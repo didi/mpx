@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, useState } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../../observer/effect'
 import { watch } from '../../../observer/watch'
@@ -7,7 +7,7 @@ import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset,
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
-import { queueJob } from '../../../observer/scheduler'
+import { queueJob, hasPendingJob } from '../../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
@@ -27,15 +27,14 @@ function getSystemInfo () {
 
 function createEffect (proxy, components) {
   const update = proxy.update = () => {
-    // pre render for props update
-    if (proxy.propsUpdatedFlag) {
-      proxy.updatePreRender()
-    }
+    // react update props in child render(async), do not need exec pre render
+    // if (proxy.propsUpdatedFlag) {
+    //   proxy.updatePreRender()
+    // }
     if (proxy.isMounted()) {
       proxy.callHook(BEFOREUPDATE)
       proxy.pendingUpdatedFlag = true
     }
-    // eslint-disable-next-line symbol-description
     proxy.stateVersion = Symbol()
     proxy.onStoreChange && proxy.onStoreChange()
   }
@@ -49,11 +48,14 @@ function createEffect (proxy, components) {
     if (!type) return null
     return createElement(type, ...rest)
   }
+
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
     return proxy.target.__injectedRender(innerCreateElement, getComponent)
   }, () => queueJob(update), proxy.scope)
+  // render effect允许自触发
+  proxy.toggleRecurse(true)
 }
 
 function getRootProps (props) {
@@ -69,133 +71,132 @@ function getRootProps (props) {
   return rootProps
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx }) {
-  const instance = Object.create({
-    setData (data, callback) {
-      return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
-    },
-    getPageId () {
-      return pageId
-    },
-    __getProps () {
-      const props = propsRef.current
-      const propsData = {}
-      Object.keys(validProps).forEach((key) => {
-        if (hasOwn(props, key)) {
-          propsData[key] = props[key]
+const instanceProto = {
+  setData (data, callback) {
+    return this.__mpxProxy.forceUpdate(data, { sync: true }, callback)
+  },
+  triggerEvent (eventName, eventDetail) {
+    const props = this.__props
+    const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])
+    if (handler && typeof handler === 'function') {
+      const timeStamp = +new Date()
+      const dataset = collectDataset(props)
+      const id = props.id || ''
+      const eventObj = {
+        type: eventName,
+        timeStamp,
+        target: {
+          id,
+          dataset,
+          targetDataset: dataset
+        },
+        currentTarget: {
+          id,
+          dataset
+        },
+        detail: eventDetail
+      }
+      handler.call(this, eventObj)
+    }
+  },
+  getPageId () {
+    return this.__pageId
+  },
+  selectComponent (selector) {
+    return this.__selectRef(selector, 'component')
+  },
+  selectAllComponents (selector) {
+    return this.__selectRef(selector, 'component', true)
+  },
+  createSelectorQuery () {
+    return createSelectorQuery().in(this)
+  },
+  createIntersectionObserver (opt) {
+    return createIntersectionObserver(this, opt, this.__intersectionCtx)
+  },
+  __resetInstance () {
+    this.__refs = {}
+    this.__dispatchedSlotSet = new WeakSet()
+  },
+  __iter (val, fn) {
+    let i, l, keys, key
+    const result = []
+    if (isArray(val) || typeof val === 'string') {
+      for (i = 0, l = val.length; i < l; i++) {
+        result.push(fn.call(this, val[i], i))
+      }
+    } else if (typeof val === 'number') {
+      for (i = 0; i < val; i++) {
+        result.push(fn.call(this, i + 1, i))
+      }
+    } else if (isObject(val)) {
+      keys = Object.keys(val)
+      for (i = 0, l = keys.length; i < l; i++) {
+        key = keys[i]
+        result.push(fn.call(this, val[key], key, i))
+      }
+    }
+    return result
+  },
+  __getProps () {
+    const props = this.__props
+    const validProps = this.__validProps
+    const propsData = {}
+    Object.keys(validProps).forEach((key) => {
+      if (hasOwn(props, key)) {
+        propsData[key] = props[key]
+      } else {
+        const altKey = hump2dash(key)
+        if (hasOwn(props, altKey)) {
+          propsData[key] = props[altKey]
         } else {
-          const altKey = hump2dash(key)
-          if (hasOwn(props, altKey)) {
-            propsData[key] = props[altKey]
-          } else {
-            let field = validProps[key]
-            if (isFunction(field) || field === null) {
-              field = {
-                type: field
-              }
+          let field = validProps[key]
+          if (isFunction(field) || field === null) {
+            field = {
+              type: field
             }
-            // 处理props默认值
-            propsData[key] = field.value
           }
+          // 处理props默认值
+          propsData[key] = field.value
         }
-      })
-      return propsData
-    },
-    __resetInstance () {
-      this.__refs = {}
-      this.__dispatchedSlotSet = new WeakSet()
-    },
-    __getSlot (name, slot) {
-      const { children } = propsRef.current
-      if (children) {
-        let result = []
-        if (isArray(children) && !hasOwn(children, '__slot')) {
-          children.forEach(child => {
-            if (isObject(child) && hasOwn(child, '__slot')) {
-              if (child.__slot === name) result.push(...child)
-            } else if (child?.props?.slot === name) {
-              result.push(child)
-            }
-          })
-        } else {
-          if (isObject(children) && hasOwn(children, '__slot')) {
-            if (children.__slot === name) result.push(...children)
-          } else if (children?.props?.slot === name) {
-            result.push(children)
+      }
+    })
+    return propsData
+  },
+  __getSlot (name, slot) {
+    const { children } = this.__props
+    if (children) {
+      let result = []
+      if (isArray(children) && !hasOwn(children, '__slot')) {
+        children.forEach(child => {
+          if (hasOwn(child, '__slot')) {
+            if (child.__slot === name) result.push(...child)
+          } else if (child?.props?.slot === name) {
+            result.push(child)
           }
-        }
-        result = result.filter(item => {
-          if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
-          this.__dispatchedSlotSet.add(item)
-          return true
         })
-        if (!result.length) return null
-        result.__slot = slot
-        return result
-      }
-      return null
-    },
-    __injectedRender: currentInject.render || noop,
-    __getRefsData: currentInject.getRefsData || noop,
-    // render helper
-    _i (val, fn) {
-      let i, l, keys, key
-      const result = []
-      if (isArray(val) || typeof val === 'string') {
-        for (i = 0, l = val.length; i < l; i++) {
-          result.push(fn.call(this, val[i], i))
-        }
-      } else if (typeof val === 'number') {
-        for (i = 0; i < val; i++) {
-          result.push(fn.call(this, i + 1, i))
-        }
-      } else if (isObject(val)) {
-        keys = Object.keys(val)
-        for (i = 0, l = keys.length; i < l; i++) {
-          key = keys[i]
-          result.push(fn.call(this, val[key], key, i))
+      } else {
+        if (hasOwn(children, '__slot')) {
+          if (children.__slot === name) result.push(...children)
+        } else if (children?.props?.slot === name) {
+          result.push(children)
         }
       }
+      result = result.filter(item => {
+        if (!isObject(item) || this.__dispatchedSlotSet.has(item)) return false
+        this.__dispatchedSlotSet.add(item)
+        return true
+      })
+      if (!result.length) return null
+      result.__slot = slot
       return result
-    },
-    triggerEvent (eventName, eventDetail) {
-      const props = propsRef.current
-      const handler = props && (props['bind' + eventName] || props['catch' + eventName] || props['capture-bind' + eventName] || props['capture-catch' + eventName])
-      if (handler && typeof handler === 'function') {
-        const timeStamp = +new Date()
-        const dataset = collectDataset(props)
-        const id = props.id || ''
-        const eventObj = {
-          type: eventName,
-          timeStamp,
-          target: {
-            id,
-            dataset,
-            targetDataset: dataset
-          },
-          currentTarget: {
-            id,
-            dataset
-          },
-          detail: eventDetail
-        }
-        handler.call(this, eventObj)
-      }
-    },
-    selectComponent (selector) {
-      return this.__selectRef(selector, 'component')
-    },
-    selectAllComponents (selector) {
-      return this.__selectRef(selector, 'component', true)
-    },
-    createSelectorQuery () {
-      return createSelectorQuery().in(this)
-    },
-    createIntersectionObserver (opt) {
-      return createIntersectionObserver(this, opt, intersectionCtx)
-    },
-    ...rawOptions.methods
-  }, {
+    }
+    return null
+  }
+}
+
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx }) {
+  const instance = Object.create(instanceProto, {
     dataset: {
       get () {
         const props = propsRef.current
@@ -210,17 +211,53 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       },
       enumerable: true
     },
-    props: {
+    __props: {
       get () {
         return propsRef.current
       },
-      enumerable: true
+      enumerable: false
+    },
+    __pageId: {
+      get () {
+        return pageId
+      },
+      enumerable: false
+    },
+    __intersectionCtx: {
+      get () {
+        return intersectionCtx
+      },
+      enumerable: false
+    },
+    __validProps: {
+      get () {
+        return validProps
+      },
+      enumerable: false
+    },
+    __injectedRender: {
+      get () {
+        return currentInject.render || noop
+      },
+      enumerable: false
+    },
+    __getRefsData: {
+      get () {
+        return currentInject.getRefsData || noop
+      },
+      enumerable: false
     }
   })
 
-  const props = propsRef.current
+  // bind this & assign methods
+  if (rawOptions.methods) {
+    Object.entries(rawOptions.methods).forEach(([key, method]) => {
+      instance[key] = method.bind(instance)
+    })
+  }
 
   if (type === 'page') {
+    const props = propsRef.current
     instance.route = props.route.name
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
   }
@@ -230,12 +267,10 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   Object.assign(proxy, {
     onStoreChange: null,
-    // eslint-disable-next-line symbol-description
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
         createEffect(proxy, components)
-        // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
       proxy.onStoreChange = onStoreChange
@@ -387,20 +422,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     }
 
-    useEffect(() => {
-      if (!isFirst) {
-        // 处理props更新
-        Object.keys(validProps).forEach((key) => {
-          if (hasOwn(props, key)) {
-            instance[key] = props[key]
-          } else {
-            const altKey = hump2dash(key)
-            if (hasOwn(props, altKey)) {
-              instance[key] = props[altKey]
-            }
+    if (!isFirst) {
+      // 处理props更新
+      Object.keys(validProps).forEach((key) => {
+        if (hasOwn(props, key)) {
+          instance[key] = props[key]
+        } else {
+          const altKey = hump2dash(key)
+          if (hasOwn(props, altKey)) {
+            instance[key] = props[altKey]
           }
-        })
-      }
+        }
+      })
+    }
+
+    useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
@@ -428,10 +464,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    const root = rawOptions.options?.disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
-    if (root) {
+    if ((rawOptions.options?.disableMemo)) {
+      proxy.memoVersion = Symbol()
+    }
+
+    const finalMemoVersion = useMemo(() => {
+      if (!hasPendingJob(proxy.update)) {
+        proxy.finalMemoVersion = Symbol()
+      }
+      return proxy.finalMemoVersion
+    }, [proxy.stateVersion, proxy.memoVersion])
+
+    const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
+    if (root && root.props.ishost) {
       const rootProps = getRootProps(props)
-      rootProps.style = { ...root.props.style, ...rootProps.style }
+      rootProps.style = Object.assign({}, root.props.style, rootProps.style)
       // update root props
       return cloneElement(root, rootProps)
     }
@@ -473,6 +520,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const onLayout = useCallback(() => {
         rootRef.current?.measureInWindow((x, y, width, height) => {
           navigation.layout = { x, y, width, height }
+          setState(Math.random())
         })
       }, [])
 

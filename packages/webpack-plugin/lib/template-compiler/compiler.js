@@ -1164,7 +1164,7 @@ function processEventReact (el) {
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+        eventConfigMap[type].configs.push(Object.assign({ name, value }, parsedFunc))
       }
     }
   })
@@ -1205,26 +1205,31 @@ function processEventReact (el) {
 
   // let wrapper
   for (const type in eventConfigMap) {
-    let { configs } = eventConfigMap[type]
-    configs.forEach(({ name }) => {
-      if (name) {
-        // 清空原始事件绑定
-        let has
-        do {
-          has = getAndRemoveAttr(el, name).has
-        } while (has)
-      }
-    })
-    configs = configs.map((item) => {
-      return item.expStr
-    })
-    const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
-    addAttrs(el, [
-      {
-        name: type,
-        value
-      }
-    ])
+    const { configs } = eventConfigMap[type]
+    if (!configs.length) continue
+    const needBind = configs.length > 1 || configs[0].hasArgs
+    if (needBind) {
+      configs.forEach(({ name }) => {
+        if (name) {
+          // 清空原始事件绑定
+          let has
+          do {
+            has = getAndRemoveAttr(el, name).has
+          } while (has)
+        }
+      })
+      const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`
+      addAttrs(el, [
+        {
+          name: type,
+          value
+        }
+      ])
+    } else {
+      const { name, value } = configs[0]
+      modifyAttr(el, name, `{{${value}}}`)
+    }
+
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
     // if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
     //   if (!wrapper) {
@@ -2361,12 +2366,11 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'class',
             value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          },
+          {
+            name: 'ishost',
+            value: '{{true}}'
           }
-          // todo 运行时通过root标识确定是否合并rootProps
-          // {
-          //   name: 'is-root',
-          //   value: '{{true}}'
-          // }
         ])
         processElement(rootView, rootView, options, meta)
         return rootView
