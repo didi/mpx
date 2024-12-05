@@ -83,6 +83,10 @@ export function queueJob (job) {
   }
 }
 
+export function hasPendingJob (job) {
+  return queue.length && queue.includes(job, isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex)
+}
+
 function queueFlush () {
   if (!isFlushing && !isFlushPending) {
     isFlushPending = true
