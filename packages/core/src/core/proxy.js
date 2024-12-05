@@ -138,8 +138,8 @@ export default class MpxProxy {
       if (isReact) {
         // react专用，正确触发updated钩子
         this.pendingUpdatedFlag = false
-        // react专用，用于提供render渲染函数中访问props数据同时不追踪props数据的顶层响应性
-        this.propsWithoutReactive = {}
+        this.memoVersion = Symbol()
+        this.finalMemoVersion = Symbol()
       }
     }
     this.initApi()
@@ -290,7 +290,6 @@ export default class MpxProxy {
     if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
-      this.propsWithoutReactive = Object.assign({}, this.props)
       shallowReactive(this.processIgnoreReactive(this.props))
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone

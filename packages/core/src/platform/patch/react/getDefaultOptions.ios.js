@@ -7,7 +7,7 @@ import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset,
 import MpxProxy from '../../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
 import mergeOptions from '../../../core/mergeOptions'
-import { queueJob } from '../../../observer/scheduler'
+import { queueJob, hasPendingJob } from '../../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
@@ -35,7 +35,6 @@ function createEffect (proxy, components) {
       proxy.callHook(BEFOREUPDATE)
       proxy.pendingUpdatedFlag = true
     }
-    // eslint-disable-next-line symbol-description
     proxy.stateVersion = Symbol()
     proxy.onStoreChange && proxy.onStoreChange()
   }
@@ -49,18 +48,14 @@ function createEffect (proxy, components) {
     if (!type) return null
     return createElement(type, ...rest)
   }
-  const getValue = (name) => {
-    if (hasOwn(proxy.propsWithoutReactive, name)) {
-      return proxy.propsWithoutReactive[name]
-    } else {
-      return proxy.target[name]
-    }
-  }
+
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(innerCreateElement, getComponent, getValue)
+    return proxy.target.__injectedRender(innerCreateElement, getComponent)
   }, () => queueJob(update), proxy.scope)
+  // render effect允许自触发
+  proxy.toggleRecurse(true)
 }
 
 function getRootProps (props) {
@@ -272,12 +267,10 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   Object.assign(proxy, {
     onStoreChange: null,
-    // eslint-disable-next-line symbol-description
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
         createEffect(proxy, components)
-        // eslint-disable-next-line symbol-description
         proxy.stateVersion = Symbol()
       }
       proxy.onStoreChange = onStoreChange
@@ -434,12 +427,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       Object.keys(validProps).forEach((key) => {
         if (hasOwn(props, key)) {
           instance[key] = props[key]
-          proxy.propsWithoutReactive[key] = props[key]
         } else {
           const altKey = hump2dash(key)
           if (hasOwn(props, altKey)) {
             instance[key] = props[altKey]
-            proxy.propsWithoutReactive[key] = props[altKey]
           }
         }
       })
@@ -473,7 +464,18 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useSyncExternalStore(proxy.subscribe, proxy.getSnapshot)
 
-    const root = rawOptions.options?.disableMemo ? proxy.effect.run() : useMemo(() => proxy.effect.run(), [proxy.stateVersion])
+    if ((rawOptions.options?.disableMemo)) {
+      proxy.memoVersion = Symbol()
+    }
+
+    const finalMemoVersion = useMemo(() => {
+      if (!hasPendingJob(proxy.update)) {
+        proxy.finalMemoVersion = Symbol()
+      }
+      return proxy.finalMemoVersion
+    }, [proxy.stateVersion, proxy.memoVersion])
+
+    const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
     if (root && root.props.ishost) {
       const rootProps = getRootProps(props)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
