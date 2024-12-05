@@ -49,7 +49,7 @@ function getStorage (options = {}) {
       item = JSON.parse(res)
     } catch (e) {
     }
-    if (item && typeof item === 'object' && hasOwn(item, 'data')) {
+    if (hasOwn(item, 'data')) {
       data = item.data
     }
     const result = {
