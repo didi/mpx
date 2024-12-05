@@ -1206,7 +1206,8 @@ function processEventReact (el) {
   // let wrapper
   for (const type in eventConfigMap) {
     const { configs } = eventConfigMap[type]
-    const needBind = configs.length > 1 || (configs.length === 1 && configs[0].hasArgs)
+    if (!configs.length) continue
+    const needBind = configs.length > 1 || configs[0].hasArgs
     if (needBind) {
       configs.forEach(({ name }) => {
         if (name) {
@@ -1226,9 +1227,7 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      if (name && value) {
-        modifyAttr(el, name, `{{${value}}}`)
-      }
+      modifyAttr(el, name, `{{${value}}}`)
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
