@@ -520,19 +520,16 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const onLayout = useCallback(() => {
         rootRef.current?.measureInWindow((x, y, width, height) => {
           navigation.layout = { x, y, width, height }
-          setState(Math.random())
         })
       }, [])
 
       const withKeyboardAvoidingView = (element) => {
         if (__mpx_mode__ === 'ios') {
-          return createElement(
-            KeyboardAvoidContext.Provider,
+          return createElement(KeyboardAvoidContext.Provider,
             {
               value: setEnabled
             },
-            createElement(
-              ReactNative.KeyboardAvoidingView,
+            createElement(ReactNative.KeyboardAvoidingView,
               {
                 style: {
                   flex: 1
@@ -552,16 +549,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       navigation.insets = useSafeAreaInsets()
 
-      return createElement(
-        GestureHandlerRootView,
+      return createElement(GestureHandlerRootView,
         {
           style: {
             flex: 1
           }
         },
         withKeyboardAvoidingView(
-          createElement(
-            ReactNative.View,
+          createElement(ReactNative.View,
             {
               style: {
                 flex: 1,
