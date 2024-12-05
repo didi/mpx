@@ -1813,7 +1813,6 @@ try {
                     loader: info[2]
                   })
                 }
-
               }
               break
             }

@@ -1,6 +1,6 @@
 const MagicString = require('magic-string')
 
-function cssConditionalStrip(cssContent, defs) {
+function cssConditionalStrip (cssContent, defs) {
   const ms = new MagicString(cssContent)
 
   // 正则匹配 @mpx-if, @mpx-elif, @mpx-else, @mpx-endif 的模式
@@ -9,7 +9,7 @@ function cssConditionalStrip(cssContent, defs) {
   const elsePattern = /\/\*\s*@mpx-else\s*\*\//gs
   const endifPattern = /\/\*\s*@mpx-endif\s*\*\//gs
 
-  function evaluateCondition(condition) {
+  function evaluateCondition (condition) {
     // 替换变量
     for (const key in defs) {
       condition = condition.replace(new RegExp(`\\b${key}\\b`, 'g'), JSON.stringify(defs[key]))
@@ -17,6 +17,7 @@ function cssConditionalStrip(cssContent, defs) {
 
     // 解析条件表达式
     try {
+      // eslint-disable-next-line no-new-func
       return Function('"use strict";return (' + condition + ')')()
     } catch (e) {
       throw new Error(`Failed to evaluate condition: ${condition}`)
@@ -24,7 +25,7 @@ function cssConditionalStrip(cssContent, defs) {
   }
 
   let currentStart = 0
-  function processCondition(start, end, condition) {
+  function processCondition (start, end, condition) {
     const conditionResult = evaluateCondition(condition)
     let hasElse = false
     let elseStart = -1

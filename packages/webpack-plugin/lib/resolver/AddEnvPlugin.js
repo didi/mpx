@@ -4,7 +4,6 @@ const parseQuery = require('loader-utils').parseQuery
 const addInfix = require('../utils/add-infix')
 const { matchCondition } = require('../utils/match-condition')
 const { JSON_JS_EXT } = require('../utils/const')
-const isCSSFileName = require('../utils/is-css-file-name')
 
 module.exports = class AddEnvPlugin {
   constructor (source, env, fileConditionRules, target) {
