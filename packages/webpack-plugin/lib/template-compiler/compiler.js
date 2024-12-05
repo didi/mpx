@@ -2361,12 +2361,11 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'class',
             value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          },
+          {
+            name: 'ishost',
+            value: '{{true}}'
           }
-          // todo 运行时通过root标识确定是否合并rootProps
-          // {
-          //   name: 'is-root',
-          //   value: '{{true}}'
-          // }
         ])
         processElement(rootView, rootView, options, meta)
         return rootView
