@@ -7,6 +7,8 @@ const shallowStringify = require('@mpxjs/webpack-plugin/lib/utils/shallow-string
 
 const PLUGIN_NAME = 'unocss:webpack'
 
+const reLetters = /[a-z]+/gi
+
 function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
@@ -31,8 +33,10 @@ function WebpackPlugin (configOrPath, defaults) {
       })
 
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
+        const mpx = compilation.__mpx__
+        const { mode, srcMode } = mpx
+        mpx.unoCtx = uno
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
-          const { mode, srcMode } = compilation.__mpx__
           // 清空transformCache避免watch修改不生效
           transformCache.clear()
           const tokens = new Set()
@@ -55,10 +59,10 @@ function WebpackPlugin (configOrPath, defaults) {
             filename: 'mpx2rn-unocss',
             mode,
             srcMode,
-            warn: (msg) => {
+            warn: msg => {
               compilation.warnings.push(msg)
             },
-            error: (msg) => {
+            error: msg => {
               compilation.errors.push(msg)
             },
             formatValueFn: 'formatValue'
@@ -68,10 +72,22 @@ function WebpackPlugin (configOrPath, defaults) {
             if (file === '*') { return }
             let code = compilation.assets[file].source().toString()
             let replaced = false
-            code = code.replace('__unocssMap__', () => {
-              replaced = true
-              return shallowStringify(classMap)
-            })
+
+            code = code
+              .replace('__unocssMap__', () => {
+                replaced = true
+                return shallowStringify(classMap)
+              })
+              .replace('__unocssBreakpoints__', () => {
+                const breakpoints = uno.config.theme.breakpoints
+                const entries = Object.entries(breakpoints)
+                  .sort((a, b) => Number.parseInt(a[1].replace(reLetters, '')) - Number.parseInt(b[1].replace(reLetters, '')))
+
+                return JSON.stringify({
+                  entries,
+                  entriesMap: breakpoints
+                })
+              })
             if (replaced) { compilation.assets[file] = new WebpackSources.RawSource(code) }
           }
         })
