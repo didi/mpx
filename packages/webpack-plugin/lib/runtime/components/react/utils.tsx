@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
@@ -276,6 +276,15 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
+const stringifyProps = ['fontWeight']
+function transformStringify (styleObj: Record<string, any>) {
+  stringifyProps.forEach((prop) => {
+    if (isNumber(styleObj[prop])) {
+      styleObj[prop] = '' + styleObj[prop]
+    }
+  })
+}
+
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -386,6 +395,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       }
     }
   })
+  // transform number enum stringify
+  transformStringify(normalStyle)
 
   return {
     normalStyle,
