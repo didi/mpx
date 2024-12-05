@@ -352,6 +352,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
         styles[key] = shareValMap[key].value
       }
       return styles
-    }, Object.assign({}, originalStyle) as ExtendedViewStyle)
+    }, {} as ExtendedViewStyle)
   })
 }

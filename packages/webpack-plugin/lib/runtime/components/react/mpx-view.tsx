@@ -789,13 +789,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
   const finalStyle = enableAnimation
-    ? [
-      viewStyle,
-      useAnimationHooks({
+    ? [viewStyle, useAnimationHooks({
         animation,
         style: viewStyle
-      })
-    ]
+      })]
     : viewStyle
 
   const innerProps = useInnerProps(props, {
