@@ -31,7 +31,7 @@ module.exports = function ({ print }) {
     },
     props: [
       {
-        test: /^(display-multiple-items|skip-hidden-item-layout|easing-function)$/,
+        test: /^(display-multiple-items|skip-hidden-item-layout)$/,
         ali: aliPropLog
       },
       {
