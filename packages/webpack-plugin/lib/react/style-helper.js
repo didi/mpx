@@ -8,23 +8,25 @@ const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 
-function formatValue (value, formatValueFn) {
-  let matched
-  let needStringify = true
-  if ((matched = numberRegExp.exec(value))) {
-    value = matched[1]
-    needStringify = false
-  } else if (unitRegExp.test(value) || hairlineRegExp.test(value)) {
-    // value = `global.__formatValue(${JSON.stringify(value)})`
-    value = `${formatValueFn}(${JSON.stringify(value)})`
-    needStringify = false
+function createFormatValue (formatValueFn) {
+  formatValueFn = formatValueFn || 'global.__formatValue'
+  return function (value) {
+    let matched
+    let needStringify = true
+    if ((matched = numberRegExp.exec(value))) {
+      value = matched[1]
+      needStringify = false
+    } else if (unitRegExp.test(value) || hairlineRegExp.test(value)) {
+      value = `${formatValueFn}(${JSON.stringify(value)})`
+      needStringify = false
+    }
+    return needStringify ? JSON.stringify(value) : value
   }
-  return needStringify ? JSON.stringify(value) : value
 }
 
 function getClassMap ({ content, filename, mode, srcMode, warn, error, formatValueFn }) {
   const classMap = {}
-  formatValueFn = formatValueFn || 'global.__formatValue'
+  const formatValue = createFormatValue(formatValueFn)
   const root = postcss.parse(content, {
     from: filename
   })
@@ -98,7 +100,6 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
 
 module.exports = {
   getClassMap,
-  formatValue,
   unitRegExp,
   numberRegExp
 }
