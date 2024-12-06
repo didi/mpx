@@ -568,16 +568,16 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
               }
             },
-            createElement(Provider,
-              null,
-              createElement(RouteContext.Provider,
+            createElement(RouteContext.Provider,
+              {
+                value: currentPageId
+              },
+              createElement(IntersectionObserverContext.Provider,
                 {
-                  value: currentPageId
+                  value: intersectionObservers.current
                 },
-                createElement(IntersectionObserverContext.Provider,
-                  {
-                    value: intersectionObservers.current
-                  },
+                createElement(Provider,
+                  null,
                   createElement(defaultOptions,
                     {
                       navigation,
@@ -590,8 +590,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             )
           )
         )
-        // todo custom portal host for active route
       )
+      // todo custom portal host for active route
     }
     return Page
   }
