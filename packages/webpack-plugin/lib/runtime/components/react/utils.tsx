@@ -488,7 +488,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
   const isFistRender = useRef(true)
-  const layoutStyle: Record<string, any> = isFistRender && !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
+  const layoutStyle: Record<string, any> = isFistRender.current && !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
   const layoutProps: Record<string, any> = {}
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
