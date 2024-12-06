@@ -22,7 +22,7 @@ const formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
 }
 
 const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProps>((props: SelectorProps, ref): React.JSX.Element => {
-  const { range, children, value, disabled, bindchange, bindcancel } = props
+  const { range, children, value, disabled, bindchange, bindcancel, style } = props
   // 格式化数据为Array<*>
   const formatRange: PickerColumn = formatRangeFun(range, props['range-key'])
   // 选中的索引值
@@ -32,7 +32,9 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
   // 存储layout布局信息
   const layoutRef = useRef({})
   const viewRef = useRef<View>(null)
-  useNodesRef<View, SelectorProps>(props, ref, viewRef, {
+  const nodeRef = useRef(null)
+  useNodesRef<View, SelectorProps>(props, ref, nodeRef, {
+    style
   })
 
   useEffect(() => {
@@ -62,6 +64,7 @@ const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProp
   }
 
   const antPickerProps = {
+    ref: nodeRef,
     data,
     value: [selected],
     cols: 1,

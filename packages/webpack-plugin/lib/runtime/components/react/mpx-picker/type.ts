@@ -3,87 +3,92 @@ import { PickerValue } from '@ant-design/react-native'
 
 export type Obj = Record<string, any>
 export type SelectorProps = {
-  mode: string,
+  mode: string
   // 表示选择了 range 中的第几个（下标从 0 开始）
   value: PickerValue
-  disabled?: boolean,
-  children: ReactNode,
-  bindcancel?: Function,
-  bindchange: Function,
+  disabled?: boolean
+  children: ReactNode
+  bindcancel?: Function
+  bindchange: Function
   // mode 为 selector 或 multiSelector 时，range 有效
-  range: Array<number|string|Obj>,
+  range: Array<number|string|Obj>
   // 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器《显示内容》 对象中的属性
-  'range-key': string,
+  'range-key': string
   getInnerLayout: Function
+  style?: Record<string, any>
   // bindcolumnchange?: Function
 }
 
 export type MultiSelectorProps = {
-  mode: string,
+  mode: string
   // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: Array<number>,
-  disabled?: boolean,
-  children: ReactNode,
-  bindcancel?: Function,
-  bindchange: Function,
-  bindcolumnchange?: Function,
+  value: Array<number>
+  disabled?: boolean
+  children: ReactNode
+  bindcancel?: Function
+  bindchange: Function
+  bindcolumnchange?: Function
   // mode 为 selector 或 multiSelector 时，range 有效
-  range: Array<Array<any>>,
+  range: Array<Array<any>>
   // 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器《显示内容》 对象中的属性
-  'range-key': string,
+  'range-key': string
   getInnerLayout: Function
+  style?: Record<string, any>
 }
 
 export type TimeProps = {
-  mode: string,
+  mode: string
   // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: string,
-  disabled?: boolean,
-  children: ReactNode,
-  bindcancel?: Function,
-  bindchange: Function,
-  start: string,
-  end: string,
+  value: string
+  disabled?: boolean
+  children: ReactNode
+  bindcancel?: Function
+  bindchange: Function
+  start: string
+  end: string
   getInnerLayout: Function
+  style?: Record<string, any>
 }
 
 export type DateProps = {
-  mode: string,
+  mode: string
   // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: string,
-  fields?: 'day' | 'month' | 'year',
-  disabled?: boolean,
-  children: ReactNode,
-  bindcancel?: Function,
-  bindchange: Function,
-  start: string,
-  end: string,
+  value: string
+  fields?: 'day' | 'month' | 'year'
+  disabled?: boolean
+  children: ReactNode
+  bindcancel?: Function
+  bindchange: Function
+  start: string
+  end: string
   getInnerLayout: Function
+  style?: Record<string, any>
 }
 
 export type RegionProps = {
-  mode: string,
+  mode: string
   // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: Array<string>,
+  value: Array<string>
   level: 'province' | 'city' | 'region' | 'sub-district'
-  'custom-item'?: string,
-  disabled?: boolean,
-  children: ReactNode,
-  bindcancel?: Function,
-  bindchange: Function,
+  'custom-item'?: string
+  disabled?: boolean
+  children: ReactNode
+  bindcancel?: Function
+  bindchange: Function
   getInnerLayout: Function
+  style?: Record<string, any>
 }
 
 export type RegionObj = {
-  value: string,
+  value: string
   code: string
   postcode?: string
   children?: RegionObj[]
 }
 
 export type PickerData = {
-  value: string,
-  label: string,
+  value: string
+  label: string
   children?: Array<Object>
 }
 

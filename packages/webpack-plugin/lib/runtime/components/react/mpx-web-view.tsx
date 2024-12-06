@@ -6,7 +6,7 @@ import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { getCurrentPage } from './utils'
+import { getCurrentPage, extendObject } from './utils'
 import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 
@@ -163,17 +163,17 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const events = {}
 
   if (bindload) {
-    Object.assign(events, {
+    extendObject(events, {
       onLoad: _load
     })
   }
   if (binderror) {
-    Object.assign(events, {
+    extendObject(events, {
       onError: _error
     })
   }
   if (bindmessage) {
-    Object.assign(events, {
+    extendObject(events, {
       onMessage: _message
     })
   }

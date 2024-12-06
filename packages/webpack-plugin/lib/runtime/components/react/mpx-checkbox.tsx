@@ -102,11 +102,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
     const defaultStyle = extendObject(
+      {},
       styles.wrapper,
-      disabled ? styles.wrapperDisabled : {}
+      disabled ? styles.wrapperDisabled : null
     )
 
-    const styleObj = extendObject(styles.container, style)
+    const styleObj = extendObject({}, styles.container, style)
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
@@ -137,7 +138,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const nodeRef = useRef(null)
 
     useNodesRef(props, ref, nodeRef, {
-      style: extendObject(defaultStyle, normalStyle),
+      style: extendObject({}, defaultStyle, normalStyle),
       change: onChange
     })
 
@@ -165,7 +166,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       extendObject(
         {
           ref: nodeRef,
-          style: extendObject(innerStyle, layoutStyle)
+          style: extendObject({}, innerStyle, layoutStyle)
         },
         layoutProps,
         {

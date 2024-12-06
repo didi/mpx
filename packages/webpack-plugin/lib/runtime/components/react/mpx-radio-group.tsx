@@ -67,7 +67,7 @@ const radioGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = extendObject(defaultStyle, style)
+  const styleObj = extendObject({}, defaultStyle, style)
 
   const {
     hasSelfPercent,
@@ -144,7 +144,7 @@ const radioGroup = forwardRef<
     extendObject(
       {
         ref: nodeRef,
-        style: extendObject(normalStyle, layoutStyle)
+        style: extendObject({}, normalStyle, layoutStyle)
       },
       layoutProps
     ),

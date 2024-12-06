@@ -90,12 +90,13 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const labelContext = useContext(LabelContext)
 
     const defaultStyle = extendObject(
+      {},
       styles.wrapper,
       isChecked ? styles.wrapperChecked : {},
       disabled ? styles.wrapperDisabled : {}
     )
 
-    const styleObj = extendObject(styles.container, style)
+    const styleObj = extendObject({}, styles.container, style)
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled || isChecked) return
@@ -132,7 +133,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, {
-      style: extendObject(defaultStyle, normalStyle),
+      style: extendObject({}, defaultStyle, normalStyle),
       change: onChange
     })
 
@@ -152,7 +153,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       extendObject(
         {
           ref: nodeRef,
-          style: extendObject(innerStyle, layoutStyle)
+          style: extendObject({}, innerStyle, layoutStyle)
         },
         layoutProps,
         {

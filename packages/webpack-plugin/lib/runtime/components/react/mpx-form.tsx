@@ -60,7 +60,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: formRef })
 
   const innerProps = useInnerProps(props, extendObject({
-    style: extendObject(innerStyle, layoutStyle),
+    style: extendObject({}, innerStyle, layoutStyle),
     ref: formRef
   }, layoutProps)
   , [

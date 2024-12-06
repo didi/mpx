@@ -42,7 +42,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       flexDirection: 'row'
     }
 
-    const styleObj = extendObject(defaultStyle, style)
+    const styleObj = extendObject({}, defaultStyle, style)
 
     const {
       hasSelfPercent,
@@ -79,7 +79,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       extendObject(
         {
           ref: nodeRef,
-          style: extendObject(innerStyle, layoutStyle)
+          style: extendObject({}, innerStyle, layoutStyle)
         },
         layoutProps,
         {

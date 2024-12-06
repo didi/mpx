@@ -80,7 +80,7 @@ function getColumnIndexByValue (range: any[] = [], column: number, value: any[] 
 }
 
 const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, MultiSelectorProps>((props: MultiSelectorProps, ref): React.JSX.Element => {
-  const { range, value, disabled, bindchange, bindcancel, children, bindcolumnchange } = props
+  const { range, value, disabled, bindchange, bindcancel, children, bindcolumnchange, style } = props
   const formatRange = formatRangeFun(range, props['range-key'])
   const initValue = getInnerValueByIndex(formatRange, value)
   // 选中的索引值
@@ -90,7 +90,9 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
   // 存储layout布局信息
   const layoutRef = useRef({})
   const viewRef = useRef<View>(null)
-  useNodesRef<View, MultiSelectorProps>(props, ref, viewRef, {
+  const nodeRef = useRef<View>(null)
+  useNodesRef<View, MultiSelectorProps>(props, ref, nodeRef, {
+    style
   })
 
   useEffect(() => {
@@ -126,6 +128,7 @@ const _MultiSelectorPicker = forwardRef<HandlerRef<View, MultiSelectorProps>, Mu
   }
 
   const antPickerProps = {
+    ref: nodeRef,
     data,
     value: selected,
     cols: range.length,
