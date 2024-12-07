@@ -1066,8 +1066,8 @@ const initVariants = (unoCtx) => {
   if (unoVariantCached) return unoVariantCached
   const { config } = unoCtx
   const separators = config.separators.join('|')
-  const breakpoints = Object.keys(config.theme.breakpoints).join('|')
-  const sizePseudoReg = /(max-|min-)\\[([^\\]]*)\]:/
+  const breakpoints = Object.keys(config.theme.breakpoints || {}).join('|')
+  const sizePseudoReg = /(max-|min-)\[([^\]]*)\]:/
   const breakPointsReg = new RegExp(`([al]t-|[<~]|max-)?(${breakpoints})(?:${separators})`)
   const orientationReg = new RegExp(`(landscape|portrait)(?:${separators})`)
   const pseudoClassReg = new RegExp(`(hover)(?:${separators})`) // 目前仅处理了 hover 状态

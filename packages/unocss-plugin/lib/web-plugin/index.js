@@ -1,13 +1,25 @@
-const WebpackSources = require('webpack-sources')
-const VirtualModulesPlugin = require('webpack-virtual-modules')
-const node_path = require('node:path')
-const process = require('process')
-const fs = require('fs')
-const { createContext, getPath, normalizeAbsolutePath } = require('./utils')
-const { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } = require('./consts')
+import * as WebpackSources from 'webpack-sources';
+import VirtualModulesPlugin from 'webpack-virtual-modules';
+import * as nodePath from 'node:path';
+import * as process from 'process';
+import * as fs from 'fs';
+import {
+  createContext,
+  getPath,
+  normalizeAbsolutePath
+} from './utils.js';
+import {
+  LAYER_MARK_ALL,
+  LAYER_PLACEHOLDER_RE,
+  RESOLVED_ID_RE,
+  getLayerPlaceholder,
+  resolveId,
+  resolveLayer
+} from './consts.js';
+
 
 const PLUGIN_NAME = 'unocss:webpack'
-const VIRTUAL_MODULE_PREFIX = node_path.resolve(process.cwd(), '_virtual_')
+const VIRTUAL_MODULE_PREFIX = nodePath.resolve(process.cwd(), '_virtual_')
 
 function WebpackPlugin (configOrPath, defaults) {
   return {
@@ -81,7 +93,7 @@ function WebpackPlugin (configOrPath, defaults) {
           const id = normalizeAbsolutePath(data.resource + (data.resourceQuery || ''))
           if (filter('', id) && !id.match(/\.html$/) && !RESOLVED_ID_RE.test(id)) {
             return [{
-              loader: node_path.resolve(__dirname, './transform-loader')
+              loader: nodePath.resolve(__dirname, './transform-loader')
             }]
           }
 
@@ -91,6 +103,7 @@ function WebpackPlugin (configOrPath, defaults) {
 
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
+          await ctx.ready
           // 清空transformCache避免watch修改不生效
           transformCache.clear()
           const tokens = new Set()
@@ -133,4 +146,7 @@ function getLayer (id) {
   }
   return layer
 }
-module.exports = WebpackPlugin
+
+export {
+  WebpackPlugin as UnoCSSWebpackPlugin
+}

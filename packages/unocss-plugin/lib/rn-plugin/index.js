@@ -1,9 +1,13 @@
-const WebpackSources = require('webpack-sources')
-const node_path = require('node:path')
-const { createContext, normalizeAbsolutePath } = require('../web-plugin/utils')
-const { RESOLVED_ID_RE } = require('../web-plugin/consts')
-const { getClassMap } = require('@mpxjs/webpack-plugin/lib/react/style-helper')
-const shallowStringify = require('@mpxjs/webpack-plugin/lib/utils/shallow-stringify')
+import WebpackSources from 'webpack-sources';
+import * as nodePath from 'node:path';
+import { createContext, normalizeAbsolutePath } from '../web-plugin/utils.js';
+import { RESOLVED_ID_RE } from '../web-plugin/consts.js';
+import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js';
+import shallowStringify from '@mpxjs/webpack-plugin/lib/utils/shallow-stringify.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url); // 当前文件的绝对路径
+const __dirname = nodePath.dirname(__filename);       // 当前文件的目录路径
 
 const PLUGIN_NAME = 'unocss:webpack'
 
@@ -13,7 +17,7 @@ function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
       const ctx = createContext(configOrPath, defaults)
-      const { uno, filter, transformCache } = ctx
+      const { filter, transformCache } = ctx
       compiler.__unoCtx = ctx
       // transform 提取tokens
       compiler.options.module.rules.unshift({
@@ -24,7 +28,7 @@ function WebpackPlugin (configOrPath, defaults) {
           const id = normalizeAbsolutePath(data.resource + (data.resourceQuery || ''))
           if (filter('', id) && !id.match(/\.html$/) && !RESOLVED_ID_RE.test(id)) {
             return [{
-              loader: node_path.resolve(__dirname, '../web-plugin/transform-loader')
+              loader: nodePath.resolve(__dirname, '../web-plugin/transform-loader')
             }]
           }
 
@@ -32,11 +36,15 @@ function WebpackPlugin (configOrPath, defaults) {
         }
       })
 
+
+
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         const mpx = compilation.__mpx__
         const { mode, srcMode } = mpx
-        mpx.unoCtx = uno
+        console.log(ctx.ready);
+        ctx.ready.then(() => mpx.unoCtx = ctx.uno)
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
+          await ctx.ready
           // 清空transformCache避免watch修改不生效
           transformCache.clear()
           const tokens = new Set()
@@ -50,6 +58,7 @@ function WebpackPlugin (configOrPath, defaults) {
               }
             }
           }
+          const { uno } = ctx
           const result = await uno.generate(tokens, { minify: true })
           if (uno._mpx2rnUnsuportedRules && uno._mpx2rnUnsuportedRules.length) {
             compilation.errors.push(`[Mpx Unocss]: all those '${uno._mpx2rnUnsuportedRules.join(', ')}' class utilities is not supported in react native mode`)
@@ -79,10 +88,9 @@ function WebpackPlugin (configOrPath, defaults) {
                 return shallowStringify(classMap)
               })
               .replace('__unocssBreakpoints__', () => {
-                const breakpoints = uno.config.theme.breakpoints
+                const breakpoints = uno.config.theme.breakpoints || {}
                 const entries = Object.entries(breakpoints)
                   .sort((a, b) => Number.parseInt(a[1].replace(reLetters, '')) - Number.parseInt(b[1].replace(reLetters, '')))
-
                 return JSON.stringify({
                   entries,
                   entriesMap: breakpoints
@@ -96,4 +104,6 @@ function WebpackPlugin (configOrPath, defaults) {
   }
 }
 
-module.exports = WebpackPlugin
+export {
+  WebpackPlugin as UnoCSSRNWebpackPlugin
+}
