@@ -57,7 +57,7 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
     parentWidth,
     parentHeight
   } = props
-  // 计算transfrom之类的
+  // 计算transform之类的
   const {
     normalStyle,
     hasVarDec,
@@ -92,7 +92,9 @@ const _Carouse = forwardRef<HandlerRef<ScrollView & View, CarouseProps>, Carouse
   // 内部存储上一次的offset值
   const autoplayTimerRef = useRef<ReturnType <typeof setTimeout> | null>(null)
   const scrollViewRef = useRef<ScrollView & View>(null)
-  useNodesRef<ScrollView & View, CarouseProps>(props, ref, scrollViewRef, {})
+  useNodesRef<ScrollView & View, CarouseProps>(props, ref, scrollViewRef, {
+    style: normalStyle
+  })
   const {
     // 存储layout布局信息
     layoutRef,

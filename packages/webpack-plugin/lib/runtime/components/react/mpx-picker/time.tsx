@@ -135,7 +135,6 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   // 存储layout布局信息
   const layoutRef = useRef({})
   const viewRef = useRef<View>(null)
-  useNodesRef<View, TimeProps>(props, ref, viewRef, {})
   // 存储modal的布局信息
   const modalLayoutRef = useRef({})
   const modalRef = useRef<View>(null)

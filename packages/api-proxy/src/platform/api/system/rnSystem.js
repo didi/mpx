@@ -5,7 +5,7 @@ import { getWindowInfo } from './rnWindowInfo'
 
 const getSystemInfoSync = function () {
   const windowInfo = getWindowInfo()
-  const { screenWidth, screenHeight, safeArea } = windowInfo
+  const { screenWidth, screenHeight } = windowInfo
 
   const result = {
     brand: DeviceInfo.getBrand(),
@@ -13,10 +13,9 @@ const getSystemInfoSync = function () {
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
-    statusBarHeight: safeArea.top,
-    fontSizeSetting: PixelRatio.getFontScale(),
-    ...windowInfo
+    fontSizeSetting: PixelRatio.getFontScale()
   }
+  Object.assign(result, windowInfo)
   defineUnsupportedProps(result, [
     'language',
     'version',

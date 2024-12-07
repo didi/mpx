@@ -18,7 +18,6 @@ interface SwiperItemProps {
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
   const {
-    'enable-offset': enableOffset,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     style
@@ -26,7 +25,6 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
 
   const { textProps } = splitProps(props)
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef, {})
 
   const {
     normalStyle,
@@ -37,6 +35,9 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
   const { textStyle, innerStyle } = splitStyle(normalStyle)
+  useNodesRef(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const {
     // 存储layout布局信息

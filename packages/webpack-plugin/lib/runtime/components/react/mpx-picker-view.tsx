@@ -90,7 +90,11 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
+
+  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
+
   const {
     // 存储layout布局信息
     layoutRef,
