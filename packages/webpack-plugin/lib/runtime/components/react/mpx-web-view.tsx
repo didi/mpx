@@ -1,11 +1,11 @@
 import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
-import { noop, warn, getFocusedNavigation } from '@mpxjs/utils'
+import { warn, getFocusedNavigation } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { getCurrentPage } from './utils'
+import { getCurrentPage, extendObject } from './utils'
 import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 
@@ -39,17 +39,11 @@ type MessageData = {
   callbackId?: number
 }
 
-interface NativeEvent {
-  url: string,
-  data: string
-}
-
-interface FormRef {
-  postMessage: (value: any) => void;
-}
-
-const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
-  const { src = '', bindmessage = noop, bindload = noop, binderror = noop } = props
+const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element|null => {
+  const { src, bindmessage, bindload, binderror } = props
+  if (!src) {
+    return (null)
+  }
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
@@ -66,7 +60,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   const webViewRef = useRef<WebView>(null)
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
-    defaultStyle: defaultWebViewStyle
+    style: defaultWebViewStyle
   })
 
   const _load = function (res: WebViewNavigationEvent) {
@@ -157,14 +151,29 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
+  const events = {}
+
+  if (bindload) {
+    extendObject(events, {
+      onLoad: _load
+    })
+  }
+  if (binderror) {
+    extendObject(events, {
+      onError: _error
+    })
+  }
+  if (bindmessage) {
+    extendObject(events, {
+      onMessage: _message
+    })
+  }
   return (<Portal>
     <WebView
       style={defaultWebViewStyle}
       source={{ uri: src }}
       ref={webViewRef}
-      onLoad={_load}
-      onError={_error}
-      onMessage={_message}
+      {...events}
       onNavigationStateChange={_changeUrl}
       javaScriptEnabled={true}
     ></WebView>

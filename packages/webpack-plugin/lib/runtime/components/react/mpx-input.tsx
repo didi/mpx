@@ -17,7 +17,7 @@
  * ✔ cursor-color
  * ✔ selection-start
  * ✔ selection-end
- * ✘ adjust-position
+ * ✔ adjust-position
  * ✘ hold-keyboard
  * ✘ safe-password-cert-path
  * ✘ safe-password-length
@@ -55,10 +55,10 @@ import {
   TextInputSubmitEditingEventData
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout } from './utils'
+import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { FormContext, FormFieldValue } from './context'
+import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -98,6 +98,7 @@ export interface InputProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'adjust-position': boolean,
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -146,6 +147,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
+    'adjust-position': adjustPosition = true,
     bindinput,
     bindfocus,
     bindblur,
@@ -159,6 +161,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const formContext = useContext(FormContext)
 
+  const setKeyboardAvoidEnabled = useContext(KeyboardAvoidContext)
+
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
   if (formContext) {
@@ -170,20 +174,22 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
-  const tmpValue = useRef<string>()
+  const tmpValue = useRef<string | undefined>(defaultValue)
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
 
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
 
-  const styleObj = {
-    padding: 0,
-    ...style,
-    ...multiline && autoHeight && {
-      height: Math.max((style as any)?.minHeight || 35, contentHeight)
-    }
-  }
+  const styleObj = extendObject(
+    { padding: 0, backgroundColor: '#fff' },
+    style,
+    multiline && autoHeight
+      ? {
+          height: Math.max((style as any)?.minHeight || 35, contentHeight)
+        }
+      : {}
+  )
 
   const {
     hasSelfPercent,
@@ -193,7 +199,9 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef)
+  useNodesRef(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
@@ -378,6 +386,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }, [])
 
+  useEffect(() => {
+    setKeyboardAvoidEnabled?.(adjustPosition)
+  }, [adjustPosition])
+
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return
@@ -387,28 +399,43 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       : (nodeRef.current as TextInput)?.blur()
   }, [focus])
 
-  const composeStyle = { ...normalStyle, ...layoutStyle }
-
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: {
-      padding: 0,
-      ...composeStyle,
-      ...multiline && autoHeight && {
-        height: Math.max((composeStyle as any)?.minHeight || 35, contentHeight)
+  const innerProps = useInnerProps(
+    props,
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject({}, normalStyle, layoutStyle)
+      },
+      layoutProps,
+      {
+        onFocus: bindfocus && onInputFocus,
+        onBlur: bindblur && onInputBlur,
+        onKeyPress: bindconfirm && onKeyPress,
+        onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
+        onSelectionChange: bindselectionchange && onSelectionChange
       }
-    },
-    ...layoutProps,
-    onFocus: bindfocus && onInputFocus,
-    onBlur: bindblur && onInputBlur,
-    onKeyPress: bindconfirm && onKeyPress,
-    onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
-    onSelectionChange: bindselectionchange && onSelectionChange
-  },
-  [],
-  {
-    layoutRef
-  })
+    ),
+    [
+      'type',
+      'keyboardType',
+      'password',
+      'placeholder-style',
+      'disabled',
+      'maxlength',
+      'auto-focus',
+      'focus',
+      'confirm-type',
+      'confirm-hold',
+      'cursor',
+      'cursor-color',
+      'selection-start',
+      'selection-end',
+      'multiline'
+    ],
+    {
+      layoutRef
+    }
+  )
 
   return (
     <TextInput

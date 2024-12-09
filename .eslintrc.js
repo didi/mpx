@@ -31,7 +31,8 @@ module.exports = {
   rules: {
     'no-cond-assign': 0,
     camelcase: 0,
-    indent: 0
+    indent: 0,
+    'symbol-description': 0
   },
   env: {
     'jest/globals': true,

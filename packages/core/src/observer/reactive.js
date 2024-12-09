@@ -225,7 +225,7 @@ export function shallowReactive (value) {
 }
 
 export function isReactive (value) {
-  return value && hasOwn(value, ObKey) && value[ObKey] instanceof Observer
+  return hasOwn(value, ObKey) && value[ObKey] instanceof Observer
 }
 
 export function getObserver (value) {
