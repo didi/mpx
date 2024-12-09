@@ -182,6 +182,7 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   }, [])
 
   const loadingStyle = extendObject(
+    {},
     styles.loading,
     {
       transform: [{ rotate }],
@@ -277,20 +278,23 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const defaultViewStyle = extendObject(
+    {},
     styles.button,
-    isMiniSize ? styles.buttonMini : {},
+    isMiniSize ? styles.buttonMini : null,
     viewStyle
   )
 
   const defaultTextStyle = extendObject(
+    {},
     styles.text,
     isMiniSize ? styles.textMini : {},
     { color: plain ? plainTextColor : normalTextColor }
   )
 
-  const defaultStyle = extendObject(defaultViewStyle, defaultTextStyle)
+  const defaultStyle = extendObject({}, defaultViewStyle, defaultTextStyle)
 
   const styleObj = extendObject(
+    {},
     defaultStyle,
     style,
     applyHoverEffect ? hoverStyle : {}
@@ -410,7 +414,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     extendObject(
       {
         ref: nodeRef,
-        style: extendObject(innerStyle, layoutStyle)
+        style: extendObject({}, innerStyle, layoutStyle)
       },
       layoutProps,
       {

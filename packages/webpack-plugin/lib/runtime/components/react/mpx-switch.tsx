@@ -122,7 +122,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
 
   const innerProps = useInnerProps(props, extendObject({
     ref: nodeRef,
-    style: extendObject(normalStyle, layoutStyle)
+    style: extendObject({}, normalStyle, layoutStyle)
   },
   layoutProps,
   !disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {})

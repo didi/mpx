@@ -63,7 +63,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
 
     const defaultStyle = { width: ~~size, height: ~~size }
 
-    const styleObj = extendObject(defaultStyle, style)
+    const styleObj = extendObject({}, defaultStyle, style)
 
     const {
       hasSelfPercent,
@@ -83,7 +83,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
         {
           ref: nodeRef,
           source: { uri },
-          style: extendObject(normalStyle, layoutStyle, { tintColor: color })
+          style: extendObject({}, normalStyle, layoutStyle, { tintColor: color })
         },
         layoutProps
       ),

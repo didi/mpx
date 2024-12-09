@@ -299,7 +299,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const visibleLength = selectLength(e.nativeEvent.layoutMeasurement)
     const contentLength = selectLength(e.nativeEvent.contentSize)
     const offset = selectOffset(e.nativeEvent.contentOffset)
-    scrollOptions.current = extendObject(scrollOptions.current, {
+    extendObject(scrollOptions.current, {
       contentLength,
       offset,
       scrollLeft: position.scrollLeft,
@@ -428,7 +428,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
-      style: extendObject(innerStyle, layoutStyle),
+      style: extendObject({}, innerStyle, layoutStyle),
       pinchGestureEnabled: false,
       horizontal: scrollX && !scrollY,
       scrollEventThrottle: scrollEventThrottle,

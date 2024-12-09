@@ -64,7 +64,7 @@ const CheckboxGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = extendObject(defaultStyle, style)
+  const styleObj = extendObject({}, defaultStyle, style)
 
   const {
     hasSelfPercent,
@@ -119,7 +119,7 @@ const CheckboxGroup = forwardRef<
     extendObject(
       {
         ref: nodeRef,
-        style: extendObject(normalStyle, layoutStyle)
+        style: extendObject({}, normalStyle, layoutStyle)
       },
       layoutProps
     ),

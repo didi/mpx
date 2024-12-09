@@ -31,7 +31,8 @@ const getTouchEvent = (
   const { layoutRef } = config
 
   const currentTarget = extendObject(
-    event.currentTarget || {},
+    {},
+    event.currentTarget,
     {
       id: id || '',
       dataset: collectDataset(props),
@@ -40,7 +41,7 @@ const getTouchEvent = (
     }
   )
 
-  return extendObject(event, {
+  return extendObject({}, event, {
     type,
     timeStamp: timestamp,
     currentTarget,
@@ -78,13 +79,13 @@ export const getCustomEvent = (
   { detail = {}, layoutRef }: { detail?: Record<string, unknown>; layoutRef: LayoutRef },
   props: Props = {}
 ) => {
-  const targetInfo = extendObject(oe.target || {}, {
+  const targetInfo = extendObject({}, oe.target, {
     id: props.id || '',
     dataset: collectDataset(props),
     offsetLeft: layoutRef?.current?.offsetLeft || 0,
     offsetTop: layoutRef?.current?.offsetTop || 0
   })
-  return extendObject(oe, {
+  return extendObject({}, oe, {
     type,
     detail,
     target: targetInfo,
@@ -132,7 +133,7 @@ const useInnerProps = (
     ...userRemoveProps
   ]
 
-  propsRef.current = extendObject(props, additionalProps)
+  propsRef.current = extendObject({}, props, additionalProps)
 
   for (const key in eventConfigMap) {
     if (hasOwn(propsRef.current, key)) {
@@ -296,6 +297,7 @@ const useInnerProps = (
   const rawEventKeys = Object.keys(eventConfig)
 
   return extendObject(
+    {},
     events,
     omit(propsRef.current, [...rawEventKeys, ...removeProps])
   )
