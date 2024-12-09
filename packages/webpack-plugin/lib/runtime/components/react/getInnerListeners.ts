@@ -41,10 +41,22 @@ const getTouchEvent = (
     }
   )
 
+  const pendingProps = (event.target as any).__internalInstanceHandle.pendingProps || {}
+
+  const target = extendObject(
+    {},
+    event.target,
+    {
+      id: pendingProps.nativeID || '',
+      dataset: collectDataset(pendingProps)
+    }
+  )
+
   return extendObject({}, event, {
     type,
     timeStamp: timestamp,
     currentTarget,
+    target,
     detail: {
       x: pageX,
       y: pageY
