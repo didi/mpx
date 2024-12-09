@@ -32,10 +32,11 @@ import { FormContext, FormFieldValue } from '../context'
  */
 
 const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
-  const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange } = props
+  const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange, style } = props
   const innerLayout = useRef({})
   const nodeRef = useRef(null)
   useNodesRef<View, PickerProps>(props, ref, nodeRef, {
+    style
   })
   const innerProps = useInnerProps(props, {
     ref: nodeRef
@@ -92,7 +93,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     bindcolumnchange && bindcolumnchange(eventData)
   }
   const commonProps = {
-    ...{ innerProps },
+    ...innerProps,
     mode,
     children,
     bindchange: onChange,

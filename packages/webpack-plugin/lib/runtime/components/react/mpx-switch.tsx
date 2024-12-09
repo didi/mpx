@@ -12,7 +12,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-import { useTransformStyle, useLayout } from './utils'
+import { useTransformStyle, useLayout, extendObject } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -42,7 +42,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-
     bindchange,
     catchchange
   } = props
@@ -77,7 +76,9 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   }, [checked])
 
   const nodeRef = useRef(null)
-  useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef)
+  useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const {
     layoutRef,
@@ -119,12 +120,13 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }, [])
 
-  const innerProps = useInnerProps(props, {
+  const innerProps = useInnerProps(props, extendObject({
     ref: nodeRef,
-    style: { ...normalStyle, ...layoutStyle },
-    ...layoutProps,
-    ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
-  }, [
+    style: extendObject({}, normalStyle, layoutStyle)
+  },
+  layoutProps,
+  !disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {})
+  , [
     'checked',
     'disabled',
     'type',
