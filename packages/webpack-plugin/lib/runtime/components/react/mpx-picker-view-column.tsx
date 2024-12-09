@@ -249,7 +249,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   return (
-    <SafeAreaView style={styles.wrapper}>
+    <SafeAreaView style={[styles.wrapper, normalStyle]}>
       {renderScollView()}
       {renderMask()}
       {renderOverlay()}

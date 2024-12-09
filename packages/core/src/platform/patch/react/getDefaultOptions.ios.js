@@ -520,19 +520,16 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const onLayout = useCallback(() => {
         rootRef.current?.measureInWindow((x, y, width, height) => {
           navigation.layout = { x, y, width, height }
-          setState(Math.random())
         })
       }, [])
 
       const withKeyboardAvoidingView = (element) => {
         if (__mpx_mode__ === 'ios') {
-          return createElement(
-            KeyboardAvoidContext.Provider,
+          return createElement(KeyboardAvoidContext.Provider,
             {
               value: setEnabled
             },
-            createElement(
-              ReactNative.KeyboardAvoidingView,
+            createElement(ReactNative.KeyboardAvoidingView,
               {
                 style: {
                   flex: 1
@@ -566,36 +563,29 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             flex: 1
           }
         },
-        createElement(
-          ReactNative.KeyboardAvoidingView,
-          {
-            style: {
-              flex: 1
+        withKeyboardAvoidingView(
+          createElement(ReactNative.View,
+            {
+              style: {
+                flex: 1,
+                backgroundColor: pageConfig.backgroundColor || '#ffffff'
+              },
+              ref: rootRef,
+              onLayout,
+              onTouchStart: () => {
+                ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
+              }
             },
-            contentContainerStyle: {
-              flex: 1,
-              backgroundColor: 'red'
-            },
-            behavior: 'position'
-          },
-          createElement(ReactNative.View, {
-            style: {
-              flex: 1,
-              backgroundColor: pageConfig.backgroundColor || '#ffffff'
-            },
-            ref: rootRef,
-            onLayout
-          },
-            createElement(Provider,
-              null,
-              createElement(RouteContext.Provider,
+            createElement(RouteContext.Provider,
+              {
+                value: currentPageId
+              },
+              createElement(IntersectionObserverContext.Provider,
                 {
-                  value: currentPageId
+                  value: intersectionObservers.current
                 },
-                createElement(IntersectionObserverContext.Provider,
-                  {
-                    value: intersectionObservers.current
-                  },
+                createElement(Provider,
+                  null,
                   createElement(defaultOptions,
                     {
                       navigation,
@@ -608,8 +598,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             )
           )
         )
-        // todo custom portal host for active route
       )
+      // todo custom portal host for active route
     }
     return Page
   }
