@@ -158,7 +158,7 @@ export default function createApp (option, config = {}) {
             }
           }
           global.__mpxAppCbs.show.forEach((cb) => {
-            cb(options)
+            cb(options || {})
           })
           global.__mpxAppFocusedState.value = 'show'
         } else if (currentState === 'inactive') {
