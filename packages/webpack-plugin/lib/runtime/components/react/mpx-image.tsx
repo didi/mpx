@@ -360,7 +360,11 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         state.current.imageHeight = height
         state.current.ratio = !width ? 0 : height / width
 
-        if (state.current.viewWidth && state.current.viewHeight) {
+        if (isWidthFixMode
+          ? state.current.viewWidth
+          : isHeightFixMode
+            ? state.current.viewHeight
+            : state.current.viewWidth && state.current.viewHeight) {
           setViewWidth(state.current.viewWidth)
           setViewHeight(state.current.viewHeight)
           setRatio(!width ? 0 : height / width)
