@@ -11,7 +11,7 @@ export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|in
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
-export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling/
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
