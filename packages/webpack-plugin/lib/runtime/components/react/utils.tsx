@@ -10,6 +10,7 @@ import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
+export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
 export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
@@ -31,10 +32,7 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 
 function getSafeAreaInset (name: string) {
   const navigation = getFocusedNavigation()
-  const insets = {
-    ...initialWindowMetrics?.insets,
-    ...navigation?.insets
-  }
+  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
 }
 
@@ -90,10 +88,11 @@ export const parseUrl = (cssUrl = '') => {
 }
 
 export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
-  return {
-    ...transferProps,
-    ...omit(originProps, deletePropsKey)
-  }
+  return extendObject(
+    {},
+    transferProps,
+    omit(originProps, deletePropsKey)
+  )
 }
 
 export function isText (ele: ReactNode): ele is ReactElement {
@@ -525,8 +524,8 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   if (textStyle || textProps) {
     children = Children.map(children, (child) => {
       if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
+        const style = extendObject({}, textStyle, child.props.style)
+        return cloneElement(child, extendObject({}, textProps, { style }))
       }
       return child
     })
@@ -595,9 +594,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
   })) || []
 }
 
-export function extendObject (...args: Record<string, any>[]) {
-  return Object.assign({}, ...args)
-}
+export const extendObject = Object.assign
 
 export function getCurrentPage (pageId: number | null) {
   if (!global.getCurrentPages) return
