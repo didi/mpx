@@ -45,7 +45,7 @@ import {
   NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -181,11 +181,14 @@ const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
     }
   }, [])
 
-  const loadingStyle = {
-    ...styles.loading,
-    transform: [{ rotate }],
-    marginRight: alone ? 0 : 5
-  }
+  const loadingStyle = extendObject(
+    {},
+    styles.loading,
+    {
+      transform: [{ rotate }],
+      marginRight: alone ? 0 : 5
+    }
+  )
 
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
@@ -274,28 +277,28 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     backgroundColor: plain ? 'transparent' : normalBackgroundColor
   }
 
-  const defaultViewStyle = {
-    ...styles.button,
-    ...(isMiniSize && styles.buttonMini),
-    ...viewStyle
-  }
+  const defaultViewStyle = extendObject(
+    {},
+    styles.button,
+    isMiniSize ? styles.buttonMini : null,
+    viewStyle
+  )
 
-  const defaultTextStyle = {
-    ...styles.text,
-    ...(isMiniSize && styles.textMini),
-    color: plain ? plainTextColor : normalTextColor
-  }
+  const defaultTextStyle = extendObject(
+    {},
+    styles.text,
+    isMiniSize ? styles.textMini : {},
+    { color: plain ? plainTextColor : normalTextColor }
+  )
 
-  const defaultStyle = {
-    ...defaultViewStyle,
-    ...defaultTextStyle
-  }
+  const defaultStyle = extendObject({}, defaultViewStyle, defaultTextStyle)
 
-  const styleObj = {
-    ...defaultStyle,
-    ...style,
-    ...(applyHoverEffect && hoverStyle)
-  }
+  const styleObj = extendObject(
+    {},
+    defaultStyle,
+    style,
+    applyHoverEffect ? hoverStyle : {}
+  )
 
   const {
     hasSelfPercent,
@@ -308,11 +311,11 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const nodeRef = useRef(null)
 
-  useNodesRef(props, ref, nodeRef, { defaultStyle })
+  useNodesRef(props, ref, nodeRef, { style: normalStyle })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+  const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   if (backgroundStyle) {
     warn('Button does not support background image-related styles!')
@@ -408,15 +411,31 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      style: { ...innerStyle, ...layoutStyle },
-      ...layoutProps,
-      bindtouchstart: onTouchStart,
-      bindtouchend: onTouchEnd,
-      bindtap: onTap
-    },
-    [],
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject({}, innerStyle, layoutStyle)
+      },
+      layoutProps,
+      {
+        bindtouchstart: (bindtouchstart || !disabled) && onTouchStart,
+        bindtouchend: (bindtouchend || !disabled) && onTouchEnd,
+        bindtap: !disabled && onTap
+      }
+    ),
+    [
+      'disabled',
+      'size',
+      'type',
+      'plain',
+      'loading',
+      'hover-class',
+      'hover-style',
+      'hover-start-time',
+      'hover-stay-time',
+      'open-type',
+      'form-type'
+    ],
     {
       layoutRef,
       disableTap: disabled
