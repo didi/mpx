@@ -1,6 +1,5 @@
 import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
-import { noop, warn } from '@mpxjs/utils'
-import { View } from 'react-native'
+import { warn, getFocusedNavigation } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
@@ -37,13 +36,14 @@ interface PayloadData {
 type MessageData = {
   payload?: PayloadData,
   type?: string,
-  callbackId?: number
+  callbackId?: number,
+  _documentTitle?: string
 }
 
-const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
-  const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
+const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
+  const { src, bindmessage, bindload, binderror } = props
   if (!src) {
-    return (<View></View>)
+    return null
   }
   if (props.style) {
     warn('The web-view component does not support the style prop.')
@@ -64,29 +64,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     style: defaultWebViewStyle
   })
 
-  const _messageList = useRef<any[]>([])
-  const handleUnload = () => {
-    // 这里是 WebView 销毁前执行的逻辑
-    bindmessage(getCustomEvent('messsage', {}, {
-      detail: {
-        data: _messageList.current
-      },
-      layoutRef: webViewRef
-    }))
-  }
-
-  useEffect(() => {
-    if (currentPage) {
-      currentPage.__webViewUrl = src
-    }
-  }, [src, currentPage])
-
-  useEffect(() => {
-    // 组件卸载时执行
-    return () => {
-      handleUnload()
-    }
-  }, [])
   const _load = function (res: WebViewNavigationEvent) {
     const result = {
       type: 'load',
@@ -107,8 +84,27 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
+  const injectedJavaScript = `
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      var _documentTitle = document.title;
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        _documentTitle: _documentTitle
+      }))
+      Object.defineProperty(document, 'title', {
+        set (val) {
+          _documentTitle = val
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            _documentTitle: _documentTitle
+          }))
+        },
+        get () {
+          return _documentTitle
+        }
+      });
+    }
+  `
   const _changeUrl = function (navState: WebViewNavigation) {
-    if (currentPage) {
+    if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
       currentPage.__webViewUrl = navState.url
     }
   }
@@ -124,10 +120,20 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     } catch (e) {
       data = {}
     }
+    const title = data._documentTitle
+    if (title) {
+      const navigation = getFocusedNavigation()
+      navigation && navigation.setOptions({ title })
+    }
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        _messageList.current.push(postData.data)
+        bindmessage && bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
+          detail: {
+            data: postData.data
+          },
+          layoutRef: webViewRef
+        }))
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
         })
@@ -172,11 +178,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       onError: _error
     })
   }
-  if (bindmessage) {
-    extendObject(events, {
-      onMessage: _message
-    })
-  }
+  extendObject(events, {
+    onMessage: _message
+  })
   return (<Portal>
     <WebView
       style={defaultWebViewStyle}
@@ -184,6 +188,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       ref={webViewRef}
       {...events}
       onNavigationStateChange={_changeUrl}
+      injectedJavaScript={injectedJavaScript}
       javaScriptEnabled={true}
     ></WebView>
   </Portal>)
