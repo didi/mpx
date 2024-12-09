@@ -36,13 +36,14 @@ interface PayloadData {
 type MessageData = {
   payload?: PayloadData,
   type?: string,
-  callbackId?: number
+  callbackId?: number,
+  _documentTitle?: string
 }
 
-const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element|null => {
+const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   if (!src) {
-    return (null)
+    return null
   }
   if (props.style) {
     warn('The web-view component does not support the style prop.')
@@ -83,19 +84,28 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
-
-  const webViewTitle = useRef<string>('')
-  const webViewUrl = useRef<string>('')
+  const injectedJavaScript = `
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      var _documentTitle = document.title;
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        _documentTitle: _documentTitle
+      }))
+      Object.defineProperty(document, 'title', {
+        set (val) {
+          _documentTitle = val
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            _documentTitle: _documentTitle
+          }))
+        },
+        get () {
+          return _documentTitle
+        }
+      });
+    }
+  `
   const _changeUrl = function (navState: WebViewNavigation) {
     if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
-      if (webViewTitle.current !== navState.title) {
-        const navigation = getFocusedNavigation()
-        navigation && navigation.setOptions({ headerTitle: navState.title })
-      }
-      if (currentPage && webViewUrl.current !== navState.url) {
-        webViewUrl.current = navState.url
-        currentPage.__webViewUrl = navState.url
-      }
+      currentPage.__webViewUrl = navState.url
     }
   }
   const _message = function (res: WebViewMessageEvent) {
@@ -110,10 +120,15 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     } catch (e) {
       data = {}
     }
+    const title = data._documentTitle
+    if (title) {
+      const navigation = getFocusedNavigation()
+      navigation && navigation.setOptions({ title })
+    }
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
+        bindmessage && bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
           detail: {
             data: postData.data
           },
@@ -163,11 +178,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       onError: _error
     })
   }
-  if (bindmessage) {
-    extendObject(events, {
-      onMessage: _message
-    })
-  }
+  extendObject(events, {
+    onMessage: _message
+  })
   return (<Portal>
     <WebView
       style={defaultWebViewStyle}
@@ -175,6 +188,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       ref={webViewRef}
       {...events}
       onNavigationStateChange={_changeUrl}
+      injectedJavaScript={injectedJavaScript}
       javaScriptEnabled={true}
     ></WebView>
   </Portal>)
