@@ -88,57 +88,6 @@ export const getCustomEvent = (
   })
 }
 
-const touchEventList = [
-  {
-    eventName: 'onTouchStart',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchstart(e, 'bubble', ref, propsRef, config)
-    }
-  },
-  {
-    eventName: 'onTouchMove',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchmove(e, 'bubble', ref, propsRef, config)
-    }
-  },
-  {
-    eventName: 'onTouchEnd',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchend(e, 'bubble', ref, propsRef, config)
-    }
-  },
-  {
-    eventName: 'onTouchCancel',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchcancel(e, 'bubble', ref, propsRef, config)
-    }
-  },
-  {
-    eventName: 'onTouchStartCapture',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchstart(e, 'capture', ref, propsRef, config)
-    }
-  },
-  {
-    eventName: 'onTouchMoveCapture',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchmove(e, 'capture', ref, propsRef, config)
-    }
-  },
-  {
-    eventName: 'onTouchEndCapture',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchend(e, 'capture', ref, propsRef, config)
-    }
-  },
-  {
-    eventName: 'onTouchCancelCapture',
-    handler: (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
-      handleTouchcancel(e, 'capture', ref, propsRef, config)
-    }
-  }
-]
-
 function handleEmitEvent (
   events: string[],
   type: string,
@@ -273,6 +222,34 @@ function handleTouchcancel (
   ref.current!.startTimer[type] = null
   handleEmitEvent(currentTouchEvent, 'touchcancel', e, propsRef, config)
 }
+
+function createTouchEventHandler (eventName: 'onTouchStart'|'onTouchMove'|'onTouchEnd'|'onTouchCancel', type: 'bubble' | 'capture') {
+  return (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig) => {
+    const handlerMap = {
+      onTouchStart: handleTouchstart,
+      onTouchMove: handleTouchmove,
+      onTouchEnd: handleTouchend,
+      onTouchCancel: handleTouchcancel
+    }
+
+    const handler = handlerMap[eventName]
+    if (handler) {
+      handler(e, type, ref, propsRef, config)
+    }
+  }
+}
+
+const touchEventList = [
+  { eventName: 'onTouchStart', handler: createTouchEventHandler('onTouchStart', 'bubble') },
+  { eventName: 'onTouchMove', handler: createTouchEventHandler('onTouchMove', 'bubble') },
+  { eventName: 'onTouchEnd', handler: createTouchEventHandler('onTouchEnd', 'bubble') },
+  { eventName: 'onTouchCancel', handler: createTouchEventHandler('onTouchCancel', 'bubble') },
+  { eventName: 'onTouchStartCapture', handler: createTouchEventHandler('onTouchStart', 'capture') },
+  { eventName: 'onTouchMoveCapture', handler: createTouchEventHandler('onTouchMove', 'capture') },
+  { eventName: 'onTouchEndCapture', handler: createTouchEventHandler('onTouchEnd', 'capture') },
+  { eventName: 'onTouchCancelCapture', handler: createTouchEventHandler('onTouchCancel', 'capture') }
+]
+
 const useInnerProps = (
   props: Props = {},
   additionalProps: AdditionalProps = {},
@@ -332,6 +309,7 @@ const useInnerProps = (
   if (!rawEventKeys.length || config.disableTouch) {
     return omit(propsRef.current, removeProps)
   }
+
   const events = useMemo(() => {
     const transformedEventKeys = rawEventKeys.reduce((acc: string[], key) => {
       if (propsRef.current[key]) {
