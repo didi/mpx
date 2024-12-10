@@ -41,13 +41,13 @@ const getTouchEvent = (
     }
   )
 
-  const pendingProps = (event.target as any).__internalInstanceHandle.pendingProps || {}
+  const pendingProps = (event.target as any)._targetInst.pendingProps || {}
 
   const target = extendObject(
     {},
     event.target,
     {
-      id: pendingProps.nativeID || '',
+      id: pendingProps.parentId || '',
       dataset: collectDataset(pendingProps)
     }
   )
