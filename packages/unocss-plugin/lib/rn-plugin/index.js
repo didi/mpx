@@ -16,9 +16,6 @@ const reLetters = /[a-z]+/gi
 function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
-      const ctx = createContext(configOrPath, defaults)
-      const { filter, transformCache } = ctx
-      compiler.__unoCtx = ctx
       // transform 提取tokens
       compiler.options.module.rules.unshift({
         enforce: 'pre',
@@ -26,7 +23,7 @@ function WebpackPlugin (configOrPath, defaults) {
           if (data.resource == null) { return [] }
 
           const id = normalizeAbsolutePath(data.resource + (data.resourceQuery || ''))
-          if (filter('', id) && !id.match(/\.html$/) && !RESOLVED_ID_RE.test(id)) {
+          if (compiler.__unoCtx.filter('', id) && !id.match(/\.html$/) && !RESOLVED_ID_RE.test(id)) {
             return [{
               loader: nodePath.resolve(__dirname, '../web-plugin/transform-loader')
             }]
@@ -36,15 +33,14 @@ function WebpackPlugin (configOrPath, defaults) {
         }
       })
 
-
-
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
-        const mpx = compilation.__mpx__
-        const { mode, srcMode } = mpx
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
-          await ctx.ready
+          const mpx = compilation.__mpx__
+          const { mode, srcMode } = mpx
+          const ctx = compiler.__unoCtx
+          const uno = ctx.uno
           // 清空transformCache避免watch修改不生效
-          transformCache.clear()
+          ctx.transformCache.clear()
           const tokens = new Set()
           for (const module of compilation.modules) {
             const assetsInfo = module.buildInfo.assetsInfo || new Map()
@@ -56,7 +52,6 @@ function WebpackPlugin (configOrPath, defaults) {
               }
             }
           }
-          const { uno } = ctx
           const result = await uno.generate(tokens, { minify: true })
           if (uno._mpx2rnUnsuportedRules && uno._mpx2rnUnsuportedRules.length) {
             compilation.errors.push(`[Mpx Unocss]: all those '${uno._mpx2rnUnsuportedRules.join(', ')}' class utilities is not supported in react native mode`)
@@ -98,9 +93,15 @@ function WebpackPlugin (configOrPath, defaults) {
         })
       })
 
-      compiler.hooks.make.tapPromise(PLUGIN_NAME, (compilation) => {
+      compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
         const mpx = compilation.__mpx__
-        return ctx.ready.then(() => mpx.unoCtx = ctx.uno)
+        mpx.unoCtx = compiler.__unoCtx.uno
+      })
+
+      compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, async (compilation) => {
+        const ctx = await createContext(configOrPath, defaults)
+        compiler.__unoCtx = ctx
+        return ctx
       })
     }
   }

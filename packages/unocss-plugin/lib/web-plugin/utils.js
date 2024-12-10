@@ -15,67 +15,53 @@ const sfcIdRE = /\.(vue|mpx)($|\?)/
 const templateIdRE = /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml|html)($|\?)/
 const cssIdRE = /\.(wxss|acss|css|qss|ttss|jxss|ddss)($|\?)/
 
-function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
+async function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
   let rawConfig = {}
-  const ctx = {
-    get ready () {
-      return ready
-    },
-    filter,
-    uno: undefined,
-    extract,
-    transformCache: new Map()
-  }
-  const unoPromise = core.createGenerator(rawConfig, defaults)
+
+  const uno = await core.createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
   const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, core.cssIdRE])
-  const ready = reloadConfig()
 
-  async function reloadConfig () {
-    const uno = ctx.uno = await unoPromise
-    const result = await config.loadConfig(root, configOrPath, extraConfigSources, defaults)
-    rawConfig = result.config
-    uno.setConfig(rawConfig)
-    rollupFilter = pluginutils.createFilter(
-      rawConfig.include || defaultInclude,
-      rawConfig.exclude || defaultExclude
-    )
-    const presets = /* @__PURE__ */ new Set()
-    uno.config.presets.forEach((i) => {
-      if (!i.name) {
-        return
-      }
-      if (presets.has(i.name)) {
-        console.warn(`[unocss] duplication of preset ${i.name} found, there might be something wrong with your config.`)
-      } else {
-        presets.add(i.name)
-      }
-    })
-
-    const transformers = uno.config.transformers
-    if (transformers) {
-      const pre = []
-      const normal = []
-      const post = []
-      transformers.forEach(i => {
-        if (i.enforce === 'pre') pre.push(i)
-        else if (i.enforce === 'post') post.push(i)
-        else normal.push(i)
-      })
-      uno.config.transformers = [
-        ...pre,
-        ...normal,
-        ...post
-      ]
+  const result = await config.loadConfig(root, configOrPath, extraConfigSources, defaults)
+  rawConfig = result.config
+  uno.setConfig(rawConfig)
+  rollupFilter = pluginutils.createFilter(
+    rawConfig.include || defaultInclude,
+    rawConfig.exclude || defaultExclude
+  )
+  const presets = /* @__PURE__ */ new Set()
+  uno.config.presets.forEach((i) => {
+    if (!i.name) {
+      return
     }
+    if (presets.has(i.name)) {
+      console.warn(`[unocss] duplication of preset ${i.name} found, there might be something wrong with your config.`)
+    } else {
+      presets.add(i.name)
+    }
+  })
 
-    return result
+  const transformers = uno.config.transformers
+  if (transformers) {
+    const pre = []
+    const normal = []
+    const post = []
+    transformers.forEach(i => {
+      if (i.enforce === 'pre') pre.push(i)
+      else if (i.enforce === 'post') post.push(i)
+      else normal.push(i)
+    })
+    uno.config.transformers = [
+      ...pre,
+      ...normal,
+      ...post
+    ]
   }
 
   async function extract (code, id) {
     const tokens = new Set()
-    await ctx.uno.applyExtractors(code, id, tokens)
+    await uno.applyExtractors(code, id, tokens)
     if (tokens.size > 0) {
       this.emitFile(id, '', undefined, {
         skipEmit: true,
@@ -94,7 +80,12 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     return code.includes(INCLUDE_COMMENT) || code.includes(CSS_PLACEHOLDER) || rollupFilter(id.replace(/\?v=\w+$/, ''))
   }
 
-  return ctx
+  return {
+    filter,
+    uno,
+    extract,
+    transformCache: new Map()
+  }
 }
 
 async function applyTransformers (ctx, original, id) {

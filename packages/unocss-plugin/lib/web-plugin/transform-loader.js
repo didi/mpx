@@ -8,7 +8,6 @@ async function transform (code, map) {
   const ctx = this._compiler.__unoCtx
   const mpx = this.getMpx()
   if (!ctx || !mpx) return callback(null, code, map)
-  await ctx.ready
   // 使用resourcePath而不是resource作为id，规避query的影响
   const id = this.resourcePath
   const { extract, transformCache } = ctx

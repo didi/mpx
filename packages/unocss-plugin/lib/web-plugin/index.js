@@ -24,8 +24,6 @@ const VIRTUAL_MODULE_PREFIX = nodePath.resolve(process.cwd(), '_virtual_')
 function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
-      const ctx = createContext(configOrPath, defaults)
-      const { uno, filter, transformCache } = ctx
       const entries = new Set()
       const __vfsModules = new Set()
       let __vfs = null
@@ -39,7 +37,7 @@ function WebpackPlugin (configOrPath, defaults) {
         __vfs = new VirtualModulesPlugin()
         compiler.options.plugins.push(__vfs)
       }
-      compiler.__unoCtx = ctx
+
       // 添加解析虚拟模块插件 import 'uno.css' 并且注入layer代码
       const resolverPlugin = {
         apply (resolver) {
@@ -91,7 +89,7 @@ function WebpackPlugin (configOrPath, defaults) {
           if (data.resource == null) { return [] }
 
           const id = normalizeAbsolutePath(data.resource + (data.resourceQuery || ''))
-          if (filter('', id) && !id.match(/\.html$/) && !RESOLVED_ID_RE.test(id)) {
+          if (compiler.__unoCtx.filter('', id) && !id.match(/\.html$/) && !RESOLVED_ID_RE.test(id)) {
             return [{
               loader: nodePath.resolve(__dirname, './transform-loader')
             }]
@@ -103,9 +101,10 @@ function WebpackPlugin (configOrPath, defaults) {
 
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
-          await ctx.ready
+          const ctx = compiler.__unoCtx
+          const uno = ctx.uno
           // 清空transformCache避免watch修改不生效
-          transformCache.clear()
+          ctx.transformCache.clear()
           const tokens = new Set()
           for (const module of compilation.modules) {
             const assetsInfo = module.buildInfo.assetsInfo || new Map()
@@ -135,9 +134,21 @@ function WebpackPlugin (configOrPath, defaults) {
           }
         })
       })
+
+      compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
+        const mpx = compilation.__mpx__
+        mpx.unoCtx = compiler.__unoCtx.uno
+      })
+
+      compiler.hooks.make.tapPromise(PLUGIN_NAME, async (compilation) => {
+        const ctx = await createContext(configOrPath, defaults)
+        compiler.__unoCtx = ctx
+        return ctx
+      })
     }
   }
 }
+
 function getLayer (id) {
   let layer = resolveLayer(getPath(id))
   if (!layer) {
