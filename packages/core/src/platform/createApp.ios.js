@@ -1,15 +1,15 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation } from '@mpxjs/utils'
+import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
-import * as wxLifecycle from '../platform/patch/wx/lifecycle'
+import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { Image } from 'react-native'
 import { ref } from '../observer/ref'
 
-const appHooksMap = makeMap(mergeLifecycle(wxLifecycle.LIFECYCLE).app)
+const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
 function getOrientation (window = ReactNative.Dimensions.get('window')) {
   return window.width > window.height ? 'landscape' : 'portrait'
@@ -160,12 +160,17 @@ export default function createApp (option, config = {}) {
           global.__mpxAppCbs.show.forEach((cb) => {
             cb(options || {})
           })
-          global.__mpxAppFocusedState.value = 'show'
+          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+            global.__mpxPageStatusMap[navigation.pageId] = 'show'
+          }
         } else if (currentState === 'inactive') {
           global.__mpxAppCbs.hide.forEach((cb) => {
             cb()
           })
-          global.__mpxAppFocusedState.value = 'hide'
+          const navigation = getFocusedNavigation()
+          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+            global.__mpxPageStatusMap[navigation.pageId] = 'show'
+          }
         }
       })
 
@@ -175,7 +180,10 @@ export default function createApp (option, config = {}) {
         const orientation = getOrientation(window)
         if (orientation === lastOrientation) return
         lastOrientation = orientation
-        global.__mpxAppFocusedState.value = `resize${count++}`
+        const navigation = getFocusedNavigation()
+        if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+          global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
+        }
       })
       return () => {
         changeSubscription && changeSubscription.remove()
@@ -223,5 +231,12 @@ export default function createApp (option, config = {}) {
       }).filter(item => item)
     }
     return []
+  }
+
+  global.setCurrentPageStatus = function (status) {
+    const navigation = getFocusedNavigation()
+    if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+      global.__mpxPageStatusMap[navigation.pageId] = status
+    }
   }
 }
