@@ -41,7 +41,7 @@ const getTouchEvent = (
     }
   )
 
-  const pendingProps = (event as any)?._targetInst?.pendingProps || {}
+  const pendingProps = (event as any)._targetInst?.pendingProps || {}
 
   const target = extendObject(
     {},
