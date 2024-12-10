@@ -6,6 +6,7 @@
   "directories": {
     "lib": "lib"
   },
+  "type": "module",
   "scripts": {},
   "author": "",
   "license": "Apache-2.0",
