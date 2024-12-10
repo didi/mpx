@@ -1,6 +1,6 @@
-const { backgroundBlendModes } = require('@unocss/preset-wind/rules')
-const { transformEmptyRule } = require('../../utils/index')
+import { backgroundBlendModes } from '@unocss/preset-wind/rules'
+import { transformEmptyRule } from '../../utils/index.js'
 
-module.exports = transformEmptyRule(
+export default transformEmptyRule(
   backgroundBlendModes
 )

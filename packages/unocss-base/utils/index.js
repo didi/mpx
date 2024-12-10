@@ -69,10 +69,11 @@ const findRawRules = (matcher, rawRules, byReg = false) => {
   .reduce((preV, curV) => preV.concat(curV), [])
 }
 
-module.exports = {
+export {
   genEmptyRule,
   transformEmptyRule,
   findRawRules,
   ruleFallback,
-  isFunction
+  isFunction,
+  ruleCallback
 }

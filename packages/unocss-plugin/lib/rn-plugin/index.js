@@ -41,7 +41,6 @@ function WebpackPlugin (configOrPath, defaults) {
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         const mpx = compilation.__mpx__
         const { mode, srcMode } = mpx
-        console.log(ctx.ready);
         ctx.ready.then(() => mpx.unoCtx = ctx.uno)
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
           await ctx.ready
@@ -81,6 +80,9 @@ function WebpackPlugin (configOrPath, defaults) {
             if (file === '*') { return }
             let code = compilation.assets[file].source().toString()
             let replaced = false
+
+            console.log(2222, classMap);
+
 
             code = code
               .replace('__unocssMap__', () => {

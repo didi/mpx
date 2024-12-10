@@ -1,14 +1,14 @@
-const color = require('./color')
-const spaceing = require('./spaceing')
-const typography = require('./typography')
-const background = require('./background')
-const shadow = require('./shadow')
-const behaviors = require('./behaviors')
-const layout = require('./layout')
-const filters = require('./filters')
-const staticRule = require('./static')
+import color from './color.js';
+import spaceing from './spaceing.js';
+import typography from './typography.js';
+import background from './background.js';
+import shadow from './shadow.js';
+import behaviors from './behaviors.js';
+import layout from './layout.js';
+import filters from './filters.js';
+import staticRule from './static.js';
 
-module.exports = [
+export default [
   ...color,
   ...spaceing,
   ...typography,
