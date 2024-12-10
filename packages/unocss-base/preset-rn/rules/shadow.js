@@ -1,4 +1,4 @@
-const { boxShadowsBase, boxShadows } = require('@unocss/preset-mini/rules')
+import { boxShadowsBase, boxShadows } from '@unocss/preset-mini/rules'
 
 const findShadowColorRule = () => {
   return boxShadows.find(rule => {
@@ -11,7 +11,7 @@ const findShadowColorRule = () => {
 
 const shadowColorRule = findShadowColorRule()
 
-module.exports = [
+export default [
   [shadowColorRule[0], (match, context) => {
     const rawHandler = shadowColorRule[1]
     const rawResult = rawHandler(match, context)

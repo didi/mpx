@@ -1,9 +1,9 @@
-const pluginutils = require('@rollup/pluginutils')
-const config = require('@unocss/config')
-const core = require('@unocss/core')
-const node_path = require('node:path')
-const MagicString = require('magic-string')
-const remapping = require('@ampproject/remapping')
+import * as pluginutils from '@rollup/pluginutils';
+import * as config from '@unocss/config';
+import * as core from '@unocss/core';
+import * as nodePath from 'node:path';
+import MagicString from 'magic-string';
+import remapping from '@ampproject/remapping';
 
 const INCLUDE_COMMENT = '@unocss-include'
 const IGNORE_COMMENT = '@unocss-ignore'
@@ -18,12 +18,22 @@ const cssIdRE = /\.(wxss|acss|css|qss|ttss|jxss|ddss)($|\?)/
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
   let rawConfig = {}
-  const uno = core.createGenerator(rawConfig, defaults)
+  const ctx = {
+    get ready () {
+      return ready
+    },
+    filter,
+    uno: undefined,
+    extract,
+    transformCache: new Map()
+  }
+  const unoPromise = core.createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
   const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, core.cssIdRE])
   const ready = reloadConfig()
 
   async function reloadConfig () {
+    const uno = ctx.uno = await unoPromise
     const result = await config.loadConfig(root, configOrPath, extraConfigSources, defaults)
     rawConfig = result.config
     uno.setConfig(rawConfig)
@@ -65,7 +75,7 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
 
   async function extract (code, id) {
     const tokens = new Set()
-    await uno.applyExtractors(code, id, tokens)
+    await ctx.uno.applyExtractors(code, id, tokens)
     if (tokens.size > 0) {
       this.emitFile(id, '', undefined, {
         skipEmit: true,
@@ -84,15 +94,7 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     return code.includes(INCLUDE_COMMENT) || code.includes(CSS_PLACEHOLDER) || rollupFilter(id.replace(/\?v=\w+$/, ''))
   }
 
-  return {
-    get ready () {
-      return ready
-    },
-    filter,
-    uno,
-    extract,
-    transformCache: new Map()
-  }
+  return ctx
 }
 
 async function applyTransformers (ctx, original, id) {
@@ -128,8 +130,8 @@ async function applyTransformers (ctx, original, id) {
 }
 
 function normalizeAbsolutePath (path) {
-  if (node_path.isAbsolute(path)) {
-    return node_path.normalize(path)
+  if (nodePath.isAbsolute(path)) {
+    return nodePath.normalize(path)
   } else {
     return path
   }
@@ -143,7 +145,7 @@ function isCssId (id) {
   return core.cssIdRE.test(id) || cssIdRE.test(id)
 }
 
-module.exports = {
+export {
   createContext,
   applyTransformers,
   getPath,

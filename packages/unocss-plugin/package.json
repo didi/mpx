@@ -3,6 +3,7 @@
   "version": "2.9.54",
   "description": "mpx unocss webpack plugin",
   "main": "lib/index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

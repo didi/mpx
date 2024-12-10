@@ -1,10 +1,10 @@
-const { imageRenderings, overscrolls, listStyle } = require('@unocss/preset-wind/rules')
-const { transformEmptyRule } = require('../../utils')
+import { imageRenderings, overscrolls, listStyle } from '@unocss/preset-wind/rules'
+import { transformEmptyRule } from '../../utils/index.js'
 
 // todo
 // const placeholder = findRawRules('$ placeholder', rules, true)
 
-module.exports = [
+export default [
   ...transformEmptyRule(
     overscrolls,
     imageRenderings,
