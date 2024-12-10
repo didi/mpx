@@ -1,3 +1,4 @@
+import { extend } from '../../utils'
 function processModel (listeners, context) {
   // 该函数只有wx:model的情况下才调用，而且默认e.detail.value有值
   // 该函数必须在产生merge前执行
@@ -53,7 +54,7 @@ export function extendEvent (e, extendObj = {}) {
 }
 
 export function inheritEvent (type, oe, detail = {}) {
-  detail = Object.assign({}, oe.detail, detail)
+  detail = extend({}, oe.detail, detail)
   const ne = getCustomEvent(type, detail)
   extendEvent(ne, {
     timeStamp: oe.timeStamp,
@@ -68,12 +69,11 @@ export function inheritEvent (type, oe, detail = {}) {
 export function getCustomEvent (type, detail = {}, target = null) {
   const targetEl = (target && target.$el) || null
   const targetInfo = targetEl ? { target: targetEl, currentTarget: targetEl } : {}
-  return {
+  return extend({
     type,
     detail,
-    timeStamp: new Date().valueOf(),
-    ...targetInfo
-  }
+    timeStamp: new Date().valueOf()
+  }, targetInfo)
 }
 
 function noop () {
@@ -82,7 +82,7 @@ function noop () {
 
 export default function getInnerListeners (context, options = {}) {
   let { mergeBefore = {}, mergeAfter = {}, defaultListeners = [], ignoredListeners = [] } = options
-  const listeners = Object.assign({}, context.$listeners)
+  const listeners = extend({}, context.$listeners)
   defaultListeners.forEach((key) => {
     if (!listeners[key]) listeners[key] = noop
   })
