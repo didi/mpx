@@ -107,6 +107,7 @@ export interface InputProps {
 }
 
 export interface PrivateInputProps {
+  allowFontScaling?: boolean
   multiline?: boolean
   'auto-height'?: boolean
   bindlinechange?: (evt: NativeSyntheticEvent<TextInputContentSizeChangeEventData> | unknown) => void
@@ -128,6 +129,7 @@ const keyboardTypeMap: Record<Type, string> = {
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
   const {
     style = {},
+    allowFontScaling = false,
     type = 'text',
     value,
     password,
@@ -185,9 +187,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     { padding: 0, backgroundColor: '#fff' },
     style,
     multiline && autoHeight
-      ? {
-          height: Math.max((style as any)?.minHeight || 35, contentHeight)
-        }
+      ? { height: Math.max((style as any)?.minHeight || 35, contentHeight) }
       : {}
   )
 
@@ -404,7 +404,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     extendObject(
       {
         ref: nodeRef,
-        style: extendObject({}, normalStyle, layoutStyle)
+        style: extendObject({}, normalStyle, layoutStyle),
+        allowFontScaling
       },
       layoutProps,
       {
