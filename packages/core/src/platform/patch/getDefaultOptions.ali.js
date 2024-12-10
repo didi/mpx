@@ -1,6 +1,6 @@
-import MpxProxy from '../../../core/proxy'
-import builtInKeysMap from '../builtInKeysMap'
-import mergeOptions from '../../../core/mergeOptions'
+import MpxProxy from '../../core/proxy'
+import builtInKeysMap from './builtInKeysMap'
+import mergeOptions from '../../core/mergeOptions'
 import { error, diffAndCloneA, hasOwn, noop, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 
 function transformApiForProxy (context, currentInject) {
