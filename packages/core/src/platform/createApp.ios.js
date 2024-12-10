@@ -164,7 +164,7 @@ export default function createApp (option, config = {}) {
           })
           const navigation = getFocusedNavigation()
           if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'show'
+            global.__mpxPageStatusMap[navigation.pageId] = 'hide'
           }
         }
       })
