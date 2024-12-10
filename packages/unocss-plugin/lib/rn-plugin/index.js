@@ -41,7 +41,6 @@ function WebpackPlugin (configOrPath, defaults) {
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         const mpx = compilation.__mpx__
         const { mode, srcMode } = mpx
-        ctx.ready.then(() => mpx.unoCtx = ctx.uno)
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
           await ctx.ready
           // 清空transformCache避免watch修改不生效
@@ -80,10 +79,6 @@ function WebpackPlugin (configOrPath, defaults) {
             if (file === '*') { return }
             let code = compilation.assets[file].source().toString()
             let replaced = false
-
-            console.log(2222, classMap);
-
-
             code = code
               .replace('__unocssMap__', () => {
                 replaced = true
@@ -101,6 +96,11 @@ function WebpackPlugin (configOrPath, defaults) {
             if (replaced) { compilation.assets[file] = new WebpackSources.RawSource(code) }
           }
         })
+      })
+
+      compiler.hooks.make.tapPromise(PLUGIN_NAME, (compilation) => {
+        const mpx = compilation.__mpx__
+        return ctx.ready.then(() => mpx.unoCtx = ctx.uno)
       })
     }
   }
