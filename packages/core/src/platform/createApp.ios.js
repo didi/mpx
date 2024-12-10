@@ -2,13 +2,13 @@ import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
 import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
-import * as wxLifecycle from '../platform/patch/wx/lifecycle'
+import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { ref } from '../observer/ref'
 
-const appHooksMap = makeMap(mergeLifecycle(wxLifecycle.LIFECYCLE).app)
+const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
 function getOrientation (window = ReactNative.Dimensions.get('window')) {
   return window.width > window.height ? 'landscape' : 'portrait'
