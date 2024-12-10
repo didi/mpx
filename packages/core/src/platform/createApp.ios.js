@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
+import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation, hasOwn, extend } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -31,11 +31,7 @@ function filterOptions (options, appData) {
 }
 
 function createAppInstance (appData) {
-  const instance = {
-    ...Mpx.prototype,
-    ...appData
-  }
-  return instance
+  return extend({}, Mpx.prototype, appData)
 }
 
 export default function createApp (option, config = {}) {
@@ -169,7 +165,7 @@ export default function createApp (option, config = {}) {
           })
           const navigation = getFocusedNavigation()
           if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'show'
+            global.__mpxPageStatusMap[navigation.pageId] = 'hide'
           }
         }
       })
