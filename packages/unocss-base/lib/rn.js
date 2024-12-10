@@ -1,6 +1,6 @@
-const presetRn = require('../preset-rn')
+import presetRn from '../preset-rn/index.js'
 
-module.exports = function presetRnMpx (options = {}) {
+export default function presetRnMpx (options = {}) {
   return {
     name: '@mpxjs/unocss-preset-rn',
     ...presetRn,

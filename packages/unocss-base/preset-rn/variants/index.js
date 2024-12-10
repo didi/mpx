@@ -1,4 +1,4 @@
-module.exports = [
+export default [
   // todo: do something for variants
   // {
   //   name: 'custom-variant-container',

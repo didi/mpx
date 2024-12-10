@@ -1,9 +1,9 @@
-const { presetUno } = require('@unocss/preset-uno')
+import { presetUno } from '@unocss/preset-uno'
 
 // eslint-disable-next-line
 const remRE = /(-?[\.\d]+)rem/g
 
-module.exports = function presetMpx (options = {}) {
+export default function presetMpx (options = {}) {
   const uno = presetUno(options)
   const { baseFontSize = 37.5 } = options
   return {
