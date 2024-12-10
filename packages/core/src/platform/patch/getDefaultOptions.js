@@ -1,7 +1,7 @@
 import { hasOwn, noop, isFunction, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
-import MpxProxy from '../../../core/proxy'
-import builtInKeysMap from '../builtInKeysMap'
-import mergeOptions from '../../../core/mergeOptions'
+import MpxProxy from '../../core/proxy'
+import builtInKeysMap from './builtInKeysMap'
+import mergeOptions from '../../core/mergeOptions'
 
 function transformProperties (properties) {
   if (!properties) {

@@ -51,3 +51,5 @@ export const LIFECYCLE = {
 }
 
 export const pageMode = ''
+
+export const lifecycleProxyMap = {}
