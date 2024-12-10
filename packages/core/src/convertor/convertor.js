@@ -1,6 +1,6 @@
 import { LIFECYCLE, lifecycleProxyMap, pageMode } from '../platform/patch/lifecycle/index'
 import { mergeLifecycle } from './mergeLifecycle'
-import { error } from '@mpxjs/utils'
+import { error, extend } from '@mpxjs/utils'
 import wxToAliRule from './wxToAli'
 import wxToWebRule from './wxToWeb'
 import wxToSwanRule from './wxToSwan'
@@ -27,17 +27,17 @@ const defaultConvertRule = {
 }
 
 const rulesMap = {
-  local: { ...defaultConvertRule },
+  local: extend({}, defaultConvertRule),
   default: defaultConvertRule,
   wxToWeb: wxToWebRule,
   wxToAli: wxToAliRule,
   wxToSwan: wxToSwanRule,
-  wxToQq: { ...defaultConvertRule, ...wxToQqRule },
-  wxToTt: { ...defaultConvertRule, ...wxToTtRule },
-  wxToDd: { ...defaultConvertRule, ...wxToDdRule },
-  wxToJd: { ...defaultConvertRule, ...wxToJdRule },
-  wxToIos: { ...defaultConvertRule, ...wxToReactRule },
-  wxToAndroid: { ...defaultConvertRule, ...wxToReactRule }
+  wxToQq: extend({}, defaultConvertRule, wxToQqRule),
+  wxToTt: extend({}, defaultConvertRule, wxToTtRule),
+  wxToDd: extend({}, defaultConvertRule, wxToDdRule),
+  wxToJd: extend({}, defaultConvertRule, wxToJdRule),
+  wxToIos: extend({}, defaultConvertRule, wxToReactRule),
+  wxToAndroid: extend({}, defaultConvertRule, wxToReactRule)
 }
 
 export function getConvertRule (convertMode) {
