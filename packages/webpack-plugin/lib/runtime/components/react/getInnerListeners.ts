@@ -47,7 +47,7 @@ const getTouchEvent = (
     {},
     event.target,
     {
-      id: pendingProps.parentId || '',
+      id: pendingProps.parentId || pendingProps.nativeID || '',
       dataset: collectDataset(pendingProps)
     }
   )
