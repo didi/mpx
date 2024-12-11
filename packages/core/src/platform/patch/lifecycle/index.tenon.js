@@ -46,3 +46,7 @@ export const LIFECYCLE = {
   PAGE_HOOKS,
   COMPONENT_HOOKS
 }
+
+export const pageMode = ''
+
+export const lifecycleProxyMap = {}
