@@ -9,7 +9,7 @@
  * ✔ bindlongtap
  * ✔ binderror
  */
-import React, { useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
+import React, { createElement, useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
 import { View, Platform, StyleSheet, NativeSyntheticEvent } from 'react-native'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
@@ -277,26 +277,21 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     )
   }
 
-  return (
-    <View
-      {...innerProps}
-    >
-      <WebView
-        ref={(element) => {
-          if (canvasRef.current) {
-            canvasRef.current.webview = element
-          }
-        }}
-        style={[stylesheet.webview, { height, width }]}
-        source={{ html }}
-        originWhitelist={originWhitelist}
-        onMessage={onMessage}
-        onLoad={onLoad}
-        scrollEnabled={false}
-      />
-    </View>
-  )
+  return createElement(View, innerProps, createElement(WebView, {
+    ref: (element) => {
+      if (canvasRef.current) {
+        canvasRef.current.webview = element
+      }
+    },
+    style: [stylesheet.webview, { height, width }],
+    source: { html },
+    originWhitelist: originWhitelist,
+    onMessage: onMessage,
+    onLoad: onLoad,
+    scrollEnabled: false
+  }))
 })
+
 _Canvas.displayName = 'mpxCanvas'
 
 export default _Canvas
