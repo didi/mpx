@@ -1,1 +1,1 @@
-export { provide, inject } from 'vue'
+export { provide, inject } from '@hummer/tenon-vue'

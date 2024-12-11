@@ -32,7 +32,9 @@ export {
   // computed
   computed,
   // instance
-  getCurrentInstance
+  getCurrentInstance,
+  provide,
+  inject
 } from '@hummer/tenon-vue'
 
 export function set (target, key, val) {
