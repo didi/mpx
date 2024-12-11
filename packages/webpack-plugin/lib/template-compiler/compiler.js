@@ -1207,7 +1207,7 @@ function processEventReact (el) {
   for (const type in eventConfigMap) {
     const { configs } = eventConfigMap[type]
     if (!configs.length) continue
-    const needBind = configs.length > 1 || configs[0].hasArgs || tagRE.test(configs[0].value)
+    const needBind = configs.length > 1 || configs[0].hasArgs
     if (needBind) {
       configs.forEach(({ name }) => {
         if (name) {
@@ -1227,7 +1227,12 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      modifyAttr(el, name, `{{${value}}}`)
+      if (tagRE.test(value)) {
+        const { result } = parseMustacheWithContext(value)
+        modifyAttr(el, name, `{{this[${result}]}}`)
+      } else {
+        modifyAttr(el, name, `{{${value}}}`)
+      }
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
