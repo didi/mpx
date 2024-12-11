@@ -27,6 +27,10 @@ export const isDev = process.env.NODE_ENV !== 'production'
 
 export const isReact = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android'
 
+export const isWeb = __mpx_mode__ === 'web'
+
+export const isTenon = __mpx_mode__ === 'tenon'
+
 export function getFocusedNavigation () {
   if (global.__mpxPagesMap) {
     for (const key in global.__mpxPagesMap) {

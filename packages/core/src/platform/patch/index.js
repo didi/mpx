@@ -1,19 +1,14 @@
 import transferOptions from '../../core/transferOptions'
 import getBuiltInMixins from '../builtInMixins/index'
-import { getDefaultOptions as getWxDefaultOptions } from './wx/getDefaultOptions'
-import { getDefaultOptions as getAliDefaultOptions } from './ali/getDefaultOptions'
-import { getDefaultOptions as getSwanDefaultOptions } from './swan/getDefaultOptions'
-import { getDefaultOptions as getWebDefaultOptions } from './web/getDefaultOptions'
-import { getDefaultOptions as getTenonDefaultOptions } from './tenon/getDefaultOptions'
-import { getDefaultOptions as getReactDefaultOptions } from './react/getDefaultOptions'
-import { error } from '@mpxjs/utils'
+import { getDefaultOptions } from './getDefaultOptions'
+import { error, isReact, isWeb, isTenon } from '@mpxjs/utils'
 
 export default function createFactory (type) {
   return (options = {}, { isNative, customCtor, customCtorType } = {}) => {
     options.__nativeRender__ = !!isNative
     options.__type__ = type
     let ctor
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
+    if (!isWeb && !isReact && !isTenon) {
       if (customCtor) {
         ctor = customCtor
         customCtorType = customCtorType || type
@@ -40,21 +35,6 @@ export default function createFactory (type) {
       }
     }
 
-    let getDefaultOptions
-    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
-      getDefaultOptions = getReactDefaultOptions
-    } else if (__mpx_mode__ === 'web') {
-      getDefaultOptions = getWebDefaultOptions
-    } else if (__mpx_mode__ === 'tenon') {
-      getDefaultOptions = getTenonDefaultOptions
-    } else if (__mpx_mode__ === 'ali') {
-      getDefaultOptions = getAliDefaultOptions
-    } else if (__mpx_mode__ === 'swan') {
-      getDefaultOptions = getSwanDefaultOptions
-    } else {
-      getDefaultOptions = getWxDefaultOptions
-    }
-
     const { setup } = options
     const { rawOptions, currentInject } = transferOptions(options, type)
     rawOptions.setup = setup
@@ -63,7 +43,7 @@ export default function createFactory (type) {
     // 将合并后的用户定义的rawOptions传入获取当前应该注入的内建mixins
     rawOptions.mixins = getBuiltInMixins({ type, rawOptions, currentInject })
     const defaultOptions = getDefaultOptions({ type, rawOptions, currentInject })
-    if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon' || __mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+    if (isWeb || isReact || isTenon) {
       global.__mpxOptionsMap = global.__mpxOptionsMap || {}
       global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     } else if (ctor) {

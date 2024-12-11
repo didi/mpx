@@ -1,4 +1,3 @@
-const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const parseRequest = require('./utils/parse-request')
@@ -14,12 +13,11 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
 const { isReact } = require('./utils/env')
+const preProcessJson = require('./utils/pre-process-json')
 const path = require('path')
 const processWeb = require('./web')
 const processReact = require('./react')
-const getRulesRunner = require('./platform')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 const loaderUtils = require('loader-utils')
 
@@ -95,7 +93,7 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : '_' + mpx.pathHash(filePath)
+  const moduleId = mpx.getModuleId(resourcePath, ctorType === 'app')
 
   const parts = parseComponent(content, {
     filePath,
@@ -112,51 +110,31 @@ module.exports = function (content) {
 
   async.waterfall([
     (callback) => {
-      getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
+      preProcessJson({
+        json: parts.json || {},
+        srcMode,
+        emitWarning,
+        emitError,
+        ctorType,
+        resourcePath,
+        loaderContext
+      }, (err, jsonInfo) => {
         if (err) return callback(err)
-        if (parts.json) parts.json.content = content
-        callback()
+        callback(null, jsonInfo)
       })
     },
-    (callback) => {
+    (jsonInfo, callback) => {
+      const {
+        componentPlaceholder,
+        componentGenerics,
+        usingComponentsInfo,
+        jsonContent
+      } = jsonInfo
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-      let usingComponents = [].concat(Object.keys(mpx.usingComponents))
-      let componentPlaceholder = []
-      let componentGenerics = {}
-
-      if (parts.json && parts.json.content) {
-        const rulesRunnerOptions = {
-          mode,
-          srcMode,
-          type: 'json',
-          waterfall: true,
-          warn: emitWarning,
-          error: emitError
-        }
-        if (ctorType !== 'app') {
-          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        }
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        try {
-          const ret = JSON5.parse(parts.json.content)
-          if (rulesRunner) rulesRunner(ret)
-          if (ret.usingComponents) {
-            usingComponents = usingComponents.concat(Object.keys(ret.usingComponents))
-          }
-          if (ret.componentPlaceholder) {
-            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-          }
-          if (ret.componentGenerics) {
-            componentGenerics = Object.assign({}, ret.componentGenerics)
-          }
-        } catch (e) {
-          return callback(e)
-        }
-      }
 
       if (mode === 'tenon') {
         let output = ''
@@ -184,6 +162,7 @@ module.exports = function (content) {
         }
         return processForTenon({
           parts,
+          jsonContent,
           loaderContext,
           pagesMap,
           componentsMap,
@@ -195,7 +174,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponents,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentGenerics,
           autoScope,
           callback
@@ -206,6 +185,7 @@ module.exports = function (content) {
       if (mode === 'web') {
         return processWeb({
           parts,
+          jsonContent,
           loaderContext,
           pagesMap,
           componentsMap,
@@ -217,7 +197,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponents,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentGenerics,
           autoScope,
           callback
@@ -227,6 +207,7 @@ module.exports = function (content) {
       if (isReact(mode)) {
         return processReact({
           parts,
+          jsonContent,
           loaderContext,
           pagesMap,
           componentsMap,
@@ -238,7 +219,7 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponents,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentGenerics,
           autoScope,
           callback
@@ -306,7 +287,7 @@ module.exports = function (content) {
           isNative,
           ctorType,
           moduleId,
-          usingComponents,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开

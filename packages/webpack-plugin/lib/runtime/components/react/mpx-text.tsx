@@ -25,6 +25,7 @@ interface _TextProps extends TextProps {
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   const {
     style = {},
+    allowFontScaling = false,
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -49,12 +50,15 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   })
 
   const nodeRef = useRef(null)
-  useNodesRef<Text, _TextProps>(props, ref, nodeRef)
+  useNodesRef<Text, _TextProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
     style: normalStyle,
-    selectable: !!selectable || !!userSelect
+    selectable: !!selectable || !!userSelect,
+    allowFontScaling
   }, [
     'user-select'
   ], {
@@ -78,6 +82,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   )
 })
 
-_Text.displayName = 'mpx-text'
+_Text.displayName = 'MpxText'
 
 export default _Text

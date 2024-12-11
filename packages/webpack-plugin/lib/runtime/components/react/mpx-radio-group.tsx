@@ -1,13 +1,26 @@
 /**
  * ✔ bindchange
  */
-import { JSX, useRef, forwardRef, ReactNode, useContext } from 'react'
-import { View, NativeSyntheticEvent, ViewStyle } from 'react-native'
+import {
+  JSX,
+  useRef,
+  forwardRef,
+  ReactNode,
+  useContext,
+  useMemo,
+  useEffect
+} from 'react'
+import {
+  View,
+  NativeSyntheticEvent,
+  ViewStyle
+} from 'react-native'
 import { warn } from '@mpxjs/utils'
+
 import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle, wrapChildren } from './utils'
+import { useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 
 export interface RadioGroupProps {
   name: string
@@ -32,9 +45,12 @@ const radioGroup = forwardRef<
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight,
-    bindchange
+    'parent-height': parentHeight
   } = props
+
+  const propsRef = useRef<any>({})
+
+  propsRef.current = props
 
   const formContext = useContext(FormContext)
 
@@ -51,10 +67,7 @@ const radioGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = {
-    ...defaultStyle,
-    ...style
-  }
+  const styleObj = extendObject({}, defaultStyle, style)
 
   const {
     hasSelfPercent,
@@ -66,20 +79,16 @@ const radioGroup = forwardRef<
   } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef, { defaultStyle })
+  useNodesRef(props, ref, nodeRef, { style: normalStyle })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const getSelectionValue = (): string | undefined => {
+  const getValue = (): string | undefined => {
     for (const key in groupValue) {
       if (groupValue[key].checked) {
         return key
       }
     }
-  }
-
-  const getValue = () => {
-    return getSelectionValue()
   }
 
   const resetValue = () => {
@@ -96,34 +105,50 @@ const radioGroup = forwardRef<
       formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
+  useEffect(() => {
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
+  }, [])
 
-  const notifyChange = (
-    evt: NativeSyntheticEvent<TouchEvent>
-  ) => {
-    bindchange &&
-      bindchange(
-        getCustomEvent(
-          'tap',
-          evt,
-          {
-            layoutRef,
-            detail: {
-              value: getSelectionValue()
-            }
-          },
-          props
+  const contextValue = useMemo(() => {
+    const notifyChange = (
+      evt: NativeSyntheticEvent<TouchEvent>
+    ) => {
+      const { bindchange } = propsRef.current
+      bindchange &&
+        bindchange(
+          getCustomEvent(
+            'tap',
+            evt,
+            {
+              layoutRef,
+              detail: {
+                value: getValue()
+              }
+            },
+            propsRef.current
+          )
         )
-      )
-  }
+    }
+    return {
+      groupValue,
+      notifyChange
+    }
+  }, [])
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      style: { ...normalStyle, ...layoutStyle },
-      ...layoutProps
-    },
-    [],
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject({}, normalStyle, layoutStyle)
+      },
+      layoutProps
+    ),
+    ['name'],
     {
       layoutRef
     }
@@ -131,7 +156,7 @@ const radioGroup = forwardRef<
 
   return (
     <View {...innerProps}>
-      <RadioGroupContext.Provider value={{ groupValue, notifyChange }}>
+      <RadioGroupContext.Provider value={contextValue}>
         {
           wrapChildren(
             props,
@@ -146,6 +171,6 @@ const radioGroup = forwardRef<
   )
 })
 
-radioGroup.displayName = 'mpx-radio-group'
+radioGroup.displayName = 'MpxRadioGroup'
 
 export default radioGroup

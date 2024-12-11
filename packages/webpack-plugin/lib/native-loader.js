@@ -1,16 +1,14 @@
 const path = require('path')
-const JSON5 = require('json5')
 const parseRequest = require('./utils/parse-request')
 const config = require('./config')
 const createHelpers = require('./helpers')
-const getJSONContent = require('./utils/get-json-content')
 const async = require('async')
 const { matchCondition } = require('./utils/match-condition')
-const { JSON_JS_EXT, MPX_APP_MODULE_ID } = require('./utils/const')
-const getRulesRunner = require('./platform')
+const { JSON_JS_EXT } = require('./utils/const')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const preProcessJson = require('./utils/pre-process-json')
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
 module.exports = function (content) {
@@ -25,6 +23,7 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
+  const moduleId = mpx.getModuleId(filePath)
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const mode = mpx.mode
@@ -114,7 +113,29 @@ module.exports = function (content) {
       new Error('[native-loader][' + this.resource + ']: ' + msg)
     )
   }
+  let ctorType = pagesMap[resourcePath]
+    ? 'page'
+    : componentsMap[resourcePath]
+      ? 'component'
+      : 'app'
+  // 处理构造器类型
+  const ctor = ctorType === 'page'
+    ? (mpx.forceUsePageCtor || mode === 'ali') ? 'Page' : 'Component'
+    : ctorType === 'component'
+      ? 'Component'
+      : 'App'
 
+  // 支持资源query传入isPage或isComponent支持页面/组件单独编译
+  if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
+    const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
+    ctorType = queryObj.isComponent ? 'component' : 'page'
+    this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
+  }
+
+  if (ctorType === 'app') {
+    const appName = getEntryName(this)
+    if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
+  }
   // 先读取json获取usingComponents信息
   async.waterfall([
     (callback) => {
@@ -141,66 +162,29 @@ module.exports = function (content) {
       }, callback)
     },
     (callback) => {
-      getJSONContent({
-        src: typeResourceMap.json,
-        useJSONJS
-      }, null, this, callback)
-    }, (content, callback) => {
-      let componentPlaceholder = []
-      let json
-      try {
-        json = JSON5.parse(content)
-      } catch (e) {
-        return callback(e)
-      }
-      let usingComponents = Object.keys(mpx.usingComponents)
-      const rulesRunnerOptions = {
-        mode,
+      preProcessJson({
+        json: {
+          src: typeResourceMap.json,
+          useJSONJS
+        },
         srcMode,
-        type: 'json',
-        waterfall: true,
-        warn: emitWarning,
-        error: emitError
-      }
+        emitWarning,
+        emitError,
+        ctorType,
+        resourcePath,
+        loaderContext
+      }, (err, jsonInfo) => {
+        if (err) return callback(err)
+        callback(null, jsonInfo)
+      })
+    },
+    (jsonInfo, callback) => {
+      const {
+        componentPlaceholder,
+        componentGenerics,
+        usingComponentsInfo
+      } = jsonInfo
 
-      let ctorType = pagesMap[resourcePath]
-        ? 'page'
-        : componentsMap[resourcePath]
-          ? 'component'
-          : 'app'
-
-      // 支持资源query传入isPage或isComponent支持页面/组件单独编译
-      if (ctorType === 'app' && (queryObj.isComponent || queryObj.isPage)) {
-        const entryName = getEntryName(this) || mpx.getOutputPath(resourcePath, queryObj.isComponent ? 'component' : 'page')
-        ctorType = queryObj.isComponent ? 'component' : 'page'
-        this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, ctorType, entryName, packageRoot))
-      }
-
-      // 处理构造器类型
-      const ctor = ctorType === 'page'
-        ? (mpx.forceUsePageCtor || mode === 'ali') ? 'Page' : 'Component'
-        : ctorType === 'component'
-          ? 'Component'
-          : 'App'
-
-      if (ctorType === 'app') {
-        const appName = getEntryName(this)
-        if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
-      }
-
-      const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : '_' + mpx.pathHash(filePath)
-
-      if (ctorType !== 'app') {
-        rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-      }
-      const rulesRunner = getRulesRunner(rulesRunnerOptions)
-      if (rulesRunner) rulesRunner(json)
-      if (json.usingComponents) {
-        usingComponents = usingComponents.concat(Object.keys(json.usingComponents))
-      }
-      if (json.componentPlaceholder) {
-        componentPlaceholder = componentPlaceholder.concat(Object.values(json.componentPlaceholder))
-      }
       const {
         getRequire
       } = createHelpers(loaderContext)
@@ -222,8 +206,9 @@ module.exports = function (content) {
               isNative,
               ctorType,
               moduleId,
-              usingComponents,
-              componentPlaceholder
+              componentGenerics,
+              componentPlaceholder,
+              usingComponentsInfo: JSON.stringify(usingComponentsInfo)
             })
             break
           case 'styles':

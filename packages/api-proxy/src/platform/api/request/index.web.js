@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import RequestTask from './RequestTask'
-import { serialize } from '@mpxjs/utils'
+import { serialize, buildUrl } from '@mpxjs/utils'
 
 function request (options = { url: '' }) {
   const CancelToken = axios.CancelToken
@@ -9,6 +9,7 @@ function request (options = { url: '' }) {
   const requestTask = new RequestTask(source.cancel)
 
   let {
+    url,
     data = {},
     method = 'GET',
     dataType = 'json',
@@ -19,8 +20,11 @@ function request (options = { url: '' }) {
     fail = null,
     complete = null
   } = options
-
   method = method.toUpperCase()
+  if (method === 'GET') {
+    url = buildUrl(url, data)
+    data = {}
+  }
 
   if (
     method === 'POST' &&
@@ -57,7 +61,7 @@ function request (options = { url: '' }) {
    */
   const rOptions = Object.assign(options, {
     method,
-    url: options.url,
+    url,
     data,
     headers: header,
     responseType,

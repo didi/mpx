@@ -96,7 +96,7 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(placeholder-style|placeholder-class|cursor-spacing|always-embed|adjust-position|hold-keyboard|safe-password-.+)$/,
+        test: /^(placeholder-style|placeholder-class|cursor-spacing|always-embed|hold-keyboard|safe-password-.+)$/,
         ios: iosPropLog,
         android: androidPropLog
       }

@@ -66,7 +66,7 @@ module.exports = function (template, {
               new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
             )
           },
-          usingComponents,
+          usingComponentsInfo,
           hasComment,
           isNative,
           basename: path.basename(resourcePath),

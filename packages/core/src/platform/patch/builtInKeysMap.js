@@ -24,6 +24,8 @@ if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
     'initData',
     'watch',
     'computed',
+    'provide',
+    'inject',
     'mpxCustomKeysForBlend',
     'mpxConvertMode',
     'mpxFileResource',

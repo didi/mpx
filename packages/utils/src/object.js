@@ -1,9 +1,9 @@
-import { type, noop } from './base'
+import { type, noop, isObject } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
 function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
+  return isObject(obj) && hasOwnProperty.call(obj, key)
 }
 
 function isPlainObject (value) {
