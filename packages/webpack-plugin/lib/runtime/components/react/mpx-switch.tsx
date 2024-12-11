@@ -5,7 +5,7 @@
  * ✔ color
  */
 import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
-import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
+import { useRef, useEffect, forwardRef, JSX, useState, useContext, createElement } from 'react'
 import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -136,22 +136,26 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   })
 
   if (type === 'checkbox') {
-    return <CheckBox
-      {...innerProps}
-      color={color}
-      style={normalStyle}
-      checked={isChecked}
-    />
+    return createElement(
+      CheckBox,
+      extendObject({}, innerProps, {
+        color: color,
+        style: normalStyle,
+        checked: isChecked
+      })
+    )
   }
 
-  return <Switch
-    {...innerProps}
-    style={normalStyle}
-    value={isChecked}
-    trackColor={{ false: '#FFF', true: color }}
-    thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
-    ios_backgroundColor="#FFF"
-  />
+  return createElement(
+    Switch,
+    extendObject({}, innerProps, {
+      style: normalStyle,
+      value: isChecked,
+      trackColor: { false: '#FFF', true: color },
+      thumbColor: isChecked ? '#FFF' : '#f4f3f4',
+      ios_backgroundColor: '#FFF'
+    })
+  )
 })
 
 _Switch.displayName = 'MpxSwitch'

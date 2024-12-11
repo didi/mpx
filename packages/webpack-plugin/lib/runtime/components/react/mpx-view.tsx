@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks from './useAnimationHooks'
@@ -814,17 +814,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     innerStyle,
     enableFastImage
   })
+
   return enableAnimation
-    ? (<Animated.View
-      {...innerProps}
-    >
-      {childNode}
-    </Animated.View>)
-    : (<View
-      {...innerProps}
-    >
-      {childNode}
-    </View>)
+    ? createElement(Animated.View, innerProps, childNode)
+    : createElement(View, innerProps, childNode)
 })
 
 _View.displayName = 'MpxView'
