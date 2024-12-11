@@ -36,8 +36,7 @@ interface PayloadData {
 type MessageData = {
   payload?: PayloadData,
   type?: string,
-  callbackId?: number,
-  _documentTitle?: string
+  callbackId?: number
 }
 
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
@@ -88,13 +87,23 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
       var _documentTitle = document.title;
       window.ReactNativeWebView.postMessage(JSON.stringify({
-        _documentTitle: _documentTitle
+        type: 'setTitle',
+        payload: {
+          data: {
+            _documentTitle: _documentTitle
+          }
+        }
       }))
       Object.defineProperty(document, 'title', {
         set (val) {
           _documentTitle = val
           window.ReactNativeWebView.postMessage(JSON.stringify({
-            _documentTitle: _documentTitle
+            type: 'setTitle',
+            payload: {
+              data: {
+                _documentTitle: _documentTitle
+              }
+            }
           }))
         },
         get () {
@@ -120,13 +129,17 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     } catch (e) {
       data = {}
     }
-    const title = data._documentTitle
-    if (title) {
-      const navigation = getFocusedNavigation()
-      navigation && navigation.setOptions({ title })
-    }
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
+      case 'setTitle':
+        { // case下不允许直接声明，包个块解决该问题
+          const title = postData.data?._documentTitle
+          if (title) {
+            const navigation = getFocusedNavigation()
+            navigation && navigation.setOptions({ title })
+          }
+        }
+        break
       case 'postMessage':
         bindmessage && bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
           detail: {
