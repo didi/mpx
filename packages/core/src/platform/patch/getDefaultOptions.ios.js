@@ -358,6 +358,7 @@ let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
+  navigation.pageId = pageId
   set(pageStatusMap, pageId, '')
   useEffect(() => {
     const focusSubscription = navigation.addListener('focus', () => {
