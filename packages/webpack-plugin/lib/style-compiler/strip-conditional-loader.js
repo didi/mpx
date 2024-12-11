@@ -102,6 +102,8 @@ function cssConditionalStrip (cssContent, defs) {
   let match
   while ((match = ifPattern.exec(ms.original)) !== null) {
     processCondition(match.index, ifPattern.lastIndex, match[1])
+    // 移除匹配到的 @mpx-if 注释
+    ms.remove(match.index, match.index + match[0].length)
     ifPattern.lastIndex = currentStart
   }
 
@@ -112,6 +114,5 @@ module.exports = function (css) {
   this.cacheable()
   const mpx = this.getMpx()
   const defs = mpx.defs
-
   return cssConditionalStrip(css, defs)
 }
