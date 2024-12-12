@@ -107,8 +107,7 @@ function request (options = { url: '' }) {
       errMsg: `request:fail ${err}`,
       statusCode: response.status,
       header: response.headers,
-      data: response.data,
-      stack: realError.stack
+      data: response.data
     }
     Object.assign(res, realError)
     failHandle(res, fail, complete)
