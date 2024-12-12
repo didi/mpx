@@ -106,7 +106,11 @@
 | vertical                | Boolean | `false`             | 滑动方向是否为纵向                      |
 | previous-margin         | String  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
 | next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
-| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| enable-offset           | Number  | `false`       | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| easing-function         | String  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
+| bindchange              | eventhandle|   无          | current 改变时会触发 change 事件，event.detail = {current, source}| 
+
+
 
 
 事件
