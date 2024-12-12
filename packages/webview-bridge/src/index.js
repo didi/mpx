@@ -1,6 +1,6 @@
 import loadScript from './loadscript'
 let sdkReady
-const SDK_URL_MAP = {
+const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
   },
@@ -15,9 +15,8 @@ const SDK_URL_MAP = {
   },
   tt: {
     url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
-  },
-  ...window.sdkUrlMap
-}
+  }
+}, window.sdkUrlMap)
 function getMpxWebViewId () {
   const href = location.href
   const reg = /mpx_webview_id=(\d+)/g

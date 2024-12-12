@@ -1,5 +1,5 @@
-import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
-import { warn, getFocusedNavigation } from '@mpxjs/utils'
+import { forwardRef, JSX, useRef, useContext, useMemo } from 'react'
+import { warn, getFocusedNavigation, isFunction } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
@@ -142,8 +142,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         bindmessage && bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
           detail: {
             data: postData.data
-          },
-          layoutRef: webViewRef
+          }
         }))
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
@@ -166,10 +165,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         break
       default:
         if (type) {
-          const commonMethod = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
-          if (commonMethod) {
-            const result = commonMethod()
-            asyncCallback = Promise.resolve(result)
+          const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
+          if (isFunction(implement)) {
+            asyncCallback = Promise.resolve(implement())
           } else {
             /* eslint-disable prefer-promise-reject-errors */
             asyncCallback = Promise.reject({
@@ -183,7 +181,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     asyncCallback && asyncCallback.then((res: any) => {
       if (webViewRef.current?.postMessage) {
         const test = JSON.stringify({
-          type: type,
+          type,
           callbackId: data.callbackId,
           result: res
         })
