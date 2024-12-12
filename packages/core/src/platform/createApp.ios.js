@@ -188,6 +188,23 @@ export default function createApp (option, config = {}) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    const navIcon = Mpx.config.rnConfig.navIconUrl || ''
+    const navScreenOpts = {
+      gestureEnabled: true,
+      // 7.x替换headerBackTitleVisible
+      // headerBackButtonDisplayMode: 'minimal',
+      headerBackTitleVisible: false,
+      headerMode: 'float'
+    }
+    if (navIcon) {
+      navScreenOpts.headerBackImage = () => {
+        // TODO tintColor 这个主题色给的不准，black/rgb(0, 122, 255) 交替,没有办法判断出来色调
+        return createElement(Image, {
+          source: { uri: navIcon},
+          style: { width: 20, height: 20, marginLeft: 10, marginTop: 5 }
+        })
+      }
+    }
     return createElement(SafeAreaProvider,
       null,
       createElement(NavigationContainer,
@@ -198,20 +215,7 @@ export default function createApp (option, config = {}) {
         createElement(Stack.Navigator,
           {
             initialRouteName,
-            screenOptions: {
-              gestureEnabled: true,
-              // 7.x替换headerBackTitleVisible
-              // headerBackButtonDisplayMode: 'minimal',
-              headerBackTitleVisible: false,
-              headerBackImage: () => {
-                // TODO tintColor 这个主题色给的不准，black/rgb(0, 122, 255) 交替
-                return createElement(Image, {
-                  source: { uri: 'https://ut-static.udache.com/webx/mini-pics/LOM1ERyWvD8fZinQKr93I_qu_scene_title_bar_back_icon.png' },
-                  style: { width: 40, height: 30, paddingLeft: 15, paddingTop: 5, paddingRight: 5, paddingBottom: 5 }
-                })
-              },
-              headerMode: 'float'
-            }
+            screenOptions: navScreenOpts
           },
           ...getPageScreens(initialRouteName, initialParams)
         )
