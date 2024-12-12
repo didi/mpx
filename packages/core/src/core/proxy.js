@@ -761,7 +761,7 @@ export default class MpxProxy {
         }
         setByPath(this.target, key, data[key])
       })
-      this.forceUpdateData = data
+      Object.assign(this.forceUpdateData, data)
     } else {
       this.forceUpdateAll = true
     }

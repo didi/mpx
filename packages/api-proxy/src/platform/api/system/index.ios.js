@@ -13,9 +13,9 @@ const getSystemInfoSync = function () {
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
     platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
-    fontSizeSetting: PixelRatio.getFontScale(),
-    ...windowInfo
+    fontSizeSetting: PixelRatio.getFontScale()
   }
+  Object.assign(result, windowInfo)
   defineUnsupportedProps(result, [
     'language',
     'version',

@@ -4,13 +4,15 @@ import { getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
   const dimensionsScreen = Dimensions.get('screen')
-  const navigation = getFocusedNavigation()
-  const insets = Object.assign(initialWindowMetrics?.insets, navigation?.insets)
+  const navigation = getFocusedNavigation() || {}
+  const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
+  const navigationInsets = navigation.insets || {}
+  const insets = Object.assign(initialWindowMetricsInset, navigationInsets)
   let safeArea = {}
   const { top = 0, bottom = 0, left = 0, right = 0 } = insets
   const screenHeight = dimensionsScreen.height
   const screenWidth = dimensionsScreen.width
-  const layout = navigation?.layout || {}
+  const layout = navigation.layout || {}
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
   const windowHeight = layoutHeight || screenHeight
