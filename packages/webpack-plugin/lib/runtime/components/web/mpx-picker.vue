@@ -17,9 +17,7 @@
               <div class="wheel-wrapper" ref="wheelWrapper">
                 <div class="wheel" v-for="(data, index) in pickerData" :key="index">
                   <ul class="wheel-scroll">
-                    <li
-                      v-for="item in data" :key="item"
-                      class="wheel-item">{{item}}
+                    <li v-for="item in data" :key="item" class="wheel-item">{{ item }}
                     </li>
                   </ul>
                 </div>
@@ -34,453 +32,451 @@
 
 
 <script type="text/ecmascript-6">
-  import BScroll from '@better-scroll/core'
-  import Wheel from '@better-scroll/wheel'
-  import { type } from '../../utils'
-  import { getCustomEvent } from './getInnerListeners'
+import BScroll from '@better-scroll/core'
+import Wheel from '@better-scroll/wheel'
+import { type, extend } from '../../utils'
+import { getCustomEvent } from './getInnerListeners'
 
-  const startYear = 1900
-  const modeOptions = {
-    time: [23, 59],
-    date: [200, 11, 30]
+const startYear = 1900
+const modeOptions = {
+  time: [23, 59],
+  date: [200, 11, 30]
+}
+
+BScroll.use(Wheel)
+
+function getPickerData (range, rangeKey) {
+  if (range) {
+    return range.map((item) => {
+      if (rangeKey && type(item) === 'Object') {
+        return item[rangeKey]
+      }
+      return item
+    })
+  }
+  return range
+}
+
+function getTimePickerData () {
+  let list = []
+  for (let i = 0; i < 60; i++) {
+    let temp = i < 10 ? `0${i}` : i
+    list.push(temp)
+  }
+  return [list.slice(0, 24), list]
+}
+
+function getDatePickerData (fields) {
+  let years = []
+  let months = []
+  let days = []
+
+  for (let i = 0; i <= 200; i++) {
+    years.push(`${startYear + i}年`)
+  }
+  if (fields === 'year') {
+    return [years]
   }
 
-  BScroll.use(Wheel)
-
-  function getPickerData (range, rangeKey) {
-    if (range) {
-      return range.map((item) => {
-        if (rangeKey && type(item) === 'Object') {
-          return item[rangeKey]
-        }
-        return item
-      })
-    }
-    return range
+  for (let i = 1; i <= 12; i++) {
+    let temp = i < 10 ? `0${i}` : i
+    months.push(`${temp}月`)
+  }
+  if (fields === 'month') {
+    return [years, months]
   }
 
-  function getTimePickerData () {
-    let list = []
-    for (let i = 0; i < 60; i++) {
-      let temp = i < 10 ? `0${i}` : i
-      list.push(temp)
-    }
-    return [list.slice(0, 24), list]
+  for (let i = 1; i <= 31; i++) {
+    let temp = i < 10 ? `0${i}` : i
+    days.push(`${temp}日`)
   }
+  return [years, months, days]
+}
 
-  function getDatePickerData (fields) {
-    let years = []
-    let months = []
-    let days = []
-
-    for (let i = 0; i <= 200; i++) {
-      years.push(`${startYear + i}年`)
-    }
-    if (fields === 'year') {
-      return [years]
-    }
-
-    for (let i = 1; i <= 12; i++) {
-      let temp = i < 10 ? `0${i}` : i
-      months.push(`${temp}月`)
-    }
-    if (fields === 'month') {
-      return [years, months]
-    }
-
-    for (let i = 1; i <= 31; i++) {
-      let temp = i < 10 ? `0${i}` : i
-      days.push(`${temp}日`)
-    }
-    return [years, months, days]
-  }
-
-  export default {
-    name: 'mpx-picker',
-    props: {
-      mode: {
-        type: String,
-        default: 'selector'
-      },
-      disabled: Boolean,
-      range: {
-        type: Array,
-        default () {
-          return []
-        }
-      },
-      rangeKey: String,
-      value: {
-        type: [Number, String, Array],
-        default () {
-          switch (this.mode) {
-            case 'selector':
-              return 0
-            case 'multiSelector':
-              return []
-            case 'time':
-              return ''
-            case 'date':
-              return ''
-            default:
-              return ''
-          }
-        }
-      },
-      start: {
-        type: String,
-        default: '1970-01-01'
-      },
-      end: {
-        type: String,
-        default: '2100-01-01'
-      },
-      fields: {
-        type: String,
-        default: 'day'
-      },
-      scrollOptions: {
-        type: Object,
-        default: () => {
-          return {}
-        }
+export default {
+  name: 'mpx-picker',
+  props: {
+    mode: {
+      type: String,
+      default: 'selector'
+    },
+    disabled: Boolean,
+    range: {
+      type: Array,
+      default () {
+        return []
       }
     },
-    data () {
-      return {
-        isShow: false,
-        startIndex: [0, 0, 0],
-        endIndex: [0, 0, 0],
-        itemHeight: 0
-      }
-    },
-    computed: {
-      pickerData () {
+    rangeKey: String,
+    value: {
+      type: [Number, String, Array],
+      default () {
         switch (this.mode) {
           case 'selector':
-            return [getPickerData(this.range, this.rangeKey)]
+            return 0
           case 'multiSelector':
-            return this.range.map((item) => {
-              return getPickerData(item, this.rangeKey)
-            })
-          case 'time':
-            return getTimePickerData()
-          case 'date':
-            return getDatePickerData(this.fields)
-          default:
             return []
+          case 'time':
+            return ''
+          case 'date':
+            return ''
+          default:
+            return ''
         }
       }
     },
-    watch: {
-      pickerData () {
-        this.refresh()
-      },
-      value: {
-        handler () {
-          let valueTemp = []
-          switch (this.mode) {
-            case 'selector':
-              this.selectedIndex = [this.value]
-              break
-            case 'multiSelector':
-              this.selectedIndex = []
-              for (let i = 0; i < this.range.length; i++) {
-                this.selectedIndex[i] = this.value[i] || 0
-              }
-              break
-            case 'time':
-              this.selectedIndex = []
-              if (!this.value)  {
-                valueTemp = [new Date().getHours(), new Date().getMinutes()]
-              } else {
-                valueTemp = this.value && this.value.split(':')
-              }
-              for (let i = 0; i < valueTemp.length; i++) {
-                this.selectedIndex[i] = valueTemp[i] || 0
-              }
-              break
-            case 'date':
-              this.selectedIndex = []
-              if (!this.value)  {
-                valueTemp = [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()]
-              } else {
-                valueTemp = this.value && this.value.split('-')
-              }
-              let result = Object.keys(this.pickerData[0]).filter(item => startYear + Number(item) === Number(valueTemp[0]))
-              this.selectedIndex[0] = Number(result[0])
-              for (let i = 1; i < valueTemp.length; i++) {
-                this.selectedIndex[i] = valueTemp[i] - 1
-              }
-              break
-            default:
-              this.selectedIndex = [0]
-          }
-          this.refresh()
-        },
-        immediate: true
-      }
+    start: {
+      type: String,
+      default: '1970-01-01'
     },
-    mounted () {
-      this.wheels = []
+    end: {
+      type: String,
+      default: '2100-01-01'
+    },
+    fields: {
+      type: String,
+      default: 'day'
+    },
+    scrollOptions: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    }
+  },
+  data () {
+    return {
+      isShow: false,
+      startIndex: [0, 0, 0],
+      endIndex: [0, 0, 0],
+      itemHeight: 0
+    }
+  },
+  computed: {
+    pickerData () {
+      switch (this.mode) {
+        case 'selector':
+          return [getPickerData(this.range, this.rangeKey)]
+        case 'multiSelector':
+          return this.range.map((item) => {
+            return getPickerData(item, this.rangeKey)
+          })
+        case 'time':
+          return getTimePickerData()
+        case 'date':
+          return getDatePickerData(this.fields)
+        default:
+          return []
+      }
+    }
+  },
+  watch: {
+    pickerData () {
       this.refresh()
-      this.initRangeIndex()
     },
-    beforeDestroy () {
-      this.wheels.forEach((wheel) => {
-        wheel.destroy()
-      })
-      this.wheels = []
-    },
-    methods: {
-      _confirm () {
-        if (this._isMoving()) {
-          return
-        }
-        this.hide()
-        let value = ''
+    value: {
+      handler () {
         let valueTemp = []
         switch (this.mode) {
           case 'selector':
-            value = this.selectedIndex[0]
+            this.selectedIndex = [this.value]
             break
           case 'multiSelector':
-            value = this.selectedIndex.slice()
+            this.selectedIndex = []
+            for (let i = 0; i < this.range.length; i++) {
+              this.selectedIndex[i] = this.value[i] || 0
+            }
             break
           case 'time':
-            for (let i = 0; i < this.selectedIndex.length; i++) {
-              valueTemp[i] = this.selectedIndex[i] < 10 ? `0${Number(this.selectedIndex[i])}` : `${this.selectedIndex[i]}`
+            this.selectedIndex = []
+            if (!this.value) {
+              valueTemp = [new Date().getHours(), new Date().getMinutes()]
+            } else {
+              valueTemp = this.value && this.value.split(':')
             }
-            value = `${valueTemp[0]}:${valueTemp[1]}`
+            for (let i = 0; i < valueTemp.length; i++) {
+              this.selectedIndex[i] = valueTemp[i] || 0
+            }
             break
           case 'date':
-            let year = this.pickerData[0][this.selectedIndex[0]].replace('年', '')
-            if (this.fields === 'year') {
-              value = `${year}`
-              break
+            this.selectedIndex = []
+            if (!this.value) {
+              valueTemp = [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()]
+            } else {
+              valueTemp = this.value && this.value.split('-')
             }
-
-            let month = this.selectedIndex[1] < 9 ? `0${this.selectedIndex[1] + 1}` : this.selectedIndex[1] + 1
-            if (this.fields === 'month') {
-              value = `${year}-${month}`
-              break
+            let result = Object.keys(this.pickerData[0]).filter(item => startYear + Number(item) === Number(valueTemp[0]))
+            this.selectedIndex[0] = Number(result[0])
+            for (let i = 1; i < valueTemp.length; i++) {
+              this.selectedIndex[i] = valueTemp[i] - 1
             }
-
-            let day = this.selectedIndex[2] < 9 ? `0${this.selectedIndex[2] + 1}` : this.selectedIndex[2] + 1
-            value = `${year}-${month}-${day}`
             break
           default:
-            value = this.selectedIndex[0]
+            this.selectedIndex = [0]
         }
-        this.$emit('change', getCustomEvent('change', {value}, this))
+        this.refresh()
       },
-      _cancel () {
-        this.hide()
-        this.$emit('cancel', getCustomEvent('cancel', {}, this))
-      },
-      _isMoving () {
-        return this.wheels.some((wheel) => {
-          return wheel.pending
-        })
-      },
-      show () {
-        this.isShow = true
-        if (this.needRefresh) {
-          this.needRefresh = false
-          this.refresh()
-        }
-      },
-      hide () {
-        this.isShow = false
-      },
-      refresh () {
-        if (this.isShow) {
-          if (this.refreshing) return
-          this.refreshing = true
-          this.$nextTick(() => {
-            let i = 0
-            const wheelWrapper = this.$refs.wheelWrapper
-            for (; i < this.pickerData.length; i++) {
-              this.selectedIndex[i] = +this.selectedIndex[i] || 0
-              if (this.selectedIndex[i] >= this.pickerData[i].length) {
-                this.selectedIndex[i] = 0
+      immediate: true
+    }
+  },
+  mounted () {
+    this.wheels = []
+    this.refresh()
+    this.initRangeIndex()
+  },
+  beforeDestroy () {
+    this.wheels.forEach((wheel) => {
+      wheel.destroy()
+    })
+    this.wheels = []
+  },
+  methods: {
+    _confirm () {
+      if (this._isMoving()) {
+        return
+      }
+      this.hide()
+      let value = ''
+      let valueTemp = []
+      switch (this.mode) {
+        case 'selector':
+          value = this.selectedIndex[0]
+          break
+        case 'multiSelector':
+          value = this.selectedIndex.slice()
+          break
+        case 'time':
+          for (let i = 0; i < this.selectedIndex.length; i++) {
+            valueTemp[i] = this.selectedIndex[i] < 10 ? `0${Number(this.selectedIndex[i])}` : `${this.selectedIndex[i]}`
+          }
+          value = `${valueTemp[0]}:${valueTemp[1]}`
+          break
+        case 'date':
+          let year = this.pickerData[0][this.selectedIndex[0]].replace('年', '')
+          if (this.fields === 'year') {
+            value = `${year}`
+            break
+          }
+
+          let month = this.selectedIndex[1] < 9 ? `0${this.selectedIndex[1] + 1}` : this.selectedIndex[1] + 1
+          if (this.fields === 'month') {
+            value = `${year}-${month}`
+            break
+          }
+
+          let day = this.selectedIndex[2] < 9 ? `0${this.selectedIndex[2] + 1}` : this.selectedIndex[2] + 1
+          value = `${year}-${month}-${day}`
+          break
+        default:
+          value = this.selectedIndex[0]
+      }
+      this.$emit('change', getCustomEvent('change', { value }, this))
+    },
+    _cancel () {
+      this.hide()
+      this.$emit('cancel', getCustomEvent('cancel', {}, this))
+    },
+    _isMoving () {
+      return this.wheels.some((wheel) => {
+        return wheel.pending
+      })
+    },
+    show () {
+      this.isShow = true
+      if (this.needRefresh) {
+        this.needRefresh = false
+        this.refresh()
+      }
+    },
+    hide () {
+      this.isShow = false
+    },
+    refresh () {
+      if (this.isShow) {
+        if (this.refreshing) return
+        this.refreshing = true
+        this.$nextTick(() => {
+          let i = 0
+          const wheelWrapper = this.$refs.wheelWrapper
+          for (; i < this.pickerData.length; i++) {
+            this.selectedIndex[i] = +this.selectedIndex[i] || 0
+            if (this.selectedIndex[i] >= this.pickerData[i].length) {
+              this.selectedIndex[i] = 0
+            }
+            if (this.wheels[i]) {
+              this.wheels[i].refresh()
+              if (this.wheels[i].getSelectedIndex() !== this.selectedIndex[i]) {
+                this.wheels[i].wheelTo(this.selectedIndex[i])
               }
-              if (this.wheels[i]) {
-                this.wheels[i].refresh()
-                if (this.wheels[i].getSelectedIndex() !== this.selectedIndex[i]) {
-                  this.wheels[i].wheelTo(this.selectedIndex[i])
-                }
-              } else {
-                this.wheels[i] = new BScroll(wheelWrapper.children[i], {
-                  wheel: {
-                    selectedIndex: this.selectedIndex[i],
-                    wheelWrapperClass: 'wheel-scroll',
-                    wheelItemClass: 'wheel-item'
-                  },
-                  probeType: 3,
-                  bindToWrapper: true,
-                  ...this.scrollOptions
-                })
-                if (this.mode === 'time' || this.mode === 'date') {
-                  this.wheels[i].on('scrollStart', function (i) {
-                    this.handleScrollStart()
-                  }.bind(this, i))
-                }
-                this.wheels[i].on('scrollEnd', function (i) {
-                  if (this.refreshing) return
-                  const currentIndex = this.wheels[i].getSelectedIndex()
-                  if (this.selectedIndex[i] !== currentIndex) {
-                    this.selectedIndex[i] = currentIndex
-                    if (this.mode === 'multiSelector') {
-                      this.$emit('columnchange', getCustomEvent('columnchange', {
-                        column: i,
-                        value: currentIndex
-                      }, this))
-                    }
-                  }
-                  if (this.mode === 'time' || this.mode === 'date') {
-                    this.handleScrollEnd()
-                  }
+            } else {
+              this.wheels[i] = new BScroll(wheelWrapper.children[i], extend({
+                wheel: {
+                  selectedIndex: this.selectedIndex[i],
+                  wheelWrapperClass: 'wheel-scroll',
+                  wheelItemClass: 'wheel-item'
+                },
+                probeType: 3,
+                bindToWrapper: true
+              }, this.scrollOptions))
+              if (this.mode === 'time' || this.mode === 'date') {
+                this.wheels[i].on('scrollStart', function (i) {
+                  this.handleScrollStart()
                 }.bind(this, i))
               }
+              this.wheels[i].on('scrollEnd', function (i) {
+                if (this.refreshing) return
+                const currentIndex = this.wheels[i].getSelectedIndex()
+                if (this.selectedIndex[i] !== currentIndex) {
+                  this.selectedIndex[i] = currentIndex
+                  if (this.mode === 'multiSelector') {
+                    this.$emit('columnchange', getCustomEvent('columnchange', {
+                      column: i,
+                      value: currentIndex
+                    }, this))
+                  }
+                }
+                if (this.mode === 'time' || this.mode === 'date') {
+                  this.handleScrollEnd()
+                }
+              }.bind(this, i))
             }
-            if (this.mode === 'time' || this.mode === 'date') {
-              this.initWheelPosition()
+          }
+          if (this.mode === 'time' || this.mode === 'date') {
+            this.initWheelPosition()
+          }
+          for (; i < this.wheels.length; i++) {
+            if (this.wheels[i]) {
+              this.wheels[i].destroy()
             }
-            for (; i < this.wheels.length; i++) {
-              if (this.wheels[i]) {
-                this.wheels[i].destroy()
-              }
-            }
-            this.wheels.length = this.pickerData.length
-            this.selectedIndex.length = this.pickerData.length
-            this.refreshing = false
-          })
-        } else {
-          this.needRefresh = true
-        }
-      },
-      initRangeIndex () {
-        if (this.mode !== 'time' && this.mode !== 'date') {
-          return
-        }
+          }
+          this.wheels.length = this.pickerData.length
+          this.selectedIndex.length = this.pickerData.length
+          this.refreshing = false
+        })
+      } else {
+        this.needRefresh = true
+      }
+    },
+    initRangeIndex () {
+      if (this.mode !== 'time' && this.mode !== 'date') {
+        return
+      }
 
-        this.itemHeight = window.getComputedStyle(document.getElementsByClassName('wheel-item')[0]).height.replace(/px/g, '')
-        if (this.mode === 'time') {
-          this.startIndex = [this.getIndex('start', 0, ':'), this.getIndex('start', 1, ':')]
-          this.endIndex = [this.getIndex('end', 0, ':'), this.getIndex('end', 1, ':')]
-        }
-        if (this.mode === 'date') {
-          this.startIndex = [this.getIndex('start', 0, '-') - startYear, this.getIndex('start', 1, '-') - 1, this.getIndex('start', 2, '-') - 1]
-          this.endIndex = [this.getIndex('end', 0, '-') - startYear, this.getIndex('end', 1, '-') - 1, this.getIndex('end', 2, '-') - 1]
-        }
-      },
-      getIndex (type, i, delimiter) {
-        return this[type] && Number(this[type].split(delimiter)[i])
-      },
-      handleScrollStart () {
-        // 重置可滚动距离
+      this.itemHeight = window.getComputedStyle(document.getElementsByClassName('wheel-item')[0]).height.replace(/px/g, '')
+      if (this.mode === 'time') {
+        this.startIndex = [this.getIndex('start', 0, ':'), this.getIndex('start', 1, ':')]
+        this.endIndex = [this.getIndex('end', 0, ':'), this.getIndex('end', 1, ':')]
+      }
+      if (this.mode === 'date') {
+        this.startIndex = [this.getIndex('start', 0, '-') - startYear, this.getIndex('start', 1, '-') - 1, this.getIndex('start', 2, '-') - 1]
+        this.endIndex = [this.getIndex('end', 0, '-') - startYear, this.getIndex('end', 1, '-') - 1, this.getIndex('end', 2, '-') - 1]
+      }
+    },
+    getIndex (type, i, delimiter) {
+      return this[type] && Number(this[type].split(delimiter)[i])
+    },
+    handleScrollStart () {
+      // 重置可滚动距离
+      for (let i = 0; i < this.wheels.length; i++) {
+        this.wheels[i].minScrollY = 0
+        this.wheels[i].maxScrollY = -(modeOptions[this.mode][i] * this.itemHeight)
+      }
+      //开始滚动 判断最多可滚动距离
+      if (this.start) {
+        this.wheels[0].minScrollY = -(this.startIndex[0] * this.itemHeight)
+
         for (let i = 0; i < this.wheels.length; i++) {
-          this.wheels[i].minScrollY = 0
-          this.wheels[i].maxScrollY = -(modeOptions[this.mode][i] * this.itemHeight)
-        }
-        //开始滚动 判断最多可滚动距离
-        if (this.start) {
-          this.wheels[0].minScrollY = -(this.startIndex[0] * this.itemHeight)
-
-          for (let i = 0; i < this.wheels.length; i++) {
-            if (!(this.wheels[i + 1] && this.wheels[i].getSelectedIndex() === this.startIndex[i])) {
-              break
-            }
-            this.wheels[i + 1].minScrollY = -(this.startIndex[i + 1] * this.itemHeight)
-            this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i + 1] * this.itemHeight)
+          if (!(this.wheels[i + 1] && this.wheels[i].getSelectedIndex() === this.startIndex[i])) {
+            break
           }
+          this.wheels[i + 1].minScrollY = -(this.startIndex[i + 1] * this.itemHeight)
+          this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i + 1] * this.itemHeight)
         }
-        if (this.end) {
-          this.wheels[0].maxScrollY = -(this.endIndex[0] * this.itemHeight)
+      }
+      if (this.end) {
+        this.wheels[0].maxScrollY = -(this.endIndex[0] * this.itemHeight)
 
-          for (let i = 0; i < this.wheels.length; i++) {
-            if (!(this.wheels[i + 1] && this.wheels[i].getSelectedIndex() === this.endIndex[i])) {
-              break
-            }
+        for (let i = 0; i < this.wheels.length; i++) {
+          if (!(this.wheels[i + 1] && this.wheels[i].getSelectedIndex() === this.endIndex[i])) {
+            break
+          }
+          this.wheels[i + 1].minScrollY = 0
+          this.wheels[i + 1].maxScrollY = -(this.endIndex[i + 1] * this.itemHeight)
+        }
+      }
+    },
+    handleScrollEnd () {
+      const solarMonths = [1, 3, 5, 7, 8, 10, 12]
+      if (this.start) {
+        for (let i = 0; i < this.wheels.length; i++) {
+          if (!(this.wheels[i].getSelectedIndex() === this.startIndex[i]) || !(this.wheels[i + 1])) {
+            break
+          }
+          if (this.wheels[i + 1].getSelectedIndex() < this.startIndex[i + 1]) {
             this.wheels[i + 1].minScrollY = 0
-            this.wheels[i + 1].maxScrollY = -(this.endIndex[i + 1] * this.itemHeight)
+            this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i + 1] * this.itemHeight)
+            this.wheels[i + 1].wheelTo([this.startIndex[i + 1]])
           }
         }
-      },
-      handleScrollEnd () {
-        const solarMonths = [1, 3, 5, 7, 8, 10, 12]
-        if (this.start) {
-          for (let i = 0; i < this.wheels.length; i++) {
-            if (!(this.wheels[i].getSelectedIndex() === this.startIndex[i]) || !(this.wheels[i + 1])) {
-              break
-            }
-            if (this.wheels[i + 1].getSelectedIndex() < this.startIndex[i + 1]) {
-              this.wheels[i + 1].minScrollY = 0
-              this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i+1] * this.itemHeight)
-              this.wheels[i + 1].wheelTo([this.startIndex[i + 1]])
-            }
+      }
+      if (this.end) {
+        for (let i = 0; i < this.wheels.length; i++) {
+          if (!(this.wheels[i].getSelectedIndex() === this.endIndex[i]) || !(this.wheels[i + 1])) {
+            break
+          }
+          if (this.wheels[i + 1].getSelectedIndex() > this.endIndex[i + 1]) {
+            this.wheels[i + 1].minScrollY = 0
+            this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i + 1] * this.itemHeight)
+            this.wheels[i + 1].wheelTo([this.endIndex[i + 1]])
           }
         }
-        if (this.end) {
-          for (let i = 0; i < this.wheels.length; i++) {
-            if (!(this.wheels[i].getSelectedIndex() === this.endIndex[i]) || !(this.wheels[i + 1])) {
-              break
-            }
-            if (this.wheels[i + 1].getSelectedIndex() > this.endIndex[i + 1]) {
-              this.wheels[i + 1].minScrollY = 0
-              this.wheels[i + 1].maxScrollY = -(modeOptions[this.mode][i+1] * this.itemHeight)
-              this.wheels[i + 1].wheelTo([this.endIndex[i + 1]])
-            }
-          }
-        }
-        // 单独处理小月30天，2月28天或29天情况
-        if (this.mode === 'date' && this.fields === 'day' && !solarMonths.includes(this.wheels[1].getSelectedIndex() + 1)) {
-          const currentYear = this.wheels[0].getSelectedIndex() + startYear
-          const isFebruary = this.wheels[1].getSelectedIndex() === 1
-          const isLeapYear = (currentYear % 4 === 0 && (currentYear % 100 !== 0)) || (currentYear % 400 === 0)
-          const day = isFebruary && (isLeapYear ? 28 : 27) || 29
-          this.wheels[2].getSelectedIndex() > day && this.wheels[2].wheelTo([0])
-        }
+      }
+      // 单独处理小月30天，2月28天或29天情况
+      if (this.mode === 'date' && this.fields === 'day' && !solarMonths.includes(this.wheels[1].getSelectedIndex() + 1)) {
+        const currentYear = this.wheels[0].getSelectedIndex() + startYear
+        const isFebruary = this.wheels[1].getSelectedIndex() === 1
+        const isLeapYear = (currentYear % 4 === 0 && (currentYear % 100 !== 0)) || (currentYear % 400 === 0)
+        const day = isFebruary && (isLeapYear ? 28 : 27) || 29
+        this.wheels[2].getSelectedIndex() > day && this.wheels[2].wheelTo([0])
+      }
 
-      },
-      initWheelPosition () {
-        if (this.start) {
-          if (this.wheels[0].getSelectedIndex() < this.startIndex[0]) {
-            for (let i = 0; i < this.wheels.length; i++) {
-              this.wheels[i].wheelTo([this.startIndex[i]])
-              this.selectedIndex[i] = this.startIndex[i] || 0
+    },
+    initWheelPosition () {
+      if (this.start) {
+        if (this.wheels[0].getSelectedIndex() < this.startIndex[0]) {
+          for (let i = 0; i < this.wheels.length; i++) {
+            this.wheels[i].wheelTo([this.startIndex[i]])
+            this.selectedIndex[i] = this.startIndex[i] || 0
+          }
+        } else {
+          for (let i = 0; i < this.wheels.length; i++) {
+            if (this.wheels[i].getSelectedIndex() !== this.startIndex[i]) {
+              break
             }
-          } else {
-            for (let i = 0; i < this.wheels.length; i++) {
-              if (this.wheels[i].getSelectedIndex() !== this.startIndex[i]) {
-                break
-              }
-              if (this.wheels[i+1] && this.wheels[i+1].getSelectedIndex() < this.startIndex[i+1]) {
-                for (let j = i+1; j < this.wheels.length; j++) {
-                  this.wheels[j].wheelTo([this.startIndex[j]])
-                  this.selectedIndex[j] = this.startIndex[j] || 0
-                }
+            if (this.wheels[i + 1] && this.wheels[i + 1].getSelectedIndex() < this.startIndex[i + 1]) {
+              for (let j = i + 1; j < this.wheels.length; j++) {
+                this.wheels[j].wheelTo([this.startIndex[j]])
+                this.selectedIndex[j] = this.startIndex[j] || 0
               }
             }
           }
         }
-        if (this.end) {
-          if (this.wheels[0].getSelectedIndex() > this.endIndex[0]) {
-            for (let i = 0; i < this.wheels.length; i++) {
-              this.wheels[i].wheelTo([this.endIndex[i]])
-              this.selectedIndex[i] = this.endIndex[i] || 0
+      }
+      if (this.end) {
+        if (this.wheels[0].getSelectedIndex() > this.endIndex[0]) {
+          for (let i = 0; i < this.wheels.length; i++) {
+            this.wheels[i].wheelTo([this.endIndex[i]])
+            this.selectedIndex[i] = this.endIndex[i] || 0
+          }
+        } else {
+          for (let i = 0; i < this.wheels.length; i++) {
+            if (this.wheels[i].getSelectedIndex() !== this.endIndex[i]) {
+              break
             }
-          } else {
-            for (let i = 0; i < this.wheels.length; i++) {
-              if (this.wheels[i].getSelectedIndex() !== this.endIndex[i]) {
-                break
-              }
-              if (this.wheels[i+1] && this.wheels[i+1].getSelectedIndex() > this.endIndex[i+1]) {
-                for (let j = i+1; j < this.wheels.length; j++) {
-                  this.wheels[j].wheelTo([this.endIndex[j]])
-                  this.selectedIndex[j] = this.endIndex[j] || 0
-                }
+            if (this.wheels[i + 1] && this.wheels[i + 1].getSelectedIndex() > this.endIndex[i + 1]) {
+              for (let j = i + 1; j < this.wheels.length; j++) {
+                this.wheels[j].wheelTo([this.endIndex[j]])
+                this.selectedIndex[j] = this.endIndex[j] || 0
               }
             }
           }
@@ -488,6 +484,7 @@
       }
     }
   }
+}
 </script>
 
 <style scoped lang="stylus" rel="stylesheet/stylus">

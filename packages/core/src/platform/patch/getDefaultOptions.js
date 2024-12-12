@@ -1,7 +1,7 @@
 import { hasOwn, noop, isFunction, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
-import MpxProxy from '../../../core/proxy'
-import builtInKeysMap from '../builtInKeysMap'
-import mergeOptions from '../../../core/mergeOptions'
+import MpxProxy from '../../core/proxy'
+import builtInKeysMap from './builtInKeysMap'
+import mergeOptions from '../../core/mergeOptions'
 
 function transformProperties (properties) {
   if (!properties) {
@@ -126,7 +126,7 @@ function transformApiForProxy (context, currentInject) {
   }
 }
 
-export function filterOptions (options) {
+function filterOptions (options) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
     if (builtInKeysMap[key]) {
@@ -155,7 +155,7 @@ export function filterOptions (options) {
   return newOptions
 }
 
-export function initProxy (context, rawOptions, currentInject) {
+function initProxy (context, rawOptions, currentInject) {
   if (!context.__mpxProxy) {
     // 提供代理对象需要的api
     transformApiForProxy(context, currentInject)
@@ -185,6 +185,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       if (this.__mpxProxy) this.__mpxProxy.unmounted()
     }
   }]
+  // 百度环境如构造页面，优先使用onInit进行初始化
+  if (__mpx_mode__ === 'swan' && type === 'page') {
+    rootMixins[0].onInit = function (...params) {
+      initProxy(this, rawOptions, currentInject, params)
+    }
+  }
   rawOptions.mixins = rawOptions.mixins ? rootMixins.concat(rawOptions.mixins) : rootMixins
   rawOptions = mergeOptions(rawOptions, type, false)
   return filterOptions(rawOptions)

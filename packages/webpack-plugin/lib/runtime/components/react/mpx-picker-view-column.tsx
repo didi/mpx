@@ -57,7 +57,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const scrollViewRef = useRef<ScrollView>(null)
-  useNodesRef(props, ref, scrollViewRef, {})
+
+  useNodesRef(props, ref, scrollViewRef, {
+    style: normalStyle
+  })
 
   const { height: pickerH, itemHeight = DefaultPickerItemH } = wrapperStyle
   const [itemRawH, setItemRawH] = useState(0) // 单个选项真实渲染高度
