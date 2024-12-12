@@ -70,14 +70,22 @@ function promisify (listObj, whiteList, customBlackList) {
     result[key] = function (...args) {
       const obj = args[0] || {}
       // 不需要转换 or 用户已定义回调，则不处理
-      if (!promisifyFilter(key) || obj.success || obj.fail) {
+      if (!promisifyFilter(key)) {
         return listObj[key].apply(ENV_OBJ, args)
       } else { // 其他情况进行转换
         if (!args[0]) args.unshift(obj)
         let returned
         const promise = new Promise((resolve, reject) => {
-          obj.success = resolve
-          obj.fail = reject
+          const originSuccess = obj.success
+          const originFail = obj.fail
+          obj.success = function (res) {
+            originSuccess && originSuccess.call(this, res)
+            resolve(res)
+          }
+          obj.fail = function (e) {
+            originFail && originFail.call(this, e)
+            reject(e)
+          }
           returned = listObj[key].apply(ENV_OBJ, args)
         })
         promise.__returned = returned
