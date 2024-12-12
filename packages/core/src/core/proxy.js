@@ -1,4 +1,4 @@
-import { reactive, shallowReactive } from '../observer/reactive'
+import { reactive } from '../observer/reactive'
 import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
 import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
@@ -290,7 +290,7 @@ export default class MpxProxy {
     if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
-      shallowReactive(this.processIgnoreReactive(this.props))
+      reactive(this.processIgnoreReactive(this.props))
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
       reactive(this.processIgnoreReactive(this.props))
@@ -761,7 +761,7 @@ export default class MpxProxy {
         }
         setByPath(this.target, key, data[key])
       })
-      this.forceUpdateData = data
+      Object.assign(this.forceUpdateData, data)
     } else {
       this.forceUpdateAll = true
     }

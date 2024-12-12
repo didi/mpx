@@ -1,5 +1,6 @@
 import XFetch from './xfetch'
 import CancelToken from './cancelToken'
+import { extend } from '@mpxjs/utils'
 
 let installed = false
 
@@ -15,7 +16,7 @@ function install (proxyMpx, options, Mpx) {
   if (installed) return
   // add request queue when mode is qq
   const isqq = __mpx_mode__ === 'qq'
-  xfetch = new XFetch(isqq ? { useQueue: defaultRequestQueueOptions, ...options } : options, Mpx)
+  xfetch = new XFetch(isqq ? extend({ useQueue: defaultRequestQueueOptions }, options) : options, Mpx)
   installed = true
   proxyMpx.xfetch = xfetch
   Object.defineProperty(proxyMpx.prototype, '$xfetch', {

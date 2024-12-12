@@ -12,7 +12,7 @@ export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
-export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling/
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
@@ -99,15 +99,7 @@ export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as ExtendedFunctionComponent)?.displayName
     const isCustomText = (ele.type as ExtendedFunctionComponent)?.isCustomText
-    return displayName === 'MpxText' || displayName === 'Text' || !!isCustomText
-  }
-  return false
-}
-
-export function isEmbedded (ele: ReactNode): ele is ReactElement {
-  if (isValidElement(ele)) {
-    const displayName = (ele.type as ExtendedFunctionComponent)?.displayName || ''
-    return ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName)
+    return displayName === 'MpxText' || displayName === 'MpxSimpleText' || displayName === 'Text' || !!isCustomText
   }
   return false
 }
@@ -594,9 +586,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
   })) || []
 }
 
-export function extendObject (target: Record<string, any> = {}, ...sources: (Record<string, any> | null | undefined)[]) {
-  return Object.assign(target, ...sources)
-}
+export const extendObject = Object.assign
 
 export function getCurrentPage (pageId: number | null) {
   if (!global.getCurrentPages) return

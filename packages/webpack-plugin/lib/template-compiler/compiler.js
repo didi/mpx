@@ -725,7 +725,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta, options)
+        closeElement(element, options, meta)
       }
     },
 
@@ -740,7 +740,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta, options)
+        closeElement(element, options, meta)
       }
     },
 
@@ -765,7 +765,7 @@ function parse (template, options) {
           parent: currentParent
         }
         children.push(el)
-        runtimeCompile ? processTextDynamic(el) : processText(el)
+        runtimeCompile ? processTextDynamic(el) : processText(el, options, meta)
       }
     },
     comment: function comment (text) {
@@ -1227,7 +1227,8 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      modifyAttr(el, name, `{{${value}}}`)
+      const { result } = parseMustacheWithContext(value)
+      modifyAttr(el, name, `{{this[${result}]}}`)
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
@@ -2041,7 +2042,7 @@ function postProcessIfReact (el) {
   }
 }
 
-function processText (el) {
+function processText (el, options, meta) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -2051,17 +2052,32 @@ function processText (el) {
   }
   el.text = parsed.val
   if (isReact(mode)) {
-    processWrapTextReact(el)
+    processWrapTextReact(el, options, meta)
   }
 }
 
-// RN中文字需被Text包裹
-function processWrapTextReact (el) {
-  const parentTag = el.parent.tag
+// RN中裸文字需被Text包裹
+// 为了批量修改Text默认属性，如allowFontScaling，使用mpx-simple-text进行包裹
+function processWrapTextReact (el, options, meta) {
+  const parent = el.parent
+  const parentTag = parent.tag
   if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
-    const wrapper = createASTElement('Text')
+    const wrapper = createASTElement('mpx-simple-text')
+    wrapper.isBuiltIn = true
+    const dataSetAttrs = []
+    parent.attrsList.forEach(({ name, value }) => {
+      if (/^data-/.test(name)) {
+        dataSetAttrs.push({
+          name,
+          value
+        })
+      }
+    })
+    addAttrs(wrapper, dataSetAttrs)
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
+    processBuiltInComponents(wrapper, meta)
+    processAttrs(wrapper, options)
   }
 }
 
@@ -2667,7 +2683,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta, options) {
+function closeElement (el, options, meta) {
   postProcessAtMode(el)
   postProcessWxs(el, meta)
 
