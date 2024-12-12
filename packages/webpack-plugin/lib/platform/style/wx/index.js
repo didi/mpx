@@ -373,7 +373,8 @@ module.exports = function getSpec ({ warn, error }) {
 
   // transform 转换
   const formatTransform = ({ prop, value, selector }, { mode }) => {
-    if (Array.isArray(value)) return { prop, value }
+    // css var & 数组直接返回
+    if (Array.isArray(value) || calcExp.test(value)) return { prop, value }
     const values = parseValues(value)
     const transform = []
     values.forEach(item => {
