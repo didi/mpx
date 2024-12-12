@@ -184,7 +184,7 @@ export default function createApp (option, config = {}) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
-    const navIcon = Mpx.config.rnConfig.navIconUrl || ''
+    const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
     const navScreenOpts = {
       gestureEnabled: true,
       // 7.x替换headerBackTitleVisible
@@ -192,13 +192,9 @@ export default function createApp (option, config = {}) {
       headerBackTitleVisible: false,
       headerMode: 'float'
     }
-    if (navIcon) {
+    if (headerBackImageProps) {
       navScreenOpts.headerBackImage = () => {
-        // TODO tintColor 这个主题色给的不准，black/rgb(0, 122, 255) 交替,没有办法判断出来色调
-        return createElement(Image, {
-          source: { uri: navIcon },
-          style: { width: 20, height: 20, marginLeft: 10, marginTop: 5 }
-        })
+        return createElement(Image, headerBackImageProps)
       }
     }
     return createElement(SafeAreaProvider,
