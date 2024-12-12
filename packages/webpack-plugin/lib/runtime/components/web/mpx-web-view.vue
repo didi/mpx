@@ -72,37 +72,17 @@
         immediate: true
       }
     },
-    beforeCreate () {
-      this.messageList = []
-    },
     mounted () {
       window.addEventListener('message', this.messageCallback)
-    },
-    deactivated () {
-      if (!this.messageList.length) {
-        return
-      }
-      let data = {
-        type: 'message',
-        data: this.messageList
-      }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
-    },
-    destroyed () {
-      window.removeEventListener('message', this.messageCallback)
-      if (!this.messageList.length) {
-        return
-      }
-      let data = {
-        type: 'message',
-        data: this.messageList
-      }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
     },
     methods: {
       messageCallback (event) {
         const hostValidate = this.hostValidate(event.origin)
-        const data = event.data
+        let data = {}
+        try {
+          const eventData = event.data
+          data = typeof eventData === 'string' ? JSON.parse(eventData) : eventData
+        } catch(e){}
         // 判断number类型，防止undefined导致触发return逻辑
         if (data.clientUid !== undefined && +data.clientUid !== this._uid) {
           return
@@ -112,9 +92,14 @@
           return
         }
         let asyncCallback = null
-        switch (data.type) {
+        const type = data.type
+        switch (type) {
           case 'postMessage':
-            this.messageList.push(value.data || value)
+            let data = {
+              type: 'message',
+              data: value.data || value
+            }
+            this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
             asyncCallback = Promise.resolve({
               errMsg: 'invokeWebappApi:ok'
             })
@@ -134,26 +119,29 @@
           case 'reLaunch':
             asyncCallback = navObj.reLaunch(value)
             break
-          case 'getLocation':
-            const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation
-            if (getLocation) {
-              asyncCallback = getLocation()
-            } else {
-              asyncCallback = Promise.reject({
-                errMsg: '未在apiImplementations中配置getLocation方法'
-              })
+          default:
+            if (type) {
+              const commonMethod = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
+              if (commonMethod) {
+                const result = commonMethod()
+                asyncCallback = Promise.resolve(result)
+              } else {
+                asyncCallback = Promise.reject({
+                  errMsg: `未在apiImplementations中配置${data.type}方法`
+                })
+              }
             }
             break
         }
         asyncCallback && asyncCallback.then((res) => {
           this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
-            type: data.type,
+            type: type,
             callbackId: data.callbackId,
             result: res
           }, event.origin)
         }).catch((error) => {
           this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
-            type: data.type,
+            type: type,
             callbackId: data.callbackId,
             error
           }, event.origin)

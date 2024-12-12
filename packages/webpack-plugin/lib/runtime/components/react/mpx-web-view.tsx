@@ -41,6 +41,7 @@ type MessageData = {
 
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
+  const mpx = global.__mpx
   if (!src) {
     return null
   }
@@ -126,7 +127,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       data = {}
     }
     const postData: PayloadData = data.payload || {}
-    switch (data.type) {
+    const type = data.type
+    switch (type) {
       case 'setTitle':
         { // case下不允许直接声明，包个块解决该问题
           const title = postData._documentTitle
@@ -162,12 +164,26 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       case 'reLaunch':
         asyncCallback = navObj.reLaunch(postData)
         break
+      default:
+        if (type) {
+          const commonMethod = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
+          if (commonMethod) {
+            const result = commonMethod()
+            asyncCallback = Promise.resolve(result)
+          } else {
+            /* eslint-disable prefer-promise-reject-errors */
+            asyncCallback = Promise.reject({
+              errMsg: `未在apiImplementations中配置${type}方法`
+            })
+          }
+        }
+        break
     }
 
     asyncCallback && asyncCallback.then((res: any) => {
       if (webViewRef.current?.postMessage) {
         const test = JSON.stringify({
-          type: data.type,
+          type: type,
           callbackId: data.callbackId,
           result: res
         })

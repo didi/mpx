@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.9.53
+ * mpxjs webview bridge v2.9.58
  * (c) 2024 @mpxjs team
  * @license Apache
  */
@@ -188,18 +188,6 @@
       });
     }
   };
-  function filterData(data) {
-    if (Object.prototype.toString.call(data) !== '[object Object]') {
-      return data;
-    }
-    var newData = {};
-    for (var item in data) {
-      if (typeof data[item] !== 'function') {
-        newData[item] = data[item];
-      }
-    }
-    return newData;
-  }
   function postMessage(type) {
     var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     if (type !== 'getEnv') {
@@ -217,7 +205,7 @@
       var postParams = {
         type: type,
         callbackId: callbackId,
-        payload: filterData(data)
+        payload: data
       };
       if (clientUid !== undefined) {
         postParams.clientUid = clientUid;
@@ -225,7 +213,7 @@
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams));
       } else {
-        window.parent.postMessage && window.parent.postMessage(postParams, '*');
+        window.parent.postMessage && window.parent.postMessage(JSON.stringify(postParams), '*');
       }
     } else {
       data({
