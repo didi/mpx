@@ -294,17 +294,17 @@ const useInnerProps = (
 
   propsRef.current = extendObject({}, props, additionalProps)
 
-  let sortEventKeys = ''
+  let hashEventKey = ''
   for (const key in eventConfigMap) {
     if (hasOwn(propsRef.current, key)) {
       eventConfig[key] = eventConfigMap[key].events
-      sortEventKeys = sortEventKeys + eventConfigMap[key].bitFlag + '|'
+      hashEventKey = hashEventKey + eventConfigMap[key].bitFlag
     }
   }
 
   const rawEventKeys = useMemo(() => {
     return Object.keys(eventConfig)
-  }, [sortEventKeys])
+  }, [hashEventKey])
 
   if (!rawEventKeys.length || config.disableTouch) {
     return omit(propsRef.current, removeProps)
@@ -328,7 +328,7 @@ const useInnerProps = (
     })
 
     return events
-  }, [sortEventKeys])
+  }, [hashEventKey])
 
   return extendObject(
     {},
