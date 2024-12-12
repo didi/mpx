@@ -456,17 +456,17 @@ module.exports = function getSpec ({ warn, error }) {
 
   const formatFlex = ({ prop, value, selector }) => {
     let values = parseValues(value)
+    // 值大于3 去前三
     if (values.length > 3) {
       warn(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
       values = values.splice(0, 3)
     }
     const cssMap = []
+    // 单个css var 直接设置 flex 属性
     if (values.length === 1 && cssVariableExp.test(value)) {
       return { prop, value }
     }
-    const lastOne = values[values.length - 1]
-    const isAuto = lastOne === 'auto'
-    // 枚举值 none initial
+    // 包含枚举值 none initial
     if (values.includes('initial') || values.includes('none')) {
       // css flex: initial ===> flex: 0 1 ===> rn flex 0 1
       // css flex: none ===> css flex: 0 0 ===> rn flex 0 0
@@ -479,40 +479,31 @@ module.exports = function getSpec ({ warn, error }) {
       }
       return cssMap
     }
-    // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
-    // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
-    if (!isNumber(lastOne) || cssVariableExp.test(value)) {
-      // 添加 grow 和 shrink
-      // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
-      // 单值 flex: 1 1 <flex-basis>
-      // 双值 flex: <flex-grow> 1 <flex-basis>
-      // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
-      let isUsed = false
-      for (let i = 0; i < 2; i++) {
-        isUsed = isNumber(values[i]) || cssVariableExp.test(values[i])
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isUsed ? values[i] : 1, selector })
+    // 只有1-2个值且最后的值是flexBasis 的有效值（auto或者有单位百分比、px等）
+    // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
+    // 单值 flex: 1 1 <flex-basis>
+    // 双值 flex: <flex-grow> 1 <flex-basis>
+    // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
+    for (let i = 0; i < 3; i++) {
+      if (i < 2) {
+        // 添加 grow 和 shrink
+        const isValid = isNumber(values[0]) || cssVariableExp.test(values[0])
+        // 兜底 1
+        const val = isValid ? values[0] : 1
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: val, selector })
         item && cssMap.push(item)
+        isValid && values.shift()
+      } else {
+        // 添加 flexBasis
+        // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理，兜底 0
+        const val = values[0] || 0
+        if (val !== 'auto') {
+          cssMap.push({
+            prop: 'flexBasis',
+            value: val
+          })
+        }
       }
-      if (!isAuto && !isUsed) {
-        // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理
-        cssMap.push({
-          prop: 'flexBasis',
-          value: lastOne
-        })
-      }
-      return cssMap
-    }
-    // 纯数值：value 按flex-grow flex-shrink flex-basis 顺序赋值
-    // 兜底 shrink & basis
-    if (values.length === 1) {
-      values.push(...[1, 0])
-    } else if (values.length === 2) {
-      values.push(0)
-    }
-    // 循环赋值
-    for (let i = 0; i < values.length; i++) {
-      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i], selector })
-      item && cssMap.push(item)
     }
     return cssMap
   }
