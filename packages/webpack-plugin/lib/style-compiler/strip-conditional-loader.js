@@ -1,6 +1,6 @@
 const MagicString = require('magic-string')
 
-function cssConditionalStrip(cssContent, defs) {
+function cssConditionalStrip (cssContent, defs) {
   const ms = new MagicString(cssContent)
 
   // 正则匹配 @mpx-if, @mpx-elif, @mpx-else, @mpx-endif 的模式
@@ -9,7 +9,7 @@ function cssConditionalStrip(cssContent, defs) {
   const elsePattern = /\/\*\s*@mpx-else\s*\*\//gs
   const endifPattern = /\/\*\s*@mpx-endif\s*\*\//gs
 
-  function evaluateCondition(condition) {
+  function evaluateCondition (condition) {
     // 替换变量
     for (const key in defs) {
       condition = condition.replace(new RegExp(`\\b${key}\\b`, 'g'), JSON.stringify(defs[key]))
@@ -17,6 +17,7 @@ function cssConditionalStrip(cssContent, defs) {
 
     // 解析条件表达式
     try {
+      // eslint-disable-next-line no-new-func
       return Function('"use strict";return (' + condition + ')')()
     } catch (e) {
       throw new Error(`Failed to evaluate condition: ${condition}`)
@@ -24,7 +25,7 @@ function cssConditionalStrip(cssContent, defs) {
   }
 
   let currentStart = 0
-  function processCondition(start, end, condition) {
+  function processCondition (start, end, condition) {
     const conditionResult = evaluateCondition(condition)
     let hasElse = false
     let elseStart = -1
@@ -42,13 +43,13 @@ function cssConditionalStrip(cssContent, defs) {
       const ifMatch = ifPattern.exec(ms.original)
 
       elifPattern.lastIndex = currentStart
-      const elifMatch = elifPattern.exec(ms.original)
+      const elseIfMatch = elifPattern.exec(ms.original)
 
       endifPattern.lastIndex = currentStart
       const endifMatch = endifPattern.exec(ms.original)
 
       const nextIf = ifMatch ? ifMatch.index : Infinity
-      const nextElseIf = elifMatch ? elifMatch.index : Infinity
+      const nextElseIf = elseIfMatch ? elseIfMatch.index : Infinity
       const nextElse = elseMatch ? elseMatch.index : Infinity
       const nextEndif = endifMatch ? endifMatch.index : Infinity
 
@@ -61,22 +62,22 @@ function cssConditionalStrip(cssContent, defs) {
         hasElse = true
         elseStart = nextElse
         currentStart = elseMatch.index + elseLen
+        ms.remove(elseStart, elseStart + elseLen) // 移除 @mpx-else 注释
       } else if (nextMarker === nextElseIf) {
         // 处理 @mpx-elif
         if (!conditionResult) {
+          // 前边的if为false，则直接移除前边代码
           ms.remove(start, nextElseIf)
         }
-        if (elifMatch) {
-          currentStart = nextElseIf + elifMatch[0].length
-          processCondition(nextElseIf, nextElseIf + elifMatch[0].length, elifMatch[1])
-        }
+        currentStart = nextElseIf + elseIfMatch[0].length
+        ms.remove(nextElseIf, nextElseIf + elseIfMatch[0].length) // 移除 @mpx-elif 注释
+        processCondition(nextElseIf, nextElseIf + elseIfMatch[0].length, elseIfMatch[1])
       } else if (nextMarker === nextIf) {
         // 处理嵌套的 @mpx-if
         // 如果遇到了新的 @mpx-if，则递归处理
-        if (ifMatch) {
-          currentStart = nextIf + ifMatch[0].length
-          processCondition(nextIf, nextIf + ifMatch[0].length, ifMatch[1])
-        }
+        currentStart = nextIf + ifMatch[0].length
+        ms.remove(nextIf, nextIf + ifMatch[0].length) // 移除 @mpx-if 注释
+        processCondition(nextIf, nextIf + ifMatch[0].length, ifMatch[1])
       } else if (nextMarker === nextEndif) {
         // 处理 @mpx-endif block块
         if (conditionResult && hasElse) {
@@ -87,6 +88,7 @@ function cssConditionalStrip(cssContent, defs) {
         } else if (!conditionResult) {
           ms.remove(start, endifMatch.index + endifMatch[0].length)
         }
+        ms.remove(endifMatch.index, endifMatch.index + endifMatch[0].length) // 移除 @mpx-endif 注释
         currentStart = endifMatch.index + endifMatch[0].length
         break
       }
@@ -97,10 +99,11 @@ function cssConditionalStrip(cssContent, defs) {
     }
   }
 
-  // 处理所有条件
   let match
   while ((match = ifPattern.exec(ms.original)) !== null) {
     processCondition(match.index, ifPattern.lastIndex, match[1])
+    // 移除匹配到的 @mpx-if 注释
+    ms.remove(match.index, match.index + match[0].length)
     ifPattern.lastIndex = currentStart
   }
 
@@ -111,6 +114,5 @@ module.exports = function (css) {
   this.cacheable()
   const mpx = this.getMpx()
   const defs = mpx.defs
-
   return cssConditionalStrip(css, defs)
 }

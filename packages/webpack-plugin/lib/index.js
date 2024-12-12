@@ -60,6 +60,7 @@ const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
 const extractorPath = normalize.lib('extractor')
+const selectorPath = normalize.lib('selector')
 const async = require('async')
 const { parseQuery } = require('loader-utils')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
@@ -1802,18 +1803,9 @@ try {
                 }
               })
               if (insertBeforeIndex > -1) {
-                if (type === 'styles') {
-                  loaders.splice(insertBeforeIndex + 1, 0, {
-                    loader: info[2]
-                  }, {
-                    loader: info[3]
-                  })
-                } else {
-                  loaders.splice(insertBeforeIndex + 1, 0, {
-                    loader: info[2]
-                  })
-                }
-
+                loaders.splice(insertBeforeIndex + 1, 0, {
+                  loader: info[2]
+                })
               }
               break
             }
@@ -1842,6 +1834,20 @@ try {
             loaders.unshift({
               loader: extractorPath
             })
+          }
+          if (type === 'styles') {
+            // 判断最后一个loader是否是 selectorPath, 如果是，则在sectorPath之前插入strip-conditional
+            const lastLoader = loaders[loaders.length - 1]
+            if (lastLoader.loader.includes(selectorPath)) {
+              loaders.splice(loaders.length - 1, 0, {
+                loader: styleStripConditaionalPath
+              })
+            } else {
+              // 在最后一个插入strip-conditional
+              loaders.push({
+                loader: styleStripConditaionalPath
+              })
+            }
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
