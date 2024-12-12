@@ -30,7 +30,7 @@ interface WebViewProps {
 }
 
 interface PayloadData {
-  data?: Record<string, any>
+  [x: string]: any
 }
 
 type MessageData = {
@@ -89,9 +89,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       window.ReactNativeWebView.postMessage(JSON.stringify({
         type: 'setTitle',
         payload: {
-          data: {
-            _documentTitle: _documentTitle
-          }
+          _documentTitle: _documentTitle
         }
       }))
       Object.defineProperty(document, 'title', {
@@ -100,9 +98,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'setTitle',
             payload: {
-              data: {
-                _documentTitle: _documentTitle
-              }
+              _documentTitle: _documentTitle
             }
           }))
         },
@@ -133,7 +129,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     switch (data.type) {
       case 'setTitle':
         { // case下不允许直接声明，包个块解决该问题
-          const title = postData.data?._documentTitle
+          const title = postData._documentTitle
           if (title) {
             const navigation = getFocusedNavigation()
             navigation && navigation.setOptions({ title })
