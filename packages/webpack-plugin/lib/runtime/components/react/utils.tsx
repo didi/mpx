@@ -477,8 +477,7 @@ interface LayoutConfig {
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }: LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
-  const isFirstRender = useRef(true)
-  const layoutStyle: Record<string, any> = isFirstRender.current && !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
+  const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
@@ -498,7 +497,6 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
       props.onLayout && props.onLayout(e)
     }
   }
-  isFirstRender.current = false
   return {
     layoutRef,
     layoutStyle,
