@@ -394,7 +394,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   useAnimatedReaction(() => targetIndex.value, (newIndex, preIndex) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     const isInit = !preIndex && newIndex === 0
-    if (!isInit && props.bindchange) {
+    if (!isInit && props.current !== newIndex && props.bindchange) {
       runOnJS(handleSwiperChange)(newIndex)
     }
   })

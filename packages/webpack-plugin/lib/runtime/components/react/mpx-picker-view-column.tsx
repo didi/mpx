@@ -55,7 +55,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const scrollViewRef = useRef<ScrollView>(null)
-  useNodesRef(props, ref, scrollViewRef, {})
+
+  useNodesRef(props, ref, scrollViewRef, {
+    style: normalStyle
+  })
 
   const { height: pickerH, itemHeight } = wrapperStyle
   const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
