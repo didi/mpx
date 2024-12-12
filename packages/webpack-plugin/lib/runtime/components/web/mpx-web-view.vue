@@ -122,7 +122,7 @@ export default {
         case 'postMessage':
           let data = {
             type: 'message',
-            data: value.data || value
+            data: value.data
           }
           this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
           asyncCallback = Promise.resolve({
