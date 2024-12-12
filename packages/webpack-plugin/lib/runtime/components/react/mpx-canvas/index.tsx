@@ -73,7 +73,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(extendObject(style, stylesheet.container), {
+  } = useTransformStyle(extendObject({}, style, stylesheet.container), {
     enableVar,
     externalVarContext,
     parentFontSize,
@@ -93,7 +93,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: extendObject(normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
+    style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
     ...layoutProps
   }, [], {
     layoutRef
@@ -134,6 +134,9 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasRef.current.removeMessageListener = removeMessageListener
 
     canvasRef.current.createImageData = createImageData
+    return () => {
+      canvasRef.current.bus?.clearBatchingTimeout()
+    }
   }, [])
 
   const createImageData = (dataArray: Array<number>, width: number, height: number) => {

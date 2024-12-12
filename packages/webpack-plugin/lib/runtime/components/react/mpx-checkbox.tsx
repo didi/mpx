@@ -25,7 +25,7 @@ import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 
 interface Selection {
@@ -46,7 +46,7 @@ export interface CheckboxProps extends Selection {
   'parent-height'?: number;
   children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  _onChange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown, { checked }: { checked: boolean }) => void
 }
 
 const styles = StyleSheet.create({
@@ -92,7 +92,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       'parent-width': parentWidth,
       'parent-height': parentHeight,
       bindtap,
-      catchtap
+      _onChange
     } = props
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
@@ -101,15 +101,13 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
-    const defaultStyle = {
-      ...styles.wrapper,
-      ...(disabled && styles.wrapperDisabled)
-    }
+    const defaultStyle = extendObject(
+      {},
+      styles.wrapper,
+      disabled ? styles.wrapperDisabled : null
+    )
 
-    const styleObj = {
-      ...styles.container,
-      ...style
-    }
+    const styleObj = extendObject({}, styles.container, style)
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled) return
@@ -119,17 +117,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         groupValue[value].checked = checked
       }
       notifyChange && notifyChange(evt)
+      // Called when the switch type attribute is checkbox
+      _onChange && _onChange(evt, { checked })
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      if (disabled) return
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-      onChange(evt)
-    }
-
-    const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      if (disabled) return
-      catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
     }
 
@@ -145,13 +138,13 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const nodeRef = useRef(null)
 
     useNodesRef(props, ref, nodeRef, {
-      defaultStyle,
+      style: extendObject({}, defaultStyle, normalStyle),
       change: onChange
     })
 
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+    const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
       warn('Checkbox does not support background image-related styles!')
@@ -170,14 +163,21 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
 
     const innerProps = useInnerProps(
       props,
-      {
-        ref: nodeRef,
-        style: { ...innerStyle, ...layoutStyle },
-        ...layoutProps,
-        bindtap: onTap,
-        catchtap: catchTap
-      },
-      [],
+      extendObject(
+        {
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle)
+        },
+        layoutProps,
+        {
+          bindtap: !disabled && onTap
+        }
+      ),
+      [
+        'value',
+        'disabled',
+        'checked'
+      ],
       {
         layoutRef
       }
