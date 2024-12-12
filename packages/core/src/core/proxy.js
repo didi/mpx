@@ -290,7 +290,7 @@ export default class MpxProxy {
     if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
-      reactive(this.processIgnoreReactive(this.props));
+      reactive(this.processIgnoreReactive(this.props))
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
       reactive(this.processIgnoreReactive(this.props))
