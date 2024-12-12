@@ -1,4 +1,3 @@
-
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 import React, { forwardRef, useRef, useState, useMemo, useEffect, cloneElement } from 'react'
 import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, extendObject, wrapChildren } from './utils'
@@ -55,7 +54,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const scrollViewRef = useRef<ScrollView>(null)
-  useNodesRef(props, ref, scrollViewRef, {})
+
+  useNodesRef(props, ref, scrollViewRef, {
+    style: normalStyle
+  })
 
   const { height: pickerH, itemHeight } = wrapperStyle
   const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
@@ -74,7 +76,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const snapToOffsets = useMemo(
     () => columnData.map((_, i) => i * itemRawH),
-    [columnData, itemRawH]
+    [maxIndex, itemRawH]
   )
 
   const paddingHeight = useMemo(
@@ -104,7 +106,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     scrollViewRef.current.scrollTo({
       x: 0,
       y: itemRawH * initialIndex,
-      animated: false
+      animated: true
     })
   }, [itemRawH, initialIndex])
 
@@ -135,7 +137,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const onContentSizeChange = (_w: number, h: number) => {
     const y = itemRawH * initialIndex
     if (y <= h) {
-      scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+      scrollViewRef.current?.scrollTo({ x: 0, y, animated: true })
     }
   }
 
