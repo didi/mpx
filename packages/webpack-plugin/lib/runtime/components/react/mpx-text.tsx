@@ -25,6 +25,7 @@ interface _TextProps extends TextProps {
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   const {
     style = {},
+    allowFontScaling = false,
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -56,7 +57,8 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
     style: normalStyle,
-    selectable: !!selectable || !!userSelect
+    selectable: !!selectable || !!userSelect,
+    allowFontScaling
   }, [
     'user-select'
   ], {

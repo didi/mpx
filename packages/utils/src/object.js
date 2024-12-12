@@ -2,6 +2,8 @@ import { type, noop, isObject } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
+const extend = Object.assign
+
 function hasOwn (obj, key) {
   return isObject(obj) && hasOwnProperty.call(obj, key)
 }
@@ -189,6 +191,7 @@ function processUndefined (obj) {
 
 export {
   hasOwn,
+  extend,
   isPlainObject,
   diffAndCloneA,
   proxy,
