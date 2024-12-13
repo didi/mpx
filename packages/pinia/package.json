@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/pinia",
-  "version": "2.9.69",
+  "version": "2.9.69-alpha.1",
   "description": "A pinia style store in miniprogram",
   "types": "@types/index.d.ts",
   "main": "src/index.js",

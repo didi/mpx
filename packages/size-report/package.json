@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/size-report",
-  "version": "2.9.41",
+  "version": "2.9.41-alpha.1",
   "description": "mpx size report plugin",
   "main": "src/index.js",
   "scripts": {
