@@ -69,7 +69,7 @@ function getItem (key) {
   } catch (e) {
   }
 
-  if (item && typeof item === 'object' && hasOwn(item, 'data')) {
+  if (hasOwn(item, 'data')) {
     return { result: true, data: item.data }
   } else {
     return { result: false }

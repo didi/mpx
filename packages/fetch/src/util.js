@@ -1,7 +1,5 @@
 import { match } from 'path-to-regexp'
-
-import { type, isFunction, isArray, isString, forEach, isNumber } from '@mpxjs/utils/src/base'
-import { serialize, buildUrl, parseUrl } from '@mpxjs/utils/src/url'
+import { type, isFunction, isArray, isString, forEach, isNumber, serialize, buildUrl, parseUrl, extend } from '@mpxjs/utils'
 
 const toString = Object.prototype.toString
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -212,7 +210,7 @@ function checkCacheConfig (thisConfig, cacheData) {
     paramsEquals = thisConfig.usePre.equals(thisConfig, cacheData)
   } else {
     paramsEquals = compareParams(thisConfig.params, cacheData.params, thisConfig.usePre.ignorePreParamKeys) &&
-        compareParams(thisConfig.data, cacheData.data, thisConfig.usePre.ignorePreParamKeys)
+      compareParams(thisConfig.data, cacheData.data, thisConfig.usePre.ignorePreParamKeys)
   }
   return paramsEquals && thisConfig.method === cacheData.method
 }
@@ -263,6 +261,7 @@ export {
   isThenable,
   isFunction,
   isNumber,
+  extend,
   parseUrl,
   deepMerge,
   doTest,

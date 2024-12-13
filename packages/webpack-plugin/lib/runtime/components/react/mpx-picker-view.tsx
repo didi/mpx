@@ -87,7 +87,11 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
+
+  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
+
   const {
     layoutRef,
     layoutProps,
@@ -121,6 +125,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     extendObject({
       ref: nodeRef,
       style: extendObject(
+        {},
         normalStyle,
         layoutStyle,
         {
@@ -137,6 +142,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
+      {},
       childProps,
       {
         columnData,

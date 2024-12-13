@@ -14,6 +14,7 @@ import {
   isEmptyObject,
   isPlainObject,
   isWeb,
+  isReact,
   doGetByPath,
   getByPath,
   setByPath,
@@ -116,7 +117,7 @@ export default class MpxProxy {
     this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
     // 收集setup中动态注册的hooks，小程序与web环境都需要
     this.hooks = {}
-    if (__mpx_mode__ !== 'web') {
+    if (!isWeb) {
       this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
@@ -134,8 +135,12 @@ export default class MpxProxy {
       this.forceUpdateAll = false
       this.currentRenderTask = null
       this.propsUpdatedFlag = false
-      // react专用，正确触发updated钩子
-      this.pendingUpdatedFlag = false
+      if (isReact) {
+        // react专用，正确触发updated钩子
+        this.pendingUpdatedFlag = false
+        this.memoVersion = Symbol()
+        this.finalMemoVersion = Symbol()
+      }
     }
     this.initApi()
   }
@@ -160,7 +165,7 @@ export default class MpxProxy {
       // 缓存上下文，在 destoryed 阶段删除
       contextMap.set(this.uid, this.target)
     }
-    if (__mpx_mode__ !== 'web') {
+    if (!isWeb) {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
@@ -179,7 +184,7 @@ export default class MpxProxy {
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android') {
+    if (!isWeb && !isReact) {
       this.initRender()
     }
 
@@ -272,7 +277,7 @@ export default class MpxProxy {
     }
     // 挂载$rawOptions
     this.target.$rawOptions = this.options
-    if (__mpx_mode__ !== 'web') {
+    if (!isWeb) {
       // 挂载$watch
       this.target.$watch = this.watch.bind(this)
       // 强制执行render
@@ -282,13 +287,14 @@ export default class MpxProxy {
   }
 
   initProps () {
-    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+    if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
+      reactive(this.processIgnoreReactive(this.props))
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
+      reactive(this.processIgnoreReactive(this.props))
     }
-    reactive(this.processIgnoreReactive(this.props))
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
   }
 
@@ -562,7 +568,7 @@ export default class MpxProxy {
           }
           if (!processed) {
             // 如果当前数据和上次的miniRenderData完全无关，但存在于组件的视图数据中，则与组件视图数据进行diff
-            if (this.target.data && hasOwn(this.target.data, firstKey)) {
+            if (hasOwn(this.target.data, firstKey)) {
               const localInitialData = getByPath(this.target.data, key)
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
@@ -755,12 +761,12 @@ export default class MpxProxy {
         }
         setByPath(this.target, key, data[key])
       })
-      this.forceUpdateData = data
+      Object.assign(this.forceUpdateData, data)
     } else {
       this.forceUpdateAll = true
     }
 
-    if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+    if (isReact) {
       // rn中不需要setdata
       this.forceUpdateData = {}
       this.forceUpdateAll = false
