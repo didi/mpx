@@ -26,19 +26,19 @@ const configs = {
     env: 'production'
   },
   esm: {
-    input: resolve('src/index.esm.js'),
+    input: resolve('src/index.js'),
     file: resolve('dist/webviewbridge.esm.js'),
     format: 'es'
   },
   'esm-browser-dev': {
-    input: resolve('src/index.esm.js'),
+    input: resolve('src/index.js'),
     file: resolve('dist/webviewbridge.esm.browser.js'),
     format: 'es',
     env: 'development',
     transpile: false
   },
   'esm-browser-prod': {
-    input: resolve('src/index.esm.js'),
+    input: resolve('src/index.js'),
     file: resolve('dist/webviewbridge.esm.browser.min.js'),
     format: 'es',
     env: 'production',

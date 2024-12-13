@@ -1,11 +1,13 @@
 import transferOptions from '../core/transferOptions'
 import mergeOptions from '../core/mergeOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp } from '@mpxjs/utils'
-import * as webLifecycle from '../platform/patch/web/lifecycle'
+import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
+import { mergeLifecycle } from '../convertor/mergeLifecycle'
+import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
+import { initAppProvides } from './export/apiInject'
 
-const webAppHooksMap = makeMap(webLifecycle.LIFECYCLE.APP_HOOKS)
+const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
 function filterOptions (options, appData) {
   const newOptions = {}
@@ -13,7 +15,7 @@ function filterOptions (options, appData) {
     if (builtInKeysMap[key]) {
       return
     }
-    if (__mpx_mode__ === 'web' && !webAppHooksMap[key]) {
+    if (__mpx_mode__ === 'web' && !appHooksMap[key] && key !== 'provide') {
       appData[key] = options[key]
     } else {
       newOptions[key] = options[key]
@@ -35,7 +37,7 @@ export default function createApp (option, config = {}) {
       created () {
         Object.assign(this, Mpx.prototype)
         Object.assign(this, appData)
-        const current = (global.__mpxRouter && global.__mpxRouter.currentRoute) || {}
+        const current = this.$root.$options?.router?.currentRoute || {}
         const options = {
           path: current.path && current.path.replace(/^\//, ''),
           query: current.query,
@@ -43,21 +45,24 @@ export default function createApp (option, config = {}) {
           shareTicket: '',
           referrerInfo: {}
         }
+        global.__mpxEnterOptions = options
         this.$options.onLaunch && this.$options.onLaunch.call(this, options)
         global.__mpxAppCbs = global.__mpxAppCbs || {
           show: [],
           hide: [],
           error: []
         }
-        if (this.$options.onShow) {
-          this.$options.onShow.call(this, options)
-          global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
-        }
-        if (this.$options.onHide) {
-          global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
-        }
-        if (this.$options.onError) {
-          global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+        if (isBrowser) {
+          if (this.$options.onShow) {
+            this.$options.onShow.call(this, options)
+            global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
+          }
+          if (this.$options.onHide) {
+            global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
+          }
+          if (this.$options.onError) {
+            global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+          }
         }
       }
     })
@@ -76,17 +81,22 @@ export default function createApp (option, config = {}) {
     })
   }
   // app选项目前不需要进行转换
-  const { rawOptions } = transferOptions(option, 'app', false)
+  const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   rawOptions.mixins = builtInMixins
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
   if (__mpx_mode__ === 'web' || __mpx_mode__ === 'tenon') {
     global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-    global.__mpxOptionsMap[global.currentModuleId] = defaultOptions
+    global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     global.getApp = function () {
+      if (!isBrowser) {
+        console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
+      }
       return appData
     }
   } else {
+    initAppProvides(rawOptions)
+    defaultOptions.onAppInit && defaultOptions.onAppInit()
     const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)
   }

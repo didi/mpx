@@ -1,4 +1,3 @@
-// @ts-ignore
 import type { ComputedRef } from '@mpxjs/core'
 
 type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
@@ -6,7 +5,6 @@ type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
 type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
 
 interface compContext {
-  __mpxProxy: object;
   [key: string]: any
 }
 
@@ -56,17 +54,16 @@ type GetDispatch<A, D> = keyof D extends never ? (<T extends keyof A>(type: T, .
 
 type GetCommit<M, D> = keyof D extends never ? (<T extends keyof M>(type: T, ...payload: M[T] extends (state: any, ...payload: infer P) => any ? P : never) => M[T] extends (state: any, ...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
 
-
 // do not exist in tip
-declare const DEPS_SYMBOL: unique symbol;
-declare const STATE_SYMBOL: unique symbol;
-declare const GETTERS_SYMBOL: unique symbol;
+declare const DEPS_SYMBOL: unique symbol
+declare const STATE_SYMBOL: unique symbol
+declare const GETTERS_SYMBOL: unique symbol
 
 type DepsSymbol = typeof DEPS_SYMBOL
 type StateSymbol = typeof STATE_SYMBOL
 type GettersSymbol = typeof GETTERS_SYMBOL
 
-interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
+export interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   [DEPS_SYMBOL]: D
   [STATE_SYMBOL]: S

@@ -1,138 +1,186 @@
 <template>
-  <iframe ref="mpxIframe" class="mpx-iframe" :src="src"></iframe>
+  <iframe ref="mpxIframe" class="mpx-iframe" :src="currentUrl" :key="currentUrl"></iframe>
 </template>
 
 <script>
-  import getInnerListeners, { getCustomEvent } from './getInnerListeners'
-  import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab} from '@mpxjs/api-proxy/src/web/api/index'
-
-  const eventLoad = 'load'
-  const eventError = 'error'
-  const eventMessage = 'message'
-  export default {
-    data: function () {
+import { getCustomEvent } from './getInnerListeners'
+import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
+import { extend } from '../../utils'
+const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
+const eventLoad = 'load'
+const eventError = 'error'
+const eventMessage = 'message'
+const mpx = global.__mpx
+export default {
+  props: {
+    src: {
+      type: String
+    }
+  },
+  computed: {
+    host () {
+      let host = this.src.split('/')
+      if (host[2]) {
+        host = host[0] + '//' + host[2]
+      } else {
+        host = ''
+      }
+      return host
+    },
+    currentUrl () {
+      if (!this.src) return ''
+      const hostValidate = this.hostValidate(this.host)
+      if (!hostValidate) {
+        console.error('访问页面域名不符合domainWhiteLists白名单配置，请确认是否正确配置该域名白名单')
+        return ''
+      }
+      let src
+      const srcQueryIndex = this.src.indexOf('?')
+      // webview与被打开页面通过_uid确定关联关系
+      if (srcQueryIndex > -1) {
+        src = `${this.src.substring(0, srcQueryIndex + 1)}mpx_webview_id=${this._uid}&${this.src.substring(srcQueryIndex + 1)}`
+      } else {
+        src = `${this.src}?mpx_webview_id=${this._uid}`
+      }
+      return src
+    },
+    loadData () {
       return {
-        origin: '',
-        messageList: [],
-        Loaded: false,
-        isActived: false,
-        mpxIframe: null,
-        isPostMessage: false
+        src: this.host,
+        fullUrl: this.src
       }
-    },
-    props: {
-      src: {
-        type: String
-      }
-    },
-    computed: {
-      mainDomain () {
-        let domain
-        const src = location.href
-        let index = src.indexOf('?')
-        if (index > -1) {
-          domain = src.substr(0, index)
-          return domain
-        }
-        domain = src.split('/')
-        if (domain[2]) {
-          domain = domain[0] + '//' + domain[2]
+    }
+  },
+  watch: {
+    currentUrl: {
+      handler (value) {
+        if (!value) {
+          this.$emit(eventError, getCustomEvent(eventError, extend({
+            errMsg: 'web-view load failed due to not in domain list'
+          }, this.loadData), this))
         } else {
-          domain = ''
-        }
-        return domain
-      }
-    },
-    created () {
-      setTimeout(() => {
-        if (!this.Loaded) {
-          const loadData = {
-            src: this.src
-          }
-          this.$emit(eventError, getCustomEvent(eventError, loadData))
-        }
-      }, 1000)
-    },
-    mounted () {
-      this.mpxIframe = this.$refs.mpxIframe
-      this.mpxIframe.addEventListener('load', (event) => {
-        event.currentTarget.contentWindow.postMessage(this.mainDomain, '*')
-      })
-      window.addEventListener('message', (event) => {
-        const data = event.data
-        const value = data.detail && data.detail.data && data.detail.data
-        if (!this.isActived) {
-          return
-        }
-        switch (data.type) {
-          case eventMessage:
-            this.isPostMessage = true
-            this.messageList.push(value.data)
-            break
-          case 'navigateTo':
-            this.isActived = false
-            navigateTo(value)
-            break
-          case 'navigateBack':
-            this.isActived = false
-            value ? navigateBack(value) : navigateBack()
-            break
-          case 'redirectTo':
-            this.isActived = false
-            redirectTo(value)
-            break
-          case 'switchTab':
-            this.isActived = false
-            switchTab(value)
-            break
-          case 'reLaunch':
-            this.isActived = false
-            reLaunch(value)
-            break
-          case 'load':
-            this.Loaded = true
-            const loadData = {
-              src: this.src
+          this.$nextTick(() => {
+            if (this.$refs.mpxIframe && this.mpxIframe != this.$refs.mpxIframe) {
+              this.mpxIframe = this.$refs.mpxIframe
+              this.mpxIframe.addEventListener('load', () => {
+                this.$emit(eventLoad, getCustomEvent(eventLoad, this.loadData, this))
+              })
             }
-            this.$emit(eventLoad, getCustomEvent(eventLoad, loadData))
+          })
         }
+      },
+      immediate: true
+    }
+  },
+  beforeCreate () {
+    this.messageList = []
+  },
+  mounted () {
+    window.addEventListener('message', this.messageCallback)
+  },
+  deactivated () {
+    if (!this.messageList.length) {
+      return
+    }
+    let data = {
+      type: 'message',
+      data: this.messageList
+    }
+    this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
+  },
+  destroyed () {
+    window.removeEventListener('message', this.messageCallback)
+    if (!this.messageList.length) {
+      return
+    }
+    let data = {
+      type: 'message',
+      data: this.messageList
+    }
+    this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
+  },
+  methods: {
+    messageCallback (event) {
+      const hostValidate = this.hostValidate(event.origin)
+      const data = event.data
+      // 判断number类型，防止undefined导致触发return逻辑
+      if (data.clientUid !== undefined && +data.clientUid !== this._uid) {
+        return
+      }
+      let value = data.payload
+      if (!hostValidate) {
+        return
+      }
+      let asyncCallback = null
+      switch (data.type) {
+        case 'postMessage':
+          this.messageList.push(value.data || value)
+          asyncCallback = Promise.resolve({
+            errMsg: 'invokeWebappApi:ok'
+          })
+          break
+        case 'navigateTo':
+          asyncCallback = navObj.navigateTo(value)
+          break
+        case 'navigateBack':
+          asyncCallback = navObj.navigateBack(value)
+          break
+        case 'redirectTo':
+          asyncCallback = navObj.redirectTo(value)
+          break
+        case 'switchTab':
+          asyncCallback = navObj.switchTab(value)
+          break
+        case 'reLaunch':
+          asyncCallback = navObj.reLaunch(value)
+          break
+        case 'getLocation':
+          const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation
+          if (getLocation) {
+            asyncCallback = getLocation()
+          } else {
+            asyncCallback = Promise.reject({
+              errMsg: '未在apiImplementations中配置getLocation方法'
+            })
+          }
+          break
+      }
+      asyncCallback && asyncCallback.then((res) => {
+        this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
+          type: data.type,
+          callbackId: data.callbackId,
+          result: res
+        }, event.origin)
+      }).catch((error) => {
+        this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
+          type: data.type,
+          callbackId: data.callbackId,
+          error
+        }, event.origin)
       })
     },
-    activated () {
-      this.isActived = true
-      this.isPostMessage = false
-    },
-    deactivated () {
-      if (!this.isPostMessage) {
-        return
+    hostValidate (host) {
+      const hostWhitelists = mpx.config.webviewConfig && mpx.config.webviewConfig.hostWhitelists || []
+      if (hostWhitelists.length) {
+        return hostWhitelists.some((item) => {
+          return host.endsWith(item)
+        })
+      } else {
+        return true
       }
-      let data = {
-        type: 'message',
-        data: this.messageList
-      }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data))
-    },
-    destroyed () {
-      if (!this.isPostMessage) {
-        return
-      }
-      let data = {
-        type: 'message',
-        data: this.messageList
-      }
-      this.$emit(eventMessage, getCustomEvent(eventMessage, data))
     }
   }
+}
 </script>
 
 <style>
-  .mpx-iframe {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-  }
+.mpx-iframe {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
 </style>

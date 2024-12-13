@@ -1,63 +1,78 @@
-const processJSON = require('./processJSON')
-const processScript = require('./processScript')
-const processStyles = require('./processStyles')
-const processTemplate = require('./processTemplate')
-
 const async = require('async')
+const processJSON = require('./processJSON')
+// const processMainScript = require('./processMainScript')
+const processTemplate = require('./processTemplate')
+const processStyles = require('./processStyles')
+const processScript = require('./processScript')
+const RecordLoaderContentDependency = require('../dependencies/RecordLoaderContentDependency')
+const {stringifyRequest} = require('./script-helper')
+const addQuery = require('../utils/add-query')
+const parseRequest = require('../utils/parse-request')
+
+
 
 module.exports = function ({
-  mpx,
-  loaderContext,
-  isProduction,
   parts,
-  ctorType,
-  filePath,
-  queryObj,
-  autoScope,
+  jsonContent,
+  loaderContext,
+  pagesMap,
   componentsMap,
+  queryObj,
+  ctorType,
+  srcMode,
   moduleId,
+  isProduction,
+  hasScoped,
+  hasComment,
+  isNative,
+  usingComponentsInfo,
+  componentGenerics,
+  autoScope,
   callback
 }) {
-  const hasComment = parts.template && parts.template.attrs && parts.template.attrs.comments
-  const isNative = false
+
+  let output = ''
+
+
+  const mpx = loaderContext.getMpx()
+  // const hasComment = parts.template && parts.template.attrs && parts.template.attrs.comments
+  // const isNative = false
   const mode = mpx.mode
-  const srcMode = mpx.srcMode
+  // const srcMode = mpx.srcMode
   const env = mpx.env
   const defs = mpx.defs
   const resolveMode = mpx.resolveMode
-  const pagesMap = mpx.pagesMap
+  // const pagesMap = mpx.pagesMap
   const projectRoot = mpx.projectRoot
 
-  let output = ''
-  const usingComponents = [].concat(Object.keys(mpx.usingComponents))
-
+  // 通过RecordLoaderContentDependency和loaderContentCache确保子request不再重复生成loaderContent
+  const cacheContent = mpx.loaderContentCache.get(loaderContext.resourcePath)
+  if (cacheContent) return callback(null, cacheContent)
   return async.waterfall([
     (callback) => {
       async.parallel([
         (callback) => {
           processTemplate(parts.template, {
+            loaderContext,
+            hasScoped,
             hasComment,
             isNative,
-            mode,
             srcMode,
-            defs,
-            loaderContext,
             moduleId,
             ctorType,
-            usingComponents,
-            decodeHTMLText: mpx.decodeHTMLText,
-            externalClasses: mpx.externalClasses,
-            checkUsingComponents: mpx.checkUsingComponents
+            usingComponentsInfo,
+            componentGenerics
           }, callback)
         },
         (callback) => {
           processStyles(parts.styles, {
             ctorType,
-            autoScope
+            autoScope,
+            moduleId
           }, callback)
         },
         (callback) => {
-          processJSON(parts.json, {
+          processJSON(jsonContent, {
             mode,
             env,
             defs,
@@ -77,28 +92,26 @@ module.exports = function ({
       output += templateRes.output
       output += stylesRes.output
       output += jsonRes.output
-      if (ctorType === 'app' && jsonRes.jsonObj.window && jsonRes.jsonObj.window.navigationBarTitleText) {
-        mpx.appTitle = jsonRes.jsonObj.window.navigationBarTitleText
-      }
-
       processScript(parts.script, {
+        loaderContext,
         ctorType,
         srcMode,
-        loaderContext,
+        moduleId,
         isProduction,
-        projectRoot,
+        componentGenerics,
         jsonConfig: jsonRes.jsonObj,
-        componentId: queryObj.componentId || '',
+        outputPath: queryObj.outputPath || '',
         builtInComponentsMap: templateRes.builtInComponentsMap,
-        localComponentsMap: jsonRes.localComponentsMap,
         localPagesMap: jsonRes.localPagesMap,
-        forceDisableBuiltInLoader: mpx.forceDisableBuiltInLoader
+        genericsInfo: templateRes.genericsInfo,
+        wxsModuleMap: templateRes.wxsModuleMap,
+        localComponentsMap: jsonRes.localComponentsMap
       }, callback)
     }
   ], (err, scriptRes) => {
     if (err) return callback(err)
     output += scriptRes.output
-    mpx.vueContentCache.set(filePath, output)
+    loaderContext._module.addPresentationalDependency(new RecordLoaderContentDependency(loaderContext.resourcePath, output))
     callback(null, output)
   })
 }

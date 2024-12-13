@@ -258,7 +258,7 @@ communityList:
   details:
   - title: 微信群
     actionLink: https://github.com/didi/mpx
-    img: https://dpubstatic.udache.com/static/dpubimg/82e2e776-71e8-4ca5-8878-33b0d5020b6d.jpg
+    img: https://dpubstatic.udache.com/static/dpubimg/6DN0ebkbjgI2P9QjJr8jr_WechatIMG3.jpeg
   - title: QQ群
     actionLink: https://github.com/didi/mpx
     img: https://dpubstatic.udache.com/static/dpubimg/etX-gKWeUb/temp_qrcode_share_374632411.png

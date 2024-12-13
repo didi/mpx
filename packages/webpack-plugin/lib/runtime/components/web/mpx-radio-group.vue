@@ -84,7 +84,7 @@
         } else {
           value = this.getValue()
         }
-        this.$emit('change', getCustomEvent('change', { value }, this.$refs.radioGroup))
+        this.$emit('change', getCustomEvent('change', { value }, this))
       }
     }
   }

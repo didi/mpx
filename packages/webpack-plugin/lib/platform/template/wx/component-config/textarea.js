@@ -14,6 +14,12 @@ module.exports = function ({ print }) {
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
+  const iosValueLogError = print({ platform: 'ios', tag: TAG_NAME, isError: true, type: 'value' })
+  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidValueLogError = print({ platform: 'android', tag: TAG_NAME, isError: true, type: 'value' })
+  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -26,6 +32,14 @@ module.exports = function ({ print }) {
       // form全量使用内建组件
       el.isBuiltIn = true
       return 'tenon-textarea'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-textarea'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-textarea'
     },
     props: [
       {
@@ -52,6 +66,26 @@ module.exports = function ({ print }) {
       {
         test: /^(fixed|cursor-spacing|show-confirm-bar|adjust-position|hold-keyboard|auto-height)$/,
         qa: qaPropLog
+      },
+      {
+        test: 'confirm-type',
+        ios ({ name, value }) {
+          const notSupported = ['return']
+          if (notSupported.includes(value)) {
+            iosValueLogError({ name, value })
+          }
+        },
+        android ({ name, value }) {
+          const notSupported = ['return']
+          if (notSupported.includes(value)) {
+            androidValueLogError({ name, value })
+          }
+        }
+      },
+      {
+        test: /^(placeholder-style|placeholder-class|cursor-spacing|always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
+        ios: iosPropLog,
+        android: androidPropLog
       }
     ],
     event: [
@@ -76,6 +110,11 @@ module.exports = function ({ print }) {
       {
         test: /^(linechange|keyboardheightchange)$/,
         tt: ttEventLog
+      },
+      {
+        test: /^keyboard.+$/,
+        ios: iosEventLog,
+        android: androidEventLog
       }
     ]
   }

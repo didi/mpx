@@ -1,5 +1,5 @@
-import * as wxLifecycle from '../platform/patch/wx/lifecycle'
-import * as tenonLifecycle from '../platform/patch/tenon/lifecycle'
+import * as wxLifecycle from '../platform/patch/lifecycle/index.wx'
+import * as tenonLifecycle from '../platform/patch/lifecycle/index.tenon'
 import { mergeLifecycle } from './mergeLifecycle'
 import { error, isObject, diffAndCloneA, hasOwn } from '@mpxjs/utils'
 import { implemented } from '../core/implement'

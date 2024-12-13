@@ -19,10 +19,11 @@ export default function proxyEventMixin () {
         const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' && this[filterMethod]) : originValue
         setByPath(this, expr, value)
       },
-      getOpenerEventChannel () {
-        const router = global.__mpxRouter
-        const eventChannel = router && router.__mpxAction && router.__mpxAction.eventChannel
-        return eventChannel
+      __invokeHandler (eventName, $event) {
+        const handler = this[eventName]
+        if (handler && typeof handler === 'function') {
+          handler.call(this, $event)
+        }
       }
     }
   }

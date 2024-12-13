@@ -1,6 +1,7 @@
-module.exports = (item) => {
-  const content = item[1]
-  const cssMapping = item[3]
+/* eslint no-var: off */
+module.exports = function (item) {
+  var content = item[1]
+  var cssMapping = item[3]
 
   if (!cssMapping) {
     return content
@@ -8,13 +9,13 @@ module.exports = (item) => {
 
   if (typeof btoa === 'function') {
     // eslint-disable-next-line no-undef
-    const base64 = btoa(
+    var base64 = btoa(
       unescape(encodeURIComponent(JSON.stringify(cssMapping)))
     )
-    const data = `sourceMappingURL=data:application/json;charset=utf-8;base64,${base64}`
-    const sourceMapping = `/*# ${data} */`
+    var data = `sourceMappingURL=data:application/json;charset=utf-8;base64,${base64}`
+    var sourceMapping = `/*# ${data} */`
 
-    const sourceURLs = cssMapping.sources.map(
+    var sourceURLs = cssMapping.sources.map(
       (source) => `/*# sourceURL=${cssMapping.sourceRoot || ''}${source} */`
     )
 

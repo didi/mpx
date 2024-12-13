@@ -5,11 +5,7 @@
 
 ## useStrictDiff
 
-- **类型**： `boolean`
-
-- **默认值**：`false`
-
-- **用法**：
+`boolean = false`
 
 每次有数据变更时，是否使用严格的 diff 算法。如果项目中有大数据集的渲染建议使用，可以提升效率。
 
@@ -58,11 +54,7 @@ mpx.config.useStrictDiff = true
 
 ## ignoreWarning
 
-- **类型**： `boolean`
-
-- **默认值**：`false`
-
-- **用法**：
+`boolean = false`
 
 是否忽略运行时的 warning 信息，默认不忽略。
 
@@ -73,11 +65,7 @@ mpx.config.ignoreWarning = true
 
 ## ignoreProxyWhiteList
 
-- **类型**： `Array<string>`
-
-- **默认值**：`['id']`
-
-- **用法**：
+`Array<string> = ['id']`
 
 Mpx 实例上的 key（包括data、computed、methods）如果有重名冲突，在`ignoreProxyWhiteList`配置中的属性会被最新的覆盖；而不在`ignoreProxyWhiteList`配置中的属性，不会被覆盖。
 
@@ -90,20 +78,13 @@ mpx.config.ignoreConflictWhiteList = ['id', 'test']
 
 ## observeClassInstance
 
-- **类型**： `boolean`
-
-- **默认值**：`false`
-
-- **用法**：
+`boolean = false`
 
 当需要对 class 对象的数据进行响应性转化，需要开启该选项。
 
 ## proxyEventHandler
-- **类型**： `Function | null`
 
-- **默认值**：`null`
-
-- **用法**：
+`Function`
 
 需要代理的事件的钩子方法，该钩子方法仅对内联传参事件或 [forceProxyEventRules](/api/compile.html#forceproxyeventrules) 规则匹配的事件生效。
 
@@ -117,11 +98,9 @@ mpx.config.proxyEventHandler = function (event) {
 
 ## setDataHandler
 
-- **类型**：`(data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null`
-
-- **默认值**：`null`
-
-- **用法**：
+```ts
+function setDataHandler(data: object, target: ComponentIns<{}, {}, {}, {}, []>): any
+```
 
 页面/组件状态更新时，使用该方法可以对 setData 调用进行监听，可以用来统计 setData 调用次数和数据量的统计，方法的入参是 setData 传输的 data 和当前组件实例。
 
@@ -134,9 +113,8 @@ mpx.config.setDataHandler = function(data, comp) {
 ```
 
 ## forceFlushSync
-- **类型**： `boolean`
 
-- **默认值**：`false`
+`boolean = false`
 
 Mpx 中更改响应性状态时，最终页面的更新并不是同步立即生效的，而是由 Mpx 将它们缓存在一个队列中， 异步等到下一个 tick 一起执行，如果想将所有队列的执行改为同步执行，我们可以通过该配置来实现。
 
@@ -146,12 +124,47 @@ import mpx from '@mpxjs/core'
 mpx.config.forceFlushSync = true
 ```
 
+## errorHandler
+
+`Function`
+
+```js
+mpx.config.errorHandler = function (errmsg, location, error) {
+  // errmsg: 框架内部运行报错的报错归类信息，例如当执行一个watch方法报错时，会是 "Unhandled error occurs during execution of watch callback!"
+  // location: 具体报错的代码路径，可选项，不一定存在
+  // error: 具体的错误堆栈，可选项，不一定存在
+  // handle error
+}
+```
+
+Mpx 框架运行时报错捕获感知处理函数。
+
+* Mpx 框架生命周期执行错误；
+* Mpx 中的 computed、watch 等内置方法执行报错；
+* Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
+
+同时被捕获的错误会通过 console.error 输出。
+
 ## webRouteConfig
-Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置
+Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置。
+此配置后续将被废弃，请使用 webConfig 进行配置
 
 - **用法**:
 ```js
 mpx.config.webRouteConfig = {
   mode: 'history'
 }
+```
+
+## webConfig
+web 环境下的一些配置，如路由模式，页面切换动画效果等
+
+- **用法**:
+```js
+// 修改路由模式
+mpx.config.webConfig.routeConfig = {
+  mode: 'history'
+}
+// 禁用页面切换动画
+mpx.config.webConfig.disablePageTransition = true
 ```

@@ -1,3 +1,12 @@
+const {
+  isRichTextTag,
+  isUnaryTag,
+  isSpace,
+  isContWidth,
+  isContHeight,
+  isContConRow
+} = require('../../../utils/dom-tag-config')
+
 // eslint-disable-next-line
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/ // useless escape
 const ncname = '[a-zA-Z_][\\w\\-\\.]*'
@@ -10,36 +19,6 @@ const comment = /^<!\--/
 // eslint-disable-next-line
 const invalidAttributeRE = /[\s"'<>\/=]/
 let currentParent
-
-function makeMap (str, expectsLowerCase) {
-  const map = Object.create(null)
-  const list = str.split(',')
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
-  }
-  return expectsLowerCase
-    ? val => map[val.toLowerCase()]
-    : val => map[val]
-}
-
-const isRichTextTag = makeMap(
-  'a,abbr,address,article,aside,b,bdi,bdo,big,blockquote,br,caption,' +
-  'center,cite,code,col,colgroup,dd,del,div,dl,dt,em,fieldset,' +
-  'font,footer,h1,h2,h3,h4,h5,h6,header,hr,i,img,ins,label,legend,' +
-  'li,mark,nav,ol,p,pre,q,rt,ruby,s,section,small,span,strong,sub,sup,' +
-  'table,tbody,td,tfoot,th,thead,tr,tt,u,ul'
-)
-const isUnaryTag = makeMap(
-  'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
-  'link,meta,param,source,track,wbr'
-)
-const isSpace = makeMap('ensp,emsp,nbsp')
-
-const isContWidth = makeMap('col,colgroup,img,table,td,th,tr')
-
-const isContHeight = makeMap('img,td,th,tr')
-
-const isContConRow = makeMap('td,th,tr')
 
 function makeAttrsMap (attrs) {
   const map = {}

@@ -43,6 +43,8 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
         port: 0, // 本地服务端口，非必填，默认 0(随机端口)
         host: '127.0.0.1', // 本地服务host，非必填
       },
+      // group 阈值校验时忽略该分包体积，总包体积校验时也会忽略该分包体积
+      ignoreSubpackages: ['new-homepage'],
       // 体积报告生成后输出的文件地址名，路径相对为 dist/wx 或者 dist/ali
       filename: '../report.json',
       // 配置阈值，此处代表总包体积阈值为 16MB，分包体积阈值为 2MB，超出将会触发编译报错提醒，该报错不阻断构建
@@ -62,8 +64,11 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
         },
         {
           name: 'pageGroup',
-          // 每个分组中可分别配置阈值，如果不配置则表示
-          threshold: '500KB',
+          // 每个分组中可分别配置阈值，如果不配置则表示没任何限制
+          threshold: {
+            size: '500KB',
+            preWarningSize: true// 可选项，开启分组体积阈值预警，会以warning的形式在每次构建后输出当前分组的剩余体积
+          },
           entryRules: {
             include: ['src/pages/index', 'src/pages/user']
           }
@@ -84,7 +89,7 @@ const MpxSizeReportPlugin = require('@mpxjs/size-report')
         include: [
           'src/components/tools.js'
         ]
-      }
+      },
       // 是否收集页面维度体积详情，默认 false
       reportPages: true,
       // 是否收集资源维度体积详情，默认 false

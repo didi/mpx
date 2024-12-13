@@ -4,21 +4,25 @@
   "private": true,
   "scripts": {
     "lerna:publish": "lerna publish from-package --yes --dist-tag alpha",
-    "lint": "eslint --ext .js packages/",
-    "fix": "eslint --fix --ext .js packages/",
+    "lint": "eslint --ext .js,.ts,.tsx packages/",
+    "fix": "eslint --fix --ext .js,.ts,.tsx packages/",
+    "lint:js": "eslint --ext .js packages/",
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vuepress dev docs-vuepress",
-    "docs:build": "vuepress build docs-vuepress"
+    "docs:build": "vuepress build docs-vuepress",
+    "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.7",
+    "@babel/core": "^7.25.2",
     "@babel/eslint-parser": "^7.18.9",
-    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-env": "^7.25.3",
     "@docsearch/css": "^3.0.0",
     "@docsearch/js": "^3.0.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@types/jest": "^27.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.2.0",
+    "@typescript-eslint/parser": "^5.2.0",
     "@vuepress/plugin-back-to-top": "^1.8.2",
     "@vuepress/plugin-pwa": "^1.8.0",
     "eslint": "^7.32.0",
@@ -30,9 +34,12 @@
     "eslint-plugin-promise": "^5.1.1",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.2.0",
-    "lerna": "^3.4.3",
+    "lerna": "^8.1.8",
     "typescript": "^4.1.3",
     "vue": "^2.7.14",
     "vuepress": "^1.9.7"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

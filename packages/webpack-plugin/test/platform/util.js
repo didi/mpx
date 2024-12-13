@@ -1,12 +1,14 @@
 const compiler = require('../../lib/template-compiler/compiler')
 const lib = require('../../lib/utils/normalize').lib
+const getRulesRunner = require('../../lib/platform/index')
 
 const errorFn = jest.fn(console.error)
 const warnFn = jest.fn(console.warn)
 
-function compileAndParse (input, { srcMode, mode, env } = { srcMode: 'wx', mode: 'ali', env: '' }) {
-  const parsed = compiler.parse(input, {
+function compileTemplate (template, { srcMode = 'wx', mode = 'ali', env = '' } = {}) {
+  const parsed = compiler.parse(template, {
     usingComponents: [],
+    usingComponentsInfo: {},
     externalClasses: [],
     srcMode,
     mode,
@@ -24,9 +26,34 @@ function compileAndParse (input, { srcMode, mode, env } = { srcMode: 'wx', mode:
   return compiler.serialize(ast)
 }
 
+function compileJson (json, { srcMode = 'wx', mode = 'ali', type = 'app', globalComponents } = {}) {
+  const rulesRunnerOptions = {
+    mode,
+    srcMode,
+    type: 'json',
+    waterfall: true,
+    warn: warnFn,
+    error: errorFn
+  }
+  if (type !== 'app') {
+    rulesRunnerOptions.mainKey = type
+    // polyfill global usingComponents
+    rulesRunnerOptions.data = {
+      globalComponents
+    }
+  }
+
+  const rulesRunner = getRulesRunner(rulesRunnerOptions)
+  if (rulesRunner) {
+    rulesRunner(json)
+  }
+  return json
+}
+
 module.exports = {
   errorFn,
   warnFn,
-  compileAndParse,
+  compileTemplate,
+  compileJson,
   lib
 }

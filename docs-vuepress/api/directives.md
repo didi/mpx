@@ -2,205 +2,185 @@
 
 ## wx:if
 
-* **预期：** `any`
+`any`
 
-* **用法：**
-  
-  根据表达式的值的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy) 来有条件地渲染元素。在切换时元素及它的数据绑定 / 组件被销毁并重建。 **注意：如果元素是 `<block/>`, 注意它并不是一个组件，它仅仅是一个包装元素，不会在页面中做任何渲染，只接受控制属性**。
+根据表达式的值的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy) 来有条件地渲染元素。在切换时元素及它的数据绑定 / 组件被销毁并重建。 **注意：如果元素是 `<block/>`, 注意它并不是一个组件，它仅仅是一个包装元素，不会在页面中做任何渲染，只接受控制属性**。
 
-  ::: danger
-  当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
-  :::
+::: danger
+当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
+:::
 
-* **参考：** [条件渲染 - wx:if](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:if](../guide/basic/conditional-render.html)
 
 ## wx:elif
 
-* **类型：** `any`
+`any`
 
-* **限制：** 前一兄弟元素必须有 `wx:if` 或 `wx:elif`
+前一兄弟元素必须有 `wx:if` 或 `wx:elif`。表示 `wx:if` 的“ `wx:elif` 块”，可以链式调用。
 
-* **用法：**
-  
-  表示 `wx:if` 的“ `wx:elif` 块”。可以链式调用。
+``` html
+<view wx:if="{{type === 'A'}}">
+  A
+</view>
+<view wx:elif="{{type === 'B'}}">
+  B
+</view>
+<view wx:elif="{{type === 'C'}}">
+  C
+</view>
+<view wx:else>
+  Not A/B/C
+</view>
+```
 
-  ``` html
-  <view wx:if="{{type === 'A'}}">
-    A
-  </view>
-  <view wx:elif="{{type === 'B'}}">
-    B
-  </view>
-  <view wx:elif="{{type === 'C'}}">
-    C
-  </view>
-  <view wx:else>
-    Not A/B/C
-  </view>
-  ```
-
-* **参考：** [条件渲染 - wx:elif](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:elif](../guide/basic/conditional-render.html)
 
 ## wx:else
 
-* **不需要表达式**
+不需要表达式，前一兄弟元素必须有 `wx:if` 或 `wx:elif`
 
-* **限制：** 前一兄弟元素必须有 `wx:if` 或 `wx:elif`
+为 `wx:if` 或者 `wx:elif` 添加 `wx:else` 块
 
-* **用法：**
-  
-  为 `wx:if` 或者 `wx:elif` 添加 `wx:else` 块
+``` html
+<view wx:if="{{type === 'A'}}">
+  A
+</view>
+<view wx:else>
+  Not A
+</view>
+```
 
-  ``` html
-  <view wx:if="{{type === 'A'}}">
-    A
-  </view>
-  <view wx:else>
-    Not A
-  </view>
-  ```
-
-* **参考：** [条件渲染 - wx:else](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:else](../guide/basic/conditional-render.html)
 
 ## wx:for
 
-* **预期：** `Array | Object | number | string`
+`Array | Object | number | string`
 
-* **用法：**
-  
-  在组件上使用 `wx:for` 控制属性绑定一个数组，即可使用数组中各项的数据重复渲染该组件。默认数组的当前项的下标变量名默认为 `index`，数组当前项的变量名默认为 `item`
+在组件上使用 `wx:for` 控制属性绑定一个数组，即可使用数组中各项的数据重复渲染该组件。默认数组的当前项的下标变量名默认为 `index`，数组当前项的变量名默认为 `item`
 
-  ``` html
-  <view wx:for="{{array}}">
-    {{ index }}: {{ item.message }}
-  </view>
+``` html
+<view wx:for="{{array}}">
+  {{ index }}: {{ item.message }}
+</view>
 
-  // 0: foo
-  // 1: bar
-  ```
+// 0: foo
+// 1: bar
+```
 
-  ``` js
-  Page({
-    data: {
-      array: [{
-        message: 'foo'
-      }, {
-        message: 'bar'
-      }]
-    }
-  })
-  ```
+``` js
+Page({
+  data: {
+    array: [{
+      message: 'foo'
+    }, {
+      message: 'bar'
+    }]
+  }
+})
+```
 
-  `wx:for` 的默认行为会尝试原地修改元素而不是移动它们。要强制其重新排序元素，你需要用特殊 `attribute key` 来提供一个排序提示：
+`wx:for` 的默认行为会尝试原地修改元素而不是移动它们。要强制其重新排序元素，你需要用特殊 `attribute key` 来提供一个排序提示：
 
-  ``` html
-  <view wx:for="{{array}}" wx:key="id">
-    {{ item.text }}
-  </view>
+``` html
+<view wx:for="{{array}}" wx:key="id">
+  {{ item.text }}
+</view>
 
-  // foo
-  // bar
-  ```
+// foo
+// bar
+```
 
-  ``` js
-  Page({
-    data: {
-      array: [{
-        id: 1, text: 'foo'
-      }, {
-        id: 2, text: 'bar'
-      }]
-    }
-  })
-  ```
+``` js
+Page({
+  data: {
+    array: [{
+      id: 1, text: 'foo'
+    }, {
+      id: 2, text: 'bar'
+    }]
+  }
+})
+```
 
-  ::: danger
-  当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
-  :::
+::: danger
+当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
+:::
 
-  `wx:for` 的详细用法可以通过以下链接查看教程详细说明。
+`wx:for` 的详细用法可以通过以下链接查看教程详细说明。
 
-* **参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
 
 ## wx:for-index
 
-* **预期：** `string`
+`string`
 
-* **用法：**
+使用 wx:for-index 可以指定数组当前下标的变量名：
 
-  使用 wx:for-index 可以指定数组当前下标的变量名：
-  
-  ``` html
-  <view wx:for="{{array}}" wx:key="id" wx:for-index="idx">
-    {{ idx }}: {{ item.text }}
-  </view>
+``` html
+<view wx:for="{{array}}" wx:key="id" wx:for-index="idx">
+  {{ idx }}: {{ item.text }}
+</view>
 
-  // 0: foo
-  // 1: bar
-  ```
+// 0: foo
+// 1: bar
+```
 
-  ``` js
-  Page({
-    data: {
-      array: [{
-        id: 1, text: 'foo'
-      }, {
-        id: 2, text: 'bar'
-      }]
-    }
-  })
-  ```
+``` js
+Page({
+  data: {
+    array: [{
+      id: 1, text: 'foo'
+    }, {
+      id: 2, text: 'bar'
+    }]
+  }
+})
+```
 
-* **参考：** [列表渲染 - wx:for-index](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for-index](../guide/basic/list-render.html)
 
 ## wx:for-item
 
-* **预期：** `string`
+`string`
 
-* **用法：**
+使用 wx:for-item 可以指定数组当前元素的变量名：
 
-  使用 wx:for-item 可以指定数组当前元素的变量名：
-  
-  ``` html
-  <view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="i">
-    <view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="j">
-      <view wx:if="{{i <= j}}">
-        {{i}} * {{j}} = {{i * j}}
-      </view>
+``` html
+<view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="i">
+  <view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="j">
+    <view wx:if="{{i <= j}}">
+      {{i}} * {{j}} = {{i * j}}
     </view>
   </view>
-  ```
+</view>
+```
 
-* **参考：** [列表渲染 - wx:for-item](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for-item](../guide/basic/list-render.html)
 
 ## wx:key
 
-* **预期：** `number | string`
+`number | string`
 
-* **用法：**
-  
-  如果列表中项目的位置会动态改变或者有新的项目添加到列表中，并且希望列表中的项目保持自己的特征和状态，需要使用 wx:key 来指定列表中项目的唯一的标识符。
-  **注意：如不提供 wx:key，会报一个 warning， 如果明确知道该列表是静态，或者不必关注其顺序，可以选择忽略**。
+如果列表中项目的位置会动态改变或者有新的项目添加到列表中，并且希望列表中的项目保持自己的特征和状态，需要使用 wx:key 来指定列表中项目的唯一的标识符。
+**注意：如不提供 wx:key，会报一个 warning， 如果明确知道该列表是静态，或者不必关注其顺序，可以选择忽略**。
 
-  有相同父元素的子元素必须有独特的 key。重复的 key 会造成渲染错误。
+有相同父元素的子元素必须有独特的 key。重复的 key 会造成渲染错误。
 
-  常见的用例是结合 `wx:for`：
+常见的用例是结合 `wx:for`：
 
-  ``` html
-  <view wx:for="{{array}}" wx:key="id">
-    {{ item.text }}
-  </view>
-  ```
+``` html
+<view wx:for="{{array}}" wx:key="id">
+  {{ item.text }}
+</view>
+```
 
-* **参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
 
 ## wx:class
 
-* **用法：**
-  
-  绑定HTML Class: 类似vue的class绑定
+绑定HTML Class: 类似vue的class绑定
 
-  #对象用法
+#对象用法
 
   我们可以传给 `wx:class` 一个对象，以动态地切换 class：
 
@@ -274,7 +254,7 @@
   </view>
   ```
 
-  #数组用法
+#数组用法
 
   我们可以把一个数组传给 `wx:class`，以应用一个 class 列表：
 
@@ -305,143 +285,107 @@
   </view>
   ```
 
-* **参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.html#类名绑定)
+**参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.html#类名绑定)
 
 ## wx:style
 
-* **用法：**
+`wx:style` 的对象语法十分直观——看着非常像 CSS，但其实是一个 JavaScript 对象。CSS property 名可以用驼峰式 (camelCase) 或短横线分隔 (kebab-case) 来命名：
 
-  `wx:style` 的对象语法十分直观——看着非常像 CSS，但其实是一个 JavaScript 对象。CSS property 名可以用驼峰式 (camelCase) 或短横线分隔 (kebab-case) 来命名：
+``` html
+<view wx:style="color: {{activeColor}}; font-size: {{fontSize}}px; fontWeight: bold">
+  这是一段测试文字
+</view>
+```
 
-  ``` html
-  <view wx:style="color: {{activeColor}}; font-size: {{fontSize}}px; fontWeight: bold">
-    这是一段测试文字
-  </view>
-  ```
+```js
+<script>
+  import {createComponent} from '@mpxjs/core'
 
-  ```js
-  <script>
-    import {createComponent} from '@mpxjs/core'
+  createComponent({
+    data: {
+      activeColor: 'red',
+      fontSize: 30
+    }
+  })
+</script>
+```
 
-    createComponent({
-      data: {
-        activeColor: 'red',
-        fontSize: 30
+直接绑定到一个样式对象通常更好，这会让模板更清晰：
+
+``` html
+<view wx:style="{{styleObject}}">
+  这是一段测试文字
+</view>
+```
+
+```js
+<script>
+  import {createComponent} from '@mpxjs/core'
+
+  createComponent({
+    data: {
+      styleObject: {
+        color: 'red',
+        fontWeight: 'bold'
       }
-    })
-  </script>
-  ```
+    },
+  })
+</script>
+```
 
-  直接绑定到一个样式对象通常更好，这会让模板更清晰：
+同样的，对象语法常常结合返回对象的计算属性使用。
 
-  ``` html
-  <view wx:style="{{styleObject}}">
-    这是一段测试文字
-  </view>
-  ```
-  
-  ```js
-  <script>
-    import {createComponent} from '@mpxjs/core'
+`wx:style` 的数组语法可以将多个样式对象应用到同一个元素上
 
-    createComponent({
-      data: {
-        styleObject: {
-          color: 'red',
-          fontWeight: 'bold'
-        }
-      },
-    })
-  </script>
-  ```
+``` html
+<view wx:style="{{[baseStyles, overridingStyles]}}">
+  这是一段测试文字
+</view>
+```
 
-  示例：
-  
-  ``` html
-  <template>
-    <view wx:for="{{list}}" wx:style="{{item.style}}">{{item.name}}</view>
-  </template>
-
-  <script>
-    import {createComponent} from '@mpxjs/core'
-    createComponent({
-      data:{
-        list:[
-          {
-            name: 'red',
-            style: {
-              color: 'red'
-            }
-          },
-          {
-            name: 'blue',
-            style: {
-              color: 'blue'
-            }
-          }         
-        ]
-      }
-    })
-  </script>
-  ```
-
-  同样的，对象语法常常结合返回对象的计算属性使用。
-
-  `wx:style` 的数组语法可以将多个样式对象应用到同一个元素上
-
-  ``` html
-  <view wx:style="{{[baseStyles, overridingStyles]}}">
-    这是一段测试文字
-  </view>
-  ```
-
-* **参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.html#样式绑定)
+**参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.html#样式绑定)
 
 ## wx:model
 
-  除了小程序原生指令之外，mpx 基于input事件提供了一个指令 wx:model, 用于双向绑定。
+除了小程序原生指令之外，mpx 基于input事件提供了一个指令 wx:model, 用于双向绑定。
 
-  示例：
+``` html
+<template>
+  <view>
+    <input wx:model="{{val}}"/>
+    <input wx:model="{{test.val}}"/>
+    <input wx:model="{{test['val']}}"/>
+  </view>
+</template>
 
-  ``` html
-  <template>
-    <view>
-      <input wx:model="{{val}}"/>
-      <input wx:model="{{test.val}}"/>
-      <input wx:model="{{test['val']}}"/>
-    </view>
-  </template>
-
-  <script>
-    import {createComponent} from '@mpxjs/core'
-    createComponent({
-      data: {
-        val: 'test',
-        test: {
-          val: 'xxx'
-        }
+<script>
+  import {createComponent} from '@mpxjs/core'
+  createComponent({
+    data: {
+      val: 'test',
+      test: {
+        val: 'xxx'
       }
-    })
-  </script>
-  ```
+    }
+  })
+</script>
+```
 
-  wx:model并不会影响相关的事件处理函数，比如像下面这样：
+wx:model并不会影响相关的事件处理函数，比如像下面这样：
 
-  ``` html
-  <input wx:model="{{inputValue}}" bindinput="handleInput"/>
-  ```
+``` html
+<input wx:model="{{inputValue}}" bindinput="handleInput"/>
+```
 
-  * **参考：** [双向绑定](../guide/basic/two-way-binding.html)
+**参考：** [双向绑定](../guide/basic/two-way-binding.html)
 
 ## wx:model-prop
 
 wx:model 默认使用 `value` 属性传值，使用 `wx:model-prop` 定义 wx:model 指令对应的属性；
- 
+
 ## wx:model-event
 
 wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:model 指令对应的事件；
-
-示例：
 
 父组件
 ```html
@@ -570,11 +514,9 @@ filter 方法除可以是和 `methods` 平级的方法，还可以是 `methods` 
 
 ## wx:ref
 
-* **预期：** `String`
+`string`
 
-* **用法：**
-
-  Mpx提供了 `wx:ref=xxx` 来更方便获取 WXML 节点信息的对象。在JS里只需要通过this.$refs.xxx 即可获取节点。
+Mpx提供了 `wx:ref=xxx` 来更方便获取 WXML 节点信息的对象。在JS里只需要通过this.$refs.xxx 即可获取节点。
 
 ```html
   <view wx:ref="tref">
@@ -590,154 +532,246 @@ filter 方法除可以是和 `methods` 平级的方法，还可以是 `methods` 
       }
     })
   </script>
-  ```
+```
 
-* **参考：** [获取组件实例 - wx:ref](../guide/basic/refs.html)
+**参考：** [获取组件实例 - wx:ref](../guide/basic/refs.html)
 
 ## wx:show
 
-* **预期：** `Boolean`
+`boolean`
 
-* **用法：**
-  与 `wx:if` 所不同的是**不会移除节点**，而是设置节点的 `style` 为 `display: none`。
+与 `wx:if` 所不同的是**不会移除节点**，而是设置节点的 `style` 为 `display: none`。
 
-  ```html
-  <view wx:show="{{show}}">
-    123
-  </view>
-  ```
+```html
+<view wx:show="{{show}}">
+  123
+</view>
+```
 
-  ```js
-  Page({
-    data: {
-      show: false
-    }
-  })
-  ```
+```js
+Page({
+  data: {
+    show: false
+  }
+})
+```
 
 ## bind
 
-* **预期：** `String`
+`string`
 
-* **用法：**
+让 `bind + (:?) + eventType` 作为属性值
 
-  让 `bind + (:?) + eventType` 作为属性值
+比如：`bindtap`
 
-  比如：`bindtap`
+```html
+<view bindtap="tapTest"> Click me! </view>
+<view bind:tap="tapTest1(testVal, $event)"> Click me! </view>
+```
 
-  ```html
-  <view bindtap="tapTest"> Click me! </view>
-  <view bind:tap="tapTest1(testVal, $event)"> Click me! </view>
-  ```
-
-  ```js
-  Page({
-    methods: {
-      tapTest () {
-        console.log('Clicked!')
-      },
-      tapTest1 (val, event) {
-        console.log(val, event)
-      }
+```js
+Page({
+  methods: {
+    tapTest () {
+      console.log('Clicked!')
+    },
+    tapTest1 (val, event) {
+      console.log(val, event)
     }
-  })
-  ```
+  }
+})
+```
 
-  Mpx做了增强的**内联传参**能力以及具体有哪些事件**类型**参考下方
-* **参考：** [事件处理 - bind](../guide/basic/event.html)
+Mpx做了增强的**内联传参**能力以及具体有哪些事件**类型**参考下方
+
+**参考：** [事件处理 - bind](../guide/basic/event.html)
 
 ## catch
 
-* **预期：** `String`
+`string`
 
-* **用法：**
+让 `catch + (:?) + eventType` 作为属性值
 
-  让 `catch + (:?) + eventType` 作为属性值
+除 `bind` 外，也可以用 `catch` 来绑定事件。与 `bind` 不同，`catch` 会阻止事件向上冒泡。
 
-  除 `bind` 外，也可以用 `catch` 来绑定事件。与 `bind` 不同，`catch` 会阻止事件向上冒泡。
-
-  ```html
-  <view id="outer" bindtap="handleTap1">
-    outer view
-    <view id="middle" catchtap="handleTap2">
-      middle view
-      <view id="inner" bindtap="handleTap3">
-        inner view
-      </view>
+```html
+<view id="outer" bindtap="handleTap1">
+  outer view
+  <view id="middle" catchtap="handleTap2">
+    middle view
+    <view id="inner" bindtap="handleTap3">
+      inner view
     </view>
   </view>
-  ```
+</view>
+```
 
-  ```js
-  Page({
-    methods: {
-      handleTap1 () {
-        console.log('outer')
-      },
-      handleTap2 () {
-        console.log('middle')
-      },
-      handleTap3 () {
-        console.log('inner')
-      }
+```js
+Page({
+  methods: {
+    handleTap1 () {
+      console.log('outer')
+    },
+    handleTap2 () {
+      console.log('middle')
+    },
+    handleTap3 () {
+      console.log('inner')
     }
-  })
-  // 通过几个操作看出被catchtap的middle view阻止了向上冒泡
-  // click outer
-  // outer
+  }
+})
+// 通过几个操作看出被catchtap的middle view阻止了向上冒泡
+// click outer
+// outer
 
-  // click middle
-  // middle
+// click middle
+// middle
 
-  // click inner
-  // inner
-  // middle
-  ```
+// click inner
+// inner
+// middle
+```
 
-* **参考：** [事件处理 - catch](../guide/basic/event.html)
+**参考：** [事件处理 - catch](../guide/basic/event.html)
 
 ## capture-bind
 
-* **预期：** `String`
+`string`
 
-* **用法：**
+让 `capture-bind + (:?) + eventType` 作为属性值
 
-  让 `capture-bind + (:?) + eventType` 作为属性值
+capture-bind要在bind之前执行，是因为事件是先捕获后冒泡，**注意：仅触摸类事件支持捕获阶段**
 
-  capture-bind要在bind之前执行，是因为事件是先捕获后冒泡，**注意：仅触摸类事件支持捕获阶段**
-
-  ```html
-    <view id="outer" bind:touchstart="handleTap1" capture-bind:touchstart="handleTap2">
-      outer view
-      <view id="inner" bind:touchstart="handleTap3" capture-bind:touchstart="handleTap4">
-        inner view
-      </view>
-    </view>
-  ```
-
-  点击inner view的调用顺序是(handleTap)2、4、3、1
-
-* **参考：** [事件处理 - capture-bind](../guide/basic/event.html)
-
-## capture-catch
-
-* **预期：** `String`
-
-* **用法：**
-
-  让 `capture-catch + (:?) + eventType` 作为属性值
-
-  capture-catch中断捕获阶段和取消冒泡阶段
-
-  ```html
-  <view id="outer" bind:touchstart="handleTap1" capture-catch:touchstart="handleTap2">
+```html
+  <view id="outer" bind:touchstart="handleTap1" capture-bind:touchstart="handleTap2">
     outer view
     <view id="inner" bind:touchstart="handleTap3" capture-bind:touchstart="handleTap4">
       inner view
     </view>
   </view>
-  ```
+```
 
-  点击inner view仅执行handleTap2
+点击inner view的调用顺序是(handleTap)2、4、3、1
 
-* **参考：** [事件处理 - capture-catch](../guide/basic/event.html)
+**参考：** [事件处理 - capture-bind](../guide/basic/event.html)
+
+## capture-catch
+
+`string`
+
+让 `capture-catch + (:?) + eventType` 作为属性值
+
+capture-catch中断捕获阶段和取消冒泡阶段
+
+```html
+<view id="outer" bind:touchstart="handleTap1" capture-catch:touchstart="handleTap2">
+  outer view
+  <view id="inner" bind:touchstart="handleTap3" capture-bind:touchstart="handleTap4">
+    inner view
+  </view>
+</view>
+```
+
+点击inner view仅执行handleTap2
+
+**参考：** [事件处理 - capture-catch](../guide/basic/event.html)
+
+
+## @mode
+
+`type mode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'`
+
+跨平台输出场景下，Mpx 框架允许用户在组件上使用 @ 和 | 符号来指定某个节点或属性只在某些平台下有效。
+
+```html
+<button
+  open-type@wx|swan="getUserInfo"
+  bindgetuserinfo@wx|swan="getUserInfo"
+  open-type@ali="getAuthorize"
+  scope@ali="userInfo"
+  onTap@ali="onTap">
+  获取用户信息
+</button>
+```
+在上方示例中，开发者可以便捷的设置在支付宝小程序与微信和百度小程序等平台分别生效的 open-type 属性，
+以及事件绑定或其他属性。假设当前 srcMode 为 wx，目标平台为 ali，则输出产物为：
+```html
+<button
+  open-type="getAuthorize"
+  scope="userInfo"
+  onTap="onTap">
+  获取用户信息
+</button>
+```
+同时，该指令也可以作用在单个节点上，但需要注意的是，该指令作用在单个节点时，节点仅在目标平台输出，同时节点自身属性不会进行跨平台语法转换，不过其子节点不受影响。
+```html
+<!--当srcMode为wx，跨平台输出ali时-->
+<!--错误写法-->
+<view @ali bindtap="someClick">
+    <view wx:if="{{flag}}">text</view>
+</view>
+<!--正确写法-->
+<view @ali onTap="someClick">
+    <view wx:if="{{flag}}">text</view>
+</view>
+```
+
+## @_mode
+
+`type _mode = '_wx' | '_ali' | '_qq' | '_swan' | '_tt' | '_web' | '_qa'`
+
+有时开发者期望使用 @mode 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力。
+```html
+<!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
+<view @_ali bindtap="someClick">test</view>
+```
+在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
+
+## @env
+
+`string`
+
+跨平台输出场景下，除了 mode 平台场景值，Mpx 框架还提供自定义 env 目标应用，来实现在不同应用下编译产出不同的代码。
+
+关于 env 的详细介绍可以点击[查看](../guide/advance/platform.html#use-env)
+
+跨平台输出使用 env 与 mode 一样支持文件纬度、区块纬度、节点纬度、属性纬度等条件编译，这里我们仅介绍下节点和属性纬度的指令模式使用，env 与 mode 可以组合使用。
+
+env 属性维度条件编译与 mode 的用法大致相同，使用 : 符号与 mode 和其他 env 进行串联，与 mode 组合使用格式形如 attr@mode:env:env|mode:env，为了不与 mode 混淆，当条件编译中仅存在 env 条件时，也需要添加 : 前缀，形如 attr@:env。
+
+```html
+<!--open-type 属性仅在百度平台且应用 env 为 didi 时保留-->
+<button open-type@swan:didi="getUserInfo">获取用户信息</button>
+<!--open-type 属性在应用 env 为 didi 的任意小程序平台保留-->
+<button open-type@:didi="getUserInfo">获取用户信息</button>
+<!--open-type 属性在微信平台且应用 env 为 didi 或 qingju 时保留-->
+<button open-type@wx:didi:qingju="getUserInfo">获取用户信息</button>
+```
+
+env 也可在单个节点上进行条件编译：
+
+```html
+<!--整个节点在应用 env 为 didi时进行保留-->
+<view @:didi>this is a  view component</view>
+```
+
+需要注意的时，如果只声明了 env，没有声明 mode，跨平台输出时框架对于节点属性默认会进行转换：
+
+```html
+<!--srcMode为wx，跨平台输出ali时，bindtap会被转为onTap-->
+<view @:didi bindtap="someClick">this is a  view component</view>
+<view bindtap@:didi ="someClick">this is a  view component</view>
+```
+
+## mpxTagName
+
+`string`
+
+跨平台输出时，有时开发者不仅需要对节点属性进行条件编译，可能还需对节点标签进行条件编译。
+
+为此，Mpx 框架支持了一个特殊属性 mpxTagName，如果节点存在这个属性，在最终输出时将节点标签修改为该属性的值，配合属性维度条件编译，即可实现对节点标签进行条件编译，例如在百度环境下希望将某个 view 标签替换为 cover-view，我们可以这样写：
+
+```html
+<view mpxTagName@swan="cover-view">will be cover-view in swan</view>
+```
+

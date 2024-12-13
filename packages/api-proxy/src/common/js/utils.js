@@ -1,3 +1,5 @@
+import { hasOwn, noop, getEnvObj, getFocusedNavigation } from '@mpxjs/utils'
+
 /**
  *
  * @param {Object} options 原参数
@@ -12,12 +14,6 @@
  *  d: 4 // 增加 d
  * })
  */
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
-}
-
 function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   let opts = {}
 
@@ -29,7 +25,6 @@ function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   })
 
   opts = Object.assign({}, opts, extraOpt)
-
   return opts
 }
 
@@ -59,27 +54,6 @@ function genFromMap () {
   return result
 }
 
-function getEnvObj () {
-  switch (__mpx_mode__) {
-    case 'wx':
-      return wx
-    case 'ali':
-      return my
-    case 'swan':
-      return swan
-    case 'qq':
-      return qq
-    case 'tt':
-      return tt
-    case 'jd':
-      return jd
-    case 'qa':
-      return qa
-    case 'dd':
-      return dd
-  }
-}
-
 function warn (msg) {
   console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
 }
@@ -87,28 +61,55 @@ function warn (msg) {
 function error (msg) {
   console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
 }
-
-function noop () {
+function envError (method) {
+  return () => {
+    throw Error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
+  }
 }
 
-function makeMap (arr) {
-  return arr.reduce((obj, item) => {
-    obj[item] = true
-    return obj
-  }, {})
+function defineUnsupportedProps (resObj, props) {
+  const defineProps = {}
+  props.forEach((item) => {
+    defineProps[item] = {
+      get () {
+        warn(`The ${item} attribute is not supported in ${__mpx_mode__} environment`)
+        return null
+      }
+    }
+  })
+  Object.defineProperties(resObj, defineProps)
 }
 
 const isBrowser = typeof window !== 'undefined'
 
+function throwSSRWarning (info) {
+  console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution`)
+}
+
+function successHandle (result, success, complete) {
+  typeof success === 'function' && success(result)
+  typeof complete === 'function' && complete(result)
+}
+
+function failHandle (result, fail, complete) {
+  typeof fail === 'function' && fail(result)
+  typeof complete === 'function' && complete(result)
+}
+
+const ENV_OBJ = getEnvObj()
+
 export {
   changeOpts,
   handleSuccess,
-  genFromMap,
-  getEnvObj,
   error,
+  envError,
   warn,
-  noop,
-  makeMap,
   isBrowser,
-  hasOwn
+  throwSSRWarning,
+  ENV_OBJ,
+  defineUnsupportedProps,
+  successHandle,
+  failHandle,
+  getFocusedNavigation,
+  genFromMap
 }

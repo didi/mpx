@@ -14,6 +14,14 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'tenon-switch'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-switch'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-switch'
+    },
     props: [
       {
         test: /^type$/,

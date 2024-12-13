@@ -9,7 +9,7 @@ const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
 const isUrlRequest = require('../utils/is-url-request')
 
-module.exports = function (json, options, rawCallback) {
+module.exports = function (jsonContent, options, rawCallback) {
   const mode = options.mode
   const env = options.env
   const defs = options.defs
@@ -54,12 +54,12 @@ module.exports = function (json, options, rawCallback) {
     })
   }
 
-  if (!json) {
+  if (!jsonContent) {
     return callback()
   }
   // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON5.parse(json.content)
+    jsonObj = JSON5.parse(jsonContent)
   } catch (e) {
     return callback(e)
   }

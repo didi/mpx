@@ -1,4 +1,4 @@
-const { compileAndParse, warnFn, errorFn, lib } = require('../../util')
+const { compileTemplate, warnFn, errorFn, lib } = require('../../util')
 
 describe('common spec case', function () {
   afterEach(() => {
@@ -11,13 +11,13 @@ describe('common spec case', function () {
     <view>test</view>
     <live-pusher wx:if="{{__mpx_mode__ === 'wx'}}"></live-pusher>
     `
-    compileAndParse(input)
+    compileTemplate(input)
     expect(errorFn).not.toHaveBeenCalled()
 
     const normalInput = `
     <map covers="123">test</map>
     `
-    compileAndParse(normalInput)
+    compileTemplate(normalInput)
     expect(warnFn).toHaveBeenCalled()
   })
 
@@ -25,9 +25,9 @@ describe('common spec case', function () {
     const input1 = '<view wx:for="{{list}}" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>'
     const input2 = '<view wx:for="strings" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>'
     const input3 = '<view wx:for="{{8}}" wx:for-item="t1" wx:for-index="t2" wx:key="u1">123</view>'
-    const output1 = compileAndParse(input1, { srcMode: 'wx', mode: 'swan' })
-    const output2 = compileAndParse(input2, { srcMode: 'wx', mode: 'swan' })
-    const output3 = compileAndParse(input3, { srcMode: 'wx', mode: 'swan' })
+    const output1 = compileTemplate(input1, { srcMode: 'wx', mode: 'swan' })
+    const output2 = compileTemplate(input2, { srcMode: 'wx', mode: 'swan' })
+    const output3 = compileTemplate(input3, { srcMode: 'wx', mode: 'swan' })
     const wxsPath = lib('runtime/swanHelper.wxs')
     expect(output1).toBe(`<import-sjs module="__swanHelper__" src="~${wxsPath}"></import-sjs><view s-for="t1, t2 in __swanHelper__.processFor(list) trackBy t1.u1">123</view>`)
     expect(output2).toBe(`<import-sjs module="__swanHelper__" src="~${wxsPath}"></import-sjs><view s-for='t1, t2 in __swanHelper__.processFor("strings") trackBy t1.u1'>123</view>`)
@@ -48,8 +48,8 @@ describe('common spec case', function () {
       <view s-if="item.show">{{item.value}}</view>
     </view>
     `
-    const output = compileAndParse(input, { srcMode: 'swan', mode: 'swan' })
-    const output2 = compileAndParse(input2, { srcMode: 'swan', mode: 'swan' })
+    const output = compileTemplate(input, { srcMode: 'swan', mode: 'swan' })
+    const output2 = compileTemplate(input2, { srcMode: 'swan', mode: 'swan' })
 
     expect(output).toBe('<view s-if="{{show}}"><view s-for="{{list}}"><view>{{item}}</view></view></view>')
     expect(output2).toBe('<view s-for="item,index in list"><view s-if="{{item.show}}">{{item.value}}</view></view>')

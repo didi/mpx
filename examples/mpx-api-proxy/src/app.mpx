@@ -1,0 +1,47 @@
+<script>
+import { createApp } from '@mpxjs/core'
+
+createApp({
+  onLaunch() {
+  }
+})
+</script>
+
+<style>
+  /*此处编写全局样式*/
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/treeSharking",
+      "./pages/notTreeSharking"
+    ],
+    "tabBar": {
+      "color": "#7A7E83",
+      "selectedColor": "#3cc51f",
+      "backgroundColor": "#ffffff",
+      "list": [
+        {
+          "pagePath": "pages/treeSharking",
+          "text": "组件"
+        },
+        {
+          "pagePath": "pages/notTreeSharking",
+          "text": "接口"
+        }
+      ]
+    }
+  }
+</script>
+
+<!--也可以通过以下形式用js输出json，便于书写注释和使用条件编译-->
+
+<!--<script name="json">-->
+<!--  // 可以写注释，通过defs注入的常量做一些判断之类的操作-->
+<!--  module.exports = {-->
+<!--    pages: [-->
+<!--      './pages/index'-->
+<!--    ]-->
+<!--  }-->
+<!--</script>-->

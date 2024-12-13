@@ -3,10 +3,12 @@ module.exports = function (loaderContext) {
   const moduleGraph = loaderContext._compilation.moduleGraph
   let entryName = ''
   for (const [name, { dependencies }] of loaderContext._compilation.entries) {
-    const entryModule = moduleGraph.getModule(dependencies[0])
-    if (entryModule && entryModule.resource === loaderContext.resource) {
-      entryName = name
-      break
+    for (const dep of dependencies) {
+      const entryModule = moduleGraph.getModule(dep)
+      if (entryModule && entryModule.resource === loaderContext.resource) {
+        entryName = name
+        break
+      }
     }
   }
   return entryName

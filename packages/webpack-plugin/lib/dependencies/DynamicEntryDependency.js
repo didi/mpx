@@ -5,9 +5,10 @@ const addQuery = require('../utils/add-query')
 const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
+const hasOwn = require('../utils/has-own')
 
 class DynamicEntryDependency extends NullDependency {
-  constructor (request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', range, extraOptions = {}) {
+  constructor (range, request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', extraOptions = {}) {
     super()
     this.request = request
     this.entryType = entryType
@@ -16,6 +17,10 @@ class DynamicEntryDependency extends NullDependency {
     this.relativePath = relativePath
     this.context = context
     this.range = range
+
+    if (typeof extraOptions === 'string') {
+      extraOptions = JSON.parse(extraOptions)
+    }
     this.extraOptions = extraOptions
   }
 
@@ -28,23 +33,10 @@ class DynamicEntryDependency extends NullDependency {
     return toPosix([request, entryType, outputPath, packageRoot, relativePath, context, ...range].join('|'))
   }
 
-  collectDynamicRequest (mpx) {
-    if (!this.packageRoot) return
-    const curValue = mpx.dynamicEntryInfo[this.packageRoot] = mpx.dynamicEntryInfo[this.packageRoot] || {
-      hasPage: false,
-      entries: []
-    }
-    if (this.entryType === 'page') {
-      curValue.hasPage = true
-    } else {
-      curValue.entries.push(this.request)
-    }
-  }
-
   addEntry (compilation, callback) {
     const mpx = compilation.__mpx__
-    let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver } = this
-    this.collectDynamicRequest(mpx)
+    let { request, entryType, outputPath, relativePath, context, originEntryNode, publicPath, resolver, extraOptions } = this
+
     async.waterfall([
       (callback) => {
         if (context && resolver) {
@@ -56,12 +48,13 @@ class DynamicEntryDependency extends NullDependency {
         }
       },
       (resource, callback) => {
+        const { resourcePath } = parseRequest(resource)
+
         if (!outputPath) {
-          const { resourcePath } = parseRequest(resource)
           outputPath = mpx.getOutputPath(resourcePath, entryType)
         }
 
-        const { packageRoot, outputPath: filename, alreadyOutputted } = mpx.getPackageInfo({
+        const { packageName, packageRoot, outputPath: filename, alreadyOutputted } = mpx.getPackageInfo({
           resource,
           outputPath,
           resourceType: entryType,
@@ -96,6 +89,14 @@ class DynamicEntryDependency extends NullDependency {
               originEntryNode.addChild(mpx.getEntryNode(entryModule, entryType))
             })
           }
+          if (mpx.dynamicEntryInfo[packageName] && extraOptions.isAsync) {
+            mpx.dynamicEntryInfo[packageName].entries.forEach(entry => {
+              if (entry.resource === resource && entry.filename === filename && entry.entryType === entryType) {
+                entry.hasAsync = true
+              }
+              return entry
+            })
+          }
           // alreadyOutputted时直接返回，避免存在模块循环引用时死循环
           return callback(null, { resultPath })
         } else {
@@ -116,6 +117,13 @@ class DynamicEntryDependency extends NullDependency {
             .catch(err => callback(err))
 
           mpx.addEntryPromiseMap.set(key, addEntryPromise)
+          mpx.collectDynamicEntryInfo({
+            resource,
+            packageName,
+            filename,
+            entryType,
+            hasAsync: extraOptions.isAsync || false
+          })
         }
       }
     ], callback)
@@ -133,15 +141,22 @@ class DynamicEntryDependency extends NullDependency {
     this.publicPath = compilation.outputOptions.publicPath || ''
     const { packageRoot, context } = this
     if (context) this.resolver = compilation.resolverFactory.get('normal', module.resolveOptions)
+    // post 分包队列在 sub 分包队列构建完毕后进行
+    if (this.extraOptions.postSubpackageEntry) {
+      mpx.postSubpackageEntriesMap[packageRoot] = mpx.postSubpackageEntriesMap[packageRoot] || []
+      mpx.postSubpackageEntriesMap[packageRoot].push(this)
+      callback()
+      return
+    }
     // 分包构建在需要在主包构建完成后在finishMake中处理，返回的资源路径先用key来占位，在合成extractedAssets时再进行最终替换
     if (packageRoot && mpx.currentPackageRoot !== packageRoot) {
       mpx.subpackagesEntriesMap[packageRoot] = mpx.subpackagesEntriesMap[packageRoot] || []
       mpx.subpackagesEntriesMap[packageRoot].push(this)
       callback()
     } else {
-      this.addEntry(compilation, (err, { resultPath }) => {
+      this.addEntry(compilation, (err, result) => {
         if (err) return callback(err)
-        this.resultPath = resultPath
+        this.resultPath = result.resultPath
         callback()
       })
     }
@@ -188,13 +203,12 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
     module,
     chunkGraph
   }) {
-    const { resultPath, range, key, outputPath, publicPath, extraOptions } = dep
+    const { resultPath, range, key, publicPath, extraOptions } = dep
 
     let replaceContent = ''
 
-    if (outputPath === 'custom-tab-bar/index') {
-      // replace with true for custom-tab-bar
-      replaceContent = JSON.stringify(true)
+    if (hasOwn(extraOptions, 'replaceContent')) {
+      replaceContent = extraOptions.replaceContent
     } else if (resultPath) {
       if (extraOptions.isRequireAsync) {
         let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))

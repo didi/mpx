@@ -1,17 +1,21 @@
-import { reactive } from '../observer/reactive'
-import { ReactiveEffect } from '../observer/effect'
+import { reactive, shallowReactive } from '../observer/reactive'
+import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
 import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
 import { computed } from '../observer/computed'
-import { queueJob, nextTick } from '../observer/scheduler'
+import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
 import Mpx from '../index'
 import {
   noop,
   type,
+  isArray,
   isFunction,
   isObject,
   isEmptyObject,
   isPlainObject,
+  isWeb,
+  isReact,
+  isTenon,
   doGetByPath,
   getByPath,
   setByPath,
@@ -25,8 +29,10 @@ import {
   processUndefined,
   getFirstKey,
   callWithErrorHandling,
+  wrapMethodsWithErrorHandling,
   warn,
-  error
+  error,
+  getEnvObj
 } from '@mpxjs/utils'
 import {
   BEFORECREATE,
@@ -36,14 +42,21 @@ import {
   BEFOREUPDATE,
   UPDATED,
   BEFOREUNMOUNT,
+  SERVERPREFETCH,
   UNMOUNTED,
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  REACTHOOKSEXEC
 } from './innerLifecycle'
+import contextMap from '../dynamic/vnode/context'
+import { getAst } from '../dynamic/astCache'
+import { inject, provide } from '../platform/export/apiInject'
 
 let uid = 0
+
+const envObj = getEnvObj()
 
 class RenderTask {
   resolved = false
@@ -93,16 +106,19 @@ function preProcessRenderData (renderData) {
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
+    // 兼容 getCurrentInstance.proxy
+    this.proxy = target
     this.reCreated = reCreated
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
+    this.ignoreReactivePattern = this.options.options?.ignoreReactivePattern
     // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
     // 收集setup中动态注册的hooks，小程序与web环境都需要
     this.hooks = {}
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
+    if (!isWeb && !isTenon) {
       this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
@@ -119,27 +135,57 @@ export default class MpxProxy {
       // 下次是否需要强制更新全部渲染数据
       this.forceUpdateAll = false
       this.currentRenderTask = null
+      this.propsUpdatedFlag = false
+      if (isReact) {
+        // react专用，正确触发updated钩子
+        this.pendingUpdatedFlag = false
+        this.memoVersion = Symbol()
+        this.finalMemoVersion = Symbol()
+      }
     }
     this.initApi()
   }
 
+  processIgnoreReactive (obj) {
+    if (this.ignoreReactivePattern && isObject(obj)) {
+      Object.keys(obj).forEach((key) => {
+        if (this.ignoreReactivePattern.test(key)) {
+          Object.defineProperty(obj, key, {
+            enumerable: true,
+            // set configurable to false to skip defineReactive
+            configurable: false
+          })
+        }
+      })
+    }
+    return obj
+  }
+
   created () {
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
-      // web和tenon中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
+    if (__mpx_dynamic_runtime__) {
+      // 缓存上下文，在 destoryed 阶段删除
+      contextMap.set(this.uid, this.target)
+    }
+    if (!isWeb && !isTenon) {
+      // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
+      // 在 props/data 初始化之前初始化 inject
+      this.initInject()
       this.initProps()
       this.initSetup()
       this.initData()
       this.initComputed()
       this.initWatch()
+      // 在 props/data 初始化之后初始化 provide
+      this.initProvide()
       unsetCurrentInstance()
     }
 
     this.state = CREATED
     this.callHook(CREATED)
 
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
+    if (!isWeb && !isReact && !isTenon) {
       this.initRender()
     }
 
@@ -161,16 +207,18 @@ export default class MpxProxy {
 
   mounted () {
     if (this.state === CREATED) {
-      this.state = MOUNTED
       // 用于处理refs等前置工作
       this.callHook(BEFOREMOUNT)
+      this.state = MOUNTED
       this.callHook(MOUNTED)
       this.currentRenderTask && this.currentRenderTask.resolve()
     }
   }
 
   propsUpdated () {
+    this.propsUpdatedFlag = true
     const updateJob = this.updateJob || (this.updateJob = () => {
+      this.propsUpdatedFlag = false
       // 只有当前没有渲染任务时，属性更新才需要单独触发updated，否则可以由渲染任务触发updated
       if (this.currentRenderTask?.resolved && this.isMounted()) {
         this.callHook(BEFOREUPDATE)
@@ -181,10 +229,30 @@ export default class MpxProxy {
   }
 
   unmounted () {
+    if (__mpx_dynamic_runtime__) {
+      // 页面/组件销毁清除上下文的缓存
+      contextMap.remove(this.uid)
+    }
+    if (!isWeb && this.options.__type__ === 'page') {
+      // 小程序页面销毁时移除对应的 provide
+      if (isFunction(this.target.getPageId)) {
+        const pageId = this.target.getPageId()
+        const providesMap = global.__mpxProvidesMap
+        if (providesMap.__pages[pageId]) {
+          delete providesMap.__pages[pageId]
+        }
+      }
+    }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
+    if (this.update) this.update.active = false
     this.callHook(UNMOUNTED)
     this.state = UNMOUNTED
+    if (this._intersectionObservers) {
+      this._intersectionObservers.forEach((observer) => {
+        observer.disconnect()
+      })
+    }
   }
 
   isUnmounted () {
@@ -210,7 +278,7 @@ export default class MpxProxy {
     }
     // 挂载$rawOptions
     this.target.$rawOptions = this.options
-    if (__mpx_mode__ !== 'web' && __mpx_mode__ !== 'tenon') {
+    if (!isWeb && !isTenon) {
       // 挂载$watch
       this.target.$watch = this.watch.bind(this)
       // 强制执行render
@@ -220,31 +288,38 @@ export default class MpxProxy {
   }
 
   initProps () {
-    this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-    reactive(this.props)
+    if (isReact) {
+      // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
+      this.props = this.target.__getProps()
+      shallowReactive(this.processIgnoreReactive(this.props))
+    } else {
+      this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
+      reactive(this.processIgnoreReactive(this.props))
+    }
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
   }
 
   initSetup () {
     const setup = this.options.setup
     if (setup) {
-      const setupResult = callWithErrorHandling(setup, this, 'setup function', [
+      let setupResult = callWithErrorHandling(setup, this, 'setup function', [
         this.props,
         {
-          triggerEvent: this.target.triggerEvent.bind(this.target),
+          triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
           refs: this.target.$refs,
           asyncRefs: this.target.$asyncRefs,
           forceUpdate: this.forceUpdate.bind(this),
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
-          createSelectorQuery: this.target.createSelectorQuery.bind(this.target),
-          createIntersectionObserver: this.target.createIntersectionObserver.bind(this.target)
+          createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
+          createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj)
         }
       ])
       if (!isObject(setupResult)) {
         error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
         return
       }
+      setupResult = wrapMethodsWithErrorHandling(setupResult, this)
       proxy(this.target, setupResult, undefined, false, this.createProxyConflictHandler('setup result'))
       this.collectLocalKeys(setupResult, (key, val) => !isFunction(val))
     }
@@ -259,7 +334,7 @@ export default class MpxProxy {
     if (isFunction(dataFn)) {
       Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
-    reactive(this.data)
+    reactive(this.processIgnoreReactive(this.data))
     proxy(this.target, this.data, undefined, false, this.createProxyConflictHandler('data'))
     this.collectLocalKeys(this.data)
   }
@@ -301,10 +376,68 @@ export default class MpxProxy {
     }
   }
 
+  initProvide () {
+    const provideOpt = this.options.provide
+    if (provideOpt) {
+      const provided = isFunction(provideOpt)
+        ? callWithErrorHandling(provideOpt.bind(this.target), this, 'provide function')
+        : provideOpt
+      if (!isObject(provided)) {
+        return
+      }
+      Object.keys(provided).forEach(key => {
+        provide(key, provided[key])
+      })
+    }
+  }
+
+  initInject () {
+    const injectOpt = this.options.inject
+    if (injectOpt) {
+      this.resolveInject(injectOpt)
+    }
+  }
+
+  resolveInject (injectOpt) {
+    if (isArray(injectOpt)) {
+      const normalized = {}
+      for (let i = 0; i < injectOpt.length; i++) {
+        normalized[injectOpt[i]] = injectOpt[i]
+      }
+      injectOpt = normalized
+    }
+    const injectObj = {}
+    for (const key in injectOpt) {
+      const opt = injectOpt[key]
+      let injected
+      if (isObject(opt)) {
+        if ('default' in opt) {
+          injected = inject(opt.from || key, opt.default, true)
+        } else {
+          injected = inject(opt.from || key)
+        }
+      } else {
+        injected = inject(opt)
+      }
+      injectObj[key] = injected
+    }
+    proxy(this.target, injectObj, undefined, false, this.createProxyConflictHandler('inject'))
+    this.collectLocalKeys(injectObj)
+  }
+
   watch (source, cb, options) {
     const target = this.target
     const getter = isString(source)
-      ? () => getByPath(target, source)
+      ? () => {
+        // for watch multi path string like 'a.b,c,d'
+        if (source.indexOf(',') > -1) {
+          return source.split(',').map(path => {
+            return getByPath(target, path.trim())
+          })
+        } else {
+          return getByPath(target, source)
+        }
+      }
       : source.bind(target)
 
     if (isObject(cb)) {
@@ -360,8 +493,11 @@ export default class MpxProxy {
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
   }
 
-  renderWithData () {
-    const renderData = preProcessRenderData(this.renderData)
+  renderWithData (skipPre, vnode) {
+    if (vnode) {
+      return this.doRenderWithVNode(vnode)
+    }
+    const renderData = skipPre ? this.renderData : preProcessRenderData(this.renderData)
     this.doRender(this.processRenderDataWithStrictDiff(renderData))
     // 重置renderData准备下次收集
     this.renderData = {}
@@ -379,7 +515,7 @@ export default class MpxProxy {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey]) {
+        if (!this.localKeysMap[firstKey] || (this.ignoreReactivePattern && this.ignoreReactivePattern.test(firstKey))) {
           continue
         }
         // 外部clone，用于只需要clone的场景
@@ -409,6 +545,7 @@ export default class MpxProxy {
             }
             const subPath = aIsSubPathOfB(key, tarKey)
             if (subPath) {
+              if (!this.miniRenderData[tarKey]) this.miniRenderData[tarKey] = {}
               // setByPath 更新miniRenderData中的子数据
               doGetByPath(this.miniRenderData[tarKey], subPath, (current, subKey, meta) => {
                 if (meta.isEnd) {
@@ -432,7 +569,7 @@ export default class MpxProxy {
           }
           if (!processed) {
             // 如果当前数据和上次的miniRenderData完全无关，但存在于组件的视图数据中，则与组件视图数据进行diff
-            if (this.target.data && hasOwn(this.target.data, firstKey)) {
+            if (hasOwn(this.target.data, firstKey)) {
               const localInitialData = getByPath(this.target.data, key)
               const { clone, diff, diffData } = diffAndCloneA(data, localInitialData)
               this.miniRenderData[key] = clone
@@ -458,6 +595,42 @@ export default class MpxProxy {
     return result
   }
 
+  doRenderWithVNode (vnode, cb) {
+    const renderTask = this.createRenderTask()
+    let callback = cb
+    // mounted之后才会触发BEFOREUPDATE/UPDATED
+    if (this.isMounted()) {
+      this.callHook(BEFOREUPDATE)
+      callback = () => {
+        cb && cb()
+        this.callHook(UPDATED)
+        renderTask && renderTask.resolve()
+      }
+    }
+    if (!this._vnode) {
+      this._vnode = diffAndCloneA(vnode).clone
+      pauseTracking()
+      // 触发渲染时暂停数据响应追踪，避免误收集到子组件的数据依赖
+      this.target.__render({ r: vnode }, callback)
+      resetTracking()
+    } else {
+      const result = diffAndCloneA(vnode, this._vnode)
+      this._vnode = result.clone
+      let diffPath = result.diffData
+      if (!isEmptyObject(diffPath)) {
+        // 构造 diffPath 数据
+        diffPath = Object.keys(diffPath).reduce((preVal, curVal) => {
+          const key = 'r' + curVal
+          preVal[key] = diffPath[curVal]
+          return preVal
+        }, {})
+        pauseTracking()
+        this.target.__render(diffPath, callback)
+        resetTracking()
+      }
+    }
+  }
+
   doRender (data, cb) {
     if (typeof this.target.__render !== 'function') {
       error('Please specify a [__render] function to render view.', this.options.mpxFileResource)
@@ -475,6 +648,7 @@ export default class MpxProxy {
       return
     }
 
+    pauseTracking()
     // 使用forceUpdateData后清空
     if (!isEmptyObject(this.forceUpdateData)) {
       data = mergeData({}, data, this.forceUpdateData)
@@ -502,15 +676,55 @@ export default class MpxProxy {
     }
 
     this.target.__render(data, callback)
+    resetTracking()
+  }
+
+  toggleRecurse (allowed) {
+    if (this.effect && this.update) this.effect.allowRecurse = this.update.allowRecurse = allowed
+  }
+
+  updatePreRender () {
+    this.toggleRecurse(false)
+    pauseTracking()
+    flushPreFlushCbs(this)
+    resetTracking()
+    this.toggleRecurse(true)
   }
 
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
+    const _i = this.target._i.bind(this.target)
+    const _c = this.target._c.bind(this.target)
+    const _r = this.target._r.bind(this.target)
+    const _sc = this.target._sc.bind(this.target)
+    const _g = this.target._g?.bind(this.target)
+    const __getAst = this.target.__getAst?.bind(this.target)
+    const moduleId = this.target.__moduleId
+    const dynamicTarget = this.target.__dynamic
+
     const effect = this.effect = new ReactiveEffect(() => {
+      // pre render for props update
+      if (this.propsUpdatedFlag) {
+        this.updatePreRender()
+      }
+      if (dynamicTarget || __getAst) {
+        try {
+          const ast = getAst(__getAst, moduleId)
+          return _r(false, _g(ast, moduleId))
+        } catch (e) {
+          e.errType = 'mpx-dynamic-render'
+          e.errmsg = e.message
+          if (!__mpx_dynamic_runtime__) {
+            return error('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.', this.options.mpxFileResource, e)
+          } else {
+            return error('Dynamic rendering error', this.options.mpxFileResource, e)
+          }
+        }
+      }
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender()
+          return this.target.__injectedRender(_i, _c, _r, _sc)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()
@@ -520,10 +734,10 @@ export default class MpxProxy {
       }
     }, () => queueJob(update), this.scope)
 
-    const update = this.update = this.effect.run.bind(this.effect)
+    const update = this.update = effect.run.bind(effect)
     update.id = this.uid
     // render effect允许自触发
-    effect.allowRecurse = update.allowRecurse = true
+    this.toggleRecurse(true)
     update()
   }
 
@@ -553,6 +767,20 @@ export default class MpxProxy {
       this.forceUpdateAll = true
     }
 
+    if (isReact) {
+      // rn中不需要setdata
+      this.forceUpdateData = {}
+      this.forceUpdateAll = false
+      if (this.update) {
+        options.sync ? this.update() : queueJob(this.update)
+      }
+      if (callback) {
+        callback = callback.bind(this.target)
+        options.sync ? callback() : nextTick(callback)
+      }
+      return
+    }
+
     if (this.effect) {
       options.sync ? this.effect.run() : this.effect.update()
     } else {
@@ -580,7 +808,9 @@ export default class MpxProxy {
 
 export let currentInstance = null
 
-export const getCurrentInstance = () => currentInstance?.target
+export const getCurrentInstance = () => {
+  return currentInstance
+}
 
 export const setCurrentInstance = (instance) => {
   currentInstance = instance
@@ -617,6 +847,8 @@ export const onLoad = createHook(ONLOAD)
 export const onShow = createHook(ONSHOW)
 export const onHide = createHook(ONHIDE)
 export const onResize = createHook(ONRESIZE)
+export const onServerPrefetch = createHook(SERVERPREFETCH)
+export const onReactHooksExec = createHook(REACTHOOKSEXEC)
 export const onPullDownRefresh = createHook('__onPullDownRefresh__')
 export const onReachBottom = createHook('__onReachBottom__')
 export const onShareAppMessage = createHook('__onShareAppMessage__')

@@ -116,5 +116,6 @@ module.exports.pitch = async function (remainingRequest) {
     }
   }
 
+  if (!resultSource) buildInfo.isEmpty = true
   return resultSource
 }

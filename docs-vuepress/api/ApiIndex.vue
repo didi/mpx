@@ -40,6 +40,10 @@ const data = [
             text: 'webRouteConfig',
             anchor: '#webRouteConfig'
           },
+          {
+            text: 'webConfig',
+            anchor: '#webConfig'
+          },
         ]
       }
     ]
@@ -733,8 +737,8 @@ const data = [
             anchor: '#autoVirtualHostRules'
           },
           {
-            text: 'partialCompile',
-            anchor: '#partialCompile'
+            text: 'partialCompileRules',
+            anchor: '#partialCompileRules'
           },
         ]
       },

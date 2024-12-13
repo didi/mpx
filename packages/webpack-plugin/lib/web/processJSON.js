@@ -9,11 +9,13 @@ const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
+const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
-module.exports = function (json, {
+module.exports = function (jsonContent, {
   loaderContext,
+  ctorType,
   pagesMap,
   componentsMap
 }, rawCallback) {
@@ -26,6 +28,7 @@ module.exports = function (json, {
   const mpx = loaderContext.getMpx()
   const {
     mode,
+    srcMode,
     env,
     projectRoot
   } = mpx
@@ -58,7 +61,8 @@ module.exports = function (json, {
     customGetDynamicEntry (resource, type, outputPath, packageRoot) {
       return {
         resource,
-        outputPath: toPosix(path.join(packageRoot, outputPath)),
+        // 输出web时组件outputPath不需要拼接packageRoot
+        outputPath: type === 'page' ? toPosix(path.join(packageRoot, outputPath)) : outputPath,
         packageRoot
       }
     }
@@ -75,12 +79,36 @@ module.exports = function (json, {
     })
   }
 
-  if (!json) {
+  const isApp = ctorType === 'app'
+
+  if (!jsonContent) {
     return callback()
   }
-  // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON5.parse(json.content)
+    jsonObj = JSON5.parse(jsonContent)
+    // 处理runner
+    const rulesRunnerOptions = {
+      mode,
+      srcMode,
+      type: 'json',
+      waterfall: true,
+      warn: emitWarning,
+      error: emitError,
+      data: {
+        // polyfill global usingComponents
+        globalComponents: mpx.globalComponents
+      }
+    }
+
+    if (!isApp) {
+      rulesRunnerOptions.mainKey = ctorType
+    }
+
+    const rulesRunner = getRulesRunner(rulesRunnerOptions)
+
+    if (rulesRunner) {
+      rulesRunner(jsonObj)
+    }
   } catch (e) {
     return callback(e)
   }
@@ -262,7 +290,7 @@ module.exports = function (json, {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath } = {}) => {
+        processComponent(component, context, {}, (err, { resource, outputPath } = {}, { tarRoot } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           const { resourcePath, queryObj } = parseRequest(resource)
           componentsMap[resourcePath] = outputPath
@@ -272,7 +300,7 @@ module.exports = function (json, {
               isComponent: true,
               outputPath
             }),
-            async: queryObj.async
+            async: queryObj.async || tarRoot
           }
           callback()
         })
