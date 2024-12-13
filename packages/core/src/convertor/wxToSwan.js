@@ -1,8 +1,8 @@
 import { error, isDev } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 import { mergeLifecycle } from './mergeLifecycle'
-import * as wxLifecycle from '../platform/patch/wx/lifecycle'
-import * as swanLifecycle from '../platform/patch/swan/lifecycle'
+import * as wxLifecycle from '../platform/patch/lifecycle/index.wx'
+import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 
 const BEHAVIORS_MAP = {
   'wx://form-field': 'swan://form-field',
@@ -30,7 +30,7 @@ function notSupportTip (options) {
 
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
-  lifecycle2: mergeLifecycle(swanLifecycle.LIFECYCLE),
+  lifecycle2: mergeLifecycle(LIFECYCLE),
   pageMode: 'blend',
   support: true,
   lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,

@@ -19,7 +19,7 @@ import { warn } from '@mpxjs/utils'
 import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle, wrapChildren } from './utils'
+import { useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 
 export interface CheckboxGroupProps {
   name: string
@@ -64,10 +64,7 @@ const CheckboxGroup = forwardRef<
     flexWrap: 'wrap'
   }
 
-  const styleObj = {
-    ...defaultStyle,
-    ...style
-  }
+  const styleObj = extendObject({}, defaultStyle, style)
 
   const {
     hasSelfPercent,
@@ -80,7 +77,7 @@ const CheckboxGroup = forwardRef<
 
   const nodeRef = useRef(null)
 
-  useNodesRef(props, ref, nodeRef, { defaultStyle })
+  useNodesRef(props, ref, nodeRef, { style: normalStyle })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
@@ -119,12 +116,16 @@ const CheckboxGroup = forwardRef<
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      style: { ...normalStyle, ...layoutStyle },
-      ...layoutProps
-    },
-    [],
+    extendObject(
+      {
+        ref: nodeRef,
+        style: extendObject({}, normalStyle, layoutStyle)
+      },
+      layoutProps
+    ),
+    [
+      'name'
+    ],
     {
       layoutRef
     }
