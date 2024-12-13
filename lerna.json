@@ -1,3 +1,6 @@
 {
-  "version": "2.9.69"
+  "packages": [
+    "packages/*"
+  ],
+  "version": "2.9.69-alpha.1"
 }
