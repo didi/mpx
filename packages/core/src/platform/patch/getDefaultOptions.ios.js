@@ -514,11 +514,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-      const onLayout = useCallback(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
-      }, [])
+
+      useEffect(() => {
+        const unsubscribe = navigation.addListener('transitionEnd', (e) => {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        });
+        return unsubscribe;
+      }, [navigation]);
 
       const withKeyboardAvoidingView = (element) => {
         if (__mpx_mode__ === 'ios') {
@@ -568,10 +572,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
               ref: rootRef,
-              onLayout,
-              onTouchStart: () => {
+              _onTouchStart: () => {
                 ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
-              }
+              },
+              get onTouchStart() {
+                return this._onTouchStart
+              },
+              set onTouchStart(value) {
+                this._onTouchStart = value
+              },
             },
             createElement(RouteContext.Provider,
               {
