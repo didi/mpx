@@ -542,6 +542,24 @@ movable-view的可移动区域。
 1. 仅支持 type 为 2D
 1. image 组件进行缩放时，计算出来的宽高可能带有小数，在不同webview内核下渲染可能会被抹去小数部分
 
+##### web-view
+承载网页的容器。会自动铺满整个RN页面
+
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| src	    | String  |               | webview 指向网页的链接，如果需要对跳转的URL设定白名单可跳转，需要在业务跳转之前出来该逻辑
+| bindmessage	    | EventHandler  |               | 网页向RN通过 postMessage 传递数据
+| bindload	    | EventHandler  |               | 网页加载成功时候触发此事件
+| binderror	    | EventHandler  |               | 网页加载失败的时候触发此事件
+
+
+注意事项
+
+1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
+
 #### 自定义组件
 
 #### 样式规则
@@ -550,7 +568,10 @@ movable-view的可移动区域。
 
 #### 环境API
 
+
+<!-- WebviewAPI -->
 #### Webview API
+对于web-view组件打开的网页，想要跟RN通信，或者跳转到RN页面，提供了以下能力
 
 #### 其他使用限制
 如事件的target等
