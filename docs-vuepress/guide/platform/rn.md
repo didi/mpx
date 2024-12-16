@@ -2,17 +2,80 @@
 大致介绍
 
 ## 跨端样式定义
-
+RN 的样式的支持基本为 web 样式的一个子集，同时还有一些属性并未与 web 对齐，因此跨平台输出 RN 时，为了保障多端输出样式一致，可参考本文针对样式在RN上的支持情况来进行样式编写。
 ### CSS选择器
-
+RN 环境下仅支持以下类名选择器，不支持逗号之外的组合选择器。
+``` css
+/* 支持 */
+.classname {
+  color: red
+}
+.classA, .classB {
+    color: red
+}
+```
 ### 样式单位
-
+#### number 类型值
+RN 环境中，number 数值型单位支持 px rpx % 三种，web 下的 vw em rem 等不支持。
+#### color 类型值
+RN 环境支持大部分 css 中 color 定义方式，仅少量不支持，详情参考 RN 文档 https://reactnative.dev/docs/colors
 ### 文本样式继承
-@hjw
+RN中，文本节点需要通过Text组件来创建文本节点。文本节点需要给Text组件来设定[属性](https://reactnative.dev/docs/text-style-props)来调整文本的外观。
+Web/小程序中，文本节点可以通过div/view节点进行直接包裹，在div/view标签上设定对应文本样式即可。不需单独包裹text节点。
+框架抹平了此部分的差异，但仍因受限于RN内text的样式[继承原则的限制](https://reactnative.dev/docs/text#limited-style-inheritance)，通过在祖先节点来设置文本节点的样式仍旧无法生效。
+#### 示例代码
+``` html
+<view class="wrapper">
+    <view class="content">我是文本</view>
+</view>
+
+.wrapper {
+    font-size: 20px;
+}
+.content {
+    text-align: right;
+}
+/** 以上例子中
+web渲染效果: 字体的大小为20px，文字居右 
+转RN之后渲染效果: 字体大小为默认大小，文字居右
+*/
+```
+#### 使用说明
+1. 无法通过设置祖先节点的样式来修改文本节点的样式，只可通过修改直接包裹文本的节点来修改文本的样式。
+2. 框架处理将文本节点样式的默认值与web进行了对齐，如果需要按照RN的默认值来进行渲染，可设置`disable-default-style`为`true`
 ### 简写样式属性
-@hjw
+#### text-decoration
+##### 使用说明
+1.仅支持 text-decoration-line text-decoration-style text-decoration-color
+##### 示例代码
+```css
+margin: 0;
+margin: 0 auto;
+margin: 0 auto 10px;
+margin: 0 10px 10px 20px;
+```
+|缩写属性|支持的缩写格式|备注|
+| --- | --- | --- |
+|text-decoration|仅支持 text-decoration-line text-decoration-style text-decoration-color|顺序固定，值以空格分隔后按按顺序赋值|
+|margin|margin: 0;margin: 0 auto;margin: 0 auto 10px;margin: 0 10px 10px 20px;|-|
+|padding|padding: 0;padding: 0 auto;padding: 0 auto 10px;padding: 0 10px 10px 20px;|-|
+|text-shadow|仅支持 offset-x offset-y blur-radius color 排序|顺序固定，值以空格分隔后按按顺序赋值|
+|border|仅支持 border-width border-style border-color|顺序固定，值以空格分隔后按按顺序赋值|
+|box-shadow|仅支持 offset-x offset-y blur-radius color|顺序固定，值以空格分隔后按按顺序赋值|
+|flex|仅支持 flex-grow flex-shrink flex-basis|顺序固定，值以空格分隔后按按顺序赋值|
+|flex-flow|仅支持 flex-direction flex-wrap|顺序固定，值以空格分隔后按按顺序赋值|
+|border-radius|支持 border-top-left-radius border-top-right-radius border-bottom-right-radius border-bottom-left-radius|顺序固定，值以空格分隔后按按顺序赋值；当设置 border-radius: 0 相当于同时设置了4个方向|
+|background|仅支持 background-image  background-color background-repeat|顺序不固定，具体每个属性的支持情况参见上面具体属性支持的文档；
 ### CSS函数
-@hjw
+#### var()
+##### 使用说明
+##### 示例代码
+#### calc()
+#### 使用说明
+##### 示例代码
+#### env()
+#### 使用说明
+##### 示例代码
 ### 使用原子类
 
 ## 混合编写RN代码
