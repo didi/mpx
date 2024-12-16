@@ -222,18 +222,16 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   useEffect(() => {
     if (scrollIntoView && __selectRef && snapScrollIntoView.current !== scrollIntoView) {
       snapScrollIntoView.current = scrollIntoView || ''
-      setTimeout(() => {
-        const refs = __selectRef(`#${scrollIntoView}`, 'node')
-        if (refs) {
-          const { nodeRef } = refs.getNodeInstance()
-          nodeRef.current?.measureLayout(
-            scrollViewRef.current,
-            (left: number, top:number) => {
-              scrollToOffset(left, top)
-            }
-          )
-        }
-      })
+      const refs = __selectRef(`#${scrollIntoView}`, 'node')
+      if (refs) {
+        const { nodeRef } = refs.getNodeInstance()
+        nodeRef.current?.measureLayout(
+          scrollViewRef.current,
+          (left: number, top:number) => {
+            scrollToOffset(left, top)
+          }
+        )
+      }
     }
   }, [scrollIntoView])
 
