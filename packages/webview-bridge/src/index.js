@@ -96,19 +96,6 @@ const webviewBridge = {
   }
 }
 
-function filterData (data) {
-  if (Object.prototype.toString.call(data) !== '[object Object]') {
-    return data
-  }
-  const newData = {}
-  for (const item in data) {
-    if (typeof data[item] !== 'function') {
-      newData[item] = data[item]
-    }
-  }
-  return newData
-}
-
 function postMessage (type, data = {}) {
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId
@@ -125,7 +112,7 @@ function postMessage (type, data = {}) {
     const postParams = {
       type,
       callbackId,
-      payload: filterData(data)
+      payload: data
     }
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid
@@ -133,7 +120,7 @@ function postMessage (type, data = {}) {
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams))
     } else {
-      window.parent.postMessage && window.parent.postMessage(postParams, '*')
+      window.parent.postMessage && window.parent.postMessage(JSON.stringify(postParams), '*')
     }
   } else {
     data({
