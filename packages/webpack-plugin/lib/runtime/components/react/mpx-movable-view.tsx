@@ -518,28 +518,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const catchEventHandlers = injectCatchEvent(props)
   const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
-  // return (
-  //   <GestureDetector gesture={gesture}>
-  //     <Animated.View
-  //       ref={nodeRef}
-  //       onLayout={onLayout}
-  //       style={[innerStyle, animatedStyles, layoutStyle]}
-  //       {...catchEventHandlers}
-  //     >
-  //       {
-  //         wrapChildren(
-  //           props,
-  //           {
-  //             hasVarDec,
-  //             varContext: varContextRef.current,
-  //             textStyle,
-  //             textProps
-  //           }
-  //         )
-  //       }
-  //     </Animated.View>
-  //   </GestureDetector>
-  // )
+
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,
     extendObject({
