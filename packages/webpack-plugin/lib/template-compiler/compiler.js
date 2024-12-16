@@ -1227,7 +1227,8 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      modifyAttr(el, name, `{{${value}}}`)
+      const { result } = parseMustacheWithContext(value)
+      modifyAttr(el, name, `{{this[${result}]}}`)
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
@@ -2063,16 +2064,22 @@ function processWrapTextReact (el, options, meta) {
   if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('mpx-simple-text')
     wrapper.isBuiltIn = true
-    const dataSetAttrs = []
+    const inheritAttrs = []
     parent.attrsList.forEach(({ name, value }) => {
       if (/^data-/.test(name)) {
-        dataSetAttrs.push({
+        inheritAttrs.push({
           name,
           value
         })
       }
+      if (/^id$/.test(name)) {
+        inheritAttrs.push({
+          name: 'parentId',
+          value
+        })
+      }
     })
-    addAttrs(wrapper, dataSetAttrs)
+    addAttrs(wrapper, inheritAttrs)
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
     processBuiltInComponents(wrapper, meta)
