@@ -2,9 +2,28 @@
 大致介绍
 
 ## 跨端样式定义
-RN 的样式的支持基本为 web 样式的一个子集，同时还有一些属性并未与 web 对齐，因此跨平台输出 RN 时，为了保障多端输出样式一致，可参考本文针对样式在RN上的支持情况来进行样式编写。
+基本为 web 样式的一个子集，
+RN 样式属性和 CSS 样式属性是相交关系，RN 有少部分样式属性（比如 tintColor、writingDirection 等） CSS 不支持，CSS 也有部分样式属性 RN 不支持（比如 clip-path、animation、transition 等）。
+
+因此，一方面在我们进行跨平台开发时，跨平台代码需要尽量使用功能的交集；另一方面为了减少开发适配的成本，Mpx 内部也对 RN 的样式作了部分抹平。
+
+具体工作分为两大类有：
+
+**编译时的class类样式转化**
+- 属性名转驼峰
+- 单位的校验和对齐
+- 过滤 RN 不支持的属性和属性值
+- 简写转换
+- 样式属性差异转换和拉齐
+
+**运行时的style样式处理**
+- 属性名转驼峰
+- 单位的计算和处理
+- 100% 计算
+- css func 处理，包括 env()、calc()、var()
+
 ### CSS选择器
-RN 环境下仅支持以下类名选择器，不支持逗号之外的组合选择器。
+RN 环境下仅支持以下类选择器，不支持逗号之外的组合选择器。
 ``` css
 /* 支持 */
 .classname {
@@ -17,16 +36,25 @@ RN 环境下仅支持以下类名选择器，不支持逗号之外的组合选�
 ### 样式单位
 #### number 类型值
 RN 环境中，number 数值型单位支持 px rpx % 三种，web 下的 vw em rem 等不支持。
+Todo: 支持的单位以及%分别是相对自己还是父级的某属性梳理补充
 #### color 类型值
 RN 环境支持大部分 css 中 color 定义方式，仅少量不支持，详情参考 RN 文档 https://reactnative.dev/docs/colors
+Todo: 不支持的颜色形式补充
 ### 文本样式继承
-RN中，文本节点需要通过Text组件来创建文本节点。文本节点需要给Text组件来设定[属性](https://reactnative.dev/docs/text-style-props)来调整文本的外观。
-Web/小程序中，文本节点可以通过div/view节点进行直接包裹，在div/view标签上设定对应文本样式即可。不需单独包裹text节点。
-框架抹平了此部分的差异，但仍因受限于RN内text的样式[继承原则的限制](https://reactnative.dev/docs/text#limited-style-inheritance)，通过在祖先节点来设置文本节点的样式仍旧无法生效。
+Web/小程序中，文本节点可以通过 div/view 节点进行直接包裹，在 div/view 节点上也可以直接设定对应文本样式。
+但是在RN中，必须通过 Text 来创建文本节点，[文本样式属性](https://reactnative.dev/docs/text-style-props)只有设置给 Text 节点才能生效。
+Mpx 框架抹平了这部分的差异，在使用 Mpx 转 RN 时，我们可以使用 view 节点直接包裹文本，也可以在 view 节点上设置文本样式作用到直接子 text 节点上。
+但仍因受限于[RN内 text 的样式继承原则的限制](https://reactnative.dev/docs/text#limited-style-inheritance)，只有 view 节点下的子 text 节点可以继承 view 节点上的文本样式，且 text 节点之间可以继承。
+具体参考以下代码：
 #### 示例代码
 ``` html
+<!-- 示例1 -->
 <view class="wrapper">
-    <view class="content">我是文本</view>
+   文本1
+   <text class="content">文本2</text>
+   <text class="content"><text>文本3<text/></text>
+   <view class="content">文本4</view>
+   <view class="content"><view>文本5</view></view>
 </view>
 
 .wrapper {
@@ -35,47 +63,102 @@ Web/小程序中，文本节点可以通过div/view节点进行直接包裹，�
 .content {
     text-align: right;
 }
-/** 以上例子中
-web渲染效果: 字体的大小为20px，文字居右 
-转RN之后渲染效果: 字体大小为默认大小，文字居右
-*/
+<!-- 
+小程序&web: 
+- 文本1-6 均为字体大小20px，文字居右
+RN: 
+- 文本1 字体大小20px
+- 文本2 字体大小20px，文字居右
+- 文本3 字体大小20px，文字居右
+- 文本4 文字居右
+- 文本5 字体&居中未生效
+-->
 ```
-#### 使用说明
-1. 无法通过设置祖先节点的样式来修改文本节点的样式，只可通过修改直接包裹文本的节点来修改文本的样式。
-2. 框架处理将文本节点样式的默认值与web进行了对齐，如果需要按照RN的默认值来进行渲染，可设置`disable-default-style`为`true`
+> **使用说明**
+> 1. 只有父级 view 节点的文本样式可以被子 text 节点继承；
+> 2. view 节点直接包裹文本实际上等同于 view>text>文本，Mpx 框架在编译时若检测到 view 节点直接包裹文本会自动添加一层 text 节点；
+> 3. 多级 text 节点可实现文本样式的继承，比如 text>text>文本 ；
+> 4. 若不想使用 Mpx 内部实现的 view>text>文本 这种文本样式继承，可设置`disable-default-style=true` 来关闭该继承逻辑；
 ### 简写样式属性
-#### text-decoration
-##### 使用说明
-1.仅支持 text-decoration-line text-decoration-style text-decoration-color
-##### 示例代码
-```css
-margin: 0;
-margin: 0 auto;
-margin: 0 auto 10px;
-margin: 0 10px 10px 20px;
-```
-|缩写属性|支持的缩写格式|备注|
-| --- | --- | --- |
-|text-decoration|仅支持 text-decoration-line text-decoration-style text-decoration-color|顺序固定，值以空格分隔后按按顺序赋值|
-|margin|margin: 0;margin: 0 auto;margin: 0 auto 10px;margin: 0 10px 10px 20px;|-|
-|padding|padding: 0;padding: 0 auto;padding: 0 auto 10px;padding: 0 10px 10px 20px;|-|
-|text-shadow|仅支持 offset-x offset-y blur-radius color 排序|顺序固定，值以空格分隔后按按顺序赋值|
-|border|仅支持 border-width border-style border-color|顺序固定，值以空格分隔后按按顺序赋值|
-|box-shadow|仅支持 offset-x offset-y blur-radius color|顺序固定，值以空格分隔后按按顺序赋值|
-|flex|仅支持 flex-grow flex-shrink flex-basis|顺序固定，值以空格分隔后按按顺序赋值|
-|flex-flow|仅支持 flex-direction flex-wrap|顺序固定，值以空格分隔后按按顺序赋值|
-|border-radius|支持 border-top-left-radius border-top-right-radius border-bottom-right-radius border-bottom-left-radius|顺序固定，值以空格分隔后按按顺序赋值；当设置 border-radius: 0 相当于同时设置了4个方向|
-|background|仅支持 background-image  background-color background-repeat|顺序不固定，具体每个属性的支持情况参见上面具体属性支持的文档；
+在 Mpx 内对于通过 class 类来定义的样式会按照 RN 的样式规则在编译处理一遍，其中最重要的一部分就是将 RN 不支持简写属性按约定的规则转换成 RN 能支持多属性结构。
+
+现已支持的简写属性如下:
+- [text-shadow]()
+- [text-decoration]()
+- [border]()
+- [border-left]()
+- [border-right]()
+- [border-top]()
+- [border-bottom]()
+- [border-radius]()
+- [border-width]()
+- [border-color]()
+- [box-shadow]()
+- [flex]()
+- [flex-flow]()
+- [margin]()
+- [padding]()
+- [background]()
+
+> **注意事项**：
+> 考虑到运行时转化的性能开销问题，简写能力只在编译处理时转化，所以 class 类上设置时简写属性会处理转化的，而在 style 属性上使用了对应的简写是不会转化的，若对应的简写属性 RN 不支持，那在 style 上使用时需要分开写。
+
+[//]: # (表格形式先注释)
+[//]: # ()
+[//]: # (|简写属性| 文档       |)
+
+[//]: # (|---|----------|)
+
+[//]: # (|text-shadow|链一下api文档|)
+
+[//]: # (|text-decoration|          |)
+
+[//]: # (|border|          |)
+
+[//]: # (|border-left|          |)
+
+[//]: # (|border-right|          |)
+
+[//]: # (|border-top|          |)
+
+[//]: # (|border-bottom|          |)
+
+[//]: # (|flex|          |)
+
+[//]: # (|flex-flow|          |)
+
+[//]: # (|border-radius|          |)
+
+[//]: # (|border-width|          |)
+
+[//]: # (|border-color|          |)
+
+[//]: # (|margin|          |)
+
+[//]: # (|padding|          |)
+
+[//]: # (|box-shadow|          |)
+[//]: # (|background|          |)
+
 ### CSS函数
 #### var()
-##### 使用说明
-##### 示例代码
+具体处理逻辑
+```css
+/* 代码示意 */
+```
+> 注意事项
 #### calc()
-#### 使用说明
-##### 示例代码
+具体处理逻辑
+```css
+/* 代码示意 */
+```
+> 注意事项
 #### env()
-#### 使用说明
-##### 示例代码
+具体处理逻辑
+```css
+/* 代码示意 */
+```
+> 注意事项
 ### 使用原子类
 
 ## 混合编写RN代码
@@ -93,6 +176,7 @@ margin: 0 10px 10px 20px;
 ### 自定义组件
 
 ### 样式规则
+Todo 补充细节
 #### position
 设置元素的定位样式
 ##### 值类型
@@ -212,6 +296,7 @@ flex-shrink: 10rpx;
 flex-shrink: 20%;
 ```
 #### flex
+Todo 重要
 flex-grow flex-shrink flex-basis 的缩写
 ##### 值类型
 按顺序分别对应 flex-grow flex-shrink flex-basis 的值类型，flex: number >= 0 (flex-grow) number >= 0 (flex-shrink) px,rpx,% (flex-basis)
@@ -472,6 +557,10 @@ background: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
 /* offset-x | offset-y | blur-radius | color */
 box-shadow: 0 1px 3px rgba(139,0,0,0.32);
 ```
+> 注意事项
+> - android 不支持
+> - ios 也只支持 offset-x | offset-y | blur-radius | color, 不支持 spread-radius
+> - react@0.76 支持了 box-shadow
 #### backface-visibility
 指定当 <image> 背面朝向观察者时是否可见，仅 <image> 支持
 ##### 值类型
