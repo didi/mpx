@@ -106,7 +106,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     scrollViewRef.current.scrollTo({
       x: 0,
       y: itemRawH * initialIndex,
-      animated: true
+      animated: false
     })
   }, [itemRawH, initialIndex])
 
@@ -137,7 +137,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const onContentSizeChange = (_w: number, h: number) => {
     const y = itemRawH * initialIndex
     if (y <= h) {
-      scrollViewRef.current?.scrollTo({ x: 0, y, animated: true })
+      scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
     }
   }
 
