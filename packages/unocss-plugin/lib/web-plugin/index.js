@@ -119,7 +119,6 @@ function WebpackPlugin (configOrPath, defaults) {
               }
             }
           }
-          debugger
           const result = await uno.generate(tokens, { minify: true })
           const files = Object.keys(compilation.assets)
           for (const file of files) {
