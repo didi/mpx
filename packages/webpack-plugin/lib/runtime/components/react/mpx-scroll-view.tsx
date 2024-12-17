@@ -220,22 +220,32 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }, [refresherTriggered])
 
   useEffect(() => {
-    if (scrollIntoView && __selectRef && snapScrollIntoView.current !== scrollIntoView) {
+    if (scrollIntoView && __selectRef) {
       snapScrollIntoView.current = scrollIntoView || ''
       setTimeout(() => {
-        const refs = __selectRef(`#${scrollIntoView}`, 'node')
-        if (refs) {
-          const { nodeRef } = refs.getNodeInstance()
-          nodeRef.current?.measureLayout(
-            scrollViewRef.current,
-            (left: number, top:number) => {
-              scrollToOffset(left, top)
-            }
-          )
-        }
+        handleScrollIntoView()
       })
     }
+  }, [])
+
+  useEffect(() => {
+    if (scrollIntoView && __selectRef && snapScrollIntoView.current !== scrollIntoView) {
+      snapScrollIntoView.current = scrollIntoView || ''
+      handleScrollIntoView()
+    }
   }, [scrollIntoView])
+
+  function handleScrollIntoView () {
+    const refs = __selectRef!(`#${scrollIntoView}`, 'node')
+    if (!refs) return
+    const { nodeRef } = refs.getNodeInstance()
+    nodeRef.current?.measureLayout(
+      scrollViewRef.current,
+      (left: number, top:number) => {
+        scrollToOffset(left, top)
+      }
+    )
+  }
 
   function selectLength (size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width
