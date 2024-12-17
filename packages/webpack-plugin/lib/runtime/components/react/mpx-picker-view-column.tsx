@@ -1,6 +1,6 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect } from 'react'
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
-import Reanimated, { AnimatedRef, scrollTo, useAnimatedRef, useAnimatedScrollHandler, useDerivedValue, useScrollViewOffset, useSharedValue } from 'react-native-reanimated'
+import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
 import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerOverlay from './pickerViewOverlay'
@@ -68,6 +68,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
+  const maxScrollViewWidth = useRef(-1)
   const touching = useRef(false)
   const scrolling = useRef(false)
   const activeIndex = useRef(initialIndex)
@@ -128,8 +129,15 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScrollViewLayout = (e: LayoutChangeEvent) => {
     const { width } = e.nativeEvent.layout
-    const widthInt = Math.round(width)
-    if (width !== widthInt && widthInt !== scrollViewWidth) {
+    const widthInt = Math.ceil(width)
+    if (widthInt !== scrollViewWidth) {
+      const maxW = maxScrollViewWidth.current
+      if (maxW !== -1 && widthInt > maxW) {
+        return
+      }
+      if (maxW === -1) {
+        maxScrollViewWidth.current = Math.ceil(widthInt * 1.5)
+      }
       setScrollViewWidth(widthInt)
     }
   }
