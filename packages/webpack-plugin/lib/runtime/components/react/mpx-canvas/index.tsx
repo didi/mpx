@@ -249,31 +249,30 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   if (Platform.OS === 'android') {
     const isAndroid9 = Platform.Version >= 28
-    return (
-      <View {...innerProps}>
-        <WebView
-         ref={(element) => {
-           if (canvasRef.current) {
-             canvasRef.current.webview = element
-           }
-         }}
-          style={[
-            isAndroid9 ? stylesheet.webviewAndroid9 : stylesheet.webview,
-            { height, width }
-          ]}
-          source={{ html }}
-          originWhitelist={originWhitelist}
-          onMessage={onMessage}
-          onLoad={onLoad}
-          overScrollMode="never"
-          mixedContentMode="always"
-          scalesPageToFit={false}
-          javaScriptEnabled
-          domStorageEnabled
-          thirdPartyCookiesEnabled
-          allowUniversalAccessFromFileURLs
-        />
-      </View>
+    return createElement(View, innerProps, createElement(
+      WebView,
+      {
+        ref: (element) => {
+          if (canvasRef.current) {
+            canvasRef.current.webview = element
+          }
+        },
+        style: [
+          isAndroid9 ? stylesheet.webviewAndroid9 : stylesheet.webview,
+          { height, width }
+        ],
+        source: { html },
+        originWhitelist: originWhitelist,
+        onMessage: onMessage,
+        onLoad: onLoad,
+        overScrollMode: 'never',
+        mixedContentMode: 'always',
+        scalesPageToFit: false,
+        javaScriptEnabled: true,
+        domStorageEnabled: true,
+        thirdPartyCookiesEnabled: true,
+        allowUniversalAccessFromFileURLs: true
+      })
     )
   }
 
