@@ -1,5 +1,5 @@
 import { filters } from '@unocss/preset-wind/rules'
-import { findRawRules, ruleFallback, isFunction, transformEmptyRule } from  '../../utils/index.js'
+import { findRawRules, ruleFallback, isFunction, transformEmptyRule } from '../../utils/index.js'
 
 // todo filter 只支持部分属性
 const newFilters = findRawRules([

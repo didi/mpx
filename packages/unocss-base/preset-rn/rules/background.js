@@ -1,5 +1,5 @@
-import { findRawRules, transformEmptyRule } from  '../../utils/index.js'
-import { backgroundStyles }  from '@unocss/preset-wind/rules'
+import { findRawRules, transformEmptyRule } from '../../utils/index.js'
+import { backgroundStyles } from '@unocss/preset-wind/rules'
 
 // todo background-position 剔除
 const NewBackgroundRules = findRawRules([

@@ -1,13 +1,13 @@
-import WebpackSources from 'webpack-sources';
-import VirtualModulesPlugin from 'webpack-virtual-modules';
-import * as nodePath from 'node:path';
-import * as process from 'process';
-import * as fs from 'fs';
+import WebpackSources from 'webpack-sources'
+import VirtualModulesPlugin from 'webpack-virtual-modules'
+import * as nodePath from 'node:path'
+import * as process from 'process'
+import * as fs from 'fs'
 import {
   createContext,
   getPath,
   normalizeAbsolutePath
-} from './utils.js';
+} from './utils.js'
 import {
   LAYER_MARK_ALL,
   LAYER_PLACEHOLDER_RE,
@@ -15,11 +15,11 @@ import {
   getLayerPlaceholder,
   resolveId,
   resolveLayer
-} from './consts.js';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+} from './consts.js'
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const PLUGIN_NAME = 'unocss:webpack'
 const VIRTUAL_MODULE_PREFIX = nodePath.resolve(process.cwd(), '_virtual_')
@@ -103,6 +103,8 @@ function WebpackPlugin (configOrPath, defaults) {
       })
 
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
+        console.log(12313, !!compilation)
+
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
           const ctx = compiler.__unoCtx
           const uno = ctx.uno

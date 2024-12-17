@@ -1,6 +1,6 @@
-import MagicString from 'magic-string';
-import transformerDirectives from '@unocss/transformer-directives';
-import { getReplaceSource } from './source.js';
+import MagicString from 'magic-string'
+import transformerDirectives from '@unocss/transformer-directives'
+import { getReplaceSource } from './source.js'
 
 const escapedReg = /\\(.)/g
 

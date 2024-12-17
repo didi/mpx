@@ -1,13 +1,13 @@
-import WebpackSources from 'webpack-sources';
-import * as nodePath from 'node:path';
-import { createContext, normalizeAbsolutePath } from '../web-plugin/utils.js';
-import { RESOLVED_ID_RE } from '../web-plugin/consts.js';
-import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js';
-import shallowStringify from '@mpxjs/webpack-plugin/lib/utils/shallow-stringify.js';
-import { fileURLToPath } from 'url';
+import WebpackSources from 'webpack-sources'
+import * as nodePath from 'node:path'
+import { createContext, normalizeAbsolutePath } from '../web-plugin/utils.js'
+import { RESOLVED_ID_RE } from '../web-plugin/consts.js'
+import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js'
+import shallowStringify from '@mpxjs/webpack-plugin/lib/utils/shallow-stringify.js'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url); // 当前文件的绝对路径
-const __dirname = nodePath.dirname(__filename);       // 当前文件的目录路径
+const __filename = fileURLToPath(import.meta.url) // 当前文件的绝对路径
+const __dirname = nodePath.dirname(__filename) // 当前文件的目录路径
 
 const PLUGIN_NAME = 'unocss:webpack'
 

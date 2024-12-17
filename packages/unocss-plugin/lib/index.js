@@ -1,39 +1,39 @@
-import * as path from 'path';
-import { minimatch } from 'minimatch';
-import * as unoConfig from '@unocss/config';
-import * as core from '@unocss/core';
-import * as mpxConfig from '@mpxjs/webpack-plugin/lib/config.js';
-import toPosix from '@mpxjs/webpack-plugin/lib/utils/to-posix.js';
-import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js';
-import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js';
-import set from '@mpxjs/webpack-plugin/lib/utils/set.js';
-import env from '@mpxjs/webpack-plugin/lib/utils/env.js';
-import MpxWebpackPlugin from '@mpxjs/webpack-plugin';
-import { UnoCSSWebpackPlugin } from './web-plugin/index.js';
-import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js';
-import transformerDirectives from '@unocss/transformer-directives';
-import * as transformerVariantGroup from '@unocss/transformer-variant-group';
+import * as path from 'path'
+import { minimatch } from 'minimatch'
+import * as unoConfig from '@unocss/config'
+import * as core from '@unocss/core'
+import * as mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
+import toPosix from '@mpxjs/webpack-plugin/lib/utils/to-posix.js'
+import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
+import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
+import set from '@mpxjs/webpack-plugin/lib/utils/set.js'
+import env from '@mpxjs/webpack-plugin/lib/utils/env.js'
+import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
+import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
+import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js'
+import transformerDirectives from '@unocss/transformer-directives'
+import * as transformerVariantGroup from '@unocss/transformer-variant-group'
 import {
   parseClasses,
   parseStrings,
   parseMustache,
   stringifyAttr,
   parseComments,
-  parseCommentConfig,
-} from './parser.js';
+  parseCommentConfig
+} from './parser.js'
 import {
   getReplaceSource,
   getConcatSource,
   getRawSource
-} from './source.js';
+} from './source.js'
 import {
   transformStyle,
   buildAliasTransformer,
   transformGroups,
   mpEscape,
-  cssRequiresTransform,
-} from './transform.js';
-import * as platformPreflightsMap from './platform.js';
+  cssRequiresTransform
+} from './transform.js'
+import * as platformPreflightsMap from './platform.js'
 
 const { has } = set
 const { isWeb, isReact } = env
