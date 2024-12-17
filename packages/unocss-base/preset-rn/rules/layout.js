@@ -1,4 +1,4 @@
-const { ruleCallback, ruleFallback } = require('../../utils')
+import { ruleCallback, ruleFallback } from '../../utils/index.js'
 
 const overflows = [
   [/^(?:overflow|of)-(.+)$/, ([match, v], { generator }) => {
@@ -13,6 +13,6 @@ const overflows = [
   [/^(?:overflow|of)-([xy])-(.+)$/, ruleCallback]
 ]
 
-module.exports = [
+export default [
   ...overflows
 ]

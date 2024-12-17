@@ -1,7 +1,7 @@
-const rules = require('./rules')
-const varaints = require('./variants')
+import rules from './rules/index.js'
+import varaints from './variants/index.js'
 
-module.exports = {
+export default {
   rules,
   varaints
 }

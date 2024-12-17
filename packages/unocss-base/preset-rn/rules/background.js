@@ -1,5 +1,5 @@
-const { findRawRules, transformEmptyRule } = require('../../utils/index')
-const { backgroundStyles } = require('@unocss/preset-wind/rules')
+import { findRawRules, transformEmptyRule } from '../../utils/index.js'
+import { backgroundStyles } from '@unocss/preset-wind/rules'
 
 // todo background-position 剔除
 const NewBackgroundRules = findRawRules([
@@ -15,6 +15,6 @@ const NewBackgroundRules = findRawRules([
   /^bg-clip-.*/
 ], backgroundStyles)
 
-module.exports = [
+export default [
   ...transformEmptyRule(NewBackgroundRules)
 ]

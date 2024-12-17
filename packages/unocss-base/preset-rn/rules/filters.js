@@ -1,5 +1,5 @@
-const { filters } = require('@unocss/preset-wind/rules')
-const { findRawRules, ruleFallback, isFunction, transformEmptyRule } = require('../../utils')
+import { filters } from '@unocss/preset-wind/rules'
+import { findRawRules, ruleFallback, isFunction, transformEmptyRule } from '../../utils/index.js'
 
 // todo filter 只支持部分属性
 const newFilters = findRawRules([
@@ -26,7 +26,7 @@ const backdropFilter = findRawRules([
   /^backdrop-filter-*/
 ], filters)
 
-module.exports = [
+export default [
   ...newFilters,
   ...transformEmptyRule(backdropFilter)
 ]

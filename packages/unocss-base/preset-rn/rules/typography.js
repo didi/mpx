@@ -1,12 +1,12 @@
-const { transformEmptyRule, ruleFallback } = require('../../utils/index')
-const {
+import { transformEmptyRule, ruleFallback } from '../../utils/index.js'
+import {
   writingModes,
   writingOrientations,
   hyphens
   // fontVariantNumericBase,
   // fontVariantNumeric
-} = require('@unocss/preset-wind/rules')
-const {
+} from '@unocss/preset-wind/rules'
+import {
   textStrokes,
   textIndents,
   tabSizes,
@@ -16,7 +16,7 @@ const {
   textWraps,
   fontSmoothings,
   verticalAligns
-} = require('@unocss/preset-mini/rules')
+} from '@unocss/preset-mini/rules'
 
 // decoration
 const textDecorations = [
@@ -52,7 +52,7 @@ const newVerticalAlign = verticalAligns.map(item => {
   }]
 })
 
-module.exports = [
+export default [
   ...transformEmptyRule(
     textIndents,
     textStrokes,

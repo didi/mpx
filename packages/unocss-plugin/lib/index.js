@@ -1,35 +1,43 @@
-const path = require('path')
-const { minimatch } = require('minimatch')
-const unoConfig = require('@unocss/config')
-const core = require('@unocss/core')
-const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
-const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
-const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
-const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
-const { has } = require('@mpxjs/webpack-plugin/lib/utils/set')
-const { isWeb, isReact } = require('@mpxjs/webpack-plugin/lib/utils/env')
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-const UnoCSSWebpackPlugin = require('./web-plugin')
-const UnoCSSRNWebpackPlugin = require('./rn-plugin')
-const transformerDirectives = require('@unocss/transformer-directives').default
-const transformerVariantGroup = require('@unocss/transformer-variant-group')
-const {
+import * as path from 'path'
+import { minimatch } from 'minimatch'
+import * as unoConfig from '@unocss/config'
+import * as core from '@unocss/core'
+import * as mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
+import toPosix from '@mpxjs/webpack-plugin/lib/utils/to-posix.js'
+import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
+import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
+import set from '@mpxjs/webpack-plugin/lib/utils/set.js'
+import env from '@mpxjs/webpack-plugin/lib/utils/env.js'
+import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
+import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
+import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js'
+import transformerDirectives from '@unocss/transformer-directives'
+import * as transformerVariantGroup from '@unocss/transformer-variant-group'
+import {
   parseClasses,
   parseStrings,
   parseMustache,
   stringifyAttr,
   parseComments,
   parseCommentConfig
-} = require('./parser')
-const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
-const {
+} from './parser.js'
+import {
+  getReplaceSource,
+  getConcatSource,
+  getRawSource
+} from './source.js'
+import {
   transformStyle,
   buildAliasTransformer,
   transformGroups,
   mpEscape,
   cssRequiresTransform
-} = require('./transform')
-const platformPreflightsMap = require('./platform')
+} from './transform.js'
+import * as platformPreflightsMap from './platform.js'
+
+const { has } = set
+const { isWeb, isReact } = env
+
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
 function filterFile (file, scan) {
@@ -527,4 +535,4 @@ class MpxUnocssPlugin {
   }
 }
 
-module.exports = MpxUnocssPlugin
+export default MpxUnocssPlugin
