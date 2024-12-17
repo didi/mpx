@@ -72,14 +72,14 @@ function MpxEvent (layer) {
             dataset: parseDataset(event.target.dataset)
         })
         extendEvent(touchEvent, {
-          timeStamp: event.timeStamp,
-          changedTouches,
-          touches: changedTouches,
-          detail: {
-            // pc端点击事件可能没有changedTouches，所以直接从 event 中取
-            x: changedTouches[0]?.pageX || event.pageX || 0,
-            y: changedTouches[0]?.pageY || event.pageY || 0
-          }
+            timeStamp: event.timeStamp,
+            changedTouches,
+            touches: changedTouches,
+            detail: {
+                // pc端点击事件可能没有changedTouches，所以直接从 event 中取
+                x: changedTouches[0]?.pageX || event.pageX || 0,
+                y: changedTouches[0]?.pageY || event.pageY || 0
+            }
         })
         targetElement && targetElement.dispatchEvent(touchEvent)
     }
