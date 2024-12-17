@@ -93,7 +93,7 @@ function WebpackPlugin (configOrPath, defaults) {
         })
       })
 
-      compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
+      compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
         const mpx = compilation.__mpx__
         mpx.unoCtx = compiler.__unoCtx.uno
       })

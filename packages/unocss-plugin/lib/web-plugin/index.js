@@ -1,4 +1,4 @@
-import * as WebpackSources from 'webpack-sources';
+import WebpackSources from 'webpack-sources';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 import * as nodePath from 'node:path';
 import * as process from 'process';
@@ -16,7 +16,10 @@ import {
   resolveId,
   resolveLayer
 } from './consts.js';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const PLUGIN_NAME = 'unocss:webpack'
 const VIRTUAL_MODULE_PREFIX = nodePath.resolve(process.cwd(), '_virtual_')
@@ -116,6 +119,7 @@ function WebpackPlugin (configOrPath, defaults) {
               }
             }
           }
+          debugger
           const result = await uno.generate(tokens, { minify: true })
           const files = Object.keys(compilation.assets)
           for (const file of files) {
@@ -135,12 +139,12 @@ function WebpackPlugin (configOrPath, defaults) {
         })
       })
 
-      compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation) => {
+      compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
         const mpx = compilation.__mpx__
         mpx.unoCtx = compiler.__unoCtx.uno
       })
 
-      compiler.hooks.make.tapPromise(PLUGIN_NAME, async (compilation) => {
+      compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, async (compilation) => {
         const ctx = await createContext(configOrPath, defaults)
         compiler.__unoCtx = ctx
         return ctx
