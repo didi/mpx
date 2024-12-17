@@ -1,5 +1,6 @@
 import { extendEvent } from './getInnerListeners'
 import { isBrowser } from '../../env'
+import { parseDataset } from '@mpxjs/utils'
 
 function MpxEvent (layer) {
     this.targetElement = null
@@ -64,15 +65,21 @@ function MpxEvent (layer) {
             cancelable: true
         })
         const changedTouches = event.changedTouches || []
+           extendEvent(event.currentTarget, {
+             dataset: parseDataset(event.currentTarget.dataset)
+           })
+           extendEvent(event.target, {
+             dataset: parseDataset(event.target.dataset)
+           })
         extendEvent(touchEvent, {
-            timeStamp: event.timeStamp,
-            changedTouches,
-            touches: changedTouches,
-            detail: {
-                // pc端点击事件可能没有changedTouches，所以直接从 event中取
-                x: changedTouches[0]?.pageX || event.pageX || 0,
-                y: changedTouches[0]?.pageY || event.pageY || 0
-            }
+          timeStamp: event.timeStamp,
+          changedTouches,
+          touches: changedTouches,
+          detail: {
+            // pc端点击事件可能没有changedTouches，所以直接从 event 中取
+            x: changedTouches[0]?.pageX || event.pageX || 0,
+            y: changedTouches[0]?.pageY || event.pageY || 0
+          }
         })
         targetElement && targetElement.dispatchEvent(touchEvent)
     }
