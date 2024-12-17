@@ -187,7 +187,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     { padding: 0, backgroundColor: '#fff' },
     style,
     multiline && autoHeight
-      ? { height: Math.max((style as any)?.minHeight || 35, contentHeight) }
+      ? { minHeight: Math.max((style as any)?.minHeight || 35, contentHeight) }
       : {}
   )
 
