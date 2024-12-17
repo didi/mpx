@@ -28,6 +28,14 @@
 ### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件属性即为不支持，具体使用范围可参考如下文档
 
+基础组件通用属性
+
+| enable-offset		  | Boolean  |     false    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| enable-var	  | Boolean  |     true    | 默认支持使用 css variable，若想关闭该功能可设置为 false |
+| parent-font-size		  | Number |     0    | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100%|
+| parent-width		  | Number  |     0    | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度|
+| parent-height		  | Number  |     0    | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度|
+
 #### view
 视图容器。
 
@@ -185,6 +193,9 @@ movable-view的可移动区域。
 
 | enable   | boolean           |   true	     | 是否从页面中脱离出来	｜
 
+注意事项:
+
+1. style 样式不支持中使用百分比计算、css variable
 
 #### cover-view
 视图容器。
