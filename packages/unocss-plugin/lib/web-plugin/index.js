@@ -103,8 +103,6 @@ function WebpackPlugin (configOrPath, defaults) {
       })
 
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
-        console.log(12313, !!compilation)
-
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
           const ctx = compiler.__unoCtx
           const uno = ctx.uno
