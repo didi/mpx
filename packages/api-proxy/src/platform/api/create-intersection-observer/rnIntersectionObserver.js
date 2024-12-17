@@ -65,7 +65,7 @@ class RNIntersectionObserver {
 
   observe (selector, callback) {
     if (this.observerRefs) {
-      console.error('"observe" call can be only called once in IntersectionObserver')
+      console.warn('"observe" call can be only called once in IntersectionObserver')
       return
     }
     let targetRef = null
@@ -75,7 +75,7 @@ class RNIntersectionObserver {
       targetRef = this.component.__selectRef(selector, 'node')
     }
     if (!targetRef || targetRef.length === 0) {
-      console.error('intersection observer target not found')
+      console.warn('intersection observer target not found')
       return
     }
     this.observerRefs = isArray(targetRef) ? targetRef : [targetRef]
