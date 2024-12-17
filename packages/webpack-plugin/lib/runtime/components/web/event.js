@@ -65,12 +65,12 @@ function MpxEvent (layer) {
             cancelable: true
         })
         const changedTouches = event.changedTouches || []
-           extendEvent(event.currentTarget, {
-             dataset: parseDataset(event.currentTarget.dataset)
-           })
-           extendEvent(event.target, {
-             dataset: parseDataset(event.target.dataset)
-           })
+        extendEvent(event.currentTarget, {
+            dataset: parseDataset(event.currentTarget.dataset)
+        })
+        extendEvent(event.target, {
+            dataset: parseDataset(event.target.dataset)
+        })
         extendEvent(touchEvent, {
           timeStamp: event.timeStamp,
           changedTouches,
