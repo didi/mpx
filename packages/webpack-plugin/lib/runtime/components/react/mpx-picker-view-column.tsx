@@ -1,9 +1,12 @@
+import React, { forwardRef, useRef, useState, useMemo, useEffect } from 'react'
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
-import React, { forwardRef, useRef, useState, useMemo, useEffect, cloneElement } from 'react'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, extendObject, wrapChildren } from './utils'
+import Reanimated, { AnimatedRef, useAnimatedRef, useAnimatedScrollHandler, useScrollViewOffset, useSharedValue } from 'react-native-reanimated'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerOverlay from './pickerViewOverlay'
 import PickerMask from './pickerViewMask'
+import MpxPickerVIewColumnItem from './mpx-picker-view-column-item'
+import { PickerViewColumnAnimationContext } from './pickerVIewContext'
 
 interface ColumnProps {
   children?: React.ReactNode
@@ -25,6 +28,8 @@ interface ColumnProps {
   pickerOverlayStyle: Record<string, any>
   columnIndex: number
 }
+
+const visibleCount = 5
 
 const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>, ColumnProps>((props: ColumnProps, ref) => {
   const {
@@ -53,9 +58,15 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const { textStyle: textStyleFromParent = {} } = splitStyle(columnStyle)
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  const scrollViewRef = useRef<ScrollView>(null)
+  // const scrollViewRef = useRef<ScrollView>(null)
+  const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
+  const offsetYShared = useScrollViewOffset(scrollViewRef as AnimatedRef<Reanimated.ScrollView>)
+  // const offsetYShared = useSharedValue(0)
+  // const scrollHandler = useAnimatedScrollHandler((event) => {
+  //   offsetYShared.value = event.contentOffset.y
+  // })
 
-  useNodesRef(props, ref, scrollViewRef, {
+  useNodesRef(props, ref, scrollViewRef as AnimatedRef<ScrollView>, {
     style: normalStyle
   })
 
@@ -69,18 +80,20 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
 
-  const initialOffset = useMemo(() => ({
-    x: 0,
-    y: itemRawH * initialIndex
-  }), [itemRawH])
+  console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length)
+
+  // const initialOffset = useMemo(() => ({
+  //   x: 0,
+  //   y: itemRawH * initialIndex
+  // }), [itemRawH])
 
   const snapToOffsets = useMemo(
     () => columnData.map((_, i) => i * itemRawH),
-    [maxIndex, itemRawH]
+    [columnData, itemRawH]
   )
 
   const paddingHeight = useMemo(
-    () => Math.round(pickerH - itemRawH) / 2,
+    () => Math.round((pickerH - itemRawH) / 2),
     [pickerH, itemRawH]
   )
 
@@ -101,13 +114,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     ) {
       return
     }
-
-    activeIndex.current = initialIndex
-    scrollViewRef.current.scrollTo({
+    scrollViewRef.current?.scrollTo({
       x: 0,
       y: itemRawH * initialIndex,
       animated: false
     })
+    activeIndex.current = initialIndex
   }, [itemRawH, initialIndex])
 
   const _onLayout = () => {
@@ -180,59 +192,51 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {
-      const restProps = index === 0 ? { onLayout: onItemLayout } : {}
-      const itemProps = extendObject(
-        {
-          key: `picker-column-item-${index}`,
-          style: extendObject(
-            { height: itemHeight, width: '100%' },
-            textStyleFromParent,
-            textStyle,
-            item.props.style
-          )
-        },
-        restProps
-      )
-      const realItem = cloneElement(item, itemProps)
-      return wrapChildren(
-        { children: realItem },
-        {
-          hasVarDec,
-          varContext: varContextRef.current,
-          textStyle,
-          textProps
-        }
+      return (
+        <MpxPickerVIewColumnItem
+          key={index}
+          item={item}
+          index={index}
+          itemHeight={itemHeight}
+          textStyleFromParent={textStyleFromParent}
+          textStyle={textStyle}
+          hasVarDec={hasVarDec}
+          varContext={varContextRef.current}
+          textProps={textProps}
+          visibleCount={visibleCount}
+          onItemLayout={onItemLayout}
+        />
       )
     })
 
   const renderScollView = () => {
     return (
-      <ScrollView
-        ref={scrollViewRef}
-        bounces={true}
-        horizontal={false}
-        pagingEnabled={false}
-        nestedScrollEnabled={true}
-        removeClippedSubviews={true}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        {...layoutProps}
-        style={[{ width: scrollViewWidth }]}
-        decelerationRate="fast"
-        scrollEventThrottle={16}
-        contentOffset={initialOffset}
-        snapToOffsets={snapToOffsets}
-        onLayout={onScrollViewLayout}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchCancel}
-        onMomentumScrollBegin={onMomentumScrollBegin}
-        onMomentumScrollEnd={onMomentumScrollEnd}
-        onContentSizeChange={onContentSizeChange}
-        contentContainerStyle={contentContainerStyle}
-      >
-        {renderInnerchild()}
-      </ScrollView>
+      <PickerViewColumnAnimationContext.Provider value={offsetYShared}>
+        <Reanimated.ScrollView
+          ref={scrollViewRef}
+          bounces={true}
+          horizontal={false}
+          pagingEnabled={false}
+          nestedScrollEnabled={true}
+          removeClippedSubviews={true}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          {...layoutProps}
+          style={[{ width: scrollViewWidth }]}
+          decelerationRate="fast"
+          snapToOffsets={snapToOffsets}
+          onLayout={onScrollViewLayout}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={onTouchCancel}
+          onMomentumScrollBegin={onMomentumScrollBegin}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          onContentSizeChange={onContentSizeChange}
+          contentContainerStyle={contentContainerStyle}
+        >
+          {renderInnerchild()}
+        </Reanimated.ScrollView>
+      </PickerViewColumnAnimationContext.Provider>
     )
   }
 
