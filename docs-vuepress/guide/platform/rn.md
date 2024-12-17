@@ -1,32 +1,34 @@
-## 跨端输出RN
+# 跨端输出RN
 大致介绍
 
-### 跨端样式定义
+## 跨端样式定义
 
-#### CSS选择器
+### CSS选择器
 
-#### 样式单位
+### 样式单位
 
-#### 文本样式继承
+### 文本样式继承
 
-#### 简写样式属性
+### 简写样式属性
 
-#### 使用原子类
+### CSS函数
 
-### 混合编写RN代码
+### 使用原子类
 
-#### 使用RN组件
+## 混合编写RN代码
 
-#### 使用React hooks
+### 使用RN组件
 
-### 能力支持范围
+### 使用React hooks
 
-#### 模版语法
+## 能力支持范围
 
-#### 基础组件
+### 模版语法
+
+### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件属性即为不支持，具体使用范围可参考如下文档
 
-##### view
+#### view
 视图容器。
 
 属性
@@ -45,7 +47,7 @@
 | bindtap       |  点击的时候触发   |
 
 
-##### scroll-view
+#### scroll-view
 可滚动视图区域。
 
 属性
@@ -88,7 +90,7 @@
 1. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
 
 
-##### swiper
+#### swiper
 滑块视图容器。
 
 属性
@@ -115,7 +117,7 @@
 | ----------------| ------------------ |
 | bindchange| current 改变时会触发 change 事件，event.detail = {current, source}|
 
-##### swiper-item
+#### swiper-item
 1. 仅可放置在swiper组件中，宽高自动设置为100%。
 
 属性
@@ -124,14 +126,14 @@
 | ----------------------- | ------- | ------------------  | ------------------------------------|
 | item-id                 | string  | `无`             | 该 swiper-item 的标识符                  |
 
-##### movable-area
+#### movable-area
 movable-view的可移动区域。
 
 注意事项
 
 1. movable-area不支持设置 scale-area，缩放手势生效区域仅在 movable-view 内
 
-##### movable-view
+#### movable-view
 可移动的视图容器，在页面中可以拖拽滑动。movable-view 必须在 movable-area 组件中，并且必须是直接子节点，否则不能移动。
 
 
@@ -158,7 +160,7 @@ movable-view的可移动区域。
 | htouchmove          | 初次手指触摸后移动为横向的移动时触发 |
 | vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
 
-##### root-portal
+#### root-portal
 使整个子树从页面中脱离出来，类似于在 CSS 中使用 fixed position 的效果。主要用于制作弹窗、弹出层等。
 属性
 
@@ -168,15 +170,15 @@ movable-view的可移动区域。
 | enable   | boolean           |   true	     | 是否从页面中脱离出来	｜
 
 
-##### cover-view
+#### cover-view
 视图容器。
 功能同 view 组件
 
-##### cover-image
+#### cover-image
 视图容器。
 功能同 image 组件
 
-##### icon
+#### icon
 图标组件
 
 
@@ -189,7 +191,7 @@ movable-view的可移动区域。
 | color		  | String  |         | icon 的颜色，同 css 的 color |
 
 
-##### text
+#### text
 文本。
 
 属性
@@ -213,7 +215,7 @@ movable-view的可移动区域。
 2. text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
 
-##### button
+#### button
 按钮。
 
 属性
@@ -232,7 +234,7 @@ movable-view的可移动区域。
 | enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 
-##### label
+#### label
 用来改进表单组件的可用性
 
 
@@ -241,7 +243,7 @@ movable-view的可移动区域。
 1. 当前不支持使用 for 属性找到对应 id，仅支持将控件放在该标签内，目前可以绑定的空间有：checkbox、radio、switch。
    
 
-##### checkbox
+#### checkbox
 多选项目
 
 
@@ -255,7 +257,7 @@ movable-view的可移动区域。
 | color		  | String   |     #09BB07  | checkbox的颜色，同css的color |
 
 
-##### checkbox-group
+#### checkbox-group
 多项选择器，内部由多个checkbox组成。
 
 
@@ -266,7 +268,7 @@ movable-view的可移动区域。
 | bindchange      | checkbox-group 中选中项发生改变时触发 change 事件，detail = { value: [ 选中的 checkbox 的 value 的数组 ] } |
 
 
-##### radio
+#### radio
 单选项目
 
 
@@ -280,7 +282,7 @@ movable-view的可移动区域。
 | color		  | String   |     #09BB07  | checkbox 的颜色，同 css 的 color |
 
 
-##### radio-group
+#### radio-group
 单项选择器，内部由多个 radio 组成
 
 
@@ -291,7 +293,7 @@ movable-view的可移动区域。
 | bindchange      | radio-group 中选中项发生改变时触发 change 事件，detail = { value: [ 选中的 radio 的 value 的数组 ] } |
 
 
-##### form
+#### form
 表单。将组件内的用户输入的switch input checkbox slider radio picker 提交。
 
 当点击 form 表单中 form-type 为 submit 的 button 组件时，会将表单组件中的 value 值进行提交，需要在表单组件中加上 name 来作为 key。
@@ -304,7 +306,7 @@ movable-view的可移动区域。
 | bindreset  | 表单重置时会触发 reset 事件 |
 
 
-##### input
+#### input
 输入框。
 
 属性
@@ -351,7 +353,7 @@ movable-view的可移动区域。
 | isFocused            | 返回值表明当前输入框是否获得了焦点        |
 
 
-##### textarea
+#### textarea
 多行输入框。
 
 属性
@@ -399,7 +401,7 @@ movable-view的可移动区域。
 | isFocused            | 返回值表明当前输入框是否获得了焦点        |
 
 
-##### picker-view
+#### picker-view
 嵌入页面的滚动选择器。其中只可放置 picker-view-column组件，其它节点不会显示
 
 属性
@@ -415,11 +417,11 @@ movable-view的可移动区域。
 | ----------------| ------------------ |
 | bindchange      | checkbox-group 中选中项发生改变时触发 change 事件，detail = { value: [ 选中的 checkbox 的 value 的数组 ] } |
 
-##### picker-view-column
+#### picker-view-column
 滚动选择器子项。仅可放置于picker-view中，其孩子节点的高度会自动设置成与picker-view的选中框的高度一致
 
 
-##### picker
+#### picker
 从底部弹起的滚动选择器。
 
 属性
@@ -498,7 +500,7 @@ movable-view的可移动区域。
 | city                   | 市级选择器                 |
 | region                 | 区级选择器                 |
 
-##### image
+#### image
 图片。
 
 属性
@@ -522,36 +524,44 @@ movable-view的可移动区域。
 2. image 组件进行缩放时，计算出来的宽高可能带有小数，在不同webview内核下渲染可能会被抹去小数部分
 
 
-##### canvas
-画布
+#### canvas
+画布。
 
+事件
 
-属性
+| 属性名                   | 类型      | 说明                                                       |
+| ----------------------- | ------- | ---------------------------------------------------------- |
+| bindtouchstart	    | eventhandle  | 手指触摸动作开始		|
+| bindtouchmove	    | eventhandle  | 手指触摸后移动		|
+| bindtouchend	    | eventhandle  | 手指触摸动作结束	|
+| bindtouchcancel	    | eventhandle  | 手指触摸动作被打断	|
+| bindlongtap	    | eventhandle  | 手指长按 300ms 之后触发	|
+| binderror	    | eventhandle  | 当发生错误时触发 error 事件， detail = {errMsg}	|
 
-| 属性名                   | 类型     | 默认值         | 说明                                                       |
-| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| value	    | String  |               | radio 标识，当该 radio 选中时，radio-group 的 change 事件会
+API
+
+ 方法名                     | 说明  |
+| ----------------------- | ------- |
+| createImage	     |  创建一个图片对象。 仅支持在 2D Canvas 中使用	|
+| createImageData	      | 创建一个 ImageData 对象。仅支持在 2D Canvas 中使用		|
+| getContext	      | 该方法返回 Canvas 的绘图上下文。仅支持在 2D Canvas 中使用	|
+| toDataURL	      | 返回一个包含图片展示的 data URI	|
 
 
 注意事项
 
-1. 仅支持 type 为 2D
-1. image 组件进行缩放时，计算出来的宽高可能带有小数，在不同webview内核下渲染可能会被抹去小数部分
+1. canvas 组件目前仅支持 2D 类型，不支持 webgl
+2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 (HTML Canvas 2D Context)[https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D] 定义的属性、方法
+3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘图，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 
-#### 自定义组件
+### 自定义组件
 
-#### 样式规则
+### 样式规则
 
-#### 应用能力
+### 应用能力
 
-#### 环境API
+### 环境API
 
-#### Webview API
+### Webview API
 
-#### 其他使用限制
-如事件的target等
-
-
-
-
-
+### 其他使用注意事项
