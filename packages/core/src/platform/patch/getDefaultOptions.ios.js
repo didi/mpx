@@ -571,8 +571,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef,
-              onLayout
+              ref: rootRef
             },
             createElement(RouteContext.Provider,
               {
