@@ -121,7 +121,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const onInitialChange = (isInvalid: boolean, value: number[]) => {
-    // console.log('[mpx-picker-view], onInitialChange-0 ---> value=', value, 'isInvalid=', isInvalid, 'snapActiveValueRef=', snapActiveValueRef.current, 'value=', value, 'activeValueRef=', activeValueRef.current)
     if (isInvalid || !snapActiveValueRef.current || hasDiff(snapActiveValueRef.current, value)) {
       console.log('[mpx-picker-view], onInitialChange-1 ===> value=', value)
       const eventData = getCustomEvent(

@@ -1,6 +1,6 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect } from 'react'
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
-import Reanimated, { AnimatedRef, scrollTo, useAnimatedRef, useAnimatedScrollHandler, useDerivedValue, useScrollViewOffset, useSharedValue } from 'react-native-reanimated'
+import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
 import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerOverlay from './pickerViewOverlay'
@@ -68,6 +68,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
+  const maxScrollViewWidth = useRef(-1)
   const touching = useRef(false)
   const scrolling = useRef(false)
   const activeIndex = useRef(initialIndex)
@@ -84,7 +85,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef
   })
 
-  // console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length)
+  console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length)
 
   // const initialOffset = useMemo(() => ({
   //   x: 0,
@@ -118,7 +119,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     ) {
       return
     }
-    // console.log('[mpx-picker-view-column], useEffect ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'y=', itemRawH * initialIndex, scrollViewRef.current?.scrollTo, JSON.stringify(scrollViewRef.current?.scrollTo), `${scrollViewRef.current?.scrollTo}`)
+    // console.log('[mpx-picker-view-column], useEffect ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'y=', itemRawH * initialIndex, `${scrollViewRef.current?.scrollTo}`)
     setTimeout(() => {
       scrollViewRef.current?.scrollTo({
         x: 0,
@@ -131,9 +132,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScrollViewLayout = (e: LayoutChangeEvent) => {
     const { width } = e.nativeEvent.layout
-    const widthInt = Math.round(width)
-    // console.log('[mpx-picker-view-column], onScrollViewLayout --->', 'columnIndex=', columnIndex, 'width=', width, 'widthInt=', widthInt, 'scrollViewWidth=', scrollViewWidth)
-    if (width !== widthInt && widthInt !== scrollViewWidth) {
+    const widthInt = Math.ceil(width)
+    console.log('[mpx-picker-view-column], onScrollViewLayout --->', 'columnIndex=', columnIndex, 'width=', width, 'widthInt=', widthInt, 'scrollViewWidth=', scrollViewWidth)
+    if (widthInt !== scrollViewWidth) {
+      const maxW = maxScrollViewWidth.current
+      if (maxW !== -1 && widthInt > maxW) {
+        return
+      }
+      if (maxW === -1) {
+        maxScrollViewWidth.current = Math.ceil(widthInt * 1.5)
+      }
       setScrollViewWidth(widthInt)
     }
   }
@@ -148,7 +156,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
-    // console.log('[mpx-picker-view-column], onItemLayout --->', 'columnIndex=', columnIndex, 'rawH=', rawH, 'itemRawH=', itemRawH)
     if (rawH && itemRawH !== rawH) {
       setItemRawH(rawH)
     }
