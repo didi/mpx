@@ -35,6 +35,7 @@ interface PayloadData {
 
 type MessageData = {
   payload?: PayloadData,
+  args?: Array<any>,
   type?: string,
   callbackId?: number
 }
@@ -126,7 +127,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     } catch (e) {
       data = {}
     }
+    const args = data.args
     const postData: PayloadData = data.payload || {}
+    const params = args !== undefined ? args : [postData]
     const type = data.type
     switch (type) {
       case 'setTitle':
@@ -141,7 +144,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       case 'postMessage':
         bindmessage && bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
           detail: {
-            data: postData.data
+            data: params[0]?.data
           }
         }))
         asyncCallback = Promise.resolve({
@@ -149,25 +152,24 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         })
         break
       case 'navigateTo':
-        asyncCallback = navObj.navigateTo(postData)
+        asyncCallback = navObj.navigateTo(...params)
         break
       case 'navigateBack':
-        asyncCallback = navObj.navigateBack(postData)
+        asyncCallback = navObj.navigateBack(...params)
         break
       case 'redirectTo':
-        asyncCallback = navObj.redirectTo(postData)
+        asyncCallback = navObj.redirectTo(...params)
         break
       case 'switchTab':
-        asyncCallback = navObj.switchTab(postData)
+        asyncCallback = navObj.switchTab(...params)
         break
       case 'reLaunch':
-        asyncCallback = navObj.reLaunch(postData)
+        asyncCallback = navObj.reLaunch(...params)
         break
       default:
         if (type) {
           const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
           if (isFunction(implement)) {
-            const params = type === 'invoke' && Array.isArray(postData) ? postData : [postData]
             asyncCallback = Promise.resolve(implement(...params))
           } else {
             /* eslint-disable prefer-promise-reject-errors */
