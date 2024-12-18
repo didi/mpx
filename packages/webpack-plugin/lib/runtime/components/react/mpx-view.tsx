@@ -12,8 +12,9 @@ import useAnimationHooks from './useAnimationHooks'
 import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useGesture } from './utils'
 import LinearGradient from 'react-native-linear-gradient'
+import { GestureDetector } from 'react-native-gesture-handler'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -714,6 +715,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   enableBackground = enableBackground || !!backgroundStyle
+  const enableHoverStyle = !!hoverStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
     throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
@@ -814,17 +816,28 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     innerStyle,
     enableFastImage
   })
-  return enableAnimation
+  const BaseComponent = animation?.actions?.length
     ? (<Animated.View
-      {...innerProps}
-    >
-      {childNode}
-    </Animated.View>)
+    {...innerProps}
+    style={finalStyle}
+  >
+    {childNode}
+  </Animated.View>)
     : (<View
-      {...innerProps}
-    >
-      {childNode}
-    </View>)
+    {...innerProps}
+  >
+    {childNode}
+  </View>)
+
+  return enableHoverStyle
+    ? <GestureDetector
+      gesture={useGesture({
+        onTouchStart: setStartTimer,
+        onTouchEnd: setStayTimer
+      })}>
+      { BaseComponent }
+    </GestureDetector>
+    : BaseComponent
 })
 
 _View.displayName = 'MpxView'

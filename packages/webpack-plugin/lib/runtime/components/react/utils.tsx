@@ -6,6 +6,8 @@ import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
+import { runOnJS } from 'react-native-reanimated'
+import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -609,4 +611,19 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
     }
     return acc
   }, {})
+}
+
+export function useGesture ({ onTouchStart, onTouchEnd }: { onTouchStart: () => void, onTouchEnd: () => void }) {
+  const gesturePan = Gesture.Pan()
+
+    .onTouchesDown(() => {
+      'worklet'
+      runOnJS(onTouchStart)()
+    })
+    .onTouchesUp(() => {
+      'worklet'
+      runOnJS(onTouchEnd)()
+    })
+
+  return gesturePan
 }
