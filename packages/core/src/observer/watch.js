@@ -12,7 +12,8 @@ import {
   isArray,
   remove,
   callWithErrorHandling,
-  hasChanged
+  hasChanged,
+  extend
 } from '@mpxjs/utils'
 
 export function watchEffect (effect, options) {
@@ -20,11 +21,11 @@ export function watchEffect (effect, options) {
 }
 
 export function watchPostEffect (effect, options) {
-  return watch(effect, null, { ...options, flush: 'post' })
+  return watch(effect, null, extend({}, options, { flush: 'post' }))
 }
 
 export function watchSyncEffect (effect, options) {
-  return watch(effect, null, { ...options, flush: 'sync' })
+  return watch(effect, null, extend({}, options, { flush: 'sync' }))
 }
 
 const warnInvalidSource = (s) => {
@@ -34,7 +35,7 @@ const warnInvalidSource = (s) => {
 const shouldTrigger = (value, oldValue) => hasChanged(value, oldValue) || isObject(value)
 
 const processWatchOptionsCompat = (options) => {
-  const newOptions = { ...options }
+  const newOptions = extend({}, options)
   if (options.sync) {
     newOptions.flush = 'sync'
   }

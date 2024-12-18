@@ -1,6 +1,6 @@
 import { useRef } from 'react'
-import { collectDataset } from '@mpxjs/utils'
-import { omit } from './utils'
+import { hasOwn, collectDataset } from '@mpxjs/utils'
+import { omit, extendObject } from './utils'
 import eventConfigMap from './event.config'
 import {
   Props,
@@ -29,17 +29,34 @@ const getTouchEvent = (
   } = nativeEvent
   const { id } = props
   const { layoutRef } = config
-  return {
-    ...event,
-    type,
-    timeStamp: timestamp,
-    currentTarget: {
-      ...(event.currentTarget || {}),
+
+  const currentTarget = extendObject(
+    {},
+    event.currentTarget,
+    {
       id: id || '',
       dataset: collectDataset(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
-    },
+    }
+  )
+
+  const pendingProps = (event as any)._targetInst?.pendingProps || {}
+
+  const target = extendObject(
+    {},
+    event.target,
+    {
+      id: pendingProps.parentId || pendingProps.nativeID || '',
+      dataset: collectDataset(pendingProps)
+    }
+  )
+
+  return extendObject({}, event, {
+    type,
+    timeStamp: timestamp,
+    currentTarget,
+    target,
     detail: {
       x: pageX,
       y: pageY
@@ -65,7 +82,7 @@ const getTouchEvent = (
     persist: event.persist,
     stopPropagation: event.stopPropagation,
     preventDefault: event.preventDefault
-  }
+  })
 }
 
 export const getCustomEvent = (
@@ -74,21 +91,20 @@ export const getCustomEvent = (
   { detail = {}, layoutRef }: { detail?: Record<string, unknown>; layoutRef: LayoutRef },
   props: Props = {}
 ) => {
-  return {
-    ...oe,
+  const targetInfo = extendObject({}, oe.target, {
+    id: props.id || '',
+    dataset: collectDataset(props),
+    offsetLeft: layoutRef?.current?.offsetLeft || 0,
+    offsetTop: layoutRef?.current?.offsetTop || 0
+  })
+  return extendObject({}, oe, {
     type,
     detail,
-    target: {
-      ...(oe.target || {}),
-      id: props.id || '',
-      dataset: collectDataset(props),
-      offsetLeft: layoutRef?.current?.offsetLeft || 0,
-      offsetTop: layoutRef?.current?.offsetTop || 0
-    },
+    target: targetInfo,
     persist: oe.persist,
     stopPropagation: oe.stopPropagation,
     preventDefault: oe.preventDefault
-  }
+  })
 }
 
 const useInnerProps = (
@@ -129,10 +145,10 @@ const useInnerProps = (
     ...userRemoveProps
   ]
 
-  propsRef.current = { ...props, ...additionalProps }
+  propsRef.current = extendObject({}, props, additionalProps)
 
   for (const key in eventConfigMap) {
-    if (propsRef.current[key]) {
+    if (hasOwn(propsRef.current, key)) {
       eventConfig[key] = eventConfigMap[key]
     }
   }
@@ -275,9 +291,11 @@ const useInnerProps = (
 
   const events: Record<string, (e: NativeTouchEvent) => void> = {}
 
-  const transformedEventKeys: string[] = []
+  let transformedEventKeys: string[] = []
   for (const key in eventConfig) {
-    transformedEventKeys.push(...eventConfig[key])
+    if (propsRef.current[key]) {
+      transformedEventKeys = transformedEventKeys.concat(eventConfig[key])
+    }
   }
 
   const finalEventKeys = [...new Set(transformedEventKeys)]
@@ -290,9 +308,10 @@ const useInnerProps = (
 
   const rawEventKeys = Object.keys(eventConfig)
 
-  return {
-    ...events,
-    ...omit(propsRef.current, [...rawEventKeys, ...removeProps])
-  }
+  return extendObject(
+    {},
+    events,
+    omit(propsRef.current, [...rawEventKeys, ...removeProps])
+  )
 }
 export default useInnerProps

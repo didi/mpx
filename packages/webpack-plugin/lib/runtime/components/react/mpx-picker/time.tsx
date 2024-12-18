@@ -1,5 +1,5 @@
 import { View, Text, Modal, TouchableWithoutFeedback } from 'react-native'
-import { PickerView } from '@ant-design/react-native'
+import { PickerView, Portal } from '@ant-design/react-native'
 import React, { forwardRef, useState, useRef, useEffect } from 'react'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { TimeProps } from './type'
@@ -13,8 +13,8 @@ const styles: { [key: string]: Object } = {
   showModal: {
     backgroundColor: 'black',
     opacity: 0.5,
-    position: 'absolute',
-    width: '100%'
+    width: '100%',
+    height: '100%'
   },
   hideModal: {
     opacity: 1,
@@ -125,7 +125,7 @@ function checkSelectedIsValid (strStart: string, strEnd: string, selected: numbe
 // start="02:10" end = 23:01
 
 const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: TimeProps, ref): React.JSX.Element => {
-  const { children, start, end, value, bindchange, bindcancel, disabled } = props
+  const { children, start, end, value, bindchange, bindcancel, style } = props
   const defaultProps = {
     start: '00:10',
     end: '23:59'
@@ -135,11 +135,11 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
   // 存储layout布局信息
   const layoutRef = useRef({})
   const viewRef = useRef<View>(null)
-  useNodesRef<View, TimeProps>(props, ref, viewRef, {})
+  const nodeRef = useRef<View>(null)
+  useNodesRef<View, TimeProps>(props, ref, nodeRef, { style })
   // 存储modal的布局信息
   const modalLayoutRef = useRef({})
   const modalRef = useRef<View>(null)
-  useNodesRef<View, TimeProps>(props, ref, modalRef, {})
   const [visible, setVisible] = useState(false)
   const columnData = generateColumns()
   const [data, setData] = useState(columnData)
@@ -188,12 +188,6 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
     } else {
       // [9, 13]
       setTimeValue(date)
-      const strDate = formatStr(date)
-      bindchange && bindchange({
-        detail: {
-          value: strDate
-        }
-      })
     }
   }
 
@@ -213,6 +207,7 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
 
   const renderModalChildren = () => {
     const pickerProps = {
+      ref: nodeRef,
       data,
       value: timevalue,
       defaultValue: timevalue,
@@ -249,12 +244,11 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
       </TouchableWithoutFeedback>
     </View>
   }
-  const strStyle = visible ? styles.showModal : styles.hideModal
-  const mheight = Math.floor(offsetTop)
 
   // Animated.View
   return (<>
-    <View style={{ ...strStyle, height: visible ? mheight : 0, bottom: 0 }}>
+    <Portal>
+      <View style={visible ? styles.showModal : styles.hideModal}>
       <Modal
         animationType="slide"
         transparent={true}
@@ -263,6 +257,7 @@ const _TimePicker = forwardRef<HandlerRef<View, TimeProps>, TimeProps>((props: T
         {renderModalChildren()}
       </Modal>
     </View>
+    </Portal>
     {renderChildren()}
   </>)
 })

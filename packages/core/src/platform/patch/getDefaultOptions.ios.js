@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
-import { ReactiveEffect } from '../../../observer/effect'
-import { watch } from '../../../observer/watch'
-import { reactive, set, del } from '../../../observer/reactive'
+import { ReactiveEffect } from '../../observer/effect'
+import { watch } from '../../observer/watch'
+import { reactive, set, del } from '../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
-import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
-import mergeOptions from '../../../core/mergeOptions'
-import { queueJob, hasPendingJob } from '../../../observer/scheduler'
+import MpxProxy from '../../core/proxy'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
+import mergeOptions from '../../core/mergeOptions'
+import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
@@ -259,6 +259,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name
+    global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
   }
 
@@ -337,8 +338,8 @@ function usePageEffect (mpxProxy, pageId) {
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
     if (hasShowHook || hasHideHook || hasResizeHook) {
-      if (hasOwn(pageStatusContext, pageId)) {
-        unWatch = watch(() => pageStatusContext[pageId], (newVal) => {
+      if (hasOwn(pageStatusMap, pageId)) {
+        unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
           } else if (/^resize/.test(newVal)) {
@@ -353,32 +354,28 @@ function usePageEffect (mpxProxy, pageId) {
   }, [])
 }
 
-const pageStatusContext = reactive({})
 let pageId = 0
+const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
-  let isFocused = true
-  set(pageStatusContext, pageId, '')
+  navigation.pageId = pageId
+  set(pageStatusMap, pageId, '')
   useEffect(() => {
     const focusSubscription = navigation.addListener('focus', () => {
-      pageStatusContext[pageId] = 'show'
-      isFocused = true
+      pageStatusMap[pageId] = 'show'
     })
     const blurSubscription = navigation.addListener('blur', () => {
-      pageStatusContext[pageId] = 'hide'
-      isFocused = false
+      pageStatusMap[pageId] = 'hide'
     })
     const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
-      if (isFocused) {
-        pageStatusContext[pageId] = value
-      }
+      pageStatusMap[pageId] = value
     })
 
     return () => {
       focusSubscription()
       blurSubscription()
       unWatchAppFocusedState()
-      del(pageStatusContext, pageId)
+      del(pageStatusMap, pageId)
     }
   }, [navigation])
 }
@@ -568,16 +565,16 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
               }
             },
-            createElement(Provider,
-              null,
-              createElement(RouteContext.Provider,
+            createElement(RouteContext.Provider,
+              {
+                value: currentPageId
+              },
+              createElement(IntersectionObserverContext.Provider,
                 {
-                  value: currentPageId
+                  value: intersectionObservers.current
                 },
-                createElement(IntersectionObserverContext.Provider,
-                  {
-                    value: intersectionObservers.current
-                  },
+                createElement(Provider,
+                  null,
                   createElement(defaultOptions,
                     {
                       navigation,
@@ -590,8 +587,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             )
           )
         )
-        // todo custom portal host for active route
       )
+      // todo custom portal host for active route
     }
     return Page
   }
