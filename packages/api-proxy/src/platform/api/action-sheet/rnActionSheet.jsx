@@ -1,6 +1,7 @@
 import { View, TouchableHighlight, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 import { Portal } from '@ant-design/react-native'
+import { getWindowInfo } from '../system/rnSystem'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,6 +9,8 @@ import Animated, {
 } from 'react-native-reanimated'
 function showActionSheet (options = {}) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
+  const windowInfo = getWindowInfo()
+  const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
   let actionSheetKey = null
   const styles = StyleSheet.create({
     actionActionMask: {
@@ -26,7 +29,8 @@ function showActionSheet (options = {}) {
       position: 'absolute',
       bottom: 0,
       left: 0,
-      right: 0
+      right: 0,
+      paddingBottom: bottom
     },
     itemStyle: {
       paddingTop: 15,
