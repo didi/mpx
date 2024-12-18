@@ -31,10 +31,22 @@ const getTouchEvent = (
     offsetTop: layoutRef?.current?.offsetTop || 0
   })
 
+  const pendingProps = (event as any)._targetInst?.pendingProps || {}
+
+  const target = extendObject(
+    {},
+    event.target,
+    {
+      id: pendingProps.parentId || pendingProps.nativeID || '',
+      dataset: collectDataset(pendingProps)
+    }
+  )
+
   return extendObject({}, event, {
     type,
     timeStamp: timestamp,
     currentTarget,
+    target,
     detail: {
       x: pageX,
       y: pageY
