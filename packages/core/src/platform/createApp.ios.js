@@ -6,6 +6,7 @@ import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
+import { Image } from 'react-native'
 import { ref } from '../observer/ref'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
@@ -187,6 +188,19 @@ export default function createApp (option, config = {}) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
+    const navScreenOpts = {
+      gestureEnabled: true,
+      // 7.x替换headerBackTitleVisible
+      // headerBackButtonDisplayMode: 'minimal',
+      headerBackTitleVisible: false,
+      headerMode: 'float'
+    }
+    if (headerBackImageProps) {
+      navScreenOpts.headerBackImage = () => {
+        return createElement(Image, headerBackImageProps)
+      }
+    }
     return createElement(SafeAreaProvider,
       null,
       createElement(NavigationContainer,
@@ -197,13 +211,7 @@ export default function createApp (option, config = {}) {
         createElement(Stack.Navigator,
           {
             initialRouteName,
-            screenOptions: {
-              gestureEnabled: true,
-              // 7.x替换headerBackTitleVisible
-              // headerBackButtonDisplayMode: 'minimal',
-              headerBackTitleVisible: false,
-              headerMode: 'float'
-            }
+            screenOptions: navScreenOpts
           },
           ...getPageScreens(initialRouteName, initialParams)
         )
