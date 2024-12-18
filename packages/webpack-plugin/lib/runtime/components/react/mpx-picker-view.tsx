@@ -78,6 +78,9 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
   activeValueRef.current = value.slice()
+  const snapActiveValueRef = useRef<number[] | null>(null)
+
+  console.log('[mpx-picker-view] value=', value, Date.now())
 
   const {
     normalStyle,
@@ -103,21 +106,31 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     const activeValue = activeValueRef.current
     activeValue[columnIndex] = selectedIndex
+    console.log('[mpx-picker-view], onSelectChange ---> columnIndex=', columnIndex, 'selectedIndex=', selectedIndex, 'activeValue=', activeValue)
     const eventData = getCustomEvent(
       'change',
       {},
       { detail: { value: activeValue, source: 'change' }, layoutRef }
     )
     bindchange?.(eventData)
+    snapActiveValueRef.current = activeValueRef.current
   }
 
-  const onInitialChange = (value: number[]) => {
-    const eventData = getCustomEvent(
-      'change',
-      {},
-      { detail: { value, source: 'change' }, layoutRef }
-    )
-    bindchange?.(eventData)
+  const hasDiff = (a: number[] = [], b: number[]) => {
+    return a.some((v, i) => v !== b[i])
+  }
+
+  const onInitialChange = (isInvalid: boolean, value: number[]) => {
+    if (isInvalid || !snapActiveValueRef.current || hasDiff(snapActiveValueRef.current, value)) {
+      console.log('[mpx-picker-view], onInitialChange-1 ===> value=', value)
+      const eventData = getCustomEvent(
+        'change',
+        {},
+        { detail: { value, source: 'change' }, layoutRef }
+      )
+      bindchange?.(eventData)
+      snapActiveValueRef.current = value.slice()
+    }
   }
 
   const innerProps = useInnerProps(
@@ -201,7 +214,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       validValue.push(validIndex)
       renderColumns.push(renderColumn(item, index, columnData, validIndex))
     })
-    isInvalid && onInitialChange(validValue)
+    onInitialChange(isInvalid, validValue)
     return renderColumns
   }
 
@@ -213,5 +226,4 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
 })
 
 _PickerView.displayName = 'MpxPickerView'
-
 export default _PickerView

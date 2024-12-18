@@ -571,16 +571,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef,
-              _onTouchStart: () => {
-                ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
-              },
-              get onTouchStart() {
-                return this._onTouchStart
-              },
-              set onTouchStart(value) {
-                this._onTouchStart = value
-              },
+              ref: rootRef
             },
             createElement(RouteContext.Provider,
               {
