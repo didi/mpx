@@ -1,7 +1,7 @@
 const selectorParser = require('postcss-selector-parser')
 // scope-id
-function isSpaceCombinator(node) {
-  return node.type === "combinator" && /^\s+$/.test(node.value);
+function isSpaceCombinator (node) {
+  return node.type === 'combinator' && /^\s+$/.test(node.value)
 }
 module.exports = ({ id }) => {
   return {
@@ -35,27 +35,27 @@ module.exports = ({ id }) => {
               }
               if (n.type === 'pseudo' && n.value === ':deep') {
                 if (n.nodes.length) {
-                  let last = n;
+                  let last = n
                   n.nodes[0].each((ss) => {
-                    selector.insertAfter(last, ss);
-                    last = ss;
-                  });
-                  const prev = selector.at(selector.index(n) - 1);
+                    selector.insertAfter(last, ss)
+                    last = ss
+                  })
+                  const prev = selector.at(selector.index(n) - 1)
                   if (!prev || !isSpaceCombinator(prev)) {
                     selector.insertAfter(
                       n,
                       selectorParser.combinator({
-                        value: " "
+                        value: ' '
                       })
-                    );
+                    )
                   }
-                  selector.removeChild(n);
+                  selector.removeChild(n)
                 } else {
-                  const prev = selector.at(selector.index(n) - 1);
+                  const prev = selector.at(selector.index(n) - 1)
                   if (prev && isSpaceCombinator(prev)) {
-                    selector.removeChild(prev);
+                    selector.removeChild(prev)
                   }
-                  selector.removeChild(n);
+                  selector.removeChild(n)
                 }
                 return false
               }
