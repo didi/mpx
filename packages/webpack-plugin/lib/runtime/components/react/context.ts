@@ -33,6 +33,10 @@ export interface IntersectionObserver {
   }
 }
 
+export interface ScrollViewContextValue {
+   gestureRef: Record<string, any> | null
+}
+
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -52,3 +56,5 @@ export const IntersectionObserverContext = createContext<IntersectionObserver | 
 export const RouteContext = createContext<number | null>(null)
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
+
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })

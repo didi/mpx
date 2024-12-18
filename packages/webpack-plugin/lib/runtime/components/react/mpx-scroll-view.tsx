@@ -31,15 +31,15 @@
  * ✔ bindscrolltolower
  * ✔ bindscroll
  */
-import { ScrollView } from 'react-native-gesture-handler'
+import { Gesture, ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext } from 'react'
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
-import { IntersectionObserverContext } from './context'
+import { IntersectionObserverContext, ScrollViewContext } from './context'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -193,6 +193,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     },
     gestureRef: scrollViewRef
   })
+
+  const contextValue = useMemo(() => {
+    return {
+      gestureRef: scrollViewRef
+    }
+  }, [])
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
@@ -491,32 +497,29 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
-  return (
-    <ScrollView
-      {...innerProps}
-      refreshControl={refresherEnabled
-        ? (
-          <RefreshControl
-            progressBackgroundColor={refresherBackground}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            {...(refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : {})}
-          />
-          )
-        : undefined}
-    >
-       {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )
-      }
-    </ScrollView>
+  return createElement(
+    ScrollView,
+    extendObject({}, innerProps, {
+      refreshControl: refresherEnabled
+        ? createElement(RefreshControl, extendObject({
+          progressBackgroundColor: refresherBackground,
+          refreshing: refreshing,
+          onRefresh: onRefresh
+        }, (refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : null)))
+        : undefined
+    }),
+    createElement(ScrollViewContext.Provider,
+      { value: contextValue },
+      wrapChildren(
+        props,
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        }
+      )
+    )
   )
 })
 
