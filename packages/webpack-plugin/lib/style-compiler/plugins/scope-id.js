@@ -1,6 +1,8 @@
 const selectorParser = require('postcss-selector-parser')
 // scope-id
-
+function isSpaceCombinator(node) {
+  return node.type === "combinator" && /^\s+$/.test(node.value);
+}
 module.exports = ({ id }) => {
   return {
     postcssPlugin: 'scope-id',
@@ -29,6 +31,32 @@ module.exports = ({ id }) => {
               if (n.type === 'combinator' && n.value === '>>>') {
                 n.value = ' '
                 n.spaces.before = n.spaces.after = ''
+                return false
+              }
+              if (n.type === 'pseudo' && n.value === ':deep') {
+                if (n.nodes.length) {
+                  let last = n;
+                  n.nodes[0].each((ss) => {
+                    selector.insertAfter(last, ss);
+                    last = ss;
+                  });
+                  const prev = selector.at(selector.index(n) - 1);
+                  if (!prev || !isSpaceCombinator(prev)) {
+                    selector.insertAfter(
+                      n,
+                      selectorParser.combinator({
+                        value: " "
+                      })
+                    );
+                  }
+                  selector.removeChild(n);
+                } else {
+                  const prev = selector.at(selector.index(n) - 1);
+                  if (prev && isSpaceCombinator(prev)) {
+                    selector.removeChild(prev);
+                  }
+                  selector.removeChild(n);
+                }
                 return false
               }
               // /deep/ alias for >>>, since >>> doesn't work in SASS
