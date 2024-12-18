@@ -19,7 +19,7 @@
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
-import { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture } from './utils'
@@ -373,17 +373,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     startTimer.value = null
   }
 
+  const innerProps = useInnerProps(props) as any
+
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
     extendEvent(e)
-    bindtouchstart && bindtouchstart(e)
-    catchtouchstart && catchtouchstart(e)
-    if (catchlongpress || bindlongpress) {
-      startTimer.value = setTimeout(() => {
-        needTap.value = false
-        bindlongpress && bindlongpress(e)
-        catchlongpress && catchlongpress(e)
-      }, 350)
-    }
+    innerProps.onTouchStart && innerProps.onTouchStart(e)
+    innerProps.onTouchStartCapture && innerProps.onTouchStartCapture(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
@@ -394,7 +389,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       } else if (touchEvent === 'vtouchmove') {
         bindvtouchmove && bindvtouchmove(e)
       }
-      bindtouchmove && bindtouchmove(e)
     }
 
     if (hasCatchTouchmove) {
@@ -403,21 +397,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       } else if (touchEvent === 'vtouchmove') {
         catchvtouchmove && catchvtouchmove(e)
       }
-      catchtouchmove && catchtouchmove(e)
     }
+    innerProps.onTouchMove && innerProps.onTouchMove(e)
+    innerProps.onTouchMoveCapture && innerProps.onTouchMoveCapture(e)
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
     extendEvent(e)
-    bindtouchend && bindtouchend(e)
-    catchtouchend && catchtouchend(e)
-    if (needTap.value) {
-      bindtap && bindtap(e)
-      catchtap && catchtap(e)
-    }
-    if (catchlongpress || bindlongpress) {
-      clearStartTimer()
-    }
+    innerProps.onTouchEnd && innerProps.onTouchEnd(e)
+    innerProps.onTouchEndCapture && innerProps.onTouchEndCapture(e)
   }
 
   const gesture = useMemo(() => {
@@ -459,7 +447,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: changedTouches.x,
           y: changedTouches.y
         }
-        if (bindtouchstart || catchtouchstart || bindlongpress || catchlongpress) {
+        if (innerProps.onTouchStart || innerProps.onTouchStartCapture) {
           runOnJS(triggerStartOnJS)({ e })
         }
       })
@@ -569,26 +557,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   })
 
-  const injectCatchEvent = (props: Record<string, any>) => {
-    const eventHandlers: Record<string, any> = {}
-    const catchEventList = [
-      { name: 'onTouchStart', value: ['catchtouchstart', 'catchtap', 'catchlongpress'] },
-      { name: 'onTouchMove', value: ['catchtouchmove', 'catchvtouchmove', 'catchhtouchmove', 'catchtap', 'catchlongpress'] },
-      { name: 'onTouchEnd', value: ['catchtouchend', 'catchtap', 'catchlongpress'] }
-    ]
-    catchEventList.forEach(event => {
-      event.value.forEach(name => {
-        if (props[name] && !eventHandlers[event.name]) {
-          eventHandlers[event.name] = (e: NativeSyntheticEvent<TouchEvent>) => {
-            e.stopPropagation()
-          }
-        }
-      })
-    })
-    return eventHandlers
-  }
-
-  const catchEventHandlers = injectCatchEvent(props)
   const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
   return (
     <GestureDetector gesture={gesture}>
@@ -596,7 +564,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         ref={nodeRef}
         onLayout={onLayout}
         style={[innerStyle, animatedStyles, layoutStyle]}
-        {...catchEventHandlers}
       >
         {
           wrapChildren(
