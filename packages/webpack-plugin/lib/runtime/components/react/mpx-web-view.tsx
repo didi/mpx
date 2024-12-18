@@ -42,15 +42,12 @@ type MessageData = {
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   const mpx = global.__mpx
-  if (!src) {
-    return null
-  }
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
   const pageId = useContext(RouteContext)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
-
+  const webViewRef = useRef<WebView>(null)
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
     left: 0 as number,
@@ -59,10 +56,13 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     bottom: 0 as number
   }
 
-  const webViewRef = useRef<WebView>(null)
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
     style: defaultWebViewStyle
   })
+
+  if (!src) {
+    return null
+  }
 
   const _load = function (res: WebViewNavigationEvent) {
     const result = {
@@ -167,7 +167,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         if (type) {
           const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
           if (isFunction(implement)) {
-            asyncCallback = Promise.resolve(implement())
+            const params = type === 'invoke' && Array.isArray(postData) ? postData : [postData]
+            asyncCallback = Promise.resolve(implement(...params))
           } else {
             /* eslint-disable prefer-promise-reject-errors */
             asyncCallback = Promise.reject({
