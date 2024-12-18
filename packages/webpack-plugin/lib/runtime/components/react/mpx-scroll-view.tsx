@@ -165,7 +165,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intersectionObservers = useContext(IntersectionObserverContext)
 
-  const snapScrollIntoView = useRef<string>('')
+  const firstScrollIntoViewChange = useRef<boolean>(false)
 
   const {
     normalStyle,
@@ -221,18 +221,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   useEffect(() => {
     if (scrollIntoView && __selectRef) {
-      snapScrollIntoView.current = scrollIntoView || ''
-      setTimeout(() => {
+      if (!firstScrollIntoViewChange.current) {
+        setTimeout(() => {
+          handleScrollIntoView()
+        })
+      } else {
         handleScrollIntoView()
-      })
+      }
     }
-  }, [])
-
-  useEffect(() => {
-    if (scrollIntoView && __selectRef && snapScrollIntoView.current !== scrollIntoView) {
-      snapScrollIntoView.current = scrollIntoView || ''
-      handleScrollIntoView()
-    }
+    firstScrollIntoViewChange.current = true
   }, [scrollIntoView])
 
   function handleScrollIntoView () {
