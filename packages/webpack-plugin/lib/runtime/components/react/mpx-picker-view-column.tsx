@@ -213,7 +213,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             index: currentId,
             y: currentId * itemRawH
           }
-          vibrateShort()
+          vibrateShort({ type: 'light' })
         }
       }
     }
