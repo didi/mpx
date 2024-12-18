@@ -368,19 +368,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }, obj)
   }, [])
 
-  const clearStartTimer = () => {
-    startTimer.value && clearTimeout(startTimer.value)
-    startTimer.value = null
-  }
-
-  const innerProps = useInnerProps(props) as any
-
-  const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
-    extendEvent(e)
-    innerProps.onTouchStart && innerProps.onTouchStart(e)
-    innerProps.onTouchStartCapture && innerProps.onTouchStartCapture(e)
-  }
-
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
     extendEvent(e)
     if (hasTouchmove) {
@@ -398,34 +385,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         catchvtouchmove && catchvtouchmove(e)
       }
     }
-    innerProps.onTouchMove && innerProps.onTouchMove(e)
-    innerProps.onTouchMoveCapture && innerProps.onTouchMoveCapture(e)
-  }
-
-  const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
-    extendEvent(e)
-    innerProps.onTouchEnd && innerProps.onTouchEnd(e)
-    innerProps.onTouchEndCapture && innerProps.onTouchEndCapture(e)
   }
 
   const gesture = useMemo(() => {
-    const checkIsNeedTap = (e: GestureTouchEvent) => {
-      'worklet'
-      const tapDetailInfo = startPosition.value || { x: 0, y: 0 }
-      const currentX = e.changedTouches[0].x
-      const currentY = e.changedTouches[0].y
-      if ((Math.abs(currentX - tapDetailInfo.x) > 1 || Math.abs(currentY - tapDetailInfo.y) > 1) && (needTap.value || startTimer.value)) {
-        needTap.value = false
-        if (catchlongpress || bindlongpress) {
-          runOnJS(clearStartTimer)()
-        }
-      }
-    }
-
     const handleTriggerMove = (e: GestureTouchEvent) => {
       'worklet'
-      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
-      const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
+      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove
+      const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove
       if (hasTouchmove || hasCatchTouchmove) {
         runOnJS(triggerMoveOnJS)({
           e,
@@ -447,9 +413,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: changedTouches.x,
           y: changedTouches.y
         }
-        if (innerProps.onTouchStart || innerProps.onTouchStartCapture) {
-          runOnJS(triggerStartOnJS)({ e })
-        }
       })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
@@ -459,7 +422,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
         }
-        checkIsNeedTap(e)
         handleTriggerMove(e)
         if (disabled) return
         const changeX = changedTouches.x - startPosition.value.x
@@ -487,10 +449,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         'worklet'
         isFirstTouch.value = true
         isMoving.value = false
-        checkIsNeedTap(e)
         if (bindtouchend || catchtouchend || bindtap || catchtap) {
-          runOnJS(triggerEndOnJS)({ e })
-        }
+-          runOnJS(triggerEndOnJS)({ e })
+-        }
         if (disabled) return
         if (!inertia) {
           const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
@@ -557,10 +518,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   })
 
+  const innerProps = useInnerProps(props)
   const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
+        {...innerProps}
         ref={nodeRef}
         onLayout={onLayout}
         style={[innerStyle, animatedStyles, layoutStyle]}
