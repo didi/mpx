@@ -579,7 +579,7 @@ API
 
 1. canvas 组件目前仅支持 2D 类型，不支持 webgl
 2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 (HTML Canvas 2D Context)[https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D] 定义的属性、方法
-3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘图，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
+3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 4. 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
 ### 自定义组件
