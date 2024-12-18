@@ -32,7 +32,7 @@ export const isWeb = __mpx_mode__ === 'web'
 export function getFocusedNavigation () {
   if (global.__mpxPagesMap) {
     for (const key in global.__mpxPagesMap) {
-      const navigation = global.__mpxPagesMap[key]?.[1]
+      const navigation = global.__mpxPagesMap[key][1]
       if (navigation && navigation.isFocused()) {
         return navigation
       }

@@ -160,7 +160,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const nodeRef = useRef<View>(null)
 
   useNodesRef(props, ref, nodeRef, {
-    defaultStyle: styles.container,
+    style: normalStyle,
     gestureRef: movableGestureRef
   })
 
