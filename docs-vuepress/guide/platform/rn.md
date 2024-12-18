@@ -25,6 +25,98 @@
 
 ### 模版语法
 
+#### 事件处理
+目前 Mpx 输出 React Native 的事件编写遵循小程序的事件编写规范，支持事件的冒泡及捕获
+
+普通事件绑定
+```js
+<view bindtap="handleTap">
+    Click here!
+</view>
+```
+
+绑定并阻止事件冒泡
+```js
+<view catchtap="handleTap">
+    Click here!
+</view>
+```
+
+事件捕获
+
+```js
+<view capture-bind:touchstart="handleTap1">
+  outer view
+  <view capture-bind:touchstart="handleTap2">
+    inner view
+  </view>
+</view>
+```
+
+中断捕获阶段和取消冒泡阶段
+
+```js
+<view capture-catch:touchstart="handleTap1">
+  outer view
+</view>
+
+```
+
+在此基础上也新增了事件处理内联传参的增强机制。
+
+```html
+<template>
+ <!--Mpx增强语法，模板内联传参，方便简洁-->
+ <view bindtap="handleTapInline('b')">b</view>
+ </template>
+ <script setup>
+  // 直接通过参数获取数据，直观方便
+  const handleTapInline = (name) => {
+    console.log('name:', name)
+  }
+  // ...
+</script>
+```
+
+除此之外，Mpx 也支持了动态事件绑定
+
+```html
+<template>
+ <!--动态事件绑定-->
+ <view wx:for="{{items}}" bindtap="handleTap_{{index}}">
+  {{item}}
+</view>
+ </template>
+ <script setup>
+  import { ref } from '@mpxjs/core'
+
+  const data = ref(['Item 1', 'Item 2', 'Item 3', 'Item 4'])
+  const handleTap_0 = (event) => {
+    console.log('Tapped on item 1');
+  },
+
+  const handleTap_1 = (event) => {
+    console.log('Tapped on item 2');
+  },
+
+  const handleTap_2 = (event) => {
+    console.log('Tapped on item 3');
+  },
+
+  const handleTap_3 = (event) => {
+    console.log('Tapped on item 4');
+  }
+</script>
+```
+
+注意事项
+
+1. 当同一个元素上同时绑定了 catchtap 和 bindtap 事件时，两个事件都会被触发执行。但是是否阻止事件冒泡的行为,会以模板上第一个绑定的事件标识符为准。
+如果第一个绑定的是 catchtap，那么不管后面绑定的是什么,都会阻止事件冒泡。如果第一个绑定的是 bindtap，则不会阻止事件冒泡。
+2. 当同一个元素上绑定了 capture-bind:tap 和 bindtap 事件时，事件的执行时机会根据模板上第一个绑定事件的标识符来决定。如果第一个绑定的是 capture-bind:tap，则事件会在捕获阶段触发，如果第一个绑定的是 bindtap，则事件会在冒泡阶段触发。
+3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
+
+
 ### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
 
