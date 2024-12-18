@@ -1,5 +1,5 @@
 import * as path from 'path'
-import minimatch from 'minimatch'
+import { minimatch } from 'minimatch'
 import * as unoConfig from '@unocss/config'
 import * as core from '@unocss/core'
 import * as mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
