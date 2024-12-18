@@ -18,11 +18,11 @@
  * ✔ vtouchmove
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
-import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
+import { StyleSheet, View, LayoutChangeEvent, NativeTouchEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -45,20 +45,11 @@ interface MovableViewProps {
   animation?: boolean;
   id?: string;
   bindchange?: (event: unknown) => void;
-  bindtouchstart?: (event: GestureTouchEvent) => void;
-  catchtouchstart?: (event: GestureTouchEvent) => void;
-  bindtouchmove?: (event: GestureTouchEvent) => void;
-  catchtouchmove?: (event: GestureTouchEvent) => void;
-  catchtouchend?: (event: GestureTouchEvent) => void;
-  bindtouchend?: (event: GestureTouchEvent) => void;
+  catchtouchmove?: (event: NativeTouchEvent) => void;
   bindhtouchmove?: (event: GestureTouchEvent) => void;
   bindvtouchmove?: (event: GestureTouchEvent) => void;
   catchhtouchmove?: (event: GestureTouchEvent) => void;
   catchvtouchmove?: (event: GestureTouchEvent) => void;
-  bindlongpress?: (event: GestureTouchEvent) => void;
-  catchlongpress?: (event: GestureTouchEvent) => void;
-  bindtap?: (event: GestureTouchEvent) => void;
-  catchtap?: (event: GestureTouchEvent) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
   'out-of-bounds'?: boolean;
   'wait-for'?: Array<GestureHandler>;
@@ -105,20 +96,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
-    bindtouchstart,
-    catchtouchstart,
     bindhtouchmove,
     bindvtouchmove,
-    bindtouchmove,
     catchhtouchmove,
     catchvtouchmove,
-    catchtouchmove,
-    bindtouchend,
-    catchtouchend,
-    bindlongpress,
-    catchlongpress,
-    bindtap,
-    catchtap
+    catchtouchmove
   } = props
 
   const {
@@ -386,6 +368,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
     }
   }
+  // const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
+  //   extendEvent(e)
+  //   bindtouchend && bindtouchend(e)
+  //   catchtouchend && catchtouchend(e)
+  // }
 
   const gesture = useMemo(() => {
     const handleTriggerMove = (e: GestureTouchEvent) => {
@@ -449,9 +436,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         'worklet'
         isFirstTouch.value = true
         isMoving.value = false
-        if (bindtouchend || catchtouchend || bindtap || catchtap) {
--          runOnJS(triggerEndOnJS)({ e })
--        }
+        // if (bindtouchend || catchtouchend) {
+        //   runOnJS(triggerEndOnJS)({ e })
+        // }
         if (disabled) return
         if (!inertia) {
           const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
@@ -518,15 +505,49 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   })
 
-  const innerProps = useInnerProps(props)
-  const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
+  const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
+
+  const innerProps = useInnerProps(props, extendObject({
+    ref: nodeRef,
+    onLayout,
+    style: [innerStyle, animatedStyles, layoutStyle]
+  },
+  catchtouchmove || catchvtouchmove || catchhtouchmove
+    ? {
+        catchtouchmove: (e: NativeTouchEvent) => {
+          // 通过代理 catchtouchmove 实现 catchvtouchmove、catchhtouchmove 阻止冒泡
+          catchtouchmove && catchtouchmove(e)
+        }
+      }
+    : null
+  ), [
+    'direction',
+    'inertia',
+    'out-of-bounds',
+    'x',
+    'y',
+    'damping',
+    'friction',
+    'disabled',
+    'scale',
+    'scale-min',
+    'scale-max',
+    'scale-value',
+    'animation',
+    'bindchange',
+    'bindscale',
+    'bindhtouchmove',
+    'bindvtouchmove',
+    'catchhtouchmove',
+    'chatchvtouchmove'
+  ], {
+    layoutRef
+  })
+
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
         {...innerProps}
-        ref={nodeRef}
-        onLayout={onLayout}
-        style={[innerStyle, animatedStyles, layoutStyle]}
       >
         {
           wrapChildren(
