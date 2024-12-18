@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
-import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
+import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, Platform, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
 // @ts-expect-error ignore
 import { vibrateShort } from '@mpxjs/api-proxy'
@@ -203,6 +203,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (Platform.OS === 'android') {
+      return
+    }
     const { y } = e.nativeEvent.contentOffset
     const { index: prevIndex, y: _y } = prevScrollingInfo.current
     if (touching.current || scrolling.current) {
@@ -213,7 +216,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             index: currentId,
             y: currentId * itemRawH
           }
-          vibrateShort({ type: 'light' })
+          vibrateShort({ type: 'selection' })
         }
       }
     }
