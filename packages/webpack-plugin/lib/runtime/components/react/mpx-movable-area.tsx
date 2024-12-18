@@ -3,7 +3,7 @@
  */
 
 import { View } from 'react-native'
-import { JSX, forwardRef, ReactNode, useRef, useMemo } from 'react'
+import { JSX, forwardRef, ReactNode, useRef, useMemo, createElement } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
@@ -51,23 +51,17 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     ref: movableViewRef
   }, layoutProps), [], { layoutRef })
 
-  return (
-    <MovableAreaContext.Provider value={contextValue}>
-      <View
-        {...innerProps}
-      >
+  return createElement(MovableAreaContext.Provider, { value: contextValue }, createElement(
+    View,
+    innerProps,
+    wrapChildren(
+      props,
       {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current
-          }
-        )
+        hasVarDec,
+        varContext: varContextRef.current
       }
-      </View>
-    </MovableAreaContext.Provider>
-  )
+    )
+  ))
 })
 
 _MovableArea.displayName = 'MpxMovableArea'
