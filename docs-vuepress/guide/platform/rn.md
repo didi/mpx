@@ -26,15 +26,17 @@
 ### 模版语法
 
 ### 基础组件
-目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件属性即为不支持，具体使用范围可参考如下文档
+目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
 
-基础组件通用属性
+RN环境基础组件通用属性
 
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | enable-offset		  | Boolean  |     false    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 | enable-var	  | Boolean  |     true    | 默认支持使用 css variable，若想关闭该功能可设置为 false |
-| parent-font-size		  | Number |     0    | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100%|
-| parent-width		  | Number  |     0    | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度|
-| parent-height		  | Number  |     0    | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度|
+| parent-font-size		  | Number |         | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100%|
+| parent-width		  | Number  |         | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度|
+| parent-height		  | Number  |         | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度|
 
 #### view
 视图容器。
@@ -167,13 +169,8 @@ movable-view的可移动区域。
 | friction  | Number  |    7    | 摩擦系数 |
 | disabled  | boolean  |    false    | 是否禁用 |
 | animation  | boolean  |    true    | 是否使用动画	 |
-| simultaneous-handlers  | Array<object>  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件。
-| wait-for  |  Array<object>   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件。
-
-注意事项
-
-1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture]
-2. wait-for  为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail]
+| simultaneous-handlers  | Array<object>  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件
+| wait-for  |  Array<object>   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件
 
 事件
 
@@ -183,6 +180,12 @@ movable-view的可移动区域。
 | bindscale         | 缩放过程中触发的事件，event.detail = {x, y, scale}    |
 | htouchmove          | 初次手指触摸后移动为横向的移动时触发 |
 | vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
+
+
+注意事项
+
+1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture]
+2. wait-for  为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail]
 
 #### root-portal
 使整个子树从页面中脱离出来，类似于在 CSS 中使用 fixed position 的效果。主要用于制作弹窗、弹出层等。
