@@ -3,7 +3,7 @@
  * ✔ size
  * ✔ color
  */
-import { JSX, forwardRef, useRef } from 'react'
+import { JSX, forwardRef, useRef, createElement } from 'react'
 import { Text, TextStyle, Image } from 'react-native'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -93,7 +93,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       }
     )
 
-    return <Image {...innerProps} />
+    return createElement(Image, innerProps)
   }
 )
 

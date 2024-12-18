@@ -1,7 +1,7 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode, useCallback } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useCallback, createElement } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -92,21 +92,19 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       }
     )
 
-    return <View {...innerProps}>
-      <LabelContext.Provider value={contextRef}>
+    return createElement(View, innerProps, createElement(
+      LabelContext.Provider,
+      { value: contextRef },
+      wrapChildren(
+        props,
         {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
         }
-      </LabelContext.Provider>
-    </View>
+      )
+    ))
   }
 )
 
