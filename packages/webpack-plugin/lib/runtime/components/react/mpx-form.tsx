@@ -5,7 +5,7 @@
  * ✔ bindreset
  */
 import { View } from 'react-native'
-import { JSX, useRef, forwardRef, ReactNode, useMemo, useCallback } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useMemo, createElement } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
@@ -102,25 +102,20 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
       reset
     }
   }, [])
-  return (
-    <View
-      {...innerProps}
-    >
-      <FormContext.Provider value={contextValue}>
-        {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
-        }
-      </FormContext.Provider>
-    </View>
-  )
+
+  return createElement(View, innerProps, createElement(
+    FormContext.Provider,
+    { value: contextValue },
+    wrapChildren(
+      props,
+      {
+        hasVarDec,
+        varContext: varContextRef.current,
+        textStyle,
+        textProps
+      }
+    )
+  ))
 })
 
 _Form.displayName = 'MpxForm'
