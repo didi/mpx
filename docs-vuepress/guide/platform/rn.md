@@ -196,7 +196,7 @@ movable-view的可移动区域。
 
 | enable   | boolean           |   true	     | 是否从页面中脱离出来	｜
 
-注意事项:
+注意事项
 
 1. style 样式不支持中使用百分比计算、css variable
 
@@ -241,6 +241,7 @@ movable-view的可移动区域。
 | bindtap       |  点击的时候触发         |
 
 注意事项
+
 1. 未包裹 text 标签的文本，会自动包裹 text 标签。
 2. text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
@@ -576,7 +577,6 @@ API
 | createImageData	      | 创建一个 ImageData 对象。仅支持在 2D Canvas 中使用		|
 | getContext	      | 该方法返回 Canvas 的绘图上下文。仅支持在 2D Canvas 中使用	|
 | toDataURL	      | 返回一个包含图片展示的 data URI	|
-
 
 注意事项
 
