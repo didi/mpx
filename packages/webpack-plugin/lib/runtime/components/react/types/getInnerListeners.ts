@@ -1,5 +1,6 @@
 import { MutableRefObject } from 'react'
 import { NativeSyntheticEvent } from 'react-native'
+import { GestureTouchEvent } from 'react-native-gesture-handler'
 
 type LayoutRef = MutableRefObject<any>
 
@@ -56,6 +57,14 @@ interface DataSetType {
   [key: string]: string;
 }
 
+interface InnerProps {
+  onTouchStart?: (e: GestureTouchEvent) => void;
+  onTouchStartCapture?: (e: GestureTouchEvent) => void;
+  onTouchMove?: (e: GestureTouchEvent) => void;
+  onTouchMoveCapture?: (e: GestureTouchEvent) => void;
+  onTouchEnd?: (e: GestureTouchEvent) => void;
+  onTouchEndCapture?: (e: GestureTouchEvent) => void;
+}
 export {
   NativeTouchEvent,
   Props,
@@ -65,5 +74,6 @@ export {
   InnerRef,
   LayoutRef,
   SetTimeoutReturnType,
-  DataSetType
+  DataSetType,
+  InnerProps
 }

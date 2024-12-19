@@ -20,6 +20,7 @@
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, createElement } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import { InnerProps } from './types/getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject } from './utils'
@@ -345,7 +346,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })
     Object.assign(e, {
       nativeEvent: {
-        timestamp: 0,
+        timestamp: new Date().valueOf(),
         pageX: e.changedTouches[0].absoluteX,
         pageY: e.changedTouches[0].absoluteY,
         touches: e.allTouches,
@@ -391,16 +392,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     innerProps.onTouchEnd && innerProps.onTouchEnd(e)
   }
 
-  const innerProps = useInnerProps(props, {}, [], {
+  const innerProps: InnerProps = useInnerProps(props, {}, [], {
     layoutRef
-  }) as {
-  onTouchStart?: (e: GestureTouchEvent) => void;
-  onTouchStartCapture?: (e: GestureTouchEvent) => void;
-  onTouchMove?: (e: GestureTouchEvent) => void;
-  onTouchMoveCapture?: (e: GestureTouchEvent) => void;
-  onTouchEnd?: (e: GestureTouchEvent) => void;
-  onTouchEndCapture?: (e: GestureTouchEvent) => void;
-}
+  })
   const gesture = useMemo(() => {
     const handleTriggerMove = (e: GestureTouchEvent) => {
       'worklet'
