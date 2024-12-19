@@ -19,7 +19,7 @@
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
-import { getCustomEvent } from './getInnerListeners'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
 import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture } from './utils'
@@ -354,36 +354,24 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
     })
     Object.assign(e, {
-      touches: e.allTouches,
-      detail: {
-        x: e.changedTouches[0].absoluteX,
-        y: e.changedTouches[0].absoluteY
+      stopPropagation: () => {},
+      preventDefault: () => {},
+      persist: () => {},
+      nativeEvent: {
+        timestamp: 0,
+        pageX: e.changedTouches[0].absoluteX,
+        pageY: e.changedTouches[0].absoluteY,
+        touches: e.allTouches,
+        changedTouches: e.changedTouches
       },
-      currentTarget: {
-        id: props.id || '',
-        dataset: collectDataset(props),
-        offsetLeft: 0,
-        offsetTop: 0
-      }
+      touches: e.allTouches
     }, obj)
   }, [])
 
-  const clearStartTimer = () => {
-    startTimer.value && clearTimeout(startTimer.value)
-    startTimer.value = null
-  }
-
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
     extendEvent(e)
-    bindtouchstart && bindtouchstart(e)
-    catchtouchstart && catchtouchstart(e)
-    if (catchlongpress || bindlongpress) {
-      startTimer.value = setTimeout(() => {
-        needTap.value = false
-        bindlongpress && bindlongpress(e)
-        catchlongpress && catchlongpress(e)
-      }, 350)
-    }
+    innerProps.onTouchStart && innerProps.onTouchStart(e)
+    innerProps.onTouchStartCapture && innerProps.onTouchStartCapture(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
@@ -394,7 +382,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       } else if (touchEvent === 'vtouchmove') {
         bindvtouchmove && bindvtouchmove(e)
       }
-      bindtouchmove && bindtouchmove(e)
+      innerProps.onTouchMove && innerProps.onTouchMove(e)
+      innerProps.onTouchMoveCapture && innerProps.onTouchMoveCapture(e)
     }
 
     if (hasCatchTouchmove) {
@@ -403,41 +392,23 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       } else if (touchEvent === 'vtouchmove') {
         catchvtouchmove && catchvtouchmove(e)
       }
-      catchtouchmove && catchtouchmove(e)
     }
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
     extendEvent(e)
-    bindtouchend && bindtouchend(e)
-    catchtouchend && catchtouchend(e)
-    if (needTap.value) {
-      bindtap && bindtap(e)
-      catchtap && catchtap(e)
-    }
-    if (catchlongpress || bindlongpress) {
-      clearStartTimer()
-    }
+    innerProps.onTouchEndCapture && innerProps.onTouchEndCapture(e)
+    innerProps.onTouchEnd && innerProps.onTouchEnd(e)
   }
 
+  const innerProps = useInnerProps(props, {}, [], {
+    layoutRef
+  })
   const gesture = useMemo(() => {
-    const checkIsNeedTap = (e: GestureTouchEvent) => {
-      'worklet'
-      const tapDetailInfo = startPosition.value || { x: 0, y: 0 }
-      const currentX = e.changedTouches[0].x
-      const currentY = e.changedTouches[0].y
-      if ((Math.abs(currentX - tapDetailInfo.x) > 1 || Math.abs(currentY - tapDetailInfo.y) > 1) && (needTap.value || startTimer.value)) {
-        needTap.value = false
-        if (catchlongpress || bindlongpress) {
-          runOnJS(clearStartTimer)()
-        }
-      }
-    }
-
     const handleTriggerMove = (e: GestureTouchEvent) => {
       'worklet'
-      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
-      const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
+      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!innerProps.onTouchMove || innerProps.onTouchMoveCapture
+      const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove
       if (hasTouchmove || hasCatchTouchmove) {
         runOnJS(triggerMoveOnJS)({
           e,
@@ -459,7 +430,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: changedTouches.x,
           y: changedTouches.y
         }
-        if (bindtouchstart || catchtouchstart || bindlongpress || catchlongpress) {
+        if (innerProps.onTouchStart || innerProps.onTouchStartCapture) {
           runOnJS(triggerStartOnJS)({ e })
         }
       })
@@ -471,7 +442,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
         }
-        checkIsNeedTap(e)
         handleTriggerMove(e)
         if (disabled) return
         const changeX = changedTouches.x - startPosition.value.x
@@ -499,8 +469,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         'worklet'
         isFirstTouch.value = true
         isMoving.value = false
-        checkIsNeedTap(e)
-        if (bindtouchend || catchtouchend || bindtap || catchtap) {
+        if (innerProps.onTouchEnd || innerProps.onTouchEndCapture) {
           runOnJS(triggerEndOnJS)({ e })
         }
         if (disabled) return
