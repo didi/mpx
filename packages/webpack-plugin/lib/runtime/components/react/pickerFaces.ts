@@ -77,9 +77,7 @@ export const createFaces = (
   const degrees = getDegreesRelativeCenter()
   const [screenHeight, offsets] = getScreenHeightsAndOffsets(degrees)
 
-  const scale = (index: number) => {
-    return 0.92 - index * 0.1
-  }
+  const scales = [1, 0.925, 0.8]
 
   return [
     // top items
@@ -90,14 +88,14 @@ export const createFaces = (
           deg: degree,
           opacity: getOpacity(degrees.length - 1 - index),
           offsetY: -1 * offsets[index],
-          scale: scale(index),
+          scale: scales[index],
           screenHeight: screenHeight[index]
         }
       })
       .reverse(),
 
     // center item
-    { index: 0, deg: 0, opacity: 1, offsetY: 0, scale: 1, screenHeight: itemHeight },
+    { index: 0, deg: 0, opacity: 1, offsetY: 0, scale: 1.031, screenHeight: itemHeight },
 
     // bottom items
     ...degrees.map<Faces>((degree, index) => {
@@ -106,7 +104,7 @@ export const createFaces = (
         deg: -1 * degree,
         opacity: getOpacity(degrees.length - 1 - index),
         offsetY: offsets[index],
-        scale: scale(index),
+        scale: scales[index],
         screenHeight: screenHeight[index]
       }
     })
