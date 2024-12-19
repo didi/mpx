@@ -613,7 +613,6 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
   }, {})
 }
 
-
 export function useGesture ({ onTouchStart, onTouchEnd }: { onTouchStart: () => void, onTouchEnd: () => void }) {
   const gestureRef: React.RefObject<any> = useContext(ScrollViewContext).gestureRef
 
@@ -628,9 +627,9 @@ export function useGesture ({ onTouchStart, onTouchEnd }: { onTouchStart: () => 
       runOnJS(onTouchEnd)()
     })
 
-    if (gestureRef) {
-      gesturePan.simultaneousWithExternalGesture(gestureRef)
-    }
+  if (gestureRef) {
+    gesturePan.simultaneousWithExternalGesture(gestureRef)
+  }
 
   return gesturePan
 }
