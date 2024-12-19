@@ -8,7 +8,7 @@
  * ✔ delta
  */
 import { View } from 'react-native'
-import { useCallback, forwardRef, JSX } from 'react'
+import { useCallback, forwardRef, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 
@@ -53,13 +53,7 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
     bindtap: handleClick
   })
 
-  return (
-    <MpxView
-      {...innerProps}
-    >
-      {children}
-    </MpxView>
-  )
+  return createElement(MpxView, innerProps, children)
 })
 
 _Navigator.displayName = 'MpxNavigator'

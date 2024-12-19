@@ -1,7 +1,7 @@
 import { walkChildren, parseSelector, error, hasOwn, collectDataset } from '@mpxjs/utils'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { EffectScope } from 'vue'
-import { PausedState } from '../helper/const'
+import { PausedState } from '../../helper/const'
 
 const hackEffectScope = () => {
   EffectScope.prototype.pause = function () {
