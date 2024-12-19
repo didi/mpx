@@ -17,12 +17,12 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, createElement } from 'react'
 import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -160,7 +160,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const nodeRef = useRef<View>(null)
 
   useNodesRef(props, ref, nodeRef, {
-    defaultStyle: styles.container,
+    style: normalStyle,
     gestureRef: movableGestureRef
   })
 
@@ -559,28 +559,24 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const catchEventHandlers = injectCatchEvent(props)
   const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
-  return (
-    <GestureDetector gesture={gesture}>
-      <Animated.View
-        ref={nodeRef}
-        onLayout={onLayout}
-        style={[innerStyle, animatedStyles, layoutStyle]}
-        {...catchEventHandlers}
-      >
-        {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
-        }
-      </Animated.View>
-    </GestureDetector>
-  )
+
+  return createElement(GestureDetector, { gesture: gesture }, createElement(
+    Animated.View,
+    extendObject({
+      ref: nodeRef,
+      onLayout: onLayout,
+      style: [innerStyle, animatedStyles, layoutStyle]
+    }, catchEventHandlers),
+    wrapChildren(
+      props,
+      {
+        hasVarDec,
+        varContext: varContextRef.current,
+        textStyle,
+        textProps
+      }
+    )
+  ))
 })
 
 _MovableView.displayName = 'MpxMovableView'
