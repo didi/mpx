@@ -33,7 +33,7 @@ import Animated, {
   useAnimatedReaction,
   withSpring
 } from 'react-native-reanimated'
-import { collectDataset } from '@mpxjs/utils'
+import { noop } from '@mpxjs/utils'
 
 interface MovableViewProps {
   children: ReactNode;
@@ -105,20 +105,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
-    bindtouchstart,
-    catchtouchstart,
     bindhtouchmove,
     bindvtouchmove,
-    bindtouchmove,
     catchhtouchmove,
-    catchvtouchmove,
-    catchtouchmove,
-    bindtouchend,
-    catchtouchend,
-    bindlongpress,
-    catchlongpress,
-    bindtap,
-    catchtap
+    catchvtouchmove
   } = props
 
   const {
@@ -354,9 +344,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
     })
     Object.assign(e, {
-      stopPropagation: () => {},
-      preventDefault: () => {},
-      persist: () => {},
       nativeEvent: {
         timestamp: 0,
         pageX: e.changedTouches[0].absoluteX,
@@ -364,7 +351,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         touches: e.allTouches,
         changedTouches: e.changedTouches
       },
-      touches: e.allTouches
+      touches: e.allTouches,
+      stopPropagation: noop,
+      preventDefault: noop,
+      persist: noop
     }, obj)
   }, [])
 
@@ -403,11 +393,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const innerProps = useInnerProps(props, {}, [], {
     layoutRef
-  })
+  }) as {
+  onTouchStart?: (e: GestureTouchEvent) => void;
+  onTouchStartCapture?: (e: GestureTouchEvent) => void;
+  onTouchMove?: (e: GestureTouchEvent) => void;
+  onTouchMoveCapture?: (e: GestureTouchEvent) => void;
+  onTouchEnd?: (e: GestureTouchEvent) => void;
+  onTouchEndCapture?: (e: GestureTouchEvent) => void;
+}
   const gesture = useMemo(() => {
     const handleTriggerMove = (e: GestureTouchEvent) => {
       'worklet'
-      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!innerProps.onTouchMove || innerProps.onTouchMoveCapture
+      const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!innerProps.onTouchMove || !!innerProps.onTouchMoveCapture
       const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove
       if (hasTouchmove || hasCatchTouchmove) {
         runOnJS(triggerMoveOnJS)({
