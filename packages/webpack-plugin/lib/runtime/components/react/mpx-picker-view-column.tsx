@@ -126,7 +126,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     ) {
       return
     }
-    console.log('[mpx-picker-view-column], useEffect ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'y=', itemRawH * initialIndex, `${scrollViewRef.current?.scrollTo}`)
+    // console.log('[mpx-picker-view-column], useEffect ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'y=', itemRawH * initialIndex, `${scrollViewRef.current?.scrollTo}`)
     setTimeout(() => {
       scrollViewRef.current?.scrollTo({
         x: 0,
@@ -154,7 +154,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onContentSizeChange = (_w: number, h: number) => {
     const y = itemRawH * initialIndex
-    console.log('[mpx-picker-view-column], onContentSizeChange --->', 'columnIndex=', columnIndex, '_w=', _w, 'h=', h, 'y=', y)
+    // console.log('[mpx-picker-view-column], onContentSizeChange --->', 'columnIndex=', columnIndex, '_w=', _w, 'h=', h, 'y=', y)
     if (y <= h) {
       scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
     }
