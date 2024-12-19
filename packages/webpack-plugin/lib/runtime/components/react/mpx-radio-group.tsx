@@ -8,7 +8,8 @@ import {
   ReactNode,
   useContext,
   useMemo,
-  useEffect
+  useEffect,
+  createElement
 } from 'react'
 import {
   View,
@@ -154,20 +155,17 @@ const radioGroup = forwardRef<
     }
   )
 
-  return (
-    <View {...innerProps}>
-      <RadioGroupContext.Provider value={contextValue}>
-        {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current
-            }
-          )
-        }
-      </RadioGroupContext.Provider>
-    </View>
+  return createElement(View, innerProps, createElement(
+    RadioGroupContext.Provider,
+    { value: contextValue },
+    wrapChildren(
+      props,
+      {
+        hasVarDec,
+        varContext: varContextRef.current
+      }
+    )
+  )
   )
 })
 

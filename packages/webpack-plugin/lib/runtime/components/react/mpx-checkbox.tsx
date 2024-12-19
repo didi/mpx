@@ -13,7 +13,8 @@ import {
   ReactNode,
   useContext,
   Dispatch,
-  SetStateAction
+  SetStateAction,
+  createElement
 } from 'react'
 import {
   View,
@@ -206,28 +207,26 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       }
     }, [checked])
 
-    return (
-      <View {...innerProps}>
-        <View style={defaultStyle}>
-          <Icon
-            type='success_no_circle'
-            size={18}
-            color={disabled ? '#ADADAD' : color}
-            style={isChecked ? styles.iconChecked : styles.icon}
-          />
-        </View>
+    return createElement(View, innerProps,
+      createElement(
+        View,
+        { style: defaultStyle },
+        createElement(Icon, {
+          type: 'success_no_circle',
+          size: 18,
+          color: disabled ? '#ADADAD' : color,
+          style: isChecked ? styles.iconChecked : styles.icon
+        })
+      ),
+      wrapChildren(
+        props,
         {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
         }
-      </View>
+      )
     )
   }
 )

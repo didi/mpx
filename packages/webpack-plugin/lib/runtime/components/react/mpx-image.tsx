@@ -10,7 +10,7 @@
  * ✔ bindtap
  * ✔ DEFAULT_SIZE
  */
-import { useEffect, useMemo, useState, useRef, forwardRef } from 'react'
+import { useEffect, useMemo, useState, useRef, forwardRef, createElement } from 'react'
 import {
   Image as RNImage,
   View,
@@ -403,35 +403,31 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   )
 
-  return (
-    <View {...innerProps}>
-      {
-        isSvg
-          ? <SvgCssUri
-              uri={src}
-              onLayout={onSvgLoad}
-              onError={binderror && onSvgError}
-              style={extendObject(
-                { transformOrigin: 'top left' },
-                modeStyle
-              )}
-            />
-          : loaded && renderImage({
-            source: { uri: src },
-            resizeMode: resizeMode,
-            onLoad: bindload && onImageLoad,
-            onError: binderror && onImageError,
-            style: extendObject(
-              {
-                transformOrigin: 'top left',
-                width: isCropMode ? imageWidth : '100%',
-                height: isCropMode ? imageHeight : '100%'
-              },
-              isCropMode ? modeStyle : {}
-            )
-          }, enableFastImage)
-      }
-    </View>
+  return createElement(View, innerProps,
+    isSvg
+      ? createElement(SvgCssUri, {
+        uri: src,
+        onLayout: onSvgLoad,
+        onError: binderror && onSvgError,
+        style: extendObject(
+          { transformOrigin: 'top left' },
+          modeStyle
+        )
+      })
+      : loaded && renderImage({
+        source: { uri: src },
+        resizeMode: resizeMode,
+        onLoad: bindload && onImageLoad,
+        onError: binderror && onImageError,
+        style: extendObject(
+          {
+            transformOrigin: 'top left',
+            width: isCropMode ? imageWidth : '100%',
+            height: isCropMode ? imageHeight : '100%'
+          },
+          isCropMode ? modeStyle : {}
+        )
+      }, enableFastImage)
   )
 })
 

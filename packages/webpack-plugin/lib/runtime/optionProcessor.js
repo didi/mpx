@@ -2,9 +2,6 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
-import { createEvent } from './components/web/event'
-
-createEvent()
 
 export function processComponentOption (
   {
@@ -309,25 +306,6 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     })
     // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
     if (isBrowser) {
-      const errorHandler = function (args, fromVue) {
-        if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
-          global.__mpxAppCbs.error.forEach((cb) => {
-            cb.apply(null, args)
-          })
-          console.error(...args)
-        } else if (fromVue) {
-          throw args[0]
-        }
-      }
-      Vue.config.errorHandler = (...args) => {
-        return errorHandler(args, true)
-      }
-      window.addEventListener('error', (event) => {
-        return errorHandler([event.error, event])
-      })
-      window.addEventListener('unhandledrejection', (event) => {
-        return errorHandler([event.reason, event])
-      })
       document.addEventListener('visibilitychange', function () {
         const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
