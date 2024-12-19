@@ -531,24 +531,23 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   })
 
-  const injectCatchEvent = (props: Record<string, any>) => {
-    const eventHandlers: Record<string, any> = {}
-    const catchEventList = [
-      { name: 'bindtouchstart', value: ['bindtouchstart'] },
-      { name: 'bindtouchmove', value: ['bindtouchmove', 'bindvtouchmove', 'bindhtouchmove'] },
-      { name: 'bindtouchend', value: ['bindtouchend'] },
-      { name: 'catchtouchstart', value: ['catchtouchstart'] },
-      { name: 'catchtouchmove', value: ['catchtouchmove', 'catchvtouchmove', 'catchhtouchmove'] },
-      { name: 'catchtouchend', value: ['catchtouchend'] }
+  const proxyTouchEvent = () => {
+    const handlers: Record<string, typeof noop> = {}
+
+    const events = [
+      { type: 'touchstart' },
+      { type: 'touchmove', alias: ['vtouchmove', 'htouchmove'] },
+      { type: 'touchend' }
     ]
-    catchEventList.forEach(event => {
-      event.value.forEach(name => {
-        if (props[name] && !eventHandlers[event.name]) {
-          eventHandlers[event.name] = noop
-        }
-      })
+
+    events.forEach(({ type, alias = [] }) => {
+      const hasEvent = (prefix: string) => props[prefix + type as keyof MovableViewProps] || alias.some(name => props[prefix + name as keyof MovableViewProps])
+
+      if (hasEvent('bind')) handlers[`bind${type}`] = noop
+      if (hasEvent('catch')) handlers[`catch${type}`] = noop
     })
-    return eventHandlers
+
+    return handlers
   }
 
   const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
@@ -557,7 +556,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     ref: nodeRef,
     onLayout: onLayout,
     style: [innerStyle, animatedStyles, layoutStyle]
-  }, injectCatchEvent(props)))
+  }, proxyTouchEvent()))
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,
