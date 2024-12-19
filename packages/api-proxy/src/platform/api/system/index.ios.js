@@ -1,4 +1,4 @@
-import DeviceInfo from 'react-native-device-info'
+// import DeviceInfo from 'react-native-device-info'
 import { PixelRatio } from 'react-native'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import { getWindowInfo, getLaunchOptionsSync, getEnterOptionsSync } from './rnSystem'
