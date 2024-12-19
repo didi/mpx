@@ -30,6 +30,10 @@ const getImageInfo = function (options = {}) {
     return
   }
   if (src === '') {
+    const result = {
+      errMsg: 'getImageInfo:fail image not found'
+    }
+    failHandle(result, fail, complete)
     return
   }
 
