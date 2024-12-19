@@ -110,6 +110,12 @@ export const createVideoContext: WechatMiniprogram.Wx['createVideoContext']
 export const onWindowResize: WechatMiniprogram.Wx['onWindowResize']
 export const offWindowResize: WechatMiniprogram.Wx['offWindowResize']
 export const createAnimation: WechatMiniprogram.Wx['createAnimation']
+export const vibrateShort: WechatMiniprogram.Wx['vibrateShort']
+export const vibrateLong: WechatMiniprogram.Wx['vibrateLong']
+export const getExtConfig: WechatMiniprogram.Wx['getExtConfig']
+export const getExtConfigSync: WechatMiniprogram.Wx['getExtConfigSync']
+export const openLocation: WechatMiniprogram.Wx['openLocation']
+export const chooseLocation: WechatMiniprogram.Wx['chooseLocation']
 
 declare const install: (...args: any) => any
 
