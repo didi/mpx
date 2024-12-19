@@ -3,12 +3,13 @@ import { RefKey } from '../helper/const'
 import {
   warn,
   isPlainObject,
-  hasOwn
+  hasOwn,
+  extend
 } from '@mpxjs/utils'
 
 export class RefImpl {
   constructor (options) {
-    Object.defineProperty(this, 'value', { enumerable: true, ...options })
+    Object.defineProperty(this, 'value', extend({ enumerable: true }, options))
   }
 }
 
