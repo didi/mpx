@@ -1,11 +1,13 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
-import { VarContext } from './context'
+import { VarContext, ScrollViewContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
+import { runOnJS } from 'react-native-reanimated'
+import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -609,4 +611,25 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
     }
     return acc
   }, {})
+}
+
+export function useGesture ({ onTouchStart, onTouchEnd }: { onTouchStart: () => void, onTouchEnd: () => void }) {
+  const gestureRef: React.RefObject<any> | null = useContext(ScrollViewContext).gestureRef
+
+  const gesturePan = Gesture.Pan()
+
+    .onTouchesDown(() => {
+      'worklet'
+      runOnJS(onTouchStart)()
+    })
+    .onTouchesUp(() => {
+      'worklet'
+      runOnJS(onTouchEnd)()
+    })
+
+  if (gestureRef) {
+    gesturePan.simultaneousWithExternalGesture(gestureRef)
+  }
+
+  return gesturePan
 }
