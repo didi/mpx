@@ -34,7 +34,7 @@ export const createFaces = (
     const maxStep = Math.trunc((visibleCount + 2) / 2) // + 2 because there are 2 more faces at 90 degrees
     const stepDegree = 90 / maxStep
 
-    const result = []
+    const result: number[] = []
     for (let i = 1; i <= maxStep; i++) {
       result.push(i * stepDegree)
     }
