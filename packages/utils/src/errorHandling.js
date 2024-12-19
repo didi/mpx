@@ -2,7 +2,7 @@ import { isFunction, isPromise } from './base'
 import { error } from './log'
 
 function handleError (e, instance, info) {
-  error(`Unhandled error occurs${info ? ` during execution of [${info}]` : ''}!`, instance?.options?.mpxFileResource, e)
+  error(`Unhandled error occurs${info ? ` during execution of [${info}]` : ''}!`, instance?.options.mpxFileResource, e)
 }
 
 export function callWithErrorHandling (fn, instance, info, args) {

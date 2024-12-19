@@ -51,7 +51,7 @@ import {
 } from './innerLifecycle'
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
-import { inject, provide } from '../platform/export/apiInject'
+import { inject, provide } from '../platform/export/inject'
 
 let uid = 0
 
