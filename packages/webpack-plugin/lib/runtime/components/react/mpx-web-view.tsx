@@ -124,12 +124,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       if (typeof nativeEventData === 'string') {
         data = JSON.parse(nativeEventData)
       }
-    } catch (e) {
-      data = {}
-    }
+    } catch (e) {}
     const args = data.args
     const postData: PayloadData = data.payload || {}
-    const params = args !== undefined ? args : [postData]
+    const params = Array.isArray(args) ? args : [postData]
     const type = data.type
     switch (type) {
       case 'setTitle':
@@ -187,6 +185,15 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
           type,
           callbackId: data.callbackId,
           result: res
+        })
+        webViewRef.current.postMessage(test)
+      }
+    }).catch((error: any) => {
+      if (webViewRef.current?.postMessage) {
+        const test = JSON.stringify({
+          type,
+          callbackId: data.callbackId,
+          error
         })
         webViewRef.current.postMessage(test)
       }

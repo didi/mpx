@@ -114,7 +114,7 @@ export default {
       }
       let value = data.payload
       const args = data.args
-      const params = args !== undefined && Array.isArray(args) ? args : [value]
+      const params = Array.isArray(args) ? args : [value]
       if (!hostValidate) {
         return
       }
