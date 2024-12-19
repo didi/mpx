@@ -37,7 +37,7 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect } from 'react'
+import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
   KeyboardTypeOptions,
   Platform,
@@ -405,7 +405,22 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle),
-        allowFontScaling
+        allowFontScaling,
+        keyboardType: keyboardType,
+        secureTextEntry: !!password,
+        defaultValue: defaultValue,
+        value: inputValue,
+        maxLength: maxlength === -1 ? undefined : maxlength,
+        editable: !disabled,
+        autoFocus: !!autoFocus || !!focus,
+        returnKeyType: confirmType,
+        selection: selection,
+        selectionColor: cursorColor,
+        blurOnSubmit: !multiline && !confirmHold,
+        underlineColorAndroid: 'rgba(0,0,0,0)',
+        textAlignVertical: textAlignVertical,
+        placeholderTextColor: placeholderTextColor,
+        multiline: !!multiline
       },
       layoutProps,
       {
@@ -413,16 +428,17 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onBlur: bindblur && onInputBlur,
         onKeyPress: bindconfirm && onKeyPress,
         onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
-        onSelectionChange: bindselectionchange && onSelectionChange
+        onSelectionChange: bindselectionchange && onSelectionChange,
+        onTextInput: onTextInput,
+        onChange: onChange,
+        onContentSizeChange: onContentSizeChange
       }
     ),
     [
       'type',
-      'keyboardType',
       'password',
       'placeholder-style',
       'disabled',
-      'maxlength',
       'auto-focus',
       'focus',
       'confirm-type',
@@ -430,37 +446,13 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       'cursor',
       'cursor-color',
       'selection-start',
-      'selection-end',
-      'multiline'
+      'selection-end'
     ],
     {
       layoutRef
     }
   )
-
-  return (
-    <TextInput
-      {...innerProps}
-      keyboardType={keyboardType as KeyboardTypeOptions}
-      secureTextEntry={!!password}
-      defaultValue={defaultValue}
-      value={inputValue}
-      maxLength={maxlength === -1 ? undefined : maxlength}
-      editable={!disabled}
-      autoFocus={!!autoFocus || !!focus}
-      returnKeyType={confirmType}
-      selection={selection}
-      selectionColor={cursorColor}
-      blurOnSubmit={!multiline && !confirmHold}
-      underlineColorAndroid="rgba(0,0,0,0)"
-      textAlignVertical={textAlignVertical}
-      placeholderTextColor={placeholderTextColor}
-      multiline={!!multiline}
-      onTextInput={onTextInput}
-      onChange={onChange}
-      onContentSizeChange={onContentSizeChange}
-    />
-  )
+  return createElement(TextInput, innerProps)
 })
 
 Input.displayName = 'MpxInput'

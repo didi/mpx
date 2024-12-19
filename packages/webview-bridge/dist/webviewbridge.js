@@ -9,50 +9,6 @@
   (global = global || self, global.mpx = factory());
 }(this, (function () { 'use strict';
 
-  function _defineProperty(e, r, t) {
-    return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
-      value: t,
-      enumerable: !0,
-      configurable: !0,
-      writable: !0
-    }) : e[r] = t, e;
-  }
-  function ownKeys(e, r) {
-    var t = Object.keys(e);
-    if (Object.getOwnPropertySymbols) {
-      var o = Object.getOwnPropertySymbols(e);
-      r && (o = o.filter(function (r) {
-        return Object.getOwnPropertyDescriptor(e, r).enumerable;
-      })), t.push.apply(t, o);
-    }
-    return t;
-  }
-  function _objectSpread2(e) {
-    for (var r = 1; r < arguments.length; r++) {
-      var t = null != arguments[r] ? arguments[r] : {};
-      r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
-        _defineProperty(e, r, t[r]);
-      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
-        Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
-      });
-    }
-    return e;
-  }
-  function _toPrimitive(t, r) {
-    if ("object" != typeof t || !t) return t;
-    var e = t[Symbol.toPrimitive];
-    if (void 0 !== e) {
-      var i = e.call(t, r || "default");
-      if ("object" != typeof i) return i;
-      throw new TypeError("@@toPrimitive must return a primitive value.");
-    }
-    return ("string" === r ? String : Number)(t);
-  }
-  function _toPropertyKey(t) {
-    var i = _toPrimitive(t, "string");
-    return "symbol" == typeof i ? i : i + "";
-  }
-
   function loadScript(url) {
     var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
       _ref$time = _ref.time,
@@ -94,7 +50,7 @@
   }
 
   var sdkReady;
-  var SDK_URL_MAP = _objectSpread2({
+  var SDK_URL_MAP = Object.assign({
     wx: {
       url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
     },
@@ -189,7 +145,13 @@
     }
   };
   function postMessage(type) {
-    var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    for (var _len = arguments.length, extraData = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      extraData[_key - 1] = arguments[_key];
+    }
+    var data = extraData[0] || {};
+    if (type === 'invoke') {
+      data = extraData[1] || {};
+    }
     if (type !== 'getEnv') {
       var currentCallbackId = ++callbackId;
       callbacks[currentCallbackId] = function (err, res) {
@@ -205,7 +167,7 @@
       var postParams = {
         type: type,
         callbackId: callbackId,
-        payload: data
+        payload: type === 'invoke' ? extraData : data
       };
       if (clientUid !== undefined) {
         postParams.clientUid = clientUid;
@@ -225,26 +187,26 @@
     var multiApiMap = {
       wx: {
         keyName: 'miniProgram',
-        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'postMessage', 'getEnv']
+        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'postMessage', 'getEnv', 'invoke']
       },
       tt: {
         keyName: 'miniProgram',
-        api: ['redirectTo', 'navigateTo', 'switchTab', 'reLaunch', 'navigateBack', 'setSwipeBackModeSync', 'postMessage', 'getEnv', 'checkJsApi', 'chooseImage', 'compressImage', 'previewImage', 'uploadFile', 'getNetworkType', 'openLocation', 'getLocation']
+        api: ['redirectTo', 'navigateTo', 'switchTab', 'reLaunch', 'navigateBack', 'setSwipeBackModeSync', 'postMessage', 'getEnv', 'checkJsApi', 'chooseImage', 'compressImage', 'previewImage', 'uploadFile', 'getNetworkType', 'openLocation', 'getLocation', 'invoke']
       },
       swan: {
         keyName: 'webView',
-        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage']
+        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'invoke']
       },
       qq: {
         keyName: 'miniProgram',
-        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage']
+        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'invoke']
       }
     };
     var singleApiMap = {
       wx: ['checkJSApi', 'chooseImage', 'previewImage', 'uploadImage', 'downloadImage', 'getLocalImgData', 'startRecord', 'stopRecord', 'onVoiceRecordEnd', 'playVoice', 'pauseVoice', 'stopVoice', 'onVoicePlayEnd', 'uploadVoice', 'downloadVoice', 'translateVoice', 'getNetworkType', 'openLocation', 'getLocation', 'startSearchBeacons', 'stopSearchBeacons', 'onSearchBeacons', 'scanQRCode', 'chooseCard', 'addCard', 'openCard'],
       my: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'chooseImage', 'previewImage', 'getLocation', 'openLocation', 'alert', 'showLoading', 'hideLoading', 'getNetworkType', 'startShare', 'tradePay', 'postMessage', 'onMessage', 'getEnv'],
       swan: ['makePhoneCall', 'setClipboardData', 'getNetworkType', 'openLocation', 'getLocation', 'chooseLocation', 'chooseImage', 'previewImage', 'openShare', 'navigateToSmartProgram'],
-      web: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLoadError', 'getLocation'],
+      web: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLoadError', 'getLocation', 'invoke'],
       tt: []
     };
     var multiApi = multiApiMap[env] || {};
@@ -252,8 +214,8 @@
     var multiApiLists = multiApi.api || [];
     multiApiLists.forEach(function (item) {
       webviewBridge[item] = function () {
-        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
+        for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+          args[_key2] = arguments[_key2];
         }
         runWebviewApiMethod(function () {
           var _window$env$multiApi$;
@@ -263,8 +225,8 @@
     });
     singleApi.forEach(function (item) {
       webviewBridge[item] = function () {
-        for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-          args[_key2] = arguments[_key2];
+        for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+          args[_key3] = arguments[_key3];
         }
         if (env === 'web') {
           postMessage.apply(void 0, [item].concat(args));
