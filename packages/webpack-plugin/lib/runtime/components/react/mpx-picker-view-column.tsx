@@ -140,6 +140,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const onScrollViewLayout = (e: LayoutChangeEvent) => {
     const { width } = e.nativeEvent.layout
     const widthInt = Math.ceil(width)
+    // console.log('[mpx-picker-view-column], onScrollViewLayout --->', 'columnIndex=', columnIndex, 'widthInt=', widthInt, 'scrollViewWidth=', scrollViewWidth)
     if (widthInt !== scrollViewWidth) {
       const maxW = maxScrollViewWidth.current
       if (maxW !== -1 && widthInt > maxW) {
@@ -156,7 +157,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     const y = itemRawH * initialIndex
     // console.log('[mpx-picker-view-column], onContentSizeChange --->', 'columnIndex=', columnIndex, '_w=', _w, 'h=', h, 'y=', y)
     if (y <= h) {
-      scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+      }, 0)
     }
   }
 
