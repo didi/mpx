@@ -1,26 +1,12 @@
-import Preview from './Preview'
-import { isBrowser, throwSSRWarning, envError, defineUnsupportedProps, successHandle, failHandle } from '../../../common/js'
+import { envError, defineUnsupportedProps, successHandle, failHandle } from '../../../common/js'
+import { Image } from 'react-native'
 
-let preview = null
-
-/**
- * 预览图片
- * @param {Object} options - 预览图片的配置项
- */
-const previewImage = (options) => {
-  if (!isBrowser) {
-    throwSSRWarning('previewImage API is running in non browser environments')
-    return
-  }
-  if (!preview) preview = new Preview()
-  preview.show(options)
-}
+const previewImage = envError('previewImage')
 
 const compressImage = envError('compressImage')
 
 const getImageInfo = function (options = {}) {
   const { src, success, fail, complete } = options
-
   if (src === undefined) {
     const result = {
       errMsg: 'getImageInfo:fail parameter error: parameter.src should be String instead of Undefined;',
@@ -36,13 +22,7 @@ const getImageInfo = function (options = {}) {
     failHandle(result, fail, complete)
     return
   }
-
-  const img = new Image()
-  img.src = src
-
-  img.onload = function () {
-    const width = img.width
-    const height = img.height
+  Image.getSize(src, (width, height) => {
     const result = {
       errMsg: 'getImageInfo:ok',
       width,
@@ -50,14 +30,12 @@ const getImageInfo = function (options = {}) {
     }
     defineUnsupportedProps(result, ['path', 'orientation', 'type'])
     successHandle(result, success, complete)
-  }
-
-  img.onerror = function () {
+  }, (err) => {
     const result = {
-      errMsg: 'getImageInfo:fail download image fail. '
+      errMsg: 'getImageInfo:fail download image fail. reason: ' + err
     }
     failHandle(result, fail, complete)
-  }
+  })
 }
 
 export {

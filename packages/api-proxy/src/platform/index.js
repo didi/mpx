@@ -43,7 +43,7 @@ export * from './api/file'
 // getUserInfo
 export * from './api/get-user-info'
 
-// previewImage, compressImage
+// previewImage, compressImage, getImageInfo
 export * from './api/image'
 
 // login
