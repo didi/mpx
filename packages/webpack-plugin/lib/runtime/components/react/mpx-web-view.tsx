@@ -129,7 +129,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     const args = data.args
     const postData: PayloadData = data.payload || {}
-    const params = args !== undefined ? args : [postData]
+    const params = Array.isArray(args) ? args : [postData]
     const type = data.type
     switch (type) {
       case 'setTitle':
