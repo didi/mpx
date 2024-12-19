@@ -165,7 +165,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intersectionObservers = useContext(IntersectionObserverContext)
 
-  const snapScrollIntoView = useRef<string>('')
+  const firstScrollIntoViewChange = useRef<boolean>(false)
 
   const {
     normalStyle,
@@ -220,22 +220,27 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }, [refresherTriggered])
 
   useEffect(() => {
-    if (scrollIntoView && __selectRef && snapScrollIntoView.current !== scrollIntoView) {
-      snapScrollIntoView.current = scrollIntoView || ''
-      setTimeout(() => {
-        const refs = __selectRef(`#${scrollIntoView}`, 'node')
-        if (refs) {
-          const { nodeRef } = refs.getNodeInstance()
-          nodeRef.current?.measureLayout(
-            scrollViewRef.current,
-            (left: number, top:number) => {
-              scrollToOffset(left, top)
-            }
-          )
-        }
-      })
+    if (scrollIntoView && __selectRef) {
+      if (!firstScrollIntoViewChange.current) {
+        setTimeout(handleScrollIntoView)
+      } else {
+        handleScrollIntoView()
+      }
     }
+    firstScrollIntoViewChange.current = true
   }, [scrollIntoView])
+
+  function handleScrollIntoView () {
+    const refs = __selectRef!(`#${scrollIntoView}`, 'node')
+    if (!refs) return
+    const { nodeRef } = refs.getNodeInstance()
+    nodeRef.current?.measureLayout(
+      scrollViewRef.current,
+      (left: number, top:number) => {
+        scrollToOffset(left, top)
+      }
+    )
+  }
 
   function selectLength (size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width
