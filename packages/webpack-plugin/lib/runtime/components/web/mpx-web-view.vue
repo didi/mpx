@@ -113,6 +113,8 @@ export default {
         return
       }
       let value = data.payload
+      const args = data.args
+      const params = args !== undefined && Array.isArray(args) ? args : [value]
       if (!hostValidate) {
         return
       }
@@ -122,7 +124,7 @@ export default {
         case 'postMessage':
           let data = {
             type: 'message',
-            data: value.data
+            data: params[0]?.data
           }
           this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
           asyncCallback = Promise.resolve({
@@ -130,25 +132,25 @@ export default {
           })
           break
         case 'navigateTo':
-          asyncCallback = navObj.navigateTo(value)
+          asyncCallback = navObj.navigateTo(...params)
           break
         case 'navigateBack':
-          asyncCallback = navObj.navigateBack(value)
+          asyncCallback = navObj.navigateBack(...params)
           break
         case 'redirectTo':
-          asyncCallback = navObj.redirectTo(value)
+          asyncCallback = navObj.redirectTo(...params)
           break
         case 'switchTab':
-          asyncCallback = navObj.switchTab(value)
+          asyncCallback = navObj.switchTab(...params)
           break
         case 'reLaunch':
-          asyncCallback = navObj.reLaunch(value)
+          asyncCallback = navObj.reLaunch(...params)
           break
         default:
           if (type) {
             const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
             if (isFunction(implement)) {
-              asyncCallback = Promise.resolve(implement())
+              asyncCallback = Promise.resolve(implement(...params))
             } else {
               asyncCallback = Promise.reject({
                 errMsg: `未在apiImplementations中配置${type}方法`

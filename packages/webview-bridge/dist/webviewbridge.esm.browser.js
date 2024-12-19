@@ -44,7 +44,7 @@ function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
 }
 
 let sdkReady;
-const SDK_URL_MAP = {
+const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
   },
@@ -59,9 +59,8 @@ const SDK_URL_MAP = {
   },
   tt: {
     url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
-  },
-  ...window.sdkUrlMap
-};
+  }
+}, window.sdkUrlMap);
 function getMpxWebViewId () {
   const href = location.href;
   const reg = /mpx_webview_id=(\d+)/g;
@@ -141,7 +140,11 @@ const webviewBridge = {
   }
 };
 
-function postMessage (type, data = {}) {
+function postMessage (type, ...extraData) {
+  let data = extraData[0] || {};
+  if (type === 'invoke') {
+    data = extraData[1] || {};
+  }
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId;
     callbacks[currentCallbackId] = (err, res) => {
@@ -157,7 +160,7 @@ function postMessage (type, data = {}) {
     const postParams = {
       type,
       callbackId,
-      payload: data
+      payload: type === 'invoke' ? extraData : data
     };
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid;
@@ -185,7 +188,8 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'postMessage',
-        'getEnv'
+        'getEnv',
+        'invoke'
       ]
     },
     tt: {
@@ -206,7 +210,8 @@ const getWebviewApi = () => {
         'uploadFile',
         'getNetworkType',
         'openLocation',
-        'getLocation'
+        'getLocation',
+        'invoke'
       ]
     },
     swan: {
@@ -218,7 +223,8 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'getEnv',
-        'postMessage'
+        'postMessage',
+        'invoke'
       ]
     },
     qq: {
@@ -230,7 +236,8 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'getEnv',
-        'postMessage'
+        'postMessage',
+        'invoke'
       ]
     }
   };
@@ -304,7 +311,8 @@ const getWebviewApi = () => {
       'getEnv',
       'postMessage',
       'getLoadError',
-      'getLocation'
+      'getLocation',
+      'invoke'
     ],
     tt: []
   };

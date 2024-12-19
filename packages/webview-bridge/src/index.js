@@ -96,7 +96,12 @@ const webviewBridge = {
   }
 }
 
-function postMessage (type, data = {}) {
+function postMessage (type, ...extraData) {
+  if (type === 'invoke') {
+    type = extraData[0]
+    extraData = extraData.slice(1)
+  }
+  const data = extraData[0]
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId
     callbacks[currentCallbackId] = (err, res) => {
@@ -112,7 +117,7 @@ function postMessage (type, data = {}) {
     const postParams = {
       type,
       callbackId,
-      payload: data
+      args: extraData
     }
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid
@@ -140,7 +145,8 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'postMessage',
-        'getEnv'
+        'getEnv',
+        'invoke'
       ]
     },
     tt: {
@@ -161,7 +167,8 @@ const getWebviewApi = () => {
         'uploadFile',
         'getNetworkType',
         'openLocation',
-        'getLocation'
+        'getLocation',
+        'invoke'
       ]
     },
     swan: {
@@ -173,7 +180,8 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'getEnv',
-        'postMessage'
+        'postMessage',
+        'invoke'
       ]
     },
     qq: {
@@ -185,7 +193,8 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'getEnv',
-        'postMessage'
+        'postMessage',
+        'invoke'
       ]
     }
   }
@@ -259,7 +268,8 @@ const getWebviewApi = () => {
       'getEnv',
       'postMessage',
       'getLoadError',
-      'getLocation'
+      'getLocation',
+      'invoke'
     ],
     tt: []
   }

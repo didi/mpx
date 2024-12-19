@@ -32,7 +32,6 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
 }) => {
   const offsetYShared = usePickerViewColumnAnimationContext()
   const facesShared = useSharedValue(createFaces(itemHeight, visibleCount))
-  // const indexShared = useSharedValue(index)
 
   useEffect(() => {
     facesShared.value = createFaces(itemHeight, visibleCount)
@@ -41,9 +40,11 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   const animatedStyles = useAnimatedStyle(() => {
     const inputRange = facesShared.value.map((f) => itemHeight * (index + f.index))
     return {
+      opacity: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.opacity), Extrapolation.CLAMP),
       transform: [
         { rotateX: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.deg), Extrapolation.EXTEND) + 'deg' },
-        { translateY: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.offsetY), Extrapolation.EXTEND) }
+        { translateY: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.offsetY), Extrapolation.EXTEND) },
+        { scale: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.scale), Extrapolation.EXTEND) }
       ]
     }
   })
