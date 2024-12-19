@@ -152,7 +152,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const onContentSizeChange = (_w: number, h: number) => {
     const y = itemRawH * initialIndex
     if (y <= h) {
-      scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+      }, 0)
     }
   }
 
