@@ -359,8 +359,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
     extendEvent(e)
-    innerProps.onTouchStart && innerProps.onTouchStart(e)
     innerProps.onTouchStartCapture && innerProps.onTouchStartCapture(e)
+    innerProps.onTouchStart && innerProps.onTouchStart(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
@@ -371,8 +371,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       } else if (touchEvent === 'vtouchmove') {
         bindvtouchmove && bindvtouchmove(e)
       }
-      innerProps.onTouchMove && innerProps.onTouchMove(e)
       innerProps.onTouchMoveCapture && innerProps.onTouchMoveCapture(e)
+      innerProps.onTouchMove && innerProps.onTouchMove(e)
     }
 
     if (hasCatchTouchmove) {
