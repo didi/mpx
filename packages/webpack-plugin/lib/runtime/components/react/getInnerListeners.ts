@@ -81,7 +81,7 @@ export const getCustomEvent = (
   {
     detail = {},
     layoutRef
-  }: { detail?: Record<string, unknown>; layoutRef: LayoutRef },
+  }: { detail?: Record<string, unknown>; layoutRef?: LayoutRef },
   props: Props = {}
 ) => {
   const targetInfo = extendObject({}, oe.target, {
