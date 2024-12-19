@@ -148,10 +148,11 @@
     for (var _len = arguments.length, extraData = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
       extraData[_key - 1] = arguments[_key];
     }
-    var data = extraData[0] || {};
     if (type === 'invoke') {
-      data = extraData[1] || {};
+      type = extraData[0];
+      extraData = extraData.slice(1);
     }
+    var data = extraData[0];
     if (type !== 'getEnv') {
       var currentCallbackId = ++callbackId;
       callbacks[currentCallbackId] = function (err, res) {
@@ -167,7 +168,7 @@
       var postParams = {
         type: type,
         callbackId: callbackId,
-        payload: type === 'invoke' ? extraData : data
+        args: extraData
       };
       if (clientUid !== undefined) {
         postParams.clientUid = clientUid;
@@ -187,19 +188,19 @@
     var multiApiMap = {
       wx: {
         keyName: 'miniProgram',
-        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'postMessage', 'getEnv', 'invoke']
+        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'postMessage', 'getEnv']
       },
       tt: {
         keyName: 'miniProgram',
-        api: ['redirectTo', 'navigateTo', 'switchTab', 'reLaunch', 'navigateBack', 'setSwipeBackModeSync', 'postMessage', 'getEnv', 'checkJsApi', 'chooseImage', 'compressImage', 'previewImage', 'uploadFile', 'getNetworkType', 'openLocation', 'getLocation', 'invoke']
+        api: ['redirectTo', 'navigateTo', 'switchTab', 'reLaunch', 'navigateBack', 'setSwipeBackModeSync', 'postMessage', 'getEnv', 'checkJsApi', 'chooseImage', 'compressImage', 'previewImage', 'uploadFile', 'getNetworkType', 'openLocation', 'getLocation']
       },
       swan: {
         keyName: 'webView',
-        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'invoke']
+        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage']
       },
       qq: {
         keyName: 'miniProgram',
-        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'invoke']
+        api: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage']
       }
     };
     var singleApiMap = {

@@ -145,8 +145,7 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'postMessage',
-        'getEnv',
-        'invoke'
+        'getEnv'
       ]
     },
     tt: {
@@ -167,8 +166,7 @@ const getWebviewApi = () => {
         'uploadFile',
         'getNetworkType',
         'openLocation',
-        'getLocation',
-        'invoke'
+        'getLocation'
       ]
     },
     swan: {
@@ -180,8 +178,7 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'getEnv',
-        'postMessage',
-        'invoke'
+        'postMessage'
       ]
     },
     qq: {
@@ -193,8 +190,7 @@ const getWebviewApi = () => {
         'reLaunch',
         'redirectTo',
         'getEnv',
-        'postMessage',
-        'invoke'
+        'postMessage'
       ]
     }
   }
