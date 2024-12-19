@@ -114,11 +114,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend,
-    bindlongpress,
-    catchlongpress,
-    bindtap,
-    catchtap
+    catchtouchend
   } = props
 
   const {
@@ -462,7 +458,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         'worklet'
         isFirstTouch.value = true
         isMoving.value = false
-        if (bindtouchend || catchtouchend || bindtap || catchtap) {
+        if (bindtouchend || catchtouchend) {
           runOnJS(triggerEndOnJS)({ e })
         }
         if (disabled) return
