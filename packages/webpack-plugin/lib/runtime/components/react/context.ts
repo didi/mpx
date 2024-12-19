@@ -34,7 +34,7 @@ export interface IntersectionObserver {
 }
 
 export interface ScrollViewContextValue {
-   gestureRef: React.RefObject<any>
+   gestureRef: React.RefObject<any> | null
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
