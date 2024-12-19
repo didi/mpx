@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
-import { VarContext } from './context'
+import { VarContext, ScrollViewContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
@@ -613,7 +613,10 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
   }, {})
 }
 
+
 export function useGesture ({ onTouchStart, onTouchEnd }: { onTouchStart: () => void, onTouchEnd: () => void }) {
+  const gestureRef: React.RefObject<any> = useContext(ScrollViewContext).gestureRef
+
   const gesturePan = Gesture.Pan()
 
     .onTouchesDown(() => {
@@ -624,6 +627,10 @@ export function useGesture ({ onTouchStart, onTouchEnd }: { onTouchStart: () => 
       'worklet'
       runOnJS(onTouchEnd)()
     })
+
+    if (gestureRef) {
+      gesturePan.simultaneousWithExternalGesture(gestureRef)
+    }
 
   return gesturePan
 }
