@@ -1,11 +1,14 @@
-import { forwardRef, JSX, useEffect, useRef } from 'react'
+import { forwardRef, JSX, useEffect, useRef, useContext, useMemo, createElement } from 'react'
 import { noop, warn } from '@mpxjs/utils'
+import { View } from 'react-native'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes'
+import { getCurrentPage, extendObject } from './utils'
+import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation } from 'react-native-webview/lib/WebViewTypes'
+import { RouteContext } from './context'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -37,20 +40,17 @@ type MessageData = {
   callbackId?: number
 }
 
-interface NativeEvent {
-  url: string,
-  data: string
-}
-
-interface FormRef {
-  postMessage: (value: any) => void;
-}
-
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element => {
-  const { src = '', bindmessage = noop, bindload = noop, binderror = noop } = props
+  const { src, bindmessage = noop, bindload = noop, binderror = noop } = props
+  if (!src) {
+    return (<View></View>)
+  }
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
+  const pageId = useContext(RouteContext)
+  const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
+
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
     left: 0 as number,
@@ -61,19 +61,25 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   const webViewRef = useRef<WebView>(null)
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
-    defaultStyle: defaultWebViewStyle
+    style: defaultWebViewStyle
   })
 
-  const _messageList: any[] = []
+  const _messageList = useRef<any[]>([])
   const handleUnload = () => {
     // 这里是 WebView 销毁前执行的逻辑
     bindmessage(getCustomEvent('messsage', {}, {
       detail: {
-        data: _messageList
+        data: _messageList.current
       },
       layoutRef: webViewRef
     }))
   }
+
+  useEffect(() => {
+    if (currentPage) {
+      currentPage.__webViewUrl = src
+    }
+  }, [src, currentPage])
 
   useEffect(() => {
     // 组件卸载时执行
@@ -101,6 +107,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror(result)
   }
+  const _changeUrl = function (navState: WebViewNavigation) {
+    if (currentPage) {
+      currentPage.__webViewUrl = navState.url
+    }
+  }
   const _message = function (res: WebViewMessageEvent) {
     let data: MessageData = {}
     let asyncCallback
@@ -116,7 +127,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const postData: PayloadData = data.payload || {}
     switch (data.type) {
       case 'postMessage':
-        _messageList.push(postData.data)
+        _messageList.current.push(postData.data)
         asyncCallback = Promise.resolve({
           errMsg: 'invokeWebappApi:ok'
         })
@@ -149,17 +160,31 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
-  return (<Portal>
-    <WebView
-      style={defaultWebViewStyle}
-      source={{ uri: src }}
-      ref={webViewRef}
-      onLoad={_load}
-      onError={_error}
-      onMessage={_message}
-      javaScriptEnabled={true}
-    ></WebView>
-  </Portal>)
+  const events = {}
+
+  if (bindload) {
+    extendObject(events, {
+      onLoad: _load
+    })
+  }
+  if (binderror) {
+    extendObject(events, {
+      onError: _error
+    })
+  }
+  if (bindmessage) {
+    extendObject(events, {
+      onMessage: _message
+    })
+  }
+
+  return createElement(Portal, null, createElement(WebView, extendObject({
+    style: defaultWebViewStyle,
+    source: { uri: src },
+    ref: webViewRef,
+    javaScriptEnabled: true,
+    onNavigationStateChange: _changeUrl
+  }, events)))
 })
 
 _WebView.displayName = 'MpxWebview'

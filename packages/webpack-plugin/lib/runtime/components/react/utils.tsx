@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
@@ -10,8 +10,9 @@ import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
+export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
-export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling/
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
@@ -31,10 +32,7 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 
 function getSafeAreaInset (name: string) {
   const navigation = getFocusedNavigation()
-  const insets = {
-    ...initialWindowMetrics?.insets,
-    ...navigation?.insets
-  }
+  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
 }
 
@@ -90,25 +88,18 @@ export const parseUrl = (cssUrl = '') => {
 }
 
 export const getRestProps = (transferProps: any = {}, originProps: any = {}, deletePropsKey: any = []) => {
-  return {
-    ...transferProps,
-    ...omit(originProps, deletePropsKey)
-  }
+  return extendObject(
+    {},
+    transferProps,
+    omit(originProps, deletePropsKey)
+  )
 }
 
 export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as ExtendedFunctionComponent)?.displayName
     const isCustomText = (ele.type as ExtendedFunctionComponent)?.isCustomText
-    return displayName === 'MpxText' || displayName === 'Text' || !!isCustomText
-  }
-  return false
-}
-
-export function isEmbedded (ele: ReactNode): ele is ReactElement {
-  if (isValidElement(ele)) {
-    const displayName = (ele.type as ExtendedFunctionComponent)?.displayName || ''
-    return ['mpx-checkbox', 'mpx-radio', 'mpx-switch'].includes(displayName)
+    return displayName === 'MpxText' || displayName === 'MpxSimpleText' || displayName === 'Text' || !!isCustomText
   }
   return false
 }
@@ -276,6 +267,15 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
+const stringifyProps = ['fontWeight']
+function transformStringify (styleObj: Record<string, any>) {
+  stringifyProps.forEach((prop) => {
+    if (isNumber(styleObj[prop])) {
+      styleObj[prop] = '' + styleObj[prop]
+    }
+  })
+}
+
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -386,6 +386,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       }
     }
   })
+  // transform number enum stringify
+  transformStringify(normalStyle)
 
   return {
     normalStyle,
@@ -475,7 +477,7 @@ interface LayoutConfig {
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }: LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
-  const layoutStyle: Record<string, any> = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
+  const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
@@ -514,8 +516,8 @@ export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varC
   if (textStyle || textProps) {
     children = Children.map(children, (child) => {
       if (isText(child)) {
-        const style = { ...textStyle, ...child.props.style }
-        return cloneElement(child, { ...textProps, style })
+        const style = extendObject({}, textStyle, child.props.style)
+        return cloneElement(child, extendObject({}, textProps, { style }))
       }
       return child
     })
@@ -584,8 +586,12 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
   })) || []
 }
 
-export function extendObject (...args: Record<string, any>[]) {
-  return Object.assign({}, ...args)
+export const extendObject = Object.assign
+
+export function getCurrentPage (pageId: number | null) {
+  if (!global.getCurrentPages) return
+  const pages = global.getCurrentPages()
+  return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
 }
 
 export function renderImage (

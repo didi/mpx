@@ -156,7 +156,9 @@ module.exports = function getSpec ({ warn, error }) {
     },
     {
       test: 'usingComponents',
-      web: fixComponentName('usingComponents')
+      web: fixComponentName('usingComponents'),
+      ios: fixComponentName('usingComponents'),
+      android: fixComponentName('usingComponents')
     },
     {
       test: 'usingComponents',
@@ -256,12 +258,21 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd', 'web'],
-    normalizeTest,
-    page: [
-      ...windowRules,
-      ...componentRules
+    supportedModes: [
+      'ali',
+      'swan',
+      'qq',
+      'tt',
+      'jd',
+      'qa',
+      'dd',
+      'web',
+      'ios',
+      'android'
     ],
+
+    normalizeTest,
+    page: [...windowRules, ...componentRules],
     component: componentRules,
     window: windowRules,
     tabBar: {
@@ -297,7 +308,7 @@ module.exports = function getSpec ({ warn, error }) {
           ali (input) {
             const value = input.list
             delete input.list
-            input.items = value.map(item => {
+            input.items = value.map((item) => {
               return runRules(spec.tabBar.list, item, {
                 mode: 'ali',
                 normalizeTest,
@@ -361,7 +372,9 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        web: fixComponentName('usingComponents')
+        web: fixComponentName('usingComponents'),
+        ios: fixComponentName('usingComponents'),
+        android: fixComponentName('usingComponents')
       },
       {
         test: 'usingComponents',
