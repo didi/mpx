@@ -1,8 +1,7 @@
-import Vue from './external/vue'
+
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
-
-import { createI18n } from './platform/builtInMixins/i18nMixin'
+import { init } from './platform/env/index'
 
 export * from './platform/export/index'
 
@@ -123,10 +122,6 @@ function factory () {
 
   Object.assign(Mpx, APIs)
   Object.assign(Mpx.prototype, InstanceAPIs)
-  // 输出web时在mpx上挂载Vue对象
-  if (__mpx_mode__ === 'web') {
-    Mpx.__vue = Vue
-  }
   return Mpx
 }
 
@@ -156,12 +151,6 @@ Mpx.config = {
   rnConfig: {}
 }
 
-global.__mpx = Mpx
-
-if (__mpx_mode__ !== 'web') {
-  if (global.i18n) {
-    Mpx.i18n = createI18n(global.i18n)
-  }
-}
+init(Mpx)
 
 export default Mpx
