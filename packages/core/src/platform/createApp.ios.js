@@ -81,12 +81,6 @@ export default function createApp (option, config = {}) {
     }
   }
 
-  global.__mpxAppCbs = global.__mpxAppCbs || {
-    show: [],
-    hide: [],
-    error: []
-  }
-
   global.__mpxAppLaunched = false
 
   global.__mpxAppFocusedState = ref('show')
@@ -136,6 +130,9 @@ export default function createApp (option, config = {}) {
       }
       if (defaultOptions.onError) {
         global.__mpxAppCbs.error.push(defaultOptions.onError.bind(instance))
+      }
+      if (defaultOptions.onUnhandledRejection) {
+        global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(instance))
       }
 
       const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {

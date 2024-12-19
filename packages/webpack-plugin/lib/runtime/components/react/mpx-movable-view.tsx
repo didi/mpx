@@ -17,7 +17,7 @@
  * ✔ htouchmove
  * ✔ vtouchmove
  */
-import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo } from 'react'
+import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, createElement } from 'react'
 import { StyleSheet, View, LayoutChangeEvent, NativeTouchEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -544,25 +544,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     layoutRef
   })
 
-  return (
-    <GestureDetector gesture={gesture}>
-      <Animated.View
-        {...innerProps}
-      >
-        {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
-        }
-      </Animated.View>
-    </GestureDetector>
-  )
+  return createElement(GestureDetector, { gesture: gesture }, createElement(
+    Animated.View,
+    innerProps,
+    wrapChildren(
+      props,
+      {
+        hasVarDec,
+        varContext: varContextRef.current,
+        textStyle,
+        textProps
+      }
+    )
+  ))
 })
 
 _MovableView.displayName = 'MpxMovableView'

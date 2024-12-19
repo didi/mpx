@@ -5,7 +5,7 @@
  * ✘ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, wrapChildren } from './utils'
@@ -65,21 +65,13 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     layoutRef
   })
 
-  return (
-    <Text
-      {...innerProps}
-    >
-      {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current
-          }
-        )
-      }
-    </Text>
-  )
+  return createElement(Text, innerProps, wrapChildren(
+    props,
+    {
+      hasVarDec,
+      varContext: varContextRef.current
+    }
+  ))
 })
 
 _Text.displayName = 'MpxText'
