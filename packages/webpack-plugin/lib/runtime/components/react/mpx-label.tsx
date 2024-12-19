@@ -1,12 +1,12 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode, useCallback } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useCallback, createElement } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 
 export interface LabelProps {
@@ -42,10 +42,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       flexDirection: 'row'
     }
 
-    const styleObj = {
-      ...defaultStyle,
-      ...style
-    }
+    const styleObj = extendObject({}, defaultStyle, style)
 
     const {
       hasSelfPercent,
@@ -57,11 +54,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
     const nodeRef = useRef(null)
-    useNodesRef(props, ref, nodeRef, { defaultStyle })
+    useNodesRef(props, ref, nodeRef, { style: normalStyle })
 
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+    const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
       warn('Label does not support background image-related styles!')
@@ -79,33 +76,35 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
 
     const innerProps = useInnerProps(
       props,
-      {
-        ref: nodeRef,
-        style: { ...innerStyle, ...layoutStyle },
-        ...layoutProps,
-        bindtap: onTap
-      },
+      extendObject(
+        {
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle)
+        },
+        layoutProps,
+        {
+          bindtap: onTap
+        }
+      ),
       [],
       {
         layoutRef
       }
     )
 
-    return <View {...innerProps}>
-      <LabelContext.Provider value={contextRef}>
+    return createElement(View, innerProps, createElement(
+      LabelContext.Provider,
+      { value: contextRef },
+      wrapChildren(
+        props,
         {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
         }
-      </LabelContext.Provider>
-    </View>
+      )
+    ))
   }
 )
 

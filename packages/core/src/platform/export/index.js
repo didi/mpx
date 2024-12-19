@@ -46,4 +46,4 @@ export {
 export {
   provide,
   inject
-} from './apiInject'
+} from './inject'

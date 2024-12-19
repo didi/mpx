@@ -1,10 +1,7 @@
-import { hasOwn, isEmptyObject } from './utils'
+import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
-import { createEvent } from './components/web/event'
-
-createEvent()
 
 export function processComponentOption (
   {
@@ -59,7 +56,7 @@ registered in parent context!`)
   }
 
   if (ctorType === 'page') {
-    option.__mpxPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
+    option.__mpxPageConfig = extend({}, global.__mpxPageConfig, pageConfig)
   }
 
   if (!hasApp) {
@@ -109,7 +106,7 @@ registered in parent context!`)
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   // eslint-disable-next-line
-  if (extendOptions) Object.assign(component, extendOptions)
+  if (extendOptions) extend(component, extendOptions)
   return component
 }
 
@@ -164,10 +161,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       })
     }
     const webRouteConfig = global.__mpx.config.webConfig.routeConfig || global.__mpx.config.webRouteConfig
-    global.__mpxRouter = option.router = new VueRouter({
-      ...webRouteConfig,
-      routes: routes
-    })
+    global.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
     let mpxStackPath = []
     if (isBrowser) {
       // 解决webview被刷新导致路由栈丢失后产生错乱问题
@@ -312,25 +306,6 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     })
     // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
     if (isBrowser) {
-      const errorHandler = function (args, fromVue) {
-        if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
-          global.__mpxAppCbs.error.forEach((cb) => {
-            cb.apply(null, args)
-          })
-          console.error(...args)
-        } else if (fromVue) {
-          throw args[0]
-        }
-      }
-      Vue.config.errorHandler = (...args) => {
-        return errorHandler(args, true)
-      }
-      window.addEventListener('error', (event) => {
-        return errorHandler([event.error, event])
-      })
-      window.addEventListener('unhandledrejection', (event) => {
-        return errorHandler([event.reason, event])
-      })
       document.addEventListener('visibilitychange', function () {
         const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
@@ -365,7 +340,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
 
   if (App.onAppInit) {
     global.__mpxAppInit = true
-    Object.assign(option, App.onAppInit() || {})
+    extend(option, App.onAppInit() || {})
     global.__mpxAppInit = false
   }
 
@@ -374,14 +349,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     option.pinia = global.__mpxPinia
   }
 
-  const app = new Vue({
-    ...option,
-    render: (h) => h(App)
-  })
-  return {
-    app,
-    ...option
-  }
+  const app = new Vue(extend(option, { render: (h) => h(App) }))
+  return extend({ app }, option)
 }
 
 export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, el }) {

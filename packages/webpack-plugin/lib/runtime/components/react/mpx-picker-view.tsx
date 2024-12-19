@@ -90,7 +90,11 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {})
+
+  useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
+
   const {
     // 存储layout布局信息
     layoutRef,
@@ -134,6 +138,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     extendObject({
       ref: nodeRef,
       style: extendObject(
+        {},
         normalStyle,
         layoutStyle,
         {
@@ -151,6 +156,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     const extraProps = {}
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
+      {},
       childProps,
       {
         columnData,

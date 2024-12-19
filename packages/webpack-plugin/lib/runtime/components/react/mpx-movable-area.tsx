@@ -3,11 +3,11 @@
  */
 
 import { View } from 'react-native'
-import { JSX, forwardRef, ReactNode, useRef, useMemo } from 'react'
+import { JSX, forwardRef, ReactNode, useRef, useMemo, createElement } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, wrapChildren, useLayout } from './utils'
+import { useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
 
 interface MovableAreaProps {
   style?: Record<string, any>;
@@ -35,7 +35,9 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const movableViewRef = useRef(null)
-  useNodesRef(props, ref, movableViewRef)
+  useNodesRef(props, ref, movableViewRef, {
+    style: normalStyle
+  })
 
   const contextValue = useMemo(() => ({
     height: normalStyle.height || 10,
@@ -44,29 +46,22 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef })
 
-  const innerProps = useInnerProps(props, {
-    style: { height: contextValue.height, width: contextValue.width, overflow: 'hidden', ...normalStyle, ...layoutStyle },
-    ref: movableViewRef,
-    ...layoutProps
-  }, [], { layoutRef })
+  const innerProps = useInnerProps(props, extendObject({
+    style: extendObject({ height: contextValue.height, width: contextValue.width, overflow: 'hidden' }, normalStyle, layoutStyle),
+    ref: movableViewRef
+  }, layoutProps), [], { layoutRef })
 
-  return (
-    <MovableAreaContext.Provider value={contextValue}>
-      <View
-        {...innerProps}
-      >
+  return createElement(MovableAreaContext.Provider, { value: contextValue }, createElement(
+    View,
+    innerProps,
+    wrapChildren(
+      props,
       {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current
-          }
-        )
+        hasVarDec,
+        varContext: varContextRef.current
       }
-      </View>
-    </MovableAreaContext.Provider>
-  )
+    )
+  ))
 })
 
 _MovableArea.displayName = 'MpxMovableArea'

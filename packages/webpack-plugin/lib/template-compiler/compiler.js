@@ -725,7 +725,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta, options)
+        closeElement(element, options, meta)
       }
     },
 
@@ -740,7 +740,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta, options)
+        closeElement(element, options, meta)
       }
     },
 
@@ -765,7 +765,7 @@ function parse (template, options) {
           parent: currentParent
         }
         children.push(el)
-        runtimeCompile ? processTextDynamic(el) : processText(el)
+        runtimeCompile ? processTextDynamic(el) : processText(el, options, meta)
       }
     },
     comment: function comment (text) {
@@ -1164,7 +1164,7 @@ function processEventReact (el) {
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+        eventConfigMap[type].configs.push(Object.assign({ name, value }, parsedFunc))
       }
     }
   })
@@ -1205,26 +1205,32 @@ function processEventReact (el) {
 
   // let wrapper
   for (const type in eventConfigMap) {
-    let { configs } = eventConfigMap[type]
-    configs.forEach(({ name }) => {
-      if (name) {
-        // 清空原始事件绑定
-        let has
-        do {
-          has = getAndRemoveAttr(el, name).has
-        } while (has)
-      }
-    })
-    configs = configs.map((item) => {
-      return item.expStr
-    })
-    const value = `{{(e)=>this.__invoke(e, [${configs}])}}`
-    addAttrs(el, [
-      {
-        name: type,
-        value
-      }
-    ])
+    const { configs } = eventConfigMap[type]
+    if (!configs.length) continue
+    const needBind = configs.length > 1 || configs[0].hasArgs
+    if (needBind) {
+      configs.forEach(({ name }) => {
+        if (name) {
+          // 清空原始事件绑定
+          let has
+          do {
+            has = getAndRemoveAttr(el, name).has
+          } while (has)
+        }
+      })
+      const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`
+      addAttrs(el, [
+        {
+          name: type,
+          value
+        }
+      ])
+    } else {
+      const { name, value } = configs[0]
+      const { result } = parseMustacheWithContext(value)
+      modifyAttr(el, name, `{{this[${result}]}}`)
+    }
+
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
     // if ((type === 'press' || type === 'longPress') && el.tag !== 'mpx-button') {
     //   if (!wrapper) {
@@ -1922,7 +1928,7 @@ function postProcessFor (el) {
 function postProcessForReact (el) {
   if (el.for) {
     if (el.for.key) {
-      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)})`, false, 'key')
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
       addAttrs(el, [{
         name: 'key',
         value: el.for.key
@@ -2036,7 +2042,7 @@ function postProcessIfReact (el) {
   }
 }
 
-function processText (el) {
+function processText (el, options, meta) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -2046,17 +2052,38 @@ function processText (el) {
   }
   el.text = parsed.val
   if (isReact(mode)) {
-    processWrapTextReact(el)
+    processWrapTextReact(el, options, meta)
   }
 }
 
-// RN中文字需被Text包裹
-function processWrapTextReact (el) {
-  const parentTag = el.parent.tag
+// RN中裸文字需被Text包裹
+// 为了批量修改Text默认属性，如allowFontScaling，使用mpx-simple-text进行包裹
+function processWrapTextReact (el, options, meta) {
+  const parent = el.parent
+  const parentTag = parent.tag
   if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
-    const wrapper = createASTElement('Text')
+    const wrapper = createASTElement('mpx-simple-text')
+    wrapper.isBuiltIn = true
+    const inheritAttrs = []
+    parent.attrsList.forEach(({ name, value }) => {
+      if (/^data-/.test(name)) {
+        inheritAttrs.push({
+          name,
+          value
+        })
+      }
+      if (/^id$/.test(name)) {
+        inheritAttrs.push({
+          name: 'parentId',
+          value
+        })
+      }
+    })
+    addAttrs(wrapper, inheritAttrs)
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
+    processBuiltInComponents(wrapper, meta)
+    processAttrs(wrapper, options)
   }
 }
 
@@ -2361,12 +2388,11 @@ function getVirtualHostRoot (options, meta) {
           {
             name: 'class',
             value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          },
+          {
+            name: 'ishost',
+            value: '{{true}}'
           }
-          // todo 运行时通过root标识确定是否合并rootProps
-          // {
-          //   name: 'is-root',
-          //   value: '{{true}}'
-          // }
         ])
         processElement(rootView, rootView, options, meta)
         return rootView
@@ -2663,7 +2689,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta, options) {
+function closeElement (el, options, meta) {
   postProcessAtMode(el)
   postProcessWxs(el, meta)
 

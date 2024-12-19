@@ -7,7 +7,7 @@ function setNavigationBarTitle (options = {}) {
     failHandle({ errMsg: 'setNavigationBarTitle:fail' }, fail, complete)
   } else {
     nextTick(() => {
-      navigation.setOptions({ headerTitle: title })
+      navigation.setOptions({ title })
       successHandle({ errMsg: 'setNavigationBarTitle:ok' }, success, complete)
     })
   }
