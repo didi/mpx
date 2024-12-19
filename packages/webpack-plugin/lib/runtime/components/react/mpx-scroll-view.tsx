@@ -222,9 +222,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   useEffect(() => {
     if (scrollIntoView && __selectRef) {
       if (!firstScrollIntoViewChange.current) {
-        setTimeout(() => {
-          handleScrollIntoView()
-        })
+        setTimeout(handleScrollIntoView)
       } else {
         handleScrollIntoView()
       }
