@@ -22,7 +22,7 @@ import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -531,7 +531,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   })
 
-  const proxyTouchEvent = () => {
+  const rewriteCatchEvent = () => {
     const handlers: Record<string, typeof noop> = {}
 
     const events = [
@@ -539,12 +539,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       { type: 'touchmove', alias: ['vtouchmove', 'htouchmove'] },
       { type: 'touchend' }
     ]
-
     events.forEach(({ type, alias = [] }) => {
-      const hasEvent = (prefix: string) => props[prefix + type as keyof MovableViewProps] || alias.some(name => props[prefix + name as keyof MovableViewProps])
-
-      if (hasEvent('bind')) handlers[`bind${type}`] = noop
-      if (hasEvent('catch')) handlers[`catch${type}`] = noop
+      const hasCatchEvent =
+        props[`catch${type}` as keyof typeof props] ||
+        alias.some(name => props[`catch${name}` as keyof typeof props])
+      if (hasCatchEvent) handlers[`catch${type}`] = noop
     })
 
     return handlers
@@ -552,11 +551,21 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const layoutStyle = !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {}
 
-  const innerProps = useInnerProps(props, extendObject({
+  // bind 相关 touch 事件直接由 gesture 触发，无须重复挂载
+  // catch 相关 touch 事件需要重写并通过 useInnerProps 注入阻止冒泡逻辑
+  const filterProps = omit(props, [
+    'bindtouchstart',
+    'bindtouchmove',
+    'bindvtouchmove',
+    'bindhtouchmove',
+    'bindtouchend'
+  ])
+
+  const innerProps = useInnerProps(filterProps, extendObject({
     ref: nodeRef,
     onLayout: onLayout,
     style: [innerStyle, animatedStyles, layoutStyle]
-  }, proxyTouchEvent()))
+  }, rewriteCatchEvent()))
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,
