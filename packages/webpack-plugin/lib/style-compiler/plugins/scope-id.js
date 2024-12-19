@@ -40,7 +40,7 @@ module.exports = ({ id }) => {
                     selector.insertAfter(last, ss)
                     last = ss
                   })
-                  const prev = selector.at(selector.index(n) - 1)
+                  const prev = n.prev()
                   if (!prev || !isSpaceCombinator(prev)) {
                     selector.insertAfter(
                       n,
@@ -49,20 +49,20 @@ module.exports = ({ id }) => {
                       })
                     )
                   }
-                  selector.removeChild(n)
+                  n.remove()
                 } else {
-                  const prev = selector.at(selector.index(n) - 1)
+                  const prev = n.prev()
                   if (prev && isSpaceCombinator(prev)) {
-                    selector.removeChild(prev)
+                    prev.remove()
                   }
-                  selector.removeChild(n)
+                  n.remove()
                 }
                 return false
               }
               // /deep/ alias for >>>, since >>> doesn't work in SASS
               if (n.type === 'tag' && n.value === '/deep/') {
                 const prev = n.prev()
-                if (prev && prev.type === 'combinator' && prev.value === ' ') {
+                if (prev && isSpaceCombinator(prev)) {
                   prev.remove()
                 }
                 n.remove()
