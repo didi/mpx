@@ -373,7 +373,8 @@ module.exports = function getSpec ({ warn, error }) {
 
   // transform 转换
   const formatTransform = ({ prop, value, selector }, { mode }) => {
-    if (Array.isArray(value)) return { prop, value }
+    // css var & 数组直接返回
+    if (Array.isArray(value) || calcExp.test(value)) return { prop, value }
     const values = parseValues(value)
     const transform = []
     values.forEach(item => {
@@ -398,7 +399,7 @@ module.exports = function getSpec ({ warn, error }) {
             break
           case 'matrix':
           case 'matrix3d':
-            transform.push({ [key]: val.split(',').map(val => +val) })
+            transform.push({ [key]: parseValues(val, ',').map(val => +val) })
             break
           case 'translate':
           case 'scale':
@@ -409,7 +410,7 @@ module.exports = function getSpec ({ warn, error }) {
             {
               // 2 个以上的值处理
               key = key.replace('3d', '')
-              const vals = val.split(',', key === 'rotate' ? 4 : 3)
+              const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
               // scale(.5) === scaleX(.5) scaleY(.5)
               if (vals.length === 1 && key === 'scale') {
                 vals.push(vals[0])
@@ -455,14 +456,17 @@ module.exports = function getSpec ({ warn, error }) {
 
   const formatFlex = ({ prop, value, selector }) => {
     let values = parseValues(value)
+    // 值大于3 去前三
     if (values.length > 3) {
-      error(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
+      warn(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
       values = values.splice(0, 3)
     }
     const cssMap = []
-    const lastOne = values[values.length - 1]
-    const isAuto = lastOne === 'auto'
-    // 枚举值 none initial
+    // 单个css var 直接设置 flex 属性
+    if (values.length === 1 && cssVariableExp.test(value)) {
+      return { prop, value }
+    }
+    // 包含枚举值 none initial
     if (values.includes('initial') || values.includes('none')) {
       // css flex: initial ===> flex: 0 1 ===> rn flex 0 1
       // css flex: none ===> css flex: 0 0 ===> rn flex 0 0
@@ -475,38 +479,31 @@ module.exports = function getSpec ({ warn, error }) {
       }
       return cssMap
     }
-    // 最后一个值是flexBasis 的有效值（auto或者有单位百分比、px等）
-    // flex 0 1 auto flex auto flex 1 auto flex 1 30px flex 1 10% flex 1 1 auto
-    if (!isNumber(lastOne) || !cssVariableExp.test(value)) {
-      // 添加 grow 和 shrink
-      // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
-      // 单值 flex: 1 1 <flex-basis>
-      // 双值 flex: <flex-grow> 1 <flex-basis>
-      // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
-      for (let i = 0; i < 2; i++) {
-        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: isNumber(values[i]) || cssVariableExp.test(value) ? values[i] : 1 })
+    // 只有1-2个值且最后的值是flexBasis 的有效值（auto或者有单位百分比、px等）
+    // 在设置 flex basis 有效值的场景下，如果没有设置 grow 和 shrink，则默认为1
+    // 单值 flex: 1 1 <flex-basis>
+    // 双值 flex: <flex-grow> 1 <flex-basis>
+    // 三值 flex: <flex-grow> <flex-shrink> <flex-basis>
+    for (let i = 0; i < 3; i++) {
+      if (i < 2) {
+        // 添加 grow 和 shrink
+        const isValid = isNumber(values[0]) || cssVariableExp.test(values[0])
+        // 兜底 1
+        const val = isValid ? values[0] : 1
+        const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: val, selector })
         item && cssMap.push(item)
+        isValid && values.shift()
+      } else {
+        // 添加 flexBasis
+        // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理，兜底 0
+        const val = values[0] || 0
+        if (val !== 'auto') {
+          cssMap.push({
+            prop: 'flexBasis',
+            value: val
+          })
+        }
       }
-      if (!isAuto) {
-        // 有单位(百分比、px等) 的 value 赋值 flexBasis，auto 不处理
-        cssMap.push({
-          prop: 'flexBasis',
-          value: lastOne
-        })
-      }
-      return cssMap
-    }
-    // 纯数值：value 按flex-grow flex-shrink flex-basis 顺序赋值
-    // 兜底 shrink & basis
-    if (values.length === 1) {
-      values.push(...[1, 0])
-    } else if (values.length === 2) {
-      values.push(0)
-    }
-    // 循环赋值
-    for (let i = 0; i < values.length; i++) {
-      const item = getIntegersFlex({ prop: AbbreviationMap[prop][i], value: values[i] })
-      item && cssMap.push(item)
     }
     return cssMap
   }
@@ -514,7 +511,7 @@ module.exports = function getSpec ({ warn, error }) {
   const formatFontFamily = ({ prop, value, selector }) => {
     // 去掉引号 取逗号分隔后的第一个
     const newVal = value.replace(/"|'/g, '').trim()
-    const values = newVal.split(',').filter(i => i)
+    const values = parseValues(newVal, ',')
     if (!newVal || !values.length) {
       error(`Value of [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
       return false

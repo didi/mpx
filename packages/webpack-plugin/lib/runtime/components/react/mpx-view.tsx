@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks from './useAnimationHooks'
@@ -779,10 +779,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
   const finalStyle = enableAnimation
-    ? useAnimationHooks({
-      animation,
-      style: viewStyle
-    })
+    ? [viewStyle, useAnimationHooks({
+        animation,
+        style: viewStyle
+      })]
     : viewStyle
   const innerProps = useInnerProps(
     props,
@@ -816,27 +816,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     innerStyle,
     enableFastImage
   })
+
   const BaseComponent = animation?.actions?.length
-    ? (<Animated.View
-    {...innerProps}
-    style={finalStyle}
-  >
-    {childNode}
-  </Animated.View>)
-    : (<View
-    {...innerProps}
-  >
-    {childNode}
-  </View>)
+    ? createElement(Animated.View, extendObject({}, innerProps, { style: finalStyle }), childNode)
+    : createElement(View, innerProps, childNode)
 
   return enableHoverStyle
-    ? <GestureDetector
-      gesture={useGesture({
-        onTouchStart: setStartTimer,
-        onTouchEnd: setStayTimer
-      })}>
-      { BaseComponent }
-    </GestureDetector>
+    ? createElement(
+      GestureDetector,
+      { gesture: useGesture({ onTouchStart: setStartTimer, onTouchEnd: setStayTimer }) },
+      BaseComponent
+    )
     : BaseComponent
 })
 

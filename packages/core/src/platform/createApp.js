@@ -5,7 +5,7 @@ import { makeMap, spreadProp, isBrowser } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
-import { initAppProvides } from './export/apiInject'
+import { initAppProvides } from './export/inject'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -47,11 +47,6 @@ export default function createApp (option, config = {}) {
         }
         global.__mpxEnterOptions = options
         this.$options.onLaunch && this.$options.onLaunch.call(this, options)
-        global.__mpxAppCbs = global.__mpxAppCbs || {
-          show: [],
-          hide: [],
-          error: []
-        }
         if (isBrowser) {
           if (this.$options.onShow) {
             this.$options.onShow.call(this, options)
@@ -62,6 +57,9 @@ export default function createApp (option, config = {}) {
           }
           if (this.$options.onError) {
             global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
+          }
+          if (this.$options.onUnhandledRejection) {
+            global.__mpxAppCbs.rejection.push(this.$options.onUnhandledRejection.bind(this))
           }
         }
       }

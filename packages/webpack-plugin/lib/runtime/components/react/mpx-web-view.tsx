@@ -1,4 +1,4 @@
-import { forwardRef, JSX, useEffect, useRef, useContext, useMemo } from 'react'
+import { forwardRef, JSX, useEffect, useRef, useContext, useMemo, createElement } from 'react'
 import { noop, warn } from '@mpxjs/utils'
 import { View } from 'react-native'
 import { Portal } from '@ant-design/react-native'
@@ -177,16 +177,14 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       onMessage: _message
     })
   }
-  return (<Portal>
-    <WebView
-      style={defaultWebViewStyle}
-      source={{ uri: src }}
-      ref={webViewRef}
-      {...events}
-      onNavigationStateChange={_changeUrl}
-      javaScriptEnabled={true}
-    ></WebView>
-  </Portal>)
+
+  return createElement(Portal, null, createElement(WebView, extendObject({
+    style: defaultWebViewStyle,
+    source: { uri: src },
+    ref: webViewRef,
+    javaScriptEnabled: true,
+    onNavigationStateChange: _changeUrl
+  }, events)))
 })
 
 _WebView.displayName = 'MpxWebview'
