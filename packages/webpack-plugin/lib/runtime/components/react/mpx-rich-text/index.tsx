@@ -100,13 +100,13 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
 
   const html: string = typeof nodes === 'string' ? nodes : jsonToHtmlStr(nodes)
 
-  return createElement(View, extendObject(innerProps),
-    createElement(WebView, extendObject({
+  return createElement(View, innerProps,
+    createElement(WebView, {
       source: { html: generateHTML(html) },
       onMessage: (event: WebViewMessageEvent) => {
         setWebViewHeight(+event.nativeEvent.data)
       }
-    }))
+    })
   )
 })
 
