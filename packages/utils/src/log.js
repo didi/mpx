@@ -18,8 +18,9 @@ export function warn (msg, location, e) {
     const warnHandler = global.__mpx?.config.warnHandler
     if (isFunction(warnHandler)) {
       warnHandler(msg, location, e)
+    } else {
+      log('warn', msg, location, e)
     }
-    return log('warn', msg, location, e)
   }
 }
 
@@ -27,8 +28,9 @@ export function error (msg, location, e) {
   const errorHandler = global.__mpx?.config.errorHandler
   if (isFunction(errorHandler)) {
     errorHandler(msg, location, e)
+  } else {
+    log('error', msg, location, e)
   }
-  return log('error', msg, location, e)
 }
 
 function log (type, msg, location, e) {
