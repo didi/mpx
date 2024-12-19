@@ -1928,7 +1928,7 @@ function postProcessFor (el) {
 function postProcessForReact (el) {
   if (el.for) {
     if (el.for.key) {
-      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)})`, false, 'key')
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
       addAttrs(el, [{
         name: 'key',
         value: el.for.key
@@ -2064,16 +2064,22 @@ function processWrapTextReact (el, options, meta) {
   if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('mpx-simple-text')
     wrapper.isBuiltIn = true
-    const dataSetAttrs = []
+    const inheritAttrs = []
     parent.attrsList.forEach(({ name, value }) => {
       if (/^data-/.test(name)) {
-        dataSetAttrs.push({
+        inheritAttrs.push({
           name,
           value
         })
       }
+      if (/^id$/.test(name)) {
+        inheritAttrs.push({
+          name: 'parentId',
+          value
+        })
+      }
     })
-    addAttrs(wrapper, dataSetAttrs)
+    addAttrs(wrapper, inheritAttrs)
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
     processBuiltInComponents(wrapper, meta)

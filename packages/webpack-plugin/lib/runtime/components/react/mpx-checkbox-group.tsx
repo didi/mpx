@@ -8,7 +8,8 @@ import {
   ReactNode,
   useContext,
   useMemo,
-  useEffect
+  useEffect,
+  createElement
 } from 'react'
 import {
   View,
@@ -156,20 +157,21 @@ const CheckboxGroup = forwardRef<
       notifyChange
     }
   }, [])
-  return (
-    <View {...innerProps}>
-      <CheckboxGroupContext.Provider value={contextValue}>
+
+  return createElement(
+    View,
+    innerProps,
+    createElement(
+      CheckboxGroupContext.Provider,
+      { value: contextValue },
+      wrapChildren(
+        props,
         {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current
-            }
-          )
+          hasVarDec,
+          varContext: varContextRef.current
         }
-      </CheckboxGroupContext.Provider>
-    </View>
+      )
+    )
   )
 })
 
