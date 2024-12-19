@@ -6,6 +6,7 @@ import React, { JSX, forwardRef, useRef, useEffect, useState, ReactNode, ReactEl
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
+import { SwiperContext } from './context'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -39,6 +40,8 @@ interface SwiperProps {
   autoplay?: boolean;
   // scrollView 只有安卓可以设
   duration?: number;
+  // 滑动过程中元素是否scale变化
+  scale?: boolean;
   'indicator-dots'?: boolean;
   'indicator-color'?: string;
   'indicator-active-color'?: string;
@@ -108,8 +111,6 @@ const dotCommonStyle = {
 const activeDotStyle = {
   zIndex: 99
 }
-// 默认前后补位的元素个数
-const patchElementNum = 1
 const longPressRatio = 100
 
 const easeMap = {
@@ -137,7 +138,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
-
+  // 默认前后补位的元素个数
+  const patchElementNum = props.circular ? 1 : 0
   const nodeRef = useRef<View>(null)
   useNodesRef<View, SwiperProps>(props, ref, nodeRef, {})
 
@@ -289,13 +291,21 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         nextMargin && dir.value === 'x' && (extraStyle.marginRight = nextMargin)
         nextMargin && dir.value === 'y' && (extraStyle.marginBottom = nextMargin)
       }
+      const stepValue = dir.value === 'x' ? widthState : heightState
+      const newChild = React.cloneElement(child, { itemIndex: index, scale: props.scale })
+      const contextValue = {
+        offset,
+        stepValue: typeof stepValue === 'number' ? stepValue : 0
+      }
       return (<Animated.View
         style={[
           pageStyle,
           extraStyle
         ]}
         key={ 'page' + index}>
-        {child}
+        <SwiperContext.Provider value={contextValue}>
+          {newChild}
+        </SwiperContext.Provider>
       </Animated.View>)
     })
   }
@@ -415,7 +425,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }, () => {
         offset.value = targetOffset
       })
-    } else {
+    } else if (props.current !== targetIndex.value) {
       offset.value = targetOffset
     }
   }, [props.current, widthState, heightState])

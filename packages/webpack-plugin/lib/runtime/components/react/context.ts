@@ -48,3 +48,5 @@ export const VarContext = createContext({})
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
 export const RouteContext = createContext<number | null>(null)
+
+export const SwiperContext = createContext({})
