@@ -116,3 +116,6 @@ export * from './api/vibrate'
 
 // onKeyboardHeightChange, offKeyboardHeightChange, hideKeyboard
 export * from './api/keyboard'
+
+// getSetting, openSetting, enableAlertBeforeUnload, disableAlertBeforeUnload, getMenuButtonBoundingClientRect
+export * from './api/setting'
