@@ -117,6 +117,12 @@ export const enableAlertBeforeUnload: WechatMiniprogram.Wx['enableAlertBeforeUnl
 export const disableAlertBeforeUnload: WechatMiniprogram.Wx['disableAlertBeforeUnload']
 export const getMenuButtonBoundingClientRect: WechatMiniprogram.Wx['getMenuButtonBoundingClientRect']
 export const getImageInfo: WechatMiniprogram.Wx['getImageInfo']
+export const vibrateShort: WechatMiniprogram.Wx['vibrateShort']
+export const vibrateLong: WechatMiniprogram.Wx['vibrateLong']
+export const getExtConfig: WechatMiniprogram.Wx['getExtConfig']
+export const getExtConfigSync: WechatMiniprogram.Wx['getExtConfigSync']
+export const openLocation: WechatMiniprogram.Wx['openLocation']
+export const chooseLocation: WechatMiniprogram.Wx['chooseLocation']
 
 declare const install: (...args: any) => any
 

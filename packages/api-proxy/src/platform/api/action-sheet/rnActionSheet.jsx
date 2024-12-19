@@ -1,38 +1,17 @@
-import { View, TouchableHighlight, Text, StyleSheet, Button, Animated } from 'react-native'
+import { View, TouchableHighlight, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 import { Portal } from '@ant-design/react-native'
+import { getWindowInfo } from '../system/rnSystem'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming
+} from 'react-native-reanimated'
 function showActionSheet (options = {}) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
-  let actionSheetKey
-  const slideAnim = new Animated.Value(500)
-  const slideIn = () => {
-    // Will change fadeAnim value to 1 in 5 seconds
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start()
-  }
-  const slideOut = () => {
-    // Will change fadeAnim value to 1 in 5 seconds
-    Animated.timing(slideAnim, {
-      toValue: 500,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-    })
-  }
-  if (itemList.length === 0 || itemList.length > 6) {
-    const result = {
-      errMsg: 'showActionSheet:fail parameter error: itemList should not be large than 6'
-    }
-    if (itemList.length === 0) {
-      result.errno = 1001
-      result.errMsg = 'showActionSheet:fail parameter error: parameter.itemList should have at least 1 item;'
-    }
-    failHandle(result, fail, complete)
-    return
-  }
+  const windowInfo = getWindowInfo()
+  const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
+  let actionSheetKey = null
   const styles = StyleSheet.create({
     actionActionMask: {
       left: 0,
@@ -44,16 +23,14 @@ function showActionSheet (options = {}) {
       zIndex: 1000
     },
     actionSheetContent: {
-      left: 0,
-      right: 0,
-      position: 'absolute',
-      bottom: 0,
       backgroundColor: '#ffffff',
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
-      transform: [{
-        translateY: -500
-      }]
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingBottom: bottom
     },
     itemStyle: {
       paddingTop: 15,
@@ -73,53 +50,62 @@ function showActionSheet (options = {}) {
       paddingBottom: 10
     }
   })
-  const remove = function () {
-    if (actionSheetKey) {
-      slideOut()
-      setTimeout(() => {
-        Portal.remove(actionSheetKey)
-        actionSheetKey = null
-      }, 200)
+  function ActionSheet () {
+    const offset = useSharedValue(1000);
+
+    const animatedStyles = useAnimatedStyle(() => ({
+      transform: [{ translateY: offset.value }],
+    }))
+
+    const slideOut = () => {
+      // Will change fadeAnim value to 1 in 5 seconds
+      offset.value = withTiming(1000)
     }
-  }
-  const selectAction = function (index) {
-    const result = {
-      errMsg: 'showActionSheet:ok',
-      tapIndex: index
+
+    offset.value = withTiming(0)
+
+    const selectAction = function (index) {
+      const result = {
+        errMsg: 'showActionSheet:ok',
+        tapIndex: index
+      }
+      successHandle(result, success, complete)
+      remove()
     }
-    successHandle(result, success, complete)
-    remove()
-  }
-  const cancelAction = function () {
-    const result = {
-      errMsg: 'showActionSheet:fail cancel'
+
+    const remove = function () {
+      if (actionSheetKey) {
+        slideOut()
+        setTimeout(() => {
+          Portal.remove(actionSheetKey)
+          actionSheetKey = null
+        }, 200)
+      }
     }
-    failHandle(result, fail, complete)
-    remove()
+
+    const cancelAction = function () {
+      const result = {
+        errMsg: 'showActionSheet:fail cancel'
+      }
+      failHandle(result, fail, complete)
+      remove()
+    }
+    return (
+      <TouchableHighlight underlayColor="rgba(0,0,0,0.6)" onPress={cancelAction} style={styles.actionActionMask}>
+        <Animated.View style={[styles.actionSheetContent, animatedStyles]} >
+          { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
+          { itemList.map((item, index) => <TouchableHighlight key={index} underlayColor="#ececec" onPress={() => selectAction(index)} style={ [styles.itemStyle, itemList.length -1 === index ? {
+            borderBottomWidth: 6,
+            borderBottomStyle: 'solid',
+            borderBottomColor: '#f7f7f7'
+          } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></TouchableHighlight>) }
+          <View style={styles.buttonStyle}><TouchableOpacity onPress={cancelAction}><Text style={{ color: "#000000", width: "100%", textAlign: "center" }}>取消</Text></TouchableOpacity></View>
+        </Animated.View>
+      </TouchableHighlight>
+    )
   }
-  let alertTextList = []
-  if (alertText) {
-    alertTextList = [alertText]
-  }
-  const ActionSheetView = <TouchableHighlight underlayColor="rgba(0,0,0,0.6)" onPress={cancelAction} style={styles.actionActionMask}>
-    <Animated.View
-      style={[
-        styles.actionSheetContent,
-        {
-          transform: [{translateY: slideAnim}]
-        }
-      ]}>
-      { alertTextList.map((item, index) => <View key={index} style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{item}</Text></View>) }
-      { itemList.map((item, index) => <TouchableHighlight key={index} underlayColor="#ececec" onPress={() => selectAction(index)} style={ [styles.itemStyle, itemList.length -1 === index ? {
-        borderBottomWidth: 6,
-        borderBottomStyle: 'solid',
-        borderBottomColor: '#f7f7f7'
-      } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></TouchableHighlight>) }
-      <View style={styles.buttonStyle}><Button color={'#000000'} title={'取消'} onPress={cancelAction}></Button></View>
-    </Animated.View>
-  </TouchableHighlight>
-  actionSheetKey = Portal.add(ActionSheetView)
-  slideIn()
+  
+  actionSheetKey = Portal.add(<ActionSheet/>)
 }
 
 export {
