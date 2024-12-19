@@ -140,8 +140,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
-  const startTimer = useSharedValue<any>(null)
-  const needTap = useSharedValue(true)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -336,7 +334,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     props.onLayout && props.onLayout(e)
   }
 
-  const extendEvent = useCallback((e: any, obj?: Record<string, any>) => {
+  const extendEvent = useCallback((e: any) => {
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
@@ -356,7 +354,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       stopPropagation: noop,
       preventDefault: noop,
       persist: noop
-    }, obj)
+    })
   }, [])
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
@@ -414,8 +412,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-        startTimer.value = null
-        needTap.value = true
         isMoving.value = false
         startPosition.value = {
           x: changedTouches.x,
@@ -427,8 +423,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
-        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         isMoving.value = true
+        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         if (isFirstTouch.value) {
           touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
@@ -486,8 +482,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
-        if (!inertia || disabled || !animation) return
         isMoving.value = false
+        if (!inertia || disabled || !animation) return
         if (direction === 'horizontal' || direction === 'all') {
           xInertialMotion.value = true
           offsetX.value = withDecay({
