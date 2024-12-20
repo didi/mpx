@@ -75,6 +75,27 @@ let env = null;
 let callbackId = 0;
 const clientUid = getMpxWebViewId();
 const callbacks = {};
+const eventListener = (event) => {
+  // 接收web-view的回调
+  const data = event.data;
+  let msgData = data;
+  try {
+    if (typeof data === 'string') {
+      msgData = JSON.parse(data);
+    }
+  } catch (e) {
+  }
+  const { callbackId, error, result } = msgData;
+  if (callbackId !== undefined && callbacks[callbackId]) {
+    if (error) {
+      callbacks[callbackId](error);
+    } else {
+      callbacks[callbackId](null, result);
+    }
+    delete callbacks[callbackId];
+  }
+};
+
 // 环境判断逻辑
 const systemUA = navigator.userAgent;
 if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
@@ -85,32 +106,20 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = 'swan';
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt';
+} if (window.ReactNativeWebView) {
+  env = 'rn';
+  if (systemUA.toLowerCase().indexOf('ios') > -1) {
+    window.addEventListener('message', eventListener, false);
+  } else {
+    document.addEventListener('message', eventListener, false); // 安卓机接收消息
+  }
 } else {
   env = 'web';
-  window.addEventListener('message', (event) => {
-    // 接收web-view的回调
-    const data = event.data;
-    let msgData = data;
-    try {
-      if (typeof data === 'string') {
-        msgData = JSON.parse(data);
-      }
-    } catch (e) {
-    }
-    const { callbackId, error, result } = msgData;
-    if (callbackId !== undefined && callbacks[callbackId]) {
-      if (error) {
-        callbacks[callbackId](error);
-      } else {
-        callbacks[callbackId](null, result);
-      }
-      delete callbacks[callbackId];
-    }
-  }, false);
+  window.addEventListener('message', eventListener, false);
 }
 
 const initWebviewBridge = () => {
-  sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  sdkReady = (env !== 'web' && env !== 'rn') ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
   getWebviewApi();
 };
 
@@ -145,7 +154,7 @@ function postMessage (type, ...extraData) {
     type = extraData[0];
     extraData = extraData.slice(1);
   }
-  const data = extraData[0];
+  const data = extraData[0] || {};
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId;
     callbacks[currentCallbackId] = (err, res) => {
@@ -311,6 +320,18 @@ const getWebviewApi = () => {
       'getLocation',
       'invoke'
     ],
+    rn: [
+      'navigateTo',
+      'navigateBack',
+      'switchTab',
+      'reLaunch',
+      'redirectTo',
+      'getEnv',
+      'postMessage',
+      'getLoadError',
+      'getLocation',
+      'invoke'
+    ],
     tt: []
   };
   const multiApi = multiApiMap[env] || {};
@@ -325,7 +346,7 @@ const getWebviewApi = () => {
   });
   singleApi.forEach((item) => {
     webviewBridge[item] = (...args) => {
-      if (env === 'web') {
+      if (env === 'web' || env === 'rn') {
         postMessage(item, ...args);
       } else if (env === 'wx') {
         runWebviewApiMethod(() => {
