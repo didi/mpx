@@ -57,7 +57,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const { textStyle: textStyleFromParent = {} } = splitStyle(columnStyle)
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  // const scrollViewRef = useRef<ScrollView>(null)
   const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
   const offsetYShared = useScrollViewOffset(scrollViewRef as AnimatedRef<Reanimated.ScrollView>)
 
@@ -67,6 +66,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const { height: pickerH, itemHeight } = wrapperStyle
   const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
+  const [itemRawW, setItemRawW] = useState<number | '100%'>('100%')
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const maxScrollViewWidth = useRef(-1)
@@ -86,6 +86,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setHeight,
     nodeRef: scrollViewRef
   })
+
+  console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length)
 
   // const initialOffset = useMemo(() => ({
   //   x: 0,
@@ -134,6 +136,15 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     activeIndex.current = initialIndex
   }, [itemRawH, initialIndex])
 
+  const onContentSizeChange = (_w: number, h: number) => {
+    const y = itemRawH * initialIndex
+    if (y <= h) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+      }, 0)
+    }
+  }
+
   const onScrollViewLayout = (e: LayoutChangeEvent) => {
     const { width } = e.nativeEvent.layout
     const widthInt = Math.ceil(width)
@@ -147,14 +158,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       }
       setScrollViewWidth(widthInt)
     }
-  }
-
-  const onContentSizeChange = (_w: number, h: number) => {
-    const y = itemRawH * initialIndex
-    if (y <= h) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
-      }, 0)
+    if (itemRawW === '100%') {
+      setItemRawW(widthInt)
     }
   }
 
@@ -227,6 +232,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           item={item}
           index={index}
           itemHeight={itemHeight}
+          itemWidth={itemRawW}
           textStyleFromParent={textStyleFromParent}
           textStyle={textStyle}
           hasVarDec={hasVarDec}
@@ -244,6 +250,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         <Reanimated.ScrollView
           ref={scrollViewRef}
           bounces={true}
+          horizontal={false}
           nestedScrollEnabled={true}
           removeClippedSubviews={false}
           showsVerticalScrollIndicator={false}
