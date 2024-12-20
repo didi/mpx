@@ -514,11 +514,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-      const onLayout = useCallback(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
-      }, [])
+
+      useEffect(() => {
+        const unsubscribe = navigation.addListener('transitionEnd', (e) => {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        });
+        return unsubscribe;
+      }, [navigation]);
 
       const withKeyboardAvoidingView = (element) => {
         if (__mpx_mode__ === 'ios') {
@@ -546,6 +550,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       navigation.insets = useSafeAreaInsets()
 
+      const [, setState] = useState(1)
+
+      const setStateRef = useRef(setState)
+
+      if (setStateRef.current !== setState) {
+        setStateRef.current = setState
+      }
+
       return createElement(GestureHandlerRootView,
         {
           style: {
@@ -559,8 +571,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef,
-              onLayout
+              ref: rootRef
             },
             createElement(RouteContext.Provider,
               {

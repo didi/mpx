@@ -497,6 +497,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
       props.onLayout && props.onLayout(e)
     }
   }
+
   return {
     layoutRef,
     layoutStyle,
