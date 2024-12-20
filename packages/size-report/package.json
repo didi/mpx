@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/size-report",
-  "version": "2.9.41-alpha.1",
+  "version": "2.9.70-alpha.0",
   "description": "mpx size report plugin",
   "main": "src/index.js",
   "scripts": {
@@ -36,7 +36,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "^2.9.0"
+    "@mpxjs/webpack-plugin": ">=2.9.0-alpha"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
