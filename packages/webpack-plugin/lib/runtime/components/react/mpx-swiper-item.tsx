@@ -17,12 +17,12 @@ interface SwiperItemProps {
   children?: ReactNode;
   style?: Object;
   itemIndex: number;
-  scale: boolean
+  scale: boolean;
 }
 
 interface ContextType {
   offset: SharedValue<number>,
-  stepValue: number
+  step: SharedValue<number>
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
@@ -36,8 +36,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
 
   const contextValue = useContext(SwiperContext) as ContextType
   const offset = contextValue.offset || 0
-  const stepValue = contextValue.stepValue || 0
-
+  const step = contextValue.step || 0
   const { textProps } = splitProps(props)
   const nodeRef = useRef(null)
 
@@ -71,20 +70,19 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   ], { layoutRef })
 
   const itemAnimatedStyle = useAnimatedStyle(() => {
-    if (!stepValue) return {}
-    const inputRange = [-stepValue, 0, stepValue]
-    const outputRange = [0.7, 1, 0.7]
+    if (!step.value) return {}
+    const inputRange = [step.value, 0]
+    const outputRange = [0.7, 1]
     return {
       transform: [{
-        scale: interpolate(Math.abs(offset.value) - itemIndex * stepValue, inputRange, outputRange)
+        scale: interpolate(Math.abs(Math.abs(offset.value) - itemIndex * step.value), inputRange, outputRange)
       }]
     }
   })
-
   return (
     <Animated.View
       {...innerProps}
-      style={[innerStyle, layoutStyle, scale ? itemAnimatedStyle : {}]}
+      style={[innerStyle, layoutStyle, { width: '100%', height: '100%' }, scale ? itemAnimatedStyle : {}]}
       data-itemId={props['item-id']}>
       {
         wrapChildren(
