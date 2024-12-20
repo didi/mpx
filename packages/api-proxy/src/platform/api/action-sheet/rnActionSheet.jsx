@@ -91,7 +91,7 @@ function showActionSheet (options = {}) {
       remove()
     }
     return (
-      <TouchableHighlight underlayColor="rgba(0,0,0,0.6)" onPress={cancelAction} style={styles.actionActionMask}>
+      <TouchableHighlight underlayColor="rgba(0,0,0,0.6)" activeOpacity={1} onPress={cancelAction} style={styles.actionActionMask}>
         <Animated.View style={[styles.actionSheetContent, animatedStyles]} >
           { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
           { itemList.map((item, index) => <TouchableHighlight key={index} underlayColor="#ececec" onPress={() => selectAction(index)} style={ [styles.itemStyle, itemList.length -1 === index ? {
