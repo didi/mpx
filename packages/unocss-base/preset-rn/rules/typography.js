@@ -1,4 +1,4 @@
-import { transformEmptyRule, ruleFallback } from '../../utils/index.js'
+import { transformEmptyRule } from '../../utils/index.js'
 import {
   writingModes,
   writingOrientations,
@@ -14,8 +14,7 @@ import {
   breaks,
   textOverflows,
   textWraps,
-  fontSmoothings,
-  verticalAligns
+  fontSmoothings
 } from '@unocss/preset-mini/rules'
 
 // decoration
@@ -41,17 +40,6 @@ const textDecorations = [
 //   }
 // })
 
-// vertical-align
-const newVerticalAlign = verticalAligns.map(item => {
-  return [item[0], ([match, v], { generator }) => {
-    if (['auto', 'top', 'bottom', 'center'].includes(v)) {
-      return { 'vertical-align': v }
-    } else {
-      return ruleFallback(match, generator)
-    }
-  }]
-})
-
 export default [
   ...transformEmptyRule(
     textIndents,
@@ -65,8 +53,7 @@ export default [
     writingOrientations,
     textDecorations,
     textWraps,
-    fontSmoothings,
+    fontSmoothings
     // newFontVariantNumberic,
-    newVerticalAlign
   )
 ]
