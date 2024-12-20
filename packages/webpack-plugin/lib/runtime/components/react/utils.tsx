@@ -653,16 +653,16 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
 
   const gesture = useMemo(() => {
     return Gesture.Pan()
-    .onTouchesDown(() => {
-      'worklet'
-      if (disabled) return
-      runOnJS(setStartTimer)()
-    })
-    .onTouchesUp(() => {
-      'worklet'
-      if (disabled) return
-      runOnJS(setStayTimer)()
-    })
+      .onTouchesDown(() => {
+        'worklet'
+        if (disabled) return
+        runOnJS(setStartTimer)()
+      })
+      .onTouchesUp(() => {
+        'worklet'
+        if (disabled) return
+        runOnJS(setStayTimer)()
+      })
   }, [disabled])
 
   if (gestureRef) {
