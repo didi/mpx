@@ -12,7 +12,7 @@ import useAnimationHooks from './useAnimationHooks'
 import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useGesture } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHoverStyle } from './utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector } from 'react-native-gesture-handler'
 
@@ -683,7 +683,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     animation
   } = props
 
-  const [isHover, setIsHover] = useState(false)
 
   // 默认样式
   const defaultStyle: ExtendedViewStyle = style.display === 'flex'
@@ -694,6 +693,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
         flexWrap: 'nowrap'
       }
     : {}
+
+  const { isHover, enableHoverStyle, gesture } = useHoverStyle({ hoverStyle, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
@@ -715,7 +716,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   enableBackground = enableBackground || !!backgroundStyle
-  const enableHoverStyle = !!hoverStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
     throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
@@ -726,44 +726,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     style: normalStyle
   })
 
-  const dataRef = useRef<{
-    startTimer?: ReturnType<typeof setTimeout>
-    stayTimer?: ReturnType<typeof setTimeout>
-  }>({})
-
-  useEffect(() => {
-    return () => {
-      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    }
-  }, [])
-
-  const setStartTimer = () => {
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.startTimer = setTimeout(() => {
-      setIsHover(true)
-    }, +hoverStartTime)
-  }
-
-  const setStayTimer = () => {
-    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.stayTimer = setTimeout(() => {
-      setIsHover(false)
-    }, +hoverStayTime)
-  }
-
-  function onTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchstart } = props
-    bindtouchstart && bindtouchstart(e)
-    setStartTimer()
-  }
-
-  function onTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchend } = props
-    bindtouchend && bindtouchend(e)
-    setStayTimer()
-  }
 
   const {
     layoutRef,
@@ -790,13 +752,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       ref: nodeRef,
       style: finalStyle
     },
-    layoutProps,
-    hoverStyle
-      ? {
-          bindtouchstart: onTouchStart,
-          bindtouchend: onTouchEnd
-        }
-      : {}
+    layoutProps
     ), [
       'hover-start-time',
       'hover-stay-time',
@@ -822,11 +778,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     : createElement(View, innerProps, childNode)
 
   return enableHoverStyle
-    ? createElement(
-      GestureDetector,
-      { gesture: useGesture({ onTouchStart: setStartTimer, onTouchEnd: setStayTimer }) },
-      BaseComponent
-    )
+    ? createElement(GestureDetector, { gesture } , BaseComponent)
     : BaseComponent
 })
 
