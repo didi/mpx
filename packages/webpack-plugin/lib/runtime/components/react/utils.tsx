@@ -613,7 +613,7 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
   }, {})
 }
 
-export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime } : { hoverStyle?: ExtendedViewStyle, hoverStartTime: number, hoverStayTime: number }) {
+export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disabled } : { hoverStyle?: ExtendedViewStyle, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
   const enableHoverStyle = !!hoverStyle
   const enableHoverStyleRef = useRef(enableHoverStyle)
   if (enableHoverStyleRef.current !== enableHoverStyle) {
@@ -651,15 +651,19 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime } : {
     }, +hoverStayTime)
   }
 
-  const gesture = Gesture.Pan()
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
     .onTouchesDown(() => {
       'worklet'
+      if (disabled) return
       runOnJS(setStartTimer)()
     })
     .onTouchesUp(() => {
       'worklet'
+      if (disabled) return
       runOnJS(setStayTimer)()
     })
+  }, [disabled])
 
   if (gestureRef) {
     gesture.simultaneousWithExternalGesture(gestureRef)
