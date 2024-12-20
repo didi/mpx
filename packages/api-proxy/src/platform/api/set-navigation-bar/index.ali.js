@@ -17,7 +17,12 @@ function setNavigationBarColor (options = {}) {
   return ENV_OBJ.setNavigationBar(options)
 }
 
+function hideHomeButton (options = {}) {
+  return ENV_OBJ.hideBackHome(options)
+}
+
 export {
   setNavigationBarTitle,
-  setNavigationBarColor
+  setNavigationBarColor,
+  hideHomeButton
 }
