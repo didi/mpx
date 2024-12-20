@@ -385,9 +385,7 @@ module.exports = function getSpec ({ warn, error }) {
         },
         web ({ name, value }, { eventRules, el, usingComponents }) {
           const parsed = parseMustacheWithContext(value)
-          if (parsed.hasBinding) {
-            value = '__invokeHandler(' + parsed.result + ', $event)'
-          }
+          value = '__invokeHandler(' + parsed.result + ', $event)'
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
