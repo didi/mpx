@@ -1,13 +1,19 @@
-import { displays } from './layout/display.js'
-import { flex } from './layout/flex.js'
-import { floats } from './layout/floats.js'
-import { overflows } from './layout/overflows.js'
-import { positions } from './layout/positions.js'
+import { ruleCallback, ruleFallback } from '../../utils/index.js'
 
-export default [
-  ...overflows,
-  ...floats,
-  ...displays,
-  ...flex,
-  ...positions
+const overflows = [
+  [
+    /^(?:overflow|of)-(.+)$/,
+    ([match, v], { generator }) => {
+      if (['hidden', 'visiable', 'scroll'].includes(v)) {
+        return {
+          overflow: v
+        }
+      } else {
+        return ruleFallback(match, generator)
+      }
+    }
+  ],
+  [/^(?:overflow|of)-([xy])-(.+)$/, ruleCallback]
 ]
+
+export { overflows }
