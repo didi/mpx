@@ -614,13 +614,12 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
 }
 
 export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime } : { hoverStyle?: ExtendedViewStyle, hoverStartTime: number, hoverStayTime: number }) {
-
   const enableHoverStyle = !!hoverStyle
   const enableHoverStyleRef = useRef(enableHoverStyle)
-  if (enableHoverStyleRef.current !== enableHoverStyle  ) {
-    throw new Error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.');
+  if (enableHoverStyleRef.current !== enableHoverStyle) {
+    throw new Error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
   }
-  
+
   if (!enableHoverStyle) return { enableHoverStyle }
 
   const gestureRef = useContext(ScrollViewContext).gestureRef

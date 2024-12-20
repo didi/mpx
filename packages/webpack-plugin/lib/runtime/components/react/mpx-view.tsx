@@ -683,7 +683,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     animation
   } = props
 
-
   // 默认样式
   const defaultStyle: ExtendedViewStyle = style.display === 'flex'
     ? {
@@ -725,7 +724,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
     style: normalStyle
   })
-
 
   const {
     layoutRef,
@@ -778,7 +776,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     : createElement(View, innerProps, childNode)
 
   return enableHoverStyle
-    ? createElement(GestureDetector, { gesture } , BaseComponent)
+    ? createElement(GestureDetector, { gesture }, BaseComponent)
     : BaseComponent
 })
 
