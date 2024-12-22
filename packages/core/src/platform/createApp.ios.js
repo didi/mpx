@@ -191,7 +191,7 @@ export default function createApp (option, config = {}) {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      headerMode: 'float'
+      headerMode: 'screen'
     }
     if (headerBackImageProps) {
       navScreenOpts.headerBackImage = () => {
