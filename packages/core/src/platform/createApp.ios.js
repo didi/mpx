@@ -192,7 +192,9 @@ export default function createApp (option, config = {}) {
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
       // 安卓上会出现回退的时，如果设置为flat的话 navigator出现右滑退出，screen部分是fade的方式，交互效果不佳
-      headerMode: 'screen'
+      headerMode: 'screen',
+      // 安卓上会出现初始化时闪现导航条的问题
+      headerShown: false
     }
     if (headerBackImageProps) {
       navScreenOpts.headerBackImage = () => {
