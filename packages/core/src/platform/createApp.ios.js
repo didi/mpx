@@ -191,8 +191,6 @@ export default function createApp (option, config = {}) {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      // 安卓上回退时，如果设置为float的话 navigator出现右滑退出，screen其实是fade的方式退出，交互不匹配，体验差，另外float模式会导致偶现状态栏透出native部分
-      headerMode: 'screen',
       // 安卓上会出现初始化时闪现导航条的问题
       headerShown: false
     }
