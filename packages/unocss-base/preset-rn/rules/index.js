@@ -29,22 +29,24 @@ import {
   orders,
   placements,
   positions,
-  insets,
   floats,
   boxSizing
 } from './positions.js'
 import { flex } from './flex.js'
 import { globalRules } from './global.js'
 import { textAligns, verticalAligns } from './align.js'
-import { containerParent } from './container.js'
+import { container, containerParent } from './container.js'
 import { animations } from './animation.js'
 import { columns } from './columns.js'
-import { divide } from './divide.js'
+import { divides } from './divide.js'
 import { placeholders } from './placeholder.js'
 import { scrolls } from './scrolls.js'
 import { tables } from './table.js'
 import { touchActions } from './touch-actions.js'
 import { viewTransition } from './view-transition.js'
+import { gaps } from './gap.js'
+import { transitions } from './transition.js'
+import { svgUtilities } from './svg.js'
 
 export default [
   ...typography,
@@ -59,6 +61,7 @@ export default [
   ...backgroundStyles,
   // container
   ...containerParent,
+  ...container,
   // layout
   ...overflows,
   // positions
@@ -68,7 +71,6 @@ export default [
   ...justifies,
   ...orders,
   ...placements,
-  ...insets,
   ...flexGridJustifiesAlignments,
   ...boxSizing,
   // static
@@ -96,7 +98,7 @@ export default [
   // columns
   ...columns,
   // divide
-  ...divide,
+  ...divides,
   // placeholder
   ...placeholders,
   // scrolls
@@ -107,6 +109,12 @@ export default [
   ...touchActions,
   // view-transition
   ...viewTransition,
+  // gap
+  ...gaps,
+  // transition
+  ...transitions,
+  // svg
+  ...svgUtilities,
   // global
   ...globalRules
 ]

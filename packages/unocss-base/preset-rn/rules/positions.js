@@ -4,7 +4,6 @@ import {
   orders,
   alignments,
   placements,
-  insets,
   floats,
   boxSizing
 } from '@unocss/preset-mini/rules'
@@ -68,9 +67,6 @@ const flexGridJustifiesAlignmentsRules = transformEmptyRule([
   ])
 ])
 
-// TODO
-const insetsRules = [...insets]
-
 // floats 不支持的属性抽离并覆盖
 const floatsRules = transformEmptyRule(floats)
 
@@ -84,7 +80,6 @@ export {
   ordersRules as orders,
   placementsRules as placements,
   flexGridJustifiesAlignmentsRules as flexGridJustifiesAlignments,
-  insetsRules as insets,
   floatsRules as floats,
   boxSizingRules as boxSizing
 }

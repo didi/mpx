@@ -1,1 +1,6 @@
-// svg stroke 看起来装了其它就可以支持部分属性
+import { svgUtilities } from '@unocss/preset-mini/rules'
+import { transformEmptyRule } from '../../utils/index.js'
+
+const svgUtilitiesRules = transformEmptyRule(svgUtilities)
+
+export { svgUtilitiesRules as svgUtilities }

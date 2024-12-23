@@ -1,9 +1,9 @@
-import { divide } from '@unocss/preset-wind/rules'
+import { divides } from '@unocss/preset-wind/rules'
 import { ruleCallback } from '../../utils/index.js'
 
 const unSupport = ['s', 'e', 'bs', 'be', 'is', 'ie', 'block', 'inline']
 
-const divideRules = divide.map(v => {
+const divideRules = divides.map(v => {
   const [regex, matcher, ...another] = v
   return [
     regex,
@@ -16,4 +16,4 @@ const divideRules = divide.map(v => {
   ]
 })
 
-export { divideRules as divide }
+export { divideRules as divides }

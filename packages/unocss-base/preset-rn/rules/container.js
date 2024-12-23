@@ -1,10 +1,11 @@
 import { containerParent } from '@unocss/preset-mini/rules'
+import { container } from '@unocss/preset-wind/rules'
 import { transformEmptyRule } from '../../utils/index.js'
 
 const containerParentRules = transformEmptyRule(containerParent)
-
-// TODO wind container
+const containerRules = transformEmptyRule(container)
 
 export {
-  containerParentRules as containerParent
+  containerParentRules as containerParent,
+  containerRules as container
 }
