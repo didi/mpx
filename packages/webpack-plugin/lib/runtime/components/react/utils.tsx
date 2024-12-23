@@ -1,11 +1,13 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
-import { VarContext } from './context'
+import { VarContext, ScrollViewContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
-import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
+import type { AnyFunc, ExtendedFunctionComponent, ExtendedViewStyle } from './types/common'
+import { runOnJS } from 'react-native-reanimated'
+import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -610,4 +612,67 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
     }
     return acc
   }, {})
+}
+
+export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disabled } : { hoverStyle?: ExtendedViewStyle, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
+  const enableHoverStyle = !!hoverStyle
+  const enableHoverStyleRef = useRef(enableHoverStyle)
+  if (enableHoverStyleRef.current !== enableHoverStyle) {
+    throw new Error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
+  }
+
+  if (!enableHoverStyle) return { enableHoverStyle }
+
+  const gestureRef = useContext(ScrollViewContext).gestureRef
+  const [isHover, setIsHover] = useState(false)
+  const dataRef = useRef<{
+    startTimer?: ReturnType<typeof setTimeout>
+    stayTimer?: ReturnType<typeof setTimeout>
+  }>({})
+
+  useEffect(() => {
+    return () => {
+      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    }
+  }, [])
+
+  const setStartTimer = () => {
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.startTimer = setTimeout(() => {
+      setIsHover(true)
+    }, +hoverStartTime)
+  }
+
+  const setStayTimer = () => {
+    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.stayTimer = setTimeout(() => {
+      setIsHover(false)
+    }, +hoverStayTime)
+  }
+
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
+      .onTouchesDown(() => {
+        'worklet'
+        if (disabled) return
+        runOnJS(setStartTimer)()
+      })
+      .onTouchesUp(() => {
+        'worklet'
+        if (disabled) return
+        runOnJS(setStayTimer)()
+      })
+  }, [disabled])
+
+  if (gestureRef) {
+    gesture.simultaneousWithExternalGesture(gestureRef)
+  }
+
+  return {
+    isHover,
+    gesture,
+    enableHoverStyle
+  }
 }
