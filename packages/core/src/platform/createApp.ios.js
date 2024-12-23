@@ -156,7 +156,7 @@ export default function createApp (option, config = {}) {
           if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
             global.__mpxPageStatusMap[navigation.pageId] = 'show'
           }
-        } else if (currentState === 'inactive') {
+        } else if (currentState === 'inactive' || currentState === 'background') {
           global.__mpxAppCbs.hide.forEach((cb) => {
             cb()
           })
