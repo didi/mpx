@@ -1,6 +1,6 @@
 import presetRn from '../preset-rn/index.js'
 
-export default function presetRnMpx (options = {}) {
+export default function presetRnMpx () {
   return {
     name: '@mpxjs/unocss-preset-rn',
     ...presetRn,
