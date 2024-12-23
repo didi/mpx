@@ -6,6 +6,7 @@ const addQuery = require('./add-query')
 const resolve = require('./resolve')
 const getJSONContent = require('./get-json-content')
 const getRulesRunner = require('../platform')
+const { matchCondition } = require('./match-condition')
 const async = require('async')
 
 module.exports = function ({
@@ -19,8 +20,7 @@ module.exports = function ({
 }, callback) {
   const mpx = loaderContext.getMpx()
   const context = loaderContext.context
-  const mode = mpx.mode
-  const pagesMap = mpx.pagesMap
+  const { mode, pagesMap, autoVirtualHostRules } = mpx
   async.waterfall([
     (callback) => {
       getJSONContent(json, null, loaderContext, callback)
@@ -78,8 +78,11 @@ module.exports = function ({
           componentGenerics = Object.assign({}, ret.componentGenerics)
         }
         if (usingComponents) {
-          const setUsingComponentInfo = (name, moduleId) => {
-            usingComponentsInfo[name] = { mid: moduleId }
+          const setUsingComponentInfo = (name, moduleId, hasVirtualHost) => {
+            usingComponentsInfo[name] = {
+              mid: moduleId,
+              hvh: hasVirtualHost
+            }
           }
           async.eachOf(usingComponents, (component, name, callback) => {
             if (ctorType === 'app') {
@@ -96,7 +99,8 @@ module.exports = function ({
               if (err) return callback(err)
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, ctorType === 'app')
-              setUsingComponentInfo(name, moduleId)
+              const hasVirtualHost = matchCondition(rawResourcePath, autoVirtualHostRules)
+              setUsingComponentInfo(name, moduleId, hasVirtualHost)
               callback()
             })
           }, (err) => {

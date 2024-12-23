@@ -2189,6 +2189,10 @@ function isComponentNode (el, options) {
   return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
+function isVirtualHostNode (el, options) {
+  return options.usingComponentsInfo[el.tag]?.hvh
+}
+
 function isReactComponent (el, options) {
   return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
 }
@@ -2416,7 +2420,7 @@ function processShow (el, options, root) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
-  if (isComponentNode(el, options)) {
+  if (isComponentNode(el, options) && isVirtualHostNode(el, options)) {
     if (show === '') {
       show = '{{false}}'
     }
