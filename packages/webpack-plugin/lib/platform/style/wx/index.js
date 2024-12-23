@@ -108,6 +108,32 @@ module.exports = function getSpec ({ warn, error }) {
     }
     return result
   }
+  // 解析 translateY(10px) 这种结构
+  // 括号外作为key返回，括号内作为val返回
+  const parseValueFromParentheses = (values) => {
+    let i = -1
+    const len = values.length
+    let stack = 0
+    let start = 0
+    let key = ''
+    let val = ''
+    while (++i < len) {
+      const char = values[i]
+      if (char === '(') {
+        if (stack === 0) {
+          start = i
+          key = values.substring(0, start)
+        }
+        stack++
+      } else if (char === ')') {
+        stack--
+        if (stack === 0) {
+          val = values.substring(start + 1, i)
+        }
+      }
+    }
+    return { key, val }
+  }
   // const getDefaultValueFromVar = (str) => {
   //   const totalVarExp = /^var\((.+)\)$/
   //   if (!totalVarExp.test(str)) return str
@@ -378,61 +404,55 @@ module.exports = function getSpec ({ warn, error }) {
     const values = parseValues(value)
     const transform = []
     values.forEach(item => {
-      const match = item.match(/([/\w]+)\(([^)]+)\)/)
-      if (match && match.length >= 3) {
-        let key = match[1]
-        const val = match[2]
-        switch (key) {
-          case 'translateX':
-          case 'translateY':
-          case 'scaleX':
-          case 'scaleY':
-          case 'rotateX':
-          case 'rotateY':
-          case 'rotateZ':
-          case 'rotate':
-          case 'skewX':
-          case 'skewY':
-          case 'perspective':
-            // 单个值处理
-            transform.push({ [key]: val })
-            break
-          case 'matrix':
-          case 'matrix3d':
-            transform.push({ [key]: parseValues(val, ',').map(val => +val) })
-            break
-          case 'translate':
-          case 'scale':
-          case 'skew':
-          case 'rotate3d': // x y z angle
-          case 'translate3d': // x y 支持 z不支持
-          case 'scale3d': // x y 支持 z不支持
-            {
-              // 2 个以上的值处理
-              key = key.replace('3d', '')
-              const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
-              // scale(.5) === scaleX(.5) scaleY(.5)
-              if (vals.length === 1 && key === 'scale') {
-                vals.push(vals[0])
-              }
-              const xyz = ['X', 'Y', 'Z']
-              transform.push(...vals.map((v, index) => {
-                if (key !== 'rotate' && index > 1) {
-                  unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
-                }
-                return { [`${key}${xyz[index] || ''}`]: v.trim() }
-              }))
-              break
+      let { key, val } = parseValueFromParentheses(item)
+      switch (key) {
+        case 'translateX':
+        case 'translateY':
+        case 'scaleX':
+        case 'scaleY':
+        case 'rotateX':
+        case 'rotateY':
+        case 'rotateZ':
+        case 'rotate':
+        case 'skewX':
+        case 'skewY':
+        case 'perspective':
+          // 单个值处理
+          transform.push({ [key]: val })
+          break
+        case 'matrix':
+        case 'matrix3d':
+          transform.push({ [key]: parseValues(val, ',').map(val => +val) })
+          break
+        case 'translate':
+        case 'scale':
+        case 'skew':
+        case 'rotate3d': // x y z angle
+        case 'translate3d': // x y 支持 z不支持
+        case 'scale3d': // x y 支持 z不支持
+        {
+          // 2 个以上的值处理
+          key = key.replace('3d', '')
+          const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
+          // scale(.5) === scaleX(.5) scaleY(.5)
+          if (vals.length === 1 && key === 'scale') {
+            vals.push(vals[0])
+          }
+          const xyz = ['X', 'Y', 'Z']
+          transform.push(...vals.map((v, index) => {
+            if (key !== 'rotate' && index > 1) {
+              unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
             }
-          case 'translateZ':
-          case 'scaleZ':
-          default:
-            // 不支持的属性处理
-            unsupportedPropError({ prop, value, selector }, { mode })
-            break
+            return { [`${key}${xyz[index] || ''}`]: v.trim() }
+          }))
+          break
         }
-      } else {
-        error(`Property [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
+        case 'translateZ':
+        case 'scaleZ':
+        default:
+          // 不支持的属性处理
+          unsupportedPropError({ prop, value, selector }, { mode })
+          break
       }
     })
     return {

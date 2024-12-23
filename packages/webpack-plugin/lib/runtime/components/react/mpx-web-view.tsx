@@ -109,6 +109,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         }
       });
     }
+    true;
   `
   const _changeUrl = function (navState: WebViewNavigation) {
     if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
@@ -211,16 +212,15 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       onError: _error
     })
   }
-  extendObject(events, {
-    onMessage: _message
-  })
 
   return createElement(Portal, null, createElement(WebView, extendObject({
     style: defaultWebViewStyle,
     source: { uri: src },
     ref: webViewRef,
     javaScriptEnabled: true,
-    onNavigationStateChange: _changeUrl
+    onNavigationStateChange: _changeUrl,
+    onMessage: _message,
+    injectedJavaScript: injectedJavaScript
   }, events)))
 })
 
