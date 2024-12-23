@@ -317,11 +317,10 @@ const useInnerProps = (
     }
   }
 
-  if (!rawEventKeys.length || config.disableTouch) {
-    return omit(propsRef.current, removeProps)
-  }
-
   const events = useMemo(() => {
+    if (!rawEventKeys.length || config.disableTouch) {
+      return {}
+    }
     const transformedEventKeys = rawEventKeys.reduce((acc: string[], key) => {
       if (propsRef.current[key]) {
         return acc.concat(eventConfig[key])
@@ -339,7 +338,7 @@ const useInnerProps = (
     })
 
     return events
-  }, [hashEventKey])
+  }, [hashEventKey, config.disableTouch])
 
   return extendObject(
     {},
