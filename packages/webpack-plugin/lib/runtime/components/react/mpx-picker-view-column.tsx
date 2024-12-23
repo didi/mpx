@@ -91,14 +91,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   //   y: itemRawH * initialIndex
   // }), [itemRawH])
 
+  const paddingHeight = useMemo(
+    () => Math.round((pickerH - itemHeight) / 2),
+    [pickerH, itemHeight]
+  )
+
   const snapToOffsets = useMemo(
     () => columnData.map((_, i) => i * itemRawH),
     [columnData, itemRawH]
-  )
-
-  const paddingHeight = useMemo(
-    () => Math.round((pickerH - itemRawH) / 2),
-    [pickerH, itemRawH]
   )
 
   const contentContainerStyle = useMemo(() => {
@@ -111,7 +111,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH, maxIndex])
 
   useEffect(() => {
-    // console.log('[mpx-picker-view-column], useEffect000 --->', 'columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'prevIndex=', prevIndex, 'activeIndex=', activeIndex.current, 'maxIndex=', maxIndex, 'prevMaxIndex=', prevMaxIndex)
     if (
       !scrollViewRef.current ||
       !itemRawH ||
