@@ -17,7 +17,6 @@ const ruleCallback = ([match], { generator }) => {
 }
 
 const ruleFallback = (match, generator) => {
-  console.log(1212313, match, !!generator)
   generator._mpx2rnUnsuportedRules = generator._mpx2rnUnsuportedRules || []
   generator._mpx2rnUnsuportedRules.push(match)
   return EMPTY
