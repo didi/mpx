@@ -567,11 +567,171 @@ movable-view的可移动区域。
 #### 应用能力
 
 #### 环境API
+在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，可能对于某个api提供的能力会比微信小程序提供的能力少一些，以下是使用说明：
+##### 使用说明
+如果全量引入api-proxy这种情况下，需要如下配置
+```javascript
+// 全量引入api-proxy
+import mpx from '@mpxjs/core'
+import apiProxy from '@didi/mpxjs-api-proxy'
+mpx.use(apiProxy, { usePromise: true })
+```
+需要在mpx项目中需要配置externals
+```
+externals: {
+  ...
+  '@react-native-async-storage/async-storage': '@react-native-async-storage/async-storage',
+  '@react-native-clipboard/clipboard': '@react-native-clipboard/clipboard',
+  '@react-native-community/netinfo': '@react-native-community/netinfo',
+  'react-native-device-info': 'react-native-device-info',
+  'react-native-safe-area-context': 'react-native-safe-area-context',
+  'react-native-reanimated': 'react-native-reanimated',
+  'react-native-get-location': 'react-native-get-location',
+  'react-native-haptic-feedback': 'react-native-haptic-feedback'
+},
+```
+如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到一下方法，来确定是否需要配置externals，配置参考上面示例
 
+| api方法                                                                                                                                                                                              | 依赖的react-native三方库                        |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| showActionSheet                                                                                                                                                                                    | react-native-reanimated                   |
+| getNetworkType、<br/>offNetworkStatusChange、<br/>onNetworkStatusChange                                                                                                                              | @react-native-community/netinfo           |
+| getLocation、<br/>openLocation、<br/>chooseLocation                                                                                                                                                  | react-native-get-location                 |
+| setStorage、<br/> setStorageSync、<br/>getStorage、<br/> getStorageSync、<br/>getStorageInfo、<br/>getStorageInfoSync、<br/>removeStorage，<br/>removeStorageSync，<br/>clearStorage，<br/>clearStorageSync | @react-native-async-storage/async-storage |
+| getSystemInfo、<br/>getSystemInfoSync、<br/>getDeviceInfo、<br/>getWindowInfo、<br/>getLaunchOptionsSync、<br/>getEnterOptionsSync                                                                      | react-native-device-info                  |
+| getWindowInfo、<br/>getLaunchOptionsSync、<br/>getEnterOptionsSync                                                                                                                                   | react-native-safe-area-context            |
+| vibrateShort、<br/> vibrateLong                                                                                                                                                                     | react-native-haptic-feedback              |
+
+在RN 项目中，如果是以全量引入api-proxy的方法需要在RN环境中执行以下所有的命令，如果只是使用单个api的能力，可以参考上表来判断安装对应的包
+```
+// 安装api-proxy下所用到的依赖 如果
+npm i @react-native-async-storage/async-storage
+npm i @react-native-clipboard/clipboard
+npm i @react-native-community/netinfo
+npm i react-native-safe-area-context
+npm i react-native-device-info
+npm i react-native-reanimated
+npm i react-native-haptic-feedback
+ios项目需要执行如下命令
+cd ios
+pod install
+
+npm i react-native-get-location
+```
+
+android下需要做如下配置：
+安装react-native-get-location包后，需要在AndroidManifest.xml中定义位置权限，[参考文档](https://www.npmjs.com/package/react-native-get-location)
+```
+<!-- Define ACCESS_FINE_LOCATION if you will use enableHighAccuracy=true  -->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+<!-- Define ACCESS_COARSE_LOCATION if you will use enableHighAccuracy=false  -->
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+```
+安装react-native-haptic-feedback包后需要在安卓中配置，[配置参考文档](https://github.com/mkuczera/react-native-haptic-feedback)
+打开 android/app/src/main/java/[...]/MainApplication.java. 在文件的顶部添加以下导入下面的代码片段
+```
+import com.mkuczera.RNReactNativeHapticFeedbackPackage;
+```
+
+
+修改设置,将下面的配置添加到android/settings.gradle文件中
+
+```javascript
+include ':react-native-haptic-feedback'
+project(':react-native-haptic-feedback').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-haptic-feedback/android')
+```
+react-native-reanimated在mpx和RN项目都要安装，安装好包后需要在babel.config.json文件中做如下配置，并且RN环境中使用的react-native-reanimated与mpx项目中安装的react-native-reanimated版本要一致：
+[配置参考文档](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/)
+```javascript
+module.exports = {
+    presets: [
+      ... // don't add it here :)
+    ],
+    plugins: [
+      ...
+      'react-native-reanimated/plugin',
+    ],
+};
+```
 
 <!-- WebviewAPI -->
 #### Webview API
 对于web-view组件打开的网页，想要跟RN通信，或者跳转到RN页面，提供了以下能力
+
+| 方法名           | 说明                                          |
+|---------------|---------------------------------------------|
+| navigateTo    | 保留当前webview页面，跳转RN页面                        |
+| navigateBack  | 关闭当前页面，返回上一页或多级RN页面                         |
+| switchTab        | 跳转到RN的 tabBar 页面                            |
+| reLaunch        | 关闭所有页面，打开到应用内的某个RN页面                        |
+| redirectTo        | 关闭当前页面，跳转到应用内的某个RN页面                        |
+| getEnv        | 获取当前环境                                      |
+| postMessage        | 向RN发送消息，实时触发组件的message事件                    |
+| invoke        | 开放一个webview页面和web页面互通消息的能力 |
+
+##### webview-bridge示例代码
+```javascript
+import webviewBridge from '@mpxjs/webview-bridge'
+webviewBridge.navigateTo({
+  url: 'RN地址',
+  success: () => {
+    console.log('跳转成功')
+  }
+})
+```
+
+##### invoke示例代码
+RN环境中挂载getTime的逻辑
+```javascript
+import mpx from '@mpxjs/core'
+...
+// 普通方法
+mpx.config.webviewConfig = {
+  apiImplementations: {
+    getTime:  (options = {}) => {
+      const { params = {} } = options
+      return {
+        text: params.text,
+        time: '2024-12-24'
+      }
+    }
+  }
+}
+// 或者promise
+mpx.config.webviewConfig = {
+  apiImplementations: {
+    getTime:  (options = {}) => {
+      return new Promise((resolve, reject) => {
+        const { params = {} } = options
+        if (params.text) {
+          resolve({
+            text: params.text,
+            time: '2024-12-24'
+          })
+        } else {
+          reject(new Error('没有传text参数'))
+        }
+      })
+    }
+  }
+}
+...
+```
+web中通信的逻辑
+```javascript
+import webviewBridge from '@mpxjs/webview-bridge'
+webviewBridge.invoke('getTime', {
+  params: {
+    text: '我是入参'
+  },
+  success: (res) => {
+    console.log('接收到的消息：', res.time)
+  }
+})
+```
+
 
 #### 其他使用限制
 如事件的target等
