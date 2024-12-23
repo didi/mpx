@@ -289,7 +289,6 @@ const useInnerProps = (
   const eventConfig: { [key: string]: string[] } = {}
   const config = rawConfig || {
     layoutRef: { current: {} },
-    disableTouch: false,
     disableTap: false
   }
   const removeProps = [
@@ -318,7 +317,7 @@ const useInnerProps = (
   }
 
   const events = useMemo(() => {
-    if (!rawEventKeys.length || config.disableTouch) {
+    if (!rawEventKeys.length) {
       return {}
     }
     const transformedEventKeys = rawEventKeys.reduce((acc: string[], key) => {
@@ -338,7 +337,7 @@ const useInnerProps = (
     })
 
     return events
-  }, [hashEventKey, config.disableTouch])
+  }, [hashEventKey])
 
   return extendObject(
     {},
