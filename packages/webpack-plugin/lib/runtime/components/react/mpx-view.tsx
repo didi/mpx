@@ -13,6 +13,7 @@ import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHoverStyle } from './utils'
+import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector } from 'react-native-gesture-handler'
 
@@ -717,7 +718,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
-    throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
   const nodeRef = useRef(null)
@@ -736,9 +737,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableAnimation = enableAnimation || !!animation
   const enableAnimationRef = useRef(enableAnimation)
   if (enableAnimationRef.current !== enableAnimation) {
-    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
-  const finalStyle = enableAnimation
+  const finalStyle = enableAnimationRef.current
     ? [viewStyle, useAnimationHooks({
         animation,
         style: viewStyle
