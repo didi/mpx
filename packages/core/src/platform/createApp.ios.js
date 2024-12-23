@@ -191,7 +191,8 @@ export default function createApp (option, config = {}) {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      headerMode: 'float'
+      // 安卓上会出现初始化时闪现导航条的问题
+      headerShown: false
     }
     if (headerBackImageProps) {
       navScreenOpts.headerBackImage = () => {
