@@ -34,7 +34,7 @@
     "@mpxjs/utils": ">=2.9.69-alpha"
   },
   "peerDependencies": {
-    "@mpxjs/core": ">=2.9.0-alpha",
+    "@mpxjs/core": ">=2.9.0",
     "pinia": "^2.0.14",
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6"
