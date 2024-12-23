@@ -1,8 +1,7 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
-import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, Platform, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
+import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { vibrateShort } from '@mpxjs/api-proxy'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerOverlay from './pickerViewOverlay'
 import PickerMask from './pickerViewMask'
@@ -114,6 +113,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH, maxIndex])
 
   useEffect(() => {
+    // console.log('[mpx-picker-view-column], useEffect000 --->', 'columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'prevIndex=', prevIndex, 'activeIndex=', activeIndex.current, 'maxIndex=', maxIndex, 'prevMaxIndex=', prevMaxIndex)
     if (
       !scrollViewRef.current ||
       !itemRawH ||
@@ -133,7 +133,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         y: itemRawH * initialIndex,
         animated: false
       })
-    }, 0)
+    }, isAndroid ? 200 : 0)
     activeIndex.current = initialIndex
   }, [itemRawH, initialIndex])
 
@@ -148,9 +148,13 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onScrollViewLayout = (e: LayoutChangeEvent) => {
+    if (isAndroid) {
+      return
+    }
+    // RN iOS bug: https://github.com/facebook/react-native/issues/36135
     const { width } = e.nativeEvent.layout
     const widthInt = Math.ceil(width)
-    // console.log('[mpx-picker-view-column], onScrollViewLayout --->', 'columnIndex=', columnIndex, 'widthInt=', widthInt, 'scrollViewWidth=', scrollViewWidth)
+    // console.log('[mpx-picker-view-column], onScrollViewLayout --->', 'columnIndex=', columnIndex, 'width=', width, 'widthInt=', widthInt, 'scrollViewWidth=', scrollViewWidth)
     if (widthInt !== scrollViewWidth) {
       const maxW = maxScrollViewWidth.current
       if (maxW !== -1 && widthInt > maxW) {
@@ -208,7 +212,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (Platform.OS === 'android') {
+    if (isAndroid) {
+      return
+    }
+    // 全局注册的震动触感 hook
+    const pickerVibrate = global.__mpx.config.rnConfig.pickerVibrate
+    if (typeof pickerVibrate !== 'function') {
       return
     }
     const { y } = e.nativeEvent.contentOffset
@@ -221,7 +230,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             index: currentId,
             y: currentId * itemRawH
           }
-          vibrateShort({ type: 'selection' })
+          // vibrateShort({ type: 'selection' })
+          pickerVibrate()
         }
       }
     }
