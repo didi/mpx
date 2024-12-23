@@ -86,21 +86,21 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef
   })
 
-  // console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length)
+  // console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length, 'pickerH=', pickerH, 'itemRawH=', itemRawH, 'itemHeight=', itemHeight)
 
   // const initialOffset = useMemo(() => ({
   //   x: 0,
   //   y: itemRawH * initialIndex
   // }), [itemRawH])
 
+  const paddingHeight = useMemo(
+    () => Math.round((pickerH - itemHeight) / 2),
+    [pickerH, itemHeight]
+  )
+
   const snapToOffsets = useMemo(
     () => columnData.map((_, i) => i * itemRawH),
     [columnData, itemRawH]
-  )
-
-  const paddingHeight = useMemo(
-    () => Math.round((pickerH - itemRawH) / 2),
-    [pickerH, itemRawH]
   )
 
   const contentContainerStyle = useMemo(() => {
@@ -139,7 +139,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onContentSizeChange = (_w: number, h: number) => {
     const y = itemRawH * initialIndex
-    // console.log('[mpx-picker-view-column], onContentSizeChange --->', 'columnIndex=', columnIndex, '_w=', _w, 'h=', h, 'y=', y)
+    // console.log('[mpx-picker-view-column], onContentSizeChange --->', 'columnIndex=', columnIndex, '_w=', _w, 'h=', h, 'y=', y, 'itemRawH=', itemRawH)
     if (y <= h) {
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
