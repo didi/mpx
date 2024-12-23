@@ -156,7 +156,7 @@ export default function createApp (option, config = {}) {
           if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
             global.__mpxPageStatusMap[navigation.pageId] = 'show'
           }
-        } else if (currentState === 'inactive') {
+        } else if (currentState === 'inactive' || currentState === 'background') {
           global.__mpxAppCbs.hide.forEach((cb) => {
             cb()
           })
@@ -191,7 +191,7 @@ export default function createApp (option, config = {}) {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      headerMode: 'screen',
+      // 安卓上会出现初始化时闪现导航条的问题
       headerShown: false
     }
     if (headerBackImageProps) {
