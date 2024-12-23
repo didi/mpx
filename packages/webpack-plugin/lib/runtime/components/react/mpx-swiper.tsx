@@ -1,4 +1,4 @@
-import { View, NativeSyntheticEvent, Dimensions, LayoutChangeEvent } from 'react-native'
+import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
 
@@ -100,10 +100,6 @@ const styles: { [key: string]: Object } = {
     overflow: 'scroll',
     display: 'flex',
     justifyContent: 'flex-start'
-  },
-  itemWrap: {
-    width: '100%',
-    height: '100%'
   }
 }
 
@@ -152,8 +148,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const nodeRef = useRef<View>(null)
   useNodesRef<View, SwiperProps>(props, ref, nodeRef, {})
 
-  // 默认取水平方向的width
-  const { width } = Dimensions.get('window')
   // 计算transfrom之类的
   const {
     normalStyle,
@@ -172,10 +166,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
-  const defaultHeight = (normalStyle?.height || 150)
-  const defaultWidth = (normalStyle?.width || width || 375)
-  const initWidth = typeof defaultWidth === 'number' ? defaultWidth - previousMargin - nextMargin : defaultWidth
-  const initHeight = typeof defaultHeight === 'number' ? defaultHeight - previousMargin - nextMargin : defaultHeight
+  const initWidth = typeof normalStyle?.width === 'number' ? normalStyle.width - previousMargin - nextMargin : normalStyle.width
+  const initHeight = typeof normalStyle?.height === 'number' ? normalStyle.height - previousMargin - nextMargin : normalStyle.height
   const dir = useSharedValue(horizontal === false ? 'y' : 'x')
   const pstep = dir.value === 'x' ? initWidth : initHeight
   const initStep: number = isNaN(pstep) ? 0 : pstep
@@ -196,7 +188,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const touchfinish = useSharedValue(false)
   // 用户是否触发了move事件,起点在onStart, 触发move事件才会执行onEnd, 1. 移动一定会触发onStart, onTouchesMove, onEnd 2. 点击未进行操作, 会触发onTouchsUp
   const isTriggerStart = useSharedValue(false)
-  // 记录上一次的点击时的绝对定位坐标
+  // 记录上一帧的绝对定位坐标
   const preAbsolutePos = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   // 用户点击未移动状态下,记录用户上一次操作的transtion 的 direction
@@ -255,7 +247,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       dots.push(<View style={[dotCommonStyle, { backgroundColor: unActionColor }]} key={i}></View>)
     }
     return (
-      <View pointerEvents="none" style = {[styles['pagination_' + dir.value]]}>
+      <View pointerEvents="none" style = {styles['pagination_' + dir.value]}>
         <View style = {[styles['pagerWrapper' + dir.value]]}>
           <Animated.View style={[
             dotCommonStyle,
@@ -276,8 +268,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   function renderItems () {
     const itemAnimatedStyles = useAnimatedStyle(() => {
-      const pageStyle: Object = dir.value === 'x' ? { width: step.value, height: '100%' } : { width: '100%', height: step.value }
-      return pageStyle
+      return dir.value === 'x' ? { width: step.value, height: '100%' } : { width: '100%', height: step.value }
     })
     let renderChild = children.slice()
     if (props.circular && totalElements.value > 1) {
@@ -293,12 +284,17 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         previousMargin && dir.value === 'x' && (extraStyle.marginLeft = previousMargin)
         previousMargin && dir.value === 'y' && (extraStyle.marginTop = previousMargin)
       }
-      if (index === totalElements.value - 1) {
+      if (index === totalElements.value - 1 && !props.circular) {
         nextMargin && dir.value === 'x' && (extraStyle.marginRight = nextMargin)
         nextMargin && dir.value === 'y' && (extraStyle.marginBottom = nextMargin)
       }
-      const newChild = React.cloneElement(child, { itemIndex: index, scale: props.scale })
-      return (<Animated.View style={[style.itemWrap, itemAnimatedStyles, extraStyle]} key={ 'page' + index}>{newChild}</Animated.View>)
+      const newChild = React.cloneElement(child, {
+        itemIndex: index,
+        scale: props.scale,
+        customStyle: [itemAnimatedStyles, extraStyle],
+        key: 'page' + index
+      })
+      return newChild
     })
     const contextValue = {
       offset,
@@ -360,6 +356,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function getInitOffset () {
+    'worklet'
     if (!step.value) return 0
     let targetOffset = 0
     if (props.circular && totalElements.value > 1) {
@@ -397,6 +394,22 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const isInit = !preIndex && newIndex === 0
     if (!isInit && props.current !== newIndex && props.bindchange) {
       runOnJS(handleSwiperChange)(newIndex)
+    }
+  })
+
+  useAnimatedReaction(() => step.value, (newIndex, preIndex) => {
+    const targetOffset = getInitOffset()
+    if (offset.value !== targetOffset) {
+      if (props.circular && props.current && props.current > 0) {
+        offset.value = targetOffset
+      } else {
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration,
+          easing: easeMap[easeingFunc]
+        }, () => {
+          offset.value = targetOffset
+        })
+      }
     }
   })
 
@@ -655,15 +668,19 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   const animatedStyles = useAnimatedStyle(() => {
     if (dir.value === 'x') {
-      return { transform: [{ translateX: offset.value }] }
+      return { transform: [{ translateX: offset.value }], opacity: step.value > 0 ? 1 : 0 }
     } else {
-      return { transform: [{ translateY: offset.value }] }
+      return { transform: [{ translateY: offset.value }], opacity: step.value > 0 ? 1 : 0 }
     }
   })
 
   function renderSwiper () {
     return (<View style={[normalStyle, layoutStyle, styles.swiper]} {...layoutProps} {...innerProps}>
-        <Animated.View style={[{ flexDirection: dir.value === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]}>
+        <Animated.View style={[{
+          flexDirection: dir.value === 'x' ? 'row' : 'column',
+          width: '100%',
+          height: '100%'
+        }, animatedStyles]}>
           {wrapChildren({
             children: arrPages
           }, {

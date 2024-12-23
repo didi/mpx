@@ -16,6 +16,7 @@ interface SwiperItemProps {
   'parent-height'?: number;
   children?: ReactNode;
   style?: Object;
+  customStyle: [];
   itemIndex: number;
   scale: boolean;
 }
@@ -30,6 +31,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     style,
+    customStyle,
     itemIndex,
     scale
   } = props
@@ -79,10 +81,11 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
       }]
     }
   })
+  const mergeStyle = [innerStyle, layoutStyle, { width: '100%', height: '100%' }, scale ? itemAnimatedStyle : {}].concat(customStyle)
   return (
     <Animated.View
       {...innerProps}
-      style={[innerStyle, layoutStyle, { width: '100%', height: '100%' }, scale ? itemAnimatedStyle : {}]}
+      style={mergeStyle}
       data-itemId={props['item-id']}>
       {
         wrapChildren(
