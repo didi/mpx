@@ -7,6 +7,8 @@ import behaviors from './behaviors.js'
 import layout from './layout.js'
 import filters from './filters.js'
 import staticRule from './static.js'
+import divider from './divider.js'
+import ring from './ring.js'
 
 export default [
   ...color,
@@ -17,5 +19,7 @@ export default [
   ...behaviors,
   ...layout,
   ...filters,
-  ...staticRule
+  ...staticRule,
+  ...divider,
+  ...ring
 ]
