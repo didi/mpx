@@ -5,7 +5,7 @@ module.exports = {
     sourceType: 'module'
   },
   extends: 'standard',
-  plugins: ['html', 'jest', 'react-hooks'],
+  plugins: ['html', 'jest'],
   globals: {
     wx: 'readonly',
     my: 'readonly',
@@ -29,8 +29,7 @@ module.exports = {
     'no-cond-assign': 0,
     camelcase: 0,
     indent: 0,
-    'symbol-description': 0,
-    'react-hooks/rules-of-hooks': 'error'
+    'symbol-description': 0
   },
   env: {
     'jest/globals': true,
@@ -55,6 +54,12 @@ module.exports = {
         '@typescript-eslint/no-unused-vars': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
         camelcase: 0
+      }
+    }, {
+      files: ['packages/webpack-plugin/**/*.{js,jsx,ts,tsx}'],
+      plugins: ['react-hooks'],
+      rules: {
+        'react-hooks/rules-of-hooks': 'error'
       }
     }
   ]
