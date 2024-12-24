@@ -13,6 +13,7 @@ import {
   WithTimingConfig,
   AnimationCallback
 } from 'react-native-reanimated'
+import { error } from '@mpxjs/utils'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
@@ -166,8 +167,17 @@ const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
   })
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps) {
-  const { style = {}, animation } = props
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean }) {
+  const { style = {}, animation, enableAnimation } = props
+
+  const enableStyleAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableStyleAnimation)
+  if (enableAnimationRef.current !== enableStyleAnimation) {
+    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
+
+  if (!enableStyleAnimation) return { enableStyleAnimation }
+  
   const originalStyle = formatStyle(style)
   // id 标识
   const id = animation?.id || -1
