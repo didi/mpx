@@ -673,7 +673,7 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
-  let {
+  const {
     style = {},
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
@@ -738,7 +738,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     animation,
     style: viewStyle
   })
-  
+
   const innerProps = useInnerProps(
     props,
     extendObject({

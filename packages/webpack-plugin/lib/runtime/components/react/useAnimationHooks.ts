@@ -177,7 +177,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   }
 
   if (!enableStyleAnimation) return { enableStyleAnimation }
-  
+
   const originalStyle = formatStyle(style)
   // id 标识
   const id = animation?.id || -1
