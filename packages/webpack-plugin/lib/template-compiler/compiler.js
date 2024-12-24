@@ -1071,6 +1071,7 @@ const initVariants = (unoCtx) => {
   const breakPointsReg = new RegExp(`([al]t-|[<~]|max-)?(${breakpoints})(?:${separators})`)
   const orientationReg = new RegExp(`(landscape|portrait)(?:${separators})`)
   const pseudoClassReg = new RegExp(`(hover)(?:${separators})`) // 目前仅处理了 hover 状态
+  const colorSchemeReg = new RegExp(`(dark|light)(?:${separators})`)
   unoVariantCached = {
     sizePseudo: {
       rule: sizePseudoReg,
@@ -1099,7 +1100,16 @@ const initVariants = (unoCtx) => {
         }
       }
     },
-    pseudoClassReg
+    colorScheme: {
+      rule: colorSchemeReg,
+      matcher (input) {
+        return {
+          prefix: input[1],
+          point: ''
+        }
+      }
+    },
+    pseudoClassReg,
   }
   return unoVariantCached
 }
@@ -1108,7 +1118,7 @@ function processVariants (staticClass = '', variants) {
   const pseudoClass = {}
   const pseudoWithMediaQueryClass = []
   const mediaQueryClass = []
-  const bReg = [variants.sizePseudo, variants.breakPoints, variants.orientation]
+  const bReg = [variants.sizePseudo, variants.breakPoints, variants.orientation, variants.colorScheme]
   const newStaticClass = staticClass.split(/\s+/).map(rawClass => {
     let applied = true
     const className = rawClass

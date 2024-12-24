@@ -1,5 +1,5 @@
 import { isObject, isArray, dash2hump, isFunction, cached, getFocusedNavigation } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet, Appearance } from 'react-native'
 
 function rpx (value) {
   const { width } = Dimensions.get('screen')
@@ -36,35 +36,6 @@ function formatValue (value) {
 }
 
 global.__formatValue = formatValue
-
-// const escapeReg = /[()[\]{}#!.:,%'"+$]/g
-// const escapeMap = {
-//   '(': '_pl_',
-//   ')': '_pr_',
-//   '[': '_bl_',
-//   ']': '_br_',
-//   '{': '_cl_',
-//   '}': '_cr_',
-//   '#': '_h_',
-//   '!': '_i_',
-//   '/': '_s_',
-//   '.': '_d_',
-//   ':': '_c_',
-//   ',': '_2c_',
-//   '%': '_p_',
-//   '\'': '_q_',
-//   '"': '_dq_',
-//   '+': '_a_',
-//   $: '_si_'
-// }
-
-// const mpEscape = cached((str) => {
-//   return str.replace(escapeReg, function (match) {
-//     if (escapeMap[match]) return escapeMap[match]
-//     // unknown escaped
-//     return '_u_'
-//   })
-// })
 
 function concat (a = '', b = '') {
   return a ? b ? (a + ' ' + b) : a : b
@@ -208,11 +179,14 @@ export default function styleHelperMixin () {
         if (!mediaQueryClass.length) return ''
         // todo 后续可优化，cache 能力
         const { width, height } = Dimensions.get('screen')
+        const colorScheme = Appearance.getColorScheme()
         const { entries, entriesMap } = global.__getUnoBreakpoints()
-        return mediaQueryClass.map(([className, breakpoints = []]) => {
-          const res = breakpoints.every(([prefix = '', point = 0]) => {
+        return mediaQueryClass.map(([className, querypoints = []]) => {
+          const res = querypoints.every(([prefix = '', point = 0]) => {
             if (prefix === 'landscape') return width > height
             if (prefix === 'portrait') return width <= height
+            if (prefix === 'dark') return colorScheme === 'dark'
+            if (prefix === 'light') return colorScheme === 'light'
             const size = formatValue(entriesMap[point] || point)
             const index = entries.findIndex(item => item[0] === point)
             const isGtPrefix = prefix.startsWith('min-')
