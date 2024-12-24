@@ -56,7 +56,7 @@ module.exports = {
         camelcase: 0
       }
     }, {
-      files: ['packages/webpack-plugin/**/*.{js,jsx,ts,tsx}'],
+      files: ['packages/webpack-plugin/lib/runtime/components/react/**/*.{js,jsx,ts,tsx}'],
       plugins: ['react-hooks'],
       rules: {
         'react-hooks/rules-of-hooks': 'error'
