@@ -165,7 +165,7 @@ const checkNeedLayout = (preImageInfo: PreImageInfo) => {
 }
 
 /**
-* h - 用户设置的高度 
+* h - 用户设置的高度。
 * lh - 容器的高度
 * ratio - 原始图片的宽高比
 * **/
