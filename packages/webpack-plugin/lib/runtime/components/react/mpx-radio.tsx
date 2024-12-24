@@ -4,7 +4,7 @@
  * ✔ checked
  * ✔ color
  */
-import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
+import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction, createElement } from 'react'
 import { View, StyleSheet, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
@@ -193,32 +193,26 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       }
     }, [checked])
 
-    return (
-      <View {...innerProps}>
-        <View style={defaultStyle}>
-          <Icon
-            type='success'
-            size={24}
-            color={disabled ? '#E1E1E1' : color}
-            style={{
-              ...styles.icon,
-              ...(isChecked && styles.iconChecked),
-              ...(disabled && styles.iconDisabled)
-            }}
-          />
-        </View>
+    return createElement(View, innerProps,
+      createElement(
+        View,
+        { style: defaultStyle },
+        createElement(Icon, {
+          type: 'success',
+          size: 24,
+          color: disabled ? '#E1E1E1' : color,
+          style: extendObject({}, styles.icon, isChecked && styles.iconChecked, disabled && styles.iconDisabled)
+        })
+      ),
+      wrapChildren(
+        props,
         {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
         }
-      </View>
+      )
     )
   }
 )

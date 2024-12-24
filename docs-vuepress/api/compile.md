@@ -88,7 +88,7 @@ mode 为 Mpx 编译的目标平台， 目前支持的有微信小程序(wx)\支�
 // 项目 package.json
 {
   "script": {
-    "build:cross": "mpx-cli-service build:mp --targets=wx,ali"
+    "build:cross": "mpx-cli-service build --targets=wx,ali"
   }
 }
 ```
