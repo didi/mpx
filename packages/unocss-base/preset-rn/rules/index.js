@@ -21,7 +21,9 @@ import {
   textOverflows,
   fontStyles,
   fontSmoothings,
-  hyphens
+  hyphens,
+  objectPositions,
+  isolations
 } from './static.js'
 import {
   flexGridJustifiesAlignments,
@@ -89,6 +91,8 @@ export default [
   ...fontStyles,
   ...fontSmoothings,
   ...hyphens,
+  ...objectPositions,
+  ...isolations,
   // spaceing
   ...paddings,
   ...margins,

@@ -1,4 +1,4 @@
-import { imageRenderings, overscrolls, listStyle } from '@unocss/preset-wind/rules'
+import { imageRenderings, overscrolls, listStyle, accents, carets } from '@unocss/preset-wind/rules'
 import { appearance, outline, willChange } from '@unocss/preset-mini/rules'
 import { transformEmptyRule } from '../../utils/index.js'
 
@@ -12,6 +12,9 @@ export default [
     listStyle,
     outline,
     willChange,
-    appearance
+    appearance,
+    accents,
+    carets,
+    willChange
   )
 ]

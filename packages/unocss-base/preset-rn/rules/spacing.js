@@ -1,6 +1,6 @@
 import { margins, paddings } from '@unocss/preset-mini/rules'
 import { spaces } from '@unocss/preset-wind/rules'
-import { ruleCallback } from '../../utils/index.js'
+import { ruleCallback, transformEmptyRule } from '../../utils/index.js'
 
 const unSupport = [
   's',
@@ -39,18 +39,7 @@ const marginsRules = margins.map(v => {
   ]
 })
 
-const spacesRules = spaces.map(v => {
- const [regex, matcher, ...another] = v
-  return [
-    regex,
-    (...args) => {
-      const [[, direction]] = args
-      if (unSupport.includes(direction)) return ruleCallback(...args)
-      return matcher(...args)
-    },
-    ...another
-  ]
-})
+const spacesRules = transformEmptyRule(spaces)
 
 export {
   paddingsRules as paddings,
