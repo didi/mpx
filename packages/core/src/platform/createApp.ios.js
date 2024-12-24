@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation, hasOwn, extend } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, extend } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -96,14 +96,10 @@ export default function createApp (option, config = {}) {
     })
 
     if (!global.__mpxAppLaunched) {
-      const parsed = Mpx.config.rnConfig.parseAppProps?.(props) || {}
-      if (parsed.url) {
-        const { path, queryObj } = parseUrlQuery(parsed.url)
-        Object.assign(initialRouteRef.current, {
-          initialRouteName: path.startsWith('/') ? path.slice(1) : path,
-          initialParams: queryObj
-        })
-      }
+      const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
+      initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
+      initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
+
       global.__mpxAppOnLaunch = (navigation) => {
         global.__mpxAppLaunched = true
         const state = navigation.getState()
