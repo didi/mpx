@@ -2,9 +2,8 @@ import { transformEmptyRule } from '../../utils/index.js'
 import {
   writingModes,
   writingOrientations,
-  hyphens
-  // fontVariantNumericBase,
-  // fontVariantNumeric
+  hyphens,
+  fontVariantNumeric
 } from '@unocss/preset-wind/rules'
 import {
   textStrokes,
@@ -39,6 +38,7 @@ const textDecorations = [
 //     }]
 //   }
 // })
+// vertical-align
 
 export default [
   ...transformEmptyRule(
@@ -53,7 +53,8 @@ export default [
     writingOrientations,
     textDecorations,
     textWraps,
-    fontSmoothings
+    fontSmoothings,
     // newFontVariantNumberic,
+    fontVariantNumeric
   )
 ]

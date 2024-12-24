@@ -23,7 +23,8 @@ import {
   fontSmoothings,
   hyphens,
   objectPositions,
-  isolations
+  isolations,
+  mixBlendModes
 } from './static.js'
 import {
   flexGridJustifiesAlignments,
@@ -49,12 +50,16 @@ import { viewTransition } from './view-transition.js'
 import { gaps } from './gap.js'
 import { transitions } from './transition.js'
 import { svgUtilities } from './svg.js'
+import ring from './ring.js'
+import border from './border.js'
 
 export default [
   ...typography,
   ...shadow,
   ...behaviors,
   ...filters,
+  ...ring,
+  ...border,
   // align
   ...verticalAligns,
   ...textAligns,
@@ -93,6 +98,7 @@ export default [
   ...hyphens,
   ...objectPositions,
   ...isolations,
+  ...mixBlendModes,
   // spaceing
   ...paddings,
   ...margins,

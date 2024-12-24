@@ -1,28 +1,19 @@
-import { boxShadowsBase, boxShadows } from '@unocss/preset-mini/rules'
+import { colorableShadows, colorResolver, h, hasParseableColor } from '@unocss/preset-mini/utils'
 
-const findShadowColorRule = () => {
-  return boxShadows.find(rule => {
-    if (rule[0] instanceof RegExp && rule[0].test('shadow')) {
-      return rule
-    }
-    return false
-  }) || []
-}
+const boxShadows = [
+  [/^shadow(?:-(.+))?$/, (match, context) => {
+    const [, d] = match
+    const { theme } = context
+    const v = theme.boxShadow?.[d || 'DEFAULT']
+    const c = d ? h.bracket.cssvar(d) : undefined
 
-const shadowColorRule = findShadowColorRule()
-
-export default [
-  [shadowColorRule[0], (match, context) => {
-    const rawHandler = shadowColorRule[1]
-    const rawResult = rawHandler(match, context)
-    if (rawResult['box-shadow']) {
+    if ((v != null || c != null) && !hasParseableColor(c, theme, 'shadowColor')) {
       return {
-        ...boxShadowsBase,
-        ...rawResult
+        'box-shadow': colorableShadows(v || c, '--un-shadow-color').join(',')
       }
-    } else {
-      // 工具类
-      return rawResult
     }
+    return colorResolver('--un-shadow-color', 'shadow', 'shadowColor')(match, context)
   }]
 ]
+
+export default boxShadows

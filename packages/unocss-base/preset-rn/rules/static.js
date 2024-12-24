@@ -13,7 +13,7 @@ import {
   textWraps,
   whitespaces
 } from '@unocss/preset-mini/rules'
-import { backgroundBlendModes, hyphens, isolations, objectPositions } from '@unocss/preset-wind/rules'
+import { backgroundBlendModes, mixBlendModes, hyphens, isolations, objectPositions } from '@unocss/preset-wind/rules'
 import { findRawRules, transformEmptyRule } from '../../utils/index.js'
 
 // display不支持的属性抽离并覆盖
@@ -62,6 +62,8 @@ const objectPositionsRules = transformEmptyRule(objectPositions)
 
 const isolationsRules = transformEmptyRule(isolations)
 
+const mixBlendModesRules = transformEmptyRule(mixBlendModes)
+
 export {
   backgroundBlendModesRules as backgroundBlendModes,
   displaysRules as displays,
@@ -79,5 +81,6 @@ export {
   fontSmoothingsRules as fontSmoothings,
   hyphensRules as hyphens,
   objectPositionsRules as objectPositions,
-  isolationsRules as isolations
+  isolationsRules as isolations,
+  mixBlendModesRules as mixBlendModes
 }
