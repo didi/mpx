@@ -81,7 +81,7 @@ export const getCustomEvent = (
   {
     detail = {},
     layoutRef
-  }: { detail?: Record<string, unknown>; layoutRef: LayoutRef },
+  }: { detail?: Record<string, unknown>; layoutRef?: LayoutRef },
   props: Props = {}
 ) => {
   const targetInfo = extendObject({}, oe.target, {
@@ -289,7 +289,6 @@ const useInnerProps = (
   const eventConfig: { [key: string]: string[] } = {}
   const config = rawConfig || {
     layoutRef: { current: {} },
-    disableTouch: false,
     disableTap: false
   }
   const removeProps = [
@@ -317,11 +316,10 @@ const useInnerProps = (
     }
   }
 
-  if (!rawEventKeys.length || config.disableTouch) {
-    return omit(propsRef.current, removeProps)
-  }
-
   const events = useMemo(() => {
+    if (!rawEventKeys.length) {
+      return {}
+    }
     const transformedEventKeys = rawEventKeys.reduce((acc: string[], key) => {
       if (propsRef.current[key]) {
         return acc.concat(eventConfig[key])
