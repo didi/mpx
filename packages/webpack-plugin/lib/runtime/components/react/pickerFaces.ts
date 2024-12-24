@@ -95,7 +95,7 @@ export const createFaces = (
       .reverse(),
 
     // center item
-    { index: 0, deg: 0, opacity: 1, offsetY: 0, scale: 1.031, screenHeight: itemHeight },
+    { index: 0, deg: 0, opacity: 1, offsetY: 0, scale: 1, screenHeight: itemHeight },
 
     // bottom items
     ...degrees.map<Faces>((degree, index) => {
