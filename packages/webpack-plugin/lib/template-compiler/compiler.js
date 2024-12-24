@@ -117,6 +117,7 @@ let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
 let usingComponents = []
+let usingComponentsInfo = {}
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -636,6 +637,7 @@ function parse (template, options) {
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
+  usingComponentsInfo = options.usingComponentsInfo
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -2185,20 +2187,20 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
-function isComponentNode (el, options) {
+function isComponentNode (el) {
   return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function isVirtualHostNode (el, options) {
-  return options.usingComponentsInfo[el.tag]?.hvh
+function getComponentInfo (el) {
+  return usingComponentsInfo[el.tag] || {}
 }
 
-function isReactComponent (el, options) {
-  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
+function isReactComponent (el) {
+  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
-  const isComponent = isComponentNode(el, options)
+  const isComponent = isComponentNode(el)
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
@@ -2312,8 +2314,7 @@ function postProcessAliComponentRootView (el, options, meta) {
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
-  const tagName = el.tag
-  const mid = options.usingComponentsInfo[tagName]?.mid || moduleId
+  const mid = getComponentInfo(el).mid
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${mid}` }
   ]
@@ -2420,7 +2421,7 @@ function processShow (el, options, root) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
-  if (isComponentNode(el, options) && isVirtualHostNode(el, options)) {
+  if (isComponentNode(el) && getComponentInfo(el).hasVirtualHost) {
     if (show === '') {
       show = '{{false}}'
     }
@@ -2719,7 +2720,7 @@ function closeElement (el, options, meta) {
         }
       })
     }
-    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
+    if (isComponentNode(el) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }

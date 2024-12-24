@@ -78,11 +78,8 @@ module.exports = function ({
           componentGenerics = Object.assign({}, ret.componentGenerics)
         }
         if (usingComponents) {
-          const setUsingComponentInfo = (name, moduleId, hasVirtualHost) => {
-            usingComponentsInfo[name] = {
-              mid: moduleId,
-              hvh: hasVirtualHost
-            }
+          const setUsingComponentInfo = (name, info) => {
+            usingComponentsInfo[name] = info
           }
           async.eachOf(usingComponents, (component, name, callback) => {
             if (ctorType === 'app') {
@@ -100,7 +97,10 @@ module.exports = function ({
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, ctorType === 'app')
               const hasVirtualHost = matchCondition(rawResourcePath, autoVirtualHostRules)
-              setUsingComponentInfo(name, moduleId, hasVirtualHost)
+              setUsingComponentInfo(name, {
+                mid: moduleId,
+                hasVirtualHost
+              })
               callback()
             })
           }, (err) => {
