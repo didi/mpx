@@ -125,7 +125,7 @@ const parseValueFromParentheses = (values: string) => {
     } else if (char === ')') {
       stack--
       if (stack === 0) {
-        val = values.substring(start, i + 1)
+        val = values.substring(start + 1, i)
       }
     }
   }

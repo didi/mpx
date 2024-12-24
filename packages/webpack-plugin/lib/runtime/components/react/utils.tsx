@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
-import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image, Platform } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
@@ -19,6 +19,9 @@ export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
 }
+
+export const isIOS = Platform.OS === 'ios'
+export const isAndroid = Platform.OS === 'android'
 
 const varDecRegExp = /^--.*/
 const varUseRegExp = /var\(/
