@@ -165,7 +165,7 @@ const checkNeedLayout = (preImageInfo: PreImageInfo) => {
 }
 
 /**
-* h - 用户设置的高度。
+* h - 用户设置的高度
 * lh - 容器的高度
 * ratio - 原始图片的宽高比
 * **/
@@ -210,7 +210,7 @@ function calculateSizePosition (h: number, ch: number, val: string): number {
 
 /**
 * 获取图片的展示宽高
-* h - 用户设���的高度
+* h - 用户设置的高度
 * lh - 容器的高度
 * **/
 const calcPercent = (h: NumberVal, lh: number) => {
