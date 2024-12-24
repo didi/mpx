@@ -554,7 +554,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'bindtouchmove',
     'bindvtouchmove',
     'bindhtouchmove',
-    'bindtouchend'
+    'bindtouchend',
+    'catchtouchstart',
+    'catchtouchmove',
+    'catchvtouchmove',
+    'catchhtouchmove',
+    'catchtouchend'
   ])
 
   const innerProps = useInnerProps(filterProps, extendObject({
