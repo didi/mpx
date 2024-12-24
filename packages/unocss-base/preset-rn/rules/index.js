@@ -9,6 +9,7 @@ import filters from './filters.js'
 import staticRule from './static.js'
 import divider from './divider.js'
 import ring from './ring.js'
+import border from './border.js'
 
 export default [
   ...color,
@@ -21,5 +22,6 @@ export default [
   ...filters,
   ...staticRule,
   ...divider,
-  ...ring
+  ...ring,
+  ...border
 ]
