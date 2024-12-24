@@ -110,7 +110,7 @@ const parseTransform = (transformStr: string) => {
   const values = parseValues(transformStr)
   const transform: {[propName: string]: string|number|number[]}[] = []
   values.forEach(item => {
-    const match = item.match(/([/\w]+)\(([^]+)\)/)
+    const match = item.match(/([/\w]+)\((.+)\)/)
     if (match && match.length >= 3) {
       let key = match[1]
       const val = match[2]
