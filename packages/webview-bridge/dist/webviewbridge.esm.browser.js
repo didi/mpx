@@ -75,6 +75,19 @@ let env = null;
 let callbackId = 0;
 const clientUid = getMpxWebViewId();
 const callbacks = {};
+
+const runCallback = (msgData) => {
+  const { callbackId, error, result } = msgData;
+  if (callbackId !== undefined && callbacks[callbackId]) {
+    if (error) {
+      callbacks[callbackId](error);
+    } else {
+      callbacks[callbackId](null, result);
+    }
+    delete callbacks[callbackId];
+  }
+};
+
 const eventListener = (event) => {
   // 接收web-view的回调
   const data = event.data;
@@ -85,15 +98,7 @@ const eventListener = (event) => {
     }
   } catch (e) {
   }
-  const { callbackId, error, result } = msgData;
-  if (callbackId !== undefined && callbacks[callbackId]) {
-    if (error) {
-      callbacks[callbackId](error);
-    } else {
-      callbacks[callbackId](null, result);
-    }
-    delete callbacks[callbackId];
-  }
+  runCallback(msgData);
 };
 
 // 环境判断逻辑
@@ -108,11 +113,7 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = 'tt';
 } if (window.ReactNativeWebView) {
   env = 'rn';
-  if (systemUA.toLowerCase().indexOf('ios') > -1) {
-    window.addEventListener('message', eventListener, false);
-  } else {
-    document.addEventListener('message', eventListener, false); // 安卓机接收消息
-  }
+  window.mpxWebviewMessageCallback = runCallback;
 } else {
   env = 'web';
   window.addEventListener('message', eventListener, false);

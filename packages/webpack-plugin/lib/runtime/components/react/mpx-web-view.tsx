@@ -111,6 +111,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     true;
   `
+  const sendMessage = function(params: string) {
+    return `
+      window.mpxWebviewMessageCallback(${params})
+      true;
+    `
+  }
   const _changeUrl = function (navState: WebViewNavigation) {
     if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
       currentPage.__webViewUrl = navState.url
@@ -182,21 +188,21 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
     asyncCallback && asyncCallback.then((res: any) => {
       if (webViewRef.current?.postMessage) {
-        const test = JSON.stringify({
+        const result = JSON.stringify({
           type,
           callbackId: data.callbackId,
           result: res
         })
-        webViewRef.current.postMessage(test)
+        webViewRef.current.injectJavaScript(sendMessage(result))
       }
     }).catch((error: any) => {
       if (webViewRef.current?.postMessage) {
-        const test = JSON.stringify({
+        const result = JSON.stringify({
           type,
           callbackId: data.callbackId,
           error
         })
-        webViewRef.current.postMessage(test)
+        webViewRef.current.injectJavaScript(sendMessage(result))
       }
     })
   }
