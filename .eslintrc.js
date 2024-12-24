@@ -5,10 +5,7 @@ module.exports = {
     sourceType: 'module'
   },
   extends: 'standard',
-  plugins: [
-    'html',
-    'jest'
-  ],
+  plugins: ['html', 'jest', 'react-hooks'],
   globals: {
     wx: 'readonly',
     my: 'readonly',
@@ -32,7 +29,8 @@ module.exports = {
     'no-cond-assign': 0,
     camelcase: 0,
     indent: 0,
-    'symbol-description': 0
+    'symbol-description': 0,
+    'react-hooks/rules-of-hooks': 'error'
   },
   env: {
     'jest/globals': true,
@@ -45,7 +43,7 @@ module.exports = {
       extends: [
         'standard',
         'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/recommended'
       ],
       plugins: ['@typescript-eslint'],
       rules: {
@@ -56,7 +54,7 @@ module.exports = {
         '@typescript-eslint/no-empty-interface': 0,
         '@typescript-eslint/no-unused-vars': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
-        camelcase: 0,
+        camelcase: 0
       }
     }
   ]
