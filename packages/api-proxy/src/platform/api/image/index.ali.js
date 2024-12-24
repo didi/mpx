@@ -30,7 +30,10 @@ function compressImage (options = {}) {
   return ENV_OBJ.compressImage(opts)
 }
 
+const getImageInfo = ENV_OBJ.getImageInfo
+
 export {
   previewImage,
-  compressImage
+  compressImage,
+  getImageInfo
 }
