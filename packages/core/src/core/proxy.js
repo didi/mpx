@@ -118,6 +118,8 @@ export default class MpxProxy {
     // 收集setup中动态注册的hooks，小程序与web环境都需要
     this.hooks = {}
     if (!isWeb) {
+      this.parent = this.resolveParent()
+      this.provides = this.parent ? this.parent.provides : Object.create(null)
       this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
@@ -193,6 +195,13 @@ export default class MpxProxy {
     }
   }
 
+  resolveParent () {
+    if (isFunction(this.target.selectOwnerComponent)) {
+      const parent = this.target.selectOwnerComponent()
+      return parent ? parent.__mpxProxy : null
+    }
+  }
+
   createRenderTask (isEmptyRender) {
     if ((!this.isMounted() && this.currentRenderTask) || (this.isMounted() && isEmptyRender)) {
       return
@@ -231,16 +240,6 @@ export default class MpxProxy {
     if (__mpx_dynamic_runtime__) {
       // 页面/组件销毁清除上下文的缓存
       contextMap.remove(this.uid)
-    }
-    if (!isWeb && this.options.__type__ === 'page') {
-      // 小程序页面销毁时移除对应的 provide
-      if (isFunction(this.target.getPageId)) {
-        const pageId = this.target.getPageId()
-        const providesMap = global.__mpxProvidesMap
-        if (providesMap.__pages[pageId]) {
-          delete providesMap.__pages[pageId]
-        }
-      }
     }
     this.callHook(BEFOREUNMOUNT)
     this.scope?.stop()
