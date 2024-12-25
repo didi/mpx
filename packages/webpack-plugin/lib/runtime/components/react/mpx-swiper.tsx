@@ -484,9 +484,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const currentOffset = Math.abs(offset.value)
     if (!props.circular) {
       if (translation < 0) {
-        return currentOffset + Math.abs(translation) < step.value * (totalElements.value - 1)
+        return currentOffset < step.value * (totalElements.value - 1)
       } else {
-        return currentOffset - Math.abs(translation) > 0
+        return currentOffset > 0
       }
     } else {
       return true
