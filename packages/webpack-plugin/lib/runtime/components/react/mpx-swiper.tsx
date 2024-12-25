@@ -363,7 +363,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function handleSwiperChange (current: number) {
-    if (props.current && props.current !== currentIndex.value) {
+    if (props.current !== currentIndex.value) {
       const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
       props.bindchange && props.bindchange(eventData)
     }
