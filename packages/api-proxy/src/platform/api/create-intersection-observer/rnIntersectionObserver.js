@@ -12,10 +12,14 @@ class RNIntersectionObserver {
   constructor (component, options, intersectionCtx) {
     this.id = idCount++
     this.component = component
-    this.options = options
+    this.options = Object.assign({
+      thresholds: [0],
+      initialRatio: 0,
+      observeAll: false
+    }, options || {})
     this.thresholds = options.thresholds.sort((a, b) => a - b) || [0]
-    this.initialRatio = options.initialRatio || 0
-    this.observeAll = options.observeAll || false
+    this.initialRatio = options.initialRatio
+    this.observeAll = options.observeAll
 
     // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
     this.component._intersectionObservers = this.component.__intersectionObservers || []
