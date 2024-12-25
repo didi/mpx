@@ -118,8 +118,6 @@ export default class MpxProxy {
     // 收集setup中动态注册的hooks，小程序与web环境都需要
     this.hooks = {}
     if (!isWeb) {
-      this.parent = this.resolveParent()
-      this.provides = this.parent ? this.parent.provides : Object.create(null)
       this.scope = effectScope(true)
       // props响应式数据代理
       this.props = {}
@@ -171,6 +169,8 @@ export default class MpxProxy {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
+      this.parent = this.resolveParent()
+      this.provides = this.parent ? this.parent.provides : Object.create(null)
       // 在 props/data 初始化之前初始化 inject
       this.initInject()
       this.initProps()
