@@ -363,8 +363,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function handleSwiperChange (current: number) {
-    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-    props.bindchange && props.bindchange(eventData)
+    if (props.current && props.current !== currentIndex.value) {
+      const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+      props.bindchange && props.bindchange(eventData)
+    }
   }
 
   function getOffset (index?: number) {
@@ -399,7 +401,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   useAnimatedReaction(() => currentIndex.value, (newIndex, preIndex) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     const isInit = !preIndex && newIndex === 0
-    if (!isInit && props.current !== newIndex && props.bindchange) {
+    if (!isInit && newIndex !== preIndex && props.bindchange) {
       runOnJS(handleSwiperChange)(newIndex)
     }
   })
@@ -408,14 +410,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       return
     }
     const targetOffset = getOffset()
-    if (props.current !== undefined && (props.current !== currentIndex.value || (props.current === 0 && currentIndex.value > 0))) {
-      currentIndex.value = props.current
+    if (props.current && props.current !== currentIndex.value) {
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
+      }, () => {
+        currentIndex.value = props.current || 0
       })
-    } else if (props.current !== currentIndex.value) {
-      offset.value = targetOffset
     }
   }, [props.current])
 
