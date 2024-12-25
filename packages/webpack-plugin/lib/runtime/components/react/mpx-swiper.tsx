@@ -410,7 +410,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       return
     }
     const targetOffset = getOffset()
-    if (props.current && props.current !== currentIndex.value) {
+    if (props.current !== undefined && props.current !== currentIndex.value) {
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
