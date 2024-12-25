@@ -13,7 +13,7 @@ import {
   transformEmptyRule
 } from '../../utils/index.js'
 
-const unSupport = ['sticky']
+const unSupport = ['sticky', 'fixed']
 // position 不支持的属性抽离并覆盖
 const positionsRules = positions.map(v => {
   const [regex, matcher, ...another] = v

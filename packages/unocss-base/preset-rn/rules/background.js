@@ -1,8 +1,8 @@
 import { backgroundStyles } from '@unocss/preset-wind/rules'
-import { findRawRules } from '../../utils/index.js'
+import { findRawRules, transformEmptyRule } from '../../utils/index.js'
 
 // todo background-position 剔除
-const NewBackgroundRules = findRawRules(
+const NewBackgroundRules = transformEmptyRule(findRawRules(
   [
     // attachments
     'bg-fixed',
@@ -16,6 +16,6 @@ const NewBackgroundRules = findRawRules(
     /^bg-clip-.*/
   ],
   backgroundStyles
-)
+))
 
 export { NewBackgroundRules as backgroundStyles }
