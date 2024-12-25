@@ -18,12 +18,12 @@ interface SwiperItemProps {
   style?: Object;
   customStyle: [];
   itemIndex: number;
-  scale: boolean;
 }
 
 interface ContextType {
-  offset: SharedValue<number>,
-  step: SharedValue<number>
+  offset: SharedValue<number>;
+  step: SharedValue<number>;
+  scale: boolean;
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
@@ -32,13 +32,13 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     'external-var-context': externalVarContext,
     style,
     customStyle,
-    itemIndex,
-    scale
+    itemIndex
   } = props
 
   const contextValue = useContext(SwiperContext) as ContextType
   const offset = contextValue.offset || 0
   const step = contextValue.step || 0
+  const scale = contextValue.scale || false
   const { textProps } = splitProps(props)
   const nodeRef = useRef(null)
 
