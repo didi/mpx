@@ -172,6 +172,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
+    // console.log('[mpx-picker-view-column], onItemLayout --->', 'columnIndex=', columnIndex, 'width=', width)
     if (rawH && itemRawH !== rawH) {
       setItemRawH(rawH)
     }
