@@ -63,7 +63,7 @@ module.exports = function (styles, {
             };\n
             let __unoClassMap
             global.__getUnoClassMap = function () {
-              if (__unoClassMap) {
+              if (!__unoClassMap) {
                 __unoClassMap = __unoCssMapPlaceholder__
               }
               return __unoClassMap
