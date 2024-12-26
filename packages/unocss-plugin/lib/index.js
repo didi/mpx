@@ -2,7 +2,7 @@ import * as path from 'path'
 import minimatch from 'minimatch'
 import * as unoConfig from '@unocss/config'
 import * as core from '@unocss/core'
-import * as mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
+import mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
 import toPosix from '@mpxjs/webpack-plugin/lib/utils/to-posix.js'
 import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
 import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
@@ -12,7 +12,7 @@ import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
 import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
 import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js'
 import transformerDirectives from '@unocss/transformer-directives'
-import * as transformerVariantGroup from '@unocss/transformer-variant-group'
+import transformerVariantGroup from '@unocss/transformer-variant-group'
 import {
   parseClasses,
   parseStrings,
@@ -220,7 +220,7 @@ class MpxUnocssPlugin {
     sources.forEach((item) => {
       compilation.fileDependencies.add(item)
       // fix jiti require cache for watch
-      delete require.cache[item]
+      // delete require.cache[item]
     })
 
     const platformPreflights = platformPreflightsMap[mode] || []
