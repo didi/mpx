@@ -53,9 +53,11 @@ import { svgUtilities } from './svg.js'
 import ring from './ring.js'
 import border from './border.js'
 import { transforms } from './transforms.js'
+import { textDecorations } from './decoration.js'
 
 export default [
   ...typography,
+  ...textDecorations,
   ...shadow,
   ...behaviors,
   ...filters,

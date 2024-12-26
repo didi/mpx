@@ -1,32 +1,50 @@
-import { filters } from '@unocss/preset-wind/rules'
-import { findRawRules, ruleFallback, isFunction, transformEmptyRule } from '../../utils/index.js'
+import { filters, filterBase } from '@unocss/preset-wind/rules'
+import { transformEmptyRule, findRawRules, ruleCallback } from '../../utils/index.js'
 
-// todo filter 只支持部分属性
-const newFilters = findRawRules([
-  'filter-blur',
-  'filter-brightness-1',
-  'filter-contrast-1',
-  'filter-grayscale-1',
-  'filter-hue-rotate-1',
-  'filter-invert-1',
-  'filter-saturate-1',
-  'filter-sepia-1'
-], filters, true).map(item => {
-  return [item[0], ([match], { generator }) => {
-    if (/^backdrop/.test(match)) {
-      return ruleFallback(match, generator)
-    } else {
-      return (isFunction(item[1]) && item[1]()) || ''
-    }
-  }]
+const filterValue = [
+  'blur',
+  'brightness',
+  'contrast',
+  'grayscale',
+  'hue-rotate',
+  'invert',
+  'saturate',
+  'sepia'
+]
+
+const newFilters = filters.map(v => {
+  const [regex, matcher, ...another] = v
+  if (typeof matcher === 'function') {
+    return [
+      regex,
+      (...args) => {
+        const [[r]] = args
+        if (/^backdrop/.test(r)) return ruleCallback(...args)
+        const res = matcher(...args)
+        // 统一作为工具类使用
+        if (filterValue.some(i => r.includes(i))) {
+          delete res.filter
+        }
+        return res
+      },
+      ...another
+    ]
+  }
+  return v
 })
 
-// backdrop-filter 不支持
-const backdropFilter = findRawRules([
-  /^backdrop-filter-*/
-], filters)
+const backDropFilter = transformEmptyRule(
+  findRawRules(['backdrop-filter', 'backdrop-filter-none'], filters)
+)
 
-export default [
-  ...newFilters,
-  ...transformEmptyRule(backdropFilter)
+const filterBaseRule = [
+  ['filter', null],
+  ['filter', {
+    ...filterBase,
+    filter: 'var(--un-blur) var(--un-brightness) var(--un-contrast) var(--un-drop-shadow) var(--un-grayscale) var(--un-hue-rotate) var(--un-invert) var(--un-saturate) var(--un-sepia)'
+  }]
 ]
+
+newFilters.push(...backDropFilter, ...filterBaseRule)
+
+export default newFilters
