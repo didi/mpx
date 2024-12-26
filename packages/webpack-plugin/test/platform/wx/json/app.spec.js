@@ -74,7 +74,12 @@ describe('json should transform app json correct', function () {
       }
     }
     const output = compileJson(input)
-    expect(output).toEqual({})
+    expect(output).toEqual({
+      usingComponents: {
+        'mpx-dialog': '@mpxjs/cube-ui/components/mpx-dialog',
+        'mpx-toast': '@mpxjs/cube-ui/components/mpx-toast'
+      }
+    })
     expect(warnFn).not.toHaveBeenCalled()
   })
 })

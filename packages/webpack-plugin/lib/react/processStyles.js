@@ -57,21 +57,35 @@ module.exports = function (styles, {
         })
         if (ctorType === 'app') {
           if (hasUnoCSS) {
-            output += `global.__getUnoBreakpoints = function () {
-              return __unocssBreakpoints__
-            };\n`
-            output += `global.__getUnoClassMap = function() {
-              const formatValue = global.__formatValue
-              return __unocssMap__
+            output += `
+            global.__getUnoBreakpoints = function () {
+              return __unoCssBreakpointsPlaceholder__
+            };\n
+            let __unoClassMap
+            global.__getUnoClassMap = function () {
+              if (__unoClassMap) {
+                __unoClassMap = __unoCssMapPlaceholder__
+              }
+              return __unoClassMap
             };\n`
           }
-          output += `global.__getAppClassMap = function() {
-            return ${shallowStringify(classMap)};
+          output += `
+          let __appClassMap
+          global.__getAppClassMap = function() {
+            if(!__appClassMap) {
+              __appClassMap = ${shallowStringify(classMap)};
+            }
+            return __appClassMap;
           };\n`
         } else {
-          output += `global.currentInject.injectMethods = {
+          output += `
+          let __classMap
+          global.currentInject.injectMethods = {
             __getClassMap: function() {
-              return ${shallowStringify(classMap)};
+              if(!__classMap) {
+                __classMap = ${shallowStringify(classMap)};
+              }
+              return __classMap;
             }
           };\n`
         }

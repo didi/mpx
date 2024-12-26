@@ -4,13 +4,13 @@
  * ✔ checked
  * ✔ color
  */
-import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction } from 'react'
+import { JSX, useRef, useState, forwardRef, useEffect, ReactNode, useContext, Dispatch, SetStateAction, createElement } from 'react'
 import { View, StyleSheet, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import Icon from './mpx-icon'
 
 export interface RadioProps {
@@ -27,7 +27,6 @@ export interface RadioProps {
   'parent-height'?: number;
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const styles = StyleSheet.create({
@@ -79,8 +78,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
-      bindtap,
-      catchtap
+      bindtap
     } = props
 
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
@@ -91,16 +89,14 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const labelContext = useContext(LabelContext)
 
-    const defaultStyle = {
-      ...styles.wrapper,
-      ...(isChecked && styles.wrapperChecked),
-      ...(disabled && styles.wrapperDisabled)
-    }
+    const defaultStyle = extendObject(
+      {},
+      styles.wrapper,
+      isChecked ? styles.wrapperChecked : {},
+      disabled ? styles.wrapperDisabled : {}
+    )
 
-    const styleObj = {
-      ...styles.container,
-      ...style
-    }
+    const styleObj = extendObject({}, styles.container, style)
 
     const onChange = (evt: NativeSyntheticEvent<TouchEvent>) => {
       if (disabled || isChecked) return
@@ -116,14 +112,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      if (disabled) return
       bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
       onChange(evt)
-    }
-
-    const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      if (disabled) return
-      catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
     }
 
     const {
@@ -135,7 +125,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       setHeight
     } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+    const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
       warn('Radio does not support background image-related styles!')
@@ -143,7 +133,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const nodeRef = useRef(null)
     useNodesRef(props, ref, nodeRef, {
-      defaultStyle,
+      style: extendObject({}, defaultStyle, normalStyle),
       change: onChange
     })
 
@@ -160,14 +150,21 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
 
     const innerProps = useInnerProps(
       props,
-      {
-        ref: nodeRef,
-        style: { ...innerStyle, ...layoutStyle },
-        ...layoutProps,
-        bindtap: onTap,
-        catchtap: catchTap
-      },
-      [],
+      extendObject(
+        {
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle)
+        },
+        layoutProps,
+        {
+          bindtap: !disabled && onTap
+        }
+      ),
+      [
+        'value',
+        'disabled',
+        'checked'
+      ],
       {
         layoutRef
       }
@@ -196,36 +193,30 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       }
     }, [checked])
 
-    return (
-      <View {...innerProps}>
-        <View style={defaultStyle}>
-          <Icon
-            type='success'
-            size={24}
-            color={disabled ? '#E1E1E1' : color}
-            style={{
-              ...styles.icon,
-              ...(isChecked && styles.iconChecked),
-              ...(disabled && styles.iconDisabled)
-            }}
-          />
-        </View>
+    return createElement(View, innerProps,
+      createElement(
+        View,
+        { style: defaultStyle },
+        createElement(Icon, {
+          type: 'success',
+          size: 24,
+          color: disabled ? '#E1E1E1' : color,
+          style: extendObject({}, styles.icon, isChecked && styles.iconChecked, disabled && styles.iconDisabled)
+        })
+      ),
+      wrapChildren(
+        props,
         {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
         }
-      </View>
+      )
     )
   }
 )
 
-Radio.displayName = 'mpx-radio'
+Radio.displayName = 'MpxRadio'
 
 export default Radio

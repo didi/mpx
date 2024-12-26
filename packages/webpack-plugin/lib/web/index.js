@@ -8,6 +8,7 @@ const RecordLoaderContentDependency = require('../dependencies/RecordLoaderConte
 
 module.exports = function ({
   parts,
+  jsonContent,
   loaderContext,
   pagesMap,
   componentsMap,
@@ -19,7 +20,7 @@ module.exports = function ({
   hasScoped,
   hasComment,
   isNative,
-  usingComponents,
+  usingComponentsInfo,
   componentGenerics,
   autoScope,
   callback
@@ -27,7 +28,7 @@ module.exports = function ({
   if (ctorType === 'app' && !queryObj.isApp) {
     return async.waterfall([
       (callback) => {
-        processJSON(parts.json, {
+        processJSON(jsonContent, {
           loaderContext,
           ctorType,
           pagesMap,
@@ -68,7 +69,7 @@ module.exports = function ({
             srcMode,
             moduleId,
             ctorType,
-            usingComponents,
+            usingComponentsInfo,
             componentGenerics
           }, callback)
         },
@@ -80,7 +81,7 @@ module.exports = function ({
           }, callback)
         },
         (callback) => {
-          processJSON(parts.json, {
+          processJSON(jsonContent, {
             loaderContext,
             ctorType,
             pagesMap,

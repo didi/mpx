@@ -5,7 +5,7 @@
  * ✘ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, wrapChildren } from './utils'
@@ -25,6 +25,7 @@ interface _TextProps extends TextProps {
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   const {
     style = {},
+    allowFontScaling = false,
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -49,35 +50,30 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   })
 
   const nodeRef = useRef(null)
-  useNodesRef<Text, _TextProps>(props, ref, nodeRef)
+  useNodesRef<Text, _TextProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
     style: normalStyle,
-    selectable: !!selectable || !!userSelect
+    selectable: !!selectable || !!userSelect,
+    allowFontScaling
   }, [
     'user-select'
   ], {
     layoutRef
   })
 
-  return (
-    <Text
-      {...innerProps}
-    >
-      {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current
-          }
-        )
-      }
-    </Text>
-  )
+  return createElement(Text, innerProps, wrapChildren(
+    props,
+    {
+      hasVarDec,
+      varContext: varContextRef.current
+    }
+  ))
 })
 
-_Text.displayName = 'mpx-text'
+_Text.displayName = 'MpxText'
 
 export default _Text

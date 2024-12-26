@@ -75,11 +75,11 @@ function WebpackPlugin (configOrPath, defaults) {
             let code = compilation.assets[file].source().toString()
             let replaced = false
             code = code
-              .replace('__unocssMap__', () => {
+              .replace('__unoCssMapPlaceholder__', () => {
                 replaced = true
                 return shallowStringify(classMap)
               })
-              .replace('__unocssBreakpoints__', () => {
+              .replace('__unoCssBreakpointsPlaceholder__', () => {
                 const breakpoints = uno.config.theme.breakpoints || {}
                 const entries = Object.entries(breakpoints)
                   .sort((a, b) => Number.parseInt(a[1].replace(reLetters, '')) - Number.parseInt(b[1].replace(reLetters, '')))

@@ -1,23 +1,18 @@
-import DeviceInfo from 'react-native-device-info'
-import { Platform, PixelRatio, Dimensions, StatusBar } from 'react-native'
+import { PixelRatio, Dimensions } from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { successHandle, failHandle, defineUnsupportedProps, getFocusedNavigation } from '../../../common/js'
+import { getFocusedNavigation } from '../../../common/js'
 
 const getWindowInfo = function () {
   const dimensionsScreen = Dimensions.get('screen')
-  const navigation = getFocusedNavigation()
-  const insets = {
-    ...initialWindowMetrics?.insets,
-    ...navigation?.insets
-  }
+  const navigation = getFocusedNavigation() || {}
+  const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
+  const navigationInsets = navigation.insets || {}
+  const insets = Object.assign(initialWindowMetricsInset, navigationInsets)
   let safeArea = {}
-  let { top = 0, bottom = 0, left = 0, right = 0 } = insets
-  if (Platform.OS === 'android') {
-    top = StatusBar.currentHeight || 0
-  }
-  const screenHeight = dimensionsScreen.height
-  const screenWidth = dimensionsScreen.width
-  const layout = navigation?.layout || {}
+  const { top = 0, bottom = 0, left = 0, right = 0 } = insets
+  const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - bottom // 解决安卓开启屏幕内三建导航安卓把安全区计算进去后产生的影响
+  const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
+  const layout = navigation.layout || {}
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
   const windowHeight = layoutHeight || screenHeight
@@ -39,86 +34,29 @@ const getWindowInfo = function () {
     screenWidth: screenWidth,
     screenHeight: screenHeight,
     screenTop: screenHeight - windowHeight,
+    statusBarHeight: safeArea.top,
     safeArea
   }
   return result
 }
 
-const getSystemInfoSync = function () {
-  const windowInfo = getWindowInfo()
-  const { screenWidth, screenHeight, safeArea } = windowInfo
-
-  const result = {
-    brand: DeviceInfo.getBrand(),
-    model: DeviceInfo.getModel(),
-    system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
-    deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
-    statusBarHeight: safeArea.top,
-    fontSizeSetting: PixelRatio.getFontScale(),
-    ...windowInfo
+const getLaunchOptionsSync = function () {
+  const options = global.__mpxEnterOptions || {}
+  const { path, scene, query } = options
+  return {
+    path,
+    scene,
+    query
   }
-  defineUnsupportedProps(result, [
-    'language',
-    'version',
-    'SDKVersion',
-    'benchmarkLevel',
-    'albumAuthorized',
-    'cameraAuthorized',
-    'locationAuthorized',
-    'microphoneAuthorized',
-    'notificationAuthorized',
-    'phoneCalendarAuthorized',
-    'host',
-    'enableDebug',
-    'notificationAlertAuthorized',
-    'notificationBadgeAuthorized',
-    'notificationSoundAuthorized',
-    'bluetoothEnabled',
-    'locationEnabled',
-    'wifiEnabled',
-    'locationReducedAccuracy',
-    'theme'
-  ])
+}
+
+const getEnterOptionsSync = function () {
+  const result = getLaunchOptionsSync()
   return result
 }
 
-const getSystemInfo = function (options = {}) {
-  const { success, fail, complete } = options
-  try {
-    const systemInfo = getSystemInfoSync()
-    Object.assign(systemInfo, {
-      errMsg: 'setStorage:ok'
-    })
-    successHandle(systemInfo, success, complete)
-  } catch (err) {
-    const result = {
-      errMsg: `getSystemInfo:fail ${err}`
-    }
-    failHandle(result, fail, complete)
-  }
-}
-
-const getDeviceInfo = function () {
-  const deviceInfo = {}
-  if (Platform.OS === 'android') {
-    const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
-    deviceInfo.deviceAbi = deviceAbi[0] || null
-  }
-  defineUnsupportedProps(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
-  Object.assign(deviceInfo, {
-    brand: DeviceInfo.getBrand(),
-    model: DeviceInfo.getModel(),
-    system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
-    memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
-  })
-  return deviceInfo
-}
-
 export {
-  getSystemInfo,
-  getSystemInfoSync,
-  getDeviceInfo,
-  getWindowInfo
+  getWindowInfo,
+  getLaunchOptionsSync,
+  getEnterOptionsSync
 }

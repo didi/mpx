@@ -3,8 +3,27 @@ import { isBrowser, isReact } from '@mpxjs/utils'
 global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
-  error: []
+  error: [],
+  rejection: []
+}
 
+function off (cbs, cb) {
+  if (cb) {
+    const idx = cbs.indexOf(cb)
+    if (idx > -1) cbs.splice(idx, 1)
+  } else {
+    cbs.length = 0
+  }
+}
+
+function onUnhandledRejection (callback) {
+  if (isBrowser || isReact) {
+    global.__mpxAppCbs.rejection.push(callback)
+  }
+}
+
+function offUnhandledRejection (callback) {
+  off(global.__mpxAppCbs.rejection, callback)
 }
 
 function onError (callback) {
@@ -14,9 +33,7 @@ function onError (callback) {
 }
 
 function offError (callback) {
-  const cbs = global.__mpxAppCbs.error
-  const index = cbs.indexOf(callback)
-  if (index > -1) cbs.splice(index, 1)
+  off(global.__mpxAppCbs.error, callback)
 }
 
 function onAppShow (callback) {
@@ -26,9 +43,7 @@ function onAppShow (callback) {
 }
 
 function offAppShow (callback) {
-  const cbs = global.__mpxAppCbs.show
-  const index = cbs.indexOf(callback)
-  if (index > -1) cbs.splice(index, 1)
+  off(global.__mpxAppCbs.show, callback)
 }
 
 function onAppHide (callback) {
@@ -38,9 +53,7 @@ function onAppHide (callback) {
 }
 
 function offAppHide (callback) {
-  const cbs = global.__mpxAppCbs.hide
-  const index = cbs.indexOf(callback)
-  if (index > -1) cbs.splice(index, 1)
+  off(global.__mpxAppCbs.hide, callback)
 }
 
 export {
@@ -49,5 +62,7 @@ export {
   offAppShow,
   offAppHide,
   onError,
-  offError
+  offError,
+  onUnhandledRejection,
+  offUnhandledRejection
 }
