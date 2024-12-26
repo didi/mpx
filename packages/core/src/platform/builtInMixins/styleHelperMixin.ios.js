@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
 import { Dimensions, StyleSheet, Appearance } from 'react-native'
 
 let { width, height } = Dimensions.get('screen')
