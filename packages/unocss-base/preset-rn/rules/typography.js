@@ -25,21 +25,6 @@ const textDecorations = [
   [/^(?:underline|decoration)-offset-(.+)$/]
 ]
 
-// todo 覆写 font-variant-numberic，和 RN 支持的属性拉齐
-// const newFontVariantNumberic = fontVariantNumeric.map(item => {
-//   const rule = item[0]
-//   const rawResult = item[1]()
-//   if (rule === 'normal-nums') {
-//     return item
-//   } else {
-//     return [rule, {
-//       ...fontVariantNumericBase,
-//       ...rawResult
-//     }]
-//   }
-// })
-// vertical-align
-
 export default [
   ...transformEmptyRule(
     textIndents,
@@ -54,7 +39,6 @@ export default [
     textDecorations,
     textWraps,
     fontSmoothings,
-    // newFontVariantNumberic,
     fontVariantNumeric
   )
 ]
