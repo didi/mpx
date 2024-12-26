@@ -1,6 +1,8 @@
 # 列表渲染
 
-Mpx中的列表渲染与原生小程序中完全一致，详情可以查看[这里](https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/list.html)
+在组件上使用 wx:for 控制属性绑定一个数组，即可使用数组中各项的数据重复渲染该组件。
+
+默认数组的当前项的下标变量名默认为 index，数组当前项的变量名默认为 item。
 
 > 值得注意的是wx:key与Vue中的key属性的区别，不能使用数据绑定，只能传递普通字符串将数组item中的对应属性作为key，或者传入保留关键字*this将item本身作为key
 
@@ -9,7 +11,7 @@ Mpx中的列表渲染与原生小程序中完全一致，详情可以查看[这�
 ```html
 <template>
   <!-- 使用数组中元素的 id属性/保留关键字*this 作为key值  -->
-  <view wx:for="{{titleList}}" wx:key="id">
+  <view wx:for="{{titleList}}">
     <!-- item 默认代表数组的当前项 -->
     <view>{{item.id}}: {{item.name}}</view>
   </view>
@@ -29,6 +31,42 @@ Mpx中的列表渲染与原生小程序中完全一致，详情可以查看[这�
   })
 </script>
 ```
+
+使用 wx:for-item 可以指定数组当前元素的变量名，
+
+使用 wx:for-index 可以指定数组当前下标的变量名：
+
+```js
+<view wx:for="{{array}}" wx:for-index="idx" wx:for-item="itemName">
+  {{idx}}: {{itemName.name}}
+</view>
+```
+
+wx:for 也可以嵌套，下边是一个九九乘法表:
+
+```html
+<view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="i">
+  <view wx:for="{{[1, 2, 3, 4, 5, 6, 7, 8, 9]}}" wx:for-item="j">
+    <view wx:if="{{i <= j}}">
+      {{i}} * {{j}} = {{i * j}}
+    </view>
+  </view>
+</view>
+```
+
+### block wx:for
+
+也可以将 wx:for 用在 `<block/>` 标签上，以渲染一个包含多节点的结构块：
+
+```html
+<block wx:for="{{[1, 2, 3]}}">
+  <view> {{index}}: </view>
+  <view> {{item}} </view>
+</block>
+```
+
+### wx:key
+
 
 ## 特殊处理
 

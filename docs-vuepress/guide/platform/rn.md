@@ -25,6 +25,153 @@
 
 ### 模版语法
 
+#### 模版指令
+Mpx 输出 React Native 支持以下模版指令。
+
+**wx:if**
+
+`any`
+
+根据表达式的值的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy) 来有条件地渲染元素。在切换时元素及它的数据绑定 / 组件被销毁并重建。
+
+**注意：如果元素是 `<block/>`, 它并不是一个组件，它仅仅是一个包装元素，不会在页面中做任何渲染，只接受控制属性**。
+
+::: danger
+当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高，不推荐这两个指令同时使用。详见列[表渲染教程](/guide/basic/list-render.html)
+:::
+
+**参考：** [条件渲染 - wx:if](/guide/basic/conditional-render.html)
+
+**wx:else**
+
+不需要表达式，前一兄弟元素必须有 `wx:if` 或 `wx:elif`
+
+为 `wx:if` 或者 `wx:elif` 添加 `wx:else` 块
+
+``` html
+<view wx:if="{{type === 'A'}}">
+  A
+</view>
+<view wx:else>
+  Not A
+</view>
+```
+**参考：** [条件渲染 - wx:else](/guide/basic/conditional-render.html)
+
+**wx:elif**
+
+`any`
+
+前一兄弟元素必须有 `wx:if` 或 `wx:elif`。表示 `wx:if` 的“ `wx:elif` 块”，可以链式调用。
+
+``` html
+<view wx:if="{{type === 'A'}}">
+  A
+</view>
+<view wx:elif="{{type === 'B'}}">
+  B
+</view>
+<view wx:elif="{{type === 'C'}}">
+  C
+</view>
+<view wx:else>
+  Not A/B/C
+</view>
+```
+
+**参考：** [条件渲染 - wx:elif](/guide/basic/conditional-render.html)
+
+**wx:show**
+
+`any`
+
+根据表达式的值来确认元素的可见性，与 `wx:if` 所不同的是**不会移除节点**，而是设置节点的 `style` 为 `display: none`。
+
+```html
+<view wx:show="{{show}}">
+  123
+</view>
+```
+
+```js
+Page({
+  data: {
+    show: false
+  }
+})
+```
+
+**wx:for**
+
+`Array | Object | number | string`
+
+在组件上使用 wx:for 控制属性绑定一个数组，即可使用数组中各项的数据重复渲染该组件。默认数组的当前项的下标变量名默认为 index，数组当前项的变量名默认为 item
+
+``` html
+<view wx:for="{{array}}">
+  {{ index }}: {{ item.message }}
+</view>
+
+// 0: foo
+// 1: bar
+```
+
+``` js
+Page({
+  data: {
+    array: [{
+      message: 'foo'
+    }, {
+      message: 'bar'
+    }]
+  }
+})
+```
+使用 wx:for-item 可以指定数组当前元素的变量名，
+
+使用 wx:for-index 可以指定数组当前下标的变量名：
+
+```js
+<view wx:for="{{array}}" wx:for-index="idx" wx:for-item="itemName">
+  {{idx}}: {{itemName.name}}
+</view>
+```
+
+wx:for 默认方式是尝试就地更新元素而不是移动它们，要强制其重新排序元素，需要使用 `wx:key` 来提供一个排序提示:
+```html
+<view wx:for="{{array}}" wx:key="id">
+  {{ item.text }}
+</view>
+
+// foo
+// bar
+<script>
+    import { createComponent } from '@mpxjs/core'
+    createComponent({
+        data: {
+            array: [{
+                id: 1, text: 'foo'
+            }, {
+                id: 2, text: 'bar'
+            }]
+        }
+    })
+</script>
+```
+wx:for 的详细用法可以通过以下链接查看教程详细说明。
+
+**参考：** [列表渲染 - wx:for](/guide/basic/list-render.html)
+
+**wx:for-item**
+
+**wx:for-index**
+
+**wx:class**
+
+**wx:style**
+
+**wx:key**
+
 #### 事件处理
 目前 Mpx 输出 React Native 的事件编写遵循小程序的事件编写规范，支持事件的冒泡及捕获
 
@@ -176,8 +323,8 @@ RN环境基础组件通用属性
 | show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
 | enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 | enable-trigger-intersection-observer  |  Boolean   |  []    | 是否开启intersection-observer |
-| simultaneous-handlers  | Array<object>  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
-| wait-for  |  Array<object>   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
+| simultaneous-handlers  | `Array<object>`  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
+| wait-for  |  `Array<object>`   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 
 
 事件
@@ -256,15 +403,15 @@ movable-view的可移动区域。
 | 属性名 | 类型             | 默认值 | 说明                                                                                                  |
 | ------ | ---------------- | ------ | ----------------------------------------------------------------------------------------------------- |
 | direction   | String           |   none     | 目前支持 all、vertical、horizontal、none｜
-| inertia   | boolean           |   false     | movable-view是否带有惯性｜
-| out-of-bounds   | boolean           |   false     | 超过可移动区域后，movable-view是否还可以移动｜
+| inertia   | boolean          |   false     | movable-view是否带有惯性｜
+| out-of-bounds   | boolean          |   false     | 超过可移动区域后，movable-view是否还可以移动｜
 | x   | Number |      | 定义x轴方向的偏移  |
 | y  | Number  |        | 定义y轴方向的偏移 |
 | friction  | Number  |    7    | 摩擦系数 |
 | disabled  | boolean  |    false    | 是否禁用 |
 | animation  | boolean  |    true    | 是否使用动画	 |
-| simultaneous-handlers  | Array<object>  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
-| wait-for  |  Array<object>   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
+| simultaneous-handlers  | `Array<object>`  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
+| wait-for  |  `Array<object>`  |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 
 事件
 
@@ -366,7 +513,6 @@ movable-view的可移动区域。
 注意事项
 
 1. 当前不支持使用 for 属性找到对应 id，仅支持将控件放在该标签内，目前可以绑定的空间有：checkbox、radio、switch。
-   
 
 #### checkbox
 多选项目
@@ -697,15 +843,15 @@ API
 
 1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
 
-#### 自定义组件
+### 自定义组件
 
-#### 样式规则
+### 样式规则
 
-#### 应用能力
+### 应用能力
 
-#### 环境API
+### 环境API
 在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，可能对于某个api提供的能力会比微信小程序提供的能力少一些，以下是使用说明：
-##### 使用说明
+#### 使用说明
 如果全量引入api-proxy这种情况下，需要如下配置
 ```javascript
 // 全量引入api-proxy
@@ -794,7 +940,8 @@ module.exports = {
 ```
 
 <!-- WebviewAPI -->
-#### Webview API
+
+### Webview API
 对于web-view组件打开的网页，想要跟RN通信，或者跳转到RN页面，提供了以下能力
 
 | 方法名           | 说明                                          |
@@ -870,5 +1017,5 @@ webviewBridge.invoke('getTime', {
 ```
 
 
-#### 其他使用限制
+### 其他使用限制
 如事件的target等

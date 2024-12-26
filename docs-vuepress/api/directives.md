@@ -91,7 +91,8 @@ Page({
 ```
 
 ``` js
-Page({
+import { createComponent } from '@mpxjs/core'
+createComponent({
   data: {
     array: [{
       id: 1, text: 'foo'
@@ -126,7 +127,8 @@ Page({
 ```
 
 ``` js
-Page({
+import { createComponent } from '@mpxjs/core'
+createComponent({
   data: {
     array: [{
       id: 1, text: 'foo'
