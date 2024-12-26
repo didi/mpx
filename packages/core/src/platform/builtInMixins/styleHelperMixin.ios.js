@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-import { isObject, isArray, dash2hump, isFunction, cached, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached } from '@mpxjs/utils'
 import { Dimensions, StyleSheet, Appearance } from 'react-native'
-=======
-import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
->>>>>>> master
 
 let { width, height } = Dimensions.get('screen')
 
@@ -176,7 +171,7 @@ export default function styleHelperMixin () {
             display: 'none'
           })
         }
-        return result
+        return isEmptyObject(result) ? empty : result
       },
       __getDynamicClass (dynamicClass, mediaQueryClass) {
         return [dynamicClass, this.__getMediaQueryClass(mediaQueryClass)]
