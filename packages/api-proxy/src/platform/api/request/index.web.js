@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import RequestTask from './RequestTask'
+import { serialize, buildUrl } from '@mpxjs/utils'
 
 function request (options = { url: '' }) {
   const CancelToken = axios.CancelToken
@@ -8,6 +9,7 @@ function request (options = { url: '' }) {
   const requestTask = new RequestTask(source.cancel)
 
   let {
+    url,
     data = {},
     method = 'GET',
     dataType = 'json',
@@ -18,8 +20,11 @@ function request (options = { url: '' }) {
     fail = null,
     complete = null
   } = options
-
   method = method.toUpperCase()
+  if (method === 'GET') {
+    url = buildUrl(url, data)
+    data = {}
+  }
 
   if (
     method === 'POST' &&
@@ -27,9 +32,7 @@ function request (options = { url: '' }) {
     (header['Content-Type'] === 'application/x-www-form-urlencoded' ||
       header['content-type'] === 'application/x-www-form-urlencoded')
   ) {
-    data = Object.keys(data).reduce((pre, curKey) => {
-      return `${pre}&${encodeURIComponent(curKey)}=${encodeURIComponent(data[curKey])}`
-    }, '').slice(1)
+    data = serialize(data)
   }
 
   /**
@@ -58,7 +61,7 @@ function request (options = { url: '' }) {
    */
   const rOptions = Object.assign(options, {
     method,
-    url: options.url,
+    url,
     data,
     headers: header,
     responseType,
@@ -104,10 +107,9 @@ function request (options = { url: '' }) {
       errMsg: `request:fail ${err}`,
       statusCode: response.status,
       header: response.headers,
-      data: response.data,
-      stack: realError.stack,
-      ...realError
+      data: response.data
     }
+    Object.assign(res, realError)
     failHandle(res, fail, complete)
   })
 
