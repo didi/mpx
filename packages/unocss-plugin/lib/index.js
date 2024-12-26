@@ -33,7 +33,7 @@ import {
   mpEscape,
   cssRequiresTransform
 } from './transform.js'
-import * as platformPreflightsMap from './platform.js'
+import platformPreflightsMap from './platform.js'
 
 const { has } = set
 const { isWeb, isReact } = env

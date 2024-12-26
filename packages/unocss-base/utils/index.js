@@ -69,6 +69,12 @@ const findRawRules = (matcher, rawRules, byReg = false) => {
   .reduce((preV, curV) => preV.concat(curV), [])
 }
 
+export const globalKeywords = ['inherit', 'initial', 'revert', 'revert-layer', 'unset']
+
+export const makeGlobalStaticRules = prefix => {
+  return globalKeywords.map(v => `${prefix}-${v}`)
+}
+
 export {
   genEmptyRule,
   transformEmptyRule,

@@ -1,4 +1,4 @@
-import { transformEmptyRule, ruleFallback } from '../../utils/index.js'
+import { transformEmptyRule } from '../../utils/index.js'
 import {
   writingModes,
   writingOrientations,
@@ -13,8 +13,7 @@ import {
   breaks,
   textOverflows,
   textWraps,
-  fontSmoothings,
-  verticalAligns
+  fontSmoothings
 } from '@unocss/preset-mini/rules'
 
 // decoration
@@ -26,16 +25,20 @@ const textDecorations = [
   [/^(?:underline|decoration)-offset-(.+)$/]
 ]
 
+// todo 覆写 font-variant-numberic，和 RN 支持的属性拉齐
+// const newFontVariantNumberic = fontVariantNumeric.map(item => {
+//   const rule = item[0]
+//   const rawResult = item[1]()
+//   if (rule === 'normal-nums') {
+//     return item
+//   } else {
+//     return [rule, {
+//       ...fontVariantNumericBase,
+//       ...rawResult
+//     }]
+//   }
+// })
 // vertical-align
-const newVerticalAlign = verticalAligns.map(item => {
-  return [item[0], ([match, v], { generator }) => {
-    if (['auto', 'top', 'bottom', 'center'].includes(v)) {
-      return { 'vertical-align': v }
-    } else {
-      return ruleFallback(match, generator)
-    }
-  }]
-})
 
 export default [
   ...transformEmptyRule(
@@ -51,7 +54,7 @@ export default [
     textDecorations,
     textWraps,
     fontSmoothings,
-    fontVariantNumeric,
-    newVerticalAlign
+    // newFontVariantNumberic,
+    fontVariantNumeric
   )
 ]

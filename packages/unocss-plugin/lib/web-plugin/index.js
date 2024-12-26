@@ -1,8 +1,8 @@
 import WebpackSources from 'webpack-sources'
 import VirtualModulesPlugin from 'webpack-virtual-modules'
-import * as nodePath from 'node:path'
-import * as process from 'process'
-import * as fs from 'fs'
+import nodePath, { dirname } from 'path'
+import process from 'process'
+import fs from 'fs'
 import {
   createContext,
   getPath,
@@ -16,7 +16,6 @@ import {
   resolveId,
   resolveLayer
 } from './consts.js'
-import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
