@@ -178,7 +178,6 @@ export default function styleHelperMixin () {
       },
       __getMediaQueryClass (mediaQueryClass = []) {
         if (!mediaQueryClass.length) return ''
-        // todo 后续可优化，cache 能力
         const { width, height } = Dimensions.get('screen')
         const colorScheme = Appearance.getColorScheme()
         const { entries, entriesMap } = global.__getUnoBreakpoints()

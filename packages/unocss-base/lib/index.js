@@ -5,14 +5,15 @@ import presetRn from '../preset-rn/index.js'
 const remRE = /(-?[\.\d]+)rem/g
 
 export default function presetMpx (options = {}) {
-  const uno = presetUno(options)
-  const { baseFontSize = 37.5 } = options
   const mpxCurrentTargetMode = process.env.MPX_CURRENT_TARGET_MODE
   const isReact = mpxCurrentTargetMode === 'ios' || mpxCurrentTargetMode === 'android'
   const extraPresets = []
   if (isReact) {
     extraPresets.push(presetRn())
+    options.dark = 'media'
   }
+  const uno = presetUno(options)
+  const { baseFontSize = 37.5 } = options
 
   return {
     ...uno,
