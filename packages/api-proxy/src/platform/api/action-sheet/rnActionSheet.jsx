@@ -1,19 +1,24 @@
-import { View, TouchableHighlight, Text, StyleSheet, Button, Animated } from 'react-native'
+import { View, TouchableHighlight, Text, StyleSheet, Button, Animated, UIManager } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
 import { Portal } from '@ant-design/react-native'
 function showActionSheet (options = {}) {
+  UIManager.setLayoutAnimationEnabledExperimental &&
+  UIManager.setLayoutAnimationEnabledExperimental(true)
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   let actionSheetKey
   const slideAnim = new Animated.Value(500)
   const slideIn = () => {
+    console.log('in')
     // Will change fadeAnim value to 1 in 5 seconds
     Animated.timing(slideAnim, {
       toValue: 0,
       duration: 200,
-      useNativeDriver: true,
+      useNativeDriver: true // 这行代码确保了动画在 Android 上的渲染
     }).start()
+    console.log(slideAnim, '-----')
   }
   const slideOut = () => {
+    console.log('out')
     // Will change fadeAnim value to 1 in 5 seconds
     Animated.timing(slideAnim, {
       toValue: 500,
@@ -52,7 +57,7 @@ function showActionSheet (options = {}) {
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
       transform: [{
-        translateY: -500
+        translateY: 500
       }]
     },
     itemStyle: {
@@ -106,7 +111,11 @@ function showActionSheet (options = {}) {
       style={[
         styles.actionSheetContent,
         {
-          transform: [{translateY: slideAnim}]
+          transform: [{
+            translateY: slideAnim
+          }, {
+            perspective: 1000
+          }]
         }
       ]}>
       { alertTextList.map((item, index) => <View key={index} style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{item}</Text></View>) }
