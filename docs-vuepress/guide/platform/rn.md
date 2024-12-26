@@ -524,28 +524,38 @@ movable-view的可移动区域。
 | clear                | 清空输入框的内容                       |
 | isFocused            | 返回值表明当前输入框是否获得了焦点        |
 
-
 #### picker-view
-嵌入页面的滚动选择器。其中只可放置 picker-view-column组件，其它节点不会显示
+
+嵌入页面的滚动选择器。其中只可放置 [*picker-view-column*](#picker-view-column) 组件，其它节点不会显示
 
 属性
 
-| 属性名                   | 类型               | 默认值              | 说明                                 |
+| 属性名                   | 类型              | 默认值              | 说明                                 |
 | ----------------------- | ------------------| ------------------ | ------------------------------------|
-| value                   | Array[number]      | `false`           | 数组中的数字依次表示 picker-view 内的 picker-view-column 选择的第几项（下标从 0 开始），数字大于 picker-view-column 可选项长度时，选择最后一项。                    |
-
+| value                   | Array\<number\>   | `[]`           | 数组中的数字依次表示 *picker-view* 内的 [*picker-view-column*](#picker-view-column) 选择的第几项（下标从 0 开始），数字大于 [*picker-view-column*](#picker-view-column) 可选项长度时，选择最后一项。|
+| indicator-style         | String          |                | 设置选择器中间选中框的样式 |
+| mask-style              | String          |                | 设置蒙层的样式           |
 
 事件
 
 | 事件名           | 说明                |
 | ----------------| ------------------ |
-| bindchange      | checkbox-group 中选中项发生改变时触发 change 事件，detail = { value: [ 选中的 checkbox 的 value 的数组 ] } |
+| bindchange      | 滚动选择时触发 change 事件，`event.detail = {value}`，其中 `value` 为数组，表示 *picker-view* 内的 [*picker-view-column*](#picker-view-column) 当前选择的是第几项（下标从 0 开始） |
+
+触感反馈回调方法
+
+通过在全局注册 `mpx.config.rnConfig.pickerVibrate` 方法，在每次滚动选择时会调用该方法。可以在方法内自行调用震动 API 来自定义触感反馈。
+
+| 注册触感方法名           | 类型          | 说明                |
+| ----------------------| --------------| ------------------- |
+| pickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现震动反馈逻辑。    |
 
 #### picker-view-column
-滚动选择器子项。仅可放置于picker-view中，其孩子节点的高度会自动设置成与picker-view的选中框的高度一致
 
+滚动选择器子项。仅可放置于 [*picker-view*](#picker-view) 中，其孩子节点的高度会自动设置成与 [*picker-view*](#picker-view) 的选中框的高度一致
 
 #### picker
+
 从底部弹起的滚动选择器。
 
 属性
@@ -557,10 +567,10 @@ movable-view的可移动区域。
 
 公共事件
 
-| 事件名           | 说明                |
-| ----------------| ------------------ |
-| bindcancel      | 取消选择时触发       |
-| bindchange      | 滚动选择时触发change事件，event.detail = {value}；value为数组，表示 picker-view 内的 picker-view-column 当前选择的是第几项（下标从 0 开始）|
+| 事件名           | 说明                                                 |
+| ----------------| ----------------------------------------------------|
+| bindcancel      | 取消选择时触发                                         |
+| bindchange      | value 改变时触发 change 事件，`event.detail = {value}` |
 
 ##### 普通选择器：mode = selector
 
