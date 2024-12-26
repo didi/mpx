@@ -346,7 +346,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     }, {} as { [propName: string]: string | number })
   }
   // ** 生成动画样式
-  return useAnimatedStyle(() => {
+
+  const animationStyle = useAnimatedStyle(() => {
     // console.info(`useAnimatedStyle styles=`, originalStyle)
     return animatedStyleKeys.value.reduce((styles, key) => {
       // console.info('getAnimationStyles', key, shareValMap[key].value)
@@ -364,4 +365,9 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       return styles
     }, {} as ExtendedViewStyle)
   })
+
+  return {
+    enableStyleAnimation,
+    animationStyle
+  }
 }
