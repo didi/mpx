@@ -164,11 +164,68 @@ wx:for 的详细用法可以通过以下链接查看教程详细说明。
 
 **wx:for-item**
 
+`string`
+
+使用 wx:for-item 可以指定数组当前元素的变量名：
+```js
+<view wx:for="{{array}}" wx:for-item="itemName">
+  {{itemName.name}}
+</view>
+```
+**参考：** [列表渲染 - wx:for-item](/guide/basic/list-render.html)
+
 **wx:for-index**
+
+`string`
+
+使用 wx:for-index 可以指定数组当前下标的变量名：
+```html
+<view wx:for="{{array}}" wx:for-index="idx">
+  {{ idx }}: {{ item.text }}
+</view>
+```
+**参考：** [列表渲染 - wx:for-item](/guide/basic/list-render.html)
 
 **wx:class**
 
+类名绑定的增强指令，让 class 可以绑定对象和数组，样式书写更加灵活。
+```html
+<!--绑定对象-->
+<view wx:class="{{ {active: isActive} }}">
+  这是一段测试文字
+</view>
+<view wx:class="{{ classObject }}">
+    这是一段测试文字
+</view>
+<!--绑定数组-->
+<view wx:class="{{[activeClass, errorClass]}}">
+  这是一段测试文字
+</view>
+
+<script>
+    import { createComponent } from '@mpxjs/core'
+    createComponent({
+        data:{
+            activeClass: 'active',
+            errorClass: 'text-danger',
+            classObject: {
+                active: true,
+                'text-danger': false
+            },
+            isActive: true
+        }
+    })
+</script>
+```
+
+**参考：** 
+* [类名样式绑定-类名绑定](/guide/basic/class-style-binding.html#类名绑定)
+* [wx:class](/api/directives.html#wx-class)
+
+
 **wx:style**
+
+
 
 **wx:key**
 
