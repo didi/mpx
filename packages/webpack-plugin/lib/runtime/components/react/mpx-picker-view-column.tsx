@@ -1,7 +1,7 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, useDebounceCallback, useStableCallback } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerOverlay from './pickerViewOverlay'
 import PickerMask from './pickerViewMask'
@@ -64,11 +64,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   })
 
   const { height: pickerH, itemHeight } = wrapperStyle
-  const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
-  const [itemRawW, setItemRawW] = useState<number | '100%'>('100%')
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
-  const maxScrollViewWidth = useRef(-1)
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
   const touching = useRef(false)
   const scrolling = useRef(false)
@@ -86,10 +83,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef
   })
 
-  // const initialOffset = useMemo(() => ({
-  //   x: 0,
-  //   y: itemRawH * initialIndex
-  // }), [itemRawH])
+  // console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length, 'pickerH=', pickerH, 'itemRawH=', itemRawH, 'itemHeight=', itemHeight)
 
   const paddingHeight = useMemo(
     () => Math.round((pickerH - itemHeight) / 2),
@@ -110,6 +104,27 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     return Math.max(0, Math.min(calc, maxIndex))
   }, [itemRawH, maxIndex])
 
+  const getYofIndex = useCallback((index: number) => {
+    return index * itemRawH
+  }, [itemRawH])
+
+  const stableResetScrollPosition = useStableCallback((y: number) => {
+    console.log('[mpx-picker-view-column], reset --->', 'columnIndex=', columnIndex, 'y=', y, touching.current, scrolling.current)
+    if (touching.current || scrolling.current) {
+      return
+    }
+    // needReset.current = true
+    if (y % itemRawH !== 0) {
+      scrolling.current = true
+      const targetIndex = getIndex(y)
+      const targetY = getYofIndex(targetIndex)
+      scrollViewRef.current?.scrollTo({ x: 0, y: targetY, animated: false })
+    } else {
+      onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+    }
+  })
+  const debounceResetScrollPosition = useDebounceCallback(stableResetScrollPosition, 10)
+
   useEffect(() => {
     if (
       !scrollViewRef.current ||
@@ -126,7 +141,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setTimeout(() => {
       scrollViewRef.current?.scrollTo({
         x: 0,
-        y: itemRawH * initialIndex,
+        y: getYofIndex(initialIndex),
         animated: false
       })
     }, isAndroid ? 200 : 0)
@@ -134,33 +149,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH, initialIndex])
 
   const onContentSizeChange = (_w: number, h: number) => {
-    const y = itemRawH * initialIndex
+    const y = getYofIndex(initialIndex)
     if (y <= h) {
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
       }, 0)
-    }
-  }
-
-  const onScrollViewLayout = (e: LayoutChangeEvent) => {
-    if (isAndroid) {
-      return
-    }
-    // RN iOS bug: https://github.com/facebook/react-native/issues/36135
-    const { width } = e.nativeEvent.layout
-    const widthInt = Math.ceil(width)
-    if (widthInt !== scrollViewWidth) {
-      const maxW = maxScrollViewWidth.current
-      if (maxW !== -1 && widthInt > maxW) {
-        return
-      }
-      if (maxW === -1) {
-        maxScrollViewWidth.current = Math.ceil(widthInt * 1.5)
-      }
-      setScrollViewWidth(widthInt)
-    }
-    if (itemRawW === '100%') {
-      setItemRawW(widthInt)
     }
   }
 
@@ -171,36 +164,39 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }
 
-  const onTouchStart = () => {
+  const onScrollBeginDrag = () => {
+    isIOS && debounceResetScrollPosition.clear()
     touching.current = true
     prevScrollingInfo.current = {
       index: activeIndex.current,
-      y: activeIndex.current * itemRawH
+      y: getYofIndex(activeIndex.current)
     }
   }
 
-  const onTouchEnd = () => {
+  const onScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     touching.current = false
-  }
-
-  const onTouchCancel = () => {
-    touching.current = false
+    const { y } = e.nativeEvent.contentOffset
+    if (isIOS) {
+      if (y > 0 && y < snapToOffsets[maxIndex]) {
+        debounceResetScrollPosition(y)
+      }
+    }
   }
 
   const onMomentumScrollBegin = () => {
+    isIOS && debounceResetScrollPosition.clear()
     scrolling.current = true
   }
 
-  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent> | { nativeEvent: { contentOffset: { y: number } } }) => {
     scrolling.current = false
-    if (!itemRawH) {
-      return
-    }
     const { y: scrollY } = e.nativeEvent.contentOffset
-    let calcIndex = Math.round(scrollY / itemRawH)
+    if (isIOS && scrollY % itemRawH !== 0) {
+      return debounceResetScrollPosition(scrollY)
+    }
+    const calcIndex = getIndex(scrollY)
     activeIndex.current = calcIndex
     if (calcIndex !== initialIndex) {
-      calcIndex = Math.max(0, Math.min(calcIndex, maxIndex)) || 0
       onSelectChange(calcIndex)
     }
   }
@@ -222,9 +218,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         if (currentId !== prevIndex) {
           prevScrollingInfo.current = {
             index: currentId,
-            y: currentId * itemRawH
+            y: getYofIndex(currentId)
           }
-          // vibrateShort({ type: 'selection' })
           pickerVibrate()
         }
       }
@@ -239,7 +234,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           item={item}
           index={index}
           itemHeight={itemHeight}
-          itemWidth={itemRawW}
           textStyleFromParent={textStyleFromParent}
           textStyle={textStyle}
           hasVarDec={hasVarDec}
@@ -264,14 +258,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           {...layoutProps}
-          style={[{ width: scrollViewWidth }]}
+          style={[{ width: '100%' }]}
           decelerationRate="fast"
           snapToOffsets={snapToOffsets}
           onScroll={onScroll}
-          onLayout={onScrollViewLayout}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onTouchCancel={onTouchCancel}
+          onScrollBeginDrag={onScrollBeginDrag}
+          onScrollEndDrag={onScrollEndDrag}
           onMomentumScrollBegin={onMomentumScrollBegin}
           onMomentumScrollEnd={onMomentumScrollEnd}
           onContentSizeChange={onContentSizeChange}
