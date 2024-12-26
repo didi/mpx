@@ -176,8 +176,8 @@ RN环境基础组件通用属性
 | show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
 | enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 | enable-trigger-intersection-observer  |  Boolean   |  []    | 是否开启intersection-observer |
-| simultaneous-handlers  | Array<object>  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
-| wait-for  |  Array<object>   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
+| simultaneous-handlers  | `Array<object>`  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
+| wait-for  |  `Array<object>`   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 
 
 事件
@@ -196,8 +196,8 @@ RN环境基础组件通用属性
 
 1. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
 2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动
-3. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture]
-4. wait-for  为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail]
+3. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
+4. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 
 
 #### swiper
@@ -232,7 +232,7 @@ RN环境基础组件通用属性
 | bindchange| current 改变时会触发 change 事件，event.detail = {current, source}|
 
 #### swiper-item
-1. 仅可放置在swiper组件中，宽高自动设置为100%。
+仅可放置在swiper组件中，宽高自动设置为100%。
 
 属性
 
@@ -263,8 +263,8 @@ movable-view的可移动区域。
 | friction  | Number  |    7    | 摩擦系数 |
 | disabled  | boolean  |    false    | 是否禁用 |
 | animation  | boolean  |    true    | 是否使用动画	 |
-| simultaneous-handlers  | Array<object>  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
-| wait-for  |  Array<object>   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
+| simultaneous-handlers  | `Array<object>`  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
+| wait-for  |  `Array<object>`  |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 
 事件
 
@@ -278,8 +278,8 @@ movable-view的可移动区域。
 
 注意事项
 
-1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture]
-2. wait-for  为 RN 环境特有属性，具体含义可参考(react-native-gesture-handler)[https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail]
+1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
+2. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 
 #### root-portal
 使整个子树从页面中脱离出来，类似于在 CSS 中使用 fixed position 的效果。主要用于制作弹窗、弹出层等。
@@ -287,8 +287,7 @@ movable-view的可移动区域。
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-
-| enable   | boolean           |   true	     | 是否从页面中脱离出来	｜
+| enable   | boolean           |   true	     | 是否从页面中脱离出来	
 
 注意事项
 
@@ -419,7 +418,7 @@ movable-view的可移动区域。
 
 
 #### form
-表单。将组件内的用户输入的switch input checkbox slider radio picker 提交。
+表单。
 
 当点击 form 表单中 form-type 为 submit 的 button 组件时，会将表单组件中的 value 值进行提交，需要在表单组件中加上 name 来作为 key。
 
@@ -679,7 +678,7 @@ API
 3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 4. 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
-##### web-view
+#### web-view
 承载网页的容器。会自动铺满整个RN页面
 
 
