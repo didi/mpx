@@ -1,5 +1,5 @@
 import { presetUno } from '@unocss/preset-uno'
-import presetRn from './rn.js'
+import presetRn from '../preset-rn/index.js'
 
 // eslint-disable-next-line
 const remRE = /(-?[\.\d]+)rem/g
