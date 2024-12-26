@@ -12,10 +12,14 @@ class RNIntersectionObserver {
   constructor (component, options, intersectionCtx) {
     this.id = idCount++
     this.component = component
-    this.options = options
-    this.thresholds = options.thresholds.sort((a, b) => a - b) || [0]
-    this.initialRatio = options.initialRatio || 0
-    this.observeAll = options.observeAll || false
+    this.options = Object.assign({
+      thresholds: [0],
+      initialRatio: 0,
+      observeAll: false
+    }, options || {})
+    this.thresholds = this.options.thresholds.sort((a, b) => a - b) || [0]
+    this.initialRatio = this.options.initialRatio
+    this.observeAll = this.options.observeAll
 
     // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
     this.component._intersectionObservers = this.component.__intersectionObservers || []
@@ -26,7 +30,7 @@ class RNIntersectionObserver {
     this.margins = DefaultMargin
     this.callback = noop
 
-    this.throttleMeasure = this.getThrottleMeasure(options.throttleTime || 100)
+    this.throttleMeasure = this.getThrottleMeasure(this.options.throttleTime || 100)
 
     // 记录上一次相交的比例
     this.previousIntersectionRatio = []

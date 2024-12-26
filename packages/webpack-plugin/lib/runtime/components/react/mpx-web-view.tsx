@@ -1,4 +1,4 @@
-import { forwardRef, JSX, useRef, useContext, useMemo, createElement } from 'react'
+import { forwardRef, JSX, useRef, useContext, useMemo, createElement, useCallback, useEffect } from 'react'
 import { warn, getFocusedNavigation, isFunction } from '@mpxjs/utils'
 import { Portal } from '@ant-design/react-native'
 import { getCustomEvent } from './getInnerListeners'
@@ -6,8 +6,9 @@ import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } 
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { getCurrentPage, extendObject } from './utils'
-import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation } from 'react-native-webview/lib/WebViewTypes'
+import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
+import { BackHandler } from 'react-native'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -56,6 +57,35 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     top: 0 as number,
     bottom: 0 as number
   }
+  const canGoBack = useRef<boolean>(false)
+
+  const onAndroidBackPress = useCallback(() => {
+      if (canGoBack.current) {
+          webViewRef.current?.goBack()
+          return true
+      }
+      return false
+  }, [canGoBack])
+
+  const beforeRemoveHandle = useCallback((e: Event) => {
+    if (canGoBack.current) {
+        webViewRef.current?.goBack()
+        e.preventDefault()
+    }
+  }, [canGoBack])
+
+  const navigation = getFocusedNavigation()
+
+  navigation?.addListener('beforeRemove', beforeRemoveHandle)
+
+  useEffect(() => {
+    if (__mpx_mode__ === 'android') {
+        BackHandler.addEventListener('hardwareBackPress', onAndroidBackPress)
+        return () => {
+            BackHandler.removeEventListener('hardwareBackPress', onAndroidBackPress)
+        }
+    }
+  }, [])
 
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
     style: defaultWebViewStyle
@@ -111,9 +141,22 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     true;
   `
+  const sendMessage = function(params: string) {
+    return `
+      window.mpxWebviewMessageCallback(${params})
+      true;
+    `
+  }
   const _changeUrl = function (navState: WebViewNavigation) {
     if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
+      canGoBack.current = navState.canGoBack
       currentPage.__webViewUrl = navState.url
+    }
+  }
+
+  const _onLoadProgress = function (event: WebViewProgressEvent) {
+    if (__mpx_mode__ === 'android') {
+        canGoBack.current = event.nativeEvent.canGoBack
     }
   }
   const _message = function (res: WebViewMessageEvent) {
@@ -135,7 +178,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         { // case下不允许直接声明，包个块解决该问题
           const title = postData._documentTitle
           if (title) {
-            const navigation = getFocusedNavigation()
             navigation && navigation.setOptions({ title })
           }
         }
@@ -182,21 +224,21 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
     asyncCallback && asyncCallback.then((res: any) => {
       if (webViewRef.current?.postMessage) {
-        const test = JSON.stringify({
+        const result = JSON.stringify({
           type,
           callbackId: data.callbackId,
           result: res
         })
-        webViewRef.current.postMessage(test)
+        webViewRef.current.injectJavaScript(sendMessage(result))
       }
     }).catch((error: any) => {
       if (webViewRef.current?.postMessage) {
-        const test = JSON.stringify({
+        const result = JSON.stringify({
           type,
           callbackId: data.callbackId,
           error
         })
-        webViewRef.current.postMessage(test)
+        webViewRef.current.injectJavaScript(sendMessage(result))
       }
     })
   }
@@ -220,7 +262,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     javaScriptEnabled: true,
     onNavigationStateChange: _changeUrl,
     onMessage: _message,
-    injectedJavaScript: injectedJavaScript
+    injectedJavaScript: injectedJavaScript,
+    onLoadProgress: _onLoadProgress,
+    allowsBackForwardNavigationGestures: true
   }, events)))
 })
 
