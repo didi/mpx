@@ -1113,7 +1113,7 @@ const initVariants = (unoCtx) => {
         }
       }
     },
-    pseudoClassReg,
+    pseudoClassReg
   }
   return unoVariantCached
 }
