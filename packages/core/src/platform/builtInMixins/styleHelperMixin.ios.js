@@ -149,11 +149,11 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
               Object.assign(result, classMap[className])
-            } else if (unoClassMap[className]) {
-              Object.assign(result, unoClassMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               Object.assign(result, appClassMap[className])
+            } else if (unoClassMap[className]) {
+              Object.assign(result, unoClassMap[className])
             } else if (this.__props[className] && isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.__props[className])
