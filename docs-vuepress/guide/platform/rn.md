@@ -528,7 +528,7 @@ movable-view的可移动区域。
 
 嵌入页面的滚动选择器。其中只可放置 [*picker-view-column*](#picker-view-column) 组件，其它节点不会显示
 
-属性
+- 属性
 
 | 属性名                   | 类型              | 默认值              | 说明                                 |
 | ----------------------- | ------------------| ------------------ | ------------------------------------|
@@ -536,19 +536,19 @@ movable-view的可移动区域。
 | indicator-style         | String          |                | 设置选择器中间选中框的样式 |
 | mask-style              | String          |                | 设置蒙层的样式           |
 
-事件
+- 事件
 
 | 事件名           | 说明                |
 | ----------------| ------------------ |
 | bindchange      | 滚动选择时触发 change 事件，`event.detail = {value}`，其中 `value` 为数组，表示 *picker-view* 内的 [*picker-view-column*](#picker-view-column) 当前选择的是第几项（下标从 0 开始） |
 
-触感反馈回调方法
+- 触感反馈回调方法
 
-通过在全局注册 `mpx.config.rnConfig.pickerVibrate` 方法，在每次滚动选择时会调用该方法。可以在方法内自行调用震动 API 来自定义触感反馈。
+通过在全局注册 `mpx.config.rnConfig.pickerVibrate` 方法，在每次滚动选择时会调用该方法。
 
 | 注册触感方法名           | 类型          | 说明                |
 | ----------------------| --------------| ------------------- |
-| pickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现震动反馈逻辑。    |
+| pickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现类似 iOS 端原生表盘的振动触感。    |
 
 #### picker-view-column
 
