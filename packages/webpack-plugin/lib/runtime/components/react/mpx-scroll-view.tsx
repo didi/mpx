@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 import { ScrollView } from 'react-native-gesture-handler'
-import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Platform } from 'react-native'
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
@@ -40,7 +40,6 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
-
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
@@ -319,6 +318,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     })
   }
 
+  const observerTimers: {[key: string]: any} = {}
   function onScroll (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscroll } = props
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
@@ -340,7 +340,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     if (enableTriggerIntersectionObserver && intersectionObservers) {
       for (const key in intersectionObservers) {
-        intersectionObservers[key].throttleMeasure()
+        if (Platform.OS === 'android') {
+          intersectionObservers[key].throttleMeasure();
+        } else {
+          // TODO: 由于iOS在onScroll滚动的过程中view的计算measureInWindow计算的值不发生变化，所以暂时在ios上加一个延时计算
+          observerTimers[key] && clearTimeout(observerTimers[key])
+          observerTimers[key] = setTimeout(() => {
+              intersectionObservers[key].throttleMeasure();
+          }, 300)
+        }
       }
     }
   }
