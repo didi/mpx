@@ -62,7 +62,8 @@ function getRootProps (props) {
   const rootProps = {}
   for (const key in props) {
     if (hasOwn(props, key)) {
-      const match = /^(bind|catch|capture-bind|capture-catch|style|enable-var):?(.*?)(?:\.(.*))?$/.exec(key)
+      const match =
+        /^(bind|catch|capture-bind|capture-catch|style|enable-var|numberOfLines):?(.*?)(?:\.(.*))?$/.exec(key)
       if (match) {
         rootProps[key] = props[key]
       }
