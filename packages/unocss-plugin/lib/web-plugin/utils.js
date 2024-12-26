@@ -1,7 +1,7 @@
 import * as pluginutils from '@rollup/pluginutils'
 import * as config from '@unocss/config'
 import * as core from '@unocss/core'
-import * as nodePath from 'node:path'
+import nodePath from 'path'
 import MagicString from 'magic-string'
 import remapping from '@ampproject/remapping'
 

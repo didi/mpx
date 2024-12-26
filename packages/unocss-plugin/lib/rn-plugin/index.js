@@ -1,5 +1,5 @@
 import WebpackSources from 'webpack-sources'
-import * as nodePath from 'node:path'
+import nodePath from 'path'
 import { createContext, normalizeAbsolutePath } from '../web-plugin/utils.js'
 import { RESOLVED_ID_RE } from '../web-plugin/consts.js'
 import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js'

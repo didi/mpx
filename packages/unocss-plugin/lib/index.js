@@ -12,7 +12,7 @@ import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
 import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
 import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js'
 import transformerDirectives from '@unocss/transformer-directives'
-import * as transformerVariantGroup from '@unocss/transformer-variant-group'
+import transformerVariantGroup from '@unocss/transformer-variant-group'
 import {
   parseClasses,
   parseStrings,
@@ -33,7 +33,7 @@ import {
   mpEscape,
   cssRequiresTransform
 } from './transform.js'
-import * as platformPreflightsMap from './platform.js'
+import platformPreflightsMap from './platform.js'
 
 const { has } = set
 const { isWeb, isReact } = env
