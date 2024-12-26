@@ -38,16 +38,15 @@ const transformRules = transforms.map(v => {
         (...args) => {
           let res = matcher(...args)
           if (res) {
-            const preflight = getPreflight(options.custom.preflightKeys)
             if (Array.isArray(res)) {
               res = Object.fromEntries(res)
             }
-            res = Object.assign(preflight, res)
             checkVars.forEach(key => {
               if (res[key] !== undefined && res[key] === 0) {
                 res[key] = '0deg'
               }
             })
+            delete res.transform
           }
           return res
         },
