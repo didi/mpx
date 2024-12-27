@@ -29,14 +29,14 @@ interface PickerViewProps {
   children: React.ReactNode
   value?: Array<number>
   bindchange?: AnyFunc
-  style: {
+  style?: {
     [key: string]: any
   }
   'indicator-style'?: string
   'mask-style'?: string
-  'enable-var': boolean
+  'enable-var'?: boolean
   'external-var-context'?: Record<string, any>,
-  'enable-offset': boolean
+  'enable-offset'?: boolean
 }
 
 interface PickerLayout {
@@ -67,7 +67,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     children,
     value = [],
     bindchange,
-    style,
+    style = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
@@ -101,7 +101,10 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
+  console.log('[mpx-picker-view], render ---> value=', value, 'style=', style, 'normalStyle=', normalStyle)
+
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
+    console.log('[mpx-picker-view], onSelectChange ---> columnIndex=', columnIndex, 'selectedIndex=', selectedIndex)
     const activeValue = activeValueRef.current
     activeValue[columnIndex] = selectedIndex
     const eventData = getCustomEvent(
@@ -118,6 +121,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const onInitialChange = (isInvalid: boolean, value: number[]) => {
+    console.log('[mpx-picker-view], onInitialChange ---> isInvalid=', isInvalid, 'value=', value)
     if (isInvalid || !snapActiveValueRef.current || hasDiff(snapActiveValueRef.current, value)) {
       const eventData = getCustomEvent(
         'change',
@@ -149,6 +153,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   )
 
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
+    console.log('[mpx-picker-view], renderColumn ---> index=', index, 'normalStyle=', normalStyle, 'indicatorH=', indicatorH)
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
       {},

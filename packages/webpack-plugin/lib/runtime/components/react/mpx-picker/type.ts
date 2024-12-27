@@ -1,11 +1,10 @@
 import { ReactNode } from 'react'
-import { PickerValue } from '@ant-design/react-native'
 
+export type PickerValue = number
 export type Obj = Record<string, any>
 export type SelectorProps = {
   mode: string
-  // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: PickerValue
+  value?: number
   disabled?: boolean
   children: ReactNode
   bindcancel?: Function
@@ -17,6 +16,12 @@ export type SelectorProps = {
   getInnerLayout: Function
   style?: Record<string, any>
   // bindcolumnchange?: Function
+  'enable-offset'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
 }
 
 export type MultiSelectorProps = {

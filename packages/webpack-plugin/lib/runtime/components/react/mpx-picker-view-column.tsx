@@ -9,7 +9,7 @@ import MpxPickerVIewColumnItem from './mpx-picker-view-column-item'
 import { PickerViewColumnAnimationContext } from './pickerVIewContext'
 
 interface ColumnProps {
-  children?: React.ReactNode
+  columnIndex: number
   columnData: React.ReactNode[]
   columnStyle: Record<string, any>
   initialIndex: number
@@ -17,15 +17,14 @@ interface ColumnProps {
   style: {
     [key: string]: any
   }
-  'enable-var': boolean
+  'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   wrapperStyle: {
     height: number
     itemHeight: number
   }
-  pickerMaskStyle: Record<string, any>
-  pickerOverlayStyle: Record<string, any>
-  columnIndex: number
+  pickerMaskStyle?: Record<string, any>
+  pickerOverlayStyle?: Record<string, any>
 }
 
 const visibleCount = 5
@@ -83,7 +82,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef
   })
 
-  // console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length, 'pickerH=', pickerH, 'itemRawH=', itemRawH, 'itemHeight=', itemHeight)
+  console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length, 'pickerH=', pickerH, 'itemRawH=', itemRawH, 'itemHeight=', itemHeight)
 
   const paddingHeight = useMemo(
     () => Math.round((pickerH - itemHeight) / 2),
@@ -159,8 +158,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
-    if (rawH && itemRawH !== rawH) {
-      setItemRawH(rawH)
+    console.log('[mpx-picker-view-column], onItemLayout --->', 'rawH=', rawH, 'itemRawH=', itemRawH)
+    const roundedH = Math.round(rawH)
+    if (roundedH && roundedH !== itemRawH) {
+      setItemRawH(roundedH)
     }
   }
 
@@ -177,7 +178,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     touching.current = false
     const { y } = e.nativeEvent.contentOffset
     if (isIOS) {
-      if (y > 0 && y < snapToOffsets[maxIndex]) {
+      if (y >= 0 && y <= snapToOffsets[maxIndex]) {
         debounceResetScrollPosition(y)
       }
     }
@@ -189,6 +190,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent> | { nativeEvent: { contentOffset: { y: number } } }) => {
+    console.log('[mpx-picker-view-column], onMomentumScrollEnd --->')
     scrolling.current = false
     const { y: scrollY } = e.nativeEvent.contentOffset
     if (isIOS && scrollY % itemRawH !== 0) {

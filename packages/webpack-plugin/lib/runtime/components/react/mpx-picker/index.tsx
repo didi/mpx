@@ -104,7 +104,7 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
 
   const selectorProps = {
     ...commonProps,
-    value: pickerValue as PickerValue,
+    value: pickerValue as number,
     range: props.range,
     'range-key': props['range-key']
   }
