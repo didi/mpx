@@ -1,8 +1,7 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
-import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, Platform, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
+import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { vibrateShort } from '@mpxjs/api-proxy'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, useDebounceCallback, useStableCallback, isIOS } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerOverlay from './pickerViewOverlay'
 import PickerMask from './pickerViewMask'
@@ -57,7 +56,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const { textStyle: textStyleFromParent = {} } = splitStyle(columnStyle)
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  // const scrollViewRef = useRef<ScrollView>(null)
   const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
   const offsetYShared = useScrollViewOffset(scrollViewRef as AnimatedRef<Reanimated.ScrollView>)
 
@@ -66,10 +64,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   })
 
   const { height: pickerH, itemHeight } = wrapperStyle
-  const [scrollViewWidth, setScrollViewWidth] = useState<number | '100%'>('100%')
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
-  const maxScrollViewWidth = useRef(-1)
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
   const touching = useRef(false)
   const scrolling = useRef(false)
@@ -87,21 +83,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef
   })
 
-  console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length)
+  // console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length, 'pickerH=', pickerH, 'itemRawH=', itemRawH, 'itemHeight=', itemHeight)
 
-  // const initialOffset = useMemo(() => ({
-  //   x: 0,
-  //   y: itemRawH * initialIndex
-  // }), [itemRawH])
+  const paddingHeight = useMemo(
+    () => Math.round((pickerH - itemHeight) / 2),
+    [pickerH, itemHeight]
+  )
 
   const snapToOffsets = useMemo(
     () => columnData.map((_, i) => i * itemRawH),
     [columnData, itemRawH]
-  )
-
-  const paddingHeight = useMemo(
-    () => Math.round((pickerH - itemRawH) / 2),
-    [pickerH, itemRawH]
   )
 
   const contentContainerStyle = useMemo(() => {
@@ -112,6 +103,27 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     const calc = Math.round(y / itemRawH)
     return Math.max(0, Math.min(calc, maxIndex))
   }, [itemRawH, maxIndex])
+
+  const getYofIndex = useCallback((index: number) => {
+    return index * itemRawH
+  }, [itemRawH])
+
+  const stableResetScrollPosition = useStableCallback((y: number) => {
+    console.log('[mpx-picker-view-column], reset --->', 'columnIndex=', columnIndex, 'y=', y, touching.current, scrolling.current)
+    if (touching.current || scrolling.current) {
+      return
+    }
+    // needReset.current = true
+    if (y % itemRawH !== 0) {
+      scrolling.current = true
+      const targetIndex = getIndex(y)
+      const targetY = getYofIndex(targetIndex)
+      scrollViewRef.current?.scrollTo({ x: 0, y: targetY, animated: false })
+    } else {
+      onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+    }
+  })
+  const debounceResetScrollPosition = useDebounceCallback(stableResetScrollPosition, 10)
 
   useEffect(() => {
     if (
@@ -126,36 +138,18 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     ) {
       return
     }
-    // console.log('[mpx-picker-view-column], useEffect ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'y=', itemRawH * initialIndex, `${scrollViewRef.current?.scrollTo}`)
     setTimeout(() => {
       scrollViewRef.current?.scrollTo({
         x: 0,
-        y: itemRawH * initialIndex,
+        y: getYofIndex(initialIndex),
         animated: false
       })
-    }, 0)
+    }, isAndroid ? 200 : 0)
     activeIndex.current = initialIndex
   }, [itemRawH, initialIndex])
 
-  const onScrollViewLayout = (e: LayoutChangeEvent) => {
-    const { width } = e.nativeEvent.layout
-    const widthInt = Math.ceil(width)
-    // console.log('[mpx-picker-view-column], onScrollViewLayout --->', 'columnIndex=', columnIndex, 'widthInt=', widthInt, 'scrollViewWidth=', scrollViewWidth)
-    if (widthInt !== scrollViewWidth) {
-      const maxW = maxScrollViewWidth.current
-      if (maxW !== -1 && widthInt > maxW) {
-        return
-      }
-      if (maxW === -1) {
-        maxScrollViewWidth.current = Math.ceil(widthInt * 1.5)
-      }
-      setScrollViewWidth(widthInt)
-    }
-  }
-
   const onContentSizeChange = (_w: number, h: number) => {
-    const y = itemRawH * initialIndex
-    // console.log('[mpx-picker-view-column], onContentSizeChange --->', 'columnIndex=', columnIndex, '_w=', _w, 'h=', h, 'y=', y)
+    const y = getYofIndex(initialIndex)
     if (y <= h) {
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
@@ -170,45 +164,53 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }
 
-  const onTouchStart = () => {
+  const onScrollBeginDrag = () => {
+    isIOS && debounceResetScrollPosition.clear()
     touching.current = true
     prevScrollingInfo.current = {
       index: activeIndex.current,
-      y: activeIndex.current * itemRawH
+      y: getYofIndex(activeIndex.current)
     }
   }
 
-  const onTouchEnd = () => {
+  const onScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     touching.current = false
-  }
-
-  const onTouchCancel = () => {
-    touching.current = false
+    const { y } = e.nativeEvent.contentOffset
+    if (isIOS) {
+      if (y > 0 && y < snapToOffsets[maxIndex]) {
+        debounceResetScrollPosition(y)
+      }
+    }
   }
 
   const onMomentumScrollBegin = () => {
+    isIOS && debounceResetScrollPosition.clear()
     scrolling.current = true
   }
 
-  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent> | { nativeEvent: { contentOffset: { y: number } } }) => {
     scrolling.current = false
-    if (!itemRawH) {
-      return
-    }
     const { y: scrollY } = e.nativeEvent.contentOffset
-    let calcIndex = Math.round(scrollY / itemRawH)
+    if (isIOS && scrollY % itemRawH !== 0) {
+      return debounceResetScrollPosition(scrollY)
+    }
+    const calcIndex = getIndex(scrollY)
     activeIndex.current = calcIndex
     if (calcIndex !== initialIndex) {
-      calcIndex = Math.max(0, Math.min(calcIndex, maxIndex)) || 0
       onSelectChange(calcIndex)
     }
   }
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (Platform.OS === 'android') {
+    const { y } = e.nativeEvent.contentOffset
+    if (isAndroid) {
       return
     }
-    const { y } = e.nativeEvent.contentOffset
+    // 全局注册的震动触感 hook
+    const pickerVibrate = global.__mpx.config.rnConfig.pickerVibrate
+    if (typeof pickerVibrate !== 'function') {
+      return
+    }
     const { index: prevIndex, y: _y } = prevScrollingInfo.current
     if (touching.current || scrolling.current) {
       if (Math.abs(y - _y) >= itemRawH) {
@@ -216,9 +218,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         if (currentId !== prevIndex) {
           prevScrollingInfo.current = {
             index: currentId,
-            y: currentId * itemRawH
+            y: getYofIndex(currentId)
           }
-          vibrateShort({ type: 'selection' })
+          // vibrateShort({ type: 'selection' })
+          pickerVibrate()
         }
       }
     }
@@ -249,20 +252,19 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         <Reanimated.ScrollView
           ref={scrollViewRef}
           bounces={true}
+          horizontal={false}
           nestedScrollEnabled={true}
           removeClippedSubviews={false}
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           {...layoutProps}
-          style={[{ width: scrollViewWidth }]}
+          style={[{ width: '100%' }]}
           decelerationRate="fast"
           snapToOffsets={snapToOffsets}
           onScroll={onScroll}
-          onLayout={onScrollViewLayout}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onTouchCancel={onTouchCancel}
+          onScrollBeginDrag={onScrollBeginDrag}
+          onScrollEndDrag={onScrollEndDrag}
           onMomentumScrollBegin={onMomentumScrollBegin}
           onMomentumScrollEnd={onMomentumScrollEnd}
           onContentSizeChange={onContentSizeChange}

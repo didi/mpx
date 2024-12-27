@@ -6,22 +6,24 @@ import { createFaces } from './pickerFaces'
 import { usePickerViewColumnAnimationContext } from './pickerVIewContext'
 
 interface PickerColumnItemProps {
-    item: React.ReactElement
-    index: number
-    itemHeight: number
-    textStyleFromParent: Record<string, any>
-    textStyle: Record<string, any>
-    hasVarDec: boolean
-    varContext: Record<string, any>
-    visibleCount: number
-    textProps?: any
-    onItemLayout?: (e: LayoutChangeEvent) => void
+  item: React.ReactElement
+  index: number
+  itemHeight: number
+  itemWidth?: number | '100%'
+  textStyleFromParent: Record<string, any>
+  textStyle: Record<string, any>
+  hasVarDec: boolean
+  varContext: Record<string, any>
+  visibleCount: number
+  textProps?: any
+  onItemLayout?: (e: LayoutChangeEvent) => void
 }
 
 const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   item,
   index,
   itemHeight,
+  itemWidth = '100%',
   textStyleFromParent,
   textStyle,
   hasVarDec,
@@ -65,20 +67,20 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   const realItem = React.cloneElement(item, itemProps)
 
   return (
-        <Reanimated.View
-            key={strKey}
-            style={[{ height: itemHeight, width: '100%' }, animatedStyles]}
-        >
-            {wrapChildren(
-              { children: realItem },
-              {
-                hasVarDec,
-                varContext,
-                textStyle,
-                textProps
-              }
-            )}
-        </Reanimated.View>
+    <Reanimated.View
+      key={strKey}
+      style={[{ height: itemHeight, width: itemWidth }, animatedStyles]}
+    >
+      {wrapChildren(
+        { children: realItem },
+        {
+          hasVarDec,
+          varContext,
+          textStyle,
+          textProps
+        }
+      )}
+    </Reanimated.View>
   )
 }
 
