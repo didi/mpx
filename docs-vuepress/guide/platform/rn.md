@@ -641,9 +641,10 @@ movable-view的可移动区域。
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| src                     | String  | `false`       | 图片资源地址，支持本地图片资源及 base64 格式数据，暂不支持 svg 格式 |
+| src                     | String  | `false`       | 图片资源地址及 base64 格式数据 |
 | mode                    | String  | `scaleToFill` | 图片裁剪、缩放的模式，适配微信 image 所有 mode 格式              |
-| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| enable-offset          | Boolean  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| enable-fast-image          | Boolean  | `false`   | 开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 
 事件
 
