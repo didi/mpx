@@ -183,7 +183,6 @@ export default function createApp (option, config = {}) {
     const { initialRouteName, initialParams } = initialRouteRef.current
     const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
     const navScreenOpts = {
-      gestureEnabled: true,
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
