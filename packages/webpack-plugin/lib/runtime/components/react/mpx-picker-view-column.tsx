@@ -109,7 +109,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH])
 
   const stableResetScrollPosition = useStableCallback((y: number) => {
-    // console.log('[mpx-picker-view-column], reset --->', 'columnIndex=', columnIndex, 'y=', y, touching.current, scrolling.current, itemRawH)
+    // console.log('[mpx-picker-view-column], reset --->', 'columnIndex=', columnIndex, 'y=', y, touching.current, scrolling.current, itemRawH, 'snapToOffsets=', snapToOffsets)
     if (touching.current || scrolling.current) {
       return
     }
@@ -178,7 +178,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     touching.current = false
     const { y } = e.nativeEvent.contentOffset
     if (isIOS) {
-      if (y > 0 && y < snapToOffsets[maxIndex]) {
+      if (y >= 0 && y <= snapToOffsets[maxIndex]) {
         debounceResetScrollPosition(y)
       }
     }
