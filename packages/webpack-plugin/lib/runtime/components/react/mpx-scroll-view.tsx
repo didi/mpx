@@ -318,7 +318,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     })
   }
 
-  const observerTimers: {[key: string]: any} = {}
   function onScroll (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscroll } = props
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
@@ -338,19 +337,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
-    if (enableTriggerIntersectionObserver && intersectionObservers) {
-      for (const key in intersectionObservers) {
-        if (Platform.OS === 'android') {
-          intersectionObservers[key].throttleMeasure();
-        } else {
-          // TODO: 由于iOS在onScroll滚动的过程中view的计算measureInWindow计算的值不发生变化，所以暂时在ios上加一个延时计算
-          observerTimers[key] && clearTimeout(observerTimers[key])
-          observerTimers[key] = setTimeout(() => {
-              intersectionObservers[key].throttleMeasure();
-          }, 300)
-        }
-      }
-    }
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -372,8 +358,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     onStartReached(e)
     onEndReached(e)
+    updateIntersection()
   }
-
+  function updateIntersection () {
+    if (enableTriggerIntersectionObserver && intersectionObservers) {
+      for (const key in intersectionObservers) {
+        intersectionObservers[key].throttleMeasure();
+      }
+    }
+  }
   function scrollToOffset (x = 0, y = 0) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation })
@@ -443,6 +436,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onScrollDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    updateIntersection()
   }
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(

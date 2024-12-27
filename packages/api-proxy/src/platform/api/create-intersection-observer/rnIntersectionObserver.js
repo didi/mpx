@@ -2,7 +2,6 @@ import { isArray, isObject, isString, noop } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
-
 const WindowRefStr = 'window'
 const IgnoreTarget = 'ignore'
 const DefaultMargin = { top: 0, bottom: 0, left: 0, right: 0 }
@@ -99,9 +98,9 @@ class RNIntersectionObserver {
     }
 
     const windowRect = {
-      top: navigationLayout.y + this.margins.top,
+      top: navigationLayout.y - this.margins.top,
       left: this.margins.left,
-      right: navigationLayout.width - this.margins.right,
+      right: navigationLayout.width + this.margins.right,
       bottom: navigationLayout.y + navigationLayout.height - this.margins.bottom
     }
 

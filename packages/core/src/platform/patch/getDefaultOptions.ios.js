@@ -530,9 +530,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useEffect(() => {
         const unsubscribe = navigation.addListener('transitionEnd', (e) => {
-          rootRef.current?.measureInWindow((x, y, width, height) => {
-            navigation.layout = { x, y, width, height }
-          })
+          setTimeout(() => {
+            rootRef.current?.measureInWindow((x, y, width, height) => {
+              navigation.layout = { x, y, width, height }
+            })
+          }, 200)
         });
         return unsubscribe;
       }, [navigation]);
