@@ -83,8 +83,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     nodeRef: scrollViewRef
   })
 
-  // console.log('[mpx-picker-view-column], render ---> columnIndex=', columnIndex, 'initialIndex=', initialIndex, 'columnData=', columnData.length, 'pickerH=', pickerH, 'itemRawH=', itemRawH, 'itemHeight=', itemHeight)
-
   const paddingHeight = useMemo(
     () => Math.round((pickerH - itemHeight) / 2),
     [pickerH, itemHeight]
@@ -109,7 +107,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH])
 
   const stableResetScrollPosition = useStableCallback((y: number) => {
-    console.log('[mpx-picker-view-column], reset --->', 'columnIndex=', columnIndex, 'y=', y, touching.current, scrolling.current)
     if (touching.current || scrolling.current) {
       return
     }
@@ -159,8 +156,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
-    if (rawH && itemRawH !== rawH) {
-      setItemRawH(rawH)
+    const roundedH = Math.round(rawH)
+    if (roundedH && roundedH !== itemRawH) {
+      setItemRawH(roundedH)
     }
   }
 
@@ -177,7 +175,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     touching.current = false
     const { y } = e.nativeEvent.contentOffset
     if (isIOS) {
-      if (y > 0 && y < snapToOffsets[maxIndex]) {
+      if (y >= 0 && y <= snapToOffsets[maxIndex]) {
         debounceResetScrollPosition(y)
       }
     }
@@ -195,18 +193,15 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       return debounceResetScrollPosition(scrollY)
     }
     const calcIndex = getIndex(scrollY)
-    activeIndex.current = calcIndex
-    if (calcIndex !== initialIndex) {
+    if (calcIndex !== activeIndex.current) {
+      activeIndex.current = calcIndex
       onSelectChange(calcIndex)
     }
   }
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isAndroid) {
-      return
-    }
-    // 全局注册的震动触感 hook
-    const pickerVibrate = global.__mpx.config.rnConfig.pickerVibrate
+    // 全局注册的振动触感 hook
+    const pickerVibrate = global.__mpx?.config?.rnConfig?.pickerVibrate
     if (typeof pickerVibrate !== 'function') {
       return
     }
@@ -220,6 +215,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             index: currentId,
             y: getYofIndex(currentId)
           }
+          // vibrateShort({ type: 'selection' })
           pickerVibrate()
         }
       }
