@@ -30,227 +30,60 @@ Mpx 输出 React Native 支持以下模版指令。
 
 **wx:if**
 
-`any`
-
-根据表达式的值的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy) 来有条件地渲染元素。在切换时元素及它的数据绑定 / 组件被销毁并重建。
-
-**注意：如果元素是 `<block/>`, 它并不是一个组件，它仅仅是一个包装元素，不会在页面中做任何渲染，只接受控制属性**。
-
-::: danger
-当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高，不推荐这两个指令同时使用。详见列[表渲染教程](/guide/basic/list-render.html)
-:::
-
-**参考：** [条件渲染 - wx:if](/guide/basic/conditional-render.html)
+输出React Native已支持，[详情查看 - wx:if](/api/directives.html#wx-if)
 
 **wx:else**
 
-不需要表达式，前一兄弟元素必须有 `wx:if` 或 `wx:elif`
+输出React Native已支持，[详情查看 - wx:else](/api/directives.html#wx-else)
 
-为 `wx:if` 或者 `wx:elif` 添加 `wx:else` 块
-
-``` html
-<view wx:if="{{type === 'A'}}">
-  A
-</view>
-<view wx:else>
-  Not A
-</view>
-```
-**参考：** [条件渲染 - wx:else](/guide/basic/conditional-render.html)
 
 **wx:elif**
 
-`any`
-
-前一兄弟元素必须有 `wx:if` 或 `wx:elif`。表示 `wx:if` 的“ `wx:elif` 块”，可以链式调用。
-
-``` html
-<view wx:if="{{type === 'A'}}">
-  A
-</view>
-<view wx:elif="{{type === 'B'}}">
-  B
-</view>
-<view wx:elif="{{type === 'C'}}">
-  C
-</view>
-<view wx:else>
-  Not A/B/C
-</view>
-```
-
-**参考：** [条件渲染 - wx:elif](/guide/basic/conditional-render.html)
+输出React Native已支持，[详情查看 - wx:elif](/api/directives.html#wx-elif)
 
 **wx:show**
 
-`any`
-
-根据表达式的值来确认元素的可见性，与 `wx:if` 所不同的是**不会移除节点**，而是设置节点的 `style` 为 `display: none`。
-
-```html
-<view wx:show="{{show}}">
-  123
-</view>
-```
-
-```js
-Page({
-  data: {
-    show: false
-  }
-})
-```
+输出React Native已支持，[详情查看 - wx:show](/api/directives.html#wx-show)
 
 **wx:for**
 
-`Array | Object | number | string`
-
-在组件上使用 wx:for 控制属性绑定一个数组，即可使用数组中各项的数据重复渲染该组件。默认数组的当前项的下标变量名默认为 index，数组当前项的变量名默认为 item
-
-``` html
-<view wx:for="{{array}}">
-  {{ index }}: {{ item.message }}
-</view>
-
-// 0: foo
-// 1: bar
-```
-
-``` js
-Page({
-  data: {
-    array: [{
-      message: 'foo'
-    }, {
-      message: 'bar'
-    }]
-  }
-})
-```
-使用 wx:for-item 可以指定数组当前元素的变量名，
-
-使用 wx:for-index 可以指定数组当前下标的变量名：
-
-```js
-<view wx:for="{{array}}" wx:for-index="idx" wx:for-item="itemName">
-  {{idx}}: {{itemName.name}}
-</view>
-```
-
-wx:for 默认方式是尝试就地更新元素而不是移动它们，要强制其重新排序元素，需要使用 `wx:key` 来提供一个排序提示:
-```html
-<view wx:for="{{array}}" wx:key="id">
-  {{ item.text }}
-</view>
-
-// foo
-// bar
-<script>
-    import { createComponent } from '@mpxjs/core'
-    createComponent({
-        data: {
-            array: [{
-                id: 1, text: 'foo'
-            }, {
-                id: 2, text: 'bar'
-            }]
-        }
-    })
-</script>
-```
-wx:for 的详细用法可以通过以下链接查看教程详细说明。
-
-**参考：** [列表渲染 - wx:for](/guide/basic/list-render.html)
+输出React Native已支持，[详情查看 - wx:for](/api/directives.html#wx-for)
 
 **wx:for-item**
 
-`string`
-
-使用 wx:for-item 可以指定数组当前元素的变量名：
-```js
-<view wx:for="{{array}}" wx:for-item="itemName">
-  {{itemName.name}}
-</view>
-```
-**参考：** [列表渲染 - wx:for-item](/guide/basic/list-render.html)
+输出React Native已支持，[详情查看 - wx:for-item](/api/directives.html#wx-for-item)
 
 **wx:for-index**
 
-`string`
-
-使用 wx:for-index 可以指定数组当前下标的变量名：
-```html
-<view wx:for="{{array}}" wx:for-index="idx">
-  {{ idx }}: {{ item.text }}
-</view>
-```
-**参考：** [列表渲染 - wx:for-item](/guide/basic/list-render.html)
+输出React Native已支持，[详情查看 - wx:for-index](/api/directives.html#wx-for-index)
 
 **wx:class**
 
-类名绑定的增强指令，让 class 可以绑定对象和数组，样式书写更加灵活。
-```html
-<!--绑定对象-->
-<view wx:class="{{ {active: isActive} }}">
-  这是一段测试文字
-</view>
-<view wx:class="{{ classObject }}">
-    这是一段测试文字
-</view>
-<!--绑定数组-->
-<view wx:class="{{[activeClass, errorClass]}}">
-  这是一段测试文字
-</view>
-
-<script>
-    import { createComponent } from '@mpxjs/core'
-    createComponent({
-        data:{
-            activeClass: 'active',
-            errorClass: 'text-danger',
-            classObject: {
-                active: true,
-                'text-danger': false
-            },
-            isActive: true
-        }
-    })
-</script>
-```
-
-**参考：** 
-* [类名样式绑定-类名绑定](/guide/basic/class-style-binding.html#类名绑定)
-* [wx:class](/api/directives.html#wx-class)
-
+输出React Native已支持，[详情查看 - wx:class](/api/directives.html#wx-class)
 
 **wx:style**
 
-样式绑定的增强指令，可以与普通的 style 属性同时存在，在视图渲染中进行合成，可以支持对象语法与数组语法。
+输出React Native已支持，[详情查看 - wx:style](/api/directives.html#wx-style)
 
-* wx:style中传入样式对象时，带有横杠的样式名可以用驼峰写法来代替
+**wx:model**
 
-```html
-<template>
-    <!--支持传入对象字面量，模板会显得杂乱，此处视图的style="color:red;font-size:16px;font-weight:bold;"-->
-    <view style="color:red;" wx:style="{{ {fontSize:'16px', fontWeight:'bold'} }}">测试文字</view>
-    <!--更好的方式是直接传入对象数据，此处视图的style="color:blue;font-size:14px;"-->
-    <view wx:style="{{innerStyle}}">测试文字</view>
-</template>
+输出React Native已支持，[详情查看 - wx:model](/api/directives.html#wx-model)
 
-<script>
-    import { createPage } from '@mpxjs/core'
+**wx:model-prop**
 
-    createPage({
-        data: {
-            innerStyle: {
-                color: 'blue',
-                fontSize: '14px'
-            }
-        }
-    })
-</script>
-```
-**参考：** [类名样式绑定 - 样式绑定](/guide/basic/class-style-binding.html#样式绑定)
+输出React Native已支持，[详情查看 - wx:model-prop](/api/directives.html#wx-model-prop)
+
+**wx:model-event**
+
+输出React Native已支持，[详情查看 - wx:model-event](/api/directives.html#wx-model-event)
+
+**wx:model-value-path**
+
+输出React Native已支持，[详情查看 - wx:model-value-path](/api/directives.html#wx-model-value-path)
+
+**wx:model-filter**
+
+输出React Native已支持，[详情查看 - wx:model-filter](/api/directives.html#wx-model-filter)
 
 **wx:ref**
 
@@ -277,16 +110,30 @@ wx:for 的详细用法可以通过以下链接查看教程详细说明。
 跨端输出React Native时，相对于输出小程序存在以下差异：
 TODO: 待补充
 
-**mpxTagName**
-
 **@mode**
+
+跨端输出 React Native 时，对模版中节点或属性进行平台纬度的条件编译。[详情查看](/api/directives.html#mode)
 
 **@_mode**
 
+跨端输出 React Native 时，对节点或属性进行平台纬度的条件编译并保留跨平台转换能力。[详情查看](/api/directives.html#mode)
+
 **@env**
 
-**@_env**
+跨端输出场景下，除了 mode 平台场景值，Mpx 框架还提供自定义 env 目标应用，来实现在不同应用下编译产出不同的代码。
 
+**参考：**
+* [通过 env 实现自定义目标环境的条件编译](/guide/advance/platform.html#use-env)
+* [@env 指令](/api/directives.html#env)
+
+**mpxTagName**
+
+支持跨平台输出时针对节点标签名进行条件编译，可以配合属性维度条件编译使用, 
+例如在 iOS 环境下希望将某个 view 标签替换为 cover-view，可以使用该功能：
+
+```html
+<view mpxTagName@ios="cover-view">will be cover-view in iOS</view>
+```
 
 #### 事件处理
 目前 Mpx 输出 React Native 的事件编写遵循小程序的事件编写规范，支持事件的冒泡及捕获
@@ -960,6 +807,7 @@ API
 1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
 
 ### 自定义组件
+创建自定义组件
 
 ### 样式规则
 
