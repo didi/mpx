@@ -204,11 +204,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isAndroid) {
-      return
-    }
-    // 全局注册的震动触感 hook
-    const pickerVibrate = global.__mpx.config.rnConfig.pickerVibrate
+    // 全局注册的振动触感 hook
+    const pickerVibrate = global.__mpx?.config?.rnConfig?.pickerVibrate
     if (typeof pickerVibrate !== 'function') {
       return
     }
