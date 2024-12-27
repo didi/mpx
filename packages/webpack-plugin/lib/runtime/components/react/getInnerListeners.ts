@@ -126,8 +126,8 @@ function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
   const currentPageX = nativeEvent.changedTouches[0].pageX
   const currentPageY = nativeEvent.changedTouches[0].pageY
   if (
-    Math.abs(currentPageX - tapDetailInfo.x) > 1 ||
-        Math.abs(currentPageY - tapDetailInfo.y) > 1
+    Math.abs(currentPageX - tapDetailInfo.x) > 3 ||
+        Math.abs(currentPageY - tapDetailInfo.y) > 3
   ) {
     ref.current!.needPress[type] = false
     ref.current!.startTimer[type] &&
@@ -289,7 +289,6 @@ const useInnerProps = (
   const eventConfig: { [key: string]: string[] } = {}
   const config = rawConfig || {
     layoutRef: { current: {} },
-    disableTouch: false,
     disableTap: false
   }
   const removeProps = [
@@ -317,11 +316,10 @@ const useInnerProps = (
     }
   }
 
-  if (!rawEventKeys.length || config.disableTouch) {
-    return omit(propsRef.current, removeProps)
-  }
-
   const events = useMemo(() => {
+    if (!rawEventKeys.length) {
+      return {}
+    }
     const transformedEventKeys = rawEventKeys.reduce((acc: string[], key) => {
       if (propsRef.current[key]) {
         return acc.concat(eventConfig[key])
