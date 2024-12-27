@@ -197,8 +197,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       return debounceResetScrollPosition(scrollY)
     }
     const calcIndex = getIndex(scrollY)
-    activeIndex.current = calcIndex
-    if (calcIndex !== initialIndex) {
+    if (calcIndex !== activeIndex.current) {
+      activeIndex.current = calcIndex
       onSelectChange(calcIndex)
     }
   }
