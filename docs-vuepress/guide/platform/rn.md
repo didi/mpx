@@ -225,9 +225,68 @@ wx:for 的详细用法可以通过以下链接查看教程详细说明。
 
 **wx:style**
 
+样式绑定的增强指令，可以与普通的 style 属性同时存在，在视图渲染中进行合成，可以支持对象语法与数组语法。
 
+* wx:style中传入样式对象时，带有横杠的样式名可以用驼峰写法来代替
 
-**wx:key**
+```html
+<template>
+    <!--支持传入对象字面量，模板会显得杂乱，此处视图的style="color:red;font-size:16px;font-weight:bold;"-->
+    <view style="color:red;" wx:style="{{ {fontSize:'16px', fontWeight:'bold'} }}">测试文字</view>
+    <!--更好的方式是直接传入对象数据，此处视图的style="color:blue;font-size:14px;"-->
+    <view wx:style="{{innerStyle}}">测试文字</view>
+</template>
+
+<script>
+    import { createPage } from '@mpxjs/core'
+
+    createPage({
+        data: {
+            innerStyle: {
+                color: 'blue',
+                fontSize: '14px'
+            }
+        }
+    })
+</script>
+```
+**参考：** [类名样式绑定 - 样式绑定](/guide/basic/class-style-binding.html#样式绑定)
+
+**wx:ref**
+
+使用wx:ref可以更方便获取节点/组件对象。
+
+```html
+
+<view wx:ref="tref">
+    123
+</view>
+
+<script>
+    import { createPage } from "@mpxjs/core"
+
+    createPage({
+        ready() {
+            this.$refs.tref.fields({size: true}, function (res) {
+                console.log(res)
+            }).exec()
+        }
+    })
+</script>
+```
+跨端输出React Native时，相对于输出小程序存在以下差异：
+TODO: 待补充
+
+**mpxTagName**
+
+**@mode**
+
+**@_mode**
+
+**@env**
+
+**@_env**
+
 
 #### 事件处理
 目前 Mpx 输出 React Native 的事件编写遵循小程序的事件编写规范，支持事件的冒泡及捕获
