@@ -204,7 +204,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { y } = e.nativeEvent.contentOffset
     if (isAndroid) {
       return
     }
@@ -213,6 +212,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     if (typeof pickerVibrate !== 'function') {
       return
     }
+    const { y } = e.nativeEvent.contentOffset
     const { index: prevIndex, y: _y } = prevScrollingInfo.current
     if (touching.current || scrolling.current) {
       if (Math.abs(y - _y) >= itemRawH) {
