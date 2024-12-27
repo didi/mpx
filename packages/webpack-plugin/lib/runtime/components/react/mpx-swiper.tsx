@@ -446,8 +446,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     let isCriticalItem = false
     // 真实滚动到的偏移量坐标
     let moveToTargetPos = 0
-    // 当前的位置
-    const currentOffset = offset.value - previousMargin
+    const currentOffset = translation < 0 ? offset.value - previousMargin : offset.value + previousMargin
     const computedIndex = Math.abs(currentOffset) / step.value
     const moveToIndex = translation < 0 ? Math.ceil(computedIndex) : Math.floor(computedIndex)
     // 实际应该定位的索引值
@@ -524,10 +523,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'worklet'
     const { translation } = eventData
     // 向右滑动的back:trans < 0， 向左滑动的back: trans < 0
-    const currentOffset = Math.abs(offset.value)
+    let currentOffset = Math.abs(offset.value)
+    if (props.circular) {
+      currentOffset += translation < 0 ? previousMargin : -previousMargin
+    }
     const curIndex = currentOffset / step.value
     const moveToIndex = (translation < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElementNum
-    const targetOffset = -(moveToIndex + patchElementNum) * step.value + (translation < 0 ? -previousMargin : previousMargin)
+    const targetOffset = -(moveToIndex + patchElementNum) * step.value + (props.circular ? -previousMargin : 0)
     offset.value = withTiming(targetOffset, {
       duration: easeDuration,
       easing: easeMap[easeingFunc]
@@ -542,7 +544,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   function handleLongPress (eventData: EventDataType) {
     'worklet'
     const { translation } = eventData
-    const currentOffset = Math.abs(offset.value) + (translation < 0 ? previousMargin : -previousMargin)
+    let currentOffset = Math.abs(offset.value)
+    if (props.circular) {
+      currentOffset += previousMargin
+    }
+
     const half = currentOffset % step.value > step.value / 2
     // 向右trans < 0, 向左trans > 0
     const isExceedHalf = translation < 0 ? half : !half
