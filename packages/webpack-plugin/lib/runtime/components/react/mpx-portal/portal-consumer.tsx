@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { PortalContextValue } from '../context'
+import { getFocusedNavigation } from '@mpxjs/utils'
 
 export type PortalConsumerProps = {
   manager: PortalContextValue
@@ -13,10 +14,12 @@ const PortalConsumer = ({ manager, children } :PortalConsumerProps): JSX.Element
         'Looks like you forgot to wrap your root component with `Provider` component from `@ant-design/react-native`.\n\n'
       )
     }
-    keyRef.current = manager.mount(children)
-    manager.update(keyRef.current, children)
+    const navigation = getFocusedNavigation()
+    const curPageId = navigation?.pageId
+    keyRef.current = manager.mount(children, undefined, curPageId)
+    manager.update(keyRef.current, children, curPageId)
     return () => {
-      manager.unmount(keyRef.current)
+      manager.unmount(keyRef.current, curPageId)
     }
   }, [])
   return null

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import {
   View,
   DeviceEventEmitter,
@@ -59,10 +59,10 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _removeType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
   let currentPageId: number | undefined
-  const _mount = (children: React.ReactNode, _key?: number) => {
+  const _mount = (children: React.ReactNode, _key?: number, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
-    if (pageId !== currentPageId) {
+    if (pageId !== (curPageId ?? currentPageId)) {
       return
     }
     const key = _key || _nextKey.current++
@@ -74,10 +74,10 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     return key
   }
 
-  const _unmount = (key: number) => {
+  const _unmount = (key: number, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
-    if (pageId !== currentPageId) {
+    if (pageId !== (curPageId ?? currentPageId)) {
       return
     }
     if (manager.current) {
@@ -87,10 +87,10 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     }
   }
 
-  const _update = (key: number, children: React.ReactNode) => {
+  const _update = (key: number, children: React.ReactNode, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
-    if (pageId !== currentPageId) {
+    if (pageId !== (curPageId ?? currentPageId)) {
       return
     }
     if (manager.current) {

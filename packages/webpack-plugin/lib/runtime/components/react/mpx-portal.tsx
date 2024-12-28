@@ -8,7 +8,8 @@ export type PortalProps = {
    * Content of the `Portal`.
    */
   children?: React.ReactNode
-  manager: PortalContextValue
+  key?: string
+  manager?: PortalContextValue
 }
 
 const Portal = ({ children }:PortalProps): JSX.Element => {

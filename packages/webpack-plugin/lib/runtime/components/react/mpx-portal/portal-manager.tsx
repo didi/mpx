@@ -24,14 +24,14 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
   }, [state])
 
   const update = useCallback((key: number, children: React.ReactNode) => {
-    setState({
-      portals: state.portals.map((item) => {
+    setState((prevState) => ({
+      portals: prevState.portals.map((item) => {
         if (item.key === key) {
           return { ...item, children }
         }
         return item
       })
-    })
+    }))
   }, [state])
 
   const unmount = useCallback((key: number) => {
@@ -46,10 +46,7 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
     unmount,
     portals: state.portals
   }))
-  useEffect(() => {
-    console.log('State updated:', state.portals)
-  }, [state.portals])
-  console.log(state.portals, '在return的state.portals')
+
   return (
     <>
       {state.portals.map(({ key, children }, i) => (

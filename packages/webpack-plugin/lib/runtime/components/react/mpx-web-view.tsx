@@ -1,4 +1,4 @@
-import { forwardRef, JSX, useRef, useContext, useMemo, createElement, useCallback, useEffect } from 'react'
+import { forwardRef, useRef, useContext, useMemo, useState, createElement, useCallback, useEffect } from 'react'
 import { warn, getFocusedNavigation, isFunction } from '@mpxjs/utils'
 import Portal from './mpx-portal'
 import { getCustomEvent } from './getInnerListeners'
@@ -8,7 +8,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import { getCurrentPage, extendObject } from './utils'
 import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
-import { BackHandler } from 'react-native'
+import { BackHandler, StyleSheet, View, Text } from 'react-native'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -41,13 +41,60 @@ type MessageData = {
   callbackId?: number
 }
 
+type LanguageCode = 'zh-CN' | 'en-US'; // 支持的语言代码
+
+interface ErrorText {
+  text: string;
+  button: string;
+}
+
+type ErrorTextMap = Record<LanguageCode, ErrorText>
+
+const styles = StyleSheet.create({
+  loadErrorContext: {
+    display: 'flex',
+    alignItems: 'center'
+  },
+  loadErrorText: {
+    fontSize: 12,
+    color: '#666666',
+    paddingTop: '40%',
+    paddingBottom: 20,
+    paddingLeft: '10%',
+    paddingRight: '10%',
+    textAlign: 'center'
+  },
+  loadErrorButton: {
+    color: '#666666',
+    textAlign: 'center',
+    padding: 10,
+    borderColor: '#666666',
+    borderStyle: 'solid',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10
+  }
+})
+
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   const mpx = global.__mpx
+  const errorText: ErrorTextMap = {
+    'zh-CN': {
+      text: '网络不可用，请检查网络设置',
+      button: '重新加载'
+    },
+    'en-US': {
+      text: 'The network is not available. Please check the network settings',
+      button: 'Reload'
+    }
+  }
+  const currentErrorText = errorText[(mpx.i18n.locale as LanguageCode) || 'zh-CN']
+
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
   const pageId = useContext(RouteContext)
+  const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
   const webViewRef = useRef<WebView>(null)
   const defaultWebViewStyle = {
@@ -107,6 +154,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     bindload(result)
   }
   const _error = function (res: WebViewErrorEvent) {
+    setPageLoadErr(true)
     const result = {
       type: 'error',
       timeStamp: res.timeStamp,
@@ -114,7 +162,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         src: ''
       }
     }
-    binderror(result)
+    binderror && binderror(result)
+  }
+
+  const _reload = function () {
+    setPageLoadErr(false)
   }
   const injectedJavaScript = `
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
@@ -250,23 +302,34 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       onLoad: _load
     })
   }
-  if (binderror) {
-    extendObject(events, {
-      onError: _error
-    })
-  }
 
-  return createElement(Portal, null, createElement(WebView, extendObject({
-    style: defaultWebViewStyle,
-    source: { uri: src },
-    ref: webViewRef,
-    javaScriptEnabled: true,
-    onNavigationStateChange: _changeUrl,
-    onMessage: _message,
-    injectedJavaScript: injectedJavaScript,
-    onLoadProgress: _onLoadProgress,
-    allowsBackForwardNavigationGestures: true
-  }, events)))
+  extendObject(events, {
+    onError: _error
+  })
+
+  return (
+      <Portal key={pageLoadErr ? 'error' : 'webview'}>
+        {pageLoadErr
+          ? (
+            <View style={[styles.loadErrorContext, defaultWebViewStyle]}>
+              <View style={styles.loadErrorText}><Text style={{ fontSize: 14, color: '#999999' }}>{currentErrorText.text}</Text></View>
+              <View style={styles.loadErrorButton} onTouchEnd={_reload}><Text style={{ fontSize: 12, color: '#666666' }}>{currentErrorText.button}</Text></View>
+            </View>
+            )
+          : (<WebView
+        style={defaultWebViewStyle}
+        source={{ uri: src }}
+        ref={webViewRef}
+        javaScriptEnabled={true}
+        onNavigationStateChange={_changeUrl}
+        onMessage={_message}
+        injectedJavaScript={injectedJavaScript}
+        onLoadProgress={_onLoadProgress}
+        allowsBackForwardNavigationGestures={true}
+        {...events}
+      ></WebView>)}
+      </Portal>
+  )
 })
 
 _WebView.displayName = 'MpxWebview'
