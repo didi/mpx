@@ -71,8 +71,12 @@ function redirectTo (options = {}) {
     }
   }
 }
-
+let pending = false
 function navigateBack (options = {}) {
+  if (pending) {
+    return
+  }
+  pending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -80,16 +84,19 @@ function navigateBack (options = {}) {
     const routeLength = navigation.getState().routes.length
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
+        pending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       })
     } else {
       navigation.pop(delta)
       navigationHelper.lastSuccessCallback = () => {
+        pending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       }
       navigationHelper.lastFailCallback = (msg) => {
+        pending = false
         const res = { errMsg: `navigateBack:fail ${msg}` }
         failHandle(res, options.fail, options.complete)
       }
