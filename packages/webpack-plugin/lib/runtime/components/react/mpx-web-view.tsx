@@ -1,6 +1,6 @@
 import { forwardRef, JSX, useRef, useContext, useMemo, createElement, useCallback, useEffect } from 'react'
 import { warn, getFocusedNavigation, isFunction } from '@mpxjs/utils'
-import { Portal } from '@ant-design/react-native'
+import Portal from './mpx-portal'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
@@ -60,17 +60,17 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const canGoBack = useRef<boolean>(false)
 
   const onAndroidBackPress = useCallback(() => {
-      if (canGoBack.current) {
-          webViewRef.current?.goBack()
-          return true
-      }
-      return false
+    if (canGoBack.current) {
+      webViewRef.current?.goBack()
+      return true
+    }
+    return false
   }, [canGoBack])
 
   const beforeRemoveHandle = useCallback((e: Event) => {
     if (canGoBack.current) {
-        webViewRef.current?.goBack()
-        e.preventDefault()
+      webViewRef.current?.goBack()
+      e.preventDefault()
     }
   }, [canGoBack])
 
@@ -80,10 +80,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   useEffect(() => {
     if (__mpx_mode__ === 'android') {
-        BackHandler.addEventListener('hardwareBackPress', onAndroidBackPress)
-        return () => {
-            BackHandler.removeEventListener('hardwareBackPress', onAndroidBackPress)
-        }
+      BackHandler.addEventListener('hardwareBackPress', onAndroidBackPress)
+      return () => {
+        BackHandler.removeEventListener('hardwareBackPress', onAndroidBackPress)
+        navigation?.removeListener('beforeRemove', beforeRemoveHandle)
+      }
     }
   }, [])
 
@@ -141,7 +142,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     true;
   `
-  const sendMessage = function(params: string) {
+  const sendMessage = function (params: string) {
     return `
       window.mpxWebviewMessageCallback(${params})
       true;
@@ -156,7 +157,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   const _onLoadProgress = function (event: WebViewProgressEvent) {
     if (__mpx_mode__ === 'android') {
-        canGoBack.current = event.nativeEvent.canGoBack
+      canGoBack.current = event.nativeEvent.canGoBack
     }
   }
   const _message = function (res: WebViewMessageEvent) {

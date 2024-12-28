@@ -23,6 +23,9 @@ declare module '@mpxjs/utils' {
     },
     setOptions: (params: Record<string, any>) => void,
     addListener: (eventName: string, callback: (e: Event) => void) => void
+    removeListener: (eventName: string, callback: (e: Event) => void) => void
+    dispatch: (eventName: string) => void
+    pageId: number
   } | undefined
 }
 

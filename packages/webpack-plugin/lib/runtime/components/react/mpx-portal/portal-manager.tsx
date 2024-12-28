@@ -1,0 +1,68 @@
+import React, { useState, useCallback, forwardRef, ForwardedRef, useImperativeHandle, useEffect, useContext, ReactElement } from 'react'
+import { View, StyleSheet } from 'react-native'
+import { getFocusedNavigation } from '@mpxjs/utils'
+
+export type State = {
+  portals: Array<{
+    key: number
+    children: React.ReactNode
+  }>
+}
+
+type PortalManagerProps = {
+}
+
+const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<unknown>): ReactElement => {
+  const [state, setState] = useState<State>({
+    portals: []
+  })
+
+  const mount = useCallback((key: number, children: React.ReactNode) => {
+    setState((prevState) => ({
+      portals: [...prevState.portals, { key, children }]
+    }))
+  }, [state])
+
+  const update = useCallback((key: number, children: React.ReactNode) => {
+    setState({
+      portals: state.portals.map((item) => {
+        if (item.key === key) {
+          return { ...item, children }
+        }
+        return item
+      })
+    })
+  }, [state])
+
+  const unmount = useCallback((key: number) => {
+    setState((prevState) => ({
+      portals: prevState.portals.filter((item) => item.key !== key)
+    }))
+  }, [])
+
+  useImperativeHandle(ref, () => ({
+    mount,
+    update,
+    unmount,
+    portals: state.portals
+  }))
+  useEffect(() => {
+    console.log('State updated:', state.portals)
+  }, [state.portals])
+  console.log(state.portals, '在return的state.portals')
+  return (
+    <>
+      {state.portals.map(({ key, children }, i) => (
+        <View
+          key={key}
+          collapsable={false} // Need collapsable=false here to clip the elevations
+          pointerEvents="box-none"
+          style={[StyleSheet.absoluteFill, { zIndex: 1000 + i }]}>
+          {children}
+        </View>
+      ))}
+    </>
+  )
+})
+
+export default _PortalManager
