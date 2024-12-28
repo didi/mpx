@@ -99,9 +99,9 @@ class RNIntersectionObserver {
 
     const windowRect = {
       top: navigationLayout.y - this.margins.top,
-      left: this.margins.left,
+      left: 0 - this.margins.left,
       right: navigationLayout.width + this.margins.right,
-      bottom: navigationLayout.y + navigationLayout.height - this.margins.bottom
+      bottom: navigationLayout.y + navigationLayout.height + this.margins.bottom
     }
 
     this.windowRect = windowRect
