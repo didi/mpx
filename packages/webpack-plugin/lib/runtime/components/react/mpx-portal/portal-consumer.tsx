@@ -11,7 +11,7 @@ const PortalConsumer = ({ manager, children } :PortalConsumerProps): JSX.Element
   useEffect(() => {
     if (!manager) {
       throw new Error(
-        'Looks like you forgot to wrap your root component with `Provider` component from `@ant-design/react-native`.\n\n'
+        'Looks like you forgot to wrap your root component with `Provider` component from `@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal`.\n\n'
       )
     }
     const navigation = getFocusedNavigation()
@@ -21,7 +21,7 @@ const PortalConsumer = ({ manager, children } :PortalConsumerProps): JSX.Element
     return () => {
       manager.unmount(keyRef.current, curPageId)
     }
-  }, [])
+  }, [children])
   return null
 }
 

@@ -1,11 +1,64 @@
-import React, { createContext } from 'react'
+import React, { createContext, useMemo, memo } from 'react'
+import { extendObject } from './utils'
 
+interface Locale {
+  /** zh_CN */
+  locale: string
+  DatePicker: {
+    /** 确定 */
+    okText: string
+    /** 取消 */
+    dismissText: string
+    /** 请选择 */
+    extra: string
+    DatePickerLocale: {
+      /** 年 */
+      year: string
+      /** 月 */
+      month: string
+      /** 日 */
+      day: string
+      /** 时 */
+      hour: string
+      /** 分 */
+      minute: string
+      /** 上午 */
+      am: string
+      /** 下午 */
+      pm: string
+    }
+  }
+  DatePickerView: {
+    /** 年 */
+    year: string
+    /** 月 */
+    month: string
+    /** 日 */
+    day: string
+    /** 时 */
+    hour: string
+    /** 分 */
+    minute: string
+    /** 上午 */
+    am: string
+    /** 下午 */
+    pm: string
+  }
+  Picker: {
+    /** 确定 */
+    okText: string
+    /** 取消 */
+    dismissText: string
+    /** 请选择 */
+    extra: string
+  }
+}
 export type LocaleContextProps = {
-  antLocale?: any
+  antLocale: Partial<Locale & { exist: boolean }>
 }
 export interface LocaleProviderProps {
   children?: React.ReactNode,
-  locale: any
+  locale?: LocaleContextProps
 }
 
 export const LocaleContext = createContext<
@@ -13,9 +66,11 @@ export const LocaleContext = createContext<
 >(undefined)
 
 const LocaleProvider = (props :LocaleProviderProps): JSX.Element => {
-  const locale = React.useMemo(() => {
-    return { antLocale: { exist: true } }
-  }, [])
+  const locale = useMemo(() => {
+    return {
+      antLocale: extendObject({}, props.locale, { exist: true })
+    }
+  }, [props.locale])
   return (
     <LocaleContext.Provider value={locale}>
       {props.children}
@@ -25,4 +80,4 @@ const LocaleProvider = (props :LocaleProviderProps): JSX.Element => {
 
 LocaleProvider.displayName = 'LocaleProvider'
 
-export default React.memo(LocaleProvider)
+export default memo(LocaleProvider)
