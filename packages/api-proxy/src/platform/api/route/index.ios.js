@@ -48,14 +48,15 @@ function navigateTo (options = {}) {
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
-      toPending = false
       const res = { errMsg: 'navigateTo:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
-      toPending = false
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
+    }
+    navigationHelper.transitionEndCallback = () => {
+      toPending = false
     }
   }
 }
@@ -73,14 +74,15 @@ function redirectTo (options = {}) {
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
-      redirectPending = false
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
-      redirectPending = false
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
+    }
+    navigationHelper.transitionEndCallback = () => {
+      redirectPending = false
     }
   }
 }
@@ -104,14 +106,15 @@ function navigateBack (options = {}) {
     } else {
       navigation.pop(delta)
       navigationHelper.lastSuccessCallback = () => {
-        backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       }
       navigationHelper.lastFailCallback = (msg) => {
-        backPending = false
         const res = { errMsg: `navigateBack:fail ${msg}` }
         failHandle(res, options.fail, options.complete)
+      }
+      navigationHelper.transitionEndCallback = () => {
+        backPending = false
       }
     }
   }
@@ -138,14 +141,15 @@ function reLaunch (options = {}) {
       ]
     })
     navigationHelper.lastSuccessCallback = () => {
-      reLaunchPending = false
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
-      reLaunchPending = false
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
+    }
+    navigationHelper.transitionEndCallback = () => {
+      reLaunchPending = false
     }
   }
 }
