@@ -9,6 +9,11 @@ export type PortalConsumerProps = {
 const PortalConsumer = ({ manager, children } :PortalConsumerProps): JSX.Element | null => {
   const keyRef = useRef<any>(null)
   useEffect(() => {
+    const navigation = getFocusedNavigation()
+    const curPageId = navigation?.pageId
+    manager.update(keyRef.current, children, curPageId)
+  }, [children])
+  useEffect(() => {
     if (!manager) {
       throw new Error(
         'Looks like you forgot to wrap your root component with `Provider` component from `@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal`.\n\n'
@@ -17,11 +22,10 @@ const PortalConsumer = ({ manager, children } :PortalConsumerProps): JSX.Element
     const navigation = getFocusedNavigation()
     const curPageId = navigation?.pageId
     keyRef.current = manager.mount(children, undefined, curPageId)
-    manager.update(keyRef.current, children, curPageId)
     return () => {
       manager.unmount(keyRef.current, curPageId)
     }
-  }, [children])
+  }, [])
   return null
 }
 
