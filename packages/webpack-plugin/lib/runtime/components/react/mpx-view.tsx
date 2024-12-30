@@ -643,7 +643,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, 
 
 interface WrapChildrenConfig {
   hasVarDec: boolean
-  enableBackground: boolean
+  enableBackground?: boolean
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
@@ -653,6 +653,11 @@ interface WrapChildrenConfig {
 }
 
 function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps, innerStyle, enableFastImage }: WrapChildrenConfig) {
+  enableBackground = enableBackground || !!backgroundStyle
+  const enableBackgroundRef = useRef(enableBackground)
+  if (enableBackgroundRef.current !== enableBackground) {
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+  }
   const children = wrapChildren(props, {
     hasVarDec,
     varContext,
@@ -668,7 +673,7 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
-  let {
+  const {
     style = {},
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
@@ -715,12 +720,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  enableBackground = enableBackground || !!backgroundStyle
-  const enableBackgroundRef = useRef(enableBackground)
-  if (enableBackgroundRef.current !== enableBackground) {
-    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
-  }
-
   const nodeRef = useRef(null)
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
     style: normalStyle
@@ -734,22 +733,17 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
 
-  enableAnimation = enableAnimation || !!animation
-  const enableAnimationRef = useRef(enableAnimation)
-  if (enableAnimationRef.current !== enableAnimation) {
-    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
-  const finalStyle = enableAnimationRef.current
-    ? [viewStyle, useAnimationHooks({
-        animation,
-        style: viewStyle
-      })]
-    : viewStyle
+  const { enableStyleAnimation, animationStyle } = useAnimationHooks({
+    enableAnimation,
+    animation,
+    style: viewStyle
+  })
+
   const innerProps = useInnerProps(
     props,
     extendObject({
       ref: nodeRef,
-      style: finalStyle
+      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
     },
     layoutProps
     ), [
@@ -763,7 +757,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const childNode = wrapWithChildren(props, {
     hasVarDec,
-    enableBackground: enableBackgroundRef.current,
+    enableBackground,
     textStyle,
     backgroundStyle,
     varContext: varContextRef.current,
@@ -772,8 +766,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableFastImage
   })
 
-  const BaseComponent = enableAnimation
-    ? createElement(Animated.View, extendObject({}, innerProps, { style: finalStyle }), childNode)
+  const BaseComponent = enableStyleAnimation
+    ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
   return enableHoverStyle

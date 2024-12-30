@@ -77,7 +77,7 @@ export const createFaces = (
   const degrees = getDegreesRelativeCenter()
   const [screenHeight, offsets] = getScreenHeightsAndOffsets(degrees)
 
-  const scales = [1, 0.925, 0.8]
+  const scales = [0.973, 0.9, 0.8]
 
   return [
     // top items
