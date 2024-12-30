@@ -108,7 +108,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH])
 
   const stableResetScrollPosition = useStableCallback((y: number) => {
-    console.log('[mpx-picker-view-column], reset --->', 'columnIndex=', columnIndex, 'y=', y, touching.current, scrolling.current)
     if (touching.current || scrolling.current) {
       return
     }
@@ -197,18 +196,15 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       return debounceResetScrollPosition(scrollY)
     }
     const calcIndex = getIndex(scrollY)
-    activeIndex.current = calcIndex
-    if (calcIndex !== initialIndex) {
+    if (calcIndex !== activeIndex.current) {
+      activeIndex.current = calcIndex
       onSelectChange(calcIndex)
     }
   }
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isAndroid) {
-      return
-    }
-    // 全局注册的震动触感 hook
-    const pickerVibrate = global.__mpx.config.rnConfig.pickerVibrate
+    // 全局注册的振动触感 hook
+    const pickerVibrate = global.__mpx?.config?.rnConfig?.pickerVibrate
     if (typeof pickerVibrate !== 'function') {
       return
     }
@@ -222,6 +218,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             index: currentId,
             y: getYofIndex(currentId)
           }
+          // vibrateShort({ type: 'selection' })
           pickerVibrate()
         }
       }
