@@ -1,12 +1,13 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-import { Portal } from '@ant-design/react-native'
+import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal'
 import { getWindowInfo } from '../system/rnSystem'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming
 } from 'react-native-reanimated'
+
 function showActionSheet (options = {}) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   const windowInfo = getWindowInfo()
@@ -77,6 +78,8 @@ function showActionSheet (options = {}) {
     const remove = function () {
       if (actionSheetKey) {
         slideOut()
+        Portal.remove(actionSheetKey)
+        actionSheetKey = null
         setTimeout(() => {
           Portal.remove(actionSheetKey)
           actionSheetKey = null
