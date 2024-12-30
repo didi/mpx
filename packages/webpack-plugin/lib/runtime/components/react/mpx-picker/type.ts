@@ -15,13 +15,6 @@ export type SelectorProps = {
   'range-key': string
   getInnerLayout: Function
   style?: Record<string, any>
-  // bindcolumnchange?: Function
-  'enable-offset'?: boolean
-  'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
-  'parent-width'?: number
-  'parent-height'?: number
 }
 
 export type MultiSelectorProps = {

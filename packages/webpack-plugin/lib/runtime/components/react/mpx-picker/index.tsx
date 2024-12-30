@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { PickerValue } from '@ant-design/react-native'
-import React, { forwardRef, useRef, useContext, useState } from 'react'
+import React, { forwardRef, useRef, useContext, useState, useEffect } from 'react'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
@@ -33,6 +33,10 @@ import { FormContext, FormFieldValue } from '../context'
 
 const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
   const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange, style } = props
+
+  const [pickerValue, setPickerValue] = useState(value as ValueType)
+  console.log('[mpx-picker], render ---> value=', value)
+
   const innerLayout = useRef({})
   const nodeRef = useRef(null)
   useNodesRef<View, PickerProps>(props, ref, nodeRef, {
@@ -42,7 +46,6 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     ref: nodeRef
   }, [], { layoutRef: innerLayout })
 
-  const [pickerValue, setPickerValue] = useState(value as ValueType)
   const defaultValues = {
     selector: 0,
     multiSelector: [0],
@@ -51,13 +54,12 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     region: undefined
   }
 
-  const formContext = useContext(FormContext)
+  useEffect(() => {
+    setPickerValue(value as ValueType)
+  }, [value])
 
-  let formValuesMap: Map<string, FormFieldValue> | undefined
-
-  // 判断 context 是否存在，存在的话读取 context 中存的 formValuesMap
-  if (formContext) {
-    formValuesMap = formContext.formValuesMap
+  const getValue = () => {
+    return pickerValue
   }
 
   const resetValue = () => {
@@ -66,8 +68,11 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     setPickerValue(defalutValue)
   }
 
-  const getValue = () => {
-    return pickerValue
+  // form 表单组件事件
+  const formContext = useContext(FormContext)
+  let formValuesMap: Map<string, FormFieldValue> | undefined
+  if (formContext) {
+    formValuesMap = formContext.formValuesMap
   }
   if (formValuesMap) {
     if (!props.name) {
@@ -76,22 +81,38 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
       formValuesMap.set(props.name, { getValue, resetValue })
     }
   }
+  useEffect(() => {
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
+  }, [])
 
   const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
     innerLayout.current = layout.current
   }
 
-  const onChange = (event: EventType) => {
-    const eventData = getCustomEvent('change', {}, { detail: event.detail, layoutRef: innerLayout })
-    bindchange && bindchange(eventData)
-    setPickerValue(event.detail.value as ValueType)
+  // confirm 确认按钮
+  const onChange = (e: EventType) => {
+    const { value } = e.detail
+    console.log('[mpx-picker], onChange ---> value=', value)
+    setTimeout(() => {
+      setPickerValue(value)
+    }, 0)
   }
 
   const columnChange = (value: PickerValue[], index: number) => {
     // type: "columnchange", detail: {column: 1, value: 2}
     const eventData = getCustomEvent('columnchange', {}, { detail: { column: index, value }, layoutRef: innerLayout })
-    bindcolumnchange && bindcolumnchange(eventData)
+    bindcolumnchange?.(eventData)
   }
+
+  const onConfirm = () => {
+    const eventData = getCustomEvent('change', {}, { detail: { value: pickerValue }, layoutRef: innerLayout })
+    bindchange?.(eventData)
+  }
+
   const commonProps = {
     ...innerProps,
     mode,
@@ -128,13 +149,13 @@ const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: P
     value: pickerValue as string,
     start: props.start,
     end: props.end,
-    fileds: props.fields || 'day'
+    fields: props.fields || 'day'
   }
 
   const regionProps = {
     ...commonProps,
     value: pickerValue as Array<string>,
-    level: props.level || 'sub-district'
+    level: props.level || 'region'
   }
 
   if (mode === 'selector') {

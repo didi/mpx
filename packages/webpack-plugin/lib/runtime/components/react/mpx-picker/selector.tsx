@@ -7,13 +7,17 @@ import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
 import { SelectorProps, Obj } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { getCustomEvent } from '../getInnerListeners'
-import { useLayout, useTransformStyle } from '../utils'
+import { extendObject } from '../utils'
 
 type RangeItemType = Obj | number | string
 
 const formatRangeFun = (range: RangeItemType[], rangeKey = '') =>
   rangeKey ? range.map((item: Obj) => item[rangeKey]) : range
+
+const formatValue = (value: number | number[]) => {
+  const _value = Array.isArray(value) ? value[0] : value
+  return +_value
+}
 
 const _SelectorPicker = forwardRef<
     HandlerRef<View, SelectorProps>,
@@ -22,58 +26,41 @@ const _SelectorPicker = forwardRef<
   const {
     range,
     style = {},
-    value = 0,
     children,
     disabled,
     bindchange,
-    bindcancel,
-    'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
-    'parent-width': parentWidth,
-    'parent-height': parentHeight
+    bindcancel
   } = props
 
+  const value = formatValue(props.value ?? 0)
+  console.log('[mpx-picker-selector], render ---> value=', props.value, 'formatValue=', value)
+
   const formatRange: Array<any> = formatRangeFun(range, props['range-key'])
-
-  const { hasSelfPercent, normalStyle, setWidth, setHeight } =
-    useTransformStyle(style, {
-      enableVar,
-      externalVarContext,
-      parentFontSize,
-      parentWidth,
-      parentHeight
-    })
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef, {
-    style: normalStyle
-  })
-  const { layoutRef } = useLayout({
-    props,
-    hasSelfPercent,
-    setWidth,
-    setHeight,
-    nodeRef
-  })
+  useNodesRef(props, ref, nodeRef, { style })
 
-  const onChange = (value: number) => {
+  const onChange = (e: { detail: { value: number[] } }) => {
+    const { value } = e.detail
     console.log('[mpx-picker-selector], onChange ---> value=', value)
-    const eventData = getCustomEvent('change', {}, { detail: { value }, layoutRef })
-    // bindchange?.(eventData)
+    bindchange?.({ detail: { value: value[0] + '' } })
   }
+
+  const wrapperStyle = extendObject(style, {
+    height: 300
+  })
 
   return (disabled
     ? <></>
     : <MpxPickerView
-        style={[style, { height: 300 }]}
-        indicator-style="height: 40px"
+        style={wrapperStyle}
+        indicator-style="height: 40"
         value={[value]}
         bindchange={onChange}
       >
         {/* @ts-expect-error ignore */}
         <MpxPickerViewColumn>
           {formatRange.map((item, index) => (
-            <Text key={index}>{item}</Text>
+            <Text key={index} style={{ lineHeight: 40, textAlign: 'center' }}>{item}</Text>
           ))}
         </MpxPickerViewColumn>
       </MpxPickerView>

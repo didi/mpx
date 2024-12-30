@@ -121,7 +121,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const onInitialChange = (isInvalid: boolean, value: number[]) => {
-    console.log('[mpx-picker-view], onInitialChange ---> isInvalid=', isInvalid, 'value=', value)
     if (isInvalid || !snapActiveValueRef.current || hasDiff(snapActiveValueRef.current, value)) {
       const eventData = getCustomEvent(
         'change',
@@ -153,7 +152,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   )
 
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
-    console.log('[mpx-picker-view], renderColumn ---> index=', index, 'normalStyle=', normalStyle, 'indicatorH=', indicatorH)
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
       {},
