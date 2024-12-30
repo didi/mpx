@@ -6,9 +6,9 @@ import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } 
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { getCurrentPage, extendObject } from './utils'
-import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
+import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent, WebViewSource } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
-import { BackHandler } from 'react-native'
+import { BackHandler, Platform } from 'react-native'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -76,6 +76,28 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   const navigation = getFocusedNavigation()
 
+  // ios 16以下版本 的hash会被转义，因此对于iOS环境下在页面load之后再注入hash部分的逻辑
+  let [baseUrl, hashParams = ''] = src.split('#')
+  if (hashParams) hashParams = '#' + hashParams
+  const source = useMemo<WebViewSource>(() => {
+    if (Platform.OS === 'ios') {
+      return { uri: baseUrl };
+    }
+    return { uri: baseUrl + hashParams };
+  }, [baseUrl, hashParams])
+
+  const hashInjectedJavascript = useMemo(() => {
+    if (Platform.OS === 'ios' && hashParams) {
+      return `(function() {
+        try {
+          location.hash = '${hashParams}';
+        } catch(e) {
+        }
+      })()`;
+    }
+    return '';
+  }, [hashParams]);
+
   navigation?.addListener('beforeRemove', beforeRemoveHandle)
 
   useEffect(() => {
@@ -115,6 +137,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     binderror?.(result)
   }
+  
+
   const injectedJavaScript = `
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
       var _documentTitle = document.title;
@@ -138,6 +162,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
           return _documentTitle
         }
       });
+      ${hashInjectedJavascript}
     }
     true;
   `
@@ -257,7 +282,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   return createElement(Portal, null, createElement(WebView, extendObject({
     style: defaultWebViewStyle,
-    source: { uri: src },
+    source: source,
     ref: webViewRef,
     javaScriptEnabled: true,
     onNavigationStateChange: _changeUrl,
