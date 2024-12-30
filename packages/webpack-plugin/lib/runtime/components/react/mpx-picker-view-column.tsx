@@ -157,7 +157,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onItemLayout = (e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
-    console.log('[mpx-picker-view-column], onItemLayout --->', 'rawH=', rawH, 'itemRawH=', itemRawH)
     const roundedH = Math.round(rawH)
     if (roundedH && roundedH !== itemRawH) {
       setItemRawH(roundedH)
@@ -189,7 +188,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent> | { nativeEvent: { contentOffset: { y: number } } }) => {
-    console.log('[mpx-picker-view-column], onMomentumScrollEnd --->')
     scrolling.current = false
     const { y: scrollY } = e.nativeEvent.contentOffset
     if (isIOS && scrollY % itemRawH !== 0) {
