@@ -1,4 +1,4 @@
-import React from 'react'
+import { ReactNode } from 'react'
 import { PortalContext, PortalContextValue } from './context'
 import PortalConsumer from './mpx-portal/portal-consumer'
 import PortalHost, { portal } from './mpx-portal/portal-host'
@@ -7,7 +7,7 @@ export type PortalProps = {
   /**
    * Content of the `Portal`.
    */
-  children?: React.ReactNode
+  children?: ReactNode
   key?: string
   manager?: PortalContextValue
 }

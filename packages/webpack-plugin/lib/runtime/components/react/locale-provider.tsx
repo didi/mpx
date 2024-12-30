@@ -1,4 +1,4 @@
-import React, { createContext, useMemo, memo } from 'react'
+import { createContext, useMemo, memo, ReactNode } from 'react'
 import { extendObject } from './utils'
 
 interface Locale {
@@ -57,7 +57,7 @@ export type LocaleContextProps = {
   antLocale: Partial<Locale & { exist: boolean }>
 }
 export interface LocaleProviderProps {
-  children?: React.ReactNode,
+  children?: ReactNode,
   locale?: LocaleContextProps
 }
 
