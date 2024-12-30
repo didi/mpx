@@ -766,7 +766,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableFastImage
   })
 
-  const BaseComponent = enableAnimation
+  const BaseComponent = enableStyleAnimation
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
