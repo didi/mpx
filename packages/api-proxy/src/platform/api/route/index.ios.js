@@ -113,9 +113,9 @@ function navigateBack (options = {}) {
         const res = { errMsg: `navigateBack:fail ${msg}` }
         failHandle(res, options.fail, options.complete)
       }
-      navigationHelper.transitionEndCallback = () => {
-        backPending = false
-      }
+    }
+    navigationHelper.transitionEndCallback = () => {
+      backPending = false
     }
   }
 }
