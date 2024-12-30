@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef, ReactNode } from 'react'
 import { PortalContextValue } from '../context'
 import { getFocusedNavigation } from '@mpxjs/utils'
 
 export type PortalConsumerProps = {
   manager: PortalContextValue
-  children?: React.ReactNode
+  children?: ReactNode
 }
 const PortalConsumer = ({ manager, children } :PortalConsumerProps): JSX.Element | null => {
   const keyRef = useRef<any>(null)

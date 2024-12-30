@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef, ReactNode } from 'react'
 import {
   View,
   DeviceEventEmitter,
@@ -11,7 +11,7 @@ import { getFocusedNavigation } from '@mpxjs/utils'
 import { PortalManagerContextValue, PortalContext } from '../context'
 
 export type PortalHostProps = {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 type addIdsMapsType = {
@@ -19,8 +19,8 @@ type addIdsMapsType = {
 }
 
 export type Operation =
-  | { type: 'mount'; key: number; children: React.ReactNode }
-  | { type: 'update'; key: number; children: React.ReactNode }
+  | { type: 'mount'; key: number; children: ReactNode }
+  | { type: 'update'; key: number; children: ReactNode }
   | { type: 'unmount'; key: number }
 
 // events
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
 
 class PortalGuard {
   private nextKey = 10000
-  add = (e: React.ReactNode) => {
+  add = (e: ReactNode) => {
     const key = this.nextKey++
     TopViewEventEmitter.emit(addType, e, key)
     return key
@@ -59,7 +59,7 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _removeType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
   let currentPageId: number | undefined
-  const _mount = (children: React.ReactNode, _key?: number, curPageId?: number) => {
+  const _mount = (children: ReactNode, _key?: number, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
     if (pageId !== (curPageId ?? currentPageId)) {
@@ -87,7 +87,7 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     }
   }
 
-  const _update = (key: number, children: React.ReactNode, curPageId?: number) => {
+  const _update = (key: number, children: ReactNode, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
     if (pageId !== (curPageId ?? currentPageId)) {
