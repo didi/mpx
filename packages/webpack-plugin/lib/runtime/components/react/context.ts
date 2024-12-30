@@ -46,6 +46,10 @@ export interface PortalContextValue {
   manager?: PortalManagerContextValue
 }
 
+export interface ScrollViewContextValue {
+   gestureRef: React.RefObject<any> | null
+}
+
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -67,6 +71,8 @@ export const RouteContext = createContext<number | null>(null)
 export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
+
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
 
