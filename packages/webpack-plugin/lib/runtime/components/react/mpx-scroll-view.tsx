@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 import { ScrollView } from 'react-native-gesture-handler'
-import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Platform } from 'react-native'
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
@@ -40,7 +40,6 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
-
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
@@ -338,11 +337,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
-    if (enableTriggerIntersectionObserver && intersectionObservers) {
-      for (const key in intersectionObservers) {
-        intersectionObservers[key].throttleMeasure()
-      }
-    }
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -364,8 +358,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     onStartReached(e)
     onEndReached(e)
+    updateIntersection()
   }
-
+  function updateIntersection () {
+    if (enableTriggerIntersectionObserver && intersectionObservers) {
+      for (const key in intersectionObservers) {
+        intersectionObservers[key].throttleMeasure();
+      }
+    }
+  }
   function scrollToOffset (x = 0, y = 0) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation })
@@ -435,6 +436,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onScrollDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    updateIntersection()
   }
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(

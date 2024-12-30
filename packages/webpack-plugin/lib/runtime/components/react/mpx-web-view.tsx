@@ -151,7 +151,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         src: res.nativeEvent?.url
       }
     }
-    bindload(result)
+    bindload?.(result)
   }
   const _error = function (res: WebViewErrorEvent) {
     setPageLoadErr(true)

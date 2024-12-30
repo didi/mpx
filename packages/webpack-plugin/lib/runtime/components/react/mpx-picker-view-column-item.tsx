@@ -9,7 +9,7 @@ interface PickerColumnItemProps {
   item: React.ReactElement
   index: number
   itemHeight: number
-  itemWidth: number | '100%'
+  itemWidth?: number | '100%'
   textStyleFromParent: Record<string, any>
   textStyle: Record<string, any>
   hasVarDec: boolean
@@ -23,7 +23,7 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   item,
   index,
   itemHeight,
-  itemWidth,
+  itemWidth = '100%',
   textStyleFromParent,
   textStyle,
   hasVarDec,
