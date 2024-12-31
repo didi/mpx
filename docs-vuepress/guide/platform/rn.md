@@ -40,12 +40,29 @@ view, text {
 }
 ```
 ### 样式单位
-#### number 类型值
-RN 环境中，number 数值型单位支持 px rpx % 三种，web 下的 vw em rem 等不支持。
-Todo: 支持的单位以及%分别是相对自己还是父级的某属性梳理补充
-#### color 类型值
-RN 环境支持大部分 css 中 color 定义方式，仅少量不支持，详情参考 RN 文档 https://reactnative.dev/docs/colors
-Todo: 不支持的颜色形式补充
+Mpx转RN, 支持以下单位，部分单位在部分情况下存在使用限制
+| 单位 | 支持情况 | 特殊说明 |
+| ---- | ---- | ---- |
+| % | 支持 | 百分比单位参考下面说明|
+| px | 支持 | 无 |
+| rpx | 支持 | rpx会根据屏幕宽度动态计算成实际的px |
+| vh | 支持 | 屏幕的高度，在使用非自定义导航时，页面初次渲染计算出来的vh是屏幕高度，后续更新渲染使用实际可视区域高度，推荐使用此单位的页面使用自定义导航 |
+| vw | 支持 | 无 |
+
+#### 百分比单位说明
+RN很多原生较多属性不支持百分比，比如font-size、translate等，但是这些属性在编写web、小程序代码的过程中使用较多，框架进行了抹平支持。以下这些属性在Mpx输出RN时专门进行了百分比单位的适配，部分属性存在编写的时候的特殊适配。
+| 属性 | web上百分比参考物 | 转rn参考 | 编写例子 |
+| ---- | ---- | ---- | ---- |
+| font-size | 最近祖先元素的font-size | 当前元素设置的parent-font-size | font-size: 50%; parent-font-size: 34px;|
+| line-height | 当前元素的font-size(未设置就是最近的祖先节点font-size) | 当前元素设置的font-size | font-size: 12px; line-height: 100%; |
+| translateX | 当前元素的宽度 | 当前元素的宽度 | 无
+| translateY | 当前元素的高度 | 当前元素的高度 | 无
+| border-top-left-radius | 当前元素的宽度 | 当前元素的高度 | 无
+| border-bottom-left-radius | 当前元素的宽度 | 当前元素的高度 | 无
+| border-top-right-radius | 当前元素的宽度 | 当前元素的高度 | 无
+| border-top-left-radius | 当前元素的宽度 | 当前元素的高度 | 无
+
+
 ### 文本样式继承
 Web/小程序中，文本节点可以通过 div/view 节点进行直接包裹，在 div/view 节点上也可以直接设定对应文本样式。
 但是在RN中，必须通过 Text 来创建文本节点，[文本样式属性](https://reactnative.dev/docs/text-style-props)只有设置给 Text 节点才能生效。
@@ -247,10 +264,68 @@ safe-area-inset-*由四个定义了视口边缘内矩形的 top, right, bottom �
 ### 使用原子类
 
 ## 混合编写RN代码
+在编写Mpx组件时，在特定情况下（处于性能考虑等因素），可能会涉及到混合开发(在Mpx项目内编写RN组件)
 
 ### 使用RN组件
-
+在Mpx组件内引用RN组件, 需在components属性下进行引用注册。在模板中进行引用，对应组件的属性参考RN，赋值的方式按照Mpx语法进行双括号包裹，组件使用的变量与属性需要通过 REACTHOOKSEXEC方法的返回值的方式进行申明
+```javascript
+<template>
+    <view>
+        <!-- 事件的value需要使用双括号包裹 -->
+        <ScrollView onScroll="{{scrollAction}}">
+        </ScrollView>
+    </view>
+</template>
+<script>
+    import { createComponent, REACTHOOKSEXEC } from '@mpxjs/core'
+    import { ScrollView } from 'react-native-gesture-handler'
+    createComponent({
+        components: {
+            ScrollView
+        }
+        [REACTHOOKSEXEC](){
+            return {}
+        }
+    })
+</script>
+```
 ### 使用React hooks
+Mpx提供了hooks的执行机制，通过在Mpx组件内注册REACTHOOKSEXEC方法，保障RN组件的初始化执行
+
+```javascript
+<template>
+    <view>
+        <ScrollView onScroll="{{onScroll}}">
+            <View>
+                <Text>{{count}}</Text>
+            </View>
+        </ScrollView>
+    </view>
+</template>
+<script>
+import { createComponent, REACTHOOKSEXEC } from '@mpxjs/core'
+import { ScrollView } from 'react-native-gesture-handler'
+import { View, Text} from 'react-native'
+import { useState } from 'react'
+createComponent({
+    components: {
+        ScrollView,View, Text
+    },
+    [REACTHOOKSEXEC](prop) {
+        // 所有使用hooks的部分在此处进行注册与执行
+        const [count, setCount] = useState(0);
+        const onScroll = () => {
+            setCount(count + 1)
+        }
+        // 返回值用于可用于模板上
+        return {
+            count,
+            onScroll
+        }
+    }
+})
+</script>
+```
 
 ## 能力支持范围
 
@@ -862,6 +937,21 @@ text-shadow: 1rpx 3rpx 0 #2E0C02;
 ```
 
 ### 应用能力
+#### app配置
+对标参考[微信app配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html), 以下仅标注支持项或者特殊关注项，未标注的均未支持
+| 配置项 | 支持情况 | 特殊说明 |
+| ---- | ---- | ---- |
+| entryPagePath | 支持 | 无|
+| pages | 支持 | 无 |
+| tabbar | 暂未支持 | 无 |
+| networkTimeout | 支持 | 无 |
+| subpackages | 支持 | 分包在RN下暂未进行拆包处理，仅能正常打包在一起，分包能力待后续支持 |
+| usingComponents | 支持 |  |
+| vw | 支持 | 无 |
+
+#### 路由能力
+
+
 
 ### 环境API
 
