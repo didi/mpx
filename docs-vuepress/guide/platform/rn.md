@@ -80,7 +80,7 @@ RN:
 - 文本5 字体&居中未生效
 -->
 ```
-> **使用说明**
+> 备注
 > 1. 只有父级 view 节点的文本样式可以被子 text 节点继承；
 > 2. view 节点直接包裹文本实际上等同于 view>text>文本，Mpx 框架在编译时若检测到 view 节点直接包裹文本会自动添加一层 text 节点；
 > 3. 多级 text 节点可实现文本样式的继承，比如 text>text>文本 ；
@@ -147,22 +147,101 @@ RN:
 [//]: # (|background|          |)
 
 ### CSS函数
+在介绍 CSS 函数前我们先来了解一下自定义属性的概念。
+#### 自定义属性（CSS 变量）
+**自定义属性**（有时候也被称作 **CSS 变量**或者**级联变量**），带有前缀 -- 的属性名，表示的是带有值的自定义属性，比如 --example--name。
+
+通常与 var() 一起使用，由自定义属性标记设定值（带有前缀 -- 的属性名，比如： --main-color: black;），由 var() 函数来获取值（比如： color: var(--main-color);）
+> 备注
+> - 自定义属性受级联的约束，并从其父级继承其值
+> - 自定义属性名区分大小写
 #### var()
-var() 函数可以插入一个自定义属性（有时也被称为“CSS 变量”）的值，用来代替非自定义属性中值的任何部分。
-```css
-/* 代码示意 */
+var() 函数可以插入一个自定义属性（有时也被称为“CSS 变量”）的值，用来代替属性值部分。
+
+var(<custom-property-name> , <declaration-value>? )：函数的第一个参数是要替换的自定义属性的名称。函数的第二个参数是可选的，用作回退值。如果第一个参数引用的自定义属性无效，则该函数将使用第二个值。
+
+> 备注
+> - 自定义属性的回退值允许使用逗号。例如，var(--foo, red, blue) 将 red, blue 同时指定为回退值（在第一个逗号之后到函数结尾前的值都会被认为是回退值）
+> - var() 函数不能作为属性名、选择器或者其他除了属性值之外的值
+```vue
+<!-- 代码示意 -->
+<template>
+  <view class="component">
+    <view class="header">Header</view>
+    <view class="content">Content</view>
+  </view>
+</template>
+
+<style>
+  .component {
+    --content-color: #b58df1;
+    --header-color: pink;
+  }
+  .component .header {
+    background-color: var(--header-color, blue);
+  }
+  .component .text {
+    background-color: var(--content-color, black);
+  }
+</style>
+<!-- 实际效果 -->
+<!-- Header 背景色是 #b58df1 -->
+<!-- Content 背景色是 pink -->
 ```
-> 注意事项
 #### calc()
-具体处理逻辑
+calc() 函数允许在声明 CSS 属性值时执行一些计算。
+
+calc() 函数用一个表达式作为它的参数，用这个表达式的结果作为值。
+
+这个表达式采用标准操作符处理法则的简单表达式，支持加减乘除 ，乘法计算需要乘数中至少有一个是 number，除法计算要求除数（/右面的数）必须是 number。
+> 备注
+> - \+ 和 - 运算符的两边必须要有空白字符，\* 和 / 这两个运算符前后不需要空白字符，但如果考虑到统一性，仍然推荐加上空白符。
+> - 能数值化的单位都支持 calc()
+> - 百分比的计算逻辑：Todo 待补充
+>  + width height top
+>  + font-size
 ```css
 /* 代码示意 */
+
+/* property: calc(expression) */
+.test {
+    width: calc(100% - 80px);
+}
+
+/* 使用 CSS 变量嵌套使用 calc() */
+.foo {
+    --widthA: 100px;
+    --widthB: calc(var(--widthA) / 2);
+    --widthC: calc(var(--widthB) / 2);
+    width: var(--widthC);
+}
+
+.demo {
+    font-size: calc(1.5rem + 3vw);
+}
 ```
-> 注意事项
 #### env()
-具体处理逻辑
+env() CSS 函数以类似于 var() 函数和 custom properties 的方式将用户代理定义的环境变量值插入 CSS 中。
+
+区别在于，环境变量除了由用户代理定义而不是由用户定义外，还被全局作用在文档中，而自定义属性则限定在声明它们的元素中。
+
+env() 的第二个可选参数，如果环境变量不可用，该参数可让你设置备用值。
+
+**值**
+- safe-area-inset-top
+- safe-area-inset-right
+- safe-area-inset-bottom
+- safe-area-inset-left
+
+safe-area-inset-*由四个定义了视口边缘内矩形的 top, right, bottom 和 left 的环境变量组成，这样可以安全地放入内容，而不会有被非矩形的显示切断的风险。
+
+对于矩形视口，例如普通的笔记本电脑显示器，其值等于零。对于非矩形显示器（如圆形表盘，iPhoneX 屏幕），在用户代理设置的四个值形成的矩形内，所有内容均可见。
+
 ```css
 /* 代码示意 */
+.demo {
+  padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 20px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 20px);
+}
 ```
 > 注意事项
 ### 使用原子类
