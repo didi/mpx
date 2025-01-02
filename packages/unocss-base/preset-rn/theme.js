@@ -1,3 +1,5 @@
+import { platformSelect } from '../utils/index.js'
+
 export default {
   preflightRoot: [],
   letterSpacing: {
@@ -17,5 +19,10 @@ export default {
     xl: '0 20px 25px rgba(0 0 0 / 0.1)',
     '2xl': '0 25px 50px rgba(0 0 0 / 0.25)',
     inner: 'inset 0 2px 4px 0 rgba(0 0 0 / 0.05)'
+  },
+  fontFamily: {
+    sans: platformSelect({ android: 'san-serif', ios: "'system font'" }),
+    serif: platformSelect({ android: 'serif', ios: 'Georgia' }),
+    mono: platformSelect({ android: 'mono', ios: "'Courier New'" })
   }
 }
