@@ -218,6 +218,7 @@ RN环境基础组件通用属性
 | vertical                | Boolean | `false`             | 滑动方向是否为纵向                      |
 | previous-margin         | String  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
 | next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
+| scale                   | Boolean  | `false`            | 滑动时是否开启前后元素缩小,默认是缩放0.7倍, 暂不支持自定义 |
 | enable-offset           | Number  | `false`       | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 | easing-function         | String  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
 | bindchange              | eventhandle|   无          | current 改变时会触发 change 事件，event.detail = {current, source}| 
@@ -641,9 +642,10 @@ movable-view的可移动区域。
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| src                     | String  | `false`       | 图片资源地址，支持本地图片资源及 base64 格式数据，暂不支持 svg 格式 |
+| src                     | String  | `false`       | 图片资源地址及 base64 格式数据 |
 | mode                    | String  | `scaleToFill` | 图片裁剪、缩放的模式，适配微信 image 所有 mode 格式              |
-| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| enable-offset          | Boolean  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| enable-fast-image          | Boolean  | `false`   | 开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 
 事件
 
@@ -758,7 +760,7 @@ API
 
 注意事项
 
-1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
+1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
 
 #### 自定义组件
 
@@ -767,7 +769,7 @@ API
 #### 应用能力
 
 #### 环境API
-在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，可能对于某个api提供的能力会比微信小程序提供的能力少一些，以下是使用说明：
+在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用是有warn提醒)会比微信小程序提供的能力少一些，以下是使用说明：
 ##### 使用说明
 如果全量引入api-proxy这种情况下，需要如下配置
 ```javascript
@@ -790,7 +792,7 @@ externals: {
   'react-native-haptic-feedback': 'react-native-haptic-feedback'
 },
 ```
-如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到一下方法，来确定是否需要配置externals，配置参考上面示例
+如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例
 
 | api方法                                                                                                                                                                                              | 依赖的react-native三方库                        |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
@@ -838,13 +840,13 @@ import com.mkuczera.RNReactNativeHapticFeedbackPackage;
 
 修改设置,将下面的配置添加到android/settings.gradle文件中
 
-```javascript
+```
 include ':react-native-haptic-feedback'
 project(':react-native-haptic-feedback').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-haptic-feedback/android')
 ```
 react-native-reanimated在mpx和RN项目都要安装，安装好包后需要在babel.config.json文件中做如下配置，并且RN环境中使用的react-native-reanimated与mpx项目中安装的react-native-reanimated版本要一致：
 [配置参考文档](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/)
-```javascript
+```
 module.exports = {
     presets: [
       ... // don't add it here :)
@@ -883,6 +885,8 @@ webviewBridge.navigateTo({
 ```
 
 ##### invoke示例代码
+对于业务中一些特殊的方法，需要有web与RN进行交互的这种情况，基于这种情况在mpx框架内部提供了挂在方法的能力，在webview-bridge提供了invoke通信的能力，具体使用方法如下：
+
 RN环境中挂载getTime的逻辑
 ```javascript
 import mpx from '@mpxjs/core'
