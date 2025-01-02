@@ -154,7 +154,7 @@ export default function styleHelperMixin () {
               Object.assign(result, appClassMap[className])
             } else if (unoClassMap[className]) {
               Object.assign(result, unoClassMap[className])
-            } else if (this.__props[className] && isObject(this.__props[className])) {
+            } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.__props[className])
             }
