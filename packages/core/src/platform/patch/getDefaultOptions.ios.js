@@ -368,8 +368,12 @@ function usePageStatus (navigation, pageId) {
       pageStatusMap[pageId] = 'hide'
     })
     const transitionEndSubscription = navigation.addListener('transitionEnd', () => {
-      if (global.__navigationHelper.transitionEndCallback) {
-        global.__navigationHelper.transitionEndCallback()
+      if (global.__navigationHelper.transitionEndCallback?.length) {
+        global.__navigationHelper.transitionEndCallback.forEach((callback) => {
+          if (isFunction(callback)) {
+            callback()
+          }
+        })
         global.__navigationHelper.transitionEndCallback = null
       }
     })
