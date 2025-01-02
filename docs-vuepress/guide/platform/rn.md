@@ -1000,15 +1000,44 @@ text-shadow: 1rpx 3rpx 0 #2E0C02;
 | ---- | ---- | ---- |
 | entryPagePath | 支持 | 无|
 | pages | 支持 | 无 |
+| window | 子属性部分支持 | 参考下面window配置部分 |
 | tabbar | 暂未支持 | 无 |
 | networkTimeout | 支持 | 无 |
 | subpackages | 支持 | 分包在RN下暂未进行拆包处理，仅能正常打包在一起，分包能力待后续支持 |
 | usingComponents | 支持 |  |
 | vw | 支持 | 无 |
 
-#### 路由能力
+##### window配置
+app里面的window配置，参考[微信内window配置说明](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html#window)
+| 配置项 | 支持情况 | 特殊说明 |
+| ---- | ---- | ---- |
+| navigationBarBackgroundColor | 支持 | 无|
+| navigationBarTextStyle | 支持 | 无 |
+| navigationStyle | 支持 | 无 |
+| backgroundColor | 支持 | 无 |
 
+#### 页面配置
+页面配置内可配置页面级别的属性，参考[微信页面配置说明](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/page.html)
+| 配置项 | 支持情况 | 特殊说明 |
+| ---- | ---- | ---- |
+| navigationBarBackgroundColor | 支持 | 无|
+| navigationBarTextStyle | 支持 | 无 |
+| navigationStyle | 支持 | 无 |
+| backgroundColor | 支持 | 无 |
+| usingComponents | 支持 | 无 |
+| disableScroll | 不支持 | RN下默认页面不支持滚动，如需滚动需要使用可滚动的元素包裹 |
 
+#### 状态管理
+##### pinia 
+暂未支持
+##### store 
+已支持
+#### i18n
+支持
+#### 原子类能力
+开发中，暂未支持
+#### 依赖注入（Provide/Inject）
+开发中，暂未支持
 
 ### 环境API
 

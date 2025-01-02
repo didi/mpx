@@ -65,7 +65,7 @@ new MpxwebpackPlugin({
 // 项目 package.json
 {
   "script": {
-    "build:cross": "mpx-cli-service build:mp --targets=wx,ali"
+    "build:cross": "mpx-cli-service build --targets=wx,ali"
   }
 }
 ```
