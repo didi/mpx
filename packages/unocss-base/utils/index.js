@@ -75,6 +75,11 @@ export const makeGlobalStaticRules = prefix => {
   return globalKeywords.map(v => `${prefix}-${v}`)
 }
 
+export const platformSelect = (options = {}) => {
+  const platform = process.env.MPX_CURRENT_TARGET_MODE
+  return options[platform] || ''
+}
+
 export {
   genEmptyRule,
   transformEmptyRule,
