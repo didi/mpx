@@ -1,5 +1,5 @@
 import { useRef, useMemo, RefObject } from 'react'
-import { hasOwn, collectDataset } from '@mpxjs/utils'
+import { hasOwn, collectDataset, getFocusedNavigation } from '@mpxjs/utils'
 import { omit, extendObject } from './utils'
 import eventConfigMap from './event.config'
 import {
@@ -19,6 +19,8 @@ const getTouchEvent = (
   props: Props,
   config: UseInnerPropsConfig
 ) => {
+  const navigation = getFocusedNavigation()
+  const { y: navigationY = 0 } = navigation?.layout || {}
   const nativeEvent = event.nativeEvent
   const { timestamp, pageX, pageY, touches, changedTouches } = nativeEvent
   const { id } = props
@@ -49,24 +51,24 @@ const getTouchEvent = (
     target,
     detail: {
       x: pageX,
-      y: pageY
+      y: pageY - navigationY
     },
     touches: touches.map((item) => {
       return {
         identifier: item.identifier,
         pageX: item.pageX,
-        pageY: item.pageY,
-        clientX: item.locationX,
-        clientY: item.locationY
+        pageY: item.pageY - navigationY,
+        clientX: nativeEvent.screenX,
+        clientY: nativeEvent.screenY - navigationY
       }
     }),
     changedTouches: changedTouches.map((item) => {
       return {
         identifier: item.identifier,
         pageX: item.pageX,
-        pageY: item.pageY,
-        clientX: item.locationX,
-        clientY: item.locationY
+        pageY: item.pageY - navigationY,
+        clientX: nativeEvent.screenX,
+        clientY: nativeEvent.screenY - navigationY
       }
     }),
     persist: event.persist,

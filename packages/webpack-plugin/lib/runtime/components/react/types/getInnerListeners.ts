@@ -14,6 +14,8 @@ type RemoveProps = string[];
 type NativeTouchEvent = NativeSyntheticEvent<NativeEvent>
 
 interface NativeEvent {
+  screenY: any
+  screenX: any
   timestamp: number;
   pageX: number;
   pageY: number;

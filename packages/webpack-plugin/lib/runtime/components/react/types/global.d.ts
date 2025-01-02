@@ -20,6 +20,12 @@ declare module '@mpxjs/utils' {
       left: number
       right: number
     },
+    layout: {
+      x: number
+      y: number
+      width: number
+      height: number
+    },
     setOptions: (params: Record<string, any>) => void
   } | undefined
 }
