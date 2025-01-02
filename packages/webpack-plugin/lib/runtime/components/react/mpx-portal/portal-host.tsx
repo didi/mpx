@@ -77,7 +77,7 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _unmount = (key: number, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
-    if (pageId !== (curPageId ?? currentPageId)) {
+    if (pageId && pageId !== (curPageId ?? currentPageId)) { // 过滤掉获取不到pageid的情况，这样避免删不掉的情况
       return
     }
     if (manager.current) {
