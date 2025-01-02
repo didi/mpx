@@ -34,7 +34,7 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import { useEffect, useRef, useState, ReactNode, forwardRef, useContext, JSX } from 'react'
+import { createElement, useEffect, useRef, useState, ReactNode, forwardRef, useContext, JSX } from 'react'
 import {
   View,
   StyleSheet,
@@ -442,21 +442,16 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     }
   )
 
-  return (
-    <View {...innerProps}>
-      {loading && <Loading alone={!children} />}
+  return createElement(View, innerProps, loading && createElement(Loading, { alone: !children }),
+    wrapChildren(
+      props,
       {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )
+        hasVarDec,
+        varContext: varContextRef.current,
+        textStyle,
+        textProps
       }
-    </View>
+    )
   )
 })
 

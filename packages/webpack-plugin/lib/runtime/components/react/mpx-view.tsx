@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX } from 'react'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks from './useAnimationHooks'
@@ -13,6 +13,7 @@ import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject } from './utils'
+import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
@@ -716,7 +717,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
-    throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
   const nodeRef = useRef(null)
@@ -774,13 +775,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableAnimation = enableAnimation || !!animation
   const enableAnimationRef = useRef(enableAnimation)
   if (enableAnimationRef.current !== enableAnimation) {
-    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
-  const finalStyle = enableAnimation
-    ? useAnimationHooks({
-      animation,
-      style: viewStyle
-    })
+  const finalStyle = enableAnimationRef.current
+    ? [viewStyle, useAnimationHooks({
+        animation,
+        style: viewStyle
+      })]
     : viewStyle
   const innerProps = useInnerProps(
     props,
@@ -814,17 +815,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     innerStyle,
     enableFastImage
   })
+
   return enableAnimation
-    ? (<Animated.View
-      {...innerProps}
-    >
-      {childNode}
-    </Animated.View>)
-    : (<View
-      {...innerProps}
-    >
-      {childNode}
-    </View>)
+    ? createElement(Animated.View, innerProps, childNode)
+    : createElement(View, innerProps, childNode)
 })
 
 _View.displayName = 'MpxView'

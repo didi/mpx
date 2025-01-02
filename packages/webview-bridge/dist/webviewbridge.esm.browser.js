@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.9.53
+ * mpxjs webview bridge v2.9.58
  * (c) 2024 @mpxjs team
  * @license Apache
  */
@@ -44,7 +44,7 @@ function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
 }
 
 let sdkReady;
-const SDK_URL_MAP = {
+const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
   },
@@ -59,9 +59,8 @@ const SDK_URL_MAP = {
   },
   tt: {
     url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
-  },
-  ...window.sdkUrlMap
-};
+  }
+}, window.sdkUrlMap);
 function getMpxWebViewId () {
   const href = location.href;
   const reg = /mpx_webview_id=(\d+)/g;
@@ -141,20 +140,12 @@ const webviewBridge = {
   }
 };
 
-function filterData (data) {
-  if (Object.prototype.toString.call(data) !== '[object Object]') {
-    return data
+function postMessage (type, ...extraData) {
+  if (type === 'invoke') {
+    type = extraData[0];
+    extraData = extraData.slice(1);
   }
-  const newData = {};
-  for (const item in data) {
-    if (typeof data[item] !== 'function') {
-      newData[item] = data[item];
-    }
-  }
-  return newData
-}
-
-function postMessage (type, data = {}) {
+  const data = extraData[0];
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId;
     callbacks[currentCallbackId] = (err, res) => {
@@ -170,7 +161,7 @@ function postMessage (type, data = {}) {
     const postParams = {
       type,
       callbackId,
-      payload: filterData(data)
+      args: extraData
     };
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid;
@@ -178,7 +169,7 @@ function postMessage (type, data = {}) {
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams));
     } else {
-      window.parent.postMessage && window.parent.postMessage(postParams, '*');
+      window.parent.postMessage && window.parent.postMessage(JSON.stringify(postParams), '*');
     }
   } else {
     data({
@@ -317,7 +308,8 @@ const getWebviewApi = () => {
       'getEnv',
       'postMessage',
       'getLoadError',
-      'getLocation'
+      'getLocation',
+      'invoke'
     ],
     tt: []
   };
