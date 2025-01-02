@@ -40,12 +40,12 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.tsx', '**/*.ts'],
+      files: ['**/*.tsx', '**/*.ts', '**/*.jsx'],
       parser: '@typescript-eslint/parser',
       extends: [
         'standard',
         'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/recommended'
       ],
       plugins: ['@typescript-eslint'],
       rules: {
@@ -56,7 +56,7 @@ module.exports = {
         '@typescript-eslint/no-empty-interface': 0,
         '@typescript-eslint/no-unused-vars': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
-        camelcase: 0,
+        camelcase: 0
       }
     }
   ]

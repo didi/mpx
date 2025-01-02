@@ -69,7 +69,7 @@ const showModal = function (options = {}) {
       flex: 1,
       textAlign: 'center',
       paddingTop: width * 0.04,
-      paddingBottom: width * 0.04,
+      paddingBottom: width * 0.04
     },
     modalButton: {
       width: '100%',
@@ -79,15 +79,14 @@ const showModal = function (options = {}) {
     cancelStyle: {
       borderRightWidth: StyleSheet.hairlineWidth,
       borderRightColor: 'rgba(0,0,0,0.2)',
-      borderStyle: 'solid',
+      borderStyle: 'solid'
     }
   })
   let modalKey
-  let ModalView
-  let modalTitle = []
-  let modalContent = []
-  let editableContent = []
-  let modalButton = [{
+  const modalTitle = []
+  const modalContent = []
+  const editableContent = []
+  const modalButton = [{
     text: confirmText,
     type: 'confirm',
     color: confirmColor
@@ -133,7 +132,7 @@ const showModal = function (options = {}) {
       color: cancelColor
     })
   }
-  ModalView = <View style={styles.modalTask}>
+  const ModalView = <View style={styles.modalTask}>
     <View style={styles.modalContent}>
       {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
       {modalContent.map((item, index) => <ScrollView key={index} style={styles.contentBox}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
@@ -151,7 +150,7 @@ const showModal = function (options = {}) {
         paddingRight: 10
       }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
       <View style={styles.modalBtnBox}>
-        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[ styles.modalBtn, item.style ]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
+        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
       </View>
     </View>
   </View>

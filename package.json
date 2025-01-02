@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "lerna:publish": "lerna publish from-package --yes",
-    "lint": "eslint --ext .js,.ts,.tsx packages/",
-    "fix": "eslint --fix --ext .js,.ts,.tsx packages/",
+    "lint": "eslint --ext .js,.ts,.tsx,.jsx packages/",
+    "fix": "eslint --fix --ext .js,.ts,.tsx,.jsx packages/",
     "lint:js": "eslint --ext .js packages/",
     "test": "jest",
     "release": "npm run lint && npm run test && npx lerna version",
