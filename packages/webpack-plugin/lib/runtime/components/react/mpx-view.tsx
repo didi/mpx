@@ -551,7 +551,7 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
       : undefined)
 }
 
-function WrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
+function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -660,7 +660,8 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? WrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
