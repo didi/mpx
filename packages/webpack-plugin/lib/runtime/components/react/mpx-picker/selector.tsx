@@ -1,13 +1,14 @@
 /**
  * 普通选择器，range可以是Array<Obj> 也可以是Array
  */
-import { Text, View } from 'react-native'
+import { Text, TouchableWithoutFeedback, View } from 'react-native'
 import React, { forwardRef, useRef } from 'react'
+import { SelectorProps, Obj } from './type'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
-import { SelectorProps, Obj } from './type'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { extendObject } from '../utils'
+import { usePopup } from '../mpx-popup'
 
 type RangeItemType = Obj | number | string
 
@@ -18,6 +19,8 @@ const formatValue = (value: number | number[]) => {
   const _value = Array.isArray(value) ? value[0] : value
   return +_value
 }
+
+const { open, remove } = usePopup()
 
 const _SelectorPicker = forwardRef<
     HandlerRef<View, SelectorProps>,
@@ -49,9 +52,8 @@ const _SelectorPicker = forwardRef<
     height: 300
   })
 
-  return (disabled
-    ? <></>
-    : <MpxPickerView
+  const renderPickerView = () => (
+      <MpxPickerView
         style={wrapperStyle}
         indicator-style="height: 40"
         value={[value]}
@@ -64,6 +66,17 @@ const _SelectorPicker = forwardRef<
           ))}
         </MpxPickerViewColumn>
       </MpxPickerView>
+  )
+
+  const openPicker = () => {
+    console.log('openPicker 被触发')
+    open(renderPickerView())
+  }
+
+  return (
+    <TouchableWithoutFeedback onPress={openPicker}>
+      {children}
+    </TouchableWithoutFeedback>
   )
 })
 
