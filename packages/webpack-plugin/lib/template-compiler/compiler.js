@@ -1151,6 +1151,52 @@ function getModelConfig (el, match) {
   }
 }
 
+function processEventWeb (el) {
+  const eventConfigMap = {}
+  el.attrsList.forEach(function ({ name, value }) {
+    const parsedEvent = config[mode].event.parseEvent(name)
+    if (parsedEvent) {
+      const type = config[mode].event.getEvent(
+        parsedEvent.eventName,
+        parsedEvent.prefix
+      )
+      const parsedFunc = parseFuncStr(value);
+      if (parsedFunc) {
+        if (!eventConfigMap[type]) {
+          eventConfigMap[type] = {
+            configs: []
+          }
+        }
+        eventConfigMap[type].configs.push(
+          Object.assign({ name, value }, parsedFunc)
+        )
+      }
+    }
+  })
+
+  // let wrapper
+  for (const type in eventConfigMap) {
+    const { configs } = eventConfigMap[type];
+    if (!configs.length) continue;
+    configs.forEach(({ name }) => {
+      if (name) {
+        // 清空原始事件绑定
+        let has;
+        do {
+          has = getAndRemoveAttr(el, name).has;
+        } while (has);
+      }
+    });
+    const value = `{{(e)=>this.__invokeHandler(e, [${configs.map((item) => item.expStr)}])}}`;
+    addAttrs(el, [
+      {
+        name: type,
+        value
+      }
+    ])
+  }
+}
+
 function processEventReact (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
@@ -2633,6 +2679,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIfWeb(el)
     processScoped(el)
+    processEventWeb(el)
     // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
     processComponentGenericsWeb(el, options, meta)

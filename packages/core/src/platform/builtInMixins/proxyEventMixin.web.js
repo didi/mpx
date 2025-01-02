@@ -1,4 +1,5 @@
-import { setByPath, extend, parseDataset } from '@mpxjs/utils'
+import { setByPath, error, extend, parseDataset } from '@mpxjs/utils'
+import Mpx from '../../index'
 
 export default function proxyEventMixin () {
   return {
@@ -26,20 +27,51 @@ export default function proxyEventMixin () {
           : originValue
         setByPath(this, expr, value)
       },
-      __invokeHandler (eventName, $event) {
-        const newEvent = extend({}, $event, {
-          target: extend({}, $event.target, {
-            dataset: parseDataset($event.target.dataset)
-          }),
-          currentTarget: extend({}, $event.currentTarget, {
-            dataset: parseDataset($event.currentTarget.dataset)
-          })
-        })
-        const handler = this[eventName]
-        if (handler && typeof handler === 'function') {
-          handler.call(this, newEvent)
-        }
-      }
+      // __invokeHandler (eventName, $event) {
+      //   const newEvent = extend({}, $event, {
+      //     target: extend({}, $event.target, {
+      //       dataset: parseDataset($event.target.dataset)
+      //     }),
+      //     currentTarget: extend({}, $event.currentTarget, {
+      //       dataset: parseDataset($event.currentTarget.dataset)
+      //     })
+      //   })
+      //   const handler = this[eventName]
+      //   if (handler && typeof handler === 'function') {
+      //     handler.call(this, newEvent)
+      //   }
+      // }
+        __invoke (rawEvent, eventConfig = []) {
+            if (typeof Mpx.config.proxyEventHandler === 'function') {
+              try {
+                Mpx.config.proxyEventHandler(rawEvent)
+              } catch (e) {
+              }
+            }
+            const location = this.__mpxProxy.options.mpxFileResource
+
+            let returnedValue
+            eventConfig.forEach((item) => {
+              const callbackName = item[0]
+              if (callbackName) {
+                const params = item.length > 1
+                  ? item.slice(1).map(item => {
+                    if (item === '__mpx_event__') {
+                      return rawEvent
+                    } else {
+                      return item
+                    }
+                  })
+                  : [rawEvent]
+                if (typeof this[callbackName] === 'function') {
+                  returnedValue = this[callbackName].apply(this, params)
+                } else {
+                  error(`Instance property [${callbackName}] is not function, please check.`, location)
+                }
+              }
+            })
+            return returnedValue
+          }
     }
   }
 }
