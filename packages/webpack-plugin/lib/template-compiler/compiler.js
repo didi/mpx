@@ -2713,14 +2713,14 @@ function closeElement (el, options, meta) {
   if (!isTemplate) {
     if (!isNative) {
       postProcessComponentIs(el, (child) => {
-        if (!hasVirtualHost && mode === 'ali') {
+        if (!getComponentInfo(el).hasVirtualHost && mode === 'ali') {
           postProcessAliComponentRootView(child, options)
         } else {
           postProcessIf(child)
         }
       })
     }
-    if (isComponentNode(el) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
+    if (isComponentNode(el) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }
