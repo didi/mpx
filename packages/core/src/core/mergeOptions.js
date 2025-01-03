@@ -172,7 +172,7 @@ function extractObservers (options) {
                 val = [val]
                 old = [old]
               }
-              cb.call(this, ...val, ...old)
+              cb.call(this, val, old)
             }
           },
           deep,
