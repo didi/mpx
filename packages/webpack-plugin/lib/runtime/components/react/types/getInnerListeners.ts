@@ -20,8 +20,6 @@ type NavigationLayout = MutableRefObject<{
   height: number;
 }>
 interface NativeEvent {
-  screenY: any
-  screenX: any
   timestamp: number;
   pageX: number;
   pageY: number;
