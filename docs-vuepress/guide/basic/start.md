@@ -54,7 +54,7 @@ npm run serve
 选项:
 
   --targets    编译目标(默认值: wx)
-  --mode       指定环境模式 (默认值：production)
+  --mode       指定环境模式 development | production (默认值：production)
   --env        自定义 __mpx_env__
   --watch      监听文件变化
   --report     生成包分析报告
@@ -66,16 +66,18 @@ mpx-cli-service build --targets=wx,ali
 
 **目前支持的平台**
 
-| 平台   | target |
-| ------ | ------ |
-| 微信   | wx     |
-| 阿里   | ali    |
-| 百度   | swan   |
-| QQ     | qq     |
-| 头条   | tt     |
-| 浏览器 | web    |
-| react-native(安卓) | android    |
-| react-native(IOS) | ios    |
+| 平台  | target  |
+|-----|---------|
+| 微信  | wx      |
+| 阿里  | ali     |
+| 百度  | swan    |
+| QQ  | qq      |
+| 头条  | tt      |
+| 浏览器 | web     |
+| 安卓  | android |
+| iOS | ios     |
+| 鸿蒙  | harmony |
+
 
 #### serve
 

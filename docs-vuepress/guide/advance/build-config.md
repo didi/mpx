@@ -90,9 +90,9 @@ module.exports = {
 
 可根据构建平台和开发环境进行选择性的配置，在构建过程中暴露出来的环境变量包括：
 
-- `MPX_CLI_MODE`: 'mp' | 'web'
+- `MPX_CLI_MODE`: 'mp' | 'web' | 'rn'
 - `NODE_ENV`：'development' | 'production'
-- `MPX_CURRENT_TARGET_MODE`: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'dd' | 'web'
+- `MPX_CURRENT_TARGET_MODE`: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'dd' | 'web' | 'ios' | 'android' | 'harmony'
 - `MPX_CURRENT_TARGET_ENV` : 'development' | 'production'
 
 ```javascript
