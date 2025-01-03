@@ -551,7 +551,7 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
       : undefined)
 }
 
-function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
+function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -660,7 +660,8 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? wrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
@@ -777,11 +778,14 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   if (enableAnimationRef.current !== enableAnimation) {
     error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
+
   const finalStyle = enableAnimationRef.current
-    ? [viewStyle, useAnimationHooks({
-        animation,
-        style: viewStyle
-      })]
+    ? [viewStyle,
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        useAnimationHooks({
+          animation,
+          style: viewStyle
+        })]
     : viewStyle
   const innerProps = useInnerProps(
     props,
