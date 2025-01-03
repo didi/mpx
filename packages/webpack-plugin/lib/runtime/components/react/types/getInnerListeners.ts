@@ -13,12 +13,7 @@ type RemoveProps = string[];
 
 type NativeTouchEvent = NativeSyntheticEvent<NativeEvent>
 
-type NavigationLayout = MutableRefObject<{
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}>
+type Navigation = Record<string, any>
 interface NativeEvent {
   timestamp: number;
   pageX: number;
@@ -68,5 +63,5 @@ export {
   LayoutRef,
   SetTimeoutReturnType,
   DataSetType,
-  NavigationLayout
+  Navigation
 }
