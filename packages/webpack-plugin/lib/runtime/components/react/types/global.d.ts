@@ -35,5 +35,5 @@ declare let global: {
 } & Record<string, any>
 
 declare module '@react-navigation/native' {
-   export function useNavigation (): any
+   export function useNavigation (): Record<string, any>
 }

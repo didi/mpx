@@ -1,4 +1,4 @@
-import { useRef, useMemo, RefObject, useEffect } from 'react'
+import { useRef, useMemo, RefObject } from 'react'
 import { hasOwn, collectDataset } from '@mpxjs/utils'
 import { useNavigation } from '@react-navigation/native'
 import { omit, extendObject } from './utils'
