@@ -34,11 +34,11 @@ function resolvePath (relative, base) {
   return stack.join('/')
 }
 
-let toPending = false
+// let toPending = false
 function navigateTo (options = {}) {
-  if (toPending) {
-    return
-  }
+  // if (toPending) {
+  //   return
+  // }
   toPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
@@ -56,16 +56,16 @@ function navigateTo (options = {}) {
       failHandle(res, options.fail, options.complete)
     }
     navigationHelper.transitionEndCallback = () => {
-      toPending = false
+      // toPending = false
     }
   }
 }
-let redirectPending = false
+// let redirectPending = false
 function redirectTo (options = {}) {
   if (redirectPending) {
     return
   }
-  redirectPending = true
+  // redirectPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -82,7 +82,7 @@ function redirectTo (options = {}) {
       failHandle(res, options.fail, options.complete)
     }
     navigationHelper.transitionEndCallback = () => {
-      redirectPending = false
+      // redirectPending = false
     }
   }
 }
