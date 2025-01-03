@@ -1,9 +1,10 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 
@@ -18,8 +19,10 @@ export const HIDDEN_STYLE = {
   opacity: 0
 }
 
-const varDecRegExp = /^--.*/
+const varDecRegExp = /^--/
 const varUseRegExp = /var\(/
+const unoVarDecRegExp = /^--un-/
+const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
 const envUseRegExp = /env\(/
 
@@ -30,14 +33,13 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-left': 'left'
 }
 
-function getSafeAreaInset (name: string) {
-  const navigation = getFocusedNavigation()
+function getSafeAreaInset (name: string, navigation: Record<string, any>) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
 }
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
-  const shallowCopy: any = Object.assign({}, obj)
+  const shallowCopy: any = extendObject({}, obj)
   for (let i = 0; i < fields.length; i += 1) {
     const key = fields[i]
     delete shallowCopy[key]
@@ -77,7 +79,7 @@ export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
     const [k, v, ...rest] = style.split(':')
     if (rest.length || !v || !k) return styleObj
     const key = k.trim().replace(/-./g, c => c.substring(1).toUpperCase())
-    return Object.assign(styleObj, { [key]: global.__formatValue(v.trim()) })
+    return extendObject(styleObj, { [key]: global.__formatValue(v.trim()) })
   }, {})
 }
 
@@ -230,7 +232,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>) {
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any>) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
@@ -238,7 +240,7 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
       parsed.forEach(({ start, end, args }) => {
         const name = args[0]
         const fallback = args[1] || ''
-        const value = '' + (getSafeAreaInset(name) ?? global.__formatValue(fallback))
+        const value = '' + (getSafeAreaInset(name, navigation) ?? global.__formatValue(fallback))
         replaced.replace(start, end - 1, value)
       })
       target[key] = global.__formatValue(replaced.source())
@@ -286,20 +288,27 @@ interface TransformStyleConfig {
 
 export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
+  const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
+  const normalStyleRef = useRef<Record<string, any>>({})
+  const normalStyleChangedRef = useRef(false)
   let hasVarDec = false
   let hasVarUse = false
   let hasSelfPercent = false
   const varKeyPaths: Array<Array<string>> = []
+  const unoVarKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
   const calcKeyPaths: Array<Array<string>> = []
   const envKeyPaths: Array<Array<string>> = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
+  const navigation = useNavigation()
 
   function varVisitor ({ key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
-      if (varDecRegExp.test(key)) {
+      if (unoVarDecRegExp.test(key)) {
+        unoVarStyle[key] = value
+      } else if (varDecRegExp.test(key)) {
         hasVarDec = true
         varStyle[key] = value
       } else {
@@ -308,25 +317,32 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       }
     }
     // 对于var定义中使用的var无需替换值，可以通过resolveVar递归解析出值
-    if (!varDecRegExp.test(key) && varUseRegExp.test(value)) {
-      hasVarUse = true
-      varKeyPaths.push(keyPath.slice())
+    if (!varDecRegExp.test(key)) {
+      // 一般情况下一个样式属性中不会混用unocss var和普通css var，可分开进行互斥处理
+      if (unoVarUseRegExp.test(value)) {
+        unoVarKeyPaths.push(keyPath.slice())
+      } else if (varUseRegExp.test(value)) {
+        hasVarUse = true
+        varKeyPaths.push(keyPath.slice())
+      }
     }
   }
 
-  // traverse var
+  // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
+
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
   if (enableVarRef.current !== enableVar) {
     error('css variable use/declare should be stable in the component lifecycle, or you can set [enable-var] with true.')
   }
-  // apply var
+  // apply css var
   const varContextRef = useRef({})
   if (enableVarRef.current) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const varContext = useContext(VarContext)
-    const newVarContext = Object.assign({}, varContext, externalVarContext, varStyle)
+    const newVarContext = extendObject({}, varContext, externalVarContext, varStyle)
     // 缓存比较newVarContext是否发生变化
     if (diffAndCloneA(varContextRef.current, newVarContext).diff) {
       varContextRef.current = newVarContext
@@ -334,70 +350,86 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     transformVar(normalStyle, varKeyPaths, varContextRef.current)
   }
 
-  function envVisitor ({ value, keyPath }: VisitorArg) {
-    if (envUseRegExp.test(value)) {
-      envKeyPaths.push(keyPath.slice())
-    }
+  // apply unocss var
+  if (unoVarKeyPaths.length) {
+    transformVar(normalStyle, unoVarKeyPaths, unoVarStyle)
   }
 
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
-    if (calcUseRegExp.test(value)) {
-      calcKeyPaths.push(keyPath.slice())
-    }
+  const { clone, diff } = diffAndCloneA(normalStyle, normalStyleRef.current)
+  if (diff) {
+    normalStyleRef.current = clone
+    normalStyleChangedRef.current = !normalStyleChangedRef.current
   }
 
-  function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
-      hasSelfPercent = true
-      percentKeyPaths.push(keyPath.slice())
-    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
-      percentKeyPaths.push(keyPath.slice())
-    }
-  }
-
-  // traverse env & calc & percent
-  traverseStyle(normalStyle, [envVisitor, percentVisitor, calcVisitor])
-
-  const percentConfig = {
-    width,
-    height,
-    fontSize: normalStyle.fontSize,
-    parentWidth,
-    parentHeight,
-    parentFontSize
-  }
-
-  // apply env
-  transformEnv(normalStyle, envKeyPaths)
-  // apply percent
-  transformPercent(normalStyle, percentKeyPaths, percentConfig)
-  // apply calc
-  transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
-    if (PERCENT_REGEX.test(value)) {
-      const resolved = resolvePercent(value, key, percentConfig)
-      return typeof resolved === 'number' ? resolved : 0
-    } else {
-      const formatted = global.__formatValue(value)
-      if (typeof formatted === 'number') {
-        return formatted
-      } else {
-        warn('calc() only support number, px, rpx, % temporarily.')
-        return 0
+  const memoResult = useMemo(() => {
+    // transform can be memoized
+    function envVisitor ({ value, keyPath }: VisitorArg) {
+      if (envUseRegExp.test(value)) {
+        envKeyPaths.push(keyPath.slice())
       }
     }
-  })
-  // transform number enum stringify
-  transformStringify(normalStyle)
 
-  return {
-    normalStyle,
-    hasSelfPercent,
+    function calcVisitor ({ value, keyPath }: VisitorArg) {
+      if (calcUseRegExp.test(value)) {
+        calcKeyPaths.push(keyPath.slice())
+      }
+    }
+
+    function percentVisitor ({ key, value, keyPath }: VisitorArg) {
+      if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+        hasSelfPercent = true
+        percentKeyPaths.push(keyPath.slice())
+      } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+        percentKeyPaths.push(keyPath.slice())
+      }
+    }
+
+    // traverse env & calc & percent
+    traverseStyle(normalStyle, [envVisitor, percentVisitor, calcVisitor])
+
+    const percentConfig = {
+      width,
+      height,
+      fontSize: normalStyle.fontSize,
+      parentWidth,
+      parentHeight,
+      parentFontSize
+    }
+
+    // apply env
+    transformEnv(normalStyle, envKeyPaths, navigation)
+    // apply percent
+    transformPercent(normalStyle, percentKeyPaths, percentConfig)
+    // apply calc
+    transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
+      if (PERCENT_REGEX.test(value)) {
+        const resolved = resolvePercent(value, key, percentConfig)
+        return typeof resolved === 'number' ? resolved : 0
+      } else {
+        const formatted = global.__formatValue(value)
+        if (typeof formatted === 'number') {
+          return formatted
+        } else {
+          warn('calc() only support number, px, rpx, % temporarily.')
+          return 0
+        }
+      }
+    })
+    // transform number enum stringify
+    transformStringify(normalStyle)
+
+    return {
+      normalStyle,
+      hasSelfPercent
+    }
+  }, [normalStyleChangedRef.current, width, height, parentWidth, parentHeight, parentFontSize])
+
+  return extendObject({
     hasVarDec,
-    enableVarRef,
     varContextRef,
     setWidth,
     setHeight
-  }
+  }, memoResult)
 }
 
 export interface VisitorArg {
@@ -564,8 +596,8 @@ export const useStableCallback = <T extends AnyFunc | null | undefined> (
   )
 }
 
-export const usePrevious = <T, > (value: T): T | undefined => {
-  const ref = useRef<T | undefined>(undefined)
+export function usePrevious<T> (value: T): T | undefined {
+  const ref = useRef<T | undefined>()
   const prev = ref.current
   ref.current = value
   return prev

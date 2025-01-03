@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, parseUrlQuery, getFocusedNavigation, hasOwn, extend } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, extend } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -96,14 +96,10 @@ export default function createApp (option, config = {}) {
     })
 
     if (!global.__mpxAppLaunched) {
-      const parsed = Mpx.config.rnConfig.parseAppProps?.(props) || {}
-      if (parsed.url) {
-        const { path, queryObj } = parseUrlQuery(parsed.url)
-        Object.assign(initialRouteRef.current, {
-          initialRouteName: path.startsWith('/') ? path.slice(1) : path,
-          initialParams: queryObj
-        })
-      }
+      const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
+      initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
+      initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
+
       global.__mpxAppOnLaunch = (navigation) => {
         global.__mpxAppLaunched = true
         const state = navigation.getState()
@@ -156,7 +152,7 @@ export default function createApp (option, config = {}) {
           if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
             global.__mpxPageStatusMap[navigation.pageId] = 'show'
           }
-        } else if (currentState === 'inactive') {
+        } else if (currentState === 'inactive' || currentState === 'background') {
           global.__mpxAppCbs.hide.forEach((cb) => {
             cb()
           })
@@ -187,11 +183,11 @@ export default function createApp (option, config = {}) {
     const { initialRouteName, initialParams } = initialRouteRef.current
     const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
     const navScreenOpts = {
-      gestureEnabled: true,
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      headerMode: 'float'
+      // 安卓上会出现初始化时闪现导航条的问题
+      headerShown: false
     }
     if (headerBackImageProps) {
       navScreenOpts.headerBackImage = () => {
