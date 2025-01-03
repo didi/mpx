@@ -39,7 +39,7 @@ function navigateTo (options = {}) {
   // if (toPending) {
   //   return
   // }
-  toPending = true
+  // toPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -62,9 +62,9 @@ function navigateTo (options = {}) {
 }
 // let redirectPending = false
 function redirectTo (options = {}) {
-  if (redirectPending) {
-    return
-  }
+  // if (redirectPending) {
+  //   return
+  // }
   // redirectPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
@@ -86,12 +86,12 @@ function redirectTo (options = {}) {
     }
   }
 }
-let backPending = false
+// let backPending = false
 function navigateBack (options = {}) {
-  if (backPending) {
-    return
-  }
-  backPending = true
+  // if (backPending) {
+  //   return
+  // }
+  // backPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -99,7 +99,7 @@ function navigateBack (options = {}) {
     const routeLength = navigation.getState().routes.length
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
-        backPending = false
+        // backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       })
@@ -115,16 +115,16 @@ function navigateBack (options = {}) {
       }
     }
     navigationHelper.transitionEndCallback = () => {
-      backPending = false
+      // backPending = false
     }
   }
 }
-let reLaunchPending = false
+// let reLaunchPending = false
 function reLaunch (options = {}) {
-  if (reLaunchPending) {
-    return
-  }
-  reLaunchPending = true
+  // if (reLaunchPending) {
+  //   return
+  // }
+  // reLaunchPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -149,7 +149,7 @@ function reLaunch (options = {}) {
       failHandle(res, options.fail, options.complete)
     }
     navigationHelper.transitionEndCallback = () => {
-      reLaunchPending = false
+      // reLaunchPending = false
     }
   }
 }
