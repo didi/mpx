@@ -21,14 +21,21 @@ import {
   placeholderModifier
 } from '@unocss/preset-wind/variants'
 
-const wrapVariant = function (variant) {
+const wrapVariant = function (variant = {}) {
   return function (raw) {
     const ctx = {
       rawSelector: raw,
       theme: this.config,
       generator: this
     }
-    const { match } = variant
+    let match
+    if (typeof variant === 'function') {
+      match = variant
+    } else if (variant.match) {
+      match = variant.match
+    } else {
+      return
+    }
     if (match(raw, ctx)) {
       this._mpx2rnUnsuportedRules = this._mpx2rnUnsuportedRules || []
       this._mpx2rnUnsuportedRules.push(raw)
