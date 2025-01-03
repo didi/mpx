@@ -117,11 +117,7 @@ function handleEmitEvent (
     if (propsRef.current[event]) {
       const match = /^(catch|capture-catch):?(.*?)(?:\.(.*))?$/.exec(event)
       if (match) {
-        const eventType = match[2]
-        if ((eventType === 'tap' && type === 'tap') ||
-            (eventType.startsWith('touch') && type === eventType)) {
-          oe.stopPropagation()
-        }
+        oe.stopPropagation()
       }
       propsRef.current[event](
         getTouchEvent(type, oe, propsRef.current, config)
