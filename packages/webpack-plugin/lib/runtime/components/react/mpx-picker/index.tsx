@@ -1,16 +1,18 @@
-import { View } from 'react-native'
-import { PickerValue } from '@ant-design/react-native'
 import React, { forwardRef, useRef, useContext, useState, useEffect } from 'react'
+import { StyleSheet, Text, TouchableHighlight, View } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import Selector from './selector'
-import TimeSelector from './time'
-import DateSelector from './date'
-import MultiSelector from './multiSelector'
-import RegionSelector from './region'
-import { PickerProps, EventType, ValueType } from './type'
+import PickerSelector from './selector'
+import PickerMultiSelector from './multiSelector'
+import PickerTime from './time'
+import PickerDate from './date'
+import PickerRegion from './region'
 import { FormContext, FormFieldValue } from '../context'
+import useNodesRef, { HandlerRef } from '../useNodesRef'
+import useInnerProps, { getCustomEvent } from '../getInnerListeners'
+import { EventType, PickerMode, PickerProps, PickerValue, ValueType } from './type'
+import { extendObject } from '../utils'
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler'
+import { usePopup } from '../mpx-popup'
 
 /**
  * ✔ mode
@@ -31,148 +33,188 @@ import { FormContext, FormFieldValue } from '../context'
  * ✘ bindcolumnchange
  */
 
-const _Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>((props: PickerProps, ref): React.JSX.Element => {
-  const { mode = 'selector', value, bindcancel, bindchange, children, bindcolumnchange, style } = props
-
-  const [pickerValue, setPickerValue] = useState(value as ValueType)
-  console.log('[mpx-picker], render ---> value=', value)
-
-  const innerLayout = useRef({})
-  const nodeRef = useRef(null)
-  useNodesRef<View, PickerProps>(props, ref, nodeRef, {
-    style
-  })
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef
-  }, [], { layoutRef: innerLayout })
-
-  const defaultValues = {
-    selector: 0,
-    multiSelector: [0],
-    time: props.start,
-    date: props.start,
-    region: undefined
-  }
-
-  useEffect(() => {
-    setPickerValue(value as ValueType)
-  }, [value])
-
-  const getValue = () => {
-    return pickerValue
-  }
-
-  const resetValue = () => {
-    type curMode = keyof typeof defaultValues
-    const defalutValue = (defaultValues[mode as curMode] !== undefined ? defaultValues[mode as curMode] : value) as ValueType
-    setPickerValue(defalutValue)
-  }
-
-  // form 表单组件事件
-  const formContext = useContext(FormContext)
-  let formValuesMap: Map<string, FormFieldValue> | undefined
-  if (formContext) {
-    formValuesMap = formContext.formValuesMap
-  }
-  if (formValuesMap) {
-    if (!props.name) {
-      warn('If a form component is used, the name attribute is required.')
-    } else {
-      formValuesMap.set(props.name, { getValue, resetValue })
-    }
-  }
-  useEffect(() => {
-    return () => {
-      if (formValuesMap && props.name) {
-        formValuesMap.delete(props.name)
-      }
-    }
-  }, [])
-
-  const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
-    innerLayout.current = layout.current
-  }
-
-  // confirm 确认按钮
-  const onChange = (e: EventType) => {
-    const { value } = e.detail
-    console.log('[mpx-picker], onChange ---> value=', value)
-    setTimeout(() => {
-      setPickerValue(value)
-    }, 0)
-  }
-
-  const columnChange = (value: PickerValue[], index: number) => {
-    // type: "columnchange", detail: {column: 1, value: 2}
-    const eventData = getCustomEvent('columnchange', {}, { detail: { column: index, value }, layoutRef: innerLayout })
-    bindcolumnchange?.(eventData)
-  }
-
-  const onConfirm = () => {
-    const eventData = getCustomEvent('change', {}, { detail: { value: pickerValue }, layoutRef: innerLayout })
-    bindchange?.(eventData)
-  }
-
-  const commonProps = {
-    ...innerProps,
-    mode,
-    children,
-    bindchange: onChange,
-    bindcolumnchange: columnChange,
-    bindcancel,
-    getInnerLayout
-  }
-
-  const selectorProps = {
-    ...commonProps,
-    value: pickerValue as number,
-    range: props.range,
-    'range-key': props['range-key']
-  }
-
-  const multiProps = {
-    ...commonProps,
-    value: pickerValue as Array<number>,
-    range: props.range,
-    'range-key': props['range-key']
-  }
-
-  const timeProps = {
-    ...commonProps,
-    value: pickerValue as string,
-    start: props.start,
-    end: props.end
-  }
-
-  const dateProps = {
-    ...commonProps,
-    value: pickerValue as string,
-    start: props.start,
-    end: props.end,
-    fields: props.fields || 'day'
-  }
-
-  const regionProps = {
-    ...commonProps,
-    value: pickerValue as Array<string>,
-    level: props.level || 'region'
-  }
-
-  if (mode === 'selector') {
-    return <Selector {...selectorProps}></Selector>
-  } else if (mode === 'multiSelector') {
-    return <MultiSelector {...multiProps}></MultiSelector>
-  } else if (mode === 'time') {
-    return <TimeSelector {...timeProps}></TimeSelector>
-  } else if (mode === 'date') {
-    return <DateSelector {...dateProps}></DateSelector>
-  } else if (mode === 'region') {
-    return <RegionSelector {...regionProps}></RegionSelector>
-  } else {
-    return <View>只支持selector, multiSelector, time, date, region 这些类型</View>
+const styles = StyleSheet.create({
+  headerItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40
+  },
+  header: {
+    height: 45,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eeeeee'
+  },
+  cancelText: {
+    color: '#7f7f7f',
+    fontSize: 17,
+    textAlign: 'center'
+  },
+  confirmText: {
+    color: '#5dc06f',
+    fontSize: 17,
+    textAlign: 'center'
   }
 })
 
-_Picker.displayName = 'mpx-picker'
+const pickerModalMap: Record<PickerMode, React.ComponentType<PickerProps>> = {
+  [PickerMode.SELECTOR]: PickerSelector,
+  [PickerMode.MULTI_SELECTOR]: PickerMultiSelector,
+  [PickerMode.TIME]: PickerTime,
+  [PickerMode.DATE]: PickerDate,
+  [PickerMode.REGION]: PickerRegion
+}
 
-export default _Picker
+const { open, remove } = usePopup()
+
+const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
+  (props: PickerProps, ref): React.JSX.Element => {
+    const {
+      mode,
+      style,
+      value,
+      children,
+      disabled,
+      bindcancel,
+      bindchange
+    } = props
+
+    const pickerValue = useRef(value)
+    console.log('[mpx-picker], render ---> value=', value)
+    pickerValue.current = value
+
+    const innerLayout = useRef({})
+    const nodeRef = useRef(null)
+    useNodesRef<View, PickerProps>(props, ref, nodeRef, {
+      style
+    })
+    const innerProps = useInnerProps(
+      props,
+      {
+        ref: nodeRef
+      },
+      [],
+      { layoutRef: innerLayout }
+    )
+    const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
+      innerLayout.current = layout.current
+    }
+
+    /** --- form 表单组件事件 --- */
+    const getValue = () => {
+      return pickerValue.current
+    }
+    const resetValue = () => {
+      // TODO
+      const defalutValue = 0
+      pickerValue.current = defalutValue
+    }
+    const formContext = useContext(FormContext)
+    let formValuesMap: Map<string, FormFieldValue> | undefined
+    if (formContext) {
+      formValuesMap = formContext.formValuesMap
+    }
+    if (formValuesMap) {
+      if (!props.name) {
+        warn('If a form component is used, the name attribute is required.')
+      } else {
+        formValuesMap.set(props.name, { getValue, resetValue })
+      }
+    }
+    useEffect(() => {
+      return () => {
+        if (formValuesMap && props.name) {
+          formValuesMap.delete(props.name)
+        }
+      }
+    }, [])
+    /** --- form 表单组件事件 --- */
+
+    const onChange = (e: EventType) => {
+      const { value } = e.detail
+      console.log('[mpx-picker], onChange ---> value=', value)
+      pickerValue.current = value
+    }
+
+    const columnChange = (value: PickerValue[], index: number) => {
+      // type: "columnchange", detail: {column: 1, value: 2}
+      const eventData = getCustomEvent(
+        'columnchange',
+        {},
+        { detail: { column: index, value }, layoutRef: innerLayout }
+      )
+      // props.bindcolumnchange?.(eventData)
+    }
+
+    const onCancel = () => {
+      bindcancel?.()
+      remove()
+    }
+
+    const onConfirm = () => {
+      const eventData = getCustomEvent(
+        'change',
+        {},
+        { detail: { value: pickerValue.current }, layoutRef: innerLayout }
+      )
+      bindchange?.(eventData)
+      remove()
+    }
+
+    const specificProps = extendObject(innerProps, {
+      mode,
+      children,
+      bindchange: onChange,
+      bindcolumnchange: columnChange,
+      getInnerLayout
+    })
+
+    const renderPickerContent = () => {
+      if (disabled) {
+        return null
+      }
+      const _mode = mode ?? PickerMode.SELECTOR
+      if (!(_mode in pickerModalMap)) {
+        return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
+      }
+      const value: any = pickerValue.current
+      const PickerModal = pickerModalMap[_mode]
+      const renderPickerModal = (
+        <>
+          <View style={[styles.header]}>
+            <TouchableHighlight
+              onPress={onCancel}
+              style={[styles.headerItem]}
+              activeOpacity={1}
+              underlayColor={'#dddddd'}
+            >
+              <Text style={[styles.cancelText]}>取消</Text>
+            </TouchableHighlight>
+            <TouchableHighlight
+              onPress={onConfirm}
+              style={[styles.headerItem]}
+              activeOpacity={1}
+              underlayColor={'#dddddd'}
+            >
+              <Text style={[styles.confirmText]}>确定</Text>
+            </TouchableHighlight>
+          </View>
+          <PickerModal {...specificProps} remove={remove} value={value}></PickerModal>
+        </>
+      )
+      open(renderPickerModal)
+    }
+
+    return (
+      <TouchableWithoutFeedback onPress={renderPickerContent}>
+        {children}
+      </TouchableWithoutFeedback>
+    )
+  }
+)
+
+Picker.displayName = 'MpxPicker'
+export default Picker

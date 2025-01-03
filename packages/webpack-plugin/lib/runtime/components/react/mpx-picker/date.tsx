@@ -55,7 +55,7 @@ const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: D
   const onElementLayout = (layout: LayoutType) => {
     viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
       layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      props.getInnerLayout && props.getInnerLayout(layoutRef)
+      // props.getInnerLayout && props.getInnerLayout(layoutRef)
     })
   }
 
