@@ -168,11 +168,7 @@ function extractObservers (options) {
               cb = this[cb]
             }
             if (typeof cb === 'function') {
-              if (keyPathArr.length < 2) {
-                val = [val]
-                old = [old]
-              }
-              cb.call(this, ...val, ...old)
+              Array.isArray(val) ? cb.call(this, ...val) : cb.call(this, val)
             }
           },
           deep,
