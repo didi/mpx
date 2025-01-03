@@ -339,6 +339,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply css var
   const varContextRef = useRef({})
   if (enableVarRef.current) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const varContext = useContext(VarContext)
     const newVarContext = extendObject({}, varContext, externalVarContext, varStyle)
     // 缓存比较newVarContext是否发生变化
