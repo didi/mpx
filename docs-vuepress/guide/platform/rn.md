@@ -87,28 +87,35 @@ Mpx 输出 React Native 支持以下模版指令。
 
 **wx:ref**
 
-使用wx:ref可以更方便获取节点/组件对象。
+使用wx:ref可以更方便获取基础节点及自定义组件实例。
+
+* 如果获取的是基础节点（nodeRef），那么可以通过基础节点暴露的相应 api 获取基础节点的样式属性等内容；
+* 如果是获取的自定义组件实例，那么可以直接调用组件实例上的方法或属性；
 
 ```html
+<template>
+  <!-- 基础组件 -->
+  <view wx:ref="tref">123</view>
+  <!-- 自定义组件 -->
+  <test-component wx:ref="cref"></test-component>
+</template>
 
-<view wx:ref="tref">
-    123
-</view>
 
 <script>
     import { createPage } from "@mpxjs/core"
 
     createPage({
         ready() {
+            // 基础节点 nodeRef 获取节点的样式属性
             this.$refs.tref.fields({size: true}, function (res) {
                 console.log(res)
             }).exec()
+
+            this.$refs.cref.show() // 拿到 test-component 组件实例，调用组件实例内部的 show 方法
         }
     })
 </script>
 ```
-跨端输出React Native时，相对于输出小程序存在以下差异：
-TODO: 待补充
 
 **@mode**
 
