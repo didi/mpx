@@ -804,6 +804,26 @@ module.exports = {
 };
 ```
 
+注意事项：
+
+1. 调用 `@mpxjs/api-proxy` 当中抹平跨端环境的 `createSelectorQuery` 方法创建的 `SelectorQuery` 实例，在使用过程中需要手动调用 `in` 方法来指定组件上下文。示例：
+
+```javascript
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  attached () {
+    const query = wx.createSelectorQuery()
+    query.select('#the-id').boundingClientRect()
+    query.selectViewport().scrollOffset()
+    query.exec(function(res){
+      res[0].top       // #the-id节点的上边界坐标
+      res[1].scrollTop // 显示区域的竖直滚动位置
+    }).in(this) // this 为组件实例
+  }
+})
+````
+
 <!-- WebviewAPI -->
 #### Webview API
 对于web-view组件打开的网页，想要跟RN通信，或者跳转到RN页面，提供了以下能力
