@@ -100,6 +100,12 @@ function WebpackPlugin (configOrPath, defaults) {
 
       compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, async (compilation) => {
         const ctx = await createContext(configOrPath, defaults)
+        ctx.uno.config.blocklist = ctx.uno.config.blocklist.map((item) => {
+          if (typeof item === 'function') {
+            return item.bind(ctx.uno)
+          }
+          return item
+        })
         compiler.__unoCtx = ctx
         return ctx
       })
