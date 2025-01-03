@@ -1,6 +1,5 @@
 const { headerPlugin } = require('./headerMdPlugin')
-const { presetUno } = require('unocss')
-const UnoCSS = require('@unocss/webpack').default
+
 
 const unocss = {
   '/unocss': [
@@ -282,27 +281,6 @@ module.exports = {
   chainWebpack: (config, isServer) => {
     // 添加node_modules避免resolve错误
     config.resolve.modules.add('node_modules')
-    config.module.rule('vue').uses.delete('cache-loader')
-    config.module.rule('tsx').uses.delete('cache-loader')
-    config.merge({
-      cache: false
-    })
-    config.plugin('extract-css').use(require('mini-css-extract-plugin'), [
-      {
-        filename: '[name].css',
-        chunkFilename: '[name].[hash:9].css'
-      }
-    ])
-  },
-  configureWebpack: {
-    plugins: [
-      UnoCSS({
-        presets: [
-          presetUno()
-        ],
-        configFile: false
-      })
-    ]
   },
   markdown: {
     // markdown-it-toc 的选项
