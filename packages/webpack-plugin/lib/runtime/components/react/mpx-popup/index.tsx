@@ -1,17 +1,39 @@
 import Portal from '../mpx-portal'
-import Popup, { PopupProps } from './popup'
+import PopupBase, { PopupBaseProps } from './popupBase'
+import PopupPicker from './popupPicker'
+
+export const enum PopupType {
+  PICKER = 'picker'
+}
 
 export interface IUsePopupOptions {
-  Modal?: React.ComponentType<PopupProps>;
+  modal?: React.ComponentType<PopupBaseProps>
+  type?: PopupType
+}
+
+/**
+ * 根据 type 返回对应的内置支持的弹窗组件
+ * @param type {PopupType} 弹窗类型
+ * @returns 弹窗容器组件
+ */
+const getPopup = (type?: PopupType): React.ComponentType<PopupBaseProps> => {
+  switch (type) {
+    case PopupType.PICKER:
+      return PopupPicker
+    default:
+      return PopupBase
+  }
 }
 
 /**
  * 基于 Portal 封装的 Popup 弹窗组件管理 Hooks
- * - 默认使用上面的 Popup 组件
- * - 导出 open remove 方法方便外部调用（比如自定义的弹窗内容组件调用）
+ * @param options.modal 可以传入自定义的弹窗组件，默认使用 PopupBase 组件
+ * @param options.type 可以传入内置支持的弹窗类型，默认使用 PopupBase 组件
+ * @returns {open, remove, getPopupKey} 返回 hooks 方法方便外部调用（比如自定义的弹窗内容组件调用）
  */
 const usePopup = (options: IUsePopupOptions = {}) => {
-  const { Modal = Popup } = options
+  const { modal, type } = options
+  const Modal = modal || getPopup(type)
 
   let popupKey: number | null = null
 
@@ -35,6 +57,5 @@ const usePopup = (options: IUsePopupOptions = {}) => {
 }
 
 export {
-  Popup,
   usePopup
 }

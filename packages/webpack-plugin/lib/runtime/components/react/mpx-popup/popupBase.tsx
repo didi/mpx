@@ -6,7 +6,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { getWindowInfo } from '@mpxjs/api-proxy'
 
-export interface PopupProps {
+export interface PopupBaseProps {
   children?: React.ReactNode
   remove?: () => void
 }
@@ -42,11 +42,12 @@ const styles = StyleSheet.create({
 })
 
 /**
- * 封装的 Popup 弹窗组件，动画样式和 showActionSheet 对齐
- * 提供给 showActionSheet 和 picker 表单组件依赖的弹窗复用
- * 其他组件需要使用类似弹窗时，也可以使用
+ * 封装的 Popup 弹窗容器组件最基础的实现，弹入和弹出动画实现和 showActionSheet 对齐
+ * 其他特定类型的弹窗容器组件可以在此基础上封装，比如 PopupPicker 弹窗容器组件
+ * @param props {PopupBaseProps} 弹窗配置项
+ * @returns 弹窗容器组件
  */
-const Popup = (props: PopupProps = {}) => {
+const PopupBase = (props: PopupBaseProps = {}) => {
   const { children, remove } = props
   const offset = useSharedValue(1000)
 
@@ -82,5 +83,5 @@ const Popup = (props: PopupProps = {}) => {
   )
 }
 
-Popup.displayName = 'MpxCustomPopup'
-export default Popup
+PopupBase.displayName = 'MpxPopupBase'
+export default PopupBase
