@@ -49,18 +49,21 @@
 用于声明组件接收的外部属性。属性的类型可以为 String、Number、Boolean、Object、Array 其一，也可以为 null 表示不限制类型。
 
 ```ts
+
+type PropType = 'String' | 'Number' | 'Boolean' | 'Object' | 'Array' | null;
+
+
 interface ComponentOptions {
   properties?: {
-    [key: string]: PropOptions | Constructor | Constructor[]
+    [key: string]: PropOptions | PropType
   }
 }
 
 interface PropOptions {
-  type: Constructor | Constructor[] // type 为必填项
+  type: PropType // type 为必填项
   value?: any
-  optionalTypes?: Constructor[] // 属性的类型（可以指定多个）
+  optionalTypes?: PropType[] // 属性的类型（可以指定多个）
   observer?: string | ((newVal: any, oldVal: any) => void)
-  required?: boolean
 }
 ```
 
@@ -71,7 +74,7 @@ properties 定义包含以下选项：
 * **`observer`**: 可选，属性值变化时的回调函数（不推荐使用，建议使用 observers）
 
 > **注意：**
-> 1. 属性名应避免以 data 开头，因为在 WXML 中，data-xyz="" 会被作为节点 dataset 来处理
+> 1. 属性名应避免以 data 开头，例如 data-xyz="" 会被作为节点 dataset 来处理
 > 2. 在组件定义和使用时，属性名和 data 字段相互间都不能冲突
 > 3. type 字段为必填项，虽然新版本基础库兼容未填写的情况，但建议始终显式指定类型
 > 4. 从基础库 2.0.9 开始，对象类型的属性和 data 字段中可以包含函数类型的子字段
