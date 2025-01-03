@@ -879,7 +879,7 @@ createComponent({
 })
 ````
 
-2. `SelectorQuery.select` 方法目前仅支持2种选择器写法
+2. `SelectorQuery.select/SelectorQuery.selectAll` 方法目前仅支持2种选择器写法
   * id 选择器：`#id`
   * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
 
