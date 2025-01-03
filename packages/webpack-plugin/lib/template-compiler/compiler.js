@@ -1256,8 +1256,10 @@ function getModelConfig (el, match) {
 function processEventWeb (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
+    // todo 事件过滤
     if (name.includes('@')) {
       const type = name
+      // todo value 为函数的情况
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {

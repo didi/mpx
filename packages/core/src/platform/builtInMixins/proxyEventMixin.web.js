@@ -34,13 +34,14 @@ export default function proxyEventMixin () {
           } catch (e) {}
         }
         const location = this.__mpxProxy.options.mpxFileResource
+        // todo newEvent 处理
         const newEvent = extend({}, rawEvent, {
-            target: extend({}, rawEvent.target, {
-              dataset: parseDataset(rawEvent.target.dataset)
-            }),
-            currentTarget: extend({}, rawEvent.currentTarget, {
-              dataset: parseDataset(rawEvent.currentTarget.dataset)
-            })
+          target: extend({}, rawEvent.target, {
+            dataset: parseDataset(rawEvent.target.dataset)
+          }),
+          currentTarget: extend({}, rawEvent.currentTarget, {
+            dataset: parseDataset(rawEvent.currentTarget.dataset)
+          })
         })
 
         let returnedValue
