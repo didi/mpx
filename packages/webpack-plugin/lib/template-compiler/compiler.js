@@ -117,6 +117,7 @@ let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
 let usingComponents = []
+let usingComponentsInfo = {}
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -636,6 +637,7 @@ function parse (template, options) {
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
+  usingComponentsInfo = options.usingComponentsInfo
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -725,7 +727,7 @@ function parse (template, options) {
         stack.push(element)
       } else {
         element.unary = true
-        closeElement(element, meta, options)
+        closeElement(element, options, meta)
       }
     },
 
@@ -740,7 +742,7 @@ function parse (template, options) {
         // pop stack
         stack.pop()
         currentParent = stack[stack.length - 1]
-        closeElement(element, meta, options)
+        closeElement(element, options, meta)
       }
     },
 
@@ -765,7 +767,7 @@ function parse (template, options) {
           parent: currentParent
         }
         children.push(el)
-        runtimeCompile ? processTextDynamic(el) : processText(el)
+        runtimeCompile ? processTextDynamic(el) : processText(el, options, meta)
       }
     },
     comment: function comment (text) {
@@ -1227,7 +1229,8 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      modifyAttr(el, name, `{{${value}}}`)
+      const { result } = parseMustacheWithContext(value)
+      modifyAttr(el, name, `{{this[${result}]}}`)
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
@@ -1927,7 +1930,7 @@ function postProcessFor (el) {
 function postProcessForReact (el) {
   if (el.for) {
     if (el.for.key) {
-      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)})`, false, 'key')
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
       addAttrs(el, [{
         name: 'key',
         value: el.for.key
@@ -2041,7 +2044,7 @@ function postProcessIfReact (el) {
   }
 }
 
-function processText (el) {
+function processText (el, options, meta) {
   if (el.type !== 3 || el.isComment) {
     return
   }
@@ -2051,17 +2054,38 @@ function processText (el) {
   }
   el.text = parsed.val
   if (isReact(mode)) {
-    processWrapTextReact(el)
+    processWrapTextReact(el, options, meta)
   }
 }
 
-// RN中文字需被Text包裹
-function processWrapTextReact (el) {
-  const parentTag = el.parent.tag
+// RN中裸文字需被Text包裹
+// 为了批量修改Text默认属性，如allowFontScaling，使用mpx-simple-text进行包裹
+function processWrapTextReact (el, options, meta) {
+  const parent = el.parent
+  const parentTag = parent.tag
   if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
-    const wrapper = createASTElement('Text')
+    const wrapper = createASTElement('mpx-simple-text')
+    wrapper.isBuiltIn = true
+    const inheritAttrs = []
+    parent.attrsList.forEach(({ name, value }) => {
+      if (/^data-/.test(name)) {
+        inheritAttrs.push({
+          name,
+          value
+        })
+      }
+      if (/^id$/.test(name)) {
+        inheritAttrs.push({
+          name: 'parentId',
+          value
+        })
+      }
+    })
+    addAttrs(wrapper, inheritAttrs)
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
+    processBuiltInComponents(wrapper, meta)
+    processAttrs(wrapper, options)
   }
 }
 
@@ -2163,16 +2187,20 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
-function isComponentNode (el, options) {
+function isComponentNode (el) {
   return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function isReactComponent (el, options) {
-  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
+function getComponentInfo (el) {
+  return usingComponentsInfo[el.tag] || {}
+}
+
+function isReactComponent (el) {
+  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
-  const isComponent = isComponentNode(el, options)
+  const isComponent = isComponentNode(el)
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
@@ -2286,8 +2314,7 @@ function postProcessAliComponentRootView (el, options, meta) {
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
-  const tagName = el.tag
-  const mid = options.usingComponentsInfo[tagName]?.mid || moduleId
+  const mid = getComponentInfo(el).mid
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${mid}` }
   ]
@@ -2394,7 +2421,7 @@ function processShow (el, options, root) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
-  if (isComponentNode(el, options)) {
+  if (isComponentNode(el) && getComponentInfo(el).hasVirtualHost) {
     if (show === '') {
       show = '{{false}}'
     }
@@ -2667,7 +2694,7 @@ function processElement (el, root, options, meta) {
   processAttrs(el, options)
 }
 
-function closeElement (el, meta, options) {
+function closeElement (el, options, meta) {
   postProcessAtMode(el)
   postProcessWxs(el, meta)
 
@@ -2686,14 +2713,14 @@ function closeElement (el, meta, options) {
   if (!isTemplate) {
     if (!isNative) {
       postProcessComponentIs(el, (child) => {
-        if (!hasVirtualHost && mode === 'ali') {
+        if (!getComponentInfo(el).hasVirtualHost && mode === 'ali') {
           postProcessAliComponentRootView(child, options)
         } else {
           postProcessIf(child)
         }
       })
     }
-    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
+    if (isComponentNode(el) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }

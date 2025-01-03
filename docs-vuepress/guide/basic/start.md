@@ -5,6 +5,8 @@
 npm i -g @mpxjs/cli
 ```
 
+> @mpxjs/cli文档 https://github.com/mpx-ecology/mpx-cli
+
 ## 创建项目安装依赖
 
 在当前目录下创建mpx项目。
@@ -38,7 +40,7 @@ npm install
 }
 ```
 
-使用npm script执行mpx的编译构建，在开发模式下我们执行 serve 命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
+使用npm script执行mpx的编译构建，在开发模式下我们执行serve命令，将项目源码构建输出到`dist/${平台目录}`下，并且监听源码的改动进行重新编译。
 
 ```shell
 npm run serve

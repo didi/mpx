@@ -17,7 +17,7 @@ const showModal = function (options = {}) {
     fail,
     complete
   } = options
-  const modalWidth = width - 60
+  const modalWidth = width * 0.8
   const styles = StyleSheet.create({
     modalTask: {
       left: 0,
@@ -53,7 +53,8 @@ const showModal = function (options = {}) {
       lineHeight: 26,
       color: '#808080',
       paddingLeft: 20,
-      paddingRight: 20
+      paddingRight: 20,
+      textAlign: 'center'
     },
     modalBtnBox: {
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -67,8 +68,8 @@ const showModal = function (options = {}) {
     modalBtn: {
       flex: 1,
       textAlign: 'center',
-      paddingTop: 10,
-      paddingBottom: 10,
+      paddingTop: width * 0.04,
+      paddingBottom: width * 0.04,
     },
     modalButton: {
       width: '100%',
@@ -88,9 +89,8 @@ const showModal = function (options = {}) {
   let editableContent = []
   let modalButton = [{
     text: confirmText,
-    confirmColor,
     type: 'confirm',
-    color: 'rgb(87, 107, 149)'
+    color: confirmColor
   }]
   let contentText = content
   const onChangeText = function (text) {
@@ -128,10 +128,9 @@ const showModal = function (options = {}) {
   if (showCancel) {
     modalButton.unshift({
       text: cancelText,
-      cancelColor,
       type: 'cancel',
       style: styles.cancelStyle,
-      color: '#000000'
+      color: cancelColor
     })
   }
   ModalView = <View style={styles.modalTask}>

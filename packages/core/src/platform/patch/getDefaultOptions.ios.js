@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement } from 'react'
 import * as ReactNative from 'react-native'
-import { ReactiveEffect } from '../../../observer/effect'
-import { watch } from '../../../observer/watch'
-import { reactive, set, del } from '../../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
-import MpxProxy from '../../../core/proxy'
-import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../../core/innerLifecycle'
-import mergeOptions from '../../../core/mergeOptions'
-import { queueJob, hasPendingJob } from '../../../observer/scheduler'
+import { ReactiveEffect } from '../../observer/effect'
+import { watch } from '../../observer/watch'
+import { reactive, set, del } from '../../observer/reactive'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import MpxProxy from '../../core/proxy'
+import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
+import mergeOptions from '../../core/mergeOptions'
+import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
@@ -52,20 +52,18 @@ function createEffect (proxy, components) {
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(innerCreateElement, getComponent)
+    return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
   }, () => queueJob(update), proxy.scope)
   // render effect允许自触发
   proxy.toggleRecurse(true)
 }
 
-function getRootProps (props) {
+function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
-    if (hasOwn(props, key)) {
-      const match = /^(bind|catch|capture-bind|capture-catch|style|enable-var):?(.*?)(?:\.(.*))?$/.exec(key)
-      if (match) {
-        rootProps[key] = props[key]
-      }
+    const altKey = dash2hump(key)
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+      rootProps[key] = props[key]
     }
   }
   return rootProps
@@ -259,6 +257,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name
+    global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
   }
 
@@ -337,8 +336,8 @@ function usePageEffect (mpxProxy, pageId) {
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
     if (hasShowHook || hasHideHook || hasResizeHook) {
-      if (hasOwn(pageStatusContext, pageId)) {
-        unWatch = watch(() => pageStatusContext[pageId], (newVal) => {
+      if (hasOwn(pageStatusMap, pageId)) {
+        unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
           } else if (/^resize/.test(newVal)) {
@@ -353,32 +352,28 @@ function usePageEffect (mpxProxy, pageId) {
   }, [])
 }
 
-const pageStatusContext = reactive({})
 let pageId = 0
+const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
-  let isFocused = true
-  set(pageStatusContext, pageId, '')
+  navigation.pageId = pageId
+  set(pageStatusMap, pageId, '')
   useEffect(() => {
     const focusSubscription = navigation.addListener('focus', () => {
-      pageStatusContext[pageId] = 'show'
-      isFocused = true
+      pageStatusMap[pageId] = 'show'
     })
     const blurSubscription = navigation.addListener('blur', () => {
-      pageStatusContext[pageId] = 'hide'
-      isFocused = false
+      pageStatusMap[pageId] = 'hide'
     })
     const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
-      if (isFocused) {
-        pageStatusContext[pageId] = value
-      }
+      pageStatusMap[pageId] = value
     })
 
     return () => {
       focusSubscription()
       blurSubscription()
       unWatchAppFocusedState()
-      del(pageStatusContext, pageId)
+      del(pageStatusMap, pageId)
     }
   }, [navigation])
 }
@@ -477,7 +472,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
     if (root && root.props.ishost) {
-      const rootProps = getRootProps(props)
+      // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
+      const rootProps = getRootProps(props, validProps)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
       // update root props
       return cloneElement(root, rootProps)
@@ -563,21 +559,18 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
               ref: rootRef,
-              onLayout,
-              onTouchStart: () => {
-                ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
-              }
+              onLayout
             },
-            createElement(Provider,
-              null,
-              createElement(RouteContext.Provider,
+            createElement(RouteContext.Provider,
+              {
+                value: currentPageId
+              },
+              createElement(IntersectionObserverContext.Provider,
                 {
-                  value: currentPageId
+                  value: intersectionObservers.current
                 },
-                createElement(IntersectionObserverContext.Provider,
-                  {
-                    value: intersectionObservers.current
-                  },
+                createElement(Provider,
+                  null,
                   createElement(defaultOptions,
                     {
                       navigation,
@@ -590,8 +583,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             )
           )
         )
-        // todo custom portal host for active route
       )
+      // todo custom portal host for active route
     }
     return Page
   }
