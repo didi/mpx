@@ -38,10 +38,6 @@ interface InnerRef {
     bubble: null | ReturnType<typeof setTimeout>;
     capture: null | ReturnType<typeof setTimeout>;
   };
-  needPress: {
-    bubble: boolean;
-    capture: boolean;
-  };
   mpxPressInfo: {
     detail: {
       x: number;

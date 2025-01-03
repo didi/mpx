@@ -13,6 +13,10 @@ import {
   NativeTouchEvent
 } from './types/getInnerListeners'
 
+const globalEventState = {
+  needPress: true
+}
+
 const getTouchEvent = (
   type: string,
   event: NativeTouchEvent,
@@ -113,7 +117,11 @@ function handleEmitEvent (
     if (propsRef.current[event]) {
       const match = /^(catch|capture-catch):?(.*?)(?:\.(.*))?$/.exec(event)
       if (match) {
-        oe.stopPropagation()
+        const eventType = match[2]
+        if ((eventType === 'tap' && type === 'tap') ||
+            (eventType.startsWith('touch') && type === eventType)) {
+          oe.stopPropagation()
+        }
       }
       propsRef.current[event](
         getTouchEvent(type, oe, propsRef.current, config)
@@ -131,7 +139,7 @@ function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
     Math.abs(currentPageX - tapDetailInfo.x) > 1 ||
         Math.abs(currentPageY - tapDetailInfo.y) > 1
   ) {
-    ref.current!.needPress[type] = false
+    globalEventState.needPress = false
     ref.current!.startTimer[type] &&
           clearTimeout(ref.current!.startTimer[type] as SetTimeoutReturnType)
     ref.current!.startTimer[type] = null
@@ -151,7 +159,7 @@ function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
     'capture-bindlongpress'
   ]
   ref.current!.startTimer[type] = null
-  ref.current!.needPress[type] = true
+  globalEventState.needPress = true
   const nativeEvent = e.nativeEvent
   ref.current!.mpxPressInfo.detail = {
     x: nativeEvent.changedTouches[0].pageX,
@@ -175,7 +183,8 @@ function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
         captureBindlongpress
   ) {
     ref.current!.startTimer[type] = setTimeout(() => {
-      ref.current!.needPress[type] = false
+      // 只要触发过longpress, 全局就不再触发tap
+      globalEventState.needPress = false
       handleEmitEvent(currentPressEvent, 'longpress', e, propsRef, config)
     }, 350)
   }
@@ -211,7 +220,7 @@ function handleTouchend (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: R
         clearTimeout(ref.current!.startTimer[type] as SetTimeoutReturnType)
   ref.current!.startTimer[type] = null
   handleEmitEvent(currentTouchEvent, 'touchend', e, propsRef, config)
-  if (ref.current!.needPress[type]) {
+  if (globalEventState.needPress) {
     if (type === 'bubble' && config.disableTap) {
       return
     }
@@ -274,10 +283,6 @@ const useInnerProps = (
     startTimer: {
       bubble: null,
       capture: null
-    },
-    needPress: {
-      bubble: false,
-      capture: false
     },
     mpxPressInfo: {
       detail: {
