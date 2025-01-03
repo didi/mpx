@@ -143,7 +143,11 @@ export default function styleHelperMixin () {
         const classMap = this.__getClassMap?.() || {}
         const unoClassMap = global.__getUnoClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
-
+        const unocssKeyIndexMap = Object.getOwnPropertyNames(unoClassMap).reduce((map, key, index) => {
+          map[key] = index
+          return map
+        }, {})
+        const unoClassList = []
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
           classString.split(/\s+/).forEach((className) => {
@@ -153,13 +157,18 @@ export default function styleHelperMixin () {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               Object.assign(result, appClassMap[className])
             } else if (unoClassMap[className]) {
-              Object.assign(result, unoClassMap[className])
+              unoClassList[unocssKeyIndexMap[className]] = unoClassMap[className]
+              // Object.assign(result, unoClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.__props[className])
             }
           })
         }
+
+        unoClassList.forEach(v => {
+          Object.assign(result, v)
+        })
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
