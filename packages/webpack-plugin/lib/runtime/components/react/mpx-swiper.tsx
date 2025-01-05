@@ -147,7 +147,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const patchElementNum = props.circular ? (previousMargin ? 2 : 1) : 0
   const nodeRef = useRef<View>(null)
   useNodesRef<View, SwiperProps>(props, ref, nodeRef, {})
-
+  
   // 计算transfrom之类的
   const {
     normalStyle,
@@ -171,13 +171,27 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const dir = useSharedValue(horizontal === false ? 'y' : 'x')
   const pstep = dir.value === 'x' ? initWidth : initHeight
   const initStep: number = isNaN(pstep) ? 0 : pstep
-  // 每个元素的宽度 or 高度
+  // 每个元素的宽度 or 高度，有固定值直接初始化无则0
   const step = useSharedValue(initStep)
   const totalElements = useSharedValue(children.length)
   // 记录选中元素的索引值
-  const currentIndex = useSharedValue(0)
+  const currentIndex = useSharedValue(props.current || 0)
+  // 确保在UI线程能拿到最新的值
+  const getOffset = (index: number) => {
+    'worklet'
+    if (!step.value) return 0
+    let targetOffset = 0
+    if (props.circular && totalElements.value > 1) {
+      const targetIndex = index + patchElementNum
+      targetOffset = -(step.value * targetIndex - previousMargin)
+    } else {
+      targetOffset = -index * step.value
+    }
+    return targetOffset
+  }
+  const initOffset = getOffset(props.current || 0)
   // 记录元素的偏移量
-  const offset = useSharedValue(0)
+  const offset = useSharedValue(initOffset)
   const strAbso = 'absolute' + dir.value.toUpperCase() as StrAbsoType
   const arrPages: Array<ReactNode> | ReactNode = renderItems()
   // 标识手指触摸和抬起, 起点在onBegin
@@ -224,6 +238,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const realHeight = dir.value === 'y' ? height - previousMargin - nextMargin : height
     step.value = dir.value === 'x' ? realWidth : realHeight
     if (touchfinish.value) {
+      // JS线程更新step.value异步，JS线程更新完立即访问sharedValue不一定确保能拿到最新的值，在UI线程中确保能拿到最新的值
       runOnUI(() => {
         offset.value = getOffset(currentIndex.value)
       })()
@@ -272,24 +287,21 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function renderItems () {
-    const itemAnimatedStyles = useAnimatedStyle(() => {
-      return dir.value === 'x' ? { width: step.value, height: '100%' } : { width: '100%', height: step.value }
-    })
     let renderChild = children.slice()
     if (props.circular && totalElements.value > 1) {
       // 最前面加最后一个元素
-      const lastChild = React.cloneElement(children[totalElements.value - 1] as ReactElement)
+      const lastChild = React.cloneElement(children[totalElements.value - 1] as ReactElement, { key: 'clone0' })
       // 最后面加第一个元素
-      const firstChild = React.cloneElement(children[0] as ReactElement)
+      const firstChild = React.cloneElement(children[0] as ReactElement, { key: 'clone1' })
       if (previousMargin) {
-        const lastChild1 = React.cloneElement(children[totalElements.value - 2] as ReactElement)
-        const firstChild1 = React.cloneElement(children[1] as ReactElement)
+        const lastChild1 = React.cloneElement(children[totalElements.value - 2] as ReactElement, { key: 'clone2' })
+        const firstChild1 = React.cloneElement(children[1] as ReactElement, { key: 'clone3' })
         renderChild = [lastChild1, lastChild].concat(renderChild).concat([firstChild, firstChild1])
       } else {
         renderChild = [lastChild].concat(renderChild).concat([firstChild])
       }
     }
-    const arrChilds = renderChild.map((child, index) => {
+    const arrChildren = renderChild.map((child, index) => {
       const extraStyle = {} as { [key: string]: any }
       if (index === 0 && !props.circular) {
         previousMargin && dir.value === 'x' && (extraStyle.marginLeft = previousMargin)
@@ -299,19 +311,20 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         nextMargin && dir.value === 'x' && (extraStyle.marginRight = nextMargin)
         nextMargin && dir.value === 'y' && (extraStyle.marginBottom = nextMargin)
       }
+      // 业务swiper-item自己生成key，内部添加的元素自定义key
       const newChild = React.cloneElement(child, {
         itemIndex: index,
-        customStyle: [itemAnimatedStyles, extraStyle],
-        key: 'page' + index
+        customStyle: [extraStyle]
       })
       return newChild
     })
     const contextValue = {
       offset,
       step,
-      scale: props.scale
+      scale: props.scale,
+      dir
     }
-    return (<SwiperContext.Provider value={contextValue}>{arrChilds}</SwiperContext.Provider>)
+    return (<SwiperContext.Provider value={contextValue}>{arrChildren}</SwiperContext.Provider>)
   }
 
   function createAutoPlay () {
@@ -369,19 +382,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }
 
-  function getOffset (index?: number) {
-    'worklet'
-    if (!step.value) return 0
-    let targetOffset = 0
-    if (props.circular && totalElements.value > 1) {
-      const targetIndex = (index || props.current || 0) + patchElementNum
-      targetOffset = -(step.value * targetIndex - previousMargin)
-    } else {
-      targetOffset = -(index || props?.current || 0) * step.value
-    }
-    return targetOffset
-  }
-
   function loop () {
     timerId.current = setTimeout(() => {
       createAutoPlay()
@@ -397,11 +397,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       loop()
     }
   }
-
-  useAnimatedReaction(() => currentIndex.value, (newIndex, preIndex) => {
+  // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
+  useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
-    const isInit = !preIndex && newIndex === 0
-    if (!isInit && newIndex !== preIndex && props.bindchange) {
+    if (newIndex !== preIndex && props.bindchange) {
       runOnJS(handleSwiperChange)(newIndex)
     }
   })
@@ -409,7 +408,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     if (!step.value) {
       return
     }
-    const targetOffset = getOffset()
+    const targetOffset = getOffset(props.current || 0)
     if (props.current !== undefined && props.current !== currentIndex.value) {
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
@@ -529,7 +528,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     const curIndex = currentOffset / step.value
     const moveToIndex = (translation < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElementNum
-    const targetOffset = -(moveToIndex + patchElementNum) * step.value + (props.circular ? -previousMargin : 0)
+    const targetOffset = -(moveToIndex + patchElementNum) * step.value + (props.circular ? previousMargin : 0)
     offset.value = withTiming(targetOffset, {
       duration: easeDuration,
       easing: easeMap[easeingFunc]
@@ -540,7 +539,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }
     })
   }
-
+  // 按照长按的处理情况：1. 用户先快速滑动，再未滑动到目标位置时再次按下然后抬起；2. 用户在正常情况下点击没有触发移动
   function handleLongPress (eventData: EventDataType) {
     'worklet'
     const { translation } = eventData
@@ -552,7 +551,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const half = currentOffset % step.value > step.value / 2
     // 向右trans < 0, 向左trans > 0
     const isExceedHalf = translation < 0 ? half : !half
-    if (+translation === 0) {
+    if (+translation === 0 || currentOffset % step.value === 0) {
       runOnJS(resumeLoop)()
     } else if (isExceedHalf) {
       handleEnd(eventData)

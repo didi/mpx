@@ -24,6 +24,7 @@ interface ContextType {
   offset: SharedValue<number>;
   step: SharedValue<number>;
   scale: boolean;
+  dir: SharedValue<string>;
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
@@ -39,6 +40,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
   const offset = contextValue.offset || 0
   const step = contextValue.step || 0
   const scale = contextValue.scale || false
+  const dir = contextValue.dir || 'x'
   const { textProps } = splitProps(props)
   const nodeRef = useRef(null)
 
@@ -70,22 +72,26 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     'enable-offset',
     'style'
   ], { layoutRef })
-
   const itemAnimatedStyle = useAnimatedStyle(() => {
     if (!step.value) return {}
     const inputRange = [step.value, 0]
     const outputRange = [0.7, 1]
-    return {
-      transform: [{
+    // 实现元素的宽度跟随step从0到真实宽度，且不能触发重新渲染整个组件，通过AnimatedStyle的方式实现
+    const outerLayoutStyle = dir.value === 'x' ? { width: step.value, height: '100%' } : { width: '100%', height: step.value }
+    const transformStyle = []
+    if (scale) {
+      transformStyle.push({
         scale: interpolate(Math.abs(Math.abs(offset.value) - itemIndex * step.value), inputRange, outputRange)
-      }]
+      })
     }
+    return Object.assign(outerLayoutStyle, {
+      transform: transformStyle
+    })
   })
-  const mergeStyle = [innerStyle, layoutStyle, { width: '100%', height: '100%' }, scale ? itemAnimatedStyle : {}].concat(customStyle)
   return (
     <Animated.View
       {...innerProps}
-      style={mergeStyle}
+      style={[innerStyle, layoutStyle, itemAnimatedStyle, customStyle]}
       data-itemId={props['item-id']}>
       {
         wrapChildren(
