@@ -1,11 +1,10 @@
-import React, { useState, useCallback, forwardRef, ForwardedRef, useImperativeHandle, useEffect, useContext, ReactElement } from 'react'
+import { useState, useCallback, forwardRef, ForwardedRef, useImperativeHandle, ReactNode, ReactElement } from 'react'
 import { View, StyleSheet } from 'react-native'
-import { getFocusedNavigation } from '@mpxjs/utils'
 
 export type State = {
   portals: Array<{
     key: number
-    children: React.ReactNode
+    children: ReactNode
   }>
 }
 
@@ -17,13 +16,13 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
     portals: []
   })
 
-  const mount = useCallback((key: number, children: React.ReactNode) => {
+  const mount = useCallback((key: number, children: ReactNode) => {
     setState((prevState) => ({
       portals: [...prevState.portals, { key, children }]
     }))
   }, [state])
 
-  const update = useCallback((key: number, children: React.ReactNode) => {
+  const update = useCallback((key: number, children: ReactNode) => {
     setState((prevState) => ({
       portals: prevState.portals.map((item) => {
         if (item.key === key) {

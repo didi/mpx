@@ -29,6 +29,7 @@ interface WebViewProps {
   binderror?: (event: CommonCallbackEvent) => void
   [x: string]: any
 }
+type Listener = (type: string, callback: (e: Event) => void) => () => void
 
 interface PayloadData {
   [x: string]: any
@@ -123,14 +124,18 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   const navigation = getFocusedNavigation()
 
-  navigation?.addListener('beforeRemove', beforeRemoveHandle)
-
   useEffect(() => {
     if (__mpx_mode__ === 'android') {
       BackHandler.addEventListener('hardwareBackPress', onAndroidBackPress)
-      return () => {
+    }
+    const addListener: Listener = navigation?.addListener.bind(navigation)
+    const beforeRemoveSubscription = addListener?.('beforeRemove', beforeRemoveHandle)
+    return () => {
+      if (__mpx_mode__ === 'android') {
         BackHandler.removeEventListener('hardwareBackPress', onAndroidBackPress)
-        navigation?.removeListener('beforeRemove', beforeRemoveHandle)
+      }
+      if (isFunction(beforeRemoveSubscription)) {
+        beforeRemoveSubscription()
       }
     }
   }, [])

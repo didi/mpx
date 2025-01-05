@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef, ReactNode } from 'react'
 import {
   View,
   DeviceEventEmitter,
@@ -11,7 +11,7 @@ import { getFocusedNavigation } from '@mpxjs/utils'
 import { PortalManagerContextValue, PortalContext } from '../context'
 
 export type PortalHostProps = {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 type addIdsMapsType = {
@@ -19,8 +19,8 @@ type addIdsMapsType = {
 }
 
 export type Operation =
-  | { type: 'mount'; key: number; children: React.ReactNode }
-  | { type: 'update'; key: number; children: React.ReactNode }
+  | { type: 'mount'; key: number; children: ReactNode }
+  | { type: 'update'; key: number; children: ReactNode }
   | { type: 'unmount'; key: number }
 
 // events
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
 
 class PortalGuard {
   private nextKey = 10000
-  add = (e: React.ReactNode) => {
+  add = (e: ReactNode) => {
     const key = this.nextKey++
     TopViewEventEmitter.emit(addType, e, key)
     return key
@@ -59,7 +59,7 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _removeType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
   let currentPageId: number | undefined
-  const _mount = (children: React.ReactNode, _key?: number, curPageId?: number) => {
+  const _mount = (children: ReactNode, _key?: number, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
     if (pageId !== (curPageId ?? currentPageId)) {
@@ -68,8 +68,6 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     const key = _key || _nextKey.current++
     if (manager.current) {
       manager.current.mount(key, children)
-    } else {
-      _queue.current.push({ type: 'mount', key, children })
     }
     return key
   }
@@ -77,17 +75,15 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _unmount = (key: number, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
-    if (pageId !== (curPageId ?? currentPageId)) {
+    if (pageId && pageId !== (curPageId ?? currentPageId)) { // 过滤掉获取不到pageid的情况，这样避免删不掉的情况
       return
     }
     if (manager.current) {
       manager.current.unmount(key)
-    } else {
-      _queue.current.push({ type: 'unmount', key })
     }
   }
 
-  const _update = (key: number, children: React.ReactNode, curPageId?: number) => {
+  const _update = (key: number, children: ReactNode, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
     if (pageId !== (curPageId ?? currentPageId)) {
@@ -95,17 +91,6 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     }
     if (manager.current) {
       manager.current.update(key, children)
-    } else {
-      const op: Operation = { type: 'mount', key, children }
-      const index = _queue.current.findIndex(
-        (o) => o.type === 'mount' || (o.type === 'update' && o.key === key)
-      )
-
-      if (index > -1) {
-        _queue.current[index] = op
-      } else {
-        _queue.current.push(op)
-      }
     }
   }
 
@@ -117,25 +102,10 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
       removeType,
       _unmount
     )
+
     return () => {
-      while (_queue.current.length && manager.current) {
-        const action = _queue.current.pop()
-        if (!action) {
-          continue
-        }
-        // tslint:disable-next-line:switch-default
-        switch (action.type) {
-          case 'mount':
-            manager.current?.mount(action.key, action.children)
-            break
-          case 'update':
-            manager.current?.update(action.key, action.children)
-            break
-          case 'unmount':
-            manager.current?.unmount(action.key)
-            break
-        }
-      }
+      _addType.current?.remove()
+      _removeType.current?.remove()
     }
   }, [])
   return (

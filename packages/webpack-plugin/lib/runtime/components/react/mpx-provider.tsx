@@ -1,15 +1,14 @@
-import React from 'react'
+import { ReactNode, createContext, useMemo } from 'react'
 import LocaleProvider, { LocaleContextProps } from './locale-provider'
 import Portal from './mpx-portal'
 import { extendObject } from './utils'
-// import { Theme, ThemeProvider } from '../style'
 
 export type Theme = typeof defaultTheme & { [key: string]: any }
 
 export interface ProviderProps {
   locale?: LocaleContextProps
   theme?: Partial<Theme>
-  children: React.ReactNode
+  children: ReactNode
 }
 const defaultTheme = {
   color_text_base: '#000000', // 基本
@@ -24,7 +23,7 @@ const defaultTheme = {
   color_success: '#52c41a',
   color_primary: '#1677ff'
 }
-export const ThemeContext = React.createContext(defaultTheme)
+export const ThemeContext = createContext(defaultTheme)
 
 export type PartialTheme = Partial<Theme>
 
@@ -35,7 +34,7 @@ export interface ThemeProviderProps {
 
 const ThemeProvider = (props: ThemeProviderProps) => {
   const { value, children } = props
-  const theme = React.useMemo(() => (extendObject({}, defaultTheme, value)), [value])
+  const theme = useMemo(() => (extendObject({}, defaultTheme, value)), [value])
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
 }
 
