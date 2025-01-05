@@ -11,6 +11,7 @@ import {
   useTransformStyle,
   extendObject
 } from './utils'
+import { PickerViewStyleContext } from './pickerVIewContext'
 import type { AnyFunc } from './types/common'
 /**
  * ✔ value
@@ -73,7 +74,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = props
   const indicatorStyle = parseInlineStyle(props['indicator-style'])
   const pickerMaskStyle = parseInlineStyle(props['mask-style'])
-  const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
+  const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
@@ -162,10 +163,9 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
           height: normalStyle?.height || DefaultPickerItemH,
           itemHeight: indicatorH || DefaultPickerItemH
         },
-        columnStyle: normalStyle,
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
-        pickerOverlayStyle,
+        pickerIndicatorStyle,
         pickerMaskStyle
       }
     )
@@ -215,9 +215,11 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   return (
-    <View {...innerProps}>
-      <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
-    </View>
+    <PickerViewStyleContext.Provider value={textStyle}>
+      <View {...innerProps}>
+        <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
+      </View>
+    </PickerViewStyleContext.Provider>
   )
 })
 

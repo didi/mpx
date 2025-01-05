@@ -1,9 +1,9 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
-import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
+import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
 import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, useDebounceCallback, useStableCallback } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import PickerOverlay from './pickerViewOverlay'
+import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
 import MpxPickerVIewColumnItem from './mpx-picker-view-column-item'
 import { PickerViewColumnAnimationContext } from './pickerVIewContext'
@@ -11,7 +11,6 @@ import { PickerViewColumnAnimationContext } from './pickerVIewContext'
 interface ColumnProps {
   children?: React.ReactNode
   columnData: React.ReactNode[]
-  columnStyle: Record<string, any>
   initialIndex: number
   onSelectChange: Function
   style: {
@@ -24,7 +23,7 @@ interface ColumnProps {
     itemHeight: number
   }
   pickerMaskStyle: Record<string, any>
-  pickerOverlayStyle: Record<string, any>
+  pickerIndicatorStyle: Record<string, any>
   columnIndex: number
 }
 
@@ -34,26 +33,22 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const {
     columnData,
     columnIndex,
-    columnStyle,
     initialIndex,
     onSelectChange,
     style,
     wrapperStyle,
     pickerMaskStyle,
-    pickerOverlayStyle,
+    pickerIndicatorStyle,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
 
   const {
     normalStyle,
-    hasVarDec,
-    varContextRef,
     hasSelfPercent,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
-  const { textStyle: textStyleFromParent = {} } = splitStyle(columnStyle)
   const { textStyle = {} } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
@@ -230,10 +225,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           item={item}
           index={index}
           itemHeight={itemHeight}
-          textStyleFromParent={textStyleFromParent}
           textStyle={textStyle}
-          hasVarDec={hasVarDec}
-          varContext={varContextRef.current}
           textProps={textProps}
           visibleCount={visibleCount}
           onItemLayout={onItemLayout}
@@ -271,10 +263,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     )
   }
 
-  const renderOverlay = () => (
-    <PickerOverlay
+  const renderIndicator = () => (
+    <PickerIndicator
       itemHeight={itemHeight}
-      overlayItemStyle={pickerOverlayStyle}
+      indicatorItemStyle={pickerIndicatorStyle}
     />
   )
 
@@ -286,11 +278,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   return (
-    <SafeAreaView style={[styles.wrapper, normalStyle]}>
+    <View style={[styles.wrapper, normalStyle]}>
       {renderScollView()}
       {renderMask()}
-      {renderOverlay()}
-    </SafeAreaView>
+      {renderIndicator()}
+    </View>
   )
 })
 
