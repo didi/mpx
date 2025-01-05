@@ -10,9 +10,10 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 const styles = StyleSheet.create({
   pickerContainer: {
-    height: 265
+    height: 240
   },
   pickerItem: {
+    fontSize: 16,
     lineHeight: 40,
     textAlign: 'center'
   }

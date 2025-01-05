@@ -29,33 +29,52 @@ import { usePopup } from '../mpx-popup'
  * ✔ custom-item
  * ✔ level 选择器层级 province，city，region，<sub-district不支持>
  * ✔ level
- * ✘ header-text
+ * ✔ header-text
  * ✘ bindcolumnchange
  */
 
 const styles = StyleSheet.create({
-  headerItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 40
-  },
   header: {
-    height: 45,
+    height: 40,
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#eeeeee'
   },
+  headerText: {
+    color: '#333333',
+    fontSize: 16,
+    textAlign: 'center'
+  },
+  footer: {
+    gap: 20,
+    height: 50,
+    marginBottom: 20,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center'
+  },
+  footerItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+    width: 110,
+    borderRadius: 5
+  },
+  cancelButton: {
+    backgroundColor: '#eeeeee'
+  },
+  confirmButton: {
+    backgroundColor: '#1AAD19'
+  },
   cancelText: {
-    color: '#7f7f7f',
-    fontSize: 17,
+    color: 'green',
+    fontSize: 16,
     textAlign: 'center'
   },
   confirmText: {
-    color: '#5dc06f',
-    fontSize: 17,
+    color: '#FFFFFF',
+    fontSize: 16,
     textAlign: 'center'
   }
 })
@@ -79,7 +98,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       children,
       disabled,
       bindcancel,
-      bindchange
+      bindchange,
+      'header-text': headerText = ''
     } = props
 
     const pickerValue = useRef(value)
@@ -184,25 +204,30 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       const PickerModal = pickerModalMap[_mode]
       const renderPickerModal = (
         <>
-          <View style={[styles.header]}>
+          {headerText && (
+            <View style={[styles.header]}>
+              <Text style={[styles.headerText]}>{headerText}</Text>
+            </View>
+          )}
+          <PickerModal {...specificProps} remove={remove} value={value}></PickerModal>
+          <View style={[styles.footer]}>
             <TouchableHighlight
               onPress={onCancel}
-              style={[styles.headerItem]}
+              style={[styles.footerItem, styles.cancelButton]}
               activeOpacity={1}
-              underlayColor={'#dddddd'}
+              underlayColor={'#DDDDDD'}
             >
               <Text style={[styles.cancelText]}>取消</Text>
             </TouchableHighlight>
             <TouchableHighlight
               onPress={onConfirm}
-              style={[styles.headerItem]}
+              style={[styles.footerItem, styles.confirmButton]}
               activeOpacity={1}
-              underlayColor={'#dddddd'}
+              underlayColor={'#179B16'}
             >
               <Text style={[styles.confirmText]}>确定</Text>
             </TouchableHighlight>
           </View>
-          <PickerModal {...specificProps} remove={remove} value={value}></PickerModal>
         </>
       )
       open(renderPickerModal)
