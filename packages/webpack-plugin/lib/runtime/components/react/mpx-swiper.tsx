@@ -147,7 +147,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const patchElementNum = props.circular ? (previousMargin ? 2 : 1) : 0
   const nodeRef = useRef<View>(null)
   useNodesRef<View, SwiperProps>(props, ref, nodeRef, {})
-  
   // 计算transfrom之类的
   const {
     normalStyle,
