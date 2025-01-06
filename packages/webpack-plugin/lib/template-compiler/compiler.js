@@ -142,7 +142,7 @@ function popForScopes () {
 
 const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
-  Array.isArray(node.children) && node.children.forEach((item) => deleteErrorInResultMap(item))
+  Array.isArray(node.children) && node.children.forEach(item => deleteErrorInResultMap(item))
 }
 
 function baseWarn (msg) {
@@ -1263,7 +1263,7 @@ function processEventReact (el) {
           } while (has)
         }
       })
-      const value = `{{(e)=>this.__invoke(e, [${configs.map((item) => item.expStr)}])}}`
+      const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`
       addAttrs(el, [
         {
           name: type,
