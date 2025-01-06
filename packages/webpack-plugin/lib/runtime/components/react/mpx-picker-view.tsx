@@ -7,7 +7,6 @@ import {
   splitProps,
   splitStyle,
   wrapChildren,
-  parseInlineStyle,
   useTransformStyle,
   extendObject
 } from './utils'
@@ -18,10 +17,10 @@ import type { AnyFunc } from './types/common'
  * ✔ bindchange
  * ✘ bindpickstart
  * ✘ bindpickend
- * ✘ mask-class
+ * ✔ mask-class
  * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
  * WebView Only:
- * ✘ indicator-class
+ * ✔ indicator-class
  * ✔ mask-style
  * ✘ immediate-change
  */
@@ -33,8 +32,8 @@ interface PickerViewProps {
   style: {
     [key: string]: any
   }
-  'indicator-style'?: string
-  'mask-style'?: string
+  'indicator-style'?: Record<string, any>,
+  'mask-style'?: Record<string, any>,
   'enable-var': boolean
   'external-var-context'?: Record<string, any>,
   'enable-offset': boolean
@@ -69,11 +68,11 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     value = [],
     bindchange,
     style,
+    'indicator-style': indicatorStyle = {},
+    'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
-  const indicatorStyle = parseInlineStyle(props['indicator-style'])
-  const pickerMaskStyle = parseInlineStyle(props['mask-style'])
   const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
@@ -145,7 +144,13 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       ),
       layoutProps
     }),
-    ['enable-offset'],
+    [
+      'enable-offset',
+      'indicator-style',
+      'indicator-class',
+      'mask-style',
+      'mask-class'
+    ],
     { layoutRef }
   )
 

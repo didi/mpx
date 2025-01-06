@@ -1,7 +1,7 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, useDebounceCallback, useStableCallback } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
@@ -64,6 +64,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
   const touching = useRef(false)
   const scrolling = useRef(false)
+  const timerResetPosition = useRef<NodeJS.Timeout | null>(null)
   const activeIndex = useRef(initialIndex)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
@@ -101,11 +102,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     return index * itemRawH
   }, [itemRawH])
 
-  const stableResetScrollPosition = useStableCallback((y: number) => {
+  const resetScrollPosition = (y: number) => {
     if (touching.current || scrolling.current) {
       return
     }
-    // needReset.current = true
     if (y % itemRawH !== 0) {
       scrolling.current = true
       const targetIndex = getIndex(y)
@@ -114,8 +114,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     } else {
       onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
     }
-  })
-  const debounceResetScrollPosition = useDebounceCallback(stableResetScrollPosition, 10)
+  }
+
+  const clearTimerResetPosition = () => {
+    if (timerResetPosition.current) {
+      clearTimeout(timerResetPosition.current)
+      timerResetPosition.current = null
+    }
+  }
 
   useEffect(() => {
     if (
@@ -158,7 +164,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }
 
   const onScrollBeginDrag = () => {
-    isIOS && debounceResetScrollPosition.clear()
+    isIOS && clearTimerResetPosition()
     touching.current = true
     prevScrollingInfo.current = {
       index: activeIndex.current,
@@ -171,13 +177,15 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     const { y } = e.nativeEvent.contentOffset
     if (isIOS) {
       if (y >= 0 && y <= snapToOffsets[maxIndex]) {
-        debounceResetScrollPosition(y)
+        timerResetPosition.current = setTimeout(() => {
+          resetScrollPosition(y)
+        }, 10)
       }
     }
   }
 
   const onMomentumScrollBegin = () => {
-    isIOS && debounceResetScrollPosition.clear()
+    isIOS && clearTimerResetPosition()
     scrolling.current = true
   }
 
@@ -185,7 +193,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     scrolling.current = false
     const { y: scrollY } = e.nativeEvent.contentOffset
     if (isIOS && scrollY % itemRawH !== 0) {
-      return debounceResetScrollPosition(scrollY)
+      return resetScrollPosition(scrollY)
     }
     const calcIndex = getIndex(scrollY)
     if (calcIndex !== activeIndex.current) {
