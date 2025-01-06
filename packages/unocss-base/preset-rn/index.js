@@ -2,7 +2,7 @@ import rules, { blocklistRules } from './rules/index.js'
 import { normalizeTransfromVar } from './rules/transforms.js'
 import theme from './theme.js'
 import blocklistVariants from './variants/index.js'
-import { boxShadowsBase, transformBase } from '@unocss/preset-mini/rules'
+import { transformBase } from '@unocss/preset-mini/rules'
 import { filterBase } from '@unocss/preset-wind/rules'
 
 function normalizePreflightBase (preflightBase) {
@@ -17,7 +17,6 @@ function preflights () {
       getCSS ({ theme, generator }) {
         generator._mpx2rnUnoPreflightBase = [
           ...normalizePreflightBase(transformBase),
-          ...boxShadowsBase,
           ...filterBase
         ]
       }
