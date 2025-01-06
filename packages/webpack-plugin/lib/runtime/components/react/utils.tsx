@@ -617,7 +617,7 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
   const enableHoverStyle = !!hoverStyle
   const enableHoverStyleRef = useRef(enableHoverStyle)
   if (enableHoverStyleRef.current !== enableHoverStyle) {
-    throw new Error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
+    error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
   }
 
   if (!enableHoverStyle) return { enableHoverStyle }
@@ -637,6 +637,7 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
   }, [])
 
   const setStartTimer = () => {
+    if (disabled) return
     dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
     dataRef.current.startTimer = setTimeout(() => {
       setIsHover(true)
@@ -644,6 +645,7 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
   }
 
   const setStayTimer = () => {
+    if (disabled) return
     dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
     dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
     dataRef.current.stayTimer = setTimeout(() => {
@@ -655,12 +657,10 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
     return Gesture.Pan()
       .onTouchesDown(() => {
         'worklet'
-        if (disabled) return
         runOnJS(setStartTimer)()
       })
       .onTouchesUp(() => {
         'worklet'
-        if (disabled) return
         runOnJS(setStayTimer)()
       })
   }, [disabled])
@@ -672,6 +672,6 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
   return {
     isHover,
     gesture,
-    enableHoverStyle
+    enableHoverStyle: enableHoverStyleRef.current
   }
 }

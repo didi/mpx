@@ -368,6 +368,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
 
   return {
     enableStyleAnimation,
-    animationStyle
+    animationStyle: enableAnimationRef.current
   }
 }
