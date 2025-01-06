@@ -5,7 +5,8 @@
 <script>
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
-import { extend } from '../../utils'
+import { extend, isFunction } from '@mpxjs/utils'
+
 const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
 const eventLoad = 'load'
 const eventError = 'error'
@@ -102,58 +103,71 @@ export default {
   methods: {
     messageCallback (event) {
       const hostValidate = this.hostValidate(event.origin)
-      const data = event.data
+      let data = {}
+      try {
+        const eventData = event.data
+        data = typeof eventData === 'string' ? JSON.parse(eventData) : eventData
+      } catch(e){}
       // 判断number类型，防止undefined导致触发return逻辑
       if (data.clientUid !== undefined && +data.clientUid !== this._uid) {
         return
       }
       let value = data.payload
+      const args = data.args
+      const params = Array.isArray(args) ? args : [value]
       if (!hostValidate) {
         return
       }
       let asyncCallback = null
-      switch (data.type) {
+      const type = data.type
+      switch (type) {
         case 'postMessage':
-          this.messageList.push(value.data || value)
+          let data = {
+            type: 'message',
+            data: params[0]?.data
+          }
+          this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
           asyncCallback = Promise.resolve({
             errMsg: 'invokeWebappApi:ok'
           })
           break
         case 'navigateTo':
-          asyncCallback = navObj.navigateTo(value)
+          asyncCallback = navObj.navigateTo(...params)
           break
         case 'navigateBack':
-          asyncCallback = navObj.navigateBack(value)
+          asyncCallback = navObj.navigateBack(...params)
           break
         case 'redirectTo':
-          asyncCallback = navObj.redirectTo(value)
+          asyncCallback = navObj.redirectTo(...params)
           break
         case 'switchTab':
-          asyncCallback = navObj.switchTab(value)
+          asyncCallback = navObj.switchTab(...params)
           break
         case 'reLaunch':
-          asyncCallback = navObj.reLaunch(value)
+          asyncCallback = navObj.reLaunch(...params)
           break
-        case 'getLocation':
-          const getLocation = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations.getLocation
-          if (getLocation) {
-            asyncCallback = getLocation()
-          } else {
-            asyncCallback = Promise.reject({
-              errMsg: '未在apiImplementations中配置getLocation方法'
-            })
+        default:
+          if (type) {
+            const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
+            if (isFunction(implement)) {
+              asyncCallback = Promise.resolve(implement(...params))
+            } else {
+              asyncCallback = Promise.reject({
+                errMsg: `未在apiImplementations中配置${type}方法`
+              })
+            }
           }
           break
       }
       asyncCallback && asyncCallback.then((res) => {
         this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
-          type: data.type,
+          type: type,
           callbackId: data.callbackId,
           result: res
         }, event.origin)
       }).catch((error) => {
         this.mpxIframe && this.mpxIframe.contentWindow && this.mpxIframe.contentWindow.postMessage && this.mpxIframe.contentWindow.postMessage({
-          type: data.type,
+          type: type,
           callbackId: data.callbackId,
           error
         }, event.origin)

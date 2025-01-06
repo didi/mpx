@@ -13,6 +13,7 @@ import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject } from './utils'
+import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 
 export interface _ViewProps extends ViewProps {
@@ -550,7 +551,7 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
       : undefined)
 }
 
-function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
+function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -659,7 +660,8 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? wrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
@@ -716,7 +718,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
-    throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
   const nodeRef = useRef(null)
@@ -774,13 +776,16 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableAnimation = enableAnimation || !!animation
   const enableAnimationRef = useRef(enableAnimation)
   if (enableAnimationRef.current !== enableAnimation) {
-    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
-  const finalStyle = enableAnimation
-    ? [viewStyle, useAnimationHooks({
-        animation,
-        style: viewStyle
-      })]
+
+  const finalStyle = enableAnimationRef.current
+    ? [viewStyle,
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        useAnimationHooks({
+          animation,
+          style: viewStyle
+        })]
     : viewStyle
   const innerProps = useInnerProps(
     props,
