@@ -26,9 +26,20 @@ declare module '@mpxjs/utils' {
     removeListener: (eventName: string, callback: (e: Event) => void) => void
     dispatch: (eventName: string) => void
     pageId: number
+    layout: {
+      x: number
+      y: number
+      width: number
+      height: number
+    },
+    setOptions: (params: Record<string, any>) => void
   } | undefined
 }
 
 declare let global: {
   __formatValue (value: string): string | number
 } & Record<string, any>
+
+declare module '@react-navigation/native' {
+   export function useNavigation (): Record<string, any>
+}
