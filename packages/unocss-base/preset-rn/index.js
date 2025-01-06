@@ -15,10 +15,10 @@ function preflights () {
     {
       layer: 'preflights',
       getCSS ({ theme, generator }) {
-        generator._mpx2rnUnoPreflightBase = [
+        generator._mpx2rnUnoPreflightBase = {
           ...normalizePreflightBase(transformBase),
           ...filterBase
-        ]
+        }
       }
     }
   ]
