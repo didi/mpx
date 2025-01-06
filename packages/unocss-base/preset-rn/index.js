@@ -1,6 +1,7 @@
-import rules from './rules/index.js'
+import rules, { blocklistRules } from './rules/index.js'
 import { normalizeTransfromVar } from './rules/transforms.js'
 import theme from './theme.js'
+import blocklistVariants from './variants/index.js'
 
 function normalizePreflightBase (preflightBase) {
   normalizeTransfromVar(preflightBase)
@@ -25,6 +26,10 @@ export default function presetRnMpx () {
     name: '@mpxjs/unocss-preset-rn',
     rules,
     theme,
-    preflights: preflights()
+    preflights: preflights(),
+    blocklist: [
+      ...blocklistRules,
+      ...blocklistVariants
+    ]
   }
 }

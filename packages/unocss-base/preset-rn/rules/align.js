@@ -1,5 +1,4 @@
-import { textAligns, verticalAligns } from '@unocss/preset-mini/rules'
-import { findRawRules, ruleCallback, transformEmptyRule } from '../../utils/index.js'
+import { verticalAligns } from '@unocss/preset-mini/rules'
 
 const support = [
   'mid',
@@ -12,27 +11,21 @@ const support = [
   'middle'
 ]
 
-const verticalAlignsRules = verticalAligns.map(v => {
-  const [regex, matcher, ...another] = v
-  return [
-    regex,
-    (...args) => {
-      const [[, v]] = args
-      if (support.includes(v)) return matcher(...args)
-      return ruleCallback(...args)
-    },
-    ...another
-  ]
+const verticalAlignsRules = verticalAligns.map(([rule]) => (raw) => {
+  const result = raw.match(rule)
+  if (result && !support.includes(result[1])) {
+    return true
+  }
 })
 
-const textAlignValuesRules = transformEmptyRule(
-  findRawRules(
-    ['text-start', 'text-end', 'text-align-start', 'text-align-end'],
-    textAligns
-  )
-)
+const textAligns = [
+  'text-start',
+  'text-end',
+  'text-align-start',
+  'text-align-end'
+]
 
 export {
   verticalAlignsRules as verticalAligns,
-  textAlignValuesRules as textAligns
+  textAligns
 }

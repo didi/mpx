@@ -25,7 +25,7 @@ async function createContext (configOrPath, defaults = {}, extraConfigSources = 
 
   const result = await config.loadConfig(root, configOrPath, extraConfigSources, defaults)
   rawConfig = result.config
-  uno.setConfig(rawConfig)
+  await uno.setConfig(rawConfig)
   rollupFilter = pluginutils.createFilter(
     rawConfig.include || defaultInclude,
     rawConfig.exclude || defaultExclude

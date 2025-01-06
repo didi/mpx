@@ -1,31 +1,12 @@
 import { colorScheme } from './color.js'
 import { backgroundStyles } from './background.js'
-import { margins, paddings, spaces } from './spacing.js'
+import { paddingAndMargins, spaces } from './spacing.js'
 import typography from './typography.js'
 import shadow from './shadow.js'
 import behaviors from './behaviors.js'
 import { overflows } from './layout.js'
 import filters from './filters.js'
-import {
-  appearances,
-  backgroundBlendModes,
-  contains,
-  cursors,
-  displays,
-  resizes,
-  whitespaces,
-  contentVisibility,
-  contents,
-  breaks,
-  textWraps,
-  textOverflows,
-  fontStyles,
-  fontSmoothings,
-  hyphens,
-  objectPositions,
-  isolations,
-  mixBlendModes
-} from './static.js'
+import staticRules from './static.js'
 import {
   flexGridJustifiesAlignments,
   justifies,
@@ -50,86 +31,58 @@ import { viewTransition } from './view-transition.js'
 import { gaps } from './gap.js'
 import { transitions } from './transition.js'
 import { svgUtilities } from './svg.js'
-import ring from './ring.js'
+import { rings } from './ring.js'
 import border from './border.js'
 import { transforms } from './transforms.js'
 import { textDecorations } from './decoration.js'
+import { lineClamps } from './line-clamp.js'
+import { grids } from './grid.js'
 
-export default [
-  ...typography,
-  ...textDecorations,
-  ...shadow,
-  ...behaviors,
-  ...filters,
-  ...ring,
-  ...border,
-  // align
-  ...verticalAligns,
-  ...textAligns,
-  // color
-  ...colorScheme,
+export const blocklistRules = [
   ...backgroundStyles,
-  // container
-  ...containerParent,
-  ...container,
-  // layout
+  ...border,
   ...overflows,
-  // positions
-  ...floats,
-  ...flex,
+  // space
+  ...paddingAndMargins,
+  ...spaces,
+  // position
   ...positions,
+  ...flexGridJustifiesAlignments,
   ...justifies,
   ...orders,
   ...placements,
-  ...flexGridJustifiesAlignments,
+  ...floats,
   ...boxSizing,
   // static
-  ...displays,
-  ...backgroundBlendModes,
-  ...appearances,
-  ...cursors,
-  ...contains,
-  ...resizes,
-  ...whitespaces,
-  ...contentVisibility,
-  ...contents,
-  ...breaks,
-  ...textWraps,
-  ...textOverflows,
-  ...fontStyles,
-  ...fontSmoothings,
-  ...hyphens,
-  ...objectPositions,
-  ...isolations,
-  ...mixBlendModes,
-  // spaceing
-  ...paddings,
-  ...margins,
-  ...spaces,
-  // animations,
-  ...animations,
-  // columns
-  ...columns,
-  // divide
-  ...divides,
-  // placeholder
-  ...placeholders,
-  // scrolls
-  ...scrolls,
-  // tables
-  ...tables,
-  // touchActions
-  ...touchActions,
-  // view-transition
-  ...viewTransition,
-  // gap
+  ...staticRules,
+  ...verticalAligns,
+  ...textAligns,
+  ...flex,
   ...gaps,
-  // transition
-  ...transitions,
-  // svg
+  ...typography,
+  ...behaviors,
+  ...containerParent,
+  ...container,
+  ...colorScheme,
+  ...columns,
+  ...grids,
+  ...placeholders,
+  ...tables,
+  ...scrolls,
+  ...divides,
+  ...touchActions,
+  ...rings,
+  ...lineClamps,
   ...svgUtilities,
-  // transforms
+  ...viewTransition,
+  ...transitions,
   ...transforms,
-  // global
+  ...animations,
   ...globalRules
+]
+
+export default [
+  ...textDecorations,
+  ...shadow,
+  ...filters
 ]
