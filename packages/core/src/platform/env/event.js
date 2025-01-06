@@ -20,21 +20,21 @@ function createMpxEvent (layer) {
   const isTouchDevice = document && 'ontouchstart' in document.documentElement
 
   const onTouchStart = (event) => {
-     if (event.targetTouches?.length > 1) {
-       return true
-     }
-     const touches = event.targetTouches
-     targetElement = event.target
-     needTap = true
-     startTimer = null
-     touchStartX = touches[0].pageX
-     touchStartY = touches[0].pageY
-     startTimer = setTimeout(() => {
-       needTap = false
-       sendEvent(targetElement, 'longpress', event)
-       sendEvent(targetElement, 'longtap', event)
-     }, 350)
-   }
+    if (event.targetTouches?.length > 1) {
+      return true
+    }
+    const touches = event.targetTouches
+    targetElement = event.target
+    needTap = true
+    startTimer = null
+    touchStartX = touches[0].pageX
+    touchStartY = touches[0].pageY
+    startTimer = setTimeout(() => {
+      needTap = false
+      sendEvent(targetElement, 'longpress', event)
+      sendEvent(targetElement, 'longtap', event)
+    }, 350)
+  }
 
   const onTouchMove = (event) => {
     const touch = event.changedTouches[0]
