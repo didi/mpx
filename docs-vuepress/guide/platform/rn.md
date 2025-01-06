@@ -398,8 +398,18 @@ display:flex
 /* 隐藏 */
 display:none
 ```
+#### justify-content
+用来设置元素列之间的间隔大小，默认值 flex-start
+##### 值类型
+enum: flex-start/flex-end/center/space-between/space-around/space-evenly
+##### 代码示例
+``` css
+justify-content: center; /* 居中排列 */
+justify-content: flex-start; /* 从行首起始位置开始排列 */
+justify-content: flex-end; /* 从行尾位置开始排列 */
+```
 #### align-content
-设置多根轴线的对齐方式。
+设置单根轴线上的子元素的对齐方式。
 ##### 值类型
 enum: flex-start, flex-end, center, stretch, space-between, space-around, space-evenly
 ##### 代码示例
@@ -562,6 +572,118 @@ flex-direction flex-wrap 的简写形式，值按固定顺序分别赋值给 fle
 flex-flow: row;
 /* flex-direction |  flex-wrap */
 flex-flow: row nowrap;
+```
+#### direction
+用来设置元素列之间的间隔大小
+##### 值类型
+enum: inherit/ltr/rtl
+##### 代码示例
+``` css
+/* 支持 */
+direction: ltr;
+direction: rtl;
+direction: inherit;
+```
+#### column-gap
+用来设置元素列之间的间隔大小
+##### 值类型
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+column-gap: 3px;
+column-gap: 25rpx;
+column-gap: 3%;
+```
+#### row-gap
+用来设置元素行之间的间隙大小
+##### 值类型
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+row-gap: 20px;
+row-gap: 10%;
+```
+#### gap
+用于设置行、列的间隙，该属性用来表示 row-gap 和可选的 column-gap 的值。如果缺失 column-gap，则其会被设置成跟 row-gap 一样的值。
+##### 值类型
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 一个值 */
+gap: 16%;
+/* 两个值 */
+gap: 20px 10px;
+gap: 21px 82%;
+/* calc() 值 */
+gap: calc(10% + 20px);
+gap: calc(20px + 10%) calc(10% - 5px);
+```
+#### height
+设置元素高度
+##### 值类型
+enum: auto
+
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+height: 120px;
+height: 130rpx;
+height: auto;
+```
+#### max-height
+设置元素最大高度
+##### 值类型
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+max-height: 120px;
+max-height: 75%;
+```
+#### min-height
+设置元素最小高度
+##### 值类型
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+min-height: 120px;
+min-height: 130rpx;
+```
+#### width
+设置元素宽度
+##### 值类型
+enum: auto
+
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+width: auto;
+width: 10%;
+```
+#### max-width
+设置元素最大宽度
+##### 值类型
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+max-width: 75%;
+max-width: 75px;
+```
+#### min-width
+设置元素最小宽度
+##### 值类型
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+##### 代码示例
+``` css
+/* 支持 */
+min-width: 10%;
+min-width: 120px;
 ```
 #### margin-top|margin-bottom|margin-right|margin-left
 上下左右外边距
@@ -878,7 +1000,7 @@ transform: 'rotateX(45deg) rotateZ(0.785398rad)';
 /* 仅rn支持 */
 transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}]
 ```
-#### transformOrigin
+#### transform-origin
 设置视图变换的原点，默认情况下，变换的原点是中心。
 ##### 值类型
 - 单值时，该值必须是 px、百分比或关键字 left、center、right、top 和 bottom 之一； 
@@ -953,18 +1075,6 @@ overflow: hidden visible;
 规定盒子首选纵横比
 ##### 值类型
 number, string
-##### 代码示例
-``` css
-/* 支持 */
-aspect-ratio: 1 / 1;
-aspect-ratio: 1;
-aspect-ratio: 0.5;
-aspect-ratio: auto;
-```
-#### column-gap
-用来设置元素列之间的间隔大小
-##### 值类型
-number，单位参考[数值类型单位说明](#数值类型单位说明)
 ##### 代码示例
 ``` css
 /* 支持 */
