@@ -1,4 +1,4 @@
-import { setByPath, error, extend, parseDataset } from '@mpxjs/utils'
+import { setByPath, error, parseDataset } from '@mpxjs/utils'
 import Mpx from '../../index'
 
 export default function proxyEventMixin () {
@@ -34,16 +34,48 @@ export default function proxyEventMixin () {
           } catch (e) {}
         }
         const location = this.__mpxProxy.options.mpxFileResource
-        // todo newEvent 处理
-        const newEvent = extend({}, rawEvent, {
-          target: extend({}, rawEvent.target, {
-            dataset: parseDataset(rawEvent.target.dataset)
-          }),
-          currentTarget: extend({}, rawEvent.currentTarget, {
-            dataset: parseDataset(rawEvent.currentTarget.dataset)
-          })
-        })
 
+        const newEvent = Object.create(Object.getPrototypeOf(rawEvent), Object.getOwnPropertyDescriptors(rawEvent))
+
+        const originalTarget = rawEvent.target
+        const originalCurrentTarget = rawEvent.currentTarget
+
+        Object.defineProperties(newEvent, {
+          target: {
+            get () {
+              if (!originalTarget) return originalTarget
+              if (!this._target) {
+                this._target = Object.create(originalTarget, {
+                  dataset: {
+                    get () {
+                      return parseDataset(originalTarget.dataset)
+                    }
+                  }
+                })
+              }
+              return this._target
+            },
+            configurable: true,
+            enumerable: true
+          },
+          currentTarget: {
+            get () {
+              if (!originalCurrentTarget) return originalCurrentTarget
+              if (!this._currentTarget) {
+                this._currentTarget = Object.create(originalCurrentTarget, {
+                  dataset: {
+                    get () {
+                      return parseDataset(originalCurrentTarget.dataset)
+                    }
+                  }
+                })
+              }
+              return this._currentTarget
+            },
+            configurable: true,
+            enumerable: true
+          }
+        })
         let returnedValue
         eventConfig.forEach((item) => {
           const callbackName = item[0]
