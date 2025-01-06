@@ -1,5 +1,5 @@
 import { textDecorations } from '@unocss/preset-mini/rules'
-import { transformEmptyRule, ruleCallback, findRawRules } from '../../utils/index.js'
+import { isReg } from '../../utils/index.js'
 
 const unSupport = [
   'auto',
@@ -7,32 +7,26 @@ const unSupport = [
   'overline'
 ]
 
-const textDecorationsRules = textDecorations.map(v => {
-  const [regex, matcher, ...another] = v
-  if (typeof matcher === 'function') {
-    return [
-      regex,
-      (...args) => {
-        const [[, v]] = args
-        if (unSupport.includes(v)) return ruleCallback(...args)
-        const res = matcher(...args)
-        if (res['text-decoration-thickness'] || res['text-underline-offset']) {
-          return ruleCallback(...args)
-        }
-        return res
-      },
-      ...another
-    ]
+const textDecorationsRules = textDecorations.map(([rule]) => (raw) => {
+  if (isReg(rule)) {
+    const result = raw.match(rule)
+    if (result && unSupport.includes(result[1])) {
+      return true
+    }
   }
-  return v
 })
 
-const textDecorationsWavyStyle = transformEmptyRule(
-  findRawRules(['underline-wavy', 'decoration-wavy'], textDecorationsRules)
-)
+const rules = [
+  // size
+  /^(?:underline|decoration)-(auto|from-font)$/,
+  // offset
+  /^(?:underline|decoration)-offset-(.+)$/,
+  // wavy style
+  'underline-wavy',
+  'decoration-wavy'
+]
 
-textDecorationsRules.push(...textDecorationsWavyStyle)
-
-export {
-  textDecorationsRules as textDecorations
-}
+export default [
+  ...textDecorationsRules,
+  ...rules
+]

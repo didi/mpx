@@ -34,11 +34,12 @@ import { svgUtilities } from './svg.js'
 import { rings } from './ring.js'
 import border from './border.js'
 import { transforms } from './transforms.js'
-import { textDecorations } from './decoration.js'
 import { lineClamps } from './line-clamp.js'
 import { grids } from './grid.js'
+import textDecorations from './decoration.js'
 
 export const blocklistRules = [
+  ...textDecorations,
   ...backgroundStyles,
   ...border,
   ...overflows,
@@ -82,7 +83,6 @@ export const blocklistRules = [
 ]
 
 export default [
-  ...textDecorations,
   ...shadow,
   ...transforms
 ]
