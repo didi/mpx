@@ -176,7 +176,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
 
-  if (!enableStyleAnimation) return { enableStyleAnimation }
+  if (!enableStyleAnimation) return { animationStyle: enableAnimationRef.current }
 
   const originalStyle = formatStyle(style)
   // id 标识

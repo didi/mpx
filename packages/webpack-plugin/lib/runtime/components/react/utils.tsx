@@ -620,7 +620,7 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
     error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
   }
 
-  if (!enableHoverStyle) return { enableHoverStyle }
+  if (!enableHoverStyle) return { enableHoverStyle: enableHoverStyleRef.current }
 
   const gestureRef = useContext(ScrollViewContext).gestureRef
   const [isHover, setIsHover] = useState(false)
