@@ -17,6 +17,14 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-video'
     },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-video'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-video'
+    },
     props: [
       {
         test: /^(enable-danmu|danmu-btn|show-progress|play-btn-position|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress|enable-auto-rotation|show-snapshot-button|show-screen-lock-button)$/,
@@ -41,7 +49,6 @@ module.exports = function ({ print }) {
         qq: qqPropLog
       },
       {
-
         test: /^(duration|danmu-list|danmu-btn|enable-danmu|muted|initial-time|page-gesture|direction|show-progress|show-center-play-btn|enable-progress-gesture|show-mute-btn|title|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress|enable-auto-rotation|show-screen-lock-button|show-snapshot-button)$/,
         tt: ttPropLog
       },
