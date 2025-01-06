@@ -10,7 +10,7 @@ function showActionSheet (options = {}) {
     Animated.timing(slideAnim, {
       toValue: 0,
       duration: 200,
-      useNativeDriver: true // 这行代码确保了动画在 Android 上的渲染
+      useNativeDriver: true,
     }).start()
   }
   const slideOut = () => {
