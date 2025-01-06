@@ -142,16 +142,15 @@ function popForScopes () {
 
 const deleteErrorInResultMap = (node) => {
   rulesResultMap.delete(node)
-  Array.isArray(node.children) && node.children.forEach((item) =>
-deleteErrorInResultMap(item))
+  Array.isArray(node.children) && node.children.forEach((item) => deleteErrorInResultMap(item))
 }
 
 function baseWarn (msg) {
-  console.warn('[template compiler]: ' + msg)
+  console.warn(('[template compiler]: ' + msg))
 }
 
 function baseError (msg) {
-  console.error('[template compiler]: ' + msg)
+  console.error(('[template compiler]: ' + msg))
 }
 
 const decodeMap = {
@@ -311,7 +310,7 @@ function parseHTML (html, options) {
     if (html === last) {
       options.chars && options.chars(html)
       if (!stack.length && options.warn) {
-        options.warn('Mal-formatted tag at end of template: "' + html + '"')
+        options.warn(('Mal-formatted tag at end of template: "' + html + '"'))
       }
       break
     }
@@ -636,7 +635,7 @@ function parse (template, options) {
   processingTemplate = false
   rulesResultMap.clear()
 
-if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
+  if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
 
@@ -805,8 +804,8 @@ if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo
   })
 
   rulesResultMap.forEach((val) => {
-    Array.isArray(val.warnArray) && val.warnArray.forEach((item) => warn$1(item))
-    Array.isArray(val.errorArray) && val.errorArray.forEach((item) => error$1(item))
+    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
+    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
   if (!tagNames.has('component') && options.checkUsingComponents) {
@@ -987,7 +986,7 @@ function processComponentIs (el, options) {
 
   const range = getAndRemoveAttr(el, 'range').val
   const isInRange = makeMap(range || '')
-  el.components = usingComponents.filter((i) => {
+  el.components = (usingComponents).filter(i => {
     if (!range) return true
     return isInRange(i)
   })
@@ -1264,9 +1263,7 @@ function processEventReact (el) {
           } while (has)
         }
       })
-      const value = `{{(e)=>this.__invoke(e, [${configs.map(
-        (item) => item.expStr
-      )}])}}`
+      const value = `{{(e)=>this.__invoke(e, [${configs.map((item) => item.expStr)}])}}`
       addAttrs(el, [
         {
           name: type,
@@ -1405,10 +1402,12 @@ function processEvent (el, options) {
         }
       })
 
-      addAttrs(el, [{
-        name: resultName || config[mode].event.getEvent(type),
-        value: '__invoke'
-      }])
+      addAttrs(el, [
+        {
+          name: resultName || config[mode].event.getEvent(type),
+          value: '__invoke'
+        }
+      ])
       eventConfigMap[escapedType] = configs.map((item) => {
         return item.expStr
       })
@@ -1416,12 +1415,10 @@ function processEvent (el, options) {
   }
 
   if (!isEmptyObject(eventConfigMap)) {
-    addAttrs(el, [
-      {
-        name: 'data-eventconfigs',
-        value: `{{${shallowStringify(eventConfigMap, true)}}}`
-      }
-    ])
+    addAttrs(el, [{
+      name: 'data-eventconfigs',
+      value: `{{${shallowStringify(eventConfigMap, true)}}}`
+    }])
   }
 }
 
@@ -1492,7 +1489,7 @@ function parseOptionalChaining (str) {
         }
       },
       checkState () {
-        return Object.values(this.count).find((i) => i)
+        return Object.values(this.count).find(i => i)
       }
     }
     let leftIndex = optionsRes.index
@@ -1810,16 +1807,13 @@ function processRefReact (el, meta) {
       if (rawClass || rawDynamicClass) {
         const staticClass = parseMustacheWithContext(rawClass).result
         const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        selectors.push({
-          prefix: '.',
-          selector: `this.__getClass(${staticClass}, ${dynamicClass})`
-        })
+        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
       }
     } else {
       meta.refs.push(refConf)
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
-    const selectorsConf = selectors.map((item) => `["${item.prefix}", ${item.selector}]`)
+    const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     addAttrs(el, [{
       name: 'ref',
       value: `{{ this.__getRefVal('${type}', [${selectorsConf}]) }}`
@@ -1998,7 +1992,8 @@ function evalExp (exp) {
       success: true,
       result: fn()
     }
-  } catch (e) {}
+  } catch (e) {
+  }
   return result
 }
 
@@ -2197,12 +2192,10 @@ function processClass (el, meta) {
     const refClassRegExp = /ref_(\w+)_(\d+)/
     const match = staticClass.match(refClassRegExp)
     if (match) {
-      addAttrs(el, [
-        {
-          name: 'class',
-          value: match[0]
-        }
-      ])
+      addAttrs(el, [{
+        name: 'class',
+        value: match[0]
+      }])
     }
   }
 }
@@ -2210,10 +2203,7 @@ function processClass (el, meta) {
 function processStyle (el, meta) {
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
-  const dynamicStyle = getAndRemoveAttr(
-    el,
-    config[mode].directive.dynamicStyle
-  ).val
+  const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, type).val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
   if (dynamicStyle) {
@@ -2225,12 +2215,10 @@ function processStyle (el, meta) {
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
-    addAttrs(el, [
-      {
-        name: targetType,
-        value: staticStyle
-      }
-    ])
+    addAttrs(el, [{
+      name: targetType,
+      value: staticStyle
+    }])
   }
 }
 
@@ -2315,20 +2303,15 @@ function processExternalClasses (el, options) {
       const reg = new RegExp('\\b' + className + '\\b', 'g')
       const replacementClassName = dash2hump(className)
       if (classLikeAttrValue.includes(className)) hasExternalClass = true
-      classLikeAttrValue = classLikeAttrValue.replace(
-        reg,
-        `{{${replacementClassName} || ''}}`
-      )
+      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName} || ''}}`)
     })
     if (hasExternalClass) {
       classLikeAttrValue += ` {{${PARENT_MODULE_ID} || ''}}`
     }
-    addAttrs(el, [
-      {
-        name: classLikeAttrName,
-        value: classLikeAttrValue
-      }
-    ])
+    addAttrs(el, [{
+      name: classLikeAttrName,
+      value: classLikeAttrValue
+    }])
   }
 }
 
@@ -2336,12 +2319,10 @@ function processScoped (el) {
   if (hasScoped && isRealNode(el)) {
     const rootModuleId = ctorType === 'component' ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
-    addAttrs(el, [
-      {
-        name: 'class',
-        value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
-      }
-    ])
+    addAttrs(el, [{
+      name: 'class',
+      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
+    }])
   }
 }
 
@@ -2403,7 +2384,7 @@ function postProcessAliComponentRootView (el, options, meta) {
     })
   }
 
-  processAttrsConditions.forEach((item) => {
+  processAttrsConditions.forEach(item => {
     const matcher = normalizeCondition(item.condition)
     allAttrs.forEach((attr) => {
       if (matcher(attr.name)) {
@@ -2618,7 +2599,7 @@ function processAtMode (el) {
             break
           // MATCH保留属性并跳过平台转换
           case statusEnum.MATCH:
-            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : (el.noTransAttrs = [processedAttr])
+            el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
             break
           default:
           // MISMATCH丢弃属性
@@ -3155,7 +3136,7 @@ function postProcessForDynamic (vnode) {
 
 function postProcessAttrsDynamic (vnode, config) {
   const exps = (vnode.exps && vnode.exps.filter(v => v.attrName)) || []
-  const expsMap = Object.fromEntries(exps.map(v => [v.attrName, v]))
+  const expsMap = Object.fromEntries(exps.map(v => ([v.attrName, v])))
   const directives = Object.values(config.directive)
   if (vnode.attrsList && vnode.attrsList.length) {
     // 后序遍历，主要为了做剔除的操作
