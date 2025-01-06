@@ -165,7 +165,6 @@ export default function styleHelperMixin () {
             }
           })
           result = Object.assign({}, unoPreflightsClassMap, unoResult, result, unoUtilitiesResult)
-          console.log(result)
         }
 
         if (staticStyle || dynamicStyle) {
