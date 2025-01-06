@@ -85,5 +85,7 @@ export {
   findRawRules,
   ruleFallback,
   isFunction,
+  isReg,
+  isString,
   ruleCallback
 }
