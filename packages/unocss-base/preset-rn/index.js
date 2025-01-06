@@ -21,12 +21,23 @@ function preflights () {
   ]
 }
 
+function postprocess (utilsObject) {
+  const everyIsVar = utilsObject.entries.every(v => {
+    return v[0].startsWith('--')
+  })
+  if (everyIsVar) {
+    utilsObject.layer = 'utilities'
+  }
+  return utilsObject
+}
+
 export default function presetRnMpx () {
   return {
     name: '@mpxjs/unocss-preset-rn',
     rules,
     theme,
     preflights: preflights(),
+    postprocess: [postprocess],
     blocklist: [
       ...blocklistRules,
       ...blocklistVariants
