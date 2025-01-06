@@ -145,6 +145,7 @@ export default function styleHelperMixin () {
         const classMap = this.__getClassMap?.() || {}
         const unoClassMap = global.__getUnoClassMap?.() || {}
         const unoUtilitiesClassMap = global.__getUtilitiesUnoClassMap?.() || {}
+        const unoPreflightsClassMap = global.__getPreflightsUnoClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -163,7 +164,8 @@ export default function styleHelperMixin () {
               Object.assign(result, this.__props[className])
             }
           })
-          result = Object.assign(unoResult, result, unoUtilitiesResult)
+          result = Object.assign({}, unoPreflightsClassMap, unoResult, result, unoUtilitiesResult)
+          console.log(result)
         }
 
         if (staticStyle || dynamicStyle) {

@@ -76,6 +76,14 @@ module.exports = function (styles, {
                 __unoUtilitiesClassMap = __unoCssMapUtilities__
               }
               return __unoUtilitiesClassMap
+            };\n
+            let __unoPreflightsClassMap
+            global.__getPreflightsUnoClassMap = function () {
+              const formatValue = global.__formatValue
+              if (!__unoPreflightsClassMap) {
+                __unoPreflightsClassMap = __unoCssMapPreflights__
+              }
+              return __unoPreflightsClassMap
             };\n`
           }
           output += `

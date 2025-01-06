@@ -73,6 +73,7 @@ function WebpackPlugin (configOrPath, defaults) {
           }
           const classMap = getLayersClassMap(result.layers.filter(v => v !== 'utilities'))
           const utilitiesClassMap = getLayersClassMap(['utilities'])
+          const preflightsClassMap = uno._mpx2rnUnoPreflightBase
 
           const files = Object.keys(compilation.assets)
           for (const file of files) {
@@ -86,6 +87,9 @@ function WebpackPlugin (configOrPath, defaults) {
               })
               .replace('__unoCssMapUtilities__', () => {
                 return shallowStringify(utilitiesClassMap)
+              })
+              .replace('__unoCssMapPreflights__', () => {
+                return JSON.stringify(preflightsClassMap)
               })
               .replace('__unoCssBreakpointsPlaceholder__', () => {
                 const breakpoints = uno.config.theme.breakpoints || {}
