@@ -16,7 +16,7 @@ interface PickerColumnItemProps {
   onItemLayout?: (e: LayoutChangeEvent) => void
 }
 
-const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
+const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   item,
   index,
   itemHeight,
@@ -79,5 +79,5 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   )
 }
 
-_PickerViewColumnItem.displayName = 'MpxPickerViewColumnItem'
-export default _PickerViewColumnItem
+PickerViewColumnItem.displayName = 'MpxPickerViewColumnItem'
+export default PickerViewColumnItem
