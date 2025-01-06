@@ -56,19 +56,24 @@ function WebpackPlugin (configOrPath, defaults) {
           if (uno._mpx2rnUnsuportedRules && uno._mpx2rnUnsuportedRules.length) {
             compilation.errors.push(`[Mpx Unocss]: all those '${uno._mpx2rnUnsuportedRules.join(', ')}' class utilities is not supported in react native mode`)
           }
-          const classMap = getClassMap({
-            content: result.css,
-            filename: 'mpx2rn-unocss',
-            mode,
-            srcMode,
-            warn: msg => {
-              compilation.warnings.push(msg)
-            },
-            error: msg => {
-              compilation.errors.push(msg)
-            },
-            formatValueFn: 'formatValue'
-          })
+          const getLayersClassMap = (layers) => {
+            return getClassMap({
+              content: result.getLayers(layers),
+              filename: 'mpx2rn-unocss',
+              mode,
+              srcMode,
+              warn: msg => {
+                compilation.warnings.push(msg)
+              },
+              error: msg => {
+                compilation.errors.push(msg)
+              },
+              formatValueFn: 'formatValue'
+            })
+          }
+          const classMap = getLayersClassMap(result.layers.filter(v => v !== 'utilities'))
+          const utilitiesClassMap = getLayersClassMap(['utilities'])
+
           const files = Object.keys(compilation.assets)
           for (const file of files) {
             if (file === '*') { return }
@@ -78,6 +83,9 @@ function WebpackPlugin (configOrPath, defaults) {
               .replace('__unoCssMapPlaceholder__', () => {
                 replaced = true
                 return shallowStringify(classMap)
+              })
+              .replace('__unoCssMapUtilities__', () => {
+                return shallowStringify(utilitiesClassMap)
               })
               .replace('__unoCssBreakpointsPlaceholder__', () => {
                 const breakpoints = uno.config.theme.breakpoints || {}

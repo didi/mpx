@@ -139,11 +139,13 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const result = {}
+        let result = {}
+        const unoResult = {}
+        const unoUtilitiesResult = {}
         const classMap = this.__getClassMap?.() || {}
         const unoClassMap = global.__getUnoClassMap?.() || {}
+        const unoUtilitiesClassMap = global.__getUtilitiesUnoClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
-
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
           classString.split(/\s+/).forEach((className) => {
@@ -153,12 +155,15 @@ export default function styleHelperMixin () {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               Object.assign(result, appClassMap[className])
             } else if (unoClassMap[className]) {
-              Object.assign(result, unoClassMap[className])
+              Object.assign(unoResult, unoClassMap[className])
+            } else if (unoUtilitiesClassMap[className]) {
+              Object.assign(unoUtilitiesResult, unoUtilitiesClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.__props[className])
             }
           })
+          result = Object.assign(unoResult, result, unoUtilitiesResult)
         }
 
         if (staticStyle || dynamicStyle) {

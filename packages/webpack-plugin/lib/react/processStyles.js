@@ -68,6 +68,14 @@ module.exports = function (styles, {
                 __unoClassMap = __unoCssMapPlaceholder__
               }
               return __unoClassMap
+            };\n
+            let __unoUtilitiesClassMap
+            global.__getUtilitiesUnoClassMap = function () {
+              const formatValue = global.__formatValue
+              if (!__unoUtilitiesClassMap) {
+                __unoUtilitiesClassMap = __unoCssMapUtilities__
+              }
+              return __unoUtilitiesClassMap
             };\n`
           }
           output += `
