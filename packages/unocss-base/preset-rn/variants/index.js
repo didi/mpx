@@ -37,8 +37,6 @@ const wrapVariant = function (variant = {}) {
       return
     }
     if (match(raw, ctx)) {
-      this._mpx2rnUnsuportedRules = this._mpx2rnUnsuportedRules || []
-      this._mpx2rnUnsuportedRules.push(raw)
       return true
     }
   }

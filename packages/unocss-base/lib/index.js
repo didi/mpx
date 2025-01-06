@@ -1,4 +1,5 @@
 import { presetUno } from '@unocss/preset-uno'
+import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import presetRn from '../preset-rn/index.js'
 
 // eslint-disable-next-line
@@ -10,6 +11,9 @@ export default function presetMpx (options = {}) {
   const extraPresets = []
   if (isReact) {
     extraPresets.push(presetRn())
+    extraPresets.push(presetLegacyCompat({
+      commaStyleColorFunction: true
+    }))
     options.dark = 'media'
   }
   const uno = presetUno(options)
