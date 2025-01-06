@@ -387,7 +387,7 @@ z-index: 1;
 #### display
 设置元素的布局方式。
 ##### 值类型
-enum: flex, none
+enum: flex/none
 > 备注
 > - RN display 仅支持 flex 布局，其他在 Web/小程序常用的布局如 block、inline-block、inline、inline-flex、grid、table 等 RN 不支持，为了保证代码有更好的跨端适配，最好使用 flex 布局。
 > - 和 Web/小程序一致，RN 下 Text 节点默认为行内 inline 布局
@@ -411,7 +411,7 @@ justify-content: flex-end; /* 从行尾位置开始排列 */
 #### align-content
 设置单根轴线上的子元素的对齐方式。
 ##### 值类型
-enum: flex-start, flex-end, center, stretch, space-between, space-around, space-evenly
+enum: flex-start/flex-end/center/stretch/space-between/space-around/space-evenly
 ##### 代码示例
 ``` css
 /** 支持 **/
@@ -430,7 +430,7 @@ align-content: unsafe center;
 #### align-items
 设置单根轴线上的子元素的对齐方式。默认会是交叉轴上的。
 ##### 值类型
-enum: flex-start, flex-end, center, stretch, baseline
+enum: flex-start/flex-end/center/stretch/baseline
 ##### 代码示例
 ``` css
 /** 支持 **/
@@ -447,7 +447,7 @@ align-items: last baseline;
 #### align-self
 设置单个子元素在单根轴线上的对齐方式
 ##### 值类型
-enum: auto, flex-start, flex-end, center, stretch, baseline
+enum: auto/flex-start/flex-end/center/stretch/baseline
 ##### 代码示例
 ``` css
 /** 支持 **/
@@ -546,7 +546,7 @@ flex: 2 2 0
 #### flex-direction
 设置主轴的方向。
 ##### 值类型
-enum: row, row-reverse, column, column-reverse
+enum: row/row-reverse/column/column-reverse
 ##### 代码示例
 ``` css
 flex-direction: row;
@@ -892,7 +892,7 @@ background-color: red;
 
 @qunfeng 补充一下背景图和渐变背景的细节
 ##### 值类型
-string: image | linear-gradient
+string: url / linear-gradient
 > 注意事项 
 > - 背景图和背景色仅支持 view 节点
 > - 开发者可通过 enable-background 属性来控制是否开启背景图片和渐变色的支持
@@ -904,7 +904,7 @@ background-image linear-gradient(270deg, rgba(255,255,255,0.40), rgba(255,255,25
 #### background-size
 设置背景图大小
 ##### 值类型
-enum: contain|cover|auto
+enum: contain/cover/auto
 
 number，单位参考[数值类型单位说明](#数值类型单位说明)
 > 注意事项
@@ -972,7 +972,7 @@ box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
 #### backface-visibility
 指定当 image 背面朝向观察者时是否可见，仅 image 支持
 ##### 值类型
-enum: visible, hidden
+enum: visible/hidden
 > 备注：仅支持 view 节点
 ##### 代码示例
 ```css
@@ -981,7 +981,7 @@ backface-visibility: visible;
 #### object-fit
 确定当元素 image 与原始图像尺寸不匹配时如何调整图像大小
 ##### 值类型
-enum: cover, contain, fill, scale-down
+enum: cover/contain/fill/scale-down
 > 备注：仅支持 view 节点
 ##### 代码示例
 ```css
@@ -1030,18 +1030,6 @@ opacity: 0.6;
 
 /* 完全透明 */
 opacity: 0;
-```
-#### pointer-events
-控制视图是否可以成为触摸事件的目标
-##### 值类型
-enum
-- auto/none
-- box-none 仅 RN 支持，表示当前视图不会成为触摸事件的目标，但其子视图可以
-- box-only 仅 RN 支持，表示当前视图可以成为触摸事件的目标，但其子视图不能
-##### 代码示例
-``` css
-pointer-events: auto;
-pointer-events: none;
 ```
 #### pointer-events
 控制视图是否可以成为触摸事件的目标
