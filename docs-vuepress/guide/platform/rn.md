@@ -115,7 +115,8 @@
 如果第一个绑定的是 catchtap，那么不管后面绑定的是什么,都会阻止事件冒泡。如果第一个绑定的是 bindtap，则不会阻止事件冒泡。
 2. 当同一个元素上绑定了 capture-bind:tap 和 bindtap 事件时，事件的执行时机会根据模板上第一个绑定事件的标识符来决定。如果第一个绑定的是 capture-bind:tap，则事件会在捕获阶段触发，如果第一个绑定的是 bindtap，则事件会在冒泡阶段触发。
 3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
-4. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
+4. 由于 tap 事件是由 touchend 事件模拟实现，所以如果子组件绑定了 catchtap，那么父组件的 touchend 事件将不会响应。同理如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
+5. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
 
 
 ### 基础组件
@@ -660,6 +661,60 @@ movable-view的可移动区域。
 2. image 组件进行缩放时，计算出来的宽高可能带有小数，在不同webview内核下渲染可能会被抹去小数部分
 
 
+#### switch
+开关选择器。
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| checked		             | boolean  |         | 是否选中 |
+| disabled   | boolean  |     false    | 是否禁用	|
+| type	  | string  |     `switch`    | 样式，有效值：switch, checkbox		 |
+| color		  | string  |     `#04BE02`    | switch 的颜色，同 css 的 color|
+
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindchange       |  点击的时候触发   |
+
+#### navigator
+页面链接。
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| hover-class	             | string  |    false      | 指定按下去的样式类。 |
+| hover-start-time   | number  |     50    | 按住后多久出现点击态，单位毫秒|
+| hover-stay-time	  | number  |     400    | 手指松开后点击态保留时间，单位毫秒	 |
+| open-type		  | String  |     `navigate`    | 可支持`navigateBack`、`redirect`、`switchTab`、`reLaunch`、`navigateTo`|
+| url		  | String  |     ``    |  当前Navite内的跳转链接	|
+
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindtap       |  点击的时候触发   |
+
+
+
+#### rich-text
+富文本。
+
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| nodes			             | array/string  |    []     | 节点列表/HTML String |
+
+
+
+
 #### canvas
 画布。
 
@@ -803,6 +858,30 @@ module.exports = {
     ],
 };
 ```
+
+注意事项：
+
+1. 调用 `@mpxjs/api-proxy` 当中抹平跨端环境的 `createSelectorQuery` 方法创建的 `SelectorQuery` 实例，在使用过程中需要手动调用实例上的 `in` 方法来指定组件上下文。示例：
+
+```javascript
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  attached () {
+    const query = wx.createSelectorQuery()
+    query.select('#the-id').boundingClientRect()
+    query.selectViewport().scrollOffset()
+    query.exec(function(res){
+      res[0].top       // #the-id节点的上边界坐标
+      res[1].scrollTop // 显示区域的竖直滚动位置
+    }).in(this) // this 为组件实例
+  }
+})
+````
+
+2. `SelectorQuery.select/SelectorQuery.selectAll` 方法目前仅支持2种选择器写法
+  * id 选择器：`#id`
+  * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
 
 <!-- WebviewAPI -->
 #### Webview API
