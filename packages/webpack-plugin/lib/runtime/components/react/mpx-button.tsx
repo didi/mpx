@@ -223,7 +223,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const formContext = useContext(FormContext)
 
-  const { isHover, enableHoverStyle, gesture } = useHoverStyle({ hoverStyle, hoverStartTime, hoverStayTime, disabled })
+  const enableHover = hoverClass !== 'none'
+  const { isHover, gesture } = useHoverStyle({ enableHover, hoverStartTime, hoverStayTime, disabled })
 
   let submitFn: () => void | undefined
   let resetFn: () => void | undefined
@@ -235,7 +236,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const isMiniSize = size === 'mini'
 
-  const applyHoverEffect = isHover && hoverClass !== 'none'
+  const applyHoverEffect = isHover && enableHover
 
   const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
 
@@ -414,7 +415,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     )
   )
 
-  return enableHoverStyle
+  return enableHover
     ? createElement(GestureDetector, { gesture }, baseButton)
     : baseButton
 })

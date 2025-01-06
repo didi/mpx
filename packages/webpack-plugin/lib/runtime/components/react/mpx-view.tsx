@@ -699,7 +699,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       }
     : {}
 
-  const { isHover, enableHoverStyle, gesture } = useHoverStyle({ hoverStyle, hoverStartTime, hoverStayTime })
+  const enableHover = !!hoverStyle
+  const { isHover, gesture } = useHoverStyle({ enableHover, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
@@ -770,7 +771,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
-  return enableHoverStyle
+  return enableHover
     ? createElement(GestureDetector, { gesture }, BaseComponent)
     : BaseComponent
 })
