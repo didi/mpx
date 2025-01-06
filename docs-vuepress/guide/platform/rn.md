@@ -38,7 +38,7 @@ view, text {
 ```
 ### 样式单位
 Mpx转RN, 支持以下单位，部分单位在部分情况下存在使用限制
-
+#### 数值 number 类型单位说明
 | 单位 | 支持情况 | 特殊说明 |
 | ---- | ---- | ---- |
 | % | 支持 | 百分比单位参考下面说明|
@@ -46,7 +46,6 @@ Mpx转RN, 支持以下单位，部分单位在部分情况下存在使用限制
 | rpx | 支持 | rpx会根据屏幕宽度动态计算成实际的px |
 | vh | 支持 | 屏幕的高度，在使用非自定义导航时，页面初次渲染计算出来的vh是屏幕高度，后续更新渲染使用实际可视区域高度，推荐使用此单位的页面使用自定义导航 |
 | vw | 支持 | 无 |
-
 #### 百分比单位说明
 RN很多原生较多属性不支持百分比，比如font-size、translate等，但是这些属性在编写web、小程序代码的过程中使用较多，框架进行了抹平支持。以下这些属性在Mpx输出RN时专门进行了百分比单位的适配，部分属性存在编写的时候的特殊适配。
 ##### 特殊的百分比计算规则
@@ -80,6 +79,50 @@ translateX/translateY/border-radius 的百分比都是根据自身宽高的来�
 以父节点高度为基准值计算百分比的属性如 height/top/bottom 则需要传入 parent-height 属性；以父节点宽度为基准值计算百分比的属性如 width/left/right 则需要传入 parent-width 属性。
 
 > 备注：属性通过父节点宽度还是高度来计算基准，一般遵循纵向以高度为基准，横向以宽度为基准的大原则
+#### 色值 color 类型支持的值格式说明
+- hex-color(十六进制)
+- rgb/rgba
+- hsl/hsla
+- hwb
+- named color，具体参考[颜色枚举值](https://reactnative.dev/docs/colors#named-colors)
+- Color ints(仅 RN 支持，如 0xff00ff00 )
+
+```css
+/* <named-color> 值 */
+color: red;
+color: orange;
+color: tan;
+color: rebeccapurple;
+
+/* <hex-color> 值 */
+color: #090;
+color: #009900;
+color: #090a;
+color: #009900aa;
+
+/* <rgb()> 值 */
+color: rgb(34, 12, 64, 0.6);
+color: rgba(34, 12, 64, 0.6);
+color: rgb(34 12 64 / 0.6);
+color: rgba(34 12 64 / 0.3);
+color: rgb(34 12 64 / 60%);
+color: rgba(34.6 12 64 / 30%);
+
+/* <hsl()> 值 */
+color: hsl(30, 100%, 50%, 0.6);
+color: hsla(30, 100%, 50%, 0.6);
+color: hsl(30 100% 50% / 0.6);
+color: hsla(30 100% 50% / 0.6);
+color: hsl(30 100% 50% / 60%);
+color: hsla(30.2 100% 50% / 60%);
+
+/* <hwb()> 值 */
+color: hwb(90 10% 10%);
+color: hwb(90 10% 10% / 0.5);
+color: hwb(90deg 10% 10%);
+color: hwb(1.5708rad 60% 0%);
+color: hwb(0.25turn 0% 40% / 50%);
+```
 
 ### 文本样式继承
 Web/小程序中，文本节点可以通过 div/view 节点进行直接包裹，在 div/view 节点上也可以直接设定对应文本样式。
@@ -319,10 +362,8 @@ enum: absolute, relative， 默认relative。
 > 备注：RN 不支持 fixed 定位
 ##### 代码示例
 ``` css
-.demo{
-  position: absolute;
-  top: 10px
-}
+position: absolute;
+top: 10px
 ```
 #### top|right|left|bottom
 设置元素的不同方向的偏移量
@@ -330,10 +371,8 @@ enum: absolute, relative， 默认relative。
 number: px, rpx, %
 ##### 代码示例
 ``` css
-.demo{
-  position: relative;
-  top: 10%;
-}
+position: relative;
+top: 10%;
 ```
 #### z-index
 控制元素的堆叠覆盖顺序。
@@ -341,11 +380,9 @@ number: px, rpx, %
 number
 ##### 代码示例
 ``` css
-.demo {
-  position: absolute;
-  top: 0;
-  z-index: 1;
-}
+position: absolute;
+top: 0;
+z-index: 1;
 ```
 #### display
 设置元素的布局方式。
@@ -421,9 +458,7 @@ align-self: last baseline;
 number: >= 0
 ##### 代码示例
 ```css
-.demo {
-  flex-grow: 3;
-}
+flex-grow: 3;
 ```
 #### flex-shrink
 设置 flex 元素的收缩规则。
@@ -433,9 +468,7 @@ flex 元素仅在默认宽度之和大于容器的时候才会发生收缩，其
 number: >= 0
 ##### 代码示例
 ```css
-.demo {
-  flex-shrink: 2;
-}
+flex-shrink: 2;
 ```
 #### flex-basis
 设置指定了 flex 元素在主轴方向上的初始大小，默认值 auto。
@@ -524,12 +557,10 @@ flex-wrap: wrap-reverse;
 flex-direction flex-wrap 的简写形式，值按固定顺序分别赋值给 flex-direction flex-wrap，若值个数不够则后置位属性不设置；和所有简写属性一致，仅支持定义在类上
 ##### 代码示例
 ```css
-.demo { 
-    /* flex-direction flex-wrap 缺省则不设置 */
-    flex-flow: row;
-    /* flex-direction |  flex-wrap */
-    flex-flow: row nowrap;
-}
+/* flex-direction flex-wrap 缺省则不设置 */
+flex-flow: row;
+/* flex-direction |  flex-wrap */
+flex-flow: row nowrap;
 ```
 #### margin-top|margin-bottom|margin-right|margin-left
 上下左右外边距
@@ -627,7 +658,7 @@ border-width: 1px 2em 0 4rem;
 #### border-top-color|border-bottom-color|border-left-color|border-right-color
 设置上下左右各边框的颜色
 ##### 值类型
-color: 参考[Color](https://reactnative.dev/docs/colors)
+color: 参考[Color](#色值-color-类型支持的值格式说明)
 ##### 代码示例
 ``` css
 border-top-color: red;
@@ -637,7 +668,7 @@ border-top-color: red;
 
 RN border-color 属性仅支持单值的，设置多值时是由框架按简写逻辑在编译时处理的，和所有简写属性一致，多值的简写形式仅在class类上支持。
 ##### 值类型
-color: 参考[Color](https://reactnative.dev/docs/colors)
+color: 参考[Color](#色值-color-类型支持的值格式说明)
 ##### 代码示例
 ``` css
 /* border-color: color; 单值语法 */
@@ -685,26 +716,22 @@ border-style: none solid dotted dashed;
 border-width border-style border-color 的简写模式, 值按固定顺序分别赋值给 border-width border-style border-color，若值个数不够则后置位属性不设置；和所有简写属性一致，仅支持定义在类上
 ##### 代码示例
 ```css
-.demo {
-    /* border-width | border-style | border-color */
-    border: 1px solid red;
-    /* border-width */
-    border: 1px;
-    /* border-width | border-style */
-    border: 1px solid;
-    /* border-width | border-style | border-color */
-    border: 1px double pink;
-}
+/* border-width | border-style | border-color */
+border: 1px solid red;
+/* border-width */
+border: 1px;
+/* border-width | border-style */
+border: 1px solid;
+/* border-width | border-style | border-color */
+border: 1px double pink;
 ```
 #### border-top|border-right|border-bottom|border-left
 border-(top|right|bottom|left)-width border-(top|right|bottom|left)-style border-(top|right|bottom|left)-color 的简写模式, 值按固定顺序分别赋值给 border-*-width border-*-style border-*-color，若值个数不够则后置位属性不设置；和所有简写属性一致，仅支持定义在类上
 ##### 代码示例
 ```css
-.demo {
-    border-top: 1px;
-    border-top: 2px dotted;
-    border-top: medium dashed green;
-}
+border-top: 1px;
+border-top: 2px dotted;
+border-top: medium dashed green;
 ```
 #### border-bottom-left-radius|border-bottom-right-radius|border-top-left-radius|border-top-right-radius
 上下左圆角大小
@@ -730,7 +757,7 @@ border-radius: 10px 10px 10px 0;
 #### background-color
 设置背景色
 ##### 值类型
-color: 参考[Color](https://reactnative.dev/docs/colors)
+color: 参考[Color](#色值-color-类型支持的值格式说明)
 ##### 代码示例
 ``` css
 background-color: red;
@@ -791,32 +818,31 @@ background-repeat: repeat;
 ##### 代码示例
 ```css
 /* 支持 */
-.demo {
-    background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink no-repeat;
-    background: #000;
-    background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink;
-    background: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
-}
+background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink no-repeat;
+background: #000;
+background: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg") pink;
+background: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
 ```
 #### box-shadow
-设置阴影颜色、阴影偏移量、阴影模糊半径
+设置阴影颜色、阴影偏移量、阴影模糊半径，因 RN 不支持 box-shadow 属性，实际是由 mpx 按 RN 支持的 shadowOffset: { width?: number, height?: number }; shadowRadius: number; shadowColor: number; 属性和顺序转换成对应的属性。
 ##### 值类型
-offset-x|offset-y|blur-radius 值为 number px/rpx/%，shadow-color 为 color 类型
+offset-x|offset-y|blur-radius 值为 number，常用单位 px/rpx/%，shadow-color 为 color 类型
 ##### 简写规则
 - 按 offset-x|offset-y|blur-radius|spread-radius|color 顺序赋值
-- 赋值过程中，如遇到不支持的属性会跳过，比如 ios 的 spread-radius，android 下 offset-x|offset-y|blur-radius|spread-radius 都会被忽略。
-- 赋值过程中，若值校验不合法，则忽略该值
+- 赋值过程中，如遇到不支持的属性会忽略该属性；若属性值校验不合法，则忽略该值，继续校验下一个值是否合法，合法则赋值，不合法则继续校验下一个值
+- android 下仅支持 shadowColor，故框架在 android 模式下不会添加 shadowOffset/shadowRadius
+- 在设置 box-shadow 有效值的情况下，ios 下会新增 shadowOpacity: 1 来展示阴影
 ##### 代码示例
 ```css
-.demo {
-    /* offset-x | offset-y | blur-radius | color */
-    box-shadow: 0 1px 3px rgba(139,0,0,0.32);
-    /* x 偏移量 | y 偏移量 | 阴影模糊半径 | 阴影扩散半径 | 阴影颜色 */
-    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
-}
+/* offset-x | offset-y | blur-radius | color */
+box-shadow: 0 1px 3px rgba(139,0,0,0.32);
+/* x 偏移量 | y 偏移量 | 阴影模糊半径 | 阴影扩散半径 | 阴影颜色 */
+/* 因第四个值 spread-radius 阴影扩散半径 不支持，故 1px 在框架处理时会被忽略 */
+box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
 ```
 > 注意事项
-> - android 不支持，ios 也只支持 offset-x | offset-y | blur-radius | color, 不支持 spread-radius
+> - android 仅支持 shadowColor，ios 也支持 shadowOffset/shadowRadius/shadowColor/shadowOpacity, 不支持设置 spread-radius 阴影扩散半径
+> - 在节点有设置 overflow:hidden; 同时设置 box-shadow，Web/小程序能正常展示阴影，RN 不能正常展示阴影，需单独新增一级节点来添加阴影
 > - RN 0.76 新架构支持 [boxShadow 属性](https://reactnative.dev/blog/2024/10/23/release-0.76-new-architecture#box-shadow-and-filter-style-props)
 #### backface-visibility
 指定当 image 背面朝向观察者时是否可见，仅 image 支持
@@ -825,9 +851,7 @@ enum: visible, hidden
 > 备注：仅支持 view 节点
 ##### 代码示例
 ```css
-.demo {
-   backface-visibility: visible;
-}
+backface-visibility: visible;
 ```
 #### object-fit
 确定当元素 image 与原始图像尺寸不匹配时如何调整图像大小
@@ -836,9 +860,7 @@ enum: cover, contain, fill, scale-down
 > 备注：仅支持 view 节点
 ##### 代码示例
 ```css
-.demo{
-    object-fit: contain;
-}
+object-fit: contain;
 ```
 #### transform
 设置旋转、缩放、倾斜或平移
@@ -848,12 +870,10 @@ array of objects (only rn): [{matrix: number[]}, {perspective: number}, {rotate:
 string
 ##### 代码示例
 ```css
-.demo {
-    /* rn & css */
-    transform: 'rotateX(45deg) rotateZ(0.785398rad)';
-    /* 仅rn支持 */
-    transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}]
-}
+/* rn & css */
+transform: 'rotateX(45deg) rotateZ(0.785398rad)';
+/* 仅rn支持 */
+transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}]
 ```
 #### transformOrigin
 设置视图变换的原点，默认情况下，变换的原点是中心。
@@ -863,16 +883,14 @@ string
 - 三值时，前两个值与双值语法相同，第三个值代表 Z 偏移，必须是 px。
 ##### 代码示例
 ```css
-.demo {
-    transform-origin: bottom;
-    transform-origin: 10px 2px;
-    transform-origin: right bottom 20px;
-}
+transform-origin: bottom;
+transform-origin: 10px 2px;
+transform-origin: right bottom 20px;
 ```
 #### color
 ##### 值类型
 color 参考 [Color](https://reactnative.dev/docs/colors)
-> 备注：[文本样式继承](#文本样式继承)
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 color: orange;
@@ -886,7 +904,7 @@ color: rgba(255, 99, 71, 0.2)
 ##### 值类型
 string
 > 注意事项
-> - [文本样式继承](#文本样式继承)
+> - [文本样式继承规则](#文本样式继承)
 > - 仅支持设置一种字体
 ##### 代码示例
 ``` css
@@ -901,7 +919,7 @@ font-family: "Gill Sans", sans-serif;
 ##### 值类型
 number: rpx/px/%
 > 备注：
-> - [文本样式继承](#文本样式继承)
+> - [文本样式继承规则](#文本样式继承)
 > - [font-size 的百分比计算](#特殊的百分比计算规则)
 ##### 代码示例
 ``` css
@@ -912,7 +930,7 @@ font-size: 12rpx;
 设置文本的字体样式。
 ##### 值类型
 enum: normal，italic
-> 备注：[文本样式继承](#文本样式继承)
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 font-style: italic;
@@ -923,9 +941,9 @@ font-style: normal;
 ##### 值类型
 enum: 100，200，300，400，500，600，800，900,normal,bold
 > 备注：
-> - [文本样式继承](#文本样式继承)
+> - [文本样式继承规则](#文本样式继承)
 > - 若在自定义字体图标上加 font-weight，可能会导致在某些安卓上不展示图标或者图标展示异常
-> - 100，200，300，400，500，600，800，900 在 RN 上是字符串，非字符串会导致异常
+> - 100，200，300，400，500，600，800，900 在 RN 上是字符串类型而非数值类型，非字符串类型可能会导致某些安卓机型异常
 ##### 代码示例
 ``` css
 font-weight: 100;
@@ -944,8 +962,8 @@ font-weight: bold;
 #### font-variant
 设置文本的字体变体
 ##### 值类型
-enum: small-caps, oldstyle-nums, lining-nums, tabular-nums, proportional-nums
-> 备注：[文本样式继承](#文本样式继承)
+enum: small-caps/oldstyle-nums/lining-nums/tabular-nums/proportional-nums
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 font-variant: small-caps;
@@ -959,7 +977,7 @@ font-variant: proportional-nums;
 定义字符之间的间距
 ##### 值类型
 number: rpx/px/%
-> 备注：[文本样式继承](#文本样式继承)
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 letter-spacing: 2px;
@@ -970,7 +988,7 @@ letter-spacing: 2rpx;
 ##### 值类型
 number: rpx/px/%
 > 备注：
-> - [文本样式继承](#文本样式继承)
+> - [文本样式继承规则](#文本样式继承)
 > - [font-size 的百分比计算](#特殊的百分比计算规则)
 ##### 代码示例
 ``` css
@@ -983,7 +1001,7 @@ line-height: 1
 设置文本的水平对齐方式。
 ##### 值类型
 enum: left, right, center, justify
-> 备注：[文本样式继承](#文本样式继承)
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 /** 支持 **/
@@ -1001,7 +1019,7 @@ text-align: justify-all;
 设置文本的装饰线样式。
 ##### 值类型
 enum: none, underline, line-through, underline line-through
-> 备注：[文本样式继承](#文本样式继承)
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 /** 支持 **/
@@ -1017,7 +1035,9 @@ text-decoration-line: overline;
 设置文本的装饰线样式
 ##### 值类型
 enum: solid/double/dotted/dashed
-> 备注：[文本样式继承](#文本样式继承)
+> 备注
+> - [文本样式继承规则](#文本样式继承)
+> - 仅 ios 支持
 ##### 代码示例
 ``` css
 text-decoration-style: double;
@@ -1026,7 +1046,9 @@ text-decoration-style: double;
 设置文本的装饰线颜色
 ##### 值类型
 color 参考 [Color](https://reactnative.dev/docs/colors)
-> 备注：[文本样式继承](#文本样式继承)
+> 备注
+> - [文本样式继承规则](#文本样式继承)
+> - 仅 ios 支持
 ##### 代码示例
 ``` css
 text-decoration-color: #21ff21;
@@ -1034,18 +1056,22 @@ text-decoration-color: #21ff21;
 #### text-decoration
 text-decoration-line text-decoration-style text-decoration-color 的简写格式
 ##### 简写规则
-按 text-decoration-line text-decoration-style text-decoration-color 顺序赋值，如遇到不支持的属性会跳过，若值校验不合法，则忽略该值
+- 按 text-decoration-line text-decoration-style text-decoration-color 顺序赋值
+- 赋值过程中，如遇到不支持的属性会忽略该属性；若属性值校验不合法，则忽略该值，继续校验下一个值是否合法，合法则赋值，不合法则继续校验下一个值
+- android 下仅转换 text-decoration-line，text-decoration-style/text-decoration-color 因不支持不会添加
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 text-decoration: underline;
 text-decoration: underline dotted;
 text-decoration: underline dotted red;
+
 ```
 #### text-transform
 设置文本的大小写转换。
 ##### 值类型
 enum: none, uppercase, lowercase, capitalize
-> 备注：[文本样式继承](#文本样式继承)
+> 备注：[文本样式继承规则](#文本样式继承)
 ##### 代码示例
 ``` css
 /** 支持 **/
@@ -1055,23 +1081,65 @@ text-transform: lowercase;
 text-transform: capitalize;
 
 /** 不支持 **/
-text-transform: none;
-text-transform: uppercase;
-text-transform: lowercase;
-text-transform: capitalize;
+text-transform: full-width;
+text-transform: full-size-kana;
+text-transform: math-auto;
 ```
-#### text-shadow
-设置文本阴影
+#### vertical-align
+用来指定行内文本的对齐方式
 ##### 值类型
-offset-x|offset-y|blur-radius 值为 number px/rpx/%，shadow-color 为 color 类型
-##### 简写规则
-- 按 offset-x|offset-y|blur-radius|spread-radius|color 顺序赋值
-- 赋值过程中，如遇到不支持的属性会跳过，比如 ios 的 spread-radius，android 下 offset-x|offset-y|blur-radius|spread-radius 都会被忽略。
-- 赋值过程中，若值校验不合法，则忽略该值
-> 备注：[文本样式继承](#文本样式继承)
+enum: auto/top/bottom/middle
+> 备注
+> - [文本样式继承规则](#文本样式继承)
+> - 仅 android 支持
 ##### 代码示例
 ```css
+/* 支持 */
+vertical-align: auto;
+vertical-align: middle;
+vertical-align: top;
+vertical-align: bottom;
+
+/* 不支持 */
+vertical-align: baseline;
+vertical-align: sub;
+vertical-align: super;
+vertical-align: text-top;
+vertical-align: text-bottom;
+```
+#### user-select
+用于控制用户是否可以选择文本
+##### 值类型
+enum: auto/text/none/contain/all
+> 备注: [文本样式继承规则](#文本样式继承)
+##### 代码示例
+```css
+/* 关键字值 */
+user-select: none;
+user-select: auto;
+user-select: text;
+user-select: contain;
+user-select: all;
+```
+#### text-shadow
+设置文本阴影，因 RN 不支持 text-shadow 属性，实际是由 mpx 按 RN 支持的 textShadowOffset: { width?: number, height?: number }; textShadowRadius: number; textShadowColor: number; 属性和顺序转换成对应的属性。
+##### 值类型
+offset-x|offset-y|blur-radius 值为 number，常用单位 px/rpx/%，shadow-color 为 color 类型
+##### 简写规则
+- 按 offset-x|offset-y|blur-radius|color 顺序赋值
+- 赋值过程中，如遇到不支持的属性会忽略该属性；若属性值校验不合法，则忽略该值，继续校验下一个值是否合法，合法则赋值，不合法则继续校验下一个值
+> 备注：[文本样式继承规则](#文本样式继承)
+##### 代码示例
+```css
+/* offset-x | offset-y | blur-radius | color */
 text-shadow: 1rpx 3rpx 0 #2E0C02;
+
+/* offset-x | offset-y */
+text-shadow: 5px 10px;
+
+/* offset-x | offset-y | color */
+/* 因为第三个值是 color 类型，赋值给 textShadowRadius 检验不合法，继续赋值给下一个属性 textShadowColor 校验合法 */
+text-shadow: 5px 5px #558abb;
 ```
 ### 应用能力
 #### app配置
