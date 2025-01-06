@@ -1,4 +1,4 @@
-import rules from './rules/index.js'
+import rules, { blocklistRules } from './rules/index.js'
 import theme from './theme.js'
 import blocklistVariants from './variants/index.js'
 
@@ -8,6 +8,7 @@ export default function presetRnMpx () {
     rules,
     theme,
     blocklist: [
+      ...blocklistRules,
       ...blocklistVariants
     ]
   }

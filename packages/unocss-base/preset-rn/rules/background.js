@@ -1,21 +1,23 @@
-import { backgroundStyles } from '@unocss/preset-wind/rules'
-import { findRawRules, transformEmptyRule } from '../../utils/index.js'
+const backgroundStyles = [
+  // attachments
+  'bg-fixed',
+  'bg-locale',
+  'bg-scroll',
+  // repeat
+  'bg-repeat',
+  'bg-repeat-x',
+  'bg-repeat-y',
+  'bg-repeat-round',
+  'bg-repeat-space',
+  // origins
+  'bg-origin-border',
+  'bg-origin-padding',
+  'bg-origin-content',
+  // clips
+  'bg-clip-border',
+  'bg-clip-content',
+  'bg-clip-padding',
+  'bg-clip-text'
+]
 
-// todo background-position 剔除
-const NewBackgroundRules = transformEmptyRule(findRawRules(
-  [
-    // attachments
-    'bg-fixed',
-    'bg-locale',
-    'bg-scroll',
-    // repeat
-    /^bg-repeat-?.*/,
-    // origins
-    /^bg-origin-.*/,
-    // clips
-    /^bg-clip-.*/
-  ],
-  backgroundStyles
-))
-
-export { NewBackgroundRules as backgroundStyles }
+export { backgroundStyles }

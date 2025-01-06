@@ -1,4 +1,3 @@
-import { transformEmptyRule } from '../../utils/index.js'
 import {
   writingModes,
   writingOrientations,
@@ -17,18 +16,16 @@ import {
 } from '@unocss/preset-mini/rules'
 
 export default [
-  ...transformEmptyRule(
-    textIndents,
-    textStrokes,
-    tabSizes,
-    whitespaces,
-    breaks,
-    textOverflows,
-    hyphens,
-    writingModes,
-    writingOrientations,
-    textWraps,
-    fontSmoothings,
-    fontVariantNumeric
-  )
+  ...textIndents,
+  ...textStrokes,
+  ...tabSizes,
+  ...whitespaces,
+  ...breaks,
+  ...textOverflows,
+  ...hyphens,
+  ...writingModes,
+  ...writingOrientations,
+  ...textWraps,
+  ...fontSmoothings,
+  ...fontVariantNumeric
 ]

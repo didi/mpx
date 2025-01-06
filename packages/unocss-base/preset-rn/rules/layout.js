@@ -1,19 +1,12 @@
-import { ruleCallback, ruleFallback } from '../../utils/index.js'
-
 const overflows = [
-  [
-    /^(?:overflow|of)-(.+)$/,
-    ([match, v], { generator }) => {
-      if (['hidden', 'visiable', 'scroll'].includes(v)) {
-        return {
-          overflow: v
-        }
-      } else {
-        return ruleFallback(match, generator)
-      }
+  (raw) => {
+    const reg = /^(?:overflow|of)-(.+)$/
+    const match = raw.match(reg)
+    if (match && !['hidden', 'visible', 'scroll'].includes(match[1])) {
+      return true
     }
-  ],
-  [/^(?:overflow|of)-([xy])-(.+)$/, ruleCallback]
+  },
+  /^(?:overflow|of)-([xy])-(.+)$/
 ]
 
 export { overflows }
