@@ -1257,17 +1257,15 @@ function processEventWeb (el) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     // todo 事件过滤
-    if (name.includes('@')) {
-      const type = name
-      // todo value 为函数的情况
+    if (/^@[a-zA-Z]+$/.test(name)) {
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
-        if (!eventConfigMap[type]) {
-          eventConfigMap[type] = {
+        if (!eventConfigMap[name]) {
+          eventConfigMap[name] = {
             configs: []
           }
         }
-        eventConfigMap[type].configs.push(
+        eventConfigMap[name].configs.push(
           Object.assign({ name, value }, parsedFunc)
         )
       }
@@ -1275,8 +1273,8 @@ function processEventWeb (el) {
   })
 
   // let wrapper
-  for (const type in eventConfigMap) {
-    const { configs } = eventConfigMap[type]
+  for (const name in eventConfigMap) {
+    const { configs } = eventConfigMap[name]
     if (!configs.length) continue
     configs.forEach(({ name }) => {
       if (name) {
@@ -1292,7 +1290,7 @@ function processEventWeb (el) {
     )}])`
     addAttrs(el, [
       {
-        name: type,
+        name,
         value
       }
     ])

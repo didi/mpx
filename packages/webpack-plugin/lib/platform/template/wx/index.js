@@ -384,11 +384,6 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ name, value }, { eventRules, el, usingComponents }) {
-          // todo 动态事件处理
-          //  const parsed = parseMustacheWithContext(value);
-          //  if (parsed.hasBinding) {
-          //    value = "__invokeHandler(" + parsed.result + ", $event)";
-          //  }
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
