@@ -1,11 +1,12 @@
-import { forwardRef, useRef, useContext, useMemo, useState, createElement, useCallback, useEffect } from 'react'
-import { warn, getFocusedNavigation, isFunction } from '@mpxjs/utils'
+import { forwardRef, useRef, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import { warn, isFunction } from '@mpxjs/utils'
 import Portal from './mpx-portal'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { getCurrentPage, extendObject } from './utils'
+import { useNavigation } from '@react-navigation/native'
 import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 import { BackHandler, StyleSheet, View, Text } from 'react-native'
@@ -122,7 +123,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
   }, [canGoBack])
 
-  const navigation = getFocusedNavigation()
+  const navigation = useNavigation()
 
   useEffect(() => {
     if (__mpx_mode__ === 'android') {
