@@ -76,7 +76,6 @@ export const blocklistRules = [
   ...svgUtilities,
   ...viewTransition,
   ...transitions,
-  ...transforms,
   ...animations,
   ...globalRules
 ]
@@ -84,5 +83,6 @@ export const blocklistRules = [
 export default [
   ...textDecorations,
   ...shadow,
-  ...filters
+  ...filters,
+  ...transforms
 ]
