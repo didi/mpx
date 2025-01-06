@@ -35,47 +35,23 @@ export default function proxyEventMixin () {
         }
         const location = this.__mpxProxy.options.mpxFileResource
 
-        const newEvent = Object.create(Object.getPrototypeOf(rawEvent), Object.getOwnPropertyDescriptors(rawEvent))
-
-        const originalTarget = rawEvent.target
-        const originalCurrentTarget = rawEvent.currentTarget
-
-        Object.defineProperties(newEvent, {
-          target: {
-            get () {
-              if (!originalTarget) return originalTarget
-              if (!this._target) {
-                this._target = Object.create(originalTarget, {
-                  dataset: {
-                    get () {
-                      return parseDataset(originalTarget.dataset)
-                    }
-                  }
-                })
-              }
-              return this._target
-            },
+        if (rawEvent.target) {
+          const originalDataset = rawEvent.target.dataset
+          Object.defineProperty(rawEvent.target, 'dataset', {
+            get: () => parseDataset(originalDataset),
             configurable: true,
             enumerable: true
-          },
-          currentTarget: {
-            get () {
-              if (!originalCurrentTarget) return originalCurrentTarget
-              if (!this._currentTarget) {
-                this._currentTarget = Object.create(originalCurrentTarget, {
-                  dataset: {
-                    get () {
-                      return parseDataset(originalCurrentTarget.dataset)
-                    }
-                  }
-                })
-              }
-              return this._currentTarget
-            },
+          })
+        }
+        if (rawEvent.currentTarget) {
+          const originalDataset = rawEvent.currentTarget.dataset
+          Object.defineProperty(rawEvent.currentTarget, 'dataset', {
+            get: () => parseDataset(originalDataset),
             configurable: true,
             enumerable: true
-          }
-        })
+          })
+        }
+
         let returnedValue
         eventConfig.forEach((item) => {
           const callbackName = item[0]
@@ -84,12 +60,12 @@ export default function proxyEventMixin () {
               item.length > 1
                 ? item.slice(1).map((item) => {
                     if (item === '__mpx_event__') {
-                      return newEvent
+                      return rawEvent
                     } else {
                       return item
                     }
                   })
-                : [newEvent]
+                : [rawEvent]
             if (typeof this[callbackName] === 'function') {
               returnedValue = this[callbackName].apply(this, params)
             } else {
