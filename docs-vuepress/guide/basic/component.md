@@ -50,8 +50,12 @@
 
 ```ts
 
-type PropType = 'String' | 'Number' | 'Boolean' | 'Object' | 'Array' | null;
-
+type PropType = | StringConstructor   // String
+  | NumberConstructor   // Number
+  | BooleanConstructor  // Boolean
+  | ObjectConstructor   // Object
+  | ArrayConstructor    // Array; 
+  | null; // null
 
 interface ComponentOptions {
   properties?: {
