@@ -663,7 +663,7 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
         'worklet'
         runOnJS(setStayTimer)()
       })
-  }, [disabled])
+  }, [])
 
   if (gestureRef) {
     gesture.simultaneousWithExternalGesture(gestureRef)
