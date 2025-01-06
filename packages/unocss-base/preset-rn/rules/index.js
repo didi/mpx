@@ -77,12 +77,12 @@ export const blocklistRules = [
   ...viewTransition,
   ...transitions,
   ...animations,
+  ...filters,
   ...globalRules
 ]
 
 export default [
   ...textDecorations,
   ...shadow,
-  ...filters,
   ...transforms
 ]
