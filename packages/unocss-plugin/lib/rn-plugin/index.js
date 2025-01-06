@@ -71,8 +71,8 @@ function WebpackPlugin (configOrPath, defaults) {
               formatValueFn: 'formatValue'
             })
           }
-          const classMap = getLayersClassMap(result.layers.filter(v => v !== 'utilities'))
-          const utilitiesClassMap = getLayersClassMap(['utilities'])
+          const classMap = getLayersClassMap(result.layers.filter(v => v !== 'varUtilities'))
+          const utilitiesClassMap = getLayersClassMap(['varUtilities'])
           const preflightsClassMap = uno._mpx2rnUnoPreflightBase
 
           const files = Object.keys(compilation.assets)

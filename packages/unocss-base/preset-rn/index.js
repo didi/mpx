@@ -2,6 +2,8 @@ import rules, { blocklistRules } from './rules/index.js'
 import { normalizeTransfromVar } from './rules/transforms.js'
 import theme from './theme.js'
 import blocklistVariants from './variants/index.js'
+import { boxShadowsBase, transformBase } from '@unocss/preset-mini/rules'
+import { filterBase } from '@unocss/preset-wind/rules'
 
 function normalizePreflightBase (preflightBase) {
   normalizeTransfromVar(preflightBase)
@@ -13,9 +15,11 @@ function preflights () {
     {
       layer: 'preflights',
       getCSS ({ theme, generator }) {
-        if (theme.preflightBase) {
-          generator._mpx2rnUnoPreflightBase = normalizePreflightBase(theme.preflightBase)
-        }
+        generator._mpx2rnUnoPreflightBase = [
+          ...normalizePreflightBase(transformBase),
+          ...boxShadowsBase,
+          ...filterBase
+        ]
       }
     }
   ]
@@ -23,10 +27,10 @@ function preflights () {
 
 function postprocess (utilsObject) {
   const everyIsVar = utilsObject.entries.every(v => {
-    return v[0].startsWith('--')
+    return v[0].startsWith('--un')
   })
   if (everyIsVar) {
-    utilsObject.layer = 'utilities'
+    utilsObject.layer = 'varUtilities'
   }
   return utilsObject
 }

@@ -164,7 +164,7 @@ export default function styleHelperMixin () {
               Object.assign(result, this.__props[className])
             }
           })
-          result = Object.assign({}, unoPreflightsClassMap, unoResult, result, unoUtilitiesResult)
+          result = Object.assign({}, unoPreflightsClassMap, unoResult, unoUtilitiesResult, result)
         }
 
         if (staticStyle || dynamicStyle) {

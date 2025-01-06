@@ -1,17 +1,6 @@
 import { filters, filterBase } from '@unocss/preset-wind/rules'
 import { transformEmptyRule, findRawRules, ruleCallback } from '../../utils/index.js'
 
-const filterValue = [
-  'blur',
-  'brightness',
-  'contrast',
-  'grayscale',
-  'hue-rotate',
-  'invert',
-  'saturate',
-  'sepia'
-]
-
 const newFilters = filters.map(v => {
   const [regex, matcher, ...another] = v
   if (typeof matcher === 'function') {
@@ -20,12 +9,7 @@ const newFilters = filters.map(v => {
       (...args) => {
         const [[r]] = args
         if (/^backdrop/.test(r)) return ruleCallback(...args)
-        const res = matcher(...args)
-        // 统一作为工具类使用
-        if (filterValue.some(i => r.includes(i))) {
-          delete res.filter
-        }
-        return res
+        return matcher(...args)
       },
       ...another
     ]
