@@ -160,8 +160,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   })
 
   const scrollEventThrottle = 50
-  const hasCallScrollToUpper = useRef(true)
-  const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intersectionObservers = useContext(IntersectionObserverContext)
 
@@ -254,19 +252,14 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { bindscrolltoupper } = props
     const { offset } = scrollOptions.current
     if (bindscrolltoupper && (offset <= upperThreshold)) {
-      if (!hasCallScrollToUpper.current) {
-        bindscrolltoupper(
-          getCustomEvent('scrolltoupper', e, {
-            detail: {
-              direction: scrollX ? 'left' : 'top'
-            },
-            layoutRef
-          }, props)
-        )
-        hasCallScrollToUpper.current = true
-      }
-    } else {
-      hasCallScrollToUpper.current = false
+      bindscrolltoupper(
+        getCustomEvent('scrolltoupper', e, {
+          detail: {
+            direction: scrollX ? 'left' : 'top'
+          },
+          layoutRef
+        }, props)
+      )
     }
   }
 
@@ -275,19 +268,14 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { contentLength, visibleLength, offset } = scrollOptions.current
     const distanceFromEnd = contentLength - visibleLength - offset
     if (bindscrolltolower && (distanceFromEnd < lowerThreshold)) {
-      if (!hasCallScrollToLower.current) {
-        hasCallScrollToLower.current = true
-        bindscrolltolower(
-          getCustomEvent('scrolltolower', e, {
-            detail: {
-              direction: scrollX ? 'right' : 'botttom'
-            },
-            layoutRef
-          }, props)
-        )
-      }
-    } else {
-      hasCallScrollToLower.current = false
+      bindscrolltolower(
+        getCustomEvent('scrolltolower', e, {
+          detail: {
+            direction: scrollX ? 'right' : 'botttom'
+          },
+          layoutRef
+        }, props)
+      )
     }
   }
 
