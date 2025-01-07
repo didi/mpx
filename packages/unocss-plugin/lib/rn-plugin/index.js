@@ -53,8 +53,8 @@ function WebpackPlugin (configOrPath, defaults) {
             }
           }
           const result = await uno.generate(tokens, { minify: true })
-          if (uno._mpx2rnUnsuportedRules.size || uno.blocked.size) {
-            compilation.errors.push(`[Mpx Unocss]: all those '${[...uno._mpx2rnUnsuportedRules, ...uno.blocked].join(', ')}' class utilities is not supported in react native mode`)
+          if (uno.blocked.size) {
+            compilation.errors.push(`[Mpx Unocss]: all those '${[...uno.blocked].join(', ')}' class utilities is not supported in react native mode`)
           }
           const getLayersClassMap = (layers) => {
             return getClassMap({
@@ -112,7 +112,6 @@ function WebpackPlugin (configOrPath, defaults) {
 
       compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, async (compilation) => {
         const ctx = await createContext(configOrPath, defaults)
-        ctx.uno._mpx2rnUnsuportedRules = new Set()
         ctx.uno.config.blocklist = ctx.uno.config.blocklist.map((item) => {
           if (typeof item === 'function') {
             return item.bind(ctx.uno)
