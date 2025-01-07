@@ -5,10 +5,7 @@ module.exports = {
     sourceType: 'module'
   },
   extends: 'standard',
-  plugins: [
-    'html',
-    'jest'
-  ],
+  plugins: ['html', 'jest'],
   globals: {
     wx: 'readonly',
     my: 'readonly',
@@ -57,6 +54,17 @@ module.exports = {
         '@typescript-eslint/no-unused-vars': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
         camelcase: 0
+      }
+    }, {
+      files: ['packages/webpack-plugin/lib/runtime/components/react/**/*.{js,jsx,ts,tsx}'],
+      plugins: ['react-hooks'],
+      rules: {
+        'react-hooks/rules-of-hooks': [
+          'error',
+          {
+            skip: ['usePopup']
+          }
+        ]
       }
     }
   ]

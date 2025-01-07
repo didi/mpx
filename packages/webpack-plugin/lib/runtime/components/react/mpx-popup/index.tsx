@@ -31,7 +31,7 @@ const getPopup = (type?: PopupType): React.ComponentType<PopupBaseProps> => {
  * @param options.type 可以传入内置支持的弹窗类型，默认使用 PopupBase 组件
  * @returns {open, remove, getPopupKey} 返回 hooks 方法方便外部调用（比如自定义的弹窗内容组件调用）
  */
-const usePopup = (options: IUsePopupOptions = {}) => {
+const createPopupManager = (options: IUsePopupOptions = {}) => {
   const { modal, type } = options
   const Modal = modal || getPopup(type)
 
@@ -57,5 +57,5 @@ const usePopup = (options: IUsePopupOptions = {}) => {
 }
 
 export {
-  usePopup
+  createPopupManager
 }

@@ -55,9 +55,6 @@ export const createFaces = (
       for (let i = 0; i < index; i++) {
         offset += freeSpaces[i]
       }
-      if (index === 0) {
-        offset *= 0.6
-      }
       return offset
     }) as unknown as T
     return [screenHeights, offsets]
@@ -67,9 +64,7 @@ export const createFaces = (
     const map: Record<number, number> = {
       0: 0,
       1: 0.8,
-      2: 0.9 // 0.35
-      // 3: 0.45, // 0.45
-      // 4: 0.5 // 0.5
+      2: 0.9
     }
     return map[index] ?? Math.min(1, map[2] + index * 0.05)
   }

@@ -7,20 +7,20 @@ import {
   splitProps,
   splitStyle,
   wrapChildren,
-  parseInlineStyle,
   useTransformStyle,
   extendObject
 } from './utils'
+import { PickerViewStyleContext } from './pickerVIewContext'
 import type { AnyFunc } from './types/common'
 /**
  * ✔ value
  * ✔ bindchange
  * ✘ bindpickstart
  * ✘ bindpickend
- * ✘ mask-class
+ * ✔ mask-class
  * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
  * WebView Only:
- * ✘ indicator-class
+ * ✔ indicator-class
  * ✔ mask-style
  * ✘ immediate-change
  */
@@ -32,9 +32,9 @@ interface PickerViewProps {
   style?: {
     [key: string]: any
   }
-  'indicator-style'?: string
-  'mask-style'?: string
-  'enable-var'?: boolean
+  'indicator-style'?: Record<string, any>,
+  'mask-style'?: Record<string, any>,
+  'enable-var': boolean
   'external-var-context'?: Record<string, any>,
   'enable-offset'?: boolean
 }
@@ -67,13 +67,13 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     children,
     value = [],
     bindchange,
-    style = {},
+    style,
+    'indicator-style': indicatorStyle = {},
+    'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
-  const indicatorStyle = parseInlineStyle(props['indicator-style'])
-  const pickerMaskStyle = parseInlineStyle(props['mask-style'])
-  const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
+  const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
@@ -146,7 +146,13 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       ),
       layoutProps
     }),
-    ['enable-offset'],
+    [
+      'enable-offset',
+      'indicator-style',
+      'indicator-class',
+      'mask-style',
+      'mask-class'
+    ],
     { layoutRef }
   )
 
@@ -164,10 +170,9 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
           height: normalStyle?.height || DefaultPickerItemH,
           itemHeight: indicatorH || DefaultPickerItemH
         },
-        columnStyle: normalStyle,
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
-        pickerOverlayStyle,
+        pickerIndicatorStyle,
         pickerMaskStyle
       }
     )
@@ -217,9 +222,11 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   return (
-    <View {...innerProps}>
-      <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
-    </View>
+    <PickerViewStyleContext.Provider value={textStyle}>
+      <View {...innerProps}>
+        <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
+      </View>
+    </PickerViewStyleContext.Provider>
   )
 })
 

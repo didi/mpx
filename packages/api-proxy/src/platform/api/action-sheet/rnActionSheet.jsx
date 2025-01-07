@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-import { usePopup } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-popup'
+import { createPopupManager } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-popup'
 
 const styles = StyleSheet.create({
   itemStyle: {
@@ -22,11 +22,10 @@ const styles = StyleSheet.create({
   }
 })
 
+const { open, remove } = createPopupManager()
+
 function showActionSheet (options = {}) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
-
-  const { open, remove } = usePopup()
-  open(<ActionSheet />)
 
   function ActionSheet () {
     const selectAction = function (index, e) {
@@ -62,6 +61,8 @@ function showActionSheet (options = {}) {
       </>
     )
   }
+
+  open(<ActionSheet />)
 }
 
 export {

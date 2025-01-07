@@ -12,7 +12,7 @@ import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import { EventType, PickerMode, PickerProps, PickerValue, ValueType } from './type'
 import { extendObject } from '../utils'
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler'
-import { usePopup } from '../mpx-popup'
+import { createPopupManager } from '../mpx-popup'
 
 /**
  * ✔ mode
@@ -87,7 +87,7 @@ const pickerModalMap: Record<PickerMode, React.ComponentType<PickerProps>> = {
   [PickerMode.REGION]: PickerRegion
 }
 
-const { open, remove } = usePopup()
+const { open, remove } = createPopupManager()
 
 const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
   (props: PickerProps, ref): React.JSX.Element => {

@@ -3,35 +3,30 @@ import { LayoutChangeEvent } from 'react-native'
 import Reanimated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { wrapChildren, extendObject } from './utils'
 import { createFaces } from './pickerFaces'
-import { usePickerViewColumnAnimationContext } from './pickerVIewContext'
+import { usePickerViewColumnAnimationContext, usePickerViewStyleContext } from './pickerVIewContext'
 
 interface PickerColumnItemProps {
   item: React.ReactElement
   index: number
   itemHeight: number
   itemWidth?: number | '100%'
-  textStyleFromParent: Record<string, any>
   textStyle: Record<string, any>
-  hasVarDec: boolean
-  varContext: Record<string, any>
   visibleCount: number
   textProps?: any
   onItemLayout?: (e: LayoutChangeEvent) => void
 }
 
-const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
+const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   item,
   index,
   itemHeight,
   itemWidth = '100%',
-  textStyleFromParent,
   textStyle,
-  hasVarDec,
-  varContext,
   textProps,
   visibleCount,
   onItemLayout
 }) => {
+  const textStyleFromAncestor = usePickerViewStyleContext()
   const offsetYShared = usePickerViewColumnAnimationContext()
   const facesShared = useSharedValue(createFaces(itemHeight, visibleCount))
 
@@ -44,8 +39,8 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
     return {
       opacity: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.opacity), Extrapolation.CLAMP),
       transform: [
-        { rotateX: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.deg), Extrapolation.CLAMP) + 'deg' },
         { translateY: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.offsetY), Extrapolation.EXTEND) },
+        { rotateX: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.deg), Extrapolation.CLAMP) + 'deg' },
         { scale: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.scale), Extrapolation.EXTEND) }
       ]
     }
@@ -57,7 +52,7 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
     {
       style: extendObject(
         { height: itemHeight, width: '100%' },
-        textStyleFromParent,
+        textStyleFromAncestor,
         textStyle,
         item.props.style
       )
@@ -74,8 +69,8 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
       {wrapChildren(
         { children: realItem },
         {
-          hasVarDec,
-          varContext,
+          hasVarDec: false,
+          varContext: {},
           textStyle,
           textProps
         }
@@ -84,5 +79,5 @@ const _PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   )
 }
 
-_PickerViewColumnItem.displayName = 'MpxPickerViewColumnItem'
-export default _PickerViewColumnItem
+PickerViewColumnItem.displayName = 'MpxPickerViewColumnItem'
+export default PickerViewColumnItem

@@ -2,7 +2,7 @@ import React from 'react'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import LinearGradient from 'react-native-linear-gradient'
 
-type OverlayProps = {
+type MaskProps = {
   itemHeight: number
   maskContainerStyle?: StyleProp<ViewStyle>
 }
@@ -10,9 +10,9 @@ type OverlayProps = {
 const _PickerViewMask = ({
   itemHeight,
   maskContainerStyle
-}: OverlayProps) => {
+}: MaskProps) => {
   return (
-    <View style={[styles.overlayContainer, maskContainerStyle]} pointerEvents={'none'}>
+    <View style={[styles.maskContainer, maskContainerStyle]} pointerEvents={'none'}>
       <LinearGradient colors={['rgba(255,255,255,1)', 'rgba(255,255,255,0.5)']} style={{ flex: 1 }} />
       <View style={{ height: itemHeight }} />
       <LinearGradient colors={['rgba(255,255,255,0.5)', 'rgba(255,255,255,1)']} style={{ flex: 1 }} />
@@ -20,7 +20,7 @@ const _PickerViewMask = ({
   )
 }
 const styles = StyleSheet.create({
-  overlayContainer: {
+  maskContainer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100
   }
