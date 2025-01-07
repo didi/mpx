@@ -4,7 +4,8 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 
 受限于 RN 平台的样式规则能力限制，绝大部分的 unocss 提供的原子类并不能在跨 RN 项目当中使用，以下是目前所支持的原子类：
 
-> 对于不支持的原子类，在编译阶段会有 error 提示，且最终的编译产物当中不会产出对应的原子类结果
+> 对于不支持的原子类，在项目编译构建阶段会将不支持的原子类以 error 形式提示，且最终的编译产物当中不会产出对应的原子类结果
+
 
 #### [Typography](https://windicss.org/utilities/general/typography.html#typography)
 
@@ -42,17 +43,67 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 
 不支持
 
-#### Variants
+#### [Variants](https://windicss.org/utilities/general/variants.html)
 
-#### Screen Readers
+* Screen Variants
+
+Mobile First
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| sm   |    @media (min-width: 640px)    |      |
+| md   |    @media (min-width: 768px)    |      |
+| lg   |    @media (min-width: 1024px)    |      |
+| xl   |    @media (min-width: 1280px)    |      |
+| 2xl  |    @media (min-width: 1536px)    |      |
+
+Desktop First
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| <sm   |    @media (max-width: 640px)    |      |
+| <md   |    @media (max-width: 768px)    |      |
+| <lg   |    @media (max-width: 1024px)    |      |
+| <xl   |    @media (max-width: 1280px)    |      |
+| <2xl  |    @media (max-width: 1536px)    |      |
+
+Only Screen
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| @sm   |   @media (min-width: 640px) and (max-width: 768px)    |      |
+| @md   |   @media (min-width: 768px) and (max-width: 1024px)    |      |
+| @lg   |   @media (min-width: 1024px) and (max-width: 1280px)    |      |
+| @xl   |   @media (min-width: 1280px) and (max-width: 1536px)    |      |
+| @2xl  |   @media (min-width: 1536px)    |      |
+
+* Pseudo Elements
+
+目前仅支持 `hover`
+
+* Theme Variants
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| dark   |   暗色模式    |      |
+| light   |   亮色模式    |      |
+
+* Orientation Variants
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| portrait   |   竖屏    |      |
+| landscape   |   横屏    |      |
+
+#### [Screen Readers](https://windicss.org/utilities/accessibility/screen-readers.html)
 
 不支持
 
-#### Animation
+#### [Animation](https://windicss.org/utilities/animations/animation.html)
 
 不支持
 
-#### Transforms
+#### [Transforms](https://windicss.org/utilities/animations/transforms.html)
 
 | 规则                | 是否支持 | 备注 |
 | :------------------ | :------: | :--: |
@@ -65,7 +116,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Perspective         |    是    |      |
 | Perspective Origin  |    是    |      |
 
-#### Transitions
+#### [Transitions](https://windicss.org/utilities/animations/transitions.html)
 
 不支持
 
@@ -82,7 +133,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Background size       |    是    |                                        |
 | Background origin     |    否    |                                        |
 
-#### Gradients
+#### [Gradients](https://windicss.org/utilities/backgrounds/gradients.html)
 
 | 规则               | 是否支持 | 备注 |
 | :----------------- | :------: | :--: |
@@ -91,144 +142,179 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Gradient Via       |    是    |      |
 | Gradient To        |    是    |      |
 
-#### Background Blend Mode
+#### [Background Blend Mode](https://windicss.org/utilities/backgrounds/background-blend-mode.html)
 
 不支持
 
-#### Box Decoration Break
 
 不支持
 
-#### Image Rendering
+#### [Box Decoration Break](https://windicss.org/utilities/behaviors/box-decoration-break.html)
 
 不支持
 
-#### Listings
-
-| 规则                | 是否支持 | 备注 |
-| :------------------ | :------: | :--: |
-| List Style Type     |    否    |      |
-| List Style Position |    否    |      |
-
-#### Overflow
-
-部分属性支持(overflow：hidden/scroll/visible)
-
-#### Overscroll Behavior
+#### [Image Rendering](https://windicss.org/utilities/behaviors/image-rendering.html)
 
 不支持
 
-#### Placeholder
+#### [Listing](https://windicss.org/utilities/behaviors/listings.html)
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| List style type   |    否    |      |
+| List style position    |    否    |      |
+| List style image    |    否    |      |
+
+#### [Overflow](https://windicss.org/utilities/behaviors/overflow.html)
+
+仅支持 `hidden`、`scroll`、`visible` 属性值
+
+#### [Overflow Behavior](https://windicss.org/utilities/behaviors/overscroll-behavior.html)
 
 不支持
 
-#### Border
-
-| 规则           | 是否支持 |              备注               |
-| :------------- | :------: | :-----------------------------: |
-| Border Radius  |    是    |       block/inline 不支持       |
-| Border Width   |    是    |                                 |
-| Border Color   |    是    | transparent/currentColor 不支持 |
-| Border Opacity |    是    |                                 |
-| Border Style   |    是    |          double 不支持          |
-
-#### Divider
+#### [Placeholder](https://windicss.org/utilities/behaviors/placeholder.html)
 
 不支持
 
-#### Outline
+#### [Border](https://windicss.org/utilities/borders/border.html)
 
-不支持
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Border radius   |    是    |  不支持 border-inline-start、border-inline-end、border-block-start、border-block-end 属性，其他都支持    |
+| Border width    |    是    |      |
+| Border color     |    是    |      |
+| Border opacity     |    是    |      |
+| Border style     |    是    |  不支持 double 样式，其他都支持   |
 
-#### Ring
+#### [Divider](https://windicss.org/utilities/borders/divider.html)
 
-不支持
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Divider width   |    否    |     |
+| Divider color    |    否    |      |
+| Divider opacity    |    否    |      |
+| Divider style   |    否    |      |
 
-#### Box Shadow
+#### [Outline](https://windicss.org/utilities/borders/outline.html)
 
-| 规则             | 是否支持 | 备注 |
-| :--------------- | :------: | :--: |
-| Box Shadow Size  |    是    |      |
-| Box Shadow Color |    是    |      |
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Outline solid   |    否    |     |
+| Outline dotted    |    否    |      |
 
-#### Opacity
+#### [Ring](https://windicss.org/utilities/borders/ring.html)
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Ring width   |    否    |     |
+| Ring color    |    否    |      |
+| Ring opacity    |    否    |      |
+| Ring offset width    |    否    |      |
+| Ring offset color    |    否    |      |
+
+
+#### [Box Shadow](https://windicss.org/utilities/effects/box-shadow.html)
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Box shadow size   |    是    |     |
+| Box shadow color    |    是    |      |
+
+#### [Opacity](https://windicss.org/utilities/effects/opacity.html)
 
 支持
 
-#### Mix Blend Mode
+#### [Mix Blend Mode](https://windicss.org/utilities/effects/mix-blend-mode.html)
 
 不支持
 
-#### Filter
 
-| 规则               | 是否支持 |                    备注                     |
-| :----------------- | :------: | :-----------------------------------------: |
-| Filter Blur        |    是    | 0.76 版本支持部分属性，且有机型的兼容性问题 |
-| Filter Brightness  |    是    |                                             |
-| Filter Contrast    |    是    |                                             |
-| Filter Drop Shadow |    是    |                                             |
-| Filter Grayscale   |    是    |                                             |
-| Filter Hue Rotate  |    是    |                                             |
-| Filter Invert      |    是    |                                             |
-| Filter Saturate    |    是    |                                             |
-| Filter Sepia       |    是    |                                             |
+#### [Filter](https://windicss.org/utilities/filters/filter.html)
 
-#### Backdrop Filter
+RN 0.76 支持，且存在机型的兼容性问题，具体参见 [RN 官方文档](https://reactnative.dev/blog/2024/10/23/release-0.76-new-architecture#box-shadow-and-filter-style-props)
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Filter blur   |    是    |      |
+| Filter brightness     |    是    |      |
+| Filter contrast     |    是    |      |
+| Filter drop shadow     |    是    |      |
+| Filter grayscale     |    是    |     |
+| Filter hue rotate    |    是    |      |
+| Filter invert     |    是    |      |
+| Filter saturate     |    是    |      |
+| Filter Sepia     |    是    |      |
+
+#### [Backdrop Filter](https://windicss.org/utilities/filters/backdrop-filter.html)
 
 不支持
 
-#### Accent Color
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Backdrop blur   |    否   |      |
+| Backdrop brightness     |    否    |      |
+| Backdrop contrast     |    否    |      |
+| Backdrop drop shadow     |    否    |      |
+| Backdrop grayscale     |    否    |     |
+| Backdrop hue rotate    |    否    |      |
+| Backdrop invert     |    否    |      |
+| Backdrop saturate     |    否    |      |
+| Backdrop Sepia     |    否    |      |
+
+
+#### [Accent Color](https://windicss.org/utilities/interactivity/accent-color.html)
 
 不支持
 
-#### Appearance
+#### [Appearance](https://windicss.org/utilities/interactivity/appearance.html)
 
 部分支持(backface-visible,backface-hidden)
 
-#### Cursor
+#### [Cursor](https://windicss.org/utilities/interactivity/cursor.html)
 
 不支持，TextInput 有属性控制
 
-#### Caret
+#### [Caret](https://windicss.org/utilities/interactivity/caret.html)
 
 | 规则          | 是否支持 | 备注 |
 | :------------ | :------: | :--: |
 | Caret Color   |    否    |      |
 | Caret Opacity |    否    |      |
 
-#### Pointer Events
+#### [Pointer Events](https://windicss.org/utilities/interactivity/pointer-events.html)
 
 部分支持(auto,none)
 
-#### Resize
+#### [Resize](https://windicss.org/utilities/interactivity/resize.html)
 
 不支持
 
-#### Scroll Behavior
+#### [Scroll Behavior](https://windicss.org/utilities/interactivity/scroll-behavior.html)
 
 不支持
 
-#### Touch Action
+#### [Touch Action](https://windicss.org/utilities/interactivity/touch-action.html)
 
 不支持
 
-#### User Select
+#### [User Select](https://windicss.org/utilities/interactivity/user-select.html)
 
 支持(none,auto,all,text)
 
-#### Will Change
+#### [Will Change](https://windicss.org/utilities/interactivity/will-change.html)
 
 不支持
 
-#### Columns
+#### [Columns](https://windicss.org/utilities/layout/columns.html)
 
 不支持
 
-#### Container
+#### [Container](https://windicss.org/utilities/layout/container.html)
 
 不支持
 
-#### Display
+#### [Display](https://windicss.org/utilities/layout/display.html)
 
 | 规则                | 是否支持 | 备注 |
 | :------------------ | :------: | :--: |
@@ -243,7 +329,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Backface Visibility |    否    |      |
 | List Item           |    否    |      |
 
-#### Flexbox
+#### [Flexbox](https://windicss.org/utilities/layout/flexbox.html)
 
 | Flex | 是 | |
 | Flex Basis | 是 | |
@@ -254,11 +340,11 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Flex Grow | 是 | |
 | Flex Shrink | 是 | |
 
-#### Grid
+#### [Grid](https://windicss.org/utilities/layout/grid.html)
 
 不支持
 
-#### Positioning
+#### [Positioning](https://windicss.org/utilities/layout/positioning.html)
 
 | 规则 | 是否支持 | 备注 |
 | :------------------ | :------: | :--: |
@@ -280,7 +366,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Object Position | 否 | |
 | Z-Index | 是 | |
 
-#### Sizing
+#### [Sizing](https://windicss.org/utilities/layout/sizing.html)
 
 | 规则 | 是否支持 | 备注 |
 | :------------------ | :------: | :--: |
@@ -291,7 +377,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Max-Height | 是 | |
 | Box Sizing | 否 | |
 
-#### Spacing
+#### [Spacing](https://windicss.org/utilities/layout/spacing.html)
 
 | 规则 | 是否支持 | 备注 |
 | :------------------ | :------: | :--: |
@@ -314,6 +400,6 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Space Between X | 否 | |
 | Space Between X Reverse | 否 | |
 
-#### Tables
+#### [Tables](https://windicss.org/utilities/layout/tables.html)
 
 不支持

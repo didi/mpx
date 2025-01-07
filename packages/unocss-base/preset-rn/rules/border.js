@@ -13,7 +13,9 @@ const unSupport = [
 
 const bordersRules = borders.map(([rule]) => (raw) => {
   const result = raw.match(rule)
-  if (result && unSupport.includes(result[1])) {
+  if (raw === 'border-double') {
+    return true
+  } else if (result && unSupport.includes(result[1])) {
     return true
   }
 })
