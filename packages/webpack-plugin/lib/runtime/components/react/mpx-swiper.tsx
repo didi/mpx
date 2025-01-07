@@ -224,9 +224,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     step.value = iStep
     if (touchfinish.value) {
       offset.value = getOffset(currentIndex.value, iStep)
-      // 比如初始确定step的情况下,useEffect中开启了loop, 如果第一个loop还未执行onWrapperLayout执行完毕开启resumeLoop，需要取消前一个
-      pauseLoop()
-      resumeLoop()
     }
   }
 
