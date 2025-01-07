@@ -24,7 +24,7 @@ interface ContextType {
   offset: SharedValue<number>;
   step: SharedValue<number>;
   scale: boolean;
-  dir: SharedValue<string>;
+  dir: string;
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
@@ -77,7 +77,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     const inputRange = [step.value, 0]
     const outputRange = [0.7, 1]
     // 实现元素的宽度跟随step从0到真实宽度，且不能触发重新渲染整个组件，通过AnimatedStyle的方式实现
-    const outerLayoutStyle = dir.value === 'x' ? { width: step.value, height: '100%' } : { width: '100%', height: step.value }
+    const outerLayoutStyle = dir === 'x' ? { width: step.value, height: '100%' } : { width: '100%', height: step.value }
     const transformStyle = []
     if (scale) {
       transformStyle.push({
