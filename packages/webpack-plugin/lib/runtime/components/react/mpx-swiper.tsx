@@ -628,15 +628,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       if (!props.circular && !canMove(eventData)) {
         return
       }
-      if (!moveDistance) {
+      const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
+      if (Math.abs(strVelocity) < longPressRatio) {
         handleLongPress()
       } else {
-        const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
-        if (Math.abs(strVelocity) < longPressRatio) {
-          handleLongPress()
-        } else {
-          handleEnd(eventData)
-        }
+        handleEnd(eventData)
       }
     })
 
