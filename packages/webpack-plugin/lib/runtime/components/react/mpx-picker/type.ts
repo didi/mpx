@@ -29,6 +29,8 @@ export interface BasePickerProps {
   style?: Record<string, any>
   children?: React.ReactNode
   remove?: Function
+  range?: RangeItem[]
+  ref?: any
 }
 
 export interface SelectorProps extends BasePickerProps {

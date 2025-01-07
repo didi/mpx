@@ -109,7 +109,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     const eventData = getCustomEvent(
       'change',
       {},
-      { detail: { value: activeValue, source: 'change' }, layoutRef }
+      { detail: { value: activeValue.slice(), source: 'change' }, layoutRef }
     )
     bindchange?.(eventData)
     snapActiveValueRef.current = activeValueRef.current

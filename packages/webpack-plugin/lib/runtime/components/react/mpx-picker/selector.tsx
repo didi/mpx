@@ -1,6 +1,3 @@
-/**
- * 普通选择器，range可以是Array<Obj> 也可以是Array
- */
 import { StyleSheet, Text, View } from 'react-native'
 import React, { forwardRef, useRef } from 'react'
 import { SelectorProps, Obj, RangeItem } from './type'

@@ -30,7 +30,7 @@ import { createPopupManager } from '../mpx-popup'
  * ✔ level 选择器层级 province，city，region，<sub-district不支持>
  * ✔ level
  * ✔ header-text
- * ✘ bindcolumnchange
+ * ✔ bindcolumnchange
  */
 
 const styles = StyleSheet.create({
@@ -95,6 +95,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       mode,
       style,
       value,
+      range,
       children,
       disabled,
       bindcancel,
@@ -103,11 +104,19 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     } = props
 
     const pickerValue = useRef(value)
-    console.log('[mpx-picker], render ---> value=', value)
+    console.log('[mpx-picker], render ---> value=', mode, value, range)
     pickerValue.current = value
 
     const innerLayout = useRef({})
     const nodeRef = useRef(null)
+    const pickerRef = useRef<any>(null)
+
+    useEffect(() => {
+      if (range && pickerRef.current) {
+        pickerRef.current.updateRange?.(range)
+      }
+    }, [JSON.stringify(range)])
+  
     useNodesRef<View, PickerProps>(props, ref, nodeRef, {
       style
     })
@@ -159,14 +168,16 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       pickerValue.current = value
     }
 
-    const columnChange = (value: PickerValue[], index: number) => {
-      // type: "columnchange", detail: {column: 1, value: 2}
+    const onColumnChange = (columnIndex: number, value: number) => {
+      if (mode !== PickerMode.MULTI_SELECTOR) {
+        return
+      }
       const eventData = getCustomEvent(
         'columnchange',
         {},
-        { detail: { column: index, value }, layoutRef: innerLayout }
+        { detail: { column: columnIndex, value }, layoutRef: innerLayout }
       )
-      // props.bindcolumnchange?.(eventData)
+      props.bindcolumnchange?.(eventData)
     }
 
     const onCancel = () => {
@@ -188,8 +199,9 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       mode,
       children,
       bindchange: onChange,
-      bindcolumnchange: columnChange,
-      getInnerLayout
+      bindcolumnchange: onColumnChange,
+      getInnerLayout,
+      getRange: () => range
     })
 
     const renderPickerContent = () => {
@@ -209,7 +221,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
               <Text style={[styles.headerText]}>{headerText}</Text>
             </View>
           )}
-          <PickerModal {...specificProps} remove={remove} value={value}></PickerModal>
+          <PickerModal {...specificProps} remove={remove} value={value} ref={pickerRef}></PickerModal>
           <View style={[styles.footer]}>
             <TouchableHighlight
               onPress={onCancel}
