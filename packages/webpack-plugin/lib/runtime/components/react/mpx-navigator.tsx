@@ -28,7 +28,6 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
     delta
   } = props
 
-  
   const handleClick = useCallback(() => {
     switch (openType) {
       case 'navigateBack':
