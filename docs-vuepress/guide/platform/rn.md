@@ -536,7 +536,9 @@ movable-view的可移动区域。
 | ----------------------- | ------------------| ------------------ | ------------------------------------|
 | value                   | Array\<number\>   | `[]`           | 数组中的数字依次表示 *picker-view* 内的 [*picker-view-column*](#picker-view-column) 选择的第几项（下标从 0 开始），数字大于 [*picker-view-column*](#picker-view-column) 可选项长度时，选择最后一项。|
 | indicator-style         | String          |                | 设置选择器中间选中框的样式 |
+| indicator-class         | String          |                | 设置选择器中间选中框的类名 |
 | mask-style              | String          |                | 设置蒙层的样式           |
+| mask-class              | String          |                | 设置蒙层的类名           |
 
 - 事件
 
