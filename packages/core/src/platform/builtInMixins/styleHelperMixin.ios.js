@@ -141,11 +141,9 @@ export default function styleHelperMixin () {
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         let result = {}
         const unoResult = {}
-        const unoUtilitiesResult = {}
+        const unoVarResult = {}
         const classMap = this.__getClassMap?.() || {}
-        const unoClassMap = global.__getUnoClassMap?.() || {}
-        const unoUtilitiesClassMap = global.__getUtilitiesUnoClassMap?.() || {}
-        const unoPreflightsClassMap = global.__getPreflightsUnoClassMap?.() || {}
+        const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -157,14 +155,14 @@ export default function styleHelperMixin () {
               Object.assign(result, appClassMap[className])
             } else if (unoClassMap[className]) {
               Object.assign(unoResult, unoClassMap[className])
-            } else if (unoUtilitiesClassMap[className]) {
-              Object.assign(unoUtilitiesResult, unoUtilitiesClassMap[className])
+            } else if (unoVarClassMap[className]) {
+              Object.assign(unoVarResult, unoVarClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.__props[className])
             }
           })
-          result = Object.assign({}, unoPreflightsClassMap, unoResult, unoUtilitiesResult, result)
+          result = Object.assign({}, unoPreflightsClassMap, unoResult, unoVarResult, result)
         }
 
         if (staticStyle || dynamicStyle) {
@@ -186,7 +184,8 @@ export default function styleHelperMixin () {
         if (!mediaQueryClass.length) return ''
         const { width, height } = Dimensions.get('screen')
         const colorScheme = Appearance.getColorScheme()
-        const { entries, entriesMap } = global.__getUnoBreakpoints()
+        const { unoBreakpoints } = global.__getUnoClass?.() || {}
+        const { entries = [], entriesMap = {} } = unoBreakpoints
         return mediaQueryClass.map(([className, querypoints = []]) => {
           const res = querypoints.every(([prefix = '', point = 0]) => {
             if (prefix === 'landscape') return width > height

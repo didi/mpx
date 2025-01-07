@@ -58,33 +58,20 @@ module.exports = function (styles, {
         if (ctorType === 'app') {
           if (hasUnoCSS) {
             output += `
-            global.__getUnoBreakpoints = function () {
-              return __unoCssBreakpointsPlaceholder__
-            };\n
-            let __unoClassMap
-            global.__getUnoClassMap = function () {
+            let __unoClass
+            global.__getUnoClass = function () {
               const formatValue = global.__formatValue
-              if (!__unoClassMap) {
-                __unoClassMap = __unoCssMapPlaceholder__
+              if (!__unoClass) {
+                __unoClass = {
+                  unoClassMap: __unoCssMapPlaceholder__,
+                  unoVarClassMap: __unoVarUtilitiesCssMap__,
+                  unoPreflightsClassMap: __unoCssMapPreflights__,
+                  unoBreakpoints:__unoCssBreakpointsPlaceholder__
+                }
               }
-              return __unoClassMap
+              return __unoClass
             };\n
-            let __unoUtilitiesClassMap
-            global.__getUtilitiesUnoClassMap = function () {
-              const formatValue = global.__formatValue
-              if (!__unoUtilitiesClassMap) {
-                __unoUtilitiesClassMap = __unoCssMapUtilities__
-              }
-              return __unoUtilitiesClassMap
-            };\n
-            let __unoPreflightsClassMap
-            global.__getPreflightsUnoClassMap = function () {
-              const formatValue = global.__formatValue
-              if (!__unoPreflightsClassMap) {
-                __unoPreflightsClassMap = __unoCssMapPreflights__
-              }
-              return __unoPreflightsClassMap
-            };\n`
+            `
           }
           output += `
           let __appClassMap

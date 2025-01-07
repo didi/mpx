@@ -85,7 +85,7 @@ function WebpackPlugin (configOrPath, defaults) {
                 replaced = true
                 return shallowStringify(classMap)
               })
-              .replace('__unoCssMapUtilities__', () => {
+              .replace('__unoVarUtilitiesCssMap__', () => {
                 return shallowStringify(utilitiesClassMap)
               })
               .replace('__unoCssMapPreflights__', () => {
