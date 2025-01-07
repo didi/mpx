@@ -123,6 +123,4 @@ export type PickerProps =
   | DateProps
   | RegionProps
 
-type mode = PickerProps['mode']
-
-export type ValueType = string | number | number[] | string[]
+export type LanguageCode = 'zh-CN' | 'en-US'

@@ -7,14 +7,16 @@ import { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 const styles = StyleSheet.create({
   pickerContainer: {
-    height: 240
+    height: 240,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10
   },
   pickerIndicator: {
-    height: 40
+    height: 45
   },
   pickerItem: {
-    fontSize: 16,
-    lineHeight: 40,
+    fontSize: 18,
+    lineHeight: 45,
     textAlign: 'center'
   }
 })

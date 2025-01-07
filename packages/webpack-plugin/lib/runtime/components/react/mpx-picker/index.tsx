@@ -1,5 +1,5 @@
-import React, { forwardRef, useRef, useContext, useState, useEffect } from 'react'
-import { StyleSheet, Text, TouchableHighlight, View } from 'react-native'
+import React, { forwardRef, useRef, useContext, useEffect } from 'react'
+import { StyleSheet, Text, TouchableHighlight, TouchableWithoutFeedback, View } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import PickerSelector from './selector'
 import PickerMultiSelector from './multiSelector'
@@ -9,10 +9,9 @@ import PickerRegion from './region'
 import { FormContext, FormFieldValue } from '../context'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import { EventType, PickerMode, PickerProps, PickerValue, ValueType } from './type'
 import { extendObject } from '../utils'
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler'
 import { createPopupManager } from '../mpx-popup'
+import { EventType, LanguageCode, PickerMode, PickerProps } from './type'
 
 /**
  * ✔ mode
@@ -43,7 +42,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: '#333333',
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center'
   },
   footer: {
@@ -69,12 +68,12 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: 'green',
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center'
   },
   confirmText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center'
   }
 })
@@ -85,6 +84,17 @@ const pickerModalMap: Record<PickerMode, React.ComponentType<PickerProps>> = {
   [PickerMode.TIME]: PickerTime,
   [PickerMode.DATE]: PickerDate,
   [PickerMode.REGION]: PickerRegion
+}
+
+const buttonTextMap: Record<LanguageCode, { cancel: string; confirm: string }> = {
+  'zh-CN': {
+    cancel: '取消',
+    confirm: '确定'
+  },
+  'en-US': {
+    cancel: 'Cancel',
+    confirm: 'Confirm'
+  }
 }
 
 const { open, remove } = createPopupManager()
@@ -103,8 +113,9 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       'header-text': headerText = ''
     } = props
 
+    const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
+
     const pickerValue = useRef(value)
-    console.log('[mpx-picker], render ---> value=', mode, value, range)
     pickerValue.current = value
 
     const innerLayout = useRef({})
@@ -229,7 +240,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
               activeOpacity={1}
               underlayColor={'#DDDDDD'}
             >
-              <Text style={[styles.cancelText]}>取消</Text>
+              <Text style={[styles.cancelText]}>{buttonText.cancel}</Text>
             </TouchableHighlight>
             <TouchableHighlight
               onPress={onConfirm}
@@ -237,7 +248,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
               activeOpacity={1}
               underlayColor={'#179B16'}
             >
-              <Text style={[styles.confirmText]}>确定</Text>
+              <Text style={[styles.confirmText]}>{buttonText.confirm}</Text>
             </TouchableHighlight>
           </View>
         </>

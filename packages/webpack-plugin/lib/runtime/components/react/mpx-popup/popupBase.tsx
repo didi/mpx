@@ -15,7 +15,7 @@ const windowInfo = getWindowInfo()
 console.log('windowInfo', windowInfo)
 const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
 const styles = StyleSheet.create({
-  actionActionMask: {
+  mask: {
     left: 0,
     top: 0,
     bottom: 0,
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 1000
   },
-  actionSheetContent: {
+  content: {
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
@@ -72,9 +72,9 @@ const PopupBase = (props: PopupBaseProps = {}) => {
   }
 
   return (
-    <View onTouchEnd={cancelAction} style={styles.actionActionMask}>
+    <View onTouchEnd={cancelAction} style={styles.mask}>
       <Animated.View
-        style={[styles.actionSheetContent, animatedStyles]}
+        style={[styles.content, animatedStyles]}
         onTouchEnd={preventMaskClick}
       >
         {children}
