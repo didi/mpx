@@ -331,6 +331,8 @@ RN 0.76 支持，且存在机型的兼容性问题，具体参见 [RN 官方文�
 
 #### [Flexbox](https://windicss.org/utilities/layout/flexbox.html)
 
+| 规则                | 是否支持 | 备注 |
+| :------------------ | :------: | :--: |
 | Flex | 是 | |
 | Flex Basis | 是 | |
 | Inline Flex | 是 | |
