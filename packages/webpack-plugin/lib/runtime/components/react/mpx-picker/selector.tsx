@@ -12,12 +12,17 @@ const styles = StyleSheet.create({
   pickerContainer: {
     height: 240
   },
+  pickerIndicator: {
+    height: 40
+  },
   pickerItem: {
     fontSize: 16,
     lineHeight: 40,
     textAlign: 'center'
   }
 })
+
+console.log('[mpx-picker-selector], render ---> styles.pickerIndicator=', styles.pickerIndicator)
 
 const formatRangeFun = (range: RangeItem[], rangeKey = '') =>
   rangeKey ? range.map((item: Obj) => item[rangeKey]) : range
@@ -46,7 +51,7 @@ const PickerSelector = forwardRef<
   return (
     <MpxPickerView
       style={styles.pickerContainer}
-      indicator-style="height: 40"
+      indicator-style={styles.pickerIndicator}
       value={[value]}
       bindchange={onChange}
     >

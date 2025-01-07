@@ -59,12 +59,7 @@ module.exports = {
       files: ['packages/webpack-plugin/lib/runtime/components/react/**/*.{js,jsx,ts,tsx}'],
       plugins: ['react-hooks'],
       rules: {
-        'react-hooks/rules-of-hooks': [
-          'error',
-          {
-            skip: ['usePopup']
-          }
-        ]
+        'react-hooks/rules-of-hooks': 'error'
       }
     }
   ]

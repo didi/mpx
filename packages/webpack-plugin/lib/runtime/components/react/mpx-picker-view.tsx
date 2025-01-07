@@ -34,7 +34,7 @@ interface PickerViewProps {
   }
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
-  'enable-var': boolean
+  'enable-var'?: boolean
   'external-var-context'?: Record<string, any>,
   'enable-offset'?: boolean
 }
@@ -101,7 +101,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
-  console.log('[mpx-picker-view], render ---> value=', value, 'style=', style, 'normalStyle=', normalStyle)
+  console.log('[mpx-picker-view], render ---> value=', value, 'style=', style, 'normalStyle=', normalStyle, 'textStyle=', textStyle, 'indicatorStyle=', indicatorStyle)
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     const activeValue = activeValueRef.current

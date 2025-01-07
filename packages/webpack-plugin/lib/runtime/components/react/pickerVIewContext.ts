@@ -23,10 +23,5 @@ export const PickerViewStyleContext = createContext<
 
 export const usePickerViewStyleContext = () => {
   const value = useContext(PickerViewStyleContext)
-  if (value === undefined) {
-    throw new Error(
-      'usePickerViewStyleContext must be called from within PickerViewStyleContext.Provider!'
-    )
-  }
   return value
 }
