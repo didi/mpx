@@ -75,3 +75,114 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 不支持
 
 #### Box Decoration Break
+
+不支持
+
+#### Image Rendering
+
+不支持
+
+#### Listing
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| List style type   |    否    |      |
+| List style position    |    否    |      |
+| List style image    |    否    |      |
+
+#### Overflow
+
+仅支持 `hidden`、`scroll`、`visible` 属性值
+
+#### Overflow Behavior
+
+不支持
+
+#### Placeholder
+
+不支持
+
+#### Border
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Border radius   |    是    |  不支持 border-inline-start、border-inline-end、border-block-start、border-block-end 属性，其他都支持    |
+| Border width    |    是    |      |
+| Border color     |    是    |      |
+| Border opacity     |    是    |      |
+| Border style     |    是    |  不支持 double 样式，其他都支持   |
+
+#### Divider
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Divider width   |    否    |     |
+| Divider color    |    否    |      |
+| Divider opacity    |    否    |      |
+| Divider style   |    否    |      |
+
+#### Outline
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Outline solid   |    否    |     |
+| Outline dotted    |    否    |      |
+
+#### Ring
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Ring width   |    否    |     |
+| Ring color    |    否    |      |
+| Ring opacity    |    否    |      |
+| Ring offset width    |    否    |      |
+| Ring offset color    |    否    |      |
+
+
+#### [Box Shadow](https://windicss.org/utilities/effects/box-shadow.html)
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Box shadow size   |    是    |     |
+| Box shadow color    |    是    |      |
+
+#### [Opacity](https://windicss.org/utilities/effects/opacity.html)
+
+支持
+
+#### [Mix Blend Mode](https://windicss.org/utilities/effects/mix-blend-mode.html)
+
+不支持
+
+
+#### Filter
+
+RN 0.76 支持，且存在机型的兼容性问题，具体参见 [RN 官方文档](https://reactnative.dev/blog/2024/10/23/release-0.76-new-architecture#box-shadow-and-filter-style-props)
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Filter blur   |    是    |      |
+| Filter brightness     |    是    |      |
+| Filter contrast     |    是    |      |
+| Filter drop shadow     |    是    |      |
+| Filter grayscale     |    是    |     |
+| Filter hue rotate    |    是    |      |
+| Filter invert     |    是    |      |
+| Filter saturate     |    是    |      |
+| Filter Sepia     |    是    |      |
+
+#### Backdrop Filter
+
+不支持
+
+| 规则          | 是否支持 | 备注 |
+| :------------- | :------: | :---: |
+| Backdrop blur   |    否   |      |
+| Backdrop brightness     |    否    |      |
+| Backdrop contrast     |    否    |      |
+| Backdrop drop shadow     |    否    |      |
+| Backdrop grayscale     |    否    |     |
+| Backdrop hue rotate    |    否    |      |
+| Backdrop invert     |    否    |      |
+| Backdrop saturate     |    否    |      |
+| Backdrop Sepia     |    否    |      |
