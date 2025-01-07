@@ -75,13 +75,11 @@ properties 定义包含以下选项：
 * **`type`**: 必填，属性的类型
 * **`optionalTypes`**: 可选，属性的类型（可以指定多个）
 * **`value`**: 可选，属性的初始值
-* **`observer`**: 可选，属性值变化时的回调函数（不推荐使用，建议使用 observers）
+* **`observer`**: 可选，属性值变化时的回调函数
 
 > **注意：**
 > 1. 属性名应避免以 data 开头，例如 data-xyz="" 会被作为节点 dataset 来处理
 > 2. 在组件定义和使用时，属性名和 data 字段相互间都不能冲突
-> 3. type 字段为必填项，虽然新版本基础库兼容未填写的情况，但建议始终显式指定类型
-> 4. 从基础库 2.0.9 开始，对象类型的属性和 data 字段中可以包含函数类型的子字段
 
 ```js
 createComponent({
@@ -99,11 +97,6 @@ createComponent({
       optionalTypes: [String, Object],
       value: 0
     },
-    // 必填属性
-    propD: {
-      type: String,
-      required: true
-    },
     // 带有属性值变化回调
     propE: {
       type: Object,
@@ -114,48 +107,28 @@ createComponent({
   }
 })
 ```
-
-在 WXML 中指定属性值时，应注意：
-* 指定静态值时使用连字符写法：`<custom-comp prop-a="value" />`
-* 使用动态绑定时使用驼峰写法：`<custom-comp :propA="value" />`
-
-多数情况下，属性最好指定一个确切的类型。这样，在 WXML 中以字面量指定属性值时，值可以获得正确的类型转换：
-
-```html
-<custom-comp min="1" max="5" />
-```
-
-此时，由于属性被规定为 Number 类型，min 和 max 会被转换为数值 1 和 5，而非字符串：
-
-```js
-this.data.min === 1 // true
-this.data.max === 5 // true
-```
+* **参考**：[微信小程序properties定义](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
 
 ### data
 
-用于声明组件的内部数据状态。
+组件的内部数据，和 properties 一同用于组件的模板渲染。
 
 ```ts
 interface ComponentOptions {
-  data?: object | (() => object)
+  data?: object
 }
 ```
 
-data 选项声明组件内部的响应式数据。在 Mpx 中，data 必须是一个返回对象的函数，以确保每个组件实例都有独立的数据副本。
-
-组件实例会代理所有 data 函数返回对象上的属性，因此可以直接通过 `this.propertyName` 访问这些数据。
+在 Mpx 中，组件实例会代理所有 data 对象的所有属性并进行响应式处理，因此可以直接通过 `this.dataName` 访问这些数据。
 
 ```js
 createComponent({
-  data() {
-    return {
-      count: 0,
-      message: 'Hello',
-      userInfo: {
-        name: '',
-        age: 0
-      }
+  data: {
+    count: 0,
+    message: 'Hello',
+    userInfo: {
+      name: '',
+      age: 0
     }
   }
 })
