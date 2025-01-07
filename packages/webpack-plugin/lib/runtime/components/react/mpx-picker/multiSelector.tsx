@@ -3,7 +3,7 @@ import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { MultiSelectorProps, Obj, RangeItem } from './type'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
-import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
+import { HandlerRef } from '../useNodesRef' // 引入辅助函数
 
 const styles = StyleSheet.create({
   pickerContainer: {
@@ -38,8 +38,6 @@ const PickerMultiSelector = forwardRef<
   const valuePrev = useRef(value)
   valuePrev.current = value
 
-  console.log('[mpx-picker-multiSelector], render ---> value=', value, 'range=', formatRange)
-
   const updateRange = (newRange: RangeItem[]) => {
     const range = formatRangeFun(newRange.slice(), props['range-key'])
     setFormatRange(range)
@@ -68,7 +66,7 @@ const PickerMultiSelector = forwardRef<
     const current = valuePrev.current
     valuePrev.current = value
     const index = value.findIndex((v, i) => v !== current[i])
-    if(index!==-1){
+    if (index !== -1) {
       bindcolumnchange?.(index, value[index])
     }
   }

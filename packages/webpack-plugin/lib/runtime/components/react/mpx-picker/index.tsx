@@ -116,7 +116,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         pickerRef.current.updateRange?.(range)
       }
     }, [JSON.stringify(range)])
-  
+
     useNodesRef<View, PickerProps>(props, ref, nodeRef, {
       style
     })
