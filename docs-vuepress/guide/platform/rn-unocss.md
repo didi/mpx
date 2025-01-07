@@ -260,4 +260,60 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 
 #### Positioning
 
+| 规则 | 是否支持 | 备注 |
+| :------------------ | :------: | :--: |
+| Justify Content | 是 | 只支持(justify-around,justify-between,justify-center,justify-end,justify-evenly,justify-start) |
+| Justify Items | 否 | |
+| Justify Self | 否 | |
+| Align Content | 是 | |
+| Align Items | 是 | |
+| Align Self | 是 | |
+| Place Content | 否 | |
+| Place Items | 否 | |
+| Place Self | 否 | |
+| Position | 是 | 只支持(absolute,relative) |
+| Top / Right / Bottom / Left | 是 | |
+| Floats | 否 | |
+| Clear | 否 | |
+| Isolation | 否 | |
+| Object Fit | 否 | |
+| Object Position | 否 | |
+| Z-Index | 是 | |
+
 #### Sizing
+
+| 规则 | 是否支持 | 备注 |
+| :------------------ | :------: | :--: |
+| Width | 是 | |
+| Min-Width | 是 | |
+| Max-Width | 是 | |
+| Min-Height | 是 | |
+| Max-Height | 是 | |
+| Box Sizing | 否 | |
+
+#### Spacing
+
+| 规则 | 是否支持 | 备注 |
+| :------------------ | :------: | :--: |
+| Padding | 是 | |
+| Padding Y | 是 | |
+| Padding X | 是 | |
+| Padding Top | 是 | |
+| Padding Left | 是 | |
+| Padding Bottom | 是 | |
+| Padding Right | 是 | |
+| Margin | 是 | |
+| Margin Y | 是 | |
+| Margin X | 是 | |
+| Margin Top | 是 | |
+| Margin Left | 是 | |
+| Margin Bottom | 是 | |
+| Margin Right | 是 | |
+| Space Between Y | 否 | |
+| Space Between Y Reverse | 否 | |
+| Space Between X | 否 | |
+| Space Between X Reverse | 否 | |
+
+#### Tables
+
+不支持
