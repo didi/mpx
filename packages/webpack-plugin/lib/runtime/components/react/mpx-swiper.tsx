@@ -164,7 +164,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
   const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
-  let childrenLength = children.length
+  const childrenLength = children.length
   const initWidth = typeof normalStyle?.width === 'number' ? normalStyle.width - previousMargin - nextMargin : normalStyle.width
   const initHeight = typeof normalStyle?.height === 'number' ? normalStyle.height - previousMargin - nextMargin : normalStyle.height
   const dir = horizontal === false ? 'y' : 'x'
@@ -188,8 +188,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 记录从onBegin 到 onTouchesUp 的时间
   const moveTime = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
-  // 用户点击未移动状态下,记录用户上一次操作的transtion 的 direction
-  const customTrans = useSharedValue(0)
   const intervalTimer = props.interval || 500
   const {
     // 存储layout布局信息
@@ -294,7 +292,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 业务swiper-item自己生成key，内部添加的元素自定义key
       const newChild = React.cloneElement(child, {
         itemIndex: index,
-        customStyle: [extraStyle]
+        customStyle: extraStyle
       })
       return newChild
     })
@@ -408,11 +406,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       })
     }
   }, [props.current])
-
-  useEffect(() => {
-    const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
-    childrenLength = children.length
-  }, [props.children])
 
   useEffect(() => {
     if (!step.value) {
@@ -534,24 +527,23 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }
     })
   }
-  // 按照长按的处理情况：1. 用户先快速滑动，再未滑动到目标位置时再次按下然后抬起；2. 用户在正常情况下点击没有触发移动
-  function handleLongPress (eventData: EventDataType) {
+  // 按照用户手指抬起的位置计算
+  function handleLongPress () {
     'worklet'
-    const { translation } = eventData
-    let currentOffset = Math.abs(offset.value)
+    const currentOffset = Math.abs(offset.value)
+    let preOffset = (currentIndex.value + patchElementNum) * step.value
     if (props.circular) {
-      currentOffset += previousMargin
+      preOffset -= previousMargin
     }
-
-    const half = currentOffset % step.value > step.value / 2
-    // 向右trans < 0, 向左trans > 0
-    const isExceedHalf = translation < 0 ? half : !half
-    if (+translation === 0 || currentOffset % step.value === 0) {
+    // 正常事件中拿到的transition值(正向滑动<0，倒着滑>0)
+    const diffOffset = preOffset - currentOffset
+    const half = Math.abs(diffOffset) > step.value / 2
+    if (+diffOffset === 0) {
       runOnJS(resumeLoop)()
-    } else if (isExceedHalf) {
-      handleEnd(eventData)
+    } else if (half) {
+      handleEnd({ translation: diffOffset })
     } else {
-      handleBack(eventData)
+      handleBack({ translation: diffOffset })
     }
   }
 
@@ -609,7 +601,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'worklet'
       const touchEventData = e.changedTouches[0]
       const moveDistance = touchEventData[strAbso] - preAbsolutePos.value
-      customTrans.value = moveDistance
       const eventData = {
         translation: moveDistance
       }
@@ -638,11 +629,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         return
       }
       if (!moveDistance) {
-        handleLongPress({ translation: customTrans.value })
+        handleLongPress()
       } else {
         const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
         if (Math.abs(strVelocity) < longPressRatio) {
-          handleLongPress(eventData)
+          handleLongPress()
         } else {
           handleEnd(eventData)
         }

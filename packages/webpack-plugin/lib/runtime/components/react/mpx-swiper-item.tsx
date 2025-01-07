@@ -16,7 +16,7 @@ interface SwiperItemProps {
   'parent-height'?: number;
   children?: ReactNode;
   style?: Object;
-  customStyle: [];
+  customStyle: Object;
   itemIndex: number;
 }
 
