@@ -726,7 +726,7 @@ movable-view的可移动区域。
 | bindtouchmove	    | eventhandle  | 手指触摸后移动		|
 | bindtouchend	    | eventhandle  | 手指触摸动作结束	|
 | bindtouchcancel	    | eventhandle  | 手指触摸动作被打断	|
-| bindlongtap	    | eventhandle  | 手指长按 300ms 之后触发	|
+| bindlongpress    | eventhandle  | 手指长按 350ms 之后触发	|
 | binderror	    | eventhandle  | 当发生错误时触发 error 事件， detail = {errMsg}	|
 
 API
