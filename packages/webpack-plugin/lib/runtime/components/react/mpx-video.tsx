@@ -8,32 +8,34 @@
  * ✔ autoplay
  * ✔ loop
  * ✔ muted
- * ✘ initial-time
+ * ✔ initial-time
  * ✘ page-gesture
  * ✘ direction
  * ✔ show-progress
  * ✔ show-fullscreen-btn
  * ✔ show-play-btn
- * ✘ show-center-play-btn
+ * ✔ show-center-play-btn
  * ✘ enable-progress-gesture
  * ✔ object-fit
  * ✔ poster
  * ✔ show-mute-btn
  * ✘ title
- * ✘ play-btn-position
+ * ✔ play-btn-position
  * ✔ enable-play-gesture
  * ✘ auto-pause-if-navigate
  * ✘ auto-pause-if-open-native
  * ✘ vslide-gesture
  * ✘ vslide-gesture-in-fullscreen
+ * ✘ show-bottom-progress(use show-progress)
  * ✘ ad-unit-id
  * ✘ poster-for-crawler
  * ✘ show-casting-button
  * ✘ picture-in-picture-mode
  * ✘ picture-in-picture-show-progress
  * ✘ picture-in-picture-init-position
- * ✔ show-screen-lock-button
- * ✔ show-snapshot-button
+ * ✔ enable-auto-rotation
+ * ✘ show-screen-lock-button
+ * ✘ show-snapshot-button
  * ✔ show-background-playback-button
  * ✘ background-poster
  * ✘ referrer-policy
@@ -53,8 +55,8 @@
  * ✔ bindprogress
  * ✔ bindloadedmetadata
  * ✔ bindcontrolstoggle(only android)
- * ✔ bindenterpictureinpicture
- * ✔ bindleavepictureinpicture
+ * ✘ bindenterpictureinpicture
+ * ✘ bindleavepictureinpicture
  * ✔ bindseekcomplete
  * ✘ bindcastinguserselect
  * ✘ bindcastingstatechange
@@ -70,8 +72,8 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-    height: 200 // 默认高度
+    width: 300,
+    height: 225
   },
   video: {
     flex: 1
