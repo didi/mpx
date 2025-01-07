@@ -4,7 +4,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 
 受限于 RN 平台的样式规则能力限制，绝大部分的 unocss 提供的原子类并不能在跨 RN 项目当中使用，以下是目前所支持的原子类：
 
-> 对于不支持的原子类，在编译阶段会有 error 提示，且最终的编译产物当中不会产出对应的原子类结果
+> 对于不支持的原子类，在项目编译构建阶段会将不支持的原子类以 error 形式提示，且最终的编译产物当中不会产出对应的原子类结果
 
 #### [Typography](https://windicss.org/utilities/general/typography.html#typography)
 
@@ -44,6 +44,56 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 
 #### Variants
 
+* Screen Variants
+
+Mobile First
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| sm   |    @media (min-width: 640px)    |      |
+| md   |    @media (min-width: 768px)    |      |
+| lg   |    @media (min-width: 1024px)    |      |
+| xl   |    @media (min-width: 1280px)    |      |
+| 2xl  |    @media (min-width: 1536px)    |      |
+
+Desktop First
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| <sm   |    @media (max-width: 640px)    |      |
+| <md   |    @media (max-width: 768px)    |      |
+| <lg   |    @media (max-width: 1024px)    |      |
+| <xl   |    @media (max-width: 1280px)    |      |
+| <2xl  |    @media (max-width: 1536px)    |      |
+
+Only Screen
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| @sm   |   @media (min-width: 640px) and (max-width: 768px)    |      |
+| @md   |   @media (min-width: 768px) and (max-width: 1024px)    |      |
+| @lg   |   @media (min-width: 1024px) and (max-width: 1280px)    |      |
+| @xl   |   @media (min-width: 1280px) and (max-width: 1536px)    |      |
+| @2xl  |   @media (min-width: 1536px)    |      |
+
+* Pseudo Elements
+
+目前仅支持 `hover`
+
+* Theme Variants
+  
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| dark   |   暗色模式    |      |
+| light   |   亮色模式    |      |
+
+* Orientation Variants
+
+| Varaint          | 规则 | 备注 |
+| :------------- | :------: | :---: |
+| portrait   |   竖屏    |      |
+| landscape   |   横屏    |      |
+
 #### Screen Readers
 
 不支持
@@ -61,7 +111,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Background size     |    是    |      |
 | Background origin     |    否    |      |
 
-#### Gradients
+#### [Gradients](https://windicss.org/utilities/backgrounds/gradients.html)
 
 | 规则          | 是否支持 | 备注 |
 | :------------- | :------: | :---: |
@@ -70,19 +120,19 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Gradient Via     |    是    |      |
 | Gradient To     |    是    |      |
 
-#### Background Blend Mode
+#### [Background Blend Mode](https://windicss.org/utilities/backgrounds/background-blend-mode.html)
 
 不支持
 
-#### Box Decoration Break
+#### [Box Decoration Break](https://windicss.org/utilities/behaviors/box-decoration-break.html)
 
 不支持
 
-#### Image Rendering
+#### [Image Rendering](https://windicss.org/utilities/behaviors/image-rendering.html)
 
 不支持
 
-#### Listing
+#### [Listing](https://windicss.org/utilities/behaviors/listings.html)
 
 | 规则          | 是否支持 | 备注 |
 | :------------- | :------: | :---: |
@@ -90,19 +140,19 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | List style position    |    否    |      |
 | List style image    |    否    |      |
 
-#### Overflow
+#### [Overflow](https://windicss.org/utilities/behaviors/overflow.html)
 
 仅支持 `hidden`、`scroll`、`visible` 属性值
 
-#### Overflow Behavior
+#### [Overflow Behavior](https://windicss.org/utilities/behaviors/overscroll-behavior.html)
 
 不支持
 
-#### Placeholder
+#### [Placeholder](https://windicss.org/utilities/behaviors/placeholder.html)
 
 不支持
 
-#### Border
+#### [Border](https://windicss.org/utilities/borders/border.html)
 
 | 规则          | 是否支持 | 备注 |
 | :------------- | :------: | :---: |
@@ -112,7 +162,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Border opacity     |    是    |      |
 | Border style     |    是    |  不支持 double 样式，其他都支持   |
 
-#### Divider
+#### [Divider](https://windicss.org/utilities/borders/divider.html)
 
 | 规则          | 是否支持 | 备注 |
 | :------------- | :------: | :---: |
@@ -121,14 +171,14 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 | Divider opacity    |    否    |      |
 | Divider style   |    否    |      |
 
-#### Outline
+#### [Outline](https://windicss.org/utilities/borders/outline.html)
 
 | 规则          | 是否支持 | 备注 |
 | :------------- | :------: | :---: |
 | Outline solid   |    否    |     |
 | Outline dotted    |    否    |      |
 
-#### Ring
+#### [Ring](https://windicss.org/utilities/borders/ring.html)
 
 | 规则          | 是否支持 | 备注 |
 | :------------- | :------: | :---: |
@@ -155,7 +205,7 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 不支持
 
 
-#### Filter
+#### [Filter](https://windicss.org/utilities/filters/filter.html)
 
 RN 0.76 支持，且存在机型的兼容性问题，具体参见 [RN 官方文档](https://reactnative.dev/blog/2024/10/23/release-0.76-new-architecture#box-shadow-and-filter-style-props)
 
@@ -171,7 +221,7 @@ RN 0.76 支持，且存在机型的兼容性问题，具体参见 [RN 官方文�
 | Filter saturate     |    是    |      |
 | Filter Sepia     |    是    |      |
 
-#### Backdrop Filter
+#### [Backdrop Filter](https://windicss.org/utilities/filters/backdrop-filter.html)
 
 不支持
 
