@@ -8,35 +8,35 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 
 #### [Typography](https://windicss.org/utilities/general/typography.html#typography)
 
-| 规则          | 是否支持 | 备注 |
-| :------------- | :------: | :---: |
-| Font family   |    是    |      |
-| Font size     |    是    |      |
-| Font style | 是 |   |
-| Font weight | 是 | | 
-| Font Variant Numberic | 否 | |
-| Hyphens | 否 | |
-| Letter spacing | 是 | |
-| Line height | 是 | |
-| Tab size | 否 | |
-| Text alignment | 是 | |
-| Text color | 是 | |
-| Text decoration | 是 | |
-| Text decoration style | 是 | ios支持，安卓不支持 |
-| Text decoration thickness | 否 | |
-| Text underline offset | 否 | |
-| Text decoration opacity | 是 | |
-| Text indent | 否 | |
-| Text opacity | 是 | |
-| Text shadow | 是 | |
-| Text stroke | 否 | |
-| Text stroke color | 否 | |
-| Text transform | 是 | |
-| Vertical alignment | 是 | 安卓支持，ios不支持，且只支持 auto/top/bottom/center |
-| White space | 否 | |
-| Word break | 否 | |
-| Write mode | 否 | |
-| Writing orientation | 否 | |
+| 规则                      | 是否支持 |                         备注                          |
+| :------------------------ | :------: | :---------------------------------------------------: |
+| Font family               |    是    |                                                       |
+| Font size                 |    是    |                                                       |
+| Font style                |    是    |                                                       |
+| Font weight               |    是    |                                                       |
+| Font Variant Numberic     |    否    |                                                       |
+| Hyphens                   |    否    |                                                       |
+| Letter spacing            |    是    |                                                       |
+| Line height               |    是    |                                                       |
+| Tab size                  |    否    |                                                       |
+| Text alignment            |    是    |                                                       |
+| Text color                |    是    |                                                       |
+| Text decoration           |    是    |                                                       |
+| Text decoration style     |    是    |                 ios 支持，安卓不支持                  |
+| Text decoration thickness |    否    |                                                       |
+| Text underline offset     |    否    |                                                       |
+| Text decoration opacity   |    是    |                                                       |
+| Text indent               |    否    |                                                       |
+| Text opacity              |    是    |                                                       |
+| Text shadow               |    是    |                                                       |
+| Text stroke               |    否    |                                                       |
+| Text stroke color         |    否    |                                                       |
+| Text transform            |    是    |                                                       |
+| Vertical alignment        |    是    | 安卓支持，ios 不支持，且只支持 auto/top/bottom/center |
+| White space               |    否    |                                                       |
+| Word break                |    否    |                                                       |
+| Write mode                |    否    |                                                       |
+| Writing orientation       |    否    |                                                       |
 
 #### Svg
 
@@ -48,30 +48,216 @@ Mpx 使用 unocss 作为原子类引擎，使得在使用 mpx 开发跨端项目
 
 不支持
 
+#### Animation
+
+不支持
+
+#### Transforms
+
+| 规则                | 是否支持 | 备注 |
+| :------------------ | :------: | :--: |
+| Transform Type      |    是    |      |
+| Transform Origin    |    是    |      |
+| Transform Rotate    |    是    |      |
+| Transform Scale     |    是    |      |
+| Transform Skew      |    是    |      |
+| Transform Translate |    是    |      |
+| Perspective         |    是    |      |
+| Perspective Origin  |    是    |      |
+
+#### Transitions
+
+不支持
+
 #### [Background](https://windicss.org/utilities/backgrounds/background.html)
 
-| 规则          | 是否支持 | 备注 |
-| :------------- | :------: | :---: |
-| Background attachment   |    否    |      |
-| Background clip     |    否    |      |
-| Background color     |    是    |      |
-| Background opacity     |    是    |      |
-| Background position     |    是    |  支持 left/right/top/bottom/center/数值    |
-| Background repeat     |    是    |   仅支持 no-repeat   |
-| Background size     |    是    |      |
-| Background origin     |    否    |      |
+| 规则                  | 是否支持 |                  备注                  |
+| :-------------------- | :------: | :------------------------------------: |
+| Background attachment |    否    |                                        |
+| Background clip       |    否    |                                        |
+| Background color      |    是    |                                        |
+| Background opacity    |    是    |                                        |
+| Background position   |    是    | 支持 left/right/top/bottom/center/数值 |
+| Background repeat     |    是    |            仅支持 no-repeat            |
+| Background size       |    是    |                                        |
+| Background origin     |    否    |                                        |
 
 #### Gradients
 
-| 规则          | 是否支持 | 备注 |
-| :------------- | :------: | :---: |
-| Gradient Direction   |    是    |      |
-| Gradient From    |    是    |      |
-| Gradient Via     |    是    |      |
-| Gradient To     |    是    |      |
+| 规则               | 是否支持 | 备注 |
+| :----------------- | :------: | :--: |
+| Gradient Direction |    是    |      |
+| Gradient From      |    是    |      |
+| Gradient Via       |    是    |      |
+| Gradient To        |    是    |      |
 
 #### Background Blend Mode
 
 不支持
 
 #### Box Decoration Break
+
+不支持
+
+#### Image Rendering
+
+不支持
+
+#### Listings
+
+| 规则                | 是否支持 | 备注 |
+| :------------------ | :------: | :--: |
+| List Style Type     |    否    |      |
+| List Style Position |    否    |      |
+
+#### Overflow
+
+部分属性支持(overflow：hidden/scroll/visible)
+
+#### Overscroll Behavior
+
+不支持
+
+#### Placeholder
+
+不支持
+
+#### Border
+
+| 规则           | 是否支持 |              备注               |
+| :------------- | :------: | :-----------------------------: |
+| Border Radius  |    是    |       block/inline 不支持       |
+| Border Width   |    是    |                                 |
+| Border Color   |    是    | transparent/currentColor 不支持 |
+| Border Opacity |    是    |                                 |
+| Border Style   |    是    |          double 不支持          |
+
+#### Divider
+
+不支持
+
+#### Outline
+
+不支持
+
+#### Ring
+
+不支持
+
+#### Box Shadow
+
+| 规则             | 是否支持 | 备注 |
+| :--------------- | :------: | :--: |
+| Box Shadow Size  |    是    |      |
+| Box Shadow Color |    是    |      |
+
+#### Opacity
+
+支持
+
+#### Mix Blend Mode
+
+不支持
+
+#### Filter
+
+| 规则               | 是否支持 |                    备注                     |
+| :----------------- | :------: | :-----------------------------------------: |
+| Filter Blur        |    是    | 0.76 版本支持部分属性，且有机型的兼容性问题 |
+| Filter Brightness  |    是    |                                             |
+| Filter Contrast    |    是    |                                             |
+| Filter Drop Shadow |    是    |                                             |
+| Filter Grayscale   |    是    |                                             |
+| Filter Hue Rotate  |    是    |                                             |
+| Filter Invert      |    是    |                                             |
+| Filter Saturate    |    是    |                                             |
+| Filter Sepia       |    是    |                                             |
+
+#### Backdrop Filter
+
+不支持
+
+#### Accent Color
+
+不支持
+
+#### Appearance
+
+部分支持(backface-visible,backface-hidden)
+
+#### Cursor
+
+不支持，TextInput 有属性控制
+
+#### Caret
+
+| 规则          | 是否支持 | 备注 |
+| :------------ | :------: | :--: |
+| Caret Color   |    否    |      |
+| Caret Opacity |    否    |      |
+
+#### Pointer Events
+
+部分支持(auto,none)
+
+#### Resize
+
+不支持
+
+#### Scroll Behavior
+
+不支持
+
+#### Touch Action
+
+不支持
+
+#### User Select
+
+支持(none,auto,all,text)
+
+#### Will Change
+
+不支持
+
+#### Columns
+
+不支持
+
+#### Container
+
+不支持
+
+#### Display
+
+| 规则                | 是否支持 | 备注 |
+| :------------------ | :------: | :--: |
+| Block               |    否    |      |
+| Inline Block        |    否    |      |
+| Inline              |    否    |      |
+| Flow Root           |    否    |      |
+| Contents            |    否    |      |
+| Hidden              |    是    |      |
+| Visibility          |    否    |      |
+| Visibility          |    否    |      |
+| Backface Visibility |    否    |      |
+| List Item           |    否    |      |
+
+#### Flexbox
+
+| Flex | 是 | |
+| Flex Basis | 是 | |
+| Inline Flex | 是 | |
+| Flex Direction | 是 | |
+| Flex Wrap | 是 | |
+| Flex Stretch | 是 | |
+| Flex Grow | 是 | |
+| Flex Shrink | 是 | |
+
+#### Grid
+
+不支持
+
+#### Positioning
+
+#### Sizing
