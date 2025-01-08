@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.9.69",
+  "version": "2.9.70",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -19,7 +19,7 @@
   ],
   "main": "src/index.js",
   "dependencies": {
-    "@mpxjs/utils": "^2.9.69",
+    "@mpxjs/utils": "^2.9.70",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"
   },
@@ -30,9 +30,9 @@
     "@mpxjs/store": "^2.9.0",
     "@react-navigation/native": "^7.0.3",
     "@react-navigation/stack": "^7.0.4",
+    "promise": "^8.3.0",
     "react": "*",
     "react-native": "*",
-    "promise": "^8.3.0",
     "react-native-gesture-handler": "^2.19.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-safe-area-context": "^4.14.0",

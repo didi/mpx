@@ -5,11 +5,10 @@ import { currentInstance } from '../../core/proxy'
 let appProvides = Object.create(null)
 
 /** @internal createApp() 初始化应用层 scope provide */
-export function initAppProvides (appOptions) {
-  const provideOpt = appOptions.provide
+export function initAppProvides (provideOpt, instance) {
   if (provideOpt) {
     const provided = isFunction(provideOpt)
-      ? callWithErrorHandling(provideOpt.bind(appOptions), appOptions, 'createApp provide function')
+      ? callWithErrorHandling(provideOpt.bind(instance), instance, 'createApp provide function')
       : provideOpt
     if (isObject(provided)) {
       appProvides = provided
