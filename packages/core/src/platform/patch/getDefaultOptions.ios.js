@@ -377,14 +377,10 @@ function usePageStatus (navigation, pageId) {
         global.__navigationHelper.transitionEndCallback = null
       }
     })
-    const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
-      pageStatusMap[pageId] = value
-    })
 
     return () => {
       focusSubscription()
       blurSubscription()
-      unWatchAppFocusedState()
       transitionEndSubscription()
       del(pageStatusMap, pageId)
     }
@@ -456,7 +452,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useEffect(() => {
       if (type === 'page') {
-        if (!global.__mpxAppLaunched && global.__mpxAppOnLaunch) {
+        if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
           global.__mpxAppOnLaunch(props.navigation)
         }
         proxy.callHook(ONLOAD, [props.route.params || {}])
