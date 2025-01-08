@@ -140,10 +140,11 @@ export default function styleHelperMixin () {
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         let result = {}
-        const unoResult = {}
+        let unoResult = {}
         const unoVarResult = {}
         const classMap = this.__getClassMap?.() || {}
         const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
+        let hasUnoClass = false
         const appClassMap = global.__getAppClassMap?.() || {}
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -154,6 +155,7 @@ export default function styleHelperMixin () {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               Object.assign(result, appClassMap[className])
             } else if (unoClassMap[className]) {
+              hasUnoClass = true
               Object.assign(unoResult, unoClassMap[className])
             } else if (unoVarClassMap[className]) {
               Object.assign(unoVarResult, unoVarClassMap[className])
@@ -162,7 +164,14 @@ export default function styleHelperMixin () {
               Object.assign(result, this.__props[className])
             }
           })
-          result = Object.assign({}, unoPreflightsClassMap, unoResult, unoVarResult, result)
+          if (hasUnoClass) {
+            // 两个类需要前置默认css变量
+            if (unoResult.transform || unoResult.filter) {
+              unoResult = Object.assign({}, unoPreflightsClassMap, unoResult)
+            }
+            // 合并uno工具变量
+            result = Object.assign({}, unoResult, unoVarResult, result)
+          }
         }
 
         if (staticStyle || dynamicStyle) {

@@ -119,7 +119,7 @@ const sidebar = {
     { title: '小程序跨端组件库 Mpx-cube-ui 开源啦', path: 'mpx-cube-ui' },
     { title: 'Mpx-cli 插件化改造', path: 'mpx-cli-next' },
     { title: 'Mpx 小程序单元测试能力建设与实践', path: 'unit-test'}
-  ],
+  ]
 }
 
 const nav = [
