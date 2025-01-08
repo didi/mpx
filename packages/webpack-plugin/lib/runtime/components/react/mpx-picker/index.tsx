@@ -123,6 +123,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const pickerRef = useRef<any>(null)
 
     useEffect(() => {
+      console.log('[mpx-picker] useEffect --->', 'range', range)
       if (range && pickerRef.current) {
         pickerRef.current.updateRange?.(range)
       }

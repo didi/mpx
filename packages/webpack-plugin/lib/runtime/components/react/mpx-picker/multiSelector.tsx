@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native'
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
 import { MultiSelectorProps, Obj, RangeItem } from './type'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
