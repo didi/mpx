@@ -395,6 +395,16 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       runOnJS(handleSwiperChange)(newIndex)
     }
   })
+
+  useEffect(() => {
+    if (childrenLength - 1 < currentIndex.value) {
+      pauseLoop()
+      currentIndex.value = 0
+      offset.value = getOffset(0, step.value)
+      resumeLoop()
+    }
+  },[childrenLength])
+
   useEffect(() => {
     if (!step.value) {
       return
