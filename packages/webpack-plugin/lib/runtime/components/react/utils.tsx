@@ -1,9 +1,10 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 
@@ -32,8 +33,7 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-left': 'left'
 }
 
-function getSafeAreaInset (name: string) {
-  const navigation = getFocusedNavigation()
+function getSafeAreaInset (name: string, navigation: Record<string, any>) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
 }
@@ -232,7 +232,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>) {
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any>) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
@@ -240,7 +240,7 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
       parsed.forEach(({ start, end, args }) => {
         const name = args[0]
         const fallback = args[1] || ''
-        const value = '' + (getSafeAreaInset(name) ?? global.__formatValue(fallback))
+        const value = '' + (getSafeAreaInset(name, navigation) ?? global.__formatValue(fallback))
         replaced.replace(start, end - 1, value)
       })
       target[key] = global.__formatValue(replaced.source())
@@ -302,6 +302,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const envKeyPaths: Array<Array<string>> = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
+  const navigation = useNavigation()
 
   function varVisitor ({ key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
@@ -396,7 +397,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
 
     // apply env
-    transformEnv(normalStyle, envKeyPaths)
+    transformEnv(normalStyle, envKeyPaths, navigation)
     // apply percent
     transformPercent(normalStyle, percentKeyPaths, percentConfig)
     // apply calc
@@ -595,7 +596,7 @@ export const useStableCallback = <T extends AnyFunc | null | undefined> (
   )
 }
 
-export const usePrevious = <T, > (value: T): T | undefined => {
+export function usePrevious<T> (value: T): T | undefined {
   const ref = useRef<T | undefined>()
   const prev = ref.current
   ref.current = value
