@@ -44,8 +44,8 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
     warn('inject() can only be used inside setup()')
     return
   }
-  const provides = resolveProvides(instance)
-  if (key in provides) {
+  const provides = instance.parent && instance.parent.provides
+  if (provides && key in provides) {
     return provides[key]
   } else if (key in appProvides) {
     return appProvides[key]
