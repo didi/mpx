@@ -9,7 +9,8 @@ const styles = StyleSheet.create({
   pickerContainer: {
     height: 240,
     borderTopLeftRadius: 10,
-    borderTopRightRadius: 10
+    borderTopRightRadius: 10,
+    paddingHorizontal: 10
   },
   pickerIndicator: {
     height: 45
