@@ -160,6 +160,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   })
 
   const scrollEventThrottle = 50
+  const hasCallScrollToUpper = useRef(true)
+  const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intersectionObservers = useContext(IntersectionObserverContext)
 
@@ -252,14 +254,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { bindscrolltoupper } = props
     const { offset } = scrollOptions.current
     if (bindscrolltoupper && (offset <= upperThreshold)) {
-      bindscrolltoupper(
-        getCustomEvent('scrolltoupper', e, {
-          detail: {
-            direction: scrollX ? 'left' : 'top'
-          },
-          layoutRef
-        }, props)
-      )
+      if (!hasCallScrollToUpper.current) {
+        bindscrolltoupper(
+          getCustomEvent('scrolltoupper', e, {
+            detail: {
+              direction: scrollX ? 'left' : 'top'
+            },
+            layoutRef
+          }, props)
+        )
+        hasCallScrollToUpper.current = true
+      }
+    } else {
+      hasCallScrollToUpper.current = false
     }
   }
 
@@ -268,14 +275,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { contentLength, visibleLength, offset } = scrollOptions.current
     const distanceFromEnd = contentLength - visibleLength - offset
     if (bindscrolltolower && (distanceFromEnd < lowerThreshold)) {
-      bindscrolltolower(
-        getCustomEvent('scrolltolower', e, {
-          detail: {
-            direction: scrollX ? 'right' : 'botttom'
-          },
-          layoutRef
-        }, props)
-      )
+      if (!hasCallScrollToLower.current) {
+        hasCallScrollToLower.current = true
+        bindscrolltolower(
+          getCustomEvent('scrolltolower', e, {
+            detail: {
+              direction: scrollX ? 'right' : 'botttom'
+            },
+            layoutRef
+          }, props)
+        )
+      }
+    } else {
+      hasCallScrollToLower.current = false
     }
   }
 
@@ -320,6 +332,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    onStartReached(e)
+    onEndReached(e)
     if (enableTriggerIntersectionObserver && intersectionObservers) {
       for (const key in intersectionObservers) {
         intersectionObservers[key].throttleMeasure()
