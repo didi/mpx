@@ -44,6 +44,8 @@
 
 ## 组件属性
 
+对于组件属性的讲解，下方暂时使用选项式 API 进行讲解。
+
 ### properties
 
 用于声明组件接收的外部属性。属性的类型可以为 String、Number、Boolean、Object、Array 其一，也可以为 null 表示不限制类型。
@@ -115,49 +117,75 @@ createComponent({
 
 ```ts
 interface ComponentOptions {
-  data?: object
+  data?: object | (() => object)
 }
 ```
+data 可以是一个函数返回一个普通 JavaScript 对象，也可以是一个普通 JavaScript 对象。
 
-在 Mpx 中，组件实例会代理所有 data 对象的所有属性并进行响应式处理，因此可以直接通过 `this.dataName` 访问这些数据。
+在 Mpx 中，组件实例会代理 data 对象的所有属性并进行响应式处理，因此可以直接通过 `this.dataName` 访问这些数据, 同时修改这些数据也会触发视图更新。
 
-```js
+```html
+<template>
+  <view>{{ count }}</view>
+  <view>{{ message }}</view>
+  <view>{{ userInfo.name }}</view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
 createComponent({
   data: {
     count: 0,
     message: 'Hello',
     userInfo: {
-      name: '',
-      age: 0
+      name: 'John',
+      age: 20
+    }
+  },
+  methods: {
+    addCount() {
+      this.count++
     }
   }
 })
+</script>
 ```
+// TODO data 的注意项
+
 
 ### computed
 
 用于声明基于现有数据的计算属性。
 
 ```ts
-interface ComponentOptions {
-  computed?: {
-    [key: string]: (() => any) | ComputedOptions
-  }
+type ComputedGetter<T> = () => T
+type ComputedSetter<T> = (value: T) => void
+
+interface WritableComputedOptions<T> {
+  get: ComputedGetter<T>
+  set: ComputedSetter<T>
 }
 
-interface ComputedOptions {
-  get(): any
-  set?(value: any): void
+// 计算属性可以是函数或对象
+type ComputedOption<T> = ComputedGetter<T> | WritableComputedOptions<T>
+
+// 组件选项的接口
+interface ComponentOptions {
+  computed?: {
+    [K: string]: ComputedOption<any>
+  }
 }
 ```
 
+该选项接收一个对象，其中键是计算属性的名称，值是一个计算属性 getter，或一个具有 get 和 set 方法的对象 (用于声明可写的计算属性)。
+
+所有的 getters 和 setters 会将它们的 this 上下文自动绑定为组件实例。
+
 computed 选项用于声明依赖于其他数据的计算属性。计算属性的结果会被缓存，只有在依赖发生变化时才会重新计算。
 
-计算属性可以通过以下方式定义：
-  * 使用函数形式（只读）
-  * 使用带有 get/set 的对象形式（可读写）
-
 ```js
+import { createComponent } from '@mpxjs/core'
 createComponent({
   data() {
     return {
@@ -182,12 +210,17 @@ createComponent({
   }
 })
 ```
+> 注意
+>* 选项式 API 中 computed 尽量不要使用箭头函数，否则无法访问组件实例 this
 
 ### watch
 
-用于声明对数据变化的监听回调。
+用于对响应性数据变化调用的侦听回调。
 
 ```ts
+// flush 选项的可选值类型
+type FlushMode = 'sync' | 'post' | 'pre'
+
 interface ComponentOptions {
   watch?: {
     [key: string]: WatchOption | WatchCallback | string
@@ -198,16 +231,21 @@ type WatchCallback = (newValue: any, oldValue: any) => void
 
 interface WatchOption {
   handler: WatchCallback | string
-  immediate?: boolean
-  deep?: boolean
+  immediate?: boolean  // 是否立即执行
+  deep?: boolean      // 是否深度监听
+  flush?: FlushMode   // 回调的执行时机
 }
 ```
 
 watch 选项用于监听数据的变化并执行相应的回调函数。支持以下功能：
-  * 监听单个数据源
-  * 监听多个数据源
-  * 深度监听（deep）
-  * 立即执行（immediate）
+* 监听单个数据源
+* 监听多个数据源
+* 深度监听（deep）
+* 立即执行（immediate）
+* 执行时机控制（flush）
+  * `'sync'`: 同步执行，立即触发回调
+  * `'post'`: DOM 更新后执行（默认值）
+  * `'pre'`: DOM 更新前执行
 
 ```js
 createComponent({
@@ -225,6 +263,7 @@ createComponent({
     message(newVal, oldVal) {
       console.log('message changed:', newVal, oldVal)
     },
+    
     // 深度监听
     user: {
       handler(newVal, oldVal) {
@@ -233,13 +272,76 @@ createComponent({
       deep: true,
       immediate: true
     },
+    
     // 监听对象的属性
     'user.name'(newVal, oldVal) {
       console.log('user.name changed:', newVal, oldVal)
+    },
+
+    // 控制执行时机
+    count: {
+      handler(newVal) {
+        console.log('count changed:', newVal)
+      },
+      flush: 'post' // DOM 更新后执行
     }
   }
 })
 ```
+
+### observers
+
+用于监听数据变化，类似于 watch，最早由微信小程序官方提出，Mpx 框架支持了该能力并做了跨平台兼容。
+
+```ts
+interface ComponentOptions {
+  observers?: {
+    [path: string]: (newValue: any, ...args: any[]) => void
+  }
+}
+```
+
+observers 选项支持以下功能：
+* 监听单个数据
+* 监听多个数据
+* 使用通配符监听对象或数组的所有子数据
+
+通配符说明：
+* `**`：表示所有子数据
+
+
+```js
+createComponent({
+  
+  observers: {
+     observers: {
+      'numberA, numberB': function(numberA, numberB) {
+        // 在 numberA 或者 numberB 被设置时，执行这个函数
+        this.numberC = numberA + numberB
+      }
+      'some.subfield': function(subfield) {
+        subfield === this.some.subfield
+      },
+      'arr[12]': function(arr12) {
+        // 使用 setData 设置 this.data.arr[12] 时触发
+        // （除此以外，使用 setData 设置 this.data.arr 也会触发）
+        arr12 === this.arr[12]
+      },
+      'some.field.**': function(field) {
+        // field 下所有子数据变化都会触发回调
+        field === this.some.field
+      }
+    }
+  }
+})
+```
+
+> **注意：**
+> 1. 和 watch 不同，observers 监听多个数据时回调方法的参数为响应性数据最新值，并非数组
+> 2. 使用通配符与 watch deep 属性表现一致
+> 3. 建议尽量统一使用 watch
+
+* **参考**：[微信小程序数据监听器](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
 
 ### methods
 
@@ -270,6 +372,127 @@ createComponent({
   }
 })
 ```
+
+### mixins
+一个包含组件选项对象的数组，这些选项都将被混入到当前组件的实例中。
+
+具体请查看[Mpx-mixins](https://mpxjs.cn/guide/advance/mixin.html)
+
+### behaviors
+
+小程序平台提供的用于组件间代码共享的特性，类似于"mixins"。
+
+
+* **参考**：[微信小程序behaviors](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
+
+在 Mpx 组件内如果使用 behaviors，在跨平台时会进行抹平处理，但建议直接使用 Mpx 提供的 mixins 能力。
+
+> **注意：**
+> * 使用内置 behaviors（如 wx://form-field），因为牵扯到小程序平台底层能力，无法做到完全跨平台抹平
+
+### relations
+
+用于定义组件间的关系，支持父子、祖孙等关系，实现组件间的通信与控制。
+
+该特性 base 微信小程序平台，在Mpx中使用该特性需要注意，输出微信小程序平台时能力完全支持，跨端输出其他平台时受制于平台底层能力，无法完全做抹平支持。
+
+| 平台 | 支持情况 | 说明 |
+|------|---------|------|
+| 微信小程序 | 完全支持 | 完全支持 relations 所有能力 |
+| 支付宝小程序 | 部分支持 | 部分支持，不支持 linkChanged 和 target 能力 |
+| 百度小程序 |  | 部分支持，仅支持父子关系，且需使用 relations 代替 relation |
+| QQ小程序 |  | 部分支持，仅支持父子关系，且需使用 relations 代替 relation |
+| 字节小程序 |  | 部分支持，仅支持父子关系 |
+| Web | ✗ | 不支持，可使用 Vue 的 provide/inject 替代 |
+| RN | 不支持 | 不支持使用 relations |
+
+
+```ts
+interface RelationOption {
+  type: 'parent' | 'child' | 'ancestor' | 'descendant'  // 关系类型
+  linked?: (target: any) => void      // 关系建立时的回调
+  linkChanged?: (target: any) => void // 关系变化时的回调
+  unlinked?: (target: any) => void    // 关系解除时的回调
+  target?: string                     // 关联的 behavior
+}
+
+interface ComponentOptions {
+  relations?: {
+    [componentPath: string]: RelationOption
+  }
+}
+```
+
+relations 支持以下功能：
+* 定义组件间的层级关系
+* 监听关系的生命周期
+* 获取关联的组件实例
+* 关联使用相同 behavior 的组件
+
+详情可参考[微信小程序-relations](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/relations.html)
+
+```js
+// custom-ul 组件
+import { createComponent } from '@mpxjs/core'
+createComponent({
+  relations: {
+    './custom-li': {
+      type: 'child', // 关联的目标节点应为子节点
+      linked(target) {
+        // 每次有 custom-li 被插入时执行
+        console.log('li linked', target)
+      },
+      unlinked(target) {
+        // 每次有 custom-li 被移除时执行
+        console.log('li unlinked', target)
+      }
+    }
+  }
+})
+
+// custom-li 组件
+import { createComponent } from '@mpxjs/core'
+createComponent({
+  relations: {
+    './custom-ul': {
+      type: 'parent', // 关联的目标节点应为父节点
+      linked(target) {
+        // 每次被插入到 custom-ul 时执行
+        console.log('ul linked', target)
+      }
+    }
+  }
+})
+```
+
+### externalClasses
+
+### options
+
+### lifetimes
+
+### pageLifetimes
+
+### 组件生命周期
+
+
+## 组件实例方法
+
+### setData
+
+### hasBehavior
+
+### triggerEvent
+
+### createSelectorQuery
+
+### createIntersectionObserver
+
+### selectComponent
+
+### selectAllComponents
+
+### getPageId
 
 ## 动态组件
 
