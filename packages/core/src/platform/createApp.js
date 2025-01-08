@@ -36,6 +36,10 @@ export default function createApp (options, config = {}) {
   }]
   if (__mpx_mode__ === 'web') {
     builtInMixins.push({
+      beforeCreate () {
+        // for vue provide vm access
+        Object.assign(this, appData)
+      },
       created () {
         const current = this.$root.$options?.router?.currentRoute || {}
         const options = {
