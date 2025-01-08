@@ -40,14 +40,14 @@ export default {
           this.wheels[0].wheelTo(newVal[0])
         })
       }
-    }
+    },
   },
   mounted () {
     this.wheels = []
     this.refresh()
-    for (let i = 0; i < this.$refs.wheelScroll.children.length; i++) {
-      this.$refs.wheelScroll.children[i].style.height = `${this.$parent.$refs.indicatorMask.offsetHeight}px`
-    }
+  },
+  updated () {
+    this.refresh()
   },
   beforeDestroy () {
     this.wheels.forEach((wheel) => {
@@ -58,11 +58,16 @@ export default {
   methods: {
     refresh () {
       if (this.refreshing) return
+     
       this.refreshing = true
+      for (let i = 0; i < this.$refs.wheelScroll.children.length; i++) {
+        this.$refs.wheelScroll.children[i].style.height = `${this.$parent.$refs.indicatorMask.offsetHeight}px`
+      }
       this.$nextTick(() => {
         const wheelWrapper = this.$refs.wheelWrapper
         if (this.wheels[0]) {
           this.wheels[0].refresh()
+          this.refreshing = false
           return
         }
         this.wheels[0] = new BScroll(wheelWrapper, extend({
