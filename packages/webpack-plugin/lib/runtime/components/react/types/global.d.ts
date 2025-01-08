@@ -32,3 +32,7 @@ declare module '@mpxjs/utils' {
 declare let global: {
   __formatValue (value: string): string | number
 } & Record<string, any>
+
+declare module '@react-navigation/native' {
+  export function useNavigation (): Record<string, any>
+}
