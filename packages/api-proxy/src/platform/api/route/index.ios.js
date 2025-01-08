@@ -48,10 +48,18 @@ const transitionEndCallback = function (callback) {
 }
 
 function navigateTo (options = {}) {
+<<<<<<< HEAD
   if (toPending) {
     return
   }
   toPending = true
+=======
+  // if (toPending) {
+  //   return
+  // }
+  // toPending = true
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+>>>>>>> 1941c56cb5f08268746e6235fa4330d6b99577a9
   const navigationHelper = global.__navigationHelper
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
@@ -74,10 +82,17 @@ function navigateTo (options = {}) {
   }
 }
 function redirectTo (options = {}) {
+<<<<<<< HEAD
   if (redirectPending) {
     return
   }
   redirectPending = true
+=======
+  // if (redirectPending) {
+  //   return
+  // }
+  // redirectPending = true
+>>>>>>> 1941c56cb5f08268746e6235fa4330d6b99577a9
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -99,11 +114,15 @@ function redirectTo (options = {}) {
     })
   }
 }
+<<<<<<< HEAD
+=======
+// let backPending = false
+>>>>>>> 1941c56cb5f08268746e6235fa4330d6b99577a9
 function navigateBack (options = {}) {
-  if (backPending) {
-    return
-  }
-  backPending = true
+  // if (backPending) {
+  //   return
+  // }
+  // backPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -111,7 +130,7 @@ function navigateBack (options = {}) {
     const routeLength = navigation.getState().routes.length
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
-        backPending = false
+        // backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       })
