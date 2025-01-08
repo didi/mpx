@@ -1626,17 +1626,32 @@ background-color: red;
 #### background-image
 设置背景图
 
-@qunfeng 补充一下背景图和渐变背景的细节
+
 ##### 值类型
 string: url / linear-gradient
 > 注意事项 
 > - 背景图和背景色仅支持 view 节点
 > - 开发者可通过 enable-background 属性来控制是否开启背景图片和渐变色的支持
+> - 渐变不支持turn、px单位，只支持渐变距离百分比。
+
 ##### 代码示例
 ``` css
+/* 支持 */
 background-image: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg");
 background-image linear-gradient(270deg, rgba(255,255,255,0.40), rgba(255,255,255,0.00))
+background-image: linear-gradient(to top, blue, red)
+background-image: linear-gradient(to right bottom, blue, red)
+background-image: linear-gradient(45deg, blue, red)
+background-image: linear-gradient(45deg, blue 0%, orange 100%)
+
+
+/* 不支持 */
+background-image: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
+background-image: linear-gradient(.25turn, red, blue) //  turn单位不支持
+background-image: linear-gradient(45deg, red 100px, blue) //px单位不支持
+
 ```
+
 #### background-size
 设置背景图大小
 ##### 值类型
@@ -1656,7 +1671,7 @@ background-size: cover;
 background-size: auto;
 background-size: 20px auto;
 
-/ * 不支持 * /
+/* 不支持 */
 background-size: 50%, 25%, 25%;
 ```
 #### background-repeat
@@ -1671,6 +1686,36 @@ background-repeat: no-repeat;
 /* 不支持 */
 background-repeat: repeat; 
 ```
+
+
+#### background-postion
+设置背景图大小
+##### 值类型
+enum: center/left/right/top/bottom
+
+number，单位参考[数值类型单位说明](#数值类型单位说明)
+
+> 注意事项
+> - 仅支持 view 节点
+##### 代码示例
+``` css
+/* 支持 */
+background-position: center;
+background-position: 10%;
+background-position: 10px;
+background-position: 10px 20px;
+background-position: 10px center;
+background-position: right 10px center;
+background-position: right 10px bottom 10px;
+
+/* 不支持 */
+background-position: 1cm 2cm;
+background-position: 10ch 8em;
+background-position: right 3em bottom 10px;
+
+```
+
+
 #### background
 背景的简写属性，只能在view上使用
 ##### 值类型
