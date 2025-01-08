@@ -92,8 +92,16 @@ background: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
 /** 2. background-image **/
 /* 支持 */
 background-image: url("https://res.wx.qq.com/wxdoc/dist/assets/img/0.4cb08bb4.jpg");
+background-image: linear-gradient(to top, blue, red)
+background-image: linear-gradient(to right bottom, blue, red)
+background-image: linear-gradient(45deg, blue, red)
+background-image: linear-gradient(45deg, blue 0%, orange 100%)
+
+
 /* 不支持 */
 background-image: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
+background-image: linear-gradient(.25turn, red, blue) //  turn单位不支持
+background-image: linear-gradient(45deg, red 100px, blue) //px单位不支持
 
 
 /** 3. background-size **/
@@ -117,7 +125,22 @@ background-repeat: no-repeat;
 background-repeat: repeat;
 
 
-/** 5. background-color **/
+/** 5. background-position **/
+background-position: center;
+background-position: 10%;
+background-position: 10px;
+background-position: 10px 20px;
+background-position: 10px center;
+background-position: right 10px center;
+background-position: right 10px bottom 10px;
+
+/* 不支持 */
+background-position: 1cm 2cm;
+background-position: 10ch 8em;
+background-position: right 3em bottom 10px;
+
+
+/** 6. background-color **/
 background-repeat: red;
 ```
 
