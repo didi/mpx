@@ -28,21 +28,23 @@ export default function proxyEventMixin () {
         }
         const location = this.__mpxProxy.options.mpxFileResource
 
-        if (rawEvent.target) {
+        if (rawEvent.target && !rawEvent.target._datasetProcessed) {
           const originalDataset = rawEvent.target.dataset
           Object.defineProperty(rawEvent.target, 'dataset', {
             get: () => parseDataset(originalDataset),
             configurable: true,
             enumerable: true
           })
+          rawEvent.target._datasetProcessed = true
         }
-        if (rawEvent.currentTarget) {
+        if (rawEvent.currentTarget && !rawEvent.currentTarget._datasetProcessed) {
           const originalDataset = rawEvent.currentTarget.dataset
           Object.defineProperty(rawEvent.currentTarget, 'dataset', {
             get: () => parseDataset(originalDataset),
             configurable: true,
             enumerable: true
           })
+          rawEvent.currentTarget._datasetProcessed = true
         }
 
         let returnedValue
