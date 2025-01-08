@@ -1184,7 +1184,7 @@ function processEventWeb (el) {
         } while (has)
       }
     })
-    const value = `(e)=>__invokeHandler(e, [${configs.map(
+    const value = `(e)=>__invoke(e, [${configs.map(
       (item) => item.expStr
     )}])`
     addAttrs(el, [

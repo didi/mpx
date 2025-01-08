@@ -20,7 +20,7 @@ export default function proxyEventMixin () {
         const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' && this[filterMethod]) : originValue
         setByPath(this, expr, value)
       },
-      __invokeHandler (rawEvent, eventConfig = []) {
+      __invoke (rawEvent, eventConfig = []) {
         if (typeof Mpx.config.proxyEventHandler === 'function') {
           try {
             Mpx.config.proxyEventHandler(rawEvent)
