@@ -34,14 +34,26 @@ function resolvePath (relative, base) {
   return stack.join('/')
 }
 
-// let toPending = false
+let toPending = false
+let redirectPending = false
+let backPending = false
+let reLaunchPending = false
+
+const navigationHelper = global.__navigationHelper
+const transitionEndCallback = function (callback) {
+  if (!navigationHelper.transitionEndCallback) {
+    navigationHelper.transitionEndCallback = []
+  }
+  navigationHelper.transitionEndCallback.push(callback)
+}
+
 function navigateTo (options = {}) {
-  // if (toPending) {
-  //   return
-  // }
+  if (toPending) {
+    return
+  }
   toPending = true
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
@@ -52,20 +64,20 @@ function navigateTo (options = {}) {
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
+      toPending = false
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    navigationHelper.transitionEndCallback = () => {
-      // toPending = false
-    }
+    transitionEndCallback(() => {
+      toPending = false
+    })
   }
 }
-// let redirectPending = false
 function redirectTo (options = {}) {
   if (redirectPending) {
     return
   }
-  // redirectPending = true
+  redirectPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (navigation && navigationHelper) {
@@ -78,15 +90,15 @@ function redirectTo (options = {}) {
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
+      redirectPending = false
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    navigationHelper.transitionEndCallback = () => {
-      // redirectPending = false
-    }
+    transitionEndCallback(() => {
+      redirectPending = false
+    })
   }
 }
-let backPending = false
 function navigateBack (options = {}) {
   if (backPending) {
     return
@@ -110,16 +122,16 @@ function navigateBack (options = {}) {
         successHandle(res, options.success, options.complete)
       }
       navigationHelper.lastFailCallback = (msg) => {
+        backPending = false
         const res = { errMsg: `navigateBack:fail ${msg}` }
         failHandle(res, options.fail, options.complete)
       }
     }
-    navigationHelper.transitionEndCallback = () => {
+    transitionEndCallback(() => {
       backPending = false
-    }
+    })
   }
 }
-let reLaunchPending = false
 function reLaunch (options = {}) {
   if (reLaunchPending) {
     return
@@ -145,12 +157,13 @@ function reLaunch (options = {}) {
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
+      reLaunchPending = false
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    navigationHelper.transitionEndCallback = () => {
+    transitionEndCallback(() => {
       reLaunchPending = false
-    }
+    })
   }
 }
 

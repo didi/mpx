@@ -68,22 +68,13 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     const key = _key || _nextKey.current++
     if (manager.current) {
       manager.current.mount(key, children)
-    } else {
-      _queue.current.push({ type: 'mount', key, children })
     }
     return key
   }
 
   const _unmount = (key: number, curPageId?: number) => {
-    const navigation = getFocusedNavigation()
-    const pageId = navigation?.pageId
-    if (pageId !== (curPageId ?? currentPageId)) {
-      return
-    }
     if (manager.current) {
       manager.current.unmount(key)
-    } else {
-      _queue.current.push({ type: 'unmount', key })
     }
   }
 
@@ -95,17 +86,6 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     }
     if (manager.current) {
       manager.current.update(key, children)
-    } else {
-      const op: Operation = { type: 'mount', key, children }
-      const index = _queue.current.findIndex(
-        (o) => o.type === 'mount' || (o.type === 'update' && o.key === key)
-      )
-
-      if (index > -1) {
-        _queue.current[index] = op
-      } else {
-        _queue.current.push(op)
-      }
     }
   }
 
@@ -117,25 +97,10 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
       removeType,
       _unmount
     )
+
     return () => {
-      while (_queue.current.length && manager.current) {
-        const action = _queue.current.pop()
-        if (!action) {
-          continue
-        }
-        // tslint:disable-next-line:switch-default
-        switch (action.type) {
-          case 'mount':
-            manager.current?.mount(action.key, action.children)
-            break
-          case 'update':
-            manager.current?.update(action.key, action.children)
-            break
-          case 'unmount':
-            manager.current?.unmount(action.key)
-            break
-        }
-      }
+      _addType.current?.remove()
+      _removeType.current?.remove()
     }
   }, [])
   return (
