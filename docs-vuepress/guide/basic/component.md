@@ -109,7 +109,7 @@ createComponent({
   }
 })
 ```
-* **参考**：[微信小程序properties定义](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
+**参考**：[微信小程序properties定义](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
 
 ### data
 
@@ -341,7 +341,7 @@ createComponent({
 > 2. 使用通配符与 watch deep 属性表现一致
 > 3. 建议尽量统一使用 watch
 
-* **参考**：[微信小程序数据监听器](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
+**参考**：[微信小程序数据监听器](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
 
 ### methods
 
@@ -383,7 +383,7 @@ createComponent({
 小程序平台提供的用于组件间代码共享的特性，类似于"mixins"。
 
 
-* **参考**：[微信小程序behaviors](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
+**参考**：[微信小程序behaviors](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
 
 在 Mpx 组件内如果使用 behaviors，在跨平台时会进行抹平处理，但建议直接使用 Mpx 提供的 mixins 能力。
 
@@ -398,14 +398,15 @@ createComponent({
 
 | 平台 | 支持情况 | 说明 |
 |------|---------|------|
-| 微信小程序 | 完全支持 | 完全支持 relations 所有能力 |
+| 微信小程序 | 完全支持 | 完全支持 relations 能力 |
 | 支付宝小程序 | 部分支持 | 部分支持，不支持 linkChanged 和 target 能力 |
-| 百度小程序 |  | 部分支持，仅支持父子关系，且需使用 relations 代替 relation |
-| QQ小程序 |  | 部分支持，仅支持父子关系，且需使用 relations 代替 relation |
-| 字节小程序 |  | 部分支持，仅支持父子关系 |
-| Web | ✗ | 不支持，可使用 Vue 的 provide/inject 替代 |
+| 百度小程序 | 不支持 |  不支持使用 relations |
+| QQ小程序 | 完全支持 | 完全支持 relations 能力 |
+| 字节小程序 | 部分支持 | 部分支持，不支持 linkChanged 能力 |
+| Web | 部分支持 | 部分支持，不支持 linkChanged 和 target 能力 |
 | RN | 不支持 | 不支持使用 relations |
 
+因此需要注意，在使用 realtions 能力跨平台时需要做好平台条件编译。 
 
 ```ts
 interface RelationOption {
@@ -467,7 +468,111 @@ createComponent({
 
 ### externalClasses
 
+组件接受的外部样式类，常用于在开启组件样式隔离时，可以通过接收外部样式类来改变组件样式。
+
+```ts
+interface ComponentOptions {
+  externalClasses?: string[]
+}
+```
+
+externalClasses 支持以下功能：
+* 定义多个外部样式类
+* 在组件 template 中使用外部样式类，同时支持在同一个节点上使用多个外部样式类
+
+```html
+<template>
+  <!-- 组件 custom-component.mpx -->
+  <view class="my-class">
+    外部传入的样式类
+  </view>
+  <view class="other-class">
+    另一个外部传入的样式类
+  </view>
+</template>
+<script>
+// 组件 custom-component.js
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  externalClasses: ['my-class', 'other-class'],
+  
+  options: {
+    styleIsolation: 'isolated'
+  }
+})
+</script>
+```
+
+使用组件：
+
+```html
+<!-- 页面 page.mpx -->
+<!-- 单个样式类 -->
+<custom-component my-class="red-text" />
+
+<!-- 多个样式类（需要基础库 2.7.1 以上） -->
+<custom-component my-class="red-text large-text" />
+
+<!-- 动态样式类 -->
+<custom-component my-class="{{isActive ? 'active' : ''}}" />
+```
+
+```css
+/* 页面 page style */
+.red-text {
+  color: red;
+}
+
+.large-text {
+  font-size: 20px;
+}
+
+.active {
+  background: #f0f0f0;
+}
+```
+
+关于 externalclasses 的更多描述也可以查看[微信小程序-外部样式类](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html#%E5%A4%96%E9%83%A8%E6%A0%B7%E5%BC%8F%E7%B1%BB)
+
+>**注意：**
+>* 该功能默认在微信小程序可用，在跨平台输出时，需要在 @mpxjs/webpack-plugin 中配置相关的 externalClasses, 否则跨平台时该能力不生效，具体配置请[查看](https://mpxjs.cn/api/compile.html#externalclasses)。
+
 ### options
+
+开启组件的部分特性时需要设置的选项，例如 virtualHost 、 multipleSlots 之类特性。
+
+```ts
+interface ComponentOptions {
+  options?: {
+    virtualHost?: boolean      // 设置组件是否为虚拟节点
+    styleIsolation?: 'isolated' | 'apply-shared' | 'shared' | 'page-isolated' | 'page-apply-shared' | 'page-shared'  // 设置样式隔离选项
+    multipleSlots?: boolean    // 启用多 slot 支持
+    addGlobalClass?: boolean   // 允许组件的样式影响到外部
+    pureDataPattern?: RegExp   // 指定纯数据字段
+  }
+}
+```
+
+options 支持以下配置：
+* **virtualHost**: 设置组件是否是虚拟的
+* **styleIsolation**: 设置组件样式隔离选项
+* **multipleSlots**: 是否启用多 slot 支持
+* **addGlobalClass**: 是否允许组件的样式影响外部
+* **pureDataPattern**: 指定纯数据字段的正则表达式
+
+但需要注意的是，此处的 options 配置为 base 微信小程序的语法特性，在跨端输出其他平台时，由于依赖平台底层能力支持与否，因此无法做到全部功能抹平。
+
+| 选项 |         微信 | 支付宝 | 百度 | QQ | 字节 | Web | RN |
+|------|------|--------|------|-----|------|-----|-----|
+| virtualHost |   支持 |  | ✗ | ✓ | ✗ | - | - |
+| styleIsolation | 支持 | 部分支持 | ✗ | ✓ | 部分支持 | ✓ | - |
+| multipleSlots | 支持 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| addGlobalClass | 支持 | 部分支持 | ✗ | ✓ | 部分支持 | ✓ | - |
+| pureDataPattern | 支持 | ✗ | ✗ | ✓ | ✗ | - | - |
+
+>**注意：**
+>options 中的特性以微信小程序为 base，随着微信小程序的持续迭代，此处列出的特性可能会存在部分缺失。
 
 ### lifetimes
 
