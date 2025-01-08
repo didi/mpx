@@ -65,6 +65,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const touching = useRef(false)
   const scrolling = useRef(false)
   const timerResetPosition = useRef<NodeJS.Timeout | null>(null)
+  const timerScrollTo = useRef<NodeJS.Timeout | null>(null)
   const activeIndex = useRef(initialIndex)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
@@ -123,6 +124,20 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }
 
+  const clearTimerScrollTo = () => {
+    if (timerScrollTo.current) {
+      clearTimeout(timerScrollTo.current)
+      timerScrollTo.current = null
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      clearTimerResetPosition()
+      clearTimerScrollTo()
+    }
+  }, [])
+
   useEffect(() => {
     if (
       !scrollViewRef.current ||
@@ -136,7 +151,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     ) {
       return
     }
-    setTimeout(() => {
+    clearTimerScrollTo()
+    timerScrollTo.current = setTimeout(() => {
       scrollViewRef.current?.scrollTo({
         x: 0,
         y: getYofIndex(initialIndex),
@@ -149,7 +165,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const onContentSizeChange = (_w: number, h: number) => {
     const y = getYofIndex(initialIndex)
     if (y <= h) {
-      setTimeout(() => {
+      clearTimerScrollTo()
+      timerScrollTo.current = setTimeout(() => {
         scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
       }, 0)
     }
