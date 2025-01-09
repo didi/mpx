@@ -13,6 +13,8 @@ type RemoveProps = string[];
 
 type NativeTouchEvent = NativeSyntheticEvent<NativeEvent>
 
+type Navigation = Record<string, any>
+
 interface NativeEvent {
   timestamp: number;
   pageX: number;
@@ -35,10 +37,6 @@ interface InnerRef {
   startTimer: {
     bubble: null | ReturnType<typeof setTimeout>;
     capture: null | ReturnType<typeof setTimeout>;
-  };
-  needPress: {
-    bubble: boolean;
-    capture: boolean;
   };
   mpxPressInfo: {
     detail: {
@@ -65,5 +63,6 @@ export {
   InnerRef,
   LayoutRef,
   SetTimeoutReturnType,
-  DataSetType
+  DataSetType,
+  Navigation
 }
