@@ -1,6 +1,6 @@
 import { useState, useCallback, forwardRef, ForwardedRef, useImperativeHandle, ReactNode, ReactElement } from 'react'
 import { View, StyleSheet } from 'react-native'
-import { extendObject } from '@mpxjs/utils'
+import { extendObject } from '../utils'
 
 export type State = {
   portals: Array<{
