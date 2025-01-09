@@ -15,7 +15,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHoverStyle } from './utils'
 import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
-import { GestureDetector } from 'react-native-gesture-handler'
+import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -773,7 +773,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     : createElement(View, innerProps, childNode)
 
   return enableHover
-    ? createElement(GestureDetector, { gesture }, BaseComponent)
+    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, BaseComponent)
     : BaseComponent
 })
 
