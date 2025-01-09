@@ -653,11 +653,6 @@ interface WrapChildrenConfig {
 }
 
 function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps, innerStyle, enableFastImage }: WrapChildrenConfig) {
-  enableBackground = enableBackground || !!backgroundStyle
-  const enableBackgroundRef = useRef(enableBackground)
-  if (enableBackgroundRef.current !== enableBackground) {
-    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
-  }
   const children = wrapChildren(props, {
     hasVarDec,
     varContext,
@@ -674,7 +669,7 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
-  const {
+  let {
     style = {},
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
@@ -722,6 +717,12 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
+  enableBackground = enableBackground || !!backgroundStyle
+  const enableBackgroundRef = useRef(enableBackground)
+  if (enableBackgroundRef.current !== enableBackground) {
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+  }
+
   const nodeRef = useRef(null)
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
     style: normalStyle
@@ -759,7 +760,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const childNode = wrapWithChildren(props, {
     hasVarDec,
-    enableBackground,
+    enableBackground: enableBackgroundRef.current,
     textStyle,
     backgroundStyle,
     varContext: varContextRef.current,
