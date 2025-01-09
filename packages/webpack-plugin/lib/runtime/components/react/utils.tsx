@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
-import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image, Platform } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
@@ -20,6 +20,11 @@ export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
 }
+
+declare const __mpx_mode__: 'ios' | 'android'
+
+export const isIOS = __mpx_mode__ === 'ios'
+export const isAndroid = __mpx_mode__ === 'android'
 
 const varDecRegExp = /^--/
 const varUseRegExp = /var\(/
@@ -568,13 +573,14 @@ export const debounce = <T extends AnyFunc> (
 ): ((...args: Parameters<T>) => void) & { clear: () => void } => {
   let timer: any
   const wrapper = (...args: ReadonlyArray<any>) => {
-    clearTimeout(timer)
+    timer && clearTimeout(timer)
     timer = setTimeout(() => {
       func(...args)
     }, delay)
   }
   wrapper.clear = () => {
-    clearTimeout(timer)
+    timer && clearTimeout(timer)
+    timer = null
   }
   return wrapper
 }
