@@ -26,7 +26,7 @@ module.exports = function (script, {
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
-import Provider from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-provider'
+import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
@@ -35,7 +35,7 @@ global.__navigationHelper = {
   createStackNavigator: createStackNavigator,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
-  Provider: Provider,
+  Provider: PortalHost,
   SafeAreaProvider: SafeAreaProvider,
   useSafeAreaInsets: useSafeAreaInsets
 }\n`

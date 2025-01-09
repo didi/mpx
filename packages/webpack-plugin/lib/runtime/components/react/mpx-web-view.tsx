@@ -1,6 +1,6 @@
 import { forwardRef, useRef, useContext, useMemo, useState, useCallback, useEffect } from 'react'
 import { warn, isFunction } from '@mpxjs/utils'
-import Portal from './mpx-portal'
+import Portal from './mpx-portal/index'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'

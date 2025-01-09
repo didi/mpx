@@ -1,6 +1,6 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native'
 import { successHandle, failHandle } from '../../../common/js'
-import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal'
+import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
 let toastKey
 let isLoadingShow

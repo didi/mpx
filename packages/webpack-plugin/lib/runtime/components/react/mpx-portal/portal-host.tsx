@@ -7,7 +7,7 @@ import {
   StyleSheet
 } from 'react-native'
 import PortalManager from './portal-manager'
-import { getFocusedNavigation } from '@mpxjs/utils'
+import { useNavigation } from '@react-navigation/native'
 import { PortalManagerContextValue, PortalContext } from '../context'
 
 export type PortalHostProps = {
@@ -59,16 +59,13 @@ export const portal = new PortalGuard()
 
 const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _nextKey = useRef(0)
-  const _queue = useRef<Operation[]>([])
   const _addType = useRef<EventSubscription | null>(null)
   const _removeType = useRef<EventSubscription | null>(null)
   const _updateType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
-  let currentPageId: number | undefined
-  const _mount = (children: ReactNode, _key?: number, curPageId?: number) => {
-    const navigation = getFocusedNavigation()
-    const pageId = navigation?.pageId
-    if (pageId !== (curPageId ?? currentPageId)) {
+  const focusState = useRef<Boolean>(false)
+  const _mount = (children: ReactNode, _key?: number) => {
+    if (!focusState.current) {
       return
     }
     const key = _key || _nextKey.current++
@@ -85,27 +82,28 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   }
 
   const _update = (key: number, children?: ReactNode, curPageId?: number) => {
-    const navigation = getFocusedNavigation()
-    const pageId = navigation?.pageId
-    if (pageId !== (curPageId ?? currentPageId)) {
-      return
-    }
     if (manager.current) {
       manager.current.update(key, children)
     }
   }
-
+  const navigation = useNavigation()
   useEffect(() => {
-    const navigation = getFocusedNavigation()
-    currentPageId = navigation?.pageId
     _addType.current = TopViewEventEmitter.addListener(addType, _mount)
     _removeType.current = TopViewEventEmitter.addListener(removeType, _unmount)
     _updateType.current = TopViewEventEmitter.addListener(updateType, _update)
+    const focusSubscription = navigation.addListener('focus', () => {
+      focusState.current = true
+    })
+    const blurSubscription = navigation.addListener('blur', () => {
+      focusState.current = false
+    })
 
     return () => {
       _addType.current?.remove()
       _removeType.current?.remove()
       _updateType.current?.remove()
+      focusSubscription()
+      blurSubscription()
     }
   }, [])
   return (

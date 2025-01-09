@@ -40,8 +40,8 @@ export interface PortalManagerContextValue {
 }
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number, pageId?: number|null) => number| undefined
-  update: (key: number, children: React.ReactNode, pageId?: number|null) => void
+  mount: (children: React.ReactNode, key?: number) => number| undefined
+  update: (key: number, children: React.ReactNode) => void
   unmount: (key: number) => void
   manager?: PortalManagerContextValue
 }
