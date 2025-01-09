@@ -338,6 +338,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    onStartReached(e)
+    onEndReached(e)
     if (enableTriggerIntersectionObserver && intersectionObservers) {
       for (const key in intersectionObservers) {
         intersectionObservers[key].throttleMeasure()
