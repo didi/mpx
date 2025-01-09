@@ -330,7 +330,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             )
           : (<WebView
         style={defaultWebViewStyle}
-        source={source}
+        source={{ uri: src }}
         ref={webViewRef}
         javaScriptEnabled={true}
         onNavigationStateChange={_changeUrl}
