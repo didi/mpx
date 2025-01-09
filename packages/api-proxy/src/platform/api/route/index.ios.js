@@ -35,18 +35,6 @@ function resolvePath (relative, base) {
 }
 
 let toPending = false
-let redirectPending = false
-let backPending = false
-let reLaunchPending = false
-
-const navigationHelper = global.__navigationHelper
-const transitionEndCallback = function (callback) {
-  if (!navigationHelper.transitionEndCallback) {
-    navigationHelper.transitionEndCallback = []
-  }
-  navigationHelper.transitionEndCallback.push(callback)
-}
-
 function navigateTo (options = {}) {
   if (toPending) {
     return
@@ -60,6 +48,7 @@ function navigateTo (options = {}) {
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
+      toPending = false
       const res = { errMsg: 'navigateTo:ok' }
       successHandle(res, options.success, options.complete)
     }
@@ -68,11 +57,10 @@ function navigateTo (options = {}) {
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    transitionEndCallback(() => {
-      toPending = false
-    })
   }
 }
+
+let redirectPending = false
 function redirectTo (options = {}) {
   if (redirectPending) {
     return
@@ -86,6 +74,7 @@ function redirectTo (options = {}) {
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
+      redirectPending = false
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
     }
@@ -94,11 +83,10 @@ function redirectTo (options = {}) {
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    transitionEndCallback(() => {
-      redirectPending = false
-    })
   }
 }
+
+let backPending = false
 function navigateBack (options = {}) {
   if (backPending) {
     return
@@ -118,6 +106,7 @@ function navigateBack (options = {}) {
     } else {
       navigation.pop(delta)
       navigationHelper.lastSuccessCallback = () => {
+        backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       }
@@ -127,11 +116,10 @@ function navigateBack (options = {}) {
         failHandle(res, options.fail, options.complete)
       }
     }
-    transitionEndCallback(() => {
-      backPending = false
-    })
   }
 }
+
+let reLaunchPending = false
 function reLaunch (options = {}) {
   if (reLaunchPending) {
     return
@@ -153,6 +141,7 @@ function reLaunch (options = {}) {
       ]
     })
     navigationHelper.lastSuccessCallback = () => {
+      reLaunchPending = false
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
     }
@@ -161,9 +150,6 @@ function reLaunch (options = {}) {
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    transitionEndCallback(() => {
-      reLaunchPending = false
-    })
   }
 }
 
