@@ -50,7 +50,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext })
   const { textStyle = {} } = splitStyle(normalStyle)
-  const { textProps } = splitProps(props)
+  const { textProps = {} } = splitProps(props)
   const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
   const offsetYShared = useScrollViewOffset(scrollViewRef as AnimatedRef<Reanimated.ScrollView>)
 
@@ -99,37 +99,19 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     return Math.max(0, Math.min(calc, maxIndex))
   }, [itemRawH, maxIndex])
 
-  const getYofIndex = useCallback((index: number) => {
-    return index * itemRawH
-  }, [itemRawH])
-
-  const resetScrollPosition = (y: number) => {
-    if (touching.current || scrolling.current) {
-      return
-    }
-    if (y % itemRawH !== 0) {
-      scrolling.current = true
-      const targetIndex = getIndex(y)
-      const targetY = getYofIndex(targetIndex)
-      scrollViewRef.current?.scrollTo({ x: 0, y: targetY, animated: false })
-    } else {
-      onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
-    }
-  }
-
-  const clearTimerResetPosition = () => {
+  const clearTimerResetPosition = useCallback(() => {
     if (timerResetPosition.current) {
       clearTimeout(timerResetPosition.current)
       timerResetPosition.current = null
     }
-  }
+  }, [])
 
-  const clearTimerScrollTo = () => {
+  const clearTimerScrollTo = useCallback(() => {
     if (timerScrollTo.current) {
       clearTimeout(timerScrollTo.current)
       timerScrollTo.current = null
     }
-  }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -155,58 +137,46 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     timerScrollTo.current = setTimeout(() => {
       scrollViewRef.current?.scrollTo({
         x: 0,
-        y: getYofIndex(initialIndex),
+        y: initialIndex * itemRawH,
         animated: false
       })
     }, isAndroid ? 200 : 0)
     activeIndex.current = initialIndex
-  }, [itemRawH, initialIndex])
+  }, [itemRawH, maxIndex, initialIndex])
 
-  const onContentSizeChange = (_w: number, h: number) => {
-    const y = getYofIndex(initialIndex)
+  const onContentSizeChange = useCallback((_w: number, h: number) => {
+    const y = initialIndex * itemRawH
     if (y <= h) {
       clearTimerScrollTo()
       timerScrollTo.current = setTimeout(() => {
         scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
       }, 0)
     }
-  }
+  }, [itemRawH, initialIndex])
 
-  const onItemLayout = (e: LayoutChangeEvent) => {
+  const onItemLayout = useCallback((e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
     const roundedH = Math.round(rawH)
     if (roundedH && roundedH !== itemRawH) {
       setItemRawH(roundedH)
     }
-  }
+  }, [itemRawH])
 
-  const onScrollBeginDrag = () => {
-    isIOS && clearTimerResetPosition()
-    touching.current = true
-    prevScrollingInfo.current = {
-      index: activeIndex.current,
-      y: getYofIndex(activeIndex.current)
+  const resetScrollPosition = useCallback((y: number) => {
+    if (touching.current || scrolling.current) {
+      return
     }
-  }
+    scrolling.current = true
+    const targetIndex = getIndex(y)
+    scrollViewRef.current?.scrollTo({ x: 0, y: targetIndex * itemRawH, animated: false })
+  }, [itemRawH, getIndex])
 
-  const onScrollEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    touching.current = false
-    const { y } = e.nativeEvent.contentOffset
-    if (isIOS) {
-      if (y >= 0 && y <= snapToOffsets[maxIndex]) {
-        timerResetPosition.current = setTimeout(() => {
-          resetScrollPosition(y)
-        }, 10)
-      }
-    }
-  }
-
-  const onMomentumScrollBegin = () => {
+  const onMomentumScrollBegin = useCallback(() => {
     isIOS && clearTimerResetPosition()
     scrolling.current = true
-  }
+  }, [])
 
-  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent> | { nativeEvent: { contentOffset: { y: number } } }) => {
+  const onMomentumScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent> | { nativeEvent: { contentOffset: { y: number } } }) => {
     scrolling.current = false
     const { y: scrollY } = e.nativeEvent.contentOffset
     if (isIOS && scrollY % itemRawH !== 0) {
@@ -217,9 +187,32 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       activeIndex.current = calcIndex
       onSelectChange(calcIndex)
     }
-  }
+  }, [itemRawH, getIndex, onSelectChange, resetScrollPosition])
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const onScrollBeginDrag = useCallback(() => {
+    isIOS && clearTimerResetPosition()
+    touching.current = true
+    prevScrollingInfo.current = {
+      index: activeIndex.current,
+      y: activeIndex.current * itemRawH
+    }
+  }, [itemRawH])
+
+  const onScrollEndDrag = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    touching.current = false
+    if (isIOS) {
+      const { y } = e.nativeEvent.contentOffset
+      if (y % itemRawH === 0) {
+        onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+      } else if (y > 0 && y < snapToOffsets[maxIndex]) {
+        timerResetPosition.current = setTimeout(() => {
+          resetScrollPosition(y)
+        }, 10)
+      }
+    }
+  }, [itemRawH, maxIndex, snapToOffsets, onMomentumScrollEnd, resetScrollPosition])
+
+  const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     // 全局注册的振动触感 hook
     const pickerVibrate = global.__mpx?.config?.rnConfig?.pickerVibrate
     if (typeof pickerVibrate !== 'function') {
@@ -233,14 +226,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         if (currentId !== prevIndex) {
           prevScrollingInfo.current = {
             index: currentId,
-            y: getYofIndex(currentId)
+            y: currentId * itemRawH
           }
           // vibrateShort({ type: 'selection' })
           pickerVibrate()
         }
       }
     }
-  }
+  }, [itemRawH, getIndex])
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {

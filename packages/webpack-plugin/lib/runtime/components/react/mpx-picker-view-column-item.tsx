@@ -49,6 +49,7 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   const strKey = `picker-column-item-${index}`
   const restProps = index === 0 ? { onLayout: onItemLayout } : {}
   const itemProps = extendObject(
+    textProps,
     {
       style: extendObject(
         { height: itemHeight, width: '100%' },
