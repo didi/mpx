@@ -564,7 +564,7 @@ useFetch().fetch({
 | getNetworkType |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | onNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | offNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| createVideoContext |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| createVideoContext |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
 ## webview-bridge
 Mpx 支持小程序跨平台后，多个平台的小程序里都提供了 webview 组件，webview 打开的 H5 页面可以通过小程序提供的 API 来与小程序通信以及调用一些小程序的能力，但是各家小程序对于 webview 提供的API是不一样的。
 
