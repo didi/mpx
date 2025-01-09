@@ -171,8 +171,6 @@ export default function createApp (options) {
       return () => {
         changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
-        // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
-        global.__mpxAppHotLaunched = false
       }
     }, [])
 
