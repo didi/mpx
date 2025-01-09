@@ -80,10 +80,10 @@ interface VideoProps {
   autoplay?: boolean;
   loop?: boolean;
   muted?: boolean;
-  initialTime?: number;
   controls?: boolean;
   poster?: string;
   style?: ViewStyle;
+  'initial-time'?: number;
   'object-fit'?: null | 'contain' | 'fill' | 'cover';
   'is-drm'?: boolean;
   'provision-url'?: string;
@@ -133,7 +133,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     autoplay = false,
     loop = false,
     muted = false,
-    initialTime = 0,
     controls = true,
     poster = '',
     bindplay,
@@ -148,6 +147,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     bindcontrolstoggle,
     bindseekcomplete,
     style,
+    'initial-time': initialTime = 0,
     'object-fit': objectFit = 'contain',
     'is-drm': isDrm = false,
     'provision-url': provisionUrl,
@@ -166,9 +166,11 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
 
   const viewRef = useRef(null)
 
-  const videoInfoRef = useRef<VideoInfoData | null>(null)
+  const videoInfoRef = useRef({} as VideoInfoData)
 
   const propsRef = useRef({})
+
+  const bufferedPercentage = useRef<undefined|number>()
 
   propsRef.current = props
 
@@ -201,57 +203,54 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     }
   })
 
-  // 处理播放进度更新
-  const bufferedPercentage = useRef(0)
   function handleProgress (data: OnProgressData) {
-    const { playableDuration, seekableDuration, currentTime } = data
+    const { playableDuration, currentTime } = data
     bindtimeupdate && bindtimeupdate(
       getCustomEvent('timeupdate',
         {},
         {
           detail: {
             currentTime,
-            duration: videoInfoRef.current && videoInfoRef.current.duration
+            duration: videoInfoRef.current.duration
           },
           layoutRef
         },
         propsRef.current
       )
     )
-
-    if (seekableDuration > 0) {
-      // 计算缓冲的百分比
-      const currentBufferedPercentage = (playableDuration / seekableDuration) * 100
-      if (currentBufferedPercentage !== bufferedPercentage.current) {
-        bufferedPercentage.current = currentBufferedPercentage
-        bindprogress && bindprogress(
-          getCustomEvent('progress',
-            {},
-            {
-              detail: {
-                buffered: bufferedPercentage.current
-              },
-              layoutRef
+    // 计算缓冲的百分比
+    const duration = videoInfoRef.current.duration || 0
+    let currentBufferedPercentage = (playableDuration / duration) * 100
+    // playableDuration 比 duration 更精确，会精确到小数，可能会出现大于 100 的情况
+    if (currentBufferedPercentage > 100) {
+      currentBufferedPercentage = 100
+    }
+    if (currentBufferedPercentage !== bufferedPercentage.current) {
+      bufferedPercentage.current = currentBufferedPercentage
+      bindprogress && bindprogress(
+        getCustomEvent('progress',
+          {},
+          {
+            detail: {
+              buffered: currentBufferedPercentage || 0
             },
-            propsRef.current
-          ))
-      }
+            layoutRef
+          },
+          propsRef.current
+        ))
     }
   }
 
-  // 处理播放结束
   function handleEnd () {
     bindended!(getCustomEvent('end', {}, { layoutRef }, propsRef.current))
   }
 
-  // 处理等待
   function handleWaiting ({ isBuffering }: OnBufferData) {
     if (isBuffering) {
       bindwaiting!(getCustomEvent('waiting', {}, { layoutRef }, propsRef.current))
     }
   }
 
-  // 处理seek完成
   function handleSeekcomplete ({ seekTime }: OnSeekData) {
     bindseekcomplete!(
       getCustomEvent('seekcomplete',
@@ -302,7 +301,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
 
   function handleVideoLoad (data: VideoInfoData) {
     const { naturalSize, duration } = data
-    if (autoplay) {
+    if (initialTime) {
       videoRef.current && videoRef.current.seek(initialTime)
     }
     videoInfoRef.current = data
@@ -322,7 +321,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
 
   // 处理错误
   function handleError ({ error }: OnVideoErrorData) {
-    binderror && binderror(getCustomEvent('play', {}, { detail: { error }, layoutRef }, propsRef.current))
+    binderror && binderror(getCustomEvent('play', {}, { detail: { errMsg: error.localizedFailureReason }, layoutRef }, propsRef.current))
   }
 
   function play () {
