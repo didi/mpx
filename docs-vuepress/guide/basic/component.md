@@ -549,7 +549,6 @@ interface ComponentOptions {
     styleIsolation?: 'isolated' | 'apply-shared' | 'shared' | 'page-isolated' | 'page-apply-shared' | 'page-shared'  // 设置样式隔离选项
     multipleSlots?: boolean    // 启用多 slot 支持
     addGlobalClass?: boolean   // 允许组件的样式影响到外部
-    pureDataPattern?: RegExp   // 指定纯数据字段
   }
 }
 ```
@@ -557,47 +556,70 @@ interface ComponentOptions {
 options 支持以下配置：
 * **virtualHost**: 设置组件是否是虚拟的
 * **styleIsolation**: 设置组件样式隔离选项
-* **multipleSlots**: 是否启用多 slot 支持
+* **multipleSlots**: 是否启用多 slot 支持，仅微信和QQ需要配置
 * **addGlobalClass**: 是否允许组件的样式影响外部
-* **pureDataPattern**: 指定纯数据字段的正则表达式
 
 但需要注意的是，此处的 options 配置为 base 微信小程序的语法特性，在跨端输出其他平台时，由于依赖平台底层能力支持与否，因此无法做到全部功能抹平。
 
-| 选项 |         微信 | 支付宝 | 百度 | QQ | 字节 | Web | RN |
-|------|------|--------|------|-----|------|-----|-----|
-| virtualHost |   支持 |  | ✗ | ✓ | ✗ | - | - |
-| styleIsolation | 支持 | 部分支持 | ✗ | ✓ | 部分支持 | ✓ | - |
-| multipleSlots | 支持 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| addGlobalClass | 支持 | 部分支持 | ✗ | ✓ | 部分支持 | ✓ | - |
-| pureDataPattern | 支持 | ✗ | ✗ | ✓ | ✗ | - | - |
+| 选项 |         微信 | 支付宝 | 百度 | QQ | 字节 | Web | RN | 说明 |
+|------|------|--------|------|-----|------|-----|-----|-----|
+| virtualHost |   ✓ | ✓ | ✗  | ✓ | ✓ | ✓ | ✗  | Mpx 以微信为base，virtualHost 默认为 false，跨端输出Web、支付宝时默认会在自定义组件根节点包裹一层节点，开发者也可以通过[编译配置](https://mpxjs.cn/api/compile.html#autovirtualhostrules)进行控制 |
+| styleIsolation | ✓ | 部分支持 | ✗ | ✓ | ✗ | ✗ | ✗ | 微信默认开启样式隔离，目前只有支付宝小程序平台没有样式隔离能力, 当组件 style 标签配置 scoped 时，Mpx 输出支付宝会默认抹平开启样式隔离，开发者也可通过[编译配置](https://mpxjs.cn/api/compile.html#autoscoperules)进行控制 |
+| multipleSlots | ✓ | - | - | ✓ | - | - | - | 目前仅微信和QQ使用多个slot需要配置multipleSlots，其他平台默认支持使用多slot |
+| addGlobalClass |  ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | - |
 
 >**注意：**
+> * virtualHost 在支付宝平台默认为 false
 >options 中的特性以微信小程序为 base，随着微信小程序的持续迭代，此处列出的特性可能会存在部分缺失。
-
-### lifetimes
-
-### pageLifetimes
+>同时对于上述各特性的具体使用，特别是各小程序平台，开发者也可以在对应小程序开发文档中查找参考。
 
 ### 组件生命周期
+在 Mpx 内组件生命周期可以使用[框架内置生命周期](框架内置生命周期)，也可以使用以微信原生base的生命周期，在使用微信原生base的生命周期时，在跨平台输出时，框架会对生命周期进行映射抹平，将不同小程序平台的生命周期转换映射为内置生命周期后再进行统一的驱动，以抹平不同小程序平台生命周期钩子的差异。
+
+在选项式 API 中，可以使用微信 base 或者 Mpx 框架暴露的内置生命周期。
+
+微信原生生命周期：
+
+| 生命周期  | 说明 |
+|-----------------|------|
+| created  | 在组件实例初始化完成时调用 |
+| attached  | 在组件挂载开始之前调用 |
+| ready | 在组件在视图层布局完成后调用 |
+| detached  | 在组件实例销毁时调用 |
+
+在组合式 API 中，需要使用框架暴露的统一的[生命周期钩子](https://mpxjs.cn/api/composition-api.html#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%92%A9%E5%AD%90)
+
+### pageLifetimes
+组件中访问页面生命周期
+
+在选项式中可以直接使用 pageLifetimes.show 之类的配置：
+
+| 生命周期  | 说明 |
+|-----------------|------|
+| show  | 组件所在页面显示 |
+| hide  | 组件所在页面隐藏 |
+| resize | 组件所在页面尺寸发生变化 |
+
+在组合式 API 中，需要使用框架暴露的 onShow、onHide、onResize，详情可[查看](https://mpxjs.cn/api/composition-api.html#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%92%A9%E5%AD%90)
 
 
 ## 组件实例方法
 
 ### setData
 
-### hasBehavior
-
 ### triggerEvent
+
+### getPageId
+
+### selectComponent
+
+### hasBehavior
 
 ### createSelectorQuery
 
 ### createIntersectionObserver
 
-### selectComponent
-
 ### selectAllComponents
-
-### getPageId
 
 ## 动态组件
 
