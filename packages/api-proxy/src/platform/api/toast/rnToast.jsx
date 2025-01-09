@@ -6,7 +6,7 @@ let toastKey
 let isLoadingShow
 const dimensionsScreen = Dimensions.get('screen')
 const screenHeight = dimensionsScreen.height
-const contentTop = parseInt(screenHeight * 0.35)
+const contentTop = parseInt(screenHeight * 0.4)
 let tId // show duration 计时id
 const styles = StyleSheet.create({
   toastContent: {
