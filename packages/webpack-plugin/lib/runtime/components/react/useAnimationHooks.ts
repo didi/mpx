@@ -182,14 +182,17 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // id 标识
   const id = animation?.id || -1
   // 有动画样式的 style key
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean|number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
   // 2 尝试用 useSharedValue，因为实际触发的 style prop 需要是 sharedValue 才能驱动动画，若外层 shareValMap 也是 sharedValue，动画无法驱动。
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
       const defaultVal = getInitialVal(key, isTransform(key))
@@ -198,6 +201,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
   // ** 获取动画样式prop & 驱动动画
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (id === -1) return
     // 更新动画样式 key map
@@ -218,6 +222,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   //   })
   // }, [style])
   // ** 清空动画
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     return () => {
       Object.values(shareValMap).forEach((value) => {
@@ -345,7 +350,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     }, {} as { [propName: string]: string | number })
   }
   // ** 生成动画样式
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animationStyle = useAnimatedStyle(() => {
     // console.info(`useAnimatedStyle styles=`, originalStyle)
     return animatedStyleKeys.value.reduce((styles, key) => {

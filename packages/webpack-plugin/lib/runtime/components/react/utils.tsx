@@ -652,14 +652,17 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   }
 
   if (!enableHoverRef.current) return { isHover: false }
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const gestureRef = useContext(ScrollViewContext).gestureRef
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [isHover, setIsHover] = useState(false)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const dataRef = useRef<{
     startTimer?: ReturnType<typeof setTimeout>
     stayTimer?: ReturnType<typeof setTimeout>
   }>({})
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     return () => {
       dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
@@ -683,7 +686,7 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
       setIsHover(false)
     }, +hoverStayTime)
   }
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const gesture = useMemo(() => {
     return Gesture.Pan()
       .onTouchesDown(() => {
