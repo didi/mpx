@@ -19,8 +19,10 @@ export const HIDDEN_STYLE = {
   opacity: 0
 }
 
-export const isIOS = Platform.OS === 'ios'
-export const isAndroid = Platform.OS === 'android'
+declare const __mpx_mode__: 'ios' | 'android'
+
+export const isIOS = __mpx_mode__ === 'ios'
+export const isAndroid = __mpx_mode__ === 'android'
 
 const varDecRegExp = /^--/
 const varUseRegExp = /var\(/

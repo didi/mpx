@@ -66,15 +66,7 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
       key={strKey}
       style={[{ height: itemHeight, width: itemWidth }, animatedStyles]}
     >
-      {wrapChildren(
-        { children: realItem },
-        {
-          hasVarDec: false,
-          varContext: {},
-          textStyle,
-          textProps
-        }
-      )}
+      {realItem}
     </Reanimated.View>
   )
 }

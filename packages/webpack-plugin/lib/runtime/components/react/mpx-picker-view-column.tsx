@@ -86,8 +86,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   const snapToOffsets = useMemo(
-    () => columnData.map((_, i) => i * itemRawH),
-    [columnData, itemRawH]
+    () => Array.from({ length: maxIndex + 1 }, (_, i) => i * itemRawH),
+    [maxIndex, itemRawH]
   )
 
   const contentContainerStyle = useMemo(() => {
