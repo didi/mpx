@@ -188,7 +188,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     hasSelfPercent,
     setWidth,
     setHeight,
-    nodeRef: videoRef
+    nodeRef: viewRef
   })
 
   useNodesRef(props, ref, viewRef, {
