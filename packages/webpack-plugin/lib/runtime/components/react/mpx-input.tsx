@@ -321,7 +321,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onSelectionChange = (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-    evt?.nativeEvent?.selection && setSelection(evt.nativeEvent.selection)
+    setSelection(evt.nativeEvent.selection)
     bindselectionchange && bindselectionchange(
       getCustomEvent(
         'selectionchange',
