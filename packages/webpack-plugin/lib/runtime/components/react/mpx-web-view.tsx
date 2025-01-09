@@ -107,6 +107,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     bottom: 0 as number
   }
   const canGoBack = useRef<boolean>(false)
+  const isNavigateBack = useRef<boolean>(false)
 
   const onAndroidBackPress = useCallback(() => {
     if (canGoBack.current) {
@@ -117,35 +118,14 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }, [canGoBack])
 
   const beforeRemoveHandle = useCallback((e: Event) => {
-    if (canGoBack.current) {
+    if (canGoBack.current && !isNavigateBack.current) {
       webViewRef.current?.goBack()
       e.preventDefault()
     }
+    isNavigateBack.current = false
   }, [canGoBack])
 
   const navigation = useNavigation()
-
-  // ios 16以下版本 的hash会被转义，因此对于iOS环境下在页面load之后再注入hash部分的逻辑
-  let [baseUrl, hashParams = ''] = src.split('#')
-  if (hashParams) hashParams = '#' + hashParams
-  const source = useMemo<WebViewSource>(() => {
-    if (Platform.OS === 'ios') {
-      return { uri: baseUrl };
-    }
-    return { uri: baseUrl + hashParams };
-  }, [baseUrl, hashParams])
-
-  const hashInjectedJavascript = useMemo(() => {
-    if (Platform.OS === 'ios' && hashParams) {
-      return `(function() {
-        try {
-          location.hash = '${hashParams}';
-        } catch(e) {
-        }
-      })()`;
-    }
-    return '';
-  }, [hashParams]);
 
   useEffect(() => {
     if (__mpx_mode__ === 'android') {
@@ -221,10 +201,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
           return _documentTitle
         }
       });
-      ${hashInjectedJavascript}
     }
     true;
   `
+
   const sendMessage = function (params: string) {
     return `
       window.mpxWebviewMessageCallback(${params})
@@ -280,6 +260,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         asyncCallback = navObj.navigateTo(...params)
         break
       case 'navigateBack':
+        isNavigateBack.current = true
         asyncCallback = navObj.navigateBack(...params)
         break
       case 'redirectTo':
