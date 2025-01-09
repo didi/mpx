@@ -85,11 +85,16 @@ export default function createApp (options) {
   global.__mpxAppLaunched = false
   global.__mpxAppHotLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
+    const firstRef = useRef(true)
     const initialRouteRef = useRef({
       initialRouteName: firstPage,
       initialParams: {}
     })
-
+    if (firstRef.current) {
+      // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
+      global.__mpxAppHotLaunched = false
+      firstRef.current = false
+    }
     if (!global.__mpxAppHotLaunched) {
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
       initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
@@ -166,8 +171,6 @@ export default function createApp (options) {
       return () => {
         changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
-        // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
-        global.__mpxAppHotLaunched = false
       }
     }, [])
 
