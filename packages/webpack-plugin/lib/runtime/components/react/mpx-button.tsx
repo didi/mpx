@@ -46,7 +46,7 @@ import {
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHoverStyle } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -224,7 +224,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   const formContext = useContext(FormContext)
 
   const enableHover = hoverClass !== 'none'
-  const { isHover, gesture } = useHoverStyle({ enableHover, hoverStartTime, hoverStayTime, disabled })
+  const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime, disabled })
 
   let submitFn: () => void | undefined
   let resetFn: () => void | undefined

@@ -645,7 +645,7 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
   }, {})
 }
 
-export function useHoverStyle ({ enableHover, hoverStartTime, hoverStayTime, disabled } : { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
+export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled } : { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
   const enableHoverRef = useRef(enableHover)
   if (enableHoverRef.current !== enableHover) {
     error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
