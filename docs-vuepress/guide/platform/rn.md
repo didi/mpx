@@ -1626,7 +1626,6 @@ background-color: red;
 #### background-image
 设置背景图
 
-
 ##### 值类型
 string: url / linear-gradient
 > 注意事项 
@@ -1651,7 +1650,6 @@ background-image: linear-gradient(.25turn, red, blue) //  turn单位不支持
 background-image: linear-gradient(45deg, red 100px, blue) //px单位不支持
 
 ```
-
 #### background-size
 设置背景图大小
 ##### 值类型
@@ -2109,6 +2107,7 @@ text-shadow: 5px 5px #558abb;
 ### 应用能力
 #### app配置
 对标参考[微信app配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html), 以下仅标注支持项或者特殊关注项，未标注的均未支持
+
 | 配置项 | 支持情况 | 特殊说明 |
 | ---- | ---- | ---- |
 | entryPagePath | 支持 | 无|
@@ -2122,6 +2121,7 @@ text-shadow: 5px 5px #558abb;
 
 ##### window配置
 app里面的window配置，参考[微信内window配置说明](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html#window)
+
 | 配置项 | 支持情况 | 特殊说明 |
 | ---- | ---- | ---- |
 | navigationBarBackgroundColor | 支持 | 无|
@@ -2131,6 +2131,7 @@ app里面的window配置，参考[微信内window配置说明](https://developer
 
 #### 页面配置
 页面配置内可配置页面级别的属性，参考[微信页面配置说明](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/page.html)
+
 | 配置项 | 支持情况 | 特殊说明 |
 | ---- | ---- | ---- |
 | navigationBarBackgroundColor | 支持 | 无|
