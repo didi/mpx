@@ -367,16 +367,6 @@ function usePageStatus (navigation, pageId) {
     const blurSubscription = navigation.addListener('blur', () => {
       pageStatusMap[pageId] = 'hide'
     })
-    const transitionEndSubscription = navigation.addListener('transitionEnd', () => {
-      if (global.__navigationHelper.transitionEndCallback?.length) {
-        global.__navigationHelper.transitionEndCallback.forEach((callback) => {
-          if (isFunction(callback)) {
-            callback()
-          }
-        })
-        global.__navigationHelper.transitionEndCallback = null
-      }
-    })
     const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
       pageStatusMap[pageId] = value
     })
@@ -385,7 +375,6 @@ function usePageStatus (navigation, pageId) {
       focusSubscription()
       blurSubscription()
       unWatchAppFocusedState()
-      transitionEndSubscription()
       del(pageStatusMap, pageId)
     }
   }, [navigation])

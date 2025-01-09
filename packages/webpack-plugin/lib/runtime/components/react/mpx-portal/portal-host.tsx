@@ -101,7 +101,6 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     _addType.current = TopViewEventEmitter.addListener(addType, _mount)
     _removeType.current = TopViewEventEmitter.addListener(removeType, _unmount)
     _updateType.current = TopViewEventEmitter.addListener(updateType, _update)
-    
 
     return () => {
       _addType.current?.remove()
