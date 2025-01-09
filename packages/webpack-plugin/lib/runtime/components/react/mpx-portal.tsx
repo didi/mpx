@@ -25,5 +25,6 @@ const Portal = ({ children }:PortalProps): JSX.Element => {
 Portal.Host = PortalHost
 Portal.add = portal.add
 Portal.remove = portal.remove
+Portal.update = portal.update
 
 export default Portal

@@ -26,6 +26,7 @@ export type Operation =
 // events
 const addType = 'MPX_RN_ADD_PORTAL'
 const removeType = 'MPX_RN_REMOVE_PORTAL'
+const updateType = 'MPX_RN_UPDATE_PORTAL'
 // fix react native web does not support DeviceEventEmitter
 const TopViewEventEmitter = DeviceEventEmitter || new NativeEventEmitter()
 
@@ -46,6 +47,10 @@ class PortalGuard {
   remove = (key: number) => {
     TopViewEventEmitter.emit(removeType, key)
   }
+
+  update = (key: number, e: ReactNode) => {
+    TopViewEventEmitter.emit(updateType, key, e)
+  }
 }
 /**
  * portal
@@ -57,6 +62,7 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _queue = useRef<Operation[]>([])
   const _addType = useRef<EventSubscription | null>(null)
   const _removeType = useRef<EventSubscription | null>(null)
+  const _updateType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
   let currentPageId: number | undefined
   const _mount = (children: ReactNode, _key?: number, curPageId?: number) => {
@@ -72,13 +78,13 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     return key
   }
 
-  const _unmount = (key: number, curPageId?: number) => {
+  const _unmount = (key: number) => {
     if (manager.current) {
       manager.current.unmount(key)
     }
   }
 
-  const _update = (key: number, children: ReactNode, curPageId?: number) => {
+  const _update = (key: number, children?: ReactNode, curPageId?: number) => {
     const navigation = getFocusedNavigation()
     const pageId = navigation?.pageId
     if (pageId !== (curPageId ?? currentPageId)) {
@@ -93,14 +99,13 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
     const navigation = getFocusedNavigation()
     currentPageId = navigation?.pageId
     _addType.current = TopViewEventEmitter.addListener(addType, _mount)
-    _removeType.current = TopViewEventEmitter.addListener(
-      removeType,
-      _unmount
-    )
+    _removeType.current = TopViewEventEmitter.addListener(removeType, _unmount)
+    _updateType.current = TopViewEventEmitter.addListener(updateType, _update)
 
     return () => {
       _addType.current?.remove()
       _removeType.current?.remove()
+      _updateType.current?.remove()
     }
   }, [])
   return (
@@ -111,7 +116,6 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
         unmount: _unmount
       }}
       >
-      {/* Need collapsable=false here to clip the elevations, otherwise they appear above Portal components */}
       <View style={styles.container} collapsable={false}>
         {children}
       </View>
