@@ -64,7 +64,7 @@
  */
 
 import { JSX, useRef, forwardRef, createElement } from 'react'
-import Video, { DRMType, ReactVideoSourceProperties } from 'react-native-video'
+import Video, { DRMType, ReactVideoSourceProperties, VideoRef, OnVideoErrorData, OnPlaybackRateChangeData, OnControlsVisibilityChange, OnBufferData, OnSeekData, OnProgressData } from 'react-native-video'
 import { StyleSheet, View, Platform, ViewStyle } from 'react-native'
 import {
   splitProps,
@@ -108,15 +108,25 @@ interface VideoProps {
   bindcontrolstoggle?: (event: Record<string, any>) => void;
   bindseekcomplete?: (event: Record<string, any>) => void;
 }
+interface VideoInfoData {
+  naturalSize: {
+    width: number
+    height: number
+  }
+  duration: number
+}
 
 const styles = StyleSheet.create({
-  video: {
+  container: {
     width: 300,
     height: 225
+  },
+  video: {
+    flex: 1
   }
 })
 
-const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProps>((videoProps: VideoProps, ref): JSX.Element => {
+const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProps: VideoProps, ref): JSX.Element => {
   const { innerProps: props = {} } = splitProps(videoProps)
   const {
     src,
@@ -152,14 +162,18 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
     'parent-height': parentHeight
   } = props
 
-  const videoRef = useRef(null)
+  const videoRef = useRef<VideoRef>(null)
+
+  const viewRef = useRef(null)
+
+  const videoInfoRef = useRef<VideoInfoData | null>(null)
 
   const propsRef = useRef({})
 
   propsRef.current = props
 
   const { normalStyle, hasSelfPercent, setWidth, setHeight } =
-    useTransformStyle(extendObject(styles.video, style), {
+    useTransformStyle(extendObject({}, styles.container, style), {
       enableVar,
       externalVarContext,
       parentFontSize,
@@ -175,7 +189,7 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
     nodeRef: videoRef
   })
 
-  useNodesRef(props, ref, videoRef, {
+  useNodesRef(props, ref, viewRef, {
     style: normalStyle,
     node: {
       play,
@@ -186,11 +200,10 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
       exitFullScreen
     }
   })
-  const videoInfoRef = useRef({})
 
   // 处理播放进度更新
   const bufferedPercentage = useRef(0)
-  function handleProgress (data) {
+  function handleProgress (data: OnProgressData) {
     const { playableDuration, seekableDuration, currentTime } = data
     bindtimeupdate && bindtimeupdate(
       getCustomEvent('timeupdate',
@@ -198,7 +211,7 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
         {
           detail: {
             currentTime,
-            duration: videoInfoRef.current.duration
+            duration: videoInfoRef.current && videoInfoRef.current.duration
           },
           layoutRef
         },
@@ -232,20 +245,20 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
   }
 
   // 处理等待
-  function handleWaiting ({ isBuffering }) {
+  function handleWaiting ({ isBuffering }: OnBufferData) {
     if (isBuffering) {
       bindwaiting!(getCustomEvent('waiting', {}, { layoutRef }, propsRef.current))
     }
   }
 
   // 处理seek完成
-  function handleSeekcomplete (data) {
+  function handleSeekcomplete ({ seekTime }: OnSeekData) {
     bindseekcomplete!(
       getCustomEvent('seekcomplete',
         {},
         {
           detail: {
-            position: data.seekTime
+            position: Platform.OS === 'android' ? seekTime * 1000 : seekTime
           },
           layoutRef
         },
@@ -265,21 +278,21 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
     )
   }
 
-  function handlePlaybackRateChange (data) {
-    if (data.playbackRate === 0) {
+  function handlePlaybackRateChange ({ playbackRate }: OnPlaybackRateChangeData) {
+    if (playbackRate === 0) {
       bindpause && bindpause(getCustomEvent('pause', {}, { layoutRef }, propsRef.current))
     } else {
       bindplay && bindplay(getCustomEvent('play', {}, { layoutRef }, propsRef.current))
     }
   }
 
-  function handleAndroidControlsVisibilityChange (data) {
+  function handleAndroidControlsVisibilityChange ({ isVisible }: OnControlsVisibilityChange) {
     bindcontrolstoggle!(
       getCustomEvent('progress',
         {},
         {
           detail: {
-            show: data.isVisible
+            show: isVisible
           },
           layoutRef
         },
@@ -287,10 +300,10 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
       ))
   }
 
-  function handleVideoLoad (data) {
+  function handleVideoLoad (data: VideoInfoData) {
     const { naturalSize, duration } = data
     if (autoplay) {
-      videoRef.current.seek(initialTime)
+      videoRef.current && videoRef.current.seek(initialTime)
     }
     videoInfoRef.current = data
     bindloadedmetadata && bindloadedmetadata(getCustomEvent('loadedmetadata',
@@ -308,29 +321,29 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
   }
 
   // 处理错误
-  function handleError ({ error }) {
+  function handleError ({ error }: OnVideoErrorData) {
     binderror && binderror(getCustomEvent('play', {}, { detail: { error }, layoutRef }, propsRef.current))
   }
 
   function play () {
-    videoRef.current.resume()
+    videoRef.current && videoRef.current.resume()
   }
   function pause () {
-    videoRef.current.pause()
+    videoRef.current && videoRef.current.pause()
   }
-  function seek (position) {
-    videoRef.current.seek(position)
+  function seek (position: number) {
+    videoRef.current && videoRef.current.seek(position)
   }
   function stop () {
-    videoRef.current.pause()
+    videoRef.current && videoRef.current.pause()
     seek(0)
   }
   function exitFullScreen () {
-    videoRef.current.setFullScreen(false)
+    videoRef.current && videoRef.current.setFullScreen(false)
   }
 
   function requestFullScreen () {
-    videoRef.current.setFullScreen(true)
+    videoRef.current && videoRef.current.setFullScreen(true)
   }
 
   const source: ReactVideoSourceProperties = {
@@ -340,7 +353,7 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
     source.drm = {
       type: DRMType.FAIRPLAY,
       certificateUrl: Platform.OS === 'android' ? provisionUrl : certificateUrl,
-      licenseUrl
+      licenseServer: licenseUrl
     }
   }
 
@@ -348,7 +361,7 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
     props,
     extendObject(
       {
-        style: extendObject({}, normalStyle, layoutStyle),
+        style: styles.video,
         ref: videoRef,
         source,
         paused: !autoplay,
@@ -394,7 +407,7 @@ const MpxVideo = forwardRef<HandlerRef<ScrollView & View, VideoProps>, VideoProp
     ],
     { layoutRef }
   )
-  return createElement(View, { style: { width: normalStyle.width, height: normalStyle.height } },
+  return createElement(View, { style: extendObject({}, normalStyle, layoutStyle), ref: viewRef },
     createElement(Video, innerProps)
   )
 })
