@@ -607,7 +607,7 @@ options 支持以下配置：
 
 ### setData
 
-用于将数据从逻辑层发送到视图层,使数据更新反映到界面上。
+更新视图数据，无论数据value是否改变，都会强制刷新视图。
 
 ```ts
 interface Component {
@@ -619,19 +619,15 @@ interface Component {
 ```
 
 setData 支持以下功能:
-* 修改 data 中的数据
-* 支持直接修改数据路径
-* 支持设置回调函数
+* 修改 data 数据
+* 支持设置回调函数，回掉函数在视图更新完成后执行
 * 支持批量更新多个数据
 
 ```js
+import { createComponent } from '@mpxjs/core'
 createComponent({
   data: {
     text: 'init data',
-    array: [{text: 'init data'}],
-    object: {
-      text: 'init data'
-    }
   },
   methods: {
     changeData() {
@@ -639,13 +635,6 @@ createComponent({
       this.setData({
         text: 'changed data'
       })
-      
-      // 修改数据路径
-      this.setData({
-        'array[0].text': 'changed data',
-        'object.text': 'changed data'
-      })
-      
       // 设置回调函数
       this.setData({
         text: 'changed data'
@@ -656,14 +645,14 @@ createComponent({
   }
 })
 ```
+在 Mpx 内请慎重使用 setData，建议直接使用组件实例修改数据
+```js
+this.text = 'some data'
+```
 
-> **注意：**
-> 1. 直接修改 this.data 而不调用 setData 是无法改变页面的状态的,还会造成数据不一致
-> 2. 仅支持设置可 JSON 化的数据
-> 3. 单次设置的数据不能超过1024kB
-> 4. 不要把 data 中任何一项的 value 设为 undefined,否则这一项将不被设置
-
-在 Mpx 中,我们可以直接通过 this.xxx 的方式修改数据,框架会自动调用 setData 进行更新。但在某些场景下(如在回调函数中)仍然需要手动调用 setData。
+| API |  微信 | 支付宝 | 百度 | QQ | 字节 | Web | RN | 说明 |
+|------|------|--------|------|-----|------|-----|-----|-----|
+| setData |  ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | - |
 
 ### triggerEvent
 
