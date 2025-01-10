@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -193,7 +193,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -230,6 +230,18 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __validProps: {
       get () {
         return validProps
+      },
+      enumerable: false
+    },
+    __componentPath: {
+      get () {
+        return currentInject.componentPath || ''
+      },
+      enumerable: false
+    },
+    __getRelation: {
+      get () {
+        return relation
       },
       enumerable: false
     },
@@ -374,6 +386,18 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+const needRelationContext = (options) => {
+  const relations = options.relations
+  if (!relations) return false
+  return Object.keys(relations).some((path) => {
+    const relation = relations[path]
+    const type = relation.type
+    return type === 'child' || type === 'descendant'
+  })
+}
+
+const RelationsContext = createContext(null)
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -384,11 +408,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
     const pageId = useContext(RouteContext)
+    const relation = useContext(RelationsContext)
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -466,7 +491,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return proxy.finalMemoVersion
     }, [proxy.stateVersion, proxy.memoVersion])
 
-    const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
+    let root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
+    if (needRelationContext(rawOptions)) {
+      root = createElement(RelationsContext.Provider, {
+        value: 'componentPath'
+      }, root)
+    }
     if (root && root.props.ishost) {
       // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
       const rootProps = getRootProps(props, validProps)
