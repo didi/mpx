@@ -43,8 +43,7 @@ const sidebar = {
         'advance/custom-output-path',
         'advance/utility-first-css',
         'advance/ssr',
-        'advance/provide-inject',
-        'platform/rn'
+        'advance/provide-inject'
       ]
     },
     {
@@ -52,8 +51,8 @@ const sidebar = {
       collapsable: false,
       children: [
         'platform/basic',
-        'platform/miniprogram',
-        'platform/web',
+        // 'platform/miniprogram',
+        // 'platform/web',
         'platform/rn'
       ]
     },

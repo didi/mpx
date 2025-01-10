@@ -1,4 +1,6 @@
 # 跨端输出RN
+
+## 跨端样式定义
 RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation、transition 等）。
 
 因此，一方面，在我们进行跨平台开发时，跨平台样式属性声明要尽量使用两边样式属性的交集；另一方面为了减少开发适配的成本，Mpx 内部也对 RN 的样式作了部分抹平。
@@ -17,7 +19,6 @@ Mpx 框架在样式处理部分的具体工作主要分为两大类有：
 - 单位的计算和处理
 - 100% 计算
 - css func 处理，包括 env()、calc()、var()
-## 跨端样式定义
 ### CSS选择器
 RN 环境下仅支持单个**类选择器**，不支持类名组合选择器，不过逗号组合的选择器本质上还是单类选择器，是可以支持的。
 ``` css
@@ -281,6 +282,7 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 ```
 > 注意事项
 ### 使用原子类
+后续支持。
 
 ## 混合编写RN代码
 在编写Mpx组件时，在特定情况下（处于性能考虑等因素），可能会涉及到混合开发(在Mpx项目内编写RN组件)
@@ -1233,6 +1235,56 @@ API
 1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
 
 #### 自定义组件
+创建自定义组件在 RN 环境下部分实例方法、属性存在兼容性问题不支持，
+文档此部分会详细列出各方法、属性的支持度。
+
+##### **组件属性**
+
+| 属性                 | RN | 描述                                                                           |
+|------------|---|------------------------------------------------------------------------------|
+| properties | ✓ | 用于声明组件接收的外部属性，详情可[查看](/guide/basic/component.html#properties)                |
+| data       | ✓ | 组件的内部数据，和 `properties` 一同用于组件的模板渲染，详情可[查看](/guide/basic/component.html#data) |
+| observers  | ✓ | 组件数据字段监听器，详情可[查看](/guide/basic/component.html#observers)                     |
+| methods    | ✓ | 组件方法定义，详情可[查看](/guide/basic/component.html#methods)                          |
+| behaviors  | ✗  | 输出 RN 不支持                                                                    |
+| created    | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#created)                        |
+| attached   | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#attached)                       |
+| ready      | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#ready)                          |
+| detached    | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#detached)                       |
+| externalClasses  | ✓ | 输出 RN 需要配置[构建配置](/api/compile.html#externalclasses)                          |
+| options    | ✗ | 输出 RN 不支持，一些选项，诸如 multipleSlots、virtualHost、pureDataPattern，这些功能输出 RN 不支持    |
+| lifetimes  | ✓ | 组件生命周期声明对象-详情可[查看](/guide/basic/component.html#lifetimes)                    |
+| pageLifetimes  | ✓ | 组件所在页面的生命周期声明对象-详情可[查看](/guide/basic/component.html#pagelifetimes)                                                           |
+
+##### **组件实例属性和方法**
+
+生成的组件实例可以在组件的方法、生命周期函数中通过 this 访问。组件包含一些通用属性和方法。
+
+未在本文档中列出的实例属性和方法则在 RN 中不支持。
+
+| 属性名  | 类型     | RN 是否支持 | 描述                       |
+|--------|----------|------|--------------------------|
+| is     | String   | ✗     | 输出 RN 暂不支持，未来支持, 组件的文件路径 |
+| id     | String   | ✓     | 节点id                     |
+| dataset| String   | ✓     | 节点dataset                |
+
+
+| 方法名               | RN是否支持 | 描述                       |
+|---------------------|--|--------------------------|
+| setData             | ✓ | 设置data并执行视图层渲染           |
+| triggerEvent        | ✓ | 触发事件                     |
+| createSelectorQuery| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref |
+| selectComponent     | ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
+| selectAllComponents| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
+| $set             | ✓ | 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新       |
+| $watch         | ✓ | 观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化                               |
+| $delete        | ✓ | 删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）             |
+| $refs        | ✓ | 一个对象，持有注册过 ref的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。 |
+| $forceUpdate        | ✓ | 用于强制刷新视图，不常用，通常建议使用响应式数据驱动视图更新                            |
+| $nextTick        | ✓ | 在下次 DOM 更新循环结束之后执行延迟回调函数，用于等待 Mpx 完成状态更新和 DOM 更新后再执行某些操作 |
+| $i18n        | ✗ | 输出 RN 暂不支持，国际化功能访问器，用于获取多语言字符串资源                                            |
+| $rawOptions        | ✓ | 访问组件原始选项对象                                      |
+
 
 ### 样式规则
 #### position
