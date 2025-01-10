@@ -1,4 +1,4 @@
-import { reactive } from '../observer/reactive'
+import { reactive, defineReactive } from '../observer/reactive'
 import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
 import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
@@ -149,6 +149,8 @@ export default class MpxProxy {
     if (this.ignoreReactivePattern && isObject(obj)) {
       Object.keys(obj).forEach((key) => {
         if (this.ignoreReactivePattern.test(key)) {
+          // 命中ignoreReactivePattern的属性将其设置为 shallowReactive
+          defineReactive(obj, key, obj[key], true)
           Object.defineProperty(obj, key, {
             enumerable: true,
             // set configurable to false to skip defineReactive
@@ -514,7 +516,7 @@ export default class MpxProxy {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey] || (this.ignoreReactivePattern && this.ignoreReactivePattern.test(firstKey))) {
+        if (!this.localKeysMap[firstKey]) {
           continue
         }
         // 外部clone，用于只需要clone的场景
