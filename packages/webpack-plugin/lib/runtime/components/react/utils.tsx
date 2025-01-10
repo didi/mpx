@@ -1,12 +1,14 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image, Platform } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
-import { VarContext } from './context'
+import { VarContext, ScrollViewContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
-import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
+import type { AnyFunc, ExtendedFunctionComponent, ExtendedViewStyle } from './types/common'
+import { runOnJS } from 'react-native-reanimated'
+import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -19,8 +21,10 @@ export const HIDDEN_STYLE = {
   opacity: 0
 }
 
-export const isIOS = Platform.OS === 'ios'
-export const isAndroid = Platform.OS === 'android'
+declare const __mpx_mode__: 'ios' | 'android'
+
+export const isIOS = __mpx_mode__ === 'ios'
+export const isAndroid = __mpx_mode__ === 'android'
 
 const varDecRegExp = /^--/
 const varUseRegExp = /var\(/
@@ -645,4 +649,68 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
     }
     return acc
   }, {})
+}
+
+export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled } : { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
+  const enableHoverRef = useRef(enableHover)
+  if (enableHoverRef.current !== enableHover) {
+    error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
+  }
+
+  if (!enableHoverRef.current) return { isHover: false }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const gestureRef = useContext(ScrollViewContext).gestureRef
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [isHover, setIsHover] = useState(false)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const dataRef = useRef<{
+    startTimer?: ReturnType<typeof setTimeout>
+    stayTimer?: ReturnType<typeof setTimeout>
+  }>({})
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    return () => {
+      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    }
+  }, [])
+
+  const setStartTimer = () => {
+    if (disabled) return
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.startTimer = setTimeout(() => {
+      setIsHover(true)
+    }, +hoverStartTime)
+  }
+
+  const setStayTimer = () => {
+    if (disabled) return
+    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.stayTimer = setTimeout(() => {
+      setIsHover(false)
+    }, +hoverStayTime)
+  }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
+      .onTouchesDown(() => {
+        'worklet'
+        runOnJS(setStartTimer)()
+      })
+      .onTouchesUp(() => {
+        'worklet'
+        runOnJS(setStayTimer)()
+      })
+  }, [])
+
+  if (gestureRef) {
+    gesture.simultaneousWithExternalGesture(gestureRef)
+  }
+
+  return {
+    isHover,
+    gesture
+  }
 }
