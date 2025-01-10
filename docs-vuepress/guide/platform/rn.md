@@ -1641,13 +1641,16 @@ background-image linear-gradient(270deg, rgba(255,255,255,0.40), rgba(255,255,25
 background-image: linear-gradient(to top, blue, red)
 background-image: linear-gradient(to right bottom, blue, red)
 background-image: linear-gradient(45deg, blue, red)
-background-image: linear-gradient(45deg, blue 0%, orange 100%)
+background-image: linear-gradient(45deg, blue 0%, orange 40%, red)
+background-image: linear-gradient(to left top, blue, red)
+
 
 
 /* 不支持 */
 background-image: linear-gradient(rgba(0, 0, 255, 0.5), rgba(255, 255, 0, 0.5));
 background-image: linear-gradient(.25turn, red, blue) //  turn单位不支持
 background-image: linear-gradient(45deg, red 100px, blue) //px单位不支持
+background-image: linear-gradient(red 0%, orange 10% 30%, yellow 50% 70%, green 90% 100%);
 
 ```
 #### background-size
