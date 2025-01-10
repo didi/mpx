@@ -14,7 +14,7 @@
     "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.7",
+    "@babel/core": "^7.25.2",
     "@babel/eslint-parser": "^7.18.9",
     "@babel/preset-env": "^7.25.3",
     "@docsearch/css": "^3.0.0",
@@ -32,6 +32,7 @@
     "eslint-plugin-jest": "^27.0.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.1",
+    "eslint-plugin-react-hooks": "^5.1.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.2.0",
     "lerna": "^8.1.8",
@@ -40,9 +41,5 @@
   },
   "workspaces": [
     "packages/*"
-  ],
-  "dependencies": {
-    "@types/react": "^18.3.11",
-    "react-native-linear-gradient": "^2.8.3"
-  }
+  ]
 }

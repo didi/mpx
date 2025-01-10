@@ -4,7 +4,7 @@ import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
 import { Validator } from './validator'
-import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig, isArray, isString } from './util'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig, isArray, isString, extend } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -13,10 +13,9 @@ export default class XFetch {
     // this.requestAdapter = (config) => requestAdapter(config, MPX)
     // 当存在 useQueue 配置时，才使用 this.queue 变量
     if (options && options.useQueue && typeof options.useQueue === 'object') {
-      this.queue = new RequestQueue({
-        adapter: (config) => requestAdapter(config, MPX),
-        ...options.useQueue
-      })
+      this.queue = new RequestQueue(extend({
+        adapter: (config) => requestAdapter(config, MPX)
+      }, options.useQueue))
     } else {
       this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
@@ -177,7 +176,7 @@ export default class XFetch {
       if (isNotExpired && checkCacheConfig(config, cacheRequestData) && cacheRequestData.responsePromise) {
         return cacheRequestData.responsePromise.then(response => {
           // 添加 isCache 标识该请求来源于缓存
-          return { ...response, isCache: true }
+          return extend(response, { isCache: true })
         })
       } else {
         delete this.cacheRequestData[cacheKey]

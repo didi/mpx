@@ -1,7 +1,7 @@
 /**
  * ✔ enable
  */
-import { ReactNode } from 'react'
+import { ReactNode, createElement, Fragment } from 'react'
 import { Portal } from '@ant-design/react-native'
 import { warn } from '@mpxjs/utils'
 interface RootPortalProps {
@@ -16,12 +16,10 @@ const _RootPortal = (props: RootPortalProps) => {
     warn('The root-portal component does not support the style prop.')
   }
   return enable
-    ? <Portal>
-      {children}
-    </Portal>
-    : <>{children}</>
+    ? createElement(Portal, null, children)
+    : createElement(Fragment, null, children)
 }
 
-_RootPortal.displayName = 'mpx-root-portal'
+_RootPortal.displayName = 'MpxRootPortal'
 
 export default _RootPortal

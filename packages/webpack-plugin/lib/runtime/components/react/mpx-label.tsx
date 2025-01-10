@@ -1,12 +1,12 @@
 /**
  * ✘ for
  */
-import { JSX, useRef, forwardRef, ReactNode } from 'react'
+import { JSX, useRef, forwardRef, ReactNode, useCallback, createElement } from 'react'
 import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 
 export interface LabelProps {
@@ -25,6 +25,7 @@ export interface LabelProps {
 const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
   (labelProps, ref): JSX.Element => {
     const { textProps, innerProps: props = {} } = splitProps(labelProps)
+    const propsRef = useRef<any>({})
 
     const {
       style = {},
@@ -32,18 +33,16 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       'external-var-context': externalVarContext,
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
-      'parent-height': parentHeight,
-      bindtap
+      'parent-height': parentHeight
     } = props
+
+    propsRef.current = props
 
     const defaultStyle = {
       flexDirection: 'row'
     }
 
-    const styleObj = {
-      ...defaultStyle,
-      ...style
-    }
+    const styleObj = extendObject({}, defaultStyle, style)
 
     const {
       hasSelfPercent,
@@ -55,11 +54,11 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
     const nodeRef = useRef(null)
-    useNodesRef(props, ref, nodeRef, { defaultStyle })
+    useNodesRef(props, ref, nodeRef, { style: normalStyle })
 
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-    const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+    const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
     if (backgroundStyle) {
       warn('Label does not support background image-related styles!')
@@ -69,43 +68,46 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       triggerChange: noop
     })
 
-    const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
-      contextRef.current.triggerChange?.(evt)
-    }
+    const onTap = useCallback((evt: NativeSyntheticEvent<TouchEvent>) => {
+      const { bindtap } = propsRef.current
+      bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, { props: propsRef.current }))
+      contextRef.current.triggerChange(evt)
+    }, [])
 
     const innerProps = useInnerProps(
       props,
-      {
-        ref: nodeRef,
-        style: { ...innerStyle, ...layoutStyle },
-        ...layoutProps,
-        bindtap: onTap
-      },
+      extendObject(
+        {
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle)
+        },
+        layoutProps,
+        {
+          bindtap: onTap
+        }
+      ),
       [],
       {
         layoutRef
       }
     )
 
-    return <View {...innerProps}>
-      <LabelContext.Provider value={contextRef}>
+    return createElement(View, innerProps, createElement(
+      LabelContext.Provider,
+      { value: contextRef },
+      wrapChildren(
+        props,
         {
-          wrapChildren(
-            props,
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
         }
-      </LabelContext.Provider>
-    </View>
+      )
+    ))
   }
 )
 
-Label.displayName = 'mpx-label'
+Label.displayName = 'MpxLabel'
 
 export default Label
