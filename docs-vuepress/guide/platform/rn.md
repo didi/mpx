@@ -791,21 +791,6 @@ import mpx from '@mpxjs/core'
 import apiProxy from '@didi/mpxjs-api-proxy'
 mpx.use(apiProxy, { usePromise: true })
 ```
-需要在mpx项目中需要配置externals
-```
-externals: {
-  ...
-  '@react-native-async-storage/async-storage': '@react-native-async-storage/async-storage',
-  '@react-native-clipboard/clipboard': '@react-native-clipboard/clipboard',
-  '@react-native-community/netinfo': '@react-native-community/netinfo',
-  'react-native-device-info': 'react-native-device-info',
-  'react-native-safe-area-context': 'react-native-safe-area-context',
-  'react-native-reanimated': 'react-native-reanimated',
-  'react-native-get-location': 'react-native-get-location',
-  'react-native-haptic-feedback': 'react-native-haptic-feedback'
-},
-```
-如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例
 
 | api方法                                                                                                                                                                                              | 依赖的react-native三方库                        |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
@@ -922,7 +907,7 @@ webviewBridge.navigateTo({
 ```
 
 ##### invoke示例代码
-对于业务中一些特殊的方法，需要有web与RN进行交互的这种情况，基于这种情况在mpx框架内部提供了挂在方法的能力，在webview-bridge提供了invoke通信的能力，具体使用方法如下：
+对于业务中一些特殊的方法，需要有web与RN进行交互的这种情况，基于这种情况在mpx框架内部提供了挂载方法的能力，在webview-bridge提供了invoke通信的能力，具体使用方法如下：
 
 RN环境中挂载getTime的逻辑
 ```javascript
