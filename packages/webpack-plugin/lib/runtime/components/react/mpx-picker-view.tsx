@@ -101,7 +101,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
-  console.log('[mpx-picker-view], render ---> value=', value, 'style=', style, 'normalStyle=', normalStyle, 'textStyle=', textStyle, 'indicatorStyle=', indicatorStyle)
+  console.log('[mpx-picker-view], render ---> value=', value)
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     const activeValue = activeValueRef.current

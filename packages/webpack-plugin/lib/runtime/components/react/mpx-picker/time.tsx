@@ -19,12 +19,7 @@ const styles = StyleSheet.create({
   pickerIndicator: {
     height: 45
   },
-  pickerItemHour: {
-    fontSize: 20,
-    lineHeight: 45,
-    textAlign: 'center'
-  },
-  pickerItemMinute: {
+  pickerItem: {
     fontSize: 20,
     lineHeight: 45,
     textAlign: 'center'
@@ -133,13 +128,13 @@ const PickerTime = forwardRef<
       {/* @ts-expect-error ignore */}
       <MpxPickerViewColumn key='hour'>
         {hoursRange.map((item, index) => (
-          <Text key={index} style={styles.pickerItemHour}>{item}</Text>
+          <Text key={index} style={styles.pickerItem}>{item}</Text>
         ))}
       </MpxPickerViewColumn>
       {/* @ts-expect-error ignore */}
       <MpxPickerViewColumn key='minute'>
         {minutesRange.map((item, index) => (
-          <Text key={index} style={styles.pickerItemMinute}>{item}</Text>
+          <Text key={index} style={styles.pickerItem}>{item}</Text>
         ))}
       </MpxPickerViewColumn>
     </MpxPickerView>)

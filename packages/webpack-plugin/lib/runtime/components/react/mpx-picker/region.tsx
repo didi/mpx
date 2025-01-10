@@ -1,111 +1,176 @@
-import { View, TouchableWithoutFeedback } from 'react-native'
-import { Picker, PickerColumnItem } from '@ant-design/react-native'
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import { warn } from '@mpxjs/utils'
 import { regionData } from './regionData'
-import React, { forwardRef, useState, useRef } from 'react'
-import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { RegionProps, RegionObj, LayoutType } from './type'
+import { RegionObj, RegionProps } from './type'
+import MpxPickerView from '../mpx-picker-view'
+import MpxPickerViewColumn from '../mpx-picker-view-column'
+import { HandlerRef } from '../useNodesRef' // 引入辅助函数
+import { useUpdateEffect } from '../utils'
 
-function formateRegionData (clObj: RegionObj[] = [], customItem?: string, depth = 2): PickerColumnItem[] {
-  const l = depth
-  // 'PickerData[]' is not assignable to type 'PickerColumn | PickerColumn[]'.
-  // const obj: PickerColumnItem[] = []
-  const obj: PickerColumnItem[] = []
-  if (customItem) {
-    const objClone: PickerColumnItem = {
-      value: customItem,
-      label: customItem,
-      children: []
-    }
-    const panding = { ...objClone }
-    let loop = panding
-    while (depth-- > 0) {
-      loop.children = [{ ...objClone }]
-      loop = loop.children[0] as PickerColumnItem
-    }
-    obj.push(panding as PickerColumnItem)
+const styles = StyleSheet.create({
+  pickerContainer: {
+    height: 240,
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10
+  },
+  pickerIndicator: {
+    height: 45
+  },
+  pickerItem: {
+    fontSize: 16,
+    lineHeight: 45,
+    textAlign: 'center'
   }
-  for (let i = 0; i < clObj.length; i++) {
-    const region: PickerColumnItem = {
-      value: clObj[i].value,
-      label: clObj[i].value
-    }
-    if (clObj[i].children) {
-      region.children = formateRegionData(clObj[i].children, customItem, l - 1)
-    }
-    obj.push(region)
-  }
-  return obj
+})
+
+const provinceMap = regionData.map(item => item.value)
+
+const findIndex = (arr: string[], val: string) => {
+  const res = arr.findIndex(item => item === val)
+  return res === -1 ? 0 : res
 }
 
-const _RegionPicker = forwardRef<HandlerRef<View, RegionProps>, RegionProps>((props: RegionProps, ref): React.JSX.Element => {
-  const { children, value, bindchange, bindcancel, disabled, style } = props
-  const formatRegionData = formateRegionData(regionData, props['custom-item'])
+const getColumnLength = (level: RegionProps['level']) => {
+  if (level === 'province') {
+    return 1
+  } else if (level === 'city') {
+    return 2
+  } else {
+    return 3
+  }
+}
 
-  const [regionvalue, setRegionValue] = useState(value)
-  // 存储layout布局信息
-  const layoutRef = useRef({})
-  const viewRef = useRef<View>(null)
+type FormatObj = {
+  indexArr: number[]
+  rangeArr: string[][]
+  nameArr?: string[]
+}
+
+const valueStr2Obj = (
+  value: string[],
+  level: RegionProps['level'] = 'region',
+  customItem = ''
+): FormatObj => {
+  const indexProvince = findIndex(provinceMap, value[0])
+  const dataCity = regionData[indexProvince].children!
+  const rangeCity = dataCity.map(item => item.value)
+  const indexCity = findIndex(rangeCity, value[1])
+  const dataArea = dataCity[indexCity].children!
+  const rangeArea = dataArea.map(item => item.value)
+  const indexArea = findIndex(rangeArea, value[2])
+
+  return {
+    indexArr: [indexProvince, indexCity, indexArea],
+    rangeArr: [provinceMap, rangeCity, rangeArea]
+  }
+}
+
+const valueChanged2Obj = (currentObj: FormatObj, value: number[]) => {
+  let [indexProvince, indexCity, indexArea] = currentObj.indexArr
+  const [newIndexProvince, newIndexCity, newIndexArea] = value
+  if (indexProvince !== newIndexProvince) {
+    indexProvince = newIndexProvince
+    indexCity = 0
+    indexArea = 0
+  } else if (indexCity !== newIndexCity) {
+    indexCity = newIndexCity
+    indexArea = 0
+  } else if (indexArea !== newIndexArea) {
+    return {
+      indexArr: value,
+      rangeArr: currentObj.rangeArr
+    }
+  }
+
+  const dataCity = regionData[indexProvince].children!
+  const rangeCity = dataCity.map(item => item.value)
+  const dataArea = dataCity[indexCity].children!
+  const rangeArea = dataArea.map(item => item.value)
+  return {
+    indexArr: [indexProvince, indexCity, indexArea],
+    rangeArr: [provinceMap, rangeCity, rangeArea]
+  }
+}
+
+const valueNum2String = (value: number[]) => {
+  const province = regionData[value[0]]
+  const city = province.children![value[1]]
+  const area = city.children![value[2]]
+  return [province.value, city.value, area.value]
+}
+
+const hasDiff = (currentValue: number[], value: number[]) => {
+  return currentValue[0] !== value[0] || currentValue[1] !== value[1] || currentValue[2] !== value[2]
+}
+
+const PickerTime = forwardRef<
+    HandlerRef<View, RegionProps>,
+    RegionProps
+>((props: RegionProps, ref): React.JSX.Element => {
+  const { value = [], level = 'region', 'custom-item': customItem = '', bindchange } = props
+  console.log('[mpx-picker-time] --->', 'value', value)
+
   const nodeRef = useRef(null)
-  useNodesRef<View, RegionProps>(props, ref, nodeRef, {
-    style
-  })
+  const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, level))
 
-  const onChange = (value: string[]): void => {
-    // 通过 value 查找 code
-    let tmp: RegionObj[] = regionData
-    const postcode: (string | undefined)[] = []
-    const code = value.map((item) => {
-      for (let i = 0; i < tmp.length; i++) {
-        if (tmp[i].value === item) {
-          const code = tmp[i].code
-          postcode.push(tmp[i].postcode)
-          tmp = tmp[i].children || []
-          return code
-        }
+  useUpdateEffect(() => {
+    const calibratedValue = valueStr2Obj(value, level, customItem)
+    setFormatObj(calibratedValue)
+  }, [value])
+
+  const updateValue = (value: string[]) => {
+    const calibratedValue = valueStr2Obj(value, level, customItem)
+    setFormatObj(calibratedValue)
+  }
+
+  const _props = useRef(props)
+  _props.current = props
+  useImperativeHandle(ref, () => ({
+    updateValue,
+    getNodeInstance: () => ({
+      props: _props,
+      nodeRef,
+      instance: {
+        style: {}
       }
-      return item
-    }).filter(code => !!code)
-    const detail: Record<string, any> = { value, code }
-    if (postcode[2]) detail.postcode = postcode[2]
-    setRegionValue(value)
-    bindchange && bindchange({
-      detail
     })
+  }))
+
+  const onChange = (e: { detail: { value: number[] } }) => {
+    const { value } = e.detail
+    const currentValue = formatObj.indexArr
+    const newObj = valueChanged2Obj(formatObj, value)
+    if (hasDiff(currentValue, value)) {
+      setFormatObj(newObj)
+    }
+    bindchange?.({ detail: { value: valueNum2String(newObj.indexArr) } })
   }
 
-  const onElementLayout = (layout: LayoutType) => {
-    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      props.getInnerLayout && props.getInnerLayout(layoutRef)
-    })
-  }
-
-  const onDismiss = (): void => {
-    bindcancel && bindcancel()
-  }
-
-  const regionProps = {
-    ref: nodeRef,
-    data: formatRegionData,
-    value: regionvalue,
-    onChange,
-    disabled,
-    onDismiss
-  }
-
-  const touchProps = {
-    onLayout: onElementLayout,
-    ref: viewRef
+  const renderColumn = () => {
+    return formatObj.rangeArr?.map((item, index) => (
+        // @ts-expect-error ignore
+        <MpxPickerViewColumn key={index}>
+          {item.map((item, index) => (
+            <Text key={index} style={styles.pickerItem}>
+              {item}
+            </Text>
+          ))}
+        </MpxPickerViewColumn>
+    ))
   }
 
   return (
-    <Picker {...regionProps}>
-      <TouchableWithoutFeedback>
-        <View {...touchProps}>{children}</View>
-      </TouchableWithoutFeedback>
-    </Picker>
-  )
+    <MpxPickerView
+      style={styles.pickerContainer}
+      indicator-style={styles.pickerIndicator}
+      value={formatObj.indexArr}
+      bindchange={onChange}
+    >
+      {renderColumn()}
+    </MpxPickerView>)
 })
 
-_RegionPicker.displayName = 'mpx-picker-region'
-export default _RegionPicker
+PickerTime.displayName = 'MpxPickerTime'
+export default PickerTime

@@ -144,7 +144,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       innerLayout.current = layout.current
     }
 
-    /** --- form 表单组件事件 --- */
+    /** --- form 表单组件内部方法 --- */
     const getValue = () => {
       return pickerValue.current
     }
@@ -172,11 +172,11 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         }
       }
     }, [])
-    /** --- form 表单组件事件 --- */
+    /** --- form 表单组件内部方法 --- */
 
     const onChange = (e: EventType) => {
       const { value } = e.detail
-      console.log('[mpx-picker], onChange ---> value=', value)
+      console.log('[mpx-picker], onChange --->', 'mode=', mode, 'value=', value)
       pickerValue.current = value
     }
 
