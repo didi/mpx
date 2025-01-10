@@ -350,6 +350,123 @@ createComponent({
 
 ### 模版语法
 
+#### 模版指令
+Mpx 输出 React Native 支持以下模版指令。
+
+**wx:if**
+
+输出React Native已支持，[详情查看 - wx:if](/api/directives.html#wx-if)
+
+**wx:else**
+
+输出React Native已支持，[详情查看 - wx:else](/api/directives.html#wx-else)
+
+
+**wx:elif**
+
+输出React Native已支持，[详情查看 - wx:elif](/api/directives.html#wx-elif)
+
+**wx:show**
+
+输出React Native已支持，[详情查看 - wx:show](/api/directives.html#wx-show)
+
+**wx:for**
+
+输出React Native已支持，[详情查看 - wx:for](/api/directives.html#wx-for)
+
+**wx:for-item**
+
+输出React Native已支持，[详情查看 - wx:for-item](/api/directives.html#wx-for-item)
+
+**wx:for-index**
+
+输出React Native已支持，[详情查看 - wx:for-index](/api/directives.html#wx-for-index)
+
+**wx:class**
+
+输出React Native已支持，[详情查看 - wx:class](/api/directives.html#wx-class)
+
+**wx:style**
+
+输出React Native已支持，[详情查看 - wx:style](/api/directives.html#wx-style)
+
+**wx:model**
+
+输出React Native已支持，[详情查看 - wx:model](/api/directives.html#wx-model)
+
+**wx:model-prop**
+
+输出React Native已支持，[详情查看 - wx:model-prop](/api/directives.html#wx-model-prop)
+
+**wx:model-event**
+
+输出React Native已支持，[详情查看 - wx:model-event](/api/directives.html#wx-model-event)
+
+**wx:model-value-path**
+
+输出React Native已支持，[详情查看 - wx:model-value-path](/api/directives.html#wx-model-value-path)
+
+**wx:model-filter**
+
+输出React Native已支持，[详情查看 - wx:model-filter](/api/directives.html#wx-model-filter)
+
+**wx:ref**
+
+使用wx:ref可以更方便获取基础节点及自定义组件实例。
+
+* 如果获取的是基础节点（nodeRef），那么可以通过基础节点暴露的相应 api 获取基础节点的样式属性等内容；
+* 如果是获取的自定义组件实例，那么可以直接调用组件实例上的方法或属性；
+
+```html
+<template>
+  <!-- 基础组件 -->
+  <view wx:ref="tref">123</view>
+  <!-- 自定义组件 -->
+  <test-component wx:ref="cref"></test-component>
+</template>
+
+
+<script>
+    import { createPage } from "@mpxjs/core"
+
+    createPage({
+        ready() {
+            // 基础节点 nodeRef 获取节点的样式属性
+            this.$refs.tref.fields({size: true}, function (res) {
+                console.log(res)
+            }).exec()
+
+            this.$refs.cref.show() // 拿到 test-component 组件实例，调用组件实例内部的 show 方法
+        }
+    })
+</script>
+```
+
+**@mode**
+
+跨端输出 React Native 时，对模版中节点或属性进行平台纬度的条件编译。[详情查看](/api/directives.html#mode)
+
+**@_mode**
+
+跨端输出 React Native 时，对节点或属性进行平台纬度的条件编译并保留跨平台转换能力。[详情查看](/api/directives.html#mode)
+
+**@env**
+
+跨端输出场景下，除了 mode 平台场景值，Mpx 框架还提供自定义 env 目标应用，来实现在不同应用下编译产出不同的代码。
+
+**参考：**
+* [通过 env 实现自定义目标环境的条件编译](/guide/advance/platform.html#use-env)
+* [@env 指令](/api/directives.html#env)
+
+**mpxTagName**
+
+支持跨平台输出时针对节点标签名进行条件编译，可以配合属性维度条件编译使用, 
+例如在 iOS 环境下希望将某个 view 标签替换为 cover-view，可以使用该功能：
+
+```html
+<view mpxTagName@ios="cover-view">will be cover-view in iOS</view>
+```
+
 #### 事件处理
 目前 Mpx 输出 React Native 的事件编写遵循小程序的事件编写规范，支持事件的冒泡及捕获
 
@@ -581,8 +698,8 @@ movable-view的可移动区域。
 | 属性名 | 类型             | 默认值 | 说明                                                                                                  |
 | ------ | ---------------- | ------ | ----------------------------------------------------------------------------------------------------- |
 | direction   | String           |   none     | 目前支持 all、vertical、horizontal、none｜
-| inertia   | boolean           |   false     | movable-view是否带有惯性｜
-| out-of-bounds   | boolean           |   false     | 超过可移动区域后，movable-view是否还可以移动｜
+| inertia   | boolean          |   false     | movable-view是否带有惯性｜
+| out-of-bounds   | boolean          |   false     | 超过可移动区域后，movable-view是否还可以移动｜
 | x   | Number |      | 定义x轴方向的偏移  |
 | y  | Number  |        | 定义y轴方向的偏移 |
 | friction  | Number  |    7    | 摩擦系数 |
@@ -690,7 +807,6 @@ movable-view的可移动区域。
 注意事项
 
 1. 当前不支持使用 for 属性找到对应 id，仅支持将控件放在该标签内，目前可以绑定的空间有：checkbox、radio、switch。
-   
 
 #### checkbox
 多选项目
@@ -2240,7 +2356,7 @@ project(':react-native-haptic-feedback').projectDir = new File(rootProject.proje
 ```
 react-native-reanimated在mpx和RN项目都要安装，安装好包后需要在babel.config.json文件中做如下配置，并且RN环境中使用的react-native-reanimated与mpx项目中安装的react-native-reanimated版本要一致：
 [配置参考文档](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/)
-```
+```javascript
 module.exports = {
     presets: [
       ... // don't add it here :)
@@ -2277,6 +2393,7 @@ createComponent({
   * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
 
 <!-- WebviewAPI -->
+
 #### Webview API
 对于web-view组件打开的网页，想要跟RN通信，或者跳转到RN页面，提供了以下能力
 
@@ -2355,5 +2472,5 @@ webviewBridge.invoke('getTime', {
 ```
 
 
-#### 其他使用限制
+### 其他使用限制
 如事件的target等

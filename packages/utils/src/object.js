@@ -1,4 +1,5 @@
 import { type, noop, isObject } from './base'
+import {markRaw} from "@mpxjs/core";
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
@@ -113,6 +114,7 @@ function diffAndCloneA (a, b) {
   }
 }
 
+this.a = xxx
 function proxy (target, source, keys, readonly, onConflict) {
   if (!global.__mpx) {
     console.warn('[Mpx utils warn]: Can not find "global.__mpx", "proxy" may encounter some potential problems!')
@@ -136,6 +138,7 @@ function proxy (target, source, keys, readonly, onConflict) {
       : function (val) {
         if (global.__mpx) {
           const isRef = global.__mpx.isRef
+          if (pattern.test(key)) markRaw(value)
           // 对reactive对象代理时不需要处理ref解包
           if (!global.__mpx.isReactive(source)) {
             const oldVal = source[key]
