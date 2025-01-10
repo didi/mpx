@@ -400,7 +400,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   })
 
   useEffect(() => {
-    var patchStep = 0
+    let patchStep = 0
     if (preMargin !== previousMargin.value) {
       patchStep = preMargin - previousMargin.value
     }
@@ -422,7 +422,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       offset.value = getOffset(0, step.value)
       resumeLoop()
     }
-  },[children.length])
+  }, [children.length])
 
   useEffect(() => {
     if (!step.value) {
@@ -622,53 +622,53 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   const gestureHandler = useMemo(() => {
     const gesturePan = Gesture.Pan()
-    .onBegin((e) => {
-      'worklet'
-      touchfinish.value = false
-      cancelAnimation(offset)
-      runOnJS(pauseLoop)()
-      preAbsolutePos.value = e[strAbso]
-      moveTranstion.value = e[strAbso]
-      moveTime.value = new Date().getTime()
-    })
-    .onTouchesMove((e) => {
-      'worklet'
-      const touchEventData = e.changedTouches[0]
-      const moveDistance = touchEventData[strAbso] - preAbsolutePos.value
-      const eventData = {
-        translation: moveDistance
-      }
-      // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
-      if (!circular.value && !canMove(eventData)) {
-        return
-      }
-      const { isBoundary, resetOffset } = reachBoundary(eventData)
-      if (isBoundary && circular.value && !touchfinish.value) {
-        offset.value = resetOffset
-      } else {
-        offset.value = moveDistance + offset.value
-      }
-      preAbsolutePos.value = touchEventData[strAbso]
-    })
-    .onTouchesUp((e) => {
-      'worklet'
-      const touchEventData = e.changedTouches[0]
-      const moveDistance = touchEventData[strAbso] - moveTranstion.value
-      touchfinish.value = true
-      const eventData = {
-        translation: moveDistance
-      }
-      // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
-      if (!circular.value && !canMove(eventData)) {
-        return
-      }
-      const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
-      if (Math.abs(strVelocity) < longPressRatio) {
-        handleLongPress()
-      } else {
-        handleEnd(eventData)
-      }
-    })
+      .onBegin((e) => {
+        'worklet'
+        touchfinish.value = false
+        cancelAnimation(offset)
+        runOnJS(pauseLoop)()
+        preAbsolutePos.value = e[strAbso]
+        moveTranstion.value = e[strAbso]
+        moveTime.value = new Date().getTime()
+      })
+      .onTouchesMove((e) => {
+        'worklet'
+        const touchEventData = e.changedTouches[0]
+        const moveDistance = touchEventData[strAbso] - preAbsolutePos.value
+        const eventData = {
+          translation: moveDistance
+        }
+        // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
+        if (!circular.value && !canMove(eventData)) {
+          return
+        }
+        const { isBoundary, resetOffset } = reachBoundary(eventData)
+        if (isBoundary && circular.value && !touchfinish.value) {
+          offset.value = resetOffset
+        } else {
+          offset.value = moveDistance + offset.value
+        }
+        preAbsolutePos.value = touchEventData[strAbso]
+      })
+      .onTouchesUp((e) => {
+        'worklet'
+        const touchEventData = e.changedTouches[0]
+        const moveDistance = touchEventData[strAbso] - moveTranstion.value
+        touchfinish.value = true
+        const eventData = {
+          translation: moveDistance
+        }
+        // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
+        if (!circular.value && !canMove(eventData)) {
+          return
+        }
+        const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
+        if (Math.abs(strVelocity) < longPressRatio) {
+          handleLongPress()
+        } else {
+          handleEnd(eventData)
+        }
+      })
     return gesturePan
   }, [])
 
