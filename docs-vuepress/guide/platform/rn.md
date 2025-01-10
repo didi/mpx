@@ -286,12 +286,22 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 在编写Mpx组件时，在特定情况下（处于性能考虑等因素），可能会涉及到混合开发(在Mpx项目内编写RN组件)
 
 ### 使用RN组件
-在Mpx组件内引用RN组件, 需在components属性下进行引用注册。在模板中进行引用，对应组件的属性参考RN，赋值的方式按照Mpx语法进行双括号包裹，组件使用的变量与属性需要通过 REACTHOOKSEXEC方法的返回值的方式进行申明
+在Mpx组件内引用RN组件，采用如下方式
+- **RN组件注册方式**：需在components属性下进行引用注册。
+- **RN组件的属性与事件**：属性与事件参考RN原生支持的属性与事件名，对应赋值方式按照Mpx语法进行双括号包裹，组件使用的值需要通过 REACTHOOKSEXEC方法的返回值的方式进行声明。
+- **RN组件的样式定义**: 组件支持样式属性的透传，通过在RN组件上定义styles即可透传样式
+- **其他功能**: 支持在RN组件内使用slot
 ```javascript
 <template>
     <view>
         <!-- 事件的value需要使用双括号包裹 -->
         <ScrollView onScroll="{{scrollAction}}">
+          <View styles="{{viewStyle}}">
+            <!-- 可混合编写mpx组件 -->
+            <view>我是Mpx组件</view>
+            <!-- 支持在RN组件内部定义插槽 -->
+            <slot name="myslot"></slot>
+          <View>
         </ScrollView>
     </view>
 </template>
@@ -303,13 +313,22 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
             ScrollView
         }
         [REACTHOOKSEXEC](){
-            return {}
+            return {
+              viewStyle: {
+                width: 200,
+                height: 200
+              }
+            }
         }
     })
 </script>
 ```
 ### 使用React hooks
-Mpx提供了hooks的执行机制，通过在Mpx组件内注册REACTHOOKSEXEC方法，保障RN组件的初始化执行
+Mpx提供了hooks的执行机制，通过在Mpx组件内注册REACTHOOKSEXEC方法，保障RN组件的初始化执行。hooks的返回值支持数据与方法
+- 模板上RN组件/Mpx组件的数据渲染
+- 模板上的Props传递
+- 模板上的样式定义
+- 模板上的事件的绑定与透传
 
 ```javascript
 <template>
@@ -345,7 +364,6 @@ createComponent({
 })
 </script>
 ```
-
 ## 能力支持范围
 
 ### 模版语法
