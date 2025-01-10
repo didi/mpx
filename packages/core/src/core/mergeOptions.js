@@ -139,7 +139,6 @@ function extractObservers (options) {
     }
   })
   if (observers) {
-    console.log('observers trigger in this ____')
     Object.keys(observers).forEach(key => {
       const callback = observers[key]
       if (callback) {
