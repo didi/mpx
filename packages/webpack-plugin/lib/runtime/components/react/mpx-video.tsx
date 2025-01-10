@@ -202,7 +202,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   })
 
   function handleProgress (data: OnProgressData) {
-    const { playableDuration, currentTime } = data
+    const { currentTime } = data
     bindtimeupdate && bindtimeupdate(
       getCustomEvent('timeupdate',
         {},
