@@ -1,12 +1,11 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { warn } from '@mpxjs/utils'
+import { RegionProps } from './type'
 import { regionData } from './regionData'
-import { RegionObj, RegionProps } from './type'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
 import { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { useUpdateEffect } from '../utils'
+import { extendObject, useUpdateEffect } from '../utils'
 
 const styles = StyleSheet.create({
   pickerContainer: {
@@ -152,11 +151,15 @@ const PickerTime = forwardRef<
     return formatObj.rangeArr?.map((item, index) => (
         // @ts-expect-error ignore
         <MpxPickerViewColumn key={index}>
-          {item.map((item, index) => (
-            <Text key={index} style={styles.pickerItem}>
+          {item.map((item, index) => {
+            const len = item.length
+            const style = extendObject({}, styles.pickerItem, {
+              fontSize: len > 5 ? 21 - len : 16
+            })
+            return <Text key={index} style={style}>
               {item}
             </Text>
-          ))}
+          })}
         </MpxPickerViewColumn>
     ))
   }
