@@ -199,7 +199,7 @@ RN:
 #### var()
 var() 函数可以插入一个自定义属性（有时也被称为“CSS 变量”）的值，用来代替属性值部分。
 
-var(<custom-property-name> , <declaration-value>? )：函数的第一个参数是要替换的自定义属性的名称。函数的第二个参数是可选的，用作回退值。如果第一个参数引用的自定义属性无效，则该函数将使用第二个值。
+`var(<custom-property-name> , <declaration-value>? )`：函数的第一个参数是要替换的自定义属性的名称。函数的第二个参数是可选的，用作回退值。如果第一个参数引用的自定义属性无效，则该函数将使用第二个值。
 
 > 备注
 > - 自定义属性的回退值允许使用逗号。例如，var(--foo, red, blue) 将 red, blue 同时指定为回退值（在第一个逗号之后到函数结尾前的值都会被认为是回退值）
@@ -442,7 +442,6 @@ createComponent({
 3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
 4. 由于 tap 事件是由 touchend 事件模拟实现，所以如果子组件绑定了 catchtap，那么父组件的 touchend 事件将不会响应。同理如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
 5. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
-
 
 ### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
@@ -1089,7 +1088,6 @@ API
 
 #### 自定义组件
 
-<<<<<<< HEAD
 ### 样式规则
 #### position
 设置元素的定位样式
@@ -1239,13 +1237,13 @@ flex-grow flex-shrink flex-basis 的简写，和所有简写属性一致，仅�
 可以使用一个，两个或三个值来指定 flex 属性。
 
 **单值语法**，值必须是以下之一：
-- 一个 <flex-grow> 的有效值：此时简写会扩展为 flex: <flex-grow> 1 0。
-- 一个 <flex-basis> 的有效值：此时简写会扩展为 flex: 1 1 <flex-basis>。
+- 一个 `<flex-grow>` 的有效值：此时简写会扩展为 `flex: <flex-grow> 1 0`。
+- 一个 `<flex-basis>` 的有效值：此时简写会扩展为 `flex: 1 1 <flex-basis>`。
 - 关键字 none/initial 。
 
 **双值语法**，第一个值必须是一个 flex-grow 的有效值，第二个值必须是以下之一：
-- 一个 flex-shrink 的有效值：此时简写会扩展为 flex: <flex-grow> <flex-shrink> 0。
-- 一个 flex-basis 的有效值：此时简写会扩展为 flex: <flex-grow> 1 <flex-basis>。
+- 一个 flex-shrink 的有效值：此时简写会扩展为 flex: `<flex-grow> <flex-shrink> 0`。
+- 一个 flex-basis 的有效值：此时简写会扩展为 flex: `<flex-grow> 1 <flex-basis>`。
 
 **三值语法**，值必须按照以下顺序指定：
 - 一个 flex-grow 的有效值。
@@ -1798,7 +1796,7 @@ transform-origin: right bottom 20px;
 ##### 值类型
 number
 - 0	元素完全透明 (即元素不可见).
-- 任何一个位于 0.0-1.0 之间的 <number>	元素半透明 (即元素后面的背景可见).
+- 任何一个位于 0.0-1.0 之间的 `<number>`	元素半透明 (即元素后面的背景可见).
 - 1	元素完全不透明 (即元素后面的背景不可见).
 > 注意事项：在 RN 上设置节点 opacity: 0; 时该节点不会触发事件响应 
 ##### 代码示例
@@ -2163,7 +2161,7 @@ import apiProxy from '@didi/mpxjs-api-proxy'
 mpx.use(apiProxy, { usePromise: true })
 ```
 需要在mpx项目中需要配置externals
-```
+```bash
 externals: {
   ...
   '@react-native-async-storage/async-storage': '@react-native-async-storage/async-storage',
@@ -2189,7 +2187,7 @@ externals: {
 | vibrateShort、<br/> vibrateLong                                                                                                                                                                     | react-native-haptic-feedback              |
 
 在RN 项目中，如果是以全量引入api-proxy的方法需要在RN环境中执行以下所有的命令，如果只是使用单个api的能力，可以参考上表来判断安装对应的包
-```
+```bash
 // 安装api-proxy下所用到的依赖 如果
 npm i @react-native-async-storage/async-storage
 npm i @react-native-clipboard/clipboard
@@ -2207,7 +2205,7 @@ npm i react-native-get-location
 
 android下需要做如下配置：
 安装react-native-get-location包后，需要在AndroidManifest.xml中定义位置权限，[参考文档](https://www.npmjs.com/package/react-native-get-location)
-```
+```html
 <!-- Define ACCESS_FINE_LOCATION if you will use enableHighAccuracy=true  -->
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
@@ -2224,7 +2222,7 @@ import com.mkuczera.RNReactNativeHapticFeedbackPackage;
 
 修改设置,将下面的配置添加到android/settings.gradle文件中
 
-```
+```js
 include ':react-native-haptic-feedback'
 project(':react-native-haptic-feedback').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-haptic-feedback/android')
 ```
