@@ -459,6 +459,10 @@ useFetch().fetch({
 | ------------- |:-----:| :-----:| :-----: | :-----:  |
 | getSystemInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getSystemInfoSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getDeviceInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getWindowInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getLaunchOptionsSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getEnterOptionsSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | nextTick |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
 | showToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
 | hideToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
@@ -466,10 +470,47 @@ useFetch().fetch({
 | showLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
 | hideLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
 | showActionSheet |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| createAnimation |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| onAppShow |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| onAppHide |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| offAppShow |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| offAppHide |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| onError |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| offError |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| onUnhandledRejection |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| offUnhandledRejection |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| createInnerAudioContext |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| closeBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| createBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| onBLEConnectionStateChange |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| createIntersectionObserver |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| getExtConfig |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getExtConfigSync |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| onKeyboardHeightChange |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| offKeyboardHeightChange |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| hideKeyboard |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| getLocation |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| openLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| chooseLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| pageScrollTo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| stopPullDownRefresh |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| startPullDownRefresh |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| redirectTo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| navigateTo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| navigateBack |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| reLaunch |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| switchTab |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| setTabBarItem |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| setTabBarStyle |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| showTabBar |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| hideTabBar |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| vibrateShort |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| vibrateLong |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 | showNavigationBarLoading |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | hideNavigationBarLoading  |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| setNavigationBarTitle |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| setNavigationBarColor |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| setNavigationBarTitle |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| setNavigationBarColor |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | request |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | downloadFile  |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|:x:|
 | uploadFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
@@ -487,6 +528,7 @@ useFetch().fetch({
 | previewImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | compressImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | chooseImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getImageInfo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | saveFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | removeSavedFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
@@ -495,8 +537,8 @@ useFetch().fetch({
 | addPhoneContact |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | setClipboardData |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 | getClipboardData |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| setScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| setScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| getScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 | makePhoneCall |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 | stopAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | startAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
@@ -522,6 +564,7 @@ useFetch().fetch({
 | getNetworkType |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | onNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | offNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| createVideoContext |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
 ## webview-bridge
 Mpx 支持小程序跨平台后，多个平台的小程序里都提供了 webview 组件，webview 打开的 H5 页面可以通过小程序提供的 API 来与小程序通信以及调用一些小程序的能力，但是各家小程序对于 webview 提供的API是不一样的。
 
