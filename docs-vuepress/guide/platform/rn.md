@@ -122,7 +122,7 @@
 ### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
 
-RN环境基础组件通用属性
+基础组件通用属性
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
@@ -131,6 +131,10 @@ RN环境基础组件通用属性
 | parent-font-size		  | Number |         | 父组件字体大小，主要用于百分比计算的场景，如 font-size: 100%|
 | parent-width		  | Number  |         | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度|
 | parent-height		  | Number  |         | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度|
+
+以上基础组件的通用属性仅在 React Native 环境中支持。在跨平台输出到小程序或 Web 时，这些属性将无法使用。
+
+由于 view、text、scroll-view、image 和 input 组件都是基于 React Native 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
 
 #### view
 视图容器。
@@ -143,6 +147,7 @@ RN环境基础组件通用属性
 | hover-start-time   | number  |     50    | 按住后多久出现点击态，单位毫秒|
 | hover-stay-time	  | number  |     400    | 手指松开后点击态保留时间，单位毫秒	 |
 | enable-offset		  | Number  |     false    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+
 
 事件
 
