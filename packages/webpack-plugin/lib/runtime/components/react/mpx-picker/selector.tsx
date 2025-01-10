@@ -8,6 +8,7 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 const styles = StyleSheet.create({
   pickerContainer: {
     height: 240,
+    paddingHorizontal: 10,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10
   },

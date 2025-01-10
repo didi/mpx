@@ -9,7 +9,10 @@ import { useUpdateEffect } from '../utils'
 
 const styles = StyleSheet.create({
   pickerContainer: {
+    width: 120,
     height: 240,
+    alignSelf: 'center',
+    paddingHorizontal: 10,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10
   },
@@ -17,16 +20,14 @@ const styles = StyleSheet.create({
     height: 45
   },
   pickerItemHour: {
-    fontSize: 18,
+    fontSize: 20,
     lineHeight: 45,
-    textAlign: 'right',
-    paddingRight: 10
+    textAlign: 'center'
   },
   pickerItemMinute: {
-    fontSize: 18,
+    fontSize: 20,
     lineHeight: 45,
-    textAlign: 'left',
-    paddingLeft: 10
+    textAlign: 'center'
   }
 })
 
@@ -74,8 +75,6 @@ const calibrateTime = (
 const hoursRange = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'))
 const minutesRange = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'))
 
-console.log('[mpx-picker-time] ===>', hoursRange, minutesRange)
-
 const PickerTime = forwardRef<
     HandlerRef<View, TimeProps>,
     TimeProps
@@ -88,11 +87,8 @@ const PickerTime = forwardRef<
   const endArray = time2Array(end, [23, 59])
   const [formatValue, setFormatValue] = useState<TimeArray>(calibrateTime(value, startArray, endArray))
 
-  console.log('[mpx-picker-time] --->', 'startArray', startArray, 'endArray', endArray, 'formatValue', formatValue)
-
   useUpdateEffect(() => {
     const calibratedValue = calibrateTime(value, startArray, endArray)
-    console.log('[mpx-picker-time] --->', 'value', value, 'res', calibratedValue)
     setFormatValue(calibratedValue)
   }, [value])
 
@@ -117,7 +113,6 @@ const PickerTime = forwardRef<
   const onChange = (e: { detail: { value: TimeArray } }) => {
     const { value } = e.detail
     const calibratedValue = calibrateTime(value, startArray, endArray)
-    console.log('[mpx-picker-time] onChange --->', 'value', value, 'formatValue', formatValue, 'calibratedValue', calibratedValue)
     bindchange?.({ detail: { value: time2String(calibratedValue) } })
 
     if (value[0] !== formatValue[0] || value[1] !== formatValue[1]) {
