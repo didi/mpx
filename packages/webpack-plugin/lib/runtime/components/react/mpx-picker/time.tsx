@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useImperativeHandle, useRef, useState, useEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { TimeProps } from './type'
@@ -78,9 +78,16 @@ const PickerTime = forwardRef<
   console.log('[mpx-picker-time] --->', 'value', value, 'start', start, 'end', end)
 
   const nodeRef = useRef(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
   const startArray = time2Array(start)
   const endArray = time2Array(end, [23, 59])
   const [formatValue, setFormatValue] = useState<TimeArray>(calibrateTime(value, startArray, endArray))
+
+  useEffect(() => {
+    return () => {
+      timerRef.current && clearTimeout(timerRef.current)
+    }
+  }, [])
 
   useUpdateEffect(() => {
     const calibratedValue = calibrateTime(value, startArray, endArray)
@@ -114,7 +121,8 @@ const PickerTime = forwardRef<
       setFormatValue(value)
     }
     if (value[0] !== calibratedValue[0] || value[1] !== calibratedValue[1]) {
-      setTimeout(() => setFormatValue(calibratedValue))
+      timerRef.current && clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => setFormatValue(calibratedValue))
     }
   }
 
