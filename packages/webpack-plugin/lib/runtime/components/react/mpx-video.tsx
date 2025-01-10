@@ -52,7 +52,7 @@
  * ✔ bindfullscreenchange
  * ✔ bindwaiting
  * ✔ binderror
- * ✔ bindprogress
+ * ✘ bindprogress
  * ✔ bindloadedmetadata
  * ✔ bindcontrolstoggle(only android)
  * ✘ bindenterpictureinpicture
@@ -103,7 +103,6 @@ interface VideoProps {
   bindfullscreenchange?: (event: Record<string, any>) => void;
   bindwaiting?: (event: Record<string, any>) => void;
   binderror?: (event: Record<string, any>) => void;
-  bindprogress?: (event: Record<string, any>) => void;
   bindloadedmetadata?: (event: Record<string, any>) => void;
   bindcontrolstoggle?: (event: Record<string, any>) => void;
   bindseekcomplete?: (event: Record<string, any>) => void;
@@ -142,7 +141,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     bindfullscreenchange,
     bindwaiting,
     binderror,
-    bindprogress,
     bindloadedmetadata,
     bindcontrolstoggle,
     bindseekcomplete,
@@ -218,27 +216,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
         propsRef.current
       )
     )
-    // 计算缓冲的百分比
-    const duration = videoInfoRef.current.duration || 0
-    let currentBufferedPercentage = (playableDuration / duration) * 100
-    // playableDuration 比 duration 更精确，会精确到小数，可能会出现大于 100 的情况
-    if (currentBufferedPercentage > 100) {
-      currentBufferedPercentage = 100
-    }
-    if (currentBufferedPercentage !== bufferedPercentage.current) {
-      bufferedPercentage.current = currentBufferedPercentage
-      bindprogress && bindprogress(
-        getCustomEvent('progress',
-          {},
-          {
-            detail: {
-              buffered: currentBufferedPercentage || 0
-            },
-            layoutRef
-          },
-          propsRef.current
-        ))
-    }
   }
 
   function handleEnd () {
@@ -252,6 +229,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   }
 
   function handleSeekcomplete ({ seekTime }: OnSeekData) {
+    // 手动拖拽进度条场景，android 可以触发，ios 不可以
     bindseekcomplete!(
       getCustomEvent('seekcomplete',
         {},
@@ -371,7 +349,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
         fullscreenAutorotate: enableAutoRotation,
         resizeMode: objectFit === 'fill' ? 'stretch' : objectFit,
         poster: controls ? poster : '',
-        onProgress: (bindtimeupdate || bindprogress) && handleProgress,
+        onProgress: bindtimeupdate && handleProgress,
         onEnd: bindended && handleEnd,
         onError: binderror && handleError,
         onBuffer: bindwaiting && handleWaiting,
@@ -399,7 +377,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
       'bindfullscreenchange',
       'bindwaiting',
       'binderror',
-      'bindprogress',
       'bindloadedmetadata',
       'bindcontrolstoggle',
       'bindseekcomplete'
