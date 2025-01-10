@@ -671,8 +671,8 @@ movable-view的可移动区域。
 
 | 属性名                   | 类型     | 默认值         | 说明                                                      |
 | ----------------------- | ------- | ------------- | --------------------------------------------------------- |
-| size                    | String  | `default`     | 按钮的大小                                                  |
-| type                    | String  | `default`     | 按钮的样式类型                                               |
+| size                    | String  | `default`     | 按钮的大小，`default`：默认大小，`mini`：小尺寸                                                  |
+| type                    | String  | `default`     | 按钮的样式类型，`primary`：绿色，`default`：白色，`warn`：红色                                               |
 | plain                   | Boolean | `false`       | 按钮是否镂空，背景色透明                                       |
 | disabled                | Boolean | `false`       | 是否禁用                                                    |
 | loading                 | Boolean | `false`       | 名称前是否带 loading 图标                                     |
@@ -763,7 +763,7 @@ movable-view的可移动区域。
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | value                   | String  |               | 输入框的初始内容                                              |
-| type                    | String  | `text`        | input 的类型，不支持 `safe-password`、`nickname`              |
+| type                    | String  | `text`        | input 的类型，可选值为 `text`、`number`、`idcard`、`digit`，不支持 `safe-password`、`nickname`              |
 | password                | Boolean | `false`       | 是否是密码类型                                               |
 | placeholder             | String  |               | 输入框为空时占位符                                            |
 | placeholder-class       | String  |               | 指定 placeholder 的样式类，仅支持 color 属性                   |
@@ -772,7 +772,7 @@ movable-view的可移动区域。
 | maxlength               | Number  | `140`         | 最大输入长度，设置为 -1 的时候不限制最大长度                     |
 | auto-focus              | Boolean | `false`       | (即将废弃，请直接使用 focus )自动聚焦，拉起键盘                  |
 | focus                   | Boolean | `false`       | 获取焦点                                                    |
-| confirm-type            | String  | `done`        | 设置键盘右下角按钮的文字，仅在 type='text' 时生效               |
+| confirm-type            | String  | `done`        | 设置键盘右下角按钮的文字，仅在 type='text' 时生效，可选值为 `send`、`search`、`next`、`go`、`done`              |
 | confirm-hold            | Boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
 | cursor                  | Number  |               | 指定 focus 时的光标位置                                      |
 | cursor-color            | String  |               | 光标颜色                                                    |
@@ -819,7 +819,7 @@ movable-view的可移动区域。
 | auto-focus              | Boolean | `false`       | (即将废弃，请直接使用 focus )自动聚焦，拉起键盘                  |
 | focus                   | Boolean | `false`       | 获取焦点                                                    |
 | auto-height             | Boolean | `false`       | 是否自动增高，设置 auto-height 时，style.height不生效          |
-| confirm-type            | String  | `done`        | 设置键盘右下角按钮的文字，不支持 `return`                       |
+| confirm-type            | String  | `done`        | 设置键盘右下角按钮的文字，可选值为 `send`、`search`、`next`、`go`、`done`，不支持 `return`                       |
 | confirm-hold            | Boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
 | cursor                  | Number  |               | 指定 focus 时的光标位置                                      |
 | cursor-color            | String  |               | 光标颜色                                                    |
@@ -859,7 +859,9 @@ movable-view的可移动区域。
 | ----------------------- | ------------------| ------------------ | ------------------------------------|
 | value                   | Array\<number\>   | `[]`           | 数组中的数字依次表示 *picker-view* 内的 [*picker-view-column*](#picker-view-column) 选择的第几项（下标从 0 开始），数字大于 [*picker-view-column*](#picker-view-column) 可选项长度时，选择最后一项。|
 | indicator-style         | String          |                | 设置选择器中间选中框的样式 |
+| indicator-class         | String          |                | 设置选择器中间选中框的类名 |
 | mask-style              | String          |                | 设置蒙层的样式           |
+| mask-class              | String          |                | 设置蒙层的类名           |
 
 - 事件
 
@@ -885,10 +887,20 @@ movable-view的可移动区域。
 
 属性
 
-| 属性名                  | 类型         | 默认值             | 说明                           |
+| 属性名                  | 类型         | 默认值             | 说明                          |
 | -----------------------| ------------| ------------------ | -----------------------------|
-| mode                   | string      | `selector`         | 选择器类型                     |
+| mode                   | string      | `selector`         | 选择器类型，合法值如下表所示      |
 | disabled               | boolean     | `false`            | 是否禁用                       |
+
+- `mode` 合法值
+
+  | 合法值         | 说明         |
+  | --------------| ------------|
+  | selector      | 普通选择器    |
+  | multiSelector | 多列选择器    |
+  | time          | 时间选择器    |
+  | date          | 日期选择器    |
+  | region        | 省市区选择器  |
 
 公共事件
 
@@ -967,7 +979,7 @@ movable-view的可移动区域。
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | src                     | String  | `false`       | 图片资源地址及 base64 格式数据 |
-| mode                    | String  | `scaleToFill` | 图片裁剪、缩放的模式，适配微信 image 所有 mode 格式              |
+| mode                    | String  | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right`             |
 | enable-offset          | Boolean  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 | enable-fast-image          | Boolean  | `false`   | 开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 
@@ -1049,7 +1061,7 @@ movable-view的可移动区域。
 | bindtouchmove	    | eventhandle  | 手指触摸后移动		|
 | bindtouchend	    | eventhandle  | 手指触摸动作结束	|
 | bindtouchcancel	    | eventhandle  | 手指触摸动作被打断	|
-| bindlongtap	    | eventhandle  | 手指长按 300ms 之后触发	|
+| bindlongpress    | eventhandle  | 手指长按 350ms 之后触发	|
 | binderror	    | eventhandle  | 当发生错误时触发 error 事件， detail = {errMsg}	|
 
 API
