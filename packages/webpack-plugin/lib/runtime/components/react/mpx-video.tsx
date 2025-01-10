@@ -168,8 +168,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
 
   const propsRef = useRef({})
 
-  const bufferedPercentage = useRef<undefined|number>()
-
   propsRef.current = props
 
   const { normalStyle, hasSelfPercent, setWidth, setHeight } =
@@ -297,7 +295,6 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     ))
   }
 
-  // 处理错误
   function handleError ({ error }: OnVideoErrorData) {
     binderror && binderror(getCustomEvent('play', {}, { detail: { errMsg: error.localizedFailureReason }, layoutRef }, propsRef.current))
   }
