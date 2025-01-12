@@ -45,8 +45,8 @@ import {
   NativeSyntheticEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { GestureDetector } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHoverStyle } from './utils'
+import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -223,7 +223,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const formContext = useContext(FormContext)
 
-  const { isHover, enableHoverStyle, gesture } = useHoverStyle({ hoverStyle, hoverStartTime, hoverStayTime, disabled })
+  const enableHover = hoverClass !== 'none'
+  const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime, disabled })
 
   let submitFn: () => void | undefined
   let resetFn: () => void | undefined
@@ -235,15 +236,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const isMiniSize = size === 'mini'
 
-  const applyHoverEffect = isHover && hoverClass !== 'none'
-
   const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
 
-  const normalBackgroundColor = disabled ? disabledColor : applyHoverEffect || loading ? hoverColor : color
+  const normalBackgroundColor = disabled ? disabledColor : isHover || loading ? hoverColor : color
 
   const plainBorderColor = disabled
     ? 'rgba(0, 0, 0, .2)'
-    : applyHoverEffect
+    : isHover
       ? `rgba(${plainColor},.6)`
       : `rgb(${plainColor})`
 
@@ -251,14 +250,14 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
 
   const plainTextColor = disabled
     ? 'rgba(0, 0, 0, .2)'
-    : applyHoverEffect
+    : isHover
       ? `rgba(${plainColor}, .6)`
       : `rgb(${plainColor})`
 
   const normalTextColor =
     type === 'default'
-      ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
-      : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
+      ? `rgba(0, 0, 0, ${disabled ? 0.3 : isHover || loading ? 0.6 : 1})`
+      : `rgba(255 ,255 ,255 , ${disabled || isHover || loading ? 0.6 : 1})`
 
   const viewStyle = {
     borderWidth: 1,
@@ -287,7 +286,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     {},
     defaultStyle,
     style,
-    applyHoverEffect ? hoverStyle : {}
+    isHover ? hoverStyle : {}
   )
 
   const {
@@ -414,8 +413,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     )
   )
 
-  return enableHoverStyle
-    ? createElement(GestureDetector, { gesture }, baseButton)
+  return enableHover
+    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, baseButton)
     : baseButton
 })
 

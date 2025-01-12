@@ -367,25 +367,10 @@ function usePageStatus (navigation, pageId) {
     const blurSubscription = navigation.addListener('blur', () => {
       pageStatusMap[pageId] = 'hide'
     })
-    const transitionEndSubscription = navigation.addListener('transitionEnd', () => {
-      if (global.__navigationHelper.transitionEndCallback?.length) {
-        global.__navigationHelper.transitionEndCallback.forEach((callback) => {
-          if (isFunction(callback)) {
-            callback()
-          }
-        })
-        global.__navigationHelper.transitionEndCallback = null
-      }
-    })
-    const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
-      pageStatusMap[pageId] = value
-    })
 
     return () => {
       focusSubscription()
       blurSubscription()
-      unWatchAppFocusedState()
-      transitionEndSubscription()
       del(pageStatusMap, pageId)
     }
   }, [navigation])
@@ -456,8 +441,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useEffect(() => {
       if (type === 'page') {
-        if (!global.__mpxAppLaunched && global.__mpxAppOnLaunch) {
+        if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
           global.__mpxAppOnLaunch(props.navigation)
+        }
+        // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+        if (isObject(props.route.params)) {
+          for (let key in props.route.params) {
+            props.route.params[key] = encodeURIComponent(props.route.params[key])
+          }
         }
         proxy.callHook(ONLOAD, [props.route.params || {}])
       }

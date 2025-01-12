@@ -10,6 +10,13 @@ import Animated, {
 
 function showActionSheet (options = {}) {
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
+  if (itemList.length > 6) {
+    const result = {
+      errMsg: 'showActionSheet:fail parameter error: itemList should not be large than 6'
+    }
+    failHandle(result, fail, complete)
+    return
+  }
   const windowInfo = getWindowInfo()
   const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
   let actionSheetKey = null

@@ -680,3 +680,67 @@ export function useHoverStyle ({ hoverStyle, hoverStartTime, hoverStayTime, disa
     enableHoverStyle
   }
 }
+
+export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled } : { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
+  const enableHoverRef = useRef(enableHover)
+  if (enableHoverRef.current !== enableHover) {
+    error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
+  }
+
+  if (!enableHoverRef.current) return { isHover: false }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const gestureRef = useContext(ScrollViewContext).gestureRef
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [isHover, setIsHover] = useState(false)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const dataRef = useRef<{
+    startTimer?: ReturnType<typeof setTimeout>
+    stayTimer?: ReturnType<typeof setTimeout>
+  }>({})
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    return () => {
+      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    }
+  }, [])
+
+  const setStartTimer = () => {
+    if (disabled) return
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.startTimer = setTimeout(() => {
+      setIsHover(true)
+    }, +hoverStartTime)
+  }
+
+  const setStayTimer = () => {
+    if (disabled) return
+    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.stayTimer = setTimeout(() => {
+      setIsHover(false)
+    }, +hoverStayTime)
+  }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
+      .onTouchesDown(() => {
+        'worklet'
+        runOnJS(setStartTimer)()
+      })
+      .onTouchesUp(() => {
+        'worklet'
+        runOnJS(setStayTimer)()
+      })
+  }, [])
+
+  if (gestureRef) {
+    gesture.simultaneousWithExternalGesture(gestureRef)
+  }
+
+  return {
+    isHover,
+    gesture
+  }
+}

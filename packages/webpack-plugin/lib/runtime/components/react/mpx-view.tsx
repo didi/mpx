@@ -12,10 +12,10 @@ import useAnimationHooks from './useAnimationHooks'
 import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHoverStyle } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
 import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
-import { GestureDetector } from 'react-native-gesture-handler'
+import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -552,7 +552,7 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
       : undefined)
 }
 
-function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
+function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -653,11 +653,6 @@ interface WrapChildrenConfig {
 }
 
 function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps, innerStyle, enableFastImage }: WrapChildrenConfig) {
-  enableBackground = enableBackground || !!backgroundStyle
-  const enableBackgroundRef = useRef(enableBackground)
-  if (enableBackgroundRef.current !== enableBackground) {
-    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
-  }
   const children = wrapChildren(props, {
     hasVarDec,
     varContext,
@@ -666,14 +661,15 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? wrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(viewProps)
-  const {
+  let {
     style = {},
     'hover-style': hoverStyle,
     'hover-start-time': hoverStartTime = 50,
@@ -699,7 +695,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       }
     : {}
 
-  const { isHover, enableHoverStyle, gesture } = useHoverStyle({ hoverStyle, hoverStartTime, hoverStayTime })
+  const enableHover = !!hoverStyle
+  const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
@@ -719,6 +716,12 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+
+  enableBackground = enableBackground || !!backgroundStyle
+  const enableBackgroundRef = useRef(enableBackground)
+  if (enableBackgroundRef.current !== enableBackground) {
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+  }
 
   const nodeRef = useRef(null)
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
@@ -757,7 +760,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const childNode = wrapWithChildren(props, {
     hasVarDec,
-    enableBackground,
+    enableBackground: enableBackgroundRef.current,
     textStyle,
     backgroundStyle,
     varContext: varContextRef.current,
@@ -770,8 +773,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
-  return enableHoverStyle
-    ? createElement(GestureDetector, { gesture }, BaseComponent)
+  return enableHover
+    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, BaseComponent)
     : BaseComponent
 })
 
