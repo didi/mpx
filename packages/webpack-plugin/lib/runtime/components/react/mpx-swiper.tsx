@@ -387,7 +387,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }
 
   function resumeLoop () {
-    if (props.autoplay) {
+    if (props.autoplay && children.length > 1) {
       loop()
     }
   }
