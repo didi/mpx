@@ -139,7 +139,7 @@ const getLaunchOptionsSync = function () {
     throwSSRWarning('getLaunchOptionsSync API is running in non browser environments')
     return
   }
-  return global.__mpxEnterOptions || {}
+  return global.__mpxLaunchOptions || {}
 }
 
 export {

@@ -23,7 +23,7 @@ const PortalConsumer = ({ manager, children } :PortalConsumerProps): JSX.Element
     const curPageId = navigation?.pageId
     keyRef.current = manager.mount(children, undefined, curPageId)
     return () => {
-      manager.unmount(keyRef.current, curPageId)
+      manager.unmount(keyRef.current)
     }
   }, [])
   return null
