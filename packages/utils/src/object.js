@@ -113,7 +113,7 @@ function diffAndCloneA (a, b) {
   }
 }
 
-function proxy (target, source, keys, readonly, onConflict, markRawKeys) {
+function proxy (target, source, keys, readonly, onConflict) {
   if (!global.__mpx) {
     console.warn('[Mpx utils warn]: Can not find "global.__mpx", "proxy" may encounter some potential problems!')
   }
@@ -137,9 +137,6 @@ function proxy (target, source, keys, readonly, onConflict, markRawKeys) {
         if (global.__mpx) {
           const isRef = global.__mpx.isRef
           // 对reactive对象代理时不需要处理ref解包
-          if (markRawKeys.test(key)) {
-            global.__mpx.markRaw(val)
-          }
           if (!global.__mpx.isReactive(source)) {
             const oldVal = source[key]
             if (isRef(oldVal) && !isRef(val)) {
