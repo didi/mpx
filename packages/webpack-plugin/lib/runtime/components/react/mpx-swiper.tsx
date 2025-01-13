@@ -221,7 +221,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const iStep = dir === 'x' ? realWidth : realHeight
     step.value = iStep
     if (touchfinish.value) {
-      offset.value = getOffset(currentIndex.value, iStep)
+      offset.value = getOffset(props.current || 0, iStep)
       pauseLoop()
       resumeLoop()
     }
