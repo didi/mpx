@@ -12,8 +12,10 @@ import useAnimationHooks from './useAnimationHooks'
 import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
+import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
+import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -550,7 +552,7 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
       : undefined)
 }
 
-function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
+function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -641,7 +643,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, 
 
 interface WrapChildrenConfig {
   hasVarDec: boolean
-  enableBackground: boolean
+  enableBackground?: boolean
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
@@ -659,7 +661,8 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? wrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
@@ -682,8 +685,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     animation
   } = props
 
-  const [isHover, setIsHover] = useState(false)
-
   // 默认样式
   const defaultStyle: ExtendedViewStyle = style.display === 'flex'
     ? {
@@ -693,6 +694,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
         flexWrap: 'nowrap'
       }
     : {}
+
+  const enableHover = !!hoverStyle
+  const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
   const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
@@ -716,52 +720,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
-    throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
   const nodeRef = useRef(null)
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
     style: normalStyle
   })
-
-  const dataRef = useRef<{
-    startTimer?: ReturnType<typeof setTimeout>
-    stayTimer?: ReturnType<typeof setTimeout>
-  }>({})
-
-  useEffect(() => {
-    return () => {
-      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    }
-  }, [])
-
-  const setStartTimer = () => {
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.startTimer = setTimeout(() => {
-      setIsHover(true)
-    }, +hoverStartTime)
-  }
-
-  const setStayTimer = () => {
-    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.stayTimer = setTimeout(() => {
-      setIsHover(false)
-    }, +hoverStayTime)
-  }
-
-  function onTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchstart } = props
-    bindtouchstart && bindtouchstart(e)
-    setStartTimer()
-  }
-
-  function onTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchend } = props
-    bindtouchend && bindtouchend(e)
-    setStayTimer()
-  }
 
   const {
     layoutRef,
@@ -771,30 +736,19 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
 
-  enableAnimation = enableAnimation || !!animation
-  const enableAnimationRef = useRef(enableAnimation)
-  if (enableAnimationRef.current !== enableAnimation) {
-    throw new Error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
-  const finalStyle = enableAnimation
-    ? [viewStyle, useAnimationHooks({
-        animation,
-        style: viewStyle
-      })]
-    : viewStyle
+  const { enableStyleAnimation, animationStyle } = useAnimationHooks({
+    enableAnimation,
+    animation,
+    style: viewStyle
+  })
+
   const innerProps = useInnerProps(
     props,
     extendObject({
       ref: nodeRef,
-      style: finalStyle
+      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
     },
-    layoutProps,
-    hoverStyle
-      ? {
-          bindtouchstart: onTouchStart,
-          bindtouchend: onTouchEnd
-        }
-      : {}
+    layoutProps
     ), [
       'hover-start-time',
       'hover-stay-time',
@@ -815,9 +769,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableFastImage
   })
 
-  return enableAnimation
+  const BaseComponent = enableStyleAnimation
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
+
+  return enableHover
+    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, BaseComponent)
+    : BaseComponent
 })
 
 _View.displayName = 'MpxView'

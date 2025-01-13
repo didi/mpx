@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { reactive, set, del } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -52,20 +52,18 @@ function createEffect (proxy, components) {
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(innerCreateElement, getComponent)
+    return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
   }, () => queueJob(update), proxy.scope)
   // render effect允许自触发
   proxy.toggleRecurse(true)
 }
 
-function getRootProps (props) {
+function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
-    if (hasOwn(props, key)) {
-      const match = /^(bind|catch|capture-bind|capture-catch|style|enable-var):?(.*?)(?:\.(.*))?$/.exec(key)
-      if (match) {
-        rootProps[key] = props[key]
-      }
+    const altKey = dash2hump(key)
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+      rootProps[key] = props[key]
     }
   }
   return rootProps
@@ -367,14 +365,10 @@ function usePageStatus (navigation, pageId) {
     const blurSubscription = navigation.addListener('blur', () => {
       pageStatusMap[pageId] = 'hide'
     })
-    const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
-      pageStatusMap[pageId] = value
-    })
 
     return () => {
       focusSubscription()
       blurSubscription()
-      unWatchAppFocusedState()
       del(pageStatusMap, pageId)
     }
   }, [navigation])
@@ -444,7 +438,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useEffect(() => {
       if (type === 'page') {
-        if (!global.__mpxAppLaunched && global.__mpxAppOnLaunch) {
+        if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
           global.__mpxAppOnLaunch(props.navigation)
         }
         proxy.callHook(ONLOAD, [props.route.params || {}])
@@ -474,7 +468,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
     if (root && root.props.ishost) {
-      const rootProps = getRootProps(props)
+      // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
+      const rootProps = getRootProps(props, validProps)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
       // update root props
       return cloneElement(root, rootProps)
@@ -560,10 +555,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
               ref: rootRef,
-              onLayout,
-              onTouchStart: () => {
-                ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
-              }
+              onLayout
             },
             createElement(RouteContext.Provider,
               {
