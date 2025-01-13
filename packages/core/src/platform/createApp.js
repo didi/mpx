@@ -38,7 +38,13 @@ export default function createApp (options, config = {}) {
     builtInMixins.push({
       beforeCreate () {
         // for vue provide vm access
-        Object.assign(this, appData)
+        Object.assign(this, appData, Mpx.prototype)
+        if (isBrowser) {
+          rawOptions.onShow && global.__mpxAppCbs.show.push(rawOptions.onShow.bind(this))
+          rawOptions.onHide && global.__mpxAppCbs.hide.push(rawOptions.onHide.bind(this))
+          rawOptions.onError && global.__mpxAppCbs.error.push(rawOptions.onError.bind(this))
+          rawOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(rawOptions.onUnhandledRejection.bind(this))
+        }
       },
       created () {
         const current = this.$root.$options?.router?.currentRoute || {}
@@ -52,7 +58,7 @@ export default function createApp (options, config = {}) {
         // web不分冷启动和热启动
         global.__mpxEnterOptions = options
         global.__mpxLaunchOptions = options
-        rawOptions.onLaunch && rawOptions.onLaunch.call(appData, options)
+        rawOptions.onLaunch && rawOptions.onLaunch.call(this, options)
         global.__mpxAppCbs.show.forEach((cb) => {
           cb(options)
         })
@@ -61,6 +67,7 @@ export default function createApp (options, config = {}) {
   } else {
     builtInMixins.push({
       onLaunch () {
+        Object.assign(this, Mpx.prototype)
         initAppProvides(rawOptions.provide, this)
       }
     })
@@ -74,12 +81,6 @@ export default function createApp (options, config = {}) {
         console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
       }
       return appData
-    }
-    if (isBrowser) {
-      defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appData))
-      defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appData))
-      defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appData))
-      defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appData))
     }
     global.__mpxOptionsMap = global.__mpxOptionsMap || {}
     global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
