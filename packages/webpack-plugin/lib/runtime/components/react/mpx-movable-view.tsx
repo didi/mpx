@@ -343,17 +343,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     props.onLayout && props.onLayout(e)
   }
 
-  const extendEvent = useCallback((e: any, obj?: Record<string, any>) => {
+  const extendEvent = useCallback((e: any, type: 'start'|'move'|'end') => {
     const { y: navigationY = 0 } = navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
-      touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
+      touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number ; clientX: number; clientY: number}) => {
         item.pageX = item.absoluteX
         item.pageY = item.absoluteY - navigationY
+        item.clientX = item.absoluteX
+        item.clientY = item.absoluteY - navigationY
       })
     })
     Object.assign(e, {
-      touches: e.allTouches,
+      touches: type === 'end' ? [] : e.allTouches,
       detail: {
         x: e.changedTouches[0].absoluteX,
         y: e.changedTouches[0].absoluteY - navigationY
@@ -364,17 +366,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         offsetLeft: 0,
         offsetTop: 0
       }
-    }, obj)
+    })
   }, [])
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
-    extendEvent(e)
+    extendEvent(e, 'start')
     bindtouchstart && bindtouchstart(e)
     catchtouchstart && catchtouchstart(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
-    extendEvent(e)
+    extendEvent(e, 'move')
     if (hasTouchmove) {
       if (touchEvent === 'htouchmove') {
         bindhtouchmove && bindhtouchmove(e)
@@ -395,7 +397,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
-    extendEvent(e)
+    extendEvent(e, 'end')
     bindtouchend && bindtouchend(e)
     catchtouchend && catchtouchend(e)
   }
