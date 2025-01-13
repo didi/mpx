@@ -356,16 +356,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })
     Object.assign(e, {
       touches: type === 'end' ? [] : e.allTouches,
-      detail: {
-        x: e.changedTouches[0].absoluteX,
-        y: e.changedTouches[0].absoluteY - navigationY
-      },
       currentTarget: {
         id: props.id || '',
         dataset: collectDataset(props),
         offsetLeft: 0,
         offsetTop: 0
-      }
+      },
+      detail: {}
     })
   }, [])
 
