@@ -67,12 +67,12 @@
 ```html
 <template>
  <!--Mpx增强语法，模板内联传参，方便简洁-->
- <view bindtap="handleTapInline('b')">b</view>
+ <view bindtap="handleTapInline('inline')">内联传参</view>
  </template>
  <script setup>
   // 直接通过参数获取数据，直观方便
-  const handleTapInline = (name) => {
-    console.log('name:', name)
+  const handleTapInline = (params) => {
+    console.log('params:', params)
   }
   // ...
 </script>
@@ -90,7 +90,7 @@
  <script setup>
   import { ref } from '@mpxjs/core'
 
-  const data = ref(['Item 1', 'Item 2', 'Item 3', 'Item 4'])
+  const items = ref(['Item 1', 'Item 2', 'Item 3', 'Item 4'])
   const handleTap_0 = (event) => {
     console.log('Tapped on item 1');
   },
@@ -108,6 +108,8 @@
   }
 </script>
 ```
+
+更多事件相关内容可以查看 [Mpx 事件处理](./basic/event.md)
 
 注意事项
 
