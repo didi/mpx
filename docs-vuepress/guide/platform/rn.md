@@ -109,7 +109,7 @@
 </script>
 ```
 
-更多事件相关内容可以查看 [Mpx 事件处理](./basic/event.md)
+更多事件相关内容可以查看 [Mpx 事件处理](../basic/event.md)
 
 注意事项
 
