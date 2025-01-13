@@ -38,7 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const hoverClassReg = /^mpx-((cover-)?view|button|navigator)$/
+const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1073,12 +1073,6 @@ function processStyleReact (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
 
-  let staticHoverClass = ''
-  if (hoverClassReg.test(el.tag)) {
-    staticHoverClass = el.attrsMap['hover-class'] || ''
-    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
-  }
-
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
@@ -1102,12 +1096,22 @@ function processStyleReact (el, options) {
     }])
   }
 
-  if (staticHoverClass && staticHoverClass !== 'none') {
-    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
-    addAttrs(el, [{
-      name: 'hover-style',
-      value: `{{this.__getStyle(${staticClassExp})}}`
-    }])
+  if (specialClassReg.test(el.tag)) {
+    const staticClassNames = ['hover', 'indicator', 'mask']
+    staticClassNames.forEach((className) => {
+      let staticClass = el.attrsMap[className + '-class'] || ''
+      let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
+      staticClass = staticClass.replace(/\s+/g, ' ')
+      staticStyle = staticStyle.replace(/\s+/g, ' ')
+      if ((staticClass && staticClass !== 'none') || staticStyle) {
+        const staticClassExp = parseMustacheWithContext(staticClass).result
+        const staticStyleExp = parseMustacheWithContext(staticStyle).result
+        addAttrs(el, [{
+          name: className + '-style',
+          value: `{{this.__getStyle(${staticClassExp}, null, ${staticStyleExp})}}`
+        }])
+      }
+    })
   }
 
   // 处理externalClasses，将其转换为style作为props传递
