@@ -226,7 +226,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       offset.value = getOffset(props.current || 0, iStep)
       // useEffect中没拿到step.value之前不会开启loop，有step直接开启layout后取消再开启，无step依赖layout结束后开启
       pauseLoop()
-      resumeLoop()
+      if (props.autoplay && children.length > 1) {
+        loop()
+      }
     }
   }
 
@@ -377,7 +379,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     return targetOffset
   }
-
+  // loop在JS线程中调用，createAutoPlay + useEffect中
   function loop () {
     timerId.current = setTimeout(createAutoPlay, intervalTimer)
   }
@@ -385,9 +387,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   function pauseLoop () {
     timerId.current && clearTimeout(timerId.current)
   }
-
+  // resumeLoop在worklet中调用
   function resumeLoop () {
-    if (props.autoplay && children.length > 1) {
+    if (props.autoplay && childrenLength.value > 1) {
       loop()
     }
   }
@@ -420,7 +422,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       pauseLoop()
       currentIndex.value = 0
       offset.value = getOffset(0, step.value)
-      resumeLoop()
+      if (props.autoplay && children.length > 1) {
+        loop()
+      }
     }
   }, [children.length])
 
@@ -443,8 +447,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     if (!step.value) {
       return
     }
-    if (props.autoplay) {
-      resumeLoop()
+    if (props.autoplay && children.length > 1) {
+      loop()
     } else {
       pauseLoop()
     }
