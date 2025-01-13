@@ -41,10 +41,13 @@ export default function createApp (options) {
     return appData
   }
 
-  defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appData))
-  defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appData))
-  defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appData))
-  defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appData))
+  // 模拟小程序appInstance在热启动时不会重新创建的行为，在外部创建跟随js context的appInstance
+  const appInstance = Object.assign({}, appData, Mpx.prototype)
+
+  defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appInstance))
+  defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appInstance))
+  defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appInstance))
+  defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
   defaultOptions.onAppInit && defaultOptions.onAppInit()
 
   const pages = currentInject.getPages() || {}
@@ -114,7 +117,7 @@ export default function createApp (options) {
         global.__mpxEnterOptions = options
         if (!global.__mpxAppLaunched) {
           global.__mpxLaunchOptions = options
-          defaultOptions.onLaunch && defaultOptions.onLaunch.call(appData, options)
+          defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
         global.__mpxAppCbs.show.forEach((cb) => {
           cb(options)
