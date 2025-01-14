@@ -36,6 +36,7 @@ function resolvePath (relative, base) {
 
 let toPending = false
 function navigateTo (options = {}) {
+  console.log('进入navigateTo-------toPending：', toPending)
   if (toPending) {
     return
   }
@@ -48,11 +49,13 @@ function navigateTo (options = {}) {
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
+      console.log('解锁 success-------toPending：', toPending)
       toPending = false
       const res = { errMsg: 'navigateTo:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
+      console.log('解锁 fail-------toPending：', toPending)
       toPending = false
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
@@ -88,6 +91,7 @@ function redirectTo (options = {}) {
 
 let backPending = false
 function navigateBack (options = {}) {
+  console.log('进入navigateBack-------backPending：', backPending)
   if (backPending) {
     return
   }
@@ -99,6 +103,7 @@ function navigateBack (options = {}) {
     const routeLength = navigation.getState().routes.length
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
+        console.log('解锁navigateBack 通用-------backPending：', backPending)
         backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
@@ -106,11 +111,13 @@ function navigateBack (options = {}) {
     } else {
       navigation.pop(delta)
       navigationHelper.lastSuccessCallback = () => {
+        console.log('解锁navigateBack success-------backPending：', backPending)
         backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       }
       navigationHelper.lastFailCallback = (msg) => {
+        console.log('解锁navigateBack fail-------backPending：', backPending)
         backPending = false
         const res = { errMsg: `navigateBack:fail ${msg}` }
         failHandle(res, options.fail, options.complete)
