@@ -1,13 +1,12 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn, extend } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { Image } from 'react-native'
-import { ref } from '../observer/ref'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -30,22 +29,27 @@ function filterOptions (options, appData) {
   return newOptions
 }
 
-function createAppInstance (appData) {
-  return extend({}, Mpx.prototype, appData)
-}
-
-export default function createApp (option, config = {}) {
+export default function createApp (options) {
   const appData = {}
 
   const { NavigationContainer, createStackNavigator, SafeAreaProvider } = global.__navigationHelper
   // app选项目前不需要进行转换
-  const { rawOptions, currentInject } = transferOptions(option, 'app', false)
+  const { rawOptions, currentInject } = transferOptions(options, 'app', false)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
-  defaultOptions.onAppInit && defaultOptions.onAppInit()
   // 在页面script执行前填充getApp()
   global.getApp = function () {
     return appData
   }
+
+  // 模拟小程序appInstance在热启动时不会重新创建的行为，在外部创建跟随js context的appInstance
+  const appInstance = Object.assign({}, appData, Mpx.prototype)
+
+  defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appInstance))
+  defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appInstance))
+  defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appInstance))
+  defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
+  defaultOptions.onAppInit && defaultOptions.onAppInit()
+
   const pages = currentInject.getPages() || {}
   const firstPage = currentInject.firstPage
   const Stack = createStackNavigator()
@@ -82,55 +86,48 @@ export default function createApp (option, config = {}) {
   }
 
   global.__mpxAppLaunched = false
-
-  global.__mpxAppFocusedState = ref('show')
+  global.__mpxAppHotLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
-    const instanceRef = useRef(null)
-    if (!instanceRef.current) {
-      instanceRef.current = createAppInstance(appData)
-    }
-    const instance = instanceRef.current
+    const firstRef = useRef(true)
     const initialRouteRef = useRef({
       initialRouteName: firstPage,
       initialParams: {}
     })
-
-    if (!global.__mpxAppLaunched) {
+    if (firstRef.current) {
+      // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
+      global.__mpxAppHotLaunched = false
+      firstRef.current = false
+    }
+    if (!global.__mpxAppHotLaunched) {
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
       initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
       initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
 
       global.__mpxAppOnLaunch = (navigation) => {
-        global.__mpxAppLaunched = true
         const state = navigation.getState()
         Mpx.config.rnConfig.onStateChange?.(state)
         const current = state.routes[state.index]
-        global.__mpxEnterOptions = {
+        const options = {
           path: current.name,
           query: current.params,
           scene: 0,
           shareTicket: '',
           referrerInfo: {}
         }
-        defaultOptions.onLaunch && defaultOptions.onLaunch.call(instance, global.__mpxEnterOptions)
-        defaultOptions.onShow && defaultOptions.onShow.call(instance, global.__mpxEnterOptions)
+        global.__mpxEnterOptions = options
+        if (!global.__mpxAppLaunched) {
+          global.__mpxLaunchOptions = options
+          defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
+        }
+        global.__mpxAppCbs.show.forEach((cb) => {
+          cb(options)
+        })
+        global.__mpxAppLaunched = true
+        global.__mpxAppHotLaunched = true
       }
     }
 
     useEffect(() => {
-      if (defaultOptions.onShow) {
-        global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(instance))
-      }
-      if (defaultOptions.onHide) {
-        global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(instance))
-      }
-      if (defaultOptions.onError) {
-        global.__mpxAppCbs.error.push(defaultOptions.onError.bind(instance))
-      }
-      if (defaultOptions.onUnhandledRejection) {
-        global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(instance))
-      }
-
       const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
         if (currentState === 'active') {
           let options = global.__mpxEnterOptions
