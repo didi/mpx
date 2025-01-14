@@ -396,6 +396,22 @@ const needRelationContext = (options) => {
   })
 }
 
+const provideRelation = (relation, instance) => {
+  const componentPath = instance.__componentPath
+  if (relation) {
+    if (relation[componentPath]) {
+      relation[componentPath].unshift(instance)
+    } else {
+      relation[componentPath] = [instance]
+    }
+    return relation
+  } else {
+    return {
+      [componentPath]: [instance]
+    }
+  }
+}
+
 const RelationsContext = createContext(null)
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -494,7 +510,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
     if (needRelationContext(rawOptions)) {
       root = createElement(RelationsContext.Provider, {
-        value: 'componentPath'
+        value: provideRelation(relation, instance)
       }, root)
     }
     if (root && root.props.ishost) {
