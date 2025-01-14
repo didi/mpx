@@ -1,4 +1,4 @@
-import { callWithErrorHandling, isFunction, isObject, warn } from '@mpxjs/utils'
+import { callWithErrorHandling, isFunction, isObject, isReact, warn } from '@mpxjs/utils'
 import { currentInstance } from '../../core/proxy'
 
 /** 全局 scope */
@@ -18,6 +18,15 @@ export function initAppProvides (provideOpt, instance) {
   }
 }
 
+function resolveProvidesRN (vm) {
+  const provides = vm.provides
+  if (!provides) {
+    const parentProvides = vm.parentProvides
+    return (vm.provides = Object.create(parentProvides))
+  }
+  return provides
+}
+
 function resolveProvides (vm) {
   const provides = vm.provides
   const parentProvides = vm.parent && vm.parent.provides
@@ -33,7 +42,9 @@ export function provide (key, value) {
     warn('provide() can only be used inside setup().')
     return
   }
-  const provides = resolveProvides(instance)
+  const provides = isReact
+    ? resolveProvidesRN(instance)
+    : resolveProvides(instance)
   provides[key] = value
 }
 
@@ -43,7 +54,9 @@ export function inject (key, defaultValue, treatDefaultAsFactory = false) {
     warn('inject() can only be used inside setup()')
     return
   }
-  const provides = instance.parent && instance.parent.provides
+  const provides = isReact
+    ? instance.parentProvides
+    : instance.parent && instance.parent.provides
   if (provides && key in provides) {
     return provides[key]
   } else if (key in appProvides) {
