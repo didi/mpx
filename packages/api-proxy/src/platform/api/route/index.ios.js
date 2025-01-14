@@ -99,7 +99,7 @@ function navigateBack (options = {}) {
     const routeLength = navigation.getState().routes.length
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
-        // backPending = false
+        backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       })
