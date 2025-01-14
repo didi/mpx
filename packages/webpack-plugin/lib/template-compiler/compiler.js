@@ -1324,12 +1324,15 @@ function processEvent (el, options) {
       const extraStr = runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
+        const isCapture = modifiers.indexOf('capture') > -1
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            configs: []
+            configs: [],
+            captureConfigs: []
           }
         }
-        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+        const targetConfigs = isCapture ? eventConfigMap[type].captureConfigs : eventConfigMap[type].configs
+        targetConfigs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
@@ -1371,25 +1374,32 @@ function processEvent (el, options) {
   }
 
   for (const type in eventConfigMap) {
-    let needBind = false
-    const { configs, proxy } = eventConfigMap[type]
+    let needBubblingBind = false
+    let needCaptureBind = false
+    const { configs, captureConfigs, proxy } = eventConfigMap[type]
     delete eventConfigMap[type]
     if (proxy) {
-      needBind = true
+      needBubblingBind = true
+      needCaptureBind = true
     } else if (configs.length > 1) {
-      needBind = true
+      needBubblingBind = true
+    } else if (captureConfigs.length > 1) {
+      needCaptureBind = true
     } else if (configs.length === 1) {
-      needBind = !!configs[0].hasArgs
+      needBubblingBind = !!configs[0].hasArgs
+    } else if (captureConfigs.length === 1) {
+      needCaptureBind = !!captureConfigs[0].hasArgs
     }
 
     const escapedType = dash2hump(type)
     // 排除特殊情况
     if (!isValidIdentifierStr(escapedType)) {
       warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
-      needBind = false
+      needBubblingBind = false
+      needCaptureBind = false
     }
 
-    if (needBind) {
+    if (needBubblingBind) {
       let resultName
       configs.forEach(({ name }) => {
         if (name) {
@@ -1412,7 +1422,37 @@ function processEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[escapedType] = configs.map((item) => {
+      eventConfigMap.bubble = {}
+      eventConfigMap.bubble[escapedType] = configs.map((item) => {
+        return item.expStr
+      })
+    }
+
+    if (needCaptureBind) {
+      let resultName
+      captureConfigs.forEach(({ name }) => {
+        if (name) {
+          // 清空原始事件绑定
+          let has
+          do {
+            has = getAndRemoveAttr(el, name).has
+          } while (has)
+
+          if (!resultName) {
+            // 清除修饰符
+            resultName = name.replace(/\..*/, '')
+          }
+        }
+      })
+
+      addAttrs(el, [
+        {
+          name: resultName || config[mode].event.getEvent(type),
+          value: '__captureInvoke'
+        }
+      ])
+      eventConfigMap.capture = {}
+      eventConfigMap.capture[escapedType] = captureConfigs.map((item) => {
         return item.expStr
       })
     }
