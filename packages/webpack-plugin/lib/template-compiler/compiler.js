@@ -1324,7 +1324,7 @@ function processEvent (el, options) {
       const extraStr = runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
-        const isCapture = modifiers.indexOf('capture') > -1
+        const isCapture = prefix.indexOf('capture') > -1
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
             configs: [],
@@ -1376,7 +1376,7 @@ function processEvent (el, options) {
   for (const type in eventConfigMap) {
     let needBubblingBind = false
     let needCaptureBind = false
-    const { configs, captureConfigs, proxy } = eventConfigMap[type]
+    const { configs = [], captureConfigs = [], proxy } = eventConfigMap[type]
     delete eventConfigMap[type]
     if (proxy) {
       needBubblingBind = true
