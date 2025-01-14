@@ -413,7 +413,7 @@ const provideRelation = (instance) => {
   }
 }
 
-const wrapRelationContext = (element, instance) => {
+const wrapRelationProvider = (element, instance) => {
   if (needRelationContext(instance.__mpxProxy.options)) {
     return createElement(RelationsContext.Provider, {
       value: provideRelation(instance)
@@ -522,9 +522,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const rootProps = getRootProps(props, validProps)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
       // update root props
-      return wrapRelationContext(cloneElement(root, rootProps), instance)
+      return wrapRelationProvider(cloneElement(root, rootProps), instance)
     }
-    return wrapRelationContext(root, instance)
+    return wrapRelationProvider(root, instance)
   }))
 
   if (rawOptions.options?.isCustomText) {
