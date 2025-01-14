@@ -35,11 +35,16 @@ function resolvePath (relative, base) {
 }
 
 let toPending = false
+let toTimeId = null
 function navigateTo (options = {}) {
   console.log('进入navigateTo-------toPending：', toPending)
   if (toPending) {
     return
   }
+  clearTimeout(toTimeId)
+  toTimeId = setTimeout(() => {
+    toPending = false
+  }, 100)
   toPending = true
   const navigationHelper = global.__navigationHelper
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
@@ -64,10 +69,15 @@ function navigateTo (options = {}) {
 }
 
 let redirectPending = false
+let redirectTimeId = null
 function redirectTo (options = {}) {
   if (redirectPending) {
     return
   }
+  clearTimeout(redirectTimeId)
+  redirectTimeId = setTimeout(() => {
+    redirectPending = false
+  }, 100)
   redirectPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
@@ -90,11 +100,16 @@ function redirectTo (options = {}) {
 }
 
 let backPending = false
+let backTimeId = null
 function navigateBack (options = {}) {
   console.log('进入navigateBack-------backPending：', backPending)
   if (backPending) {
     return
   }
+  clearTimeout(backTimeId)
+  backTimeId = setTimeout(() => {
+    backPending = false
+  }, 100)
   backPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
@@ -127,10 +142,15 @@ function navigateBack (options = {}) {
 }
 
 let reLaunchPending = false
+let reLaunchTimeId = null
 function reLaunch (options = {}) {
   if (reLaunchPending) {
     return
   }
+  clearTimeout(reLaunchTimeId)
+  reLaunchTimeId = setTimeout(() => {
+    reLaunchPending = false
+  }, 100)
   reLaunchPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
