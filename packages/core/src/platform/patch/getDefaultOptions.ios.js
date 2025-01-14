@@ -448,7 +448,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             loadParams[key] = encodeURIComponent(props.route.params[key])
           }
         }
-        proxy.callHook(ONLOAD, [loadParams || {}])
+        proxy.callHook(ONLOAD, [loadParams])
       }
       proxy.mounted()
       return () => {
