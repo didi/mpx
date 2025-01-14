@@ -239,7 +239,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       },
       enumerable: false
     },
-    __getRelation: {
+    __relation: {
       get () {
         return relation
       },
@@ -386,6 +386,8 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+const RelationsContext = createContext(null)
+
 const needRelationContext = (options) => {
   const relations = options.relations
   if (!relations) return false
@@ -396,23 +398,30 @@ const needRelationContext = (options) => {
   })
 }
 
-const provideRelation = (relation, instance) => {
+const provideRelation = (instance) => {
   const componentPath = instance.__componentPath
+  const relation = instance.__relation
   if (relation) {
-    if (relation[componentPath]) {
-      relation[componentPath].unshift(instance)
-    } else {
-      relation[componentPath] = [instance]
+    if (!relation[componentPath]) {
+      relation[componentPath] = instance
     }
     return relation
   } else {
     return {
-      [componentPath]: [instance]
+      [componentPath]: instance
     }
   }
 }
 
-const RelationsContext = createContext(null)
+const wrapRelationContext = (element, instance) => {
+  if (needRelationContext(instance.__mpxProxy.options)) {
+    return createElement(RelationsContext.Provider, {
+      value: provideRelation(instance)
+    }, element)
+  } else {
+    return element
+  }
+}
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
@@ -507,20 +516,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return proxy.finalMemoVersion
     }, [proxy.stateVersion, proxy.memoVersion])
 
-    let root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
-    if (needRelationContext(rawOptions)) {
-      root = createElement(RelationsContext.Provider, {
-        value: provideRelation(relation, instance)
-      }, root)
-    }
+    const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
     if (root && root.props.ishost) {
       // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
       const rootProps = getRootProps(props, validProps)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
       // update root props
-      return cloneElement(root, rootProps)
+      return wrapRelationContext(cloneElement(root, rootProps), instance)
     }
-    return root
+    return wrapRelationContext(root, instance)
   }))
 
   if (rawOptions.options?.isCustomText) {

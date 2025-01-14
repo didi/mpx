@@ -1,25 +1,9 @@
 import { BEFORECREATE, MOUNTED, BEFOREUNMOUNT } from '../../core/innerLifecycle'
-// import { isArray } from '@mpxjs/utils'
 
 const relationTypeMap = {
   parent: 'child',
   ancestor: 'descendant'
 }
-
-// const isChildNode = (target, instance) => {
-//   let children = target.props.children
-//   if (!children) return
-//   if (!isArray(children)) {
-//     children = [children]
-//   }
-//   return children.some((item = {}) => {
-//     if (item.type?.__mpxBuiltIn) { // 如果是基础节点，继续向下查找
-//       return isChildNode(item, instance)
-//     } else {
-//       return item.type === instance.__getReactFunctionComponent()
-//     }
-//   })
-// }
 
 export default function relationsMixin (mixinType) {
   if (mixinType === 'component') {
@@ -39,7 +23,7 @@ export default function relationsMixin (mixinType) {
       },
       methods: {
         getRelationNodes (path) {
-          return this.__mpxRelationNodesMap(path) || null
+          return this.__mpxRelationNodesMap[path] || null
         },
         __mpxCollectRelations () {
           const relations = this.__mpxProxy.options.relations
@@ -51,65 +35,21 @@ export default function relationsMixin (mixinType) {
         },
         __mpxCheckParent (current, relation, path) {
           const type = relation.type
-          const relationMap = current.__getRelation
+          const relationMap = current.__relation
           if (!relationMap) return
 
-          // parent 只处理一个层级，ancestor 遍历到就返回
           if (relationMap[path]) {
-            relationMap[path].forEach((target, index) => {
-              if ((type === 'parent' && index === 0) || type === 'ancestor') {
-                const targetRelation = target.__mpxProxy.options.relations?.[this.__componentPath]
-                if (targetRelation && targetRelation.type === relationTypeMap[type] && target.__componentPath) {
-                  this.__mpxRelations[path] = {
-                    target,
-                    targetRelation,
-                    relation
-                  }
-                  this.__mpxRelationNodesMap[path] = [target]
-                  return
-                }
+            const target = relationMap[path]
+            const targetRelation = target.__mpxProxy.options.relations?.[this.__componentPath]
+            if (targetRelation && targetRelation.type === relationTypeMap[type] && target.__componentPath) {
+              this.__mpxRelations[path] = {
+                target,
+                targetRelation,
+                relation
               }
-            })
-            // if (type === 'parent') {
-            //   const target = relationMap[path][0]
-            //   const targetRelation = target.__mpxProxy.options.relations?.[this.__componentPath]
-            //   if (targetRelation && targetRelation.type === relationTypeMap[type] && target.__componentPath) {
-            //     this.__mpxRelations[path] = {
-            //       target,
-            //       targetRelation,
-            //       relation
-            //     }
-            //     this.__mpxRelationNodesMap[path] = [target]
-            //   }
-            // } else if (type === 'ancestor') {
-            //   relationMap[path].forEach(target => {
-            //     const targetRelation = target.__mpxProxy.options.relations?.[this.__componentPath]
-            //     if (targetRelation && targetRelation.type === relationTypeMap[type] && target.__componentPath) {
-            //       this.__mpxRelations[path] = {
-            //         target,
-            //         targetRelation,
-            //         relation
-            //       }
-            //       this.__mpxRelationNodesMap[path] = [target]
-            //     }
-            //   })
-            // }
+              this.__mpxRelationNodesMap[path] = [target]
+            }
           }
-
-          // parent 只需要处理一层，ancestor 需要考虑多个层级
-          // if ((type === 'parent' && isChildNode(target, this)) || type === 'ancestor') {
-          //   const targetRelation = target.__mpxProxy.options.relations?.[this.__componentPath]
-          //   if (targetRelation && targetRelation.type === relationTypeMap[type] && target.__componentPath === path) {
-          //     this.__mpxRelations[path] = {
-          //       target,
-          //       targetRelation,
-          //       relation
-          //     }
-          //     this.__mpxRelationNodesMap[path] = [target]
-          //   } else if (type === 'ancestor') {
-          //     this.__mpxCheckParent(target, relation, path)
-          //   }
-          // }
         },
         __mpxExecRelations (type) {
           Object.keys(this.__mpxRelations).forEach(path => {

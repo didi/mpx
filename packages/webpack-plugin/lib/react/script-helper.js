@@ -118,7 +118,9 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
     content += `global.currentInject.getComponents = function () {
   return ${shallowStringify(componentsMap)}
 }\n`
-    content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
+    if (ctorType === 'component') {
+      content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
+    }
   }
   content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
   content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
