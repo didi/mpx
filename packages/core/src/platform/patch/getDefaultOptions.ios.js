@@ -444,6 +444,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
           global.__mpxAppOnLaunch(props.navigation)
         }
+        // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+        if (isObject(props.route.params)) {
+          for (let key in props.route.params) {
+            props.route.params[key] = encodeURIComponent(props.route.params[key])
+          }
+        }
         proxy.callHook(ONLOAD, [props.route.params || {}])
       }
       proxy.mounted()
