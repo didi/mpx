@@ -33,20 +33,26 @@ function resolvePath (relative, base) {
   }
   return stack.join('/')
 }
+function isLock(navigationHelper, type, options) {
+  if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
+    const res = { errMsg: `${type}:fail the previous routing event didn't complete` }
+    failHandle(res, options.fail, options.complete)
+    return true
+  }
+  setTimeout(() => {
+    if (navigationHelper.lastFailCallback) {
+      navigationHelper.lastFailCallback('timeout')
+      navigationHelper.lastFailCallback = null
+    }
+  }, 350)
+  return false
+}
 
-let toPending = false
-let toTimeId = null
-function navigateTo (options = {}) {
-  console.log('进入navigateTo-------toPending：', toPending)
-  if (toPending) {
+function navigateTo (options = {}) {  
+  const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'navigateTo', options)) {
     return
   }
-  clearTimeout(toTimeId)
-  toTimeId = setTimeout(() => {
-    toPending = false
-  }, 100)
-  toPending = true
-  const navigationHelper = global.__navigationHelper
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
@@ -54,106 +60,72 @@ function navigateTo (options = {}) {
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
-      console.log('解锁 success-------toPending：', toPending)
-      toPending = false
       const res = { errMsg: 'navigateTo:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
-      console.log('解锁 fail-------toPending：', toPending)
-      toPending = false
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
   }
 }
 
-let redirectPending = false
-let redirectTimeId = null
 function redirectTo (options = {}) {
-  if (redirectPending) {
-    return
-  }
-  clearTimeout(redirectTimeId)
-  redirectTimeId = setTimeout(() => {
-    redirectPending = false
-  }, 100)
-  redirectPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'redirectTo', options)) {
+    return
+  }
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
-      redirectPending = false
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
-      redirectPending = false
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
   }
 }
 
-let backPending = false
-let backTimeId = null
 function navigateBack (options = {}) {
-  console.log('进入navigateBack-------backPending：', backPending)
-  if (backPending) {
-    return
-  }
-  clearTimeout(backTimeId)
-  backTimeId = setTimeout(() => {
-    backPending = false
-  }, 100)
-  backPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'navigateBack', options)) {
+    return
+  }
   if (navigation && navigationHelper) {
     const delta = options.delta || 1
     const routeLength = navigation.getState().routes.length
+    navigationHelper.lastSuccessCallback = () => {
+      const res = { errMsg: 'navigateBack:ok' }
+      successHandle(res, options.success, options.complete)
+    }
+    navigationHelper.lastFailCallback = (msg) => {
+      const res = { errMsg: `navigateBack:fail ${msg}` }
+      failHandle(res, options.fail, options.complete)
+    }
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
-        console.log('解锁navigateBack 通用-------backPending：', backPending)
-        backPending = false
         const res = { errMsg: 'navigateBack:ok' }
         successHandle(res, options.success, options.complete)
       })
     } else {
       navigation.pop(delta)
-      navigationHelper.lastSuccessCallback = () => {
-        console.log('解锁navigateBack success-------backPending：', backPending)
-        backPending = false
-        const res = { errMsg: 'navigateBack:ok' }
-        successHandle(res, options.success, options.complete)
-      }
-      navigationHelper.lastFailCallback = (msg) => {
-        console.log('解锁navigateBack fail-------backPending：', backPending)
-        backPending = false
-        const res = { errMsg: `navigateBack:fail ${msg}` }
-        failHandle(res, options.fail, options.complete)
-      }
     }
   }
 }
 
-let reLaunchPending = false
-let reLaunchTimeId = null
 function reLaunch (options = {}) {
-  if (reLaunchPending) {
-    return
-  }
-  clearTimeout(reLaunchTimeId)
-  reLaunchTimeId = setTimeout(() => {
-    reLaunchPending = false
-  }, 100)
-  reLaunchPending = true
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'reLaunch', options)) {
+    return
+  }
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
@@ -168,12 +140,10 @@ function reLaunch (options = {}) {
       ]
     })
     navigationHelper.lastSuccessCallback = () => {
-      reLaunchPending = false
       const res = { errMsg: 'redirectTo:ok' }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
-      reLaunchPending = false
       const res = { errMsg: `redirectTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
