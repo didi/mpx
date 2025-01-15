@@ -122,9 +122,10 @@ function extractObservers (options) {
   Object.keys(props).forEach(key => {
     const prop = props[key]
     if (prop && prop.observer) {
+      let callback = prop.observer
+      delete prop.observer
       mergeWatch(key, {
         handler (...rest) {
-          let callback = prop.observer
           if (typeof callback === 'string') {
             callback = this[callback]
           }
@@ -168,11 +169,7 @@ function extractObservers (options) {
               cb = this[cb]
             }
             if (typeof cb === 'function') {
-              if (keyPathArr.length < 2) {
-                val = [val]
-                old = [old]
-              }
-              cb.call(this, ...val, ...old)
+              Array.isArray(val) ? cb.call(this, ...val) : cb.call(this, val)
             }
           },
           deep,
