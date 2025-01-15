@@ -21,7 +21,7 @@ export function initAppProvides (provideOpt, instance) {
 function resolveProvidesRN (vm) {
   const provides = vm.provides
   if (!provides) {
-    const parentProvides = vm.parentProvides
+    const parentProvides = vm.parentProvides || null
     return (vm.provides = Object.create(parentProvides))
   }
   return provides
