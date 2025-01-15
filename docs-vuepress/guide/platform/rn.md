@@ -148,14 +148,15 @@
 | hover-class	             | string  |         | 指定按下去的样式类。 |
 | hover-start-time   | number  |     50    | 按住后多久出现点击态，单位毫秒|
 | hover-stay-time	  | number  |     400    | 手指松开后点击态保留时间，单位毫秒	 |
-| enable-offset		  | Number  |     false    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+| animation | Object  | undefined  | 传递动画的实例， 可配合mpx.createAnimation方法一起使用|
+| enable-background		  | Boolean  |     false    | 是否要开启background-image、background-size和background-postion的相关计算或渲染，请根据实际情况开启 |
+| enable-animation | Boolean  | false  | 开启要开启动画渲染，请根据实际情况开启 |
+| enable-fast-image | Boolean  | false  | 开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 
+注意事项
 
-事件
+1. 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 
-| 事件名           | 说明                                                 |
-| ----------------| --------------------------------------------------- |
-| bindtap       |  点击的时候触发   |
 
 
 #### scroll-view
@@ -331,16 +332,8 @@ movable-view的可移动区域。
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | user-select             | boolean  | `false`       | 文本是否可选。 |
-| disable-default-style             | boolean  | `false`       |  会内置默认样式，比如fontSize为16。设置`true`可以禁止默认的内置样式。 |
-| enable-offset		  | Number  |     false    | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 
-事件
-
-
-| 事件名           | 说明                                                 |
-| ----------------| --------------------------------------------------- |
-| bindtap       |  点击的时候触发         |
 
 注意事项
 
