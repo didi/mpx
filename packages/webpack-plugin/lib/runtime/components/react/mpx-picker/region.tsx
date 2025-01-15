@@ -1,9 +1,9 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { RegionProps } from './type'
-import { regionData } from './regionData'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
+import { RegionProps } from './type'
+import { regionData } from './regionData'
 import { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { extendObject, useUpdateEffect } from '../utils'
 
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const provinceMap = regionData.map(item => item.value)
+const rangeProvince = regionData.map(item => item.value)
 
 const findIndex = (arr: string[], val: string) => {
   const res = arr.findIndex(item => item === val)
@@ -49,59 +49,77 @@ type FormatObj = {
 
 const valueStr2Obj = (
   value: string[],
-  level: RegionProps['level'] = 'region',
+  limit: number,
   customItem = ''
 ): FormatObj => {
-  const indexProvince = findIndex(provinceMap, value[0])
-  const dataCity = regionData[indexProvince].children!
-  const rangeCity = dataCity.map(item => item.value)
-  const indexCity = findIndex(rangeCity, value[1])
-  const dataArea = dataCity[indexCity].children!
-  const rangeArea = dataArea.map(item => item.value)
-  const indexArea = findIndex(rangeArea, value[2])
-
-  return {
-    indexArr: [indexProvince, indexCity, indexArea],
-    rangeArr: [provinceMap, rangeCity, rangeArea]
+  const indexProvince = findIndex(rangeProvince, value[0])
+  const ans: FormatObj = {
+    indexArr: [indexProvince],
+    rangeArr: [rangeProvince]
   }
+  for (
+    let i = 1,
+      lastIndex = indexProvince,
+      lastData = regionData,
+      lastRange = rangeProvince;
+    i < limit;
+    i++
+  ) {
+    lastData = lastData[lastIndex].children!
+    lastRange = lastData.map((item) => item.value)
+    lastIndex = findIndex(lastRange, value[i])
+    ans.indexArr.push(lastIndex)
+    ans.rangeArr.push(lastRange)
+  }
+  return ans
 }
 
-const valueChanged2Obj = (currentObj: FormatObj, value: number[]) => {
-  let [indexProvince, indexCity, indexArea] = currentObj.indexArr
-  const [newIndexProvince, newIndexCity, newIndexArea] = value
-  if (indexProvince !== newIndexProvince) {
-    indexProvince = newIndexProvince
-    indexCity = 0
-    indexArea = 0
-  } else if (indexCity !== newIndexCity) {
-    indexCity = newIndexCity
-    indexArea = 0
-  } else if (indexArea !== newIndexArea) {
-    return {
-      indexArr: value,
-      rangeArr: currentObj.rangeArr
+const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => {
+  const newValue = new Array(limit).fill(0)
+  const currentValue = currentObj.indexArr
+  for (let i = 0; i < limit; i++) {
+    if (i === limit - 1) {
+      return {
+        indexArr: value,
+        rangeArr: currentObj.rangeArr
+      }
+    }
+    if (currentValue[i] !== value[i]) {
+      newValue[i] = value[i]
+      break
     }
   }
 
-  const dataCity = regionData[indexProvince].children!
-  const rangeCity = dataCity.map(item => item.value)
-  const dataArea = dataCity[indexCity].children!
-  const rangeArea = dataArea.map(item => item.value)
-  return {
-    indexArr: [indexProvince, indexCity, indexArea],
-    rangeArr: [provinceMap, rangeCity, rangeArea]
+  const ans: FormatObj = {
+    indexArr: [newValue[0]],
+    rangeArr: [rangeProvince]
   }
+  let data = regionData
+  for (let i = 1; i < limit; i++) {
+    data = data[newValue[i - 1]].children!
+    const range = data.map(item => item.value)
+    ans.indexArr.push(newValue[i])
+    ans.rangeArr.push(range)
+  }
+  return ans
 }
 
 const valueNum2String = (value: number[]) => {
-  const province = regionData[value[0]]
-  const city = province.children![value[1]]
-  const area = city.children![value[2]]
-  return [province.value, city.value, area.value]
+  let data = regionData
+  return value.map(index => {
+    const item = data[index]
+    data = item.children!
+    return item.value
+  })
 }
 
-const hasDiff = (currentValue: number[], value: number[]) => {
-  return currentValue[0] !== value[0] || currentValue[1] !== value[1] || currentValue[2] !== value[2]
+const hasDiff = (currentValue: number[], value: number[], limit = 3) => {
+  for (let i = 0; i < limit; i++) {
+    if (currentValue[i] !== value[i]) {
+      return true
+    }
+  }
+  return false
 }
 
 const PickerTime = forwardRef<
@@ -109,20 +127,20 @@ const PickerTime = forwardRef<
     RegionProps
 >((props: RegionProps, ref): React.JSX.Element => {
   const { value = [], level = 'region', 'custom-item': customItem = '', bindchange } = props
-  console.log('[mpx-picker-time] --->', 'value', value)
 
   const nodeRef = useRef(null)
-  const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, level))
+  const columnLength = useMemo(() => getColumnLength(level), [level])
+  const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, columnLength, customItem))
 
   useUpdateEffect(() => {
-    const calibratedValue = valueStr2Obj(value, level, customItem)
+    const calibratedValue = valueStr2Obj(value, columnLength, customItem)
     setFormatObj(calibratedValue)
-  }, [value])
+  }, [value, columnLength, customItem])
 
-  const updateValue = (value: string[]) => {
-    const calibratedValue = valueStr2Obj(value, level, customItem)
+  const updateValue = useCallback((value: string[]) => {
+    const calibratedValue = valueStr2Obj(value, columnLength, customItem)
     setFormatObj(calibratedValue)
-  }
+  }, [columnLength, customItem])
 
   const _props = useRef(props)
   _props.current = props
@@ -137,15 +155,15 @@ const PickerTime = forwardRef<
     })
   }))
 
-  const onChange = (e: { detail: { value: number[] } }) => {
+  const onChange = useCallback((e: { detail: { value: number[] } }) => {
     const { value } = e.detail
     const currentValue = formatObj.indexArr
-    const newObj = valueChanged2Obj(formatObj, value)
-    if (hasDiff(currentValue, value)) {
+    const newObj = valueChanged2Obj(formatObj, value, columnLength)
+    if (hasDiff(currentValue, value, columnLength)) {
       setFormatObj(newObj)
     }
     bindchange?.({ detail: { value: valueNum2String(newObj.indexArr) } })
-  }
+  }, [formatObj, columnLength, bindchange])
 
   const renderColumn = () => {
     return formatObj.rangeArr?.map((item, index) => (
