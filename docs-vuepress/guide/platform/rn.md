@@ -723,9 +723,9 @@ movable-view的可移动区域。
 
 | 属性名 | 类型             | 默认值 | 说明                                                                                                  |
 | ------ | ---------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| direction   | String           |   none     | 目前支持 all、vertical、horizontal、none｜
-| inertia   | boolean          |   false     | movable-view是否带有惯性｜
-| out-of-bounds   | boolean          |   false     | 超过可移动区域后，movable-view是否还可以移动｜
+| direction   | String           |   none     | 目前支持 all、vertical、horizontal、none  | 
+| inertia   | boolean          |   false     | movable-view是否带有惯性  |
+| out-of-bounds   | boolean          |   false     | 超过可移动区域后，movable-view是否还可以移动  |
 | x   | Number |      | 定义x轴方向的偏移  |
 | y  | Number  |        | 定义y轴方向的偏移 |
 | friction  | Number  |    7    | 摩擦系数 |
@@ -1206,7 +1206,7 @@ API
 注意事项
 
 1. canvas 组件目前仅支持 2D 类型，不支持 webgl
-2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 [HTML Canvas 2D Context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) 定义的属性、方法
+2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 (HTML Canvas 2D Context)[https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D] 定义的属性、方法
 3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 4. 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
