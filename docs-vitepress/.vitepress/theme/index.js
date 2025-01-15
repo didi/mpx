@@ -1,7 +1,8 @@
 import { h } from 'vue'
 import Theme from 'vitepress/theme'
 import Layout from './layouts/HomepageLayout.vue'
-import RegisterSW from "./components/RegisterSW.vue";
+import RegisterSW from "./components/RegisterSW.vue"
+import './styles/index.css'
 
 export default {
     ...Theme,

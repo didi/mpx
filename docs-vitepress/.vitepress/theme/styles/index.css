@@ -1,0 +1,12 @@
+:root {
+    --vt-c-text-1: #213547;
+    --vt-c-text-code: #476582;
+    --vt-c-text-3: rgba(60, 60, 60, 0.33);
+    --vt-c-green: #42b883;
+    --vt-c-divider: rgba(60, 60, 60, 0.29);
+    --vt-c-divider-light: rgba(60, 60, 60, 0.12);
+    --vt-c-green-light: #42d392;
+    --vt-c-green-lighter: #35eb9a;
+    --vt-c-green-dark: #33a06f;
+    --vt-c-green-darker: #155f3e;
+}

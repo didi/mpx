@@ -37,11 +37,11 @@ const sidebar = {
                 { text: "状态管理（store）", link: "/guide/advance/store" },
                 { text: "状态管理（pinia）", link: "/guide/advance/pinia" },
                 { text: "使用 mixin", link: "/guide/advance/mixin" },
-                { text: "使用npm", link: "/guide/advance/npm" },
+                { text: "使用 npm", link: "/guide/advance/npm" },
                 { text: "使用分包", link: "/guide/advance/subpackage" },
                 { text: "分包异步化", link: "/guide/advance/async-subpackage" },
                 { text: "跨平台", link: "/guide/advance/platform" },
-                { text: "国际化i18n", link: "/guide/advance/i18n" },
+                { text: "国际化 i18n", link: "/guide/advance/i18n" },
                 { text: "包体积分析", link: "/guide/advance/size-report" },
                 { text: "图像资源处理", link: "/guide/advance/image-process" },
                 { text: "原生渐进迁移", link: "/guide/advance/progressive" },
@@ -71,7 +71,7 @@ const sidebar = {
             collapsable: false,
             items: [
                 { text: "跨端输出基础", link: "/guide/platform/basic" },
-                { text: "跨端输出RN", link: "/guide/platform/rn" },
+                { text: "跨端输出 RN", link: "/guide/platform/rn" },
             ],
         },
         {
@@ -158,7 +158,7 @@ const sidebar = {
             items: [
                 { text: "滴滴开源小程序框架Mpx", link: "/articles/1.0" },
                 {
-                    text: "Mpx发布2.0，完美支持跨平台开发",
+                    text: "Mpx 发布2.0，完美支持跨平台开发",
                     link: "/articles/2.0",
                 },
                 {
@@ -209,7 +209,7 @@ const sidebar = {
 
 const ogUrl = "https://mpxjs.cn/"
 const ogImage = `${ogUrl}logo.png`
-const title = "Mpx框架"
+const title = "Mpx 框架"
 const description = "深度性能优化的增强型小程序开发框架"
 
 export default withPwa(
@@ -300,7 +300,16 @@ export default withPwa(
             outline: [2, 3],
             socialLinks: [{ icon: 'github',  link: 'https://github.com/didi/mpx' }],
             nav: [
-                { text: '指南', activeMatch: '^/guide/', link: '/guide/basic/start' },
+                { text: '指南', activeMatch: '^/guide/', link: '/guide/basic/start',  },
+                // 未来热门的链接可以用下面的折叠标题
+                // {
+                //     text: "文档",
+                //     activeMatch: "^/guide/(basic/start|platform/basic)/",
+                //     items: [
+                //         { text: "快速开始", link: "/guide/basic/start" },
+                //         { text: "跨端输出", link: "/guide/platform/basic" },
+                //     ],
+                // },
                 { text: 'API', activeMatch: '^/api/', link: '/api/' },
                 { text: '文章', activeMatch: '^/articles/', link: '/articles/' },
                 { text: '更新记录', activeMatch: '^/releases/', link: 'https://github.com/didi/mpx/releases', target: '_blank'},

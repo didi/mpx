@@ -1053,9 +1053,9 @@ h3 {
   break-inside: avoid;
   overflow: auto;
   margin-bottom: 20px;
-  background-color: var(--vt-c-bg-soft);
+  background-color: var(--vp-c-bg-soft);
   border-radius: 8px;
-  padding: 28px 26px;
+  padding: 28px 18px;
   transition: background-color 0.5s;
 }
 
