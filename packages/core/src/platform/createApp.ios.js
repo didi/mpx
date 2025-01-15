@@ -6,7 +6,6 @@ import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
-import { Image } from 'react-native'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
