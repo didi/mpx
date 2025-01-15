@@ -43,8 +43,5 @@
   "workspaces": [
     "packages/*",
     "docs-vitepress"
-  ],
-  "dependencies": {
-    "vue-demi": "^0.14.10"
-  }
+  ]
 }
