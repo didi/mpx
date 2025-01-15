@@ -1311,6 +1311,32 @@ function processEventReact (el) {
   // }
 }
 
+function isNeedBind (configs, isProxy) {
+  if (isProxy) return true
+  if (configs.length > 1) return true
+  if (configs.length === 1) return configs[0].hasArgs
+  return false
+}
+
+function processEventBinding (el, configs) {
+  let resultName
+  configs.forEach(({ name }) => {
+    if (name) {
+      // 清空原始事件绑定
+      let has
+      do {
+        has = getAndRemoveAttr(el, name).has
+      } while (has)
+
+      if (!resultName) {
+        // 清除修饰符
+        resultName = name.replace(/\..*/, '')
+      }
+    }
+  })
+  return { resultName }
+}
+
 function processEvent (el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
@@ -1374,22 +1400,11 @@ function processEvent (el, options) {
   }
 
   for (const type in eventConfigMap) {
-    let needBubblingBind = false
-    let needCaptureBind = false
     const { configs = [], captureConfigs = [], proxy } = eventConfigMap[type]
     delete eventConfigMap[type]
-    if (proxy) {
-      needBubblingBind = true
-      needCaptureBind = true
-    } else if (configs.length > 1) {
-      needBubblingBind = true
-    } else if (captureConfigs.length > 1) {
-      needCaptureBind = true
-    } else if (configs.length === 1) {
-      needBubblingBind = !!configs[0].hasArgs
-    } else if (captureConfigs.length === 1) {
-      needCaptureBind = !!captureConfigs[0].hasArgs
-    }
+
+    let needBubblingBind = isNeedBind(configs, proxy)
+    let needCaptureBind = isNeedBind(captureConfigs, proxy)
 
     const escapedType = dash2hump(type)
     // 排除特殊情况
@@ -1400,21 +1415,7 @@ function processEvent (el, options) {
     }
 
     if (needBubblingBind) {
-      let resultName
-      configs.forEach(({ name }) => {
-        if (name) {
-          // 清空原始事件绑定
-          let has
-          do {
-            has = getAndRemoveAttr(el, name).has
-          } while (has)
-
-          if (!resultName) {
-            // 清除修饰符
-            resultName = name.replace(/\..*/, '')
-          }
-        }
-      })
+      const { resultName } = processEventBinding(el, configs)
 
       addAttrs(el, [
         {
@@ -1422,36 +1423,25 @@ function processEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap.bubble = {}
+      if (!eventConfigMap.bubble) {
+        eventConfigMap.bubble = {}
+      }
       eventConfigMap.bubble[escapedType] = configs.map((item) => {
         return item.expStr
       })
     }
 
     if (needCaptureBind) {
-      let resultName
-      captureConfigs.forEach(({ name }) => {
-        if (name) {
-          // 清空原始事件绑定
-          let has
-          do {
-            has = getAndRemoveAttr(el, name).has
-          } while (has)
-
-          if (!resultName) {
-            // 清除修饰符
-            resultName = name.replace(/\..*/, '')
-          }
-        }
-      })
-
+      const { resultName } = processEventBinding(el, captureConfigs)
       addAttrs(el, [
         {
           name: resultName || config[mode].event.getEvent(type),
           value: '__captureInvoke'
         }
       ])
-      eventConfigMap.capture = {}
+      if (!eventConfigMap.capture) {
+        eventConfigMap.capture = {}
+      }
       eventConfigMap.capture[escapedType] = captureConfigs.map((item) => {
         return item.expStr
       })
