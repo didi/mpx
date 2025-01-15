@@ -170,15 +170,16 @@ Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几�
 ### 使用 event 对象
 
 ```html
-<!-- 支持传入动态数据 -->
-<view bindtap="handleTapInlineWithEvent($event)">获取event对象</view>
+<!-- 获取 event 对象 -->
+<view bindtap="handleTapInlineWithEvent($event, 'inline')">获取event对象</view>
 
 <script>
   import { createComponent } from '@mpxjs/core'
   createComponent({
     methods: {
-      handleTapInline(event) {
+      handleTapInlineWithEvent(event, params) {
         console.log('event:', event)
+        console.log('params:', params)
       }
     }
   })
