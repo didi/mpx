@@ -36,6 +36,7 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
   const Modal = modal || getPopup(type)
 
   let popupKey: number | null = null
+  let isOpen = false
 
   const getPopupKey = () => {
     return popupKey
@@ -45,9 +46,13 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
       Portal.remove(popupKey)
       popupKey = null
     }
+    isOpen = false
   }
   const open = (childComponent: React.ReactNode) => {
-    popupKey = Portal.add(<Modal remove={remove}>{childComponent}</Modal>)
+    if (!isOpen) {
+      isOpen = true
+      popupKey = Portal.add(<Modal remove={remove}>{childComponent}</Modal>)
+    }
   }
   return {
     open,
