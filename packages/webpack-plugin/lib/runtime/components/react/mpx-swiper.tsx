@@ -312,7 +312,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     return (<SwiperContext.Provider value={contextValue}>{arrChildren}</SwiperContext.Provider>)
   }
 
-  const { loop, pauseLoop, resumeLoop} = useMemo(() => {
+  const { loop, pauseLoop, resumeLoop } = useMemo(() => {
     function createAutoPlay () {
       if (!step.value) return
       let targetOffset = 0
@@ -611,7 +611,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 移动的距离
       const { translation } = eventData
       const elementsLength = step.value * childrenLength.value
-  
       let isBoundary = false
       let resetOffset = 0
       // Y轴向下滚动, transDistance > 0, 向上滚动 < 0 X轴向左滚动, transDistance > 0
@@ -678,7 +677,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       })
       .onTouchesUp((e) => {
         'worklet'
-        if(touchfinish.value) return
+        if (touchfinish.value) return
         const touchEventData = e.changedTouches[0]
         const moveDistance = touchEventData[strAbso] - moveTranstion.value
         touchfinish.value = true
