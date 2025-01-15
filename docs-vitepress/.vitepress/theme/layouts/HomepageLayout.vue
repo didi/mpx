@@ -8,7 +8,7 @@
       <Footer />
     </div>
     <div v-else>
-      <Navbar />
+      <!-- <Navbar /> -->
       <Layout></Layout>
     </div>
   </div>

@@ -422,6 +422,14 @@ const data = [
           {
             text: 'useFetch',
             anchor: '#useFetch'
+          },
+          {
+            text: 'provide',
+            anchor: '#provide'
+          },
+          {
+            text: 'inject',
+            anchor: '#inject'
           }
         ]
       }

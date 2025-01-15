@@ -214,3 +214,9 @@ getCurrentInstance 只能在 setup 或生命周期钩子中调用。
 
 ## useFetch
 点击[查看详情](./extend.md#usefetch)
+
+## provide
+点击[查看详情](../guide/advance/provide-inject.md#组合式语法)
+
+## inject
+点击[查看详情](../guide/advance/provide-inject.md#组合式语法-1)
