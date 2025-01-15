@@ -19,7 +19,7 @@ async function close() {
 
 onBeforeMount(async () => {
   const { registerSW } = await import('virtual:pwa-register')
-  console.log('onBeforeMount trigger ____')
+  console.log('[SW] onBeforeMount')
   updateServiceWorker = registerSW({
     immediate: true,
     onOfflineReady,
@@ -37,27 +37,27 @@ onBeforeMount(async () => {
 <template>
   <template v-if="offlineReady || needRefresh">
     <div
-        class="pwa-toast"
-        role="alertdialog"
-        aria-labelledby="pwa-message"
+      class="pwa-toast"
+      role="alertdialog"
+      aria-labelledby="pwa-message"
     >
       <div id="pwa-message" class="mb-3">
-        {{ offlineReady ? 'App ready to work offline' : 'New content available, click the reload button to update.' }}
+        {{ offlineReady ? '应用已准备好离线工作' : '📣 有新内容可用，请点击重新加载按钮以更新。' }}
       </div>
       <button
-          v-if="needRefresh"
-          type="button"
-          class="pwa-refresh"
-          @click="updateServiceWorker?.()"
+        v-if="needRefresh"
+        type="button"
+        class="pwa-refresh"
+        @click="updateServiceWorker?.()"
       >
-        Reload
+        重新加载
       </button>
       <button
-          type="button"
-          class="pwa-cancel"
-          @click="close"
+        type="button"
+        class="pwa-cancel"
+        @click="close"
       >
-        Close
+        关闭
       </button>
     </div>
   </template>
@@ -86,5 +86,19 @@ onBeforeMount(async () => {
   margin-right: 5px;
   border-radius: 2px;
   padding: 3px 10px;
+  border-radius: 4px;
+  width: 80px;
+}
+.pwa-toast .pwa-refresh {
+  color: white;
+  background-image: linear-gradient(-45deg, #50be97 30%, #31bc7f 70%);
+  margin-right: 10px;
+}
+.pwa-toast .pwa-refresh:hover {
+  background-image: none; /* 新增hover颜色 */
+  background-color: #45a76d;
+}
+.pwa-toast .pwa-cancel:hover {
+  background-color: #8885;
 }
 </style>
