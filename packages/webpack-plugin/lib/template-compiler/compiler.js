@@ -1324,7 +1324,7 @@ function processEvent (el, options) {
       const extraStr = runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
-        const isCapture = prefix.indexOf('capture') > -1
+        const isCapture = /^capture/.test(prefix)
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
             configs: [],
