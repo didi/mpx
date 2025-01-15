@@ -1,4 +1,4 @@
-import { reactive } from '../observer/reactive'
+import { reactive, defineReactive } from '../observer/reactive'
 import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
 import { effectScope } from '../platform/export/index'
 import { watch } from '../observer/watch'
@@ -111,7 +111,7 @@ export default class MpxProxy {
     this.uid = uid++
     this.name = options.name || ''
     this.options = options
-    this.ignoreReactivePattern = this.options.options?.ignoreReactivePattern
+    this.shallowReactivePattern = this.options.options?.shallowReactivePattern
     // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
@@ -145,10 +145,12 @@ export default class MpxProxy {
     this.initApi()
   }
 
-  processIgnoreReactive (obj) {
-    if (this.ignoreReactivePattern && isObject(obj)) {
+  processShallowReactive (obj) {
+    if (this.shallowReactivePattern && isObject(obj)) {
       Object.keys(obj).forEach((key) => {
-        if (this.ignoreReactivePattern.test(key)) {
+        if (this.shallowReactivePattern.test(key)) {
+          // 命中shallowReactivePattern的属性将其设置为 shallowReactive
+          defineReactive(obj, key, obj[key], true)
           Object.defineProperty(obj, key, {
             enumerable: true,
             // set configurable to false to skip defineReactive
@@ -290,10 +292,10 @@ export default class MpxProxy {
     if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
-      reactive(this.processIgnoreReactive(this.props))
+      reactive(this.processShallowReactive(this.props))
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
-      reactive(this.processIgnoreReactive(this.props))
+      reactive(this.processShallowReactive(this.props))
     }
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
   }
@@ -333,7 +335,7 @@ export default class MpxProxy {
     if (isFunction(dataFn)) {
       Object.assign(this.data, callWithErrorHandling(dataFn.bind(this.target), this, 'data function'))
     }
-    reactive(this.processIgnoreReactive(this.data))
+    reactive(this.processShallowReactive(this.data))
     proxy(this.target, this.data, undefined, false, this.createProxyConflictHandler('data'))
     this.collectLocalKeys(this.data)
   }
@@ -514,7 +516,7 @@ export default class MpxProxy {
       if (hasOwn(renderData, key)) {
         const data = renderData[key]
         const firstKey = getFirstKey(key)
-        if (!this.localKeysMap[firstKey] || (this.ignoreReactivePattern && this.ignoreReactivePattern.test(firstKey))) {
+        if (!this.localKeysMap[firstKey]) {
           continue
         }
         // 外部clone，用于只需要clone的场景

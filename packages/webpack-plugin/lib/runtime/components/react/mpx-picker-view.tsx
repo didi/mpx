@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import React, { forwardRef, useState, useRef } from 'react'
+import React, { forwardRef, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import {
@@ -7,35 +7,33 @@ import {
   splitProps,
   splitStyle,
   wrapChildren,
-  parseInlineStyle,
   useTransformStyle,
-  useDebounceCallback,
-  useStableCallback,
   extendObject
 } from './utils'
+import { PickerViewStyleContext } from './pickerVIewContext'
 import type { AnyFunc } from './types/common'
 /**
  * ✔ value
  * ✔ bindchange
  * ✘ bindpickstart
  * ✘ bindpickend
- * ✘ mask-class
+ * ✔ mask-class
  * ✔ indicator-style: 优先级indicator-style.height > pick-view-column中的子元素设置的height
- * ✘ indicator-class
- * ✘ mask-style
+ * WebView Only:
+ * ✔ indicator-class
+ * ✔ mask-style
  * ✘ immediate-change
  */
 
 interface PickerViewProps {
   children: React.ReactNode
-  // 初始的defaultValue数组中的数字依次表示 picker-view 内的 picker-view-column 选择的第几项（下标从 0 开始），
-  // 数字大于 picker-view-column 可选项长度时，选择最后一项。
   value?: Array<number>
   bindchange?: AnyFunc
   style: {
     [key: string]: any
   }
-  'indicator-style'?: string
+  'indicator-style'?: Record<string, any>,
+  'mask-style'?: Record<string, any>,
   'enable-var': boolean
   'external-var-context'?: Record<string, any>,
   'enable-offset': boolean
@@ -62,25 +60,25 @@ const styles: { [key: string]: Object } = {
   }
 }
 
+const DefaultPickerItemH = 36
+
 const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProps>((props: PickerViewProps, ref) => {
   const {
     children,
     value = [],
     bindchange,
     style,
+    'indicator-style': indicatorStyle = {},
+    'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
-
-  // indicatorStyle 需要转换为rn的style
-  // 微信设置到pick-view上上设置的normalStyle如border等需要转换成RN的style然后进行透传
-  const indicatorStyle = parseInlineStyle(props['indicator-style'])
-  const { height: indicatorH, ...pickerOverlayStyle } = indicatorStyle
-  const [pickMaxH, setPickMaxH] = useState(0)
+  const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
   const cloneRef = useRef(null)
   const activeValueRef = useRef(value)
   activeValueRef.current = value.slice()
+  const snapActiveValueRef = useRef<number[] | null>(null)
 
   const {
     normalStyle,
@@ -96,7 +94,6 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   })
 
   const {
-    // 存储layout布局信息
     layoutRef,
     layoutProps,
     layoutStyle
@@ -104,33 +101,32 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
 
-  const onColumnItemRawHChange = (height: number) => {
-    if (height > pickMaxH) {
-      setPickMaxH(height)
-    }
-  }
-
-  const bindchangeDebounce = useDebounceCallback(useStableCallback(bindchange), 300)
-
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
-    bindchangeDebounce.clear()
     const activeValue = activeValueRef.current
     activeValue[columnIndex] = selectedIndex
     const eventData = getCustomEvent(
       'change',
       {},
-      { detail: { value: activeValue, source: 'change' }, layoutRef }
+      { detail: { value: activeValue.slice(), source: 'change' }, layoutRef }
     )
-    bindchangeDebounce(eventData)
+    bindchange?.(eventData)
+    snapActiveValueRef.current = activeValueRef.current
   }
 
-  const onInitialChange = (value: number[]) => {
-    const eventData = getCustomEvent(
-      'change',
-      {},
-      { detail: { value, source: 'change' }, layoutRef }
-    )
-    bindchange?.(eventData) // immediate
+  const hasDiff = (a: number[] = [], b: number[]) => {
+    return a.some((v, i) => v !== b[i])
+  }
+
+  const onInitialChange = (isInvalid: boolean, value: number[]) => {
+    if (isInvalid || !snapActiveValueRef.current || hasDiff(snapActiveValueRef.current, value)) {
+      const eventData = getCustomEvent(
+        'change',
+        {},
+        { detail: { value: value.slice(), source: 'change' }, layoutRef }
+      )
+      bindchange?.(eventData)
+      snapActiveValueRef.current = value.slice()
+    }
   }
 
   const innerProps = useInnerProps(
@@ -148,12 +144,17 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       ),
       layoutProps
     }),
-    ['enable-offset'],
+    [
+      'enable-offset',
+      'indicator-style',
+      'indicator-class',
+      'mask-style',
+      'mask-class'
+    ],
     { layoutRef }
   )
 
   const renderColumn = (child: React.ReactElement, index: number, columnData: React.ReactNode[], initialIndex: number) => {
-    const extraProps = {}
     const childProps = child?.props || {}
     const wrappedProps = extendObject(
       {},
@@ -164,15 +165,14 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         columnIndex: index,
         key: `pick-view-${index}`,
         wrapperStyle: {
-          height: normalStyle?.height || 0,
-          itemHeight: indicatorH || 0
+          height: normalStyle?.height || DefaultPickerItemH,
+          itemHeight: indicatorH || DefaultPickerItemH
         },
-        onColumnItemRawHChange,
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
-        pickerOverlayStyle
-      },
-      extraProps
+        pickerIndicatorStyle,
+        pickerMaskStyle
+      }
     )
     const realElement = React.cloneElement(child, wrappedProps)
     return wrapChildren(
@@ -215,17 +215,18 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       validValue.push(validIndex)
       renderColumns.push(renderColumn(item, index, columnData, validIndex))
     })
-    isInvalid && onInitialChange(validValue)
+    onInitialChange(isInvalid, validValue)
     return renderColumns
   }
 
   return (
-    <View {...innerProps}>
-      <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
-    </View>
+    <PickerViewStyleContext.Provider value={textStyle}>
+      <View {...innerProps}>
+        <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
+      </View>
+    </PickerViewStyleContext.Provider>
   )
 })
 
 _PickerView.displayName = 'MpxPickerView'
-
 export default _PickerView

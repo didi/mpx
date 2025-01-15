@@ -43,7 +43,18 @@ const sidebar = {
         'advance/custom-output-path',
         'advance/utility-first-css',
         'advance/ssr',
-        'advance/provide-inject'
+        'advance/provide-inject',
+        'advance/build-config'
+      ]
+    },
+    {
+      title: '跨端',
+      collapsable: false,
+      children: [
+        'platform/basic',
+        // 'platform/miniprogram',
+        // 'platform/web',
+        'platform/rn'
       ]
     },
     {

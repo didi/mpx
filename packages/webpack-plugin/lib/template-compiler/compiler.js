@@ -38,7 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const hoverClassReg = /^mpx-((cover-)?view|button|navigator)$/
+const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1073,12 +1073,6 @@ function processStyleReact (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
 
-  let staticHoverClass = ''
-  if (hoverClassReg.test(el.tag)) {
-    staticHoverClass = el.attrsMap['hover-class'] || ''
-    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
-  }
-
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
@@ -1102,12 +1096,22 @@ function processStyleReact (el, options) {
     }])
   }
 
-  if (staticHoverClass && staticHoverClass !== 'none') {
-    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
-    addAttrs(el, [{
-      name: 'hover-style',
-      value: `{{this.__getStyle(${staticClassExp})}}`
-    }])
+  if (specialClassReg.test(el.tag)) {
+    const staticClassNames = ['hover', 'indicator', 'mask']
+    staticClassNames.forEach((className) => {
+      let staticClass = el.attrsMap[className + '-class'] || ''
+      let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
+      staticClass = staticClass.replace(/\s+/g, ' ')
+      staticStyle = staticStyle.replace(/\s+/g, ' ')
+      if ((staticClass && staticClass !== 'none') || staticStyle) {
+        const staticClassExp = parseMustacheWithContext(staticClass).result
+        const staticStyleExp = parseMustacheWithContext(staticStyle).result
+        addAttrs(el, [{
+          name: className + '-style',
+          value: `{{this.__getStyle(${staticClassExp}, null, ${staticStyleExp})}}`
+        }])
+      }
+    })
   }
 
   // 处理externalClasses，将其转换为style作为props传递
@@ -1150,6 +1154,49 @@ function getModelConfig (el, match) {
     modelFilter,
     modelValuePathArr,
     stringifiedModelValue
+  }
+}
+
+function processEventWeb (el) {
+  const eventConfigMap = {}
+  el.attrsList.forEach(function ({ name, value }) {
+    if (/^@[a-zA-Z]+$/.test(name)) {
+      const parsedFunc = parseFuncStr(value)
+      if (parsedFunc) {
+        if (!eventConfigMap[name]) {
+          eventConfigMap[name] = {
+            configs: []
+          }
+        }
+        eventConfigMap[name].configs.push(
+          Object.assign({ name, value }, parsedFunc)
+        )
+      }
+    }
+  })
+
+  // let wrapper
+  for (const name in eventConfigMap) {
+    const { configs } = eventConfigMap[name]
+    if (!configs.length) continue
+    configs.forEach(({ name }) => {
+      if (name) {
+        // 清空原始事件绑定
+        let has
+        do {
+          has = getAndRemoveAttr(el, name).has
+        } while (has)
+      }
+    })
+    const value = `(e)=>__invoke(e, [${configs.map(
+      (item) => item.expStr
+    )}])`
+    addAttrs(el, [
+      {
+        name,
+        value
+      }
+    ])
   }
 }
 
@@ -2638,6 +2685,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIfWeb(el)
     processScoped(el)
+    processEventWeb(el)
     // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
     processComponentGenericsWeb(el, options, meta)
