@@ -609,9 +609,9 @@ Mpx 输出 React Native 支持以下模版指令。
 | hover-start-time   | number  |     50    | 按住后多久出现点击态，单位毫秒|
 | hover-stay-time	  | number  |     400    | 手指松开后点击态保留时间，单位毫秒	 |
 | animation | Object  | undefined  | 传递动画的实例， 可配合mpx.createAnimation方法一起使用|
-| enable-background		  | Boolean  |     false    | 是否要开启background-image、background-size和background-postion的相关计算或渲染，请根据实际情况开启 |
-| enable-animation | Boolean  | false  | 开启要开启动画渲染，请根据实际情况开启 |
-| enable-fast-image | Boolean  | false  | 开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-background		  | Boolean  |     false    |  RN环境特有属性，是否要开启background-image、background-size和background-postion的相关计算或渲染，请根据实际情况开启 |
+| enable-animation | Boolean  | false  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
+| enable-fast-image | Boolean  | false  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 
 注意事项
 
@@ -643,10 +643,9 @@ Mpx 输出 React Native 支持以下模版指令。
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
 | paging-enabled          | Number  | `false`   | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置  |
 | show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
-| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
-| enable-trigger-intersection-observer  |  Boolean   |  []    | 是否开启intersection-observer |
-| simultaneous-handlers  | `Array<object>`  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
-| wait-for  |  `Array<object>`   |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
+| enable-trigger-intersection-observer  |  Boolean   |  []    | RN环境特有属性，是否开启intersection-observer |
+| simultaneous-handlers  | `Array<object>`  |    []    | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
+| wait-for  |  `Array<object>`   |  []    | RN环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 
 
 事件
@@ -688,7 +687,6 @@ Mpx 输出 React Native 支持以下模版指令。
 | previous-margin         | String  | `0`                 | 前边距，可用于露出前一项的一小部分，接受px |
 | next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
 | scale                   | Boolean  | `false`            | 滑动时是否开启前后元素缩小,默认是缩放0.7倍, 暂不支持自定义 |
-| enable-offset           | Number  | `false`       | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 | easing-function         | String  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
 | bindchange              | eventhandle|   无          | current 改变时会触发 change 事件，event.detail = {current, source}| 
 
@@ -817,7 +815,6 @@ movable-view的可移动区域。
 | hover-class             | String  |               | 指定按钮按下去的样式类。当 hover-class="none" 时，没有点击态效果  |
 | hover-start-time        | Number  |  `20`         | 按住后多久出现点击态，单位毫秒                                  |
 | hover-stay-time         | Number  |  `70`         | 手指松开后点击态保留时间，单位毫秒                               |
-| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 
 #### label
@@ -914,7 +911,7 @@ movable-view的可移动区域。
 | cursor-color            | String  |               | 光标颜色                                                    |
 | selection-start         | Number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
 | selection-end           | Number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
-| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
+
 
 事件
 
@@ -961,7 +958,6 @@ movable-view的可移动区域。
 | cursor-color            | String  |               | 光标颜色                                                    |
 | selection-start         | Number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
 | selection-end           | Number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
-| enable-offset          | Number  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
 
 事件
 
@@ -1116,8 +1112,7 @@ movable-view的可移动区域。
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | src                     | String  | `false`       | 图片资源地址及 base64 格式数据 |
 | mode                    | String  | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right`             |
-| enable-offset          | Boolean  | `false`   | 设置是否要获取组件的布局信息，若设置了该属性，会在 e.target 中返回组件的 offsetLeft、offsetWidth 信息|
-| enable-fast-image          | Boolean  | `false`   | 开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| enable-fast-image          | Boolean  | `false`   | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 
 事件
 
