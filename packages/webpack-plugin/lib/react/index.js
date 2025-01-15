@@ -8,6 +8,7 @@ const RecordLoaderContentDependency = require('../dependencies/RecordLoaderConte
 
 module.exports = function ({
   parts,
+  jsonContent,
   loaderContext,
   pagesMap,
   componentsMap,
@@ -19,7 +20,7 @@ module.exports = function ({
   hasScoped,
   hasComment,
   isNative,
-  usingComponents,
+  usingComponentsInfo,
   componentGenerics,
   autoScope,
   callback
@@ -50,21 +51,20 @@ module.exports = function ({
             srcMode,
             moduleId,
             ctorType,
-            usingComponents,
+            usingComponentsInfo,
             componentGenerics
           }, callback)
         },
         (callback) => {
           processStyles(parts.styles, {
             loaderContext,
-            srcMode,
             ctorType,
             autoScope,
             moduleId
           }, callback)
         },
         (callback) => {
-          processJSON(parts.json, {
+          processJSON(jsonContent, {
             loaderContext,
             ctorType,
             pagesMap,

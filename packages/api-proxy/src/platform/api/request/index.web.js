@@ -1,6 +1,7 @@
 import axios from 'axios'
-import { webHandleSuccess, webHandleFail, defineUnsupportedProps } from '../../../common/js'
+import { successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import RequestTask from './RequestTask'
+import { serialize, buildUrl } from '@mpxjs/utils'
 
 function request (options = { url: '' }) {
   const CancelToken = axios.CancelToken
@@ -8,18 +9,22 @@ function request (options = { url: '' }) {
   const requestTask = new RequestTask(source.cancel)
 
   let {
+    url,
     data = {},
     method = 'GET',
     dataType = 'json',
     responseType = 'text',
-    timeout = 60 * 1000,
+    timeout = global.__networkTimeout || 60 * 1000,
     header = {},
     success = null,
     fail = null,
     complete = null
   } = options
-
   method = method.toUpperCase()
+  if (method === 'GET') {
+    url = buildUrl(url, data)
+    data = {}
+  }
 
   if (
     method === 'POST' &&
@@ -27,14 +32,36 @@ function request (options = { url: '' }) {
     (header['Content-Type'] === 'application/x-www-form-urlencoded' ||
       header['content-type'] === 'application/x-www-form-urlencoded')
   ) {
-    data = Object.keys(data).reduce((pre, curKey) => {
-      return `${pre}&${encodeURIComponent(curKey)}=${encodeURIComponent(data[curKey])}`
-    }, '').slice(1)
+    data = serialize(data)
   }
 
-  const rOptions = {
+  /**
+   * axios 的其他参数
+   * baseURL
+   * transformRequest
+   * transformResponse,
+   * headers,
+   * params,
+   * paramsSerializer,
+   * withCredentials,
+   * adapter,
+   * auth,
+   * xsrfCookieName,
+   * xsrfHeaderName,
+   * onUploadProgress,
+   * onDownloadProgress,
+   * maxContentLength,
+   * maxBodyLength,
+   * validateStatus,
+   * maxRedirects,
+   * socketPath,
+   * httpAgent,
+   * httpsAgent,
+   * decompress
+   */
+  const rOptions = Object.assign(options, {
     method,
-    url: options.url,
+    url,
     data,
     headers: header,
     responseType,
@@ -50,7 +77,7 @@ function request (options = { url: '' }) {
       // throw ETIMEDOUT error instead of generic ECONNABORTED on request timeouts
       clarifyTimeoutError: false
     }
-  }
+  })
   if (method === 'GET') {
     rOptions.params = rOptions.data || {}
     delete rOptions.data
@@ -63,27 +90,27 @@ function request (options = { url: '' }) {
       } catch (e) {
       }
     }
-    const result = {
+
+    const result = Object.assign({}, res, {
       errMsg: 'request:ok',
       data,
       statusCode: res.status,
       header: res.headers
-    }
+    })
     defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
     return result
   }).catch(err => {
-    const response = err?.response || {}
+    const realError = err || {}
+    const response = realError.response || {}
     const res = {
       errMsg: `request:fail ${err}`,
       statusCode: response.status,
       header: response.headers,
       data: response.data
     }
-    webHandleFail(res, fail, complete)
-    if (!fail) {
-      return Promise.reject(res)
-    }
+    Object.assign(res, realError)
+    failHandle(res, fail, complete)
   })
 
   return requestTask

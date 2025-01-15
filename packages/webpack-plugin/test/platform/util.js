@@ -8,6 +8,7 @@ const warnFn = jest.fn(console.warn)
 function compileTemplate (template, { srcMode = 'wx', mode = 'ali', env = '' } = {}) {
   const parsed = compiler.parse(template, {
     usingComponents: [],
+    usingComponentsInfo: {},
     externalClasses: [],
     srcMode,
     mode,

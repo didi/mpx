@@ -14,7 +14,7 @@ module.exports = function (template, {
   srcMode,
   moduleId,
   ctorType,
-  usingComponents,
+  usingComponentsInfo,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -27,7 +27,8 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
-    autoVirtualHostRules
+    autoVirtualHostRules,
+    customTextRules
   } = mpx
   const { resourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -63,7 +64,7 @@ module.exports = function (template, {
       const { root, meta } = templateCompiler.parse(template.content, {
         warn,
         error,
-        usingComponents,
+        usingComponentsInfo, // processTemplate中无其他地方使用，直接透传 string 类型
         hasComment,
         isNative,
         ctorType,
@@ -84,7 +85,8 @@ module.exports = function (template, {
         globalComponents: [],
         // web模式下实现抽象组件
         componentGenerics,
-        hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
+        hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
+        isCustomText: matchCondition(resourcePath, customTextRules)
       })
 
       if (meta.wxsContentMap) {
@@ -113,13 +115,15 @@ module.exports = function (template, {
         try {
           const ignoreMap = Object.assign({
             createElement: true,
-            getComponent: true,
-            rootProps: true
+            getComponent: true
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
+            // customBindThis (path, t) {
+            //   path.replaceWith(t.callExpression(t.identifier('getValue'), [t.stringLiteral(path.node.name)]))
+            // }
           })
-          output += `global.currentInject.render = function (createElement, getComponent, rootProps) {
+          output += `global.currentInject.render = function (createElement, getComponent) {
   return ${bindResult.code}
 };\n`
         } catch (e) {

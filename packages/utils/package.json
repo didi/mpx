@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/utils",
-  "version": "2.9.50",
+  "version": "2.9.70",
   "description": "A toolkit for mpx framework",
   "main": "src/index.js",
   "scripts": {
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "peerDependencies": {
-    "@mpxjs/core": "^2.9.0"
+    "@mpxjs/core": "^2.9.58"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

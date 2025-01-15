@@ -1,6 +1,6 @@
 import loadScript from './loadscript'
 let sdkReady
-const SDK_URL_MAP = {
+const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
   },
@@ -15,9 +15,8 @@ const SDK_URL_MAP = {
   },
   tt: {
     url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
-  },
-  ...window.sdkUrlMap
-}
+  }
+}, window.sdkUrlMap)
 function getMpxWebViewId () {
   const href = location.href
   const reg = /mpx_webview_id=(\d+)/g
@@ -46,7 +45,15 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = 'web'
   window.addEventListener('message', (event) => {
     // 接收web-view的回调
-    const { callbackId, error, result } = event.data
+    const data = event.data
+    let msgData = data
+    try {
+      if (typeof data === 'string') {
+        msgData = JSON.parse(data)
+      }
+    } catch (e) {
+    }
+    const { callbackId, error, result } = msgData
     if (callbackId !== undefined && callbacks[callbackId]) {
       if (error) {
         callbacks[callbackId](error)
@@ -89,20 +96,12 @@ const webviewBridge = {
   }
 }
 
-function filterData (data) {
-  if (Object.prototype.toString.call(data) !== '[object Object]') {
-    return data
+function postMessage (type, ...extraData) {
+  if (type === 'invoke') {
+    type = extraData[0]
+    extraData = extraData.slice(1)
   }
-  const newData = {}
-  for (const item in data) {
-    if (typeof data[item] !== 'function') {
-      newData[item] = data[item]
-    }
-  }
-  return newData
-}
-
-function postMessage (type, data = {}) {
+  const data = extraData[0]
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId
     callbacks[currentCallbackId] = (err, res) => {
@@ -118,12 +117,16 @@ function postMessage (type, data = {}) {
     const postParams = {
       type,
       callbackId,
-      payload: filterData(data)
+      args: extraData
     }
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid
     }
-    window.parent.postMessage && window.parent.postMessage(postParams, '*')
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams))
+    } else {
+      window.parent.postMessage && window.parent.postMessage(JSON.stringify(postParams), '*')
+    }
   } else {
     data({
       webapp: true
@@ -261,7 +264,8 @@ const getWebviewApi = () => {
       'getEnv',
       'postMessage',
       'getLoadError',
-      'getLocation'
+      'getLocation',
+      'invoke'
     ],
     tt: []
   }

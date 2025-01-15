@@ -4,7 +4,7 @@
  * ✔ plain
  * ✔ disabled
  * ✔ loading
- * ✘ form-type
+ * ✔ form-type
  * - open-type: Partially. Only support `share`、`getUserInfo`
  * ✔ hover-class: Convert hoverClass to hoverStyle.
  * ✔ hover-style
@@ -34,27 +34,23 @@
  * ✘ bindagreeprivacyauthorization
  * ✔ bindtap
  */
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  forwardRef,
-} from 'react'
+import { createElement, useEffect, useRef, ReactNode, forwardRef, useContext, JSX } from 'react'
 import {
   View,
-  Text,
   StyleSheet,
-  StyleProp,
   ViewStyle,
   TextStyle,
   Animated,
   Easing,
-  NativeSyntheticEvent,
+  NativeSyntheticEvent
 } from 'react-native'
-import { extractTextStyle, isText, every } from './utils'
+import { warn } from '@mpxjs/utils'
+import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import { RouteContext, FormContext } from './context'
+import type { ExtendedViewStyle } from './types/common'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -74,18 +70,21 @@ export interface ButtonProps {
   disabled?: boolean
   loading?: boolean
   'hover-class'?: string
-  'hover-style'?: StyleProp<ViewStyle & TextStyle>
+  'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'open-type'?: OpenType
+  'form-type'?: 'submit' | 'reset'
   'enable-offset'?: boolean,
-  style?: StyleProp<ViewStyle & TextStyle>
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  style?: ViewStyle & TextStyle & Record<string, any>
   children: ReactNode
   bindgetuserinfo?: (userInfo: any) => void
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  catchtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  bindtouchstart?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
-  bindtouchend?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 const LOADING_IMAGE_URI =
@@ -94,12 +93,12 @@ const LOADING_IMAGE_URI =
 const TypeColorMap: Record<Type, TypeColor> = {
   default: ['#F8F8F8', '#DEDEDE', '35,35,35', '#F7F7F7'],
   primary: ['#1AAD19', '#179B16', '26,173,25', '#9ED99D'],
-  warn: ['#E64340', '#CE3C39', '230,67,64', '#EC8B89'],
+  warn: ['#E64340', '#CE3C39', '230,67,64', '#EC8B89']
 }
 
 const OpenTypeEventsMap = new Map<OpenType, OpenTypeEvent>([
   ['share', 'onShareAppMessage'],
-  ['getUserInfo', 'onUserInfo'],
+  ['getUserInfo', 'onUserInfo']
 ])
 
 const styles = StyleSheet.create({
@@ -114,50 +113,54 @@ const styles = StyleSheet.create({
     marginHorizontal: 'auto' // 按钮默认居中
   },
   buttonMini: {
-    height: 30,
+    height: 30
   },
   text: {
     fontSize: 18,
-    color: '#000000',
+    color: '#000000'
   },
   textMini: {
-    fontSize: 13,
+    fontSize: 13
   },
   loading: {
     width: 20,
-    height: 20,
-  },
+    height: 20
+  }
 })
 
-const getOpenTypeEvent = (openType: OpenType) => {
-  // @ts-ignore
-  if (!global?.__mpx?.config?.rnConfig) {
-    console.warn('Environment not supported')
+const getOpenTypeEvent = (openType?: OpenType) => {
+  if (!openType) return
+  if (!global.__mpx?.config?.rnConfig) {
+    warn('Environment not supported')
     return
   }
-
   const eventName = OpenTypeEventsMap.get(openType)
   if (!eventName) {
-    console.warn(`open-type not support ${openType}`)
+    warn(`open-type not support ${openType}`)
     return
   }
 
-  // @ts-ignore
-  const event = global.__mpx.config.rnConfig?.openTypeHandler?.[eventName]
+  const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
   if (!event) {
-    console.warn(`Unregistered ${eventName} event`)
+    warn(`Unregistered ${eventName} event`)
     return
   }
 
   return event
 }
 
-const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
+const timer = (data: any, time = 3000) => new Promise((resolve) => {
+  setTimeout(() => {
+    resolve(data)
+  }, time)
+})
+
+const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
   const image = useRef(new Animated.Value(0)).current
 
   const rotate = image.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+    outputRange: ['0deg', '360deg']
   })
 
   useEffect(() => {
@@ -167,7 +170,7 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
         duration: 1000,
         easing: Easing.linear,
         useNativeDriver: true,
-        isInteraction: false,
+        isInteraction: false
       })
     )
 
@@ -176,19 +179,23 @@ const Loading = ({ alone = false }: { alone: boolean }): React.JSX.Element => {
     return () => {
       animation.stop()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const loadingStyle = {
-    ...styles.loading,
-    transform: [{ rotate }],
-    marginRight: alone ? 0 : 5,
-  }
+  const loadingStyle = extendObject(
+    {},
+    styles.loading,
+    {
+      transform: [{ rotate }],
+      marginRight: alone ? 0 : 5
+    }
+  )
 
   return <Animated.Image testID="loading" style={loadingStyle} source={{ uri: LOADING_IMAGE_URI }} />
 }
 
-const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, ref): React.JSX.Element => {
+const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonProps, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(buttonProps)
+
   const {
     size = 'default',
     type = 'default',
@@ -196,207 +203,221 @@ const Button = forwardRef<HandlerRef< View, ButtonProps>,ButtonProps >((props, r
     disabled = false,
     loading = false,
     'hover-class': hoverClass,
-    'hover-style': hoverStyle = [],
+    'hover-style': hoverStyle = {},
     'hover-start-time': hoverStartTime = 20,
     'hover-stay-time': hoverStayTime = 70,
     'open-type': openType,
-    'enable-offset': enableOffset,
-    style = [],
+    'form-type': formType,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
+    style = {},
     children,
     bindgetuserinfo,
-    bindtap,
-    catchtap,
-    bindtouchstart,
-    bindtouchend,
+    bindtap
   } = props
 
-  const refs = useRef<{
-    hoverStartTimer: ReturnType<typeof setTimeout> | undefined
-    hoverStayTimer: ReturnType<typeof setTimeout> | undefined
-  }>({
-    hoverStartTimer: undefined,
-    hoverStayTimer: undefined,
-  })
+  const pageId = useContext(RouteContext)
 
-  const layoutRef = useRef({})
+  const formContext = useContext(FormContext)
 
-  const [isHover, setIsHover] = useState(false)
+  const enableHover = hoverClass !== 'none'
+  const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime, disabled })
+
+  let submitFn: () => void | undefined
+  let resetFn: () => void | undefined
+
+  if (formContext) {
+    submitFn = formContext.submit
+    resetFn = formContext.reset
+  }
 
   const isMiniSize = size === 'mini'
 
-  const applyHoverEffect = isHover && hoverClass !== 'none'
-
-  const inheritTextStyle = extractTextStyle(style)
-
-  const textHoverStyle = extractTextStyle(hoverStyle)
-
   const [color, hoverColor, plainColor, disabledColor] = TypeColorMap[type]
 
-  const normalBackgroundColor = disabled ? disabledColor : applyHoverEffect || loading ? hoverColor : color
+  const normalBackgroundColor = disabled ? disabledColor : isHover || loading ? hoverColor : color
 
   const plainBorderColor = disabled
     ? 'rgba(0, 0, 0, .2)'
-    : applyHoverEffect
-    ? `rgba(${plainColor},.6)`
-    : `rgb(${plainColor})`
+    : isHover
+      ? `rgba(${plainColor},.6)`
+      : `rgb(${plainColor})`
 
   const normalBorderColor = type === 'default' ? 'rgba(0, 0, 0, .2)' : normalBackgroundColor
 
   const plainTextColor = disabled
     ? 'rgba(0, 0, 0, .2)'
-    : applyHoverEffect
-    ? `rgba(${plainColor}, .6)`
-    : `rgb(${plainColor})`
+    : isHover
+      ? `rgba(${plainColor}, .6)`
+      : `rgb(${plainColor})`
 
   const normalTextColor =
     type === 'default'
-      ? `rgba(0, 0, 0, ${disabled ? 0.3 : applyHoverEffect || loading ? 0.6 : 1})`
-      : `rgba(255 ,255 ,255 , ${disabled || applyHoverEffect || loading ? 0.6 : 1})`
+      ? `rgba(0, 0, 0, ${disabled ? 0.3 : isHover || loading ? 0.6 : 1})`
+      : `rgba(255 ,255 ,255 , ${disabled || isHover || loading ? 0.6 : 1})`
 
   const viewStyle = {
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: plain ? plainBorderColor : normalBorderColor,
-    backgroundColor: plain ? 'transparent' : normalBackgroundColor,
+    backgroundColor: plain ? 'transparent' : normalBackgroundColor
   }
 
-  const textStyle = {
-    color: plain ? plainTextColor : normalTextColor,
-    ...inheritTextStyle
-  }
-
-  const defaultViewStyle = [
+  const defaultViewStyle = extendObject(
+    {},
     styles.button,
-    isMiniSize && styles.buttonMini || {},
-    viewStyle,
-  ]
+    isMiniSize ? styles.buttonMini : null,
+    viewStyle
+  )
 
-  const defaultTextStyle = [
-    styles.text, isMiniSize && styles.textMini, textStyle
-  ]
+  const defaultTextStyle = extendObject(
+    {},
+    styles.text,
+    isMiniSize ? styles.textMini : {},
+    { color: plain ? plainTextColor : normalTextColor }
+  )
+
+  const defaultStyle = extendObject({}, defaultViewStyle, defaultTextStyle)
+
+  const styleObj = extendObject(
+    {},
+    defaultStyle,
+    style,
+    isHover ? hoverStyle : {}
+  )
+
+  const {
+    hasSelfPercent,
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const nodeRef = useRef(null)
+
+  useNodesRef(props, ref, nodeRef, { style: normalStyle })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
+
+  const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+
+  if (backgroundStyle) {
+    warn('Button does not support background image-related styles!')
+  }
 
   const handleOpenTypeEvent = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    if (!openType) return
     const handleEvent = getOpenTypeEvent(openType)
+    if (!handleEvent) return
 
     if (openType === 'share') {
-      handleEvent && handleEvent({
+      const currentPage = getCurrentPage(pageId)
+      const event = {
         from: 'button',
         target: getCustomEvent('tap', evt, { layoutRef }, props).target,
-      })
-    }
-
-    if (openType === 'getUserInfo') {
-      const userInfo = handleEvent && handleEvent()
-      if (typeof userInfo === 'object') {
-        bindgetuserinfo && bindgetuserinfo(userInfo)
+        webViewUrl: currentPage?.__webViewUrl
+      }
+      if (currentPage) {
+        const defaultMessage = {
+          title: global.__mpx.config.rnConfig.projectName || 'AwesomeProject',
+          path: currentPage.route || ''
+        }
+        if (currentPage.onShareAppMessage) {
+          const { promise, ...message } = currentPage.onShareAppMessage(event) || {}
+          if (promise) {
+            Promise.race([Promise.resolve(promise), timer(message)])
+              .then((msg) => {
+                handleEvent(Object.assign({}, defaultMessage, msg))
+              })
+          } else {
+            handleEvent(Object.assign({}, defaultMessage, message))
+          }
+        } else {
+          handleEvent(defaultMessage)
+        }
+      } else {
+        warn('Current page not found')
+        // Todo handleEvent(event)
       }
     }
+
+    if (openType === 'getUserInfo' && bindgetuserinfo) {
+      Promise.resolve(handleEvent)
+        .then((userInfo) => {
+          if (typeof userInfo === 'object') {
+            bindgetuserinfo(userInfo)
+          }
+        })
+    }
   }
 
-  const setStayTimer = () => {
-    clearTimeout(refs.current.hoverStayTimer)
-    refs.current.hoverStayTimer = setTimeout(() => {
-      setIsHover(false)
-      clearTimeout(refs.current.hoverStayTimer)
-    }, hoverStayTime)
-  }
-
-  const setStartTimer = () => {
-    clearTimeout(refs.current.hoverStartTimer)
-    refs.current.hoverStartTimer = setTimeout(() => {
-      setIsHover(true)
-      clearTimeout(refs.current.hoverStartTimer)
-    }, hoverStartTime)
-  }
-
-  const onTouchStart = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    bindtouchstart && bindtouchstart(evt)
-    if (disabled) return
-    setStartTimer()
-  }
-
-  const onTouchEnd = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    bindtouchend && bindtouchend(evt)
-    if (disabled) return
-    setStayTimer()
+  const handleFormTypeFn = () => {
+    if (formType === 'submit') {
+      submitFn && submitFn()
+    } else if (formType === 'reset') {
+      resetFn && resetFn()
+    }
   }
 
   const onTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
     if (disabled) return
     bindtap && bindtap(getCustomEvent('tap', evt, { layoutRef }, props))
     handleOpenTypeEvent(evt)
-  }
-
-  const catchTap = (evt: NativeSyntheticEvent<TouchEvent>) => {
-    if (disabled) return
-    catchtap && catchtap(getCustomEvent('tap', evt, { layoutRef }, props))
-    handleOpenTypeEvent(evt)
-  }
-
-  function wrapChildren(children: ReactNode, textStyle?: StyleProp<TextStyle>) {
-    if (every(children, (child)=>isText(child))) {
-      children = [<Text key='buttonTextWrap' style={textStyle}>{children}</Text>]
-    } else {
-      if(textStyle) console.warn('Text style will be ignored unless every child of the button is Text node!')
-    }
-  
-    return children
-  }
-
-  const { nodeRef } = useNodesRef(props, ref, {
-    defaultStyle: StyleSheet.flatten([
-      ...defaultViewStyle,
-      ...defaultTextStyle,
-    ])
-  })
-
-  const onLayout = () => {
-    nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-    })
+    handleFormTypeFn()
   }
 
   const innerProps = useInnerProps(
     props,
-    {
-      ref: nodeRef,
-      bindtouchstart: onTouchStart,
-      bindtouchend: onTouchEnd,
-      bindtap: onTap,
-      catchtap: catchTap,
-      ...(enableOffset ? { onLayout } : {}),
-    },
-    [
-      'enable-offset'
-    ],
-    { 
-      layoutRef
-    }
-  );
-
-  return (
-    <View
-      {...innerProps}
-      style={[
-        ...defaultViewStyle,
-        style,
-        applyHoverEffect && hoverStyle,
-      ]}>
-      {loading && <Loading alone={!children} />}
+    extendObject(
       {
-        wrapChildren(
-          children, 
-          [
-            ...defaultTextStyle,
-            applyHoverEffect && textHoverStyle,
-          ]
-        )
+        ref: nodeRef,
+        style: extendObject({}, innerStyle, layoutStyle)
+      },
+      layoutProps,
+      {
+        bindtap: !disabled && onTap
       }
-    </View>
+    ),
+    [
+      'disabled',
+      'size',
+      'type',
+      'plain',
+      'loading',
+      'hover-class',
+      'hover-style',
+      'hover-start-time',
+      'hover-stay-time',
+      'open-type',
+      'form-type'
+    ],
+    {
+      layoutRef,
+      disableTap: disabled
+    }
   )
+
+  const baseButton = createElement(View, innerProps, loading && createElement(Loading, { alone: !children }),
+    wrapChildren(
+      props,
+      {
+        hasVarDec,
+        varContext: varContextRef.current,
+        textStyle,
+        textProps
+      }
+    )
+  )
+
+  return enableHover
+    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, baseButton)
+    : baseButton
 })
 
-Button.displayName = 'mpx-button'
+Button.displayName = 'MpxButton'
 
 export default Button

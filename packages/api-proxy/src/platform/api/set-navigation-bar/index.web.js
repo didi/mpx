@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning, webHandleSuccess } from '../../../common/js'
+import { isBrowser, envError, throwSSRWarning, successHandle } from '../../../common/js'
 
 function setNavigationBarTitle (options = {}) {
   if (!isBrowser) {
@@ -10,7 +10,7 @@ function setNavigationBarTitle (options = {}) {
     document.title = title
   }
 
-  webHandleSuccess({ errMsg: 'setNavigationBarTitle:ok' }, success, complete)
+  successHandle({ errMsg: 'setNavigationBarTitle:ok' }, success, complete)
 }
 
 function setNavigationBarColor (options = {}) {
@@ -23,10 +23,13 @@ function setNavigationBarColor (options = {}) {
   meta.setAttribute('name', 'theme-color')
   meta.setAttribute('content', backgroundColor)
   document.head.appendChild(meta)
-  webHandleSuccess({ errMsg: 'setNavigationBarColor:ok' }, success, complete)
+  successHandle({ errMsg: 'setNavigationBarColor:ok' }, success, complete)
 }
+
+const hideHomeButton = envError('hideHomeButton')
 
 export {
   setNavigationBarTitle,
-  setNavigationBarColor
+  setNavigationBarColor,
+  hideHomeButton
 }

@@ -63,7 +63,7 @@ const async = require('async')
 const { parseQuery } = require('loader-utils')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_APP_MODULE_ID } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
@@ -139,6 +139,7 @@ class MpxWebpackPlugin {
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
+    options.customTextRules = options.customTextRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
@@ -158,7 +159,6 @@ class MpxWebpackPlugin {
       return externalsMap[external] || external
     })
     options.projectRoot = options.projectRoot || process.cwd()
-    options.projectName = options.projectName || 'AwesomeProject'
     options.forceUsePageCtor = options.forceUsePageCtor || false
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
@@ -173,11 +173,13 @@ class MpxWebpackPlugin {
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
+    options.disableRequireAsync = options.disableRequireAsync || false
     options.miniNpmPackages = options.miniNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
     options.customOutputPath = options.customOutputPath || null
+    options.customComponentModuleId = options.customComponentModuleId || null
     options.nativeConfig = Object.assign({
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
@@ -346,7 +348,19 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
-    const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    const addModeOptions = {
+      fileConditionRules: this.options.fileConditionRules
+    }
+    const mode = this.options.mode
+    if (mode === 'web' || mode === 'ios' || mode === 'android' || mode === 'harmony') {
+      // 'web' | 'ios' | 'android' | 'harmony' 下，使用implicitMode强制进行平台转换
+      addModeOptions.implicitMode = true
+    }
+    if (mode === 'android' || mode === 'harmony') {
+      // 'android' | 'harmony' 下，使用 mode = 'ios' 进行兼容兜底
+      addModeOptions.defaultMode = 'ios'
+    }
+    const addModePlugin = new AddModePlugin('before-file', this.options.mode, addModeOptions, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
@@ -671,7 +685,8 @@ class MpxWebpackPlugin {
           assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
-          usingComponents: {},
+          globalComponents: {},
+          globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           wxsAssetsCache: new Map(),
           addEntryPromiseMap: new Map(),
@@ -684,9 +699,9 @@ class MpxWebpackPlugin {
           env: this.options.env,
           externalClasses: this.options.externalClasses,
           projectRoot: this.options.projectRoot,
-          projectName: this.options.projectName,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
+          customTextRules: this.options.customTextRules,
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
@@ -708,7 +723,8 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode),
+          // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -736,6 +752,15 @@ class MpxWebpackPlugin {
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
           },
+          getModuleId: (filePath, isApp = false) => {
+            if (isApp) return MPX_APP_MODULE_ID
+            const customComponentModuleId = this.options.customComponentModuleId
+            if (typeof customComponentModuleId === 'function') {
+              const customModuleId = customComponentModuleId(filePath)
+              if (customModuleId) return customModuleId
+            }
+            return '_' + mpx.pathHash(filePath)
+          },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
             let entryNode = entryNodeModulesMap.get(module)
@@ -755,7 +780,7 @@ class MpxWebpackPlugin {
             const hash = mpx.pathHash(resourcePath)
             const customOutputPath = this.options.customOutputPath
             if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
-            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext).replace(/^\//, '')
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext, resourcePath).replace(/^\//, '')
             if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
           },
@@ -1810,9 +1835,8 @@ try {
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
-
-        if (isWeb(mpx.mode)) {
-          const mpxStyleOptions = queryObj.mpxStyleOptions
+        // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
+        if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
@@ -1837,8 +1861,7 @@ try {
             }
             if (loaderIndex > -1) {
               loaders.splice(loaderIndex + 1, 0, {
-                loader: styleCompilerPath,
-                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+                loader: styleCompilerPath
               })
             }
           }

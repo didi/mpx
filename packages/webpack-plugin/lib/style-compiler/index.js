@@ -18,7 +18,8 @@ module.exports = function (css, map) {
   const cb = this.async()
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
-  const id = queryObj.moduleId || queryObj.mid || '_' + mpx.pathHash(resourcePath)
+  const mpxStyleOptions = (queryObj.mpxStyleOptions && JSON.parse(queryObj.mpxStyleOptions)) || {}
+  const id = queryObj.moduleId || mpxStyleOptions.mid || mpx.getModuleId(resourcePath)
   const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
@@ -46,14 +47,14 @@ module.exports = function (css, map) {
       config.options
     )
     // ali平台下处理scoped和host选择器
-    if (mode === 'ali') {
-      if (queryObj.scoped) {
+    if (mode === 'ali' || mode === 'web') {
+      if (queryObj.scoped || mpxStyleOptions.scoped) {
         plugins.push(scopeId({ id }))
       }
       plugins.push(transSpecial({ id }))
     }
 
-    if (mode === 'web' || isReact(mode)) {
+    if (isReact(mode)) {
       plugins.push(transSpecial({ id }))
     }
 

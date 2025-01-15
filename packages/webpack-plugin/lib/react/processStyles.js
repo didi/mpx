@@ -5,7 +5,6 @@ const shallowStringify = require('../utils/shallow-stringify')
 
 module.exports = function (styles, {
   loaderContext,
-  srcMode,
   ctorType,
   autoScope,
   moduleId
@@ -14,7 +13,17 @@ module.exports = function (styles, {
   let content = ''
   let output = '/* styles */\n'
   if (styles.length) {
-    const { mode } = loaderContext.getMpx()
+    const warn = (msg) => {
+      loaderContext.emitWarning(
+        new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
+      )
+    }
+    const error = (msg) => {
+      loaderContext.emitError(
+        new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
+      )
+    }
+    const { mode, srcMode } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -22,6 +31,7 @@ module.exports = function (styles, {
         scoped,
         extract: false
       }
+      // todo 建立新的request在内部导出classMap，便于样式模块复用
       loaderContext.importModule(JSON.parse(getRequestString('styles', style, extraOptions, i))).then((result) => {
         if (Array.isArray(result)) {
           result = result.map((item) => {
@@ -41,16 +51,28 @@ module.exports = function (styles, {
           content,
           filename: loaderContext.resourcePath,
           mode,
-          srcMode
+          srcMode,
+          warn,
+          error
         })
         if (ctorType === 'app') {
-          output += `global.__getAppClassMap = function() {
-            return ${shallowStringify(classMap)};
+          output += `
+          let __appClassMap
+          global.__getAppClassMap = function() {
+            if(!__appClassMap) {
+              __appClassMap = ${shallowStringify(classMap)};
+            }
+            return __appClassMap;
           };\n`
         } else {
-          output += `global.currentInject.injectMethods = {
+          output += `
+          let __classMap
+          global.currentInject.injectMethods = {
             __getClassMap: function() {
-              return ${shallowStringify(classMap)};
+              if(!__classMap) {
+                __classMap = ${shallowStringify(classMap)};
+              }
+              return __classMap;
             }
           };\n`
         }

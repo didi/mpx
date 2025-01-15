@@ -6,13 +6,13 @@ const { matchCondition } = require('../utils/match-condition')
 
 module.exports = function (template, {
   loaderContext,
-  // hasScoped,
+  hasScoped,
   hasComment,
   isNative,
   srcMode,
   moduleId,
   ctorType,
-  usingComponents,
+  usingComponentsInfo,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -38,7 +38,7 @@ module.exports = function (template, {
     const idName = (el && el.match(/#(.*)/) && el.match(/#(.*)/)[1]) || 'app'
     template = {
       tag: 'template',
-      content: `<div id="${idName}"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
+      content: `<div id="${idName}"><transition :name="transitionName"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></transition></div>`
     }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
@@ -73,7 +73,7 @@ module.exports = function (template, {
         const { root, meta } = templateCompiler.parse(template.content, {
           warn,
           error,
-          usingComponents,
+          usingComponentsInfo, // processTemplate中无其他地方使用，直接透传 string 类型
           hasComment,
           isNative,
           ctorType,
@@ -83,8 +83,7 @@ module.exports = function (template, {
           defs,
           decodeHTMLText,
           externalClasses,
-          // todo 后续输出web也采用mpx的scoped处理
-          hasScoped: false,
+          hasScoped,
           moduleId,
           filePath: resourcePath,
           i18n: null,

@@ -4,18 +4,3 @@ export function getComponent (component, extendOptions) {
   if (extendOptions) Object.assign(component, extendOptions)
   return component
 }
-
-export function createApp ({
-  App,
-  pagesMap,
-  firstPage,
-  createElement,
-  NavigationContainer,
-  createNativeStackNavigator
-}) {
-  const Stack = createNativeStackNavigator()
-  const pages = []
-  return () => {
-    return createElement(NavigationContainer, null, createElement(Stack.Navigator, null, ...pages))
-  }
-}

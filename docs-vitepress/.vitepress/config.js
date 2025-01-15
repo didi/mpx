@@ -44,7 +44,17 @@ const sidebar = {
                 { text: '小程序插件', link: '/guide/advance/plugin' },
                 { text: '自定义路径', link: '/guide/advance/custom-output-path' },
                 { text: '使用原子类', link: '/guide/advance/utility-first-css' },
-                { text: 'SSR', link: '/guide/advance/ssr' }
+                { text: 'SSR', link: '/guide/advance/ssr' },
+                { text: '依赖注入（Provide/Inject）', link: '/guide/advance/provide-inject' },
+                { text: '编译配置', link: '/guide/advance/build-config' }
+            ]
+        },
+        {
+            text: '跨端',
+            collapsable: false,
+            items: [
+                { text: '跨端输出基础', link: '/guide/platform/basic' },
+                { text: '跨端输出RN', link: '/guide/platform/rn' },
             ]
         },
         {

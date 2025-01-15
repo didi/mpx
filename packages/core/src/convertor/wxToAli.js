@@ -1,7 +1,6 @@
-import * as wxLifecycle from '../platform/patch/wx/lifecycle'
-import * as aliLifecycle from '../platform/patch/ali/lifecycle'
+import * as wxLifecycle from '../platform/patch/lifecycle/index.wx'
+import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import { mergeLifecycle } from './mergeLifecycle'
-import { mergeToArray } from '../core/mergeOptions'
 import { error, hasOwn, isDev } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 
@@ -39,7 +38,7 @@ function notSupportTip (options) {
 
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
-  lifecycle2: mergeLifecycle(aliLifecycle.LIFECYCLE),
+  lifecycle2: mergeLifecycle(LIFECYCLE),
   pageMode: 'blend',
   support: false,
   lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,
@@ -59,14 +58,6 @@ export default {
       })
       options.props = props
       delete options.properties
-    }
-    if (options.onResize) {
-      mergeToArray(options, {
-        events: {
-          onResize: options.onResize
-        }
-      }, 'events')
-      delete options.onResize
     }
     notSupportTip(options)
   }

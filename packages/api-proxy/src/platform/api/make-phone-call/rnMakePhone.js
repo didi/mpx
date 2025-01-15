@@ -1,7 +1,7 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import { Linking } from 'react-native'
 
-const makePhoneCall = function (options) {
+const makePhoneCall = function (options = {}) {
   const {
     phoneNumber = '',
     success = null,
@@ -13,12 +13,12 @@ const makePhoneCall = function (options) {
     const result = {
       errMsg: 'makePhoneCall:ok'
     }
-    webHandleSuccess(result, success, complete)
+    successHandle(result, success, complete)
   }).catch(() => {
     const result = {
       errMsg: 'makePhoneCall:fail cancel'
     }
-    webHandleFail(result, fail, complete)
+    failHandle(result, fail, complete)
   })
 }
 
