@@ -297,7 +297,10 @@ export default withPwa(
                 prev: "上一页",
                 next: "下一页",
             },
-            outline: [2, 3],
+            outline: {
+                level: [2, 3],
+                label: '本页目录',
+            },
             socialLinks: [{ icon: 'github',  link: 'https://github.com/didi/mpx' }],
             nav: [
                 { text: '指南', activeMatch: '^/guide/', link: '/guide/basic/start',  },
