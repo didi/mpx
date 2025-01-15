@@ -88,31 +88,18 @@ export default function proxyEventMixin () {
     },
     __model (expr, $event, valuePath = ['value'], filterMethod) {
       const innerFilter = {
-        trim: (val) => typeof val === 'string' && val.trim()
+        trim: val => typeof val === 'string' && val.trim()
       }
-      const originValue = valuePath.reduce(
-        (acc, cur) => acc[cur],
-        $event.detail
-      )
-      const value = filterMethod
-        ? innerFilter[filterMethod]
-          ? innerFilter[filterMethod](originValue)
-          : typeof this[filterMethod] === 'function'
-          ? this[filterMethod](originValue)
-          : originValue
-        : originValue
+      const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
+      const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
       setByPath(this, expr, value)
     }
   }
   if (__mpx_mode__ === 'ali') {
     Object.assign(methods, {
       triggerEvent (eventName, eventDetail) {
-        const handlerName = eventName
-          .replace(/^./, (matched) => matched.toUpperCase())
-          .replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
-        const handler =
-          this.props &&
-          (this.props['on' + handlerName] || this.props['catch' + handlerName])
+        const handlerName = eventName.replace(/^./, matched => matched.toUpperCase()).replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+        const handler = this.props && (this.props['on' + handlerName] || this.props['catch' + handlerName])
         if (handler && typeof handler === 'function') {
           const dataset = collectDataset(this.props)
           const id = this.props.id || ''
