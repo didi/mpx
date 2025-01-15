@@ -529,17 +529,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-
-      useEffect(() => {
-        const unsubscribe = navigation.addListener('transitionEnd', (e) => {
-          setTimeout(() => {
-            rootRef.current?.measureInWindow((x, y, width, height) => {
-              navigation.layout = { x, y, width, height }
-            })
-          }, 200)
-        });
-        return unsubscribe;
-      }, [navigation]);
+      const onLayout = useCallback(() => {
+        setTimeout(() => {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        }, 200)
+      }, [])
 
       const withKeyboardAvoidingView = (element) => {
         if (__mpx_mode__ === 'ios') {
@@ -588,7 +584,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef
+              ref: rootRef,
+              onLayout
             },
             createElement(RouteContext.Provider,
               {
