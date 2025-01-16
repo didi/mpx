@@ -216,14 +216,15 @@ export default withPwa(
     defineConfig({
         base: "/",
         head: [
+            ["link", { rel: "icon", href: "/favicon.ico" }],
             [
-                "link",
-                {
-                    rel: "icon",
-                    href: "http://mpxjs.cn/favicon.ico",
-                    type: "image/png",
-                    sizes: "16x16",
-                },
+                "script",
+                { type: "text/javascript" },
+                `(function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "jtvvy52wxy");`,
             ],
             ["meta", { name: "author", content: title }],
             ["meta", { property: "og:type", content: "website" }],
@@ -249,7 +250,7 @@ export default withPwa(
         pwa: {
             base: "/",
             scope: "/",
-            includeAssets: ["favicon.svg"],
+            includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
                 name: title,
                 short_name: "Mpx",
@@ -290,20 +291,26 @@ export default withPwa(
                 appId: "DZ8S6HN0MP",
                 apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
                 indexName: "mpxjs",
-                placeholder: '搜索文档'
+                placeholder: "搜索文档",
             },
-            logo: "/logo.png",
+            logo: "/favicon.ico",
             docFooter: {
                 prev: "上一页",
                 next: "下一页",
             },
             outline: {
                 level: [2, 3],
-                label: '本页目录',
+                label: "本页目录",
             },
-            socialLinks: [{ icon: 'github',  link: 'https://github.com/didi/mpx' }],
+            socialLinks: [
+                { icon: "github", link: "https://github.com/didi/mpx" },
+            ],
             nav: [
-                { text: '指南', activeMatch: '^/guide/', link: '/guide/basic/start',  },
+                {
+                    text: "指南",
+                    activeMatch: "^/guide/",
+                    link: "/guide/basic/start",
+                },
                 // 未来热门的链接可以用下面的折叠标题
                 // {
                 //     text: "文档",
@@ -313,11 +320,20 @@ export default withPwa(
                 //         { text: "跨端输出", link: "/guide/platform/basic" },
                 //     ],
                 // },
-                { text: 'API', activeMatch: '^/api/', link: '/api/' },
-                { text: '文章', activeMatch: '^/articles/', link: '/articles/' },
-                { text: '更新记录', activeMatch: '^/releases/', link: 'https://github.com/didi/mpx/releases', target: '_blank'},
+                { text: "API", activeMatch: "^/api/", link: "/api/" },
+                {
+                    text: "文章",
+                    activeMatch: "^/articles/",
+                    link: "/articles/",
+                },
+                {
+                    text: "更新记录",
+                    activeMatch: "^/releases/",
+                    link: "https://github.com/didi/mpx/releases",
+                    target: "_blank",
+                },
             ],
-            sidebar
+            sidebar,
         },
         // @ts-ignore
         chainWebpack: (config) => {
