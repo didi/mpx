@@ -984,49 +984,52 @@ export default {
   margin: 0px auto;
   padding: 64px 32px;
 }
-a{
-  text-decoration: none;
-}
 
-h1,
-h2,
-h3 {
-  font-weight: 600;
-  line-height: 1;
-}
+.vp-doc {
+  a{
+    text-decoration: none;
+  }
 
-h1,
-h2 {
-  letter-spacing: -0.02em;
-}
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    line-height: 1;
+  }
 
-h1 {
-  font-size: 38px;
-}
+  h1,
+  h2 {
+    letter-spacing: -0.02em;
+  }
 
-ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+  h1 {
+    font-size: 38px;
+  }
 
-h2 {
-  font-size: 24px;
-  color: var(--vp-c-text-1);
-  margin: 36px 0;
-  transition: color 0.5s;
-  padding-top: 36px;
-  border-top: 1px solid var(--vt-c-divider-light);
-  border-bottom: none;
-}
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 
-h3 {
-  letter-spacing: -0.01em;
-  color: var(--vt-c-green);
-  font-size: 18px;
-  margin-top: 0;
-  margin-bottom: 1em;
-  transition: color 0.5s;
+  h2 {
+    font-size: 24px;
+    color: var(--vp-c-text-1);
+    margin: 36px 0;
+    transition: color 0.5s;
+    padding-top: 36px;
+    border-top: 1px solid var(--vt-c-divider-light);
+    border-bottom: none;
+  }
+
+  h3 {
+    letter-spacing: -0.01em;
+    color: var(--vt-c-brand);
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 1em;
+    transition: color 0.5s;
+  }
 }
 
 .api-section {
@@ -1039,10 +1042,11 @@ h3 {
   line-height: 2;
   color: var(--vt-c-text-code);
   transition: color 0.5s;
+  text-decoration: none;
 }
 
 .api-groups a:hover {
-  color: var(--vt-c-green);
+  color: var(--vt-c-brand);
   transition: none;
 }
 
