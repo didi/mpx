@@ -278,7 +278,7 @@ export default withPwa(
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
             },
             devOptions: {
-                enabled: true,
+                enabled: false,
                 suppressWarnings: true,
                 navigateFallback: "/",
             },

@@ -48,7 +48,7 @@ export default {
   },
   setup() {
     const route = useRoute()
-    const { theme, isDark } = useData()
+    const { theme } = useData()
     const router = useRouter()
     const isSidebarOpen = ref(false)
     const smallMode = ref(false)
@@ -75,9 +75,6 @@ export default {
     algolia.value = theme.value.algolia
 
     onMounted(() => {
-      // 首页不开启暗色模式，还没有适配
-      isDark.value = false
-
       const MOBILE_DESKTOP_BREAKPOINT = 719
       const handleLinksWrapWidth = () => {
         if (document.documentElement.clientWidth < MOBILE_DESKTOP_BREAKPOINT) {

@@ -1,11 +1,11 @@
 import { h } from 'vue'
-import Theme from 'vitepress/theme'
+import DefaultTheme from 'vitepress/theme'
 import Layout from './layouts/HomepageLayout.vue'
 import RegisterSW from "./components/RegisterSW.vue"
 import './styles/index.css'
 
 export default {
-    ...Theme,
+    ...DefaultTheme,
     Layout() {
         return h(Layout, null, {
             'layout-bottom': () => h(RegisterSW)
