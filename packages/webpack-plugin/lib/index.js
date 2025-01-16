@@ -1880,7 +1880,7 @@ try {
             if (tenonStyleLoaderIndex > -1 && !isPitcherRequest) {
               loaders.splice(tenonStyleLoaderIndex + 1, 0, {
                 loader: normalize.lib('style-compiler/index.js'),
-                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+                options: (queryObj.mpxStyleOptions && JSON.parse(queryObj.mpxStyleOptions)) || {}
               })
             }
           } else if (mpxStyleLoaderIndex === -1) {

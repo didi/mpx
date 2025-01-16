@@ -135,7 +135,6 @@ module.exports = function (content) {
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-
       if (mode === 'tenon') {
         let output = ''
         if (ctorType === 'app' && !queryObj.app) {

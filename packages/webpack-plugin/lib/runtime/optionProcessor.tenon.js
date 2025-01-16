@@ -12,7 +12,7 @@ export function processComponentOption (
     componentGenerics,
     genericsInfo,
     wxsMixin,
-    hasApp,
+    hasApp
   }
 ) {
   if (ctorType === 'app') {
@@ -48,9 +48,9 @@ export function processComponentOption (
 
   if (wxsMixin) {
     if (option.mixins) {
-      option.mixins.push(mixin)
+      option.mixins.push(wxsMixin)
     } else {
-      option.mixins = [mixin]
+      option.mixins = [wxsMixin]
     }
   }
 
