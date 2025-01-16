@@ -1,0 +1,16 @@
+:root {
+    --vt-c-green: #42b883;
+    --vt-c-text-code: #476582;
+    --vt-c-green-light: #42d392;
+    --vt-c-green-lighter: #35eb9a;
+    --vt-c-text-3: rgba(60, 60, 60, 0.33);
+    --vt-c-divider: rgba(60, 60, 60, 0.29);
+    --vt-c-divider-light: rgba(60, 60, 60, 0.12);
+}
+
+.dark {
+    --vt-c-text-code: #aac8e4;
+    --vt-c-text-3: rgba(235, 235, 235, .38);
+    --vt-c-divider: rgba(84, 84, 84, .65);
+    --vt-c-divider-light: rgba(84, 84, 84, .48);
+}
