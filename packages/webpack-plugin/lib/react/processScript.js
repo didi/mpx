@@ -14,25 +14,25 @@ module.exports = function (script, {
   localPagesMap
 }, callback) {
   let scriptSrcMode = srcMode
-  const mode = loaderContext.getMpx().mode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
     script = { tag: 'script' }
   }
+
   let output = '/* script */\n'
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
-${mode === 'ios' ? "import { createNativeStackNavigator } from '@react-navigation/native-stack'" : "import { createStackNavigator } from '@react-navigation/stack'" }
+import { createStackNavigator } from '@react-navigation/stack'
 import Provider from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-provider'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
-  createStackNavigator: ${mode === 'ios' ? 'createNativeStackNavigator' : 'createStackNavigator'},
+  createStackNavigator: createStackNavigator,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
   Provider: Provider,
