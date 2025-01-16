@@ -292,6 +292,11 @@ export default withPwa(
                 apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
                 indexName: "mpxjs",
                 placeholder: "搜索文档",
+                translations: {
+                    button: {
+                        buttonText: "搜索",
+                    },
+                },
             },
             logo: "/favicon.ico",
             docFooter: {
