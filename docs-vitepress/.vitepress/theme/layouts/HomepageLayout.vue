@@ -47,7 +47,6 @@ export default {
     // 非首页回到首页，关闭暗色模式
     // 非首页，切换到首页，再切换回来，保持之前非首页的亮暗模式
     watch(() => isDark.value, (value) => {
-      console.log('watch isDark --->', value)
       if (frontmatter.value.layout === 'homepageLayout') {
         if (value) {
           isDark.value = false
@@ -57,7 +56,6 @@ export default {
       }
     }, { immediate: true })
     watch(() => frontmatter.value.layout, (val) => {
-      console.log('watch frontmatter.value.layout --->', val)
       if (val === 'homepageLayout') {
         if (isDark.value) {
           isDark.value = false
