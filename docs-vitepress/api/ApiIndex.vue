@@ -944,7 +944,7 @@ export default {
         <label for="api-filter">过滤</label>
         <input
             type="search"
-            placeholder="Enter keyword"
+            placeholder="输入关键字"
             id="api-filter"
             v-model="query"
         />
@@ -1012,7 +1012,7 @@ ul {
 
 h2 {
   font-size: 24px;
-  color: var(--vt-c-text-1);
+  color: var(--vp-c-text-1);
   margin: 36px 0;
   transition: color 0.5s;
   padding-top: 36px;
@@ -1024,6 +1024,7 @@ h3 {
   letter-spacing: -0.01em;
   color: var(--vt-c-green);
   font-size: 18px;
+  margin-top: 0;
   margin-bottom: 1em;
   transition: color 0.5s;
 }
@@ -1040,10 +1041,6 @@ h3 {
   transition: color 0.5s;
 }
 
-.dark api-groups a {
-  font-weight: 400;
-}
-
 .api-groups a:hover {
   color: var(--vt-c-green);
   transition: none;
@@ -1055,7 +1052,7 @@ h3 {
   margin-bottom: 20px;
   background-color: var(--vp-c-bg-soft);
   border-radius: 8px;
-  padding: 28px 18px;
+  padding: 24px 18px;
   transition: background-color 0.5s;
 }
 
@@ -1078,8 +1075,8 @@ h3 {
   padding: 6px 12px;
 }
 
-.api-filter:focus {
-  border-color: var(--vt-c-green-light);
+#api-filter:focus {
+  box-shadow: 0 0 4pt #00d47499;
 }
 
 .no-match {
