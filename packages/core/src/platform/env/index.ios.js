@@ -1,4 +1,4 @@
-import { isFunction, isNumber } from '@mpxjs/utils'
+import { isFunction, isNumber, isString } from '@mpxjs/utils'
 import { createI18n } from '../builtInMixins/i18nMixin'
 
 export function init (Mpx) {
@@ -37,7 +37,7 @@ function initGlobalErrorHandling () {
         cb(event)
       })
     } else {
-      console.warn(`UNHANDLED PROMISE REJECTION ${isNumber(event.id) ? '(id:' + event.id + ')' : ''}: ${event.reason}\n`)
+      console.warn(`UNHANDLED PROMISE REJECTION ${(isNumber(event.id) || isString(event.id)) ? '(id:' + event.id + ')' : ''}: ${event.reason}\n`)
     }
   }
   const rejectionTrackingOptions = {
