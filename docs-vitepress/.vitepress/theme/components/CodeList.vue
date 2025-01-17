@@ -9,7 +9,7 @@
           </transition>
         </div>
       </popover> -->
-      <img width="150" height="170" :src="item.code" alt="code" loading="lazy" />
+      <img width="150" style="height: 170px;" :src="item.code" alt="code" loading="lazy" />
     </div>
   </div>
 </template>

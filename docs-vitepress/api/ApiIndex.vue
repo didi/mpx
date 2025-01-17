@@ -983,52 +983,17 @@ export default {
   max-width: 1024px;
   margin: 0px auto;
   padding: 64px 32px;
-}
-
-.vp-doc {
-  a{
-    text-decoration: none;
-  }
-
-  h1,
-  h2,
-  h3 {
-    font-weight: 600;
-    line-height: 1;
-  }
-
-  h1,
-  h2 {
-    letter-spacing: -0.02em;
-  }
-
-  h1 {
-    font-size: 38px;
-  }
 
   ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  h2 {
-    font-size: 24px;
-    color: var(--vp-c-text-1);
-    margin: 36px 0;
-    transition: color 0.5s;
-    padding-top: 36px;
-    border-top: 1px solid var(--vt-c-divider-light);
-    border-bottom: none;
+    list-style: none !important;
+    padding: 0 !important;
   }
 
   h3 {
-    letter-spacing: -0.01em;
-    color: var(--vt-c-brand);
-    font-size: 18px;
-    margin-top: 0;
-    margin-bottom: 1em;
-    transition: color 0.5s;
+    color: var(--vt-c-brand) !important;
+    font-size: 18px !important;
+    margin-top: 0 !important;
+    transition: color 0.5s !important;
   }
 }
 
@@ -1074,13 +1039,13 @@ export default {
 }
 
 .api-filter input {
-  border: 1px solid var(--vt-c-divider);
-  border-radius: 8px;
-  padding: 6px 12px;
+  border: 1px solid var(--vt-c-divider) !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
 }
 
 #api-filter:focus {
-  box-shadow: 0 0 4pt #00d47499;
+  box-shadow: 0 0 4pt #00d47499 !important;
 }
 
 .no-match {

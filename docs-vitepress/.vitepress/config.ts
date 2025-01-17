@@ -207,6 +207,55 @@ const sidebar = {
     ],
 }
 
+const algoliaTranslations = {
+    button: {
+        buttonText: "搜索",
+    },
+    modal: {
+        searchBox: {
+            resetButtonTitle: "清除查询条件",
+            resetButtonAriaLabel: "清除查询条件",
+            cancelButtonText: "取消",
+            cancelButtonAriaLabel: "取消",
+        },
+        startScreen: {
+            recentSearchesTitle: "搜索历史",
+            noRecentSearchesText: "没有搜索历史",
+            saveRecentSearchButtonTitle: "保存到搜索历史",
+            removeRecentSearchButtonTitle: "从搜索历史中移除",
+            favoriteSearchesTitle: "收藏",
+            removeFavoriteSearchButtonTitle: "从收藏中移除",
+        },
+        errorScreen: {
+            titleText: "无法获取结果",
+            helpText: "你可能需要检查你的网络连接",
+        },
+        footer: {
+            selectText: "选择",
+            navigateText: "切换",
+            closeText: "关闭",
+            searchByText: "搜索供应商",
+        },
+        noResultsScreen: {
+            noResultsText: "无法找到相关结果",
+            suggestedQueryText: "你可以尝试查询",
+            reportMissingResultsText: "你认为这个查询应该有结果？",
+            reportMissingResultsLinkText: "向我们反馈",
+        },
+    },
+}
+
+const i18n = {
+    search: '搜索',
+    menu: '菜单',
+    toc: '本页目录',
+    returnToTop: '返回顶部',
+    appearance: '外观',
+    previous: '前一篇',
+    next: '下一篇',
+    pageNotFound: '页面未找到',
+}
+
 const ogUrl = "https://mpxjs.cn/"
 const ogImage = `${ogUrl}logo.png`
 const title = "Mpx 框架"
@@ -256,24 +305,6 @@ export default withPwa(
                 short_name: "Mpx",
                 description,
                 theme_color: "#ffffff",
-                // icons: [
-                //     {
-                //         src: 'pwa-192x192.png',
-                //         sizes: '192x192',
-                //         type: 'image/png',
-                //     },
-                //     {
-                //         src: 'pwa-512x512.png',
-                //         sizes: '512x512',
-                //         type: 'image/png',
-                //     },
-                //     {
-                //         src: 'pwa-512x512.png',
-                //         sizes: '512x512',
-                //         type: 'image/png',
-                //         purpose: 'any maskable',
-                //     },
-                // ],
             },
             workbox: {
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
@@ -292,21 +323,9 @@ export default withPwa(
                 apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
                 indexName: "mpxjs",
                 placeholder: "搜索文档",
-                translations: {
-                    button: {
-                        buttonText: "搜索",
-                    },
-                },
+                translations: algoliaTranslations,
             },
             logo: "/favicon.ico",
-            docFooter: {
-                prev: "上一页",
-                next: "下一页",
-            },
-            outline: {
-                level: [2, 3],
-                label: "本页目录",
-            },
             socialLinks: [
                 { icon: "github", link: "https://github.com/didi/mpx" },
             ],
@@ -338,7 +357,24 @@ export default withPwa(
                     target: "_blank",
                 },
             ],
+            outline: {
+                level: [2, 3],
+                label: "本页目录",
+            },
             sidebar,
+            darkModeSwitchLabel: "外观",
+            sidebarMenuLabel: "菜单",
+            returnToTopLabel: "返回顶部",
+            langMenuLabel: "语言",
+            notFound: {
+                title: "页面未找到",
+                linkText: "返回首页",
+                quote: "😩 抱歉，迷路了～"
+            },
+            docFooter: {
+                prev: "上一页",
+                next: "下一页",
+            },
         },
         // @ts-ignore
         chainWebpack: (config) => {

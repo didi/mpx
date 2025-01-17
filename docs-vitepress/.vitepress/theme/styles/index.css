@@ -35,6 +35,12 @@
     }
 }
 
+.VPNavBarAppearance {
+    .VPSwitch:hover {
+        border: 1px solid var(--vt-c-brand) !important;
+    }
+}
+
 .VPNavBarMenuLink:hover {
     color: var(--vt-c-brand-highlight) !important;
 }
@@ -42,6 +48,12 @@
 .VPNavBarMenuLink.active {
     color: var(--vt-c-brand) !important;
     border-bottom: 1px solid var(--vt-c-brand);
+}
+
+.VPLocalNavOutlineDropdown {
+    .top-link {
+        color: var(--vt-c-brand) !important;
+    }
 }
 
 .VPSidebarItem.is-link {
@@ -69,6 +81,17 @@
     .outline-marker {
         height: 20px;
         background-color: var(--vt-c-brand);
+    }
+}
+
+.VPContent {
+    .link {
+        border: 1px solid var(--vt-c-brand);
+        color: var(--vt-c-brand);
+    }
+    .link:hover {
+        border: 1px solid var(--vt-c-brand);
+        color: var(--vt-c-brand-highlight);
     }
 }
 
@@ -109,6 +132,10 @@
     }
 
     .DocSearch-Prefill {
+        color: var(--vt-c-brand);
+    }
+
+    .DocSearch-Cancel {
         color: var(--vt-c-brand);
     }
 }
