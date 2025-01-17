@@ -43,8 +43,15 @@ function initGlobalErrorHandling () {
     }
   }
 
+  // 支持 core-js promise polyfill
+  const oldOnUnhandledRejection = global.onunhandledrejection
+  global.onunhandledrejection = function onunhandledrejection (event) {
+    // event = { promise, reason }
+    rejectionTrackingOptions.onUnhandled(null, event.reason)
+    oldOnUnhandledRejection.apply(this, event)
+  }
   if (global?.HermesInternal?.hasPromise?.()) {
-    global.HermesInternal?.enablePromiseRejectionTracker?.(rejectionTrackingOptions)
+    global.HermesInternal.enablePromiseRejectionTracker?.(rejectionTrackingOptions)
   } else {
     require('promise/setimmediate/rejection-tracking').enable(rejectionTrackingOptions)
   }
