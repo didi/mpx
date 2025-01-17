@@ -18,7 +18,7 @@ class RNIntersectionObserver {
       observeAll: false,
       throttleTime: 100
     }, options || {})
-    this.thresholds = this.options.thresholds.sort((a, b) => a - b) || [0]
+    this.thresholds = this.options.thresholds.sort((a, b) => a - b)
     this.initialRatio = this.options.initialRatio
     this.observeAll = this.options.observeAll
 
