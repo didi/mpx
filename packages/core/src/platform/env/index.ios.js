@@ -1,4 +1,4 @@
-import { isNumber, isString } from '@mpxjs/utils'
+import { isFunction, isNumber } from '@mpxjs/utils'
 import { createI18n } from '../builtInMixins/i18nMixin'
 
 export function init (Mpx) {
@@ -51,9 +51,9 @@ function initGlobalErrorHandling () {
   const oldOnUnhandledRejection = global.onunhandledrejection
   global.onunhandledrejection = function onunhandledrejection (event) {
     onUnhandledRejection(event)
-    oldOnUnhandledRejection.call(this, event)
+    isFunction(oldOnUnhandledRejection) && oldOnUnhandledRejection.call(this, event)
   }
-  if (global?.HermesInternal?.hasPromise?.()) {
+  if (global.HermesInternal?.hasPromise?.()) {
     global.HermesInternal.enablePromiseRejectionTracker?.(rejectionTrackingOptions)
   } else {
     require('promise/setimmediate/rejection-tracking').enable(rejectionTrackingOptions)
