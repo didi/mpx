@@ -4,7 +4,6 @@ const addQuery = require('../utils/add-query')
 const path = require('path')
 const parseRequest = require('../utils/parse-request')
 
-
 module.exports = function (template, {
   loaderContext,
   hasScoped,
@@ -84,7 +83,7 @@ module.exports = function (template, {
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
           globalComponents: [],
           // web模式下实现抽象组件
-          componentGenerics,
+          componentGenerics
         })
         // if (parsed.meta.wxsModuleMap) {
         //   wxsModuleMap = parsed.meta.wxsModuleMap

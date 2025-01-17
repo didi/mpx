@@ -5,11 +5,9 @@ const processTemplate = require('./processTemplate')
 const processStyles = require('./processStyles')
 const processScript = require('./processScript')
 const RecordLoaderContentDependency = require('../dependencies/RecordLoaderContentDependency')
-const {stringifyRequest} = require('./script-helper')
+const { stringifyRequest } = require('./script-helper')
 const addQuery = require('../utils/add-query')
 const parseRequest = require('../utils/parse-request')
-
-
 
 module.exports = function ({
   parts,
@@ -30,15 +28,12 @@ module.exports = function ({
   autoScope,
   callback
 }) {
-
   let output = ''
-
-
   const mpx = loaderContext.getMpx()
   // const hasComment = parts.template && parts.template.attrs && parts.template.attrs.comments
   // const isNative = false
   const mode = mpx.mode
-  // const srcMode = mpx.srcMode
+  srcMode = mpx.srcMode
   const env = mpx.env
   const defs = mpx.defs
   const resolveMode = mpx.resolveMode

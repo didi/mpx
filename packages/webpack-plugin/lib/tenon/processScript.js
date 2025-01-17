@@ -7,8 +7,6 @@ const async = require('async')
 const createJSONHelper = require('../json-compiler/helper')
 const addQuery = require('../utils/add-query')
 
-
-
 const {
   buildComponentsMap,
   getRequireScript,
@@ -32,7 +30,6 @@ module.exports = function (script, {
   localPagesMap
 }, callback) {
   const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
-
 
   // add entry
   // const checkEntryDeps = (callback) => {
@@ -146,10 +143,8 @@ module.exports = function (script, {
         hasApp = false
       }
 
-
       // 获取组件集合
       const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
-
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
