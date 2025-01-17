@@ -23,7 +23,7 @@ class RNIntersectionObserver {
     this.observeAll = this.options.observeAll
 
     // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
-    this.component._intersectionObservers = this.component.__intersectionObservers
+    this.component._intersectionObservers = this.component._intersectionObservers || []
     this.component._intersectionObservers.push(this)
 
     this.observerRefs = null
