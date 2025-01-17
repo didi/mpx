@@ -30,7 +30,7 @@
     <section class="two-section">
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $frontmatter.features" :key="index">
-          <img :src="item.icon" alt="svg" loading="lazy" width="80" height="80" />
+          <img :src="item.icon" alt="svg" loading="lazy" width="80" style="height: 80px;" />
           <p class="two-section__title">{{item.title}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
@@ -46,7 +46,7 @@
             <div class="three-section__phone">
               <img
                   width="410"
-                  height="712"
+                  style="height: 712px;"
                   src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
                   alt="phone"
                   loading="lazy" />
@@ -68,7 +68,7 @@
             <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
             <p class="white-text title">{{$frontmatter.threeSection.title}}</p>
             <p class="white-text desc">
-              <!-- {{$page.frontmatter.threeSection.details}} -->
+              <!-- {{$frontmatter.threeSection.details}} -->
               扫码体验Mpx版本的
               <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
               在各个小程序平台和web中的一致表现 ，更多示例项目可点击
@@ -77,8 +77,8 @@
             </p>
           </div>
           <!-- <button class="three-section__btn btn">
-            <a :href="$page.frontmatter.threeSection.actionLink" class="blue-link">
-              {{$page.frontmatter.threeSection.actionText}}
+            <a :href="$frontmatter.threeSection.actionLink" class="blue-link">
+              {{$frontmatter.threeSection.actionText}}
             </a>
           </button> -->
           <code-list :dataList="mvcList"></code-list>
@@ -160,7 +160,7 @@
           <li v-for="(item, index) in current" :key="index">
             <a :href="item.actionLink" class="six-section__item six-section__step">
               <div class="six-section__icon">
-                <img :src="item.icon" alt="svg" loading="lazy" width="50" height="50" />
+                <img :src="item.icon" alt="svg" loading="lazy" width="50" style="height: 50px;" />
               </div>
               <div class="six-section__list">
                 <div class="six-section__bold">{{item.title}}</div>
@@ -188,7 +188,7 @@
           <div class="seven-section_phone">
             <img
               width="213"
-              height="433"
+              style="height: 433px;"
               src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
               alt="phone"
               loading="lazy" />
