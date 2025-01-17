@@ -1005,13 +1005,13 @@ export default {
   font-size: 15px;
   font-weight: 500;
   line-height: 2;
-  color: var(--vt-c-text-code);
+  color: var(--vt-c-text-code) !important;
   transition: color 0.5s;
   text-decoration: none;
 }
 
 .api-groups a:hover {
-  color: var(--vt-c-brand);
+  color: var(--vt-c-brand) !important;
   transition: none;
 }
 
