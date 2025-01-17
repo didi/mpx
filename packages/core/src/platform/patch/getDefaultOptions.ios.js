@@ -499,7 +499,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions({
+        navigation.setOptions(Object.assign({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
@@ -507,7 +507,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           },
           headerTintColor: pageConfig.navigationBarTextStyle || 'white',
           statusBarTranslucent: true
-        })
+        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
       }, [])
 
       const rootRef = useRef(null)

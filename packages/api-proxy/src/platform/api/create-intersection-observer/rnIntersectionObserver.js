@@ -1,4 +1,4 @@
-import { isArray, isObject, isString, noop } from '@mpxjs/utils'
+import { isArray, isObject, isString, noop, warn } from '@mpxjs/utils'
 import throttle from 'lodash/throttle'
 import { Dimensions } from 'react-native'
 import { getFocusedNavigation } from '../../../common/js'
@@ -11,17 +11,19 @@ class RNIntersectionObserver {
   constructor (component, options, intersectionCtx) {
     this.id = idCount++
     this.component = component
+    this.mpxFileResource = component.__mpxProxy?.options?.mpxFileResource || ''
     this.options = Object.assign({
       thresholds: [0],
       initialRatio: 0,
-      observeAll: false
+      observeAll: false,
+      throttleTime: 100
     }, options || {})
     this.thresholds = this.options.thresholds.sort((a, b) => a - b) || [0]
     this.initialRatio = this.options.initialRatio
     this.observeAll = this.options.observeAll
 
     // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
-    this.component._intersectionObservers = this.component.__intersectionObservers || []
+    this.component._intersectionObservers = this.component.__intersectionObservers
     this.component._intersectionObservers.push(this)
 
     this.observerRefs = null
@@ -29,7 +31,7 @@ class RNIntersectionObserver {
     this.margins = DefaultMargin
     this.callback = noop
 
-    this.throttleMeasure = this.getThrottleMeasure(this.options.throttleTime || 100)
+    this.throttleMeasure = this.getThrottleMeasure(this.options.throttleTime)
 
     // 记录上一次相交的比例
     this.previousIntersectionRatio = []
@@ -55,7 +57,7 @@ class RNIntersectionObserver {
       this.relativeRef = relativeRef
       this.margins = Object.assign({}, DefaultMargin, margins)
     } else {
-      console.warn(`node ${selector}is not found. The relative node for intersection observer will be ignored`)
+      warn(`node ${selector}is not found. The relative node for intersection observer will be ignored`, this.mpxFileResource)
     }
     return this
   }
@@ -68,7 +70,7 @@ class RNIntersectionObserver {
 
   observe (selector, callback) {
     if (this.observerRefs) {
-      console.warn('"observe" call can be only called once in IntersectionObserver')
+      warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return
     }
     let targetRef = null
@@ -78,7 +80,7 @@ class RNIntersectionObserver {
       targetRef = this.component.__selectRef(selector, 'node')
     }
     if (!targetRef || targetRef.length === 0) {
-      console.warn('intersection observer target not found')
+      warn('intersection observer target not found', this.mpxFileResource)
       return
     }
     this.observerRefs = isArray(targetRef) ? targetRef : [targetRef]
@@ -230,7 +232,7 @@ class RNIntersectionObserver {
         }
       })
     }).catch((e) => {
-      console.log('_measureTarget fail', e)
+      warn('_measureTarget fail', this.mpxFileResource, e)
     })
   }
 
