@@ -1,35 +1,64 @@
-name: docs
+# 构建 VitePress 站点并将其部署到 GitHub Pages 的示例工作流程
+#
+name: Deploy VitePress site to Pages
 
 on:
+  # 在针对 `main` 分支的推送上运行。如果你
+  # 使用 `master` 分支作为默认分支，请将其更改为 `master`
   push:
-    branches:
-      - master
+    branches: [docs-vitepress-test]
+
+  # 允许你从 Actions 选项卡手动运行此工作流程
+  workflow_dispatch:
+
+# 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 只允许同时进行一次部署，跳过正在运行和最新队列之间的运行队列
+# 但是，不要取消正在进行的运行，因为我们希望允许这些生产部署完成
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
-  deploy:
+  # 构建工作
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: technote-space/get-diff-action@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          PATTERNS: |
-            +(docs|docs-vitepress)/**/*
-            +(docs|docs-vitepress)/.*/**/*
-      # vuepress生成最终文档
-      - name: generate docs file
-        if: env.GIT_DIFF
+          fetch-depth: 0 # 如果未启用 lastUpdated，则不需要
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+          # cache: npm # 没有上传lock文件，用不了cache
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Install dependencies
+        run: npm i && npm i --prefix docs-vitepress 
+      - name: Build with VitePress
         run: |
-          npm i
           npm run docs:build
-
-      # 使用 https://github.com/appleboy/scp-action 进行部署，注意 strip_components 用于控制层级
-      - name: Deploy to self-host server
-        if: env.GIT_DIFF
-        uses: appleboy/scp-action@master
+          touch docs-vitepress/.vitepress/dist/.nojekyll
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          host: ${{ secrets.DOCS_SERVER_HOST }}
-          username: ${{ secrets.DOCS_SERVER_USER }}
-          key: ${{ secrets.DOCS_SERVER_KEY }}
-          command_timeout: "20m"
-          source: "./docs-vitepress/.vitepress/dist/"
-          strip_components: 4
-          target: "${{ secrets.DOCS_SERVER_DIR }}"
+          path: docs-vitepress/.vitepress/dist
+
+  # 部署工作
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

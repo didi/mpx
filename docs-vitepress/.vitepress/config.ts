@@ -263,7 +263,7 @@ const description = "深度性能优化的增强型小程序开发框架"
 
 export default withPwa(
     defineConfig({
-        base: "/",
+        base: "/mpx",
         head: [
             ["link", { rel: "icon", href: "/favicon.ico" }],
             [
@@ -296,25 +296,6 @@ export default withPwa(
             },
         },
         ignoreDeadLinks: true,
-        pwa: {
-            base: "/",
-            scope: "/",
-            includeAssets: ["favicon.ico", "logo.png"],
-            manifest: {
-                name: title,
-                short_name: "Mpx",
-                description,
-                theme_color: "#ffffff",
-            },
-            workbox: {
-                globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
-            },
-            devOptions: {
-                enabled: false,
-                suppressWarnings: true,
-                navigateFallback: "/",
-            },
-        },
         themeConfig: {
             // navbar: false,
             algolia: {
