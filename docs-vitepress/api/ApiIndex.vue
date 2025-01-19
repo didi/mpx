@@ -944,7 +944,7 @@ export default {
         <label for="api-filter">过滤</label>
         <input
             type="search"
-            placeholder="输入关键字"
+            placeholder="请输入关键字"
             id="api-filter"
             v-model="query"
         />
@@ -1021,7 +1021,7 @@ export default {
   margin-bottom: 20px;
   background-color: var(--vp-c-bg-soft);
   border-radius: 8px;
-  padding: 24px 18px;
+  padding: 20px 18px;
   transition: background-color 0.5s;
 }
 
