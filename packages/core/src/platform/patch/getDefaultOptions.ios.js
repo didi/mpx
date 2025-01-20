@@ -257,20 +257,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   if (!isEmptyObject(relationInfo.relations)) {
-    Object.defineProperties(instance, {
-      __relations: {
-        get () {
-          return relationInfo.relations
-        },
-        enumerable: false
-      },
-      __relationNodesMap: {
-        get () {
-          return relationInfo.relationNodesMap
-        },
-        enumerable: false
-      }
-    })
+    instance.__relations = relationInfo.relations
+    instance.__relationNodesMap = relationInfo.relationNodesMap
   }
 
   // bind this & assign methods
