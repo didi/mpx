@@ -9,10 +9,10 @@
  *     ✘ show-confirm-bar
  *     ✔ bindlinechange: No `heightRpx` info.
  */
-import { JSX, forwardRef } from 'react'
+import { JSX, forwardRef, createElement } from 'react'
 import { Keyboard, TextInput } from 'react-native'
 import Input, { InputProps, PrivateInputProps } from './mpx-input'
-import { omit } from './utils'
+import { omit, extendObject } from './utils'
 import { HandlerRef } from './useNodesRef'
 
 export type TextareProps = Omit<
@@ -29,18 +29,19 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
       'multiline',
       'confirm-hold'
     ])
-    return (
-      <Input
-        ref={ref}
-        multiline
-        confirm-type='next'
-        bindblur={() => Keyboard.dismiss()}
-        {...restProps}
-      />
+
+    return createElement(
+      Input,
+      extendObject({
+        ref: ref,
+        multiline: true,
+        confirmType: 'next',
+        bindblur: () => Keyboard.dismiss()
+      }, restProps)
     )
   }
 )
 
-Textarea.displayName = 'mpx-textarea'
+Textarea.displayName = 'MpxTextarea'
 
 export default Textarea

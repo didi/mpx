@@ -4,26 +4,34 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, ImageResizeMode, StyleSheet, Image, LayoutChangeEvent, Text } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, Children, cloneElement } from 'react'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
+import Animated from 'react-native-reanimated'
+import useAnimationHooks from './useAnimationHooks'
+import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
+import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
+import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
+  animation?: AnimationProp
   children?: ReactNode | ReactNode[]
   'hover-style'?: ExtendedViewStyle
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'enable-background'?: boolean
   'enable-var'?: boolean
+  'enable-fast-image'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'enable-animation'?: boolean
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -71,9 +79,11 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string,
+  source?: {uri: string },
   colors: Array<string>,
   locations?: Array<number>
   angle?: number
+  resizeMode?: 'cover' | 'stretch'
 }
 
 const linearMap = new Map([
@@ -228,10 +238,7 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
     }
   }
 
-  imageProps.style = {
-    ...imageProps.style as ImageStyle,
-    ...style
-  }
+  extendObject(imageProps.style, style)
 }
 
 // background-size 转换
@@ -275,24 +282,23 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       if (!dimensions) return
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
-      (imageProps.style as ImageStyle).resizeMode = 'stretch'
+      imageProps.resizeMode = 'stretch'
       dimensions = {
         width: isPercent(width) ? width : +width,
         height: isPercent(height) ? height : +height
       } as { width: NumberVal, height: NumberVal }
     }
   }
+
   // 样式合并
-  imageProps.style = {
-    ...imageProps.style as ImageStyle,
-    ...dimensions
-  }
+  extendObject(imageProps.style, dimensions)
 }
 
 // background-image转换为source
 function backgroundImage (imageProps: ImageProps, preImageInfo: PreImageInfo) {
-  if (preImageInfo.src) {
-    imageProps.src = preImageInfo.src
+  const src = preImageInfo.src
+  if (src) {
+    imageProps.source = { uri: src }
   }
 }
 
@@ -321,8 +327,8 @@ function linearGradient (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
 const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) => {
   // 初始化
   const imageProps: ImageProps = {
+    resizeMode: 'cover',
     style: {
-      resizeMode: 'cover' as ImageResizeMode,
       position: 'absolute'
       // ...StyleSheet.absoluteFillObject
     },
@@ -471,10 +477,9 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
       return prev
     }, { colors: [], locations: [] })
 
-  return {
-    ...linearInfo,
+  return extendObject({}, linearInfo, {
     direction: direction.trim()
-  }
+  })
 }
 
 function parseBgImage (text: string): {
@@ -528,7 +533,26 @@ function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
   return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
 }
 
-function wrapImage (imageStyle?: ExtendedViewStyle) {
+function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
+  const { borderWidth, borderRadius } = innerStyle
+  const borderStyles = ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
+  return pickStyle(innerStyle,
+    borderStyles,
+    borderWidth && borderRadius
+      ? (key, val) => {
+        // 盒子内圆角borderWith与borderRadius的关系
+        // 当borderRadius 小于 当borderWith 内边框为直角
+        // 当borderRadius 大于等于 当borderWith 内边框为圆角
+          if (borderStyles.includes(key)) {
+            const borderVal = +val - borderWidth
+            return borderVal > 0 ? borderVal : 0
+          }
+          return val
+        }
+      : undefined)
+}
+
+function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -611,22 +635,24 @@ function wrapImage (imageStyle?: ExtendedViewStyle) {
     }
   }
 
-  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
     {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} /> }
-    {show && type === 'image' && <Image {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
+    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
   </View>
 }
 
 interface WrapChildrenConfig {
   hasVarDec: boolean
-  enableBackground: boolean
+  enableBackground?: boolean
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
   textProps?: Record<string, any>
+  innerStyle?: Record<string, any>
+  enableFastImage?: boolean
 }
 
-function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps }: WrapChildrenConfig) {
+function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps, innerStyle, enableFastImage }: WrapChildrenConfig) {
   const children = wrapChildren(props, {
     hasVarDec,
     varContext,
@@ -635,7 +661,8 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? wrapImage(backgroundStyle) : null,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
@@ -650,29 +677,28 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-background': enableBackground,
+    'enable-fast-image': enableFastImage,
+    'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight
+    'parent-height': parentHeight,
+    animation
   } = props
 
-  const [isHover, setIsHover] = useState(false)
-
   // 默认样式
-  const defaultStyle: ExtendedViewStyle = {
-    // flex 布局相关的默认样式
-    ...style.display === 'flex' && {
-      flexDirection: 'row',
-      flexBasis: 'auto',
-      flexShrink: 1,
-      flexWrap: 'nowrap'
-    }
-  }
+  const defaultStyle: ExtendedViewStyle = style.display === 'flex'
+    ? {
+        flexDirection: 'row',
+        flexBasis: 'auto',
+        flexShrink: 1,
+        flexWrap: 'nowrap'
+      }
+    : {}
 
-  const styleObj: ExtendedViewStyle = {
-    ...defaultStyle,
-    ...style,
-    ...(isHover ? hoverStyle : null)
-  }
+  const enableHover = !!hoverStyle
+  const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
+
+  const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
   const {
     normalStyle,
@@ -689,57 +715,18 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentHeight
   })
 
-  const { textStyle, backgroundStyle, innerStyle } = splitStyle(normalStyle)
+  const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
-    throw new Error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
   const nodeRef = useRef(null)
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
-    defaultStyle
+    style: normalStyle
   })
-
-  const dataRef = useRef<{
-    startTimer?: ReturnType<typeof setTimeout>
-    stayTimer?: ReturnType<typeof setTimeout>
-  }>({})
-
-  useEffect(() => {
-    return () => {
-      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    }
-  }, [])
-
-  const setStartTimer = () => {
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.startTimer = setTimeout(() => {
-      setIsHover(true)
-    }, +hoverStartTime)
-  }
-
-  const setStayTimer = () => {
-    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.stayTimer = setTimeout(() => {
-      setIsHover(false)
-    }, +hoverStayTime)
-  }
-
-  function onTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchstart } = props
-    bindtouchstart && bindtouchstart(e)
-    setStartTimer()
-  }
-
-  function onTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchend } = props
-    bindtouchend && bindtouchend(e)
-    setStayTimer()
-  }
 
   const {
     layoutRef,
@@ -747,44 +734,50 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: { ...innerStyle, ...layoutStyle },
-    ...layoutProps,
-    ...(hoverStyle && {
-      bindtouchstart: onTouchStart,
-      bindtouchend: onTouchEnd
-    })
-  }, [
-    'hover-start-time',
-    'hover-stay-time',
-    'hover-style',
-    'hover-class'
-  ], {
-    layoutRef
+  const viewStyle = extendObject({}, innerStyle, layoutStyle)
+
+  const { enableStyleAnimation, animationStyle } = useAnimationHooks({
+    enableAnimation,
+    animation,
+    style: viewStyle
   })
 
-  return (
-    <View
-      {...innerProps}
-    >
-      {
-        wrapWithChildren(
-          props,
-          {
-            hasVarDec,
-            enableBackground: enableBackgroundRef.current,
-            textStyle,
-            backgroundStyle,
-            varContext: varContextRef.current,
-            textProps
-          }
-        )
-      }
-    </View>
-  )
+  const innerProps = useInnerProps(
+    props,
+    extendObject({
+      ref: nodeRef,
+      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
+    },
+    layoutProps
+    ), [
+      'hover-start-time',
+      'hover-stay-time',
+      'hover-style',
+      'hover-class'
+    ], {
+      layoutRef
+    })
+
+  const childNode = wrapWithChildren(props, {
+    hasVarDec,
+    enableBackground: enableBackgroundRef.current,
+    textStyle,
+    backgroundStyle,
+    varContext: varContextRef.current,
+    textProps,
+    innerStyle,
+    enableFastImage
+  })
+
+  const BaseComponent = enableStyleAnimation
+    ? createElement(Animated.View, innerProps, childNode)
+    : createElement(View, innerProps, childNode)
+
+  return enableHover
+    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, BaseComponent)
+    : BaseComponent
 })
 
-_View.displayName = 'mpx-view'
+_View.displayName = 'MpxView'
 
 export default _View

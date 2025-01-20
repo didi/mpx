@@ -168,11 +168,7 @@ function extractObservers (options) {
               cb = this[cb]
             }
             if (typeof cb === 'function') {
-              if (keyPathArr.length < 2) {
-                val = [val]
-                old = [old]
-              }
-              cb.call(this, ...val, ...old)
+              Array.isArray(val) ? cb.call(this, ...val) : cb.call(this, val)
             }
           },
           deep,
@@ -354,7 +350,7 @@ function transformHOOKS (options) {
     const componentHooksMap = makeMap(convertRule.lifecycle.component)
     for (const key in options) {
       // 使用Component创建page实例，页面专属生命周期&自定义方法需写在methods内部
-      if (typeof options[key] === 'function' && key !== 'dataFn' && key !== 'setup' && !componentHooksMap[key]) {
+      if (typeof options[key] === 'function' && key !== 'dataFn' && key !== 'setup' && key !== 'provide' && !componentHooksMap[key]) {
         if (!options.methods) options.methods = {}
         options.methods[key] = options[key]
         delete options[key]

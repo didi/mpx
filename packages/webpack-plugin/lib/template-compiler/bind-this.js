@@ -264,7 +264,8 @@ module.exports = {
   transform (code, {
     needCollect = false,
     renderReduce = false,
-    ignoreMap = {}
+    ignoreMap = {},
+    customBindThis
   } = {}) {
     const ast = babylon.parse(code, {
       plugins: [
@@ -420,7 +421,11 @@ module.exports = {
             if (isProps) {
               propKeySet.add(name)
             }
-            path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+            if (typeof customBindThis === 'function') {
+              customBindThis(path, t)
+            } else {
+              path.replaceWith(t.memberExpression(t.thisExpression(), path.node))
+            }
           }
           delete path.needBind
         }

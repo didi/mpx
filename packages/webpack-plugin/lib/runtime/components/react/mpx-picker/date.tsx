@@ -27,12 +27,14 @@ function dateToString (date: Date, fields: 'day' | 'month' | 'year' = 'day'): st
 }
 
 const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: DateProps, ref): React.JSX.Element => {
-  const { children, start = '1970-01-01', end = '2999-01-01', value, bindchange, bindcancel, disabled, fields } = props
+  const { children, start = '1970-01-01', end = '2999-01-01', value, bindchange, bindcancel, disabled, fields, style } = props
   const [datevalue, setDateValue] = useState(value)
   // 存储layout布局信息
   const layoutRef = useRef({})
   const viewRef = useRef<View>(null)
-  useNodesRef<View, DateProps>(props, ref, viewRef, {
+  const nodeRef = useRef<View>(null)
+  useNodesRef<View, DateProps>(props, ref, nodeRef, {
+    style
   })
 
   useEffect(() => {
@@ -58,6 +60,7 @@ const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: D
   }
 
   const dateProps = {
+    ref: nodeRef,
     precision: fields,
     value: formatTimeStr(datevalue),
     minDate: formatTimeStr(start),
