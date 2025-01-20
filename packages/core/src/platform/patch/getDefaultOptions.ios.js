@@ -233,6 +233,18 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       },
       enumerable: false
     },
+    __componentPath: {
+      get () {
+        return currentInject.componentPath || ''
+      },
+      enumerable: false
+    },
+    __relation: {
+      get () {
+        return relation
+      },
+      enumerable: false
+    },
     __injectedRender: {
       get () {
         return currentInject.render || noop
