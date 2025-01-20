@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { reactive, set, del } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, isEmptyObject } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -193,7 +193,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relationInfo }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -256,9 +256,13 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     })
   }
 
-  if (!isEmptyObject(relationInfo.relations)) {
-    instance.__relations = relationInfo.relations
-    instance.__relationNodesMap = relationInfo.relationNodesMap
+  if (relation) {
+    Object.defineProperty(instance, '__relation', {
+      get () {
+        return relation
+      },
+      enumerable: false
+    })
   }
 
   // bind this & assign methods
@@ -393,29 +397,26 @@ const RelationsContext = createContext(null)
 const checkRelation = (options) => {
   const relations = options.relations || {}
   let hasDescendantRelation = false
-  const ancestorRelations = {}
+  let hasAncestorRelation = false
   Object.keys(relations).forEach((path) => {
     const relation = relations[path]
     const type = relation.type
     if (['child', 'descendant'].includes(type)) {
       hasDescendantRelation = true
     } else if (['parent', 'ancestor'].includes(type)) {
-      ancestorRelations[path] = relation
+      hasAncestorRelation = true
     }
   })
   return {
     hasDescendantRelation,
-    ancestorRelations
+    hasAncestorRelation
   }
 }
 
 const provideRelation = (instance, relation) => {
   const componentPath = instance.__componentPath
   if (relation) {
-    if (!relation[componentPath]) {
-      relation[componentPath] = instance
-    }
-    return relation
+    return Object.assign({}, relation, { [componentPath]: instance })
   } else {
     return {
       [componentPath]: instance
@@ -423,55 +424,26 @@ const provideRelation = (instance, relation) => {
   }
 }
 
-const relationTypeMap = {
-  parent: 'child',
-  ancestor: 'descendant'
-}
-
-const collectRelations = (ancestorRelations, relationMap, componentPath = '') => {
-  const relations = {}
-  const relationNodesMap = {}
-  Object.keys(ancestorRelations).forEach(path => {
-    const relation = ancestorRelations[path]
-    const type = relation.type
-    if (relationMap[path]) {
-      const target = relationMap[path]
-      const targetRelation = target.__mpxProxy.options.relations?.[componentPath]
-      if (targetRelation && targetRelation.type === relationTypeMap[type] && target.__componentPath === path) {
-        relations[path] = {
-          target,
-          targetRelation,
-          relation
-        }
-        relationNodesMap[path] = [target]
-      }
-    }
-  })
-
-  return {
-    relations,
-    relationNodesMap
-  }
-}
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
-  const { hasDescendantRelation, ancestorRelations } = checkRelation(rawOptions)
+  const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
     const pageId = useContext(RouteContext)
-    const relation = useContext(RelationsContext)
-    const relationInfo = collectRelations(ancestorRelations, relation, currentInject.componentPath)
+    let relation = null
+    if (hasDescendantRelation || hasAncestorRelation) {
+      relation = useContext(RelationsContext)
+    }
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relationInfo })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
