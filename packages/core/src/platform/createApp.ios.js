@@ -41,10 +41,13 @@ export default function createApp (options) {
     return appData
   }
 
-  defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appData))
-  defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appData))
-  defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appData))
-  defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appData))
+  // 模拟小程序appInstance在热启动时不会重新创建的行为，在外部创建跟随js context的appInstance
+  const appInstance = Object.assign({}, appData, Mpx.prototype)
+
+  defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appInstance))
+  defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appInstance))
+  defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appInstance))
+  defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
   defaultOptions.onAppInit && defaultOptions.onAppInit()
 
   const pages = currentInject.getPages() || {}
@@ -83,7 +86,6 @@ export default function createApp (options) {
   }
 
   global.__mpxAppLaunched = false
-  global.__mpxAppHotLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
     const initialRouteRef = useRef({
@@ -93,6 +95,8 @@ export default function createApp (options) {
     if (firstRef.current) {
       // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
       global.__mpxAppHotLaunched = false
+      // 热启动情况下重置__mpxPagesMap避免页面销毁函数未及时执行时错误地引用到之前的navigation
+      global.__mpxPagesMap = {}
       firstRef.current = false
     }
     if (!global.__mpxAppHotLaunched) {
@@ -109,12 +113,13 @@ export default function createApp (options) {
           query: current.params,
           scene: 0,
           shareTicket: '',
-          referrerInfo: {}
+          referrerInfo: {},
+          isLaunch: true
         }
         global.__mpxEnterOptions = options
         if (!global.__mpxAppLaunched) {
           global.__mpxLaunchOptions = options
-          defaultOptions.onLaunch && defaultOptions.onLaunch.call(appData, options)
+          defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
         global.__mpxAppCbs.show.forEach((cb) => {
           cb(options)
