@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { reactive, set, del } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, isEmptyObject } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -193,7 +193,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relationInfo }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -233,18 +233,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       },
       enumerable: false
     },
-    __componentPath: {
-      get () {
-        return currentInject.componentPath || ''
-      },
-      enumerable: false
-    },
-    __relation: {
-      get () {
-        return relation
-      },
-      enumerable: false
-    },
     __injectedRender: {
       get () {
         return currentInject.render || noop
@@ -258,6 +246,32 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       enumerable: false
     }
   })
+
+  if (type === 'component') {
+    Object.defineProperty(instance, '__componentPath', {
+      get () {
+        return currentInject.componentPath || ''
+      },
+      enumerable: false
+    })
+  }
+
+  if (!isEmptyObject(relationInfo.relations)) {
+    Object.defineProperties(instance, {
+      __relations: {
+        get() {
+          return relationInfo.relations
+        },
+        enumerable: false
+      },
+      __relationNodesMap: {
+        get() {
+          return relationInfo.relationNodesMap
+        },
+        enumerable: false
+      }
+    })
+  }
 
   // bind this & assign methods
   if (rawOptions.methods) {
@@ -388,19 +402,27 @@ function usePageStatus (navigation, pageId) {
 
 const RelationsContext = createContext(null)
 
-const needRelationContext = (options) => {
-  const relations = options.relations
-  if (!relations) return false
-  return Object.keys(relations).some((path) => {
+const checkRelation = (options) => {
+  const relations = options.relations || {}
+  let hasDescendantRelation = false
+  const ancestorRelations = {}
+  Object.keys(relations).forEach((path) => {
     const relation = relations[path]
     const type = relation.type
-    return type === 'child' || type === 'descendant'
+    if (['child', 'descendant'].includes(type)) {
+      hasDescendantRelation = true
+    } else if (['parent', 'ancestor'].includes(type)) {
+      ancestorRelations[path] = relation
+    }
   })
+  return {
+    hasDescendantRelation,
+    ancestorRelations
+  }
 }
 
-const provideRelation = (instance) => {
+const provideRelation = (instance, relation) => {
   const componentPath = instance.__componentPath
-  const relation = instance.__relation
   if (relation) {
     if (!relation[componentPath]) {
       relation[componentPath] = instance
@@ -413,13 +435,34 @@ const provideRelation = (instance) => {
   }
 }
 
-const wrapRelationContext = (element, instance) => {
-  if (needRelationContext(instance.__mpxProxy.options)) {
-    return createElement(RelationsContext.Provider, {
-      value: provideRelation(instance)
-    }, element)
-  } else {
-    return element
+const relationTypeMap = {
+  parent: 'child',
+  ancestor: 'descendant'
+}
+
+const collectRelations = (ancestorRelations, relationMap, componentPath = '') => {
+  const relations = {}
+  const relationNodesMap = {}
+  Object.keys(ancestorRelations).forEach(path => {
+    const relation = ancestorRelations[path]
+    const type = relation.type
+    if (relationMap[path]) {
+      const target = relationMap[path]
+      const targetRelation = target.__mpxProxy.options.relations?.[componentPath]
+      if (targetRelation && targetRelation.type === relationTypeMap[type] && target.__componentPath === path) {
+        relations[path] = {
+          target,
+          targetRelation,
+          relation
+        }
+        relationNodesMap[path] = [target]
+      }
+    }
+  })
+
+  return {
+    relations,
+    relationNodesMap
   }
 }
 
@@ -427,6 +470,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  const { hasDescendantRelation, ancestorRelations } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
@@ -434,11 +478,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const intersectionCtx = useContext(IntersectionObserverContext)
     const pageId = useContext(RouteContext)
     const relation = useContext(RelationsContext)
+    const relationInfo = collectRelations(ancestorRelations, relation, currentInject.componentPath)
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relationInfo })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -516,15 +561,22 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return proxy.finalMemoVersion
     }, [proxy.stateVersion, proxy.memoVersion])
 
-    const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
+    let root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
     if (root && root.props.ishost) {
       // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
       const rootProps = getRootProps(props, validProps)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
       // update root props
-      return wrapRelationContext(cloneElement(root, rootProps), instance)
+      root = cloneElement(root, rootProps)
     }
-    return wrapRelationContext(root, instance)
+    return hasDescendantRelation
+      ? createElement(RelationsContext.Provider,
+          {
+            value: provideRelation(instance, relation)
+          },
+          root
+        )
+      : root
   }))
 
   if (rawOptions.options?.isCustomText) {
