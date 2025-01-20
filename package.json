@@ -3,7 +3,7 @@
   "description": "mpx monorepo",
   "private": true,
   "scripts": {
-    "lerna:publish": "lerna publish from-package --yes",
+    "lerna:publish": "lerna publish from-package --yes --dist-tag beta",
     "lint": "eslint --ext .js,.ts,.tsx packages/",
     "fix": "eslint --fix --ext .js,.ts,.tsx packages/",
     "lint:js": "eslint --ext .js packages/",
