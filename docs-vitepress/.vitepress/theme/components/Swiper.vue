@@ -156,6 +156,7 @@ export default {
     transform filter 0.3s
   .swiper-img
     cursor pointer
+    display inline-block
   .swiper-disable
     cursor not-allowed
     filter grayscale(100%)
