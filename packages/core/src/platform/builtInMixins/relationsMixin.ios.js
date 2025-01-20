@@ -39,7 +39,7 @@ export default function relationsMixin (mixinType) {
       },
       methods: {
         getRelationNodes (path) {
-          return this.__mpxRelationNodesMap(path) || null
+          return this.__mpxRelationNodesMap[path] || null
         },
         __mpxCollectRelations () {
           const relations = this.__mpxProxy.options.relations
