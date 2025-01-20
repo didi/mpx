@@ -32,7 +32,7 @@
           :src="item.micon"
           loading="lazy"
           width="34"
-          style="height: 34px;"
+          style="height: 34px;display: inline-block;"
         />
         <p class="m-advan-section-title">{{ item.title }}</p>
       </li>
@@ -41,9 +41,9 @@
     <div class="mdemo-wrapper">
       <div class="mdemo-title">{{ $frontmatter.threeSection.title }}</div>
       <p class="mdemo-subtitle">
-        扫码体验Mpx版本的
+        扫码体验 Mpx 版本的
         <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
-        在各个小程序平台和web中的一致表现 ，更多示例项目可点击
+        在各个小程序平台和 web 中的一致表现 ，更多示例项目可点击
         <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
         进入查看。
       </p>

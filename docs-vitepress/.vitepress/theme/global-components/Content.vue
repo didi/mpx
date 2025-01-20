@@ -30,7 +30,7 @@
     <section class="two-section">
       <ul class="row">
         <li class="two-section__item" v-for="(item, index) in $frontmatter.features" :key="index">
-          <img :src="item.icon" alt="svg" loading="lazy" width="80" style="height: 80px;" />
+          <img :src="item.icon" alt="svg" loading="lazy" width="80" style="height: 80px;display: inline-block;" />
           <p class="two-section__title">{{item.title}}</p>
           <p class="two-section__desc">{{item.details}}</p>
           <div class="two-section__line"></div>
@@ -46,7 +46,7 @@
             <div class="three-section__phone">
               <img
                   width="410"
-                  style="height: 712px;"
+                  style="height: 712px;max-width: none;"
                   src="https://dpubstatic.udache.com/static/dpubimg/Vx5n_3YCtP/anli_pic_phone.png"
                   alt="phone"
                   loading="lazy" />
@@ -67,11 +67,11 @@
           <div>
             <span class="dot-inner" style="background: #fff; margin: 0 auto;"></span>
             <p class="white-text title">{{$frontmatter.threeSection.title}}</p>
-            <p class="white-text desc">
+            <p class="white-text desc" >
               <!-- {{$frontmatter.threeSection.details}} -->
-              扫码体验Mpx版本的
+              扫码体验 Mpx 版本的
               <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
-              在各个小程序平台和web中的一致表现 ，更多示例项目可点击
+              在各个小程序平台和 web 中的一致表现 ，更多示例项目可点击
               <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
               进入查看。
             </p>
@@ -208,8 +208,6 @@
 import Swiper from '../components/Swiper.vue';
 import SwiperImg from '../components/SwiperImg.vue';
 import CodeList from '../components/CodeList.vue';
-import { useData } from 'vitepress'
-import { toRefs } from 'vue'
 
 export default {
   data () {
@@ -272,12 +270,14 @@ section
 
 .title
   font-size 30px
+  margin-top 40px
   margin-bottom 20px
   font-weight 500
 
 .desc
   font-size 14px
   line-height 22px
+  margin-top 30px
   margin-bottom 40px
 
 .btn
@@ -323,6 +323,7 @@ section
   flex 1
 
 .one-section__title
+  margin-top 30px
   margin-bottom 20px
   font-size 40px
   font-weight 500
@@ -332,6 +333,7 @@ section
   width 450px
   line-height 30px
   margin-bottom 70px
+  padding-top 20px
 
 .one-section__btn
   width 162px
