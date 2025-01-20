@@ -259,13 +259,13 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   if (!isEmptyObject(relationInfo.relations)) {
     Object.defineProperties(instance, {
       __relations: {
-        get() {
+        get () {
           return relationInfo.relations
         },
         enumerable: false
       },
       __relationNodesMap: {
-        get() {
+        get () {
           return relationInfo.relationNodesMap
         },
         enumerable: false
