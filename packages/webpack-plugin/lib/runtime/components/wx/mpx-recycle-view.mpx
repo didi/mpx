@@ -1,0 +1,198 @@
+<template>
+  <scroll-view
+    class="mpx-recycle-list"
+    scroll-y="{{scrollY}}"
+    bindscroll="onScroll"
+    wx:style="height: {{height}}px"
+  >
+    <view class="content-wrapper">
+      <view class="infinite-list-placeholder" ref="placeholder" wx:style="{{placeholderStyle}}"></view>
+      <view class="infinite-list" ref="content" wx:style="{{contentStyle}}">
+        <view
+          wx:for="{{visibleData}}"
+          wx:key="id"
+          class="infinite-list-item"
+          wx:style="height: {{itemSize.height}}px; overflow: hidden"
+        >
+          <recycle-item current-item="{{item.item}}"/>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    scrollX: Boolean,
+    scrollY: Boolean,
+    height: {
+      type: String,
+      value: '100%'
+    },
+    // 预估尺寸
+    itemSize: Object,
+    bufferScale: {
+      type: Number,
+      value: 2
+    },
+    listData: Array
+  },
+  data: {
+    screenHeight: 0,
+    start: 0,
+    end: 0,
+    contentStyle: '',
+    placeholderStyle: '',
+    positions: []
+  },
+  computed: {
+    _listData() {
+      return this.listData.map((item, index) => {
+        return {
+          _index: `_${index}`,
+          item
+        }
+      })
+    },
+    visibleCount() {
+      return Math.ceil(this.screenHeight / this.itemSize.height)
+    },
+    aboveCount() {
+      return Math.min(this.start, this.bufferScale * this.visibleCount)
+    },
+    belowCount() {
+      return Math.min(
+        this.listData.length - this.end,
+        this.bufferScale * this.visibleCount
+      )
+    },
+    visibleData() {
+      const start = this.start - this.aboveCount
+      const end = this.end + this.belowCount
+      return this._listData.slice(start, end)
+    }
+  },
+  watch: {
+    listData: {
+      handler() {
+        this.initPositions()
+        this.$nextTick(() => {
+          if (!this.positions || !this.positions.length) {
+            return
+          }
+          // 更新列表总高度
+          const height = this.positions[this.positions.length - 1].bottom
+          this.placeholderStyle = `height: ${height}px`
+          // 更新真实偏移量
+          this.setStartOffset()
+        })
+      },
+      immediate: true
+    }
+  },
+  attached() {
+    this.initPositions()
+    const query = wx.createSelectorQuery().in(this)
+    setTimeout(() => {
+      query.select('.mpx-recycle-list').boundingClientRect(rect => {
+        this.screenHeight = rect.height
+        this.start = 0
+        this.end = this.start + this.visibleCount
+      }).exec()
+    }, 300)
+  },
+  methods: {
+    initPositions() {
+      const { height } = this.itemSize
+      this.positions = this.listData.map((d, index) => ({
+        index,
+        height,
+        top: index * height,
+        bottom: (index + 1) * height
+      }))
+    },
+    getStartIndex(scrollTop = 0) {
+      return this.binarySearch(this.positions, scrollTop)
+    },
+    binarySearch(list, value) {
+      let start = 0
+      let end = list.length - 1
+      let tempIndex = null
+
+      while (start <= end) {
+        const midIndex = parseInt((start + end) / 2)
+        const midValue = list[midIndex].bottom
+        if (midValue === value) {
+          return midIndex + 1
+        } else if (midValue < value) {
+          start = midIndex + 1
+        } else if (midValue > value) {
+          if (tempIndex === null || tempIndex > midIndex) {
+            tempIndex = midIndex
+          }
+          end = end - 1
+        }
+      }
+      return tempIndex
+    },
+    setStartOffset() {
+      let startOffset
+      if (this.start >= 1) {
+        const size =
+          this.positions[this.start].top -
+          (this.positions[this.start - this.aboveCount]
+            ? this.positions[this.start - this.aboveCount].top
+            : 0)
+        startOffset = this.positions[this.start - 1].bottom - size
+      } else {
+        startOffset = 0
+      }
+      this.contentStyle = `transform: translateY(${startOffset}px);`
+    },
+    onScroll(e) {
+      const { scrollTop } = e.detail
+      this.start = this.getStartIndex(scrollTop)
+      this.end = this.start + this.visibleCount
+      this.setStartOffset()
+    }
+  }
+})
+</script>
+<script type="application/json">
+{
+  "component": true,
+  // wx配置
+  // "componentGenerics": {
+  //   "recycle-item": true
+  // }
+  "componentGenerics": {
+    "recycle-item": {
+      "default": "../components/test-item"
+    }
+  }
+}
+</script>
+<style scoped>
+.mpx-recycle-list {
+  position: relative;
+  overflow: hidden;
+}
+
+.content-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.infinite-list {
+  left: 0;
+  right: 0;
+  pointer-events: none; /* 支付宝环境需要设置允许事件穿透 */
+  top: 0;
+  position: absolute;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+</style>
