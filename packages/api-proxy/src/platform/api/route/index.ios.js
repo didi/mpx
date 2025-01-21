@@ -40,7 +40,7 @@ function isLock(navigationHelper, type, options) {
     return true
   }
   setTimeout(() => {
-    if (navigationHelper.lastFailCallback) {
+    if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
       navigationHelper.lastFailCallback('timeout')
       navigationHelper.lastFailCallback = null
     }
