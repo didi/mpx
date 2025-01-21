@@ -257,7 +257,6 @@ export default withPwa(
         pwa: {
             base: "/",
             scope: "/",
-            filename: "service-worker.js",
             includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
                 name: "Mpx",
