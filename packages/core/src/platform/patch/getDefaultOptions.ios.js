@@ -195,7 +195,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -282,6 +282,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+  // 在 created 之前设置 parentProvides
+  proxy.parentProvides = parentProvides
   proxy.created()
 
   Object.assign(proxy, {
@@ -446,8 +448,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      rawOptions.parentProvides = parentProvides
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -541,7 +542,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       root = cloneElement(root, rootProps)
     }
 
-    const provides = useMemo(() => proxy.provides, [proxy.provides])
+    const provides = proxy.provides
     if (provides) {
       root = createElement(ProviderContext.Provider, { value: provides }, root)
     }
