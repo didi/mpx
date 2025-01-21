@@ -7,16 +7,17 @@ import {
   StyleSheet
 } from 'react-native'
 import PortalManager from './portal-manager'
-import { useNavigation } from '@react-navigation/native'
-import { PortalManagerContextValue, PortalContext } from '../context'
+import { PortalContext } from '../context'
 
-export type PortalHostProps = {
+type PortalHostProps = {
   children: ReactNode,
   pageId: number
 }
 
-type addIdsMapsType = {
-  [key: number]: number[]
+interface PortalManagerContextValue {
+  mount: (key: number, children: React.ReactNode) => void
+  update: (key: number, children: React.ReactNode) => void
+  unmount: (key: number) => void
 }
 
 export type Operation =
@@ -66,43 +67,13 @@ const PortalHost = ({ children, pageId } :PortalHostProps): JSX.Element => {
   const _updateType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
   const queue = useRef<Array<{ type: string, key: number; children: ReactNode }>>([])
-  const _mount = (children: ReactNode, _key?: number, id?: number) => {
+  const mount = (children: ReactNode, _key?: number, id?: number) => {
     if (id !== pageId) return
-    const key = _key || _nextKey.current++
-    if (!isMounted.current) {
-      queue.current.push({ type: 'mount', key, children })
-    } else if (manager.current) {
-      manager.current.mount(key, children)
-    }
-    return key
-  }
-
-  const _unmount = (key: number) => {
-    if (!isMounted.current) {
-      queue.current.push({ type: 'unmount', key, children })
-    } else if (manager.current) {
-      manager.current.unmount(key)
-    }
-  }
-
-  const _update = (key: number, children?: ReactNode) => {
-    if (!isMounted.current) {
-      const operation = { type: 'mount', key, children }
-      const index = queue.current.findIndex((q) => q.key === key)
-      if (index > -1) {
-        queue.current[index] = operation
-      } else {
-        queue.current.push(operation)
-      }
-    } else if (manager.current) {
-      manager.current.update(key, children)
-    }
-  }
-
-  const mount = (children: ReactNode, _key?: number) => {
     const key = _key || _nextKey.current++
     if (manager.current) {
       manager.current.mount(key, children)
+    } else {
+      queue.current.push({ type: 'mount', key, children })
     }
     return key
   }
@@ -110,22 +81,32 @@ const PortalHost = ({ children, pageId } :PortalHostProps): JSX.Element => {
   const unmount = (key: number) => {
     if (manager.current) {
       manager.current.unmount(key)
+    } else {
+      queue.current.push({ type: 'unmount', key, children })
     }
   }
 
   const update = (key: number, children?: ReactNode) => {
     if (manager.current) {
       manager.current.update(key, children)
+    } else {
+      const operation = { type: 'mount', key, children }
+      const index = queue.current.findIndex((q) => q.type === 'mount' && q.key === key)
+      if (index > -1) {
+        queue.current[index] = operation
+      } else {
+        queue.current.push(operation)
+      }
     }
   }
 
   useMemo(() => {
-    _addType.current = TopViewEventEmitter.addListener(addType, _mount)
-    _removeType.current = TopViewEventEmitter.addListener(removeType, _unmount)
-    _updateType.current = TopViewEventEmitter.addListener(updateType, _update)
+    _addType.current = TopViewEventEmitter.addListener(addType, mount)
+    _removeType.current = TopViewEventEmitter.addListener(removeType, unmount)
+    _updateType.current = TopViewEventEmitter.addListener(updateType, update)
   }, [])
-  const navigation = useNavigation()
   useEffect(() => {
+    isMounted.current = true
     while (queue.current.length && manager.current) {
       const operation = queue.current.shift()
       if (!operation) return
@@ -135,17 +116,14 @@ const PortalHost = ({ children, pageId } :PortalHostProps): JSX.Element => {
           break
         case 'unmount':
           manager.current.unmount(operation.key)
+          break
       }
     }
-    const focusSubscription = navigation.addListener('focus', () => {
-      isMounted.current = true
-    })
 
     return () => {
       _addType.current?.remove()
       _removeType.current?.remove()
       _updateType.current?.remove()
-      focusSubscription()
     }
   }, [])
   return (

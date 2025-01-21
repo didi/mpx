@@ -32,18 +32,11 @@ export interface IntersectionObserver {
     throttleMeasure: () => void
   }
 }
-export interface PortalManagerContextValue {
-  mount: (key: number, children: React.ReactNode) => void
-  update: (key: number, children: React.ReactNode) => void
-  unmount: (key: number) => void,
-  portals: Array<{key: number, children: React.ReactNode}>
-}
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number, id?: number) => number| undefined
+  mount: (children: React.ReactNode, key?: number | null, id?: number| null) => number| undefined
   update: (key: number, children: React.ReactNode) => void
   unmount: (key: number) => void
-  manager?: PortalManagerContextValue
 }
 
 export interface ScrollViewContextValue {
@@ -75,5 +68,3 @@ export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | nu
 export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
-
-export const PortalManagerContext = createContext<PortalManagerContextValue| null>(null)
