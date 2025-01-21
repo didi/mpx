@@ -33,7 +33,7 @@ function resolvePath (relative, base) {
   }
   return stack.join('/')
 }
-function isLock(navigationHelper, type, options) {
+function isLock (navigationHelper, type, options) {
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
     const res = { errMsg: `${type}:fail the previous routing event didn't complete` }
     failHandle(res, options.fail, options.complete)
@@ -48,7 +48,7 @@ function isLock(navigationHelper, type, options) {
   return false
 }
 
-function navigateTo (options = {}) {  
+function navigateTo (options = {}) {
   const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'navigateTo', options)) {
     return

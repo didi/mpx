@@ -1,8 +1,9 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, getPageId, error } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 const { width, height } = Dimensions.get('window')
 const showModal = function (options = {}) {
+  const id = getPageId()
   const {
     title,
     content,
@@ -17,6 +18,14 @@ const showModal = function (options = {}) {
     fail,
     complete
   } = options
+  if (id === null) {
+    error('showModal cannot be invoked outside the mpx life cycle in React Native environments')
+    const result = {
+      errMsg: 'showModal:fail cannot be invoked outside the mpx life cycle in React Native environments'
+    }
+    failHandle(result, fail, complete)
+    return
+  }
   const modalWidth = width * 0.8
   const styles = StyleSheet.create({
     modalTask: {
@@ -156,7 +165,7 @@ const showModal = function (options = {}) {
     </View>
   </View>
   try {
-    modalKey = Portal.add(ModalView)
+    modalKey = Portal.add(ModalView, id)
   } catch (e) {
     const result = {
       errMsg: `showModal:fail invalid ${e}`

@@ -489,7 +489,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
-
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
         navigation.setOptions({
@@ -566,7 +565,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                   value: intersectionObservers.current
                 },
                 createElement(Provider,
-                  null,
+                  {
+                    pageId: currentPageId
+                  },
                   createElement(defaultOptions,
                     {
                       navigation,

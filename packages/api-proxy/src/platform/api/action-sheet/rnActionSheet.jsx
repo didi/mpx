@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native'
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, getPageId, error } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { getWindowInfo } from '../system/rnSystem'
 import Animated, {
@@ -9,7 +9,16 @@ import Animated, {
 } from 'react-native-reanimated'
 
 function showActionSheet (options = {}) {
+  const id = getPageId()
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
+  if (id === null) {
+    error('showActionSheet cannot be invoked outside the mpx life cycle in React Native environments')
+    const result = {
+      errMsg: 'showActionSheet:fail cannot be invoked outside the mpx life cycle in React Native environments'
+    }
+    failHandle(result, fail, complete)
+    return
+  }
   if (itemList.length > 6) {
     const result = {
       errMsg: 'showActionSheet:fail parameter error: itemList should not be large than 6'
@@ -116,8 +125,7 @@ function showActionSheet (options = {}) {
       </View>
     )
   }
-  
-  actionSheetKey = Portal.add(<ActionSheet/>)
+  actionSheetKey = Portal.add(<ActionSheet />, id)
 }
 
 export {
