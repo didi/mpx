@@ -218,6 +218,12 @@ export default withPwa(
         base: "/",
         head: [
             ["link", { rel: "icon", href: "/favicon.ico" }],
+            ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
+            [
+                "script",
+                { id: "unregister-sw" },
+                "if('serviceWorker' in navigator) window.addEventListener('load', (e) => navigator.serviceWorker.register('/service-worker.js', { scope: '/' }))",
+            ],
             [
                 "script",
                 { type: "text/javascript" },
@@ -225,7 +231,7 @@ export default withPwa(
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
                 t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
                 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "jtvvy52wxy");`,
+                })(window, document, "clarity", "script", "jtvvy52wxy");`,
             ],
             ["meta", { name: "author", content: title }],
             ["meta", { property: "og:type", content: "website" }],
@@ -251,12 +257,20 @@ export default withPwa(
         pwa: {
             base: "/",
             scope: "/",
+            filename: "service-worker.js",
             includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
-                name: title,
+                name: "Mpx",
                 short_name: "Mpx",
                 description,
                 theme_color: "#ffffff",
+                icons: [
+                    {
+                        src: "https://dpubstatic.udache.com/static/dpubimg/1ESVodfAED/logo.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                    },
+                ],
             },
             workbox: {
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
@@ -321,7 +335,7 @@ export default withPwa(
             notFound: {
                 title: "页面未找到",
                 linkText: "返回首页",
-                quote: "😩 抱歉，迷路了～"
+                quote: "😩 抱歉，迷路了～",
             },
             docFooter: {
                 prev: "上一页",
