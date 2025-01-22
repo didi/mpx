@@ -1,7 +1,7 @@
 <template>
   <div class="swiper-container">
     <div class="swiper-button">
-      <img :class="leftButtonDisabled" class="swiper-img" @click="handlePrev" src="https://dpubstatic.udache.com/static/dpubimg/0cgzDC8Apn/anli_icon_left.png" width="50" height="50" alt="left" loading="lazy" />
+      <img :class="leftButtonDisabled" class="swiper-img" @click="handlePrev" src="https://dpubstatic.udache.com/static/dpubimg/0cgzDC8Apn/anli_icon_left.png" width="50" style="height: 50px;" alt="left" loading="lazy" />
     </div>
     <div class="swiper" ref="wrapper">
       <div
@@ -13,14 +13,14 @@
         @transitionend="handleEnd">
         <div class="swiper-item">
           <div>
-            <div><img width="80" height="80" :src="item.img" alt="二维码" loading="lazy" /></div>
+            <div><img width="80" style="height: 80px;" :src="item.img" alt="二维码" loading="lazy" /></div>
             <div>{{item.title}}</div>
           </div>
         </div>
       </div>
     </div>
     <div class="swiper-button">
-      <img :class="rightButtonDisabled" class="swiper-img" @click="handleNext" src="https://dpubstatic.udache.com/static/dpubimg/QhD6ulEP7k/anli_icon_right.png" width="50" height="50" alt="right" loading="lazy" />
+      <img :class="rightButtonDisabled" class="swiper-img" @click="handleNext" src="https://dpubstatic.udache.com/static/dpubimg/QhD6ulEP7k/anli_icon_right.png" width="50" style="height: 50px;" alt="right" loading="lazy" />
     </div>
   </div>
 </template>
@@ -156,6 +156,7 @@ export default {
     transform filter 0.3s
   .swiper-img
     cursor pointer
+    display inline-block
   .swiper-disable
     cursor not-allowed
     filter grayscale(100%)

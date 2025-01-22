@@ -1,6 +1,6 @@
 <template>
   <div class="swiper-container" ref="container" :style="getStyle">
-    <div class="swiper" :style="getMode" ref="wrapper" @touchstart="handleStart" @touchmove="handleMove" @touchend="handleEnd">
+    <div class="swiper" ref="wrapper" @touchstart="handleStart" @touchmove="handleMove" @touchend="handleEnd">
       <div
         ref="list"
         class="swiper-list"
@@ -58,9 +58,6 @@ export default {
   computed: {
     getStyle () {
       return `height: ${this.height}px;`
-    },
-    getMode () {
-      return this.isMove ? 'transition: transform 0s;' : 'transition: transform 0.3s;'
     },
     getWidth () {
       return `width: ${this.offsetWidth}px;`
@@ -149,6 +146,7 @@ export default {
       const moveX = touch.clientX - this.touchInfo.clientX
       const distance = this.current * this.offsetWidth  - moveX
       wrapper.style.transform = `translateX(${-distance}px)`
+      wrapper.style.transition = 'transform 0s'
       this.touchInfo.moveX = moveX
     },
     handleEnd () {
@@ -174,6 +172,7 @@ export default {
         }
       }
       const wrapper = this.$refs.wrapper
+      wrapper.style.transition = 'transform 0.3s'
       switch (nextPage) {
         case 0:
           wrapper.style.transform = `translateX(${-this.current * this.offsetWidth}px)`
@@ -209,7 +208,7 @@ export default {
   white-space nowrap
   transform translateX(0)
   display inline-block
-  // transition transform 0.3s
+  transition transform 0.3s
 .swiper-list
   width 100%
   // height 132px

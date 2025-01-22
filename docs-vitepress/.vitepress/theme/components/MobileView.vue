@@ -1,20 +1,20 @@
 <template>
   <div class="m-banner-wrapper">
     <div class="m-banner">
-      <div class="m-title">{{ $page.frontmatter.heroText }}</div>
+      <div class="m-title">{{ $frontmatter.heroText }}</div>
       <div class="m-subtitle">
-        {{ $page.frontmatter.tagline }}
+        {{ $frontmatter.tagline }}
       </div>
 
       <div class="m-banner-btn-wrapper">
         <button class="m-banner-btn m-banner-btn-enter">
-          <a style="font-size: 15px;" :href="$page.frontmatter.actionLink">
-            {{ $page.frontmatter.actionText }}
+          <a style="font-size: 15px;" :href="$frontmatter.actionLink">
+            {{ $frontmatter.actionText }}
           </a>
         </button>
         <div class="m-banner-btn m-banner-btn-jump">
-          <a class="white-link" :href="$page.frontmatter.githubLink">
-            {{ $page.frontmatter.githubText }}
+          <a class="white-link" :href="$frontmatter.githubLink">
+            {{ $frontmatter.githubText }}
           </a>
         </div>
       </div>
@@ -24,7 +24,7 @@
     <div class="m-advantages">
       <li
         class="m-advan-section"
-        v-for="(item, index) in $page.frontmatter.features"
+        v-for="(item, index) in $frontmatter.features"
         :key="index"
       >
         <img
@@ -32,74 +32,74 @@
           :src="item.micon"
           loading="lazy"
           width="34"
-          height="34"
+          style="height: 34px;display: inline-block;"
         />
         <p class="m-advan-section-title">{{ item.title }}</p>
       </li>
     </div>
 
     <div class="mdemo-wrapper">
-      <div class="mdemo-title">{{ $page.frontmatter.threeSection.title }}</div>
+      <div class="mdemo-title">{{ $frontmatter.threeSection.title }}</div>
       <p class="mdemo-subtitle">
-        扫码体验Mpx版本的
+        扫码体验 Mpx 版本的
         <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples/mpx-todoMVC">todoMVC</a>
-        在各个小程序平台和web中的一致表现 ，更多示例项目可点击
+        在各个小程序平台和 web 中的一致表现 ，更多示例项目可点击
         <a class="target-link" href="https://github.com/didi/mpx/tree/master/examples">这里</a>
         进入查看。
       </p>
       <!-- <a class="mdemo-btn" href="/">
-        {{ $page.frontmatter.threeSection.actionText }}
+        {{ $frontmatter.threeSection.actionText }}
       </a> -->
       <div class="mdemo-icon-wrapper">
         <div style="margin: 0 6px;" v-for="(item, index) in mvcList" :key="index">
-          <img width="130" height="150" :src="item.code" alt="code" loading="lazy" />
+          <img width="130" style="height: 150px;" :src="item.code" alt="code" loading="lazy" />
         </div>
       </div>
     </div>
 
     <div class="m-feature-wrapper">
       <div class="m-feature-title">
-        {{ $page.frontmatter.fourSection.title }}
+        {{ $frontmatter.fourSection.title }}
       </div>
       <div class="m-feature-subtitle">
-        {{ $page.frontmatter.fourSection.details }}
+        {{ $frontmatter.fourSection.details }}
       </div>
-      <a class="m-feature-btn" :href="$page.frontmatter.fourSection.actionLink">
-        {{ $page.frontmatter.fourSection.actionText }}
+      <a class="m-feature-btn" :href="$frontmatter.fourSection.actionLink">
+        {{ $frontmatter.fourSection.actionText }}
       </a>
       <img
         class="m-feature-pic"
         width="100%"
-        height="309px"
-        :src="$page.frontmatter.fourSection.mimg"
+        style="height: 309px;"
+        :src="$frontmatter.fourSection.mimg"
         alt="platform"
         loading="lazy"
       />
 
       <div class="m-feature-title">
-        {{ $page.frontmatter.fiveSection.title }}
+        {{ $frontmatter.fiveSection.title }}
       </div>
       <div class="m-feature-subtitle">
-        {{ $page.frontmatter.fiveSection.details }}
+        {{ $frontmatter.fiveSection.details }}
       </div>
-      <a class="m-feature-btn" :href="$page.frontmatter.fourSection.actionLink">
-        {{ $page.frontmatter.fiveSection.actionText }}
+      <a class="m-feature-btn" :href="$frontmatter.fourSection.actionLink">
+        {{ $frontmatter.fiveSection.actionText }}
       </a>
       <img
         class="m-feature-pic"
         width="100%"
-        height="309px"
-        :src="$page.frontmatter.fiveSection.mimg"
+        style="height: 309px;"
+        :src="$frontmatter.fiveSection.mimg"
         alt="platform"
         loading="lazy"
       />
     </div>
 
     <div class="m-util-wrapper">
-      <div class="m-util-title">{{$page.frontmatter.sixSection.title}}</div>
+      <div class="m-util-title">{{$frontmatter.sixSection.title}}</div>
       <ul class="row six-section__row" v-for="(item, index) in list" :key="index">
         <a :href="item.actionLink" class="six-section__item six-section__step">
-          <img class="six-section__icon" :src="item.icon" alt="svg" loading="lazy" width="50" height="50" />
+          <img class="six-section__icon" :src="item.icon" alt="svg" loading="lazy" width="50" style="height: 50px;" />
           <div class="six-section__list">
             <div class="six-section__bold">{{item.title}}</div>
             <div class="six-section__subtitle">{{item.details}}</div>
@@ -109,11 +109,11 @@
     </div>
 
     <div class="m-example-wrapper">
-      <div class="m-example-title">{{$page.frontmatter.sevenSection.title}}</div>
+      <div class="m-example-title">{{$frontmatter.sevenSection.title}}</div>
         <div class="m-example-phone">
           <img
               width="318"
-              height="318"
+              style="height: 318px;"
               src="https://dpubstatic.udache.com/static/dpubimg/xxjYvzgJdt/y_bg_phone.png"
               alt="phone"/>
           <div class="m-example-img-contain">
@@ -155,10 +155,10 @@ export default {
   },
   computed: {
     list () {
-      return this.$page.frontmatter.sixSection.details
+      return this.$frontmatter.sixSection.details
     },
     multiList () {
-      const list = this.$page.frontmatter.sevenSection.details
+      const list = this.$frontmatter.sevenSection.details
       const result = []
       let temp = []
       for (let i = 0; i < list.length; i++) {
@@ -172,11 +172,11 @@ export default {
       return result
     },
     mvcList() {
-      const list = this.$page.frontmatter.threeSection.list
+      const list = this.$frontmatter.threeSection.list
       return list
     },
     dataList () {
-      const list = this.$page.frontmatter.sevenSection.details
+      const list = this.$frontmatter.sevenSection.details
       return list
     }
   },
