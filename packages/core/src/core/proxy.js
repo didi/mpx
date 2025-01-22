@@ -171,10 +171,8 @@ export default class MpxProxy {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
       setCurrentInstance(this)
-      if (!isReact) {
-        this.parent = this.resolveParent()
-        this.provides = this.parent ? this.parent.provides : Object.create(null)
-      }
+      this.parent = this.resolveParent()
+      this.provides = this.parent ? this.parent.provides : Object.create(null)
       // 在 props/data 初始化之前初始化 inject
       this.initInject()
       this.initProps()
@@ -200,6 +198,11 @@ export default class MpxProxy {
   }
 
   resolveParent () {
+    if (isReact) {
+      return {
+        provides: this.target.__getParentProvides
+      }
+    }
     if (isFunction(this.target.selectOwnerComponent)) {
       const parent = this.target.selectOwnerComponent()
       return parent ? parent.__mpxProxy : null

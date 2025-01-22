@@ -246,6 +246,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         return currentInject.getRefsData || noop
       },
       enumerable: false
+    },
+    __getParentProvides: {
+      get () {
+        return parentProvides || null
+      },
+      enumerable: false
     }
   })
 
@@ -282,8 +288,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
-  // 在 created 之前设置 parentProvides
-  proxy.parentProvides = parentProvides
   proxy.created()
 
   Object.assign(proxy, {
