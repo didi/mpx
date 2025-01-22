@@ -2,11 +2,22 @@
   <scroll-view
     class="mpx-recycle-list"
     scroll-y="{{scrollY}}"
+    scroll-top="{{scrollTop}}"
+    scroll-with-animation="{{scrollWithAnimation}}"
+    enable-back-to-top="{{enableBackToTop}}"
+    lower-threshold="{{lowerThreshold}}"
+    upper-threshold="{{upperThreshold}}"
+    wx:style="width: {{_width}}; height: {{_height}}"
     bindscroll="onScroll"
-    wx:style="height: {{height}}px"
+    bindscrolltoupper="onScrollToUpper"
+    bindscrolltolower="onScrollToLower"
   >
     <view class="content-wrapper">
-      <view class="infinite-list-placeholder" ref="placeholder" wx:style="{{placeholderStyle}}"></view>
+      <view
+        class="infinite-list-placeholder"
+        ref="placeholder"
+        wx:style="{{placeholderStyle}}"
+      ></view>
       <view class="infinite-list" ref="content" wx:style="{{contentStyle}}">
         <view
           wx:for="{{visibleData}}"
@@ -14,7 +25,7 @@
           class="infinite-list-item"
           wx:style="height: {{itemSize.height}}px; overflow: hidden"
         >
-          <recycle-item current-item="{{item.item}}"/>
+          <recycle-item current-item="{{item.item}}" />
         </view>
       </view>
     </view>
@@ -25,11 +36,14 @@ import { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
-    scrollX: Boolean,
     scrollY: Boolean,
     height: {
-      type: String,
-      value: '100%'
+      type: Number,
+      value: 0
+    },
+    width: {
+      type: Number,
+      value: 0
     },
     // 预估尺寸
     itemSize: Object,
@@ -37,10 +51,24 @@ createComponent({
       type: Number,
       value: 2
     },
-    listData: Array
+    listData: Array,
+    scrollTop: {
+      type: Number,
+      value: 0
+    },
+    scrollWithAnimation: Boolean,
+    enableBackToTop: Boolean,
+    lowerThreshold: {
+      type: Number,
+      value: 50
+    },
+    upperThreshold: {
+      type: Number,
+      value: 50
+    }
   },
   data: {
-    screenHeight: 0,
+    containerHeight: 0,
     start: 0,
     end: 0,
     contentStyle: '',
@@ -48,6 +76,12 @@ createComponent({
     positions: []
   },
   computed: {
+    _width() {
+      return this.width ? `${this.width}px` : '100%'
+    },
+    _height() {
+      return this.height ? `${this.height}px` : '100%'
+    },
     _listData() {
       return this.listData.map((item, index) => {
         return {
@@ -57,16 +91,13 @@ createComponent({
       })
     },
     visibleCount() {
-      return Math.ceil(this.screenHeight / this.itemSize.height)
+      return Math.ceil(this.containerHeight / this.itemSize.height)
     },
     aboveCount() {
       return Math.min(this.start, this.bufferScale * this.visibleCount)
     },
     belowCount() {
-      return Math.min(
-        this.listData.length - this.end,
-        this.bufferScale * this.visibleCount
-      )
+      return Math.min(this.listData.length - this.end, this.bufferScale * this.visibleCount)
     },
     visibleData() {
       const start = this.start - this.aboveCount
@@ -90,18 +121,27 @@ createComponent({
         })
       },
       immediate: true
+    },
+    scrollTop: {
+      handler(val) {
+        this.start = this.getStartIndex(val)
+        this.end = this.start + this.visibleCount
+        this.setStartOffset()
+      }
     }
   },
-  attached() {
+  ready() {
     this.initPositions()
     const query = wx.createSelectorQuery().in(this)
-    setTimeout(() => {
-      query.select('.mpx-recycle-list').boundingClientRect(rect => {
-        this.screenHeight = rect.height
-        this.start = 0
+    query
+      .select('.mpx-recycle-list')
+      .boundingClientRect((rect) => {
+        this.containerHeight = rect.height
+        this.start = this.getStartIndex(this.scrollTop)
         this.end = this.start + this.visibleCount
-      }).exec()
-    }, 300)
+        this.setStartOffset()
+      })
+      .exec()
   },
   methods: {
     initPositions() {
@@ -141,10 +181,10 @@ createComponent({
       let startOffset
       if (this.start >= 1) {
         const size =
-          this.positions[this.start].top -
-          (this.positions[this.start - this.aboveCount]
-            ? this.positions[this.start - this.aboveCount].top
-            : 0)
+            this.positions[this.start].top -
+            (this.positions[this.start - this.aboveCount]
+              ? this.positions[this.start - this.aboveCount].top
+              : 0)
         startOffset = this.positions[this.start - 1].bottom - size
       } else {
         startOffset = 0
@@ -156,43 +196,49 @@ createComponent({
       this.start = this.getStartIndex(scrollTop)
       this.end = this.start + this.visibleCount
       this.setStartOffset()
+      this.triggerEvent('scroll', e)
+    },
+    onScrollToUpper(e) {
+      this.triggerEvent('scrolltoupper', e)
+    },
+    onScrollToLower(e) {
+      this.triggerEvent('scrolltolower', e)
     }
   }
 })
 </script>
 <script type="application/json">
-{
-  "component": true,
-  // wx配置
-  // "componentGenerics": {
-  //   "recycle-item": true
-  // }
-  "componentGenerics": {
-    "recycle-item": {
-      "default": "../components/test-item"
+  {
+    "component": true,
+    "componentGenerics": {
+      "recycle-item": {
+        "default": "../components/test"
+      }
     }
   }
-}
 </script>
 <style scoped>
-.mpx-recycle-list {
-  position: relative;
-  overflow: hidden;
-}
+  .mpx-recycle-list {
+    position: relative;
+    overflow: hidden;
+  }
 
-.content-wrapper {
-  position: relative;
-  width: 100%;
-}
+  .content-wrapper {
+    position: relative;
+    width: 100%;
+  }
 
-.infinite-list {
-  left: 0;
-  right: 0;
-  pointer-events: none; /* 支付宝环境需要设置允许事件穿透 */
-  top: 0;
-  position: absolute;
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
+  .infinite-list {
+    left: 0;
+    right: 0;
+    /* 支付宝环境需要设置允许事件穿透, 否则滑不动 */
+    /* @mpx-if (__mpx_mode__ === 'ali') */
+    pointer-events: none;
+    /* @mpx-endif */
+    top: 0;
+    position: absolute;
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
 </style>
