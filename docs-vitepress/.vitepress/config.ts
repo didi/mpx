@@ -1,5 +1,6 @@
 import { defineConfig } from "vitepress"
 import { withPwa } from "@vite-pwa/vitepress"
+import { algoliaTranslations } from "./theme/translations"
 
 const sidebar = {
     "/guide/": [
@@ -207,55 +208,6 @@ const sidebar = {
     ],
 }
 
-const algoliaTranslations = {
-    button: {
-        buttonText: "搜索",
-    },
-    modal: {
-        searchBox: {
-            resetButtonTitle: "清除查询条件",
-            resetButtonAriaLabel: "清除查询条件",
-            cancelButtonText: "取消",
-            cancelButtonAriaLabel: "取消",
-        },
-        startScreen: {
-            recentSearchesTitle: "搜索历史",
-            noRecentSearchesText: "没有搜索历史",
-            saveRecentSearchButtonTitle: "保存到搜索历史",
-            removeRecentSearchButtonTitle: "从搜索历史中移除",
-            favoriteSearchesTitle: "收藏",
-            removeFavoriteSearchButtonTitle: "从收藏中移除",
-        },
-        errorScreen: {
-            titleText: "无法获取结果",
-            helpText: "你可能需要检查你的网络连接",
-        },
-        footer: {
-            selectText: "选择",
-            navigateText: "切换",
-            closeText: "关闭",
-            searchByText: "搜索供应商",
-        },
-        noResultsScreen: {
-            noResultsText: "无法找到相关结果",
-            suggestedQueryText: "你可以尝试查询",
-            reportMissingResultsText: "你认为这个查询应该有结果？",
-            reportMissingResultsLinkText: "向我们反馈",
-        },
-    },
-}
-
-const i18n = {
-    search: '搜索',
-    menu: '菜单',
-    toc: '本页目录',
-    returnToTop: '返回顶部',
-    appearance: '外观',
-    previous: '前一篇',
-    next: '下一篇',
-    pageNotFound: '页面未找到',
-}
-
 const ogUrl = "https://mpxjs.cn/"
 const ogImage = `${ogUrl}logo.png`
 const title = "Mpx 框架"
@@ -266,6 +218,12 @@ export default withPwa(
         base: "/",
         head: [
             ["link", { rel: "icon", href: "/favicon.ico" }],
+            ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
+            [
+                "script",
+                { id: "unregister-sw" },
+                "if('serviceWorker' in navigator) window.addEventListener('load', (e) => navigator.serviceWorker.register('/service-worker.js', { scope: '/' }))",
+            ],
             [
                 "script",
                 { type: "text/javascript" },
@@ -273,7 +231,7 @@ export default withPwa(
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
                 t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
                 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "jtvvy52wxy");`,
+                })(window, document, "clarity", "script", "jtvvy52wxy");`,
             ],
             ["meta", { name: "author", content: title }],
             ["meta", { property: "og:type", content: "website" }],
@@ -301,10 +259,17 @@ export default withPwa(
             scope: "/",
             includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
-                name: title,
+                name: "Mpx",
                 short_name: "Mpx",
                 description,
                 theme_color: "#ffffff",
+                icons: [
+                    {
+                        src: "https://dpubstatic.udache.com/static/dpubimg/1ESVodfAED/logo.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                    },
+                ],
             },
             workbox: {
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
@@ -369,7 +334,7 @@ export default withPwa(
             notFound: {
                 title: "页面未找到",
                 linkText: "返回首页",
-                quote: "😩 抱歉，迷路了～"
+                quote: "😩 抱歉，迷路了～",
             },
             docFooter: {
                 prev: "上一页",
