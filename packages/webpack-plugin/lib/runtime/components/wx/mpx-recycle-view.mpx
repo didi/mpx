@@ -2,7 +2,7 @@
   <scroll-view
     class="mpx-recycle-list"
     scroll-y="{{scrollY}}"
-    scroll-top="{{scrollTop}}"
+    scroll-top="{{_scrollTop}}"
     scroll-with-animation="{{scrollWithAnimation}}"
     enable-back-to-top="{{enableBackToTop}}"
     lower-threshold="{{lowerThreshold}}"
@@ -73,7 +73,8 @@ createComponent({
     end: 0,
     contentStyle: '',
     placeholderStyle: '',
-    positions: []
+    positions: [],
+    isReady: false
   },
   computed: {
     _width() {
@@ -89,6 +90,10 @@ createComponent({
           item
         }
       })
+    },
+    _scrollTop() {
+      // 使用初始值或当前值
+      return this.isReady ? this.scrollTop : 0
     },
     visibleCount() {
       return Math.ceil(this.containerHeight / this.itemSize.height)
@@ -116,6 +121,11 @@ createComponent({
           // 更新列表总高度
           const height = this.positions[this.positions.length - 1].bottom
           this.placeholderStyle = `height: ${height}px`
+          if (!this.isReady) {
+            this.$nextTick(() => {
+              this.isReady = true
+            })
+          }
           // 更新真实偏移量
           this.setStartOffset()
         })
@@ -127,7 +137,8 @@ createComponent({
         this.start = this.getStartIndex(val)
         this.end = this.start + this.visibleCount
         this.setStartOffset()
-      }
+      },
+      immediate: true
     }
   },
   ready() {
@@ -212,7 +223,7 @@ createComponent({
     "component": true,
     "componentGenerics": {
       "recycle-item": {
-        "default": "./mpx-recycle-item-default"
+        "default": "./mpx-recycle-item-default.mpx"
       }
     }
   }
