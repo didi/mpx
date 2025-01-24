@@ -11,6 +11,8 @@ import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
+const ProviderContext = createContext(null)
+
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
   const screen = ReactNative.Dimensions.get('screen')
@@ -193,7 +195,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -242,6 +244,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __getRefsData: {
       get () {
         return currentInject.getRefsData || noop
+      },
+      enumerable: false
+    },
+    __getParentProvides: {
+      get () {
+        return parentProvides || null
       },
       enumerable: false
     }
@@ -435,6 +443,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
     const pageId = useContext(RouteContext)
+    const parentProvides = useContext(ProviderContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
@@ -443,7 +452,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -536,6 +545,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       // update root props
       root = cloneElement(root, rootProps)
     }
+
+    const provides = proxy.provides
+    if (provides) {
+      root = createElement(ProviderContext.Provider, { value: provides }, root)
+    }
+
     return hasDescendantRelation
       ? createElement(RelationsContext.Provider,
           {
