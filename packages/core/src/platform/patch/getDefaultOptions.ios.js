@@ -247,7 +247,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       },
       enumerable: false
     },
-    __getParentProvides: {
+    __parentProvides: {
       get () {
         return parentProvides || null
       },

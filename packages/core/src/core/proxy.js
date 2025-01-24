@@ -200,7 +200,7 @@ export default class MpxProxy {
   resolveParent () {
     if (isReact) {
       return {
-        provides: this.target.__getParentProvides
+        provides: this.target.__parentProvides
       }
     }
     if (isFunction(this.target.selectOwnerComponent)) {
