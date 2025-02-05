@@ -267,7 +267,7 @@ class MpxUnocssPlugin {
         // const warn = (msg) => {
         //   compilation.warnings.push(new Error(msg))
         // }
-        const { mode, dynamicEntryInfo, appInfo, assetsModulesMap } = mpx
+        const { mode, dynamicEntryInfo, appInfo, assetsModulesMap, independentSubpackagesMap } = mpx
         const uno = await this.createContext(compilation, mode)
         const config = uno.config
 
@@ -403,7 +403,15 @@ class MpxUnocssPlugin {
           return Promise.resolve()
         }))
         delete packageClassesMaps.main
-        const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps), this.options.minCount)
+        // const commonClassesMap = getCommonClassesMap(Object.values(packageClassesMaps), this.options.minCount)
+        const commonClassesMap = getCommonClassesMap(Object.entries(packageClassesMaps)
+          .filter(([packageRoot, _]) => {
+            // 独立分包中的classes不需要抽取到主包
+            return !independentSubpackagesMap[packageRoot]
+          })
+          .map(([_, classesMap]) => {
+            return classesMap
+          }), this.options.minCount)
         Object.assign(mainClassesMap, commonClassesMap)
         // 生成主包uno.css
         let mainUnoFile
@@ -458,7 +466,11 @@ class MpxUnocssPlugin {
         await Promise.all(Object.entries(packageClassesMaps).map(async ([packageRoot, classesMap]) => {
           let unoFile
           const classes = Object.keys(classesMap)
-          const unoFileContent = await this.generateStyle(uno, classes, generateOptions)
+          const unoFileContent = await this.generateStyle(uno, classes, {
+            ...generateOptions,
+            // 独立分包中的unocss文件生成preflights
+            ...independentSubpackagesMap[packageRoot] ? { preflights: true } : null
+          })
           if (unoFileContent) {
             unoFile = toPosix(path.join(packageRoot, this.options.unoFile + styleExt))
             if (assets[unoFile]) {
@@ -479,7 +491,8 @@ class MpxUnocssPlugin {
                 if (filterFile(resourcePath, this.options.scan)) {
                   const entryStyleFile = filename + styleExt
                   const entryStyleSource = getConcatSource('')
-                  if (mainUnoFile) {
+                  // 独立分包中的页面和组件无需引入mainUnoFile
+                  if (mainUnoFile && !independentSubpackagesMap[packageRoot]) {
                     const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
                     entryStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
                   }
@@ -505,7 +518,8 @@ class MpxUnocssPlugin {
               if (styleIsolation === 'isolated' && entryType === 'component') {
                 const componentStyleFile = filename + styleExt
                 const componentStyleSource = getConcatSource('')
-                if (mainUnoFile) {
+                // 独立分包中的页面和组件无需引入mainUnoFile
+                if (mainUnoFile && !independentSubpackagesMap[packageRoot]) {
                   const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(componentStyleFile), mainUnoFile)), mode)
                   componentStyleSource.add(`@import ${JSON.stringify(mainRelativePath)};\n`)
                 }

@@ -5,10 +5,7 @@ module.exports = {
     sourceType: 'module'
   },
   extends: 'standard',
-  plugins: [
-    'html',
-    'jest'
-  ],
+  plugins: ['html', 'jest'],
   globals: {
     wx: 'readonly',
     my: 'readonly',
@@ -31,7 +28,8 @@ module.exports = {
   rules: {
     'no-cond-assign': 0,
     camelcase: 0,
-    indent: 0
+    indent: 0,
+    'symbol-description': 0
   },
   env: {
     'jest/globals': true,
@@ -44,7 +42,7 @@ module.exports = {
       extends: [
         'standard',
         'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/recommended'
       ],
       plugins: ['@typescript-eslint'],
       rules: {
@@ -55,7 +53,13 @@ module.exports = {
         '@typescript-eslint/no-empty-interface': 0,
         '@typescript-eslint/no-unused-vars': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
-        camelcase: 0,
+        camelcase: 0
+      }
+    }, {
+      files: ['packages/webpack-plugin/lib/runtime/components/react/**/*.{js,jsx,ts,tsx}'],
+      plugins: ['react-hooks'],
+      rules: {
+        'react-hooks/rules-of-hooks': 'error'
       }
     }
   ]

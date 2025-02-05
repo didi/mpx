@@ -37,8 +37,6 @@ function autoScaleCanvas(canvas) {
     var ctx = canvas.getContext("2d");
     var ratio = window.devicePixelRatio || 1;
     if (ratio !== 1) {
-        canvas.style.width = canvas.width + "px";
-        canvas.style.height = canvas.height + "px";
         canvas.width *= ratio;
         canvas.height *= ratio;
         ctx.scale(ratio, ratio);
@@ -184,6 +182,8 @@ var createObjectsFromArgs = function (args) {
 };
 
 var canvas = document.createElement('canvas');
+canvas.style.width = '100%';
+canvas.style.height = '100%';
 var autoScaledCanvas = new AutoScaledCanvas(canvas);
 
 var targets = {
@@ -316,8 +316,7 @@ var handleError = function (err, message) {
   document.removeEventListener('message', handleIncomingMessage);
 };
 
-function handleIncomingMessage(e) {
-  var data = JSON.parse(e.data);
+function handleIncomingMessage(data) {
   if (Array.isArray(data)) {
     for (var i = 0; i < data.length; i++) {
       try {
@@ -335,8 +334,7 @@ function handleIncomingMessage(e) {
   }
 }
 
-window.addEventListener('message', handleIncomingMessage);
-document.addEventListener('message', handleIncomingMessage);
+window.mpxWebviewMessageCallback = handleIncomingMessage
 </script>
   
 

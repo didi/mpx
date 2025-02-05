@@ -43,7 +43,7 @@ export * from './api/file'
 // getUserInfo
 export * from './api/get-user-info'
 
-// previewImage, compressImage
+// previewImage, compressImage, getImageInfo
 export * from './api/image'
 
 // login
@@ -105,9 +105,6 @@ export * from './api/video'
 // onWindowResize, offWindowResize
 export * from './api/window'
 
-// getEnterOptionsSync
-export * from './api/lifecycle'
-
 // getLocation, openLocation, chooseLocation
 export * from './api/location'
 
@@ -119,3 +116,6 @@ export * from './api/vibrate'
 
 // onKeyboardHeightChange, offKeyboardHeightChange, hideKeyboard
 export * from './api/keyboard'
+
+// getSetting, openSetting, enableAlertBeforeUnload, disableAlertBeforeUnload, getMenuButtonBoundingClientRect
+export * from './api/setting'

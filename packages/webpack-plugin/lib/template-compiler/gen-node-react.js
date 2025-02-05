@@ -19,7 +19,7 @@ function genFor (node) {
   node.forProcessed = true
   const index = node.for.index || 'index'
   const item = node.for.item || 'item'
-  return `_i(${node.for.exp}, function(${item},${index}){return ${genNode(node)}})`
+  return `this.__iter(${node.for.exp}, function(${item},${index}){return ${genNode(node)}})`
 }
 
 const s = JSON.stringify
@@ -57,7 +57,7 @@ function genNode (node) {
           }, {})
           if (node.slot) {
             const { name, slot } = node.slot
-            exp += `__getSlot(${name ? s(name) : ''}${slot ? `, ${s(slot)}` : ''})`
+            exp += `this.__getSlot(${name ? s(name) : ''}${slot ? `, ${s(slot)}` : ''})`
           } else {
             exp += `createElement(${`getComponent(${node.is || s(node.tag)})`}`
             if (node.attrsList.length) {

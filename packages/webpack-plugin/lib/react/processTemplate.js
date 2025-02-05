@@ -119,6 +119,9 @@ module.exports = function (template, {
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
+            // customBindThis (path, t) {
+            //   path.replaceWith(t.callExpression(t.identifier('getValue'), [t.stringLiteral(path.node.name)]))
+            // }
           })
           output += `global.currentInject.render = function (createElement, getComponent) {
   return ${bindResult.code}

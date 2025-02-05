@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
 
 let { width, height } = Dimensions.get('screen')
@@ -25,6 +25,8 @@ const unit = {
   vw,
   vh
 }
+
+const empty = {}
 
 function formatValue (value) {
   const matched = unitRegExp.exec(value)
@@ -179,9 +181,9 @@ export default function styleHelperMixin () {
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               Object.assign(result, appClassMap[className])
-            } else if (this.props[className] && isObject(this.props[className])) {
+            } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              Object.assign(result, this.props[className])
+              Object.assign(result, this.__props[className])
             }
           })
         }
@@ -196,7 +198,8 @@ export default function styleHelperMixin () {
             display: 'none'
           })
         }
-        return result
+
+        return isEmptyObject(result) ? empty : result
       }
     }
   }

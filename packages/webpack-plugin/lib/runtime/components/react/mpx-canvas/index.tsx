@@ -9,7 +9,7 @@
  * ✔ bindlongtap
  * ✔ binderror
  */
-import React, { useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
+import React, { createElement, useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
 import { View, Platform, StyleSheet, NativeSyntheticEvent } from 'react-native'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
@@ -73,7 +73,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(extendObject(style, stylesheet.container), {
+  } = useTransformStyle(extendObject({}, style, stylesheet.container), {
     enableVar,
     externalVarContext,
     parentFontSize,
@@ -93,7 +93,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
   const innerProps = useInnerProps(props, {
     ref: nodeRef,
-    style: extendObject(normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
+    style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
     ...layoutProps
   }, [], {
     layoutRef
@@ -106,7 +106,11 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   useEffect(() => {
     const webviewPostMessage = (message: WebviewMessage) => {
       if (canvasRef.current.webview) {
-        canvasRef.current.webview.postMessage(JSON.stringify(message))
+        const jsCode = `
+        window.mpxWebviewMessageCallback(${JSON.stringify(message)});
+        true;
+      `
+        canvasRef.current.webview.injectJavaScript(jsCode)
       }
     }
 
@@ -134,6 +138,9 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     canvasRef.current.removeMessageListener = removeMessageListener
 
     canvasRef.current.createImageData = createImageData
+    return () => {
+      canvasRef.current.bus?.clearBatchingTimeout()
+    }
   }, [])
 
   const createImageData = (dataArray: Array<number>, width: number, height: number) => {
@@ -246,54 +253,48 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   if (Platform.OS === 'android') {
     const isAndroid9 = Platform.Version >= 28
-    return (
-      <View {...innerProps}>
-        <WebView
-         ref={(element) => {
-           if (canvasRef.current) {
-             canvasRef.current.webview = element
-           }
-         }}
-          style={[
-            isAndroid9 ? stylesheet.webviewAndroid9 : stylesheet.webview,
-            { height, width }
-          ]}
-          source={{ html }}
-          originWhitelist={originWhitelist}
-          onMessage={onMessage}
-          onLoad={onLoad}
-          overScrollMode="never"
-          mixedContentMode="always"
-          scalesPageToFit={false}
-          javaScriptEnabled
-          domStorageEnabled
-          thirdPartyCookiesEnabled
-          allowUniversalAccessFromFileURLs
-        />
-      </View>
-    )
-  }
-
-  return (
-    <View
-      {...innerProps}
-    >
-      <WebView
-        ref={(element) => {
+    return createElement(View, innerProps, createElement(
+      WebView,
+      {
+        ref: (element) => {
           if (canvasRef.current) {
             canvasRef.current.webview = element
           }
-        }}
-        style={[stylesheet.webview, { height, width }]}
-        source={{ html }}
-        originWhitelist={originWhitelist}
-        onMessage={onMessage}
-        onLoad={onLoad}
-        scrollEnabled={false}
-      />
-    </View>
-  )
+        },
+        style: [
+          isAndroid9 ? stylesheet.webviewAndroid9 : stylesheet.webview,
+          { height, width }
+        ],
+        source: { html },
+        originWhitelist: originWhitelist,
+        onMessage: onMessage,
+        onLoad: onLoad,
+        overScrollMode: 'never',
+        mixedContentMode: 'always',
+        scalesPageToFit: false,
+        javaScriptEnabled: true,
+        domStorageEnabled: true,
+        thirdPartyCookiesEnabled: true,
+        allowUniversalAccessFromFileURLs: true
+      })
+    )
+  }
+
+  return createElement(View, innerProps, createElement(WebView, {
+    ref: (element) => {
+      if (canvasRef.current) {
+        canvasRef.current.webview = element
+      }
+    },
+    style: [stylesheet.webview, { height, width }],
+    source: { html },
+    originWhitelist: originWhitelist,
+    onMessage: onMessage,
+    onLoad: onLoad,
+    scrollEnabled: false
+  }))
 })
+
 _Canvas.displayName = 'mpxCanvas'
 
 export default _Canvas
