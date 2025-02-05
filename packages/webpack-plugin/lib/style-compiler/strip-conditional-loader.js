@@ -1,118 +1,145 @@
-const MagicString = require('magic-string')
-
-function cssConditionalStrip (cssContent, defs) {
-  const ms = new MagicString(cssContent)
-
-  // 正则匹配 @mpx-if, @mpx-elif, @mpx-else, @mpx-endif 的模式
-  const ifPattern = /\/\*\s*@mpx-if\s*\((.*?)\)\s*\*\//gs
-  const elifPattern = /\/\*\s*@mpx-elif\s*\((.*?)\)\s*\*\//gs
-  const elsePattern = /\/\*\s*@mpx-else\s*\*\//gs
-  const endifPattern = /\/\*\s*@mpx-endif\s*\*\//gs
-
-  function evaluateCondition (condition) {
-    // 替换变量
-    for (const key in defs) {
-      condition = condition.replace(new RegExp(`\\b${key}\\b`, 'g'), JSON.stringify(defs[key]))
-    }
-
-    // 解析条件表达式
-    try {
-      // eslint-disable-next-line no-new-func
-      return Function('"use strict";return (' + condition + ')')()
-    } catch (e) {
-      throw new Error(`Failed to evaluate condition: ${condition}`)
-    }
+class Node {
+  constructor (type, condition = null) {
+    this.type = type // 'If', 'ElseIf', 'Else' 或 'Text'
+    this.condition = condition // If 或 Elif 的条件
+    this.children = []
+    this.value = ''
   }
+}
 
-  let currentStart = 0
-  function processCondition (start, end, condition) {
-    const conditionResult = evaluateCondition(condition)
-    let hasElse = false
-    let elseStart = -1
-    let elseLen = 0
-    currentStart = end + 1
+// 提取 css string 为 token
+function tokenize (cssString) {
+  const regex = /\/\*\s*@mpx-(if|elif|else|end)(?:\s*\(([^\)]*)\))?\s*\*\//g
+  const tokens = []
+  let lastIndex = 0
+  let match
 
-    while (currentStart < ms.original.length) {
-      elsePattern.lastIndex = currentStart
-      const elseMatch = elsePattern.exec(ms.original)
-      if (elseMatch) {
-        elseLen = elseMatch[0].length
-      }
+  while ((match = regex.exec(cssString)) !== null) {
+    // 如果 token 前有普通文本，生成文本 token
+    if (match.index > lastIndex) {
+      const text = cssString.substring(lastIndex, match.index)
+      tokens.push({ type: 'text', content: text })
+    }
+    // match[1] 为关键字：if, elif, else, end
+    // match[2] 为条件（如果存在）
+    tokens.push({
+      type: match[1], // 'if'、'elif'、'else' 或 'end'
+      condition: match[2] ? match[2].trim() : null
+    })
+    lastIndex = regex.lastIndex
+  }
+  // 处理结尾剩余的文本
+  if (lastIndex < cssString.length) {
+    const text = cssString.substring(lastIndex)
+    tokens.push({ type: 'text', content: text })
+  }
+  return tokens
+}
 
-      ifPattern.lastIndex = currentStart
-      const ifMatch = ifPattern.exec(ms.original)
-
-      elifPattern.lastIndex = currentStart
-      const elseIfMatch = elifPattern.exec(ms.original)
-
-      endifPattern.lastIndex = currentStart
-      const endifMatch = endifPattern.exec(ms.original)
-
-      const nextIf = ifMatch ? ifMatch.index : Infinity
-      const nextElseIf = elseIfMatch ? elseIfMatch.index : Infinity
-      const nextElse = elseMatch ? elseMatch.index : Infinity
-      const nextEndif = endifMatch ? endifMatch.index : Infinity
-
-      const nextMarker = Math.min(nextIf, nextElseIf, nextElse, nextEndif)
-
-      if (nextMarker === Infinity) break
-
-      if (nextMarker === nextElse) {
-        // 处理 @mpx-else
-        hasElse = true
-        elseStart = nextElse
-        currentStart = elseMatch.index + elseLen
-        ms.remove(elseStart, elseStart + elseLen) // 移除 @mpx-else 注释
-      } else if (nextMarker === nextElseIf) {
-        // 处理 @mpx-elif
-        if (!conditionResult) {
-          // 前边的if为false，则直接移除前边代码
-          ms.remove(start, nextElseIf)
-        }
-        currentStart = nextElseIf + elseIfMatch[0].length
-        ms.remove(nextElseIf, nextElseIf + elseIfMatch[0].length) // 移除 @mpx-elif 注释
-        processCondition(nextElseIf, nextElseIf + elseIfMatch[0].length, elseIfMatch[1])
-      } else if (nextMarker === nextIf) {
-        // 处理嵌套的 @mpx-if
-        // 如果遇到了新的 @mpx-if，则递归处理
-        currentStart = nextIf + ifMatch[0].length
-        ms.remove(nextIf, nextIf + ifMatch[0].length) // 移除 @mpx-if 注释
-        processCondition(nextIf, nextIf + ifMatch[0].length, ifMatch[1])
-      } else if (nextMarker === nextEndif) {
-        // 处理 @mpx-endif block块
-        if (conditionResult && hasElse) {
-          // 移除 @mpx-else 至 @mpx-endif 代码
-          ms.remove(elseStart, endifMatch.index + endifMatch[0].length)
-        } else if (!conditionResult && hasElse) {
-          ms.remove(start, elseStart + elseLen)
-        } else if (!conditionResult) {
-          ms.remove(start, endifMatch.index + endifMatch[0].length)
-        }
-        ms.remove(endifMatch.index, endifMatch.index + endifMatch[0].length) // 移除 @mpx-endif 注释
-        currentStart = endifMatch.index + endifMatch[0].length
+// parse：将生成的 token 数组构造成嵌套的 AST
+function parse (cssString) {
+  const tokens = tokenize(cssString)
+  const ast = []
+  const nodeStack = []
+  let currentChildren = ast
+  function pushConditionalNode (nodeType, condition) {
+    // 获取父节点的 children 数组
+    const parentChildren = nodeStack.length > 0 ? nodeStack[nodeStack.length - 1] : ast
+    const node = new Node(nodeType, condition)
+    parentChildren.push(node)
+    // 入栈
+    nodeStack.push(parentChildren)
+    currentChildren = node.children
+  }
+  tokens.forEach(token => {
+    switch (token.type) {
+      case 'text': {
+        // 生成 Text 节点，保存代码文本
+        const textNode = new Node('Text')
+        textNode.value = token.content
+        currentChildren.push(textNode)
         break
       }
-      // 兜底更新当前开始位置
-      if (currentStart < nextMarker) {
-        currentStart = nextMarker + 1
+      case 'if': {
+        pushConditionalNode('If', token.condition)
+        break
+      }
+      case 'elif': {
+        // 处理 mpx-elif：回到 if 块的父级 children 数组
+        if (nodeStack.length === 0) {
+          throw new Error('elif without a preceding if')
+        }
+        currentChildren = nodeStack[nodeStack.length - 1]
+        pushConditionalNode('Elif', token.condition)
+        break
+      }
+      case 'else': {
+        if (nodeStack.length === 0) {
+          throw new Error('else without a preceding if')
+        }
+        currentChildren = nodeStack[nodeStack.length - 1]
+        pushConditionalNode('Else', null)
+        break
+      }
+      case 'end': {
+        // 结束当前条件块，弹出上一级 children 指针
+        if (nodeStack.length > 0) {
+          currentChildren = nodeStack.pop()
+        } else {
+          throw new Error('end without matching if')
+        }
+        break
+      }
+      default:
+        break
+    }
+  })
+  return ast
+}
+
+function evaluateCondition (condition, context) {
+  try {
+    const keys = Object.keys(context)
+    const values = keys.map(key => context[key])
+    const func = new Function(...keys, `return (${condition});`)
+    return func(...values)
+  } catch (e) {
+    console.error(`Error evaluating condition: ${condition}`, e)
+    return false
+  }
+}
+
+function traverseAndEvaluate (ast, context) {
+  let output = ''
+
+  function traverse (nodes) {
+    for (const node of nodes) {
+      if (node.type === 'Rule') {
+        output += node.value
+      } else if (node.type === 'If') {
+        // 直接判断 If 节点
+        if (evaluateCondition(node.condition, context)) {
+          traverse(node.children)
+        }
+      } else if (node.type === 'ElseIf') {
+        if (evaluateCondition(node.condition, context)) {
+          traverse(node.children)
+          return
+        }
+      } else if (node.type === 'Else') {
+        traverse(node.children)
+        return
       }
     }
   }
-
-  let match
-  while ((match = ifPattern.exec(ms.original)) !== null) {
-    processCondition(match.index, ifPattern.lastIndex, match[1])
-    // 移除匹配到的 @mpx-if 注释
-    ms.remove(match.index, match.index + match[0].length)
-    ifPattern.lastIndex = currentStart
-  }
-
-  return ms.toString()
+  traverse(ast)
+  return output
 }
 
 module.exports = function (css) {
   this.cacheable()
   const mpx = this.getMpx()
   const defs = mpx.defs
-  return cssConditionalStrip(css, defs)
+  const ast = parse(css)
+  return traverseAndEvaluate(ast, defs)
 }
