@@ -13,6 +13,7 @@ import {
   WithTimingConfig,
   AnimationCallback
 } from 'react-native-reanimated'
+import { error } from '@mpxjs/utils'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
@@ -110,7 +111,7 @@ const parseTransform = (transformStr: string) => {
   const values = parseValues(transformStr)
   const transform: {[propName: string]: string|number|number[]}[] = []
   values.forEach(item => {
-    const match = item.match(/([/\w]+)\(([^)]+)\)/)
+    const match = item.match(/([/\w]+)\((.+)\)/)
     if (match && match.length >= 3) {
       let key = match[1]
       const val = match[2]
@@ -166,20 +167,32 @@ const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
   })
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps) {
-  const { style = {}, animation } = props
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean }) {
+  const { style = {}, animation, enableAnimation } = props
+
+  const enableStyleAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableStyleAnimation)
+  if (enableAnimationRef.current !== enableStyleAnimation) {
+    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
+
+  if (!enableAnimationRef.current) return { enableStyleAnimation: false }
+
   const originalStyle = formatStyle(style)
   // id 标识
   const id = animation?.id || -1
   // 有动画样式的 style key
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean|number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
   // 2 尝试用 useSharedValue，因为实际触发的 style prop 需要是 sharedValue 才能驱动动画，若外层 shareValMap 也是 sharedValue，动画无法驱动。
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
       const defaultVal = getInitialVal(key, isTransform(key))
@@ -188,6 +201,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
   // ** 获取动画样式prop & 驱动动画
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (id === -1) return
     // 更新动画样式 key map
@@ -208,6 +222,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   //   })
   // }, [style])
   // ** 清空动画
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     return () => {
       Object.values(shareValMap).forEach((value) => {
@@ -240,14 +255,13 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
       }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
+        const ruleV = isTransform(key) ? transform.get(key) : rules.get(key)
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
-        const toVal = rules.get(key) !== undefined
-          ? rules.get(key)
-          : transform.get(key) !== undefined
-            ? transform.get(key)
-            : index > 0
-              ? lastValueMap[key]
-              : shareValMap[key].value
+        const toVal = ruleV !== undefined
+          ? ruleV
+          : index > 0
+            ? lastValueMap[key]
+            : shareValMap[key].value
         const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
         needSetCallback = false
         if (!sequence[key]) {
@@ -336,7 +350,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     }, {} as { [propName: string]: string | number })
   }
   // ** 生成动画样式
-  return useAnimatedStyle(() => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const animationStyle = useAnimatedStyle(() => {
     // console.info(`useAnimatedStyle styles=`, originalStyle)
     return animatedStyleKeys.value.reduce((styles, key) => {
       // console.info('getAnimationStyles', key, shareValMap[key].value)
@@ -354,4 +369,9 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
       return styles
     }, {} as ExtendedViewStyle)
   })
+
+  return {
+    enableStyleAnimation: enableAnimationRef.current,
+    animationStyle
+  }
 }
