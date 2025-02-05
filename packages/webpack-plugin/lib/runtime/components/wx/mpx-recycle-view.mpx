@@ -1,6 +1,7 @@
 <template>
   <scroll-view
     class="mpx-recycle-list"
+    wx:ref
     scroll-y="{{scrollY}}"
     scroll-top="{{_scrollTop}}"
     scroll-with-animation="{{scrollWithAnimation}}"
@@ -15,10 +16,9 @@
     <view class="content-wrapper">
       <view
         class="infinite-list-placeholder"
-        ref="placeholder"
         wx:style="{{placeholderStyle}}"
       ></view>
-      <view class="infinite-list" ref="content" wx:style="{{contentStyle}}">
+      <view class="infinite-list" wx:style="{{contentStyle}}">
         <view
           wx:for="{{visibleData}}"
           wx:key="id"
@@ -32,7 +32,7 @@
   </scroll-view>
 </template>
 <script>
-import { createComponent } from '@mpxjs/core'
+import mpx, { createComponent } from '@mpxjs/core'
 
 createComponent({
   properties: {
@@ -143,7 +143,7 @@ createComponent({
   },
   ready() {
     this.initPositions()
-    const query = wx.createSelectorQuery().in(this)
+    const query = mpx.createSelectorQuery().in(this)
     query
       .select('.mpx-recycle-list')
       .boundingClientRect((rect) => {
