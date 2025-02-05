@@ -9,7 +9,7 @@ class Node {
 
 // 提取 css string 为 token
 function tokenize (cssString) {
-  const regex = /\/\*\s*@mpx-(if|elif|else|end)(?:\s*\(([^\)]*)\))?\s*\*\//g
+  const regex = /\/\*\s*@mpx-(if|elif|else|end)(?:\s*\((.*?)\))?\s*\*\//g
   const tokens = []
   let lastIndex = 0
   let match
@@ -97,10 +97,11 @@ function parse (cssString) {
   return ast
 }
 
-function evaluateCondition (condition, context) {
+function evaluateCondition (condition, defs) {
   try {
-    const keys = Object.keys(context)
-    const values = keys.map(key => context[key])
+    const keys = Object.keys(defs)
+    const values = keys.map(key => defs[key])
+    /* eslint-disable no-new-func */
     const func = new Function(...keys, `return (${condition});`)
     return func(...values)
   } catch (e) {
@@ -109,7 +110,7 @@ function evaluateCondition (condition, context) {
   }
 }
 
-function traverseAndEvaluate (ast, context) {
+function traverseAndEvaluate (ast, defs) {
   let output = ''
 
   function traverse (nodes) {
@@ -118,11 +119,11 @@ function traverseAndEvaluate (ast, context) {
         output += node.value
       } else if (node.type === 'If') {
         // 直接判断 If 节点
-        if (evaluateCondition(node.condition, context)) {
+        if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
         }
       } else if (node.type === 'ElseIf') {
-        if (evaluateCondition(node.condition, context)) {
+        if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           return
         }
