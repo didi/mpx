@@ -42,56 +42,36 @@ function parse (cssString) {
   const ast = []
   const nodeStack = []
   let currentChildren = ast
-  function pushConditionalNode (nodeType, condition) {
-    // 获取父节点的 children 数组
-    const parentChildren = nodeStack.length > 0 ? nodeStack[nodeStack.length - 1] : ast
-    const node = new Node(nodeType, condition)
-    parentChildren.push(node)
-    // 入栈
-    nodeStack.push(parentChildren)
-    currentChildren = node.children
-  }
   tokens.forEach(token => {
-    switch (token.type) {
-      case 'text': {
-        // 生成 Text 节点，保存代码文本
-        const textNode = new Node('Text')
-        textNode.value = token.content
-        currentChildren.push(textNode)
-        break
+    if (token.type === 'text') {
+      const node = new Node('Text')
+      node.value = token.content
+      currentChildren.push(node)
+    } else if (token.type === 'if') {
+      const node = new Node('If', token.condition)
+      currentChildren.push(node)
+      nodeStack.push(currentChildren)
+      currentChildren = node.children
+    } else if (token.type === 'elif') {
+      if (nodeStack.length === 0) {
+        throw new Error('elif without a preceding if')
       }
-      case 'if': {
-        pushConditionalNode('If', token.condition)
-        break
+      currentChildren = nodeStack[nodeStack.length - 1]
+      const node = new Node('ElseIf', token.condition)
+      currentChildren.push(node)
+      currentChildren = node.children
+    } else if (token.type === 'else') {
+      if (nodeStack.length === 0) {
+        throw new Error('else without a preceding if')
       }
-      case 'elif': {
-        // 处理 mpx-elif：回到 if 块的父级 children 数组
-        if (nodeStack.length === 0) {
-          throw new Error('elif without a preceding if')
-        }
-        currentChildren = nodeStack[nodeStack.length - 1]
-        pushConditionalNode('Elif', token.condition)
-        break
+      currentChildren = nodeStack[nodeStack.length - 1]
+      const node = new Node('Else')
+      currentChildren.push(node)
+      currentChildren = node.children
+    } else if (token.type === 'end') {
+      if (nodeStack.length > 0) {
+        currentChildren = nodeStack.pop()
       }
-      case 'else': {
-        if (nodeStack.length === 0) {
-          throw new Error('else without a preceding if')
-        }
-        currentChildren = nodeStack[nodeStack.length - 1]
-        pushConditionalNode('Else', null)
-        break
-      }
-      case 'end': {
-        // 结束当前条件块，弹出上一级 children 指针
-        if (nodeStack.length > 0) {
-          currentChildren = nodeStack.pop()
-        } else {
-          throw new Error('end without matching if')
-        }
-        break
-      }
-      default:
-        break
     }
   })
   return ast
@@ -112,24 +92,25 @@ function evaluateCondition (condition, defs) {
 
 function traverseAndEvaluate (ast, defs) {
   let output = ''
-
+  let batchedIf = false
   function traverse (nodes) {
     for (const node of nodes) {
-      if (node.type === 'Rule') {
+      if (node.type === 'Text') {
         output += node.value
       } else if (node.type === 'If') {
         // 直接判断 If 节点
+        batchedIf = false
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
+          batchedIf = true
         }
-      } else if (node.type === 'ElseIf') {
+      } else if (node.type === 'ElseIf' && !batchedIf) {
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
-          return
+          batchedIf = true
         }
-      } else if (node.type === 'Else') {
+      } else if (node.type === 'Else' && !batchedIf) {
         traverse(node.children)
-        return
       }
     }
   }
