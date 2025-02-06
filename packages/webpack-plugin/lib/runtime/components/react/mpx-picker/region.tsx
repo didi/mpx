@@ -84,8 +84,8 @@ const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => 
         rangeArr: currentObj.rangeArr
       }
     }
+    newValue[i] = value[i]
     if (currentValue[i] !== value[i]) {
-      newValue[i] = value[i]
       break
     }
   }
