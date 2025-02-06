@@ -21,7 +21,7 @@
       <view class="infinite-list" wx:style="{{contentStyle}}">
         <view
           wx:for="{{visibleData}}"
-          wx:key="id"
+          wx:key="index"
           class="infinite-list-item"
           wx:style="height: {{itemSize.height}}px; overflow: hidden"
         >
