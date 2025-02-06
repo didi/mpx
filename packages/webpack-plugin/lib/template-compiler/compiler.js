@@ -2457,6 +2457,49 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
+function processComponentGenericsReact (el, options) {
+  const { componentGenerics, usingComponentsInfo } = options
+  // 处理子组件定义
+  if (componentGenerics && componentGenerics[el.tag]) {
+      const genericKey = el.tag
+
+      // 使用 is 属性处理动态组件
+      el.is = `this.__props.generic && this.__props.generic['${genericKey}'] && getComponent(this.__props.generic['${genericKey}']) ? this.__props.generic['${genericKey}'] : '${genericKey}default'`
+
+      // 保存可能的组件列表
+      el.components = [
+        `this.__props.generic['${genericKey}']`,
+        `${genericKey}default`
+      ]
+  }
+
+  // 处理父组件中使用 generic 组件的情况
+  const attrsToAdd = []
+  el.attrsList.forEach(attr => {
+    const match = attr.name.match(genericRE)
+    if (match) {
+      const key = match[1]
+      const componentName = attr.value
+      // 传递 generic 配置
+      attrsToAdd.push({
+        name: 'generic',
+        value: { [key]: componentName }
+      })
+
+      // 从 usingComponentsInfo 中获取组件的 moduleId
+      if (usingComponentsInfo[componentName]) {
+        const { mid } = usingComponentsInfo[componentName]
+        // 传递组件的 moduleId 给子组件
+        attrsToAdd.push({
+          name: 'genericComponents',
+          value: { [componentName]: mid }
+        })
+      }
+    }
+  })
+  el.attrsList = el.attrsList.concat(attrsToAdd)
+}
+
 function processShow (el, options, root) {
   let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (mode === 'swan') show = wrapMustache(show)
@@ -2707,6 +2750,7 @@ function processElement (el, root, options, meta) {
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
+    processComponentGenericsReact(el, options)
     return
   }
 

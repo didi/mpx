@@ -42,6 +42,17 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
+    // 从父组件传递的 genericComponents 中获取 moduleId
+    if (proxy.target.__props.genericComponents && proxy.target.__props.generic) {
+    const genericKey = Object.keys(proxy.target.__props.generic)[0]
+    const actualComponentName = proxy.target.__props.generic[genericKey]
+
+    if (tagName === actualComponentName) {
+      // 通过 moduleId 从全局获取组件定义
+      const moduleId = proxy.target.__props.genericComponents[actualComponentName]
+      return global.__mpxOptionsMap[moduleId]
+    }
+  }
     return components[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
