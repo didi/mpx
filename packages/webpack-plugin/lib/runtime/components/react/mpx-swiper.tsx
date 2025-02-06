@@ -1,4 +1,4 @@
-import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
+import { AppState, View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
 
@@ -195,6 +195,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const moveTime = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
+  const appState = useRef(AppState.currentState)
   const {
     // 存储layout布局信息
     layoutRef,
@@ -314,7 +315,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   const { loop, pauseLoop, resumeLoop } = useMemo(() => {
     function createAutoPlay () {
-      if (!step.value) return
+      if (!step.value || appState.current !== 'active') return
       let targetOffset = 0
       let nextIndex = currentIndex.value
       if (!circularShared.value) {
@@ -366,7 +367,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     // loop在JS线程中调用，createAutoPlay + useEffect中
     function loop () {
       timerId.current && clearTimeout(timerId.current)
-      timerId.current = setTimeout(createAutoPlay, intervalTimer)
+      if (appState.current === 'active') {
+        timerId.current = setTimeout(createAutoPlay, intervalTimer)
+      }
     }
 
     function pauseLoop () {
@@ -434,6 +437,20 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       runOnJS(handleSwiperChange)(newIndex)
     }
   })
+  // 监听切换前后台，默认切换到后台JS执行不会立即停止定时器还在
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      appState.current = nextAppState
+      if (nextAppState === 'active' && autoplayShared.value && childrenLength.value > 1) {
+        loop()
+      } else {
+        appState.current = nextAppState
+      }
+    })
+    return () => {
+      subscription.remove()
+    }
+  }, [])
 
   useEffect(() => {
     let patchStep = 0
@@ -454,13 +471,17 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   useEffect(() => {
     childrenLength.value = children.length
+    pauseLoop()
     if (children.length - 1 < currentIndex.value) {
-      pauseLoop()
       currentIndex.value = 0
       offset.value = getOffset(0, step.value)
-      if (autoplay && children.length > 1) {
-        loop()
-      }
+    } else {
+      // children变化-其他属性都不变化（比如从1变化到3或者从3变到1， 在circular的情况下offset是需要更新的）
+      currentIndex.value = props.current || 0
+      offset.value = getOffset(props.current || 0, step.value)
+    }
+    if (autoplay && children.length > 1) {
+      loop()
     }
   }, [children.length])
 
