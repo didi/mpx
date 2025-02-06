@@ -289,10 +289,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   let isLoadError = false
   let fristLoaded = false
+  let statusCode: string | number = ''
   const onLoadEnd = function (res: WebViewEvent) {
     fristLoaded = true
     isLoaded.current = true
-    console.log('onLoadEnd', fristLoaded)
     const src = res.nativeEvent?.url
     if (isLoadError) {
       isLoadError = false
@@ -302,6 +302,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         timeStamp: res.timeStamp,
         detail: {
           src,
+          statusCode
         }
       }
       binderror && binderror(result)
@@ -318,8 +319,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
   const onHttpError = function (res: WebViewHttpErrorEvent) {
     isLoadError = true
+    statusCode = res.nativeEvent?.statusCode
   }
   const onError = function () {
+    statusCode = ''
     isLoadError = true
     if (!fristLoaded) {
       setPageLoadErr(true)
