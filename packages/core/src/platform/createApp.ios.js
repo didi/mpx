@@ -7,6 +7,7 @@ import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { Image } from 'react-native'
+import { initAppProvides } from './export/inject'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -35,6 +36,7 @@ export default function createApp (options) {
   const { NavigationContainer, createStackNavigator, SafeAreaProvider } = global.__navigationHelper
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(options, 'app', false)
+  initAppProvides(rawOptions.provide, rawOptions)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
   // 在页面script执行前填充getApp()
   global.getApp = function () {
@@ -86,7 +88,6 @@ export default function createApp (options) {
   }
 
   global.__mpxAppLaunched = false
-  global.__mpxAppHotLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
     const initialRouteRef = useRef({
@@ -96,6 +97,8 @@ export default function createApp (options) {
     if (firstRef.current) {
       // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
       global.__mpxAppHotLaunched = false
+      // 热启动情况下重置__mpxPagesMap避免页面销毁函数未及时执行时错误地引用到之前的navigation
+      global.__mpxPagesMap = {}
       firstRef.current = false
     }
     if (!global.__mpxAppHotLaunched) {
@@ -112,7 +115,8 @@ export default function createApp (options) {
           query: current.params,
           scene: 0,
           shareTicket: '',
-          referrerInfo: {}
+          referrerInfo: {},
+          isLaunch: true
         }
         global.__mpxEnterOptions = options
         if (!global.__mpxAppLaunched) {

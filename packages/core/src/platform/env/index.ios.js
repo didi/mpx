@@ -1,3 +1,4 @@
+import { isFunction, isNumber, isString } from '@mpxjs/utils'
 import { createI18n } from '../builtInMixins/i18nMixin'
 
 export function init (Mpx) {
@@ -30,21 +31,30 @@ function initGlobalErrorHandling () {
     })
   }
 
+  function onUnhandledRejection (event) {
+    if (global.__mpxAppCbs && global.__mpxAppCbs.rejection && global.__mpxAppCbs.rejection.length) {
+      global.__mpxAppCbs.rejection.forEach((cb) => {
+        cb(event)
+      })
+    } else {
+      console.warn(`UNHANDLED PROMISE REJECTION ${(isNumber(event.id) || isString(event.id)) ? '(id:' + event.id + ')' : ''}: ${event.reason}\n`)
+    }
+  }
   const rejectionTrackingOptions = {
     allRejections: true,
     onUnhandled (id, error) {
-      if (global.__mpxAppCbs && global.__mpxAppCbs.rejection && global.__mpxAppCbs.rejection.length) {
-        global.__mpxAppCbs.rejection.forEach((cb) => {
-          cb(error, id)
-        })
-      } else {
-        console.warn(`UNHANDLED PROMISE REJECTION (id: ${id}): ${error}\n`)
-      }
+      onUnhandledRejection({ id, reason: error, promise: null })
     }
   }
 
-  if (global?.HermesInternal?.hasPromise?.()) {
-    global.HermesInternal?.enablePromiseRejectionTracker?.(rejectionTrackingOptions)
+  // 支持 core-js promise polyfill
+  const oldOnUnhandledRejection = global.onunhandledrejection
+  global.onunhandledrejection = function onunhandledrejection (event) {
+    onUnhandledRejection(event)
+    isFunction(oldOnUnhandledRejection) && oldOnUnhandledRejection.call(this, event)
+  }
+  if (global.HermesInternal?.hasPromise?.()) {
+    global.HermesInternal.enablePromiseRejectionTracker?.(rejectionTrackingOptions)
   } else {
     require('promise/setimmediate/rejection-tracking').enable(rejectionTrackingOptions)
   }
