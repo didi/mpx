@@ -99,7 +99,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
   const webViewRef = useRef<WebView>(null)
-  const isLoaded = useRef<boolean>(false)
+  const [isLoaded, setIsLoaded] = useState<boolean>(true)
+  const fristLoaded = useRef<boolean>(false)
+  
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
     left: 0 as number,
@@ -186,7 +188,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   const sendMessage = function (params: string) {
     return `
-      window.mpxWebviewMessageCallback(${params})
+      window.mpxWebviewMessageCallback && window.mpxWebviewMessageCallback(${params})
       true;
     `
   }
@@ -288,11 +290,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   let isLoadError = false
-  let fristLoaded = false
   let statusCode: string | number = ''
   const onLoadEnd = function (res: WebViewEvent) {
-    fristLoaded = true
-    isLoaded.current = true
+    fristLoaded.current = true
+    setIsLoaded(true)
     const src = res.nativeEvent?.url
     if (isLoadError) {
       isLoadError = false
@@ -324,12 +325,14 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const onError = function () {
     statusCode = ''
     isLoadError = true
-    if (!fristLoaded) {
+    if (!fristLoaded.current) {
       setPageLoadErr(true)
     }
   }
   const onLoadStart = function () {
-    isLoaded.current = false
+    if (!fristLoaded.current) {
+      setIsLoaded(false)
+    }
   }
 
   return (
