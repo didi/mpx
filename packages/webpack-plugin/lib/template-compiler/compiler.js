@@ -2232,11 +2232,18 @@ function processOptimizeSize (root, options) {
       }
     }
   }
-  // 记录所有原生组件（判断条件：usingComponents中不存在的组件）
+  // 记录所有原生组件（判断依据：usingComponents中不存在, 但是被使用了的组件）
   const nativeTags = new Set()
   walkNode(root, (node) => {
     if (node.tag && !usingComponentsNameMap[node.tag]) {
       nativeTags.add(node.tag)
+    }
+    if (Array.isArray(node.attrsList)) {
+      node.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name) && attr.value && !usingComponentsNameMap[attr.value]) {
+          nativeTags.add(attr.value)
+        }
+      })
     }
   })
   // template中的使用到的组件不会经过压缩，如果使用自定义组件会出现问题，如果存在template，发出报错
@@ -2244,13 +2251,21 @@ function processOptimizeSize (root, options) {
   // 校验压缩后的组件名是否与原生组件冲突
   for (const name of Object.values(usingComponentsNameMap)) {
     if (nativeTags.has(name)) {
-      error$1(`压缩后组件与原生组件 <${name}> 冲突，请在配置中添加白名单`)
+      error$1(`压缩后组件与原生组件 <${name}> 冲突，请在 reservedComponentName 配置中添加白名单`)
     }
   }
   walkNode(root, (node) => {
-    // 只有自定义组件才替换（判断条件：在usingComponents中的组件），并且新组件名不允许出现原生组件名
+    // 只有自定义组件才替换（判断依据：在usingComponents中存在的组件）
     if (node.tag && usingComponentsNameMap[node.tag]) {
       node.tag = usingComponentsNameMap[node.tag]
+    }
+    if (Array.isArray(node.attrsList)) {
+      node.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name) && attr.value && usingComponentsNameMap[attr.value]) {
+          attr.value = usingComponentsNameMap[attr.value]
+          node.attrsMap[attr.name] = attr.value
+        }
+      })
     }
   })
 }
