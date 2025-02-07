@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.9.71",
+  "version": "2.9.72",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -31,9 +31,9 @@
     "@react-navigation/stack": "^7.0.4",
     "react": "*",
     "react-native": "*",
-    "react-native-reanimated": "^3.15.2",
     "react-native-gesture-handler": "^2.19.0",
     "react-native-linear-gradient": "^2.8.3",
+    "react-native-reanimated": "^3.15.2",
     "react-native-safe-area-context": "^4.14.0",
     "react-native-screens": "^4.1.0",
     "react-native-webview": "^13.10.5",
