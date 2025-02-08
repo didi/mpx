@@ -78,7 +78,8 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "rimraf ./lib/runtime/components/react/dist && tsc"
+    "copy-icons": "cp ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
+    "build": "rimraf ./lib/runtime/components/react/dist && tsc && copy-icons"
   },
   "devDependencies": {
     "@ant-design/react-native": "^5.2.2",
