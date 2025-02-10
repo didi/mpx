@@ -71,6 +71,10 @@ createComponent({
     scrollOptions: {
       type: Object,
       value: {}
+    },
+    scrollThrottleDelay: {
+      type: Number,
+      value: 16
     }
   },
   data: {
@@ -80,7 +84,8 @@ createComponent({
     placeholderStyle: '',
     containerHeight: 0,
     positions: [],
-    isReady: false
+    isReady: false,
+    lastScrollTime: 0
   },
   computed: {
     _width() {
@@ -209,6 +214,11 @@ createComponent({
       this.contentStyle = `transform: translateY(${startOffset}px);`
     },
     onScroll(e) {
+      const now = Date.now()
+      if (now - this.lastScrollTime < this.scrollThrottleDelay) {
+        return
+      }
+      this.lastScrollTime = now
       const { scrollTop } = e.detail
       this.start = this.getStartIndex(scrollTop)
       this.end = this.start + this.visibleCount
