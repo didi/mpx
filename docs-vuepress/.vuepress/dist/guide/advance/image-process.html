@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>图像资源处理 | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/69.2d309866.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>基础</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/basic/start.html" class="sidebar-link">快速开始</a></li><li><a href="/guide/basic/intro.html" class="sidebar-link">介绍</a></li><li><a href="/guide/basic/single-file.html" class="sidebar-link">单文件开发</a></li><li><a href="/guide/basic/ide.html" class="sidebar-link">IDE 高亮配置</a></li><li><a href="/guide/basic/template.html" class="sidebar-link">模板语法</a></li><li><a href="/guide/basic/css.html" class="sidebar-link">CSS 处理</a></li><li><a href="/guide/basic/reactive.html" class="sidebar-link">数据响应</a></li><li><a href="/guide/basic/class-style-binding.html" class="sidebar-link">类名样式绑定</a></li><li><a href="/guide/basic/conditional-render.html" class="sidebar-link">条件渲染</a></li><li><a href="/guide/basic/list-render.html" class="sidebar-link">列表渲染</a></li><li><a href="/guide/basic/event.html" class="sidebar-link">事件处理</a></li><li><a href="/guide/basic/two-way-binding.html" class="sidebar-link">双向绑定</a></li><li><a href="/guide/basic/component.html" class="sidebar-link">自定义组件</a></li><li><a href="/guide/basic/refs.html" class="sidebar-link">获取组件实例/节点信息</a></li><li><a href="/guide/basic/option-chain.html" class="sidebar-link">模版内可选链表达式</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>进阶</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/advance/store.html" class="sidebar-link">状态管理（store）</a></li><li><a href="/guide/advance/pinia.html" class="sidebar-link">状态管理（pinia）</a></li><li><a href="/guide/advance/mixin.html" class="sidebar-link">使用 mixin</a></li><li><a href="/guide/advance/npm.html" class="sidebar-link">使用npm</a></li><li><a href="/guide/advance/subpackage.html" class="sidebar-link">使用分包</a></li><li><a href="/guide/advance/async-subpackage.html" class="sidebar-link">分包异步化</a></li><li><a href="/guide/advance/platform.html" class="sidebar-link">跨平台</a></li><li><a href="/guide/advance/i18n.html" class="sidebar-link">国际化i18n</a></li><li><a href="/guide/advance/size-report.html" class="sidebar-link">包体积分析</a></li><li><a href="/guide/advance/image-process.html" aria-current="page" class="active sidebar-link">图像资源处理</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/advance/image-process.html#图像资源引入有三种方式" class="sidebar-link">图像资源引入有三种方式</a></li><li class="sidebar-sub-header"><a href="/guide/advance/image-process.html#base64-图像资源" class="sidebar-link">Base64 图像资源</a></li><li class="sidebar-sub-header"><a href="/guide/advance/image-process.html#cdn-图像资源" class="sidebar-link">CDN 图像资源</a></li><li class="sidebar-sub-header"><a href="/guide/advance/image-process.html#cdn-图像资源输出本地目录，用户自行批量上传到cdn服务器" class="sidebar-link">CDN 图像资源输出本地目录，用户自行批量上传到CDN服务器</a></li><li class="sidebar-sub-header"><a href="/guide/advance/image-process.html#用户自定义图像处理方式" class="sidebar-link">用户自定义图像处理方式</a></li></ul></li><li><a href="/guide/advance/progressive.html" class="sidebar-link">原生渐进迁移</a></li><li><a href="/guide/advance/ability-compatible.html" class="sidebar-link">原生能力兼容</a></li><li><a href="/guide/advance/plugin.html" class="sidebar-link">小程序插件</a></li><li><a href="/guide/advance/custom-output-path.html" class="sidebar-link">自定义路径</a></li><li><a href="/guide/advance/utility-first-css.html" class="sidebar-link">使用原子类</a></li><li><a href="/guide/advance/ssr.html" class="sidebar-link">SSR</a></li><li><a href="/guide/advance/provide-inject.html" class="sidebar-link">依赖注入（Provide/Inject）</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>组合式 API</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/composition-api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/guide/composition-api/reactive-api.html" class="sidebar-link">响应式 API</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>工具</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/tool/ts.html" class="sidebar-link">使用TypeScript开发小程序</a></li><li><a href="/guide/tool/unit-test.html" class="sidebar-link">单元测试</a></li><li><a href="/guide/tool/e2e-test.html" class="sidebar-link">E2E自动化测试</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/guide/extend" class="sidebar-heading clickable"><span>拓展</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/extend/fetch.html" class="sidebar-link">网络请求</a></li><li><a href="/guide/extend/api-proxy.html" class="sidebar-link">Api代理</a></li><li><a href="/guide/extend/mock.html" class="sidebar-link">数据 Mock</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>理解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/understand/runtime.html" class="sidebar-link">Mpx运行时增强原理</a></li><li><a href="/guide/understand/compile.html" class="sidebar-link">Mpx编译构建原理</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>迁移</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/migrate/2.9.html" class="sidebar-link">从 2.8 升级至 2.9</a></li><li><a href="/guide/migrate/2.8.html" class="sidebar-link">从 2.7 升级至 2.8</a></li><li><a href="/guide/migrate/2.7.html" class="sidebar-link">从旧版本迁移至 2.7</a></li><li><a href="/guide/migrate/mpx-cli-3.html" class="sidebar-link">mpx-cli v2 迁移到 v3</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="图像资源处理"><a href="#图像资源处理" class="header-anchor">#</a> 图像资源处理</h1> <blockquote><p>Mpx在小程序开发中提供了很好的图像资源处理能力，让开发者可以愉快地在项目中使用图片。</p></blockquote> <h2 id="图像资源引入有三种方式"><a href="#图像资源引入有三种方式" class="header-anchor">#</a> 图像资源引入有三种方式</h2> <ol><li>Template 中通过 image src 指定图像资源
+<ul><li>直接指定图像的远程资源地址</li> <li>资源为本地路径，若配置 publicPath，则 publicPath 与 webpack loader 中配置的 name 进行拼接</li></ul></li> <li>Style 中通过 src 指定图像资源</li> <li>Style 中通过 class 指定图像资源</li></ol> <p>Wxss文件中只能用 CDN 地址或 Base64, 针对第二、三种方式引入的资源，可以通过配置决定使用 CDN 还是 Base64，且 Mpx 中图像资源处理会优先检查 Base64，具体配置参数如下：</p> <ul><li>publicPath：资源存放 CDN 地址，可选</li> <li>limit: 资源大小限制，可根据资源的大小判断走 Base64 还是 CDN， 可选</li> <li>publicPathScope: 限制输出 CDN 图像资源的范围，可选 styleOnly、all，默认为 styleOnly。（图像引用方式分两大类 Template, Style）</li> <li>outputPathCDN: 设置 CDN 图像对应的本地相对地址（相对于当前编译输出目录的地址，如 dist,或者 dist/wx），可写脚本将本地图像批量上传到 CDN</li></ul> <h2 id="base64-图像资源"><a href="#base64-图像资源" class="header-anchor">#</a> Base64 图像资源</h2> <p>图像转 Base64的两种方式:</p> <ul><li>未配置 publicPath</li> <li>配置了 publicPath，且用户未自定义图像处理 fallback query，且未配置 limit 或图像资源未超过 limit 的限制时</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// webpack.config.js 配置,未配置 publicPath 必走 Base64</span>
+<span class="token keyword">const</span> webpackConfig <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">module</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">rules</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(png|jpe?g|gif|svg)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+      <span class="token literal-property property">loader</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">urlLoader</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><div class="custom-block tip"><p class="custom-block-title">@mpxjs/cli 3.x 版本配置如下</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// vue.config.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'@vue/cli-service'</span><span class="token punctuation">)</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">pluginOptions</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">mpx</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">urlLoader</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div></div> <div class="language-css extra-class"><pre class="language-css"><code><span class="token selector">&lt;style&gt;
+  .logo</span> <span class="token punctuation">{</span>
+    <span class="token property">background-image</span><span class="token punctuation">:</span> <span class="token url"><span class="token function">url</span><span class="token punctuation">(</span><span class="token string url">'~images/logo.png'</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+&lt;/style&gt;
+</code></pre></div><h2 id="cdn-图像资源"><a href="#cdn-图像资源" class="header-anchor">#</a> CDN 图像资源</h2> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// webpack.config.js 配置</span>
+<span class="token keyword">const</span> webpackConfig <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">module</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">rules</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(png|jpe?g|gif|svg)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+      <span class="token literal-property property">loader</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">urlLoader</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span><span class="token punctuation">,</span>
+        <span class="token comment">// CDN 地址</span>
+        <span class="token literal-property property">publicPath</span><span class="token operator">:</span> <span class="token string">'http://a.com/'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token string">'1024'</span> <span class="token comment">// Base64 的最大长度，超过则走 CDN </span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><div class="custom-block tip"><p class="custom-block-title">@mpxjs/cli 3.x 版本配置如下</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// vue.config.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'@vue/cli-service'</span><span class="token punctuation">)</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">pluginOptions</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">mpx</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">urlLoader</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span><span class="token punctuation">,</span>
+        <span class="token comment">// CDN 地址</span>
+        <span class="token literal-property property">publicPath</span><span class="token operator">:</span> <span class="token string">'http://a.com/'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token string">'1024'</span> <span class="token comment">// Base64 的最大长度，超过则走 CDN </span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div></div> <h2 id="cdn-图像资源输出本地目录，用户自行批量上传到cdn服务器"><a href="#cdn-图像资源输出本地目录，用户自行批量上传到cdn服务器" class="header-anchor">#</a> CDN 图像资源输出本地目录，用户自行批量上传到CDN服务器</h2> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// webpack.config.js 配置</span>
+<span class="token keyword">const</span> webpackConfig <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">module</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">rules</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(png|jpe?g|gif|svg)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+      <span class="token literal-property property">loader</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">urlLoader</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">publicPath</span><span class="token operator">:</span> <span class="token string">'http://a.com'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token number">100</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">publicPathScope</span><span class="token operator">:</span> <span class="token string">'styleOnly'</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">outputPathCDN</span><span class="token operator">:</span> <span class="token string">'./cdnImages'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><div class="custom-block tip"><p class="custom-block-title">@mpxjs/cli 3.x 版本配置如下</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// vue.config.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'@vue/cli-service'</span><span class="token punctuation">)</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">pluginOptions</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">mpx</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">urlLoader</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">publicPath</span><span class="token operator">:</span> <span class="token string">'http://a.com'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token number">100</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">publicPathScope</span><span class="token operator">:</span> <span class="token string">'styleOnly'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">outputPathCDN</span><span class="token operator">:</span> <span class="token string">'./cdnImages'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div></div> <blockquote><p>备注:<br>
+图像默认编译后会输出到 img 目录下, 当设置 outputPathCDN 后，输出的本地图像地址为 outputPathCDN + img/图像.png<br>
+CND 文件地址为 publicPath + img/图像.png，所以当使用脚本上传到 CDN 时，路径要带上 img</p></blockquote> <h2 id="用户自定义图像处理方式"><a href="#用户自定义图像处理方式" class="header-anchor">#</a> 用户自定义图像处理方式</h2> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// webpack.config.js 配置</span>
+<span class="token keyword">const</span> webpackConfig <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">module</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">rules</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(png|jpe?g|gif|svg)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+      <span class="token literal-property property">loader</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">urlLoader</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span><span class="token punctuation">,</span>
+        <span class="token comment">// CDN 地址</span>
+        <span class="token literal-property property">publicPath</span><span class="token operator">:</span> <span class="token string">'http://a.com/'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token string">'1024'</span> <span class="token comment">// Base64 的最大长度，超过则走 CDN,</span>
+        <span class="token literal-property property">fallback</span><span class="token operator">:</span> <span class="token string">'file-loader'</span> <span class="token comment">// 默认走 file-loader</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><div class="custom-block tip"><p class="custom-block-title">@mpxjs/cli 3.x 版本配置如下</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// vue.config.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'@vue/cli-service'</span><span class="token punctuation">)</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">pluginOptions</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">mpx</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">urlLoader</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span><span class="token punctuation">,</span>
+        <span class="token comment">// CDN 地址</span>
+        <span class="token literal-property property">publicPath</span><span class="token operator">:</span> <span class="token string">'http://a.com/'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">limit</span><span class="token operator">:</span> <span class="token string">'1024'</span> <span class="token comment">// Base64 的最大长度，超过则走 CDN,</span>
+        <span class="token literal-property property">fallback</span><span class="token operator">:</span> <span class="token string">'file-loader'</span> <span class="token comment">// 默认走 file-loader</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div></div> <div class="language-css extra-class"><pre class="language-css"><code><span class="token comment">/*不走 Base64 的情况下*/</span>
+<span class="token selector">&lt;style&gt;
+  .logo2</span> <span class="token punctuation">{</span>
+    <span class="token property">background-image</span><span class="token punctuation">:</span> <span class="token url"><span class="token function">url</span><span class="token punctuation">(</span><span class="token string url">'~images/logo.png?fallback=true'</span><span class="token punctuation">)</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+&lt;/style&gt;
+</code></pre></div></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/guide/advance/size-report.html" class="prev">
+        包体积分析
+      </a></span> <span class="next"><a href="/guide/advance/progressive.html">
+        原生渐进迁移
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/69.2d309866.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>

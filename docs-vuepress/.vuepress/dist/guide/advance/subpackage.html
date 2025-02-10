@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>使用分包 | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/81.16e2cc83.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>基础</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/basic/start.html" class="sidebar-link">快速开始</a></li><li><a href="/guide/basic/intro.html" class="sidebar-link">介绍</a></li><li><a href="/guide/basic/single-file.html" class="sidebar-link">单文件开发</a></li><li><a href="/guide/basic/ide.html" class="sidebar-link">IDE 高亮配置</a></li><li><a href="/guide/basic/template.html" class="sidebar-link">模板语法</a></li><li><a href="/guide/basic/css.html" class="sidebar-link">CSS 处理</a></li><li><a href="/guide/basic/reactive.html" class="sidebar-link">数据响应</a></li><li><a href="/guide/basic/class-style-binding.html" class="sidebar-link">类名样式绑定</a></li><li><a href="/guide/basic/conditional-render.html" class="sidebar-link">条件渲染</a></li><li><a href="/guide/basic/list-render.html" class="sidebar-link">列表渲染</a></li><li><a href="/guide/basic/event.html" class="sidebar-link">事件处理</a></li><li><a href="/guide/basic/two-way-binding.html" class="sidebar-link">双向绑定</a></li><li><a href="/guide/basic/component.html" class="sidebar-link">自定义组件</a></li><li><a href="/guide/basic/refs.html" class="sidebar-link">获取组件实例/节点信息</a></li><li><a href="/guide/basic/option-chain.html" class="sidebar-link">模版内可选链表达式</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>进阶</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/advance/store.html" class="sidebar-link">状态管理（store）</a></li><li><a href="/guide/advance/pinia.html" class="sidebar-link">状态管理（pinia）</a></li><li><a href="/guide/advance/mixin.html" class="sidebar-link">使用 mixin</a></li><li><a href="/guide/advance/npm.html" class="sidebar-link">使用npm</a></li><li><a href="/guide/advance/subpackage.html" aria-current="page" class="active sidebar-link">使用分包</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/advance/subpackage.html#原生语法注册分包" class="sidebar-link">原生语法注册分包</a></li><li class="sidebar-sub-header"><a href="/guide/advance/subpackage.html#packages-语法注册分包" class="sidebar-link">packages 语法注册分包</a></li><li class="sidebar-sub-header"><a href="/guide/advance/subpackage.html#独立分包" class="sidebar-link">独立分包</a></li><li class="sidebar-sub-header"><a href="/guide/advance/subpackage.html#分包预下载" class="sidebar-link">分包预下载</a></li><li class="sidebar-sub-header"><a href="/guide/advance/subpackage.html#分包注意事项" class="sidebar-link">分包注意事项</a></li></ul></li><li><a href="/guide/advance/async-subpackage.html" class="sidebar-link">分包异步化</a></li><li><a href="/guide/advance/platform.html" class="sidebar-link">跨平台</a></li><li><a href="/guide/advance/i18n.html" class="sidebar-link">国际化i18n</a></li><li><a href="/guide/advance/size-report.html" class="sidebar-link">包体积分析</a></li><li><a href="/guide/advance/image-process.html" class="sidebar-link">图像资源处理</a></li><li><a href="/guide/advance/progressive.html" class="sidebar-link">原生渐进迁移</a></li><li><a href="/guide/advance/ability-compatible.html" class="sidebar-link">原生能力兼容</a></li><li><a href="/guide/advance/plugin.html" class="sidebar-link">小程序插件</a></li><li><a href="/guide/advance/custom-output-path.html" class="sidebar-link">自定义路径</a></li><li><a href="/guide/advance/utility-first-css.html" class="sidebar-link">使用原子类</a></li><li><a href="/guide/advance/ssr.html" class="sidebar-link">SSR</a></li><li><a href="/guide/advance/provide-inject.html" class="sidebar-link">依赖注入（Provide/Inject）</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>组合式 API</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/composition-api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/guide/composition-api/reactive-api.html" class="sidebar-link">响应式 API</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>工具</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/tool/ts.html" class="sidebar-link">使用TypeScript开发小程序</a></li><li><a href="/guide/tool/unit-test.html" class="sidebar-link">单元测试</a></li><li><a href="/guide/tool/e2e-test.html" class="sidebar-link">E2E自动化测试</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/guide/extend" class="sidebar-heading clickable"><span>拓展</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/extend/fetch.html" class="sidebar-link">网络请求</a></li><li><a href="/guide/extend/api-proxy.html" class="sidebar-link">Api代理</a></li><li><a href="/guide/extend/mock.html" class="sidebar-link">数据 Mock</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>理解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/understand/runtime.html" class="sidebar-link">Mpx运行时增强原理</a></li><li><a href="/guide/understand/compile.html" class="sidebar-link">Mpx编译构建原理</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>迁移</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/migrate/2.9.html" class="sidebar-link">从 2.8 升级至 2.9</a></li><li><a href="/guide/migrate/2.8.html" class="sidebar-link">从 2.7 升级至 2.8</a></li><li><a href="/guide/migrate/2.7.html" class="sidebar-link">从旧版本迁移至 2.7</a></li><li><a href="/guide/migrate/mpx-cli-3.html" class="sidebar-link">mpx-cli v2 迁移到 v3</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="使用分包"><a href="#使用分包" class="header-anchor">#</a> 使用分包</h1> <p>作为一个对 performance 极度重视的框架，分包作为提升小程序体验的重要能力，框架对各种类型的分包能力进行了完善支持。</p> <blockquote><p>分包是小程序平台提供的原生能力，mpx是对该能力做了部分加强，目前各大主流小程序平台都已支持分包，且框架在可能的情况下进行了抹平。</p></blockquote> <blockquote><p>使用分包一定要记得阅读下面的<a href="#%E5%88%86%E5%8C%85%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">分包注意事项</a></p></blockquote> <h2 id="原生语法注册分包"><a href="#原生语法注册分包" class="header-anchor">#</a> 原生语法注册分包</h2> <p>Mpx 支持小程序原生语法注册分包，并且在框架层面对不同平台的的差异进行了抹平，我们以微信小程序原生语法注册分包为例。</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;pages/index/index&quot;</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;subPackages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;root&quot;</span><span class="token operator">:</span> <span class="token string">&quot;test&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;pages/other/other&quot;</span><span class="token punctuation">,</span>
+        <span class="token string">&quot;pages/other/other2&quot;</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="packages-语法注册分包"><a href="#packages-语法注册分包" class="header-anchor">#</a> packages 语法注册分包</h2> <p>Mpx 提供 packages 语法来对小程序的主包页面和分包划分能力进行增强，使用 packages 语法可以灵活的对业务进行拆分，允许以 npm 包的形式进行
+主包页面和分包注册，且分包名和页面路径可自定义，十分有利于大型多团队开发的项目维护。</p> <h3 id="使用方法"><a href="#使用方法" class="header-anchor">#</a> 使用方法</h3> <p>Mpx 拓展了 app.json 的语法，新增了 packages 域，用来声明依赖的 packages，packages 可嵌套依赖。</p> <h4 id="注册主包页面"><a href="#注册主包页面" class="header-anchor">#</a> 注册主包页面</h4> <p>首先我们介绍下 packages 注册主包页面的用法，在 packages 中直接配置资源路径，Mpx 会去读取该资源中 json 区块中的 pages 属性，合并到主包页面配置中。</p> <div class="language-html extra-class"><pre class="language-html"><code>// @file src/app.mpx
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>application/json<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token punctuation">{</span>
+    <span class="token string-property property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;./pages/index/index&quot;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string-property property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;{npmPackage || relativePathToPackage}/index&quot;</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+
+// @file src/packages/index.mpx
+// 注意确保页面路径的唯一性
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>application/json<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token punctuation">{</span>
+    <span class="token string-property property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;./pages/other/other&quot;</span><span class="token punctuation">,</span>
+      <span class="token string">&quot;./pages/other/other2&quot;</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>打包结果：dist/app.json</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;pages/index/index&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;pages/other/other&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;pages/other/other2&quot;</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h4 id="注册分包"><a href="#注册分包" class="header-anchor">#</a> 注册分包</h4> <p>Mpx 会将 packages 域下的路径带 root 为 key 的 query 解析注册为分包，使用 packages 语法注册分包，只需要在 packages 中配置资源路径添加 <code>root=xxx</code>，root的值即为分包名。</p> <div class="language-html extra-class"><pre class="language-html"><code>// @file src/app.mpx
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>application/json<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token punctuation">{</span>
+    <span class="token string-property property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;./pages/index/index&quot;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string-property property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;{npmPackage || relativePathToPackage}/index?root=test&quot;</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+
+// @file src/packages/index.mpx (子包的入口文件)
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>application/json<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token punctuation">{</span>
+    <span class="token string-property property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;./pages/other/other&quot;</span><span class="token punctuation">,</span>
+      <span class="token string">&quot;./pages/other/other2&quot;</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>打包结果：dist/app.json</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;pages/index/index&quot;</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;subPackages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;root&quot;</span><span class="token operator">:</span> <span class="token string">&quot;test&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;pages/other/other&quot;</span><span class="token punctuation">,</span>
+        <span class="token string">&quot;pages/other/other2&quot;</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>由上可见，经过我们的编译过程，packages 中注册的页面可按照原始的路径被合并入主包页面或注册为分包，
+这样开发者可以不用考虑自己在被依赖时页面路径是怎么样的，也可以直接将调试用的app.mpx作为依赖入口直接暴露出去，
+对于主app的开发者来说也不需要了解依赖内部的细节，只需要在packages中声明自己所需的依赖即可。</p> <h3 id="注意事项"><a href="#注意事项" class="header-anchor">#</a> 注意事项</h3> <ul><li>依赖的开发者在自己的入口 app.mpx 中注册页面时对于本地页面一定要使用相对路径进行注册，否则在主app中进行编译时会找不到对应的页面</li> <li>不管是用 json 还是 mpx 格式定义 package 入口，编译时永远只会解析 json 且只会关注 json 中的 pages 和 packages 域，其余所有东西在主app编译时都会被忽略</li> <li>由于我们是将 packages 中注册的页面按照原始的路径合并到主 app 当中，有可能会出现路径名冲突。<br>
+这种情况下编译会报出响应错误提示用户解决冲突，为了避免这种情况的发生，依赖的提供者最好将自己内部的页面放置在能够描述依赖特性的子文件夹下。</li></ul> <p>例如一个包叫login，建议包内页面文件目录为：</p> <div class="language- extra-class"><pre class="language-text"><code>project
+│   app.mpx  
+└───pages
+    └───login
+        │   page1.mpx
+        │   page2.mpx
+        │   ...
+</code></pre></div><h2 id="独立分包"><a href="#独立分包" class="header-anchor">#</a> 独立分包</h2> <p>Mpx目前已支持独立分包构建，使用 <a href="#packages">packages</a> 语法声明分包时只需要在后面添加 <code>independent=true</code> query 即可，同时也支持原生语法声明。
+如下方示例声明 packageA 分包为独立分包</p> <p><strong>示例：</strong></p> <div class="language-json5 extra-class"><pre class="language-json5"><code><span class="token comment">// src/app.mpx 文件中 json 块</span>
+
+<span class="token comment">// Mpx packages 方式</span>
+<span class="token punctuation">{</span>
+  <span class="token property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;packageA/app.mpx?root=packageA&amp;independent=true&quot;</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><div class="language-json5 extra-class"><pre class="language-json5"><code><span class="token comment">// 微信原生方式</span>
+<span class="token punctuation">{</span>
+  <span class="token property">&quot;subpackages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;root&quot;</span><span class="token operator">:</span> <span class="token string">&quot;packageA&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;pages/index&quot;</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;independent&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>需要注意的是，由于独立分包可以独立于主包和其他分包运行，从独立分包页面进入小程序时，主包中的相应初始化逻辑并不会执行，如果独立分包中多个页面需要某种通用初始化逻辑时就无法优雅的实现，
+Mpx框架针对独立分包场景提供了独立分包初始化逻辑执行能力。</p> <p>对于使用 packages 方式声明的独立分包，默认将 .mpx 文件自身的 script 块作为初始化逻辑执行。</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token comment">&lt;!--src/packagesA/app.mpx，packageA 独立分包入口文件--&gt;</span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+<span class="token keyword">import</span> mpx <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+<span class="token keyword">import</span> apiProxy <span class="token keyword">from</span> <span class="token string">'@mpxjs/api-proxy'</span>
+
+mpx<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span>apiProxy<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">usePromise</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> 
+<span class="token keyword">if</span> <span class="token punctuation">(</span>isIndependent<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// do some in independent package</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token comment">// do some not independent package</span>
+<span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>application/json<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+<span class="token punctuation">{</span>
+  <span class="token string-property property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;./pages/index&quot;</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>上方代码中 独立分包 packageA 的入口文件 app.mpx 中的 script block 代码会默认在独立分包初始化时执行，Mpx 同时提供了全局变量 <code>isIndependent</code> 标识当前代码执行环境是否为独立分包来进行特定逻辑区分</p> <p>如果你不想走这个默认的初始化逻辑执行规则，想自定义一个 js 文件存储当前独立分包的初始化逻辑，我们支持 independent 配置项直接配置为初始化逻辑文件地址</p> <div class="language-json5 extra-class"><pre class="language-json5"><code><span class="token comment">// src/app.mpx 文件中 json 块</span>
+<span class="token comment">// Mpx packages 方式</span>
+<span class="token punctuation">{</span>
+  <span class="token property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;packageA/app.mpx?root=packageA&amp;independent=./common&quot;</span> <span class="token comment">// 路径上下文为 packageA 文件夹</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><div class="language-json5 extra-class"><pre class="language-json5"><code><span class="token comment">// 微信原生方式</span>
+<span class="token punctuation">{</span>
+  <span class="token property">&quot;subpackages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;root&quot;</span><span class="token operator">:</span> <span class="token string">&quot;packageA&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;pages/index&quot;</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;independent&quot;</span><span class="token operator">:</span> <span class="token string">&quot;./common&quot;</span> <span class="token comment">// 路径上下文为 packageA 文件夹</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// src/pacakgeA/common.js</span>
+<span class="token keyword">import</span> mpx <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+<span class="token keyword">import</span> apiProxy <span class="token keyword">from</span> <span class="token string">'@mpxjs/api-proxy'</span>
+
+mpx<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span>apiProxy<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">usePromise</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>isIndependent<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// do some in independent package</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    <span class="token comment">// do some not independent package</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>注意上方配置 independent 为初始化逻辑文件地址时，路径相对地址上下文为 packageA</p> <h2 id="分包预下载"><a href="#分包预下载" class="header-anchor">#</a> 分包预下载</h2> <p>分包预下载是在 json中 新增一个 preloadRule 字段，mpx 打包时候会原封不动把这个部分放到 app.json 中，所以只需要按照 <a href="https://developers.weixin.qq.com/miniprogram/dev/framework/subpackages/preload.html" target="_blank" rel="noopener noreferrer">微信小程序官方文档 - 分包预下载<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> 或者 <a href="https://opendocs.alipay.com/mini/framework/subpackages" target="_blank" rel="noopener noreferrer">支付宝小程序官方文档 - 分包预下载<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> 配置即可。</p> <p><strong>示例：</strong></p> <div class="language-html extra-class"><pre class="language-html"><code>// @file src/app.mpx
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>application/json<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token punctuation">{</span>
+    <span class="token string-property property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;./pages/index/index&quot;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string-property property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;{npmPackage || relativePathToPackage}/index?root=xxx&quot;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token string-property property">&quot;preloadRule&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token string-property property">&quot;pages/index&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token string-property property">&quot;network&quot;</span><span class="token operator">:</span> <span class="token string">&quot;all&quot;</span><span class="token punctuation">,</span>
+        <span class="token string-property property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">&quot;important&quot;</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token string-property property">&quot;sub1/index&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token string-property property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">&quot;hello&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;sub3&quot;</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+
+// @file src/packages/index.mpx (子包的入口文件)
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>application/json<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token punctuation">{</span>
+    <span class="token string-property property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;./pages/other/other&quot;</span><span class="token punctuation">,</span>
+      <span class="token string">&quot;./pages/other/other2&quot;</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>打包结果：dist/app.json</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;pages/index/index&quot;</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;subPackages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;root&quot;</span><span class="token operator">:</span> <span class="token string">&quot;xxx&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;pages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;pages/other/other&quot;</span><span class="token punctuation">,</span>
+        <span class="token string">&quot;pages/other/other2&quot;</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;preloadRule&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;pages/index&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;network&quot;</span><span class="token operator">:</span> <span class="token string">&quot;all&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">&quot;important&quot;</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;sub1/index&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;packages&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">&quot;hello&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;sub3&quot;</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>  
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="分包注意事项"><a href="#分包注意事项" class="header-anchor">#</a> 分包注意事项</h2> <p>当我们使用分包加载时，依赖包内的跳转路径需注意，比如要跳转到other2页面</p> <ul><li>不用分包时会是：/pages/other/other2</li> <li>使用分包后应为：/test/pages/other/other2</li></ul> <p>即前面会多?root={rootKey}的rootKey这一层</p> <p>为了解决这个问题，有三种方案：</p> <ul><li><p>import的时候在最后加'?resolve', 例如: <code>import testPagePath from '../pages/testPage.mpx?resolve'</code> , 编译时就会把它处理成正确的完整的绝对路径。</p></li> <li><p>使用相对路径跳转。</p></li> <li><p>定死使用的分包路径名，直接写/{rootKey}/pages/xxx （极度不推荐，尤其在分包可能被多方引用的情况时）</p></li></ul> <p>这里我们建议使用第一种方式。</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/guide/advance/npm.html" class="prev">
+        使用npm
+      </a></span> <span class="next"><a href="/guide/advance/async-subpackage.html">
+        分包异步化
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/81.16e2cc83.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>

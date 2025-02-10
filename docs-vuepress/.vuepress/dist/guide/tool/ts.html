@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>使用TypeScript开发小程序 | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/112.da7bd3e7.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>基础</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/basic/start.html" class="sidebar-link">快速开始</a></li><li><a href="/guide/basic/intro.html" class="sidebar-link">介绍</a></li><li><a href="/guide/basic/single-file.html" class="sidebar-link">单文件开发</a></li><li><a href="/guide/basic/ide.html" class="sidebar-link">IDE 高亮配置</a></li><li><a href="/guide/basic/template.html" class="sidebar-link">模板语法</a></li><li><a href="/guide/basic/css.html" class="sidebar-link">CSS 处理</a></li><li><a href="/guide/basic/reactive.html" class="sidebar-link">数据响应</a></li><li><a href="/guide/basic/class-style-binding.html" class="sidebar-link">类名样式绑定</a></li><li><a href="/guide/basic/conditional-render.html" class="sidebar-link">条件渲染</a></li><li><a href="/guide/basic/list-render.html" class="sidebar-link">列表渲染</a></li><li><a href="/guide/basic/event.html" class="sidebar-link">事件处理</a></li><li><a href="/guide/basic/two-way-binding.html" class="sidebar-link">双向绑定</a></li><li><a href="/guide/basic/component.html" class="sidebar-link">自定义组件</a></li><li><a href="/guide/basic/refs.html" class="sidebar-link">获取组件实例/节点信息</a></li><li><a href="/guide/basic/option-chain.html" class="sidebar-link">模版内可选链表达式</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>进阶</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/advance/store.html" class="sidebar-link">状态管理（store）</a></li><li><a href="/guide/advance/pinia.html" class="sidebar-link">状态管理（pinia）</a></li><li><a href="/guide/advance/mixin.html" class="sidebar-link">使用 mixin</a></li><li><a href="/guide/advance/npm.html" class="sidebar-link">使用npm</a></li><li><a href="/guide/advance/subpackage.html" class="sidebar-link">使用分包</a></li><li><a href="/guide/advance/async-subpackage.html" class="sidebar-link">分包异步化</a></li><li><a href="/guide/advance/platform.html" class="sidebar-link">跨平台</a></li><li><a href="/guide/advance/i18n.html" class="sidebar-link">国际化i18n</a></li><li><a href="/guide/advance/size-report.html" class="sidebar-link">包体积分析</a></li><li><a href="/guide/advance/image-process.html" class="sidebar-link">图像资源处理</a></li><li><a href="/guide/advance/progressive.html" class="sidebar-link">原生渐进迁移</a></li><li><a href="/guide/advance/ability-compatible.html" class="sidebar-link">原生能力兼容</a></li><li><a href="/guide/advance/plugin.html" class="sidebar-link">小程序插件</a></li><li><a href="/guide/advance/custom-output-path.html" class="sidebar-link">自定义路径</a></li><li><a href="/guide/advance/utility-first-css.html" class="sidebar-link">使用原子类</a></li><li><a href="/guide/advance/ssr.html" class="sidebar-link">SSR</a></li><li><a href="/guide/advance/provide-inject.html" class="sidebar-link">依赖注入（Provide/Inject）</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>组合式 API</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/composition-api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/guide/composition-api/reactive-api.html" class="sidebar-link">响应式 API</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>工具</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/tool/ts.html" aria-current="page" class="active sidebar-link">使用TypeScript开发小程序</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/tool/ts.html#什么是typescript" class="sidebar-link">什么是TypeScript</a></li><li class="sidebar-sub-header"><a href="/guide/tool/ts.html#typescript优势" class="sidebar-link">TypeScript优势</a></li><li class="sidebar-sub-header"><a href="/guide/tool/ts.html#使用方式" class="sidebar-link">使用方式</a></li><li class="sidebar-sub-header"><a href="/guide/tool/ts.html#类型推导及注意事项" class="sidebar-link">类型推导及注意事项</a></li></ul></li><li><a href="/guide/tool/unit-test.html" class="sidebar-link">单元测试</a></li><li><a href="/guide/tool/e2e-test.html" class="sidebar-link">E2E自动化测试</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/guide/extend" class="sidebar-heading clickable"><span>拓展</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/extend/fetch.html" class="sidebar-link">网络请求</a></li><li><a href="/guide/extend/api-proxy.html" class="sidebar-link">Api代理</a></li><li><a href="/guide/extend/mock.html" class="sidebar-link">数据 Mock</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>理解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/understand/runtime.html" class="sidebar-link">Mpx运行时增强原理</a></li><li><a href="/guide/understand/compile.html" class="sidebar-link">Mpx编译构建原理</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>迁移</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/migrate/2.9.html" class="sidebar-link">从 2.8 升级至 2.9</a></li><li><a href="/guide/migrate/2.8.html" class="sidebar-link">从 2.7 升级至 2.8</a></li><li><a href="/guide/migrate/2.7.html" class="sidebar-link">从旧版本迁移至 2.7</a></li><li><a href="/guide/migrate/mpx-cli-3.html" class="sidebar-link">mpx-cli v2 迁移到 v3</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="使用typescript开发小程序"><a href="#使用typescript开发小程序" class="header-anchor">#</a> 使用TypeScript开发小程序</h1> <h2 id="什么是typescript"><a href="#什么是typescript" class="header-anchor">#</a> 什么是TypeScript</h2> <p>TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最常用的语言之一） 的基础上添加静态类型定义构建而成。</p> <p>类型提供了一种描述对象形状的方法。可以帮助提供更好的文档，还可以让 TypeScript 验证你的代码可以正常工作。</p> <p>在 TypeScript 中，不是每个地方都需要标注类型，因为类型推断允许您无需编写额外的代码即可获得大量功能。</p> <h2 id="typescript优势"><a href="#typescript优势" class="header-anchor">#</a> TypeScript优势</h2> <ol><li><p>静态类型检查
+静态类型检查可以避免很多不必要类型的错误，在编译阶段提前发现问题；</p></li> <li><p>强大的类型推断能力
+除了类型声明外，<code>TypeScript</code> 提供了强大的类型推断能力，该能力能够大大减少我们需要编写的类型声明，有效地减少我们使用 <code>TypeScript</code> 的额外压力；</p></li> <li><p>IDE 智能提示
+目前主流的 IDE 都对 <code>TypeScript</code> 提供了良好的支持，基于 <code>TypeScript</code> 的类型系统提供友好准确的编码提示与错误检查。</p></li></ol> <h2 id="使用方式"><a href="#使用方式" class="header-anchor">#</a> 使用方式</h2> <h3 id="编写ts前的准备工作"><a href="#编写ts前的准备工作" class="header-anchor">#</a> 编写ts前的准备工作</h3> <p>由于对 store 做类型推导使用了最新的 <code>TypeScript</code> 特性，因此需要将编辑器的 <code>TypeScript</code> 版本升级至 <strong>4.1.3</strong> 及以上版本。以下是 VSCode 配置示例：</p> <ol><li><p>更新项目中的TypeScript为 4.1.3 及以上版本。</p></li> <li><p>在VSCode中打开一个 .js/.ts/.tsx 后缀的文件，使用 <code>Shift+Command+P</code> 唤出 VSCode 命令行，输入 <code>TypeScript</code> ，选择 <code>Select TypeScript Version</code>，选择使用工作区版本，将版本切换至 4.1.3 及以上版本。</p></li></ol> <img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/select-ts-version.png" style="border-radius:6px;"> <ol start="3"><li>在 VSCode 编辑器中安装 mpx 插件，来支持在.mpx单文件中编写 ts 时的代码提示和实时报错等优秀体验。</li></ol> <div class="custom-block warning"><p class="custom-block-title">WARNING</p> <p>使用 @typescript/eslint-plugin 对 ts 代码进行检查，当在.mpx文件中使用全局类型时，eslint 会抛出 no-undef 错误，可以关闭相关 eslint 规则校验</p></div> <h3 id="mpx中编写ts（推荐）"><a href="#mpx中编写ts（推荐）" class="header-anchor">#</a> .mpx中编写ts（推荐）</h3> <p>目前 Mpx 已经支持在.mpx文件的 script 标签中编写 ts 代码，需要在 script 标签上添加 <code>lang=&quot;ts&quot;</code> 属性，在编译时会自动这部分 script 中的内容进行 ts 类型检查。</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>ts<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+<span class="token comment">// 内联编写ts代码</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>当然，由于大部分IDE对 ts 的语法支持都只对 .ts 和 .d.ts 文件生效，因此 Mpx 也支持创建一个 .ts 文件进行 ts 代码编写，在.mpx文件中，通过 src 的方式引入。</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>ts<span class="token punctuation">&quot;</span></span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>./index.ts<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><h3 id="为-ts文件添加loader"><a href="#为-ts文件添加loader" class="header-anchor">#</a> 为.ts文件添加loader</h3> <p>在 Webpack 配置中添加如下 rules 以配置 ts-loader</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token punctuation">{</span>
+  <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.ts$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+  <span class="token literal-property property">use</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">'babel-loader'</span><span class="token punctuation">,</span>
+    <span class="token string">'ts-loader'</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h3 id="编写tsconfig-json文件"><a href="#编写tsconfig-json文件" class="header-anchor">#</a> 编写tsconfig.json文件</h3> <p>对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥 Mpx 中强大的 ts 类型推导能力</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;compilerOptions&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;target&quot;</span><span class="token operator">:</span> <span class="token string">&quot;es6&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;allowJs&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;noImplicitThis&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;noImplicitAny&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;strictNullChecks&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;moduleResolution&quot;</span><span class="token operator">:</span> <span class="token string">&quot;node&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;lib&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token string">&quot;dom&quot;</span><span class="token punctuation">,</span>
+      <span class="token string">&quot;es6&quot;</span><span class="token punctuation">,</span>
+      <span class="token string">&quot;dom.iterable&quot;</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h3 id="增强类型"><a href="#增强类型" class="header-anchor">#</a> 增强类型</h3> <p>如果需要增加 Mpx 的属性和选项，可以自定义声明 <code>TypeScript</code> 补充现有的类型。</p> <p>例如，首先创建一个 types.d.ts 文件</p> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token comment">// types.d.ts</span>
+
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Mpx <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'@mpxjs/core'</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 声明为 Mpx 补充的属性</span>
+  <span class="token keyword">interface</span> <span class="token class-name">Mpx</span> <span class="token punctuation">{</span>
+    $myProperty<span class="token operator">:</span> <span class="token builtin">string</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>之后在任意文件只需引用一次 types.d.ts 声明文件即可，例如在 app.mpx 中引用</p> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token comment">// app.mpx</span>
+
+<span class="token comment">/// &lt;reference path=&quot;./types.d.ts&quot; /&gt;</span>
+<span class="token keyword">import</span> mpx <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+mpx<span class="token punctuation">.</span>$myProperty <span class="token operator">=</span> <span class="token string">'my-property'</span>
+</code></pre></div><h2 id="类型推导及注意事项"><a href="#类型推导及注意事项" class="header-anchor">#</a> 类型推导及注意事项</h2> <p>Mpx 基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于 js 的方式调用 Mpx 提供的 api ，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于 ts 本身的能力限制，我们在 Mpx 的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，简单的使用示例如下：</p> <div class="language-typescript extra-class"><pre class="language-typescript"><code><span class="token keyword">import</span> <span class="token punctuation">{</span>createComponent<span class="token punctuation">,</span> getMixin<span class="token punctuation">,</span> createStoreWithThis<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token comment">// createStoreWithThis作为createStore的变种方法，主要变化在于定义getters，mutations和actions时，</span>
+<span class="token comment">// 获取自身的state，getters等属性不再通过参数传入，而是通过this.state或者this.getters等属性进行访问，</span>
+<span class="token comment">// 由于TS的能力限制，getters/mutations/actions只有使用对象字面量的方式直接传入createStoreWithThis时</span>
+<span class="token comment">// 才能正确推导出this的类型，当需要将getters/mutations/actions拆解为对象编写时，</span>
+<span class="token comment">// 需要用户显式地声明this类型，无法直接推导得出。</span>
+
+<span class="token keyword">const</span> store <span class="token operator">=</span> <span class="token function">createStoreWithThis</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  state<span class="token operator">:</span> <span class="token punctuation">{</span>
+    aa<span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    bb<span class="token operator">:</span> <span class="token number">2</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  getters<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">cc</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>aa <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>bb
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  actions<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">doSth3</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>getters<span class="token punctuation">.</span>cc<span class="token punctuation">)</span>
+      <span class="token keyword">return</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  data<span class="token operator">:</span> <span class="token punctuation">{</span>
+    a<span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    b<span class="token operator">:</span> <span class="token string">'2'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  computed<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">c</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>b
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token function">d</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// data, mixin, computed中定义的数据能够被推导到this中</span>
+      <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>a <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span>aaa <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span>c
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment">// 从store上map过来的计算属性或者方法同样能够被推导到this中</span>
+    <span class="token operator">...</span>store<span class="token punctuation">.</span><span class="token function">mapState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'aa'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  mixins<span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token comment">// 使用mixins，需要对每一个mixin子项进行getMixin辅助函数包裹，支持嵌套mixin</span>
+    <span class="token function">getMixin</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      computed<span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token function">aaa</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">return</span> <span class="token number">123</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      methods<span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token function">doSth</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>aaa<span class="token punctuation">)</span>
+          <span class="token keyword">return</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  methods<span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">doSth2</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>a<span class="token operator">++</span>
+      <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>d<span class="token punctuation">)</span>
+      <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>aa<span class="token punctuation">)</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">doSth3</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token operator">...</span>store<span class="token punctuation">.</span><span class="token function">mapActions</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'doSth3'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h3 id="getmixin"><a href="#getmixin" class="header-anchor">#</a> getMixin</h3> <p>为 ts 项目提供的反向推导 mixin 的辅助函数，getMixin 接收一个对象作为参数，使用 mixins 时，支持嵌套 mixin。具体用法见<a href="/api/global-api.html#getmixin">getMixin</a>。</p> <h3 id="createstorewiththis"><a href="#createstorewiththis" class="header-anchor">#</a> createStoreWithThis</h3> <p>为了在 ts 项目中更好的支持 store 的类型推导，提供了 createStoreWithThis 进行 store 的创建，createStoreWithThis 接收一个 options 对象作为参数。通过 createStoreWithThis 创建 store 时，使用<code>this.state</code>，<code>this.getters</code>，<code>this.commit</code>, <code>this.dispatch</code>对自身的相关属性进行获取。具体用法见<a href="/api/store-api.html#createstorewiththis">createStoreWithThis</a>。</p> <h3 id="createstatewiththis"><a href="#createstatewiththis" class="header-anchor">#</a> createStateWithThis</h3> <p>创建一个 state，支持 state 类型推导的辅助函数，具体用法见<a href="/api/store-api.html#createstatewiththis">createStateWithThis</a></p> <h3 id="creategetterswiththis"><a href="#creategetterswiththis" class="header-anchor">#</a> createGettersWithThis</h3> <p>创建一个 getters，支持 getters 类型推导的辅助函数，具体用法见<a href="/api/store-api.html#creategetterswiththis">createGettersWithThis</a></p> <h3 id="createmutationswiththis"><a href="#createmutationswiththis" class="header-anchor">#</a> createMutationsWithThis</h3> <p>创建一个 mutations，支持 mutations 类型推导的辅助函数，具体用法见<a href="/api/store-api.html#createmutationswiththis">createMutationsWithThis</a></p> <h3 id="createactionswiththis"><a href="#createactionswiththis" class="header-anchor">#</a> createActionsWithThis</h3> <p>创建一个 actions，支持 actions 类型推导的辅助函数，具体用法见<a href="/api/store-api.html#createactionswiththis">createActionsWithThis</a></p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/guide/composition-api/reactive-api.html" class="prev">
+        响应式 API
+      </a></span> <span class="next"><a href="/guide/tool/unit-test.html">
+        单元测试
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/112.da7bd3e7.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>

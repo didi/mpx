@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>从旧版本迁移至 2.7 | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/103.b34f6752.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>基础</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/basic/start.html" class="sidebar-link">快速开始</a></li><li><a href="/guide/basic/intro.html" class="sidebar-link">介绍</a></li><li><a href="/guide/basic/single-file.html" class="sidebar-link">单文件开发</a></li><li><a href="/guide/basic/ide.html" class="sidebar-link">IDE 高亮配置</a></li><li><a href="/guide/basic/template.html" class="sidebar-link">模板语法</a></li><li><a href="/guide/basic/css.html" class="sidebar-link">CSS 处理</a></li><li><a href="/guide/basic/reactive.html" class="sidebar-link">数据响应</a></li><li><a href="/guide/basic/class-style-binding.html" class="sidebar-link">类名样式绑定</a></li><li><a href="/guide/basic/conditional-render.html" class="sidebar-link">条件渲染</a></li><li><a href="/guide/basic/list-render.html" class="sidebar-link">列表渲染</a></li><li><a href="/guide/basic/event.html" class="sidebar-link">事件处理</a></li><li><a href="/guide/basic/two-way-binding.html" class="sidebar-link">双向绑定</a></li><li><a href="/guide/basic/component.html" class="sidebar-link">自定义组件</a></li><li><a href="/guide/basic/refs.html" class="sidebar-link">获取组件实例/节点信息</a></li><li><a href="/guide/basic/option-chain.html" class="sidebar-link">模版内可选链表达式</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>进阶</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/advance/store.html" class="sidebar-link">状态管理（store）</a></li><li><a href="/guide/advance/pinia.html" class="sidebar-link">状态管理（pinia）</a></li><li><a href="/guide/advance/mixin.html" class="sidebar-link">使用 mixin</a></li><li><a href="/guide/advance/npm.html" class="sidebar-link">使用npm</a></li><li><a href="/guide/advance/subpackage.html" class="sidebar-link">使用分包</a></li><li><a href="/guide/advance/async-subpackage.html" class="sidebar-link">分包异步化</a></li><li><a href="/guide/advance/platform.html" class="sidebar-link">跨平台</a></li><li><a href="/guide/advance/i18n.html" class="sidebar-link">国际化i18n</a></li><li><a href="/guide/advance/size-report.html" class="sidebar-link">包体积分析</a></li><li><a href="/guide/advance/image-process.html" class="sidebar-link">图像资源处理</a></li><li><a href="/guide/advance/progressive.html" class="sidebar-link">原生渐进迁移</a></li><li><a href="/guide/advance/ability-compatible.html" class="sidebar-link">原生能力兼容</a></li><li><a href="/guide/advance/plugin.html" class="sidebar-link">小程序插件</a></li><li><a href="/guide/advance/custom-output-path.html" class="sidebar-link">自定义路径</a></li><li><a href="/guide/advance/utility-first-css.html" class="sidebar-link">使用原子类</a></li><li><a href="/guide/advance/ssr.html" class="sidebar-link">SSR</a></li><li><a href="/guide/advance/provide-inject.html" class="sidebar-link">依赖注入（Provide/Inject）</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>组合式 API</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/composition-api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/guide/composition-api/reactive-api.html" class="sidebar-link">响应式 API</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>工具</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/tool/ts.html" class="sidebar-link">使用TypeScript开发小程序</a></li><li><a href="/guide/tool/unit-test.html" class="sidebar-link">单元测试</a></li><li><a href="/guide/tool/e2e-test.html" class="sidebar-link">E2E自动化测试</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/guide/extend" class="sidebar-heading clickable"><span>拓展</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/extend/fetch.html" class="sidebar-link">网络请求</a></li><li><a href="/guide/extend/api-proxy.html" class="sidebar-link">Api代理</a></li><li><a href="/guide/extend/mock.html" class="sidebar-link">数据 Mock</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>理解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/understand/runtime.html" class="sidebar-link">Mpx运行时增强原理</a></li><li><a href="/guide/understand/compile.html" class="sidebar-link">Mpx编译构建原理</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>迁移</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/migrate/2.9.html" class="sidebar-link">从 2.8 升级至 2.9</a></li><li><a href="/guide/migrate/2.8.html" class="sidebar-link">从 2.7 升级至 2.8</a></li><li><a href="/guide/migrate/2.7.html" aria-current="page" class="active sidebar-link">从旧版本迁移至 2.7</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/migrate/2.7.html#依赖升级" class="sidebar-link">依赖升级</a></li><li class="sidebar-sub-header"><a href="/guide/migrate/2.7.html#开启持久化缓存" class="sidebar-link">开启持久化缓存</a></li><li class="sidebar-sub-header"><a href="/guide/migrate/2.7.html#修改rules" class="sidebar-link">修改rules</a></li><li class="sidebar-sub-header"><a href="/guide/migrate/2.7.html#entry配置修改" class="sidebar-link">entry配置修改</a></li><li class="sidebar-sub-header"><a href="/guide/migrate/2.7.html#mpxwebpackplugin配置变更" class="sidebar-link">MpxWebpackPlugin配置变更</a></li></ul></li><li><a href="/guide/migrate/mpx-cli-3.html" class="sidebar-link">mpx-cli v2 迁移到 v3</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="从旧版本迁移至-2-7"><a href="#从旧版本迁移至-2-7" class="header-anchor">#</a> 从旧版本迁移至 2.7</h1> <p>自 2.7 版本开始，Mpx 将编译构建流程基于 Webpack5 进行了<strong>全面的重构</strong>，优化解决了老的编译流程中存在的大量历史遗留问题，安全完整地支持了基于文件系统的持久化缓存，大幅提升了 Mpx 想的编译构建速度，以滴滴出行小程序为例，无缓存场景下相较 2.6 版本提速约 180%，有缓存场景下提速约 <strong>10</strong> 倍。</p> <p>与此同时，Mpx 2.7 版本还带来了 rules 复用，完善的单元测试支持，独立分包构建，分包异步化等众多新特性。直接通过 @mpxjs/cli 创建的新项目就能够直接使用这些新特性，如果你对于编译构建没有太多定制化诉求，我们也推荐使用 @mpxjs/cli 新建项目，并将老项目中的 src 目录 copy 覆盖至新项目的方式进行迁移，这是一种成本最低的迁移方式。</p> <p>如果你的老项目中已经对编译构建进行了高度的定制，本文将提供详细的迁移工作指引。</p> <h2 id="依赖升级"><a href="#依赖升级" class="header-anchor">#</a> 依赖升级</h2> <p>将下面列出的相关依赖升级至对应版本，如果有其他自行引入的 loader 也确保将其升级至 webpack5 兼容的版本：</p> <div class="language-json5 extra-class"><pre class="language-json5"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;dependencies&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;@mpxjs/api-proxy&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^2.7.1&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@mpxjs/core&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^2.7.1&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@mpxjs/fetch&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^2.7.1&quot;</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;devDependencies&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;@mpxjs/webpack-plugin&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^2.7.1&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;webpack&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^5.64.4&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;webpack-merge&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^5.8.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;terser-webpack-plugin&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^5.2.5&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;copy-webpack-plugin&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^9.0.1&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;webpack-bundle-analyzer&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^4.5.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;ts-loader&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^9.2.6&quot;</span><span class="token punctuation">,</span>
+    <span class="token comment">// eslint相关配置，按需安装</span>
+    <span class="token property">&quot;eslint&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^7.32.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;eslint-config-standard&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^16.0.3&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;eslint-plugin-html&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^6.2.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;eslint-plugin-import&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^2.25.2&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;eslint-plugin-node&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^11.1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;eslint-plugin-promise&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^5.1.1&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;eslint-webpack-plugin&quot;</span><span class="token operator">:</span> <span class="token string">&quot;^3.1.0&quot;</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="开启持久化缓存"><a href="#开启持久化缓存" class="header-anchor">#</a> 开启持久化缓存</h2> <p>在 webpack 配置中添加以下配置项：</p> <div class="language-js extra-class"><pre class="language-js"><code>module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">cache</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'filesystem'</span><span class="token punctuation">,</span>
+    <span class="token comment">// 声明构建配置，注意如果声明某个文件夹为构建配置，需要在文件夹下放置空的package.json文件，避免构建依赖收集时将主项目的依赖项视为构建依赖</span>
+    <span class="token literal-property property">buildDependencies</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">build</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'build/'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">config</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'config/'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">cacheDirectory</span><span class="token operator">:</span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'.cache/'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">snapshot</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 如果希望修改node_modules下的文件时对应的缓存可以失效，可以将此处的配置改为 managedPaths: []</span>
+    <span class="token literal-property property">managedPaths</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'node_modules/'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="修改rules"><a href="#修改rules" class="header-anchor">#</a> 修改rules</h2> <p>在 2.7 版本中，我们优化了 .mpx 文件中各个 block 应用 loader 的规则。</p> <p>在之前的版本中，我们基本上使用内置的规则对 .mpx 中的 block 应用 loaders，如：对 &lt;script&gt; 应用 babel-loader，对 &lt;style lang=&quot;stylus&quot;&gt; 应用 stylus-loader。这种方式的弊端主要在于用户无法便捷地自定义 block 的 loaders 应用规则，比如传入特定的 loaders 配置。</p> <p>在 2.7 版本中，我们支持了构建时读取用户在 module.rules 中配置的规则来对 block 进行 loaders 应用， 例如：对于 &lt;style lang=&quot;stylus&quot;&gt; 我们会对其应用用户在 rules 中对于 .stylus 文件 配置的 loaders，当用户没有在 block 中声明 lang 属性时，我们也会兜底使用不同区块默认的 lang 来进行 rules 匹配。</p> <p>因此，相较于过去的版本，我们需要在 rules 中添加一些规则使得 .mpx 文件中的各类 block 都能得到正确的处理。</p> <div class="language-js extra-class"><pre class="language-js"><code>module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">module</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">rules</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token comment">// 新版本中rules规则对.mpx文件中的区块同样生效，在旧版本中.mpx文件中script会走内置的babel转义，但是新版当中只有在include范围内的.mpx文件才会走babel，但由于新版本中.mpx文件中的script会采用.mpx.js的格式来匹配rules，因此我们可以用如下include条件让其保持与旧版本一致的表现。</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.js$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">loader</span><span class="token operator">:</span> <span class="token string">'babel-loader'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">include</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.mpx\.js</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'src'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'test'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'node_modules/@mpxjs'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 如使用ts编码则需要添加本条rule</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.ts$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">use</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">'babel-loader'</span><span class="token punctuation">,</span>
+          <span class="token punctuation">{</span>
+            <span class="token literal-property property">loader</span><span class="token operator">:</span> <span class="token string">'ts-loader'</span><span class="token punctuation">,</span>
+            <span class="token literal-property property">options</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+              <span class="token literal-property property">appendTsSuffixTo</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(mpx|vue)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">]</span>
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 处理json区块</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.json$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">resourceQuery</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">asScript</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">'javascript/auto'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 处理wxs</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(wxs|qs|sjs|qjs|jds|dds|filter\.js)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">use</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">wxsPreLoader</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">enforce</span><span class="token operator">:</span> <span class="token string">'pre'</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 处理图像资源</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(png|jpe?g|gif|svg)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">use</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">urlLoader</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'img/[name][hash].[ext]'</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 下面的rules输出小程序时需配置，如输出web需要修改为vue的相关rules，具体逻辑可以参考脚手架项目中build/getRules.js</span>
+      <span class="token comment">// mpx主loader</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.mpx$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">use</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">loader</span><span class="token punctuation">(</span>currentMpxLoaderConf<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 如使用sass/less等其他预编译语言，自行修改test规则并用sass/less-loader替换stylus-loader</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.styl(us)?$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">use</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">wxssLoader</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+          <span class="token string">'stylus-loader'</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 处理未使用预编译语言的style区块和独立样式文件</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(wxss|acss|css|qss|ttss|jxss|ddss)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">use</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">wxssLoader</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token comment">// 处理未使用预编译语言的template区块和独立模板文件</span>
+      <span class="token punctuation">{</span>
+        <span class="token literal-property property">test</span><span class="token operator">:</span> <span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml)$</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">,</span>
+        <span class="token literal-property property">use</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">wxmlLoader</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="entry配置修改"><a href="#entry配置修改" class="header-anchor">#</a> entry配置修改</h2> <p>如果进行常规的小程序输出，无需关注。如进行插件输出或独立输出组件/页面等特殊场景，mpx 提供了辅助方法来生成对应的 entry request，示例如下：</p> <div class="language-js extra-class"><pre class="language-js"><code>module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">entry</span><span class="token operator">:</span><span class="token punctuation">{</span>
+    <span class="token comment">// 输出plugin</span>
+    <span class="token literal-property property">plugin</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">getPluginEntry</span><span class="token punctuation">(</span><span class="token string">'./plugin.json'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment">// 独立输出组件，相当于./list.mpx?isComponent，不过为了保障后续该配置不受框架内部query变动影响，建议使用辅助方法</span>
+    <span class="token literal-property property">list</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">getComponentEntry</span><span class="token punctuation">(</span><span class="token string">'./list.mpx'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment">// 独立输出页面，相当于./index.mpx?isPage</span>
+    <span class="token literal-property property">index</span><span class="token operator">:</span> MpxWebpackPlugin<span class="token punctuation">.</span><span class="token function">getPageEntry</span><span class="token punctuation">(</span><span class="token string">'./index.mpx'</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="mpxwebpackplugin配置变更"><a href="#mpxwebpackplugin配置变更" class="header-anchor">#</a> MpxWebpackPlugin配置变更</h2> <ul><li>移除了forceDisableInject配置</li> <li>nativeOptions更名为nativeConfig</li></ul> <p>上述的内容中只列举了一些和 mpx 高度相关的配置项变更，如果你的项目使用了特定的插件或者loader，请确保将其升级至兼容 webpack5 的版本。</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/guide/migrate/2.8.html" class="prev">
+        从 2.7 升级至 2.8
+      </a></span> <span class="next"><a href="/guide/migrate/mpx-cli-3.html">
+        mpx-cli v2 迁移到 v3
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/103.b34f6752.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>

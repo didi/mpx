@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Store API | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/46.22f9a9c6.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><a href="/api/app-config.html" class="sidebar-link">全局配置</a></li><li><a href="/api/global-api.html" class="sidebar-link">全局 API</a></li><li><a href="/api/instance-api.html" class="sidebar-link">实例 API</a></li><li><a href="/api/store-api.html" aria-current="page" class="active sidebar-link">Store API</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/api/store-api.html#createstore" class="sidebar-link">createStore</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/api/store-api.html#store-实例属性" class="sidebar-link">Store 实例属性</a></li><li class="sidebar-sub-header"><a href="/api/store-api.html#store-实例方法" class="sidebar-link">Store 实例方法</a></li></ul></li><li class="sidebar-sub-header"><a href="/api/store-api.html#createstorewiththis" class="sidebar-link">createStoreWithThis</a></li><li class="sidebar-sub-header"><a href="/api/store-api.html#createstatewiththis" class="sidebar-link">createStateWithThis</a></li><li class="sidebar-sub-header"><a href="/api/store-api.html#creategetterswiththis" class="sidebar-link">createGettersWithThis</a></li><li class="sidebar-sub-header"><a href="/api/store-api.html#createmutationswiththis" class="sidebar-link">createMutationsWithThis</a></li><li class="sidebar-sub-header"><a href="/api/store-api.html#createactionswiththis" class="sidebar-link">createActionsWithThis</a></li></ul></li><li><a href="/api/directives.html" class="sidebar-link">模板指令</a></li><li><a href="/api/compile.html" class="sidebar-link">编译构建</a></li><li><a href="/api/builtIn.html" class="sidebar-link">内建组件</a></li><li><a href="/api/reactivity-api.html" class="sidebar-link">响应式 API</a></li><li><a href="/api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/api/optional-api.html" class="sidebar-link">选项式 API</a></li><li><a href="/api/extend.html" class="sidebar-link">周边拓展</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="store-api"><a href="#store-api" class="header-anchor">#</a> Store API</h1> <p><strong>注意：</strong> 以下 API 在 <strong>2.8</strong> 版本后无法通过全局应用实例 <code>mpx</code> 访问。若项目中有类似 mpx.createStore 的用法，在升级到 <strong>2.8</strong> 版本后请进行修改。</p> <h2 id="createstore"><a href="#createstore" class="header-anchor">#</a> createStore</h2> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">function</span> <span class="token function">createStore</span><span class="token punctuation">(</span>options<span class="token operator">:</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Store
+</code></pre></div><blockquote><p>创建一个全局状态管理容器，实现复杂场景下的组件通信需求</p></blockquote> <ul><li><p><code>options</code></p> <p>options 可指定以下属性：</p> <ul><li><p><strong>state</strong>: <code>Object</code></p> <p>store的根 state 对象。</p> <p><a href="/guide/advance/store.html#state">详细介绍</a></p></li> <li><p><strong>mutations</strong>: <code>{ [type: string]: Function }</code></p> <p>在 store 上注册 mutation，处理函数总是接受 state 作为第一个参数（如果定义在模块中，则为模块的局部状态），payload 作为第二个参数（可选）。</p> <p><a href="/guide/advance/store.html#mutation">详细介绍</a></p></li> <li><p><strong>actions</strong>: <code>{ [type: string]: Function }</code></p> <p>在 store 上注册 action。处理函数总是接受 context 作为第一个参数，payload 作为第二个参数（可选）。</p> <p>context 对象包含以下属性：
+<code>js { state, // 等同于 `store.state` commit, // 等同于 `store.commit` dispatch, // 等同于 `store.dispatch` getters // 等同于 `store.getters` }</code>
+同时如果有第二个参数 payload 的话也能够接收。</p> <p><a href="/guide/advance/store.html#action">详细介绍</a></p></li> <li><p><strong>getters</strong>：<code>{[key: string]: Function }</code></p> <p>在 store 上注册 getter，getter 方法接受以下参数：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token punctuation">{</span>
+  state<span class="token punctuation">,</span>     <span class="token comment">// 如果在模块中定义则为模块的局部状态</span>
+  getters   <span class="token comment">// 等同于 store.getters</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>注册的 getter 暴露为 store.getters。</p> <p><a href="/guide/advance/store.html#getter">详细介绍</a></p></li> <li><p><strong>modules</strong>：<code>Object</code></p> <p>包含了子模块的对象，会被合并到 store，大概长这样：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token punctuation">{</span>
+  <span class="token literal-property property">key</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    state<span class="token punctuation">,</span>
+    mutations<span class="token punctuation">,</span>
+    actions<span class="token operator">?</span><span class="token punctuation">,</span>
+    getters<span class="token operator">?</span><span class="token punctuation">,</span>
+    modules<span class="token operator">?</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>与根模块的选项一样，每个模块也包含 state 和 mutations 选项。模块的状态使用 key 关联到 store 的根状态。模块的 mutation 和 getter 只会接收 module 的局部状态作为第一个参数，而不是根状态，并且模块 action 的 context.state 同样指向局部状态。</p> <p><a href="/guide/advance/store.html#modules">详细介绍</a></p></li> <li><p><strong>deps</strong>：<code>Object</code></p> <p>包含了当前store依赖的第三方store：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token punctuation">{</span>
+  <span class="token literal-property property">store1</span><span class="token operator">:</span> storeA<span class="token punctuation">,</span>
+  <span class="token literal-property property">store2</span><span class="token operator">:</span> storeB
+<span class="token punctuation">}</span>
+</code></pre></div><p><a href="/guide/advance/store.html#modules">详细介绍</a></p></li></ul></li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span>createStore<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+<span class="token keyword">const</span> store1 <span class="token operator">=</span> <span class="token function">createStore</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">state</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">mutations</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">increment</span> <span class="token punctuation">(</span><span class="token parameter">state</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      state<span class="token punctuation">.</span>count<span class="token operator">++</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">actions</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">increment</span> <span class="token punctuation">(</span><span class="token parameter">context</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      context<span class="token punctuation">.</span><span class="token function">commit</span><span class="token punctuation">(</span><span class="token string">'increment'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token operator">...</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> store2 <span class="token operator">=</span> <span class="token function">createStore</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token operator">...</span>options <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h3 id="store-实例属性"><a href="#store-实例属性" class="header-anchor">#</a> <strong>Store 实例属性</strong></h3> <ul><li><strong>state</strong>：<code>Object</code>
+根状态。</li> <li><strong>getters</strong>：<code>Object</code>
+暴露出注册的 getter。</li></ul> <h3 id="store-实例方法"><a href="#store-实例方法" class="header-anchor">#</a> <strong>Store 实例方法</strong></h3> <ul><li>commit</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">commit</span><span class="token punctuation">(</span>type<span class="token operator">:</span> string<span class="token punctuation">,</span> payload<span class="token operator">?</span><span class="token operator">:</span> any<span class="token punctuation">,</span> options<span class="token operator">?</span><span class="token operator">:</span> Object<span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token function">commit</span><span class="token punctuation">(</span>mutation<span class="token operator">:</span> Object<span class="token punctuation">,</span> options<span class="token operator">?</span><span class="token operator">:</span> Object<span class="token punctuation">)</span>
+</code></pre></div><p>提交 mutation。<a href="/guide/advance/store.html#mutation">详细介绍</a></p> <ul><li>dispatch</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">dispatch</span><span class="token punctuation">(</span>type<span class="token operator">:</span> string<span class="token punctuation">,</span> payload<span class="token operator">?</span><span class="token operator">:</span> any<span class="token punctuation">,</span> options<span class="token operator">?</span><span class="token operator">:</span> Object<span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token function">dispatch</span><span class="token punctuation">(</span>action<span class="token operator">:</span> Object<span class="token punctuation">,</span> options<span class="token operator">?</span><span class="token operator">:</span> Object<span class="token punctuation">)</span>
+</code></pre></div><p>分发 action。返回一个Promise。<a href="/guide/advance/store.html#action">详细介绍</a></p> <ul><li>mapState</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">mapState</span><span class="token punctuation">(</span>map<span class="token operator">:</span> Array<span class="token operator">&lt;</span>string<span class="token operator">&gt;</span> <span class="token operator">|</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Object
+</code></pre></div><p>为组件创建计算属性以返回 store 中的状态。<a href="/guide/advance/store.html#state">详细介绍</a></p> <ul><li>mapGetters</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">mapGetters</span><span class="token punctuation">(</span>map<span class="token operator">:</span> Array<span class="token operator">&lt;</span>string<span class="token operator">&gt;</span> <span class="token operator">|</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Object
+</code></pre></div><p>为组件创建计算属性以返回 getter 的返回值。<a href="/guide/advance/store.html#getter">详细介绍</a></p> <ul><li>mapActions</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">mapActions</span><span class="token punctuation">(</span>map<span class="token operator">:</span> Array<span class="token operator">&lt;</span>string<span class="token operator">&gt;</span> <span class="token operator">|</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Object
+</code></pre></div><p>创建组件方法分发 action。<a href="/guide/advance/store.html#action">详细介绍</a></p> <ul><li>mapMutations</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">mapMutations</span><span class="token punctuation">(</span>map<span class="token operator">:</span> Array<span class="token operator">&lt;</span>string<span class="token operator">&gt;</span> <span class="token operator">|</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Object
+</code></pre></div><p>创建组件方法提交 mutation。<a href="/guide/advance/store.html#mutation">详细介绍</a></p> <ul><li>mapStateToRefs</li></ul> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token function">mapStateToRefs</span><span class="token punctuation">(</span>maps<span class="token operator">:</span> <span class="token builtin">Array</span><span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token operator">&gt;</span> <span class="token operator">|</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">[</span>key<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">:</span> ComputedRef<span class="token operator">&lt;</span><span class="token builtin">any</span><span class="token operator">&gt;</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p><strong>组合式 API 特有</strong>，在组合式 API 场景下解构访问 getter 并保持 getter 响应性，可以使用该方法。<a href="/guide/advance/store.html#use-store-in-composition-api">详细介绍</a></p> <ul><li>mapGettersToRefs</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">mapGettersToRefs</span><span class="token punctuation">(</span>maps<span class="token operator">:</span> Array<span class="token operator">&lt;</span>string<span class="token operator">&gt;</span> <span class="token operator">|</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token punctuation">[</span>key<span class="token operator">:</span> string<span class="token punctuation">]</span><span class="token operator">:</span> ComputedRef<span class="token operator">&lt;</span>any<span class="token operator">&gt;</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p><strong>组合式 API 特有</strong>，在组合式 API 场景下需解构访问 state 并保持 state 响应性，可以使用该方法。<a href="/guide/advance/store.html#use-store-in-composition-api">详细介绍</a></p> <h2 id="createstorewiththis"><a href="#createstorewiththis" class="header-anchor">#</a> createStoreWithThis</h2> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">function</span> <span class="token function">createStoreWithThis</span><span class="token punctuation">(</span>store<span class="token operator">:</span> Store<span class="token punctuation">)</span><span class="token operator">:</span> Store
+</code></pre></div><blockquote><p>createStoreWithThis 为 createStore 的变种方法，主要为了在 <code>Typescript</code> 环境中，可以更好地支持 store 中的类型推导。<br>
+其主要变化在于定义 getters， mutations 和 actions 时，
+自身的 state，getters 等属性不再通过参数传入，而是会挂载到函数的执行上下文 this 当中，通过 this.state 或 this.getters 的方式进行访问。
+由于TS的能力限制，getters/mutations/actions 只有使用对象字面量的方式直接传入 createStoreWithThis 时
+才能正确推导出 this 的类型，当需要将 getters/mutations/actions 拆解为对象编写时，需要用户显式地声明 this 类型，无法直接推导得出。</p></blockquote> <div class="language-js extra-class"><pre class="language-js"><code>
+<span class="token keyword">import</span> <span class="token punctuation">{</span>createComponent<span class="token punctuation">,</span> getMixin<span class="token punctuation">,</span> createStoreWithThis<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> store <span class="token operator">=</span> <span class="token function">createStoreWithThis</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">state</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">aa</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">bb</span><span class="token operator">:</span> <span class="token number">2</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">getters</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">cc</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>aa <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>bb
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">actions</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">doSth3</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>getters<span class="token punctuation">.</span>cc<span class="token punctuation">)</span>
+      <span class="token keyword">return</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">data</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">a</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token literal-property property">b</span><span class="token operator">:</span> <span class="token string">'2'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">computed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">c</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>b
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token function">d</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// data, mixin, computed中定义的数据能够被推导到this中</span>
+      <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>a <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span>aaa <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span>c
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment">// 从store上map过来的计算属性或者方法同样能够被推导到this中</span>
+    <span class="token operator">...</span>store<span class="token punctuation">.</span><span class="token function">mapState</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'aa'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">mixins</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token comment">// 使用mixins，需要对每一个mixin子项进行getMixin辅助函数包裹，支持嵌套mixin</span>
+    <span class="token function">getMixin</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">computed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token function">aaa</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">return</span> <span class="token number">123</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token function">doSth</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>aaa<span class="token punctuation">)</span>
+          <span class="token keyword">return</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">doSth2</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>a<span class="token operator">++</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>d<span class="token punctuation">)</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>aa<span class="token punctuation">)</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">doSth3</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token operator">...</span>store<span class="token punctuation">.</span><span class="token function">mapActions</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'doSth3'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h2 id="createstatewiththis"><a href="#createstatewiththis" class="header-anchor">#</a> createStateWithThis</h2> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">function</span> <span class="token function">createStateWithThis</span><span class="token punctuation">(</span>state<span class="token operator">:</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Object
+</code></pre></div><blockquote><p>createStateWithThis 为创建 state 提供了类型推导，对于基本类型可以由 TypeScript 自行推导，使用其他类型时，推荐使用 as 进行约束</p></blockquote> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> createStateWithThis <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">export</span> type StatusType <span class="token operator">=</span> <span class="token string">'start'</span> <span class="token operator">|</span> <span class="token string">'running'</span> <span class="token operator">|</span> <span class="token string">'stop'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">createStateWithThis</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">status</span><span class="token operator">:</span> <span class="token string">'running'</span> <span class="token keyword">as</span> StatusType
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h2 id="creategetterswiththis"><a href="#creategetterswiththis" class="header-anchor">#</a> createGettersWithThis</h2> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">function</span> <span class="token function">createGettersWithThis</span><span class="token punctuation">(</span>getters<span class="token operator">:</span> Object<span class="token punctuation">,</span> options<span class="token operator">:</span> Object<span class="token punctuation">)</span><span class="token operator">:</span>Object
+</code></pre></div><ul><li><p>getters</p> <p>需要定义的 getters 对象。</p></li> <li><p>options（可选参数）</p> <p>在 options 中可以传入 state，getters，deps。由于 getter 的类型推论需要基于 state，所以导出 getters 时，需要将 state 进行传入。deps 是作为一个扩展存在，getters 可以通过 deps 中传入的其他 store 来获取值，当 store 没有其他需要依赖的 deps 时可以不传。createMutationsWithThis 和 createActionsWithThis 同理。</p></li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> createGettersWithThis<span class="token punctuation">,</span> createStoreWithThis <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">createGettersWithThis</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">isStart</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>status <span class="token operator">===</span> <span class="token string">'start'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function">getNum</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>base<span class="token punctuation">.</span>test <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span>getters<span class="token punctuation">.</span>base<span class="token punctuation">.</span>getTest
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  state<span class="token punctuation">,</span>
+  <span class="token literal-property property">deps</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">base</span><span class="token operator">:</span> <span class="token function">createStoreWithThis</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">state</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">testNum</span><span class="token operator">:</span> <span class="token number">0</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">getters</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token function">getTest</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>testNum <span class="token operator">*</span> <span class="token number">2</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h2 id="createmutationswiththis"><a href="#createmutationswiththis" class="header-anchor">#</a> createMutationsWithThis</h2> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">function</span> <span class="token function">createMutationsWithThis</span><span class="token punctuation">(</span>mutations<span class="token operator">:</span> Object<span class="token punctuation">,</span> options<span class="token operator">:</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Object
+</code></pre></div><ul><li><p>mutations</p> <p>需要定义的 mutations 对象。</p></li> <li><p>options（可选参数）</p> <p>在 options 中可以传入 state，deps。</p></li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> createMutationsWithThis <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">createMutationsWithThis</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">setCurrentStatus</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">payload</span><span class="token operator">:</span> StatusType</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>state<span class="token punctuation">.</span>status <span class="token operator">=</span> payload
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> state <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h2 id="createactionswiththis"><a href="#createactionswiththis" class="header-anchor">#</a> createActionsWithThis</h2> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">function</span> <span class="token function">createActionsWithThis</span><span class="token punctuation">(</span>actions<span class="token operator">:</span> Object<span class="token punctuation">,</span> options<span class="token operator">:</span> Object<span class="token punctuation">)</span><span class="token operator">:</span> Object
+</code></pre></div><ul><li><p>actions</p> <p>需要定义的 actions 对象。</p></li> <li><p>options（可选参数）</p> <p>由于action 可以同时调用 getters、mutations，所以需要将这些都传入，以便进行类型推导。因此 options 可以传入 state、getters、mutations、deps。</p></li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> createActionsWithThis <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+<span class="token keyword">import</span> state<span class="token punctuation">,</span> <span class="token punctuation">{</span> StatusType <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./state'</span>
+<span class="token keyword">import</span> getters <span class="token keyword">from</span> <span class="token string">'./getters'</span>
+<span class="token keyword">import</span> mutations <span class="token keyword">from</span> <span class="token string">'./mutations'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">createActionsWithThis</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">testActions</span> <span class="token punctuation">(</span><span class="token parameter"><span class="token literal-property property">payload</span><span class="token operator">:</span> StatusType</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> Promise<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">commit</span><span class="token punctuation">(</span><span class="token string">'setCurrentStatus'</span><span class="token punctuation">,</span> payload<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  state<span class="token punctuation">,</span>
+  getters<span class="token punctuation">,</span>
+  mutations
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/api/instance-api.html" class="prev">
+        实例 API
+      </a></span> <span class="next"><a href="/api/directives.html">
+        模板指令
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/46.22f9a9c6.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>

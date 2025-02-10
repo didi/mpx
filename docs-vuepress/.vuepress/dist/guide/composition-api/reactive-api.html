@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>响应式 API | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/98.939cb6ef.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>基础</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/basic/start.html" class="sidebar-link">快速开始</a></li><li><a href="/guide/basic/intro.html" class="sidebar-link">介绍</a></li><li><a href="/guide/basic/single-file.html" class="sidebar-link">单文件开发</a></li><li><a href="/guide/basic/ide.html" class="sidebar-link">IDE 高亮配置</a></li><li><a href="/guide/basic/template.html" class="sidebar-link">模板语法</a></li><li><a href="/guide/basic/css.html" class="sidebar-link">CSS 处理</a></li><li><a href="/guide/basic/reactive.html" class="sidebar-link">数据响应</a></li><li><a href="/guide/basic/class-style-binding.html" class="sidebar-link">类名样式绑定</a></li><li><a href="/guide/basic/conditional-render.html" class="sidebar-link">条件渲染</a></li><li><a href="/guide/basic/list-render.html" class="sidebar-link">列表渲染</a></li><li><a href="/guide/basic/event.html" class="sidebar-link">事件处理</a></li><li><a href="/guide/basic/two-way-binding.html" class="sidebar-link">双向绑定</a></li><li><a href="/guide/basic/component.html" class="sidebar-link">自定义组件</a></li><li><a href="/guide/basic/refs.html" class="sidebar-link">获取组件实例/节点信息</a></li><li><a href="/guide/basic/option-chain.html" class="sidebar-link">模版内可选链表达式</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>进阶</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/advance/store.html" class="sidebar-link">状态管理（store）</a></li><li><a href="/guide/advance/pinia.html" class="sidebar-link">状态管理（pinia）</a></li><li><a href="/guide/advance/mixin.html" class="sidebar-link">使用 mixin</a></li><li><a href="/guide/advance/npm.html" class="sidebar-link">使用npm</a></li><li><a href="/guide/advance/subpackage.html" class="sidebar-link">使用分包</a></li><li><a href="/guide/advance/async-subpackage.html" class="sidebar-link">分包异步化</a></li><li><a href="/guide/advance/platform.html" class="sidebar-link">跨平台</a></li><li><a href="/guide/advance/i18n.html" class="sidebar-link">国际化i18n</a></li><li><a href="/guide/advance/size-report.html" class="sidebar-link">包体积分析</a></li><li><a href="/guide/advance/image-process.html" class="sidebar-link">图像资源处理</a></li><li><a href="/guide/advance/progressive.html" class="sidebar-link">原生渐进迁移</a></li><li><a href="/guide/advance/ability-compatible.html" class="sidebar-link">原生能力兼容</a></li><li><a href="/guide/advance/plugin.html" class="sidebar-link">小程序插件</a></li><li><a href="/guide/advance/custom-output-path.html" class="sidebar-link">自定义路径</a></li><li><a href="/guide/advance/utility-first-css.html" class="sidebar-link">使用原子类</a></li><li><a href="/guide/advance/ssr.html" class="sidebar-link">SSR</a></li><li><a href="/guide/advance/provide-inject.html" class="sidebar-link">依赖注入（Provide/Inject）</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>组合式 API</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/composition-api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/guide/composition-api/reactive-api.html" aria-current="page" class="active sidebar-link">响应式 API</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/composition-api/reactive-api.html#创建响应式对象" class="sidebar-link">创建响应式对象</a></li><li class="sidebar-sub-header"><a href="/guide/composition-api/reactive-api.html#use-ref-create-reactive-value" class="sidebar-link">使用ref()创建独立的响应式值</a></li><li class="sidebar-sub-header"><a href="/guide/composition-api/reactive-api.html#响应式对象解构" class="sidebar-link">响应式对象解构</a></li><li class="sidebar-sub-header"><a href="/guide/composition-api/reactive-api.html#计算值" class="sidebar-link">计算值</a></li><li class="sidebar-sub-header"><a href="/guide/composition-api/reactive-api.html#watcheffect" class="sidebar-link">watchEffect</a></li><li class="sidebar-sub-header"><a href="/guide/composition-api/reactive-api.html#watch" class="sidebar-link">watch</a></li><li class="sidebar-sub-header"><a href="/guide/composition-api/reactive-api.html#响应式-api-与-vue3-中的区别" class="sidebar-link">响应式 API 与 Vue3 中的区别</a></li></ul></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>工具</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/tool/ts.html" class="sidebar-link">使用TypeScript开发小程序</a></li><li><a href="/guide/tool/unit-test.html" class="sidebar-link">单元测试</a></li><li><a href="/guide/tool/e2e-test.html" class="sidebar-link">E2E自动化测试</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/guide/extend" class="sidebar-heading clickable"><span>拓展</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/extend/fetch.html" class="sidebar-link">网络请求</a></li><li><a href="/guide/extend/api-proxy.html" class="sidebar-link">Api代理</a></li><li><a href="/guide/extend/mock.html" class="sidebar-link">数据 Mock</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>理解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/understand/runtime.html" class="sidebar-link">Mpx运行时增强原理</a></li><li><a href="/guide/understand/compile.html" class="sidebar-link">Mpx编译构建原理</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>迁移</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/migrate/2.9.html" class="sidebar-link">从 2.8 升级至 2.9</a></li><li><a href="/guide/migrate/2.8.html" class="sidebar-link">从 2.7 升级至 2.8</a></li><li><a href="/guide/migrate/2.7.html" class="sidebar-link">从旧版本迁移至 2.7</a></li><li><a href="/guide/migrate/mpx-cli-3.html" class="sidebar-link">mpx-cli v2 迁移到 v3</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="响应式-api"><a href="#响应式-api" class="header-anchor">#</a> 响应式 API</h1> <p>在 Mpx 中，为了支持<a href="/guide/composition-api/composition-api.html">组合式 API</a> 的使用，我们参考 Vue3 提供了相关的响应式 API，但由于 <code>proxy</code> 目前仍然存在浏览器兼容性问题，我们在底层还是基于 <code>Object.defineProperty</code> 实现的数据响应，因此相较于 Vue3 提供的 API 存在一些删减，同时也存在与 Vue2 一样的数据响应<a href="https://v2.cn.vuejs.org/v2/guide/reactivity.html#%E6%A3%80%E6%B5%8B%E5%8F%98%E5%8C%96%E7%9A%84%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9" target="_blank" rel="noopener noreferrer">使用限制<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>。</p> <h2 id="创建响应式对象"><a href="#创建响应式对象" class="header-anchor">#</a> 创建响应式对象</h2> <p>在 Mpx 中，我们可以使用 <code>reactive</code> 方法将一个 JavaScript 对象<strong>深度转换</strong>为响应式对象，当对象内数据发生变化时能够被系统感知，相当于 Vue2 中的 <code>observable</code>，需要注意的是在 Mpx 中 <code>reactive()</code> 是将传入的对象进行响应性转化后返回原对象，而在 Vue3 中则会基于 <code>proxy</code> API 返回传入对象的响应式代理。</p> <p>目前 <code>reactive</code> 仅支持传入基础对象类型，包括纯对象和数组，暂不支持 <code>Map</code> 和 <code>Set</code> 这样的集合类型。</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> reactive <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token comment">// 响应式对象</span>
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><p>你可以在<a href="/api/reactivity-api/basic-reactivity.html">响应式基础 API</a> 章节中了解更多关于 <code>reactive</code> 的信息。</p> <h2 id="use-ref-create-reactive-value"><a href="#use-ref-create-reactive-value" class="header-anchor">#</a> 使用<code>ref()</code>创建独立的响应式值 </h2> <p>上面提到 <code>reactive</code> 只能传入对象类型数据，当我们想将一个原始数据类型的值（如数字、字符串、布尔值）变成响应式时，我们不得不先将其包装为一个对象，使用起来较为繁琐，新的 <code>ref</code> 方法能够让我们便捷地达成上述目标：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> ref <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token comment">// 响应式值</span>
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+</code></pre></div><p><code>ref()</code> 会返回一个可变的响应式对象，该对象作为一个<strong>响应式引用</strong>通过 <code>value</code> 属性维护着传入的内部值：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> ref <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token comment">// 0</span>
+
+count<span class="token punctuation">.</span>value<span class="token operator">++</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token comment">// 1</span>
+</code></pre></div><h3 id="ref-解包"><a href="#ref-解包" class="header-anchor">#</a> Ref 解包</h3> <p>当 <code>ref</code> 作为渲染上下文 (从 <code>setup()</code> 中返回的对象) 上的 property 返回并可以在模板中被访问时，它将自动浅层次解包内部值。只有访问嵌套的 ref 时需要在模板中添加 <code>.value</code>：</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{ count }}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{ nested.count.value }}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token keyword">import</span> <span class="token punctuation">{</span> createComponent<span class="token punctuation">,</span> ref <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+   
+  <span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        count<span class="token punctuation">,</span>
+        <span class="token literal-property property">nested</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          count
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><h3 id="访问响应式对象"><a href="#访问响应式对象" class="header-anchor">#</a> 访问响应式对象</h3> <p>当 <code>ref</code> 作为响应式对象的 property 被访问或更改时，为使其行为类似于普通 property，它会自动解包内部值：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  count
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>count<span class="token punctuation">)</span> <span class="token comment">// 0</span>
+
+state<span class="token punctuation">.</span>count <span class="token operator">=</span> <span class="token number">1</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token comment">// 1</span>
+</code></pre></div><p>如果将新的 ref 赋值给现有 ref 的 property，将会替换旧的 ref：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> otherCount <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+
+state<span class="token punctuation">.</span>count <span class="token operator">=</span> otherCount
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>count<span class="token punctuation">)</span> <span class="token comment">// 2</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token comment">// 1</span>
+</code></pre></div><p>Ref 解包仅发生在被响应式 <code>Object</code> 嵌套的时候。当从 <code>Array</code> 访问 ref 时，不会进行解包：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> arr <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'Hello world'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment">// 这里需要 .value</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>arr<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+</code></pre></div><h2 id="响应式对象解构"><a href="#响应式对象解构" class="header-anchor">#</a> 响应式对象解构</h2> <p>当我们想使用大型响应式对象的一些 property 时，可能很想使用 <strong>ES6 解构</strong>来获取我们想要的 property：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> reactive <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> people <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'hiyuki'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">age</span><span class="token operator">:</span> <span class="token number">26</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">gender</span><span class="token operator">:</span> <span class="token string">'male'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">city</span><span class="token operator">:</span> <span class="token string">'Beijing'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token keyword">let</span> <span class="token punctuation">{</span> name<span class="token punctuation">,</span> age <span class="token punctuation">}</span> <span class="token operator">=</span> people
+</code></pre></div><p>遗憾的是，使用解构的两个 property 的响应性都会丢失。对于这种情况，我们需要将我们的响应式对象转换为一组 ref。这些 ref 将保留与源对象的响应式关联：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> reactive<span class="token punctuation">,</span> toRefs <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> people <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">'hiyuki'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">age</span><span class="token operator">:</span> <span class="token number">26</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">gender</span><span class="token operator">:</span> <span class="token string">'male'</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">city</span><span class="token operator">:</span> <span class="token string">'Beijing'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token keyword">let</span> <span class="token punctuation">{</span> name<span class="token punctuation">,</span> age <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">toRefs</span><span class="token punctuation">(</span>people<span class="token punctuation">)</span>
+age<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token number">30</span> <span class="token comment">// age 现在是个 ref，我们需要使用 .value 进行访问，对其进行修改也将直接作用在原响应式对象中</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>people<span class="token punctuation">.</span>age<span class="token punctuation">)</span> <span class="token comment">// 30</span>
+</code></pre></div><p>你可以在<a href="/api/reactivity-api/refs-api.html">Refs API</a> 章节中了解更多关于 <code>refs</code> 的信息。</p> <h2 id="计算值"><a href="#计算值" class="header-anchor">#</a> 计算值</h2> <p>有时我们需要依赖于其他状态的状态——在 选项式 API 中，这是用组件计算属性处理的，在新的组合式 API 中，我们可以使用 <code>computed</code> 函数直接创建计算值：它接受 getter 函数并为 getter 返回的值返回一个不可变的响应式 ref 对象。</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> ref<span class="token punctuation">,</span> computed <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> plusOne <span class="token operator">=</span> <span class="token function">computed</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> count<span class="token punctuation">.</span>value <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>plusOne<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token comment">// 2</span>
+
+plusOne<span class="token punctuation">.</span>value<span class="token operator">++</span> <span class="token comment">// error</span>
+</code></pre></div><p>或者，可以使用一个带有 get 和 set 函数的对象来创建一个可写的 ref 对象。</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> ref<span class="token punctuation">,</span> computed <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> plusOne <span class="token operator">=</span> <span class="token function">computed</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function-variable function">get</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> count<span class="token punctuation">.</span>value <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">set</span><span class="token operator">:</span> <span class="token parameter">val</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    count<span class="token punctuation">.</span>value <span class="token operator">=</span> val <span class="token operator">-</span> <span class="token number">1</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+plusOne<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token number">1</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token comment">// 0</span>
+</code></pre></div><h2 id="watcheffect"><a href="#watcheffect" class="header-anchor">#</a> <code>watchEffect</code></h2> <p>为了根据响应式状态自动应用和重新应用副作用，我们可以使用 <code>watchEffect</code> 函数。它立即执行传入的一个函数，同时响应式追踪其依赖，并在其依赖变更时重新运行该函数。</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+<span class="token function">watchEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment">// -&gt; logs 0</span>
+
+<span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  count<span class="token punctuation">.</span>value<span class="token operator">++</span>
+  <span class="token comment">// -&gt; logs 1</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span>
+</code></pre></div><h3 id="停止侦听"><a href="#停止侦听" class="header-anchor">#</a> 停止侦听</h3> <p>当 <code>watchEffect</code> 在组件的 <a href="/guide/composition-api/composition-api.html#Setup">setup()</a> 函数或<a href="/guide/composition-api/composition-api.html#生命周期钩子">生命周期钩子</a>被调用时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。</p> <p>在一些情况下，也可以显式调用返回值以停止侦听：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> stop <span class="token operator">=</span> <span class="token function">watchEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">/* ... */</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// later</span>
+<span class="token function">stop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre></div><h3 id="清除副作用"><a href="#清除副作用" class="header-anchor">#</a> 清除副作用</h3> <p>有时副作用函数会执行一些异步的副作用，这些响应需要在其失效时清除 (即完成之前状态已改变了) 。所以侦听副作用传入的函数可以接收一个 <code>onInvalidate</code> 函数作入参，用来注册清理失效时的回调。当以下情况发生时，这个失效回调会被触发：</p> <ul><li>副作用即将重新执行时</li> <li>侦听器被停止 (如果在 <code>setup()</code> 或生命周期钩子函数中使用了 <code>watchEffect</code>，则在组件卸载时)</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">watchEffect</span><span class="token punctuation">(</span><span class="token parameter">onInvalidate</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> token <span class="token operator">=</span> <span class="token function">performAsyncOperation</span><span class="token punctuation">(</span>id<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+  <span class="token function">onInvalidate</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token comment">// id has changed or watcher is stopped.</span>
+    <span class="token comment">// invalidate previously pending async operation</span>
+    token<span class="token punctuation">.</span><span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><p>之所以是通过传入一个函数去注册失效回调，而不是从回调返回它，是因为返回值对于异步错误处理很重要。</p> <p>在执行数据请求时，副作用函数往往是一个异步函数：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> data <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">)</span>
+<span class="token function">watchEffect</span><span class="token punctuation">(</span><span class="token keyword">async</span> <span class="token parameter">onInvalidate</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token function">onInvalidate</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token comment">/* ... */</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment">// 在Promise解析之前注册清除函数</span>
+  data<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchData</span><span class="token punctuation">(</span>props<span class="token punctuation">.</span>id<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><p>我们知道异步函数都会隐式地返回一个 Promise，但是清理函数必须要在 Promise 被 resolve 之前被注册。</p> <h3 id="副作用刷新时机"><a href="#副作用刷新时机" class="header-anchor">#</a> 副作用刷新时机</h3> <p>默认情况下，数据发生变更时，关联的副作用会被推入异步队列中，进行异步刷新，这样可以避免同一个“tick” 中多个状态改变导致的不必要的重复调用。在核心的具体实现中，组件的 <code>render</code> 函数也是一个被侦听的副作用。当一个用户定义的副作用函数进入队列时，默认情况下，会在所有的组件 <code>render</code> 前执行：</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{ count }}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createComponent<span class="token punctuation">,</span> ref<span class="token punctuation">,</span> watchEffect <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+    <span class="token function">watchEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>count<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      count
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>在这个例子中：</p> <ul><li><code>count</code> 会在初始运行时同步打印出来</li> <li>更改 <code>count</code> 时，将在组件<strong>更新前</strong>执行副作用。</li></ul> <p>如果需要在组件更新(例如：当与<a href="/guide/composition-api/composition-api.html#模板引用">模板引用</a>一起)后重新运行侦听器副作用，我们可以传递带有 <code>flush</code> 选项的附加 <code>options</code> 对象 (默认为 <code>'pre'</code>)：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// 在组件更新后触发，这样你就可以访问更新的 DOM。</span>
+<span class="token comment">// 注意：这也将推迟副作用的初始运行，直到组件的首次渲染完成。</span>
+<span class="token function">watchEffect</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token comment">/* 访问视图 */</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token literal-property property">flush</span><span class="token operator">:</span> <span class="token string">'post'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+</code></pre></div><p><code>flush</code> 选项还接受 <code>sync</code>，这将强制效果始终同步触发。然而，这是低效的，应该很少需要。</p> <p>与此同时，我们还提供了 <code>watchPostEffect</code> 和 <code>watchSyncEffect</code> 别名用来让代码意图更加明显。</p> <h2 id="watch"><a href="#watch" class="header-anchor">#</a> <code>watch</code></h2> <p><code>watch</code> API 相当于选项式 API 中的 <code>watch property</code>。<code>watch</code> 需要侦听特定的数据源，并在回调函数中执行副作用。默认情况下，它也是惰性的，即只有当被侦听的源发生变化时才执行回调。</p> <ul><li>与 <a href="#watcheffect">watchEffect</a> 比较，<code>watch</code> 允许我们：
+<ul><li>懒执行副作用；</li> <li>更具体地说明什么状态应该触发侦听器重新运行；</li> <li>访问侦听状态变化前后的值。</li></ul></li></ul> <h3 id="侦听单个数据源"><a href="#侦听单个数据源" class="header-anchor">#</a> 侦听单个数据源</h3> <p>侦听器数据源可以是返回值的 getter 函数，也可以直接是 <code>ref</code>：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// 侦听一个 getter</span>
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token function">watch</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">.</span>count<span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter">count<span class="token punctuation">,</span> prevCount</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token comment">/* ... */</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// 直接侦听ref</span>
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token function">watch</span><span class="token punctuation">(</span>count<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">count<span class="token punctuation">,</span> prevCount</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token comment">/* ... */</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h3 id="侦听多个数据源"><a href="#侦听多个数据源" class="header-anchor">#</a> 侦听多个数据源</h3> <p>侦听器还可以使用数组同时侦听多个源：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> firstName <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> lastName <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token function">watch</span><span class="token punctuation">(</span><span class="token punctuation">[</span>firstName<span class="token punctuation">,</span> lastName<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">newValues<span class="token punctuation">,</span> prevValues</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>newValues<span class="token punctuation">,</span> prevValues<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+firstName<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'John'</span> <span class="token comment">// logs: [&quot;John&quot;, &quot;&quot;] [&quot;&quot;, &quot;&quot;]</span>
+lastName<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'Smith'</span> <span class="token comment">// logs: [&quot;John&quot;, &quot;Smith&quot;] [&quot;John&quot;, &quot;&quot;]</span>
+</code></pre></div><p>尽管如此，如果你在同一个函数里同时改变这些被侦听的来源，侦听器仍只会执行一次：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> firstName <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+    <span class="token keyword">const</span> lastName <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+  
+    <span class="token function">watch</span><span class="token punctuation">(</span><span class="token punctuation">[</span>firstName<span class="token punctuation">,</span> lastName<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">newValues<span class="token punctuation">,</span> prevValues</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>newValues<span class="token punctuation">,</span> prevValues<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  
+    <span class="token keyword">const</span> <span class="token function-variable function">changeValues</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      firstName<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'John'</span>
+      lastName<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'Smith'</span>
+      <span class="token comment">// 打印 [&quot;John&quot;, &quot;Smith&quot;] [&quot;&quot;, &quot;&quot;]</span>
+    <span class="token punctuation">}</span>
+  
+    <span class="token keyword">return</span> <span class="token punctuation">{</span> changeValues <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><p>注意多个同步更改只会触发一次侦听器。</p> <p>通过更改设置 <code>flush: 'sync'</code>，我们可以为每个更改都强制触发侦听器，尽管这通常是不推荐的。或者，可以用 <a href="/api/global-api.html#nexttick">nextTick</a> 等待侦听器在下一步改变之前运行。例如：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> <span class="token function-variable function">changeValues</span> <span class="token operator">=</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  firstName<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'John'</span> <span class="token comment">// 打印 [&quot;John&quot;, &quot;&quot;] [&quot;&quot;, &quot;&quot;]</span>
+  <span class="token keyword">await</span> <span class="token function">nextTick</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  lastName<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'Smith'</span> <span class="token comment">// 打印 [&quot;John&quot;, &quot;Smith&quot;] [&quot;John&quot;, &quot;&quot;]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h3 id="侦听响应式对象"><a href="#侦听响应式对象" class="header-anchor">#</a> 侦听响应式对象</h3> <p>为了侦听深度嵌套的对象或数组中 property 变化，我们需要将 <code>deep</code> 选项设置为 true：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> 
+  <span class="token literal-property property">id</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">attributes</span><span class="token operator">:</span> <span class="token punctuation">{</span> 
+    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">watch</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> prevState</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'not deep'</span><span class="token punctuation">,</span> state<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">,</span> prevState<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+<span class="token function">watch</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> prevState</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'deep'</span><span class="token punctuation">,</span> state<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">,</span> prevState<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span> <span class="token literal-property property">deep</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+state<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name <span class="token operator">=</span> <span class="token string">'Alex'</span> <span class="token comment">// 日志: &quot;deep&quot; &quot;Alex&quot; &quot;Alex&quot;</span>
+</code></pre></div><p>然而，侦听一个响应式对象或数组将始终返回该对象的引用。为了完全侦听深度嵌套的对象和数组，可能需要对值进行深拷贝。这可以通过诸如 <code>lodash.cloneDeep</code> 这样的实用工具来实现：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> _ <span class="token keyword">from</span> <span class="token string">'lodash'</span>
+
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">id</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">attributes</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">watch</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> _<span class="token punctuation">.</span><span class="token function">cloneDeep</span><span class="token punctuation">(</span>state<span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> prevState</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">,</span> prevState<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+state<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name <span class="token operator">=</span> <span class="token string">'Alex'</span> <span class="token comment">// 日志: &quot;Alex&quot; &quot;&quot;</span>
+</code></pre></div><p>我们也可以直接给 <code>watch()</code> 传入一个响应式对象，这种情况下会隐式地强制开启 <code>deep</code> 选项，确保嵌套的深层变更能够被监听到：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> 
+  <span class="token literal-property property">id</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">attributes</span><span class="token operator">:</span> <span class="token punctuation">{</span> 
+    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">watch</span><span class="token punctuation">(</span>
+  state<span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter">state<span class="token punctuation">,</span> prevState</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'implicit deep'</span><span class="token punctuation">,</span> state<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">,</span> prevState<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+state<span class="token punctuation">.</span>attributes<span class="token punctuation">.</span>name <span class="token operator">=</span> <span class="token string">'Alex'</span> <span class="token comment">// 日志: &quot;implicit deep&quot; &quot;Alex&quot; &quot;Alex&quot;</span>
+</code></pre></div><blockquote><p>需要注意的是，在侦听使用 <code>reactive()</code> 创建的响应式对象时，受数据响应限制影响，在改变数组或使用 <code>set()</code> 新增对象属性时，存在和 Vue3 中表现不一致的情况，详情查看<a href="#%E6%95%B0%E6%8D%AE%E5%93%8D%E5%BA%94%E9%99%90%E5%88%B6%E5%B8%A6%E6%9D%A5%E7%9A%84%E5%B7%AE%E5%BC%82">这里</a></p></blockquote> <h3 id="立即回调的侦听器"><a href="#立即回调的侦听器" class="header-anchor">#</a> 立即回调的侦听器</h3> <p>同选项式 <code>watch</code> 一致，我们也可以通过传递 <code>immediate</code> 选项让侦听回调立即执行：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span> 
+  <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">watch</span><span class="token punctuation">(</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">.</span>count<span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token parameter">value<span class="token punctuation">,</span> oldValue</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'immediate'</span><span class="token punctuation">,</span> value<span class="token punctuation">,</span> oldValue<span class="token punctuation">)</span> <span class="token comment">// 日志: &quot;immediate&quot; 0 undefined</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span> <span class="token literal-property property">immediate</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+</code></pre></div><h3 id="与-watcheffect-共享的行为"><a href="#与-watcheffect-共享的行为" class="header-anchor">#</a> 与 watchEffect 共享的行为</h3> <p><code>watch</code> 与 <code>watchEffect</code> 共享<a href="#%E5%81%9C%E6%AD%A2%E4%BE%A6%E5%90%AC">停止侦听</a>，<a href="#%E6%B8%85%E9%99%A4%E5%89%AF%E4%BD%9C%E7%94%A8">清除副作用</a> (相应地 <code>onInvalidate</code> 会作为回调的第三个参数传入)、<a href="#%E5%89%AF%E4%BD%9C%E7%94%A8%E5%88%B7%E6%96%B0%E6%97%B6%E6%9C%BA">副作用刷新时机</a>行为。</p> <h2 id="响应式-api-与-vue3-中的区别"><a href="#响应式-api-与-vue3-中的区别" class="header-anchor">#</a> 响应式 API 与 Vue3 中的区别</h2> <p>下面我们来总结一下 Mpx 中响应式 API 与 Vue3 中的区别：</p> <ul><li>不支持 <code>raw</code> 相关 API（<code>markRaw</code> 除外，我们提供了该 API 用于跳过部分数据的响应式转换）</li> <li>不支持 <code>readonly</code> 相关 API</li> <li>不支持 <code>watchEffect</code>、<code>watch</code>、<code>computed</code> 的调试选项</li> <li>不支持对 <code>map</code>、<code>set</code> 等集合类型进行响应式转换</li> <li>受到 <code>Object.defineProperty</code> 实现带来的数据响应限制影响</li></ul> <h3 id="数据响应限制带来的差异"><a href="#数据响应限制带来的差异" class="header-anchor">#</a> 数据响应限制带来的差异</h3> <p>同 Vue2 一致，Mpx 无法感知到对象 property 的添加或移除，我们暴露了 <code>set</code> 和 <code>del</code> API 来让用户显式地进行相关操作：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> ref<span class="token punctuation">,</span> watchSyncEffect<span class="token punctuation">,</span> set<span class="token punctuation">,</span> del <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">watchSyncEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// {&quot;count&quot;:0}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">set</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>value<span class="token punctuation">,</span> <span class="token string">'hello'</span><span class="token punctuation">,</span> <span class="token string">'world'</span><span class="token punctuation">)</span> <span class="token comment">// {&quot;count&quot;:0,&quot;hello&quot;:&quot;world&quot;}</span>
+
+<span class="token function">del</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>value<span class="token punctuation">,</span> <span class="token string">'count'</span><span class="token punctuation">)</span> <span class="token comment">// {&quot;hello&quot;:&quot;world&quot;}</span>
+</code></pre></div><p>同样，我们需要使用 <code>set</code> 或数组原型方法对数组进行修改：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> ref<span class="token punctuation">,</span> watchSyncEffect<span class="token punctuation">,</span> set <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token function">watchSyncEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// [0,1,2,3]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">set</span><span class="token punctuation">(</span>state<span class="token punctuation">.</span>value<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span> <span class="token comment">// [0,3,2,3]</span>
+
+state<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span> <span class="token comment">// [0,3,2,3,4]</span>
+</code></pre></div><p>可能你已经注意到，上面两个示例当中我们都使用了 <code>ref()</code> 进行响应式数据创建，这是有原因的，在新的响应式 API 模式下，我们使用 <code>reactive()</code> 创建的响应式数据在上述情况下仍然无法绕过 Vue2 设计中的数据响应限制，即使你使用了 <code>set</code> 或数组原型方法：</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> reactive<span class="token punctuation">,</span> watchSyncEffect<span class="token punctuation">,</span> set <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token function">watchSyncEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>state<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// [0,1,2,3]</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token function">set</span><span class="token punctuation">(</span>state<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span> <span class="token comment">// 不会触发 watchEffect</span>
+
+state<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span> <span class="token comment">// 不会触发 watchEffect</span>
+</code></pre></div><p>对于对象和在模板中使用也是同理：</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span> <span class="token attr-name">bindtap</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>addCount2<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{state.count}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{state.count2}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+  <span class="token keyword">import</span> <span class="token punctuation">{</span> createComponent<span class="token punctuation">,</span> reactive<span class="token punctuation">,</span> set <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+  
+  <span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token function">setup</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token function">reactive</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">count</span><span class="token operator">:</span> <span class="token number">0</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+      <span class="token keyword">const</span> <span class="token function-variable function">addCount2</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        <span class="token function">set</span><span class="token punctuation">(</span>state<span class="token punctuation">,</span> <span class="token string">'count2'</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span> <span class="token comment">// 不会触发视图更新</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        state<span class="token punctuation">,</span>
+        addCount2
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>为什么会产生这个现象呢？原因在于：基于 <code>Object.defineProperty</code> 实现的数据响应系统中，我们会对对象的每个已有属性创建了一个 <code>Dep</code> 对象，在对该属性进行 <code>get</code> 访问时通过这个对象将其与依赖它的观察者 <code>ReactiveEffect</code> 关联起来，并在 <code>set</code> 操作时触发关联 <code>ReactiveEffect</code> 的更新，这是我们大家都知道的数据响应的基本原理。但是对于新增/删除对象属性和修改数组的场景，我们无法事先定义当前不存在属性的 <code>get/set</code> (当然这在 <code>proxy</code> 当中是可行的)，因此我们会把对象或者数组本身作为一个数据依赖创建 <code>Dep</code> 对象，<strong>通过父级访问</strong>该数据时定义的 <code>get/set</code> 将其关联到对应的 <code>ReactiveEffect</code>，并在对数据进行新增/删除属性或数组操作时通过数据本身持有的 <code>Dep</code> 对象触发关联 <code>ReactiveEffect</code> 的更新，如下图所示：</p> <p><img src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/ReactiveEffect.png" alt="数据响应原理"></p> <p>需要注意的是，<strong>通过父级访问</strong>是建立 <code>Dep</code> 与 <code>ReactiveEffect</code> 关联关系的先决条件，在选项式 API 中，我们访问组件的响应式数据都需要通过 <code>this</code> 进行访问，相当于这些数据都存在 <code>this</code> 这个必要的<strong>父级</strong>，因此我们在使用 <code>$set/$delete</code> 进行对对象进行新增/删除属性或对数组进行修改时都能得到符合预期的结果，唯一的限制在于不能新增/删除根级数据属性，原因就在于 <code>this</code> 不存在访问它的父级。</p> <p>但是在组合式 API 中，我们不需要通过 <code>this</code> 访问响应式数据，因此通过 <code>reactive()</code> 创建的响应式数据本身就是根级数据，我们自然无法通过上述方式感知到根级数据自身的变化（在 Vue3 中，基于 <code>proxy</code> 提供的强大能力响应式系统能够精确地感知到数据属性，甚至是当前不存在属性的访问与修改，不需要为数据自身建立 <code>Dep</code> 对象，自然也不存在相关问题）。</p> <p>在这种情况下，我们就需要用 <code>ref()</code> 创建响应式数据，因为 <code>ref</code> 创建了一个包装对象，我们永远需要通过 <code>.value</code> 来访问其持有的数据（不管是显式访问还是隐式自动解包），这样就能保证 <code>ref</code> 数据自身的变化能够被响应式系统感知，因此也不会遇到上面描述的问题。</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/guide/composition-api/composition-api.html" class="prev">
+        组合式 API
+      </a></span> <span class="next"><a href="/guide/tool/ts.html">
+        使用TypeScript开发小程序
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/98.939cb6ef.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>

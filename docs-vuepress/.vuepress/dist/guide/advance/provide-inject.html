@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>依赖注入（Provide/Inject） | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/76.50d84c61.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>基础</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/basic/start.html" class="sidebar-link">快速开始</a></li><li><a href="/guide/basic/intro.html" class="sidebar-link">介绍</a></li><li><a href="/guide/basic/single-file.html" class="sidebar-link">单文件开发</a></li><li><a href="/guide/basic/ide.html" class="sidebar-link">IDE 高亮配置</a></li><li><a href="/guide/basic/template.html" class="sidebar-link">模板语法</a></li><li><a href="/guide/basic/css.html" class="sidebar-link">CSS 处理</a></li><li><a href="/guide/basic/reactive.html" class="sidebar-link">数据响应</a></li><li><a href="/guide/basic/class-style-binding.html" class="sidebar-link">类名样式绑定</a></li><li><a href="/guide/basic/conditional-render.html" class="sidebar-link">条件渲染</a></li><li><a href="/guide/basic/list-render.html" class="sidebar-link">列表渲染</a></li><li><a href="/guide/basic/event.html" class="sidebar-link">事件处理</a></li><li><a href="/guide/basic/two-way-binding.html" class="sidebar-link">双向绑定</a></li><li><a href="/guide/basic/component.html" class="sidebar-link">自定义组件</a></li><li><a href="/guide/basic/refs.html" class="sidebar-link">获取组件实例/节点信息</a></li><li><a href="/guide/basic/option-chain.html" class="sidebar-link">模版内可选链表达式</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>进阶</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/advance/store.html" class="sidebar-link">状态管理（store）</a></li><li><a href="/guide/advance/pinia.html" class="sidebar-link">状态管理（pinia）</a></li><li><a href="/guide/advance/mixin.html" class="sidebar-link">使用 mixin</a></li><li><a href="/guide/advance/npm.html" class="sidebar-link">使用npm</a></li><li><a href="/guide/advance/subpackage.html" class="sidebar-link">使用分包</a></li><li><a href="/guide/advance/async-subpackage.html" class="sidebar-link">分包异步化</a></li><li><a href="/guide/advance/platform.html" class="sidebar-link">跨平台</a></li><li><a href="/guide/advance/i18n.html" class="sidebar-link">国际化i18n</a></li><li><a href="/guide/advance/size-report.html" class="sidebar-link">包体积分析</a></li><li><a href="/guide/advance/image-process.html" class="sidebar-link">图像资源处理</a></li><li><a href="/guide/advance/progressive.html" class="sidebar-link">原生渐进迁移</a></li><li><a href="/guide/advance/ability-compatible.html" class="sidebar-link">原生能力兼容</a></li><li><a href="/guide/advance/plugin.html" class="sidebar-link">小程序插件</a></li><li><a href="/guide/advance/custom-output-path.html" class="sidebar-link">自定义路径</a></li><li><a href="/guide/advance/utility-first-css.html" class="sidebar-link">使用原子类</a></li><li><a href="/guide/advance/ssr.html" class="sidebar-link">SSR</a></li><li><a href="/guide/advance/provide-inject.html" aria-current="page" class="active sidebar-link">依赖注入（Provide/Inject）</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/advance/provide-inject.html#适用场景" class="sidebar-link">适用场景</a></li><li class="sidebar-sub-header"><a href="/guide/advance/provide-inject.html#provide-提供" class="sidebar-link">Provide 提供</a></li><li class="sidebar-sub-header"><a href="/guide/advance/provide-inject.html#inject-注入" class="sidebar-link">Inject 注入</a></li><li class="sidebar-sub-header"><a href="/guide/advance/provide-inject.html#避免注入名潜在冲突" class="sidebar-link">避免注入名潜在冲突</a></li><li class="sidebar-sub-header"><a href="/guide/advance/provide-inject.html#ts-类型支持" class="sidebar-link">TS 类型支持</a></li><li class="sidebar-sub-header"><a href="/guide/advance/provide-inject.html#跨端差异" class="sidebar-link">跨端差异</a></li></ul></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>组合式 API</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/composition-api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/guide/composition-api/reactive-api.html" class="sidebar-link">响应式 API</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>工具</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/tool/ts.html" class="sidebar-link">使用TypeScript开发小程序</a></li><li><a href="/guide/tool/unit-test.html" class="sidebar-link">单元测试</a></li><li><a href="/guide/tool/e2e-test.html" class="sidebar-link">E2E自动化测试</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/guide/extend" class="sidebar-heading clickable"><span>拓展</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/extend/fetch.html" class="sidebar-link">网络请求</a></li><li><a href="/guide/extend/api-proxy.html" class="sidebar-link">Api代理</a></li><li><a href="/guide/extend/mock.html" class="sidebar-link">数据 Mock</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>理解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/understand/runtime.html" class="sidebar-link">Mpx运行时增强原理</a></li><li><a href="/guide/understand/compile.html" class="sidebar-link">Mpx编译构建原理</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>迁移</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/migrate/2.9.html" class="sidebar-link">从 2.8 升级至 2.9</a></li><li><a href="/guide/migrate/2.8.html" class="sidebar-link">从 2.7 升级至 2.8</a></li><li><a href="/guide/migrate/2.7.html" class="sidebar-link">从旧版本迁移至 2.7</a></li><li><a href="/guide/migrate/mpx-cli-3.html" class="sidebar-link">mpx-cli v2 迁移到 v3</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="依赖注入-provide-inject"><a href="#依赖注入-provide-inject" class="header-anchor">#</a> 依赖注入（Provide/Inject）</h1> <h2 id="适用场景"><a href="#适用场景" class="header-anchor">#</a> 适用场景</h2> <p>通常情况下，从父组件向子组件传递数据时，我们会使用 props 向下传递。如果在一颗组件层级嵌套很深的组件树中，某个深层的子组件依赖一个较远的祖先组件中的部分数据。在这种情况下，如果仅使用 props 则必须将其沿着组件链路逐级传递下去，这就是 <strong>prop 逐级透传（prop-drilling）</strong> 问题。</p> <p>使用 <code>provide</code> 和 <code>inject</code> 可以帮助我们解决这一麻烦问题：一个父组件相对于其所有的后代组件，会作为<strong>依赖提供者</strong>。任何后代的组件树，无论层级有多深，都可以<strong>注入</strong>由父组件提供给整条链路的依赖。</p> <p><img src="https://s3-gz01.didistatic.com/packages-mait/img/bLipGWmlcm1732166788438.png" alt="组件间 provide-inject 示意图"></p> <h2 id="provide-提供"><a href="#provide-提供" class="header-anchor">#</a> Provide 提供</h2> <h3 id="组合式语法"><a href="#组合式语法" class="header-anchor">#</a> 组合式语法</h3> <p>在组合式语法中，需要使用到 <code>provide()</code> 函数，<code>provide()</code> 函数接收两个必填参数：</p> <ol><li>第一个参数表示<strong>注入名</strong>，是一个字符串或者 <code>Symbol</code>。后代组件会用注入名来查找期望注入的值，一个组件可以多次调用 <code>provide()</code>，使用不同的注入名，注入不同的依赖值。使用 <code>Symbol</code> 作为注入名时，只能使用组合式语法而非选项式语法。</li> <li>第二个参数表示<strong>提供值</strong>，值可以是任意类型，包括响应式的状态，比如一个 <code>ref</code>、<code>reactive</code> 或者 <code>computed</code> 计算值。</li></ol> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token operator">&lt;</span>script setup<span class="token operator">&gt;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> computed<span class="token punctuation">,</span> provide<span class="token punctuation">,</span> ref <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token comment">// 静态数据</span>
+<span class="token function">provide</span><span class="token punctuation">(</span><span class="token comment">/* 注入名 */</span> <span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token comment">/* 值 */</span> <span class="token string">'hello!'</span><span class="token punctuation">)</span>
+
+<span class="token comment">// 使用 Symbol 作为注入名</span>
+<span class="token keyword">const</span> key <span class="token operator">=</span> <span class="token function">Symbol</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token function">provide</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> <span class="token string">'hello!'</span><span class="token punctuation">)</span>
+
+<span class="token comment">// 响应式数据</span>
+<span class="token keyword">const</span> count <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> double <span class="token operator">=</span> <span class="token function">computed</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> count<span class="token punctuation">.</span>value <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token function">provide</span><span class="token punctuation">(</span><span class="token string">'count'</span><span class="token punctuation">,</span> count<span class="token punctuation">)</span>
+<span class="token function">provide</span><span class="token punctuation">(</span><span class="token string">'double'</span><span class="token punctuation">,</span> double<span class="token punctuation">)</span>
+
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">&gt;</span>
+</code></pre></div><h3 id="选项式语法"><a href="#选项式语法" class="header-anchor">#</a> 选项式语法</h3> <p>选项式语法的 <code>setup()</code> 中，用法和组合式 API 一致。另外针对选项式语法，我们也提供了 <code>provide</code> 选项，它是<strong>一个对象或返回一个对象的函数</strong>。</p> <p>对于 <code>provide</code> 对象上的每一个属性，后代组件会用其 key 为注入名查找期望注入的值，属性的值就是要提供的数据。</p> <p>如果我们需要提供依赖当前组件实例的状态 (比如在 <code>data</code> 属性中定义的数据)，那么需要使用函数形式的 <code>provide</code> 选项。需要注意的是，这 <strong>并不会</strong> 使注入保持响应性，如果需要保证注入方和供给方之间的响应性链接，我们需要使用 <code>computed()</code> 函数提供一个计算属性。</p> <div class="language-ts extra-class"><div class="highlight-lines"><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><div class="highlighted"> </div><br><br><br><br><br></div><pre class="language-ts"><code><span class="token operator">&lt;</span>script<span class="token operator">&gt;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createComponent<span class="token punctuation">,</span> computed <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  data<span class="token operator">:</span> <span class="token punctuation">{</span>
+    count<span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// 1. 静态数据可以选择直接使用对象形式</span>
+  provide<span class="token operator">:</span> <span class="token punctuation">{</span>
+    message<span class="token operator">:</span> <span class="token string">'hello'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// 2. 选择使用函数的形式，可以访问到 `this`</span>
+  <span class="token function">provide</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      count<span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>count
+      <span class="token comment">// 显式提供一个计算属性</span>
+      message<span class="token operator">:</span> <span class="token function">computed</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>count <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">&gt;</span>
+</code></pre></div><h3 id="应用级顶层-provide"><a href="#应用级顶层-provide" class="header-anchor">#</a> 应用级顶层 provide</h3> <p>前面介绍的是在一个组件中提供依赖，我们还可以在整个应用层面提供依赖，这样整个应用中所有组件都可以使用。</p> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> createApp <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createApp</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment">// 应用层 provide</span>
+  <span class="token function">provide</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      <span class="token string-property property">'appMessage'</span><span class="token operator">:</span> <span class="token string">'provide from App scope!'</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h2 id="inject-注入"><a href="#inject-注入" class="header-anchor">#</a> Inject 注入</h2> <h3 id="组合式语法"><a href="#组合式语法" class="header-anchor">#</a> 组合式语法</h3> <p><code>inject()</code> 函数最多接收三个参数：</p> <ul><li>第一个参数必填，表示<strong>注入名</strong>，字符串类型。</li> <li>第二个参数可选，表示<strong>默认值</strong>。
+<ul><li>如果在注入一个值时不确定是否有提供者，那么应该声明一个默认值。如果既没有提供者也没有默认值，则会抛出一个运行时警告。</li></ul></li> <li>第三个参数可选，表示<strong>是否将默认值视为工厂函数</strong>，布尔类型。
+<ul><li>某些场景下，默认值可能需要通过调用一个函数或初始化一个类来生成，或者某些非基础类型数据创建开销比较大，请使用工厂函数来创建默认值。</li></ul></li></ul> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token operator">&lt;</span>script setup<span class="token operator">&gt;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> inject <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token comment">// 注入 message 依赖</span>
+<span class="token keyword">const</span> value <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span><span class="token string">'message'</span><span class="token punctuation">)</span>
+<span class="token comment">// 创建默认值</span>
+<span class="token keyword">const</span> value <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span><span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token string">'default value'</span><span class="token punctuation">)</span>
+<span class="token comment">// 使用工厂函数创建默认值</span>
+<span class="token keyword">const</span> value <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span><span class="token string">'key'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">new</span> <span class="token class-name">ExpensiveClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">&gt;</span>
+</code></pre></div><p>如果提供的值是一个 ref，注入进来的会是该 ref 对象，而不会自动解包为其内部的值。这使得注入方能够通过 ref 对象和提供方保持响应性链接。</p> <h3 id="选项式语法"><a href="#选项式语法" class="header-anchor">#</a> 选项式语法</h3> <p>选项式语法的 <code>setup()</code> 中，用法和组合式 API 一致。另外针对选项式语法，我们也提供了 <code>inject</code> 选项，它是<strong>一个数组或一个对象</strong>。</p> <ol><li><strong>数组</strong>形式使用。数组中的每一项对应一个注入名，注入的属性会以同名的 key 暴露到组件实例上。如下示例中，注入名 <code>&quot;message&quot;</code> 在注入后以 <code>this.message</code> 的形式暴露。另外，<code>inject</code> 会在组件自身的状态<strong>之前</strong>被解析，意味着你可以在 <code>data()</code> 中访问到注入的属性。</li></ol> <div class="language-ts extra-class"><div class="highlight-lines"><br><br><br><br><br><div class="highlighted"> </div><br><br><br><br><br><br><br><br><br><br></div><pre class="language-ts"><code><span class="token operator">&lt;</span>script<span class="token operator">&gt;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createComponent <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment">// 数组形式使用 `inject` 选项</span>
+  inject<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token string">'count'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 可以在 `data()` 中访问到注入的属性</span>
+      fullMessage<span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>message<span class="token punctuation">,</span>
+      fullCount<span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>count
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">&gt;</span>
+</code></pre></div><ol start="2"><li><strong>对象</strong>形式使用。相比数组形式，对象形式支持注入<strong>别名</strong>和<strong>默认值</strong>。如下示例，通过 <code>from</code> 属性指定原注入名，通过 <code>default</code> 属性指定默认值。</li></ol> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token operator">&lt;</span>script<span class="token operator">&gt;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createComponent <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  inject<span class="token operator">:</span> <span class="token punctuation">{</span>
+    myCount<span class="token operator">:</span> <span class="token string">'count'</span><span class="token punctuation">,</span> <span class="token comment">// 按注入名 'count' 注入</span>
+    message<span class="token operator">:</span> <span class="token punctuation">{</span>
+      from<span class="token operator">:</span> <span class="token string">'message'</span><span class="token punctuation">,</span> <span class="token comment">// 'message' 是原注入名，当与原注入名同名时，这个属性是可选的</span>
+      <span class="token keyword">default</span><span class="token operator">:</span> <span class="token string">'default value'</span> <span class="token comment">// 默认值</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    user<span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token comment">// 与原注入名 'user' 同名</span>
+      <span class="token function-variable function">default</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> name<span class="token operator">:</span> <span class="token string">'Wang'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment">// 使用工厂函数创建默认值</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">&gt;</span>
+</code></pre></div><h2 id="避免注入名潜在冲突"><a href="#避免注入名潜在冲突" class="header-anchor">#</a> 避免注入名潜在冲突</h2> <p>如果你正在构建大型的应用，包含非常多的依赖提供，那么随处定义的注入名容易存在潜在的同名冲突。在 Mpx 实现中，同名的注入名会覆盖之前已有的注入名对应的提供值。</p> <p>针对大型应用的最佳实践，我们通常推荐在一个单独的文件中导出这些注入名，可以结合业务模块功能来统一注入名的命名和管理规范。<em>以下示例仅供参考，具体实现请依据自身实际场景确定。</em></p> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token comment">/** 推荐创建一个单独的文件来管理和导出注入名 */</span>
+
+<span class="token comment">// 1. 使用枚举类型</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> InjectionKeys <span class="token operator">=</span> <span class="token punctuation">{</span>
+  user<span class="token operator">:</span> <span class="token string">'user'</span><span class="token punctuation">,</span>
+  auth<span class="token operator">:</span> <span class="token string">'auth'</span><span class="token punctuation">,</span>
+  product<span class="token operator">:</span> <span class="token string">'product'</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 2. 按业务模块功能划分命名，不容易命名冲突，可读性高</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> InjectionKeys <span class="token operator">=</span> <span class="token punctuation">{</span>
+  user<span class="token operator">:</span> <span class="token punctuation">{</span>
+    service<span class="token operator">:</span> <span class="token string">'user:service'</span><span class="token punctuation">,</span>
+    store<span class="token operator">:</span> <span class="token string">'user:store'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  auth<span class="token operator">:</span> <span class="token punctuation">{</span>
+    service<span class="token operator">:</span> <span class="token string">'auth:service'</span><span class="token punctuation">,</span>
+    token<span class="token operator">:</span> <span class="token string">'auth:token'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  product<span class="token operator">:</span> <span class="token punctuation">{</span>
+    list<span class="token operator">:</span> <span class="token string">'product:list'</span><span class="token punctuation">,</span>
+    details<span class="token operator">:</span> <span class="token string">'product:details'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 3. 使用 Symbol 创建唯一注入名，或再结合命名空间</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> InjectionKeys <span class="token operator">=</span> <span class="token punctuation">{</span>
+  user<span class="token operator">:</span> <span class="token function">Symbol</span><span class="token punctuation">(</span><span class="token string">'user'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  auth<span class="token operator">:</span> <span class="token function">Symbol</span><span class="token punctuation">(</span><span class="token string">'auth'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  product<span class="token operator">:</span> <span class="token function">Symbol</span><span class="token punctuation">(</span><span class="token string">'product'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 4. 自行实现类似 Symbol polyfill 的命名生成函数</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> <span class="token function-variable function">createInjectionKey</span> <span class="token operator">=</span> <span class="token punctuation">(</span>module<span class="token punctuation">,</span> key<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">module</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>key<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> InjectionKeys <span class="token operator">=</span> <span class="token punctuation">{</span>
+  user<span class="token operator">:</span> <span class="token function">createInjectionKey</span><span class="token punctuation">(</span><span class="token string">'user'</span><span class="token punctuation">,</span> <span class="token string">'service'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  auth<span class="token operator">:</span> <span class="token function">createInjectionKey</span><span class="token punctuation">(</span><span class="token string">'auth'</span><span class="token punctuation">,</span> <span class="token string">'token'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  product<span class="token operator">:</span> <span class="token function">createInjectionKey</span><span class="token punctuation">(</span><span class="token string">'product'</span><span class="token punctuation">,</span> <span class="token string">'list'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="ts-类型支持"><a href="#ts-类型支持" class="header-anchor">#</a> TS 类型支持</h2> <p>直接使用字符串注入 key 时，注入值的类型默认推导会是 <code>unknown</code>，需要通过泛型参数显式声明。因为无法保证运行时一定存在这个 provide，所以推导类型也可能是 <code>undefined</code>。当声明一个默认值后，这个 <code>undefined</code> 类型就可以成功被移除。</p> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">&quot;ts&quot;</span><span class="token operator">&gt;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> inject <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">const</span> foo <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">)</span> <span class="token comment">// 类型：unknown</span>
+<span class="token keyword">const</span> foo <span class="token operator">=</span> <span class="token generic-function"><span class="token function">inject</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">)</span> <span class="token comment">// 类型：string | undefined</span>
+<span class="token keyword">const</span> foo <span class="token operator">=</span> <span class="token generic-function"><span class="token function">inject</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">,</span> <span class="token string">'default value'</span><span class="token punctuation">)</span> <span class="token comment">// 类型：string ✅</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">&gt;</span>
+</code></pre></div><p>当然，如果你已经确定注入名肯定被提供了，也可以强制断言。</p> <div class="language-ts extra-class"><pre class="language-ts"><code><span class="token keyword">const</span> foo <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span><span class="token string">'foo'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> <span class="token builtin">string</span>
+</code></pre></div><p>如果使用 <code>Symbol</code> 作为注入名，可以使用我们提供的 <code>InjectionKey</code> 泛型接口，使用它对注入名进行注解或者断言后，可以用来在不同组件之间同步注入值的类型。建议将注入 key 放在单独文件，这样方便在多个组件中导入使用。</p> <div class="language-ts extra-class"><div class="highlight-lines"><br><br><br><div class="highlighted"> </div><br><br><br><br><br><br><br><br></div><pre class="language-ts"><code><span class="token keyword">import</span> <span class="token punctuation">{</span> provide<span class="token punctuation">,</span> inject <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+<span class="token keyword">import</span> <span class="token keyword">type</span> <span class="token punctuation">{</span> InjectionKey <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">const</span> key<span class="token operator">:</span> InjectionKey<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">Symbol</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// 类型注解</span>
+<span class="token comment">// const key = Symbol() as InjectionKey&lt;string&gt; // 类型断言写法等效</span>
+
+<span class="token function">provide</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> <span class="token string">'foo'</span><span class="token punctuation">)</span> <span class="token comment">// 若默认值是非字符串则会 TS 类型报错</span>
+
+<span class="token keyword">const</span> foo <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span> <span class="token comment">// ✅ foo 的类型：string | undefined</span>
+<span class="token keyword">const</span> foo <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> <span class="token string">'default value'</span><span class="token punctuation">)</span> <span class="token comment">// ✅ foo 的类型：string</span>
+<span class="token keyword">const</span> foo <span class="token operator">=</span> <span class="token function">inject</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token comment">// ❌ 默认值是非字符串则会 TS 类型报错</span>
+</code></pre></div><h2 id="跨端差异"><a href="#跨端差异" class="header-anchor">#</a> 跨端差异</h2> <ul><li>Mpx 输出 Web 端后，使用规则与 Vue 一致，<code>provide/inject</code> 的生效范围严格遵行父子组件关系，只有父组件可以成功向子孙组件提供依赖。</li> <li>Mpx 输出小程序端会略有不同，由于小程序原生框架限制，暂时无法在子组件获取真实渲染时的父组件引用关系，所以不能像 Vue 那样基于父组件原型继承来实现 <code>provide</code>。在 Mpx 底层实现中，我们将组件层的 <code>provide</code> 挂载在所属页面实例上，相当于将组件 scope 提升到页面 scope，可以理解成一种“降级模拟”。当然，这并不影响父组件向子孙组件 <code>provide</code> 的能力，只是会额外存在“<strong>副作用</strong>”：同一页面中的组件可以向页面中其他所有在其之后渲染子组件提供依赖。比如同一页面下的组件 A 可以向后渲染的兄弟组件 B 的子孙组件提供数据，这在 Web 端是不允许的。因此，针对小程序端可能出现的“副作用”需要开发者自行保证，可以结合上述注入名的管理优化来规避。</li></ul></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/guide/advance/ssr.html" class="prev">
+        SSR
+      </a></span> <span class="next"><a href="/guide/composition-api/composition-api.html">
+        组合式 API
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/76.50d84c61.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>

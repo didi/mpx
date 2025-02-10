@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>国际化i18n | Mpx框架</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="/favicon.ico">
+    <script type="text/javascript">(function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "jtvvy52wxy");</script>
+    <meta name="description" content="Mpxjs 是滴滴开源的支持跨端开发、深度性能优化的增强型小程序开发框架。使用 Mpxjs 帮助你更好开发小程序，拥有类似 VueJS 的数据响应能力，在降低研发心智负担的同时比原生小程序性能更好，完全基于原生小程序语法保障了最少的坑，一次开发多端生效同时支持微信小程序、支付宝小程序、抖音小程序、百度小程序、Web H5。">
+    
+    <link rel="preload" href="/assets/css/0.styles.f22478ca.css" as="style"><link rel="preload" href="/assets/js/app.84c88b57.js" as="script"><link rel="preload" href="/assets/js/7.01e4e942.js" as="script"><link rel="preload" href="/assets/js/3.145e69cd.js" as="script"><link rel="preload" href="/assets/js/1.4f7abe8f.js" as="script"><link rel="preload" href="/assets/js/68.ebe4213c.js" as="script"><link rel="preload" href="/assets/js/30.04d1a7ea.js" as="script">
+    <link rel="stylesheet" href="/assets/css/0.styles.f22478ca.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div id="vuepress-theme-blog__global-layout"><div class="content-wrapper"><div class="container"><div class="theme-container"><header class="header" data-v-3ad594c3><!----> <div class="head-container" data-v-3ad594c3><a href="/" data-v-3ad594c3><div class="logo" data-v-3ad594c3>mpx</div></a> <div class="row" data-v-3ad594c3><div class="header__line" data-v-3ad594c3></div> <nav class="nav" data-v-3ad594c3><a href="/guide/basic/start.html" class="nav-link" data-v-3ad594c3>
+          指南
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/api/" class="nav-link" data-v-3ad594c3>
+          API
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="/articles/" class="nav-link" data-v-3ad594c3>
+          文章
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx/releases" target="_blank" class="nav-link" data-v-3ad594c3>
+          更新记录
+          <!----></a></nav><nav class="nav" data-v-3ad594c3><a href="https://github.com/didi/mpx" target="_blank" class="nav-link" data-v-3ad594c3>
+          GitHub
+          <!----></a></nav> <div class="searchBox-wrapper" data-v-3ad594c3><div class="searchBox" data-v-3ad594c3><form id="search-form" role="search" class="algolia-search-wrapper search-box" data-v-3ad594c3><div id="docsearch-container"></div></form></div></div></div></div> <!----></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/guide/basic/start.html" class="nav-link">
+  指南
+</a></div><div class="nav-item"><a href="/api/index.html" class="nav-link">
+  API
+</a></div><div class="nav-item"><a href="/articles/index.html" class="nav-link">
+  文章
+</a></div><div class="nav-item"><a href="https://github.com/didi/mpx/releases" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  更新记录
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div><div class="nav-item"><a href="https://github.com/didi/mpx" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Github
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>基础</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/basic/start.html" class="sidebar-link">快速开始</a></li><li><a href="/guide/basic/intro.html" class="sidebar-link">介绍</a></li><li><a href="/guide/basic/single-file.html" class="sidebar-link">单文件开发</a></li><li><a href="/guide/basic/ide.html" class="sidebar-link">IDE 高亮配置</a></li><li><a href="/guide/basic/template.html" class="sidebar-link">模板语法</a></li><li><a href="/guide/basic/css.html" class="sidebar-link">CSS 处理</a></li><li><a href="/guide/basic/reactive.html" class="sidebar-link">数据响应</a></li><li><a href="/guide/basic/class-style-binding.html" class="sidebar-link">类名样式绑定</a></li><li><a href="/guide/basic/conditional-render.html" class="sidebar-link">条件渲染</a></li><li><a href="/guide/basic/list-render.html" class="sidebar-link">列表渲染</a></li><li><a href="/guide/basic/event.html" class="sidebar-link">事件处理</a></li><li><a href="/guide/basic/two-way-binding.html" class="sidebar-link">双向绑定</a></li><li><a href="/guide/basic/component.html" class="sidebar-link">自定义组件</a></li><li><a href="/guide/basic/refs.html" class="sidebar-link">获取组件实例/节点信息</a></li><li><a href="/guide/basic/option-chain.html" class="sidebar-link">模版内可选链表达式</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>进阶</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/advance/store.html" class="sidebar-link">状态管理（store）</a></li><li><a href="/guide/advance/pinia.html" class="sidebar-link">状态管理（pinia）</a></li><li><a href="/guide/advance/mixin.html" class="sidebar-link">使用 mixin</a></li><li><a href="/guide/advance/npm.html" class="sidebar-link">使用npm</a></li><li><a href="/guide/advance/subpackage.html" class="sidebar-link">使用分包</a></li><li><a href="/guide/advance/async-subpackage.html" class="sidebar-link">分包异步化</a></li><li><a href="/guide/advance/platform.html" class="sidebar-link">跨平台</a></li><li><a href="/guide/advance/i18n.html" aria-current="page" class="active sidebar-link">国际化i18n</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/advance/i18n.html#开启-i18n" class="sidebar-link">开启 i18n</a></li><li class="sidebar-sub-header"><a href="/guide/advance/i18n.html#options-api-usage" class="sidebar-link">选项式 API 中使用</a></li><li class="sidebar-sub-header"><a href="/guide/advance/i18n.html#composition-api-usage" class="sidebar-link">在组合式 API 中使用</a></li><li class="sidebar-sub-header"><a href="/guide/advance/i18n.html#scope" class="sidebar-link">作用域</a></li><li class="sidebar-sub-header"><a href="/guide/advance/i18n.html#动态变更locale" class="sidebar-link">动态变更locale</a></li><li class="sidebar-sub-header"><a href="/guide/advance/i18n.html#动态更新语言集" class="sidebar-link">动态更新语言集</a></li><li class="sidebar-sub-header"><a href="/guide/advance/i18n.html#平台支持" class="sidebar-link">平台支持</a></li></ul></li><li><a href="/guide/advance/size-report.html" class="sidebar-link">包体积分析</a></li><li><a href="/guide/advance/image-process.html" class="sidebar-link">图像资源处理</a></li><li><a href="/guide/advance/progressive.html" class="sidebar-link">原生渐进迁移</a></li><li><a href="/guide/advance/ability-compatible.html" class="sidebar-link">原生能力兼容</a></li><li><a href="/guide/advance/plugin.html" class="sidebar-link">小程序插件</a></li><li><a href="/guide/advance/custom-output-path.html" class="sidebar-link">自定义路径</a></li><li><a href="/guide/advance/utility-first-css.html" class="sidebar-link">使用原子类</a></li><li><a href="/guide/advance/ssr.html" class="sidebar-link">SSR</a></li><li><a href="/guide/advance/provide-inject.html" class="sidebar-link">依赖注入（Provide/Inject）</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>组合式 API</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/composition-api/composition-api.html" class="sidebar-link">组合式 API</a></li><li><a href="/guide/composition-api/reactive-api.html" class="sidebar-link">响应式 API</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>工具</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/tool/ts.html" class="sidebar-link">使用TypeScript开发小程序</a></li><li><a href="/guide/tool/unit-test.html" class="sidebar-link">单元测试</a></li><li><a href="/guide/tool/e2e-test.html" class="sidebar-link">E2E自动化测试</a></li></ul></section></li><li><section class="sidebar-group depth-0"><a href="/guide/extend" class="sidebar-heading clickable"><span>拓展</span> <!----></a> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/extend/fetch.html" class="sidebar-link">网络请求</a></li><li><a href="/guide/extend/api-proxy.html" class="sidebar-link">Api代理</a></li><li><a href="/guide/extend/mock.html" class="sidebar-link">数据 Mock</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>理解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/understand/runtime.html" class="sidebar-link">Mpx运行时增强原理</a></li><li><a href="/guide/understand/compile.html" class="sidebar-link">Mpx编译构建原理</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>迁移</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/guide/migrate/2.9.html" class="sidebar-link">从 2.8 升级至 2.9</a></li><li><a href="/guide/migrate/2.8.html" class="sidebar-link">从 2.7 升级至 2.8</a></li><li><a href="/guide/migrate/2.7.html" class="sidebar-link">从旧版本迁移至 2.7</a></li><li><a href="/guide/migrate/mpx-cli-3.html" class="sidebar-link">mpx-cli v2 迁移到 v3</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="国际化i18n"><a href="#国际化i18n" class="header-anchor">#</a> 国际化i18n</h1> <p>Mpx 支持国际化 i18n，使用方式及支持能力与 vue-i18n 非常接近。</p> <p>Mpx 自带 i18n 能力，无需额外安装插件。由于小程序模板中的 i18n 函数是通过 wxs 编译注入进行实现，我们需要将 i18n 配置传入到 MpxWebpackPlugin 中来使 i18n 生效，这是与 vue-i18n 最大的区别。</p> <h2 id="开启-i18n"><a href="#开启-i18n" class="header-anchor">#</a> 开启 i18n</h2> <p>I18n 配置传入到 MpxWebpackPlugin 选项中即可生效，额外支持 messagesPath 配置，通过模块路径传入语言集，其余配置参考 vue-i18n。</p> <p>由于小程序的双线程特性，在选项式 API 场景下，默认情况下模板中调用的 i18n 函数由 wxs 实现，而 js 中调用的 i18n 函数由 js 实现，该设计能够将视图层和逻辑层之间的通信开销降至最低，得到最优的性能表现，但是由于 wxs 和 js 之间无法共享数据，在最终的编译产物中语言集会同时存在于 js 和 wxs 当中，对包体积产生负面影响。</p> <p>为了平衡上述影响，自2.6.56版本之后我们新增了编译配置项 <code>i18n.useComputed</code> ，改配置项开启的情况下对于模板中的 i18n 调用将不再使用 wxs 实现，而是通过在 computed 进行实现，语言集将只存在于 js 逻辑层当中，对于节省了包体积的同时双线程通信成本也会增加，用时间换空间，具体是否开启可以根据实际项目的使用情况及资源瓶颈由开发者自行决定，
+另外需要注意的是，<strong>在 Mpx 组合式 API 场景下 i18n 仅支持通过 computed 实现</strong>。</p> <blockquote><p>开启 <code>i18n.useComputed</code> 配置时，由于 computed 技术架构的限制，i18n 函数无法对模板循环渲染中的 <code>item</code> 或 <code>index</code> 生效。</p></blockquote> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">// vue.config.js</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token literal-property property">pluginOptions</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">mpx</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">plugin</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token literal-property property">i18n</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token literal-property property">locale</span><span class="token operator">:</span> <span class="token string">'en-US'</span><span class="token punctuation">,</span>
+          <span class="token comment">// messages既可以通过对象字面量传入，也可以通过messagesPath指定一个js模块路径，在该模块中定义配置并导出，dateTimeFormats/dateTimeFormatsPath和numberFormats/numberFormatsPath同理</span>
+          <span class="token literal-property property">messages</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token string-property property">'en-US'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+              <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token literal-property property">hello</span><span class="token operator">:</span> <span class="token string">'{msg} world'</span>
+              <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token string-property property">'zh-CN'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+              <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token literal-property property">hello</span><span class="token operator">:</span> <span class="token string">'{msg} 世界'</span>
+              <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+          <span class="token literal-property property">useComputed</span><span class="token operator">:</span> <span class="token boolean">false</span> <span class="token comment">// 默认 false,  此开关将模板中的 i18n 函数注入 computed，在包体积空间紧张的情况下可以使用</span>
+          <span class="token comment">// messagesPath: path.resolve(__dirname, '../src/i18n.js')</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h2 id="options-api-usage"><a href="#options-api-usage" class="header-anchor">#</a> 选项式 API 中使用 </h2> <p>同 vue-i18n，在组件中直接调用翻译函数使用，由于 wxs 执行环境的限制，目前 js 中支持了 vue-i18n 中 $t/$tc/$te 翻译函数，$d/$n 暂不支持，详细使用方法可参考 vue-i18n。</p> <p>此外类似于 vue-i18n，在组件模板的 Mustache 插值中直接调用翻译函数。</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span> <span class="token attr-name"><span class="token namespace">wx:</span>if</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>{{isMessageExist}}<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>{{ $t('message.hello', { msg: 'hello' }) }}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+    <span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token function">ready</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$t</span><span class="token punctuation">(</span><span class="token string">'message.hello'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token literal-property property">msg</span><span class="token operator">:</span> <span class="token string">'hello'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">computed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token function">isMessageExist</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$te</span><span class="token punctuation">(</span><span class="token string">'message.hello'</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><h2 id="composition-api-usage"><a href="#composition-api-usage" class="header-anchor">#</a> 在组合式 API 中使用 </h2> <p>在组合式 API setup 中，<code>this</code> 不是该活跃实例的引用，为了继续使用 i18n 的相关能力，我们需要一个新的方法来替代 <code>this</code>
+，这里 Mpx 提供 <code>useI18n</code> 方法支持对 i18n 相关功能的使用。</p> <h3 id="开始使用"><a href="#开始使用" class="header-anchor">#</a> 开始使用</h3> <p>同 vue-i18n, <strong>useI18n</strong> 返回一个 i18n 实例，该实例提供文案翻译 API 例如 <strong>t</strong> 方法，相较于选项式 API 中的翻译方法，在组合式 API 中有部分变化。</p> <ol><li>翻译方法 $t/t 和 $tc/tc，在组合式 API 中统一使用翻译方法 t</li> <li>翻译方法 $te/te，在组合式 API 中统一使用 te</li> <li>翻译方法 $tm/tm，在组合式 API 中统一使用 tm</li></ol> <p><code>useI18n</code> 方法的执行必须在 <code>setup</code> 中的顶层。</p> <p>i18n 同时也支持传入参数，例如 <code>locale</code> 和 <code>fallbackLocale</code>，
+关于实例的更多信息可移步API章节 <a href="/api/extend.html#usei18n">查看</a></p> <p>在不给 <code>useI18n</code> 传入任何参数时，i18n 实例的上下文将是全局作用域，即翻译函数 <code>t</code> 引用的文案来源是我们在 <code>MpxWebpackPlugin</code>
+中配置的文案。</p> <p>通过在 <strong>setup</strong> 中返回翻译函数 <strong>t</strong>，我们可以在模版中直接使用它:</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{t(&quot;message.hello&quot;)}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> <span class="token punctuation">{</span>createComponent<span class="token punctuation">,</span> useI18n<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">setup</span><span class="token punctuation">(</span><span class="token parameter">props<span class="token punctuation">,</span> context</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> t <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useI18n</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// 从返回中解构出 t 方法</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      t
+    <span class="token punctuation">}</span> <span class="token comment">// 将 t 方法返回挂载到渲染实例</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><p><strong>注意事项：</strong></p> <p>组合式 API 中，Mpx 在编译时对模版进行 ast 遍历分析，检测到对应的翻译函数 t/tc/te 后，将其转换为 computed 方法注入，computed 中调用 setup 中返回的 t 方法进行文案获取，由此引申出来两个注意项：</p> <p>1.不可对从 <strong>useI18n</strong> 中解构出的 <strong>t</strong> 方法进行重命名，否则模版中将无法正确获取文案。</p> <p>下方即为错误示例：</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{t1('message.hello')}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+    <span class="token keyword">import</span> <span class="token punctuation">{</span>createComponent<span class="token punctuation">,</span> useI18n<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+    <span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">{</span><span class="token literal-property property">t</span><span class="token operator">:</span> t1<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useI18n</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token punctuation">{</span>
+                t1
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>2.模版中的 t/tc/te 方法都是使用 computed 实现，由于 computed 技术架构的限制，i18n 函数无法对模板循环渲染中的 <code>item</code> 或 <code>index</code> 生效。</p> <p>例如下方示例将会报错 computed 中找不到 item</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token comment">&lt;!--tc方法使用 computed 实现，最终将无法正确获取item--&gt;</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span> <span class="token attr-name"><span class="token namespace">wx:</span>for</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>{{listData}}<span class="token punctuation">&quot;</span></span> <span class="token attr-name"><span class="token namespace">wx:</span>key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>index<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>{{tc('message.hello', {msg: item})}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+    <span class="token keyword">import</span> <span class="token punctuation">{</span>createComponent<span class="token punctuation">,</span> ref<span class="token punctuation">,</span> useI18n<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+    <span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> listData <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+            <span class="token keyword">const</span> <span class="token punctuation">{</span>tc<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useI18n</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token punctuation">{</span>
+                tc<span class="token punctuation">,</span>
+                listData
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><h2 id="scope"><a href="#scope" class="header-anchor">#</a> 作用域 </h2> <p>在 Mpx 组合式 API 中，<code>useI18n</code> 返回的 i18n 实例默认是指向全局作用域，文案来源即为 <code>MpxWebpackPlugin</code> 中配置的 messages。</p> <p>如果需要在组合式 API 中使用本地作用域，需要给 <code>useI18n</code> 传入响应的配置项，<code>useI18n</code> 将根据传入的 locale、messages 等配置项来生成一个全新的
+i18n 实例，该实例的文案源即为用户传入的 <code>messages</code>。</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token comment">&lt;!--将展示本地作用域中的文案 哈喽--&gt;</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{t('message.hello')}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+    <span class="token keyword">import</span> <span class="token punctuation">{</span>createPage<span class="token punctuation">,</span> useI18n<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+    <span class="token function">createPage</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">{</span> t <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useI18n</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+                <span class="token literal-property property">locale</span><span class="token operator">:</span> <span class="token string">'en-US'</span><span class="token punctuation">,</span>
+                <span class="token literal-property property">messages</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                    <span class="token string-property property">'en-US'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                        <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                            <span class="token literal-property property">hello</span><span class="token operator">:</span> <span class="token string">'哈喽'</span>
+                        <span class="token punctuation">}</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token punctuation">{</span>
+                t
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p><strong>注意事项：</strong></p> <p>在给 <code>useI18n</code> 传参时，若只传入 <code>messages</code> 属性，则 <code>locale</code> 会自动 fallback 到全局 locale，修改 <code>useI18n</code> 返回的 <code>locale</code> ref 值将改变本地作用域  locale。</p> <p>若只传入 <code>locale</code> 属性，不传入 <code>messages</code>，则会自动 fallback 到全局 <code>locale</code> 和 <code>messages</code>，且修改 <code>useI18n</code> 返回的 <code>locale</code> 对<strong>全局和本地都不会起作用</strong>，
+因此建议不要单独传入 <code>locale</code> 属性，若想使用本地 i18n 实例，则必须传入 <code>messages</code> 属性。</p> <p>在 Mpx 选项式 API 中，i18n 实例仅有全局 global i18n 实例，所有 i18n 翻译方法 $t/$tc/$te/$tm 的执行上下文都为全局作用域。</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{$t('message.hello')}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+    <span class="token keyword">import</span> <span class="token punctuation">{</span>createPage<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+    <span class="token function">createPage</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token function">onLoad</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>$i18n<span class="token punctuation">)</span>
+            <span class="token comment">/**
+             * locale 全局 locale
+             * fallbackLocale 全局兜底 locale
+             */</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">computed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token function">name</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment">// 作用域为 global scope</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$t</span><span class="token punctuation">(</span><span class="token string">'message.name'</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><h2 id="动态变更locale"><a href="#动态变更locale" class="header-anchor">#</a> 动态变更locale</h2> <p>在 Mpx 组合式 API 中，你可以通过修改 <code>useI18n</code> 返回的 <code>locale</code> 来更换局部或全局语言，或者更改 mpx.i18n 中的 locale 属性更换全局语言集，并自动更新视图。</p> <ul><li>变更全局 locale</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> mpx<span class="token punctuation">,</span> <span class="token punctuation">{</span> createComponent<span class="token punctuation">,</span> useI18n <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">setup</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 局部locale变更，生效范围为当前组件内</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span>t<span class="token punctuation">,</span> locale<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useI18n</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 全局locale变更，生效范围为项目全局，locale 是一个 ref 变量</span>
+      locale<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'zh-CN'</span>
+      <span class="token comment">// 或者通过mpx.i18n来修改，也能起到全局locale修改作用</span>
+      mpx<span class="token punctuation">.</span>i18n<span class="token punctuation">.</span>locale <span class="token operator">=</span> <span class="token string">'zh-CN'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        t
+    <span class="token punctuation">}</span>  
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><p><strong>注意：</strong> 这里通过 mpx.i18n 修改 locale 时，为和 vue3 保持一直，需要通过 global 属性来获取 locale，同时 locale 也是一个 ref 变量，需要使用 <code>.value</code> 来修改。</p> <ul><li>变更局部 locale</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> mpx<span class="token punctuation">,</span> <span class="token punctuation">{</span> createComponent<span class="token punctuation">,</span> useI18n <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">setup</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 局部locale变更，生效范围为当前组件内</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span>t<span class="token punctuation">,</span> locale<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useI18n</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">locale</span><span class="token operator">:</span> <span class="token string">'en-US'</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">messages</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token string-property property">'en-US'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                    <span class="token literal-property property">hello</span><span class="token operator">:</span> <span class="token string">'hello'</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token string-property property">'zh-CN'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                    <span class="token literal-property property">hello</span><span class="token operator">:</span> <span class="token string">'你好'</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 局部locale变更，生效范围为当前组件/页面，locale 是一个 ref 变量</span>
+      locale<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'zh-CN'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        t
+    <span class="token punctuation">}</span>  
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><p>在选项式 API 中，仅支持修改全局 locale, 不支持修改局部 locale。</p> <p>在 Vue3 中，选项式 API 中直接修改 this.$i18n.locale 无任何作用，这里为和 Vue3 拉齐建议使用 mpx.i18n 来进行 locale 修改。</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> mpx<span class="token punctuation">,</span> <span class="token punctuation">{</span> createComponent <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+<span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token function">ready</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 修改全局 locale</span>
+      mpx<span class="token punctuation">.</span>i18n<span class="token punctuation">.</span>locale <span class="token operator">=</span> <span class="token string">'en-US'</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre></div><h2 id="动态更新语言集"><a href="#动态更新语言集" class="header-anchor">#</a> 动态更新语言集</h2> <p>在组合式 API 中默认支持动态更新语言集。</p> <p>在选项式 API 中，当模板中没有使用 i18n 函数或开启了 <code>i18n.useComputed</code> 配置时, 可以对语言集进行动态更新。</p> <p>我们提供了 <code>mergeLocaleMessage</code> 对语言集进行动态扩展，<code>setLocaleMessage</code> 对语言集进行覆盖更新。</p> <p>使用方式如下：</p> <div class="language-html extra-class"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token comment">&lt;!--2 秒之后展示 哈喽--&gt;</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{t('message.hello')}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+    <span class="token comment">&lt;!--1秒之后展示 hello1, 2秒之后展示为 恭喜你--&gt;</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>view</span><span class="token punctuation">&gt;</span></span>{{t('message.hello1')}}<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>view</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+    <span class="token keyword">import</span> mpx<span class="token punctuation">,</span> <span class="token punctuation">{</span> createComponent<span class="token punctuation">,</span> useI18n<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@mpxjs/core'</span>
+
+    <span class="token function">createComponent</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token function">setup</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">{</span> t<span class="token punctuation">,</span> mergeLocaleMessage<span class="token punctuation">,</span> setLocaleMessage <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useI18n</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+                <span class="token comment">// 新增一门语言或针对特定语言更新语言集</span>
+                <span class="token function">mergeLocaleMessage</span><span class="token punctuation">(</span><span class="token string">'en-US'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+                    <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                        <span class="token literal-property property">hello1</span><span class="token operator">:</span> <span class="token string">'hello1'</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span>
+            <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+                <span class="token function">setLocaleMessage</span><span class="token punctuation">(</span><span class="token string">'en-US'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+                    <span class="token literal-property property">message</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+                        <span class="token literal-property property">hello</span><span class="token operator">:</span> <span class="token string">'哈喽'</span><span class="token punctuation">,</span>
+                        <span class="token literal-property property">hello1</span><span class="token operator">:</span> <span class="token string">'恭喜你'</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">2000</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token punctuation">{</span> t <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+</code></pre></div><p>同理我们在选项式 API 中可以使用 <code>mpx.i18n.global.mergeLocaleMessage</code>, <code>mpx.i18n.global.setLocaleMessage</code> 方法来动态更新或扩展语言集。</p> <h2 id="平台支持"><a href="#平台支持" class="header-anchor">#</a> 平台支持</h2> <p>目前支持业内所有小程序平台(微信/支付宝/qq/百度/头条)。</p> <p>在输出 web 时，构建会自动引入 vue-i18n 并进行安装配置，无需修改任何代码即可按照预期正常工作。</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/guide/advance/platform.html" class="prev">
+        跨平台
+      </a></span> <span class="next"><a href="/guide/advance/size-report.html">
+        包体积分析
+      </a>
+      →
+    </span></p></div> </main></div></div></div></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/assets/js/app.84c88b57.js" defer></script><script src="/assets/js/7.01e4e942.js" defer></script><script src="/assets/js/3.145e69cd.js" defer></script><script src="/assets/js/1.4f7abe8f.js" defer></script><script src="/assets/js/68.ebe4213c.js" defer></script><script src="/assets/js/30.04d1a7ea.js" defer></script>
+  </body>
+</html>
