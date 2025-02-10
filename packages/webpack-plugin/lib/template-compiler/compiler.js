@@ -808,7 +808,7 @@ function parse (template, options) {
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
-  if (!tagNames.has('component') && options.checkUsingComponents) {
+  if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
     const arr = []
     usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
