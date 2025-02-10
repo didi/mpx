@@ -2,12 +2,14 @@
   <scroll-view
     class="mpx-recycle-list"
     wx:ref
+    type="list"
     scroll-y="{{scrollY}}"
     scroll-top="{{_scrollTop}}"
     scroll-with-animation="{{scrollWithAnimation}}"
     enable-back-to-top="{{enableBackToTop}}"
     lower-threshold="{{lowerThreshold}}"
     upper-threshold="{{upperThreshold}}"
+    scroll-options="{{scrollOptions}}"
     wx:style="width: {{_width}}; height: {{_height}}"
     bindscroll="onScroll"
     bindscrolltoupper="onScrollToUpper"
@@ -65,14 +67,18 @@ createComponent({
     upperThreshold: {
       type: Number,
       value: 50
+    },
+    scrollOptions: {
+      type: Object,
+      value: {}
     }
   },
   data: {
-    containerHeight: 0,
     start: 0,
     end: 0,
     contentStyle: '',
     placeholderStyle: '',
+    containerHeight: 0,
     positions: [],
     isReady: false
   },
