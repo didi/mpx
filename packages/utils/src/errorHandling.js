@@ -1,4 +1,4 @@
-import { isFunction, isPromise } from './base'
+import { isFunction } from './base'
 import { error } from './log'
 
 function handleError (e, instance, info) {
@@ -8,13 +8,7 @@ function handleError (e, instance, info) {
 export function callWithErrorHandling (fn, instance, info, args) {
   if (!isFunction(fn)) return
   try {
-    const res = args ? fn(...args) : fn()
-    if (res && isPromise(res)) {
-      res.catch(e => {
-        handleError(e, instance, info)
-      })
-    }
-    return res
+    return args ? fn(...args) : fn()
   } catch (e) {
     handleError(e, instance, info)
   }
