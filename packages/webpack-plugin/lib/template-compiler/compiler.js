@@ -2464,7 +2464,7 @@ function processShow (el, options, root) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
     return
   }
-  if (ctorType === 'component' && el.parent === root && isRealNode(el)) {
+  if (ctorType === 'component' && el.parent === root && isRealNode(el) && hasVirtualHost) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
