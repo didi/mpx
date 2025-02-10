@@ -51,7 +51,7 @@ const IconTypeMap = new Map<IconType, string>([
   ['cancel', Cancel],
   ['download', Download],
   ['search', Search],
-  ['clear', Clear],
+  ['clear', Clear]
 ])
 
 const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
