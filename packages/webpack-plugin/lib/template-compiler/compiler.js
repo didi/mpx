@@ -478,6 +478,7 @@ function parseComponent (content, options) {
         tag,
         content: '',
         start: end,
+        offset: 0,
         attrs: attrs.reduce(function (cumulated, ref) {
           const name = ref.name
           const value = ref.value
@@ -580,8 +581,15 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
+      let offset = content.slice(0, currentBlock.start).split(splitRE).length
       if (options.pad) {
-        text = padContent(currentBlock, options.pad) + text
+        text = padContent(currentBlock, options.pad, offset) + text
+      }
+      if (options.pad !== 'line') {
+        if (text[0] === '\n') {
+          offset-- // 去掉换行符影响
+        }
+        currentBlock.offset = offset
       }
       currentBlock.content = text
       currentBlock = null
@@ -589,11 +597,10 @@ function parseComponent (content, options) {
     depth--
   }
 
-  function padContent (block, pad) {
+  function padContent (block, pad, offset) {
     if (pad === 'space') {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
-      const offset = content.slice(0, block.start).split(splitRE).length
       const padChar = '\n'
       return Array(offset).join(padChar)
     }

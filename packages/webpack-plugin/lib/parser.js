@@ -25,7 +25,8 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
       output.script.map = generateSourceMap(
         filename,
         content,
-        output.script.content
+        output.script.content,
+        output.script.offset
       )
     }
     if (output.styles) {
@@ -34,7 +35,8 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
           style.map = generateSourceMap(
             filename,
             content,
-            style.content
+            style.content,
+            output.script.offset
           )
         }
       })
@@ -45,7 +47,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
   return output
 }
 
-function generateSourceMap (filename, source, generated) {
+function generateSourceMap (filename, source, generated, offset = 0) {
   const map = new SourceMapGenerator()
   map.setSourceContent(filename, source)
   generated.split(splitRE).forEach((line, index) => {
@@ -53,7 +55,7 @@ function generateSourceMap (filename, source, generated) {
       map.addMapping({
         source: filename,
         original: {
-          line: index + 1,
+          line: offset + index + 1,
           column: 0
         },
         generated: {
