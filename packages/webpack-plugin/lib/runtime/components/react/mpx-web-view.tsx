@@ -285,7 +285,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
-  
   let isLoadError = false
   let statusCode: string | number = ''
   const onLoadEnd = function (res: WebViewEvent) {
