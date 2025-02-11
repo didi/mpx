@@ -186,6 +186,14 @@ module.exports = function (content) {
     json.usingComponents = json.usingComponents || {}
   }
 
+  if (mode === 'wx' || mode === 'ali') {
+    if (isApp) {
+      json.usingComponents = Object.assign({}, {
+        'recycle-view': require.resolve('../runtime/components/extend/mpx-recycle-view.mpx')
+      }, json.usingComponents)
+    }
+  }
+
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {
