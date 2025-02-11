@@ -720,7 +720,14 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
       processElement(element, root, options, meta)
+
       tagNames.add(element.tag)
+      // 统计通过抽象节点方式使用的组件
+      element.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name)) {
+          tagNames.add(attr.value)
+        }
+      })
 
       if (!unary) {
         currentParent = element
@@ -808,7 +815,7 @@ function parse (template, options) {
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
-  if (!tagNames.has('component') && options.checkUsingComponents) {
+  if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
     const arr = []
     usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
@@ -2464,7 +2471,7 @@ function processShow (el, options, root) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
     return
   }
-  if (ctorType === 'component' && el.parent === root && isRealNode(el)) {
+  if (ctorType === 'component' && el.parent === root && isRealNode(el) && hasVirtualHost) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return

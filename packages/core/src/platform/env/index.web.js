@@ -38,7 +38,7 @@ function initGlobalErrorHandling () {
     window.addEventListener('unhandledrejection', (event) => {
       if (global.__mpxAppCbs && global.__mpxAppCbs.rejection && global.__mpxAppCbs.rejection.length) {
         global.__mpxAppCbs.rejection.forEach((cb) => {
-          cb(event.reason, event.promise)
+          cb(event)
         })
       } else {
         console.warn(`UNHANDLED PROMISE REJECTION: ${event.reason}\n`)
