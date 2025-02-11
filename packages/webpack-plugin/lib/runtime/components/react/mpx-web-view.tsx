@@ -155,6 +155,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   const _reload = function () {
+    if (__mpx_mode__ === 'android') {
+      fristLoaded.current = false // 安卓需要重新设置
+    }
     setPageLoadErr(false)
   }
   
@@ -291,7 +294,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   let isLoadError = false
   let statusCode: string | number = ''
-  const onLoadEnd = function (res: WebViewEvent) {
+  const onLoadEndHandle = function (res: WebViewEvent) {
     fristLoaded.current = true
     setIsLoaded(true)
     const src = res.nativeEvent?.url
@@ -316,6 +319,15 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         }
       }
       bindload?.(result)
+    }
+  }
+  const onLoadEnd = function (res: WebViewEvent) {
+    if (__mpx_mode__ === 'android') {
+      setTimeout(() => {
+        onLoadEndHandle(res)
+      }, 0)
+    } else {
+      onLoadEndHandle(res)
     }
   }
   const onHttpError = function (res: WebViewHttpErrorEvent) {
