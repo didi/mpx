@@ -500,32 +500,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions({
+        navigation.setOptions(Object.assign({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-
-        const setStatusBar = (config) => {
-          ReactNative.StatusBar.setBarStyle(config.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-          const color = isCustom ? 'transparent' : config.statusBarColor
-          color && ReactNative.StatusBar.setBackgroundColor(color)
-        }
-        if (__mpx_mode__ === 'android') {
-          pageConfigStack.push(pageConfig)
-          setStatusBar(pageConfig)
-        }
-        return () => {
-          if (__mpx_mode__ === 'android') {
-            pageConfigStack.pop()
-            const config = pageConfigStack[pageConfigStack.length - 1] || {}
-            setStatusBar(config)
-          }
-        };
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
+          statusBarTranslucent: true
+        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
       }, [])
 
       const rootRef = useRef(null)
