@@ -7,6 +7,8 @@ const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDep
 module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
+  const mpx = this.getMpx()
+  const isRN = ['ios', 'android', 'harmony'].includes(mpx.mode)
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -32,6 +34,8 @@ module.exports = function loader (content, prevOptions) {
   }
 
   let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
+
+  if (isRN) publicPath = `__non_webpack_require__(${JSON.stringify(`./${url}`)})`
 
   if (options.publicPath) {
     if (typeof options.publicPath === 'function') {
