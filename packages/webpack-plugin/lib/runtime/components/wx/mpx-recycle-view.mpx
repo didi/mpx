@@ -23,11 +23,11 @@
       <view class="infinite-list" wx:style="{{contentStyle}}">
         <view
           wx:for="{{visibleData}}"
-          wx:key="index"
+          wx:key="_index"
           class="infinite-list-item"
           wx:style="height: {{itemSize.height}}px; overflow: hidden"
         >
-          <recycle-item current-item="{{item.item}}" />
+          <recycle-item current-item="{{item}}" />
         </view>
       </view>
     </view>
@@ -96,10 +96,7 @@ createComponent({
     },
     _listData() {
       return this.listData.map((item, index) => {
-        return {
-          _index: `_${index}`,
-          item
-        }
+        return Object.assign({}, item, { _index: `_${index}` })
       })
     },
     _scrollTop() {
@@ -113,7 +110,7 @@ createComponent({
       return Math.min(this.start, this.bufferScale * this.visibleCount)
     },
     belowCount() {
-      return Math.min(this.listData.length - this.end, this.bufferScale * this.visibleCount)
+      return Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
     },
     visibleData() {
       const start = this.start - this.aboveCount
