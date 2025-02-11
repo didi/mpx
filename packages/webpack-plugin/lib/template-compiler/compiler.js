@@ -2339,6 +2339,10 @@ function processBuiltInComponents (el, meta) {
     }
     const tag = el.tag
     if (!meta.builtInComponentsMap[tag]) {
+      if (el.isExtend) {
+        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/extend/${tag}`
+        return
+      }
       if (isReact(mode)) {
         meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
       } else {

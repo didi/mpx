@@ -1,6 +1,6 @@
 <template>
   <scroll-view
-    class="mpx-recycle-list"
+    class="mpx-recycle-view"
     wx:ref
     type="list"
     scroll-y="{{scrollY}}"
@@ -153,7 +153,7 @@ createComponent({
     this.initPositions()
     const query = mpx.createSelectorQuery().in(this)
     query
-      .select('.mpx-recycle-list')
+      .select('.mpx-recycle-view')
       .boundingClientRect((rect) => {
         this.containerHeight = rect.height
         this.start = this.getStartIndex(this.scrollTop)
@@ -242,7 +242,7 @@ createComponent({
   }
 </script>
 <style scoped>
-  .mpx-recycle-list {
+  .mpx-recycle-view {
     position: relative;
     overflow: hidden;
   }
