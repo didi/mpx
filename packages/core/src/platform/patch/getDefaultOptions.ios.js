@@ -623,9 +623,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return createElement(GestureHandlerRootView,
         {
           // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom' ? {
+          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
+          ? {
             height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          } : {
+          }
+          : {
             flex: 1
           }
         },
