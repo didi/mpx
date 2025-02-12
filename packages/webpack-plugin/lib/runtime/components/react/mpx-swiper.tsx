@@ -1,8 +1,8 @@
-import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
+import { AppState, View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
 
-import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useCallback, useMemo } from 'react'
+import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
@@ -134,7 +134,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'external-var-context': externalVarContext,
-    style = {}
+    style = {},
+    autoplay = false,
+    circular = false
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
@@ -158,14 +160,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  const preMargin = props['previous-margin'] ? parseInt(props['previous-margin']) : 0
-  const nextMargin = props['next-margin'] ? parseInt(props['next-margin']) : 0
-  const previousMargin = useSharedValue(preMargin)
+  const preMargin = props['previous-margin'] ? global.__formatValue(props['previous-margin']) as number : 0
+  const nextMargin = props['next-margin'] ? global.__formatValue(props['next-margin']) as number : 0
+  const preMarginShared = useSharedValue(preMargin)
   const nextMarginShared = useSharedValue(nextMargin)
+  const autoplayShared = useSharedValue(autoplay)
   // 默认前后补位的元素个数
-  const patchEleNum = props.circular ? (preMargin ? 2 : 1) : 0
-  const patchElementNum = useSharedValue(patchEleNum)
-  const circular = useSharedValue(props.circular || false)
+  const patchElmNum = circular ? (preMargin ? 2 : 1) : 0
+  const patchElmNumShared = useSharedValue(patchElmNum)
+  const circularShared = useSharedValue(circular)
   const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
   // 对有变化的变量，在worklet中只能使用sharedValue变量，useRef不能更新
   const childrenLength = useSharedValue(children.length)
@@ -192,6 +195,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const moveTime = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
+  const appState = useRef(AppState.currentState)
   const {
     // 存储layout布局信息
     layoutRef,
@@ -221,14 +225,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const realWidth = dir === 'x' ? width - preMargin - nextMargin : width
     const realHeight = dir === 'y' ? height - preMargin - nextMargin : height
     const iStep = dir === 'x' ? realWidth : realHeight
-    step.value = iStep
-    if (touchfinish.value) {
-      offset.value = getOffset(props.current || 0, iStep)
-      // useEffect中没拿到step.value之前不会开启loop，有step直接开启layout后取消再开启，无step依赖layout结束后开启
-      pauseLoop()
-      if (props.autoplay && children.length > 1) {
-        loop()
-      }
+    if (iStep !== step.value) {
+      step.value = iStep
+      updateCurrent(props.current || 0, iStep)
+      updateAutoplay()
     }
   }
 
@@ -242,7 +242,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   })
 
-  const renderPagination = useCallback(() => {
+  function renderPagination () {
     if (children.length <= 1) return null
     const activeColor = activeDotColor || '#007aff'
     const unActionColor = dotColor || 'rgba(0,0,0,.2)'
@@ -269,12 +269,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           {dots}
       </View>
     </View>)
-  }, [activeDotColor, dotColor, children.length])
+  }
 
   function renderItems () {
     const intLen = children.length
     let renderChild = children.slice()
-    if (props.circular && intLen > 1) {
+    if (circular && intLen > 1) {
       // 最前面加最后一个元素
       const lastChild = React.cloneElement(children[intLen - 1] as ReactElement, { key: 'clone0' })
       // 最后面加第一个元素
@@ -289,11 +289,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     const arrChildren = renderChild.map((child, index) => {
       const extraStyle = {} as { [key: string]: any }
-      if (index === 0 && !props.circular) {
+      if (index === 0 && !circular) {
         preMargin && dir === 'x' && (extraStyle.marginLeft = preMargin)
         preMargin && dir === 'y' && (extraStyle.marginTop = preMargin)
       }
-      if (index === intLen - 1 && !props.circular) {
+      if (index === intLen - 1 && !circular) {
         nextMargin && dir === 'x' && (extraStyle.marginRight = nextMargin)
         nextMargin && dir === 'y' && (extraStyle.marginBottom = nextMargin)
       }
@@ -313,43 +313,20 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     return (<SwiperContext.Provider value={contextValue}>{arrChildren}</SwiperContext.Provider>)
   }
 
-  const createAutoPlay = useCallback(() => {
-    let targetOffset = 0
-    let nextIndex = currentIndex.value
-    if (!circular.value) {
-      // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
-      if (currentIndex.value === childrenLength.value - 1) {
-        pauseLoop()
-        return
-      }
-      nextIndex += 1
-      targetOffset = -nextIndex * step.value - previousMargin.value
-      offset.value = withTiming(targetOffset, {
-        duration: easeDuration,
-        easing: easeMap[easeingFunc]
-      }, () => {
-        currentIndex.value = nextIndex
-        runOnJS(loop)()
-      })
-    } else {
-      // 默认向右, 向下
-      if (nextIndex === childrenLength.value - 1) {
-        nextIndex = 0
-        targetOffset = -(childrenLength.value + patchElementNum.value) * step.value + previousMargin.value
-        // 执行动画到下一帧
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration
-        }, () => {
-          const initOffset = -step.value * patchElementNum.value + previousMargin.value
-          // 将开始位置设置为真正的位置
-          offset.value = initOffset
-          currentIndex.value = nextIndex
-          runOnJS(loop)()
-        })
-      } else {
-        nextIndex = currentIndex.value + 1
-        targetOffset = -(nextIndex + patchElementNum.value) * step.value + previousMargin.value
-        // 执行动画到下一帧
+  const { loop, pauseLoop, resumeLoop } = useMemo(() => {
+    function createAutoPlay () {
+      if (!step.value || appState.current !== 'active') return
+      let targetOffset = 0
+      let nextIndex = currentIndex.value
+      if (!circularShared.value) {
+        // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
+        if (currentIndex.value === childrenLength.value - 1) {
+          pauseLoop()
+          return
+        }
+        nextIndex += 1
+        // targetOffset = -nextIndex * step.value - preMarginShared.value
+        targetOffset = -nextIndex * step.value
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
@@ -357,7 +334,57 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           currentIndex.value = nextIndex
           runOnJS(loop)()
         })
+      } else {
+        // 默认向右, 向下
+        if (nextIndex === childrenLength.value - 1) {
+          nextIndex = 0
+          targetOffset = -(childrenLength.value + patchElmNumShared.value) * step.value + preMarginShared.value
+          // 执行动画到下一帧
+          offset.value = withTiming(targetOffset, {
+            duration: easeDuration
+          }, () => {
+            const initOffset = -step.value * patchElmNumShared.value + preMarginShared.value
+            // 将开始位置设置为真正的位置
+            offset.value = initOffset
+            currentIndex.value = nextIndex
+            runOnJS(loop)()
+          })
+        } else {
+          nextIndex = currentIndex.value + 1
+          targetOffset = -(nextIndex + patchElmNumShared.value) * step.value + preMarginShared.value
+          // 执行动画到下一帧
+          offset.value = withTiming(targetOffset, {
+            duration: easeDuration,
+            easing: easeMap[easeingFunc]
+          }, () => {
+            currentIndex.value = nextIndex
+            runOnJS(loop)()
+          })
+        }
       }
+    }
+
+    // loop在JS线程中调用，createAutoPlay + useEffect中
+    function loop () {
+      timerId.current && clearTimeout(timerId.current)
+      if (appState.current === 'active') {
+        timerId.current = setTimeout(createAutoPlay, intervalTimer)
+      }
+    }
+
+    function pauseLoop () {
+      timerId.current && clearTimeout(timerId.current)
+    }
+    // resumeLoop在worklet中调用
+    function resumeLoop () {
+      if (autoplayShared.value && childrenLength.value > 1) {
+        loop()
+      }
+    }
+    return {
+      loop,
+      pauseLoop,
+      resumeLoop
     }
   }, [])
 
@@ -371,26 +398,36 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   function getOffset (index:number, stepValue: number) {
     if (!stepValue) return 0
     let targetOffset = 0
-    if (props.circular && children.length > 1) {
-      const targetIndex = index + patchEleNum
+    if (circular && children.length > 1) {
+      const targetIndex = index + patchElmNum
       targetOffset = -(stepValue * targetIndex - preMargin)
     } else {
       targetOffset = -index * stepValue
     }
     return targetOffset
   }
-  // loop在JS线程中调用，createAutoPlay + useEffect中
-  function loop () {
-    timerId.current = setTimeout(createAutoPlay, intervalTimer)
-  }
 
-  function pauseLoop () {
-    timerId.current && clearTimeout(timerId.current)
+  function updateCurrent (index:number, stepValue: number) {
+    const targetOffset = getOffset(index || 0, stepValue)
+    if (targetOffset !== offset.value) {
+      // 内部基于props.current!==currentIndex.value决定是否使用动画及更新currentIndex.value
+      if (props.current !== undefined && props.current !== currentIndex.value) {
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration,
+          easing: easeMap[easeingFunc]
+        }, () => {
+          currentIndex.value = props.current || 0
+        })
+      } else {
+        offset.value = targetOffset
+      }
+    }
   }
-  // resumeLoop在worklet中调用
-  function resumeLoop () {
-    if (props.autoplay && childrenLength.value > 1) {
+  function updateAutoplay () {
+    if (autoplay && children.length > 1) {
       loop()
+    } else {
+      pauseLoop()
     }
   }
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
@@ -400,234 +437,238 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       runOnJS(handleSwiperChange)(newIndex)
     }
   })
+  // 监听切换前后台，默认切换到后台JS执行不会立即停止定时器还在
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      appState.current = nextAppState
+      if (nextAppState === 'active' && autoplayShared.value && childrenLength.value > 1) {
+        loop()
+      } else {
+        appState.current = nextAppState
+      }
+    })
+    return () => {
+      subscription.remove()
+    }
+  }, [])
 
   useEffect(() => {
     let patchStep = 0
-    if (preMargin !== previousMargin.value) {
-      patchStep = preMargin - previousMargin.value
+    if (preMargin !== preMarginShared.value) {
+      patchStep += preMargin - preMarginShared.value
     }
     if (nextMargin !== nextMarginShared.value) {
       patchStep += nextMargin - nextMarginShared.value
     }
-    previousMargin.value = preMargin
+    preMarginShared.value = preMargin
     nextMarginShared.value = nextMargin
     const newStep = step.value - patchStep
-    step.value = newStep
-    offset.value = getOffset(currentIndex.value, newStep)
+    if (step.value !== newStep) {
+      step.value = newStep
+      offset.value = getOffset(currentIndex.value, newStep)
+    }
   }, [preMargin, nextMargin])
 
   useEffect(() => {
     childrenLength.value = children.length
+    pauseLoop()
     if (children.length - 1 < currentIndex.value) {
-      pauseLoop()
       currentIndex.value = 0
       offset.value = getOffset(0, step.value)
-      if (props.autoplay && children.length > 1) {
-        loop()
-      }
+    } else {
+      // children变化-其他属性都不变化（比如从1变化到3或者从3变到1， 在circular的情况下offset是需要更新的）
+      currentIndex.value = props.current || 0
+      offset.value = getOffset(props.current || 0, step.value)
+    }
+    if (autoplay && children.length > 1) {
+      loop()
     }
   }, [children.length])
 
   useEffect(() => {
-    if (!step.value) {
-      return
-    }
-    const targetOffset = getOffset(props.current || 0, step.value)
-    if (props.current !== undefined && props.current !== currentIndex.value) {
-      offset.value = withTiming(targetOffset, {
-        duration: easeDuration,
-        easing: easeMap[easeingFunc]
-      }, () => {
-        currentIndex.value = props.current || 0
-      })
-    }
+    updateCurrent(props.current || 0, step.value)
   }, [props.current])
 
   useEffect(() => {
-    if (!step.value) {
-      return
-    }
-    if (props.autoplay && children.length > 1) {
-      loop()
-    } else {
-      pauseLoop()
-    }
+    autoplayShared.value = autoplay
+    updateAutoplay()
     return () => {
-      if (props.autoplay) {
+      if (autoplay) {
         pauseLoop()
       }
     }
-  }, [props.autoplay])
+  }, [autoplay])
 
-  const getTargetPosition = useCallback((eventData: EventDataType) => {
-    'worklet'
-    // 移动的距离
-    const { translation } = eventData
-    let resetOffsetPos = 0
-    let selectedIndex = currentIndex.value
-    // 是否临界点
-    let isCriticalItem = false
-    // 真实滚动到的偏移量坐标
-    let moveToTargetPos = 0
-    const currentOffset = translation < 0 ? offset.value - previousMargin.value : offset.value + previousMargin.value
-    const computedIndex = Math.abs(currentOffset) / step.value
-    const moveToIndex = translation < 0 ? Math.ceil(computedIndex) : Math.floor(computedIndex)
-    // 实际应该定位的索引值
-    if (!circular.value) {
-      selectedIndex = moveToIndex
-      moveToTargetPos = selectedIndex * step.value
-    } else {
-      if (moveToIndex >= childrenLength.value + patchElementNum.value) {
-        selectedIndex = moveToIndex - (childrenLength.value + patchElementNum.value)
-        resetOffsetPos = (selectedIndex + patchElementNum.value) * step.value - previousMargin.value
-        moveToTargetPos = moveToIndex * step.value - previousMargin.value
-        isCriticalItem = true
-      } else if (moveToIndex <= patchElementNum.value - 1) {
-        selectedIndex = moveToIndex === 0 ? childrenLength.value - patchElementNum.value : childrenLength.value - 1
-        resetOffsetPos = (selectedIndex + patchElementNum.value) * step.value - previousMargin.value
-        moveToTargetPos = moveToIndex * step.value - previousMargin.value
-        isCriticalItem = true
+  useEffect(() => {
+    if (circular !== circularShared.value) {
+      circularShared.value = circular
+      patchElmNumShared.value = circular ? (preMargin ? 2 : 1) : 0
+      offset.value = getOffset(currentIndex.value, step.value)
+    }
+  }, [circular, preMargin])
+
+  const { gestureHandler } = useMemo(() => {
+    function getTargetPosition (eventData: EventDataType) {
+      'worklet'
+      // 移动的距离
+      const { translation } = eventData
+      let resetOffsetPos = 0
+      let selectedIndex = currentIndex.value
+      // 是否临界点
+      let isCriticalItem = false
+      // 真实滚动到的偏移量坐标
+      let moveToTargetPos = 0
+      const currentOffset = translation < 0 ? offset.value - preMarginShared.value : offset.value + preMarginShared.value
+      const computedIndex = Math.abs(currentOffset) / step.value
+      const moveToIndex = translation < 0 ? Math.ceil(computedIndex) : Math.floor(computedIndex)
+      // 实际应该定位的索引值
+      if (!circularShared.value) {
+        selectedIndex = moveToIndex
+        moveToTargetPos = selectedIndex * step.value
       } else {
-        selectedIndex = moveToIndex - patchElementNum.value
-        moveToTargetPos = moveToIndex * step.value - previousMargin.value
+        if (moveToIndex >= childrenLength.value + patchElmNumShared.value) {
+          selectedIndex = moveToIndex - (childrenLength.value + patchElmNumShared.value)
+          resetOffsetPos = (selectedIndex + patchElmNumShared.value) * step.value - preMarginShared.value
+          moveToTargetPos = moveToIndex * step.value - preMarginShared.value
+          isCriticalItem = true
+        } else if (moveToIndex <= patchElmNumShared.value - 1) {
+          selectedIndex = moveToIndex === 0 ? childrenLength.value - patchElmNumShared.value : childrenLength.value - 1
+          resetOffsetPos = (selectedIndex + patchElmNumShared.value) * step.value - preMarginShared.value
+          moveToTargetPos = moveToIndex * step.value - preMarginShared.value
+          isCriticalItem = true
+        } else {
+          selectedIndex = moveToIndex - patchElmNumShared.value
+          moveToTargetPos = moveToIndex * step.value - preMarginShared.value
+        }
+      }
+      return {
+        selectedIndex,
+        isCriticalItem,
+        resetOffset: -resetOffsetPos,
+        targetOffset: -moveToTargetPos
       }
     }
-    return {
-      selectedIndex,
-      isCriticalItem,
-      resetOffset: -resetOffsetPos,
-      targetOffset: -moveToTargetPos
-    }
-  }, [])
-
-  const canMove = useCallback((eventData: EventDataType) => {
-    'worklet'
-    const { translation } = eventData
-    const currentOffset = Math.abs(offset.value)
-    if (!circular.value) {
-      if (translation < 0) {
-        return currentOffset < step.value * (childrenLength.value - 1)
+    function canMove (eventData: EventDataType) {
+      'worklet'
+      const { translation } = eventData
+      const currentOffset = Math.abs(offset.value)
+      if (!circularShared.value) {
+        if (translation < 0) {
+          return currentOffset < step.value * (childrenLength.value - 1)
+        } else {
+          return currentOffset > 0
+        }
       } else {
-        return currentOffset > 0
+        return true
       }
-    } else {
-      return true
     }
-  }, [])
-
-  const handleEnd = useCallback((eventData: EventDataType) => {
-    'worklet'
-    const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
-    if (isCriticalItem) {
+    function handleEnd (eventData: EventDataType) {
+      'worklet'
+      const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
+      if (isCriticalItem) {
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration,
+          easing: easeMap[easeingFunc]
+        }, () => {
+          if (touchfinish.value !== false) {
+            currentIndex.value = selectedIndex
+            offset.value = resetOffset
+            runOnJS(resumeLoop)()
+          }
+        })
+      } else {
+        offset.value = withTiming(targetOffset, {
+          duration: easeDuration,
+          easing: easeMap[easeingFunc]
+        }, () => {
+          if (touchfinish.value !== false) {
+            currentIndex.value = selectedIndex
+            runOnJS(resumeLoop)()
+          }
+        })
+      }
+    }
+    function handleBack (eventData: EventDataType) {
+      'worklet'
+      const { translation } = eventData
+      // 向右滑动的back:trans < 0， 向左滑动的back: trans < 0
+      let currentOffset = Math.abs(offset.value)
+      if (circularShared.value) {
+        currentOffset += translation < 0 ? preMarginShared.value : -preMarginShared.value
+      }
+      const curIndex = currentOffset / step.value
+      const moveToIndex = (translation < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElmNumShared.value
+      const targetOffset = -(moveToIndex + patchElmNumShared.value) * step.value + (circularShared.value ? preMarginShared.value : 0)
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
       }, () => {
         if (touchfinish.value !== false) {
-          currentIndex.value = selectedIndex
-          offset.value = resetOffset
-          runOnJS(resumeLoop)()
-        }
-      })
-    } else {
-      offset.value = withTiming(targetOffset, {
-        duration: easeDuration,
-        easing: easeMap[easeingFunc]
-      }, () => {
-        if (touchfinish.value !== false) {
-          currentIndex.value = selectedIndex
+          currentIndex.value = moveToIndex
           runOnJS(resumeLoop)()
         }
       })
     }
-  }, [])
-
-  const handleBack = useCallback((eventData: EventDataType) => {
-    'worklet'
-    const { translation } = eventData
-    // 向右滑动的back:trans < 0， 向左滑动的back: trans < 0
-    let currentOffset = Math.abs(offset.value)
-    if (circular.value) {
-      currentOffset += translation < 0 ? previousMargin.value : -previousMargin.value
-    }
-    const curIndex = currentOffset / step.value
-    const moveToIndex = (translation < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElementNum.value
-    const targetOffset = -(moveToIndex + patchElementNum.value) * step.value + (circular.value ? previousMargin.value : 0)
-    offset.value = withTiming(targetOffset, {
-      duration: easeDuration,
-      easing: easeMap[easeingFunc]
-    }, () => {
-      if (touchfinish.value !== false) {
-        currentIndex.value = moveToIndex
+    function handleLongPress () {
+      'worklet'
+      const currentOffset = Math.abs(offset.value)
+      let preOffset = (currentIndex.value + patchElmNumShared.value) * step.value
+      if (circularShared.value) {
+        preOffset -= preMarginShared.value
+      }
+      // 正常事件中拿到的transition值(正向滑动<0，倒着滑>0)
+      const diffOffset = preOffset - currentOffset
+      const half = Math.abs(diffOffset) > step.value / 2
+      if (+diffOffset === 0) {
         runOnJS(resumeLoop)()
-      }
-    })
-  }, [])
-
-  // 按照用户手指抬起的位置计算
-  const handleLongPress = useCallback(() => {
-    'worklet'
-    const currentOffset = Math.abs(offset.value)
-    let preOffset = (currentIndex.value + patchElementNum.value) * step.value
-    if (circular.value) {
-      preOffset -= previousMargin.value
-    }
-    // 正常事件中拿到的transition值(正向滑动<0，倒着滑>0)
-    const diffOffset = preOffset - currentOffset
-    const half = Math.abs(diffOffset) > step.value / 2
-    if (+diffOffset === 0) {
-      runOnJS(resumeLoop)()
-    } else if (half) {
-      handleEnd({ translation: diffOffset })
-    } else {
-      handleBack({ translation: diffOffset })
-    }
-  }, [])
-
-  const reachBoundary = useCallback((eventData: EventDataType) => {
-    'worklet'
-    // 移动的距离
-    const { translation } = eventData
-    const elementsLength = step.value * childrenLength.value
-
-    let isBoundary = false
-    let resetOffset = 0
-    // Y轴向下滚动, transDistance > 0, 向上滚动 < 0 X轴向左滚动, transDistance > 0
-    const currentOffset = offset.value
-    const moveStep = Math.ceil(translation / elementsLength)
-    if (translation < 0) {
-      const posEnd = (childrenLength.value + patchElementNum.value + 1) * step.value
-      const posReverseEnd = (patchElementNum.value - 1) * step.value
-      if (currentOffset < -posEnd + step.value) {
-        isBoundary = true
-        resetOffset = Math.abs(moveStep) === 0 ? patchElementNum.value * step.value + translation : moveStep * elementsLength
-      }
-      if (currentOffset > -posReverseEnd) {
-        isBoundary = true
-        resetOffset = moveStep * elementsLength
-      }
-    } else if (translation > 0) {
-      const posEnd = (patchElementNum.value - 1) * step.value
-      const posReverseEnd = (patchElementNum.value + childrenLength.value) * step.value
-      if (currentOffset > -posEnd) {
-        isBoundary = true
-        resetOffset = moveStep * elementsLength + step.value + (moveStep === 1 ? translation : 0)
-      }
-      if (currentOffset < -posReverseEnd) {
-        isBoundary = true
-        resetOffset = moveStep * elementsLength + patchElementNum.value * step.value
+      } else if (half) {
+        handleEnd({ translation: diffOffset })
+      } else {
+        handleBack({ translation: diffOffset })
       }
     }
-    return {
-      isBoundary,
-      resetOffset: -resetOffset
+    function reachBoundary (eventData: EventDataType) {
+      'worklet'
+      // 移动的距离
+      const { translation } = eventData
+      const elementsLength = step.value * childrenLength.value
+      let isBoundary = false
+      let resetOffset = 0
+      // Y轴向下滚动, transDistance > 0, 向上滚动 < 0 X轴向左滚动, transDistance > 0
+      const currentOffset = offset.value
+      const moveStep = Math.ceil(translation / elementsLength)
+      if (translation < 0) {
+        const posEnd = (childrenLength.value + patchElmNumShared.value + 1) * step.value
+        const posReverseEnd = (patchElmNumShared.value - 1) * step.value
+        if (currentOffset < -posEnd + step.value) {
+          isBoundary = true
+          resetOffset = Math.abs(moveStep) === 0 ? patchElmNumShared.value * step.value + translation : moveStep * elementsLength
+        }
+        if (currentOffset > -posReverseEnd) {
+          isBoundary = true
+          resetOffset = moveStep * elementsLength
+        }
+      } else if (translation > 0) {
+        const posEnd = (patchElmNumShared.value - 1) * step.value
+        const posReverseEnd = (patchElmNumShared.value + childrenLength.value) * step.value
+        if (currentOffset > -posEnd) {
+          isBoundary = true
+          resetOffset = moveStep * elementsLength + step.value + (moveStep === 1 ? translation : 0)
+        }
+        if (currentOffset < -posReverseEnd) {
+          isBoundary = true
+          resetOffset = moveStep * elementsLength + patchElmNumShared.value * step.value
+        }
+      }
+      return {
+        isBoundary,
+        resetOffset: -resetOffset
+      }
     }
-  }, [])
-
-  const gestureHandler = useMemo(() => {
     const gesturePan = Gesture.Pan()
       .onBegin((e) => {
         'worklet'
+        if (!step.value) return
         touchfinish.value = false
         cancelAnimation(offset)
         runOnJS(pauseLoop)()
@@ -637,17 +678,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       })
       .onTouchesMove((e) => {
         'worklet'
+        if (touchfinish.value) return
         const touchEventData = e.changedTouches[0]
         const moveDistance = touchEventData[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance
         }
         // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
-        if (!circular.value && !canMove(eventData)) {
+        if (!circularShared.value && !canMove(eventData)) {
           return
         }
         const { isBoundary, resetOffset } = reachBoundary(eventData)
-        if (isBoundary && circular.value && !touchfinish.value) {
+        if (isBoundary && circularShared.value) {
           offset.value = resetOffset
         } else {
           offset.value = moveDistance + offset.value
@@ -656,6 +698,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       })
       .onTouchesUp((e) => {
         'worklet'
+        if (touchfinish.value) return
         const touchEventData = e.changedTouches[0]
         const moveDistance = touchEventData[strAbso] - moveTranstion.value
         touchfinish.value = true
@@ -663,7 +706,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           translation: moveDistance
         }
         // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
-        if (!circular.value && !canMove(eventData)) {
+        if (!circularShared.value && !canMove(eventData)) {
           return
         }
         const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
@@ -673,7 +716,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           handleEnd(eventData)
         }
       })
-    return gesturePan
+    return {
+      gestureHandler: gesturePan
+    }
   }, [])
 
   const animatedStyles = useAnimatedStyle(() => {

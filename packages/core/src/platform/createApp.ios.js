@@ -83,7 +83,6 @@ export default function createApp (options) {
   }
 
   global.__mpxAppLaunched = false
-  global.__mpxAppHotLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
     const initialRouteRef = useRef({
@@ -93,6 +92,8 @@ export default function createApp (options) {
     if (firstRef.current) {
       // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
       global.__mpxAppHotLaunched = false
+      // 热启动情况下重置__mpxPagesMap避免页面销毁函数未及时执行时错误地引用到之前的navigation
+      global.__mpxPagesMap = {}
       firstRef.current = false
     }
     if (!global.__mpxAppHotLaunched) {
@@ -109,7 +110,8 @@ export default function createApp (options) {
           query: current.params,
           scene: 0,
           shareTicket: '',
-          referrerInfo: {}
+          referrerInfo: {},
+          isLaunch: true
         }
         global.__mpxEnterOptions = options
         if (!global.__mpxAppLaunched) {
@@ -176,22 +178,17 @@ export default function createApp (options) {
 
     const { initialRouteName, initialParams } = initialRouteRef.current
     const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
-    const headerBackImageSource = Mpx.config.rnConfig.headerBackImageSource || null
     const navScreenOpts = {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
       // 安卓上会出现初始化时闪现导航条的问题
-      headerShown: false,
-      headerShadowVisible: false
+      headerShown: false
     }
     if (headerBackImageProps) {
       navScreenOpts.headerBackImage = () => {
         return createElement(Image, headerBackImageProps)
       }
-    }
-    if (headerBackImageSource) {
-      navScreenOpts.headerBackImageSource = headerBackImageSource
     }
     return createElement(SafeAreaProvider,
       null,
