@@ -26,6 +26,7 @@ module.exports = function (script, {
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { useHeaderHeight } from '@react-navigation/elements';
 import Provider from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-provider'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -33,6 +34,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createStackNavigator: createNativeStackNavigator,
+  useHeaderHeight: useHeaderHeight,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
   Provider: Provider,
