@@ -14,12 +14,12 @@ module.exports = function (script, {
   localPagesMap
 }, callback) {
   let scriptSrcMode = srcMode
+  const mode = loaderContext.getMpx().mode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
     script = { tag: 'script' }
   }
-
   let output = '/* script */\n'
   if (ctorType === 'app') {
     output += `
