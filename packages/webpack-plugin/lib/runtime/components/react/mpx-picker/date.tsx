@@ -1,86 +1,180 @@
-import { View, TouchableWithoutFeedback } from 'react-native'
-import { DatePicker } from '@ant-design/react-native'
-import React, { forwardRef, useState, useRef, useEffect } from 'react'
-import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { DateProps, LayoutType } from './type'
+import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import MpxPickerView from '../mpx-picker-view'
+import MpxPickerViewColumn from '../mpx-picker-view-column'
+import { DateProps } from './type'
+import { HandlerRef } from '../useNodesRef'
+import { extendObject, useUpdateEffect } from '../utils'
+import { years, months, daysInMonth, daysInMonthLength, START_YEAR, END_YEAR } from './dateData'
 
-function formatTimeStr (time = ''): Date {
-  let [year, month, day]: any = time.split('-')
-  year = ~~year || 2000
-  month = ~~month || 1
-  day = ~~day || 1
-  return new Date(year, month - 1, day)
+type FormatObj = {
+  indexArr: number[]
+  rangeArr: string[][]
+  nameArr?: string[]
 }
 
-function dateToString (date: Date, fields: 'day' | 'month' | 'year' = 'day'): string {
-  const yyyy: string = date.getFullYear() + ''
-  const MM: string = ('0' + (date.getMonth() + 1)).slice(-2)
-  const dd: string = ('0' + date.getDate()).slice(-2)
-  let ret: string = yyyy
-  if (fields === 'month' || fields === 'day') {
-    ret += `-${MM}`
-    if (fields === 'day') {
-      ret += `-${dd}`
-    }
+const styles = StyleSheet.create({
+  pickerContainer: {
+    height: 240,
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10
+  },
+  pickerIndicator: {
+    height: 45
+  },
+  pickerItem: {
+    fontSize: 16,
+    lineHeight: 45,
+    textAlign: 'center'
   }
-  return ret
-}
-
-const _DatePicker = forwardRef<HandlerRef<View, DateProps>, DateProps>((props: DateProps, ref): React.JSX.Element => {
-  const { children, start = '1970-01-01', end = '2999-01-01', value, bindchange, bindcancel, disabled, fields, style } = props
-  const [datevalue, setDateValue] = useState(value)
-  // 存储layout布局信息
-  const layoutRef = useRef({})
-  const viewRef = useRef<View>(null)
-  const nodeRef = useRef<View>(null)
-  useNodesRef<View, DateProps>(props, ref, nodeRef, {
-    style
-  })
-
-  useEffect(() => {
-    value && setDateValue(value)
-  }, [value])
-
-  const onChange = (date: Date): void => {
-    const { fields = 'day' } = props
-    const ret = dateToString(date, fields)
-    setDateValue(ret)
-    bindchange && bindchange({ detail: { value: ret } })
-  }
-
-  const onDismiss = (): void => {
-    bindcancel && bindcancel()
-  }
-
-  const onElementLayout = (layout: LayoutType) => {
-    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      // props.getInnerLayout && props.getInnerLayout(layoutRef)
-    })
-  }
-
-  const dateProps = {
-    ref: nodeRef,
-    precision: fields,
-    value: formatTimeStr(datevalue),
-    minDate: formatTimeStr(start),
-    maxDate: formatTimeStr(end),
-    onChange,
-    onDismiss,
-    disabled
-  }
-  const touchProps = {
-    onLayout: onElementLayout,
-    ref: viewRef
-  }
-  return (
-    <DatePicker {...dateProps}>
-      <TouchableWithoutFeedback>
-        <View {...touchProps}>{children}</View>
-      </TouchableWithoutFeedback>
-    </DatePicker>
-  )
 })
 
-_DatePicker.displayName = 'mpx-picker-date'
-export default _DatePicker
+const findIndex = (arr: string[], val: string) => {
+  const res = arr.findIndex(item => item === val)
+  return res === -1 ? 0 : res
+}
+
+const getColumnLength = (fields: DateProps['fields'] = 'day') => {
+  return fields === 'year' ? 1 : fields === 'month' ? 2 : 3
+}
+
+const splitDateStr = (dateStr: string) => {
+  const today = new Date()
+  const todayYear = today.getFullYear()
+  const todayMonth = today.getMonth() + 1
+  const todayDay = today.getDate()
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const year = Math.max(Math.min(START_YEAR, y), END_YEAR)
+  const month = Math.max(Math.min(1, m), 12)
+  const day = Math.max(Math.min(1, d), daysInMonthLength(year, month))
+  return [year || todayYear, month || todayMonth, day || todayDay]
+}
+
+const valueStr2Obj = (
+  _value: string, // eg: 2025-2-12
+  limit: number
+): FormatObj => {
+  const [y, m, d] = splitDateStr(_value)
+  const ans = {
+    indexArr: [y - START_YEAR],
+    rangeArr: [years]
+  }
+  if (limit === 2) {
+    ans.indexArr.push(m - 1)
+    ans.rangeArr.push(months)
+  } else if (limit === 3) {
+    const days = daysInMonth(y, m)
+    ans.indexArr.push(d - 1)
+    ans.rangeArr.push(days)
+  }
+  return ans
+}
+
+const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => {
+  const currentValue = currentObj.indexArr
+  const rangeArr = currentObj.rangeArr
+
+  if (limit === 3 && (currentValue[0] !== value[0] || currentValue[1] !== value[1])) {
+    const days = daysInMonth(value[0], value[1] + 1)
+    rangeArr[2] = days
+  }
+
+  return {
+    indexArr: value,
+    rangeArr
+  }
+}
+
+const valueNum2String = (value: number[]) => {
+  return value.map(index => {
+    if (index === 0) {
+      return index + START_YEAR
+    } else {
+      return index + 1
+    }
+  }).join('-')
+}
+
+const hasDiff = (currentValue: number[], value: number[], limit = 3) => {
+  for (let i = 0; i < limit; i++) {
+    if (currentValue[i] !== value[i]) {
+      return true
+    }
+  }
+  return false
+}
+
+const PickerTime = forwardRef<
+  HandlerRef<View, DateProps>,
+  DateProps
+>((props: DateProps, ref): React.JSX.Element => {
+  const { value = '', start = '1900-01-01', end = '2100-01-01', fields, bindchange } = props
+
+  const nodeRef = useRef(null)
+  const columnLength = useMemo(() => getColumnLength(fields), [fields])
+  const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, columnLength))
+
+  useUpdateEffect(() => {
+    const calibratedValue = valueStr2Obj(value, columnLength)
+    setFormatObj(calibratedValue)
+  }, [value, columnLength])
+
+  const updateValue = useCallback((value: string) => {
+    const calibratedValue = valueStr2Obj(value, columnLength)
+    setFormatObj(calibratedValue)
+  }, [columnLength])
+
+  const _props = useRef(props)
+  _props.current = props
+  useImperativeHandle(ref, () => ({
+    updateValue,
+    getNodeInstance: () => ({
+      props: _props,
+      nodeRef,
+      instance: {
+        style: {}
+      }
+    })
+  }))
+
+  const onChange = useCallback((e: { detail: { value: number[] } }) => {
+    const { value } = e.detail
+    const currentValue = formatObj.indexArr
+    const newObj = valueChanged2Obj(formatObj, value, columnLength)
+    if (hasDiff(currentValue, value, columnLength)) {
+      setFormatObj(newObj)
+    }
+    bindchange?.({ detail: { value: valueNum2String(newObj.indexArr) } })
+  }, [formatObj, columnLength, bindchange])
+
+  const renderColumn = () => {
+    return formatObj.rangeArr?.map((item, index) => (
+      // @ts-expect-error ignore
+      <MpxPickerViewColumn key={index}>
+        {item.map((item, index) => {
+          const len = item.length
+          const style = extendObject({}, styles.pickerItem, {
+            fontSize: len > 5 ? 21 - len : 16
+          })
+          return <Text key={index} style={style}>
+            {item}
+          </Text>
+        })}
+      </MpxPickerViewColumn>
+    ))
+  }
+
+  return (
+    <MpxPickerView
+      style={styles.pickerContainer}
+      indicator-style={styles.pickerIndicator}
+      value={formatObj.indexArr}
+      bindchange={onChange}
+    >
+      {renderColumn()}
+    </MpxPickerView>)
+})
+
+PickerTime.displayName = 'MpxPickerTime'
+export default PickerTime
