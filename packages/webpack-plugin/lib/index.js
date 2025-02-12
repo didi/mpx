@@ -191,6 +191,7 @@ class MpxWebpackPlugin {
     options.retryRequireAsync = options.retryRequireAsync || false
     options.optimizeSize = options.optimizeSize || false
     options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
+    options.useExtendComponents = options.useExtendComponents
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -726,6 +727,7 @@ class MpxWebpackPlugin {
           // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
           supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode)),
           partialCompileRules: this.options.partialCompileRules,
+          useExtendComponents: this.options.useExtendComponents,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
               hasPage: false,

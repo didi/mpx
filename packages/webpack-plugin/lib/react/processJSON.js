@@ -10,7 +10,7 @@ const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const { RESOLVE_IGNORED_ERR, EXTEND_COMPONENTS_LIST } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
 module.exports = function (jsonContent, {
@@ -30,7 +30,8 @@ module.exports = function (jsonContent, {
     mode,
     srcMode,
     env,
-    projectRoot
+    projectRoot,
+    useExtendComponents
   } = mpx
 
   const context = loaderContext.context
@@ -102,9 +103,17 @@ module.exports = function (jsonContent, {
     if (!isApp) {
       rulesRunnerOptions.mainKey = ctorType
     } else {
-      jsonObj.usingComponents = Object.assign({}, {
-        'recycle-view': require.resolve('../runtime/components/extend/mpx-recycle-view.mpx')
-      }, jsonObj.usingComponents)
+      if (useExtendComponents) {
+        const extendComponents = {}
+        useExtendComponents.forEach((name) => {
+          if (EXTEND_COMPONENTS_LIST.includes(name)) {
+            extendComponents[name] = require.resolve(`../runtime/components/extend/mpx-${name}.mpx`)
+          } else {
+            emitWarning(`extend component ${name} is not supported!`)
+          }
+        })
+        jsonObj.usingComponents = Object.assign({}, extendComponents, jsonObj.usingComponents)
+      }
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)

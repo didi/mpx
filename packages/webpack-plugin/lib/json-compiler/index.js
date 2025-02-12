@@ -12,7 +12,7 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
-const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT, EXTEND_COMPONENTS_LIST } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
@@ -187,10 +187,17 @@ module.exports = function (content) {
   }
 
   if (mode === 'wx' || mode === 'ali') {
-    if (isApp) {
-      json.usingComponents = Object.assign({}, {
-        'recycle-view': require.resolve('../runtime/components/extend/mpx-recycle-view.mpx')
-      }, json.usingComponents)
+    const { useExtendComponents } = mpx
+    if (isApp && useExtendComponents) {
+      const extendComponents = {}
+        useExtendComponents.forEach((name) => {
+          if (EXTEND_COMPONENTS_LIST.includes(name)) {
+            extendComponents[name] = require.resolve(`../runtime/components/extend/mpx-${name}.mpx`)
+          } else {
+            emitWarning(`extend component ${name} is not supported!`)
+          }
+        })
+        json.usingComponents = Object.assign({}, extendComponents, json.usingComponents)
     }
   }
 
