@@ -28,12 +28,14 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
 import { NavigationContainer, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { Provider } from '@ant-design/react-native'
+import { useHeaderHeight } from '@react-navigation/elements';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
   createStackNavigator: createNativeStackNavigator,
+  useHeaderHeight: useHeaderHeight,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
   Provider: Provider,
