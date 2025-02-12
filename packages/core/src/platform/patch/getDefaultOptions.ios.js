@@ -491,7 +491,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const [enabled, setEnabled] = useState(false)
@@ -530,17 +530,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-
-      useEffect(() => {
-        const unsubscribe = navigation.addListener('transitionEnd', (e) => {
-          setTimeout(() => {
-            rootRef.current?.measureInWindow((x, y, width, height) => {
-              navigation.layout = { x, y, width, height }
-            })
-          }, 200)
-        });
-        return unsubscribe;
-      }, [navigation]);
+      const onLayout = useCallback(() => {
+        setTimeout(() => {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        }, 200)
+      }, [])
 
       const withKeyboardAvoidingView = (element) => {
         if (__mpx_mode__ === 'ios') {
@@ -575,10 +571,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       if (setStateRef.current !== setState) {
         setStateRef.current = setState
       }
-
       return createElement(GestureHandlerRootView,
         {
-          style: {
+          // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
+          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom' ? {
+            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+          } : {
             flex: 1
           }
         },
@@ -589,7 +587,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef
+              ref: rootRef,
+              onLayout
             },
             createElement(RouteContext.Provider,
               {
