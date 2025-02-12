@@ -45,9 +45,9 @@ const splitDateStr = (dateStr: string) => {
   const todayMonth = today.getMonth() + 1
   const todayDay = today.getDate()
   const [y, m, d] = dateStr.split('-').map(Number)
-  const year = Math.max(Math.min(START_YEAR, y), END_YEAR)
-  const month = Math.max(Math.min(1, m), 12)
-  const day = Math.max(Math.min(1, d), daysInMonthLength(year, month))
+  const year = Math.min(Math.max(START_YEAR, y), END_YEAR)
+  const month = Math.min(Math.max(1, m), 12)
+  const day = Math.min(Math.max(1, d), daysInMonthLength(year, month))
   return [year || todayYear, month || todayMonth, day || todayDay]
 }
 
@@ -65,8 +65,8 @@ const valueStr2Obj = (
     ans.rangeArr.push(months)
   } else if (limit === 3) {
     const days = daysInMonth(y, m)
-    ans.indexArr.push(d - 1)
-    ans.rangeArr.push(days)
+    ans.indexArr.push(m - 1, d - 1)
+    ans.rangeArr.push(months, days)
   }
   return ans
 }
@@ -87,11 +87,11 @@ const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => 
 }
 
 const valueNum2String = (value: number[]) => {
-  return value.map(index => {
+  return value.map((item, index) => {
     if (index === 0) {
-      return index + START_YEAR
+      return item + START_YEAR
     } else {
-      return index + 1
+      return item + 1
     }
   }).join('-')
 }
@@ -110,6 +110,8 @@ const PickerTime = forwardRef<
   DateProps
 >((props: DateProps, ref): React.JSX.Element => {
   const { value = '', start = '1900-01-01', end = '2100-01-01', fields, bindchange } = props
+
+  console.log('---> render value=', value)
 
   const nodeRef = useRef(null)
   const columnLength = useMemo(() => getColumnLength(fields), [fields])
@@ -142,6 +144,7 @@ const PickerTime = forwardRef<
     const { value } = e.detail
     const currentValue = formatObj.indexArr
     const newObj = valueChanged2Obj(formatObj, value, columnLength)
+    console.log('----> onChange value=', value, newObj.indexArr)
     if (hasDiff(currentValue, value, columnLength)) {
       setFormatObj(newObj)
     }
@@ -153,11 +156,7 @@ const PickerTime = forwardRef<
       // @ts-expect-error ignore
       <MpxPickerViewColumn key={index}>
         {item.map((item, index) => {
-          const len = item.length
-          const style = extendObject({}, styles.pickerItem, {
-            fontSize: len > 5 ? 21 - len : 16
-          })
-          return <Text key={index} style={style}>
+          return <Text key={index} style={styles.pickerItem}>
             {item}
           </Text>
         })}
