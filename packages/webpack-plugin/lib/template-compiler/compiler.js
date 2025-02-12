@@ -2464,6 +2464,60 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
+function processComponentGenericsReact (el, options) {
+  const { componentGenerics, usingComponentsInfo } = options
+  // 处理子组件定义
+  if (componentGenerics && componentGenerics[el.tag]) {
+      const genericKey = el.tag
+
+      // 使用 is 属性处理动态组件
+      el.is = `this.__props.generic && this.__props.generic['${genericKey}'] && getComponent(this.__props.generic['${genericKey}']) ? this.__props.generic['${genericKey}'] : '${genericKey}default'`
+
+      // 保存可能的组件列表
+      el.components = [
+        `this.__props.generic['${genericKey}']`,
+        `${genericKey}default`
+      ]
+  }
+
+  // 处理父组件中使用 generic 组件的情况
+  const genericConfig = {} // 用一个对象收集所有的 generic 配置
+  const genericComponentsConfig = {} // 收集所有组件的 moduleId
+  el.attrsList.forEach(attr => {
+    const match = attr.name.match(genericRE)
+    if (match) {
+      const key = match[1]
+      const componentName = attr.value
+      // 将每个 generic 配置添加到同一个对象中
+      genericConfig[key] = componentName
+
+      // 从 usingComponentsInfo 中获取组件的 moduleId
+      if (usingComponentsInfo[componentName]) {
+        const { mid } = usingComponentsInfo[componentName]
+        // 收集组件的 moduleId
+        genericComponentsConfig[componentName] = mid
+      }
+    }
+  })
+  // 只有在有 generic 配置时才添加属性
+  if (Object.keys(genericConfig).length) {
+    const attrsToAdd = [
+      {
+        name: 'generic',
+        value: genericConfig
+      }
+    ]
+    // 只有在有 moduleId 时才添加 genericComponents 属性
+    if (Object.keys(genericComponentsConfig).length) {
+      attrsToAdd.push({
+        name: 'genericComponents',
+        value: genericComponentsConfig
+      })
+    }
+    el.attrsList = el.attrsList.concat(attrsToAdd)
+  }
+}
+
 function processShow (el, options, root) {
   let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (mode === 'swan') show = wrapMustache(show)
@@ -2714,6 +2768,7 @@ function processElement (el, root, options, meta) {
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
+    processComponentGenericsReact(el, options)
     return
   }
 
