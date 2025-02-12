@@ -114,6 +114,7 @@ function navigateBack (options = {}) {
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
         navigationHelper.lastSuccessCallback()
+        navigationHelper.lastSuccessCallback = null
       })
     } else {
       navigation.pop(delta)
