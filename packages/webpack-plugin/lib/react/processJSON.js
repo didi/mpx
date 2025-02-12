@@ -101,6 +101,10 @@ module.exports = function (jsonContent, {
 
     if (!isApp) {
       rulesRunnerOptions.mainKey = ctorType
+    } else {
+      jsonObj.usingComponents = Object.assign({}, {
+        'recycle-view': require.resolve('../runtime/components/extend/mpx-recycle-view.mpx')
+      }, jsonObj.usingComponents)
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)

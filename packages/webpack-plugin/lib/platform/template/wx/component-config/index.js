@@ -42,7 +42,6 @@ const wxs = require('./wxs')
 const component = require('./component')
 const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
-const recycleView = require('./recycle-view')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -126,7 +125,6 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     hyphenTagName({ print }),
     label({ print }),
     component(),
-    rootPortal({ print }),
-    recycleView({ print })
+    rootPortal({ print })
   ]
 }
