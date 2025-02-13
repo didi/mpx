@@ -44,6 +44,7 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
+    const appComponents = global.__getAppComponents() || {}
     // 从父组件传递的 genericComponents 中获取 moduleId
     if (proxy.target.__props.genericComponents && proxy.target.__props.generic) {
       const genericKeys = Object.keys(proxy.target.__props.generic)
@@ -59,7 +60,7 @@ function createEffect (proxy, components) {
         }
       }
     }
-    return components[tagName] || getByPath(ReactNative, tagName)
+    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
