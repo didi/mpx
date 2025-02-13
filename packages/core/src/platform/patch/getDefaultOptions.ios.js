@@ -566,7 +566,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const [enabled, setEnabled] = useState(true)
@@ -576,20 +576,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions({
+        navigation.setOptions(Object.assign({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-        if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
-          color && ReactNative.StatusBar.setBackgroundColor(color)
-        }
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
+          statusBarTranslucent: true
+        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
       }, [])
 
       const rootRef = useRef(null)
@@ -627,7 +622,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       return createElement(GestureHandlerRootView,
         {
-          style: {
+          // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
+          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
+          ? {
+            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+          }
+          : {
             flex: 1
           }
         },
