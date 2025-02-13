@@ -16,16 +16,13 @@
     bindscrolltolower="onScrollToLower"
   >
     <view class="content-wrapper">
-      <view
-        class="infinite-list-placeholder"
-        wx:style="{{placeholderStyle}}"
-      ></view>
+      <view class="infinite-list-placeholder" wx:style="{{placeholderStyle}}"></view>
       <view class="infinite-list" wx:style="{{contentStyle}}">
         <view
           wx:for="{{visibleData}}"
           wx:key="_index"
           class="infinite-list-item"
-          wx:style="height: {{itemSize.height}}px; overflow: hidden"
+          wx:style="height: {{item._size.height}}px; width: {{item._size.width}}px; overflow: hidden"
         >
           <recycle-item current-item="{{item}}" />
         </view>
@@ -34,202 +31,267 @@
   </scroll-view>
 </template>
 <script>
-import mpx, { createComponent } from '@mpxjs/core'
+  import mpx, { createComponent } from '@mpxjs/core'
 
-createComponent({
-  properties: {
-    scrollY: Boolean,
-    height: {
-      type: Number,
-      value: 0
+  createComponent({
+    properties: {
+      scrollY: Boolean,
+      height: {
+        type: Number,
+        value: 0
+      },
+      width: {
+        type: Number,
+        value: 0
+      },
+      itemSize: {
+        type: Object,
+        value: {}
+      },
+      bufferScale: {
+        type: Number,
+        value: 2
+      },
+      listData: Array,
+      scrollTop: {
+        type: Number,
+        value: 0
+      },
+      scrollWithAnimation: Boolean,
+      enableBackToTop: Boolean,
+      lowerThreshold: {
+        type: Number,
+        value: 50
+      },
+      upperThreshold: {
+        type: Number,
+        value: 50
+      },
+      scrollOptions: {
+        type: Object,
+        value: {}
+      },
+      scrollThrottleDelay: {
+        type: Number,
+        value: 16
+      }
     },
-    width: {
-      type: Number,
-      value: 0
+    data: {
+      start: 0,
+      end: 0,
+      contentStyle: '',
+      placeholderStyle: '',
+      containerHeight: 0,
+      positions: [],
+      isReady: false,
+      lastScrollTime: 0
     },
-    // 预估尺寸
-    itemSize: Object,
-    bufferScale: {
-      type: Number,
-      value: 2
-    },
-    listData: Array,
-    scrollTop: {
-      type: Number,
-      value: 0
-    },
-    scrollWithAnimation: Boolean,
-    enableBackToTop: Boolean,
-    lowerThreshold: {
-      type: Number,
-      value: 50
-    },
-    upperThreshold: {
-      type: Number,
-      value: 50
-    },
-    scrollOptions: {
-      type: Object,
-      value: {}
-    },
-    scrollThrottleDelay: {
-      type: Number,
-      value: 16
-    }
-  },
-  data: {
-    start: 0,
-    end: 0,
-    contentStyle: '',
-    placeholderStyle: '',
-    containerHeight: 0,
-    positions: [],
-    isReady: false,
-    lastScrollTime: 0
-  },
-  computed: {
-    _width() {
-      return this.width ? `${this.width}px` : '100%'
-    },
-    _height() {
-      return this.height ? `${this.height}px` : '100%'
-    },
-    _listData() {
-      return this.listData.map((item, index) => {
-        return Object.assign({}, item, { _index: `_${index}` })
-      })
-    },
-    _scrollTop() {
-      // 使用初始值或当前值
-      return this.isReady ? this.scrollTop : 0
-    },
-    visibleCount() {
-      return Math.ceil(this.containerHeight / this.itemSize.height)
-    },
-    aboveCount() {
-      return Math.min(this.start, this.bufferScale * this.visibleCount)
-    },
-    belowCount() {
-      return Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
-    },
-    visibleData() {
-      const start = this.start - this.aboveCount
-      const end = this.end + this.belowCount
-      return this._listData.slice(start, end)
-    }
-  },
-  watch: {
-    listData: {
-      handler() {
-        this.initPositions()
-        this.$nextTick(() => {
-          if (!this.positions || !this.positions.length) {
-            return
-          }
-          // 更新列表总高度
-          const height = this.positions[this.positions.length - 1].bottom
-          this.placeholderStyle = `height: ${height}px`
-          if (!this.isReady) {
-            this.$nextTick(() => {
-              this.isReady = true
-            })
-          }
-          // 更新真实偏移量
-          this.setStartOffset()
+    computed: {
+      _width() {
+        return this.width ? `${this.width}px` : '100%'
+      },
+      _height() {
+        return this.height ? `${this.height}px` : '100%'
+      },
+      _listData() {
+        return this.listData.map((item, index) => {
+          return Object.assign({}, item, { _index: `_${index}` })
         })
       },
-      immediate: true
-    },
-    scrollTop: {
-      handler(val) {
-        this.start = this.getStartIndex(val)
-        this.end = this.start + this.visibleCount
-        this.setStartOffset()
+      _scrollTop() {
+        // 使用初始值或当前值
+        return this.isReady ? this.scrollTop : 0
       },
-      immediate: true
-    }
-  },
-  ready() {
-    this.initPositions()
-    const query = mpx.createSelectorQuery().in(this)
-    query
-      .select('.mpx-recycle-view')
-      .boundingClientRect((rect) => {
-        this.containerHeight = rect.height
-        this.start = this.getStartIndex(this.scrollTop)
+      visibleCount() {
+        if (!this.positions.length) return 0
+
+        let count = 0
+        let totalHeight = 0
+        const startIndex = Math.min(this.start, this.positions.length - 1)
+
+        // 确保至少显示一屏的内容
+        const minCount = Math.ceil(this.containerHeight / this.positions[0].height)
+
+        for (let i = startIndex; i < this.positions.length; i++) {
+          totalHeight += this.positions[i].height
+          if (totalHeight > this.containerHeight && count >= minCount) {
+            break
+          }
+          count++
+        }
+
+        // 如果是最后几个项目，确保全部显示
+        if (startIndex + count > this.positions.length - 3) {
+          count = this.positions.length - startIndex
+        }
+
+        return Math.max(count, minCount)
+      },
+      aboveCount() {
+        return Math.min(this.start, this.bufferScale * this.visibleCount)
+      },
+      belowCount() {
+        return Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
+      },
+      visibleData() {
+        if (!this._listData.length) return []
+
+        const start = Math.min(Math.max(0, this.start - this.aboveCount), this._listData.length - 1)
+
+        // 修改结束索引的计算
+        let end = Math.min(this._listData.length, this.start + this.visibleCount + this.belowCount)
+
+        // 如果接近列表末尾，确保显示所有剩余项目
+        if (end > this._listData.length - 3) {
+          end = this._listData.length
+        }
+
+        return this._listData.slice(start, end).map((item, idx) => {
+          const realIndex = start + idx
+          const size =
+            typeof this.itemSize.itemSizeFunc === 'function' ? this.itemSize.itemSizeFunc(item, realIndex) : this.itemSize.defult
+
+          return {
+            ...item,
+            _index: `_${realIndex}`,
+            _size: size
+          }
+        })
+      },
+      totalHeight() {
+        if (!this.positions.length) return 0
+        return this.positions[this.positions.length - 1].bottom
+      }
+    },
+    watch: {
+      listData: {
+        handler() {
+          this.initPositions()
+          this.$nextTick(() => {
+            if (!this.positions || !this.positions.length) {
+              return
+            }
+            // 更新列表总高度
+            this.placeholderStyle = `height: ${this.totalHeight}px`
+            if (!this.isReady) {
+              this.$nextTick(() => {
+                this.isReady = true
+              })
+            }
+            // 更新真实偏移量
+            this.setStartOffset()
+          })
+        },
+        immediate: true
+      },
+      scrollTop: {
+        handler(val) {
+          this.start = this.getStartIndex(val)
+          this.end = this.start + this.visibleCount
+          this.setStartOffset()
+        },
+        immediate: true
+      }
+    },
+    ready() {
+      this.initPositions()
+      const query = mpx.createSelectorQuery().in(this)
+      query
+        .select('.mpx-recycle-view')
+        .boundingClientRect((rect) => {
+          this.containerHeight = rect.height
+          this.start = this.getStartIndex(this.scrollTop)
+          this.end = this.start + this.visibleCount
+          this.setStartOffset()
+        })
+        .exec()
+    },
+    methods: {
+      initPositions() {
+        let bottom = 0
+        this.positions = this._listData.map((item, index) => {
+          const size =
+            typeof this.itemSize.itemSizeFunc === 'function' ? this.itemSize.itemSizeFunc(item, index) : this.itemSize.defult
+          const position = {
+            index,
+            height: size.height,
+            top: bottom,
+            bottom: bottom + size.height
+          }
+          bottom = position.bottom
+          return position
+        })
+      },
+      getStartIndex(scrollTop = 0) {
+        // 确保不会返回超出范围的索引
+        const index = this.binarySearch(this.positions, scrollTop)
+        return Math.min(index, this._listData.length - 1)
+      },
+      binarySearch(list, value) {
+        if (!list.length) return 0
+
+        // 如果 scrollTop 超过了最后一个元素的底部
+        if (value >= list[list.length - 1].bottom) {
+          return list.length - 1
+        }
+
+        let start = 0
+        let end = list.length - 1
+
+        while (start <= end) {
+          const midIndex = Math.floor((start + end) / 2)
+          const midValue = list[midIndex]
+
+          if (value >= midValue.top && value < midValue.bottom) {
+            return midIndex
+          }
+
+          if (value < midValue.top) {
+            end = midIndex - 1
+          } else {
+            start = midIndex + 1
+          }
+        }
+
+        return Math.min(Math.max(0, start - 1), list.length - 1)
+      },
+      setStartOffset() {
+        if (!this.positions.length) return
+
+        if (this.start >= 1) {
+          // 确保 startIndex 不会超出范围
+          const startIndex = Math.min(
+            Math.max(0, this.start - this.aboveCount),
+            this.positions.length - 1
+          )
+
+          const offset = this.positions[startIndex].top
+
+          this.contentStyle = `transform: translateY(${offset}px);`
+        } else {
+          this.contentStyle = `transform: translateY(0px);`
+        }
+      },
+      onScroll(e) {
+        const now = Date.now()
+        if (now - this.lastScrollTime < this.scrollThrottleDelay) {
+          return
+        }
+        this.lastScrollTime = now
+        const { scrollTop } = e.detail
+        this.start = this.getStartIndex(scrollTop)
         this.end = this.start + this.visibleCount
         this.setStartOffset()
-      })
-      .exec()
-  },
-  methods: {
-    initPositions() {
-      const { height } = this.itemSize
-      this.positions = this.listData.map((d, index) => ({
-        index,
-        height,
-        top: index * height,
-        bottom: (index + 1) * height
-      }))
-    },
-    getStartIndex(scrollTop = 0) {
-      return this.binarySearch(this.positions, scrollTop)
-    },
-    binarySearch(list, value) {
-      let start = 0
-      let end = list.length - 1
-      let tempIndex = null
-
-      while (start <= end) {
-        const midIndex = parseInt((start + end) / 2)
-        const midValue = list[midIndex].bottom
-        if (midValue === value) {
-          return midIndex + 1
-        } else if (midValue < value) {
-          start = midIndex + 1
-        } else if (midValue > value) {
-          if (tempIndex === null || tempIndex > midIndex) {
-            tempIndex = midIndex
-          }
-          end = end - 1
-        }
+        this.triggerEvent('scroll', e)
+      },
+      onScrollToUpper(e) {
+        this.triggerEvent('scrolltoupper', e)
+      },
+      onScrollToLower(e) {
+        this.triggerEvent('scrolltolower', e)
       }
-      return tempIndex
-    },
-    setStartOffset() {
-      let startOffset
-      if (this.start >= 1) {
-        const size =
-            this.positions[this.start].top -
-            (this.positions[this.start - this.aboveCount]
-              ? this.positions[this.start - this.aboveCount].top
-              : 0)
-        startOffset = this.positions[this.start - 1].bottom - size
-      } else {
-        startOffset = 0
-      }
-      this.contentStyle = `transform: translateY(${startOffset}px);`
-    },
-    onScroll(e) {
-      const now = Date.now()
-      if (now - this.lastScrollTime < this.scrollThrottleDelay) {
-        return
-      }
-      this.lastScrollTime = now
-      const { scrollTop } = e.detail
-      this.start = this.getStartIndex(scrollTop)
-      this.end = this.start + this.visibleCount
-      this.setStartOffset()
-      this.triggerEvent('scroll', e)
-    },
-    onScrollToUpper(e) {
-      this.triggerEvent('scrolltoupper', e)
-    },
-    onScrollToLower(e) {
-      this.triggerEvent('scrolltolower', e)
     }
-  }
-})
+  })
 </script>
 <script type="application/json">
   {
