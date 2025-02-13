@@ -23,7 +23,8 @@ interface ColumnProps {
     itemHeight: number
   }
   pickerMaskStyle: Record<string, any>
-  pickerIndicatorStyle: Record<string, any>
+  pickerIndicatorStyle: Record<string, any>,
+  enableAnimation?: boolean
 }
 
 const visibleCount = 5
@@ -36,6 +37,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     onSelectChange,
     style,
     wrapperStyle,
+    enableAnimation,
     pickerMaskStyle,
     pickerIndicatorStyle,
     'enable-var': enableVar,
@@ -246,6 +248,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           textProps={textProps}
           visibleCount={visibleCount}
           onItemLayout={onItemLayout}
+          enableAnimation={enableAnimation}
         />
       )
     })

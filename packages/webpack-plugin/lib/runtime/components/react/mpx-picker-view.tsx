@@ -36,7 +36,8 @@ interface PickerViewProps {
   'mask-style'?: Record<string, any>,
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>,
-  'enable-offset'?: boolean
+  'enable-offset'?: boolean,
+  enableAnimation?: boolean
 }
 
 interface PickerLayout {
@@ -68,6 +69,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     value = [],
     bindchange,
     style,
+    enableAnimation,
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
@@ -172,6 +174,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         },
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
+        enableAnimation,
         pickerIndicatorStyle,
         pickerMaskStyle
       }
