@@ -22,7 +22,7 @@
           wx:for="{{visibleData}}"
           wx:key="_index"
           class="infinite-list-item"
-          wx:style="height: {{item._size.height}}px; width: {{item._size.width}}px; overflow: hidden"
+          wx:style="height: {{item._size.height}}; width: {{item._size.width}}; overflow: hidden"
         >
           <recycle-item current-item="{{item}}" />
         </view>
@@ -54,6 +54,10 @@
       },
       listData: Array,
       scrollTop: {
+        type: Number,
+        value: 0
+      },
+      visibleCount: {
         type: Number,
         value: 0
       },
@@ -102,44 +106,21 @@
         // 使用初始值或当前值
         return this.isReady ? this.scrollTop : 0
       },
-      visibleCount() {
-        if (!this.positions.length) return 0
-
-        let count = 0
-        let totalHeight = 0
-        const startIndex = Math.min(this.start, this.positions.length - 1)
-
-        // 确保至少显示一屏的内容
-        const minCount = Math.ceil(this.containerHeight / this.positions[0].height)
-
-        for (let i = startIndex; i < this.positions.length; i++) {
-          totalHeight += this.positions[i].height
-          if (totalHeight > this.containerHeight && count >= minCount) {
-            break
-          }
-          count++
-        }
-
-        // 如果是最后几个项目，确保全部显示
-        if (startIndex + count > this.positions.length - 3) {
-          count = this.positions.length - startIndex
-        }
-
-        return Math.max(count, minCount)
+      _visibleCount() {
+        return this.visibleCount || Math.ceil(this.containerHeight / this.positions[0].height)
       },
       aboveCount() {
-        return Math.min(this.start, this.bufferScale * this.visibleCount)
+        return Math.min(this.start, this.bufferScale * this._visibleCount)
       },
       belowCount() {
-        return Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
+        return Math.min(this._listData.length - this.end, this.bufferScale * this._visibleCount)
       },
       visibleData() {
         if (!this._listData.length) return []
 
         const start = Math.min(Math.max(0, this.start - this.aboveCount), this._listData.length - 1)
 
-        // 修改结束索引的计算
-        let end = Math.min(this._listData.length, this.start + this.visibleCount + this.belowCount)
+        let end = Math.min(this._listData.length, this.start + this._visibleCount + this.belowCount)
 
         // 如果接近列表末尾，确保显示所有剩余项目
         if (end > this._listData.length - 3) {
@@ -148,13 +129,14 @@
 
         return this._listData.slice(start, end).map((item, idx) => {
           const realIndex = start + idx
-          const size =
-            typeof this.itemSize.itemSizeFunc === 'function' ? this.itemSize.itemSizeFunc(item, realIndex) : this.itemSize.defult
-
+          const size = this.getItemSize(item, realIndex)
           return {
             ...item,
             _index: `_${realIndex}`,
-            _size: size
+            _size: {
+              width: typeof size.width === 'number' ? `${size.width}px` : size.width,
+              height: typeof size.height === 'number' ? `${size.height}px` : size.height
+            }
           }
         })
       },
@@ -187,7 +169,7 @@
       scrollTop: {
         handler(val) {
           this.start = this.getStartIndex(val)
-          this.end = this.start + this.visibleCount
+          this.end = this.start + this._visibleCount
           this.setStartOffset()
         },
         immediate: true
@@ -201,7 +183,7 @@
         .boundingClientRect((rect) => {
           this.containerHeight = rect.height
           this.start = this.getStartIndex(this.scrollTop)
-          this.end = this.start + this.visibleCount
+          this.end = this.start + this._visibleCount
           this.setStartOffset()
         })
         .exec()
@@ -210,8 +192,7 @@
       initPositions() {
         let bottom = 0
         this.positions = this._listData.map((item, index) => {
-          const size =
-            typeof this.itemSize.itemSizeFunc === 'function' ? this.itemSize.itemSizeFunc(item, index) : this.itemSize.defult
+          const size = this.getItemSize(item, index)
           const position = {
             index,
             height: size.height,
@@ -272,6 +253,17 @@
           this.contentStyle = `transform: translateY(0px);`
         }
       },
+      getItemSize(item, index) {
+        let size
+        if (typeof this.itemSize.itemSizeFunc === 'function') {
+          size = this.itemSize.itemSizeFunc(item, index)
+        } else {
+          size = this.itemSize.default
+        }
+
+        return size
+      },
+
       onScroll(e) {
         const now = Date.now()
         if (now - this.lastScrollTime < this.scrollThrottleDelay) {
@@ -280,7 +272,7 @@
         this.lastScrollTime = now
         const { scrollTop } = e.detail
         this.start = this.getStartIndex(scrollTop)
-        this.end = this.start + this.visibleCount
+        this.end = this.start + this._visibleCount
         this.setStartOffset()
         this.triggerEvent('scroll', e)
       },
