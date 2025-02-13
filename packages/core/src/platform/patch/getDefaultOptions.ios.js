@@ -44,7 +44,8 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    return components[tagName] || getByPath(ReactNative, tagName)
+    const appComponents = global.__getAppComponents() || {}
+    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
