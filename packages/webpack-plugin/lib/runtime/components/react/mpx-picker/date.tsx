@@ -79,15 +79,18 @@ const calibrateDate = (date: TimeValue | number[], start: TimeValue, end: TimeVa
 }
 
 const initDateStr2Arr = (dateStr: TimeValue | number[], start: TimeValue, end: TimeValue): number[] => {
-  const today = new Date()
-  const todayYear = today.getFullYear()
-  const todayMonth = today.getMonth() + 1
-  const todayDay = today.getDate()
+  if (!dateStr) {
+    const today = new Date()
+    const todayYear = today.getFullYear()
+    const todayMonth = today.getMonth() + 1
+    const todayDay = today.getDate()
+    dateStr = [todayYear, todayMonth, todayDay]
+  }
   const [y, m, d] = getDateArr(dateStr)
   const year = Math.min(Math.max(START_YEAR, y), END_YEAR)
   const month = Math.min(Math.max(1, m), 12)
   const day = Math.min(Math.max(1, d), daysInMonthLength(year, month))
-  const res = [year || todayYear, month || todayMonth, day || todayDay]
+  const res = [year, month, day]
   return calibrateDate(res, start, end)
 }
 
@@ -120,6 +123,10 @@ const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => 
   if (limit === 3 && (currentValue[0] !== value[0] || currentValue[1] !== value[1])) {
     const days = daysInMonth(value[0], value[1] + 1)
     rangeArr[2] = days
+    const maxIndex = days.length - 1
+    if (value[2] > maxIndex) {
+      value[2] = maxIndex
+    }
   }
 
   return {
@@ -198,12 +205,13 @@ const PickerTime = forwardRef<
     const { value } = e.detail
     const currentValue = formatObj.indexArr
     const newObj = valueChanged2Obj(formatObj, value, columnLength)
-    console.log('---> data change', newObj.indexArr)
     if (hasDiff(currentValue, value, columnLength)) {
       setFormatObj(newObj)
       const newObj2 = valueChanged2Obj2(value, columnLength, start, end)
-      timerRef.current && clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => setFormatObj(newObj2))
+      if (hasDiff(newObj.indexArr, newObj2.indexArr, columnLength)) {
+        timerRef.current && clearTimeout(timerRef.current)
+        timerRef.current = setTimeout(() => setFormatObj(newObj2))
+      }
     }
     bindchange?.({ detail: { value: valueNum2String(newObj.indexArr) } })
   }, [formatObj, columnLength, bindchange, start, end])
