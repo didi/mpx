@@ -11,6 +11,7 @@ export const enum PickerMode {
 export type PickerValue = number
 export type Obj = Record<string, any>
 export type RangeItem = Obj | number | string
+export type TimeValue = `${number}-${number}-${number}` | ''
 
 /** 通用属性 */
 export interface BasePickerProps {
@@ -66,9 +67,9 @@ export interface TimeProps extends BasePickerProps {
 export interface DateProps extends BasePickerProps {
   mode: PickerMode.DATE
   /** 默认值 '' */
-  value?: string
-  start?: string
-  end?: string
+  value?: TimeValue
+  start?: TimeValue
+  end?: TimeValue
   /** 有效值 year,month,day，表示选择器的粒度 */
   fields?: 'day' | 'month' | 'year'
   bindchange?: Function
