@@ -254,13 +254,16 @@
         }
       },
       getItemSize(item, index) {
+        const { width, height, getter } = this.itemSize
         let size
-        if (typeof this.itemSize.itemSizeFunc === 'function') {
-          size = this.itemSize.itemSizeFunc(item, index)
+        if (typeof getter === 'function') {
+          size = getter(item, index)
         } else {
-          size = this.itemSize.default
+          size = {
+            width: width || 0,
+            height: height || 0
+          }
         }
-
         return size
       },
 

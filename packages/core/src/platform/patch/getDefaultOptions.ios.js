@@ -59,7 +59,7 @@ function createEffect (proxy, components) {
         }
       }
     }
-    return components[tagName] || global.__getAppComponents()[tagName] || getByPath(ReactNative, tagName)
+    return components[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
