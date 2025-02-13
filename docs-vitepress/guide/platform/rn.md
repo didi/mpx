@@ -1,7 +1,7 @@
 # 跨端输出RN
 
 ## 跨端样式定义
-RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation、transition 等）。
+RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation、transition 等等）。
 
 因此，一方面，在我们进行跨平台开发时，跨平台样式属性声明要尽量使用两边样式属性的交集；另一方面为了减少开发适配的成本，Mpx 内部也对 RN 的样式作了部分抹平。
 
