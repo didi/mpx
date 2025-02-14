@@ -57,10 +57,6 @@
         type: Number,
         value: 0
       },
-      visibleCount: {
-        type: Number,
-        value: 0
-      },
       scrollWithAnimation: Boolean,
       enableBackToTop: Boolean,
       lowerThreshold: {
@@ -106,21 +102,39 @@
         // 使用初始值或当前值
         return this.isReady ? this.scrollTop : 0
       },
-      _visibleCount() {
-        return this.visibleCount || Math.ceil(this.containerHeight / this.positions[0].height)
+      visibleCount() {
+        if (!this.positions.length) return 0
+
+        let count = 0
+        let totalHeight = 0
+        const startIndex = Math.min(this.start, this.positions.length - 1)
+
+        for (let i = startIndex; i < this.positions.length; i++) {
+          totalHeight += this.positions[i]?.height || 0
+          if (totalHeight > this.containerHeight) {
+            break
+          }
+          count++
+        }
+
+        // 如果是最后几个项目，确保全部显示
+        if (startIndex + count > this.positions.length - 3) {
+          count = this.positions.length - startIndex
+        }
+        return count || 1
       },
       aboveCount() {
-        return Math.min(this.start, this.bufferScale * this._visibleCount)
+        return Math.min(this.start, this.bufferScale * this.visibleCount)
       },
       belowCount() {
-        return Math.min(this._listData.length - this.end, this.bufferScale * this._visibleCount)
+        return Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
       },
       visibleData() {
         if (!this._listData.length) return []
 
         const start = Math.min(Math.max(0, this.start - this.aboveCount), this._listData.length - 1)
 
-        let end = Math.min(this._listData.length, this.start + this._visibleCount + this.belowCount)
+        let end = Math.min(this._listData.length, this.start + this.visibleCount + this.belowCount)
 
         // 如果接近列表末尾，确保显示所有剩余项目
         if (end > this._listData.length - 3) {
@@ -169,7 +183,7 @@
       scrollTop: {
         handler(val) {
           this.start = this.getStartIndex(val)
-          this.end = this.start + this._visibleCount
+          this.end = this.start + this.visibleCount
           this.setStartOffset()
         },
         immediate: true
@@ -183,7 +197,7 @@
         .boundingClientRect((rect) => {
           this.containerHeight = rect.height
           this.start = this.getStartIndex(this.scrollTop)
-          this.end = this.start + this._visibleCount
+          this.end = this.start + this.visibleCount
           this.setStartOffset()
         })
         .exec()
@@ -275,7 +289,7 @@
         this.lastScrollTime = now
         const { scrollTop } = e.detail
         this.start = this.getStartIndex(scrollTop)
-        this.end = this.start + this._visibleCount
+        this.end = this.start + this.visibleCount
         this.setStartOffset()
         this.triggerEvent('scroll', e)
       },
