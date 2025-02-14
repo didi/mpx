@@ -570,7 +570,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const [enabled, setEnabled] = useState(true)
+      const [enabled, setEnabled] = useState(false)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
