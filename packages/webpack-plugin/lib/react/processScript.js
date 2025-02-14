@@ -35,7 +35,7 @@ global.__navigationHelper = {
   createStackNavigator: createStackNavigator,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
-  Provider: PortalHost,
+  PortalHost: PortalHost,
   SafeAreaProvider: SafeAreaProvider,
   useSafeAreaInsets: useSafeAreaInsets
 }\n`

@@ -46,11 +46,10 @@ const runCallback = (msgData) => {
 
 const eventListener = (event) => {
   // 接收web-view的回调
-  const data = event.data
-  let msgData = data
+  let msgData = event.data
   try {
-    if (typeof data === 'string') {
-      msgData = JSON.parse(data)
+    if (typeof msgData === 'string') {
+      msgData = JSON.parse(msgData)
     }
   } catch (e) {
   }

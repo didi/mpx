@@ -482,7 +482,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
+    const { PortalHost, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const [enabled, setEnabled] = useState(true)
@@ -564,10 +564,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 {
                   value: intersectionObservers.current
                 },
-                createElement(Provider,
-                  {
-                    pageId: currentPageId
-                  },
+                createElement(PortalHost,
+                  null,
                   createElement(defaultOptions,
                     {
                       navigation,

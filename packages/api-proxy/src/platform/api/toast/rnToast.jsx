@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native'
-import { successHandle, failHandle, getPageId, error } from '../../../common/js'
+import { successHandle, failHandle, getPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
 let isLoadingShow
@@ -57,7 +57,6 @@ function showToast (options = {}) {
   const id = getPageId()
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   if (id === null) {
-    error('showToast cannot be invoked outside the mpx life cycle in React Native environments')
     const result = {
       errMsg: 'showToast:fail cannot be invoked outside the mpx life cycle in React Native environments'
     }
@@ -106,7 +105,7 @@ function showToast (options = {}) {
     </View>
   }
   try {
-    if (toastMap.get(id)) {
+    if (toastMap.get(id)) { // 页面维度判断是否要清除toast
       Portal.remove(toastMap.get(id))
       toastMap.delete(id)
     }
@@ -115,6 +114,7 @@ function showToast (options = {}) {
     if (!isLoading) {
       const timeoutId = setTimeout(() => {
         Portal.remove(toastMap.get(id))
+        toastMap.delete(id)
       }, duration)
       timerMap.set(id, timeoutId)
     }

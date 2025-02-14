@@ -9,7 +9,7 @@ import { getCurrentPage } from './utils'
 import { useNavigation } from '@react-navigation/native'
 import { WebViewHttpErrorEvent, WebViewEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
-import { BackHandler, StyleSheet, View, Text } from 'react-native'
+import { StyleSheet, View, Text } from 'react-native'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -99,7 +99,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
   const webViewRef = useRef<WebView>(null)
-  const fristLoaded = useRef<boolean>(true)
+  const fristLoaded = useRef<boolean>(false)
+  const isLoadError = useRef<boolean>(false)
+  const statusCode = useRef<string|number>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(true)
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
@@ -111,34 +113,19 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const canGoBack = useRef<boolean>(false)
   const isNavigateBack = useRef<boolean>(false)
 
-  const onAndroidBackPress = useCallback(() => {
-    if (canGoBack.current) {
-      webViewRef.current?.goBack()
-      return true
-    }
-    return false
-  }, [canGoBack])
-
-  const beforeRemoveHandle = useCallback((e: Event) => {
+  const beforeRemoveHandle = (e: Event) => {
     if (canGoBack.current && !isNavigateBack.current) {
       webViewRef.current?.goBack()
       e.preventDefault()
     }
     isNavigateBack.current = false
-  }, [canGoBack])
+  }
 
   const navigation = useNavigation()
 
   useEffect(() => {
-    if (__mpx_mode__ === 'android') {
-      BackHandler.addEventListener('hardwareBackPress', onAndroidBackPress)
-    }
-    const addListener: Listener = navigation?.addListener.bind(navigation)
-    const beforeRemoveSubscription = addListener?.('beforeRemove', beforeRemoveHandle)
+    const beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
     return () => {
-      if (__mpx_mode__ === 'android') {
-        BackHandler.removeEventListener('hardwareBackPress', onAndroidBackPress)
-      }
       if (isFunction(beforeRemoveSubscription)) {
         beforeRemoveSubscription()
       }
@@ -288,21 +275,19 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
-  let isLoadError = false
-  let statusCode: string | number = ''
   const onLoadEndHandle = function (res: WebViewEvent) {
     fristLoaded.current = true
     setIsLoaded(true)
     const src = res.nativeEvent?.url
-    if (isLoadError) {
-      isLoadError = false
+    if (isLoadError.current) {
+      isLoadError.current = false
       isNavigateBack.current = false
       const result = {
         type: 'error',
         timeStamp: res.timeStamp,
         detail: {
           src,
-          statusCode
+          statusCode: statusCode.current
         }
       }
       binderror && binderror(result)
@@ -327,12 +312,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
   }
   const onHttpError = function (res: WebViewHttpErrorEvent) {
-    isLoadError = true
-    statusCode = res.nativeEvent?.statusCode
+    isLoadError.current = true
+    statusCode.current = res.nativeEvent?.statusCode
   }
   const onError = function () {
-    statusCode = ''
-    isLoadError = true
+    statusCode.current = ''
+    isLoadError.current = true
     if (!fristLoaded.current) {
       setPageLoadErr(true)
     }
@@ -353,9 +338,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             </View>
             )
           : (<WebView
-            style={ defaultWebViewStyle }
+            style={ [ defaultWebViewStyle, {
+              pointerEvents: isLoaded ? 'auto' : 'none'
+            } ] }
             source={{ uri: src }}
-            pointerEvents={ isLoaded ? 'auto' : 'none' }
             ref={webViewRef}
             javaScriptEnabled={true}
             onNavigationStateChange={_changeUrl}

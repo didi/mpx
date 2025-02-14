@@ -91,8 +91,7 @@ function failHandle (result, fail, complete) {
 function getPageId () {
   const navigation = getFocusedNavigation()
   const currentInstance = getCurrentInstance()
-  console.log(currentInstance, currentInstance?.getPageId, navigation, navigation?.pageId)
-  const id = currentInstance?.getPageId || navigation?.pageId || null
+  const id = currentInstance?.getPageId() || navigation?.pageId || null
   return id
 }
 

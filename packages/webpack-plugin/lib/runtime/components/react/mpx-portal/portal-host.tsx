@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode, useMemo } from 'react'
+import { useEffect, useRef, ReactNode, useMemo, useContext } from 'react'
 import {
   View,
   DeviceEventEmitter,
@@ -7,7 +7,7 @@ import {
   StyleSheet
 } from 'react-native'
 import PortalManager from './portal-manager'
-import { PortalContext } from '../context'
+import { PortalContext, RouteContext } from '../context'
 
 type PortalHostProps = {
   children: ReactNode,
@@ -59,14 +59,11 @@ class PortalGuard {
  */
 export const portal = new PortalGuard()
 
-const PortalHost = ({ children, pageId } :PortalHostProps): JSX.Element => {
-  const isMounted = useRef<boolean>(false)
+const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _nextKey = useRef(0)
-  const _addType = useRef<EventSubscription | null>(null)
-  const _removeType = useRef<EventSubscription | null>(null)
-  const _updateType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
   const queue = useRef<Array<{ type: string, key: number; children: ReactNode }>>([])
+  const pageId = useContext(RouteContext)
   const mount = (children: ReactNode, _key?: number, id?: number) => {
     if (id !== pageId) return
     const key = _key || _nextKey.current++
@@ -99,14 +96,15 @@ const PortalHost = ({ children, pageId } :PortalHostProps): JSX.Element => {
       }
     }
   }
-
+  let subScriptions: Array<EventSubscription> = []
   useMemo(() => {
-    _addType.current = TopViewEventEmitter.addListener(addType, mount)
-    _removeType.current = TopViewEventEmitter.addListener(removeType, unmount)
-    _updateType.current = TopViewEventEmitter.addListener(updateType, update)
+    subScriptions = [
+      TopViewEventEmitter.addListener(addType, mount),
+      TopViewEventEmitter.addListener(removeType, unmount),
+      TopViewEventEmitter.addListener(updateType, update)
+    ]
   }, [])
   useEffect(() => {
-    isMounted.current = true
     while (queue.current.length && manager.current) {
       const operation = queue.current.shift()
       if (!operation) return
@@ -121,9 +119,9 @@ const PortalHost = ({ children, pageId } :PortalHostProps): JSX.Element => {
     }
 
     return () => {
-      _addType.current?.remove()
-      _removeType.current?.remove()
-      _updateType.current?.remove()
+      subScriptions.forEach((subScription:any) => {
+        subScription.remove()
+      })
     }
   }, [])
   return (

@@ -1,25 +1,33 @@
-import { View, Text, StyleSheet } from 'react-native'
-import { successHandle, failHandle, getPageId, error } from '../../../common/js'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { successHandle, failHandle, getPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { getWindowInfo } from '../system/rnSystem'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming
+  withTiming,
+  Easing
 } from 'react-native-reanimated'
-
+const actionSheetMap = new Map()
 function showActionSheet (options = {}) {
   const id = getPageId()
+  const remove = function () {
+    if (actionSheetMap.get(id)) { // 页面维度判断是否要清除之前渲染的actionsheet
+      Portal.remove(actionSheetMap.get(id))
+      actionSheetMap.delete(id)
+    }
+  }
+  remove()
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   if (id === null) {
-    error('showActionSheet cannot be invoked outside the mpx life cycle in React Native environments')
     const result = {
       errMsg: 'showActionSheet:fail cannot be invoked outside the mpx life cycle in React Native environments'
     }
     failHandle(result, fail, complete)
     return
   }
-  if (itemList.length > 6) {
+  const len = itemList.length
+  if (len > 6) {
     const result = {
       errMsg: 'showActionSheet:fail parameter error: itemList should not be large than 6'
     }
@@ -28,16 +36,23 @@ function showActionSheet (options = {}) {
   }
   const windowInfo = getWindowInfo()
   const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
-  let actionSheetKey = null
+  const height = len * 53 + 46 + bottom + (alertText ? 52 : 0)
   const styles = StyleSheet.create({
+    actionAction: {
+      left: 0,
+      top: 0,
+      bottom: 0,
+      right: 0,
+      position: 'absolute',
+      zIndex: 1000
+    },
     actionActionMask: {
       left: 0,
       top: 0,
       bottom: 0,
       right: 0,
       backgroundColor: 'rgba(0,0,0,0.6)',
-      position: 'absolute',
-      zIndex: 1000
+      position: 'absolute'
     },
     actionSheetContent: {
       backgroundColor: '#ffffff',
@@ -59,73 +74,75 @@ function showActionSheet (options = {}) {
       borderBottomColor: 'rgba(0,0,0,0.1)'
     },
     itemTextStyle: {
-      fontSize: 18
+      fontSize: 18,
+      height: 22,
+      lineHeight: 22
     },
     buttonStyle: {
-      fontSize: 18,
       paddingTop: 10,
-      paddingBottom: 10
+      paddingBottom: 10,
+      justifyContent: 'center',
+      alignItems: 'center'
     }
   })
   function ActionSheet () {
-    const offset = useSharedValue(1000);
+    const offset = useSharedValue(height)
 
-    const animatedStyles = useAnimatedStyle(() => ({
-      transform: [{ translateY: offset.value }],
-    }))
+    const animatedStyles = useAnimatedStyle(() => {
+      return {
+        transform: [{ translateY: offset.value }]
+      }
+    })
 
-    const slideOut = () => {
-      // Will change fadeAnim value to 1 in 5 seconds
-      offset.value = withTiming(1000)
-    }
+    offset.value = withTiming(0, {
+      easing: Easing.out(Easing.poly(3)),
+      duration: 250
+    })
 
-    offset.value = withTiming(0)
-
-    const selectAction = function (index, e) {
-      e.stopPropagation()
+    const selectAction = function (index) {
       const result = {
         errMsg: 'showActionSheet:ok',
         tapIndex: index
       }
       successHandle(result, success, complete)
-      remove()
+      offset.value = withTiming(height, {
+        easing: Easing.out(Easing.poly(3)),
+        duration: 250
+      })
+      setTimeout(() => {
+        remove()
+      }, 200)
     }
 
-    const remove = function () {
-      if (actionSheetKey) {
-        slideOut()
-        Portal.remove(actionSheetKey)
-        actionSheetKey = null
-        setTimeout(() => {
-          Portal.remove(actionSheetKey)
-          actionSheetKey = null
-        }, 200)
-      }
-    }
-
-    const cancelAction = function (e) {
-      e.stopPropagation()
+    const cancelAction = function () {
       const result = {
         errMsg: 'showActionSheet:fail cancel'
       }
       failHandle(result, fail, complete)
-      remove()
+      offset.value = withTiming(300, {
+        easing: Easing.out(Easing.poly(3))
+      })
+      setTimeout(() => {
+        remove()
+      }, 200)
     }
     return (
-      <View onTouchEnd={cancelAction} style={styles.actionActionMask}>
+      <View style={styles.actionAction}>
+        <TouchableOpacity activeOpacity={1} style={styles.actionActionMask} onPress={cancelAction}></TouchableOpacity>
         <Animated.View style={[styles.actionSheetContent, animatedStyles]}>
           { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
-          { itemList.map((item, index) => <View key={index} onTouchEnd={(e) => selectAction(index, e)} style={ [styles.itemStyle, itemList.length -1 === index ? {
+          { itemList.map((item, index) => <TouchableOpacity onPress={() => selectAction(index)} key={index} style={ [styles.itemStyle, itemList.length -1 === index ? {
             borderBottomWidth: 6,
             borderBottomStyle: 'solid',
             borderBottomColor: '#f7f7f7'
-          } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></View>) }
-          <View style={styles.buttonStyle} onTouchEnd={cancelAction}><Text style={{ color: "#000000", width: "100%", textAlign: "center" }}>取消</Text></View>
+          } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></TouchableOpacity>) }
+          <TouchableOpacity style={styles.buttonStyle} onPress={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></TouchableOpacity>
         </Animated.View>
       </View>
     )
   }
-  actionSheetKey = Portal.add(<ActionSheet />, id)
+  const actionSheetKey = Portal.add(<ActionSheet />, id)
+  actionSheetMap.set(id, actionSheetKey)
 }
 
 export {
