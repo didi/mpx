@@ -181,6 +181,7 @@ export default {
   box-shadow rgb(240 241 242) 0px 2px 8px
   padding: 0.5rem 3rem;
   // justify-content center
+  box-sizing: content-box;
 }
 
 .nav-link {
@@ -189,6 +190,7 @@ export default {
   align-items: center;
   width: 100%;
   justify-content: space-between;
+  font-weight: 500;
 }
 
 a.router-link-active {

@@ -6,7 +6,7 @@ import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
-import { Image } from 'react-native'
+import { initAppProvides } from './export/inject'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -35,6 +35,7 @@ export default function createApp (options) {
   const { NavigationContainer, createStackNavigator, SafeAreaProvider } = global.__navigationHelper
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(options, 'app', false)
+  initAppProvides(rawOptions.provide, rawOptions)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
   // 在页面script执行前填充getApp()
   global.getApp = function () {
@@ -180,18 +181,18 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
-    const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
+    const headerBackImageSource = Mpx.config.rnConfig.headerBackImageSource || null
     const navScreenOpts = {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
       // 安卓上会出现初始化时闪现导航条的问题
-      headerShown: false
+      headerShown: false,
+      // 隐藏导航下的那条线
+      headerShadowVisible: false
     }
-    if (headerBackImageProps) {
-      navScreenOpts.headerBackImage = () => {
-        return createElement(Image, headerBackImageProps)
-      }
+    if (headerBackImageSource) {
+      navScreenOpts.headerBackImageSource = headerBackImageSource
     }
     return createElement(SafeAreaProvider,
       null,
