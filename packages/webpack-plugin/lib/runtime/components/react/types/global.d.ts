@@ -43,3 +43,5 @@ declare let global: {
 declare module '@react-navigation/native' {
    export function useNavigation (): Record<string, any>
 }
+
+declare module '*.png'
