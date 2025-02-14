@@ -49,7 +49,7 @@ export interface ImageProps {
   mode?: Mode
   svg?: boolean
   style?: ImageStyle & Record<string, any>
-  'enable-offset'?: boolean;
+  'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
@@ -403,29 +403,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   )
 
-  const createBaseImage = (innerProps = {}) => {
-    return renderImage(
-      extendObject(
-        {
-          source: { uri: src },
-          resizeMode: resizeMode,
-          onLoad: bindload && onImageLoad,
-          onError: binderror && onImageError,
-          style: extendObject(
-            {
-              transformOrigin: 'top left',
-              width: isCropMode ? imageWidth : '100%',
-              height: isCropMode ? imageHeight : '100%'
-            },
-            isCropMode ? modeStyle : {}
-          )
-        },
-        innerProps
-      ),
-      enableFastImage
-    )
-  }
-
   const SvgImage = createElement(
     View,
     innerProps,
@@ -440,9 +417,28 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     })
   )
 
-  const BaseImage = createBaseImage(innerProps)
+  const BaseImage = renderImage(
+    extendObject(
+      {
+        source: { uri: src },
+        resizeMode: resizeMode,
+        onLoad: bindload && onImageLoad,
+        onError: binderror && onImageError,
+        style: extendObject(
+          {
+            transformOrigin: 'top left',
+            width: isCropMode ? imageWidth : '100%',
+            height: isCropMode ? imageHeight : '100%'
+          },
+          isCropMode ? modeStyle : {}
+        )
+      },
+      isLayoutMode ? {} : innerProps
+    ),
+    enableFastImage
+  )
 
-  const LayoutImage = createElement(View, innerProps, loaded && createBaseImage())
+  const LayoutImage = createElement(View, innerProps, loaded && BaseImage)
 
   return isSvg ? SvgImage : isLayoutMode ? LayoutImage : BaseImage
 })
