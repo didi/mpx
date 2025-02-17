@@ -26,10 +26,10 @@ export default function getRefsMixin () {
           })
         })
       },
-      __getRefVal (type, selectorsConf, refId) {
+      __getRefVal (type, selectorsConf, refFnId) {
         const target = this
-        if (!this[refId]) {
-          this[refId] = function (instance) {
+        if (!this[refFnId]) {
+          this[refFnId] = function (instance) {
             const context = this
             selectorsConf.forEach((item = []) => {
               const [prefix, selectors = ''] = item
@@ -51,7 +51,7 @@ export default function getRefsMixin () {
             })
           }
         }
-        return this[refId]
+        return this[refFnId]
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
