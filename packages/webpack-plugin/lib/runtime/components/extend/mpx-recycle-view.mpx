@@ -14,6 +14,7 @@
     bindscroll="onScroll"
     bindscrolltoupper="onScrollToUpper"
     bindscrolltolower="onScrollToLower"
+    wx:if="{{_listData && _listData.length}}"
   >
     <view class="content-wrapper">
       <view class="infinite-list-placeholder" wx:style="{{placeholderStyle}}"></view>
@@ -232,6 +233,7 @@
           bottom = position.bottom
           return position
         })
+
         if (this.containerHeight) {
           this.calculateVisibleCounts()
         }
@@ -331,32 +333,15 @@
       },
 
       onScroll(e) {
-        // const now = Date.now()
-        // if (now - this.lastScrollTime < this.scrollThrottleDelay) {
-        //   return
-        // }
-        // this.lastScrollTime = now
-        // const { scrollTop } = e.detail
-        // this.start = this.getStartIndex(scrollTop)
-        // this.end = this.start + this.visibleCount
-        // this.setStartOffset()
-        // this.triggerEvent('scroll', e)
         const now = Date.now()
         if (now - this.lastScrollTime < this.scrollThrottleDelay) {
           return
         }
-
-        const { scrollTop } = e.detail
-        const currentStartIndex = this.getStartIndex(scrollTop)
-
-        const threshold = Math.max(2, Math.floor(this.visibleCounts[this.start] / 3))
-        if (Math.abs(currentStartIndex - this.start) > threshold) {
-          this.start = currentStartIndex
-          this.end = this.start + this.visibleCount
-          this.setStartOffset()
-        }
-
         this.lastScrollTime = now
+        const { scrollTop } = e.detail
+        this.start = this.getStartIndex(scrollTop)
+        this.end = this.start + this.visibleCount
+        this.setStartOffset()
         this.triggerEvent('scroll', e)
       },
       onScrollToUpper(e) {
