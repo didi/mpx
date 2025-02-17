@@ -88,7 +88,7 @@ function failHandle (result, fail, complete) {
   typeof complete === 'function' && complete(result)
 }
 
-function getPageId () {
+function getCurrentPageId () {
   const navigation = getFocusedNavigation()
   const currentInstance = getCurrentInstance()
   const id = currentInstance?.getPageId() || navigation?.pageId || null
@@ -110,5 +110,5 @@ export {
   successHandle,
   failHandle,
   getFocusedNavigation,
-  getPageId
+  getCurrentPageId
 }

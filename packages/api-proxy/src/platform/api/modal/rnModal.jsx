@@ -1,10 +1,10 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle, getPageId } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 const { width, height } = Dimensions.get('window')
 const modalMap = new Map()
 const showModal = function (options = {}) {
-  const id = getPageId()
+  const id = getCurrentPageId()
   const {
     title,
     content,

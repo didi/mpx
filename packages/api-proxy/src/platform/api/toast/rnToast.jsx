@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native'
-import { successHandle, failHandle, getPageId } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 
 let isLoadingShow
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
 const toastMap = new Map()
 const timerMap = new Map()
 function showToast (options = {}) {
-  const id = getPageId()
+  const id = getCurrentPageId()
   const { title, icon = 'success', image, duration = 1500, mask = false, success, fail, complete, isLoading } = options
   if (id === null) {
     const result = {
@@ -131,7 +131,7 @@ function showToast (options = {}) {
 }
 
 function hideToast(options = {}) {
-  const id = getPageId()
+  const id = getCurrentPageId()
   const { noConflict = false, success, fail, complete } = options
 
   if (isLoadingShow && noConflict) {
@@ -177,7 +177,7 @@ function showLoading (options = {}) {
 }
 
 function hideLoading (options = {}) {
-  const id = getPageId()
+  const id = getCurrentPageId()
   const { noConflict = false, success, fail, complete } = options
   if (!isLoadingShow && noConflict) {
     return

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { successHandle, failHandle, getPageId } from '../../../common/js'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { getWindowInfo } from '../system/rnSystem'
 import Animated, {
@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated'
 const actionSheetMap = new Map()
 function showActionSheet (options = {}) {
-  const id = getPageId()
+  const id = getCurrentPageId()
   const remove = function () {
     if (actionSheetMap.get(id)) { // 页面维度判断是否要清除之前渲染的actionsheet
       Portal.remove(actionSheetMap.get(id))
