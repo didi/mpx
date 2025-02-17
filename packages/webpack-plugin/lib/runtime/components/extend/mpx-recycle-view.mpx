@@ -74,6 +74,10 @@
       scrollThrottleDelay: {
         type: Number,
         value: 16
+      },
+      minRenderCount: {
+        type: Number,
+        value: 10
       }
     },
     data: {
@@ -84,7 +88,8 @@
       containerHeight: 0,
       positions: [],
       isReady: false,
-      lastScrollTime: 0
+      lastScrollTime: 0,
+      visibleCounts: []
     },
     computed: {
       _width() {
@@ -103,31 +108,39 @@
         return this.isReady ? this.scrollTop : 0
       },
       visibleCount() {
-        if (!this.positions.length) return 0
-
-        let count = 0
-        let totalHeight = 0
-        const startIndex = Math.min(this.start, this.positions.length - 1)
-
-        for (let i = startIndex; i < this.positions.length; i++) {
-          totalHeight += this.positions[i]?.height || 0
-          if (totalHeight > this.containerHeight) {
-            break
-          }
-          count++
-        }
-
-        // 如果是最后几个项目，确保全部显示
-        if (startIndex + count > this.positions.length - 3) {
-          count = this.positions.length - startIndex
-        }
-        return count || 1
+        if (!this.visibleCounts.length) return this.minRenderCount
+        return Math.max(this.visibleCounts[this.start], this.minRenderCount)
       },
+      // visibleCount() {
+      //   if (!this.positions.length) return 0
+
+      //   let count = 0
+      //   let totalHeight = 0
+      //   const startIndex = Math.min(this.start, this.positions.length - 1)
+
+      //   for (let i = startIndex; i < this.positions.length; i++) {
+      //     totalHeight += this.positions[i]?.height || 0
+      //     if (totalHeight > this.containerHeight) {
+      //       break
+      //     }
+      //     count++
+      //   }
+
+      //   // 如果是最后几个项目，确保全部显示
+      //   if (startIndex + count > this.positions.length - 3) {
+      //     count = this.positions.length - startIndex
+      //   }
+      //   return Math.max(count, this.minRenderCount)
+      // },
       aboveCount() {
-        return Math.min(this.start, this.bufferScale * this.visibleCount)
+        return Math.max(0, Math.min(this.start, this.bufferScale * this.visibleCount))
       },
       belowCount() {
-        return Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
+        if (!this._listData.length) return 0
+        return Math.max(
+          0,
+          Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
+        )
       },
       visibleData() {
         if (!this._listData.length) return []
@@ -187,6 +200,9 @@
           this.setStartOffset()
         },
         immediate: true
+      },
+      containerHeight() {
+        this.calculateVisibleCounts()
       }
     },
     ready() {
@@ -216,11 +232,44 @@
           bottom = position.bottom
           return position
         })
+        if (this.containerHeight) {
+          this.calculateVisibleCounts()
+        }
       },
+      calculateVisibleCounts() {
+        this.visibleCounts = this.positions.map((_, startIndex) => {
+          let count = 0
+          let totalHeight = 0
+
+          for (let i = startIndex; i < this.positions.length; i++) {
+            totalHeight += this.positions[i].height
+            if (totalHeight > this.containerHeight) {
+              break
+            }
+            count++
+          }
+
+          // 如果是最后几个项目，确保全部显示
+          if (startIndex + count > this.positions.length - 3) {
+            count = this.positions.length - startIndex
+          }
+
+          return count
+        })
+      },
+
       getStartIndex(scrollTop = 0) {
         // 确保不会返回超出范围的索引
+        if (!this.positions.length) {
+          return 0
+        }
+
+        // 如果滚动位置为0，直接返回0
+        if (scrollTop <= 0) {
+          return 0
+        }
         const index = this.binarySearch(this.positions, scrollTop)
-        return Math.min(index, this._listData.length - 1)
+        return Math.max(0, Math.min(index, this._listData.length - 1))
       },
       binarySearch(list, value) {
         if (!list.length) return 0
@@ -282,15 +331,32 @@
       },
 
       onScroll(e) {
+        // const now = Date.now()
+        // if (now - this.lastScrollTime < this.scrollThrottleDelay) {
+        //   return
+        // }
+        // this.lastScrollTime = now
+        // const { scrollTop } = e.detail
+        // this.start = this.getStartIndex(scrollTop)
+        // this.end = this.start + this.visibleCount
+        // this.setStartOffset()
+        // this.triggerEvent('scroll', e)
         const now = Date.now()
         if (now - this.lastScrollTime < this.scrollThrottleDelay) {
           return
         }
-        this.lastScrollTime = now
+
         const { scrollTop } = e.detail
-        this.start = this.getStartIndex(scrollTop)
-        this.end = this.start + this.visibleCount
-        this.setStartOffset()
+        const currentStartIndex = this.getStartIndex(scrollTop)
+
+        const threshold = Math.max(2, Math.floor(this.visibleCounts[this.start] / 3))
+        if (Math.abs(currentStartIndex - this.start) > threshold) {
+          this.start = currentStartIndex
+          this.end = this.start + this.visibleCount
+          this.setStartOffset()
+        }
+
+        this.lastScrollTime = now
         this.triggerEvent('scroll', e)
       },
       onScrollToUpper(e) {
