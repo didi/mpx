@@ -115,7 +115,6 @@ const instanceProto = {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
   },
   __resetInstance () {
-    this.__refs = {}
     this.__dispatchedSlotSet = new WeakSet()
   },
   __iter (val, fn) {
