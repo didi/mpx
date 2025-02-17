@@ -131,12 +131,12 @@ function showActionSheet (options = {}) {
         <TouchableOpacity activeOpacity={1} style={styles.actionActionMask} onPress={cancelAction}></TouchableOpacity>
         <Animated.View style={[styles.actionSheetContent, animatedStyles]}>
           { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
-          { itemList.map((item, index) => <TouchableOpacity onPress={() => selectAction(index)} key={index} style={ [styles.itemStyle, itemList.length -1 === index ? {
+          { itemList.map((item, index) => <View onTouchEnd={() => selectAction(index)} key={index} style={ [styles.itemStyle, itemList.length -1 === index ? {
             borderBottomWidth: 6,
             borderBottomStyle: 'solid',
             borderBottomColor: '#f7f7f7'
-          } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></TouchableOpacity>) }
-          <TouchableOpacity style={styles.buttonStyle} onPress={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></TouchableOpacity>
+          } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></View>) }
+          <View style={styles.buttonStyle} onTouchEnd={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></View>
         </Animated.View>
       </View>
     )
