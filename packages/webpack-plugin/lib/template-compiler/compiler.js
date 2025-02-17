@@ -1771,7 +1771,7 @@ function processRefReact (el, meta) {
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${type}', [${selectorsConf}]) }}`
+      value: `{{ this.__getRefVal('${type}', [${selectorsConf}], 'ref_fn_${++refId}') }}`
     }])
   }
 
