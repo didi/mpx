@@ -2335,29 +2335,31 @@ app里面的window配置，参考[微信内window配置说明](https://developer
 | disableScroll | 不支持 | RN下默认页面不支持滚动，如需滚动需要使用可滚动的元素包裹 |
 
 #### 状态管理
+
 ##### pinia 
-暂未支持
+跨端输出 RN 支持完整的 pinia 相关能力，详情可点击[查看](/guide/advance/pinia.html)。
 ##### store 
-已支持
+跨端输出 RN 支持所有 store 相关能力，详情可点击[查看](/guide/advance/store.html)。
 #### i18n
-支持
+Mpx 支持国际化 i18n，相关能力在跨端输出 RN 时也做了完整支持，详情可点击[查看](/guide/advance/i18n.html)。
 #### 原子类能力
 开发中，暂未支持
 #### 依赖注入（Provide/Inject）
-开发中，暂未支持
+跨端输出 RN 支持使用依赖注入能力，详情可[查看](/guide/advance/provide-inject.html#依赖注入-provide-inject)。
 
 #### 环境API
-在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用是有warn提醒)会比微信小程序提供的能力少一些，以下是使用说明：
+在RN环境中也提供了一部分常用 api 能力，方法名和使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用时有warn提醒)会比微信小程序提供的能力少一些，
+具体 api 支持列表可点击[查看](/api/extend.html#api-proxy)，以下是使用说明：
 ##### 使用说明
 如果全量引入api-proxy这种情况下，需要如下配置
 ```javascript
 // 全量引入api-proxy
 import mpx from '@mpxjs/core'
-import apiProxy from '@didi/mpxjs-api-proxy'
+import apiProxy from '@mpxjs/api-proxy'
 mpx.use(apiProxy, { usePromise: true })
 ```
 
-需要在mpx项目中需要配置externals
+需要在mpx项目中需要配置externals，使用 mpx-cli 创建的项目默认已配置，开发者无需进行二次配置。
 ```bash
 externals: {
   ...
@@ -2371,7 +2373,7 @@ externals: {
   'react-native-haptic-feedback': 'react-native-haptic-feedback'
 },
 ```
-如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例
+如果单独使用api-proxy方法，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例：
 
 
 | api方法                                                                                                                                                                                              | 依赖的react-native三方库                        |
@@ -2540,7 +2542,3 @@ webviewBridge.invoke('getTime', {
   }
 })
 ```
-
-
-### 其他使用限制
-如事件的target等
