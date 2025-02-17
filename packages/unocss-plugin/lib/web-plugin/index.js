@@ -1,3 +1,5 @@
+const postcss = require('postcss')
+const pluginCondStrip = require('@mpxjs/webpack-plugin/lib/style-compiler/plugins/conditional-strip')
 const WebpackSources = require('webpack-sources')
 const VirtualModulesPlugin = require('webpack-virtual-modules')
 const node_path = require('node:path')
@@ -5,6 +7,7 @@ const process = require('process')
 const fs = require('fs')
 const { createContext, getPath, normalizeAbsolutePath } = require('./utils')
 const { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } = require('./consts')
+const loadPostcssConfig = require('@mpxjs/webpack-plugin/lib/style-compiler/load-postcss-config')
 
 const PLUGIN_NAME = 'unocss:webpack'
 const VIRTUAL_MODULE_PREFIX = node_path.resolve(process.cwd(), '_virtual_')
@@ -89,8 +92,33 @@ function WebpackPlugin (configOrPath, defaults) {
         }
       })
 
-      compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
+      compiler.hooks.thisCompilation.tap({ name: PLUGIN_NAME, stage: 1000 }, (compilation) => {
+        const { __mpx__: mpx } = compilation
+        const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, {
+          defs: mpx.defs,
+          inlineConfigFile: node_path.join(mpx.projectRoot, 'vue.config.js')
+        })
+        const configBox = loadPostcssConfig({
+          emitWarning(warning) {
+            compilation.warnings.push(warning)
+          }
+        }, inlineConfig)
+        const plugins = [] // init with trim plugin
+        plugins.push(
+          pluginCondStrip({
+            defs: mpx.defs
+          })
+        )
+        const finalPluginsBox = configBox.then(config => config.prePlugins.concat(plugins, config.plugins))
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
+          const [plugins, options] = await Promise.all([finalPluginsBox, configBox.then(config => Object.assign(
+            {
+              to: '__uno.css',
+              from: '__uno.css',
+              map: false
+            },
+            config.options
+          ))])
           // 清空transformCache避免watch修改不生效
           transformCache.clear()
           const tokens = new Set()
@@ -110,14 +138,27 @@ function WebpackPlugin (configOrPath, defaults) {
             if (file === '*') { return }
             let code = compilation.assets[file].source().toString()
             let replaced = false
-            code = code.replace(LAYER_PLACEHOLDER_RE, (_, quote, layer) => {
+            for(const [source, quote, layer] of code.matchAll(LAYER_PLACEHOLDER_RE)) {
               replaced = true
-              const css = layer === LAYER_MARK_ALL ? result.getLayers(undefined, Array.from(entries).map((i) => resolveLayer(i)).filter((i) => !!i)) : result.getLayer(layer) || ''
-              if (!quote) { return css }
+              const _css = layer === LAYER_MARK_ALL? result.getLayers(undefined, Array.from(entries).map((i) => resolveLayer(i)).filter((i) =>!!i)) : result.getLayer(layer) || ''
+              const css = (await postcss(plugins).process(_css, options)).content
+              if (!quote) {
+                code = code.replace(source, css)
+                continue
+              }
               let escaped = JSON.stringify(css).slice(1, -1)
               if (quote === '\\"') { escaped = JSON.stringify(escaped).slice(1, -1) }
-              return quote + escaped
-            })
+              code = code.replace(source, quote + escaped)
+            }
+            // code = code.replace(LAYER_PLACEHOLDER_RE, (_, quote, layer) => {
+            //   replaced = true
+            //   const _css = layer === LAYER_MARK_ALL ? result.getLayers(undefined, Array.from(entries).map((i) => resolveLayer(i)).filter((i) => !!i)) : result.getLayer(layer) || ''
+            //   const css = await postcss(plugins).process(_css, options)
+            //   if (!quote) { return css }
+            //   let escaped = JSON.stringify(css).slice(1, -1)
+            //   if (quote === '\\"') { escaped = JSON.stringify(escaped).slice(1, -1) }
+            //   return quote + escaped
+            // })
             if (replaced) { compilation.assets[file] = new WebpackSources.RawSource(code) }
           }
         })
