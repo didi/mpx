@@ -30,18 +30,17 @@ export default function getRefsMixin () {
         const target = this
         if (!this[refFnId]) {
           this[refFnId] = function (instance) {
-            const context = this
             selectorsConf.forEach((item = []) => {
               const [prefix, selectors = ''] = item
               if (selectors) {
                 selectors.trim().split(/\s+/).forEach(selector => {
                   const refKey = prefix + selector
-                  const refVal = { type, instance, context }
+                  const refVal = { type, instance, refFnId }
                   target.__refs[refKey] = target.__refs[refKey] || []
                   if (instance) { // mount
                     target.__refs[refKey].push(refVal)
                   } else { // unmount
-                    const index = target.__refs[refKey].findIndex(item => item.context === context)
+                    const index = target.__refs[refKey].findIndex(item => item.refFnId === refFnId)
                     if (index > -1) {
                       target.__refs[refKey].splice(index, 1)
                     }
