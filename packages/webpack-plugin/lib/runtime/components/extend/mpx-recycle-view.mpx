@@ -14,7 +14,6 @@
     bindscroll="onScroll"
     bindscrolltoupper="onScrollToUpper"
     bindscrolltolower="onScrollToLower"
-    wx:if="{{_listData && _listData.length}}"
   >
     <view class="content-wrapper">
       <view class="infinite-list-placeholder" wx:style="{{placeholderStyle}}"></view>
@@ -177,22 +176,10 @@
       listData: {
         handler() {
           this.initPositions()
-          this.$nextTick(() => {
-            if (!this.positions || !this.positions.length) {
-              return
-            }
-            // 更新列表总高度
-            this.placeholderStyle = `height: ${this.totalHeight}px`
-            if (!this.isReady) {
-              this.$nextTick(() => {
-                this.isReady = true
-              })
-            }
-            // 更新真实偏移量
-            this.setStartOffset()
-          })
-        },
-        immediate: true
+          this.placeholderStyle = `height: ${this.totalHeight}px`
+          // 更新真实偏移量
+          this.setStartOffset()
+        }
       },
       scrollTop: {
         handler(val) {
@@ -213,6 +200,11 @@
         .select('.mpx-recycle-view')
         .boundingClientRect((rect) => {
           this.containerHeight = rect.height
+          this.isReady = true
+          this.placeholderStyle = `height: ${this.totalHeight}px`
+          if (!this.positions || !this.positions.length) {
+            return
+          }
           this.start = this.getStartIndex(this.scrollTop)
           this.end = this.start + this.visibleCount
           this.setStartOffset()
