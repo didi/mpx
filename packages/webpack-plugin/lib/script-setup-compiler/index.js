@@ -1,5 +1,6 @@
 const babylon = require('@babel/parser')
 const MagicString = require('magic-string')
+const { SourceMapConsumer, SourceMapGenerator } = require('source-map')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const formatCodeFrame = require('@babel/code-frame')
@@ -621,7 +622,12 @@ function compileScriptSetup (
   _s.appendRight(endOffset, '})')
 
   return {
-    content: _s.toString()
+    content: _s.toString(),
+    map: _s.generateMap({
+      source: filePath,
+      hires: true,
+      includeContent: true,
+    })
   }
 }
 
@@ -1161,14 +1167,25 @@ function getCtor (ctorType) {
   return ctor
 }
 
-module.exports = function (content) {
+module.exports = async function (content, sourceMap) {
   const { queryObj } = parseRequest(this.resource)
   const { ctorType, lang } = queryObj
   const filePath = this.resourcePath
-  const { content: callbackContent } = compileScriptSetup({
+  const callback = this.async()
+  let finalSourceMap = null
+  const {
+    content: callbackContent,
+    map
+  } = compileScriptSetup({
     content,
     lang
   }, ctorType, filePath)
-
-  this.callback(null, callbackContent)
+  finalSourceMap = map
+  if (sourceMap) {
+    const consumer = await new SourceMapConsumer(sourceMap)
+    const generator = SourceMapGenerator.fromSourceMap(consumer)
+    generator.applySourceMap(consumer, filePath)
+    finalSourceMap = generator.toJSON()
+  }
+  callback(null, callbackContent, finalSourceMap)
 }
