@@ -1,6 +1,9 @@
 import { defineConfig } from "vitepress"
 import { withPwa } from "@vite-pwa/vitepress"
-import { algoliaTranslations } from "./theme/translations"
+import {
+    algoliaTranslations,
+    localSearchTranslations,
+} from "./theme/translations"
 
 const sidebar = {
     "/guide/": [
@@ -282,13 +285,16 @@ export default withPwa(
         },
         themeConfig: {
             // navbar: false,
-            algolia: {
-                // apiKey: '7849f511f78afc4383a81f0137a91c0f',
-                appId: "DZ8S6HN0MP",
-                apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
-                indexName: "mpxjs",
-                placeholder: "搜索文档",
-                translations: algoliaTranslations,
+            search: {
+                provider: "local",
+                options: {
+                    // // apiKey: '7849f511f78afc4383a81f0137a91c0f',
+                    // appId: "DZ8S6HN0MP",
+                    // apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
+                    // indexName: "mpxjs",
+                    // placeholder: "搜索文档",
+                    translations: localSearchTranslations,
+                },
             },
             logo: "/favicon.ico",
             socialLinks: [
