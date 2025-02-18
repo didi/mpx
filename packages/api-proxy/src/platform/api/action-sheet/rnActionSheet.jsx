@@ -46,6 +46,13 @@ function showActionSheet (options = {}) {
       position: 'absolute',
       zIndex: 1000
     },
+    maskWrap: {
+      left: 0,
+      top: 0,
+      bottom: 0,
+      right: 0,
+      position: 'absolute'
+    },
     actionActionMask: {
       left: 0,
       top: 0,
@@ -143,7 +150,7 @@ function showActionSheet (options = {}) {
     }
     return (
       <View style={styles.actionAction}>
-        <Animated.View style={[styles.actionSheetContent, maskAnimatedStyles]}>
+        <Animated.View style={[styles.maskWrap, maskAnimatedStyles]}>
           <TouchableOpacity activeOpacity={1} style={styles.actionActionMask} onPress={cancelAction}></TouchableOpacity>
         </Animated.View>
         <Animated.View style={[styles.actionSheetContent, actionAnimatedStyles]}>
