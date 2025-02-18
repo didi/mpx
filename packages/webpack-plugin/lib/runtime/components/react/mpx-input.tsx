@@ -172,12 +172,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const parseValue = (value: string | number | undefined): string => {
-    if (value === undefined || value === null) return ''
-    if (typeof value === 'number') return value + ''
-    if (value.length > maxlength && maxlength >= 0) {
-      return value.slice(0, maxlength)
+    if (typeof value === 'string') {
+      if (value.length > maxlength && maxlength >= 0) {
+        return value.slice(0, maxlength)
+      }
+      return value
     }
-    return value
+    if (typeof value === 'number') return value + ''
+    return ''
   }
 
   const keyboardType = keyboardTypeMap[type]
