@@ -86,18 +86,44 @@ function showActionSheet (options = {}) {
     }
   })
   function ActionSheet () {
-    const offset = useSharedValue(height)
+    const slide = useSharedValue(height)
+    const fade = useSharedValue(0)
 
-    const animatedStyles = useAnimatedStyle(() => {
+    const actionAnimatedStyles = useAnimatedStyle(() => {
       return {
-        transform: [{ translateY: offset.value }]
+        transform: [{ translateY: slide.value }]
       }
     })
 
-    offset.value = withTiming(0, {
-      easing: Easing.out(Easing.poly(3)),
-      duration: 250
+    const maskAnimatedStyles = useAnimatedStyle(() => {
+      return {
+        opacity: fade.value
+      }
     })
+    const setSlide = function (value) {
+      slide.value = withTiming(value, {
+        easing: Easing.out(Easing.ease),
+        duration: 300
+      })
+    }
+
+    const setFade = function (value) {
+      fade.value = withTiming(value, {
+        easing: Easing.inOut(Easing.ease),
+        duration: 300
+      })
+    }
+    setSlide(0)
+    setFade(1)
+    
+
+    const removeAnimation = function () {
+      setSlide(height)
+      setFade(0)
+      setTimeout(() => {
+        remove()
+      }, 300)
+    }
 
     const selectAction = function (index) {
       const result = {
@@ -105,13 +131,7 @@ function showActionSheet (options = {}) {
         tapIndex: index
       }
       successHandle(result, success, complete)
-      offset.value = withTiming(height, {
-        easing: Easing.out(Easing.poly(3)),
-        duration: 250
-      })
-      setTimeout(() => {
-        remove()
-      }, 200)
+      removeAnimation()
     }
 
     const cancelAction = function () {
@@ -119,17 +139,14 @@ function showActionSheet (options = {}) {
         errMsg: 'showActionSheet:fail cancel'
       }
       failHandle(result, fail, complete)
-      offset.value = withTiming(300, {
-        easing: Easing.out(Easing.poly(3))
-      })
-      setTimeout(() => {
-        remove()
-      }, 200)
+      removeAnimation()
     }
     return (
       <View style={styles.actionAction}>
-        <TouchableOpacity activeOpacity={1} style={styles.actionActionMask} onPress={cancelAction}></TouchableOpacity>
-        <Animated.View style={[styles.actionSheetContent, animatedStyles]}>
+        <Animated.View style={[styles.actionSheetContent, maskAnimatedStyles]}>
+          <TouchableOpacity activeOpacity={1} style={styles.actionActionMask} onPress={cancelAction}></TouchableOpacity>
+        </Animated.View>
+        <Animated.View style={[styles.actionSheetContent, actionAnimatedStyles]}>
           { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
           { itemList.map((item, index) => <View onTouchEnd={() => selectAction(index)} key={index} style={ [styles.itemStyle, itemList.length -1 === index ? {
             borderBottomWidth: 6,
