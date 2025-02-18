@@ -16,7 +16,7 @@ const Portal = ({ children }:PortalProps): null => {
   useEffect(() => {
     if (!manager) {
       throw new Error(
-        'Looks like you forgot to wrap your root component with `Provider` component from `@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index`.\n\n'
+        'Looks like you forgot to wrap your root component with `PortalHost` component from `@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index`.\n\n'
       )
     }
     keyRef.current = manager.mount(children, null, pageId)
