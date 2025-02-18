@@ -26,21 +26,31 @@ export default function getRefsMixin () {
           })
         })
       },
-      __getRefVal (type, selectorsConf) {
-        return (instance) => {
-          if (instance) {
+      __getRefVal (type, selectorsConf, refFnId) {
+        const target = this
+        if (!this[refFnId]) {
+          this[refFnId] = function (instance) {
             selectorsConf.forEach((item = []) => {
               const [prefix, selectors = ''] = item
               if (selectors) {
                 selectors.trim().split(/\s+/).forEach(selector => {
                   const refKey = prefix + selector
-                  this.__refs[refKey] = this.__refs[refKey] || []
-                  this.__refs[refKey].push({ type, instance })
+                  const refVal = { type, instance, refFnId }
+                  target.__refs[refKey] = target.__refs[refKey] || []
+                  if (instance) { // mount
+                    target.__refs[refKey].push(refVal)
+                  } else { // unmount
+                    const index = target.__refs[refKey].findIndex(item => item.refFnId === refFnId)
+                    if (index > -1) {
+                      target.__refs[refKey].splice(index, 1)
+                    }
+                  }
                 })
               }
             })
           }
         }
+        return this[refFnId]
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
