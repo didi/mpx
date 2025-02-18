@@ -2,7 +2,9 @@ import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import Layout from './layouts/HomepageLayout.vue'
 import RegisterSW from "./components/RegisterSW.vue"
+
 import './styles/index.css'
+import 'virtual:group-icons.css'
 
 export default {
     ...DefaultTheme,

@@ -1,6 +1,10 @@
 import { defineConfig } from "vitepress"
 import { withPwa } from "@vite-pwa/vitepress"
 import {
+    groupIconMdPlugin,
+    groupIconVitePlugin,
+} from "vitepress-plugin-group-icons"
+import {
     algoliaTranslations,
     localSearchTranslations,
 } from "./theme/translations"
@@ -257,6 +261,15 @@ export default withPwa(
             },
         },
         ignoreDeadLinks: true,
+        markdown: {
+            theme: {
+                light: "github-light",
+                dark: "github-dark",
+            },
+            config(md) {
+                md.use(groupIconMdPlugin)
+            },
+        },
         pwa: {
             base: "/",
             scope: "/",
@@ -346,6 +359,10 @@ export default withPwa(
                 prev: "上一页",
                 next: "下一页",
             },
+        },
+        vite: {
+            logLevel: "info",
+            plugins: [groupIconVitePlugin()],
         },
         // @ts-ignore
         chainWebpack: (config) => {
