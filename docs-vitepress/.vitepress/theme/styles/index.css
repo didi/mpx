@@ -142,21 +142,9 @@
 }
 
 /* Local Search */
-/* .VPLocalSearchBox {
-    .search-bar:focus-within {
-        border-color: var(--vt-c-brand-highlight) !important;
-    }
-    .search-actions button:hover {
-        color: var(--vt-c-brand) !important;
-    }
-    .result.selected {
-        .titles,
-        .title-icon {
-            color: var(--vt-c-brand) !important;
-        }
-        border-color: var(--vt-c-brand-highlight) !important;
-    }
-} */
+.VPLocalSearchBox {
+    z-index: 120 !important;
+}
 
 .pager-link.title {
     color: var(--vt-c-brand) !important;

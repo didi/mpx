@@ -14,14 +14,14 @@
 </template>
 
 <script>
-import { watch } from 'vue'
-import { useData } from 'vitepress'
+import { watch } from "vue"
+import { useData } from "vitepress"
 import Content from "../global-components/Content.vue"
 import Footer from "../global-components/Footer.vue"
 import Navbar from "../components/Navbar.vue"
 import MobileView from "../components/MobileView.vue"
 import RegisterSW from "../components/RegisterSW.vue"
-import CustomLayout from '../components/CustomLayout.vue'
+import CustomLayout from "../components/CustomLayout.vue"
 
 export default {
   components: {
