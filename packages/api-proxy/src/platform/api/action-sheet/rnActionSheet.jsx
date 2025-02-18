@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { getWindowInfo } from '../system/rnSystem'
@@ -109,15 +109,15 @@ function showActionSheet (options = {}) {
     })
     const setSlide = function (value) {
       slide.value = withTiming(value, {
-        easing: Easing.out(Easing.ease),
-        duration: 300
+        easing: Easing.out(Easing.poly(3)),
+        duration: 250
       })
     }
 
     const setFade = function (value) {
       fade.value = withTiming(value, {
-        easing: Easing.inOut(Easing.ease),
-        duration: 300
+        easing: Easing.inOut(Easing.poly(3)),
+        duration: 250
       })
     }
     setSlide(0)
@@ -129,7 +129,7 @@ function showActionSheet (options = {}) {
       setFade(0)
       setTimeout(() => {
         remove()
-      }, 300)
+      }, 250)
     }
 
     const selectAction = function (index) {
@@ -151,7 +151,7 @@ function showActionSheet (options = {}) {
     return (
       <View style={styles.actionAction}>
         <Animated.View style={[styles.maskWrap, maskAnimatedStyles]}>
-          <TouchableOpacity activeOpacity={1} style={styles.actionActionMask} onPress={cancelAction}></TouchableOpacity>
+          <View activeOpacity={1} style={styles.actionActionMask} onTouchEnd={cancelAction}></View>
         </Animated.View>
         <Animated.View style={[styles.actionSheetContent, actionAnimatedStyles]}>
           { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
