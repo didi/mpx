@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.9.58
- * (c) 2024 @mpxjs team
+ * mpxjs webview bridge v2.9.70
+ * (c) 2025 @mpxjs team
  * @license Apache
  */
 function loadScript(url) {
@@ -90,11 +90,10 @@ var runCallback = function runCallback(msgData) {
 };
 var eventListener = function eventListener(event) {
   // 接收web-view的回调
-  var data = event.data;
-  var msgData = data;
+  var msgData = event.data;
   try {
-    if (typeof data === 'string') {
-      msgData = JSON.parse(data);
+    if (typeof msgData === 'string') {
+      msgData = JSON.parse(msgData);
     }
   } catch (e) {}
   runCallback(msgData);
