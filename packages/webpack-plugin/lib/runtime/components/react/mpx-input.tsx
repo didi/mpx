@@ -77,7 +77,7 @@ type Type = 'text' | 'number' | 'idcard' | 'digit'
 export interface InputProps {
   name?: string
   style?: InputStyle & Record<string, any>
-  value?: string
+  value?: string | number
   type?: Type
   password?: boolean
   placeholder?: string
@@ -171,8 +171,17 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     formValuesMap = formContext.formValuesMap
   }
 
+  const parseValue = (value: string | number | undefined): string => {
+    if (value === undefined || value === null) return ''
+    if (typeof value === 'number') return value + ''
+    if (value.length > maxlength && maxlength >= 0) {
+      return value.slice(0, maxlength)
+    }
+    return value
+  }
+
   const keyboardType = keyboardTypeMap[type]
-  const defaultValue = type === 'number' && value ? value + '' : value
+  const defaultValue = parseValue(value)
   const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
@@ -208,7 +217,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   useEffect(() => {
     if (inputValue !== value) {
-      setInputValue(value)
+      setInputValue(parseValue(value))
     }
   }, [value])
 
