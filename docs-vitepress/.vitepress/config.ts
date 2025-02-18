@@ -1,6 +1,13 @@
 import { defineConfig } from "vitepress"
 import { withPwa } from "@vite-pwa/vitepress"
-import { algoliaTranslations } from "./theme/translations"
+import {
+    groupIconMdPlugin,
+    groupIconVitePlugin,
+} from "vitepress-plugin-group-icons"
+import {
+    algoliaTranslations,
+    localSearchTranslations,
+} from "./theme/translations"
 
 const sidebar = {
     "/guide/": [
@@ -254,9 +261,19 @@ export default withPwa(
             },
         },
         ignoreDeadLinks: true,
+        markdown: {
+            theme: {
+                light: "github-light",
+                dark: "github-dark",
+            },
+            config(md) {
+                md.use(groupIconMdPlugin)
+            },
+        },
         pwa: {
             base: "/",
             scope: "/",
+            registerType: "prompt",
             includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
                 name: "Mpx",
@@ -282,13 +299,16 @@ export default withPwa(
         },
         themeConfig: {
             // navbar: false,
-            algolia: {
-                // apiKey: '7849f511f78afc4383a81f0137a91c0f',
-                appId: "DZ8S6HN0MP",
-                apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
-                indexName: "mpxjs",
-                placeholder: "搜索文档",
-                translations: algoliaTranslations,
+            search: {
+                provider: "local",
+                options: {
+                    // // apiKey: '7849f511f78afc4383a81f0137a91c0f',
+                    // appId: "DZ8S6HN0MP",
+                    // apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
+                    // indexName: "mpxjs",
+                    // placeholder: "搜索文档",
+                    translations: localSearchTranslations,
+                },
             },
             logo: "/favicon.ico",
             socialLinks: [
@@ -340,6 +360,10 @@ export default withPwa(
                 prev: "上一页",
                 next: "下一页",
             },
+        },
+        vite: {
+            logLevel: "info",
+            plugins: [groupIconVitePlugin()],
         },
         // @ts-ignore
         chainWebpack: (config) => {

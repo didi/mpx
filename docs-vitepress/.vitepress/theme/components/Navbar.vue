@@ -36,15 +36,15 @@
 </template>
 
 <script>
-// import SearchBox from "@SearchBox";
-import AlgoliaSearchBox from "../components/AlgoliaSearchBox.vue";
-import { useRoute, useRouter, useData } from "vitepress";
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue"
+import { useRoute, useRouter, useData } from "vitepress"
+import { VPNavBarSearch } from "vitepress/theme"
+// import AlgoliaSearchBox from "../components/AlgoliaSearchBox.vue"
 
 export default {
   components: {
     // SearchBox,
-    AlgoliaSearchBox
+    AlgoliaSearchBox: VPNavBarSearch // 首页替换为 local 搜索
   },
   setup() {
     const route = useRoute()
@@ -66,11 +66,12 @@ export default {
       if (path !== '/') {
         return ''
       }
-      return isSidebarOpen.value ? 'transform: translateY(0);' : ''
+      return isSidebarOpen.value ? 'transform: translateY(0);z-index: 0;display: none' : ''
     })
 
     const isAlgoliaSearch = computed(() => {
-      return theme.value.algolia && theme.value.algolia.apiKey && theme.value.algolia.indexName;
+      // local 暂时写死 true
+      return true //theme.value.algolia && theme.value.algolia.apiKey && theme.value.algolia.indexName;
     })
     algolia.value = theme.value.algolia
 

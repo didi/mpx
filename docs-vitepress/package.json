@@ -9,6 +9,7 @@
     "vue": "^3.4.37"
   },
   "devDependencies": {
+    "vitepress-plugin-group-icons": "^1.3.6",
     "workbox-window": "^7.1.0"
   }
 }
