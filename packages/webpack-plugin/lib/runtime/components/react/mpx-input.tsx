@@ -163,7 +163,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const formContext = useContext(FormContext)
 
-  const setKeyboardAvoidEnabled = useContext(KeyboardAvoidContext)
+  const inputRef = useContext(KeyboardAvoidContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
@@ -255,7 +255,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindfocus!(
+    if (inputRef) {
+      inputRef.current = nodeRef.current
+    }
+    bindfocus && bindfocus(
       getCustomEvent(
         'focus',
         evt,
@@ -271,7 +274,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindblur!(
+    if (inputRef) {
+      inputRef.current = null
+    }
+    bindblur && bindblur(
       getCustomEvent(
         'blur',
         evt,
@@ -388,10 +394,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }, [])
 
-  useEffect(() => {
-    setKeyboardAvoidEnabled?.(adjustPosition)
-  }, [adjustPosition])
-
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return
@@ -426,8 +428,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       },
       layoutProps,
       {
-        onFocus: bindfocus && onInputFocus,
-        onBlur: bindblur && onInputBlur,
+        onFocus: onInputFocus,
+        onBlur: onInputBlur,
         onKeyPress: bindconfirm && onKeyPress,
         onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
         onSelectionChange: onSelectionChange,

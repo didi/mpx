@@ -5,7 +5,7 @@ export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
-export type KeyboardAvoidContextValue = (enabled: boolean) => void
+export type KeyboardAvoidContextValue = React.MutableRefObject<any>
 
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
