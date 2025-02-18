@@ -273,6 +273,7 @@ export default withPwa(
         pwa: {
             base: "/",
             scope: "/",
+            registerType: "prompt",
             includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
                 name: "Mpx",

@@ -4,37 +4,33 @@
       <Navbar />
       <mobile-view v-if="smallMode"></mobile-view>
       <Content v-else />
-      <LayoutBottom/>
+      <RegisterSW />
       <Footer />
     </div>
     <div v-else>
-      <!-- <Navbar /> -->
-      <Layout></Layout>
+      <CustomLayout />
     </div>
   </div>
 </template>
 
 <script>
 import { watch } from 'vue'
-import Navbar from "../components/Navbar.vue";
-import MobileView from "../components/MobileView.vue";
-import Content from "../global-components/Content.vue";
-import Footer from "../global-components/Footer.vue";
-import LayoutBottom from '../components/RegisterSW.vue'
-import DefaultTheme from 'vitepress/theme'
 import { useData } from 'vitepress'
+import Content from "../global-components/Content.vue"
+import Footer from "../global-components/Footer.vue"
+import Navbar from "../components/Navbar.vue"
+import MobileView from "../components/MobileView.vue"
+import RegisterSW from "../components/RegisterSW.vue"
+import CustomLayout from '../components/CustomLayout.vue'
 
-const { Layout } = DefaultTheme
-// import ParentLayout from '@parent-theme/layouts/Layout.vue'
 export default {
   components: {
     Navbar,
     Content,
     Footer,
-    Layout,
-    // ParentLayout,
-    MobileView,
-    LayoutBottom
+    CustomLayout,
+    RegisterSW,
+    MobileView
   },
   data () {
     return {

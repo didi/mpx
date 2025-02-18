@@ -1,26 +1,14 @@
-import { h } from 'vue'
-import DefaultTheme from 'vitepress/theme'
-import Layout from './layouts/HomepageLayout.vue'
-import RegisterSW from "./components/RegisterSW.vue"
+import { h } from "vue"
+import DefaultTheme from "vitepress/theme"
+import HomepageLayout from "./layouts/HomepageLayout.vue"
 
-import './styles/index.css'
-import 'virtual:group-icons.css'
+import "virtual:group-icons.css"
+import "./styles/index.css"
+import "./styles/switchAppearance.css"
 
 export default {
     ...DefaultTheme,
     Layout() {
-        return h(Layout, null, {
-            'layout-bottom': () => h(RegisterSW)
-        })
-    }
+        return h(HomepageLayout)
+    },
 }
-// export default {
-//   extend: '@vuepress/theme-default',
-//   plugins: [
-//     ['@vuepress/search', {
-//       searchMaxSuggestions: 10
-//     }],
-//     ['@vuepress/back-to-top'],
-//     formatHeaderSlugPlugin
-//   ]
-// }
