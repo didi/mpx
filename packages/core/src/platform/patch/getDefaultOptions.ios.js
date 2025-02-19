@@ -599,7 +599,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         if (__mpx_mode__ === 'ios') {
           return createElement(KeyboardAvoidContext.Provider,
             {
-              value: useRef(null)
+              value: {
+                cursorSpacing: 0,
+                ref: null
+              }
             },
             createElement(KeyboardAvoidingView,
               {

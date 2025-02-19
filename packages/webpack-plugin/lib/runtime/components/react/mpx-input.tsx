@@ -7,7 +7,7 @@
  * ✘ placeholder-class
  * ✔ disabled
  * ✔ maxlength
- * ✘ cursor-spacing
+ * ✔ cursor-spacing
  * ✔ auto-focus
  * ✔ focus
  * ✔ confirm-type
@@ -37,9 +37,8 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect, createElement } from 'react'
+import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
-  KeyboardTypeOptions,
   Platform,
   TextInput,
   TextStyle,
@@ -82,6 +81,7 @@ export interface InputProps {
   password?: boolean
   placeholder?: string
   disabled?: boolean
+  'cursor-spacing'?: number
   maxlength?: number
   'auto-focus'?: boolean
   focus?: boolean
@@ -136,6 +136,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'placeholder-style': placeholderStyle,
     disabled,
     maxlength = 140,
+    'cursor-spacing': cursorSpacing = 0,
     'auto-focus': autoFocus,
     focus,
     'confirm-type': confirmType = 'done',
@@ -149,7 +150,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    'adjust-position': adjustPosition = false,
+    'adjust-position': adjustPosition = true,
     bindinput,
     bindfocus,
     bindblur,
@@ -163,7 +164,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const formContext = useContext(FormContext)
 
-  const inputRef = useContext(KeyboardAvoidContext)
+  const keyboardAvoid = useContext(KeyboardAvoidContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
@@ -265,10 +266,22 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }
 
-  const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    if (inputRef) {
-      inputRef.current = nodeRef.current
+  const setKeyboardAvoidContext = () => {
+    if (adjustPosition && keyboardAvoid) {
+      Object.assign(keyboardAvoid, {
+        cursorSpacing,
+        ref: nodeRef.current
+      })
     }
+  }
+
+  const onTouchStart = () => {
+    // sometimes the focus event occurs later than the keyboardWillShow event
+    setKeyboardAvoidContext()
+  }
+
+  const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    setKeyboardAvoidContext()
     bindfocus && bindfocus(
       getCustomEvent(
         'focus',
@@ -285,9 +298,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    if (inputRef) {
-      inputRef.current = null
-    }
     bindblur && bindblur(
       getCustomEvent(
         'blur',
@@ -439,6 +449,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       },
       layoutProps,
       {
+        onTouchStart: onTouchStart,
         onFocus: onInputFocus,
         onBlur: onInputBlur,
         onKeyPress: bindconfirm && onKeyPress,
