@@ -596,28 +596,25 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const withKeyboardAvoidingView = (element) => {
-        if (__mpx_mode__ === 'ios') {
-          return createElement(KeyboardAvoidContext.Provider,
+        return createElement(KeyboardAvoidContext.Provider,
+          {
+            value: {
+              cursorSpacing: 0,
+              ref: null
+            }
+          },
+          createElement(KeyboardAvoidingView,
             {
-              value: {
-                cursorSpacing: 0,
-                ref: null
+              style: {
+                flex: 1
+              },
+              contentContainerStyle: {
+                flex: 1
               }
             },
-            createElement(KeyboardAvoidingView,
-              {
-                style: {
-                  flex: 1
-                },
-                contentContainerStyle: {
-                  flex: 1
-                }
-              },
-              element
-            )
+            element
           )
-        }
-        return element
+        )
       }
 
       navigation.insets = useSafeAreaInsets()
