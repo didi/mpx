@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.9.72",
+  "version": "2.9.73",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -19,7 +19,7 @@
   ],
   "main": "src/index.js",
   "dependencies": {
-    "@mpxjs/utils": "^2.9.70",
+    "@mpxjs/utils": "^2.9.73",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"
   },
@@ -27,8 +27,8 @@
     "@d11/react-native-fast-image": "^8.6.12",
     "@mpxjs/api-proxy": "^2.9.0",
     "@mpxjs/store": "^2.9.0",
-    "@react-navigation/native": "^7.0.3",
-    "@react-navigation/stack": "^7.0.4",
+    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native-stack": "^7.2.0",
     "react": "*",
     "react-native": "*",
     "react-native-gesture-handler": "^2.19.0",
@@ -67,7 +67,7 @@
     "@react-navigation/native": {
       "optional": true
     },
-    "@react-navigation/stack": {
+    "@react-navigation/native-stack": {
       "optional": true
     },
     "react-native-safe-area-context": {
