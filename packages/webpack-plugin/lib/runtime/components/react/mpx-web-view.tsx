@@ -350,7 +350,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onHttpError={onHttpError}
             onError={onError}
             onLoadStart={onLoadStart}
-            allowsBackForwardNavigationGestures={ isLoaded ? true : false }
+            allowsBackForwardNavigationGestures={isLoaded}
       ></WebView>)}
       </Portal>
   )
