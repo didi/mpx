@@ -27,7 +27,7 @@ module.exports = function (template, {
     webConfig,
     autoVirtualHostRules
   } = mpx
-  const { resourcePath } = parseRequest(loaderContext.resource)
+  const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
   let wxsModuleMap, genericsInfo
@@ -85,7 +85,7 @@ module.exports = function (template, {
           externalClasses,
           hasScoped,
           moduleId,
-          filePath: resourcePath,
+          filePath: rawResourcePath,
           i18n: null,
           checkUsingComponents,
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
@@ -99,7 +99,7 @@ module.exports = function (template, {
         }
         if (meta.wxsContentMap) {
           for (const module in meta.wxsContentMap) {
-            wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+            wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
         if (meta.builtInComponentsMap) {
