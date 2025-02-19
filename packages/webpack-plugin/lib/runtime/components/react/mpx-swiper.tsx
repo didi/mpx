@@ -117,7 +117,7 @@ const activeDotStyle = {
 const longPressRatio = 100
 
 const easeMap = {
-  default: Easing.linear,
+  default: Easing.inOut(Easing.poly(3)),
   linear: Easing.linear,
   easeInCubic: Easing.in(Easing.cubic),
   easeOutCubic: Easing.out(Easing.cubic),
