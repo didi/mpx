@@ -17,7 +17,7 @@ const state = reactive({
 })
 ```
 
-你可以在[响应式基础 API](../../api/reactivity-api/basic-reactivity.md) 章节中了解更多关于 `reactive` 的信息。
+你可以在[响应式基础 API](../../api/reactivity-api.md#reactive) 章节中了解更多关于 `reactive` 的信息。
 
 ## 使用`ref()`创建独立的响应式值 {#use-ref-create-reactive-value}
 
@@ -139,7 +139,7 @@ age.value = 30 // age 现在是个 ref，我们需要使用 .value 进行访问�
 console.log(people.age) // 30
 ```
 
-你可以在[Refs API](../../api/reactivity-api/refs-api.md) 章节中了解更多关于 `refs` 的信息。
+你可以在[Refs API](../../api/reactivity-api.md#refs) 章节中了解更多关于 `refs` 的信息。
 
 ## 计算值
 
@@ -191,7 +191,7 @@ setTimeout(() => {
 
 ### 停止侦听
 
-当 `watchEffect` 在组件的 [setup()](composition-api.md#Setup) 函数或[生命周期钩子](composition-api.md#生命周期钩子)被调用时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。
+当 `watchEffect` 在组件的 [setup()](composition-api.md#Setup) 函数或[生命周期钩子](composition-api.md#lifecycle-hooks)被调用时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。
 
 在一些情况下，也可以显式调用返回值以停止侦听：
 
@@ -271,7 +271,7 @@ createComponent({
 * `count` 会在初始运行时同步打印出来
 * 更改 `count` 时，将在组件**更新前**执行副作用。
 
-如果需要在组件更新(例如：当与[模板引用](composition-api.md#模板引用)一起)后重新运行侦听器副作用，我们可以传递带有 `flush` 选项的附加 `options` 对象 (默认为 `'pre'`)：
+如果需要在组件更新(例如：当与[模板引用](composition-api.md#template-ref)一起)后重新运行侦听器副作用，我们可以传递带有 `flush` 选项的附加 `options` 对象 (默认为 `'pre'`)：
 
 ```js
 // 在组件更新后触发，这样你就可以访问更新的 DOM。
