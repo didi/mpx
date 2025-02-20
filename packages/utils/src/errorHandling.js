@@ -1,27 +1,21 @@
-import { isFunction, isPromise } from './base'
+import { isFunction } from './base'
 import { error } from './log'
 
 function handleError (e, instance, info) {
-  error(`Unhandled error occurs${info ? ` during execution of [${info}]` : ''}!`, instance?.options?.mpxFileResource, e)
+  error(`Unhandled error occurs${info ? ` during execution of [${info}]` : ''}!`, instance?.options.mpxFileResource, e)
 }
 
 export function callWithErrorHandling (fn, instance, info, args) {
   if (!isFunction(fn)) return
   try {
-    const res = args ? fn(...args) : fn()
-    if (res && isPromise(res)) {
-      res.catch(e => {
-        handleError(e, instance, info)
-      })
-    }
-    return res
+    return args ? fn(...args) : fn()
   } catch (e) {
     handleError(e, instance, info)
   }
 }
 
 export function wrapMethodsWithErrorHandling (methods, instance) {
-  if (process.env.NODE_ENV === 'production') return methods
+  // if (process.env.NODE_ENV === 'production') return methods
   const newMethods = {}
   Object.keys(methods).forEach((key) => {
     if (isFunction(methods[key])) {

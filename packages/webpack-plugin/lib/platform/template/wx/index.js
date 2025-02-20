@@ -411,7 +411,9 @@ module.exports = function getSpec ({ warn, error }) {
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
           return {
-            name: dash2hump(rPrefix + '-' + rEventName) + modifierStr,
+            name: rPrefix + dash2hump(rEventName.replace(/^./, (matched) => {
+              return matched.toUpperCase()
+            })) + modifierStr,
             value
           }
         },
@@ -493,10 +495,6 @@ module.exports = function getSpec ({ warn, error }) {
           }
         },
         web ({ name, value }, { eventRules, el, usingComponents }) {
-          const parsed = parseMustacheWithContext(value)
-          if (parsed.hasBinding) {
-            value = '__invokeHandler(' + parsed.result + ', $event)'
-          }
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]

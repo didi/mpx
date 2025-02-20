@@ -13,6 +13,7 @@ import {
   WithTimingConfig,
   AnimationCallback
 } from 'react-native-reanimated'
+import { error } from '@mpxjs/utils'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
@@ -83,12 +84,34 @@ const InitialValue: ExtendedViewStyle = Object.assign({
 const TransformOrigin = 'transformOrigin'
 // transform
 const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
+// 多value解析
+const parseValues = (str: string, char = ' ') => {
+  let stack = 0
+  let temp = ''
+  const result = []
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '(') {
+      stack++
+    } else if (str[i] === ')') {
+      stack--
+    }
+    // 非括号内 或者 非分隔字符且非空
+    if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
+      temp += str[i]
+    }
+    if ((stack === 0 && str[i] === char) || i === str.length - 1) {
+      result.push(temp)
+      temp = ''
+    }
+  }
+  return result
+}
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 const parseTransform = (transformStr: string) => {
-  const values = transformStr.trim().split(/\s+/)
+  const values = parseValues(transformStr)
   const transform: {[propName: string]: string|number|number[]}[] = []
   values.forEach(item => {
-    const match = item.match(/([/\w]+)\(([^)]+)\)/)
+    const match = item.match(/([/\w]+)\((.+)\)/)
     if (match && match.length >= 3) {
       let key = match[1]
       const val = match[2]
@@ -109,7 +132,7 @@ const parseTransform = (transformStr: string) => {
           break
         case 'matrix':
         case 'matrix3d':
-          transform.push({ [key]: val.split(',').map(val => +val) })
+          transform.push({ [key]: parseValues(val, ',').map(val => +val) })
           break
         case 'translate':
         case 'scale':
@@ -120,8 +143,8 @@ const parseTransform = (transformStr: string) => {
         {
           // 2 个以上的值处理
           key = key.replace('3d', '')
-          const vals = val.split(',', key === 'rotate' ? 4 : 3)
-          // scale(.5) === scaleX(.5) scaleY(.5) 这里处理一下
+          const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
+          // scale(.5) === scaleX(.5) scaleY(.5)
           if (vals.length === 1 && key === 'scale') {
             vals.push(vals[0])
           }
@@ -144,20 +167,32 @@ const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
   })
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps) {
-  const { style = {}, animation } = props
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean }) {
+  const { style = {}, animation, enableAnimation } = props
+
+  const enableStyleAnimation = enableAnimation || !!animation
+  const enableAnimationRef = useRef(enableStyleAnimation)
+  if (enableAnimationRef.current !== enableStyleAnimation) {
+    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  }
+
+  if (!enableAnimationRef.current) return { enableStyleAnimation: false }
+
   const originalStyle = formatStyle(style)
   // id 标识
   const id = animation?.id || -1
   // 有动画样式的 style key
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean|number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
   // 2 尝试用 useSharedValue，因为实际触发的 style prop 需要是 sharedValue 才能驱动动画，若外层 shareValMap 也是 sharedValue，动画无法驱动。
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
       const defaultVal = getInitialVal(key, isTransform(key))
@@ -166,6 +201,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
   // ** 获取动画样式prop & 驱动动画
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (id === -1) return
     // 更新动画样式 key map
@@ -186,6 +222,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
   //   })
   // }, [style])
   // ** 清空动画
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     return () => {
       Object.values(shareValMap).forEach((value) => {
@@ -218,12 +255,14 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
       }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
-        let toVal = (rules.get(key) || transform.get(key))
+        const ruleV = isTransform(key) ? transform.get(key) : rules.get(key)
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
-        if (toVal === undefined) {
-          toVal = index > 0 ? lastValueMap[key] : shareValMap[key].value
-        }
-        const animation = getAnimation({ key, value: toVal }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
+        const toVal = ruleV !== undefined
+          ? ruleV
+          : index > 0
+            ? lastValueMap[key]
+            : shareValMap[key].value
+        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
         needSetCallback = false
         if (!sequence[key]) {
           sequence[key] = [animation]
@@ -231,7 +270,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
           sequence[key].push(animation)
         }
         // 更新一下 lastValueMap
-        lastValueMap[key] = toVal
+        lastValueMap[key] = toVal!
       })
       // 赋值驱动动画
       animatedKeys.forEach((key) => {
@@ -311,7 +350,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
     }, {} as { [propName: string]: string | number })
   }
   // ** 生成动画样式
-  return useAnimatedStyle(() => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const animationStyle = useAnimatedStyle(() => {
     // console.info(`useAnimatedStyle styles=`, originalStyle)
     return animatedStyleKeys.value.reduce((styles, key) => {
       // console.info('getAnimationStyles', key, shareValMap[key].value)
@@ -327,6 +367,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps) {
         styles[key] = shareValMap[key].value
       }
       return styles
-    }, Object.assign({}, originalStyle) as ExtendedViewStyle)
+    }, {} as ExtendedViewStyle)
   })
+
+  return {
+    enableStyleAnimation: enableAnimationRef.current,
+    animationStyle
+  }
 }

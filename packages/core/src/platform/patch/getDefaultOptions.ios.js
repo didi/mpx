@@ -1,15 +1,17 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { reactive, set, del } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+
+const ProviderContext = createContext(null)
 
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
@@ -42,7 +44,8 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    return components[tagName] || getByPath(ReactNative, tagName)
+    const appComponents = global.__getAppComponents?.() || {}
+    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -52,20 +55,18 @@ function createEffect (proxy, components) {
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
-    return proxy.target.__injectedRender(innerCreateElement, getComponent)
+    return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
   }, () => queueJob(update), proxy.scope)
   // render effect允许自触发
   proxy.toggleRecurse(true)
 }
 
-function getRootProps (props) {
+function getRootProps (props, validProps) {
   const rootProps = {}
   for (const key in props) {
-    if (hasOwn(props, key)) {
-      const match = /^(bind|catch|capture-bind|capture-catch|style|enable-var):?(.*?)(?:\.(.*))?$/.exec(key)
-      if (match) {
-        rootProps[key] = props[key]
-      }
+    const altKey = dash2hump(key)
+    if (!hasOwn(validProps, key) && !hasOwn(validProps, altKey) && key !== 'children') {
+      rootProps[key] = props[key]
     }
   }
   return rootProps
@@ -195,7 +196,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -246,8 +247,32 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         return currentInject.getRefsData || noop
       },
       enumerable: false
+    },
+    __parentProvides: {
+      get () {
+        return parentProvides || null
+      },
+      enumerable: false
     }
   })
+
+  if (type === 'component') {
+    Object.defineProperty(instance, '__componentPath', {
+      get () {
+        return currentInject.componentPath || ''
+      },
+      enumerable: false
+    })
+  }
+
+  if (relation) {
+    Object.defineProperty(instance, '__relation', {
+      get () {
+        return relation
+      },
+      enumerable: false
+    })
+  }
 
   // bind this & assign methods
   if (rawOptions.methods) {
@@ -367,34 +392,68 @@ function usePageStatus (navigation, pageId) {
     const blurSubscription = navigation.addListener('blur', () => {
       pageStatusMap[pageId] = 'hide'
     })
-    const unWatchAppFocusedState = watch(global.__mpxAppFocusedState, (value) => {
-      pageStatusMap[pageId] = value
-    })
 
     return () => {
       focusSubscription()
       blurSubscription()
-      unWatchAppFocusedState()
       del(pageStatusMap, pageId)
     }
   }, [navigation])
+}
+
+const RelationsContext = createContext(null)
+
+const checkRelation = (options) => {
+  const relations = options.relations || {}
+  let hasDescendantRelation = false
+  let hasAncestorRelation = false
+  Object.keys(relations).forEach((path) => {
+    const relation = relations[path]
+    const type = relation.type
+    if (['child', 'descendant'].includes(type)) {
+      hasDescendantRelation = true
+    } else if (['parent', 'ancestor'].includes(type)) {
+      hasAncestorRelation = true
+    }
+  })
+  return {
+    hasDescendantRelation,
+    hasAncestorRelation
+  }
+}
+
+const provideRelation = (instance, relation) => {
+  const componentPath = instance.__componentPath
+  if (relation) {
+    return Object.assign({}, relation, { [componentPath]: instance })
+  } else {
+    return {
+      [componentPath]: instance
+    }
+  }
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
     const pageId = useContext(RouteContext)
+    const parentProvides = useContext(ProviderContext)
+    let relation = null
+    if (hasDescendantRelation || hasAncestorRelation) {
+      relation = useContext(RelationsContext)
+    }
     propsRef.current = props
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -444,10 +503,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     useEffect(() => {
       if (type === 'page') {
-        if (!global.__mpxAppLaunched && global.__mpxAppOnLaunch) {
+        if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
           global.__mpxAppOnLaunch(props.navigation)
         }
-        proxy.callHook(ONLOAD, [props.route.params || {}])
+        const loadParams = {}
+        // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+        if (isObject(props.route.params)) {
+          for (const key in props.route.params) {
+            loadParams[key] = encodeURIComponent(props.route.params[key])
+          }
+        }
+        proxy.callHook(ONLOAD, [loadParams])
       }
       proxy.mounted()
       return () => {
@@ -472,14 +538,28 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return proxy.finalMemoVersion
     }, [proxy.stateVersion, proxy.memoVersion])
 
-    const root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
+    let root = useMemo(() => proxy.effect.run(), [finalMemoVersion])
     if (root && root.props.ishost) {
-      const rootProps = getRootProps(props)
+      // 对于组件未注册的属性继承到host节点上，如事件、样式和其他属性等
+      const rootProps = getRootProps(props, validProps)
       rootProps.style = Object.assign({}, root.props.style, rootProps.style)
       // update root props
-      return cloneElement(root, rootProps)
+      root = cloneElement(root, rootProps)
     }
-    return root
+
+    const provides = proxy.provides
+    if (provides) {
+      root = createElement(ProviderContext.Provider, { value: provides }, root)
+    }
+
+    return hasDescendantRelation
+      ? createElement(RelationsContext.Provider,
+          {
+            value: provideRelation(instance, relation)
+          },
+          root
+        )
+      : root
   }))
 
   if (rawOptions.options?.isCustomText) {
@@ -487,30 +567,25 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
+    const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const [enabled, setEnabled] = useState(true)
+      const [enabled, setEnabled] = useState(false)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
 
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions({
+        navigation.setOptions(Object.assign({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-        if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
-          color && ReactNative.StatusBar.setBackgroundColor(color)
-        }
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
+          statusBarTranslucent: true
+        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
       }, [])
 
       const rootRef = useRef(null)
@@ -548,7 +623,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       return createElement(GestureHandlerRootView,
         {
-          style: {
+          // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
+          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
+          ? {
+            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+          }
+          : {
             flex: 1
           }
         },
@@ -560,10 +640,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
               ref: rootRef,
-              onLayout,
-              onTouchStart: () => {
-                ReactNative.Keyboard.isVisible() && ReactNative.Keyboard.dismiss()
-              }
+              onLayout
             },
             createElement(RouteContext.Provider,
               {

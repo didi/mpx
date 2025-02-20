@@ -1,8 +1,7 @@
-import Vue from './external/vue'
+
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
-
-import { createI18n } from './platform/builtInMixins/i18nMixin'
+import { init } from './platform/env/index'
 
 export * from './platform/export/index'
 
@@ -156,12 +155,6 @@ Mpx.config = {
   rnConfig: {}
 }
 
-global.__mpx = Mpx
-
-if (__mpx_mode__ !== 'web') {
-  if (global.i18n) {
-    Mpx.i18n = createI18n(global.i18n)
-  }
-}
+init(Mpx)
 
 export default Mpx

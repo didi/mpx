@@ -38,7 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const hoverClassReg = /^mpx-((cover-)?view|button|navigator)$/
+const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -117,6 +117,7 @@ let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
 let usingComponents = []
+let usingComponentsInfo = {}
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -636,6 +637,7 @@ function parse (template, options) {
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
+  usingComponentsInfo = options.usingComponentsInfo
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -718,7 +720,14 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
       processElement(element, root, options, meta)
+
       tagNames.add(element.tag)
+      // 统计通过抽象节点方式使用的组件
+      element.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name)) {
+          tagNames.add(attr.value)
+        }
+      })
 
       if (!unary) {
         currentParent = element
@@ -806,7 +815,7 @@ function parse (template, options) {
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
-  if (!tagNames.has('component') && options.checkUsingComponents) {
+  if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
     const arr = []
     usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
@@ -1071,12 +1080,6 @@ function processStyleReact (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
 
-  let staticHoverClass = ''
-  if (hoverClassReg.test(el.tag)) {
-    staticHoverClass = el.attrsMap['hover-class'] || ''
-    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
-  }
-
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
@@ -1100,12 +1103,22 @@ function processStyleReact (el, options) {
     }])
   }
 
-  if (staticHoverClass && staticHoverClass !== 'none') {
-    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
-    addAttrs(el, [{
-      name: 'hover-style',
-      value: `{{this.__getStyle(${staticClassExp})}}`
-    }])
+  if (specialClassReg.test(el.tag)) {
+    const staticClassNames = ['hover', 'indicator', 'mask']
+    staticClassNames.forEach((className) => {
+      let staticClass = el.attrsMap[className + '-class'] || ''
+      let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
+      staticClass = staticClass.replace(/\s+/g, ' ')
+      staticStyle = staticStyle.replace(/\s+/g, ' ')
+      if ((staticClass && staticClass !== 'none') || staticStyle) {
+        const staticClassExp = parseMustacheWithContext(staticClass).result
+        const staticStyleExp = parseMustacheWithContext(staticStyle).result
+        addAttrs(el, [{
+          name: className + '-style',
+          value: `{{this.__getStyle(${staticClassExp}, null, ${staticStyleExp})}}`
+        }])
+      }
+    })
   }
 
   // 处理externalClasses，将其转换为style作为props传递
@@ -1148,6 +1161,49 @@ function getModelConfig (el, match) {
     modelFilter,
     modelValuePathArr,
     stringifiedModelValue
+  }
+}
+
+function processEventWeb (el) {
+  const eventConfigMap = {}
+  el.attrsList.forEach(function ({ name, value }) {
+    if (/^@[a-zA-Z]+$/.test(name)) {
+      const parsedFunc = parseFuncStr(value)
+      if (parsedFunc) {
+        if (!eventConfigMap[name]) {
+          eventConfigMap[name] = {
+            configs: []
+          }
+        }
+        eventConfigMap[name].configs.push(
+          Object.assign({ name, value }, parsedFunc)
+        )
+      }
+    }
+  })
+
+  // let wrapper
+  for (const name in eventConfigMap) {
+    const { configs } = eventConfigMap[name]
+    if (!configs.length) continue
+    configs.forEach(({ name }) => {
+      if (name) {
+        // 清空原始事件绑定
+        let has
+        do {
+          has = getAndRemoveAttr(el, name).has
+        } while (has)
+      }
+    })
+    const value = `(e)=>__invoke(e, [${configs.map(
+      (item) => item.expStr
+    )}])`
+    addAttrs(el, [
+      {
+        name,
+        value
+      }
+    ])
   }
 }
 
@@ -1227,7 +1283,8 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      modifyAttr(el, name, `{{${value}}}`)
+      const { result } = parseMustacheWithContext(value)
+      modifyAttr(el, name, `{{this[${result}]}}`)
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
@@ -1927,7 +1984,7 @@ function postProcessFor (el) {
 function postProcessForReact (el) {
   if (el.for) {
     if (el.for.key) {
-      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)})`, false, 'key')
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
       addAttrs(el, [{
         name: 'key',
         value: el.for.key
@@ -2063,16 +2120,22 @@ function processWrapTextReact (el, options, meta) {
   if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('mpx-simple-text')
     wrapper.isBuiltIn = true
-    const dataSetAttrs = []
+    const inheritAttrs = []
     parent.attrsList.forEach(({ name, value }) => {
       if (/^data-/.test(name)) {
-        dataSetAttrs.push({
+        inheritAttrs.push({
           name,
           value
         })
       }
+      if (/^id$/.test(name)) {
+        inheritAttrs.push({
+          name: 'parentId',
+          value
+        })
+      }
     })
-    addAttrs(wrapper, dataSetAttrs)
+    addAttrs(wrapper, inheritAttrs)
     replaceNode(el, wrapper, true)
     addChild(wrapper, el)
     processBuiltInComponents(wrapper, meta)
@@ -2178,16 +2241,20 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
-function isComponentNode (el, options) {
+function isComponentNode (el) {
   return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
 }
 
-function isReactComponent (el, options) {
-  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
+function getComponentInfo (el) {
+  return usingComponentsInfo[el.tag] || {}
+}
+
+function isReactComponent (el) {
+  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
-  const isComponent = isComponentNode(el, options)
+  const isComponent = isComponentNode(el)
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
@@ -2301,8 +2368,7 @@ function postProcessAliComponentRootView (el, options, meta) {
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
-  const tagName = el.tag
-  const mid = options.usingComponentsInfo[tagName]?.mid || moduleId
+  const mid = getComponentInfo(el).mid
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${mid}` }
   ]
@@ -2405,11 +2471,11 @@ function processShow (el, options, root) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
     return
   }
-  if (ctorType === 'component' && el.parent === root && isRealNode(el)) {
+  if (ctorType === 'component' && el.parent === root && isRealNode(el) && hasVirtualHost) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
-  if (isComponentNode(el, options)) {
+  if (isComponentNode(el) && getComponentInfo(el).hasVirtualHost) {
     if (show === '') {
       show = '{{false}}'
     }
@@ -2626,6 +2692,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIfWeb(el)
     processScoped(el)
+    processEventWeb(el)
     // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
     processComponentGenericsWeb(el, options, meta)
@@ -2710,14 +2777,14 @@ function closeElement (el, options, meta) {
   if (!isTemplate) {
     if (!isNative) {
       postProcessComponentIs(el, (child) => {
-        if (!hasVirtualHost && mode === 'ali') {
+        if (!getComponentInfo(el).hasVirtualHost && mode === 'ali') {
           postProcessAliComponentRootView(child, options)
         } else {
           postProcessIf(child)
         }
       })
     }
-    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
+    if (isComponentNode(el) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }
