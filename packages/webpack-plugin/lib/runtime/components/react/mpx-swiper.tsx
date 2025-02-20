@@ -497,7 +497,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       let isCriticalItem = false
       // 真实滚动到的偏移量坐标
       let moveToTargetPos = 0
-      const currentOffset = translation < 0 ? offset.value - preMarginShared.value : offset.value + preMarginShared.value
+      const tmp = !circularShared.value ? 0 :  preMarginShared.value
+      const currentOffset = translation < 0 ? offset.value - tmp : offset.value + tmp
       const computedIndex = Math.abs(currentOffset) / step.value
       const moveToIndex = translation < 0 ? Math.ceil(computedIndex) : Math.floor(computedIndex)
       // 实际应该定位的索引值
