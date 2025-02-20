@@ -1,0 +1,147 @@
+<template>
+  <view class="mpx-sticky-header">
+    <view class="sticky-header-placeholder" style="height: {{contentHeight}}px; position: {{ isSticky ? 'relative' : 'absolute' }}"></view>
+    <view
+      id="{{stickyId}}"
+      wx:ref
+      class="sticky-header-content {{isSticky ? 'is-sticky' : ''}}"
+      style="{{contentStyle}}"
+    >
+      <slot></slot>
+    </view>
+  </view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      // 吸顶时与顶部的距离，单位px
+      offsetTop: {
+        type: Number,
+        value: 0
+      },
+      // 内边距 [top, right, bottom, left]
+      padding: {
+        type: Array,
+        value: [0, 0, 0, 0]
+      },
+      // scroll-view的选择器
+      scrollSelector: {
+        type: String,
+        value: ''
+      },
+      stickyId: {
+        type: String,
+        value: ''
+      }
+    },
+
+    data: {
+      isSticky: false,
+      contentHeight: 0,
+      contentStyle: '',
+      zIndex: 1
+    },
+
+    computed: {
+      baseStyle() {
+        const { padding, offsetTop, isSticky, zIndex } = this
+        const [paddingTop, paddingRight, paddingBottom, paddingLeft] = padding
+        return [
+          isSticky ? `top: ${offsetTop}px;` : '',
+          `padding: ${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px;`
+        ].join('')
+      }
+    },
+
+    lifetimes: {
+      attached() {
+        this.init()
+      },
+
+      detached() {
+        this.cleanup()
+      }
+    },
+
+    methods: {
+      init() {
+        mpx
+          .createSelectorQuery()
+          .in(this)
+          .select('.sticky-header-content')
+          .boundingClientRect((rect) => {
+            if (rect) {
+              this.contentHeight = rect.height
+              this.setupObservers()
+            }
+          })
+          .exec()
+      },
+
+      setupObservers() {
+        if (this.intersectionObserver) {
+          this.intersectionObserver.disconnect()
+        }
+
+        let lastPushedOffset
+
+        const updateStickyState = (entry) => {
+        const topDistance = entry.boundingClientRect.top - this.offsetTop
+        const shouldSticky = entry.intersectionRatio < 1 && topDistance <= 0
+          
+          if (this.isSticky !== shouldSticky) {
+            this.isSticky = shouldSticky
+            this.contentStyle = shouldSticky ? this.baseStyle : ''
+            
+            this.triggerEvent('stickontopchange', {
+              isSticky: shouldSticky,
+              height: entry.boundingClientRect.height
+            })
+          }
+        }
+
+        if (this.scrollSelector) {
+          this.intersectionObserver = this.createIntersectionObserver({
+            thresholds: [0, 1]
+          })
+            .relativeToViewport()
+            .observe(`.sticky-header-placeholder`, (res) => {
+              updateStickyState(res)
+            })
+        }
+      },
+
+      cleanup() {
+        if (this.intersectionObserver) {
+          this.intersectionObserver.disconnect()
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+  .mpx-sticky-header
+    position relative
+    .sticky-header-placeholder
+      width 100%
+      transition height 0.1s ease-in-out
+      position absolute  // 改为占位符绝对定位
+      top 0
+      left 0
+    .sticky-header-content
+      width 100%
+      box-sizing border-box
+      &.is-sticky
+        position fixed
+        left 0
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>
