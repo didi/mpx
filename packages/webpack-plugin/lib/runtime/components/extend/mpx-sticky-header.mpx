@@ -1,14 +1,30 @@
 <template>
   <view class="mpx-sticky-header">
-    <view class="sticky-header-placeholder" style="height: {{contentHeight}}px; position: {{ isSticky ? 'relative' : 'absolute' }}"></view>
     <view
-      id="{{stickyId}}"
-      wx:ref
-      class="sticky-header-content {{isSticky ? 'is-sticky' : ''}}"
-      style="{{contentStyle}}"
-    >
-      <slot></slot>
-    </view>
+      class="sticky-header-placeholder"
+      id="sticky-header-placeholder-{{stickyId}}"
+      style="height: {{contentHeight}}px; position: {{ isSticky ? 'relative' : 'absolute' }}"
+    ></view>
+
+    <root-portal wx:if="{{isRn && isSticky}}">
+      <view
+        id="{{stickyId}}"
+        wx:ref
+        class="sticky-header-content {{isSticky ? 'is-sticky' : ''}}"
+        style="{{contentStyle}}"
+      >
+        <slot></slot>
+      </view>
+    </root-portal>
+    <view
+      wx:else
+        id="{{stickyId}}"
+        wx:ref
+        class="sticky-header-content {{isSticky ? 'is-sticky' : ''}}"
+        style="{{contentStyle}}"
+      >
+        <slot></slot>
+      </view>
   </view>
 </template>
 
@@ -42,7 +58,8 @@
       isSticky: false,
       contentHeight: 0,
       contentStyle: '',
-      parentRect: {}
+      parentRect: {},
+      isRn: __mpx_mode__ === 'ios' || __mpx_mode__ === 'android'
     },
 
     computed: {
@@ -55,12 +72,10 @@
         ].join('')
       }
     },
-
+    ready() {
+      this.init()
+    },
     lifetimes: {
-      attached() {
-        this.init()
-      },
-
       detached() {
         this.cleanup()
       }
@@ -68,9 +83,13 @@
 
     methods: {
       init() {
-        mpx.createSelectorQuery().select(`#${this.scrollSelector}`).boundingClientRect((rect) => {
-          this.parentRect = rect
-        }).exec()
+        mpx
+          .createSelectorQuery()
+          .select(`#${this.scrollSelector}`)
+          .boundingClientRect((rect) => {
+            this.parentRect = rect
+          })
+          .exec()
         mpx
           .createSelectorQuery()
           .in(this)
@@ -92,13 +111,13 @@
         let lastPushedOffset
 
         const updateStickyState = (entry) => {
-        const topDistance = entry.boundingClientRect.top - this.parentRect.top -this.offsetTop
-        const shouldSticky = entry.intersectionRatio < 1 && topDistance <= 0
-          
+          const topDistance = entry.boundingClientRect.top - this.parentRect.top - this.offsetTop
+          const shouldSticky = entry.intersectionRatio < 1 && topDistance <= 0
+
           if (this.isSticky !== shouldSticky) {
             this.isSticky = shouldSticky
             this.contentStyle = shouldSticky ? this.baseStyle : ''
-            
+
             this.triggerEvent('stickontopchange', {
               isSticky: shouldSticky,
               height: entry.boundingClientRect.height
@@ -116,7 +135,7 @@
               right: this.parentRect.right,
               bottom: this.parentRect.bottom
             })
-            .observe(`.sticky-header-placeholder`, (res) => {
+            .observe(`#sticky-header-placeholder-${this.stickyId}`, (res) => {
               updateStickyState(res)
             })
         }
@@ -134,18 +153,21 @@
 <style lang="stylus">
   .mpx-sticky-header
     position relative
-    .sticky-header-placeholder
-      width 100%
-      transition height 0.1s ease-in-out
-      position absolute
-      top 0
-      left 0
-    .sticky-header-content
-      width 100%
-      box-sizing border-box
-      &.is-sticky
-        position fixed
-        left 0
+  .sticky-header-placeholder
+    width 100%
+    position absolute
+    top 0
+    left 0
+    /* 支付宝环境需要设置允许事件穿透, 否则点不动 */
+    /* @mpx-if (__mpx_mode__ === 'ali') */
+    pointer-events none
+    /* @mpx-endif */
+  .sticky-header-content
+    width 100%
+    box-sizing border-box
+  .is-sticky
+    position fixed
+    left 0
 </style>
 
 <script type="application/json">
