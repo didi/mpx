@@ -42,15 +42,15 @@
       isSticky: false,
       contentHeight: 0,
       contentStyle: '',
-      zIndex: 1
+      parentRect: {}
     },
 
     computed: {
       baseStyle() {
-        const { padding, offsetTop, isSticky, zIndex } = this
+        const { padding, offsetTop, isSticky } = this
         const [paddingTop, paddingRight, paddingBottom, paddingLeft] = padding
         return [
-          isSticky ? `top: ${offsetTop}px;` : '',
+          isSticky ? `top: ${(this.parentRect.top || 0) + offsetTop}px;` : '',
           `padding: ${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px;`
         ].join('')
       }
@@ -68,6 +68,9 @@
 
     methods: {
       init() {
+        mpx.createSelectorQuery().select(`#${this.scrollSelector}`).boundingClientRect((rect) => {
+          this.parentRect = rect
+        }).exec()
         mpx
           .createSelectorQuery()
           .in(this)
@@ -89,7 +92,7 @@
         let lastPushedOffset
 
         const updateStickyState = (entry) => {
-        const topDistance = entry.boundingClientRect.top - this.offsetTop
+        const topDistance = entry.boundingClientRect.top - this.parentRect.top -this.offsetTop
         const shouldSticky = entry.intersectionRatio < 1 && topDistance <= 0
           
           if (this.isSticky !== shouldSticky) {
@@ -107,7 +110,12 @@
           this.intersectionObserver = this.createIntersectionObserver({
             thresholds: [0, 1]
           })
-            .relativeToViewport()
+            .relativeToViewport({
+              top: -this.parentRect.top,
+              left: -this.parentRect.left,
+              right: this.parentRect.right,
+              bottom: this.parentRect.bottom
+            })
             .observe(`.sticky-header-placeholder`, (res) => {
               updateStickyState(res)
             })
@@ -129,7 +137,7 @@
     .sticky-header-placeholder
       width 100%
       transition height 0.1s ease-in-out
-      position absolute  // 改为占位符绝对定位
+      position absolute
       top 0
       left 0
     .sticky-header-content
