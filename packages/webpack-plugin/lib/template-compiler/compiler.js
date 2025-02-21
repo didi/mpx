@@ -720,7 +720,14 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
       processElement(element, root, options, meta)
+
       tagNames.add(element.tag)
+      // 统计通过抽象节点方式使用的组件
+      element.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name)) {
+          tagNames.add(attr.value)
+        }
+      })
 
       if (!unary) {
         currentParent = element
@@ -808,7 +815,7 @@ function parse (template, options) {
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
-  if (!tagNames.has('component') && options.checkUsingComponents) {
+  if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
     const arr = []
     usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
@@ -1154,6 +1161,49 @@ function getModelConfig (el, match) {
     modelFilter,
     modelValuePathArr,
     stringifiedModelValue
+  }
+}
+
+function processEventWeb (el) {
+  const eventConfigMap = {}
+  el.attrsList.forEach(function ({ name, value }) {
+    if (/^@[a-zA-Z]+$/.test(name)) {
+      const parsedFunc = parseFuncStr(value)
+      if (parsedFunc) {
+        if (!eventConfigMap[name]) {
+          eventConfigMap[name] = {
+            configs: []
+          }
+        }
+        eventConfigMap[name].configs.push(
+          Object.assign({ name, value }, parsedFunc)
+        )
+      }
+    }
+  })
+
+  // let wrapper
+  for (const name in eventConfigMap) {
+    const { configs } = eventConfigMap[name]
+    if (!configs.length) continue
+    configs.forEach(({ name }) => {
+      if (name) {
+        // 清空原始事件绑定
+        let has
+        do {
+          has = getAndRemoveAttr(el, name).has
+        } while (has)
+      }
+    })
+    const value = `(e)=>__invoke(e, [${configs.map(
+      (item) => item.expStr
+    )}])`
+    addAttrs(el, [
+      {
+        name,
+        value
+      }
+    ])
   }
 }
 
@@ -2421,7 +2471,7 @@ function processShow (el, options, root) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
     return
   }
-  if (ctorType === 'component' && el.parent === root && isRealNode(el)) {
+  if (ctorType === 'component' && el.parent === root && isRealNode(el) && hasVirtualHost) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
@@ -2642,6 +2692,7 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIfWeb(el)
     processScoped(el)
+    processEventWeb(el)
     // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
     processComponentGenericsWeb(el, options, meta)

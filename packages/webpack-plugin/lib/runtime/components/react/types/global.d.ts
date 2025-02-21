@@ -32,6 +32,7 @@ declare module '@mpxjs/utils' {
       width: number
       height: number
     },
+    setOptions: (params: Record<string, any>) => void
   } | undefined
 }
 
@@ -42,3 +43,5 @@ declare let global: {
 declare module '@react-navigation/native' {
    export function useNavigation (): Record<string, any>
 }
+
+declare module '*.png'

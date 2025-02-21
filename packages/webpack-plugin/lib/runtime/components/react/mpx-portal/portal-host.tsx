@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode } from 'react'
+import { useEffect, useRef, ReactNode, useMemo, useContext } from 'react'
 import {
   View,
   DeviceEventEmitter,
@@ -7,15 +7,17 @@ import {
   StyleSheet
 } from 'react-native'
 import PortalManager from './portal-manager'
-import { getFocusedNavigation } from '@mpxjs/utils'
-import { PortalManagerContextValue, PortalContext } from '../context'
+import { PortalContext, RouteContext } from '../context'
 
-export type PortalHostProps = {
-  children: ReactNode
+type PortalHostProps = {
+  children: ReactNode,
+  pageId: number
 }
 
-type addIdsMapsType = {
-  [key: number]: number[]
+interface PortalManagerContextValue {
+  mount: (key: number, children: React.ReactNode) => void
+  update: (key: number, children: React.ReactNode) => void
+  unmount: (key: number) => void
 }
 
 export type Operation =
@@ -26,6 +28,7 @@ export type Operation =
 // events
 const addType = 'MPX_RN_ADD_PORTAL'
 const removeType = 'MPX_RN_REMOVE_PORTAL'
+const updateType = 'MPX_RN_UPDATE_PORTAL'
 // fix react native web does not support DeviceEventEmitter
 const TopViewEventEmitter = DeviceEventEmitter || new NativeEventEmitter()
 
@@ -37,14 +40,18 @@ const styles = StyleSheet.create({
 
 class PortalGuard {
   private nextKey = 10000
-  add = (e: ReactNode) => {
+  add = (e: ReactNode, id: number) => {
     const key = this.nextKey++
-    TopViewEventEmitter.emit(addType, e, key)
+    TopViewEventEmitter.emit(addType, e, key, id)
     return key
   }
 
   remove = (key: number) => {
     TopViewEventEmitter.emit(removeType, key)
+  }
+
+  update = (key: number, e: ReactNode) => {
+    TopViewEventEmitter.emit(updateType, key, e)
   }
 }
 /**
@@ -54,69 +61,77 @@ export const portal = new PortalGuard()
 
 const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _nextKey = useRef(0)
-  const _queue = useRef<Operation[]>([])
-  const _addType = useRef<EventSubscription | null>(null)
-  const _removeType = useRef<EventSubscription | null>(null)
   const manager = useRef<PortalManagerContextValue | null>(null)
-  let currentPageId: number | undefined
-  const _mount = (children: ReactNode, _key?: number, curPageId?: number) => {
-    const navigation = getFocusedNavigation()
-    const pageId = navigation?.pageId
-    if (pageId !== (curPageId ?? currentPageId)) {
-      return
-    }
+  const queue = useRef<Array<{ type: string, key: number; children: ReactNode }>>([])
+  const pageId = useContext(RouteContext)
+  const mount = (children: ReactNode, _key?: number, id?: number) => {
+    if (id !== pageId) return
     const key = _key || _nextKey.current++
     if (manager.current) {
       manager.current.mount(key, children)
+    } else {
+      queue.current.push({ type: 'mount', key, children })
     }
     return key
   }
 
-  const _unmount = (key: number, curPageId?: number) => {
-    const navigation = getFocusedNavigation()
-    const pageId = navigation?.pageId
-    if (pageId && pageId !== (curPageId ?? currentPageId)) { // 过滤掉获取不到pageid的情况，这样避免删不掉的情况
-      return
-    }
+  const unmount = (key: number) => {
     if (manager.current) {
       manager.current.unmount(key)
+    } else {
+      queue.current.push({ type: 'unmount', key, children })
     }
   }
 
-  const _update = (key: number, children: ReactNode, curPageId?: number) => {
-    const navigation = getFocusedNavigation()
-    const pageId = navigation?.pageId
-    if (pageId !== (curPageId ?? currentPageId)) {
-      return
-    }
+  const update = (key: number, children?: ReactNode) => {
     if (manager.current) {
       manager.current.update(key, children)
+    } else {
+      const operation = { type: 'mount', key, children }
+      const index = queue.current.findIndex((q) => q.type === 'mount' && q.key === key)
+      if (index > -1) {
+        queue.current[index] = operation
+      } else {
+        queue.current.push(operation)
+      }
     }
   }
-
+  let subScriptions: Array<EventSubscription> = []
+  useMemo(() => {
+    subScriptions = [
+      TopViewEventEmitter.addListener(addType, mount),
+      TopViewEventEmitter.addListener(removeType, unmount),
+      TopViewEventEmitter.addListener(updateType, update)
+    ]
+  }, [])
   useEffect(() => {
-    const navigation = getFocusedNavigation()
-    currentPageId = navigation?.pageId
-    _addType.current = TopViewEventEmitter.addListener(addType, _mount)
-    _removeType.current = TopViewEventEmitter.addListener(
-      removeType,
-      _unmount
-    )
+    while (queue.current.length && manager.current) {
+      const operation = queue.current.shift()
+      if (!operation) return
+      switch (operation.type) {
+        case 'mount':
+          manager.current.mount(operation.key, operation.children)
+          break
+        case 'unmount':
+          manager.current.unmount(operation.key)
+          break
+      }
+    }
 
     return () => {
-      _addType.current?.remove()
-      _removeType.current?.remove()
+      subScriptions.forEach((subScription:any) => {
+        subScription.remove()
+      })
     }
   }, [])
   return (
     <PortalContext.Provider
       value={{
-        mount: _mount,
-        update: _update,
-        unmount: _unmount
+        mount,
+        update,
+        unmount
       }}
       >
-      {/* Need collapsable=false here to clip the elevations, otherwise they appear above Portal components */}
       <View style={styles.container} collapsable={false}>
         {children}
       </View>

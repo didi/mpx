@@ -1,8 +1,10 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle } from '../../../common/js'
-import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 const { width, height } = Dimensions.get('window')
+const modalMap = new Map()
 const showModal = function (options = {}) {
+  const id = getCurrentPageId()
   const {
     title,
     content,
@@ -17,6 +19,23 @@ const showModal = function (options = {}) {
     fail,
     complete
   } = options
+  if (id === null) {
+    const result = {
+      errMsg: 'showModal:fail cannot be invoked outside the mpx life cycle in React Native environments'
+    }
+    failHandle(result, fail, complete)
+    return
+  }
+  const setCurrentModalKey = function (modalKey) {
+    const currentArr = modalMap.get(id) || []
+    currentArr.push(modalKey)
+    modalMap.set(id, currentArr)
+  }
+  const getCurrentModalKey = function () {
+    const currentArr = modalMap.get(id) || []
+    return currentArr.pop()
+  }
+
   const modalWidth = width * 0.8
   const styles = StyleSheet.create({
     modalTask: {
@@ -69,7 +88,7 @@ const showModal = function (options = {}) {
       flex: 1,
       textAlign: 'center',
       paddingTop: width * 0.04,
-      paddingBottom: width * 0.04
+      paddingBottom: width * 0.04,
     },
     modalButton: {
       width: '100%',
@@ -79,14 +98,14 @@ const showModal = function (options = {}) {
     cancelStyle: {
       borderRightWidth: StyleSheet.hairlineWidth,
       borderRightColor: 'rgba(0,0,0,0.2)',
-      borderStyle: 'solid'
+      borderStyle: 'solid',
     }
   })
-  let modalKey
-  const modalTitle = []
-  const modalContent = []
-  const editableContent = []
-  const modalButton = [{
+  let ModalView
+  let modalTitle = []
+  let modalContent = []
+  let editableContent = []
+  let modalButton = [{
     text: confirmText,
     type: 'confirm',
     color: confirmColor
@@ -96,8 +115,10 @@ const showModal = function (options = {}) {
     contentText = text
   }
   const closeModal = function (buttonInfo) {
-    Portal.remove(modalKey)
-    modalKey = null
+    const modalKey = getCurrentModalKey()
+    if(modalKey) {
+      Portal.remove(modalKey)
+    }
     const result = {
       errMsg: 'showModal:ok'
     }
@@ -132,7 +153,7 @@ const showModal = function (options = {}) {
       color: cancelColor
     })
   }
-  const ModalView = <View style={styles.modalTask}>
+  ModalView = <View style={styles.modalTask}>
     <View style={styles.modalContent}>
       {modalTitle.map((item, index) => <View key={index}><Text style={styles.modalTitleText}>{item}</Text></View>)}
       {modalContent.map((item, index) => <ScrollView key={index} style={styles.contentBox}><Text style={styles.modalContentText}>{item}</Text></ScrollView>)}
@@ -150,12 +171,13 @@ const showModal = function (options = {}) {
         paddingRight: 10
       }} onChangeText={text => onChangeText(text)} defaultValue={content}></TextInput></View>)}
       <View style={styles.modalBtnBox}>
-        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[styles.modalBtn, item.style]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
+        {modalButton.map((item, index) => <TouchableOpacity key={index} style={[ styles.modalBtn, item.style ]} onPress={() => closeModal(item)}><Text style={[styles.modalButton, { color: item.color }]}>{item.text}</Text></TouchableOpacity>)}
       </View>
     </View>
   </View>
   try {
-    modalKey = Portal.add(ModalView)
+    const modalKey = Portal.add(ModalView, id)
+    setCurrentModalKey(modalKey)
   } catch (e) {
     const result = {
       errMsg: `showModal:fail invalid ${e}`

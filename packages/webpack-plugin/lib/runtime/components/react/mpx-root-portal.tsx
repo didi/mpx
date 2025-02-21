@@ -2,7 +2,7 @@
  * ✔ enable
  */
 import { ReactNode, createElement, Fragment } from 'react'
-import Portal from './mpx-portal'
+import Portal from './mpx-portal/index'
 import { warn } from '@mpxjs/utils'
 interface RootPortalProps {
   enable?: boolean

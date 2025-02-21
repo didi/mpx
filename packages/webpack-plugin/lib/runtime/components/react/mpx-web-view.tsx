@@ -1,14 +1,15 @@
-import { forwardRef, useRef, useContext, useMemo, useState, createElement, useCallback, useEffect } from 'react'
-import { warn, getFocusedNavigation, isFunction } from '@mpxjs/utils'
-import Portal from './mpx-portal'
+import { forwardRef, useRef, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import { warn, isFunction } from '@mpxjs/utils'
+import Portal from './mpx-portal/index'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { getCurrentPage, extendObject } from './utils'
-import { WebViewNavigationEvent, WebViewErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
+import { getCurrentPage } from './utils'
+import { useNavigation } from '@react-navigation/native'
+import { WebViewHttpErrorEvent, WebViewEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
-import { BackHandler, StyleSheet, View, Text } from 'react-native'
+import { StyleSheet, View, Text } from 'react-native'
 
 type OnMessageCallbackEvent = {
   detail: {
@@ -98,6 +99,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
   const webViewRef = useRef<WebView>(null)
+  const fristLoaded = useRef<boolean>(false)
+  const isLoadError = useRef<boolean>(false)
+  const statusCode = useRef<string|number>('')
+  const [isLoaded, setIsLoaded] = useState<boolean>(true)
   const defaultWebViewStyle = {
     position: 'absolute' as 'absolute' | 'relative' | 'static',
     left: 0 as number,
@@ -106,34 +111,21 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     bottom: 0 as number
   }
   const canGoBack = useRef<boolean>(false)
+  const isNavigateBack = useRef<boolean>(false)
 
-  const onAndroidBackPress = useCallback(() => {
-    if (canGoBack.current) {
-      webViewRef.current?.goBack()
-      return true
-    }
-    return false
-  }, [canGoBack])
-
-  const beforeRemoveHandle = useCallback((e: Event) => {
-    if (canGoBack.current) {
+  const beforeRemoveHandle = (e: Event) => {
+    if (canGoBack.current && !isNavigateBack.current) {
       webViewRef.current?.goBack()
       e.preventDefault()
     }
-  }, [canGoBack])
+    isNavigateBack.current = false
+  }
 
-  const navigation = getFocusedNavigation()
+  const navigation = useNavigation()
 
   useEffect(() => {
-    if (__mpx_mode__ === 'android') {
-      BackHandler.addEventListener('hardwareBackPress', onAndroidBackPress)
-    }
-    const addListener: Listener = navigation?.addListener.bind(navigation)
-    const beforeRemoveSubscription = addListener?.('beforeRemove', beforeRemoveHandle)
+    const beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
     return () => {
-      if (__mpx_mode__ === 'android') {
-        BackHandler.removeEventListener('hardwareBackPress', onAndroidBackPress)
-      }
       if (isFunction(beforeRemoveSubscription)) {
         beforeRemoveSubscription()
       }
@@ -148,29 +140,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     return null
   }
 
-  const _load = function (res: WebViewNavigationEvent) {
-    const result = {
-      type: 'load',
-      timeStamp: res.timeStamp,
-      detail: {
-        src: res.nativeEvent?.url
-      }
-    }
-    bindload(result)
-  }
-  const _error = function (res: WebViewErrorEvent) {
-    setPageLoadErr(true)
-    const result = {
-      type: 'error',
-      timeStamp: res.timeStamp,
-      detail: {
-        src: ''
-      }
-    }
-    binderror && binderror(result)
-  }
-
   const _reload = function () {
+    if (__mpx_mode__ === 'android') {
+      fristLoaded.current = false // 安卓需要重新设置
+    }
     setPageLoadErr(false)
   }
   const injectedJavaScript = `
@@ -199,9 +172,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
     true;
   `
+
   const sendMessage = function (params: string) {
     return `
-      window.mpxWebviewMessageCallback(${params})
+      window.mpxWebviewMessageCallback && window.mpxWebviewMessageCallback(${params})
       true;
     `
   }
@@ -254,6 +228,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         asyncCallback = navObj.navigateTo(...params)
         break
       case 'navigateBack':
+        isNavigateBack.current = true
         asyncCallback = navObj.navigateBack(...params)
         break
       case 'redirectTo':
@@ -300,17 +275,58 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       }
     })
   }
-  const events = {}
-
-  if (bindload) {
-    extendObject(events, {
-      onLoad: _load
-    })
+  const onLoadEndHandle = function (res: WebViewEvent) {
+    fristLoaded.current = true
+    setIsLoaded(true)
+    const src = res.nativeEvent?.url
+    if (isLoadError.current) {
+      isLoadError.current = false
+      isNavigateBack.current = false
+      const result = {
+        type: 'error',
+        timeStamp: res.timeStamp,
+        detail: {
+          src,
+          statusCode: statusCode.current
+        }
+      }
+      binderror && binderror(result)
+    } else {
+      const result = {
+        type: 'load',
+        timeStamp: res.timeStamp,
+        detail: {
+          src
+        }
+      }
+      bindload?.(result)
+    }
   }
-
-  extendObject(events, {
-    onError: _error
-  })
+  const onLoadEnd = function (res: WebViewEvent) {
+    if (__mpx_mode__ === 'android') {
+      setTimeout(() => {
+        onLoadEndHandle(res)
+      }, 0)
+    } else {
+      onLoadEndHandle(res)
+    }
+  }
+  const onHttpError = function (res: WebViewHttpErrorEvent) {
+    isLoadError.current = true
+    statusCode.current = res.nativeEvent?.statusCode
+  }
+  const onError = function () {
+    statusCode.current = ''
+    isLoadError.current = true
+    if (!fristLoaded.current) {
+      setPageLoadErr(true)
+    }
+  }
+  const onLoadStart = function () {
+    if (!fristLoaded.current) {
+      setIsLoaded(false)
+    }
+  }
 
   return (
       <Portal key={pageLoadErr ? 'error' : 'webview'}>
@@ -322,16 +338,19 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             </View>
             )
           : (<WebView
-        style={defaultWebViewStyle}
-        source={{ uri: src }}
-        ref={webViewRef}
-        javaScriptEnabled={true}
-        onNavigationStateChange={_changeUrl}
-        onMessage={_message}
-        injectedJavaScript={injectedJavaScript}
-        onLoadProgress={_onLoadProgress}
-        allowsBackForwardNavigationGestures={true}
-        {...events}
+            style={ defaultWebViewStyle }
+            source={{ uri: src }}
+            ref={webViewRef}
+            javaScriptEnabled={true}
+            onNavigationStateChange={_changeUrl}
+            onMessage={_message}
+            injectedJavaScript={injectedJavaScript}
+            onLoadProgress={_onLoadProgress}
+            onLoadEnd={onLoadEnd}
+            onHttpError={onHttpError}
+            onError={onError}
+            onLoadStart={onLoadStart}
+            allowsBackForwardNavigationGestures={isLoaded}
       ></WebView>)}
       </Portal>
   )
