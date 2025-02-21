@@ -4,6 +4,7 @@ import { createSelectorQuery } from '@mpxjs/api-proxy'
 export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
+      this.__refCache = {}
       this.__refs = {}
       this.$refs = {}
       this.__getRefs()
@@ -26,21 +27,30 @@ export default function getRefsMixin () {
           })
         })
       },
-      __getRefVal (type, selectorsConf) {
-        return (instance) => {
-          if (instance) {
+      __getRefVal (type, selectorsConf, refFnId) {
+        if (!this.__refCache[refFnId]) {
+          this.__refCache[refFnId] = (instance) => {
             selectorsConf.forEach((item = []) => {
               const [prefix, selectors = ''] = item
               if (selectors) {
                 selectors.trim().split(/\s+/).forEach(selector => {
                   const refKey = prefix + selector
+                  const refVal = { type, instance, refFnId }
                   this.__refs[refKey] = this.__refs[refKey] || []
-                  this.__refs[refKey].push({ type, instance })
+                  if (instance) { // mount
+                    this.__refs[refKey].push(refVal)
+                  } else { // unmount
+                    const index = this.__refs[refKey].findIndex(item => item.refFnId === refFnId)
+                    if (index > -1) {
+                      this.__refs[refKey].splice(index, 1)
+                    }
+                  }
                 })
               }
             })
           }
         }
+        return this.__refCache[refFnId]
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
