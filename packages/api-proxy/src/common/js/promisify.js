@@ -14,24 +14,37 @@ const blackList = [
   'stopBackgroundAudio',
   'showNavigationBarLoading',
   'hideNavigationBarLoading',
-  'createAnimation',
-  'createAnimationVideo',
-  'createSelectorQuery',
-  'createIntersectionObserver',
   'getPerformance',
   'hideKeyboard',
   'stopPullDownRefresh',
-  'createWorker',
   'pageScrollTo',
   'reportAnalytics',
   'getMenuButtonBoundingClientRect',
   'reportMonitor',
-  'createOffscreenCanvas',
   'reportEvent',
   'connectSocket',
   'base64ToArrayBuffer',
+  'arrayBufferToBase64',
   'getDeviceInfo',
-  'getWindowInfo'
+  'getWindowInfo',
+  'getAppBaseInfo',
+  'getAppAuthorizeSetting',
+  'getApiCategory',
+  'postMessageToReferrerPage',
+  'postMessageToReferrerMiniProgram',
+  'reportPerformance',
+  'getPerformance',
+  'preDownloadSubpackage',
+  'router',
+  'nextTick',
+  'checkIsPictureInPictureActive',
+  'worklet',
+  'revokeBufferURL',
+  'reportEvent',
+  'getExptInfoSync',
+  'reserveChannelsLive',
+  'getNFCAdapter',
+  'isVKSupport'
 ]
 
 function getMapFromList (list) {
@@ -55,7 +68,7 @@ function promisify (listObj, whiteList, customBlackList) {
     } else {
       return !(blackListMap[key] || // 特别指定的方法
         /^get\w*Manager$/.test(key) || // 获取manager的api
-        /^create\w*Context$/.test(key) || // 创建上下文相关api
+        /^create(?!BLEConnection|BLEPeripheralServer)\w*$/.test(key) || // 创建上下文相关api
         /^(on|off)/.test(key) || // 以 on* 或 off开头的方法
         /\w+Sync$/.test(key) // 以Sync结尾的方法
       )

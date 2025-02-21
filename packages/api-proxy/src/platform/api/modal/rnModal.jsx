@@ -1,8 +1,10 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle } from '../../../common/js'
-import { Portal } from '@ant-design/react-native'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 const { width, height } = Dimensions.get('window')
+const modalMap = new Map()
 const showModal = function (options = {}) {
+  const id = getCurrentPageId()
   const {
     title,
     content,
@@ -17,6 +19,23 @@ const showModal = function (options = {}) {
     fail,
     complete
   } = options
+  if (id === null) {
+    const result = {
+      errMsg: 'showModal:fail cannot be invoked outside the mpx life cycle in React Native environments'
+    }
+    failHandle(result, fail, complete)
+    return
+  }
+  const setCurrentModalKey = function (modalKey) {
+    const currentArr = modalMap.get(id) || []
+    currentArr.push(modalKey)
+    modalMap.set(id, currentArr)
+  }
+  const getCurrentModalKey = function () {
+    const currentArr = modalMap.get(id) || []
+    return currentArr.pop()
+  }
+
   const modalWidth = width * 0.8
   const styles = StyleSheet.create({
     modalTask: {
@@ -82,7 +101,6 @@ const showModal = function (options = {}) {
       borderStyle: 'solid',
     }
   })
-  let modalKey
   let ModalView
   let modalTitle = []
   let modalContent = []
@@ -97,8 +115,10 @@ const showModal = function (options = {}) {
     contentText = text
   }
   const closeModal = function (buttonInfo) {
-    Portal.remove(modalKey)
-    modalKey = null
+    const modalKey = getCurrentModalKey()
+    if(modalKey) {
+      Portal.remove(modalKey)
+    }
     const result = {
       errMsg: 'showModal:ok'
     }
@@ -156,7 +176,8 @@ const showModal = function (options = {}) {
     </View>
   </View>
   try {
-    modalKey = Portal.add(ModalView)
+    const modalKey = Portal.add(ModalView, id)
+    setCurrentModalKey(modalKey)
   } catch (e) {
     const result = {
       errMsg: `showModal:fail invalid ${e}`
