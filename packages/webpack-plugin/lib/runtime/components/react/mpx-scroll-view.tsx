@@ -33,13 +33,13 @@
  */
 import { ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement } from 'react'
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
-import { IntersectionObserverContext } from './context'
+import { IntersectionObserverContext, ScrollViewContext } from './context'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -194,6 +194,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     gestureRef: scrollViewRef
   })
 
+  const contextValue = useMemo(() => {
+    return {
+      gestureRef: scrollViewRef
+    }
+  }, [])
+
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
   if (scrollX && scrollY) {
@@ -332,11 +338,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
-    if (enableTriggerIntersectionObserver && intersectionObservers) {
-      for (const key in intersectionObservers) {
-        intersectionObservers[key].throttleMeasure()
-      }
-    }
+    onStartReached(e)
+    onEndReached(e)
+    updateIntersection()
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -358,8 +362,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     onStartReached(e)
     onEndReached(e)
+    updateIntersection()
   }
-
+  function updateIntersection () {
+    if (enableTriggerIntersectionObserver && intersectionObservers) {
+      for (const key in intersectionObservers) {
+        intersectionObservers[key].throttleMeasure()
+      }
+    }
+  }
   function scrollToOffset (x = 0, y = 0) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation })
@@ -429,6 +440,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onScrollDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    updateIntersection()
   }
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
@@ -507,14 +519,17 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, (refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : null)))
         : undefined
     }),
-    wrapChildren(
-      props,
-      {
-        hasVarDec,
-        varContext: varContextRef.current,
-        textStyle,
-        textProps
-      }
+    createElement(ScrollViewContext.Provider,
+      { value: contextValue },
+      wrapChildren(
+        props,
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        }
+      )
     )
   )
 })
