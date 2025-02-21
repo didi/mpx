@@ -648,7 +648,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const gesturePan = Gesture.Pan()
       .onBegin((e) => {
         'worklet'
-        console.log('------------------onBegin')
         if (!step.value) return
         touchfinish.value = false
         cancelAnimation(offset)
@@ -667,7 +666,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
         // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
         if (!circularShared.value && !canMove(eventData)) {
-          console.log('------------------onTouchesMove')
           return
         }
         const { isBoundary, resetOffset } = reachBoundary(eventData)
@@ -681,7 +679,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       .onTouchesUp((e) => {
         'worklet'
         if (touchfinish.value) return
-        console.log('------------------onTouchesUp', touchfinish.value)
         const touchEventData = e.changedTouches[0]
         const moveDistance = touchEventData[strAbso] - moveTranstion.value
         touchfinish.value = true
@@ -690,7 +687,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
         // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
         if (!circularShared.value && !canMove(eventData)) {
-          console.log('------------------onTouchesUp:1')
           return
         }
         const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
