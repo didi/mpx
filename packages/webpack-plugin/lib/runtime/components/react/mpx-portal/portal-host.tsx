@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
 
 class PortalGuard {
   private nextKey = 10000
-  add = (e: ReactNode, id: number) => {
+  add = (e: ReactNode, id: number | null) => {
     const key = this.nextKey++
     TopViewEventEmitter.emit(addType, e, key, id)
     return key

@@ -6,7 +6,7 @@ import PickerMultiSelector from './multiSelector'
 import PickerTime from './time'
 import PickerDate from './date'
 import PickerRegion from './region'
-import { FormContext, FormFieldValue } from '../context'
+import { FormContext, FormFieldValue, RouteContext } from '../context'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import { extendObject } from '../utils'
@@ -112,6 +112,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       bindchange,
       'header-text': headerText = ''
     } = props
+
+    const pageId = useContext(RouteContext)
 
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
 
@@ -254,7 +256,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
           </View>
         </>
       )
-      open(renderPickerModal)
+      open(renderPickerModal, pageId)
     }
 
     return (

@@ -48,10 +48,10 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
     }
     isOpen = false
   }
-  const open = (childComponent: React.ReactNode) => {
-    if (!isOpen) {
+  const open = (childComponent: React.ReactNode, pageId: number | null) => {
+    if (!isOpen && pageId != null) {
       isOpen = true
-      popupKey = Portal.add(<Modal remove={remove}>{childComponent}</Modal>)
+      popupKey = Portal.add(<Modal remove={remove}>{childComponent}</Modal>, pageId)
     }
   }
   return {
