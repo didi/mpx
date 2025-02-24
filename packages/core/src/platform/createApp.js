@@ -24,19 +24,29 @@ function filterOptions (options, appData) {
   return newOptions
 }
 
-export default function createApp (option, config = {}) {
-  // 在App中挂载mpx对象供周边工具访问，如e2e测试
+export default function createApp (options, config = {}) {
+  const appData = {}
+  // app选项目前不需要进行转换
+  const { rawOptions, currentInject } = transferOptions(options, 'app', false)
   const builtInMixins = [{
+    // 在App中挂载mpx对象供周边工具访问，如e2e测试
     getMpx () {
       return Mpx
     }
   }]
-  const appData = {}
   if (__mpx_mode__ === 'web') {
     builtInMixins.push({
+      beforeCreate () {
+        // for vue provide vm access
+        Object.assign(this, appData, Mpx.prototype)
+        if (isBrowser) {
+          rawOptions.onShow && global.__mpxAppCbs.show.push(rawOptions.onShow.bind(this))
+          rawOptions.onHide && global.__mpxAppCbs.hide.push(rawOptions.onHide.bind(this))
+          rawOptions.onError && global.__mpxAppCbs.error.push(rawOptions.onError.bind(this))
+          rawOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(rawOptions.onUnhandledRejection.bind(this))
+        }
+      },
       created () {
-        Object.assign(this, Mpx.prototype)
-        Object.assign(this, appData)
         const current = this.$root.$options?.router?.currentRoute || {}
         const options = {
           path: current.path && current.path.replace(/^\//, ''),
@@ -45,48 +55,36 @@ export default function createApp (option, config = {}) {
           shareTicket: '',
           referrerInfo: {}
         }
+        // web不分冷启动和热启动
         global.__mpxEnterOptions = options
-        this.$options.onLaunch && this.$options.onLaunch.call(this, options)
-        if (isBrowser) {
-          if (this.$options.onShow) {
-            this.$options.onShow.call(this, options)
-            global.__mpxAppCbs.show.push(this.$options.onShow.bind(this))
-          }
-          if (this.$options.onHide) {
-            global.__mpxAppCbs.hide.push(this.$options.onHide.bind(this))
-          }
-          if (this.$options.onError) {
-            global.__mpxAppCbs.error.push(this.$options.onError.bind(this))
-          }
-          if (this.$options.onUnhandledRejection) {
-            global.__mpxAppCbs.rejection.push(this.$options.onUnhandledRejection.bind(this))
-          }
-        }
+        global.__mpxLaunchOptions = options
+        rawOptions.onLaunch && rawOptions.onLaunch.call(this, options)
+        global.__mpxAppCbs.show.forEach((cb) => {
+          cb(options)
+        })
       }
     })
   } else {
     builtInMixins.push({
       onLaunch () {
         Object.assign(this, Mpx.prototype)
+        initAppProvides(rawOptions.provide, this)
       }
     })
   }
-  // app选项目前不需要进行转换
-  const { rawOptions, currentInject } = transferOptions(option, 'app', false)
   rawOptions.mixins = builtInMixins
   const defaultOptions = filterOptions(spreadProp(mergeOptions(rawOptions, 'app', false), 'methods'), appData)
 
   if (__mpx_mode__ === 'web') {
-    global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-    global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     global.getApp = function () {
       if (!isBrowser) {
         console.error('[Mpx runtime error]: Dangerous API! global.getApp method is running in non browser environments')
       }
       return appData
     }
+    global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+    global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
   } else {
-    initAppProvides(rawOptions)
     defaultOptions.onAppInit && defaultOptions.onAppInit()
     const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)
