@@ -33,6 +33,12 @@ export interface IntersectionObserver {
   }
 }
 
+export interface PortalContextValue {
+  mount: (children: React.ReactNode, key?: number | null, id?: number| null) => number| undefined
+  update: (key: number, children: React.ReactNode) => void
+  unmount: (key: number) => void
+}
+
 export interface ScrollViewContextValue {
    gestureRef: React.RefObject<any> | null
 }
@@ -60,3 +66,5 @@ export const SwiperContext = createContext({})
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
 export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })
+
+export const PortalContext = createContext<PortalContextValue>(null as any)

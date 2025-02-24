@@ -11,9 +11,9 @@
     --vt-c-divider-light: rgba(60, 60, 60, 0.12);
     --vt-c-brand-highlight: var(--vt-c-brand-dark);
     --vt-c-brand: var(--vt-c-green);
-    --vt-c-brand-dark: var(--vt-c-green-dark);
     --vt-c-brand-light: var(--vt-c-green-light);
     --vt-c-brand-dark: var(--vt-c-green-dark);
+    --vp-c-brand-1: var(--vt-c-brand);
 }
 
 .dark {
@@ -95,6 +95,7 @@
     }
 }
 
+/* Algolia Search */
 .DocSearch-Button {
     background-color: transparent;
 }
@@ -140,7 +141,12 @@
     }
 }
 
-.pager-link .title {
+/* Local Search */
+.VPLocalSearchBox {
+    z-index: 120 !important;
+}
+
+.pager-link.title {
     color: var(--vt-c-brand) !important;
 }
 
