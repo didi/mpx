@@ -82,7 +82,6 @@
     "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
   },
   "devDependencies": {
-    "@ant-design/react-native": "^5.2.2",
     "@d11/react-native-fast-image": "^8.6.12",
     "@mpxjs/api-proxy": "^2.9.73",
     "@types/babel-traverse": "^6.25.4",
