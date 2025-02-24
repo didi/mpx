@@ -122,9 +122,10 @@ function extractObservers (options) {
   Object.keys(props).forEach(key => {
     const prop = props[key]
     if (prop && prop.observer) {
+      let callback = prop.observer
+      delete prop.observer
       mergeWatch(key, {
         handler (...rest) {
-          let callback = prop.observer
           if (typeof callback === 'string') {
             callback = this[callback]
           }

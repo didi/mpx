@@ -9,6 +9,7 @@ module.exports = function (script, {
   moduleId,
   isProduction,
   jsonConfig,
+  outputPath,
   builtInComponentsMap,
   localComponentsMap,
   localPagesMap
@@ -25,17 +26,19 @@ module.exports = function (script, {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
-import { createStackNavigator } from '@react-navigation/stack'
-import { Provider } from '@ant-design/react-native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
+import { useHeaderHeight } from '@react-navigation/elements';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
-  createStackNavigator: createStackNavigator,
+  createStackNavigator: createNativeStackNavigator,
+  useHeaderHeight: useHeaderHeight,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
-  Provider: Provider,
+  PortalHost: PortalHost,
   SafeAreaProvider: SafeAreaProvider,
   useSafeAreaInsets: useSafeAreaInsets
 }\n`
@@ -64,7 +67,7 @@ global.__navigationHelper = {
       jsonConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }
