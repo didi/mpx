@@ -33,13 +33,13 @@
  */
 import { ScrollView } from 'react-native-gesture-handler'
 import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext } from 'react'
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
-import { IntersectionObserverContext } from './context'
+import { IntersectionObserverContext, ScrollViewContext } from './context'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -165,7 +165,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intersectionObservers = useContext(IntersectionObserverContext)
 
-  const snapScrollIntoView = useRef<string>('')
+  const firstScrollIntoViewChange = useRef<boolean>(false)
 
   const {
     normalStyle,
@@ -194,6 +194,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     gestureRef: scrollViewRef
   })
 
+  const contextValue = useMemo(() => {
+    return {
+      gestureRef: scrollViewRef
+    }
+  }, [])
+
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
   if (scrollX && scrollY) {
@@ -220,22 +226,27 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }, [refresherTriggered])
 
   useEffect(() => {
-    if (scrollIntoView && __selectRef && snapScrollIntoView.current !== scrollIntoView) {
-      snapScrollIntoView.current = scrollIntoView || ''
-      setTimeout(() => {
-        const refs = __selectRef(`#${scrollIntoView}`, 'node')
-        if (refs) {
-          const { nodeRef } = refs.getNodeInstance()
-          nodeRef.current?.measureLayout(
-            scrollViewRef.current,
-            (left: number, top:number) => {
-              scrollToOffset(left, top)
-            }
-          )
-        }
-      })
+    if (scrollIntoView && __selectRef) {
+      if (!firstScrollIntoViewChange.current) {
+        setTimeout(handleScrollIntoView)
+      } else {
+        handleScrollIntoView()
+      }
     }
+    firstScrollIntoViewChange.current = true
   }, [scrollIntoView])
+
+  function handleScrollIntoView () {
+    const refs = __selectRef!(`#${scrollIntoView}`, 'node')
+    if (!refs) return
+    const { nodeRef } = refs.getNodeInstance()
+    nodeRef.current?.measureLayout(
+      scrollViewRef.current,
+      (left: number, top:number) => {
+        scrollToOffset(left, top)
+      }
+    )
+  }
 
   function selectLength (size: { height: number; width: number }) {
     return !scrollX ? size.height : size.width
@@ -327,11 +338,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
-    if (enableTriggerIntersectionObserver && intersectionObservers) {
-      for (const key in intersectionObservers) {
-        intersectionObservers[key].throttleMeasure()
-      }
-    }
+    onStartReached(e)
+    onEndReached(e)
+    updateIntersection()
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -353,8 +362,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     onStartReached(e)
     onEndReached(e)
+    updateIntersection()
   }
-
+  function updateIntersection () {
+    if (enableTriggerIntersectionObserver && intersectionObservers) {
+      for (const key in intersectionObservers) {
+        intersectionObservers[key].throttleMeasure()
+      }
+    }
+  }
   function scrollToOffset (x = 0, y = 0) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation })
@@ -424,6 +440,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onScrollDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    updateIntersection()
   }
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
@@ -491,32 +508,29 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
-  return (
-    <ScrollView
-      {...innerProps}
-      refreshControl={refresherEnabled
-        ? (
-          <RefreshControl
-            progressBackgroundColor={refresherBackground}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            {...(refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : {})}
-          />
-          )
-        : undefined}
-    >
-       {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )
-      }
-    </ScrollView>
+  return createElement(
+    ScrollView,
+    extendObject({}, innerProps, {
+      refreshControl: refresherEnabled
+        ? createElement(RefreshControl, extendObject({
+          progressBackgroundColor: refresherBackground,
+          refreshing: refreshing,
+          onRefresh: onRefresh
+        }, (refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : null)))
+        : undefined
+    }),
+    createElement(ScrollViewContext.Provider,
+      { value: contextValue },
+      wrapChildren(
+        props,
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        }
+      )
+    )
   )
 })
 

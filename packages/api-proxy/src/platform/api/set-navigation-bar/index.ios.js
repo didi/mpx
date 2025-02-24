@@ -1,4 +1,4 @@
-import { successHandle, failHandle, getFocusedNavigation } from '../../../common/js'
+import { successHandle, failHandle, getFocusedNavigation, envError } from '../../../common/js'
 import { nextTick } from '../next-tick'
 function setNavigationBarTitle (options = {}) {
   const { title = '', success, fail, complete } = options
@@ -7,7 +7,7 @@ function setNavigationBarTitle (options = {}) {
     failHandle({ errMsg: 'setNavigationBarTitle:fail' }, fail, complete)
   } else {
     nextTick(() => {
-      navigation.setOptions({ headerTitle: title })
+      navigation.setOptions({ title })
       successHandle({ errMsg: 'setNavigationBarTitle:ok' }, success, complete)
     })
   }
@@ -31,7 +31,10 @@ function setNavigationBarColor (options = {}) {
   }
 }
 
+const hideHomeButton = envError('hideHomeButton')
+
 export {
   setNavigationBarTitle,
-  setNavigationBarColor
+  setNavigationBarColor,
+  hideHomeButton
 }

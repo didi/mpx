@@ -316,8 +316,7 @@ var handleError = function (err, message) {
   document.removeEventListener('message', handleIncomingMessage);
 };
 
-function handleIncomingMessage(e) {
-  var data = JSON.parse(e.data);
+function handleIncomingMessage(data) {
   if (Array.isArray(data)) {
     for (var i = 0; i < data.length; i++) {
       try {
@@ -335,8 +334,7 @@ function handleIncomingMessage(e) {
   }
 }
 
-window.addEventListener('message', handleIncomingMessage);
-document.addEventListener('message', handleIncomingMessage);
+window.mpxWebviewMessageCallback = handleIncomingMessage
 </script>
   
 

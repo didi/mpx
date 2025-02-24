@@ -1,3 +1,4 @@
+declare let __mpx_mode__: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' | 'dd' | 'qa' | 'jd' | 'android' | 'ios'
 declare module '@mpxjs/utils' {
   export function isEmptyObject (obj: Object): boolean
   export function isFunction (fn: unknown): boolean
@@ -19,10 +20,28 @@ declare module '@mpxjs/utils' {
       bottom: number
       left: number
       right: number
-    }
+    },
+    setOptions: (params: Record<string, any>) => void,
+    addListener: (eventName: string, callback: (e: Event) => void) => void
+    removeListener: (eventName: string, callback: (e: Event) => void) => void
+    dispatch: (eventName: string) => void
+    pageId: number
+    layout: {
+      x: number
+      y: number
+      width: number
+      height: number
+    },
+    setOptions: (params: Record<string, any>) => void
   } | undefined
 }
 
 declare let global: {
   __formatValue (value: string): string | number
 } & Record<string, any>
+
+declare module '@react-navigation/native' {
+   export function useNavigation (): Record<string, any>
+}
+
+declare module '*.png'

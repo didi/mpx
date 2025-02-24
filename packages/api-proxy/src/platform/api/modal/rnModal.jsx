@@ -1,8 +1,10 @@
 import { View, Dimensions, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native'
-import { successHandle, failHandle } from '../../../common/js'
-import { Portal } from '@ant-design/react-native'
+import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 const { width, height } = Dimensions.get('window')
+const modalMap = new Map()
 const showModal = function (options = {}) {
+  const id = getCurrentPageId()
   const {
     title,
     content,
@@ -17,7 +19,24 @@ const showModal = function (options = {}) {
     fail,
     complete
   } = options
-  const modalWidth = width - 60
+  if (id === null) {
+    const result = {
+      errMsg: 'showModal:fail cannot be invoked outside the mpx life cycle in React Native environments'
+    }
+    failHandle(result, fail, complete)
+    return
+  }
+  const setCurrentModalKey = function (modalKey) {
+    const currentArr = modalMap.get(id) || []
+    currentArr.push(modalKey)
+    modalMap.set(id, currentArr)
+  }
+  const getCurrentModalKey = function () {
+    const currentArr = modalMap.get(id) || []
+    return currentArr.pop()
+  }
+
+  const modalWidth = width * 0.8
   const styles = StyleSheet.create({
     modalTask: {
       left: 0,
@@ -53,7 +72,8 @@ const showModal = function (options = {}) {
       lineHeight: 26,
       color: '#808080',
       paddingLeft: 20,
-      paddingRight: 20
+      paddingRight: 20,
+      textAlign: 'center'
     },
     modalBtnBox: {
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -67,8 +87,8 @@ const showModal = function (options = {}) {
     modalBtn: {
       flex: 1,
       textAlign: 'center',
-      paddingTop: 10,
-      paddingBottom: 10,
+      paddingTop: width * 0.04,
+      paddingBottom: width * 0.04,
     },
     modalButton: {
       width: '100%',
@@ -81,24 +101,24 @@ const showModal = function (options = {}) {
       borderStyle: 'solid',
     }
   })
-  let modalKey
   let ModalView
   let modalTitle = []
   let modalContent = []
   let editableContent = []
   let modalButton = [{
     text: confirmText,
-    confirmColor,
     type: 'confirm',
-    color: 'rgb(87, 107, 149)'
+    color: confirmColor
   }]
   let contentText = content
   const onChangeText = function (text) {
     contentText = text
   }
   const closeModal = function (buttonInfo) {
-    Portal.remove(modalKey)
-    modalKey = null
+    const modalKey = getCurrentModalKey()
+    if(modalKey) {
+      Portal.remove(modalKey)
+    }
     const result = {
       errMsg: 'showModal:ok'
     }
@@ -128,10 +148,9 @@ const showModal = function (options = {}) {
   if (showCancel) {
     modalButton.unshift({
       text: cancelText,
-      cancelColor,
       type: 'cancel',
       style: styles.cancelStyle,
-      color: '#000000'
+      color: cancelColor
     })
   }
   ModalView = <View style={styles.modalTask}>
@@ -157,7 +176,8 @@ const showModal = function (options = {}) {
     </View>
   </View>
   try {
-    modalKey = Portal.add(ModalView)
+    const modalKey = Portal.add(ModalView, id)
+    setCurrentModalKey(modalKey)
   } catch (e) {
     const result = {
       errMsg: `showModal:fail invalid ${e}`
