@@ -42,7 +42,7 @@ const wxs = require('./wxs')
 const component = require('./component')
 const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
-
+const stickyHeader = require('./sticky-header')
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
    * universal print for detail component warn or error
@@ -125,6 +125,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     hyphenTagName({ print }),
     label({ print }),
     component(),
-    rootPortal({ print })
+    rootPortal({ print }),
+    stickyHeader({ print })
   ]
 }
