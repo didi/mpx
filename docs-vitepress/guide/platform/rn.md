@@ -1206,7 +1206,7 @@ API
 注意事项
 
 1. canvas 组件目前仅支持 2D 类型，不支持 webgl
-2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 (HTML Canvas 2D Context)[https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D] 定义的属性、方法
+2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 [HTML Canvas 2D Context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) 定义的属性、方法
 3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 4. 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
@@ -1226,7 +1226,7 @@ API
 
 注意事项
 
-1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
+1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#webview-api)
 
 #### 自定义组件
 创建自定义组件在 RN 环境下部分实例方法、属性存在兼容性问题不支持，
@@ -2335,29 +2335,31 @@ app里面的window配置，参考[微信内window配置说明](https://developer
 | disableScroll | 不支持 | RN下默认页面不支持滚动，如需滚动需要使用可滚动的元素包裹 |
 
 #### 状态管理
+
 ##### pinia 
-暂未支持
+跨端输出 RN 支持完整的 pinia 相关能力，详情可点击[查看](/guide/advance/pinia.html)。
 ##### store 
-已支持
+跨端输出 RN 支持所有 store 相关能力，详情可点击[查看](/guide/advance/store.html)。
 #### i18n
-支持
+Mpx 支持国际化 i18n，相关能力在跨端输出 RN 时也做了完整支持，详情可点击[查看](/guide/advance/i18n.html)。
 #### 原子类能力
 开发中，暂未支持
 #### 依赖注入（Provide/Inject）
-开发中，暂未支持
+跨端输出 RN 支持使用依赖注入能力，详情可[查看](/guide/advance/provide-inject.html#依赖注入-provide-inject)。
 
 #### 环境API
-在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用是有warn提醒)会比微信小程序提供的能力少一些，以下是使用说明：
+在RN环境中也提供了一部分常用 api 能力，方法名和使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用时有warn提醒)会比微信小程序提供的能力少一些，
+具体 api 支持列表可点击[查看](/api/extend.html#api-proxy)，以下是使用说明：
 ##### 使用说明
 如果全量引入api-proxy这种情况下，需要如下配置
 ```javascript
 // 全量引入api-proxy
 import mpx from '@mpxjs/core'
-import apiProxy from '@didi/mpxjs-api-proxy'
+import apiProxy from '@mpxjs/api-proxy'
 mpx.use(apiProxy, { usePromise: true })
 ```
 
-需要在mpx项目中需要配置externals
+需要在mpx项目中需要配置externals，使用 mpx-cli 创建的项目默认已配置，开发者无需进行二次配置。
 ```bash
 externals: {
   ...
@@ -2371,7 +2373,7 @@ externals: {
   'react-native-haptic-feedback': 'react-native-haptic-feedback'
 },
 ```
-如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例
+如果单独使用api-proxy方法，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例：
 
 
 | api方法                                                                                                                                                                                              | 依赖的react-native三方库                        |
@@ -2540,7 +2542,3 @@ webviewBridge.invoke('getTime', {
   }
 })
 ```
-
-
-### 其他使用限制
-如事件的target等

@@ -1,6 +1,14 @@
 import { defineConfig } from "vitepress"
 import { withPwa } from "@vite-pwa/vitepress"
-import { algoliaTranslations } from "./theme/translations"
+import {
+    groupIconMdPlugin,
+    groupIconVitePlugin,
+} from "vitepress-plugin-group-icons"
+import { transformerTwoslash } from "@shikijs/vitepress-twoslash"
+import {
+    algoliaTranslations,
+    localSearchTranslations,
+} from "./theme/translations"
 
 const sidebar = {
     "/guide/": [
@@ -221,11 +229,6 @@ export default withPwa(
             ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
             [
                 "script",
-                { id: "unregister-sw" },
-                "if('serviceWorker' in navigator) window.addEventListener('load', (e) => navigator.serviceWorker.register('/service-worker.js', { scope: '/' }))",
-            ],
-            [
-                "script",
                 { type: "text/javascript" },
                 `(function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -254,9 +257,21 @@ export default withPwa(
             },
         },
         ignoreDeadLinks: true,
+        markdown: {
+            theme: {
+                light: "github-light",
+                dark: "github-dark",
+            },
+            // @ts-ignore
+            codeTransformers: [transformerTwoslash()],
+            config(md) {
+                md.use(groupIconMdPlugin)
+            },
+        },
         pwa: {
             base: "/",
             scope: "/",
+            registerType: "prompt",
             includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
                 name: "Mpx",
@@ -275,20 +290,23 @@ export default withPwa(
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
             },
             devOptions: {
-                enabled: false,
+                enabled: true,
                 suppressWarnings: true,
                 navigateFallback: "/",
             },
         },
         themeConfig: {
             // navbar: false,
-            algolia: {
-                // apiKey: '7849f511f78afc4383a81f0137a91c0f',
-                appId: "DZ8S6HN0MP",
-                apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
-                indexName: "mpxjs",
-                placeholder: "搜索文档",
-                translations: algoliaTranslations,
+            search: {
+                provider: "local",
+                options: {
+                    // // apiKey: '7849f511f78afc4383a81f0137a91c0f',
+                    // appId: "DZ8S6HN0MP",
+                    // apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
+                    // indexName: "mpxjs",
+                    // placeholder: "搜索文档",
+                    translations: localSearchTranslations,
+                },
             },
             logo: "/favicon.ico",
             socialLinks: [
@@ -340,6 +358,11 @@ export default withPwa(
                 prev: "上一页",
                 next: "下一页",
             },
+        },
+        vite: {
+            logLevel: "info",
+            // @ts-ignore
+            plugins: [groupIconVitePlugin()],
         },
         // @ts-ignore
         chainWebpack: (config) => {

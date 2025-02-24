@@ -340,6 +340,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     onStartReached(e)
     onEndReached(e)
+    updateIntersection()
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
