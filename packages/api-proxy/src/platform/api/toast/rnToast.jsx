@@ -77,14 +77,14 @@ function showToast (options = {}) {
   const pointerEvents = mask ? 'auto' : 'none'
   isLoadingShow = isLoading
   if (image || icon === 'success' || icon === 'error') {
-    ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
+    ToastView = <View style={[styles.toastWrap, {pointerEvents}]}>
       <View style={[styles.toastContent, styles.toastHasIcon]}>
         <Image style={ styles.toastImg } source={{uri: image || iconImg[icon]}}></Image>
         { title ? <Text style={styles.toastText}>{title}</Text> : null }
       </View>
     </View>
   } else if (icon === 'loading') {
-    ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
+    ToastView = <View  style={[styles.toastWrap, {pointerEvents}]}>
       <View style={[styles.toastContent, styles.toastHasIcon]}>
         <ActivityIndicator
           animating
@@ -95,7 +95,7 @@ function showToast (options = {}) {
       </View>
     </View>
   }  else  {
-    ToastView = <View style={styles.toastWrap} pointerEvents={pointerEvents}>
+    ToastView = <View style={[styles.toastWrap, {pointerEvents}]}>
       <View style={styles.toastContent}>
         { title ? <Text numberOfLines={2} style={{ ...styles.toastText, ...(icon === 'none' ? {
             height: 'auto',

@@ -2,7 +2,6 @@ import { useEffect, useRef, ReactNode, useMemo, useContext } from 'react'
 import {
   View,
   DeviceEventEmitter,
-  EventSubscription,
   NativeEventEmitter,
   StyleSheet
 } from 'react-native'
@@ -40,7 +39,7 @@ const styles = StyleSheet.create({
 
 class PortalGuard {
   private nextKey = 10000
-  add = (e: ReactNode, id: number) => {
+  add = (e: ReactNode, id: number|null) => {
     const key = this.nextKey++
     TopViewEventEmitter.emit(addType, e, key, id)
     return key
@@ -64,7 +63,7 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const manager = useRef<PortalManagerContextValue | null>(null)
   const queue = useRef<Array<{ type: string, key: number; children: ReactNode }>>([])
   const pageId = useContext(RouteContext)
-  const mount = (children: ReactNode, _key?: number, id?: number) => {
+  const mount = (children: ReactNode, _key?: number, id?: number|null) => {
     if (id !== pageId) return
     const key = _key || _nextKey.current++
     if (manager.current) {
@@ -96,9 +95,8 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
       }
     }
   }
-  let subScriptions: Array<EventSubscription> = []
-  useMemo(() => {
-    subScriptions = [
+  const subScriptions = useMemo(() => {
+    return [
       TopViewEventEmitter.addListener(addType, mount),
       TopViewEventEmitter.addListener(removeType, unmount),
       TopViewEventEmitter.addListener(updateType, update)
