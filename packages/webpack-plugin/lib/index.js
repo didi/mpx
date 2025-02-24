@@ -1506,12 +1506,12 @@ class MpxWebpackPlugin {
                 '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
                 '    var arr = $1.split(", ")\n' +
                 '    var str = ""\n' +
-                '    var pattern = /(.*):(.*)/\n' +
+                '    var pattern = /(\\w+)(?::\\s*(\\w+))?/\n' +
                 '    for (var i = 0; i < arr.length; i++) {\n' +
                 '      var result = arr[i].match(pattern)\n' +
                 '      var left = result[1]\n' +
-                '      var right = result[2]\n' +
-                '      str += "var" + right + " = ctx." + left\n' +
+                '      var right = result[2] || left\n' +
+                '      str += "var " + right + " = ctx." + left + ";\\n  "\n' +
                 '    }\n' +
                 '    return str\n' +
                 '  })\n' +

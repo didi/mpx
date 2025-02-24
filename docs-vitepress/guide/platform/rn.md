@@ -643,7 +643,7 @@ Mpx 输出 React Native 支持以下模版指令。
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
 | paging-enabled          | Number  | `false`   | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置  |
 | show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
-| enable-trigger-intersection-observer  |  Boolean   |  []    | RN环境特有属性，是否开启intersection-observer |
+| enable-trigger-intersection-observer  |  Boolean   |  false    | RN环境特有属性，是否开启intersection-observer |
 | simultaneous-handlers  | `Array<object>`  |    []    | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | wait-for  |  `Array<object>`   |  []    | RN环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 
@@ -1206,7 +1206,7 @@ API
 注意事项
 
 1. canvas 组件目前仅支持 2D 类型，不支持 webgl
-2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 (HTML Canvas 2D Context)[https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D] 定义的属性、方法
+2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 [HTML Canvas 2D Context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) 定义的属性、方法
 3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 4. 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
@@ -1226,7 +1226,7 @@ API
 
 注意事项
 
-1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
+1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#webview-api)
 
 #### 自定义组件
 创建自定义组件在 RN 环境下部分实例方法、属性存在兼容性问题不支持，
@@ -1267,9 +1267,9 @@ API
 |---------------------|--|--------------------------|
 | setData             | ✓ | 设置data并执行视图层渲染           |
 | triggerEvent        | ✓ | 触发事件                     |
-| createSelectorQuery| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref |
-| selectComponent     | ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
-| selectAllComponents| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
+| createSelectorQuery| ✓ | 返回一个 SelectorQuery 对象实例，用以查询基础节点位置等属性 |
+| selectComponent     | ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例       |
+| selectAllComponents| ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的全部组件实例对象组成的数组      |
 | $set             | ✓ | 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新       |
 | $watch         | ✓ | 观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化                               |
 | $delete        | ✓ | 删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）             |
@@ -1278,6 +1278,34 @@ API
 | $nextTick        | ✓ | 在下次 DOM 更新循环结束之后执行延迟回调函数，用于等待 Mpx 完成状态更新和 DOM 更新后再执行某些操作 |
 | $i18n        | ✗ | 输出 RN 暂不支持，国际化功能访问器，用于获取多语言字符串资源                                            |
 | $rawOptions        | ✓ | 访问组件原始选项对象                                      |
+
+注意事项：
+
+1. `selectComponent`/`selectAllComponents` api 目前支持的选择器仅包括：
+  * id 选择器：`#id`
+  * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
+2. 使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致：
+
+```javascript
+<template>
+  <view wx:ref class="title">this is view</view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  
+  createComponent({
+    ready() {
+      this.createSelectorQuery()
+        .select('.title')
+        .boundingClientRect(res => {
+          console.log('the rect res is:', res)
+        })
+        .exec()
+    }
+  })
+</script>
+```
 
 
 ### 样式规则
@@ -2335,29 +2363,31 @@ app里面的window配置，参考[微信内window配置说明](https://developer
 | disableScroll | 不支持 | RN下默认页面不支持滚动，如需滚动需要使用可滚动的元素包裹 |
 
 #### 状态管理
+
 ##### pinia 
-暂未支持
+跨端输出 RN 支持完整的 pinia 相关能力，详情可点击[查看](/guide/advance/pinia.html)。
 ##### store 
-已支持
+跨端输出 RN 支持所有 store 相关能力，详情可点击[查看](/guide/advance/store.html)。
 #### i18n
-支持
+Mpx 支持国际化 i18n，相关能力在跨端输出 RN 时也做了完整支持，详情可点击[查看](/guide/advance/i18n.html)。
 #### 原子类能力
 开发中，暂未支持
 #### 依赖注入（Provide/Inject）
-开发中，暂未支持
+跨端输出 RN 支持使用依赖注入能力，详情可[查看](/guide/advance/provide-inject.html#依赖注入-provide-inject)。
 
 #### 环境API
-在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用是有warn提醒)会比微信小程序提供的能力少一些，以下是使用说明：
+在RN环境中也提供了一部分常用 api 能力，方法名和使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用时有warn提醒)会比微信小程序提供的能力少一些，
+具体 api 支持列表可点击[查看](/api/extend.html#api-proxy)，以下是使用说明：
 ##### 使用说明
 如果全量引入api-proxy这种情况下，需要如下配置
 ```javascript
 // 全量引入api-proxy
 import mpx from '@mpxjs/core'
-import apiProxy from '@didi/mpxjs-api-proxy'
+import apiProxy from '@mpxjs/api-proxy'
 mpx.use(apiProxy, { usePromise: true })
 ```
 
-需要在mpx项目中需要配置externals
+需要在mpx项目中需要配置externals，使用 mpx-cli 创建的项目默认已配置，开发者无需进行二次配置。
 ```bash
 externals: {
   ...
@@ -2371,7 +2401,7 @@ externals: {
   'react-native-haptic-feedback': 'react-native-haptic-feedback'
 },
 ```
-如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例
+如果单独使用api-proxy方法，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例：
 
 
 | api方法                                                                                                                                                                                              | 依赖的react-native三方库                        |
@@ -2540,7 +2570,3 @@ webviewBridge.invoke('getTime', {
   }
 })
 ```
-
-
-### 其他使用限制
-如事件的target等

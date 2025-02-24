@@ -89,9 +89,8 @@ function failHandle (result, fail, complete) {
 }
 
 function getCurrentPageId () {
-  const navigation = getFocusedNavigation()
   const currentInstance = getCurrentInstance()
-  const id = currentInstance?.getPageId() || navigation?.pageId || null
+  const id = currentInstance?.getPageId() || getFocusedNavigation()?.pageId || null
   return id
 }
 

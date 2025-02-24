@@ -53,8 +53,7 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
         <View
           key={key}
           collapsable={false} // Need collapsable=false here to clip the elevations
-          pointerEvents="box-none"
-          style={[StyleSheet.absoluteFill, { zIndex: 1000 + i }]}>
+          style={[StyleSheet.absoluteFill, { zIndex: 1000 + i, pointerEvents: 'box-none' }]}>
           {children}
         </View>
       ))}
