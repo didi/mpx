@@ -256,7 +256,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
           </View>
         </>
       )
-      open(renderPickerModal, pageId)
+      const contentHeight = headerText ? 350 : 310
+      open(renderPickerModal, pageId, { contentHeight })
     }
 
     return (

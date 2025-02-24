@@ -1,18 +1,21 @@
-import { View, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming
+  withTiming,
+  Easing,
+  runOnJS
 } from 'react-native-reanimated'
 import { getWindowInfo } from '@mpxjs/api-proxy'
+import { useEffect } from 'react'
 
 export interface PopupBaseProps {
   children?: React.ReactNode
   remove?: () => void
+  contentHeight?: number
 }
 
 const windowInfo = getWindowInfo()
-console.log('windowInfo', windowInfo)
 const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
 const styles = StyleSheet.create({
   mask: {
@@ -41,30 +44,57 @@ const styles = StyleSheet.create({
   }
 })
 
+const MASK_ON = 1 as const
+const MASK_OFF = 0 as const
+const MOVEOUT_HEIGHT = 330 as const
+
 /**
- * 封装的 Popup 弹窗容器组件最基础的实现，弹入和弹出动画实现和 showActionSheet 对齐
- * 其他特定类型的弹窗容器组件可以在此基础上封装，比如 PopupPicker 弹窗容器组件
- * @param props {PopupBaseProps} 弹窗配置项
- * @returns 弹窗容器组件
+ * 类似微信 picker 弹窗的动画效果都可以复用此类容器
+ * 其他特定类型的弹窗容器组件可以在此基础上封装，或者扩展实现
  */
 const PopupBase = (props: PopupBaseProps = {}) => {
-  const { children, remove } = props
-  const offset = useSharedValue(1000)
+  const {
+    children,
+    remove = () => null,
+    contentHeight = MOVEOUT_HEIGHT
+  } = props
+  const fade = useSharedValue<number>(MASK_OFF)
+  const slide = useSharedValue<number>(contentHeight)
 
-  const animatedStyles = useAnimatedStyle(() => ({
-    transform: [{ translateY: offset.value }]
+  const animatedStylesMask = useAnimatedStyle(() => ({
+    opacity: fade.value
   }))
 
-  const slideOut = () => {
-    offset.value = withTiming(1000)
-  }
+  const animatedStylesContent = useAnimatedStyle(() => ({
+    transform: [{ translateY: slide.value }]
+  }))
 
-  offset.value = withTiming(0)
+  useEffect(() => {
+    fade.value = withTiming(MASK_ON, {
+      easing: Easing.inOut(Easing.poly(3)),
+      duration: 300
+    })
+    slide.value = withTiming(0, {
+      easing: Easing.out(Easing.poly(3)),
+      duration: 300
+    })
+  }, [])
 
-  const cancelAction = function (e: any) {
-    e.stopPropagation()
-    slideOut()
-    remove?.()
+  const cancelAction = function () {
+    fade.value = withTiming(MASK_OFF, {
+      easing: Easing.inOut(Easing.poly(3)),
+      duration: 300
+    })
+    slide.value = withTiming(
+      contentHeight,
+      {
+        easing: Easing.inOut(Easing.poly(3)),
+        duration: 300
+      },
+      () => {
+        runOnJS(remove)()
+      }
+    )
   }
 
   const preventMaskClick = (e: any) => {
@@ -72,14 +102,17 @@ const PopupBase = (props: PopupBaseProps = {}) => {
   }
 
   return (
-    <View onTouchEnd={cancelAction} style={styles.mask}>
+    <Animated.View
+      onTouchEnd={cancelAction}
+      style={[styles.mask, animatedStylesMask]}
+    >
       <Animated.View
-        style={[styles.content, animatedStyles]}
+        style={[styles.content, animatedStylesContent]}
         onTouchEnd={preventMaskClick}
       >
         {children}
       </Animated.View>
-    </View>
+    </Animated.View>
   )
 }
 
