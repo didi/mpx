@@ -1,11 +1,17 @@
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
 import { RegionProps } from './type'
 import { regionData } from './regionData'
-import { HandlerRef } from '../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef'
 import { extendObject, useUpdateEffect } from '../utils'
+
+type FormatObj = {
+  indexArr: number[]
+  rangeArr: string[][]
+  nameArr?: string[]
+}
 
 const styles = StyleSheet.create({
   pickerContainer: {
@@ -41,21 +47,21 @@ const getColumnLength = (level: RegionProps['level']) => {
   }
 }
 
-type FormatObj = {
-  indexArr: number[]
-  rangeArr: string[][]
-  nameArr?: string[]
-}
-
 const valueStr2Obj = (
   value: string[],
   limit: number,
   customItem = ''
 ): FormatObj => {
-  const indexProvince = findIndex(rangeProvince, value[0])
+  const offsetIndex = customItem ? 1 : 0
+  let indexProvince = 0
+  if (customItem && value[0] === customItem) {
+    indexProvince = 0
+  } else {
+    indexProvince = findIndex(rangeProvince, value[0]) + offsetIndex
+  }
   const ans: FormatObj = {
     indexArr: [indexProvince],
-    rangeArr: [rangeProvince]
+    rangeArr: [customItem ? [customItem, ...rangeProvince] : rangeProvince]
   }
   for (
     let i = 1,
@@ -65,16 +71,32 @@ const valueStr2Obj = (
     i < limit;
     i++
   ) {
-    lastData = lastData[lastIndex].children!
+    if (customItem) {
+      if (lastIndex === 0) {
+        if (i === 1) {
+          ans.indexArr.push(0, 0)
+          ans.rangeArr.push([customItem], [customItem])
+        } else {
+          ans.indexArr.push(0)
+          ans.rangeArr.push([customItem])
+        }
+        return ans
+      }
+    }
+    lastData = lastData[lastIndex - offsetIndex].children!
     lastRange = lastData.map((item) => item.value)
-    lastIndex = findIndex(lastRange, value[i])
-    ans.indexArr.push(lastIndex)
-    ans.rangeArr.push(lastRange)
+    lastIndex = findIndex(lastRange, value[i]) + offsetIndex
+    if (customItem && customItem === value[i]) {
+      lastIndex = 0
+    }
+    ans.indexArr.push(Math.max(0, lastIndex))
+    ans.rangeArr.push(customItem ? [customItem, ...lastRange] : lastRange)
   }
   return ans
 }
 
-const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => {
+const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3, customItem = '') => {
+  const offsetIndex = customItem ? 1 : 0
   const newValue = new Array(limit).fill(0)
   const currentValue = currentObj.indexArr
   for (let i = 0; i < limit; i++) {
@@ -92,21 +114,40 @@ const valueChanged2Obj = (currentObj: FormatObj, value: number[], limit = 3) => 
 
   const ans: FormatObj = {
     indexArr: [newValue[0]],
-    rangeArr: [rangeProvince]
+    rangeArr: [currentObj.rangeArr[0]]
   }
   let data = regionData
   for (let i = 1; i < limit; i++) {
-    data = data[newValue[i - 1]].children!
+    if (customItem) {
+      if (newValue[i - 1] === 0) {
+        if (i === 1) {
+          ans.indexArr.push(0, 0)
+          ans.rangeArr.push([customItem], [customItem])
+        } else {
+          ans.indexArr.push(0)
+          ans.rangeArr.push([customItem])
+        }
+        return ans
+      }
+    }
+    data = data[newValue[i - 1] - offsetIndex].children!
     const range = data.map(item => item.value)
     ans.indexArr.push(newValue[i])
-    ans.rangeArr.push(range)
+    ans.rangeArr.push(customItem ? [customItem, ...range] : range)
   }
   return ans
 }
 
-const valueNum2String = (value: number[]) => {
+const valueNum2String = (value: number[], customItem = '') => {
   let data = regionData
   return value.map(index => {
+    if (customItem) {
+      if (index === 0) {
+        return customItem
+      } else {
+        index -= 1
+      }
+    }
     const item = data[index]
     data = item.children!
     return item.value
@@ -123,47 +164,30 @@ const hasDiff = (currentValue: number[], value: number[], limit = 3) => {
 }
 
 const PickerTime = forwardRef<
-    HandlerRef<View, RegionProps>,
-    RegionProps
+  HandlerRef<View, RegionProps>,
+  RegionProps
 >((props: RegionProps, ref): React.JSX.Element => {
   const { value = [], level = 'region', 'custom-item': customItem = '', bindchange } = props
-
   const nodeRef = useRef(null)
   const columnLength = useMemo(() => getColumnLength(level), [level])
   const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, columnLength, customItem))
+
+  useNodesRef(props, ref, nodeRef, { style: {} })
 
   useUpdateEffect(() => {
     const calibratedValue = valueStr2Obj(value, columnLength, customItem)
     setFormatObj(calibratedValue)
   }, [value, columnLength, customItem])
 
-  const updateValue = useCallback((value: string[]) => {
-    const calibratedValue = valueStr2Obj(value, columnLength, customItem)
-    setFormatObj(calibratedValue)
-  }, [columnLength, customItem])
-
-  const _props = useRef(props)
-  _props.current = props
-  useImperativeHandle(ref, () => ({
-    updateValue,
-    getNodeInstance: () => ({
-      props: _props,
-      nodeRef,
-      instance: {
-        style: {}
-      }
-    })
-  }))
-
   const onChange = useCallback((e: { detail: { value: number[] } }) => {
     const { value } = e.detail
     const currentValue = formatObj.indexArr
-    const newObj = valueChanged2Obj(formatObj, value, columnLength)
+    const newObj = valueChanged2Obj(formatObj, value, columnLength, customItem)
     if (hasDiff(currentValue, value, columnLength)) {
       setFormatObj(newObj)
     }
-    bindchange?.({ detail: { value: valueNum2String(newObj.indexArr) } })
-  }, [formatObj, columnLength, bindchange])
+    bindchange?.({ detail: { value: valueNum2String(newObj.indexArr, customItem) } })
+  }, [formatObj, columnLength, customItem, bindchange])
 
   const renderColumn = () => {
     return formatObj.rangeArr?.map((item, index) => (

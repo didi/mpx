@@ -118,18 +118,13 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
 
     const pickerValue = useRef(value)
+    const initShowValue = useRef(value)
     pickerValue.current = value
+    initShowValue.current = value
 
     const innerLayout = useRef({})
     const nodeRef = useRef(null)
     const pickerRef = useRef<any>(null)
-
-    useEffect(() => {
-      console.log('[mpx-picker] useEffect --->', 'range', range)
-      if (range && pickerRef.current) {
-        pickerRef.current.updateRange?.(range)
-      }
-    }, [JSON.stringify(range)])
 
     useNodesRef<View, PickerProps>(props, ref, nodeRef, {
       style
@@ -146,14 +141,20 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       innerLayout.current = layout.current
     }
 
+    useEffect(() => {
+      if (range && pickerRef.current && mode === PickerMode.MULTI_SELECTOR) {
+        pickerRef.current.updateRange?.(range)
+      }
+    }, [JSON.stringify(range)])
+
     /** --- form 表单组件内部方法 --- */
     const getValue = () => {
       return pickerValue.current
     }
     const resetValue = () => {
-      // TODO
-      const defalutValue = 0
+      const defalutValue = undefined // 默认值
       pickerValue.current = defalutValue
+      initShowValue.current = defalutValue
     }
     const formContext = useContext(FormContext)
     let formValuesMap: Map<string, FormFieldValue> | undefined
@@ -178,7 +179,6 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
 
     const onChange = (e: EventType) => {
       const { value } = e.detail
-      console.log('[mpx-picker], onChange --->', 'mode=', mode, 'value=', value)
       pickerValue.current = value
     }
 
@@ -226,7 +226,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!(_mode in pickerModalMap)) {
         return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
       }
-      const value: any = pickerValue.current
+      const value: any = initShowValue.current
       const PickerModal = pickerModalMap[_mode]
       const renderPickerModal = (
         <>

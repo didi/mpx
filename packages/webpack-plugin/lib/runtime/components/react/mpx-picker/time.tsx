@@ -1,10 +1,10 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState, useEffect } from 'react'
+import React, { forwardRef, useRef, useState, useEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { TimeProps } from './type'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
-import { HandlerRef } from '../useNodesRef' // 引入辅助函数
+import useNodesRef, { HandlerRef } from '../useNodesRef'
 import { useUpdateEffect } from '../utils'
 
 const styles = StyleSheet.create({
@@ -71,17 +71,18 @@ const hoursRange = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2,
 const minutesRange = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'))
 
 const PickerTime = forwardRef<
-    HandlerRef<View, TimeProps>,
-    TimeProps
+  HandlerRef<View, TimeProps>,
+  TimeProps
 >((props: TimeProps, ref): React.JSX.Element => {
   const { value = '00:00', start = '00:00', end = '23:59', bindchange } = props
-  console.log('[mpx-picker-time] --->', 'value', value, 'start', start, 'end', end)
 
   const nodeRef = useRef(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const startArray = time2Array(start)
   const endArray = time2Array(end, [23, 59])
   const [formatValue, setFormatValue] = useState<TimeArray>(calibrateTime(value, startArray, endArray))
+
+  useNodesRef(props, ref, nodeRef, { style: {} })
 
   useEffect(() => {
     return () => {
@@ -93,24 +94,6 @@ const PickerTime = forwardRef<
     const calibratedValue = calibrateTime(value, startArray, endArray)
     setFormatValue(calibratedValue)
   }, [value])
-
-  const updateValue = (value = '00:00') => {
-    const calibratedValue = calibrateTime(value, startArray, endArray)
-    setFormatValue(calibratedValue)
-  }
-
-  const _props = useRef(props)
-  _props.current = props
-  useImperativeHandle(ref, () => ({
-    updateValue,
-    getNodeInstance: () => ({
-      props: _props,
-      nodeRef,
-      instance: {
-        style: {}
-      }
-    })
-  }))
 
   const onChange = (e: { detail: { value: TimeArray } }) => {
     const { value } = e.detail

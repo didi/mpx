@@ -31,11 +31,11 @@ const formatValue = (value: number | number[]) => {
 }
 
 const PickerMultiSelector = forwardRef<
-    HandlerRef<View, MultiSelectorProps>,
-    MultiSelectorProps
+  HandlerRef<View, MultiSelectorProps>,
+  MultiSelectorProps
 >((props: MultiSelectorProps, ref): React.JSX.Element => {
-  const { range = [], bindchange, bindcolumnchange } = props
-  const value = formatValue(props.value ?? [])
+  const { value: _value = [], range = [], bindchange, bindcolumnchange } = props
+  const value = formatValue(_value)
   const [formatRange, setFormatRange] = useState(formatRangeFun(range, props['range-key']))
   const nodeRef = useRef(null)
   const valuePrev = useRef(value)

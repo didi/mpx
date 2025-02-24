@@ -1,9 +1,9 @@
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState, useEffect } from 'react'
+import React, { forwardRef, useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
 import { DateProps, TimeValue } from './type'
-import { HandlerRef } from '../useNodesRef'
+import useNodesRef, { HandlerRef } from '../useNodesRef'
 import { useUpdateEffect } from '../utils'
 import { years, months, daysInMonth, wrapDate, daysInMonthLength, START_YEAR, END_YEAR } from './dateData'
 
@@ -166,11 +166,12 @@ const PickerTime = forwardRef<
   DateProps
 >((props: DateProps, ref): React.JSX.Element => {
   const { value = '', start = START_DATE, end = END_DATE, fields, bindchange } = props
-
   const nodeRef = useRef(null)
   const columnLength = useMemo(() => getColumnLength(fields), [fields])
   const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, columnLength, start, end))
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useNodesRef(props, ref, nodeRef, { style: {} })
 
   useEffect(() => {
     return () => {
@@ -182,24 +183,6 @@ const PickerTime = forwardRef<
     const calibratedValue = valueStr2Obj(value, columnLength, start, end)
     setFormatObj(calibratedValue)
   }, [value, columnLength, start, end])
-
-  const updateValue = useCallback((value: TimeValue) => {
-    const calibratedValue = valueStr2Obj(value, columnLength, start, end)
-    setFormatObj(calibratedValue)
-  }, [columnLength, start, end])
-
-  const _props = useRef(props)
-  _props.current = props
-  useImperativeHandle(ref, () => ({
-    updateValue,
-    getNodeInstance: () => ({
-      props: _props,
-      nodeRef,
-      instance: {
-        style: {}
-      }
-    })
-  }))
 
   const onChange = useCallback((e: { detail: { value: number[] } }) => {
     const { value } = e.detail
