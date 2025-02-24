@@ -12,8 +12,7 @@ import Animated, {
 } from 'react-native-reanimated'
 const actionSheetMap = new Map()
 
-const remove = function () {
-  const id = getCurrentPageId()
+const remove = function (id) {
   if (actionSheetMap.get(id)) { // 页面维度判断是否要清除之前渲染的actionsheet
     Portal.remove(actionSheetMap.get(id))
     actionSheetMap.delete(id)
@@ -93,57 +92,37 @@ function ActionSheet ({itemColor, height, success, fail, complete, alertText, it
       opacity: fade.value
     }
   })
-  const setSlide = function (value) {
-    return new Promise((resolve) => {
-      const safeCallback = (res) => {
-        if (res) {
-          runOnJS(resolve)()
-        }
-      }
-      slide.value = withTiming(value, {
-        easing: Easing.out(Easing.poly(3)),
-        duration: 250
-      }, safeCallback)
-    })
-  }
-  const setFade = function (value) {
-    return new Promise((resolve) => {
-      const safeCallback = (res) => {
-        if (res) {
-          runOnJS(resolve)()
-        }
-      }
-      fade.value = withTiming(value, {
-        easing: Easing.inOut(Easing.poly(3)),
-        duration: 250
-      }, safeCallback)
-    })
-  }
+
   useEffect(() => {
-    setSlide(0)
-    setFade(1)
+    fade.value = withTiming(1, {
+      easing: Easing.inOut(Easing.poly(3)),
+      duration: 250
+    })
+    slide.value = withTiming(0, {
+      easing: Easing.out(Easing.poly(3)),
+      duration: 250
+    })
   }, [])
 
-  const removeAnimation = function () {
-    Promise.all([setSlide(height), setFade(0)]).then(() => {
-      remove()
-    })
+  const removeActionSheet = function () {
+    const id = getCurrentPageId()
+    remove(id)
   }
 
   const selectAction = function (index) {
+    removeActionSheet()
     const result = {
       errMsg: 'showActionSheet:ok',
       tapIndex: index
     }
     successHandle(result, success, complete)
-    removeAnimation()
   }
   const cancelAction = function () {
+    removeActionSheet()
     const result = {
       errMsg: 'showActionSheet:fail cancel'
     }
     failHandle(result, fail, complete)
-    removeAnimation()
   }
   return (
     <View style={styles.actionAction}>
@@ -163,7 +142,8 @@ function ActionSheet ({itemColor, height, success, fail, complete, alertText, it
   )
 }
 function showActionSheet (options = {}) {
-  remove()
+  const id = getCurrentPageId()
+  remove(id)
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
   if (id === null) {
     const result = {
@@ -182,7 +162,6 @@ function showActionSheet (options = {}) {
   }
   const height = len * 53 + 46 + bottom + (alertText ? 52 : 0)
   
-  const id = getCurrentPageId()
   const actionSheetKey = Portal.add(<ActionSheet itemColor={itemColor} height={height} success={success} fail={fail} complete={complete} alertText={alertText} itemList={itemList} />, id)
   actionSheetMap.set(id, actionSheetKey)
 }
