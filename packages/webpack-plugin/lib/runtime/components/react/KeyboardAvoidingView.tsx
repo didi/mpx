@@ -1,6 +1,6 @@
 import React, { ReactNode, useContext, useEffect } from 'react'
 import { EmitterSubscription, Keyboard, Platform, View, ViewStyle } from 'react-native'
-import Animted, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { KeyboardAvoidContext } from './context'
 
 type KeyboardAvoidViewProps = {
@@ -68,14 +68,14 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
   return (
     <View style={style}>
-      <Animted.View
+      <Animated.View
         style={[
           contentContainerStyle,
           animatedStyle
         ]}
       >
         {children}
-      </Animted.View>
+      </Animated.View>
     </View>
   )
 }
