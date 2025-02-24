@@ -44,7 +44,8 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    return components[tagName] || getByPath(ReactNative, tagName)
+    const appComponents = global.__getAppComponents?.() || {}
+    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -115,7 +116,6 @@ const instanceProto = {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
   },
   __resetInstance () {
-    this.__refs = {}
     this.__dispatchedSlotSet = new WeakSet()
   },
   __iter (val, fn) {
@@ -566,14 +566,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
+    const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const [enabled, setEnabled] = useState(true)
+      const [enabled, setEnabled] = useState(false)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
-
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
         navigation.setOptions(Object.assign({
@@ -649,7 +648,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 {
                   value: intersectionObservers.current
                 },
-                createElement(Provider,
+                createElement(PortalHost,
                   null,
                   createElement(defaultOptions,
                     {

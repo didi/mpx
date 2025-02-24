@@ -1,28 +1,23 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 
-const offlineReady = ref(false)
 const needRefresh = ref(false)
 
 let updateServiceWorker: (() => Promise<void>) | undefined
 
-function onOfflineReady() {
-  offlineReady.value = true
-}
 function onNeedRefresh() {
   needRefresh.value = true
 }
 async function close() {
-  offlineReady.value = false
   needRefresh.value = false
 }
 
 onBeforeMount(async () => {
+  // @ts-ignore
   const { registerSW } = await import('virtual:pwa-register')
   console.log('[SW] onBeforeMount')
   updateServiceWorker = registerSW({
     immediate: true,
-    onOfflineReady,
     onNeedRefresh,
     onRegistered() {
       console.info('Service Worker registered')
@@ -35,14 +30,14 @@ onBeforeMount(async () => {
 </script>
 
 <template>
-  <template v-if="offlineReady || needRefresh">
+  <template v-if="needRefresh">
     <div
       class="pwa-toast"
       role="alertdialog"
       aria-labelledby="pwa-message"
     >
       <div id="pwa-message" class="mb-3">
-        {{ offlineReady ? '应用已准备好离线工作' : '📣 有新内容可用，请点击重新加载按钮以更新。' }}
+        有新内容可用，请单击重新加载按钮进行更新。
       </div>
       <button
         v-if="needRefresh"

@@ -402,7 +402,7 @@ createComponent({
 选项式 API 中使用，作用同[onResize](/api/composition-api.html#onresize)
 
 ## 响应式 API
-详情请[移步](/api/reactivity-api/basic-reactivity.html)
+详情请[移步](/api/reactivity-api.html)
 
 ## 组合式 API
 详情请[移步](/api/composition-api.html)
