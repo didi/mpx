@@ -443,6 +443,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateIntersection()
   }
 
+  function onScrollDragStart (e: NativeSyntheticEvent<NativeScrollEvent>) {
+    hasCallScrollToLower.current = false
+    hasCallScrollToUpper.current = false
+    onScrollDrag(e)
+  }
+
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
       style: extendObject({}, innerStyle, layoutStyle),
@@ -457,9 +463,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       onScroll: onScroll,
       onContentSizeChange: onContentSizeChange,
       bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
-      bindtouchmove: ((enhanced && binddragging) || bindtouchend) && onScrollTouchMove,
+      bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
       bindtouchend: ((enhanced && binddragend) || bindtouchend) && onScrollTouchEnd,
-      onScrollBeginDrag: onScrollDrag,
+      onScrollBeginDrag: onScrollDragStart,
       onScrollEndDrag: onScrollDrag,
       onMomentumScrollEnd: onScrollEnd
     },
