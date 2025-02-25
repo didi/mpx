@@ -1,24 +1,19 @@
-import { h } from 'vue'
-import DefaultTheme from 'vitepress/theme'
-import Layout from './layouts/HomepageLayout.vue'
-import RegisterSW from "./components/RegisterSW.vue"
-import './styles/index.css'
+import { h } from "vue"
+import DefaultTheme from "vitepress/theme"
+import TwoslashFloatingVue from "@shikijs/vitepress-twoslash/client"
+import HomepageLayout from "./layouts/HomepageLayout.vue"
+
+import '@shikijs/vitepress-twoslash/style.css'
+import "virtual:group-icons.css"
+import "./styles/index.css"
+import "./styles/switchAppearance.css"
 
 export default {
     ...DefaultTheme,
     Layout() {
-        return h(Layout, null, {
-            'layout-bottom': () => h(RegisterSW)
-        })
-    }
+        return h(HomepageLayout)
+    },
+    enhanceApp({ app }) {
+        app.use(TwoslashFloatingVue)
+    },
 }
-// export default {
-//   extend: '@vuepress/theme-default',
-//   plugins: [
-//     ['@vuepress/search', {
-//       searchMaxSuggestions: 10
-//     }],
-//     ['@vuepress/back-to-top'],
-//     formatHeaderSlugPlugin
-//   ]
-// }

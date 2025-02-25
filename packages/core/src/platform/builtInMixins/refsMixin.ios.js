@@ -4,6 +4,7 @@ import { createSelectorQuery } from '@mpxjs/api-proxy'
 export default function getRefsMixin () {
   return {
     [BEFORECREATE] () {
+      this.__refCache = {}
       this.__refs = {}
       this.$refs = {}
       this.__getRefs()
@@ -26,32 +27,30 @@ export default function getRefsMixin () {
           })
         })
       },
-       __getRefVal (type, selectorsConf, refFnId) {
-        const target = this
-        if (!this[refFnId]) {
-          this[refFnId] = function (instance) {
+      __getRefVal (type, selectorsConf, refFnId) {
+        if (!this.__refCache[refFnId]) {
+          this.__refCache[refFnId] = (instance) => {
             selectorsConf.forEach((item = []) => {
               const [prefix, selectors = ''] = item
               if (selectors) {
                 selectors.trim().split(/\s+/).forEach(selector => {
                   const refKey = prefix + selector
                   const refVal = { type, instance, refFnId }
-                  target.__refs[refKey] = target.__refs[refKey] || []
+                  this.__refs[refKey] = this.__refs[refKey] || []
                   if (instance) { // mount
-                    target.__refs[refKey].push(refVal)
+                    this.__refs[refKey].push(refVal)
                   } else { // unmount
-                    const index = target.__refs[refKey].findIndex(item => item.refFnId === refFnId)
+                    const index = this.__refs[refKey].findIndex(item => item.refFnId === refFnId)
                     if (index > -1) {
-                      target.__refs[refKey].splice(index, 1)
+                      this.__refs[refKey].splice(index, 1)
                     }
                   }
-                  console.log(refKey, 'the refKey length is:', target.__refs[refKey].length)
                 })
               }
             })
           }
         }
-        return this[refFnId]
+        return this.__refCache[refFnId]
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
