@@ -643,7 +643,7 @@ Mpx 输出 React Native 支持以下模版指令。
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
 | paging-enabled          | Number  | `false`   | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置  |
 | show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
-| enable-trigger-intersection-observer  |  Boolean   |  []    | RN环境特有属性，是否开启intersection-observer |
+| enable-trigger-intersection-observer  |  Boolean   |  false    | RN环境特有属性，是否开启intersection-observer |
 | simultaneous-handlers  | `Array<object>`  |    []    | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | wait-for  |  `Array<object>`   |  []    | RN环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 
@@ -1267,9 +1267,9 @@ API
 |---------------------|--|--------------------------|
 | setData             | ✓ | 设置data并执行视图层渲染           |
 | triggerEvent        | ✓ | 触发事件                     |
-| createSelectorQuery| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref |
-| selectComponent     | ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
-| selectAllComponents| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
+| createSelectorQuery| ✓ | 返回一个 SelectorQuery 对象实例，用以查询基础节点位置等属性 |
+| selectComponent     | ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例       |
+| selectAllComponents| ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的全部组件实例对象组成的数组      |
 | $set             | ✓ | 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新       |
 | $watch         | ✓ | 观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化                               |
 | $delete        | ✓ | 删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）             |
@@ -1278,6 +1278,34 @@ API
 | $nextTick        | ✓ | 在下次 DOM 更新循环结束之后执行延迟回调函数，用于等待 Mpx 完成状态更新和 DOM 更新后再执行某些操作 |
 | $i18n        | ✗ | 输出 RN 暂不支持，国际化功能访问器，用于获取多语言字符串资源                                            |
 | $rawOptions        | ✓ | 访问组件原始选项对象                                      |
+
+注意事项：
+
+1. `selectComponent`/`selectAllComponents` api 目前支持的选择器仅包括：
+  * id 选择器：`#id`
+  * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
+2. 使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致：
+
+```javascript
+<template>
+  <view wx:ref class="title">this is view</view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  
+  createComponent({
+    ready() {
+      this.createSelectorQuery()
+        .select('.title')
+        .boundingClientRect(res => {
+          console.log('the rect res is:', res)
+        })
+        .exec()
+    }
+  })
+</script>
+```
 
 
 ### 样式规则

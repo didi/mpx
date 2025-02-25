@@ -909,7 +909,7 @@ function postMoveBaseDirective (target, source, isDelete = true) {
 }
 
 function stringify (str) {
-  if (isWeb(mode)) str = str.replace(/'/g, '"')
+  if (isWeb(mode) && typeof str === 'string') str = str.replace(/'/g, '"')
   return JSON.stringify(str)
 }
 
@@ -1827,7 +1827,7 @@ function processRefReact (el, meta) {
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${type}', [${selectorsConf}]) }}`
+      value: `{{ this.__getRefVal('${type}', [${selectorsConf}], 'ref_fn_${++refId}') }}`
     }])
   }
 
