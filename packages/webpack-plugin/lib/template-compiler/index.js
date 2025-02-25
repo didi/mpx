@@ -10,7 +10,7 @@ const { stringify } = require('./dynamic')
 
 module.exports = function (raw) {
   this.cacheable()
-  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const { resourcePath, queryObj, rawResourcePath } = parseRequest(this.resource)
   const mpx = this.getMpx()
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
@@ -70,8 +70,8 @@ module.exports = function (raw) {
     hasScoped,
     moduleId,
     usingComponentsInfo,
-    // 这里需传递resourcePath和wxsContentMap保持一致
-    filePath: resourcePath,
+    // 这里需传递rawResourcePath和wxsContentMap保持一致
+    filePath: rawResourcePath,
     i18n,
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     globalComponents: Object.keys(mpx.globalComponents),
@@ -82,7 +82,7 @@ module.exports = function (raw) {
 
   if (meta.wxsContentMap) {
     for (const module in meta.wxsContentMap) {
-      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+      wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
 
