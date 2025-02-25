@@ -1182,10 +1182,15 @@ module.exports = async function (content, sourceMap) {
   }, ctorType, filePath)
   finalSourceMap = map
   if (sourceMap) {
-    const consumer = await new SourceMapConsumer(sourceMap)
-    const generator = SourceMapGenerator.fromSourceMap(consumer)
-    generator.applySourceMap(consumer, filePath)
-    finalSourceMap = generator.toJSON()
+    const compiledMapConsumer = await new SourceMapConsumer(map)
+    const compiledMapGenerator = SourceMapGenerator.fromSourceMap(compiledMapConsumer)
+
+    const originalConsumer = await new SourceMapConsumer(sourceMap)
+    compiledMapGenerator.applySourceMap(
+      originalConsumer,
+      filePath // 需要确保与原始映射的source路径一致
+    )
+    finalSourceMap = compiledMapGenerator.toJSON()
   }
   callback(null, callbackContent, finalSourceMap)
 }
