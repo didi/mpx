@@ -48,6 +48,7 @@ const PickerMultiSelector = forwardRef<
     if (newValue.length === 0) {
       newValue = formatValue.map(() => 0)
     }
+    checkColumnChange(newValue, formatValue)
     if (hasDiff(newValue, formatValue)) {
       setFormatValue(newValue)
     }

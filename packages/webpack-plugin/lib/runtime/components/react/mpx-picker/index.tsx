@@ -126,9 +126,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const pageId = useContext(RouteContext)
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
     const pickerValue = useRef(value)
-    const initShowValue = useRef(value)
     pickerValue.current = Array.isArray(value) ? value.slice() : value
-    initShowValue.current = Array.isArray(value) ? value.slice() : value
     const innerLayout = useRef({})
     const nodeRef = useRef(null)
     const pickerRef = useRef<any>(null)
@@ -159,9 +157,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     }
     const resetValue = () => {
       const defalutValue = getDefaultValue(mode) // 默认值
-      pickerValue.current = defalutValue
-      initShowValue.current = defalutValue
-      pickerRef.current.updateValue?.()
+      pickerRef.current.updateValue?.(defalutValue)
     }
     const formContext = useContext(FormContext)
     let formValuesMap: Map<string, FormFieldValue> | undefined
@@ -233,7 +229,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!(_mode in pickerModalMap)) {
         return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
       }
-      const value: any = initShowValue.current
+      const _value: any = value
       const PickerModal = pickerModalMap[_mode]
       const renderPickerModal = (
         <>
@@ -242,7 +238,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
               <Text style={[styles.headerText]}>{headerText}</Text>
             </View>
           )}
-          <PickerModal {...specificProps} value={value} ref={pickerRef}></PickerModal>
+          <PickerModal {...specificProps} value={_value} ref={pickerRef}></PickerModal>
           <View style={[styles.footer]}>
             <View
               onTouchEnd={onCancel}
