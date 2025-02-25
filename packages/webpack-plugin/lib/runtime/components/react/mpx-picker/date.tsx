@@ -1,9 +1,9 @@
-import React, { forwardRef, useCallback, useMemo, useRef, useState, useEffect } from 'react'
+import React, { forwardRef, useCallback, useMemo, useRef, useState, useEffect, useImperativeHandle } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
 import { DateProps, TimeValue } from './type'
-import useNodesRef, { HandlerRef } from '../useNodesRef'
+import { HandlerRef } from '../useNodesRef'
 import { useUpdateEffect } from '../utils'
 import { years, months, daysInMonth, wrapDate, daysInMonthLength, START_YEAR, END_YEAR } from './dateData'
 
@@ -95,7 +95,7 @@ const initDateStr2Arr = (dateStr: TimeValue | number[], start: TimeValue, end: T
 }
 
 const valueStr2Obj = (
-  _value: TimeValue | number[], // eg: 2025-2-12
+  _value: TimeValue | number[] = '', // eg: 2025-2-12
   limit: number,
   start: TimeValue,
   end: TimeValue
@@ -161,7 +161,7 @@ const hasDiff = (currentValue: number[], value: number[], limit = 3) => {
   return false
 }
 
-const PickerTime = forwardRef<
+const PickerDate = forwardRef<
   HandlerRef<View, DateProps>,
   DateProps
 >((props: DateProps, ref): React.JSX.Element => {
@@ -170,8 +170,6 @@ const PickerTime = forwardRef<
   const columnLength = useMemo(() => getColumnLength(fields), [fields])
   const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, columnLength, start, end))
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-
-  useNodesRef(props, ref, nodeRef, { style: {} })
 
   useEffect(() => {
     return () => {
@@ -183,6 +181,24 @@ const PickerTime = forwardRef<
     const calibratedValue = valueStr2Obj(value, columnLength, start, end)
     setFormatObj(calibratedValue)
   }, [value, columnLength, start, end])
+
+  const updateValue = useCallback((value: TimeValue = '') => {
+    const calibratedValue = valueStr2Obj(value, columnLength, start, end)
+    setFormatObj(calibratedValue)
+  }, [columnLength, start, end])
+
+  const _props = useRef(props)
+  _props.current = props
+  useImperativeHandle(ref, () => ({
+    updateValue,
+    getNodeInstance: () => ({
+      props: _props,
+      nodeRef,
+      instance: {
+        style: {}
+      }
+    })
+  }))
 
   const onChange = useCallback((e: { detail: { value: number[] } }) => {
     const { value } = e.detail
@@ -223,5 +239,5 @@ const PickerTime = forwardRef<
     </MpxPickerView>)
 })
 
-PickerTime.displayName = 'MpxPickerTime'
-export default PickerTime
+PickerDate.displayName = 'MpxPickerDate'
+export default PickerDate

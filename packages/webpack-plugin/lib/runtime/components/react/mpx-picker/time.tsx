@@ -1,10 +1,10 @@
-import React, { forwardRef, useRef, useState, useEffect } from 'react'
+import React, { forwardRef, useRef, useState, useEffect, useImperativeHandle } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { TimeProps } from './type'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
-import useNodesRef, { HandlerRef } from '../useNodesRef'
+import { HandlerRef } from '../useNodesRef'
 import { useUpdateEffect } from '../utils'
 
 const styles = StyleSheet.create({
@@ -82,7 +82,23 @@ const PickerTime = forwardRef<
   const endArray = time2Array(end, [23, 59])
   const [formatValue, setFormatValue] = useState<TimeArray>(calibrateTime(value, startArray, endArray))
 
-  useNodesRef(props, ref, nodeRef, { style: {} })
+  const updateValue = (value = '00:00') => {
+    const calibratedValue = calibrateTime(value, startArray, endArray)
+    setFormatValue(calibratedValue)
+  }
+
+  const _props = useRef(props)
+  _props.current = props
+  useImperativeHandle(ref, () => ({
+    updateValue,
+    getNodeInstance: () => ({
+      props: _props,
+      nodeRef,
+      instance: {
+        style: {}
+      }
+    })
+  }))
 
   useEffect(() => {
     return () => {

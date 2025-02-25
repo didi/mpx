@@ -1,10 +1,10 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import MpxPickerView from '../mpx-picker-view'
 import MpxPickerViewColumn from '../mpx-picker-view-column'
 import { RegionProps } from './type'
 import { regionData } from './regionData'
-import useNodesRef, { HandlerRef } from '../useNodesRef'
+import { HandlerRef } from '../useNodesRef'
 import { extendObject, useUpdateEffect } from '../utils'
 
 type FormatObj = {
@@ -48,7 +48,7 @@ const getColumnLength = (level: RegionProps['level']) => {
 }
 
 const valueStr2Obj = (
-  value: string[],
+  value: string[] = [],
   limit: number,
   customItem = ''
 ): FormatObj => {
@@ -163,7 +163,7 @@ const hasDiff = (currentValue: number[], value: number[], limit = 3) => {
   return false
 }
 
-const PickerTime = forwardRef<
+const PickerRegion = forwardRef<
   HandlerRef<View, RegionProps>,
   RegionProps
 >((props: RegionProps, ref): React.JSX.Element => {
@@ -172,11 +172,29 @@ const PickerTime = forwardRef<
   const columnLength = useMemo(() => getColumnLength(level), [level])
   const [formatObj, setFormatObj] = useState<FormatObj>(valueStr2Obj(value, columnLength, customItem))
 
-  useNodesRef(props, ref, nodeRef, { style: {} })
+  const updateValue = useCallback((value: string[] = []) => {
+    const calibratedValue = valueStr2Obj(value, columnLength, customItem)
+    setFormatObj(calibratedValue)
+  }, [columnLength, customItem])
+
+  const _props = useRef(props)
+  _props.current = props
+  useImperativeHandle(ref, () => ({
+    updateValue,
+    getNodeInstance: () => ({
+      props: _props,
+      nodeRef,
+      instance: {
+        style: {}
+      }
+    })
+  }))
 
   useUpdateEffect(() => {
     const calibratedValue = valueStr2Obj(value, columnLength, customItem)
-    setFormatObj(calibratedValue)
+    if (hasDiff(formatObj.indexArr, calibratedValue.indexArr, columnLength)) {
+      setFormatObj(calibratedValue)
+    }
   }, [value, columnLength, customItem])
 
   const onChange = useCallback((e: { detail: { value: number[] } }) => {
@@ -217,5 +235,5 @@ const PickerTime = forwardRef<
     </MpxPickerView>)
 })
 
-PickerTime.displayName = 'MpxPickerTime'
-export default PickerTime
+PickerRegion.displayName = 'MpxPickerRegion'
+export default PickerRegion

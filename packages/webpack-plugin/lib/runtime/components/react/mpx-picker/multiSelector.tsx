@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { MultiSelectorProps, Obj, RangeItem } from './type'
 import MpxPickerView from '../mpx-picker-view'
@@ -25,21 +25,33 @@ const styles = StyleSheet.create({
 const formatRangeFun = (range: RangeItem[], rangeKey = '') =>
   rangeKey ? range.map((item: Obj) => item[rangeKey]) : range
 
-const formatValue = (value: number | number[]) => {
-  const _value = Array.isArray(value) ? value : [value]
-  return _value
+const formatValueFn = (value: number | number[]) => {
+  return Array.isArray(value) ? value : [value]
+}
+
+const hasDiff = (a: number[], b: number[]) => {
+  return a.length !== b.length || a.some((item, index) => item !== b[index])
 }
 
 const PickerMultiSelector = forwardRef<
   HandlerRef<View, MultiSelectorProps>,
   MultiSelectorProps
 >((props: MultiSelectorProps, ref): React.JSX.Element => {
-  const { value: _value = [], range = [], bindchange, bindcolumnchange } = props
-  const value = formatValue(_value)
+  const { value = [], range = [], bindchange, bindcolumnchange } = props
+  const _value = formatValueFn(value)
+  const [formatValue, setFormatValue] = useState<number[]>(_value)
   const [formatRange, setFormatRange] = useState(formatRangeFun(range, props['range-key']))
   const nodeRef = useRef(null)
-  const valuePrev = useRef(value)
-  valuePrev.current = value
+
+  const updateValue = useCallback((value: number[] = []) => {
+    let newValue = formatValueFn(value)
+    if (newValue.length === 0) {
+      newValue = formatValue.map(() => 0)
+    }
+    if (hasDiff(newValue, formatValue)) {
+      setFormatValue(newValue)
+    }
+  }, [formatValue])
 
   const updateRange = (newRange: RangeItem[]) => {
     const range = formatRangeFun(newRange.slice(), props['range-key'])
@@ -49,6 +61,7 @@ const PickerMultiSelector = forwardRef<
   const _props = useRef(props)
   _props.current = props
   useImperativeHandle(ref, () => ({
+    updateValue,
     updateRange,
     getNodeInstance: () => ({
       props: _props,
@@ -61,14 +74,15 @@ const PickerMultiSelector = forwardRef<
 
   const onChange = (e: { detail: { value: number[] } }) => {
     const { value } = e.detail
-    checkColumnChange(value)
+    checkColumnChange(value, formatValue)
     bindchange?.({ detail: { value: value } })
+    if (hasDiff(value, formatValue)) {
+      setFormatValue(value.slice())
+    }
   }
 
-  const checkColumnChange = (value: number[]) => {
-    const current = valuePrev.current
-    valuePrev.current = value
-    const index = value.findIndex((v, i) => v !== current[i])
+  const checkColumnChange = (value: number[], formatValue: number[]) => {
+    const index = value.findIndex((v, i) => v !== formatValue[i])
     if (index !== -1) {
       bindcolumnchange?.(index, value[index])
     }
@@ -89,7 +103,7 @@ const PickerMultiSelector = forwardRef<
     <MpxPickerView
       style={styles.pickerContainer}
       indicator-style={styles.pickerIndicator}
-      value={value}
+      value={formatValue}
       bindchange={onChange}
     >
       {formatRange.map((item, index) => (

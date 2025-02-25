@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef, useContext, useEffect } from 'react'
-import { StyleSheet, Text, TouchableHighlight, TouchableWithoutFeedback, View } from 'react-native'
+import { StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import PickerSelector from './selector'
 import PickerMultiSelector from './multiSelector'
@@ -86,6 +86,19 @@ const pickerModalMap: Record<PickerMode, React.ComponentType<PickerProps>> = {
   [PickerMode.REGION]: PickerRegion
 }
 
+const getDefaultValue = (mode: PickerMode) => {
+  switch (mode) {
+    case PickerMode.SELECTOR:
+    case PickerMode.MULTI_SELECTOR:
+    case PickerMode.REGION:
+      return []
+    case PickerMode.TIME:
+    case PickerMode.DATE:
+    default:
+      return ''
+  }
+}
+
 const buttonTextMap: Record<LanguageCode, { cancel: string; confirm: string }> = {
   'zh-CN': {
     cancel: '取消',
@@ -114,8 +127,8 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
     const pickerValue = useRef(value)
     const initShowValue = useRef(value)
-    pickerValue.current = value
-    initShowValue.current = value
+    pickerValue.current = Array.isArray(value) ? value.slice() : value
+    initShowValue.current = Array.isArray(value) ? value.slice() : value
     const innerLayout = useRef({})
     const nodeRef = useRef(null)
     const pickerRef = useRef<any>(null)
@@ -145,9 +158,10 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       return pickerValue.current
     }
     const resetValue = () => {
-      const defalutValue = undefined // 默认值
+      const defalutValue = getDefaultValue(mode) // 默认值
       pickerValue.current = defalutValue
       initShowValue.current = defalutValue
+      pickerRef.current.updateValue?.()
     }
     const formContext = useContext(FormContext)
     let formValuesMap: Map<string, FormFieldValue> | undefined
@@ -257,9 +271,14 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     }, [])
 
     return (
-      <TouchableWithoutFeedback onPress={show}>
-        {children}
-      </TouchableWithoutFeedback>
+      <>
+        <TouchableWithoutFeedback onPress={show}>
+          {children}
+        </TouchableWithoutFeedback>
+        <View onTouchEnd={resetValue}>
+          <Text>点击按钮</Text>
+        </View>
+      </>
     )
   }
 )

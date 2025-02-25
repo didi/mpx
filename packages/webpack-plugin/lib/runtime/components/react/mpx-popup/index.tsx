@@ -59,7 +59,7 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
 
   const update = (updatedChild: ReactElement | null) => {
     if (popupKey !== null && child !== null && updatedChild !== null) {
-      child = updatedChild
+      child = cloneElement(child, { children: updatedChild })
       Portal.update(popupKey, child)
     }
   }
