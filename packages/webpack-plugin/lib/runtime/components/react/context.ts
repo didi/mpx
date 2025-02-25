@@ -43,6 +43,11 @@ export interface ScrollViewContextValue {
    gestureRef: React.RefObject<any> | null
 }
 
+export interface RouteContextValue {
+  pageId: number
+  navigation: Record<string, any>
+}
+
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -59,7 +64,7 @@ export const VarContext = createContext({})
 
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
-export const RouteContext = createContext<number | null>(null)
+export const RouteContext = createContext<RouteContextValue | null>(null)
 
 export const SwiperContext = createContext({})
 

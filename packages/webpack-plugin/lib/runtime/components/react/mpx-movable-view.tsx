@@ -34,7 +34,7 @@ import Animated, {
   withSpring
 } from 'react-native-reanimated'
 import { collectDataset, noop } from '@mpxjs/utils'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation } from './utils'
 
 interface MovableViewProps {
   children: ReactNode;

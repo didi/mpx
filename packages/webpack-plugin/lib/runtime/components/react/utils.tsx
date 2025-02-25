@@ -1,10 +1,9 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image, Platform } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
-import { VarContext, ScrollViewContext } from './context'
+import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent, ExtendedViewStyle } from './types/common'
 import { runOnJS } from 'react-native-reanimated'
@@ -43,6 +42,11 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 function getSafeAreaInset (name: string, navigation: Record<string, any>) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
+}
+
+export function useNavigation (): Record<string, any> {
+  const { navigation } = useContext(RouteContext) || {}
+  return navigation || {}
 }
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
@@ -239,7 +243,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any>) {
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any> | undefined) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
@@ -628,7 +632,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
 
 export const extendObject = Object.assign
 
-export function getCurrentPage (pageId: number | null) {
+export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return
   const pages = global.getCurrentPages()
   return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
