@@ -97,13 +97,10 @@ const buttonTextMap: Record<LanguageCode, { cancel: string; confirm: string }> =
   }
 }
 
-const { open, remove } = createPopupManager()
-
 const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
   (props: PickerProps, ref): React.JSX.Element => {
     const {
       mode,
-      style,
       value,
       range = null,
       children,
@@ -114,21 +111,17 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     } = props
 
     const pageId = useContext(RouteContext)
-
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
-
     const pickerValue = useRef(value)
     const initShowValue = useRef(value)
     pickerValue.current = value
     initShowValue.current = value
-
     const innerLayout = useRef({})
     const nodeRef = useRef(null)
     const pickerRef = useRef<any>(null)
+    const { open, show, hide, remove } = useRef(createPopupManager()).current
 
-    useNodesRef<View, PickerProps>(props, ref, nodeRef, {
-      style
-    })
+    useNodesRef<View, PickerProps>(props, ref, nodeRef)
     const innerProps = useInnerProps(
       props,
       {
@@ -196,7 +189,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
 
     const onCancel = () => {
       bindcancel?.()
-      remove()
+      hide()
     }
 
     const onConfirm = () => {
@@ -206,7 +199,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         { detail: { value: pickerValue.current }, layoutRef: innerLayout }
       )
       bindchange?.(eventData)
-      remove()
+      hide()
     }
 
     const specificProps = extendObject(innerProps, {
@@ -235,24 +228,20 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
               <Text style={[styles.headerText]}>{headerText}</Text>
             </View>
           )}
-          <PickerModal {...specificProps} remove={remove} value={value} ref={pickerRef}></PickerModal>
+          <PickerModal {...specificProps} value={value} ref={pickerRef}></PickerModal>
           <View style={[styles.footer]}>
-            <TouchableHighlight
-              onPress={onCancel}
+            <View
+              onTouchEnd={onCancel}
               style={[styles.footerItem, styles.cancelButton]}
-              activeOpacity={1}
-              underlayColor={'#DDDDDD'}
             >
               <Text style={[styles.cancelText]}>{buttonText.cancel}</Text>
-            </TouchableHighlight>
-            <TouchableHighlight
-              onPress={onConfirm}
+            </View>
+            <View
+              onTouchEnd={onConfirm}
               style={[styles.footerItem, styles.confirmButton]}
-              activeOpacity={1}
-              underlayColor={'#179B16'}
             >
               <Text style={[styles.confirmText]}>{buttonText.confirm}</Text>
-            </TouchableHighlight>
+            </View>
           </View>
         </>
       )
@@ -260,8 +249,15 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       open(renderPickerModal, pageId, { contentHeight })
     }
 
+    useEffect(() => {
+      renderPickerContent()
+      return () => {
+        remove()
+      }
+    }, [])
+
     return (
-      <TouchableWithoutFeedback onPress={renderPickerContent}>
+      <TouchableWithoutFeedback onPress={show}>
         {children}
       </TouchableWithoutFeedback>
     )

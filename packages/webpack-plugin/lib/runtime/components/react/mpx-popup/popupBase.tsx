@@ -3,16 +3,16 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  Easing,
-  runOnJS
+  Easing
 } from 'react-native-reanimated'
 import { getWindowInfo } from '@mpxjs/api-proxy'
-import { useEffect } from 'react'
+import { useUpdateEffect } from '../utils'
 
 export interface PopupBaseProps {
   children?: React.ReactNode
-  remove?: () => void
+  hide?: () => void
   contentHeight?: number
+  visible?: boolean
 }
 
 const windowInfo = getWindowInfo()
@@ -55,8 +55,9 @@ const MOVEOUT_HEIGHT = 330 as const
 const PopupBase = (props: PopupBaseProps = {}) => {
   const {
     children,
-    remove = () => null,
-    contentHeight = MOVEOUT_HEIGHT
+    hide = () => null,
+    contentHeight = MOVEOUT_HEIGHT,
+    visible = false
   } = props
   const fade = useSharedValue<number>(MASK_OFF)
   const slide = useSharedValue<number>(contentHeight)
@@ -69,7 +70,7 @@ const PopupBase = (props: PopupBaseProps = {}) => {
     transform: [{ translateY: slide.value }]
   }))
 
-  useEffect(() => {
+  const showAimation = () => {
     fade.value = withTiming(MASK_ON, {
       easing: Easing.inOut(Easing.poly(3)),
       duration: 300
@@ -78,9 +79,9 @@ const PopupBase = (props: PopupBaseProps = {}) => {
       easing: Easing.out(Easing.poly(3)),
       duration: 300
     })
-  }, [])
+  }
 
-  const cancelAction = function () {
+  const hideAnimation = () => {
     fade.value = withTiming(MASK_OFF, {
       easing: Easing.inOut(Easing.poly(3)),
       duration: 300
@@ -90,12 +91,17 @@ const PopupBase = (props: PopupBaseProps = {}) => {
       {
         easing: Easing.inOut(Easing.poly(3)),
         duration: 300
-      },
-      () => {
-        runOnJS(remove)()
       }
     )
   }
+
+  useUpdateEffect(() => {
+    if (visible) {
+      showAimation()
+    } else {
+      hideAnimation()
+    }
+  }, [visible])
 
   const preventMaskClick = (e: any) => {
     e.stopPropagation()
@@ -103,8 +109,11 @@ const PopupBase = (props: PopupBaseProps = {}) => {
 
   return (
     <Animated.View
-      onTouchEnd={cancelAction}
-      style={[styles.mask, animatedStylesMask]}
+      onTouchEnd={hide}
+      style={[
+        styles.mask,
+        animatedStylesMask
+      ]}
     >
       <Animated.View
         style={[styles.content, animatedStylesContent]}

@@ -218,7 +218,6 @@ const PickerTime = forwardRef<
       indicator-style={styles.pickerIndicator}
       value={formatObj.indexArr}
       bindchange={onChange}
-      enableAnimation={false}
     >
       {renderColumn()}
     </MpxPickerView>)

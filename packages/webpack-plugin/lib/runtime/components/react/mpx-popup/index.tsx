@@ -1,3 +1,4 @@
+import { cloneElement, ReactElement } from 'react'
 import Portal from '../mpx-portal'
 import PopupBase, { PopupBaseProps } from './popupBase'
 
@@ -30,10 +31,8 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
 
   let popupKey: number | null = null
   let isOpen = false
+  let child: ReactElement | null = null
 
-  const getPopupKey = () => {
-    return popupKey
-  }
   const remove = () => {
     if (popupKey !== null) {
       Portal.remove(popupKey)
@@ -41,6 +40,7 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
     }
     isOpen = false
   }
+
   const open = (
     childComponent: React.ReactNode,
     pageId: number | null,
@@ -48,18 +48,38 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
   ) => {
     if (!isOpen && pageId != null) {
       isOpen = true
-      popupKey = Portal.add(
-        <Modal remove={remove} {...options}>
+      child = (
+        <Modal hide={hide} {...options} visible={false}>
           {childComponent}
-        </Modal>,
-        pageId
+        </Modal>
       )
+      popupKey = Portal.add(child, pageId)
     }
   }
+
+  const update = (updatedChild: ReactElement | null) => {
+    if (popupKey !== null && child !== null && updatedChild !== null) {
+      child = updatedChild
+      Portal.update(popupKey, child)
+    }
+  }
+
+  const _updateVisible = (visible: boolean) => {
+    if (popupKey !== null && child !== null) {
+      child = cloneElement(child, { visible })
+      Portal.update(popupKey, child)
+    }
+  }
+
+  const show = () => _updateVisible(true)
+  const hide = () => _updateVisible(false)
+
   return {
     open,
-    remove,
-    getPopupKey
+    show,
+    hide,
+    update,
+    remove
   }
 }
 

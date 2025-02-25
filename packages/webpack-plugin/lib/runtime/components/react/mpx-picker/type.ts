@@ -29,7 +29,6 @@ export interface BasePickerProps {
   name?: string
   style?: Record<string, any>
   children?: React.ReactNode
-  remove?: Function
   range?: RangeItem[]
   ref?: any
 }
