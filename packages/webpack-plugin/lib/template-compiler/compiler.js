@@ -1207,12 +1207,13 @@ function processEventWeb (el) {
   }
 }
 
-function processEventReact (el) {
+function processEventReact (el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
       const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
+      const modifiers = (parsedEvent.modifier || '').split('.')
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1221,6 +1222,9 @@ function processEventReact (el) {
           }
         }
         eventConfigMap[type].configs.push(Object.assign({ name, value }, parsedFunc))
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
+          eventConfigMap[type].proxy = true
+        }
       }
     }
   })
@@ -1261,9 +1265,9 @@ function processEventReact (el) {
 
   // let wrapper
   for (const type in eventConfigMap) {
-    const { configs } = eventConfigMap[type]
+    const { configs, proxy } = eventConfigMap[type]
     if (!configs.length) continue
-    const needBind = configs.length > 1 || configs[0].hasArgs
+    const needBind = proxy || configs.length > 1 || configs[0].hasArgs
     if (needBind) {
       configs.forEach(({ name }) => {
         if (name) {
@@ -2709,7 +2713,7 @@ function processElement (el, root, options, meta) {
     processRefReact(el, meta)
     if (!pass) {
       processStyleReact(el, options)
-      processEventReact(el)
+      processEventReact(el, options)
       processComponentIs(el, options)
       processSlotReact(el, meta)
     }
