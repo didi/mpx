@@ -91,8 +91,9 @@ mpx.config.ignoreConflictWhiteList = ['id', 'test']
 ```js
 import mpx from '@mpxjs/core'
 
-mpx.config.proxyEventHandler = function (event) {
-    // 入参为 event 事件对象
+mpx.config.proxyEventHandler = function (event, componentIns) {
+  // 首个入参为 event 事件对象
+  // 其次入参为 触发事件的组件实例
 }
 ```
 

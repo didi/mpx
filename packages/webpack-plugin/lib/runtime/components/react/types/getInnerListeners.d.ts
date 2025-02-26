@@ -13,7 +13,7 @@ type RemoveProps = string[];
 
 type NativeTouchEvent = NativeSyntheticEvent<NativeEvent>
 
-type Navigation = Record<string, any>
+type Navigation = Record<string, any> | undefined
 
 interface NativeEvent {
   timestamp: number;

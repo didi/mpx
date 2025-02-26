@@ -266,7 +266,7 @@ interface MpxConfig {
   observeClassInstance: boolean | Array<AnyConstructor>
   errorHandler: (msg: String, location: String, e: Error) => any | null
   warnHandler: (msg: String, location: String, e: Error) => any | null
-  proxyEventHandler: (e: WechatMiniprogram.CustomEvent) => any | null
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,

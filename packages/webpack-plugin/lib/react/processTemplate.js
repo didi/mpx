@@ -28,6 +28,7 @@ module.exports = function (template, {
     externalClasses,
     checkUsingComponents,
     autoVirtualHostRules,
+    forceProxyEventRules,
     customTextRules
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
@@ -86,6 +87,7 @@ module.exports = function (template, {
         // web模式下实现抽象组件
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
+        forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
         isCustomText: matchCondition(resourcePath, customTextRules)
       })
 

@@ -294,7 +294,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         forceProxyEventRules: {
-          include: ['bindtap']
+          include: ['src/packages/index.mpx']
         }
       }
     }

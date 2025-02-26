@@ -23,7 +23,7 @@ export default function proxyEventMixin () {
       __invoke (rawEvent, eventConfig = []) {
         if (typeof Mpx.config.proxyEventHandler === 'function') {
           try {
-            Mpx.config.proxyEventHandler(rawEvent)
+            Mpx.config.proxyEventHandler(rawEvent, this)
           } catch (e) {}
         }
         const location = this.__mpxProxy.options.mpxFileResource
