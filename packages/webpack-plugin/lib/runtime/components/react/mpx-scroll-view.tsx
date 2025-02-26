@@ -258,7 +258,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   function onStartReached (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscrolltoupper } = props
-    const { offset, contentLength, visibleLength } = scrollOptions.current
+    const { offset } = scrollOptions.current
     if (bindscrolltoupper && (offset <= upperThreshold)) {
       if (!hasCallScrollToUpper.current) {
         bindscrolltoupper(
