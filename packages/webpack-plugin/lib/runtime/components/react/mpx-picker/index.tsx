@@ -267,14 +267,9 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     }, [])
 
     return (
-      <>
-        <TouchableWithoutFeedback onPress={show}>
-          {children}
-        </TouchableWithoutFeedback>
-        <View onTouchEnd={resetValue}>
-          <Text>点击按钮</Text>
-        </View>
-      </>
+      <TouchableWithoutFeedback onPress={show}>
+        {children}
+      </TouchableWithoutFeedback>
     )
   }
 )
