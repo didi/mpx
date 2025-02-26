@@ -9,7 +9,7 @@ export type PortalProps = {
 const Portal = ({ children }:PortalProps): null => {
   const manager = useContext(PortalContext)
   const keyRef = useRef<any>(null)
-  const pageId = useContext(RouteContext)
+  const { pageId } = useContext(RouteContext) || {}
   useEffect(() => {
     manager.update(keyRef.current, children)
   }, [children])
