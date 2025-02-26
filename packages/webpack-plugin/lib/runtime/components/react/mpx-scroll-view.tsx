@@ -280,7 +280,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { bindscrolltolower } = props
     const { contentLength, visibleLength, offset } = scrollOptions.current
     const distanceFromEnd = contentLength - visibleLength - offset
-    if (bindscrolltolower && (distanceFromEnd < lowerThreshold) && contentLength > visibleLength) {
+    if (bindscrolltolower && (distanceFromEnd < lowerThreshold)) {
       if (!hasCallScrollToLower.current) {
         hasCallScrollToLower.current = true
         bindscrolltolower(
@@ -453,6 +453,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     {
       style: extendObject({}, innerStyle, layoutStyle),
       pinchGestureEnabled: false,
+      alwaysBounceVertical: false,
+      alwaysBounceHorizontal: false,
       horizontal: scrollX && !scrollY,
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
