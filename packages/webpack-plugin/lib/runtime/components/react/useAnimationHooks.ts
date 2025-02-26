@@ -40,10 +40,10 @@ export type AnimationProp = {
 // 微信 timingFunction 和 RN Easing 对应关系
 const EasingKey = {
   linear: Easing.linear,
-  ease: Easing.ease,
-  'ease-in': Easing.in(Easing.ease),
-  'ease-in-out': Easing.inOut(Easing.ease),
-  'ease-out': Easing.out(Easing.ease)
+  ease: Easing.inOut(Easing.ease),
+  'ease-in': Easing.in(Easing.poly(3)),
+  'ease-in-out': Easing.inOut(Easing.poly(3)),
+  'ease-out': Easing.out(Easing.poly(3))
   // 'step-start': '',
   // 'step-end': ''
 }

@@ -4,6 +4,7 @@ import {
     groupIconMdPlugin,
     groupIconVitePlugin,
 } from "vitepress-plugin-group-icons"
+import { transformerTwoslash } from "@shikijs/vitepress-twoslash"
 import {
     algoliaTranslations,
     localSearchTranslations,
@@ -228,11 +229,6 @@ export default withPwa(
             ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
             [
                 "script",
-                { id: "unregister-sw" },
-                "if('serviceWorker' in navigator) window.addEventListener('load', (e) => navigator.serviceWorker.register('/service-worker.js', { scope: '/' }))",
-            ],
-            [
-                "script",
                 { type: "text/javascript" },
                 `(function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -266,6 +262,8 @@ export default withPwa(
                 light: "github-light",
                 dark: "github-dark",
             },
+            // @ts-ignore
+            codeTransformers: [transformerTwoslash()],
             config(md) {
                 md.use(groupIconMdPlugin)
             },
@@ -292,7 +290,7 @@ export default withPwa(
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
             },
             devOptions: {
-                enabled: false,
+                enabled: true,
                 suppressWarnings: true,
                 navigateFallback: "/",
             },
@@ -363,6 +361,7 @@ export default withPwa(
         },
         vite: {
             logLevel: "info",
+            // @ts-ignore
             plugins: [groupIconVitePlugin()],
         },
         // @ts-ignore

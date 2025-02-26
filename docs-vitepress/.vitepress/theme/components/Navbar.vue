@@ -66,7 +66,7 @@ export default {
       if (path !== '/') {
         return ''
       }
-      return isSidebarOpen.value ? 'transform: translateY(0);z-index: 0;display: none' : ''
+      return isSidebarOpen.value ? 'transform: translateY(0);' : ''
     })
 
     const isAlgoliaSearch = computed(() => {
