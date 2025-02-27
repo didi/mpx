@@ -7,6 +7,8 @@ import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
+import { KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -194,19 +196,43 @@ export default function createApp (options) {
     if (headerBackImageSource) {
       navScreenOpts.headerBackImageSource = headerBackImageSource
     }
+
+    const withKeyboardAvoidingView = (element) => {
+      return createElement(KeyboardAvoidContext.Provider,
+        {
+          value: {
+            cursorSpacing: 0,
+            ref: null
+          }
+        },
+        createElement(KeyboardAvoidingView,
+          {
+            style: {
+              flex: 1
+            },
+            contentContainerStyle: {
+              flex: 1
+            }
+          },
+          element
+        )
+      )
+    }
     return createElement(SafeAreaProvider,
       null,
-      createElement(NavigationContainer,
-        {
-          onStateChange,
-          onUnhandledAction
-        },
-        createElement(Stack.Navigator,
+      withKeyboardAvoidingView(
+        createElement(NavigationContainer,
           {
-            initialRouteName,
-            screenOptions: navScreenOpts
+            onStateChange,
+            onUnhandledAction
           },
-          ...getPageScreens(initialRouteName, initialParams)
+          createElement(Stack.Navigator,
+            {
+              initialRouteName,
+              screenOptions: navScreenOpts
+            },
+            ...getPageScreens(initialRouteName, initialParams)
+          )
         )
       )
     )
