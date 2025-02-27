@@ -14,14 +14,14 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const duration = isIOS ? 250 : 300
   const easing = isIOS ? Easing.inOut(Easing.ease) : Easing.out(Easing.quad)
 
-  const bottom = useSharedValue(0)
-  const flexBasis = useSharedValue('auto')
+  const offset = useSharedValue(0)
+  const basic = useSharedValue('auto')
   const keyboardAvoid = useContext(KeyboardAvoidContext)
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateY: -bottom.value }],
-      flexBasis: isIOS ? 'auto' : flexBasis.value as DimensionValue
+      transform: [{ translateY: -offset.value }],
+      flexBasis: isIOS ? 'auto' : basic.value as DimensionValue
     }
   })
 
@@ -30,8 +30,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
       cursorSpacing: 0,
       ref: null
     })
-    bottom.value = withTiming(0, { duration, easing })
-    flexBasis.value = 'auto'
+    offset.value = withTiming(0, { duration, easing })
+    basic.value = 'auto'
   }
 
   useEffect(() => {
@@ -46,10 +46,10 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
           setTimeout(() => {
             ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
               const aboveOffset = pageY + height - endCoordinates.screenY
-              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : cursorSpacing
+              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
               const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
               const value = aboveOffset > 0 ? belowValue : aboveValue
-              bottom.value = withTiming(value, { duration, easing })
+              offset.value = withTiming(value, { duration, easing })
             })
           })
         }),
@@ -64,17 +64,17 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
           ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
             const aboveOffset = pageY + height - endCoordinates.screenY
             const belowOffset = endCoordinates.height - aboveOffset
-            const aboveValue = -aboveOffset >= cursorSpacing ? 0 : cursorSpacing
+            const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
             const belowValue = Math.min(belowOffset, cursorSpacing)
             const value = aboveOffset > 0 ? belowValue : aboveValue
-            bottom.value = withTiming(value, { duration, easing }, (finished) => {
+            offset.value = withTiming(value, { duration, easing }, (finished) => {
               if (finished) {
                 /**
                  * In the Android environment, the layout information is not synchronized after the animation,
                  * which results in the inability to correctly trigger element events.
                  * Here, we utilize flexBasic to proactively trigger a re-layout
                  */
-                flexBasis.value = '99.99%'
+                basic.value = '99.99%'
               }
             })
           })
