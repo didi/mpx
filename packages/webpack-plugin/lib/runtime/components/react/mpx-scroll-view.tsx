@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 import { ScrollView } from 'react-native-gesture-handler'
-import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { Animated, View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
@@ -46,6 +46,7 @@ interface ScrollViewProps {
   enhanced?: boolean;
   bounces?: boolean;
   style?: ViewStyle;
+  scrollEventThrottle?: number;
   'scroll-x'?: boolean;
   'scroll-y'?: boolean;
   'enable-back-to-top'?: boolean;
@@ -68,6 +69,7 @@ interface ScrollViewProps {
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
+  'enable-sticky'?: boolean;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -141,8 +143,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
+    'enable-sticky': enableSticky,
     __selectRef
   } = props
+
+  const scrollOffset = useRef(new Animated.Value(0)).current
 
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
@@ -196,7 +201,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const contextValue = useMemo(() => {
     return {
-      gestureRef: scrollViewRef
+      gestureRef: scrollViewRef,
+      scrollOffset
     }
   }, [])
 
@@ -442,6 +448,16 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateIntersection()
   }
 
+  const scrollHandler = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onScroll(event)
+      }
+    }
+  )
+
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
       style: extendObject({}, innerStyle, layoutStyle),
@@ -453,7 +469,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       showsVerticalScrollIndicator: scrollY && showScrollbar,
       scrollEnabled: scrollX || scrollY,
       ref: scrollViewRef,
-      onScroll: onScroll,
+      onScroll: scrollHandler,
       onContentSizeChange: onContentSizeChange,
       bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
       bindtouchmove: ((enhanced && binddragging) || bindtouchend) && onScrollTouchMove,
@@ -507,8 +523,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
+  let ScrollViewComponent = ScrollView
+  if (enableSticky) {
+    ScrollViewComponent = Animated.createAnimatedComponent(ScrollView)
+  }
+
   return createElement(
-    ScrollView,
+    ScrollViewComponent,
     extendObject({}, innerProps, {
       refreshControl: refresherEnabled
         ? createElement(RefreshControl, extendObject({

@@ -1,42 +1,56 @@
-import React, { useEffect, useRef, useState, useContext } from 'react'
-import { StyleSheet } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, useAnimatedReaction, runOnJS, useScrollViewOffset } from 'react-native-reanimated'
+
+import React, { useEffect, useRef, useState, useContext, forwardRef, cloneElement } from 'react'
+import { Animated, StyleSheet, View } from 'react-native'
 import { ScrollViewContext } from './context'
-export const _StickyHeader = ({ offsetTop = 0, children, onStickOnTopChange, style, scrollViewRef }) => {
+import useNodesRef, { HandlerRef } from './useNodesRef'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
+interface StickyHeaderProps {
+  children?: ReactNode;
+  style?: ViewStyle;
+  'enable-var'?: boolean;
+  'external-var-context'?: Record<string, any>;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
+
+}
+
+const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHeaderProps>((stickyHeaderProps: StickyHeaderProps = {}, ref): JSX.Element => {
+  const { textProps, innerProps: props = {} } = splitProps(stickyHeaderProps)
+  const {
+    style,
+    children,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
+  } = props
   const [contentHeight, setContentHeight] = useState(0)
   const [headerTop, setHeaderTop] = useState(0)
   const [isSticky, setIsSticky] = useState(false)
   const scrollViewContext = useContext(ScrollViewContext)
-  const scrollY = useScrollViewOffset(scrollViewContext.gestureRef)
+  const scrollOffset = scrollViewContext.scrollOffset
   const headerRef = useRef(null)
-  const translateY = useSharedValue(0)
-  const animatedStyles = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-      zIndex: 10
-    }
+
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef,
+    hasSelfPercent,
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef })
+
+  const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+
+  useNodesRef(props, ref, headerRef, {
+    style: normalStyle
   })
-  useAnimatedReaction(() => scrollY.value, currentScrollY => {
-    // 计算元素顶部距离视口顶部的距离
-    const elementTopToViewport = headerTop - currentScrollY
-    // 当元素顶部距离视口顶部的距离小于等于 offsetTop 时触发吸顶
-    const shouldSticky = elementTopToViewport <= offsetTop
-    if (shouldSticky) {
-      // 计算需要偏移的距离：
-      // 当前滚动位置 - (header初始位置 - 期望的吸顶位置)
-      translateY.value = currentScrollY - (headerTop - offsetTop)
-    } else {
-      // 不吸顶时回到原始位置
-      translateY.value = 0
-    }
-    // 更新吸顶状态
-    if (isSticky !== shouldSticky) {
-      runOnJS(setIsSticky)(shouldSticky)
-      if (onStickOnTopChange) {
-        runOnJS(onStickOnTopChange)(shouldSticky, contentHeight)
-      }
-    }
-  }, [headerTop, offsetTop, contentHeight, isSticky])
+
+  // 测量 header 位置
   useEffect(() => {
     if (headerRef.current) {
       headerRef.current.measure((x, y, width, height, pageX, pageY) => {
@@ -45,20 +59,58 @@ export const _StickyHeader = ({ offsetTop = 0, children, onStickOnTopChange, sty
       })
     }
   }, [])
-  return (<Animated.View ref={headerRef} style={[
-    styles.content,
-    animatedStyles,
-    style
-  ]}>
-      {React.cloneElement(children, {
+
+  const animatedStyle = React.useMemo(() => {
+    if (headerTop === null) {
+      return {}
+    } // 等待 headerTop 被测量
+
+    // 设置阈值，处理精度问题
+    const threshold = 1
+
+    // 根据 headerTop 的值选择合适的 inputRange 和 outputRange
+    const inputRange =
+      headerTop <= threshold ? [0, 1] : [headerTop - 1, headerTop]
+
+    const outputRange = [0, 1]
+
+    // 计算 translateY
+    const translateY = Animated.multiply(
+      scrollOffset.interpolate({
+        inputRange,
+        outputRange,
+        extrapolate: 'clamp'
+      }),
+      Animated.subtract(scrollOffset, headerTop <= threshold ? 0 : headerTop)
+    )
+
+    return {
+      transform: [{ translateY }],
+      zIndex: 100
+    }
+  }, [headerTop, scrollOffset])
+
+  return (
+    <Animated.View
+      ref={headerRef}
+      style={[
+        styles.content,
+        innerStyle,
+        layoutStyle,
+        animatedStyle
+      ]}>
+      {cloneElement(children, {
         style: styles.fill
       })}
-    </Animated.View>)
-}
+    </Animated.View>
+  )
+})
+
 const styles = StyleSheet.create({
   content: {
     width: '100%',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    zIndex: 10
   },
   fill: {
     flex: 1
