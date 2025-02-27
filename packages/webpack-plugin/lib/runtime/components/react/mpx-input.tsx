@@ -268,14 +268,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (adjustPosition && keyboardAvoid) {
-      Object.assign(keyboardAvoid, {
+      extendObject(keyboardAvoid, {
         cursorSpacing,
-        ref: nodeRef.current
+        ref: nodeRef
       })
     }
   }
 
-  const onTouchStart = () => {
+  const onInputTouchStart = () => {
     // sometimes the focus event occurs later than the keyboardWillShow event
     setKeyboardAvoidContext()
   }
@@ -415,6 +415,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }, [])
 
+  useEffect(() => {
+    if (focus) {
+      setKeyboardAvoidContext()
+    }
+  }, [focus])
+
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return
@@ -449,7 +455,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       },
       layoutProps,
       {
-        onTouchStart: onTouchStart,
+        onTouchStart: onInputTouchStart,
         onFocus: onInputFocus,
         onBlur: onInputBlur,
         onKeyPress: bindconfirm && onKeyPress,
