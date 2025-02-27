@@ -1,37 +1,41 @@
 
-import React, { useEffect, useRef, useState, useContext, forwardRef, cloneElement } from 'react'
-import { Animated, StyleSheet, View } from 'react-native'
+import React, { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement } from 'react'
+import { Animated, StyleSheet, View, NativeSyntheticEvent } from 'react-native'
 import { ScrollViewContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
+
 interface StickyHeaderProps {
   children?: ReactNode;
   style?: ViewStyle;
+  'offset-top'?: number;
   'enable-var'?: boolean;
   'external-var-context'?: Record<string, any>;
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
-
+  bindstickontopchange?: (e: NativeSyntheticEvent<unknown>) => void;
 }
 
 const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHeaderProps>((stickyHeaderProps: StickyHeaderProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(stickyHeaderProps)
   const {
     style,
-    children,
+    bindstickontopchange,
+    'offset-top': offsetTop = 0,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
-  const [contentHeight, setContentHeight] = useState(0)
+  const contentHeight = useRef(0)
   const [headerTop, setHeaderTop] = useState(0)
-  const [isSticky, setIsSticky] = useState(false)
   const scrollViewContext = useContext(ScrollViewContext)
   const scrollOffset = scrollViewContext.scrollOffset
   const headerRef = useRef(null)
+  const isStickOnTopRef = useRef(false)
 
   const {
     normalStyle,
@@ -42,7 +46,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef })
+  const { layoutRef } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
@@ -50,59 +54,79 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     style: normalStyle
   })
 
-  // 测量 header 位置
   useEffect(() => {
     if (headerRef.current) {
-      headerRef.current.measure((x, y, width, height, pageX, pageY) => {
-        setContentHeight(height)
-        setHeaderTop(pageY)
+      headerRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+        contentHeight.current = height
+        setHeaderTop(pageY - offsetTop)
       })
     }
   }, [])
 
-  const animatedStyle = React.useMemo(() => {
-    if (headerTop === null) {
-      return {}
-    } // 等待 headerTop 被测量
+  useEffect(() => {
+    if (!bindstickontopchange) return
 
-    // 设置阈值，处理精度问题
+    const listener = scrollOffset.addListener((state: { value: number }) => {
+      const currentScrollValue = state.value
+      const newIsStickOnTop = currentScrollValue > headerTop
+      if (newIsStickOnTop !== isStickOnTopRef.current) {
+        isStickOnTopRef.current = newIsStickOnTop
+        bindstickontopchange(
+          getCustomEvent('stickontopchange', {}, {
+            detail: {
+              isStickOnTop: newIsStickOnTop
+            },
+            layoutRef
+          }, props))
+      }
+    })
+
+    return () => {
+      scrollOffset.removeListener(listener)
+    }
+  }, [headerTop])
+
+  const animatedStyle = useMemo(() => {
     const threshold = 1
 
-    // 根据 headerTop 的值选择合适的 inputRange 和 outputRange
     const inputRange =
       headerTop <= threshold ? [0, 1] : [headerTop - 1, headerTop]
 
     const outputRange = [0, 1]
 
-    // 计算 translateY
     const translateY = Animated.multiply(
       scrollOffset.interpolate({
         inputRange,
         outputRange,
         extrapolate: 'clamp'
       }),
-      Animated.subtract(scrollOffset, headerTop <= threshold ? 0 : headerTop)
+      Animated.subtract(scrollOffset, headerTop <= threshold ? -offsetTop : headerTop)
     )
 
     return {
-      transform: [{ translateY }],
-      zIndex: 100
+      transform: [{ translateY }]
     }
   }, [headerTop, scrollOffset])
 
+  const innerProps = useInnerProps(props, {
+    ref: headerRef,
+    style: extendObject({}, styles.content, innerStyle, animatedStyle)
+  }, [], { layoutRef })
+
   return (
-    <Animated.View
-      ref={headerRef}
-      style={[
-        styles.content,
-        innerStyle,
-        layoutStyle,
-        animatedStyle
-      ]}>
-      {cloneElement(children, {
-        style: styles.fill
-      })}
-    </Animated.View>
+    createElement(
+      Animated.View,
+      innerProps,
+      wrapChildren(
+        props,
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        }
+      )
+    )
   )
 })
 
@@ -111,9 +135,6 @@ const styles = StyleSheet.create({
     width: '100%',
     boxSizing: 'border-box',
     zIndex: 10
-  },
-  fill: {
-    flex: 1
   }
 })
 
