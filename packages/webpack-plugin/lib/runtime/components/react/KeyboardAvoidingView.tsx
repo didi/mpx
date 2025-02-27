@@ -1,7 +1,8 @@
 import React, { ReactNode, useContext, useEffect } from 'react'
 import { EmitterSubscription, Keyboard, Platform, View, ViewStyle } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
-import { KeyboardAvoidContext } from './context'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
+import { KeyboardAvoidContext, KeyboardAvoidContextValue } from './context'
+import { extendObject } from './utils'
 
 type KeyboardAvoidViewProps = {
   children?: ReactNode
@@ -10,53 +11,51 @@ type KeyboardAvoidViewProps = {
 }
 
 const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: KeyboardAvoidViewProps) => {
-  const bottom = useSharedValue(0)
+  const isIOS = Platform.OS === 'ios'
+  const easing = isIOS ? Easing.inOut(Easing.ease) : Easing.out(Easing.quad)
+  const duration = isIOS ? 250 : 300
+
+  const offset = useSharedValue(0)
   const keyboardAvoid = useContext(KeyboardAvoidContext)
 
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -bottom.value }] }))
+  const animatedStyle = useAnimatedStyle(() => {
+    return isIOS ? { transform: [{ translateY: -offset.value }] } : { bottom: offset.value }
+  })
 
   const resetKeyboard = () => {
-    keyboardAvoid && Object.assign(keyboardAvoid, {
+    keyboardAvoid && extendObject(keyboardAvoid, {
       cursorSpacing: 0,
       ref: null
     })
-    bottom.value = withTiming(0)
+    offset.value = withTiming(0, { duration, easing })
+  }
+
+  const animateOffset = (evt: any, keyboardAvoid: KeyboardAvoidContextValue | null) => {
+    if (!keyboardAvoid) return
+    const { endCoordinates } = evt
+    const { ref, cursorSpacing = 0 } = keyboardAvoid
+    setTimeout(() => {
+      ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+        const aboveOffset = pageY + height - endCoordinates.screenY
+        const aboveValue = -aboveOffset >= cursorSpacing ? 0 : cursorSpacing
+        const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
+        const value = aboveOffset > 0 ? belowValue : aboveValue
+        offset.value = withTiming(value, { duration, easing })
+      })
+    })
   }
 
   useEffect(() => {
     let subscriptions: EmitterSubscription[] = []
 
-    if (Platform.OS === 'ios') {
+    if (isIOS) {
       subscriptions = [
-        Keyboard.addListener('keyboardWillShow', (evt: any) => {
-          if (!keyboardAvoid) return
-          const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid
-          ref?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            const aboveOffset = pageY + height - endCoordinates.screenY
-            const aboveValue = -aboveOffset >= cursorSpacing ? 0 : cursorSpacing
-            const belowValue = aboveOffset + cursorSpacing >= endCoordinates.height ? endCoordinates.height : aboveOffset + cursorSpacing
-            const value = aboveOffset > 0 ? belowValue : aboveValue
-            bottom.value = withTiming(value)
-          })
-        }),
+        Keyboard.addListener('keyboardWillShow', (evt: any) => animateOffset(evt, keyboardAvoid)),
         Keyboard.addListener('keyboardWillHide', resetKeyboard)
       ]
     } else {
       subscriptions = [
-        Keyboard.addListener('keyboardDidShow', (evt: any) => {
-          if (!keyboardAvoid) return
-          const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid
-          ref?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            const aboveOffset = pageY + height - endCoordinates.screenY
-            const belowOffset = endCoordinates.height - aboveOffset
-            const aboveValue = -aboveOffset >= cursorSpacing ? 0 : cursorSpacing
-            const belowValue = cursorSpacing >= belowOffset ? belowOffset : cursorSpacing
-            const value = aboveOffset > 0 ? belowValue : aboveValue
-            bottom.value = withTiming(value)
-          })
-        }),
+        Keyboard.addListener('keyboardDidShow', (evt: any) => animateOffset(evt, keyboardAvoid)),
         Keyboard.addListener('keyboardDidHide', resetKeyboard)
       ]
     }
