@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { PortalContext, PortalContextValue } from './context'
+import { PortalContext, PortalContextValue, VarContext } from './context'
 import PortalConsumer from './mpx-portal/portal-consumer'
 import PortalHost, { portal } from './mpx-portal/portal-host'
 
@@ -9,10 +9,15 @@ export type PortalProps = {
    */
   children?: ReactNode
   key?: string
-  manager?: PortalContextValue
+  manager?: PortalContextValue,
+  varContext?: Record<string, any> | undefined
 }
 
-const Portal = ({ children }:PortalProps): JSX.Element => {
+const Portal = ({ children, varContext }:PortalProps): JSX.Element => {
+  const hasVarContext = varContext && Object.keys(varContext).length
+  if (hasVarContext) {
+      children = (<VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>)
+  }
   return (
     <PortalContext.Consumer>
       {(manager) => (
