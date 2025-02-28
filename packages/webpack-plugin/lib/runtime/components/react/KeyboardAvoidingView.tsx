@@ -2,6 +2,7 @@ import React, { ReactNode, useContext, useEffect } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, Platform, View, ViewStyle } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
 import { KeyboardAvoidContext } from './context'
+import { extendObject } from './utils'
 
 type KeyboardAvoidViewProps = {
   children?: ReactNode
@@ -28,7 +29,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   })
 
   const resetKeyboard = () => {
-    keyboardAvoid && Object.assign(keyboardAvoid, {
+    keyboardAvoid?.current && extendObject(keyboardAvoid.current, {
       cursorSpacing: 0,
       ref: null
     })
@@ -42,9 +43,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     if (isIOS) {
       subscriptions = [
         Keyboard.addListener('keyboardWillShow', (evt: any) => {
-          if (!keyboardAvoid) return
+          if (!keyboardAvoid?.current) return
           const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid
+          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
           setTimeout(() => {
             ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
               const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
@@ -60,9 +61,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     } else {
       subscriptions = [
         Keyboard.addListener('keyboardDidShow', (evt: any) => {
-          if (!keyboardAvoid) return
+          if (!keyboardAvoid?.current) return
           const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid
+          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
           ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
             const aboveOffset = pageY + height - endCoordinates.screenY
             const belowOffset = endCoordinates.height - aboveOffset

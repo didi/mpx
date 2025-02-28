@@ -598,10 +598,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const withKeyboardAvoidingView = (element) => {
         return createElement(KeyboardAvoidContext.Provider,
           {
-            value: {
-              cursorSpacing: 0,
-              ref: null
-            }
+            value: useRef({ cursorSpacing: 0, ref: null })
           },
           createElement(KeyboardAvoidingView,
             {
