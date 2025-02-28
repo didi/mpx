@@ -11,7 +11,9 @@ const Portal = ({ children }:PortalProps): null => {
   const keyRef = useRef<any>(null)
   const { pageId } = useContext(RouteContext) || {}
   const varContext = useContext(VarContext)
-  children = (<VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>)
+  if (varContext) {
+    children = (<VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>)
+  }
   useEffect(() => {
     manager.update(keyRef.current, children)
   }, [children])
