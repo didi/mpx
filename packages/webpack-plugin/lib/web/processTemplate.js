@@ -25,7 +25,8 @@ module.exports = function (template, {
     externalClasses,
     checkUsingComponents,
     webConfig,
-    autoVirtualHostRules
+    autoVirtualHostRules,
+    forceProxyEventRules
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -92,7 +93,8 @@ module.exports = function (template, {
           globalComponents: [],
           // web模式下实现抽象组件
           componentGenerics,
-          hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
+          hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
+          forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules)
         })
         if (meta.wxsModuleMap) {
           wxsModuleMap = meta.wxsModuleMap

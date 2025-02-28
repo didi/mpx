@@ -12,7 +12,7 @@ export default function proxyEventMixin () {
     __invoke ($event) {
       if (typeof Mpx.config.proxyEventHandler === 'function') {
         try {
-          Mpx.config.proxyEventHandler($event)
+          Mpx.config.proxyEventHandler($event, this)
         } catch (e) {
         }
       }
