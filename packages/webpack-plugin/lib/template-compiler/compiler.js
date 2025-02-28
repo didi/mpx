@@ -1287,10 +1287,9 @@ function processEventReact (el, options) {
       ])
     } else {
       const { name, value } = configs[0]
-      const parseResult = parseMustacheWithContext(value)?.result
       const attrValue = isValidIdentifierStr(value)
         ? `{{this.${value}}}`
-        : `{{this[${parseResult}]}}`
+        : `{{this[${parseMustacheWithContext(value).result}]}}`
 
       modifyAttr(el, name, attrValue)
     }
