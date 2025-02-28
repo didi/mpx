@@ -9,7 +9,8 @@ import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import { IntersectionObserverContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
 
 const ProviderContext = createContext(null)
 
@@ -594,6 +595,28 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         })
       }, [])
 
+      const withKeyboardAvoidingView = (element) => {
+        return createElement(KeyboardAvoidContext.Provider,
+          {
+            value: {
+              cursorSpacing: 0,
+              ref: null
+            }
+          },
+          createElement(KeyboardAvoidingView,
+            {
+              style: {
+                flex: 1
+              },
+              contentContainerStyle: {
+                flex: 1
+              }
+            },
+            element
+          )
+        )
+      }
+
       navigation.insets = useSafeAreaInsets()
 
       return createElement(GestureHandlerRootView,
@@ -607,31 +630,33 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             flex: 1
           }
         },
-        createElement(ReactNative.View,
-          {
-            style: {
-              flex: 1,
-              backgroundColor: pageConfig.backgroundColor || '#ffffff'
-            },
-            ref: rootRef,
-            onLayout
-          },
-          createElement(RouteContext.Provider,
+        withKeyboardAvoidingView(
+          createElement(ReactNative.View,
             {
-              value: currentPageId
-            },
-            createElement(IntersectionObserverContext.Provider,
-              {
-                value: intersectionObservers.current
+              style: {
+                flex: 1,
+                backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              createElement(Provider,
-                null,
-                createElement(defaultOptions,
-                  {
-                    navigation,
-                    route,
-                    id: currentPageId
-                  }
+              ref: rootRef,
+              onLayout
+            },
+            createElement(RouteContext.Provider,
+              {
+                value: currentPageId
+              },
+              createElement(IntersectionObserverContext.Provider,
+                {
+                  value: intersectionObservers.current
+                },
+                createElement(Provider,
+                  null,
+                  createElement(defaultOptions,
+                    {
+                      navigation,
+                      route,
+                      id: currentPageId
+                    }
+                  )
                 )
               )
             )
