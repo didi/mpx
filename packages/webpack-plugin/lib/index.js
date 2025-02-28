@@ -1790,35 +1790,19 @@ try {
           const extract = queryObj.extract
 
           if (type === 'styles') {
-            let stylusIndex = -1
-            let sassIndex = -1
-            let lessIndex = -1
-            let cssIndex = -1
-
+            let insertBeforeIndex = -1
             // 单次遍历收集所有索引
             loaders.forEach((loader, index) => {
               const currentLoader = toPosix(loader.loader)
-              if (currentLoader.includes('node_modules/stylus-loader')) {
-                stylusIndex = index
-              } else if (currentLoader.includes('node_modules/sass-loader')) {
-                sassIndex = index
-              } else if (currentLoader.includes('node_modules/less-loader')) {
-                lessIndex = index
-              } else if (currentLoader.includes('node_modules/css-loader')) {
-                cssIndex = index
+              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
+                insertBeforeIndex = index
               }
             })
 
-            if (stylusIndex !== -1) {
-              loaders.splice(stylusIndex, 0, { loader: styleStripConditionalPath })
-              loaders.splice(stylusIndex + 2, 0, { loader: styleStripConditionalPath })
-            } else if (lessIndex !== -1) {
-              loaders.splice(lessIndex + 1, 0, { loader: styleStripConditionalPath })
-            } else if (sassIndex !== -1) {
-              loaders.splice(sassIndex + 1, 0, { loader: styleStripConditionalPath })
-            } else if (cssIndex !== -1) {
-              loaders.splice(cssIndex + 1, 0, { loader: styleStripConditionalPath })
+            if (insertBeforeIndex !== -1) {
+              loaders.splice(insertBeforeIndex, 0, { loader: styleStripConditionalPath })
             }
+            loaders.push({ loader: styleStripConditionalPath })
           }
 
           switch (type) {
