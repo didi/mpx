@@ -39,14 +39,14 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-left': 'left'
 }
 
-function getSafeAreaInset (name: string, navigation: Record<string, any>) {
+function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
 }
 
-export function useNavigation (): Record<string, any> {
+export function useNavigation (): Record<string, any> | undefined {
   const { navigation } = useContext(RouteContext) || {}
-  return navigation || {}
+  return navigation
 }
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
@@ -243,7 +243,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any>) {
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any> | undefined) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
