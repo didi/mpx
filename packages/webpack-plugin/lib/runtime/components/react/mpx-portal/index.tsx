@@ -7,10 +7,11 @@ export type PortalProps = {
   varContext?: Record<string, any> | undefined
 }
 
-const Portal = ({ children, varContext }:PortalProps): null => {
+const Portal = ({ children }:PortalProps): null => {
   const manager = useContext(PortalContext)
   const keyRef = useRef<any>(null)
   const { pageId } = useContext(RouteContext) || {}
+  const varContext = useContext(VarContext)
   const hasVarContext = varContext && Object.keys(varContext).length
   if (hasVarContext) {
     children = (<VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>)
