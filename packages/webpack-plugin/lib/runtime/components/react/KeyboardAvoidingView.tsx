@@ -19,10 +19,12 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const keyboardAvoid = useContext(KeyboardAvoidContext)
 
   const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: -offset.value }],
-      flexBasis: isIOS ? 'auto' : basic.value as DimensionValue
-    }
+    return Object.assign(
+      {
+        transform: [{ translateY: -offset.value }]
+      },
+      isIOS ? {} : { flexBasis: basic.value as DimensionValue }
+    )
   })
 
   const resetKeyboard = () => {
