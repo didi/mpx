@@ -5,7 +5,7 @@ export default {
   name: 'mpx-sticky-header',
   inject: ['scrollOffset'],
   props: {
-    'offset-top': {
+    'offsetTop': {
       type: Number,
       default: 0
     }
@@ -18,16 +18,17 @@ export default {
   },
   computed: {
     _scrollOffset () {
-      return -this.scrollOffset.get()
+      return -this.scrollOffset?.get() || 0
     }
   },
   mounted () {
-    // 使用$el获取当前组件的根DOM元素
-    if (this.$el) {
-      const rect = this.$el.getBoundingClientRect()
-      const scrollViewRect = this.$parent.$refs.wrapper.getBoundingClientRect()
-      this.headerTop = rect.top - scrollViewRect.top - this.offsetTop
+    if (!this.$parent?.$refs?.wrapper) {
+      console.error('[Mpx runtime error]: sticky-header must be placed inside a scroll-view component')
+      return
     }
+    const rect = this.$el.getBoundingClientRect()
+    const scrollViewRect = this.$parent.$refs.wrapper.getBoundingClientRect()
+    this.headerTop = rect.top - scrollViewRect.top - this.offsetTop
   },
   watch: {
     _scrollOffset: {
