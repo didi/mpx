@@ -9,7 +9,7 @@ class Node {
 
 // 提取 css string 为 token
 function tokenize (cssString) {
-  const regex = /\/\*\s*@mpx-(if|elif|else|end)(?:\s*\((.*?)\))?\s*\*\//g
+  const regex = /\/\*\s*@mpx-(if|elif|else|endif)(?:\s*\((.*?)\))?\s*\*\//g
   const tokens = []
   let lastIndex = 0
   let match
@@ -20,10 +20,10 @@ function tokenize (cssString) {
       const text = cssString.substring(lastIndex, match.index)
       tokens.push({ type: 'text', content: text })
     }
-    // match[1] 为关键字：if, elif, else, end
+    // match[1] 为关键字：if, elif, else, endif
     // match[2] 为条件（如果存在）
     tokens.push({
-      type: match[1], // 'if'、'elif'、'else' 或 'end'
+      type: match[1], // 'if'、'elif'、'else' 或 'endif'
       condition: match[2] ? match[2].trim() : null
     })
     lastIndex = regex.lastIndex
@@ -68,7 +68,7 @@ function parse (cssString) {
       const node = new Node('Else')
       currentChildren.push(node)
       currentChildren = node.children
-    } else if (token.type === 'end') {
+    } else if (token.type === 'endif') {
       if (nodeStack.length > 0) {
         currentChildren = nodeStack.pop()
       }
