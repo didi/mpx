@@ -68,7 +68,7 @@ module.exports = function getSpec ({ warn, error }) {
           if (el) {
             const injectWxsProp = {
               injectWxsPath: '~' + normalize.lib('runtime/swanHelper.wxs'),
-              injectWxsModuleName: '__swanHelper__'
+              injectWxsModuleName: 'mpxSwanHelper'
             }
             if (el.injectWxsProps && Array.isArray(el.injectWxsProps)) {
               el.injectWxsProps.push(injectWxsProp)
@@ -78,7 +78,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
           return {
             name: 's-for',
-            value: `${itemName}, ${indexName} in __swanHelper__.processFor(${listName})${keyStr}`
+            value: `${itemName}, ${indexName} in mpxSwanHelper.processFor(${listName})${keyStr}`
           }
         },
         web ({ value }, { el }) {
@@ -302,7 +302,9 @@ module.exports = function getSpec ({ warn, error }) {
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
           return {
-            name: dash2hump(rPrefix + '-' + rEventName) + modifierStr,
+            name: rPrefix + dash2hump(rEventName.replace(/^./, (matched) => {
+              return matched.toUpperCase()
+            })) + modifierStr,
             value
           }
         },

@@ -44,7 +44,8 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    return components[tagName] || getByPath(ReactNative, tagName)
+    const appComponents = global.__getAppComponents?.() || {}
+    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -115,7 +116,6 @@ const instanceProto = {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
   },
   __resetInstance () {
-    this.__refs = {}
     this.__dispatchedSlotSet = new WeakSet()
   },
   __iter (val, fn) {
@@ -442,7 +442,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
-    const pageId = useContext(RouteContext)
+    const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
@@ -566,30 +566,24 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { Provider, useSafeAreaInsets, GestureHandlerRootView } = global.__navigationHelper
+    const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const [enabled, setEnabled] = useState(true)
+      const [enabled, setEnabled] = useState(false)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
-
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions({
+        navigation.setOptions(Object.assign({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-        if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
-          color && ReactNative.StatusBar.setBackgroundColor(color)
-        }
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
+          statusBarTranslucent: true
+        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
       }, [])
 
       const rootRef = useRef(null)
@@ -627,7 +621,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       return createElement(GestureHandlerRootView,
         {
-          style: {
+          // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
+          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
+          ? {
+            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+          }
+          : {
             flex: 1
           }
         },
@@ -643,13 +642,16 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             },
             createElement(RouteContext.Provider,
               {
-                value: currentPageId
+                value: {
+                  pageId: currentPageId,
+                  navigation
+                }
               },
               createElement(IntersectionObserverContext.Provider,
                 {
                   value: intersectionObservers.current
                 },
-                createElement(Provider,
+                createElement(PortalHost,
                   null,
                   createElement(defaultOptions,
                     {

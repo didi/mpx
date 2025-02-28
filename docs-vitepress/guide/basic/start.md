@@ -1,9 +1,22 @@
 # 快速开始
 
 ## 安装脚手架
-```shell
+
+::: code-group
+
+```sh [npm]
 npm i -g @mpxjs/cli
 ```
+
+```sh [pnpm]
+pnpm add -g @mpxjs/cli
+```
+
+```sh [yarn]
+yarn global add @mpxjs/cli
+```
+
+:::
 
 > @mpxjs/cli文档 https://github.com/mpx-ecology/mpx-cli
 
