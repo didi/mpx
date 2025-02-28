@@ -16,8 +16,8 @@ module.exports = function (content) {
   // 处理内联wxs
   if (wxsModule) {
     const wxsContentMap = mpx.wxsContentMap
-    const resourcePath = parseRequest(this.resource).resourcePath
-    content = wxsContentMap[`${resourcePath}~${wxsModule}`] || content
+    const rawResourcePath = parseRequest(this.resource).rawResourcePath
+    content = wxsContentMap[`${rawResourcePath}~${wxsModule}`] || content
   }
 
   const visitor = {}

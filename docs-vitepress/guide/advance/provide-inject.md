@@ -210,37 +210,41 @@ export const InjectionKeys = {
 
 直接使用字符串注入 key 时，注入值的类型默认推导会是 `unknown`，需要通过泛型参数显式声明。因为无法保证运行时一定存在这个 provide，所以推导类型也可能是 `undefined`。当声明一个默认值后，这个 `undefined` 类型就可以成功被移除。
 
-```ts
-<script setup lang="ts">
+```ts twoslash
 import { inject } from '@mpxjs/core'
 
-const foo = inject('foo') // 类型：unknown
-const foo = inject<string>('foo') // 类型：string | undefined
-const foo = inject<string>('foo', 'default value') // 类型：string ✅
-</script>
+const foo1 = inject('foo') // 类型：unknown
+const foo2 = inject<string>('foo') // 类型：string | undefined
+const foo3 = inject<string>('foo', 'default value') // 类型：string ✅
 ```
 
 当然，如果你已经确定注入名肯定被提供了，也可以强制断言。
 
-```ts
+```ts twoslash
+import { inject } from '@mpxjs/core'
+
 const foo = inject('foo') as string
 ```
 
 如果使用 `Symbol` 作为注入名，可以使用我们提供的 `InjectionKey` 泛型接口，使用它对注入名进行注解或者断言后，可以用来在不同组件之间同步注入值的类型。建议将注入 key 放在单独文件，这样方便在多个组件中导入使用。
 
-```ts{4}
+```ts{4} twoslash
+// @errors: 2345 1146 1005
 import { provide, inject } from '@mpxjs/core'
 import type { InjectionKey } from '@mpxjs/core'
 
 export const key: InjectionKey<string> = Symbol() // 类型注解
 // const key = Symbol() as InjectionKey<string> // 类型断言写法等效
 
-provide(key, 'foo') // 若默认值是非字符串则会 TS 类型报错
+provide(key, 'foo') // ✅
+provide(key, 123) // 提供值应当为字符串类型
 
-const foo = inject(key) // ✅ foo 的类型：string | undefined
-const foo = inject(key, 'default value') // ✅ foo 的类型：string
-const foo = inject(key, 1) // ❌ 默认值是非字符串则会 TS 类型报错
+const foo1 = inject(key) // ✅ foo1: string | undefined
+const foo2 = inject(key, 'default value') // ✅ foo2: string
+const foo3 = inject(key, 123) // 默认值应当为字符串类型
 ```
+
+> 👀 鼠标悬浮到上面代码可以查看具体 TS 类型
 
 ## 跨端差异
 

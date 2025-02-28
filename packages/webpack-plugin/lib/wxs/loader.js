@@ -20,7 +20,7 @@ module.exports.pitch = function (remainingRequest) {
   const mpx = this.getMpx()
   const mode = mpx.mode
   const getOutputPath = mpx.getOutputPath
-  let { resourcePath, queryObj } = parseRequest(this.resource)
+  let { resourcePath, queryObj, rawResourcePath } = parseRequest(this.resource)
   const issuer = moduleGraph.getIssuer(this._module)
   const { resourcePath: issuerResourcePath, queryObj: issuerQueryObj } = parseRequest(queryObj.issuerResource || issuer.resource)
   const issuerPackageName = issuerQueryObj.packageRoot || 'main'
@@ -37,7 +37,7 @@ module.exports.pitch = function (remainingRequest) {
 
   const wxsModule = queryObj.wxsModule
   if (wxsModule) {
-    resourcePath = `${resourcePath}~${wxsModule}`
+    resourcePath = `${rawResourcePath}~${wxsModule}`
   }
   const packageRoot = queryObj.packageRoot || ''
   const ext = config[mode].wxs.ext
