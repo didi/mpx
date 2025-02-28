@@ -10,8 +10,7 @@ interface RootPortalProps {
   children: ReactNode
   [x: string]: any
 }
-
-const _RootPortal = (props: RootPortalProps) => {
+const RootPortal = (props: RootPortalProps) => {
   const { children, enable = true } = props
   if (props.style) {
     warn('The root-portal component does not support the style prop.')
@@ -22,6 +21,6 @@ const _RootPortal = (props: RootPortalProps) => {
     : createElement(Fragment, null, children)
 }
 
-_RootPortal.displayName = 'MpxRootPortal'
+RootPortal.displayName = 'MpxRootPortal'
 
-export default _RootPortal
+export default RootPortal
