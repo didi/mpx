@@ -288,9 +288,11 @@ export default withPwa(
             },
             workbox: {
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
+                sourcemap: true,
+                navigateFallbackDenylist: [/^\/mpx-cube-ui/],
             },
             devOptions: {
-                enabled: true,
+                enabled: false,
                 suppressWarnings: true,
                 navigateFallback: "/",
             },
