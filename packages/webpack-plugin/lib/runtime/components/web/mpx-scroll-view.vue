@@ -44,6 +44,7 @@
       enhanced: Boolean,
       refresherEnabled: Boolean,
       refresherTriggered: Boolean,
+      enableSticky: Boolean,
       refresherThreshold: {
         type: Number,
         default: 45
@@ -55,6 +56,13 @@
       refresherBackground: {
         type: String,
         default: ''
+      }
+    },
+    provide () {
+      return {
+        scrollOffset: {
+          get: () => this.lastY
+        }
       }
     },
     data () {
@@ -251,7 +259,7 @@
           }
           this.lastX = x
           this.lastY = y
-        }, 30, {
+        }, this.enableSticky ? 0 : 30, {
           leading: true,
           trailing: true
         }))

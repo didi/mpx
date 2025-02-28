@@ -10,6 +10,10 @@ module.exports = function ({ print }) {
     ios (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-sticky-header'
+    },
+    web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-sticky-header'
     }
   }
 }
