@@ -1788,6 +1788,39 @@ try {
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
+
+          if (type === 'styles') {
+            let stylusIndex = -1
+            let sassIndex = -1
+            let lessIndex = -1
+            let cssIndex = -1
+
+            // 单次遍历收集所有索引
+            loaders.forEach((loader, index) => {
+              const currentLoader = toPosix(loader.loader)
+              if (currentLoader.includes('node_modules/stylus-loader')) {
+                stylusIndex = index
+              } else if (currentLoader.includes('node_modules/sass-loader')) {
+                sassIndex = index
+              } else if (currentLoader.includes('node_modules/less-loader')) {
+                lessIndex = index
+              } else if (currentLoader.includes('node_modules/css-loader')) {
+                cssIndex = index
+              }
+            })
+
+            if (stylusIndex !== -1) {
+              loaders.splice(stylusIndex, 0, { loader: styleStripConditionalPath })
+              loaders.splice(stylusIndex + 2, 0, { loader: styleStripConditionalPath })
+            } else if (lessIndex !== -1) {
+              loaders.splice(lessIndex + 1, 0, { loader: styleStripConditionalPath })
+            } else if (sassIndex !== -1) {
+              loaders.splice(sassIndex + 1, 0, { loader: styleStripConditionalPath })
+            } else if (cssIndex !== -1) {
+              loaders.splice(cssIndex + 1, 0, { loader: styleStripConditionalPath })
+            }
+          }
+
           switch (type) {
             case 'styles':
             case 'template': {
@@ -1834,20 +1867,6 @@ try {
             loaders.unshift({
               loader: extractorPath
             })
-          }
-          if (type === 'styles') {
-            // 判断最后一个loader是否是 selectorPath, 如果是，则在sectorPath之前插入strip-conditional
-            const lastLoader = loaders[loaders.length - 1]
-            if (lastLoader.loader.includes(selectorPath)) {
-              loaders.splice(loaders.length - 1, 0, {
-                loader: styleStripConditionalPath
-              })
-            } else {
-              // 在最后一个插入strip-conditional
-              loaders.push({
-                loader: styleStripConditionalPath
-              })
-            }
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }

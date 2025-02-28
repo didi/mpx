@@ -51,11 +51,11 @@ body { margin: 0; }
   .feature { color: red; }
   /*@mpx-else*/
   .feature { color: blue; }
-  /*@mpx-end*/
+  /*@mpx-endif*/
 }
 /*@mpx-else*/
 .desktop { display: block; }
-/*@mpx-end*/
+/*@mpx-endif*/
 header { color: red }
     `
     const output = cssIfLoader.call(context, inputCSS)
@@ -80,11 +80,11 @@ body { margin: 0; }
   .feature { color: red; }
   /*@mpx-else*/
   .feature { color: blue; }
-  /*@mpx-end*/
+  /*@mpx-endif */
 }
 /*@mpx-else*/
 .desktop { display: block; }
-/*@mpx-end*/
+/* @mpx-endif*/
     `
     const output = cssIfLoader.call(context, inputCSS)
     expect(output).toContain('.mobile')
@@ -108,7 +108,7 @@ header {}
 .tablet { display: block; }
 /*@mpx-else*/
 .desktop { display: block; }
-/*@mpx-end*/
+/*@mpx-endif */
 body {}
     `
     let output = cssIfLoader.call(context, inputCSS)
@@ -148,13 +148,13 @@ body {}
     const inputCSS = `
 /*@mpx-if(isMobile)*/
 .mobile { display: block; }
-/*@mpx-end*/
+/*@mpx-endif*/
 
 /*@mpx-if(showHeader)*/
 .header { height: 100px; }
 /*@mpx-else*/
 .header { height: 50px; }
-/*@mpx-end*/
+/*@mpx-endif*/
     `
     const output = cssIfLoader.call(context, inputCSS)
     // 第一个 if 块：isMobile 为 true，输出 .mobile
@@ -175,8 +175,8 @@ body {}
   .test1 {}
   /*@mpx-elif(showHeader)*/
   .test2 {}
-  /*@mpx-end*/
-/*@mpx-end*/
+  /*@mpx-endif*/
+/*@mpx-endif*/
     `
     const output = cssIfLoader.call(context, inputCSS)
     expect(output).toContain('.mobile')
