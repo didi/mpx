@@ -9,6 +9,7 @@ interface RootPortalProps {
   children: ReactNode
   [x: string]: any
 }
+
 const _RootPortal = (props: RootPortalProps) => {
   const { children, enable = true } = props
   if (props.style) {
