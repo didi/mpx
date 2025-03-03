@@ -232,35 +232,31 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }, [cursor, selectionStart, selectionEnd])
 
-  const onTextInput = ({ nativeEvent }: NativeSyntheticEvent<TextInputTextInputEventData>) => {
-    if (!bindinput && !bindblur) return
-    const {
-      range: { start, end },
-      text
-    } = nativeEvent
-    cursorIndex.current = start < end ? start : start + text.length
-  }
-
-  const onChange = (evt: NativeSyntheticEvent<TextInputChangeEventData>) => {
-    tmpValue.current = evt.nativeEvent.text
-    if (!bindinput) return
-    const result = bindinput(
-      getCustomEvent(
-        'input',
-        evt,
-        {
-          detail: {
-            value: evt.nativeEvent.text,
-            cursor: cursorIndex.current
+  const onChange = (evt: NativeSyntheticEvent<TextInputChangeEventData & TextInputSelectionChangeEventData>) => {
+    const { text, selection } = evt.nativeEvent
+    tmpValue.current = text
+    cursorIndex.current = selection.end
+    if (bindinput) {
+      const result = bindinput(
+        getCustomEvent(
+          'input',
+          evt,
+          {
+            detail: {
+              value: tmpValue.current,
+              cursor: cursorIndex.current
+            },
+            layoutRef
           },
-          layoutRef
-        },
-        props
+          props
+        )
       )
-    )
-    if (typeof result === 'string') {
-      tmpValue.current = result
-      setInputValue(result)
+      if (typeof result === 'string') {
+        tmpValue.current = result
+        setInputValue(result)
+      } else {
+        setInputValue(tmpValue.current)
+      }
     } else {
       setInputValue(tmpValue.current)
     }
@@ -275,12 +271,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }
 
-  const onInputTouchStart = () => {
+  const onTouchStart = () => {
     // sometimes the focus event occurs later than the keyboardWillShow event
     setKeyboardAvoidContext()
   }
 
-  const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
     setKeyboardAvoidContext()
     bindfocus && bindfocus(
       getCustomEvent(
@@ -297,7 +293,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     )
   }
 
-  const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const onBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
     bindblur && bindblur(
       getCustomEvent(
         'blur',
@@ -455,15 +451,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       },
       layoutProps,
       {
-        onTouchStart: onInputTouchStart,
-        onFocus: onInputFocus,
-        onBlur: onInputBlur,
+        onTouchStart,
+        onFocus,
+        onBlur,
+        onChange,
+        onSelectionChange,
+        onContentSizeChange,
         onKeyPress: bindconfirm && onKeyPress,
-        onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
-        onSelectionChange: onSelectionChange,
-        onTextInput: onTextInput,
-        onChange: onChange,
-        onContentSizeChange: onContentSizeChange
+        onSubmitEditing: bindconfirm && multiline && onSubmitEditing
       }
     ),
     [
