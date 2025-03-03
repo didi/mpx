@@ -289,7 +289,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // 从 prop style 中获取样式初始值 没有为undefined
   function getOriginalStyleVal (key: keyof ExtendedViewStyle, isTransform = false) {
     if (isTransform && Array.isArray(originalStyle.transform)) {
-      let initialVal = undefined // InitialValue[key]
+      let initialVal // InitialValue[key]
       // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
       originalStyle.transform.forEach(item => {
         if (item[key] !== undefined) initialVal = item[key]
