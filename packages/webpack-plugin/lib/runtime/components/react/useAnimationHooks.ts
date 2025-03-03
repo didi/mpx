@@ -185,8 +185,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   // const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean|number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
@@ -212,6 +212,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     createAnimation(keys)
   }, [id])
   // 同步style更新
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     Object.keys(animatedKeys.current).forEach(key => {
       const originVal = getOriginalStyleVal(key, isTransform(key))
