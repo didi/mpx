@@ -2,6 +2,15 @@
 
 ## 快速使用 RN
 
+``` bash
+# ios
+npx mpx-cli-service build --targets=ios
+# android
+npx mpx-cli-service build --targets=android
+# harmony
+npx mpx-cli-service build --targets=harmony
+```
+
 
 ## 跨端样式定义
 RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation、transition 等等）。
