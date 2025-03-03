@@ -346,6 +346,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     onStartReached(e)
     onEndReached(e)
+    updateIntersection()
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -458,10 +459,18 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   )
 
+  function onScrollDragStart (e: NativeSyntheticEvent<NativeScrollEvent>) {
+    hasCallScrollToLower.current = false
+    hasCallScrollToUpper.current = false
+    onScrollDrag(e)
+  }
+
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
       style: extendObject({}, innerStyle, layoutStyle),
       pinchGestureEnabled: false,
+      alwaysBounceVertical: false,
+      alwaysBounceHorizontal: false,
       horizontal: scrollX && !scrollY,
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
@@ -472,9 +481,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       onScroll: enableSticky ? scrollHandler: onScroll,
       onContentSizeChange: onContentSizeChange,
       bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
-      bindtouchmove: ((enhanced && binddragging) || bindtouchend) && onScrollTouchMove,
+      bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
       bindtouchend: ((enhanced && binddragend) || bindtouchend) && onScrollTouchEnd,
-      onScrollBeginDrag: onScrollDrag,
+      onScrollBeginDrag: onScrollDragStart,
       onScrollEndDrag: onScrollDrag,
       onMomentumScrollEnd: onScrollEnd
     },

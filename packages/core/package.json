@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.9.73",
+  "version": "2.10.0",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -19,7 +19,7 @@
   ],
   "main": "src/index.js",
   "dependencies": {
-    "@mpxjs/utils": "^2.9.73",
+    "@mpxjs/utils": "^2.10.0",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"
   },
@@ -36,6 +36,7 @@
     "react-native-reanimated": "^3.15.2",
     "react-native-safe-area-context": "^4.14.0",
     "react-native-screens": "^4.1.0",
+    "react-native-video": "^6.9.0",
     "react-native-webview": "^13.10.5",
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6",
@@ -86,6 +87,9 @@
       "optional": true
     },
     "@d11/react-native-fast-image": {
+      "optional": true
+    },
+    "react-native-video": {
       "optional": true
     }
   },

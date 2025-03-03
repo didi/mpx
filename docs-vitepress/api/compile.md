@@ -52,11 +52,21 @@ interface Rules {
 
 Mpx 编译构建跨平台小程序和 web 的 webpack 主插件，安装示例如下：
 
-```bash 
+::: code-group
+
+```sh [npm]
 npm install -D @mpxjs/webpack-plugin
-pnpm install -D @mpxjs/webpack-plugin
+```
+
+```sh [pnpm]
+pnpm add -D @mpxjs/webpack-plugin
+```
+
+```sh [yarn]
 yarn add -D @mpxjs/webpack-plugin
 ```
+
+:::
 
 使用示例如下：
 ```javascript
@@ -284,7 +294,7 @@ module.exports = defineConfig({
     mpx: {
       plugin: {
         forceProxyEventRules: {
-          include: ['bindtap']
+          include: ['src/packages/index.mpx']
         }
       }
     }
