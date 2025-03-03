@@ -1,7 +1,7 @@
 /**
  * ✔ enable
  */
-import { ReactNode, createElement, Fragment, useContext } from 'react'
+import { ReactNode, createElement, Fragment } from 'react'
 import Portal from './mpx-portal'
 import { warn } from '@mpxjs/utils'
 import { VarContext } from './context'
@@ -16,9 +16,9 @@ const _RootPortal = (props: RootPortalProps) => {
   if (props.style) {
     warn('The root-portal component does not support the style prop.')
   }
-  const varContext = useContext(VarContext)
+  
   return enable
-    ? createElement(Portal, { varContext }, children)
+    ? createElement(Portal, null, children)
     : createElement(Fragment, null, children)
 }
 
