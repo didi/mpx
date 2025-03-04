@@ -1,6 +1,6 @@
 
-import React, { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement } from 'react'
-import { Animated, StyleSheet, View, NativeSyntheticEvent } from 'react-native'
+import  { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode } from 'react'
+import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle } from 'react-native'
 import { ScrollViewContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
@@ -33,8 +33,8 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const contentHeight = useRef(0)
   const [headerTop, setHeaderTop] = useState(0)
   const scrollViewContext = useContext(ScrollViewContext)
-  const scrollOffset = scrollViewContext.scrollOffset
-  const headerRef = useRef(null)
+  const { scrollOffset, scrollLayoutRef } = scrollViewContext
+  const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
 
   const {
@@ -68,7 +68,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
-      const newIsStickOnTop = currentScrollValue > headerTop
+      const newIsStickOnTop = currentScrollValue > (headerTop - (scrollLayoutRef.current.offsetTop || 0))
       if (newIsStickOnTop !== isStickOnTopRef.current) {
         isStickOnTopRef.current = newIsStickOnTop
         bindstickontopchange(
@@ -88,9 +88,10 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const animatedStyle = useMemo(() => {
     const threshold = 1
+    const realHeaderTop = headerTop - (scrollLayoutRef.current.offsetTop || 0)
 
     const inputRange =
-      headerTop <= threshold ? [0, 1] : [headerTop - 1, headerTop]
+     realHeaderTop <= threshold ? [0, 1] : [realHeaderTop - 1, realHeaderTop]
 
     const outputRange = [0, 1]
 
@@ -100,7 +101,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         outputRange,
         extrapolate: 'clamp'
       }),
-      Animated.subtract(scrollOffset, headerTop <= threshold ? -offsetTop : headerTop)
+      Animated.subtract(scrollOffset, realHeaderTop <= threshold ? -offsetTop : realHeaderTop)
     )
 
     return {
@@ -133,7 +134,6 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 const styles = StyleSheet.create({
   content: {
     width: '100%',
-    boxSizing: 'border-box',
     zIndex: 10
   }
 })

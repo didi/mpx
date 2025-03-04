@@ -199,14 +199,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     gestureRef: scrollViewRef
   })
 
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+
   const contextValue = useMemo(() => {
     return {
       gestureRef: scrollViewRef,
-      scrollOffset
+      scrollOffset,
+      scrollLayoutRef: layoutRef
     }
   }, [])
-
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
   if (scrollX && scrollY) {
     warn('scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
@@ -532,9 +533,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
-  let ScrollViewComponent = ScrollView
+  let ScrollViewComponent: React.ComponentType<any> = ScrollView
   if (enableSticky) {
-    ScrollViewComponent = Animated.createAnimatedComponent(ScrollView)
+    ScrollViewComponent = Animated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
   }
 
   return createElement(

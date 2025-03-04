@@ -1,5 +1,5 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent } from 'react-native'
+import { NativeSyntheticEvent, Animated } from 'react-native'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
@@ -43,7 +43,9 @@ export interface PortalContextValue {
 }
 
 export interface ScrollViewContextValue {
-   gestureRef: React.RefObject<any> | null
+  gestureRef: React.RefObject<any> | null,
+  scrollOffset: Animated.Value,
+  scrollLayoutRef: React.RefObject<any>
 }
 
 export interface RouteContextValue {
@@ -73,6 +75,6 @@ export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0), scrollLayoutRef: { current: {} } })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
