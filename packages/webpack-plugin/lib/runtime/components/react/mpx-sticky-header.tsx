@@ -1,5 +1,5 @@
 
-import  { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode } from 'react'
+import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode } from 'react'
 import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle } from 'react-native'
 import { ScrollViewContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -9,6 +9,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 interface StickyHeaderProps {
   children?: ReactNode;
   style?: ViewStyle;
+  padding?: [number, number, number, number];
   'offset-top'?: number;
   'enable-var'?: boolean;
   'external-var-context'?: Record<string, any>;
@@ -23,6 +24,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const {
     style,
     bindstickontopchange,
+    padding = [0, 0, 0, 0],
     'offset-top': offsetTop = 0,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -111,7 +113,12 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const innerProps = useInnerProps(props, {
     ref: headerRef,
-    style: extendObject({}, styles.content, innerStyle, animatedStyle)
+    style: extendObject({}, styles.content, innerStyle, animatedStyle, {
+      paddingTop: padding[0] || 0,
+      paddingRight: padding[1] || 0,
+      paddingBottom: padding[2] || 0,
+      paddingLeft: padding[3] || 0
+    })
   }, [], { layoutRef })
 
   return (
