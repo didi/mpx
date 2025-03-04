@@ -587,7 +587,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-      const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
+      const keyboardAvoidRef = useRef(null)
       const onLayout = useCallback(() => {
         rootRef.current?.measureInWindow((x, y, width, height) => {
           navigation.layout = { x, y, width, height }

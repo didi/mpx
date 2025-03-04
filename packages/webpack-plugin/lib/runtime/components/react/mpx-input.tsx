@@ -263,11 +263,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const setKeyboardAvoidContext = () => {
-    if (adjustPosition && keyboardAvoid?.current) {
-      extendObject(keyboardAvoid.current, {
-        cursorSpacing,
-        ref: nodeRef
-      })
+    if (adjustPosition && keyboardAvoid) {
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef }
     }
   }
 

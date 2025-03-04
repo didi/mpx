@@ -29,10 +29,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   })
 
   const resetKeyboard = () => {
-    keyboardAvoid?.current && extendObject(keyboardAvoid.current, {
-      cursorSpacing: 0,
-      ref: null
-    })
+    if (keyboardAvoid?.current) {
+      keyboardAvoid.current = null
+    }
     offset.value = withTiming(0, { duration, easing })
     basic.value = 'auto'
   }
