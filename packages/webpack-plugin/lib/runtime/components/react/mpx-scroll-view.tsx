@@ -478,7 +478,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       showsVerticalScrollIndicator: scrollY && showScrollbar,
       scrollEnabled: scrollX || scrollY,
       ref: scrollViewRef,
-      onScroll: enableSticky ? scrollHandler: onScroll,
+      onScroll: enableSticky ? scrollHandler : onScroll,
       onContentSizeChange: onContentSizeChange,
       bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
       bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
