@@ -5,11 +5,11 @@ module.exports = function ({ print }) {
     test: TAG_NAME,
     android (tag, { el }) {
       el.isBuiltIn = true
-      return 'View'
+      return 'mpx-sticky-section'
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
-      return 'View'
+      return "mpx-sticky-section";
     },
     web (tag, { el }) {
       return 'div'
