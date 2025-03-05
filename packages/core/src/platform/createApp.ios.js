@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, encodeObjValues } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -111,7 +111,7 @@ export default function createApp (options) {
         const current = state.routes[state.index]
         const options = {
           path: current.name,
-          query: current.params,
+          query: encodeObjValues(current.params),
           scene: 0,
           shareTicket: '',
           referrerInfo: {},
@@ -140,7 +140,7 @@ export default function createApp (options) {
             const current = state.routes[state.index]
             options = {
               path: current.name,
-              query: current.params,
+              query: encodeObjValues(current.params),
               scene: 0,
               shareTicket: '',
               referrerInfo: {}

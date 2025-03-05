@@ -1,4 +1,4 @@
-import { isArray, type, forEach } from './base'
+import { isArray, type, forEach, isObject } from './base'
 
 function encode (val) {
   return encodeURIComponent(val)
@@ -6,6 +6,18 @@ function encode (val) {
 
 function decode (val) {
   return decodeURIComponent(val)
+}
+
+function encodeObjValues (obj) {
+  let retObj = {}
+  if (isObject(obj)) {
+    for (const key in obj) {
+      retObj[key] = encodeURIComponent(obj[key])
+    }
+  } else {
+    retObj = obj
+  }
+  return retObj
 }
 
 function isURLSearchParams (val) {
@@ -157,5 +169,6 @@ export {
   parseUrl,
   parseQuery,
   parseUrlQuery,
-  serialize
+  serialize,
+  encodeObjValues
 }
