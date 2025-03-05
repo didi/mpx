@@ -194,6 +194,7 @@ export default function createApp (options) {
     if (headerBackImageSource) {
       navScreenOpts.headerBackImageSource = headerBackImageSource
     }
+
     return createElement(SafeAreaProvider,
       null,
       createElement(NavigationContainer,

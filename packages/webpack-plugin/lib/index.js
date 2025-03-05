@@ -54,6 +54,7 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
+const styleStripConditionalPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -1507,12 +1508,12 @@ class MpxWebpackPlugin {
                 '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
                 '    var arr = $1.split(", ")\n' +
                 '    var str = ""\n' +
-                '    var pattern = /(.*):(.*)/\n' +
+                '    var pattern = /(\\w+)(?::\\s*(\\w+))?/\n' +
                 '    for (var i = 0; i < arr.length; i++) {\n' +
                 '      var result = arr[i].match(pattern)\n' +
                 '      var left = result[1]\n' +
-                '      var right = result[2]\n' +
-                '      str += "var" + right + " = ctx." + left\n' +
+                '      var right = result[2] || left\n' +
+                '      str += "var " + right + " = ctx." + left + ";\\n  "\n' +
                 '    }\n' +
                 '    return str\n' +
                 '  })\n' +
@@ -1787,6 +1788,23 @@ try {
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
+
+          if (type === 'styles') {
+            let insertBeforeIndex = -1
+            // 单次遍历收集所有索引
+            loaders.forEach((loader, index) => {
+              const currentLoader = toPosix(loader.loader)
+              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
+                insertBeforeIndex = index
+              }
+            })
+
+            if (insertBeforeIndex !== -1) {
+              loaders.splice(insertBeforeIndex, 0, { loader: styleStripConditionalPath })
+            }
+            loaders.push({ loader: styleStripConditionalPath })
+          }
+
           switch (type) {
             case 'styles':
             case 'template': {

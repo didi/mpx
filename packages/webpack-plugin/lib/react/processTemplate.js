@@ -28,9 +28,10 @@ module.exports = function (template, {
     externalClasses,
     checkUsingComponents,
     autoVirtualHostRules,
+    forceProxyEventRules,
     customTextRules
   } = mpx
-  const { resourcePath } = parseRequest(loaderContext.resource)
+  const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
   let genericsInfo
@@ -77,7 +78,7 @@ module.exports = function (template, {
         // todo 后续输出web也采用mpx的scoped处理
         hasScoped: false,
         moduleId,
-        filePath: resourcePath,
+        filePath: rawResourcePath,
         // react中模版i18n不需要特殊处理
         i18n: null,
         checkUsingComponents,
@@ -86,12 +87,13 @@ module.exports = function (template, {
         // web模式下实现抽象组件
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
+        forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
         isCustomText: matchCondition(resourcePath, customTextRules)
       })
 
       if (meta.wxsContentMap) {
         for (const module in meta.wxsContentMap) {
-          wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+          wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
         }
       }
       if (meta.builtInComponentsMap) {
