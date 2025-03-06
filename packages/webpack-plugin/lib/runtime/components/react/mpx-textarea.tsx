@@ -25,7 +25,11 @@ const DEFAULT_TEXTAREA_HEIGHT = 150
 
 const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
   (props, ref): JSX.Element => {
-    const { style = {} } = props
+    const {
+      style = {},
+      'auto-height': autoHeight = false,
+      'confirm-type': confirmType = 'text'
+    } = props
 
     const restProps = omit(props, [
       'ref',
@@ -33,19 +37,21 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
       'style',
       'password',
       'multiline',
+      'auto-height',
+      'confirm-type',
       'confirm-hold'
     ])
 
     return createElement(
       Input,
       extendObject(restProps, {
-        ref: ref,
+        ref,
+        autoHeight,
+        confirmType,
         multiline: true,
-        confirmType: 'next',
-        bindblur: () => Keyboard.dismiss(),
         style: extendObject({
           width: DEFAULT_TEXTAREA_WIDTH,
-          height: DEFAULT_TEXTAREA_HEIGHT
+          height: autoHeight ? 'auto' : DEFAULT_TEXTAREA_HEIGHT
         }, style)
       })
     )
