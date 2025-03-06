@@ -73,6 +73,8 @@ type InputStyle = Omit<
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
 
+type ConfirmType = 'done' | 'send' | 'search' | 'next' | 'go' | 'return'
+
 export interface InputProps {
   name?: string
   style?: InputStyle & Record<string, any>
@@ -85,7 +87,7 @@ export interface InputProps {
   maxlength?: number
   'auto-focus'?: boolean
   focus?: boolean
-  'confirm-type'?: 'done' | 'send' | 'search' | 'next' | 'go'
+  'confirm-type'?: ConfirmType
   'confirm-hold'?: boolean
   cursor?: number
   'cursor-color'?: string
@@ -437,7 +439,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         maxLength: maxlength === -1 ? undefined : maxlength,
         editable: !disabled,
         autoFocus: !!autoFocus || !!focus,
-        returnKeyType: confirmType,
         selection: selection,
         selectionColor: cursorColor,
         blurOnSubmit: !multiline && !confirmHold,
@@ -446,6 +447,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         placeholderTextColor: placeholderTextColor,
         multiline: !!multiline
       },
+      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType },
       layoutProps,
       {
         onTouchStart,

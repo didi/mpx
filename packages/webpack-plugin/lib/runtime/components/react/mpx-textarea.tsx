@@ -10,7 +10,7 @@
  *     ✔ bindlinechange: No `heightRpx` info.
  */
 import { JSX, forwardRef, createElement } from 'react'
-import { Keyboard, TextInput } from 'react-native'
+import { TextInput } from 'react-native'
 import Input, { InputProps, PrivateInputProps } from './mpx-input'
 import { omit, extendObject } from './utils'
 import { HandlerRef } from './useNodesRef'
@@ -28,7 +28,7 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
     const {
       style = {},
       'auto-height': autoHeight = false,
-      'confirm-type': confirmType = 'text'
+      'confirm-type': confirmType = 'return'
     } = props
 
     const restProps = omit(props, [
@@ -46,9 +46,10 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
       Input,
       extendObject(restProps, {
         ref,
-        autoHeight,
         confirmType,
         multiline: true,
+        'auto-height': autoHeight,
+        'confirm-type': confirmType,
         style: extendObject({
           width: DEFAULT_TEXTAREA_WIDTH,
           height: autoHeight ? 'auto' : DEFAULT_TEXTAREA_HEIGHT
