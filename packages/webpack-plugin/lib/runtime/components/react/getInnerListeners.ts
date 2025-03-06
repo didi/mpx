@@ -1,7 +1,6 @@
 import { useRef, useMemo, RefObject } from 'react'
 import { hasOwn, collectDataset } from '@mpxjs/utils'
-import { useNavigation } from '@react-navigation/native'
-import { omit, extendObject } from './utils'
+import { omit, extendObject, useNavigation } from './utils'
 import eventConfigMap from './event.config'
 import {
   Props,

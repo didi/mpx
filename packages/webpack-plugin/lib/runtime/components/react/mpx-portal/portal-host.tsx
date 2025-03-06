@@ -62,7 +62,7 @@ const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _nextKey = useRef(0)
   const manager = useRef<PortalManagerContextValue | null>(null)
   const queue = useRef<Array<{ type: string, key: number; children: ReactNode }>>([])
-  const pageId = useContext(RouteContext)
+  const { pageId } = useContext(RouteContext) || {}
   const mount = (children: ReactNode, _key?: number, id?: number|null) => {
     if (id !== pageId) return
     const key = _key || _nextKey.current++

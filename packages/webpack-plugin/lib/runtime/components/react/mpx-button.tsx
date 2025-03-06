@@ -219,7 +219,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     bindtap
   } = props
 
-  const pageId = useContext(RouteContext)
+  const { pageId } = useContext(RouteContext) || {}
 
   const formContext = useContext(FormContext)
 

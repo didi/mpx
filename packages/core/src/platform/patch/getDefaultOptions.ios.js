@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useState, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -10,6 +10,7 @@ import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
 
 const ProviderContext = createContext(null)
 
@@ -442,7 +443,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
-    const pageId = useContext(RouteContext)
+    const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
@@ -569,7 +570,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
-      const [enabled, setEnabled] = useState(false)
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
@@ -587,6 +587,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
+      const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
       const onLayout = useCallback(() => {
         rootRef.current?.measureInWindow((x, y, width, height) => {
           navigation.layout = { x, y, width, height }
@@ -594,27 +595,22 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const withKeyboardAvoidingView = (element) => {
-        if (__mpx_mode__ === 'ios') {
-          return createElement(KeyboardAvoidContext.Provider,
+        return createElement(KeyboardAvoidContext.Provider,
+          {
+            value: keyboardAvoidRef
+          },
+          createElement(KeyboardAvoidingView,
             {
-              value: setEnabled
-            },
-            createElement(ReactNative.KeyboardAvoidingView,
-              {
-                style: {
-                  flex: 1
-                },
-                contentContainerStyle: {
-                  flex: 1
-                },
-                behavior: 'position',
-                enabled
+              style: {
+                flex: 1
               },
-              element
-            )
+              contentContainerStyle: {
+                flex: 1
+              }
+            },
+            element
           )
-        }
-        return element
+        )
       }
 
       navigation.insets = useSafeAreaInsets()
@@ -642,7 +638,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             },
             createElement(RouteContext.Provider,
               {
-                value: currentPageId
+                value: {
+                  pageId: currentPageId,
+                  navigation
+                }
               },
               createElement(IntersectionObserverContext.Provider,
                 {

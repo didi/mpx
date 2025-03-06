@@ -20,11 +20,17 @@ export type TextareProps = Omit<
   'type' | 'password' | 'multiline' | 'confirm-hold'
 >
 
+const DEFAULT_TEXTAREA_WIDTH = 300
+const DEFAULT_TEXTAREA_HEIGHT = 150
+
 const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
   (props, ref): JSX.Element => {
+    const { style = {} } = props
+
     const restProps = omit(props, [
       'ref',
       'type',
+      'style',
       'password',
       'multiline',
       'confirm-hold'
@@ -32,12 +38,16 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
 
     return createElement(
       Input,
-      extendObject({
+      extendObject(restProps, {
         ref: ref,
         multiline: true,
         confirmType: 'next',
-        bindblur: () => Keyboard.dismiss()
-      }, restProps)
+        bindblur: () => Keyboard.dismiss(),
+        style: extendObject({
+          width: DEFAULT_TEXTAREA_WIDTH,
+          height: DEFAULT_TEXTAREA_HEIGHT
+        }, style)
+      })
     )
   }
 )
