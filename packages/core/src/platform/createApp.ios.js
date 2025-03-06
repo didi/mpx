@@ -56,6 +56,7 @@ export default function createApp (options) {
   const Stack = createStackNavigator()
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pages).map(([key, item]) => {
+      console.log('the key and name is:', key, item) // todo page name
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
