@@ -61,7 +61,10 @@
     "source-list-map": "^2.0.0"
   },
   "peerDependencies": {
-    "webpack": "^5.48.0"
+    "webpack": "^5.48.0",
+    "@hummer/tenon-dev-server-webpack-plugin": "0.0.2",
+    "@hummer/tenon-loader": "^1.2.0",
+    "@hummer/tenon-style-loader": "^0.2.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
