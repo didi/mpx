@@ -5,8 +5,7 @@ import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { getCurrentPage } from './utils'
-import { useNavigation } from '@react-navigation/native'
+import { getCurrentPage, useNavigation } from './utils'
 import { WebViewHttpErrorEvent, WebViewEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 import { StyleSheet, View, Text } from 'react-native'
@@ -95,7 +94,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
-  const pageId = useContext(RouteContext)
+  const { pageId } = useContext(RouteContext) || {}
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
   const webViewRef = useRef<WebView>(null)
