@@ -362,7 +362,6 @@ function usePageEffect (mpxProxy, pageId) {
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
-    set(pageStatusMap, pageId, '')
     if (hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
@@ -385,6 +384,9 @@ const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
+  if (!hasOwn(pageStatusMap, pageId)) {
+    set(pageStatusMap, pageId, '')
+  }
   useEffect(() => {
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
