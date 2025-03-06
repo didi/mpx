@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { reactive, set, del } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, encodeObjValues } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -506,14 +506,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
           global.__mpxAppOnLaunch(props.navigation)
         }
-        const loadParams = {}
         // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-        if (isObject(props.route.params)) {
-          for (const key in props.route.params) {
-            loadParams[key] = encodeURIComponent(props.route.params[key])
-          }
-        }
-        proxy.callHook(ONLOAD, [loadParams])
+        proxy.callHook(ONLOAD, [encodeObjValues(props.route.params)])
       }
       proxy.mounted()
       return () => {
