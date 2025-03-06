@@ -19,7 +19,7 @@ function getAsyncChunkName (chunkName) {
 }
 
 function getAsyncComponent (type, componentName, componentRequest, chunkName, fallbackComponentRequest = mpxViewRequest) {
-  const str = `
+  const componentStr = `
     function (props) {
       return createElement(Suspense,
         {
@@ -30,7 +30,7 @@ function getAsyncComponent (type, componentName, componentRequest, chunkName, fa
             return import(${getAsyncChunkName(chunkName)}${componentRequest})
               // .catch(function() {
               //   return {
-              //     default: getComponent(require(${fallbackComponentRequest})) // todo 是否需要加 catch 功能，会导致递归渲染
+              //     default: getComponent(require(${fallbackComponentRequest})) // todo 是否需要加 catch 功能
               //   }
               // })
           }),
@@ -45,8 +45,8 @@ function getAsyncComponent (type, componentName, componentRequest, chunkName, fa
   `
 
   return type === 'page'
-    ? `getComponent(${str}, {__mpxPageRoute: ${JSON.stringify(componentName)}, displayName: "Page"})`
-    : str
+    ? `getComponent(${componentStr}, {__mpxPageRoute: ${JSON.stringify(componentName)}, displayName: "Page"})`
+    : componentStr
 }
 
 function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig }) {
