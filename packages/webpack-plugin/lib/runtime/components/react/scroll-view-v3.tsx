@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 import { ScrollView, RefreshControl, Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Animated as RNAnimated } from 'react-native'
 import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle, runOnJS, useAnimatedScrollHandler } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
@@ -201,6 +201,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       gestureRef: scrollViewRef
     }
   }, [])
+
+  const refresherHeight = useSharedValue(0)
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
@@ -439,13 +441,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const translateY = useSharedValue(0)
   const isAtTop = useSharedValue(true)
   const [refreshing, setRefreshing] = useState(false)
+  const scrollOffset = useRef(new RNAnimated.Value(0)).current
 
   // 监听滚动位置
-  const handleScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      isAtTop.value = event.contentOffset.y <= 0
+  const handleScroll = RNAnimated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        isAtTop.value = event.nativeEvent.contentOffset.y <= 0
+        onScroll(event)
+      }
     }
-  })
+  )
 
   // 处理刷新
   const onRefresh = () => {
@@ -464,14 +472,14 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       // 只有在顶部才能下拉
       if (isAtTop.value && event.translationY > 0 && !refreshing) {
         // 阻尼效果
-        translateY.value = Math.min(event.translationY * 0.6, 120)
+        translateY.value = Math.min(event.translationY * 0.6, refresherHeight.value)
       }
     })
-    .onEnd(() => {
+    .onEnd((event) => {
       'worklet'
-      if (translateY.value > 80 && !refreshing) {
+      if (event.translationY >= 80 && !refreshing) {
         // 触发刷新
-        translateY.value = withTiming(60)
+        translateY.value = withTiming(refresherHeight.value)
         runOnJS(onRefresh)()
       } else if (!refreshing) {
         // 回弹
@@ -479,40 +487,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       }
     })
     .simultaneousWithExternalGesture(scrollViewRef)
-
-  const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
-    {
-      style: extendObject({}, innerStyle, layoutStyle),
-      pinchGestureEnabled: false,
-      alwaysBounceVertical: false,
-      alwaysBounceHorizontal: false,
-      horizontal: scrollX && !scrollY,
-      scrollEventThrottle: scrollEventThrottle,
-      scrollsToTop: enableBackToTop,
-      showsHorizontalScrollIndicator: scrollX && showScrollbar,
-      showsVerticalScrollIndicator: scrollY && showScrollbar,
-      scrollEnabled: scrollX || scrollY,
-      ref: scrollViewRef,
-      onScroll: onScroll,
-      onContentSizeChange: onContentSizeChange,
-      bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
-      bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
-      bindtouchend: ((enhanced && binddragend) || bindtouchend) && onScrollTouchEnd,
-      onScrollBeginDrag: onScrollDragStart,
-      onScrollEndDrag: onScrollDrag,
-      onMomentumScrollEnd: onScrollEnd
-    },
-    (simultaneousHandlers ? { simultaneousHandlers } : {}),
-    (waitForHandlers ? { waitFor: waitForHandlers } : {}),
-    layoutProps
-  )
-
-  if (enhanced) {
-    Object.assign(scrollAdditionalProps, {
-      bounces,
-      pagingEnabled
-    })
-  }
 
   const getRefresherContent = (children: ReactNode) => {
     let refresherContent = null
@@ -533,6 +507,40 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   const { refresherContent, otherContent } = getRefresherContent(props.children)
+
+  const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
+    {
+      style: extendObject({}, innerStyle, layoutStyle),
+      pinchGestureEnabled: false,
+      alwaysBounceVertical: false,
+      alwaysBounceHorizontal: false,
+      horizontal: scrollX && !scrollY,
+      scrollEventThrottle: scrollEventThrottle,
+      scrollsToTop: enableBackToTop,
+      showsHorizontalScrollIndicator: scrollX && showScrollbar,
+      showsVerticalScrollIndicator: scrollY && showScrollbar,
+      scrollEnabled: refreshing ? false : (scrollX || scrollY),
+      ref: scrollViewRef,
+      onScroll: refresherContent ? handleScroll : onScroll,
+      onContentSizeChange: onContentSizeChange,
+      bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
+      bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
+      bindtouchend: ((enhanced && binddragend) || bindtouchend) && onScrollTouchEnd,
+      onScrollBeginDrag: onScrollDragStart,
+      onScrollEndDrag: onScrollDrag,
+      onMomentumScrollEnd: onScrollEnd
+    },
+    (simultaneousHandlers ? { simultaneousHandlers } : {}),
+    (waitForHandlers ? { waitFor: waitForHandlers } : {}),
+    layoutProps
+  )
+
+  if (enhanced) {
+    Object.assign(scrollAdditionalProps, {
+      bounces,
+      pagingEnabled
+    })
+  }
 
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
     'id',
@@ -565,14 +573,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   // 刷新控件的动画样式
   const refresherAnimatedStyle = useAnimatedStyle(() => {
     // 这里要计算的是刷新控件应该显示多少
-    // 从 -60 位置慢慢移动到 0 位置
     return {
-      height: 60,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: -60, // 初始隐藏在顶部
-      transform: [{ translateY: Math.min(translateY.value, 60) }], // 独立的转换值
-      backgroundColor: props.refresherBackground || '#ffffff'
+      marginTop: -refresherHeight.value, // 初始隐藏在顶部
+      transform: [{ translateY: Math.min(translateY.value, refresherHeight.value) }]
     }
   })
 
@@ -580,46 +583,40 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const contentAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{
-        translateY: translateY.value > 60 ? 60 // 超过60后，保持60的差距
+        translateY: translateY.value > refresherHeight.value
+          ? refresherHeight.value
           : translateY.value
-      }] // 60以内，正常移动
+      }]
     }
   })
+
+  const onRefresherLayout = (e: LayoutChangeEvent) => {
+    const { height } = e.nativeEvent.layout
+    refresherHeight.value = height
+  }
   useEffect(() => {
     if (refresherTriggered !== undefined) {
       setRefreshing(!!refresherTriggered)
 
       if (refresherTriggered) {
-        translateY.value = withTiming(60)
+        translateY.value = withTiming(refresherHeight.value)
       } else {
         translateY.value = withTiming(0, { duration: 300 })
       }
     }
   }, [refresherTriggered])
-  // 刷新控件样式
-  const refresherStyle = {
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -60, // 初始隐藏在上方
-    overflow: 'hidden'
-  }
-  const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
+
+  const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView)
 
   return (
    <GestureDetector gesture={panGesture}>
       <View style={{ flex: 1, overflow: 'hidden' }}>
-        {/* 整个内容一起移动 */}
           <AnimatedScrollView
             {...innerProps}
-            scrollEnabled={!refreshing}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            simultaneousHandlers={panGesture}
           >
             {/* 刷新控件 - 有独立的动画 */}
-          <Animated.View style={refresherAnimatedStyle}>
-            {refresherContent }
+          <Animated.View style={refresherAnimatedStyle} onLayout={onRefresherLayout}>
+            {refresherContent}
           </Animated.View>
 
           {/* 内容区域 - 有独立的动画 */}
