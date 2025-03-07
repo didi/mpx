@@ -237,7 +237,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const onChange = (evt: NativeSyntheticEvent<TextInputChangeEventData & TextInputSelectionChangeEventData>) => {
     const { text, selection } = evt.nativeEvent
     tmpValue.current = text
-    cursorIndex.current = selection.end
+    // Todo have not `selection` on the Android platform, and `onSelection` is later than `onChange`
+    cursorIndex.current = selection?.end || 0
     if (bindinput) {
       const result = bindinput(
         getCustomEvent(
