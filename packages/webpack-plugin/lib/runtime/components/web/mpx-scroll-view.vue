@@ -62,6 +62,9 @@
       return {
         scrollOffset: {
           get: () => this.lastY
+        },
+        scrollViewRect: {
+          get: () => this.scrollViewRect
         }
       }
     },
@@ -76,7 +79,8 @@
         lastContentWidth: 0,
         lastContentHeight: 0,
         lastWrapperWidth: 0,
-        lastWrapperHeight: 0
+        lastWrapperHeight: 0,
+        scrollViewRect: {}
       }
     },
     computed: {
@@ -335,6 +339,7 @@
         const scrollWrapperHeight = wrapper?.clientHeight || 0
         if (wrapper) {
           const computedStyle = getComputedStyle(wrapper)
+          this.scrollViewRect = wrapper.getBoundingClientRect()
           // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
           // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
           this.$refs.innerWrapper.style.width = `${scrollWrapperWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`

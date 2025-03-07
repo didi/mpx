@@ -3,7 +3,7 @@ import { getCustomEvent } from './getInnerListeners'
 
 export default {
   name: 'mpx-sticky-header',
-  inject: ['scrollOffset'],
+  inject: ['scrollOffset', 'scrollViewRect'],
   props: {
     'offsetTop': {
       type: Number,
@@ -13,22 +13,21 @@ export default {
   data () {
     return {
       headerTop: 0,
-      isStickOnTop: false
+      isStickOnTop: false,
+      headerRect: {}
     }
   },
   computed: {
     _scrollOffset () {
       return -this.scrollOffset?.get() || 0
+    },
+    _scrollViewRect () {
+      return this.scrollViewRect?.get() || {}
     }
   },
   mounted () {
-    if (!this.$parent?.$refs?.wrapper) {
-      console.error('[Mpx runtime error]: sticky-header must be placed inside a scroll-view component')
-      return
-    }
-    const rect = this.$el.getBoundingClientRect()
-    const scrollViewRect = this.$parent.$refs.wrapper.getBoundingClientRect()
-    this.headerTop = rect.top - scrollViewRect.top - this.offsetTop
+    this.headerRect = this.$el.getBoundingClientRect()
+    this.headerTop = this.headerRect.top - (this._scrollViewRect.top || 0) - this.offsetTop
   },
   watch: {
     _scrollOffset: {
@@ -43,6 +42,11 @@ export default {
         }
       },
       immediate: true
+    },
+    _scrollViewRect: {
+      handler (rect = {}) {
+        this.headerTop = this.headerRect.top - (rect.top || 0) - this.offsetTop
+      },
     }
   },
   render (h) {
