@@ -195,6 +195,16 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     },
     gestureRef: scrollViewRef
   })
+  const currentTranslateY = useRef(0);
+  useEffect(() => {
+    const id = translateY.addListener(({value}) => {
+      currentTranslateY.current = value;
+    });
+    
+    return () => {
+      translateY.removeListener(id);
+    };
+  }, []);
 
   const contextValue = useMemo(() => {
     return {
@@ -475,23 +485,21 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       }
     })
     .onEnd(() => {
-      const currentValue = translateY.__getValue() // 获取当前值
-
-      if (currentValue > 80 && !refreshing) {
-        // 触发刷新 - 使用原生Animated API
+      if (currentTranslateY.current > 80 && !refreshing) {
+        // 触发刷新
         Animated.timing(translateY, {
           toValue: 60,
           duration: 300,
           useNativeDriver: true
-        }).start()
-        onRefresh()
+        }).start();
+        onRefresh();
       } else if (!refreshing) {
-        // 回弹 - 使用原生Animated API
+        // 回弹
         Animated.timing(translateY, {
           toValue: 0,
           duration: 300,
           useNativeDriver: true
-        }).start()
+        }).start();
       }
     })
     .runOnJS(true)
@@ -579,26 +587,24 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'bindrefresherrefresh'
   ], { layoutRef })
 
-  // 内容区域的动画样式 - 只有内容区域需要下移
-  const limitedTranslateY = translateY.interpolate({
-    inputRange: [0, 60, 120],
-    outputRange: [0, 60, 60], // 超过60后保持60的值
-    extrapolate: 'clamp'
-  })
-
   // 刷新控件的动画样式
   const refresherAnimatedStyle = {
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -60, // 初始隐藏在顶部
-    transform: [{ translateY: limitedTranslateY }], // 使用派生的动画值
+    transform: [{ translateY: translateY }], // 独立的转换值
     backgroundColor: props.refresherBackground || '#ffffff'
   }
 
-  // 创建常规样式对象
+  // 内容区域的动画样式
   const contentAnimatedStyle = {
-    transform: [{ translateY: limitedTranslateY }]
+    transform: [{
+      translateY: translateY.interpolate({
+        inputRange: [0, 60, 120],
+        outputRange: [0, 60, 60]
+      })
+    }]
   }
 
   useEffect(() => {
@@ -620,14 +626,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       }
     }
   }, [refresherTriggered])
-  // 刷新控件样式
-  const refresherStyle = {
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -60, // 初始隐藏在上方
-    overflow: 'hidden'
-  }
+
   const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
 
   return (
