@@ -411,7 +411,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       onLayout: onSvgLoad,
       onError: binderror && onSvgError,
       style: extendObject(
-        { transformOrigin: 'top left' },
+        { transformOrigin: 'left top' },
         modeStyle
       )
     })
@@ -426,7 +426,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         onError: binderror && onImageError,
         style: extendObject(
           {
-            transformOrigin: 'top left',
+            transformOrigin: 'left top',
             width: isCropMode ? imageWidth : '100%',
             height: isCropMode ? imageHeight : '100%'
           },
