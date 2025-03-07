@@ -23,7 +23,7 @@
           wx:for="{{visibleData}}"
           wx:key="_index"
           class="infinite-list-item"
-          wx:style="height: {{item._size.height}}; width: {{item._size.width}}; overflow: hidden"
+          wx:style="height: {{item._size.height}}; width: {{item._size.width}};"
         >
           <recycle-item current-item="{{item}}" />
         </view>
