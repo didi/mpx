@@ -10,6 +10,7 @@
     lower-threshold="{{lowerThreshold}}"
     upper-threshold="{{upperThreshold}}"
     scroll-options="{{scrollOptions}}"
+    enable-sticky="{{enableSticky}}"
     wx:style="width: {{_width}}; height: {{_height}}"
     bindscroll="onScroll"
     bindscrolltoupper="onScrollToUpper"
@@ -78,6 +79,10 @@
       minRenderCount: {
         type: Number,
         value: 10
+      },
+      enableSticky: {
+        type: Boolean,
+        value: false
       }
     },
     data: {
