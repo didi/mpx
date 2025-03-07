@@ -3,30 +3,74 @@ const createHelpers = require('../helpers')
 const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
+const addQuery = require('../utils/add-query')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
 
-// function getAsyncChunkName (chunkName) {
-//   if (chunkName && typeof chunkName !== 'boolean') {
-//     return `/* webpackChunkName: "${chunkName}" */`
-//   }
-//   return ''
-// }
+const mpxViewRequest = `"${addQuery('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-view', { isComponent: true })}"`
+const mpxErrorBoundary = `"${addQuery('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-error-boundary', { isComponent: true })}"`
+
+function getAsyncChunkName (chunkName) {
+  if (chunkName && typeof chunkName !== 'boolean') {
+    return `/* webpackChunkName: "${chunkName}" */`
+  }
+  return ''
+}
+
+function getAsyncComponent (componentName, componentRequest, chunkName, fallbackComponentRequest = mpxViewRequest) {
+  return `
+    memo(getComponent(function (props) {
+      return createElement(
+        getComponent(require(${mpxErrorBoundary})),
+        {
+          fallback: createElement(getComponent(require(${fallbackComponentRequest})), props)
+        },
+        createElement(
+          Suspense,
+          {
+            fallback: createElement(getComponent(require(${fallbackComponentRequest})), props)
+          },
+          createElement(
+            getComponent(
+              lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
+            ),
+            props
+          )
+        )
+      )
+    }, { displayName: 'AsyncComponent' })
+  )
+  `
+}
+
+const getAsyncPage = function (pagePath, pageRequest) {
+  return `
+    getComponent(function (props) {
+      return createElement(getComponent(global.__mpxLoadedAsyncPagesMap[${pageRequest}], { displayName: 'Page' }), props)
+    }, {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "AsyncPage"})
+  `
+}
 
 function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig }) {
   let firstPage = ''
   const pagesMap = {}
+  const asyncPagesMap = {}
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
-    // if (pageCfg.async) {
-    //   pagesMap[pagePath] = `lazy(function(){return import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(function(res){return getComponent(res, {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})})})`
-    // } else {
+    if (pageCfg.async) {
+      pagesMap[pagePath] = getAsyncPage(pagePath, pageRequest)
+      asyncPagesMap[pagePath] = `function () { return import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(asyncPage => {
+        if (!global.__mpxLoadedAsyncPagesMap[${pageRequest}]) {
+          global.__mpxLoadedAsyncPagesMap[${pageRequest}] = asyncPage
+        }
+      }) }`
+    } else {
     // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-    pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`
-    // }
+      pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`
+    }
     if (pagePath === jsonConfig.entryPagePath) {
       firstPage = pagePath
     }
@@ -36,7 +80,8 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig }) {
   })
   return {
     pagesMap,
-    firstPage
+    firstPage,
+    asyncPagesMap
   }
 }
 
@@ -46,12 +91,31 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      // RN中暂不支持异步加载
-      // if (componentCfg.async) {
-      //   componentsMap[componentName] = `lazy(function(){return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res, {displayName: ${JSON.stringify(componentName)}})})})`
-      // } else {
-      componentsMap[componentName] = `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`
-      // }
+      if (componentCfg.async) {
+        if (jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]) {
+          const placeholder = jsonConfig.componentPlaceholder[componentName]
+          if (localComponentsMap[jsonConfig.componentPlaceholder[componentName]]) {
+            const placeholderCfg = localComponentsMap[placeholder]
+            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
+            if (placeholderCfg.async) {
+              loaderContext.emitWarning(
+                new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
+              )
+            }
+            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, placeholderRequest)
+          } else {
+            const fallbackComponentRequest = `"${addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-${placeholder}`, { isComponent: true })}"`
+            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, fallbackComponentRequest)
+          }
+        } else {
+          loaderContext.emitWarning(
+            new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
+          )
+          componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async)
+        }
+      } else {
+        componentsMap[componentName] = `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`
+      }
     })
   }
   if (builtInComponentsMap) {
@@ -88,6 +152,7 @@ function buildGlobalParams ({
   jsonConfig,
   componentsMap,
   pagesMap,
+  asyncPagesMap,
   firstPage,
   outputPath
 }) {
@@ -100,6 +165,8 @@ global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
 global.__mpxGenericsMap = {}
 global.__mpxOptionsMap = {}
 global.__mpxPagesMap = {}
+global.__mpxAsyncPagesMap = ${shallowStringify(asyncPagesMap)}
+global.__mpxLoadedAsyncPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__getAppComponents = function () {

@@ -50,8 +50,22 @@ function isLock (navigationHelper, type, options) {
   return false
 }
 
+function getNavigationCallback (type, options) {
+  return {
+    successCallback: () => {
+      const res = { errMsg: `${type}: ok` }
+      successHandle(res, options.success, options.complete)
+    },
+    failCallback: (msg) => {
+      const res = { errMsg: `${type}: fail ${msg}` }
+      failHandle(res, options.fail, options.complete)
+    }
+  }
+}
+
 function navigateTo (options = {}) {
   const navigationHelper = global.__navigationHelper
+  const asyncPagesMap = global.__mpxAsyncPagesMap
   if (isLock(navigationHelper, 'navigateTo', options)) {
     return
   }
@@ -60,14 +74,18 @@ function navigateTo (options = {}) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
-    navigation.push(finalPath, queryObj)
-    navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'navigateTo:ok' }
-      successHandle(res, options.success, options.complete)
+    const { successCallback, failCallback } = getNavigationCallback('navigateTo', options)
+    const navigationHandle = () => {
+      navigation.push(finalPath, queryObj)
+      navigationHelper.lastSuccessCallback = successCallback
+      navigationHelper.lastFailCallback = failCallback
     }
-    navigationHelper.lastFailCallback = (msg) => {
-      const res = { errMsg: `navigateTo:fail ${msg}` }
-      failHandle(res, options.fail, options.complete)
+    if (asyncPagesMap[finalPath]) {
+      asyncPagesMap[finalPath]()
+        .then(navigationHandle)
+        .catch((e) => failCallback(e.message))
+    } else {
+      navigationHandle()
     }
   }
 }
@@ -75,6 +93,7 @@ function navigateTo (options = {}) {
 function redirectTo (options = {}) {
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  const asyncPagesMap = global.__mpxAsyncPagesMap
   if (isLock(navigationHelper, 'redirectTo', options)) {
     return
   }
@@ -82,14 +101,19 @@ function redirectTo (options = {}) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
-    navigation.replace(finalPath, queryObj)
-    navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'redirectTo:ok' }
-      successHandle(res, options.success, options.complete)
+    const { successCallback, failCallback } = getNavigationCallback('redirectTo', options)
+    const navigationHandle = () => {
+      navigation.replace(finalPath, queryObj)
+      navigationHelper.lastSuccessCallback = successCallback
+      navigationHelper.lastFailCallback = failCallback
     }
-    navigationHelper.lastFailCallback = (msg) => {
-      const res = { errMsg: `redirectTo:fail ${msg}` }
-      failHandle(res, options.fail, options.complete)
+
+    if (asyncPagesMap[finalPath]) {
+      asyncPagesMap[finalPath]()
+        .then(navigationHandle)
+        .catch((e) => failCallback(e.message))
+    } else {
+      navigationHandle()
     }
   }
 }
@@ -125,6 +149,7 @@ function navigateBack (options = {}) {
 function reLaunch (options = {}) {
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  const asyncPagesMap = global.__mpxAsyncPagesMap
   if (isLock(navigationHelper, 'reLaunch', options)) {
     return
   }
@@ -132,22 +157,27 @@ function reLaunch (options = {}) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: finalPath,
-          params: queryObj
-        }
-      ]
-    })
-    navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'redirectTo:ok' }
-      successHandle(res, options.success, options.complete)
+    const { successCallback, failCallback } = getNavigationCallback('redirectTo', options)
+    const navigationHandle = () => {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: finalPath,
+            params: queryObj
+          }
+        ]
+      })
+      navigationHelper.lastSuccessCallback = successCallback
+      navigationHelper.lastFailCallback = failCallback
     }
-    navigationHelper.lastFailCallback = (msg) => {
-      const res = { errMsg: `redirectTo:fail ${msg}` }
-      failHandle(res, options.fail, options.complete)
+
+    if (asyncPagesMap[finalPath]) {
+      asyncPagesMap[finalPath]()
+        .then(navigationHandle)
+        .catch((e) => failCallback(e.message))
+    } else {
+      navigationHandle()
     }
   }
 }

@@ -22,6 +22,7 @@ module.exports = function (script, {
   }
 
   let output = '/* script */\n'
+  output += "import { Suspense, lazy, createElement, memo } from 'react'\n"
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
@@ -42,7 +43,7 @@ global.__navigationHelper = {
   SafeAreaProvider: SafeAreaProvider,
   useSafeAreaInsets: useSafeAreaInsets
 }\n`
-    const { pagesMap, firstPage } = buildPagesMap({
+    const { pagesMap, firstPage, asyncPagesMap } = buildPagesMap({
       localPagesMap,
       loaderContext,
       jsonConfig
@@ -52,12 +53,10 @@ global.__navigationHelper = {
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, asyncPagesMap, firstPage })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
-    // RN环境暂不支持异步加载
-    // output += 'import { lazy } from \'react\'\n'
     output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
     // 获取组件集合
     const componentsMap = buildComponentsMap({
