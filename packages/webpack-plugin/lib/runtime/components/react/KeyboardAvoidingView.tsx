@@ -1,6 +1,6 @@
-import React, { ReactNode, useContext, useEffect } from 'react'
+import React, { ReactNode, useContext, useEffect, useMemo } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, Platform, View, ViewStyle } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { KeyboardAvoidContext } from './context'
 
@@ -14,16 +14,21 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const isIOS = Platform.OS === 'ios'
   const duration = isIOS ? 250 : 300
   const easing = isIOS ? Easing.inOut(Easing.ease) : Easing.out(Easing.quad)
-  const gesture = Gesture.Tap()
-
-  // use `Gesture.Tap().onEnd` in this way cause crash
-  gesture.onEnd(() => {
-    Keyboard.isVisible() && Keyboard.dismiss()
-  })
 
   const offset = useSharedValue(0)
   const basic = useSharedValue('auto')
   const keyboardAvoid = useContext(KeyboardAvoidContext)
+
+  const dismiss = () => {
+    Keyboard.isVisible() && Keyboard.dismiss()
+  }
+
+  const gesture = useMemo(() => {
+    return Gesture.Tap()
+      .onEnd(() => {
+        runOnJS(dismiss)()
+      })
+  }, [])
 
   const animatedStyle = useAnimatedStyle(() => {
     return Object.assign(

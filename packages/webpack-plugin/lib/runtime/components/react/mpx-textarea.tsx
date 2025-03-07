@@ -3,7 +3,7 @@
  *   Subtraction:
  *     type, password, confirm-hold
  *   Addition:
- *     - confirm-type: Not support `return`
+ *     ✔ confirm-type
  *     ✔ auto-height
  *     ✘ fixed
  *     ✘ show-confirm-bar
@@ -27,7 +27,6 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
   (props, ref): JSX.Element => {
     const {
       style = {},
-      'auto-height': autoHeight = false,
       'confirm-type': confirmType = 'return'
     } = props
 
@@ -37,7 +36,6 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
       'style',
       'password',
       'multiline',
-      'auto-height',
       'confirm-type',
       'confirm-hold'
     ])
@@ -48,11 +46,10 @@ const Textarea = forwardRef<HandlerRef<TextInput, TextareProps>, TextareProps>(
         ref,
         confirmType,
         multiline: true,
-        'auto-height': autoHeight,
         'confirm-type': confirmType,
         style: extendObject({
           width: DEFAULT_TEXTAREA_WIDTH,
-          height: autoHeight ? 'auto' : DEFAULT_TEXTAREA_HEIGHT
+          height: DEFAULT_TEXTAREA_HEIGHT
         }, style)
       })
     )
