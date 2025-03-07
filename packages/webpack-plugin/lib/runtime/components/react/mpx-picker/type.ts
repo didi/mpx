@@ -1,112 +1,126 @@
-import { ReactNode } from 'react'
-import { PickerValue } from '@ant-design/react-native'
+import React from 'react'
 
+export const enum PickerMode {
+  SELECTOR = 'selector',
+  MULTI_SELECTOR = 'multiSelector',
+  TIME = 'time',
+  DATE = 'date',
+  REGION = 'region',
+}
+
+export type PickerValue = number
 export type Obj = Record<string, any>
-export type SelectorProps = {
-  mode: string
-  // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: PickerValue
+export type RangeItem = Obj | number | string
+export type TimeValue = `${number}-${number}-${number}` | ''
+
+/** 通用属性 */
+export interface BasePickerProps {
+  /** --- 小程序属性 --- */
+  /** 选择器类型, 默认值 selector */
+  mode?: PickerMode
+  /** 是否禁用, 默认值 false */
   disabled?: boolean
-  children: ReactNode
+  /** 点击取消按钮时触发 */
   bindcancel?: Function
-  bindchange: Function
-  // mode 为 selector 或 multiSelector 时，range 有效
-  range: Array<number|string|Obj>
-  // 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器《显示内容》 对象中的属性
-  'range-key': string
-  getInnerLayout: Function
+  /** 头部标题 */
+  'header-text'?: string
+  /** --- 内部组件属性 --- */
+  /** 作为表单组件时的名称 */
+  name?: string
   style?: Record<string, any>
-  // bindcolumnchange?: Function
+  children?: React.ReactNode
+  range?: RangeItem[]
+  ref?: any
 }
 
-export type MultiSelectorProps = {
-  mode: string
-  // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: Array<number>
-  disabled?: boolean
-  children: ReactNode
-  bindcancel?: Function
-  bindchange: Function
+export interface SelectorProps extends BasePickerProps {
+  mode: PickerMode.SELECTOR
+  /**  默认值 0 */
+  value?: number
+  /** 默认值 [] */
+  range?: RangeItem[]
+  'range-key'?: string
+  /** 点击确认按钮后触发 change 事件, event.detail = {value} */
+  bindchange?: Function
+}
+
+export interface MultiSelectorProps extends BasePickerProps {
+  mode: PickerMode.MULTI_SELECTOR
+  /** 默认值 [] */
+  value?: number[]
+  range?: RangeItem[]
+  'range-key'?: string
+  bindchange?: Function
   bindcolumnchange?: Function
-  // mode 为 selector 或 multiSelector 时，range 有效
-  range: Array<Array<any>>
-  // 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器《显示内容》 对象中的属性
-  'range-key': string
-  getInnerLayout: Function
-  style?: Record<string, any>
 }
 
-export type TimeProps = {
-  mode: string
-  // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: string
-  disabled?: boolean
-  children: ReactNode
-  bindcancel?: Function
-  bindchange: Function
-  start: string
-  end: string
-  getInnerLayout: Function
-  style?: Record<string, any>
+export interface TimeProps extends BasePickerProps {
+  mode: PickerMode.TIME
+  /** 表示选中的时间，格式为"hh:mm" */
+  value?: string
+  start?: string
+  end?: string
+  bindchange?: Function
 }
 
-export type DateProps = {
-  mode: string
-  // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: string
+export interface DateProps extends BasePickerProps {
+  mode: PickerMode.DATE
+  /** 默认值 '' */
+  value?: TimeValue
+  start?: TimeValue
+  end?: TimeValue
+  /** 有效值 year,month,day，表示选择器的粒度 */
   fields?: 'day' | 'month' | 'year'
-  disabled?: boolean
-  children: ReactNode
-  bindcancel?: Function
-  bindchange: Function
-  start: string
-  end: string
-  getInnerLayout: Function
-  style?: Record<string, any>
+  bindchange?: Function
 }
 
-export type RegionProps = {
-  mode: string
-  // 表示选择了 range 中的第几个（下标从 0 开始）
-  value: Array<string>
-  level: 'province' | 'city' | 'region' | 'sub-district'
+export interface RegionProps extends BasePickerProps {
+  mode: PickerMode.REGION
+  /** 表示选中的省市区，默认选中每一列的第一个值, 默认值 [] */
+  value?: string[]
+  /** 默认值 region */
+  level?: 'province' | 'city' | 'region' | 'sub-district'
+  /** 可为每一列的顶部添加一个自定义的项 */
   'custom-item'?: string
-  disabled?: boolean
-  children: ReactNode
-  bindcancel?: Function
-  bindchange: Function
-  getInnerLayout: Function
-  style?: Record<string, any>
+  /** value 改变时触发 change 事件, event.detail = {value, code, postcode},
+   * 其中字段 code 是统计用区划代码, postcode 是邮政编码 */
+  bindchange?: Function
 }
 
-export type RegionObj = {
+export interface RegionObj {
   value: string
   code: string
   postcode?: string
   children?: RegionObj[]
 }
 
-export type PickerData = {
+export interface PickerData {
   value: string
   label: string
-  children?: Array<Object>
+  children?: Object[]
 }
 
-export type EventType = {
+export interface EventType {
   detail: {
     value: PickerValue[]
   }
 }
 
-export type LayoutType = {
+export interface LayoutType {
   nativeEvent: {
     layout: Obj
   }
 }
 
-type FormType = {
+export interface FormType {
   name: string
 }
 
-export type PickerProps = SelectorProps & MultiSelectorProps & TimeProps & DateProps & RegionProps & FormType
-export type ValueType = string | number | Array<number> | Array<string>
+export type PickerProps =
+  | SelectorProps
+  | MultiSelectorProps
+  | TimeProps
+  | DateProps
+  | RegionProps
+
+export type LanguageCode = 'zh-CN' | 'en-US'
