@@ -295,6 +295,18 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
 
+  if (type === 'page') {
+    const loadParams = {}
+    const props = propsRef.current
+    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+    if (isObject(props.route.params)) {
+      for (const key in props.route.params) {
+        loadParams[key] = encodeURIComponent(props.route.params[key])
+      }
+    }
+    proxy.callHook(ONLOAD, [loadParams])
+  }
+
   Object.assign(proxy, {
     onStoreChange: null,
     stateVersion: Symbol(),
@@ -508,16 +520,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     usePageEffect(proxy, pageId)
 
     useEffect(() => {
-      if (type === 'page') {
-        const loadParams = {}
-        // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-        if (isObject(props.route.params)) {
-          for (const key in props.route.params) {
-            loadParams[key] = encodeURIComponent(props.route.params[key])
-          }
-        }
-        proxy.callHook(ONLOAD, [loadParams])
-      }
       proxy.mounted()
       return () => {
         proxy.unmounted()
