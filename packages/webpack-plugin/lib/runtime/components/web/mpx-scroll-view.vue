@@ -44,6 +44,7 @@
       enhanced: Boolean,
       refresherEnabled: Boolean,
       refresherTriggered: Boolean,
+      enableSticky: Boolean,
       refresherThreshold: {
         type: Number,
         default: 45
@@ -57,6 +58,16 @@
         default: ''
       }
     },
+    provide () {
+      return {
+        scrollOffset: {
+          get: () => this.lastY
+        },
+        scrollViewRect: {
+          get: () => this.scrollViewRect
+        }
+      }
+    },
     data () {
       return {
         isLoading: false,
@@ -68,7 +79,8 @@
         lastContentWidth: 0,
         lastContentHeight: 0,
         lastWrapperWidth: 0,
-        lastWrapperHeight: 0
+        lastWrapperHeight: 0,
+        scrollViewRect: {}
       }
     },
     computed: {
@@ -251,7 +263,7 @@
           }
           this.lastX = x
           this.lastY = y
-        }, 30, {
+        }, this.enableSticky ? 0 : 30, {
           leading: true,
           trailing: true
         }))
@@ -327,6 +339,7 @@
         const scrollWrapperHeight = wrapper?.clientHeight || 0
         if (wrapper) {
           const computedStyle = getComputedStyle(wrapper)
+          this.scrollViewRect = wrapper.getBoundingClientRect()
           // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
           // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
           this.$refs.innerWrapper.style.width = `${scrollWrapperWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
