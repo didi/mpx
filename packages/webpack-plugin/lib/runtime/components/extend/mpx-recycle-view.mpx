@@ -115,28 +115,7 @@
       visibleCount() {
         if (!this.visibleCounts.length) return this.minRenderCount
         return Math.max(this.visibleCounts[this.start], this.minRenderCount)
-      },
-      // visibleCount() {
-      //   if (!this.positions.length) return 0
-
-      //   let count = 0
-      //   let totalHeight = 0
-      //   const startIndex = Math.min(this.start, this.positions.length - 1)
-
-      //   for (let i = startIndex; i < this.positions.length; i++) {
-      //     totalHeight += this.positions[i]?.height || 0
-      //     if (totalHeight > this.containerHeight) {
-      //       break
-      //     }
-      //     count++
-      //   }
-
-      //   // 如果是最后几个项目，确保全部显示
-      //   if (startIndex + count > this.positions.length - 3) {
-      //     count = this.positions.length - startIndex
-      //   }
-      //   return Math.max(count, this.minRenderCount)
-      // },
+      },  
       aboveCount() {
         return Math.max(0, Math.min(this.start, this.bufferScale * this.visibleCount))
       },
