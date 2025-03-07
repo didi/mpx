@@ -457,7 +457,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 处理刷新
   const onRefresh = () => {
-    setRefreshing(true)
+    if (refresherTriggered === undefined) {
+      setRefreshing(true)
+      setTimeout(() => {
+        setRefreshing(false)
+        translateY.value = withTiming(0)
+      }, 500)
+    }
     const { bindrefresherrefresh } = props
     bindrefresherrefresh &&
       bindrefresherrefresh(
@@ -469,19 +475,38 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       'worklet'
-      // 只有在顶部才能下拉
-      if (isAtTop.value && event.translationY > 0 && !refreshing) {
-        // 阻尼效果
-        translateY.value = Math.min(event.translationY * 0.6, refresherHeight.value)
+      if (isAtTop.value) {
+        if (refreshing) {
+          // 在刷新状态下，允许完全隐藏刷新器
+          // 从完全展开状态(refresherHeight.value)开始计算偏移
+          translateY.value = Math.max(
+            0,
+            Math.min(
+              refresherHeight.value,
+              refresherHeight.value + event.translationY
+            )
+          )
+        } else if (event.translationY > 0) {
+          // 非刷新状态下的下拉逻辑保持不变
+          translateY.value = Math.min(event.translationY * 0.6, refresherHeight.value)
+        }
       }
     })
     .onEnd((event) => {
       'worklet'
-      if (event.translationY >= 80 && !refreshing) {
+      if (refreshing) {
+        // 刷新状态下，根据滑动距离决定是否隐藏
+        // 如果向上滑动超过一半高度，就完全隐藏
+        if (translateY.value < refresherHeight.value / 2) {
+          translateY.value = withTiming(0)
+        } else {
+          translateY.value = withTiming(refresherHeight.value)
+        }
+      } else if (event.translationY >= refresherHeight.value) {
         // 触发刷新
         translateY.value = withTiming(refresherHeight.value)
         runOnJS(onRefresh)()
-      } else if (!refreshing) {
+      } else {
         // 回弹
         translateY.value = withTiming(0)
       }
