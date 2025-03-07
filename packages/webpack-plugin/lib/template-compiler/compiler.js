@@ -1812,7 +1812,6 @@ function processRefReact (el, meta) {
 
     /**
      * refFnId 在 for 循环当中为空，避免 refFn 在运行时被不同 ref 缓存共用，其他场景有唯一值，用作缓存 key
-     * 
      * selectorsConf: [type, [[prefix, selector], [prefix, selector]], refFnId?]
      */
     if (!val) {
