@@ -195,16 +195,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     },
     gestureRef: scrollViewRef
   })
-  const currentTranslateY = useRef(0);
-  useEffect(() => {
-    const id = translateY.addListener(({value}) => {
-      currentTranslateY.current = value;
-    });
-    
-    return () => {
-      translateY.removeListener(id);
-    };
-  }, []);
+  const currentTranslateY = useRef(0)
 
   const contextValue = useMemo(() => {
     return {
@@ -465,7 +456,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 处理刷新
   const onRefresh = () => {
-    setRefreshing(true)
     const { bindrefresherrefresh } = props
     bindrefresherrefresh &&
       bindrefresherrefresh(
@@ -480,6 +470,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       if (isAtTop.current && event.translationY > 0 && !refreshing) {
         // 阻尼效果
         const dampedTranslation = Math.min(event.translationY * 0.6, 120)
+        currentTranslateY.current = dampedTranslation
         // 直接设置 Animated.Value
         translateY.setValue(dampedTranslation)
       }
@@ -487,19 +478,24 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     .onEnd(() => {
       if (currentTranslateY.current > 80 && !refreshing) {
         // 触发刷新
-        Animated.timing(translateY, {
-          toValue: 60,
-          duration: 300,
-          useNativeDriver: true
-        }).start();
-        onRefresh();
+        setTimeout(() => {
+          Animated.timing(translateY, {
+            toValue: 60,
+            duration: 300,
+            useNativeDriver: true
+          }).start()
+        })
+        onRefresh()
+        currentTranslateY.current = 0
       } else if (!refreshing) {
         // 回弹
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true
-        }).start();
+        setTimeout(() => {
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true
+          }).start()
+        })
       }
     })
     .runOnJS(true)
@@ -600,10 +596,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   // 内容区域的动画样式
   const contentAnimatedStyle = {
     transform: [{
-      translateY: translateY.interpolate({
-        inputRange: [0, 60, 120],
-        outputRange: [0, 60, 60]
-      })
+      translateY: translateY // 直接使用同一个动画值，确保同步移动
     }]
   }
 
@@ -612,17 +605,29 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       setRefreshing(!!refresherTriggered)
 
       if (refresherTriggered) {
-        Animated.timing(translateY, {
-          toValue: 60,
-          duration: 300,
-          useNativeDriver: true // 启用原生驱动
-        }).start()
+      // 显示刷新控件
+        setTimeout(() => {
+          Animated.timing(translateY, {
+            toValue: 60,
+            duration: 300,
+            useNativeDriver: true
+          }).start(() => {
+            console.log('下拉动画完成')
+          })
+        })
       } else {
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true // 启用原生驱动
-        }).start()
+      // 隐藏刷新控件
+      // 不需要设置初始值，使用当前值
+        setTimeout(() => {
+          Animated.timing(translateY, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true
+          }).start(() => {
+            console.log('回弹动画完成')
+            // 添加额外验
+          })
+        })
       }
     }
   }, [refresherTriggered])
