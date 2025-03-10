@@ -156,10 +156,39 @@ function switchTab () {
 
 }
 
+function reset (options = {}) {
+  const routes = options.routes || []
+  if (!routes.length) {
+    const res = { errMsg: 'reset:fail routes cannot be an empty array' }
+    failHandle(res, options.fail, options.complete)
+    return
+  }
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'reset', options)) {
+    return
+  }
+  if (navigation && navigationHelper) {
+    navigation.reset({
+      index: routes.length - 1,
+      routes
+    })
+    navigationHelper.lastSuccessCallback = () => {
+      const res = { errMsg: 'reset:ok' }
+      successHandle(res, options.success, options.complete)
+    }
+    navigationHelper.lastFailCallback = (msg) => {
+      const res = { errMsg: `reset:fail ${msg}` }
+      failHandle(res, options.fail, options.complete)
+    }
+  }
+}
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
   reLaunch,
-  switchTab
+  switchTab,
+  reset
 }

@@ -183,10 +183,13 @@ function switchTab (options = {}) {
   }
 }
 
+const reset = envError('reset')
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
   reLaunch,
-  switchTab
+  switchTab,
+  reset
 }
