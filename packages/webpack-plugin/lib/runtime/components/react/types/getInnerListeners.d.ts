@@ -44,10 +44,6 @@ interface InnerRef {
       y: number;
     };
   };
-   needPress: {
-    bubble: boolean;
-    capture: boolean;
-  };
 }
 interface UseInnerPropsConfig {
   layoutRef: LayoutRef;
