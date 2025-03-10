@@ -1809,10 +1809,12 @@ function processRefReact (el, meta) {
     }
 
     const selectors = []
+    const refFnId = forScopes.reduce((preV, curV) => {
+      return `${preV} + "_" + ${curV.index}`
+    }, `"ref_fn_${++refId}"`)
 
     /**
-     * refFnId 在 for 循环当中为空，避免 refFn 在运行时被不同 ref 缓存共用，其他场景有唯一值，用作缓存 key
-     * selectorsConf: [type, [[prefix, selector], [prefix, selector]], refFnId?]
+     * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
      */
     if (!val) {
       const rawId = el.attrsMap.id
@@ -1835,7 +1837,7 @@ function processRefReact (el, meta) {
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${type}', [${selectorsConf}], ${all ? '' : `ref_fn_${++refId}`}) }}`
+      value: `{{ this.__getRefVal('${type}', [${selectorsConf}], ${refFnId}) }}`
     }])
   }
 

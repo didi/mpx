@@ -28,38 +28,29 @@ export default function getRefsMixin () {
         })
       },
       __getRefVal (type, selectorsConf, refFnId) {
-        const refFn = (instance) => {
-          selectorsConf.forEach((item = []) => {
-            const [prefix, selectors = ''] = item
-            if (selectors) {
-              selectors.trim().split(/\s+/).forEach(selector => {
-                const refKey = prefix + selector
-                const refVal = {
-                  type,
-                  instance,
-                  uid: refFnId || refFn
-                }
-                this.__refs[refKey] = this.__refs[refKey] || []
-                if (instance) { // mount
-                  this.__refs[refKey].push(refVal)
-                } else { // unmount
-                  const index = this.__refs[refKey].findIndex(item => item.uid === refFnId || item.uid === refFn)
-                  if (index > -1) {
-                    this.__refs[refKey].splice(index, 1)
+        if (!this.__refCache[refFnId]) {
+          this.__refCache[refFnId] = (instance) => {
+            selectorsConf.forEach((item = []) => {
+              const [prefix, selectors = ''] = item
+              if (selectors) {
+                selectors.trim().split(/\s+/).forEach(selector => {
+                  const refKey = prefix + selector
+                  const refVal = { type, instance, refFnId }
+                  this.__refs[refKey] = this.__refs[refKey] || []
+                  if (instance) { // mount
+                    this.__refs[refKey].push(refVal)
+                  } else { // unmount
+                    const index = this.__refs[refKey].findIndex(item => item.refFnId === refFnId)
+                    if (index > -1) {
+                      this.__refs[refKey].splice(index, 1)
+                    }
                   }
-                }
-              })
-            }
-          })
-        }
-        if (refFnId) {
-          if (!this.__refCache[refFnId]) {
-            this.__refCache[refFnId] = refFn
+                })
+              }
+            })
           }
-          return this.__refCache[refFnId]
-        } else {
-          return refFn
         }
+        return this.__refCache[refFnId]
       },
       __selectRef (selector, refType, all = false) {
         const splitedSelector = selector.match(/(#|\.)?[^.#]+/g) || []
