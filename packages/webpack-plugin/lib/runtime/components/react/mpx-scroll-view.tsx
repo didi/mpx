@@ -189,7 +189,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       pagingEnabled,
       fastDeceleration: false,
       decelerationDisabled: false,
-      scrollTo: scrollToOffset
+      scrollTo
     },
     gestureRef: scrollViewRef
   })
@@ -235,6 +235,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
     firstScrollIntoViewChange.current = true
   }, [scrollIntoView])
+
+  function scrollTo ({ top = 0, left = 0, animated = false } : { top?: number; left?: number; animated?: boolean }) {
+    scrollToOffset(left, top, animated, 'scrollTo')
+  }
 
   function handleScrollIntoView () {
     const refs = __selectRef!(`#${scrollIntoView}`, 'node')
@@ -371,9 +375,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       }
     }
   }
-  function scrollToOffset (x = 0, y = 0) {
+  function scrollToOffset (x = 0, y = 0, animated = false, scrollSource = '') {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation })
+      scrollViewRef.current.scrollTo({ x, y, animated: scrollSource === 'scrollTo' ? animated : !!scrollWithAnimation })
       scrollOptions.current.scrollLeft = x
       scrollOptions.current.scrollTop = y
       snapScrollLeft.current = x
