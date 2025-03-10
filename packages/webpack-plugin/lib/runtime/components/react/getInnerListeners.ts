@@ -137,7 +137,7 @@ function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
     Math.abs(currentPageX - tapDetailInfo.x) > 3 ||
         Math.abs(currentPageY - tapDetailInfo.y) > 3
   ) {
-    globalEventState.needPress = false
+    ref.current!.needPress[type] = false
     ref.current!.startTimer[type] &&
           clearTimeout(ref.current!.startTimer[type] as SetTimeoutReturnType)
     ref.current!.startTimer[type] = null
@@ -157,6 +157,7 @@ function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
     'capture-bindlongpress'
   ]
   ref.current!.startTimer[type] = null
+  ref.current!.needPress[type] = true
   globalEventState.needPress = true
   const nativeEvent = e.nativeEvent
   ref.current!.mpxPressInfo.detail = {
@@ -181,8 +182,9 @@ function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
         captureBindlongpress
   ) {
     ref.current!.startTimer[type] = setTimeout(() => {
-      // 只要触发过longpress, 全局就不再触发tap
+      // 只要触发过 longpress, 全局就不再触发tap
       globalEventState.needPress = false
+      ref.current!.needPress[type] = false
       handleEmitEvent(currentPressEvent, 'longpress', e, propsRef, config, navigation)
     }, 350)
   }
@@ -218,7 +220,8 @@ function handleTouchend (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: R
         clearTimeout(ref.current!.startTimer[type] as SetTimeoutReturnType)
   ref.current!.startTimer[type] = null
   handleEmitEvent(currentTouchEvent, 'touchend', e, propsRef, config, navigation)
-  if (globalEventState.needPress) {
+  if (!globalEventState.needPress) return
+  if (ref.current!.needPress[type]) {
     if (type === 'bubble' && config.disableTap) {
       return
     }
@@ -290,6 +293,10 @@ const useInnerProps = (
         x: 0,
         y: 0
       }
+    },
+    needPress: {
+      bubble: false,
+      capture: false
     }
   })
 
