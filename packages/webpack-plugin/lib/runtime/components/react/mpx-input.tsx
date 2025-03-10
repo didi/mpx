@@ -190,7 +190,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
-  const tmpValue = useRef<string | undefined>(defaultValue)
+  const tmpValue = useRef<string>(defaultValue)
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
 
@@ -234,11 +234,26 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     }
   }, [cursor, selectionStart, selectionEnd])
 
+  // have not selection on the Android platformg
+  const getCursorIndex = (
+    changedSelection: TextInputSelectionChangeEventData['selection'] | undefined,
+    prevValue: string,
+    curValue: string
+  ) => {
+    if (changedSelection) return changedSelection.end
+    if (!prevValue || !curValue || prevValue.length === curValue.length) return curValue.length
+    const prevStr = prevValue.substring(cursorIndex.current)
+    const curStr = curValue.substring(cursorIndex.current)
+    return cursorIndex.current + curStr.length - prevStr.length
+  }
+
   const onChange = (evt: NativeSyntheticEvent<TextInputChangeEventData & TextInputSelectionChangeEventData>) => {
     const { text, selection } = evt.nativeEvent
+    // will trigger twice on the Android platformg, prevent the second trigger
+    if (tmpValue.current === text) return
+    const index = getCursorIndex(selection, tmpValue.current, text)
     tmpValue.current = text
-    // Todo have not `selection` on the Android platform, and `onSelection` is later than `onChange`
-    cursorIndex.current = selection?.end || 0
+    cursorIndex.current = index
     if (bindinput) {
       const result = bindinput(
         getCustomEvent(
@@ -344,15 +359,18 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onSelectionChange = (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-    setSelection(evt.nativeEvent.selection)
+    const { selection } = evt.nativeEvent
+    const { start, end } = selection
+    cursorIndex.current = start
+    setSelection(selection)
     bindselectionchange && bindselectionchange(
       getCustomEvent(
         'selectionchange',
         evt,
         {
           detail: {
-            selectionStart: evt.nativeEvent.selection.start,
-            selectionEnd: evt.nativeEvent.selection.end
+            selectionStart: start,
+            selectionEnd: end
           },
           layoutRef
         },
