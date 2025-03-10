@@ -185,11 +185,14 @@ function switchTab (options = {}) {
 
 const reset = envError('reset')
 
+const getState = envError('getState')
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
   reLaunch,
   switchTab,
-  reset
+  reset,
+  getState
 }

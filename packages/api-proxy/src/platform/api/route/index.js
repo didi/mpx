@@ -12,11 +12,14 @@ const switchTab = ENV_OBJ.switchTab || envError('switchTab')
 
 const reset = envError('reset')
 
+const getState = envError('getState')
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
   reLaunch,
   switchTab,
-  reset
+  reset,
+  getState
 }

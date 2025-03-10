@@ -184,11 +184,20 @@ function reset (options = {}) {
   }
 }
 
+function getState () {
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  if (navigation) {
+    return navigation.getState()
+  }
+  return {}
+}
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
   reLaunch,
   switchTab,
-  reset
+  reset,
+  getState
 }
