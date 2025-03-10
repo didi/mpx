@@ -1,7 +1,7 @@
 import { useRef, useMemo, RefObject } from 'react'
 import { hasOwn, collectDataset } from '@mpxjs/utils'
 import { omit, extendObject, useNavigation } from './utils'
-import eventConfigMap from './event.config'
+import eventConfigMap, { TAP_EVENTS } from './event.config'
 import {
   Props,
   AdditionalProps,
@@ -197,12 +197,16 @@ function handleTouchmove (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: 
   const currentTouchEvent =
         type === 'bubble' ? bubbleTouchEvent : captureTouchEvent
   handleEmitEvent(currentTouchEvent, 'touchmove', e, propsRef, config, navigation)
-  checkIsNeedPress(e, type, ref)
+  if (TAP_EVENTS.some(eventName => propsRef.current[eventName])) {
+    checkIsNeedPress(e, type, ref)
+  }
 }
 
 function handleTouchend (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) {
   // move event may not be triggered
-  checkIsNeedPress(e, type, ref)
+  if (TAP_EVENTS.some(eventName => propsRef.current[eventName])) {
+    checkIsNeedPress(e, type, ref)
+  }
   const bubbleTouchEvent = ['catchtouchend', 'bindtouchend']
   const bubbleTapEvent = ['catchtap', 'bindtap']
   const captureTouchEvent = [
