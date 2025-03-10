@@ -9,8 +9,16 @@ function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
 
-const mpxViewRequest = `"${addQuery('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-view', { isComponent: true })}"`
-const mpxErrorBoundary = `"${addQuery('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-error-boundary', { isComponent: true })}"`
+function getMpxComponentRequest (component) {
+  return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
+}
+
+const mpxViewRequest = getMpxComponentRequest('mpx-view')
+const mpxTextRequest = getMpxComponentRequest('mpx-simple-text')
+const mpxErrorBoundary = getMpxComponentRequest('AsyncErrorBoundary')
+const mpxPageLoading = getMpxComponentRequest('AsyncPageLoading')
+const mpxAsyncPage = getMpxComponentRequest('AsyncPage')
+const mpxAsyncComponent = getMpxComponentRequest('AsyncComponent')
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
@@ -23,8 +31,9 @@ function getAsyncComponent (componentName, componentRequest, chunkName, fallback
   return `
     memo(getComponent(function (props) {
       return createElement(
-        getComponent(require(${mpxErrorBoundary})),
+        getComponent(require(${mpxErrorBoundary}), { displayName: 'AsyncComponentErrorBoundary' }),
         {
+          asyncType: 'component',
           fallback: createElement(getComponent(require(${fallbackComponentRequest})), props)
         },
         createElement(
@@ -40,33 +49,66 @@ function getAsyncComponent (componentName, componentRequest, chunkName, fallback
           )
         )
       )
-    }, { displayName: 'AsyncComponent' })
+    }, { displayName: 'AsyncComponentContainer' })
   )
   `
 }
 
-const getAsyncPage = function (pagePath, pageRequest) {
+function __getAsyncPage (componentName, componentRequest, chunkName) {
+  return `getComponent(function(props) {
+    return createElement(
+      getComponent(require(${mpxAsyncPage})),
+      {
+        navigation: props.navigation,
+        // todo fallback & loading
+      },
+      createElement(
+        getComponent(
+          lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
+        ),
+        props
+      )
+    )
+  })`
+}
+
+function _getAsyncPage (componentName, componentRequest, chunkName, fallbackComponentRequest = mpxViewRequest) {
   return `
     getComponent(function (props) {
-      return createElement(getComponent(global.__mpxLoadedAsyncPagesMap[${pageRequest}], { displayName: 'Page' }), props)
-    }, {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "AsyncPage"})
+      const pageConfig = global.__mpxPageConfig || {}
+      usePageLayoutEffect(props.navigation, pageConfig)
+      return createElement(
+        getComponent(require(${mpxErrorBoundary}), { displayName: 'AsyncPageErrorBoundary' }),
+        {
+          asyncType: 'page', // todo 提供一个配置的能力，点击重新加载
+          // todo 重试的配置
+          fallback: createElement(getComponent(require(${mpxTextRequest})), null, '点击重试')
+        },
+        createElement(
+          Suspense,
+          { // todo 加载的配置
+            fallback: createElement(getComponent(require(${mpxPageLoading})))
+          },
+          createElement(
+            getComponent(
+              lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
+            ),
+            props
+          )
+        )
+      )
+    }, { displayName: 'AsyncPageContainer' })
   `
 }
 
 function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig }) {
   let firstPage = ''
   const pagesMap = {}
-  const asyncPagesMap = {}
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async) {
-      pagesMap[pagePath] = getAsyncPage(pagePath, pageRequest)
-      asyncPagesMap[pagePath] = `function () { return import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(asyncPage => {
-        if (!global.__mpxLoadedAsyncPagesMap[${pageRequest}]) {
-          global.__mpxLoadedAsyncPagesMap[${pageRequest}] = asyncPage
-        }
-      }) }`
+      pagesMap[pagePath] = __getAsyncPage(pagePath, pageRequest, pageCfg.async)
     } else {
     // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
       pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`
@@ -80,8 +122,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig }) {
   })
   return {
     pagesMap,
-    firstPage,
-    asyncPagesMap
+    firstPage
   }
 }
 
@@ -152,7 +193,6 @@ function buildGlobalParams ({
   jsonConfig,
   componentsMap,
   pagesMap,
-  asyncPagesMap,
   firstPage,
   outputPath
 }) {
@@ -165,8 +205,6 @@ global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
 global.__mpxGenericsMap = {}
 global.__mpxOptionsMap = {}
 global.__mpxPagesMap = {}
-global.__mpxAsyncPagesMap = ${shallowStringify(asyncPagesMap)}
-global.__mpxLoadedAsyncPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__getAppComponents = function () {

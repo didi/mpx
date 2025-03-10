@@ -1,5 +1,6 @@
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessorReact')
+const usePageLayoutEffectPath = normalize.lib('runtime/usePageLayoutEffectReact')
 const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
 
 module.exports = function (script, {
@@ -26,6 +27,7 @@ module.exports = function (script, {
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
+import usePageLayoutEffect from ${stringifyRequest(loaderContext, usePageLayoutEffectPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
@@ -43,7 +45,7 @@ global.__navigationHelper = {
   SafeAreaProvider: SafeAreaProvider,
   useSafeAreaInsets: useSafeAreaInsets
 }\n`
-    const { pagesMap, firstPage, asyncPagesMap } = buildPagesMap({
+    const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
       loaderContext,
       jsonConfig
@@ -53,7 +55,7 @@ global.__navigationHelper = {
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, asyncPagesMap, firstPage })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
