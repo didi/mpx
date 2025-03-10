@@ -303,10 +303,7 @@ const useInnerProps = (
     layoutRef: { current: {} },
     disableTap: false
   }
-
   const navigation = useNavigation()
-
-  propsRef.current = extendObject({}, props, additionalProps)
 
   const removeProps = [
     'children',
@@ -319,6 +316,8 @@ const useInnerProps = (
     'parent-height',
     ...userRemoveProps
   ]
+
+  propsRef.current = extendObject({}, props, additionalProps)
 
   let hashEventKey = ''
   const rawEventKeys: Array<string> = []
