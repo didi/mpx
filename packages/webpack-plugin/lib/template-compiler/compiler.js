@@ -1809,9 +1809,6 @@ function processRefReact (el, meta) {
     }
 
     const selectors = []
-    const refFnId = forScopes.reduce((preV, curV) => {
-      return `${preV} + "_" + ${curV.index}`
-    }, `"ref_fn_${++refId}"`)
 
     /**
      * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
@@ -1835,6 +1832,10 @@ function processRefReact (el, meta) {
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
+    const refFnId = forScopes.reduce((preV, curV) => {
+      return `${preV} + "_" + ${curV.index}`
+    }, `"ref_fn_${++refId}"`)
+
     addAttrs(el, [{
       name: 'ref',
       value: `{{ this.__getRefVal('${type}', [${selectorsConf}], ${refFnId}) }}`
