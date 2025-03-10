@@ -1,4 +1,4 @@
-import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
+import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser, envError } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 let routeCount = 0
