@@ -1271,9 +1271,7 @@ function processEventReact (el, options) {
     // name 是否 worklet 标识
     const isWorklet = /^worklet(.*?)/.test(type)
     const needBind = proxy || configs.length > 1 || configs[0].hasArgs
-    // 回调方法是否为 worklet 函数
-    const hasWorkletHash = !!configs[0].value.__workletHash
-    if (needBind || (isWorklet && !hasWorkletHash)) {
+    if (needBind) {
       configs.forEach(({ name }) => {
         if (name) {
           // 清空原始事件绑定
@@ -1283,11 +1281,6 @@ function processEventReact (el, options) {
           } while (has)
         }
       })
-      if (!hasWorkletHash) {
-        // worklet 回调需要是 worklet 函数
-        error$1('Worklet callback must be a worklet function.')
-        return
-      }
       if (isWorklet) {
         // worklet 不支持模板参数
         error$1('Worklet callback does not support passing parameters in templates.')
