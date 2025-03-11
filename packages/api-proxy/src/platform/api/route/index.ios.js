@@ -34,7 +34,7 @@ function resolvePath (relative, base) {
   return stack.join('/')
 }
 let timerId = null
-function isLock (navigationHelper, type, options) {
+function isLock (navigationHelper = {}, type, options) {
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
     const res = { errMsg: `${type}:fail the previous routing event didn't complete` }
     failHandle(res, options.fail, options.complete)
@@ -163,16 +163,21 @@ function reset (options = {}) {
     failHandle(res, options.fail, options.complete)
     return
   }
+  const resetOption = Object.getOwnPropertyNames(options).reduce((resOpt, key) => {
+    if (key !== 'fail' && key !== 'complete' && key !== 'success') {
+      resOpt[key] = options[key]
+    }
+    return resOpt
+  }, {})
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'reset', options)) {
     return
   }
   if (navigation && navigationHelper) {
-    navigation.reset({
-      index: routes.length - 1,
-      routes
-    })
+    navigation.reset(Object.assign(resetOption, {
+      index: routes.length - 1
+    }))
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'reset:ok' }
       successHandle(res, options.success, options.complete)
