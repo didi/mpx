@@ -3,7 +3,7 @@ const { dash2hump } = require('./utils/hump-dash')
 const reactConfig = {
   event: {
     parseEvent (attr) {
-      const match = /^(bind|catch|capture-bind|capture-catch):?(.*?)(?:\.(.*))?$/.exec(attr)
+      const match = /^(bind|catch|capture-bind|capture-catch|worklet):?(.*?)(?:\.(.*))?$/.exec(attr)
       if (match) {
         return {
           prefix: match[1],
