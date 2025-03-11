@@ -583,7 +583,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           },
           headerTintColor: pageConfig.navigationBarTextStyle || 'white',
           statusBarTranslucent: true
-        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
+        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light', headerTitleAlign: 'center' } : {}))
       }, [])
 
       const rootRef = useRef(null)
