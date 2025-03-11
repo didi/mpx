@@ -1268,9 +1268,12 @@ function processEventReact (el, options) {
   for (const type in eventConfigMap) {
     const { configs, proxy } = eventConfigMap[type]
     if (!configs.length) continue
+    // name 是否 worklet 标识
     const isWorklet = /^worklet(.*?)/.test(type)
     const needBind = proxy || configs.length > 1 || configs[0].hasArgs
-    if (needBind) {
+    // 回调方法是否为 worklet 函数
+    const hasWorkletHash = !!configs[0].value.__workletHash
+    if (needBind || (isWorklet && !hasWorkletHash)) {
       configs.forEach(({ name }) => {
         if (name) {
           // 清空原始事件绑定
@@ -1280,8 +1283,14 @@ function processEventReact (el, options) {
           } while (has)
         }
       })
+      if (!hasWorkletHash) {
+        // worklet 回调需要是 worklet 函数
+        error$1('Worklet callback must be a worklet function.')
+        return
+      }
       if (isWorklet) {
-        error$1('Worklet callback does not support passing parameters in templates')
+        // worklet 不支持模板参数
+        error$1('Worklet callback does not support passing parameters in templates.')
         return
       }
       const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`
@@ -1293,7 +1302,7 @@ function processEventReact (el, options) {
       ])
     } else {
       const { name, value } = configs[0]
-      const attrValue = isValidIdentifierStr(value)
+      const attrValue = isValidIdentifierStr(value) || isWorklet
         ? `{{this.${value}}}`
         : `{{this[${parseMustacheWithContext(value).result}]}}`
 
