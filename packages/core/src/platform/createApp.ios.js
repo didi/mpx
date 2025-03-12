@@ -186,10 +186,14 @@ export default function createApp (options) {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      // 安卓上会出现初始化时闪现导航条的问题
-      headerShown: false,
+      // 默认为true，安卓上会出现初始化时闪现导航条的问题。如果设置为fasle会导致出现根组件进行二次更新。
+      // headerShown: false,
       // 隐藏导航下的那条线
-      headerShadowVisible: false
+      headerShadowVisible: false,
+      // 安卓默认文字未居中
+      headerTitleAlign: 'center',
+      // 设置状态栏颜色为透明
+      statusBarBackgroundColor: 'transparent'
     }
     if (headerBackImageSource) {
       navScreenOpts.headerBackImageSource = headerBackImageSource

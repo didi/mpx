@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -581,19 +581,20 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          statusBarTranslucent: true
-        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light', headerTitleAlign: 'center' } : {}))
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
       }, [])
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
-      const onLayout = useCallback(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
+      useEffect(() => {
+        setTimeout(() => {
+          // 在根节点onlayout计算会出现y值不太准确的情况, 故延迟100ms计算
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        }, 100)
       }, [])
-
       const withKeyboardAvoidingView = (element) => {
         return createElement(KeyboardAvoidContext.Provider,
           {
@@ -633,8 +634,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef,
-              onLayout
+              ref: rootRef
             },
             createElement(RouteContext.Provider,
               {
