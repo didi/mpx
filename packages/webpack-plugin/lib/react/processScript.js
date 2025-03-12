@@ -1,6 +1,5 @@
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessorReact')
-const usePageLayoutEffectPath = normalize.lib('runtime/usePageLayoutEffectReact')
 const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
 
 module.exports = function (script, {
