@@ -462,20 +462,24 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   // )
 
   // 处理刷新
-  // const onRefresh = () => {
-  //   if (refresherTriggered === undefined) {
-  //     setRefreshing(true)
-  //     setTimeout(() => {
-  //       setRefreshing(false)
-  //       translateY.value = withTiming(0)
-  //     }, 500)
-  //   }
-  //   const { bindrefresherrefresh } = props
-  //   bindrefresherrefresh &&
-  //     bindrefresherrefresh(
-  //       getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
-  //     )
-  // }
+  const onRefresh = () => {
+    if (refresherTriggered === undefined) {
+      setRefreshing(true)
+      setTimeout(() => {
+        setRefreshing(false)
+        translateY.value = withTiming(0)
+        if (!enableScrollValue.value) {
+          enableScrollValue.value = true
+          runOnJS(setEnableScroll)(true)
+        }
+      }, 500)
+    }
+    const { bindrefresherrefresh } = props
+    bindrefresherrefresh &&
+      bindrefresherrefresh(
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
+      )
+  }
 
   const movePan = Gesture.Pan()
     .onStart((event) => {
@@ -496,6 +500,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     .onUpdate((event) => {
       'worklet'
       if (translateY.value <= 0 && event.translationY < 0) {
+        enableScrollValue.value = true
         // 滑动到顶再向上 ===> 开始滚动
         enableScrollValue.value = true
         runOnJS(setEnableScroll)(true)
@@ -506,10 +511,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       }
       // 滚动时禁止滑动
       if (!enableScrollValue.value) {
-        // translateY.value = Math.min(
-        //   event.translationY * 0.6 < 0 ? 0 : event.translationY * 0.6,
-        //   refresherHeight.value,
-        // );
         if (isAtTop.value) {
           if (refreshing) {
             // 在刷新状态下，允许完全隐藏刷新器
@@ -531,8 +532,25 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     .onEnd((event) => {
       'worklet'
       if (enableScrollValue.value) return
-      if (event.translationY < refresherHeight.value) {
+      if (refreshing) {
+        // 刷新状态下，根据滑动距离决定是否隐藏
+        // 如果向下滑动没超过一半高度，就完全隐藏，如果向上滑动完全隐藏
+        if (event.translationY > 0 && translateY.value < refresherHeight.value / 2 || event.translationY < 0) {
+          translateY.value = withTiming(0)
+          setRefreshing(false)
+          enableScrollValue.value = true
+          runOnJS(setEnableScroll)(true)
+        } else{
+          translateY.value = withTiming(refresherHeight.value)
+        }
+      } else if (event.translationY >= refresherHeight.value) {
+        // 触发刷新
+        translateY.value = withTiming(refresherHeight.value)
+        runOnJS(onRefresh)()
+      } else {
+        // 回弹
         translateY.value = withTiming(0)
+        setRefreshing(false)
         enableScrollValue.value = true
         runOnJS(setEnableScroll)(true)
       }
@@ -645,17 +663,21 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { height } = e.nativeEvent.layout
     refresherHeight.value = height
   }
-  // useEffect(() => {
-  //   if (refresherTriggered !== undefined) {
-  //     setRefreshing(!!refresherTriggered)
+  useEffect(() => {
+    if (refresherTriggered !== undefined) {
+      setRefreshing(!!refresherTriggered)
 
-  //     if (refresherTriggered) {
-  //       translateY.value = withTiming(refresherHeight.value)
-  //     } else {
-  //       translateY.value = withTiming(0, { duration: 300 })
-  //     }
-  //   }
-  // }, [refresherTriggered])
+      if (refresherTriggered) {
+        translateY.value = withTiming(refresherHeight.value)
+        enableScrollValue.value = false
+        runOnJS(setEnableScroll)(false)
+      } else {
+        translateY.value = withTiming(0)
+        enableScrollValue.value = true
+        runOnJS(setEnableScroll)(true)
+      }
+    }
+  }, [refresherTriggered])
 
   // createAnimatedComponent 后 可能还是会出现 move 频率减少、end 事件不触发
   const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView)
