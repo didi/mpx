@@ -14,7 +14,6 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
      * loadedEvent 后续需要和 native 对接，事件对象的确认 (状态枚举：loaded/missing/failed/timeout)，
      */
     this.options = options
-    // this.loadAsyncFn = options.loadAsyncFn
     this.loadAsyncTemplate = options.loadAsyncTemplate
     this.timeout = options.timeout || 5000
   }
@@ -23,7 +22,6 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
     const { compilation } = this
     const { runtimeTemplate } = compilation
     const loadScriptFn = RuntimeGlobals.loadScript
-    // const loadAsyncFn = this.loadAsyncFn.toString()
     return Template.asString([
       'var inProgress = {};',
       `${loadScriptFn} = ${runtimeTemplate.basicFunction(
@@ -74,8 +72,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           "var successCallback = callback.bind(null, 'load');",
           "var failedCallback = callback.bind(null, 'fail')", // import 没法加载远程 js 代码，本地调试只能静态路径；
           `var loadAsyncChunkFn = ${this.loadAsyncTemplate.trim()}`,
-          `loadAsyncChunkFn(config).then(successCallback).catch(failedCallback)`
-          // 'loadFn(url, successCallback, failedCallback)'
+          'loadAsyncChunkFn(config).then(successCallback).catch(failedCallback)'
         ]
       )}`
     ])

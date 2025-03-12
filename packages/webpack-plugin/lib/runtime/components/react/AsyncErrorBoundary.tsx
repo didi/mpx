@@ -17,14 +17,16 @@ interface ComponentError extends Error {
 }
 
 export default class ErrorBoundary extends React.Component<PropsType, StateType> {
-  constructor(props: PropsType) {
+  constructor (props: PropsType) {
     super(props)
     this.state = {
       hasError: false,
       key: 0
     }
   }
-  static getDerivedStateFromError(error: ComponentError): StateType | undefined {
+
+  // render 阶段收集到的错误
+  static getDerivedStateFromError (error: ComponentError): StateType | undefined {
     if (error.name === 'ChunkLoadError') {
       return {
         hasError: true,
@@ -42,7 +44,7 @@ export default class ErrorBoundary extends React.Component<PropsType, StateType>
     })
   }
 
-  render() {
+  render () {
     const { fallback: Fallback } = this.props
     if (this.state.hasError) {
       if (this.props.asyncType === 'page') {
@@ -65,6 +67,5 @@ export default class ErrorBoundary extends React.Component<PropsType, StateType>
         </React.Fragment>
       )
     }
-
   }
 }

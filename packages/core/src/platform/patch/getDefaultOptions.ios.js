@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -502,7 +502,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
-
     useEffect(() => {
       if (type === 'page') {
         if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
@@ -576,18 +575,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const intersectionObservers = useRef({})
       usePageStatus(navigation, currentPageId)
       usePageLayoutEffect(navigation, pageConfig)
-      // useLayoutEffect(() => {
-      //   const isCustom = pageConfig.navigationStyle === 'custom'
-      //   navigation.setOptions(Object.assign({
-      //     headerShown: !isCustom,
-      //     title: pageConfig.navigationBarTitleText || '',
-      //     headerStyle: {
-      //       backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-      //     },
-      //     headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-      //     statusBarTranslucent: true
-      //   }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
-      // }, [])
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })

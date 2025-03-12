@@ -23,7 +23,7 @@ module.exports = function (script, {
   }
 
   let output = '/* script */\n'
-  output += "import { Suspense, lazy, createElement, memo } from 'react'\n"
+  output += "import { Suspense, lazy, createElement, memo, forwardRef } from 'react'\n"
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
