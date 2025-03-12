@@ -27,7 +27,6 @@ module.exports = function (script, {
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
-import usePageLayoutEffect from ${stringifyRequest(loaderContext, usePageLayoutEffectPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
