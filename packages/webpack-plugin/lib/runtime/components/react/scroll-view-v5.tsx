@@ -481,20 +481,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       )
   }
 
-  const movePan = Gesture.Pan()
-    .onStart((event) => {
-      'worklet'
-      console.log('mova pan start')
-    })
-    .onUpdate(event => {
-      'worklet'
-      console.log('mova pan update')
-    })
-    .onEnd(() => {
-      'worklet'
-      console.log('mova pan end')
-    })
-
   // 处理下拉刷新的手势
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
@@ -535,12 +521,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       if (refreshing) {
         // 刷新状态下，根据滑动距离决定是否隐藏
         // 如果向下滑动没超过一半高度，就完全隐藏，如果向上滑动完全隐藏
-        if (event.translationY > 0 && translateY.value < refresherHeight.value / 2 || event.translationY < 0) {
+        if ((event.translationY > 0 && translateY.value < refresherHeight.value / 2) || event.translationY < 0) {
           translateY.value = withTiming(0)
-          setRefreshing(false)
           enableScrollValue.value = true
           runOnJS(setEnableScroll)(true)
-        } else{
+          runOnJS(setRefreshing)(false)
+        } else {
           translateY.value = withTiming(refresherHeight.value)
         }
       } else if (event.translationY >= refresherHeight.value) {
@@ -550,9 +536,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       } else {
         // 回弹
         translateY.value = withTiming(0)
-        setRefreshing(false)
         enableScrollValue.value = true
         runOnJS(setEnableScroll)(true)
+        runOnJS(setRefreshing)(false)
       }
     })
     .simultaneousWithExternalGesture(scrollViewRef)
@@ -663,6 +649,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { height } = e.nativeEvent.layout
     refresherHeight.value = height
   }
+
   useEffect(() => {
     if (refresherTriggered !== undefined) {
       setRefreshing(!!refresherTriggered)
