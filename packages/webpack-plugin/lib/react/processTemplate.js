@@ -14,7 +14,7 @@ module.exports = function (template, {
   srcMode,
   moduleId,
   ctorType,
-  usingComponents,
+  usingComponentsInfo,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -27,9 +27,11 @@ module.exports = function (template, {
     decodeHTMLText,
     externalClasses,
     checkUsingComponents,
-    autoVirtualHostRules
+    autoVirtualHostRules,
+    forceProxyEventRules,
+    customTextRules
   } = mpx
-  const { resourcePath } = parseRequest(loaderContext.resource)
+  const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
   let genericsInfo
@@ -63,7 +65,7 @@ module.exports = function (template, {
       const { root, meta } = templateCompiler.parse(template.content, {
         warn,
         error,
-        usingComponents,
+        usingComponentsInfo, // processTemplate中无其他地方使用，直接透传 string 类型
         hasComment,
         isNative,
         ctorType,
@@ -76,7 +78,7 @@ module.exports = function (template, {
         // todo 后续输出web也采用mpx的scoped处理
         hasScoped: false,
         moduleId,
-        filePath: resourcePath,
+        filePath: rawResourcePath,
         // react中模版i18n不需要特殊处理
         i18n: null,
         checkUsingComponents,
@@ -84,12 +86,14 @@ module.exports = function (template, {
         globalComponents: [],
         // web模式下实现抽象组件
         componentGenerics,
-        hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
+        hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
+        forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
+        isCustomText: matchCondition(resourcePath, customTextRules)
       })
 
       if (meta.wxsContentMap) {
         for (const module in meta.wxsContentMap) {
-          wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+          wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
         }
       }
       if (meta.builtInComponentsMap) {
@@ -117,6 +121,9 @@ module.exports = function (template, {
           }, meta.wxsModuleMap)
           const bindResult = bindThis.transform(rawCode, {
             ignoreMap
+            // customBindThis (path, t) {
+            //   path.replaceWith(t.callExpression(t.identifier('getValue'), [t.stringLiteral(path.node.name)]))
+            // }
           })
           output += `global.currentInject.render = function (createElement, getComponent) {
   return ${bindResult.code}

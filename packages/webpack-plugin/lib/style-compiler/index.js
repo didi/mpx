@@ -4,7 +4,6 @@ const loadPostcssConfig = require('./load-postcss-config')
 const { MPX_ROOT_VIEW, MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
-const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
 const cssArrayList = require('./plugins/css-array-list')
@@ -19,7 +18,7 @@ module.exports = function (css, map) {
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
   const mpxStyleOptions = (queryObj.mpxStyleOptions && JSON.parse(queryObj.mpxStyleOptions)) || {}
-  const id = queryObj.moduleId || mpxStyleOptions.mid || '_' + mpx.pathHash(resourcePath)
+  const id = queryObj.moduleId || mpxStyleOptions.mid || mpx.getModuleId(resourcePath)
   const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
@@ -58,9 +57,9 @@ module.exports = function (css, map) {
       plugins.push(transSpecial({ id }))
     }
 
-    plugins.push(pluginCondStrip({
-      defs
-    }))
+    // plugins.push(pluginCondStrip({
+    //   defs
+    // }))
 
     for (const item of transRpxRules) {
       const {

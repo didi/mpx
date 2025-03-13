@@ -34,6 +34,7 @@ export class Observer {
 
   constructor (value, shallow) {
     this.value = value
+    this.shallow = shallow
     def(value, ObKey, this)
     if (Array.isArray(value)) {
       const augment = hasProto && arrayProtoAugment
@@ -120,7 +121,7 @@ export function defineReactive (obj, key, val, shallow) {
   const getter = property && property.get
   const setter = property && property.set
 
-  let childOb = !shallow && observe(val)
+  let childOb = shallow ? getObserver(val) : observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
@@ -149,7 +150,7 @@ export function defineReactive (obj, key, val, shallow) {
       } else {
         val = newVal
       }
-      childOb = !shallow && observe(newVal)
+      childOb = shallow ? getObserver(newVal) : observe(newVal)
       dep.notify()
     }
   })
@@ -175,7 +176,7 @@ export function set (target, key, val) {
     target[key] = val
     return val
   }
-  defineReactive(ob.value, key, val)
+  defineReactive(ob.value, key, val, ob.shallow)
   ob.dep.notify()
   return val
 }
@@ -225,7 +226,7 @@ export function shallowReactive (value) {
 }
 
 export function isReactive (value) {
-  return value && hasOwn(value, ObKey) && value[ObKey] instanceof Observer
+  return hasOwn(value, ObKey) && value[ObKey] instanceof Observer
 }
 
 export function getObserver (value) {

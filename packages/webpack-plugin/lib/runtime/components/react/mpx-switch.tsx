@@ -4,15 +4,15 @@
  * ✔ disabled
  * ✔ color
  */
-import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
-import { useRef, useEffect, forwardRef, JSX, useState, useContext } from 'react'
+import { Switch, SwitchProps, ViewStyle, NativeSyntheticEvent } from 'react-native'
+import { useRef, useEffect, forwardRef, JSX, useState, useContext, createElement } from 'react'
 import { warn } from '@mpxjs/utils'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
 import { FormContext, FormFieldValue } from './context'
-import { useTransformStyle, useLayout } from './utils'
+import { useTransformStyle, useLayout, extendObject } from './utils'
 
 interface _SwitchProps extends SwitchProps {
   style?: ViewStyle
@@ -42,7 +42,6 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-
     bindchange,
     catchchange
   } = props
@@ -77,7 +76,9 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   }, [checked])
 
   const nodeRef = useRef(null)
-  useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef)
+  useNodesRef<Switch, _SwitchProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
   const {
     layoutRef,
@@ -111,12 +112,21 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }
 
-  const innerProps = useInnerProps(props, {
+  useEffect(() => {
+    return () => {
+      if (formValuesMap && props.name) {
+        formValuesMap.delete(props.name)
+      }
+    }
+  }, [])
+
+  const innerProps = useInnerProps(props, extendObject({
     ref: nodeRef,
-    style: { ...normalStyle, ...layoutStyle },
-    ...layoutProps,
-    ...!disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
-  }, [
+    style: extendObject({}, normalStyle, layoutStyle)
+  },
+  layoutProps,
+  !disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {})
+  , [
     'checked',
     'disabled',
     'type',
@@ -126,24 +136,28 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
   })
 
   if (type === 'checkbox') {
-    return <CheckBox
-      {...innerProps}
-      color={color}
-      style={normalStyle}
-      checked={isChecked}
-    />
+    return createElement(
+      CheckBox,
+      extendObject({}, innerProps, {
+        color: color,
+        style: normalStyle,
+        checked: isChecked
+      })
+    )
   }
 
-  return <Switch
-    {...innerProps}
-    style={normalStyle}
-    value={isChecked}
-    trackColor={{ false: '#FFF', true: color }}
-    thumbColor={isChecked ? '#FFF' : '#f4f3f4'}
-    ios_backgroundColor="#FFF"
-  />
+  return createElement(
+    Switch,
+    extendObject({}, innerProps, {
+      style: normalStyle,
+      value: isChecked,
+      trackColor: { false: '#FFF', true: color },
+      thumbColor: isChecked ? '#FFF' : '#f4f3f4',
+      ios_backgroundColor: '#FFF'
+    })
+  )
 })
 
-_Switch.displayName = 'mpx-switch'
+_Switch.displayName = 'MpxSwitch'
 
 export default _Switch

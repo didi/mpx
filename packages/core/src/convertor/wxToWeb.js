@@ -1,5 +1,5 @@
-import * as wxLifecycle from '../platform/patch/wx/lifecycle'
-import * as webLifecycle from '../platform/patch/web/lifecycle'
+import * as wxLifecycle from '../platform/patch/lifecycle/index.wx'
+import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import { mergeLifecycle } from './mergeLifecycle'
 import {
   isObject,
@@ -32,7 +32,7 @@ function notSupportTip (options) {
 
 export default {
   lifecycle: mergeLifecycle(wxLifecycle.LIFECYCLE),
-  lifecycle2: mergeLifecycle(webLifecycle.LIFECYCLE),
+  lifecycle2: mergeLifecycle(LIFECYCLE),
   pageMode: 'blend',
   support: true,
   lifecycleProxyMap: wxLifecycle.lifecycleProxyMap,

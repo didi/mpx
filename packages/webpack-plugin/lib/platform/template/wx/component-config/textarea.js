@@ -91,7 +91,7 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(placeholder-style|placeholder-class|cursor-spacing|always-embed|adjust-position|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
+        test: /^(placeholder-style|placeholder-class|always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog

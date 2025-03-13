@@ -1,0 +1,17 @@
+{
+  "name": "docs-vitepress",
+  "private": true,
+  "type": "module",
+  "description": "Mpx 官方文档",
+  "homepage": "https://mpxjs.cn",
+  "license": "ISC",
+  "dependencies": {
+    "vue": "^3.4.37"
+  },
+  "devDependencies": {
+    "@shikijs/vitepress-twoslash": "^3.0.0",
+    "typescript": "^5.7.3",
+    "vitepress-plugin-group-icons": "^1.3.6",
+    "workbox-window": "^7.1.0"
+  }
+}

@@ -137,6 +137,11 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
 
   initData?: Record<string, any>
 
+  provide?: Record<string, any> | (() => Record<string, any>)
+  inject?:
+    | { [key: string]: string | Symbol | { from?: string | Symbol; default?: any } }
+    | Array<string>
+
   [index: string]: any
 }
 
@@ -259,13 +264,15 @@ interface MpxConfig {
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
-  errorHandler: (e: Error, target: ComponentIns<{}, {}, {}, {}, []>, hookName: string) => any | null
-  proxyEventHandler: (e: WechatMiniprogram.CustomEvent) => any | null
+  errorHandler: (msg: String, location: String, e: Error) => any | null
+  warnHandler: (msg: String, location: String, e: Error) => any | null
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,
   webConfig: object,
-  webviewConfig?: WebviewConfig
+  webviewConfig: WebviewConfig,
+  rnConfig: object,
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
@@ -305,6 +312,8 @@ export interface Mpx {
   remove: typeof del
 
   delete: typeof del
+
+  provide: typeof provide
 
   config: MpxConfig
 
@@ -569,6 +578,13 @@ export function getCurrentScope (): EffectScope | undefined
 export function onScopeDispose (fn: () => void): void
 export function set<T extends object> (target: T, key: string | number, value: any): void
 export function del<T extends object> (target: T, key: keyof T): void
+
+// provide & inject
+export declare function provide<T>(key: InjectionKey<T> | string | number, value: T): void;
+export declare function inject<T>(key: InjectionKey<T> | string): T | undefined;
+export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T, treatDefaultAsFactory?: false): T;
+export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T | (() => T), treatDefaultAsFactory: true): T;
+export declare interface InjectionKey<T> extends Symbol {}
 
 // nextTick
 export function nextTick (fn: () => any): void

@@ -1,4 +1,5 @@
 import { hasOwn, noop, getEnvObj, getFocusedNavigation } from '@mpxjs/utils'
+import { getCurrentInstance } from '@mpxjs/core'
 
 /**
  *
@@ -87,6 +88,12 @@ function failHandle (result, fail, complete) {
   typeof complete === 'function' && complete(result)
 }
 
+function getCurrentPageId () {
+  const currentInstance = getCurrentInstance()
+  const id = currentInstance?.getPageId() || getFocusedNavigation()?.pageId || null
+  return id
+}
+
 const ENV_OBJ = getEnvObj()
 
 export {
@@ -101,5 +108,6 @@ export {
   defineUnsupportedProps,
   successHandle,
   failHandle,
-  getFocusedNavigation
+  getFocusedNavigation,
+  getCurrentPageId
 }
