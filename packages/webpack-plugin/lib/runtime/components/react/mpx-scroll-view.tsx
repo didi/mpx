@@ -509,7 +509,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 刷新控件的动画样式
   const refresherAnimatedStyle = useAnimatedStyle(() => {
-    // 这里要计算的是刷新控件应该显示多少
     return {
       marginTop: -refresherHeight.value, // 初始隐藏在顶部
       transform: [{ translateY: Math.min(translateY.value, refresherHeight.value) }],
@@ -537,20 +536,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     .onUpdate((event) => {
       'worklet'
       if (translateY.value <= 0 && event.translationY < 0) {
+        // 滑动到顶再向上开启滚动
         enableScrollValue.value = true
-        // 滑动到顶再向上 ===> 开始滚动
         enableScrollValue.value = true
         runOnJS(setEnableScroll)(true)
       } else if (event.translationY > 0 && isAtTop.value) {
-        // 滚动到顶再向下 ===> 开始滑动
+        // 滚动到顶再向下禁止滚动
         enableScrollValue.value = false
         runOnJS(setEnableScroll)(false)
       }
-      // 滚动时禁止滑动
+      // 禁止滚动后切换为滑动
       if (!enableScrollValue.value) {
         if (isAtTop.value) {
           if (refreshing) {
-            // 在刷新状态下，允许完全隐藏刷新器
             // 从完全展开状态(refresherHeight.value)开始计算偏移
             translateY.value = Math.max(
               0,
