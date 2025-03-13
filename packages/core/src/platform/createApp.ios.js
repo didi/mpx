@@ -181,6 +181,7 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
     const headerBackImageSource = Mpx.config.rnConfig.headerBackImageSource || null
     const navScreenOpts = {
       // 7.x替换headerBackTitleVisible
@@ -188,8 +189,12 @@ export default function createApp (options) {
       headerBackTitleVisible: false,
       // 安卓上会出现初始化时闪现导航条的问题
       headerShown: false,
-      // 隐藏导航下的那条线
       headerShadowVisible: false
+    }
+    if (headerBackImageProps) {
+      navScreenOpts.headerBackImage = () => {
+        return createElement(Image, headerBackImageProps)
+      }
     }
     if (headerBackImageSource) {
       navScreenOpts.headerBackImageSource = headerBackImageSource
