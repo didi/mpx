@@ -194,7 +194,8 @@ export default function createApp (options) {
         navScreenOpts.headerBackImageSource = headerBackImageSource
       }
     } else {
-       // 安卓上会出现初始化时闪现导航条的问题
+       // 安卓上会出现导航条闪现的问题所以默认加headerShown false（stack版本， native-stack版本可以干掉）
+       // iOS加上默认headerShown false的话会因为iOS根高度是screenHeight - useHeaderHeight()会导致出现渲染两次情况，因此iOS不加此默认值
       navScreenOpts.headerShown = false
       // 安卓和鸿蒙先用stack
       const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
