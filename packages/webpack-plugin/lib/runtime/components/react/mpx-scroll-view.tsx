@@ -106,6 +106,9 @@ type ScrollAdditionalProps = {
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
+
+const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView)
+
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
@@ -151,11 +154,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const snapScrollTop = useRef(0)
   const snapScrollLeft = useRef(0)
 
-  const [scrollBounces, setScrollBounces] = useState(!!bounces)
   const [refreshing, setRefreshing] = useState(false)
   const [enableScroll, setEnableScroll] = useState(true)
   const enableScrollValue = useSharedValue(true)
   const lastEnableScrollValue = useSharedValue(true)
+
+  const [scrollBounces, setScrollBounces] = useState(!!bounces)
+  const bouncesValue = useSharedValue(!!bounces)
+  const lastBouncesValue = useSharedValue(!!bounces)
+
   const translateY = useSharedValue(0)
   const isAtTop = useSharedValue(true)
   const refresherHeight = useSharedValue(0)
@@ -537,23 +544,31 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       'worklet'
-      if (event.translationY > 0 && enhanced && scrollBounces) {
-        // runOnJS(setScrollBounces)(false)
-      } else if ((event.translationY < 0) && enhanced && !scrollBounces) {
-        // runOnJS(setScrollBounces)(true)
+      if (event.translationY > 0 && enhanced && bouncesValue.value) {
+        bouncesValue.value = false
+        if (bouncesValue.value !== lastBouncesValue.value) {
+          runOnJS(setScrollBounces)(bouncesValue.value)
+          lastBouncesValue.value = bouncesValue.value
+        }
+      } else if ((event.translationY < 0) && enhanced && !bouncesValue.value) {
+        bouncesValue.value = true
+        if (bouncesValue.value !== lastBouncesValue.value) {
+          runOnJS(setScrollBounces)(bouncesValue.value)
+          lastBouncesValue.value = bouncesValue.value
+        }
       }
       if (translateY.value <= 0 && event.translationY < 0) {
         // 滑动到顶再向上开启滚动
         enableScrollValue.value = true
         if (lastEnableScrollValue.value !== enableScrollValue.value) {
-          runOnJS(setEnableScroll)(true)
+          runOnJS(setEnableScroll)(enableScrollValue.value)
           lastEnableScrollValue.value = enableScrollValue.value
         }
       } else if (event.translationY > 0 && isAtTop.value) {
         // 滚动到顶再向下禁止滚动
         enableScrollValue.value = false
         if (lastEnableScrollValue.value !== enableScrollValue.value) {
-          runOnJS(setEnableScroll)(false)
+          runOnJS(setEnableScroll)(enableScrollValue.value)
           lastEnableScrollValue.value = enableScrollValue.value
         }
       }
@@ -586,10 +601,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           translateY.value = withTiming(0)
           enableScrollValue.value = true
           if (lastEnableScrollValue.value !== enableScrollValue.value) {
-            runOnJS(setEnableScroll)(true)
+            runOnJS(setEnableScroll)(enableScrollValue.value)
             lastEnableScrollValue.value = enableScrollValue.value
           }
-          // runOnJS(setRefreshing)(false)
+          runOnJS(setRefreshing)(false)
         } else {
           translateY.value = withTiming(refresherHeight.value)
         }
@@ -605,7 +620,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           runOnJS(setEnableScroll)(true)
           lastEnableScrollValue.value = enableScrollValue.value
         }
-        // runOnJS(setRefreshing)(false)
+        runOnJS(setRefreshing)(false)
       }
     })
     .simultaneousWithExternalGesture(scrollViewRef)
@@ -675,12 +690,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const { refresherContent, otherContent } = getRefresherContent(props.children)
 
-  // createAnimatedComponent 后 可能还是会出现 move 频率减少、end 事件不触发
-  const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView)
-
   const withRefresherTemplate = (
       <GestureDetector gesture={panGesture}>
-        <ScrollView {...innerProps}>
+        <AnimatedScrollView {...innerProps}>
           {/* 刷新控件 - 有独立的动画 */}
           <Animated.View style={refresherAnimatedStyle} onLayout={onRefresherLayout}>
             {refresherContent}
@@ -700,7 +712,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
               )}
             </ScrollViewContext.Provider>
           </Animated.View>
-        </ScrollView>
+        </AnimatedScrollView>
       </GestureDetector>
   )
 
