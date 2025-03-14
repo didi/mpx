@@ -7,8 +7,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  Easing,
-  runOnJS
+  Easing
 } from 'react-native-reanimated'
 const actionSheetMap = new Map()
 
