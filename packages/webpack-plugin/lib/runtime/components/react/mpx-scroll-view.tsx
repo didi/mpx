@@ -237,7 +237,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }, [scrollIntoView])
 
   function scrollTo ({ top = 0, left = 0, animated = false } : { top?: number; left?: number; animated?: boolean }) {
-    scrollToOffset(left, top, animated, 'scrollTo')
+    scrollToOffset(left, top, animated)
   }
 
   function handleScrollIntoView () {
@@ -375,9 +375,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       }
     }
   }
-  function scrollToOffset (x = 0, y = 0, animated = false, scrollSource = '') {
+  function scrollToOffset (x = 0, y = 0, animated?: boolean) {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ x, y, animated: scrollSource === 'scrollTo' ? animated : !!scrollWithAnimation })
+      scrollViewRef.current.scrollTo({ x, y, animated: animated !== undefined ? animated : !!scrollWithAnimation })
       scrollOptions.current.scrollLeft = x
       scrollOptions.current.scrollTop = y
       snapScrollLeft.current = x
