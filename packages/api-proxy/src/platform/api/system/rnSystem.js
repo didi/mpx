@@ -7,6 +7,7 @@ const getWindowInfo = function () {
   const navigation = getFocusedNavigation() || {}
   const initialWindowMetricsInset = initialWindowMetrics?.insets || {}
   const navigationInsets = navigation.insets || {}
+  console.log('navigationInsets-----------', navigationInsets)
   const insets = Object.assign(initialWindowMetricsInset, navigationInsets)
   let safeArea = {}
   const { top = 0, bottom = 0, left = 0, right = 0 } = insets
