@@ -879,7 +879,6 @@ function modifyAttr (el, name, val) {
   const list = el.attrsList
   for (let i = 0, l = list.length; i < l; i++) {
     if (list[i].name === name) {
-      list[i].name = name.replace(/worklet:/g, '')
       list[i].value = val
       break
     }
@@ -1268,8 +1267,6 @@ function processEventReact (el, options) {
   for (const type in eventConfigMap) {
     const { configs, proxy } = eventConfigMap[type]
     if (!configs.length) continue
-    // name 是否 worklet 标识
-    const isWorklet = /^worklet(.*?)/.test(type)
     const needBind = proxy || configs.length > 1 || configs[0].hasArgs
     if (needBind) {
       configs.forEach(({ name }) => {
@@ -1281,11 +1278,6 @@ function processEventReact (el, options) {
           } while (has)
         }
       })
-      if (isWorklet) {
-        // worklet 不支持模板参数
-        error$1('Worklet callback does not support passing parameters in templates.')
-        return
-      }
       const value = `{{(e)=>this.__invoke(e, [${configs.map(item => item.expStr)}])}}`
       addAttrs(el, [
         {
@@ -1295,7 +1287,7 @@ function processEventReact (el, options) {
       ])
     } else {
       const { name, value } = configs[0]
-      const attrValue = isValidIdentifierStr(value) || isWorklet
+      const attrValue = isValidIdentifierStr(value)
         ? `{{this.${value}}}`
         : `{{this[${parseMustacheWithContext(value).result}]}}`
 
