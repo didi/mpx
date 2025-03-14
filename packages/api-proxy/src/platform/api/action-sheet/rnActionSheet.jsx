@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
@@ -53,8 +53,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    right: 0,
-    paddingBottom: bottom
+    right: 0
   },
   itemStyle: {
     paddingTop: 15,
@@ -72,15 +71,16 @@ const styles = StyleSheet.create({
   },
   buttonStyle: {
     paddingTop: 10,
-    paddingBottom: 10,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    paddingBottom: bottom + 10
   }
 })
 
 function ActionSheet ({itemColor, height, success, fail, complete, alertText, itemList}) {
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
+  const [selectedIndex, setSelectedIndex] = useState(null)
 
   const actionAnimatedStyles = useAnimatedStyle(() => {
     return {
@@ -116,6 +116,7 @@ function ActionSheet ({itemColor, height, success, fail, complete, alertText, it
       tapIndex: index
     }
     successHandle(result, success, complete)
+    setSelectedIndex(null)
   }
   const cancelAction = function () {
     removeActionSheet()
@@ -123,6 +124,10 @@ function ActionSheet ({itemColor, height, success, fail, complete, alertText, it
       errMsg: 'showActionSheet:fail cancel'
     }
     failHandle(result, fail, complete)
+    setSelectedIndex(null)
+  }
+  const startHandle = function (index) {
+    setSelectedIndex(index)
   }
   return (
     <View style={styles.actionAction}>
@@ -131,12 +136,16 @@ function ActionSheet ({itemColor, height, success, fail, complete, alertText, it
       </Animated.View>
       <Animated.View style={[styles.actionSheetContent, actionAnimatedStyles]}>
         { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
-        { itemList.map((item, index) => <View onTouchEnd={() => selectAction(index)} key={index} style={ [styles.itemStyle, itemList.length -1 === index ? {
+        { itemList.map((item, index) => <View onTouchStart={() => startHandle(index)} onTouchEnd={() => selectAction(index)} key={index} style={ [styles.itemStyle, itemList.length -1 === index ? {
           borderBottomWidth: 6,
           borderBottomStyle: 'solid',
           borderBottomColor: '#f7f7f7'
-        } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></View>) }
-        <View style={styles.buttonStyle} onTouchEnd={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></View>
+        } : {}, {
+          backgroundColor: selectedIndex === index ? '#ececec' : '#ffffff'
+        }] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></View>) }
+        <View style={[styles.buttonStyle, {
+          backgroundColor: selectedIndex === -1 ? '#ececec' : '#ffffff'
+        }]}  onTouchStart={() => startHandle(-1)} onTouchEnd={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></View>
       </Animated.View>
     </View>
   )
