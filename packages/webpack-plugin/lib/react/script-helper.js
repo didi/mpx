@@ -45,13 +45,16 @@ function getAsyncComponent (componentName, componentRequest, chunkName, fallback
   }))`
 }
 
-function getAsyncPage (componentName, componentRequest, chunkName) {
+function getAsyncPage (componentName, componentRequest, chunkName, fallback, loading) {
+  fallback = fallback && `createElement(getComponent(require('${fallback}?isComponent=true')))`
+  loading = loading && `createElement(getComponent(require('${loading}?isComponent=true')))`
   return `getComponent(function(props) {
     return createElement(
       getComponent(require(${mpxAsyncPage})),
       {
         navigation: props.navigation,
-        // todo fallback & loading
+        fallback: ${fallback},
+        loading: ${loading}
       },
       createElement(
         getComponent(
@@ -63,14 +66,14 @@ function getAsyncPage (componentName, componentRequest, chunkName) {
   })`
 }
 
-function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig }) {
+function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) {
   let firstPage = ''
   const pagesMap = {}
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async) {
-      pagesMap[pagePath] = getAsyncPage(pagePath, pageRequest, pageCfg.async)
+      pagesMap[pagePath] = getAsyncPage(pagePath, pageRequest, pageCfg.async, rnConfig.asyncChunk.fallback, rnConfig.asyncChunk.loading)
     } else {
     // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
       pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`
