@@ -107,6 +107,9 @@ type ScrollAdditionalProps = {
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
+
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
+
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
@@ -535,8 +538,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   let ScrollViewComponent: React.ComponentType<any> = ScrollView
   if (enableSticky) {
-    ScrollViewComponent = Animated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
-  }
+    ScrollViewComponent = AnimatedScrollView
 
   return createElement(
     ScrollViewComponent,
