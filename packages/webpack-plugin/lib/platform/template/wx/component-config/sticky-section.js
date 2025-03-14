@@ -9,7 +9,7 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
-      return "mpx-sticky-section";
+      return 'mpx-sticky-section'
     },
     web (tag, { el }) {
       return 'div'
