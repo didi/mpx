@@ -19,14 +19,7 @@
     <view class="content-wrapper">
       <view class="infinite-list-placeholder" wx:style="{{placeholderStyle}}"></view>
       <view class="infinite-list" wx:style="{{contentStyle}}">
-        <view
-          wx:for="{{visibleData}}"
-          wx:key="_index"
-          class="infinite-list-item"
-          wx:style="height: {{item._size.height}}; width: {{item._size.width}}; overflow: hidden"
-        >
-          <recycle-item current-item="{{item}}" />
-        </view>
+        <recycle-item wx:for="{{visibleData}}" wx:key="_index" current-item="{{item}}"/>
       </view>
     </view>
   </scroll-view>
@@ -45,7 +38,7 @@
         type: Number,
         value: 0
       },
-      itemSize: {
+      itemHeight: {
         type: Object,
         value: {}
       },
@@ -140,14 +133,10 @@
 
         return this._listData.slice(start, end).map((item, idx) => {
           const realIndex = start + idx
-          const size = this.getItemSize(item, realIndex)
+          const height = this.getItemHeight(item, realIndex)
           return {
             ...item,
-            _index: `_${realIndex}`,
-            _size: {
-              width: typeof size.width === 'number' ? `${size.width}px` : size.width,
-              height: typeof size.height === 'number' ? `${size.height}px` : size.height
-            }
+            _index: `_${realIndex}`
           }
         })
       },
@@ -199,12 +188,12 @@
       initPositions() {
         let bottom = 0
         this.positions = this._listData.map((item, index) => {
-          const size = this.getItemSize(item, index)
+          const height = this.getItemHeight(item, index)
           const position = {
             index,
-            height: size.height,
+            height: height,
             top: bottom,
-            bottom: bottom + size.height
+            bottom: bottom + height
           }
           bottom = position.bottom
           return position
@@ -294,20 +283,14 @@
           this.contentStyle = `transform: translateY(0px);`
         }
       },
-      getItemSize(item, index) {
-        const { width, height, getter } = this.itemSize
-        let size
+      getItemHeight(item, index) {
+        const { value, getter } = this.itemHeight
         if (typeof getter === 'function') {
-          size = getter(item, index)
+          return getter(item, index) || 0
         } else {
-          size = {
-            width: width || 0,
-            height: height || 0
-          }
+          return value || 0
         }
-        return size
       },
-
       onScroll(e) {
         const now = Date.now()
         if (now - this.lastScrollTime < this.scrollThrottleDelay) {
