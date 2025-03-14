@@ -259,12 +259,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
       if (refresherTriggered) {
         translateY.value = withTiming(refresherHeight.value)
-        enableScrollValue.value = false
-        runOnJS(setEnableScroll)(false)
+        resetScrollState(false)
       } else {
         translateY.value = withTiming(0)
-        enableScrollValue.value = true
-        runOnJS(setEnableScroll)(true)
+        resetScrollState(true)
       }
     }
   }, [refresherTriggered])
@@ -485,9 +483,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       setTimeout(() => {
         setRefreshing(false)
         translateY.value = withTiming(0)
-        if (!enableScrollValue.value) {
-          enableScrollValue.value = true
-          runOnJS(setEnableScroll)(true)
+        if (!lastEnableScrollValue.value) {
+          resetScrollState(true)
         }
       }, 500)
     }
@@ -536,58 +533,72 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   })
 
-  const onRefresherLayout = (e: LayoutChangeEvent) => {
+  function onRefresherLayout (e: LayoutChangeEvent) {
     const { height } = e.nativeEvent.layout
     refresherHeight.value = height
   }
+
+  function updateScrollState (newValue: boolean) {
+    'worklet'
+    if (enableScrollValue.value !== newValue) {
+      enableScrollValue.value = newValue
+      if (lastEnableScrollValue.value !== newValue) {
+        runOnJS(setEnableScroll)(newValue)
+        lastEnableScrollValue.value = newValue
+      }
+    }
+  }
+
+  const resetScrollState = (value: boolean) => {
+    enableScrollValue.value = value
+    lastEnableScrollValue.value = value
+    setEnableScroll(value)
+  }
+
+  function updateBouncesState (newValue: boolean) {
+    'worklet'
+    if (bouncesValue.value !== newValue) {
+      bouncesValue.value = newValue
+      if (lastBouncesValue.value !== newValue) {
+        runOnJS(setScrollBounces)(newValue)
+        lastBouncesValue.value = newValue
+      }
+    }
+  }
+
   // 处理下拉刷新的手势
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       'worklet'
-      if (event.translationY > 0 && enhanced && bouncesValue.value) {
-        bouncesValue.value = false
-        if (bouncesValue.value !== lastBouncesValue.value) {
-          runOnJS(setScrollBounces)(bouncesValue.value)
-          lastBouncesValue.value = bouncesValue.value
-        }
-      } else if ((event.translationY < 0) && enhanced && !bouncesValue.value) {
-        bouncesValue.value = true
-        if (bouncesValue.value !== lastBouncesValue.value) {
-          runOnJS(setScrollBounces)(bouncesValue.value)
-          lastBouncesValue.value = bouncesValue.value
+      if (enhanced) {
+        if (event.translationY > 0 && bouncesValue.value) {
+          updateBouncesState(false)
+        } else if ((event.translationY < 0) && !bouncesValue.value) {
+          updateBouncesState(true)
         }
       }
+
       if (translateY.value <= 0 && event.translationY < 0) {
         // 滑动到顶再向上开启滚动
-        enableScrollValue.value = true
-        if (lastEnableScrollValue.value !== enableScrollValue.value) {
-          runOnJS(setEnableScroll)(enableScrollValue.value)
-          lastEnableScrollValue.value = enableScrollValue.value
-        }
+        updateScrollState(true)
       } else if (event.translationY > 0 && isAtTop.value) {
         // 滚动到顶再向下禁止滚动
-        enableScrollValue.value = false
-        if (lastEnableScrollValue.value !== enableScrollValue.value) {
-          runOnJS(setEnableScroll)(enableScrollValue.value)
-          lastEnableScrollValue.value = enableScrollValue.value
-        }
+        updateScrollState(false)
       }
       // 禁止滚动后切换为滑动
-      if (!enableScrollValue.value) {
-        if (isAtTop.value) {
-          if (refreshing) {
-            // 从完全展开状态(refresherHeight.value)开始计算偏移
-            translateY.value = Math.max(
-              0,
-              Math.min(
-                refresherHeight.value,
-                refresherHeight.value + event.translationY
-              )
+      if (!enableScrollValue.value && isAtTop.value) {
+        if (refreshing) {
+          // 从完全展开状态(refresherHeight.value)开始计算偏移
+          translateY.value = Math.max(
+            0,
+            Math.min(
+              refresherHeight.value,
+              refresherHeight.value + event.translationY
             )
-          } else if (event.translationY > 0) {
-            // 非刷新状态下的下拉逻辑保持不变
-            translateY.value = Math.min(event.translationY * 0.6, refresherHeight.value)
-          }
+          )
+        } else if (event.translationY > 0) {
+          // 非刷新状态下的下拉逻辑保持不变
+          translateY.value = Math.min(event.translationY * 0.6, refresherHeight.value)
         }
       }
     })
@@ -599,11 +610,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         // 如果向下滑动没超过 refresherThreshold，就完全隐藏，如果向上滑动完全隐藏
         if ((event.translationY > 0 && translateY.value < refresherThreshold) || event.translationY < 0) {
           translateY.value = withTiming(0)
-          enableScrollValue.value = true
-          if (lastEnableScrollValue.value !== enableScrollValue.value) {
-            runOnJS(setEnableScroll)(enableScrollValue.value)
-            lastEnableScrollValue.value = enableScrollValue.value
-          }
+          updateScrollState(true)
           runOnJS(setRefreshing)(false)
         } else {
           translateY.value = withTiming(refresherHeight.value)
@@ -615,11 +622,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       } else {
         // 回弹
         translateY.value = withTiming(0)
-        enableScrollValue.value = true
-        if (lastEnableScrollValue.value !== enableScrollValue.value) {
-          runOnJS(setEnableScroll)(true)
-          lastEnableScrollValue.value = enableScrollValue.value
-        }
+        updateScrollState(true)
         runOnJS(setRefreshing)(false)
       }
     })
