@@ -536,9 +536,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
-  let ScrollViewComponent: React.ComponentType<any> = ScrollView
-  if (enableSticky) {
-    ScrollViewComponent = AnimatedScrollView
+  const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
 
   return createElement(
     ScrollViewComponent,
