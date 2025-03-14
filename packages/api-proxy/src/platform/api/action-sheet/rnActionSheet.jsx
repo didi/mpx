@@ -139,12 +139,12 @@ function ActionSheet ({itemColor, height, success, fail, complete, alertText, it
           borderBottomWidth: 6,
           borderBottomStyle: 'solid',
           borderBottomColor: '#f7f7f7'
-        } : {}, {
-          backgroundColor: selectedIndex === index ? '#ececec' : '#ffffff'
-        }] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></View>) }
-        <View style={[styles.buttonStyle, {
-          backgroundColor: selectedIndex === -1 ? '#ececec' : '#ffffff'
-        }]}  onTouchStart={() => startHandle(-1)} onTouchEnd={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></View>
+        } : {}, selectedIndex === index ? {
+          backgroundColor: '#ececec'
+        } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></View>) }
+        <View style={[styles.buttonStyle, selectedIndex === -1 ? {
+          backgroundColor: '#ececec'
+        } : {}]}  onTouchStart={() => startHandle(-1)} onTouchEnd={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></View>
       </Animated.View>
     </View>
   )
