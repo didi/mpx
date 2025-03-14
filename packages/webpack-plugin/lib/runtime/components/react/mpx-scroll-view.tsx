@@ -155,6 +155,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const [refreshing, setRefreshing] = useState(false)
   const [enableScroll, setEnableScroll] = useState(true)
   const enableScrollValue = useSharedValue(true)
+  const lastEnableScrollValue = useSharedValue(true)
   const translateY = useSharedValue(0)
   const isAtTop = useSharedValue(true)
   const refresherHeight = useSharedValue(0)
@@ -537,19 +538,24 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     .onUpdate((event) => {
       'worklet'
       if (event.translationY > 0 && enhanced && scrollBounces) {
-        runOnJS(setScrollBounces)(false)
-      } else if (event.translationY < 0  && enhanced && !scrollBounces) {
-        runOnJS(setScrollBounces)(true)
+        // runOnJS(setScrollBounces)(false)
+      } else if ((event.translationY < 0) && enhanced && !scrollBounces) {
+        // runOnJS(setScrollBounces)(true)
       }
       if (translateY.value <= 0 && event.translationY < 0) {
         // 滑动到顶再向上开启滚动
         enableScrollValue.value = true
-        enableScrollValue.value = true
-        runOnJS(setEnableScroll)(true)
+        if (lastEnableScrollValue.value !== enableScrollValue.value) {
+          runOnJS(setEnableScroll)(true)
+          lastEnableScrollValue.value = enableScrollValue.value
+        }
       } else if (event.translationY > 0 && isAtTop.value) {
         // 滚动到顶再向下禁止滚动
         enableScrollValue.value = false
-        runOnJS(setEnableScroll)(false)
+        if (lastEnableScrollValue.value !== enableScrollValue.value) {
+          runOnJS(setEnableScroll)(false)
+          lastEnableScrollValue.value = enableScrollValue.value
+        }
       }
       // 禁止滚动后切换为滑动
       if (!enableScrollValue.value) {
@@ -579,8 +585,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         if ((event.translationY > 0 && translateY.value < refresherThreshold) || event.translationY < 0) {
           translateY.value = withTiming(0)
           enableScrollValue.value = true
-          runOnJS(setEnableScroll)(true)
-          runOnJS(setRefreshing)(false)
+          if (lastEnableScrollValue.value !== enableScrollValue.value) {
+            runOnJS(setEnableScroll)(true)
+            lastEnableScrollValue.value = enableScrollValue.value
+          }
+          // runOnJS(setRefreshing)(false)
         } else {
           translateY.value = withTiming(refresherHeight.value)
         }
@@ -592,8 +601,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         // 回弹
         translateY.value = withTiming(0)
         enableScrollValue.value = true
-        runOnJS(setEnableScroll)(true)
-        runOnJS(setRefreshing)(false)
+        if (lastEnableScrollValue.value !== enableScrollValue.value) {
+          runOnJS(setEnableScroll)(true)
+          lastEnableScrollValue.value = enableScrollValue.value
+        }
+        // runOnJS(setRefreshing)(false)
       }
     })
     .simultaneousWithExternalGesture(scrollViewRef)
