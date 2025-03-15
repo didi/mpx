@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -11,6 +11,7 @@ import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
+import usePageLayoutEffect from '@mpxjs/webpack-plugin/lib/runtime/usePageLayoutEffectReact'
 
 const ProviderContext = createContext(null)
 
@@ -117,6 +118,7 @@ const instanceProto = {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
   },
   __resetInstance () {
+    this.__refs = {}
     this.__dispatchedSlotSet = new WeakSet()
   },
   __iter (val, fn) {
@@ -501,7 +503,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
-
     useEffect(() => {
       if (type === 'page') {
         if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
@@ -578,18 +579,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         navigation
       })
       usePageStatus(navigation, currentPageId)
-      useLayoutEffect(() => {
-        const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions(Object.assign({
-          headerShown: !isCustom,
-          title: pageConfig.navigationBarTitleText || '',
-          headerStyle: {
-            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-          },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          statusBarTranslucent: true
-        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
-      }, [])
+      usePageLayoutEffect(navigation, pageConfig)
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
