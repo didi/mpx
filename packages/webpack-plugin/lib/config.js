@@ -554,5 +554,6 @@ module.exports = {
     }
   },
   ios: reactConfig,
-  android: reactConfig
+  android: reactConfig,
+  harmony: reactConfig
 }

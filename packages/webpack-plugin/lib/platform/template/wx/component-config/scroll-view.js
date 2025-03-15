@@ -14,6 +14,8 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
 
@@ -24,6 +26,10 @@ module.exports = function ({ print }) {
       return 'mpx-scroll-view'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-scroll-view'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-scroll-view'
     },
@@ -55,7 +61,8 @@ module.exports = function ({ print }) {
       {
         test: /^(refresher-threshold|enable-passive|scroll-anchoring|using-sticky|fast-deceleration|enable-flex)$/,
         android: androidPropLog,
-        ios: iosPropLog
+        ios: iosPropLog,
+        harmony: harmonyPropLog
       },
       {
         test: /^(refresher-default-style|refresher-background)$/,
@@ -88,7 +95,8 @@ module.exports = function ({ print }) {
       {
         test: /^(refresherpulling|refresherrestore|refresherabort)$/,
         android: androidEventLog,
-        ios: iosEventLog
+        ios: iosEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }

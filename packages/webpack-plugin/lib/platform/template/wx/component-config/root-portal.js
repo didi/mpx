@@ -10,6 +10,10 @@ module.exports = function ({ print }) {
     android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-root-portal'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-root-portal'
     }
   }
 }

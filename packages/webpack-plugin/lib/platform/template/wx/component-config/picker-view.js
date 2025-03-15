@@ -8,6 +8,7 @@ module.exports = function ({ print }) {
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -20,6 +21,10 @@ module.exports = function ({ print }) {
       return 'mpx-picker-view'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-picker-view'
     },
@@ -37,7 +42,8 @@ module.exports = function ({ print }) {
         tt: ttEventLog,
         jd: jdEventLog,
         ios: iosEventLog,
-        android: androidEventLog
+        android: androidEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }
