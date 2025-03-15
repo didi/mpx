@@ -2475,6 +2475,52 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
+function processComponentGenericsReact (el, options) {
+  const { componentGenerics, usingComponentsInfo } = options
+  if (componentGenerics && componentGenerics[el.tag]) {
+      const genericKey = el.tag
+      el.is = `this.__props.generic && this.__props.generic['${genericKey}'] && getComponent(this.__props.generic['${genericKey}']) ? this.__props.generic['${genericKey}'] : '${genericKey}default'`
+      el.components = [
+        `this.__props.generic['${genericKey}']`,
+        `${genericKey}default`
+      ]
+  }
+
+  const genericConfig = {}
+  const genericComponentsConfig = {}
+
+  el.attrsList.forEach(attr => {
+    const match = attr.name.match(genericRE)
+    if (match) {
+      const key = match[1]
+      const componentName = attr.value
+      genericConfig[key] = componentName
+
+      if (usingComponentsInfo[componentName]) {
+        const { mid } = usingComponentsInfo[componentName]
+        genericComponentsConfig[componentName] = mid
+      }
+    }
+  })
+
+  if (Object.keys(genericConfig).length) {
+    const attrsToAdd = [
+      {
+        name: 'generic',
+        value: genericConfig
+      }
+    ]
+
+    if (Object.keys(genericComponentsConfig).length) {
+      attrsToAdd.push({
+        name: 'genericComponents',
+        value: genericComponentsConfig
+      })
+    }
+    el.attrsList = el.attrsList.concat(attrsToAdd)
+  }
+}
+
 function processShow (el, options, root) {
   let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (mode === 'swan') show = wrapMustache(show)
@@ -2725,6 +2771,7 @@ function processElement (el, root, options, meta) {
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
+    processComponentGenericsReact(el, options)
     return
   }
 
