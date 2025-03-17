@@ -50,6 +50,11 @@ interface AsyncPageProps {
   _props: Record<any, any>
 }
 
+/**
+ * 1. 合并到同一个组件
+ * 2. 只提供一个 fallback 组件即可
+ *
+ */
 const AsyncPage = (props: AsyncPageProps) => {
   const pageConfig = global.__mpxPageConfig || {}
   const {
