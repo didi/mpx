@@ -14,6 +14,7 @@ import {
   isEmptyObject,
   isPlainObject,
   isWeb,
+  isAli,
   isReact,
   doGetByPath,
   getByPath,
@@ -101,7 +102,6 @@ function preProcessRenderData (renderData) {
   })
   return processedRenderData
 }
-
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
@@ -290,6 +290,9 @@ export default class MpxProxy {
       this.target.$forceUpdate = this.forceUpdate.bind(this)
       this.target.$nextTick = nextTick
     }
+    if (isAli) {
+      this.target.getPageId = this.getPageId.bind(this)
+    }
   }
 
   initProps () {
@@ -318,7 +321,7 @@ export default class MpxProxy {
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
-          getPageId: this.target.getPageId ? this.target.getPageId.bind(this.target) : noop
+          getPageId: this.target.getPageId.bind(this.target)
         }
       ])
       if (!isObject(setupResult)) {
@@ -808,6 +811,14 @@ export default class MpxProxy {
         }
       }
       options.sync ? doCallback() : nextTick(doCallback)
+    }
+  }
+
+  getPageId () {
+    if (this.options.__type__ === 'component') {
+      return this.target.$page.$id
+    } else {
+      return this.target.$id
     }
   }
 }

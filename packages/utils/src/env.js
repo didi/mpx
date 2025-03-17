@@ -29,6 +29,8 @@ export const isReact = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android'
 
 export const isWeb = __mpx_mode__ === 'web'
 
+export const isAli = __mpx_mode__ === 'ali'
+
 export function getFocusedNavigation () {
   if (global.__mpxPagesMap) {
     for (const key in global.__mpxPagesMap) {
