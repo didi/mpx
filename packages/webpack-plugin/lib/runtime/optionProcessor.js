@@ -3,7 +3,7 @@ import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
 
-const pageId = 0
+let pageId = 0
 
 export function processComponentOption (
   {
@@ -59,13 +59,26 @@ registered in parent context!`)
 
   if (ctorType === 'page') {
     option.__mpxPageConfig = extend({}, global.__mpxPageConfig, pageConfig)
-    Object.assign(option.provide || {}, {
-      __pageId: pageId + 1
-    })
+    const originalProvide = option.provide
+    option.provide = function () {
+      const provided = typeof originalProvide === 'function'
+      ? originalProvide.call(this)
+      : originalProvide || {}
+
+      return Object.assign({}, provided, {
+       __pageId: ++pageId
+      })
+    }
   }
 
   if (ctorType === 'component') {
-    option.inject = [...(option.inject || []), '__pageId']
+    if (Array.isArray(option.inject)) {
+      option.inject.push('__pageId')
+    } else if (typeof option.inject === 'object' && option.inject !== null) {
+      option.inject.__pageId = '__pageId'
+    } else {
+      option.inject = ['__pageId']
+    }
   }
 
   if (!hasApp) {
