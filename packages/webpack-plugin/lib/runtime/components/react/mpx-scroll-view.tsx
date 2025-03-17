@@ -46,6 +46,7 @@ interface ScrollViewProps {
   enhanced?: boolean;
   bounces?: boolean;
   style?: ViewStyle;
+  scrollEventThrottle?: number;
   'scroll-x'?: boolean;
   'scroll-y'?: boolean;
   'enable-back-to-top'?: boolean;
@@ -90,7 +91,6 @@ type ScrollAdditionalProps = {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onContentSizeChange: (width: number, height: number) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
-  scrollEventThrottle: number;
   scrollsToTop: boolean;
   showsHorizontalScrollIndicator: boolean;
   showsVerticalScrollIndicator: boolean;
@@ -115,6 +115,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     enhanced = false,
     bounces = true,
     style = {},
+    scrollEventThrottle = 0,
     binddragstart,
     binddragging,
     binddragend,
@@ -175,7 +176,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     visibleLength: 0
   })
 
-  const scrollEventThrottle = 50
   const hasCallScrollToUpper = useRef(true)
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
