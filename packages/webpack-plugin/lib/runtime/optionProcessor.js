@@ -59,7 +59,7 @@ registered in parent context!`)
 
   if (ctorType === 'page') {
     option.__mpxPageConfig = extend({}, global.__mpxPageConfig, pageConfig)
-    Object.assign(option.provide, {
+    Object.assign(option.provide || {}, {
       __pageId: pageId + 1
     })
   }
