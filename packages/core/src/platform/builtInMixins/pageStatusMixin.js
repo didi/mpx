@@ -1,6 +1,17 @@
 import { CREATED, ONLOAD, ONSHOW, ONHIDE, ONRESIZE } from '../../core/innerLifecycle'
 
 export default function pageStatusMixin (mixinType) {
+  const pageIdMixin = {
+    methods: {
+      getPageId () {
+        if (this.__mpxProxy.options.__type__ === 'component') {
+         return this.$page.$id
+        } else {
+          return this.$id
+        }
+      }
+    }
+  }
   if (mixinType === 'page') {
     const pageMixin = {
       onShow () {
@@ -19,7 +30,7 @@ export default function pageStatusMixin (mixinType) {
     if (__mpx_mode__ === 'ali') {
       let count = 0
       const resolvedPromise = Promise.resolve()
-      Object.assign(pageMixin, {
+      Object.assign(pageMixin, pageIdMixin, {
         data: {
           mpxPageStatus: null
         },
@@ -52,7 +63,7 @@ export default function pageStatusMixin (mixinType) {
     return pageMixin
   } else {
     if (__mpx_mode__ === 'ali') {
-      return {
+      return Object.assign(pageIdMixin, {
         [CREATED] () {
           const options = this.__mpxProxy.options
           const hasHook = this.__mpxProxy.hasHook.bind(this.__mpxProxy)
@@ -81,7 +92,7 @@ export default function pageStatusMixin (mixinType) {
             })
           }
         }
-      }
+      })
     } else {
       return {
         pageLifetimes: {

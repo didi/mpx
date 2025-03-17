@@ -290,9 +290,6 @@ export default class MpxProxy {
       this.target.$forceUpdate = this.forceUpdate.bind(this)
       this.target.$nextTick = nextTick
     }
-    if (isAli) {
-      this.target.getPageId = this.getPageId.bind(this)
-    }
   }
 
   initProps () {
@@ -811,14 +808,6 @@ export default class MpxProxy {
         }
       }
       options.sync ? doCallback() : nextTick(doCallback)
-    }
-  }
-
-  getPageId () {
-    if (this.options.__type__ === 'component') {
-      return this.target.$page.$id
-    } else {
-      return this.target.$id
     }
   }
 }
