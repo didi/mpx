@@ -1,4 +1,4 @@
-import { Suspense, memo, ReactNode, lazy, ComponentType } from 'react'
+import { Suspense, memo } from 'react'
 import ErrorBoundary from './AsyncErrorBoundary'
 
 interface AsyncComponentProps {

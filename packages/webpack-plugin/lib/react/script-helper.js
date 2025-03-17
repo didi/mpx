@@ -24,8 +24,8 @@ function getAsyncChunkName (chunkName) {
 }
 
 function getAsyncComponent (componentName, componentRequest, chunkName, fallbackComponentRequest) {
-  // todo memo，注入 pageConfig
-  return `getComponent(forwardRef(function(props, ref) {
+  // todo 注入 pageConfig
+  return `getComponent(memo(forwardRef(function(props, ref) {
     return createElement(
       getComponent(require(${mpxAsyncComponent})),
       {
@@ -36,7 +36,7 @@ function getAsyncComponent (componentName, componentRequest, chunkName, fallback
         )
       }
     )
-  }))`
+  })))`
 }
 
 function getAsyncPage (componentName, componentRequest, chunkName, fallback, loading) {

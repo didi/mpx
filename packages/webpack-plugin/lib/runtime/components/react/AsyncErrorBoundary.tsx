@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { View, Text } from 'react-native'
 
 // todo any
 interface PropsType {
@@ -34,6 +33,7 @@ export default class ErrorBoundary extends React.Component<PropsType, StateType>
         key: 0
       }
     }
+    return undefined
   }
 
   reloadPage () {

@@ -33,15 +33,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#fff' // 白色背景
-  },
-  spinner: {
-    marginBottom: 10
+    backgroundColor: '#fff'
   },
   text: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#333' // 深灰色文字
+    color: '#333'
   }
 })
 
@@ -50,7 +47,7 @@ interface AsyncPageProps {
   fallback: React.ComponentType<any>
   loading: React.ComponentType<any>
   asyncPage: React.ComponentType<any>
-  _props: any
+  _props: Record<any, any>
 }
 
 const AsyncPage = (props: AsyncPageProps) => {
