@@ -3,15 +3,26 @@ import ErrorBoundary from './AsyncErrorBoundary'
 import usePageLayoutEffect from './usePageLayoutEffectReact'
 import { View, Text, StyleSheet } from 'react-native'
 
-interface SimpleLoadingIndicatorProps {
+interface DefaultLoadingProps {
   text?: string
 }
 
-const SimpleLoadingIndicator = ({ text = '加载中...' }: SimpleLoadingIndicatorProps) => {
+const DefaultLoading = ({ text = '加载中...' }: DefaultLoadingProps) => {
   return (
     <View style={styles.container}>
-      {/* <ActivityIndicator size="large" color="#0a7ea4" style={styles.spinner} /> */}
       <Text style={styles.text}>{text}</Text>
+    </View>
+  )
+}
+
+interface DefaultFallbackProps {
+  onReload: () => void
+}
+
+const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text} onPress={onReload}>页面加载失败，请点击重试</Text>
     </View>
   )
 }
@@ -35,19 +46,26 @@ const styles = StyleSheet.create({
 })
 
 interface AsyncPageProps {
-  children: ReactNode
-  fallback: ReactNode
-  loading: ReactNode
-  navigation: Object
+  // children: ReactNode
+  fallback: React.ComponentType<any>
+  loading: React.ComponentType<any>
+  asyncPage: React.ComponentType<any>
+  _props: any
 }
 
 const AsyncPage = (props: AsyncPageProps) => {
   const pageConfig = global.__mpxPageConfig || {}
-  usePageLayoutEffect(props.navigation, pageConfig)
+  const {
+    loading: Loading = DefaultLoading,
+    fallback: Fallback = DefaultFallback,
+    asyncPage: AsyncPage
+  } = props
+  usePageLayoutEffect(props._props.navigation, pageConfig)
   return (
-    <ErrorBoundary asyncType='page' fallback={props.fallback || <SimpleLoadingIndicator text="点击重试"></SimpleLoadingIndicator>}>
-      <Suspense fallback={props.loading || <SimpleLoadingIndicator></SimpleLoadingIndicator>}>
-        {props.children}
+    <ErrorBoundary asyncType='page' fallback={({ onReload }) => <Fallback onReload={onReload}></Fallback>}>
+      <Suspense fallback={<Loading />}>
+        {/* {props.children} */}
+        <AsyncPage {...props._props}></AsyncPage>
       </Suspense>
     </ErrorBoundary>
   )

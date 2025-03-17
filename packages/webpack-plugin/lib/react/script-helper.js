@@ -24,44 +24,35 @@ function getAsyncChunkName (chunkName) {
 }
 
 function getAsyncComponent (componentName, componentRequest, chunkName, fallbackComponentRequest) {
-  // todo memo
-  // 减少字符串代码，将参数传递进去？函数包裹的层数
+  // todo memo，注入 pageConfig
   return `getComponent(forwardRef(function(props, ref) {
     return createElement(
       getComponent(require(${mpxAsyncComponent})),
       {
-        fallback: createElement(getComponent(require(${fallbackComponentRequest})), { ...props, ref })
-      },
-      createElement(
-        getComponent(
+        _props: Object.assign({}, props, {ref}),
+        fallback: getComponent(require(${fallbackComponentRequest})),
+        asyncComponent: getComponent(
           lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
-        ),
-        {
-          ...props,
-          ref
-        }
-      )
+        )
+      }
     )
   }))`
 }
 
 function getAsyncPage (componentName, componentRequest, chunkName, fallback, loading) {
-  fallback = fallback && `createElement(getComponent(require('${fallback}?isComponent=true')))`
-  loading = loading && `createElement(getComponent(require('${loading}?isComponent=true')))`
+  fallback = fallback && `getComponent(require('${fallback}?isComponent=true'))`
+  loading = loading && `getComponent(require('${loading}?isComponent=true'))`
   return `getComponent(function(props) {
     return createElement(
       getComponent(require(${mpxAsyncPage})),
       {
-        navigation: props.navigation,
+        _props: props,
         fallback: ${fallback},
-        loading: ${loading}
-      },
-      createElement(
-        getComponent(
+        loading: ${loading},
+        asyncPage: getComponent(
           lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
         ),
-        props
-      )
+      }
     )
   })`
 }

@@ -2,19 +2,19 @@ import { Suspense, memo, ReactNode, lazy, ComponentType } from 'react'
 import ErrorBoundary from './AsyncErrorBoundary'
 
 interface AsyncComponentProps {
-  children: ReactNode
-  chunkName: string
-  componentRequest: Promise<{ default: ComponentType<any> }>
-  fallback: ReactNode
+  // children: ReactNode,
+  _props: Record<any, any>,
+  asyncComponent: React.ComponentType<any>
+  fallback: React.ComponentType<any>
 }
 
 const AsyncComponent = memo(function AsyncComponent (props: AsyncComponentProps) {
-  // const LazyComponent = lazy(() => props.componentRequest)
+  const { fallback: Fallback, asyncComponent: AsyncComponent } = props
   return (
-    <ErrorBoundary asyncType='component' fallback={props.fallback}>
-      <Suspense fallback={props.fallback}>
-        {props.children}
-        {/* <LazyComponent {...props}></LazyComponent> */}
+    <ErrorBoundary asyncType='component' fallback={() => <Fallback {...props._props}></Fallback>}>
+      <Suspense fallback={<Fallback {...props._props}></Fallback>}>
+        {/* {props.children} */}
+        <AsyncComponent {...props._props}></AsyncComponent>
       </Suspense>
     </ErrorBoundary>
   )
