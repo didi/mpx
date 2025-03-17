@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -423,6 +423,7 @@ const checkRelation = (options) => {
 }
 
 const provideRelation = (instance, relation) => {
+  // todo 需要考虑缓存对象避免无效更新子组件
   const componentPath = instance.__componentPath
   if (relation) {
     return Object.assign({}, relation, { [componentPath]: instance })
@@ -432,7 +433,6 @@ const provideRelation = (instance, relation) => {
     }
   }
 }
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -554,11 +554,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     return hasDescendantRelation
       ? createElement(RelationsContext.Provider,
-          {
-            value: provideRelation(instance, relation)
-          },
-          root
-        )
+        {
+          value: provideRelation(instance, relation)
+        },
+        root
+      )
       : root
   }))
 
@@ -572,28 +572,39 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
+      const routeContextValRef = useRef({
+        pageId: currentPageId,
+        navigation
+      })
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions(Object.assign({
+        navigation.setOptions({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          statusBarTranslucent: true
-        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        })
+
+        if (__mpx_mode__ === 'android') {
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
+          color && ReactNative.StatusBar.setBackgroundColor(color)
+        }
       }, [])
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
-      const onLayout = useCallback(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
+      useEffect(() => {
+        setTimeout(() => {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        }, 100)
       }, [])
-
       const withKeyboardAvoidingView = (element) => {
         return createElement(KeyboardAvoidContext.Provider,
           {
@@ -619,12 +630,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         {
           // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
           style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
-          ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          }
-          : {
-            flex: 1
-          }
+            ? {
+              height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+            }
+            : {
+              flex: 1
+            }
         },
         withKeyboardAvoidingView(
           createElement(ReactNative.View,
@@ -633,15 +644,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef,
-              onLayout
+              ref: rootRef
             },
             createElement(RouteContext.Provider,
               {
-                value: {
-                  pageId: currentPageId,
-                  navigation
-                }
+                value: routeContextValRef.current
               },
               createElement(IntersectionObserverContext.Provider,
                 {
