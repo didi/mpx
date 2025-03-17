@@ -107,8 +107,6 @@ type ScrollAdditionalProps = {
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 
-const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView)
-
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
@@ -695,7 +693,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const withRefresherTemplate = (
       <GestureDetector gesture={panGesture}>
-        <AnimatedScrollView {...innerProps}>
+        <ScrollView {...innerProps}>
           {/* 刷新控件 - 有独立的动画 */}
           <Animated.View style={refresherAnimatedStyle} onLayout={onRefresherLayout}>
             {refresherContent}
@@ -715,7 +713,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
               )}
             </ScrollViewContext.Provider>
           </Animated.View>
-        </AnimatedScrollView>
+        </ScrollView>
       </GestureDetector>
   )
 
