@@ -423,6 +423,7 @@ const checkRelation = (options) => {
 }
 
 const provideRelation = (instance, relation) => {
+  // todo 需要考虑缓存对象避免无效更新子组件
   const componentPath = instance.__componentPath
   if (relation) {
     return Object.assign({}, relation, { [componentPath]: instance })
@@ -553,11 +554,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     return hasDescendantRelation
       ? createElement(RelationsContext.Provider,
-          {
-            value: provideRelation(instance, relation)
-          },
-          root
-        )
+        {
+          value: provideRelation(instance, relation)
+        },
+        root
+      )
       : root
   }))
 
@@ -571,6 +572,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
+      const routeContextValRef = useRef({
+        pageId: currentPageId,
+        navigation
+      })
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
@@ -625,12 +630,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         {
           // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
           style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
-          ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          }
-          : {
-            flex: 1
-          }
+            ? {
+              height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+            }
+            : {
+              flex: 1
+            }
         },
         withKeyboardAvoidingView(
           createElement(ReactNative.View,
@@ -643,10 +648,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             },
             createElement(RouteContext.Provider,
               {
-                value: {
-                  pageId: currentPageId,
-                  navigation
-                }
+                value: routeContextValRef.current
               },
               createElement(IntersectionObserverContext.Provider,
                 {
