@@ -74,7 +74,7 @@ registered in parent context!`)
   if (ctorType === 'component') {
     if (Array.isArray(option.inject)) {
       option.inject.push('__pageId')
-    } else if (typeof option.inject === 'object' && option.inject !== null) {
+    } else if (option.inject && typeof option.inject === 'object') {
       option.inject.__pageId = '__pageId'
     } else {
       option.inject = ['__pageId']
