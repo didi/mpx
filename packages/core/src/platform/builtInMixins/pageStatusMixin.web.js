@@ -12,6 +12,8 @@ let systemInfo = {}
 
 let count = 0
 
+let pageId = 0
+
 function getCurrentPageInstance () {
   const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
   let pageInstance
@@ -79,6 +81,9 @@ export default function pageStatusMixin (mixinType) {
         // onLoad应该在用户声明周期CREATED后再执行，故此处使用原生created声明周期来触发onLoad
         const query = this.$root.$options?.router?.currentRoute?.query || {}
         this.__mpxProxy.callHook(ONLOAD, [query])
+      },
+      provide: {
+       __pageId: ++pageId
       }
     })
   }
@@ -88,7 +93,8 @@ export default function pageStatusMixin (mixinType) {
     Object.assign(mixin, {
       [BEFORECREATE] () {
         this.$page = getParentPage(this)
-      }
+      },
+      inject: ['__pageId']
     })
   }
 
