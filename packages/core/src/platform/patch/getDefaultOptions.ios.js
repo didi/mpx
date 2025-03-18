@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -286,10 +286,26 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    // App onLaunch 在 Page created 之前执行
+    if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
+      global.__mpxAppOnLaunch(props.navigation)
+    }
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
+
+  if (type === 'page') {
+    const loadParams = {}
+    const props = propsRef.current
+    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+    if (isObject(props.route.params)) {
+      for (const key in props.route.params) {
+        loadParams[key] = encodeURIComponent(props.route.params[key])
+      }
+    }
+    proxy.callHook(ONLOAD, [loadParams])
+  }
 
   Object.assign(proxy, {
     onStoreChange: null,
@@ -384,7 +400,9 @@ const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
-  set(pageStatusMap, pageId, '')
+  if (!hasOwn(pageStatusMap, pageId)) {
+    set(pageStatusMap, pageId, '')
+  }
   useEffect(() => {
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
@@ -433,7 +451,6 @@ const provideRelation = (instance, relation) => {
     }
   }
 }
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -503,19 +520,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     usePageEffect(proxy, pageId)
 
     useEffect(() => {
-      if (type === 'page') {
-        if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
-          global.__mpxAppOnLaunch(props.navigation)
-        }
-        const loadParams = {}
-        // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-        if (isObject(props.route.params)) {
-          for (const key in props.route.params) {
-            loadParams[key] = encodeURIComponent(props.route.params[key])
-          }
-        }
-        proxy.callHook(ONLOAD, [loadParams])
-      }
       proxy.mounted()
       return () => {
         proxy.unmounted()
@@ -580,25 +584,32 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions(Object.assign({
+        navigation.setOptions({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          statusBarTranslucent: true
-        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        })
+
+        if (__mpx_mode__ === 'android') {
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
+          color && ReactNative.StatusBar.setBackgroundColor(color)
+        }
       }, [])
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
-      const onLayout = useCallback(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
+      useEffect(() => {
+        setTimeout(() => {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        }, 100)
       }, [])
-
       const withKeyboardAvoidingView = (element) => {
         return createElement(KeyboardAvoidContext.Provider,
           {
@@ -638,8 +649,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef,
-              onLayout
+              ref: rootRef
             },
             createElement(RouteContext.Provider,
               {
