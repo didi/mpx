@@ -207,8 +207,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     switch (type) {
       case 'setTitle':
         { // case下不允许直接声明，包个块解决该问题
-          const title = postData._documentTitle
-          if (title) {
+          const title = postData._documentTitle?.trim()
+          if (title !== undefined) {
             navigation && navigation.setOptions({ title })
           }
         }
@@ -304,6 +304,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const onLoadEnd = function (res: WebViewEvent) {
     if (__mpx_mode__ === 'android') {
       setTimeout(() => {
+        res.persist()
         onLoadEndHandle(res)
       }, 0)
     } else {
