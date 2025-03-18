@@ -2,6 +2,7 @@ import { getConvertRule } from '../convertor/convertor'
 import builtInKeysMap from '../platform/patch/builtInKeysMap'
 import { implemented } from './implement'
 import {
+  isArray,
   isFunction,
   isObject,
   aliasReplace,
@@ -216,14 +217,16 @@ function mergeMixins (parent, child) {
       mergeHooks(parent, child, key)
     } else if (/^(data|dataFn)$/.test(key)) {
       mergeDataFn(parent, child, key)
-    } else if (/^(computed|properties|props|methods|proto|options|relations|initData|inject)$/.test(key)) {
+    } else if (/^(computed|properties|props|methods|proto|options|relations|initData)$/.test(key)) {
       mergeShallowObj(parent, child, key)
     } else if (/^(watch|observers|pageLifetimes|events)$/.test(key)) {
       mergeToArray(parent, child, key)
     } else if (/^behaviors|externalClasses$/.test(key)) {
       mergeArray(parent, child, key)
-    } else if (/^provide$/.test(key)) {
-      mergedProvide(parent, child, key)
+    } else if (key === 'inject') {
+      mergeInject(parent, child, key)
+    } else if (key === 'provide') {
+      mergeProvide(parent, child, key)
     } else if (key !== 'mixins' && key !== 'mpxCustomKeysForBlend') {
       // 收集非函数的自定义属性，在Component创建的页面中挂载到this上，模拟Page创建页面的表现，swan当中component构造器也能自动挂载自定义数据，不需要框架模拟挂载
       if (curType === 'blend' && typeof child[key] !== 'function' && !builtInKeysMap[key] && __mpx_mode__ !== 'swan') {
@@ -280,7 +283,22 @@ function mergeDataFn (parent, child, key) {
   }
 }
 
-function mergedProvide (parent, child, key) {
+function normalizeInject (options) {
+  const injectOpt = options.inject
+  if (isArray(injectOpt)) {
+    const normalized = (options.inject = {})
+    for (let i = 0; i < injectOpt.length; i++) {
+      normalized[injectOpt[i]] = injectOpt[i]
+    }
+  }
+}
+
+function mergeInject (parent, child, key) {
+  normalizeInject(child)
+  mergeShallowObj(parent, child, key)
+}
+
+function mergeProvide (parent, child, key) {
   const parentVal = parent[key]
   const childVal = child[key]
   if (!parentVal) {
