@@ -4,7 +4,7 @@
  * ✔ password
  * ✔ placeholder
  * - placeholder-style: Only support color.
- * ✘ placeholder-class
+ * - placeholder-class: Only support color.
  * ✔ disabled
  * ✔ maxlength
  * ✔ cursor-spacing
@@ -54,7 +54,7 @@ import {
   TextInputSubmitEditingEventData
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -93,7 +93,7 @@ export interface InputProps {
   'cursor-color'?: string
   'selection-start'?: number
   'selection-end'?: number
-  'placeholder-style'?: string
+  'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean,
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
@@ -135,7 +135,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     type = 'text',
     value,
     password,
-    'placeholder-style': placeholderStyle,
+    'placeholder-style': placeholderStyle = {},
     disabled,
     maxlength = 140,
     'cursor-spacing': cursorSpacing = 0,
@@ -187,7 +187,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const keyboardType = keyboardTypeMap[type]
   const defaultValue = parseValue(value)
-  const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
   const textAlignVertical = multiline ? 'top' : 'auto'
 
   const tmpValue = useRef<string>(defaultValue)
@@ -463,7 +462,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         blurOnSubmit: !multiline && !confirmHold,
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
-        placeholderTextColor: placeholderTextColor,
+        placeholderTextColor: placeholderStyle?.color,
         multiline: !!multiline
       },
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType },
