@@ -14,7 +14,6 @@ import {
   isEmptyObject,
   isPlainObject,
   isWeb,
-  isAli,
   isReact,
   doGetByPath,
   getByPath,
