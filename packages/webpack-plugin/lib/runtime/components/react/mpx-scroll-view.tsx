@@ -481,6 +481,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   // 处理刷新
   function onRefresh () {
     if (refresherContent && refresherEnabled && refresherTriggered === undefined) {
+      // 处理使用了自定义刷新组件，又没设置 refresherTriggered 情况
       setRefreshing(true)
       setTimeout(() => {
         setRefreshing(false)
