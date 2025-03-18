@@ -126,6 +126,7 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
   if (!isProduction) {
     content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+    content += 'global.currentInject.HMRSysbmol = Symbol()\n'
   }
   return content
 }

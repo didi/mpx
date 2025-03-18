@@ -451,6 +451,15 @@ const provideRelation = (instance, relation) => {
     }
   }
 }
+
+const needHMRFresh = (currentInject) => {
+  if (!currentInject.HMRSysbmol) return false
+  const HMRSysbmolRef = useRef(currentInject.HMRSysbmol)
+  const HMRFresh = HMRSysbmolRef.current !== currentInject.HMRSysbmol
+  if (HMRFresh) HMRSysbmolRef.current = currentInject.HMRSysbmol
+  return HMRFresh
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -468,8 +477,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       relation = useContext(RelationsContext)
     }
     propsRef.current = props
+
     let isFirst = false
-    if (!instanceRef.current) {
+    if (!instanceRef.current || needHMRFresh(currentInject)) {
       isFirst = true
       instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides })
     }
