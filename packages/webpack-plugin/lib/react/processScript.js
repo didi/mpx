@@ -27,7 +27,7 @@ module.exports = function (script, {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
-${mode === 'ios' ? "import { createNativeStackNavigator } from '@react-navigation/native-stack'" : "import { createStackNavigator } from '@react-navigation/stack'"}
+${mode === 'ios' || mode === 'harmony' ? "import { createNativeStackNavigator } from '@react-navigation/native-stack'" : "import { createStackNavigator } from '@react-navigation/stack'"}
 import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
 import { useHeaderHeight } from '@react-navigation/elements';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -35,7 +35,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
-  createStackNavigator: ${mode === 'ios' ? 'createNativeStackNavigator' : 'createStackNavigator'},
+  createStackNavigator: ${mode === 'ios' || mode === 'harmony' ? 'createNativeStackNavigator' : 'createStackNavigator'},
   useHeaderHeight: useHeaderHeight,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
