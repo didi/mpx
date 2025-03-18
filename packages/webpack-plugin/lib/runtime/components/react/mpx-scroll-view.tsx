@@ -32,9 +32,9 @@
  * ✔ bindscroll
  */
 import { ScrollView, RefreshControl, Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Animated as RNAnimated } from 'react-native'
-import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
-import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle, runOnJS, useAnimatedScrollHandler } from 'react-native-reanimated'
+import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo } from 'react'
+import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
