@@ -2,6 +2,8 @@ interface EventConfig {
   [key: string]: string[];
 }
 
+export const TAP_EVENTS = ['bindtap', 'catchtap', 'capture-bindtap', 'capture-catchtap']
+
 const eventConfigMap: { [key: string]: { bitFlag: string; events: string[] } } = {
   bindtap: { bitFlag: '0', events: ['onTouchStart', 'onTouchMove', 'onTouchEnd'] },
   bindlongpress: { bitFlag: '1', events: ['onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel'] },
