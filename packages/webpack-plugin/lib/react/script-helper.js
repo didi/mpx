@@ -18,7 +18,7 @@ const mpxAsyncComponent = getMpxComponentRequest('AsyncComponent')
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
-    return `/* webpackChunkName: "${chunkName}" */`
+    return `/* webpackChunkName: "${chunkName}/index" */`
   }
   return ''
 }
