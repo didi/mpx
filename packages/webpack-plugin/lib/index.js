@@ -656,6 +656,8 @@ class MpxWebpackPlugin {
           __vfs,
           // app信息，便于获取appName
           appInfo: {},
+          // pageConfig信息
+          pageConfigMap: {},
           // pages全局记录，无需区分主包分包
           pagesMap: {},
           // 组件资源记录，依照所属包进行记录
