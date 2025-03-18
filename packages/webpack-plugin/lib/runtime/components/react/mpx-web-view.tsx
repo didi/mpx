@@ -303,8 +303,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
   const onLoadEnd = function (res: WebViewEvent) {
     if (__mpx_mode__ === 'android') {
+      res.persist()
       setTimeout(() => {
-        res.persist()
         onLoadEndHandle(res)
       }, 0)
     } else {
