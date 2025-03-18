@@ -186,6 +186,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
+  const { refresherContent, otherContent } = getRefresherContent(props.children)
+  const hasRefresher = refresherContent && refresherEnabled
+
   const {
     normalStyle,
     hasVarDec,
@@ -381,9 +384,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { bindscrollend } = props
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
-    if (scrollTop <= 0) {
-      isAtTop.value = true
-    }
+    isAtTop.value = scrollTop <= 0
     bindscrollend &&
       bindscrollend(
         getCustomEvent('scrollend', e, {
@@ -480,8 +481,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 处理刷新
   function onRefresh () {
-    if (refresherContent && refresherEnabled && refresherTriggered === undefined) {
-      // 处理使用了自定义刷新组件，又没设置 refresherTriggered 情况
+    if (hasRefresher && refresherTriggered === undefined) {
+      // 处理使用了自定义刷新组件，又没设置 refresherTriggered 的情况
       setRefreshing(true)
       setTimeout(() => {
         setRefreshing(false)
@@ -694,9 +695,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'bindrefresherrefresh'
   ], { layoutRef })
 
-  const { refresherContent, otherContent } = getRefresherContent(props.children)
-
-  const withRefresherTemplate = (
+  const withRefresherScrollView = (
       <GestureDetector gesture={panGesture}>
         <ScrollView {...innerProps}>
           {/* 刷新控件 - 有独立的动画 */}
@@ -722,7 +721,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       </GestureDetector>
   )
 
-  const commonScrollTemplate = (
+  const commonScrollView = (
       <ScrollView {...innerProps} refreshControl={
         refresherEnabled
           ? (<RefreshControl
@@ -747,7 +746,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       </ScrollView>
   )
 
-  return refresherContent && refresherEnabled ? withRefresherTemplate : commonScrollTemplate
+  return hasRefresher ? withRefresherScrollView : commonScrollView
 })
 
 _ScrollView.displayName = 'MpxScrollView'
