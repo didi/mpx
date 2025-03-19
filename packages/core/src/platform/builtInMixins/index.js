@@ -49,7 +49,7 @@ export default function getBuiltInMixins ({ type, rawOptions = {} }) {
       relationsMixin(type)
     ]
     if (__mpx_mode__ === 'ali') {
-      bulitInMixins.concat([
+      bulitInMixins = bulitInMixins.concat([
         pageIdMixin(type)
       ])
     }

@@ -5,9 +5,6 @@ export default function pageIdMixin (mixinType) {
 
   if (mixinType === 'page') {
     Object.assign(mixin, {
-      data: {
-        __pageId: 0
-      },
       beforeCreate () {
         this.__pageId = ++pageId
       },
