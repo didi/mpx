@@ -586,7 +586,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         const isCustom = pageConfig.navigationStyle === 'custom'
         navigation.setOptions({
           headerShown: !isCustom,
-          title: pageConfig.navigationBarTitleText || '',
+          title: pageConfig.navigationBarTitleText?.trim() || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
