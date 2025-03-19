@@ -46,9 +46,13 @@ export default function getBuiltInMixins ({ type, rawOptions = {} }) {
       proxyEventMixin(),
       pageStatusMixin(type),
       refsMixin(),
-      relationsMixin(type),
-      pageIdMixin(type)
+      relationsMixin(type)
     ]
+    if (__mpx_mode__ === 'ali') {
+      bulitInMixins.concat([
+        pageIdMixin(type)
+      ])
+    }
     // 此为纯增强类mixins，原生模式下不需要注入
     if (!rawOptions.__nativeRender__) {
       bulitInMixins = bulitInMixins.concat([
