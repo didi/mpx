@@ -2,14 +2,22 @@
 
 ## 快速使用 RN
 
-``` bash
-# ios
+::: code-group
+
+``` sh [iOS]
 npx mpx-cli-service build --targets=ios
-# android
+```
+
+``` sh [Android]
 npx mpx-cli-service build --targets=android
-# harmony
+```
+
+``` sh [HarmonyOS]
 npx mpx-cli-service build --targets=harmony
 ```
+
+:::
+
 > 构建其他平台参考 [快速开始](../basic/start.html)
 
 ## 跨端样式定义
