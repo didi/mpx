@@ -602,7 +602,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-      const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
+      const keyboardAvoidRef = useRef(null)
       useEffect(() => {
         setTimeout(() => {
           rootRef.current?.measureInWindow((x, y, width, height) => {
