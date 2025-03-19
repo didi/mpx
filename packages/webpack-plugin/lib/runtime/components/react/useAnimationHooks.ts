@@ -185,9 +185,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
-  // const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean|number|string})
+  const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
+  // 记录上次style map
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const lastStyle = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
@@ -195,8 +197,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
-      const defaultVal = getInitialVal(key, isTransform(key))
-      valMap[key] = makeMutable(defaultVal)
+      // 用默认值初始化
+      valMap[key] = makeMutable(InitialValue[key])
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
@@ -206,21 +208,18 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     if (id === -1) return
     // 更新动画样式 key map
     animatedKeys.current = getAnimatedStyleKeys()
+    // 首次设置 lastStyle，不需要更新 shareValMap
+    updateStyleVal()
     const keys = Object.keys(animatedKeys.current)
     animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...keys])
     // 驱动动画
     createAnimation(keys)
   }, [id])
-  // 同步style更新
+  // ** style更新同步
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    Object.keys(animatedKeys.current).forEach(key => {
-      const originVal = getOriginalStyleVal(key, isTransform(key))
-      if (originVal && animatedKeys.current[key] !== originVal) {
-        animatedKeys.current[key] = originVal
-        shareValMap[key].value = originVal
-      }
-    })
+    // style 更新后同步更新 lastStyle & shareValMap
+    updateStyleVal()
   }, [style])
   // ** 清空动画
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -299,17 +298,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     }
     return originalStyle[key] // === undefined ? InitialValue[key] : originalStyle[key]
   }
-  // function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
-  //   if (isTransform && Array.isArray(originalStyle.transform)) {
-  //     let initialVal = InitialValue[key]
-  //     // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
-  //     originalStyle.transform.forEach(item => {
-  //       if (item[key] !== undefined) initialVal = item[key]
-  //     })
-  //     return initialVal
-  //   }
-  //   return originalStyle[key] === undefined ? InitialValue[key] : originalStyle[key]
-  // }
   // 获取动画shareVal初始值（prop style or 默认值）
   function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
     const originalVal = getOriginalStyleVal(key, isTransform)
@@ -321,15 +309,13 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       const { rules, transform } = action
       const ruleArr = [...rules.keys(), ...transform.keys()]
       ruleArr.forEach(key => {
-        const originalVal = getOriginalStyleVal(key, isTransform(key))
-        if (!keyMap[key]) keyMap[key] = originalVal === undefined ? false : originalVal
         if (!keyMap[key]) keyMap[key] = true
       })
       return keyMap
     }, animatedKeys.current)
   }
   // animated key transform 格式化
-  function formatAnimatedKeys (keys: string[] = []) {
+  function formatAnimatedKeys (keys: string[]) {
     const animatedKeys = [] as (string|string[])[]
     const transforms = [] as string[]
     keys.forEach(key => {
@@ -341,6 +327,16 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     })
     if (transforms.length) animatedKeys.push(transforms)
     return animatedKeys
+  }
+  // 设置 lastStyle & shareValMap
+  function updateStyleVal () {
+    Object.keys(animatedKeys.current).forEach(key => {
+      const originVal = getOriginalStyleVal(key, isTransform(key))
+      if (originVal && lastStyle.current[key] !== originVal) {
+        lastStyle.current[key] = originVal
+        shareValMap[key].value = originVal
+      }
+    })
   }
   // transform 数组转对象
   function getTransformObj () {
