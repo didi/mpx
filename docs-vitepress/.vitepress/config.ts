@@ -356,6 +356,13 @@ export default withPwa(
                 linkText: "返回首页",
                 quote: "😩 抱歉，迷路了～",
             },
+            lastUpdated: {
+                text: "最后更新于",
+                formatOptions: {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                },
+            },
             docFooter: {
                 prev: "上一页",
                 next: "下一页",
