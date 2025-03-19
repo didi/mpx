@@ -60,7 +60,8 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
         selectComponent: instance.selectComponent.bind(instance),
         selectAllComponents: instance.selectAllComponents.bind(instance),
         createSelectorQuery: instance.createSelectorQuery.bind(instance),
-        createIntersectionObserver: instance.createIntersectionObserver.bind(instance)
+        createIntersectionObserver: instance.createIntersectionObserver.bind(instance),
+        getPageId: instance.getPageId.bind(instance)
       }
       const setupRes = rawSetup(props, newContext)
       unsetCurrentInstance(instance.__mpxProxy)
