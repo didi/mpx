@@ -13,7 +13,8 @@ import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from 
 import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
 
 const ProviderContext = createContext(null)
-
+// 临时用来存储底部的安全区域高度（虚拟按键等高度）此部分内容不在safearea里面
+let bottomHeight = -1
 function getSystemInfo () {
   const window = ReactNative.Dimensions.get('window')
   const screen = ReactNative.Dimensions.get('screen')
@@ -574,6 +575,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   if (type === 'page') {
     const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
+    const isCustom = pageConfig.navigationStyle === 'custom'
+    const windowDimensions = ReactNative.Dimensions.get('window')
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
@@ -583,7 +586,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       })
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
-        const isCustom = pageConfig.navigationStyle === 'custom'
         navigation.setOptions({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText || '',
@@ -603,13 +605,19 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
-      useEffect(() => {
-        setTimeout(() => {
+      const onLayout = () => {
+        navigation.layout = {
+          x: 0,
+          y: headerHeight,
+          width: windowDimensions.width,
+          height: windowDimensions.height - headerHeight - (bottomHeight === -1 ? 0 : bottomHeight)
+        }
+        if (bottomHeight === -1) {
           rootRef.current?.measureInWindow((x, y, width, height) => {
-            navigation.layout = { x, y, width, height }
+            bottomHeight = windowDimensions.height - headerHeight - height
           })
-        }, 100)
-      }, [])
+        }
+      }
       const withKeyboardAvoidingView = (element) => {
         return createElement(KeyboardAvoidContext.Provider,
           {
@@ -649,7 +657,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef
+              ref: rootRef,
+              onLayout
             },
             createElement(RouteContext.Provider,
               {

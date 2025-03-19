@@ -34,6 +34,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 // const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
@@ -616,6 +617,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RemoveEntryDependency, new NullFactory())
       compilation.dependencyTemplates.set(RemoveEntryDependency, new RemoveEntryDependency.Template())
+
+      compilation.dependencyFactories.set(RecordPageConfigMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordPageConfigMapDependency, new RecordPageConfigMapDependency.Template())
 
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())

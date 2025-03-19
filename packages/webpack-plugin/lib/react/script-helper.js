@@ -108,6 +108,9 @@ global.__getAppComponents = function () {
 global.currentInject.getPages = function () {
   return ${shallowStringify(pagesMap)}
 }
+global.currentInject.getPageConfigMap = function () {
+  return ${shallowStringify(pagesMap)}
+}
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
     if (ctorType === 'page') {
