@@ -208,7 +208,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     if (id === -1) return
     // 更新动画样式 key map
     animatedKeys.current = getAnimatedStyleKeys()
-    // 首次设置 lastStyle，不需要更新 shareValMap
+    // 首次设置 lastStyle & 更新 shareValMap
     updateStyleVal()
     const keys = Object.keys(animatedKeys.current)
     animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...keys])
@@ -297,11 +297,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       return initialVal
     }
     return originalStyle[key] // === undefined ? InitialValue[key] : originalStyle[key]
-  }
-  // 获取动画shareVal初始值（prop style or 默认值）
-  function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
-    const originalVal = getOriginalStyleVal(key, isTransform)
-    return originalVal === undefined ? InitialValue[key] : originalVal
   }
   // 循环 animation actions 获取所有有动画的 style prop name
   function getAnimatedStyleKeys () {
