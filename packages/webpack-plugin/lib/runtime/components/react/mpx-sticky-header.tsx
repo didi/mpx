@@ -54,10 +54,13 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   function onLayout (e: LayoutChangeEvent) {
     if (headerRef.current) {
-      headerRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-        contentHeight.current = height
-        setHeaderTop(pageY - offsetTop)
-      })
+      // hack 外层做动画 android pageY 可能拿到不准问题
+      setTimeout(() => {
+        headerRef.current!.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+          contentHeight.current = height
+          setHeaderTop(pageY - offsetTop)
+        })
+      }, 100)
     }
   }
 
