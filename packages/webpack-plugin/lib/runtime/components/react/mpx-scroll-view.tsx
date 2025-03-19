@@ -38,7 +38,7 @@ import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle,
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 
 interface ScrollViewProps {
@@ -223,6 +223,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }, [])
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+
+  const hasRefresherLayoutRef = useRef(false)
+
+  // layout 完成前先隐藏，避免安卓闪烁问题
+  const refresherLayoutStyle = useMemo(() => { return !hasRefresherLayoutRef.current ? HIDDEN_STYLE : {} }, [hasRefresherLayoutRef.current])
 
   if (scrollX && scrollY) {
     warn('scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
@@ -540,6 +545,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onRefresherLayout (e: LayoutChangeEvent) {
     const { height } = e.nativeEvent.layout
     refresherHeight.value = height
+    hasRefresherLayoutRef.current = true
   }
 
   function updateScrollState (newValue: boolean) {
@@ -699,7 +705,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       <GestureDetector gesture={panGesture}>
         <ScrollView {...innerProps}>
           {/* 刷新控件 - 有独立的动画 */}
-          <Animated.View style={refresherAnimatedStyle} onLayout={onRefresherLayout}>
+          <Animated.View style={[refresherAnimatedStyle, refresherLayoutStyle]} onLayout={onRefresherLayout}>
             {refresherContent}
           </Animated.View>
 
