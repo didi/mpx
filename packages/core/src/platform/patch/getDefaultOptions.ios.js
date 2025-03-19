@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -432,7 +432,6 @@ const provideRelation = (instance, relation) => {
     }
   }
 }
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -575,25 +574,32 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions(Object.assign({
+        navigation.setOptions({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText?.trim() || '',
           headerStyle: {
             backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
           },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white',
-          statusBarTranslucent: true
-        }, __mpx_mode__ === 'android' ? { statusBarStyle: pageConfig.statusBarStyle || 'light' } : {}))
+          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        })
+
+        if (__mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
+          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
+          color && ReactNative.StatusBar.setBackgroundColor(color)
+        }
       }, [])
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
-      const onLayout = useCallback(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
+      useEffect(() => {
+        setTimeout(() => {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            navigation.layout = { x, y, width, height }
+          })
+        }, 100)
       }, [])
-
       const withKeyboardAvoidingView = (element) => {
         return createElement(KeyboardAvoidContext.Provider,
           {
@@ -633,8 +639,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef,
-              onLayout
+              ref: rootRef
             },
             createElement(RouteContext.Provider,
               {

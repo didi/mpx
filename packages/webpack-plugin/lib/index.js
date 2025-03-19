@@ -130,7 +130,7 @@ class MpxWebpackPlugin {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
     if (isReact(options.mode) && options.srcMode !== 'wx') {
-      errors.push('MpxWebpackPlugin supports mode to be "ios" or "android" only when srcMode is set to "wx"!')
+      errors.push('MpxWebpackPlugin supports mode to be "ios" or "android" of "harmony" only when srcMode is set to "wx"!')
     }
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
