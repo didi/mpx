@@ -56,16 +56,22 @@ export default function createApp (options) {
   const Stack = createStackNavigator()
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pages).map(([key, item]) => {
+      const options = {
+        // __mpxPageStatusMap 为编译注入的全局变量
+        headerShown: !Object.assign({}, global.__mpxPageConfig, _pageConfigMap[key]).navigationStyle === 'custom'
+      }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
           component: item,
-          initialParams
+          initialParams,
+          options
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: item
+        component: item,
+        options
       })
     })
   }

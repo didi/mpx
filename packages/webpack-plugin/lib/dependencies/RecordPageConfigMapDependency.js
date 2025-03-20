@@ -15,14 +15,14 @@ class RecordPageConfigMapDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     const pagePath = mpx.pagesMap[this.resourcePath]
-    const keysToExtract = ['navigationStyle', 'navigationBarBackgroundColor'];
-    const configObj = {};
+    const keysToExtract = ['navigationStyle']
+    const configObj = {}
     keysToExtract.forEach(key => {
-      if (this.jsonObj.hasOwnProperty(key)) {
+      if (this.jsonObj[key]) {
         configObj[key] = this.jsonObj[key]
       }
-    });
-    mpx.pageConfigMap[pagePath] = configObj
+    })
+    if (Object.keys(configObj).length) mpx.pageConfigMap[pagePath] = configObj
     return callback()
   }
 
