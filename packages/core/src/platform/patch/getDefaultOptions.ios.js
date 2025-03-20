@@ -10,7 +10,7 @@ import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
+import PageWrapper from './pageWrapper'
 
 const ProviderContext = createContext(null)
 
@@ -575,15 +575,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
+    const { useSafeAreaInsets, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
-      const intersectionObservers = useRef({})
-      const routeContextValRef = useRef({
-        pageId: currentPageId,
-        navigation
-      })
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
@@ -605,7 +600,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-      const keyboardAvoidRef = useRef(null)
       useEffect(() => {
         setTimeout(() => {
           rootRef.current?.measureInWindow((x, y, width, height) => {
@@ -613,71 +607,21 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           })
         }, 100)
       }, [])
-      const withKeyboardAvoidingView = (element) => {
-        return createElement(KeyboardAvoidContext.Provider,
-          {
-            value: keyboardAvoidRef
-          },
-          createElement(KeyboardAvoidingView,
-            {
-              style: {
-                flex: 1
-              },
-              contentContainerStyle: {
-                flex: 1
-              }
-            },
-            element
-          )
-        )
-      }
 
       navigation.insets = useSafeAreaInsets()
 
-      return createElement(GestureHandlerRootView,
-        {
-          // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
-            ? {
-              height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-            }
-            : {
-              flex: 1
-            }
-        },
-        withKeyboardAvoidingView(
-          createElement(ReactNative.View,
-            {
-              style: {
-                flex: 1,
-                backgroundColor: pageConfig.backgroundColor || '#ffffff'
-              },
-              ref: rootRef
-            },
-            createElement(RouteContext.Provider,
-              {
-                value: routeContextValRef.current
-              },
-              createElement(IntersectionObserverContext.Provider,
-                {
-                  value: intersectionObservers.current
-                },
-                createElement(PortalHost,
-                  null,
-                  createElement(defaultOptions,
-                    {
-                      navigation,
-                      route,
-                      id: currentPageId
-                    }
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-      // todo custom portal host for active route
+      return createElement(PageWrapper, {
+        navigation,
+        pageId: currentPageId,
+        pageConfig,
+        useHeaderHeight,
+        useSafeAreaInsets,
+        children: createElement(defaultOptions, {
+          navigation,
+          route,
+          id: currentPageId
+        })
+      })
     }
     return Page
   }
