@@ -58,7 +58,7 @@ export default function createApp (options) {
     return Object.entries(pages).map(([key, item]) => {
       const options = {
         // __mpxPageStatusMap 为编译注入的全局变量
-        headerShown: !Object.assign({}, global.__mpxPageConfig, _pageConfigMap[key]).navigationStyle === 'custom'
+        headerShown: !(Object.assign({}, global.__mpxPageConfig, global.pageConfigMap[key]).navigationStyle === 'custom')
       }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {

@@ -1648,7 +1648,11 @@ class MpxWebpackPlugin {
             // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
             source.add('/* @refresh reset */\n')
             // 注入页面的配置，供screen前置设置导航情况
-            if (isRuntime) source.add(`var _pageConfigMap = ${JSON.stringify(mpx.pageConfigMap)};\n`)
+            if (isRuntime) {
+              source.add('// inject pageconfigmap for screen\n' +
+                'var context = (function() { return this })() || Function("return this")();\n')
+              source.add(`context.pageConfigMap = ${JSON.stringify(mpx.pageConfigMap)};\n`)
+            }
             source.add(originalSource)
             compilation.assets[chunkFile] = source
             processedChunk.add(chunk)
