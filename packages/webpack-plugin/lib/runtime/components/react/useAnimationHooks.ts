@@ -189,7 +189,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // 记录上次style map
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const lastStyle = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
+  const lastShareValRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
   // 1 尝试用 useRef，但 useAnimatedStyle 访问后的 ref 不能在增加新的值，被冻结
@@ -197,8 +197,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
-      // 用默认值初始化
-      valMap[key] = makeMutable(InitialValue[key])
+      const defaultVal = getInitialVal(key, isTransform(key))
+      valMap[key] = makeMutable(defaultVal)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
@@ -208,8 +208,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     if (id === -1) return
     // 更新动画样式 key map
     animatedKeys.current = getAnimatedStyleKeys()
-    // 首次设置 lastStyle & 更新 shareValMap
-    updateStyleVal()
     const keys = Object.keys(animatedKeys.current)
     animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...keys])
     // 驱动动画
@@ -218,7 +216,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // ** style更新同步
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    // style 更新后同步更新 lastStyle & shareValMap
+    // style 更新后同步更新 lastShareValRef & shareValMap
     updateStyleVal()
   }, [style])
   // ** 清空动画
@@ -298,6 +296,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     }
     return originalStyle[key] // === undefined ? InitialValue[key] : originalStyle[key]
   }
+  // 获取动画shareVal初始值（prop style or 默认值）
+  function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
+    const originalVal = getOriginalStyleVal(key, isTransform)
+    return originalVal === undefined ? InitialValue[key] : originalVal
+  }
   // 循环 animation actions 获取所有有动画的 style prop name
   function getAnimatedStyleKeys () {
     return (animation?.actions || []).reduce((keyMap, action) => {
@@ -323,13 +326,15 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     if (transforms.length) animatedKeys.push(transforms)
     return animatedKeys
   }
-  // 设置 lastStyle & shareValMap
+  // 设置 lastShareValRef & shareValMap
   function updateStyleVal () {
     Object.keys(animatedKeys.current).forEach(key => {
       const originVal = getOriginalStyleVal(key, isTransform(key))
-      if (originVal && lastStyle.current[key] !== originVal) {
-        lastStyle.current[key] = originVal
-        shareValMap[key].value = originVal
+      if (originVal && lastShareValRef.current[key] !== originVal) {
+        lastShareValRef.current[key] = originVal
+        if (shareValMap[key].value !== originVal) {
+          shareValMap[key].value = originVal
+        }
       }
     })
   }
