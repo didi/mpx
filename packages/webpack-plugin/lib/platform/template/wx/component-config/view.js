@@ -27,8 +27,8 @@ module.exports = function ({ print }) {
     ios (tag, { el }) {
       el.isBuiltIn = true
       const simpleValue = el.attrsMap['is-simple'] || ''
-      const matches = simpleValue.match(regex)
-      if (matches && matches[0]) {
+      const matches = regex.exec(simpleValue)
+      if (matches && matches[1] === 'true') {
         return 'mpx-simple-view'
       }
       return 'mpx-view'
@@ -36,8 +36,8 @@ module.exports = function ({ print }) {
     android (tag, { el }) {
       el.isBuiltIn = true
       const simpleValue = el.attrsMap['is-simple'] || ''
-      const matches = simpleValue.match(regex)
-      if (matches && matches[0]) {
+      const matches = regex.exec(simpleValue)
+      if (matches && matches[1] === 'true') {
         return 'mpx-simple-view'
       }
       return 'mpx-view'
