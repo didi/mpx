@@ -101,7 +101,6 @@ function preProcessRenderData (renderData) {
   })
   return processedRenderData
 }
-
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
@@ -317,7 +316,8 @@ export default class MpxProxy {
           selectComponent: this.target.selectComponent.bind(this.target),
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
-          createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj)
+          createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
+          getPageId: this.target.getPageId.bind(this.target)
         }
       ])
       if (!isObject(setupResult)) {

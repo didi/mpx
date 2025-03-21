@@ -440,17 +440,6 @@ const checkRelation = (options) => {
   }
 }
 
-const provideRelation = (instance, relation) => {
-  // todo 需要考虑缓存对象避免无效更新子组件
-  const componentPath = instance.__componentPath
-  if (relation) {
-    return Object.assign({}, relation, { [componentPath]: instance })
-  } else {
-    return {
-      [componentPath]: instance
-    }
-  }
-}
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -557,14 +546,28 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       root = createElement(ProviderContext.Provider, { value: provides }, root)
     }
 
-    return hasDescendantRelation
-      ? createElement(RelationsContext.Provider,
+    if (hasDescendantRelation) {
+      const relationProvide = useMemo(() => {
+        const componentPath = instance.__componentPath
+        if (relation) {
+          return Object.assign({}, relation, { [componentPath]: instance })
+        } else {
+          return {
+            [componentPath]: instance
+          }
+        }
+      }, [relation])
+
+      return createElement(
+        RelationsContext.Provider,
         {
-          value: provideRelation(instance, relation)
+          value: relationProvide
         },
         root
       )
-      : root
+    } else {
+      return root
+    }
   }))
 
   if (rawOptions.options?.isCustomText) {
