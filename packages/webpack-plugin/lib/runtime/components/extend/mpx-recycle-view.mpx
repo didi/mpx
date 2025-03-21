@@ -13,6 +13,7 @@
     scrollEventThrottle="{{scrollEventThrottle}}"
     wx:style="width: {{_width}}; height: {{_height}}"
     bindscroll="onScroll"
+    bindscrollend="onScrollEnd"
     bindscrolltoupper="onScrollToUpper"
     bindscrolltolower="onScrollToLower"
   >
