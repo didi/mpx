@@ -1,7 +1,7 @@
 <template>
   <scroll-view
     class="mpx-recycle-view"
-    wx:ref
+    wx:ref="mpxRecycleView"
     type="list"
     scroll-y="{{scrollY}}"
     scroll-top="{{_scrollTop}}"
@@ -304,6 +304,7 @@
       },
       onScroll(e) {
         const now = Date.now()
+        // 添加16ms的节流，大约60fps
         if (now - this.lastScrollTime < 16) {
           return
         }
@@ -311,7 +312,8 @@
 
         const { scrollTop } = e.detail
         const newStart = this.getStartIndex(scrollTop)
-        // 只有当start发生足够变化时才更新，避免触发重渲染
+        
+        // 只有当start发生足够变化时才更新，避免滚动触发重渲染
         if (Math.abs(newStart - this.end) >= Math.floor(this.belowCount / 2)) {
           this.start = newStart
           this.end = this.start + this.visibleCount
@@ -325,6 +327,13 @@
       },
       onScrollToLower(e) {
         this.triggerEvent('scrolltolower', e)
+      },
+      scrollTo(params = {}) {
+        this.$refs.mpxRecycleView.node().exec(res => {
+          if (res && res[0]) {
+            res[0].node.scrollTo(params)
+          }
+        })
       }
     }
   })
