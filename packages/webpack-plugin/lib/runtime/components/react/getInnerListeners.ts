@@ -1,7 +1,7 @@
 import { useRef, useMemo, RefObject } from 'react'
 import { hasOwn, collectDataset } from '@mpxjs/utils'
 import { omit, extendObject, useNavigation } from './utils'
-import eventConfigMap, { TAP_EVENTS } from './event.config'
+import eventConfigMap, { TAP_EVENTS, LONGPRESS_EVENTS } from './event.config'
 import {
   Props,
   AdditionalProps,
@@ -168,18 +168,7 @@ function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
   const currentPressEvent =
         type === 'bubble' ? bubblePressEvent : capturePressEvent
   handleEmitEvent(currentTouchEvent, 'touchstart', e, propsRef, config, navigation)
-  const {
-    catchlongpress,
-    bindlongpress,
-    'capture-catchlongpress': captureCatchlongpress,
-    'capture-bindlongpress': captureBindlongpress
-  } = propsRef.current
-  if (
-    catchlongpress ||
-        bindlongpress ||
-        captureCatchlongpress ||
-        captureBindlongpress
-  ) {
+  if (LONGPRESS_EVENTS.some(eventName => propsRef.current[eventName])) {
     ref.current!.startTimer[type] = setTimeout(() => {
       // 只要触发过longpress, 全局就不再触发tap
       globalEventState.needPress = false
