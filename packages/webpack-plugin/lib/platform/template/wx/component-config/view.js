@@ -25,10 +25,16 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
+      if (el.attrsMap['is-simple']) {
+        return 'mpx-simple-view'
+      }
       return 'mpx-view'
     },
     android (tag, { el }) {
       el.isBuiltIn = true
+      if (el.attrsMap['is-simple']) {
+        return 'mpx-simple-view'
+      }
       return 'mpx-view'
     },
     qa (tag) {
