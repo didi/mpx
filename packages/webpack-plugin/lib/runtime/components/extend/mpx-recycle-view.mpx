@@ -303,10 +303,21 @@
         }
       },
       onScroll(e) {
+        const now = Date.now()
+        if (now - this.lastScrollTime < 16) {
+          return
+        }
+        this.lastScrollTime = now
+
         const { scrollTop } = e.detail
-        this.start = this.getStartIndex(scrollTop)
-        this.end = this.start + this.visibleCount
-        this.setStartOffset()
+        const newStart = this.getStartIndex(scrollTop)
+        // 只有当start发生足够变化时才更新，避免触发重渲染
+        if (Math.abs(newStart - this.end) >= Math.floor(this.belowCount / 2)) {
+          this.start = newStart
+          this.end = this.start + this.visibleCount
+          this.setStartOffset()
+        }
+        
         this.triggerEvent('scroll', e)
       },
       onScrollToUpper(e) {
