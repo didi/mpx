@@ -7,7 +7,7 @@ import { RouteContext, IntersectionObserverContext, KeyboardAvoidContext } from 
 import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
 import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
 
-export default function PageWrapper({
+function PageWrapper ({
     children,
     navigation,
     pageId,
@@ -78,3 +78,7 @@ export default function PageWrapper({
             )
         ))
 }
+
+PageWrapper.displayName = 'PageWrapper'
+
+export default PageWrapper
