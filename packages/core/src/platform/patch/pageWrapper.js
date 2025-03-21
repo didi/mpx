@@ -1,6 +1,7 @@
 import { useRef, createElement } from 'react';
 import * as ReactNative from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useHeaderHeight } from '@react-navigation/elements'
 import { RouteContext, IntersectionObserverContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
@@ -10,8 +11,7 @@ export default function PageWrapper({
     children,
     navigation,
     pageId,
-    pageConfig = {},
-    useHeaderHeight
+    pageConfig = {}
 }) {
 
     const rootRef = useRef(null)
