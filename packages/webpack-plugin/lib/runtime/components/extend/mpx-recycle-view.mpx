@@ -5,6 +5,8 @@
     type="list"
     scroll-y="{{scrollY}}"
     scroll-top="{{_scrollTop}}"
+    enhanced="{{enhanced}}"
+    bounces="{{bounces}}"
     scroll-with-animation="{{scrollWithAnimation}}"
     enable-back-to-top="{{enableBackToTop}}"
     lower-threshold="{{lowerThreshold}}"
@@ -73,6 +75,14 @@
       minRenderCount: {
         type: Number,
         value: 10
+      },
+      enhanced: {
+        type: Boolean,
+        value: false
+      },
+      bounces: {
+        type: Boolean,
+        value: false
       }
     },
     data: {
