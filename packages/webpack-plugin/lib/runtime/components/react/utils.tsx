@@ -80,20 +80,6 @@ export const useUpdateEffect = (effect: any, deps: any) => {
   }, deps)
 }
 
-/**
- * 解析行内样式
- * @param inlineStyle
- * @returns
- */
-export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
-  return inlineStyle.split(';').reduce((styleObj, style) => {
-    const [k, v, ...rest] = style.split(':')
-    if (rest.length || !v || !k) return styleObj
-    const key = k.trim().replace(/-./g, c => c.substring(1).toUpperCase())
-    return extendObject(styleObj, { [key]: global.__formatValue(v.trim()) })
-  }, {})
-}
-
 export const parseUrl = (cssUrl = '') => {
   if (!cssUrl) return
   const match = cssUrl.match(URL_REGEX)
