@@ -20,7 +20,7 @@
     <view class="content-wrapper">
       <view class="infinite-list-placeholder" wx:style="{{placeholderStyle}}"></view>
       <view class="infinite-list" wx:style="{{contentStyle}}">
-        <recycle-item wx:for="{{visibleData}}" wx:key="_index" current-item="{{item}}"/>
+        <recycle-item wx:for="{{visibleData}}" wx:key="_index" current-item="{{item}}" />
       </view>
     </view>
   </scroll-view>
@@ -105,16 +105,30 @@
       visibleCount() {
         if (!this.visibleCounts.length) return this.minRenderCount
         return Math.max(this.visibleCounts[this.start], this.minRenderCount)
-      },  
+      },
       aboveCount() {
-        return Math.max(0, Math.min(this.start, this.bufferScale * this.visibleCount))
+        if (!this._listData.length || !this.visibleCounts.length) return 0
+        let count = 0
+        const startIndex = Math.max(0, this.start)
+        const endIndex = Math.max(0, startIndex - this.bufferScale)
+
+        for (let i = startIndex; i > endIndex; i--) {
+          count += this.visibleCounts[i] || 0
+        }
+
+        return count
       },
       belowCount() {
-        if (!this._listData.length) return 0
-        return Math.max(
-          0,
-          Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
-        )
+        if (!this._listData.length || !this.visibleCounts.length) return 0
+        let count = 0
+        const startIndex = Math.min(this.start, this._listData.length - 1)
+        const endIndex = Math.min(startIndex + this.bufferScale, this._listData.length - 1)
+
+        for (let i = startIndex; i < endIndex; i++) {
+          count += this.visibleCounts[i] || 0
+        }
+
+        return count
       },
       visibleData() {
         if (!this._listData.length) return []
