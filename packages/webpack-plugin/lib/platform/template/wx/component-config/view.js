@@ -1,4 +1,5 @@
 const TAG_NAME = 'view'
+const regex = /{{(.*?)}}/g
 
 module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
@@ -25,10 +26,20 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
+      const simpleValue = el.attrsMap['is-simple'] || ''
+      const matches = regex.exec(simpleValue)
+      if (matches && matches[1] === 'true') {
+        return 'mpx-simple-view'
+      }
       return 'mpx-view'
     },
     android (tag, { el }) {
       el.isBuiltIn = true
+      const simpleValue = el.attrsMap['is-simple'] || ''
+      const matches = regex.exec(simpleValue)
+      if (matches && matches[1] === 'true') {
+        return 'mpx-simple-view'
+      }
       return 'mpx-view'
     },
     qa (tag) {
