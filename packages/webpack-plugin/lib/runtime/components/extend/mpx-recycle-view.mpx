@@ -10,7 +10,7 @@
     lower-threshold="{{lowerThreshold}}"
     upper-threshold="{{upperThreshold}}"
     scroll-options="{{scrollOptions}}"
-    enable-sticky="{{enableSticky}}"
+    scrollEventThrottle="{{scrollEventThrottle}}"
     wx:style="width: {{_width}}; height: {{_height}}"
     bindscroll="onScroll"
     bindscrolltoupper="onScrollToUpper"
@@ -65,17 +65,13 @@
         type: Object,
         value: {}
       },
-      scrollThrottleDelay: {
+      scrollEventThrottle: {
         type: Number,
-        value: 16
+        value: 0
       },
       minRenderCount: {
         type: Number,
         value: 10
-      },
-      enableSticky: {
-        type: Boolean,
-        value: false
       }
     },
     data: {
@@ -292,11 +288,6 @@
         }
       },
       onScroll(e) {
-        const now = Date.now()
-        if (now - this.lastScrollTime < this.scrollThrottleDelay) {
-          return
-        }
-        this.lastScrollTime = now
         const { scrollTop } = e.detail
         this.start = this.getStartIndex(scrollTop)
         this.end = this.start + this.visibleCount
