@@ -191,7 +191,10 @@ export default function createApp (options) {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      headerShadowVisible: false
+      headerShadowVisible: false,
+      // 整体切换native-stack时进行修改如下
+      // statusBarTranslucent: true,
+      // statusBarBackgroundColor: 'transparent'
     }
     if (__mpx_mode__ === 'ios') {
       // ios使用native-stack
