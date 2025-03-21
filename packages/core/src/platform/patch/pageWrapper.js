@@ -1,4 +1,4 @@
-import { useRef, createElement } from 'react';
+import { useRef, createElement } from 'react'
 import * as ReactNative from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useHeaderHeight } from '@react-navigation/elements'
@@ -13,9 +13,8 @@ function PageWrapper ({
     pageId,
     pageConfig = {}
 }) {
-
     const rootRef = useRef(null)
-    const keyboardAvoidRef= useRef(null)
+    const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
     const routeContextValRef = useRef({
         navigation,
