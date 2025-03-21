@@ -1598,7 +1598,7 @@ class MpxWebpackPlugin {
         name: 'MpxWebpackPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
-        if (isWeb(mpx.mode) || isReact(mpx.mode)) return
+        if (isWeb(mpx.mode)) return
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
@@ -1637,6 +1637,16 @@ class MpxWebpackPlugin {
 
           const originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
+
+          if (isReact(mpx.mode)) {
+            // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
+            source.add('/* @refresh reset */\n')
+            source.add(originalSource)
+            compilation.assets[chunkFile] = source
+            processedChunk.add(chunk)
+            return
+          }
+
           source.add(`\nvar ${globalObject} = {};\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {

@@ -286,10 +286,26 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    // App onLaunch 在 Page created 之前执行
+    if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
+      global.__mpxAppOnLaunch(props.navigation)
+    }
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
+
+  if (type === 'page') {
+    const loadParams = {}
+    const props = propsRef.current
+    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+    if (isObject(props.route.params)) {
+      for (const key in props.route.params) {
+        loadParams[key] = encodeURIComponent(props.route.params[key])
+      }
+    }
+    proxy.callHook(ONLOAD, [loadParams])
+  }
 
   Object.assign(proxy, {
     onStoreChange: null,
@@ -384,7 +400,9 @@ const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
-  set(pageStatusMap, pageId, '')
+  if (!hasOwn(pageStatusMap, pageId)) {
+    set(pageStatusMap, pageId, '')
+  }
   useEffect(() => {
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
@@ -422,16 +440,6 @@ const checkRelation = (options) => {
   }
 }
 
-const provideRelation = (instance, relation) => {
-  const componentPath = instance.__componentPath
-  if (relation) {
-    return Object.assign({}, relation, { [componentPath]: instance })
-  } else {
-    return {
-      [componentPath]: instance
-    }
-  }
-}
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -501,19 +509,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     usePageEffect(proxy, pageId)
 
     useEffect(() => {
-      if (type === 'page') {
-        if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
-          global.__mpxAppOnLaunch(props.navigation)
-        }
-        const loadParams = {}
-        // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-        if (isObject(props.route.params)) {
-          for (const key in props.route.params) {
-            loadParams[key] = encodeURIComponent(props.route.params[key])
-          }
-        }
-        proxy.callHook(ONLOAD, [loadParams])
-      }
       proxy.mounted()
       return () => {
         proxy.unmounted()
@@ -551,14 +546,28 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       root = createElement(ProviderContext.Provider, { value: provides }, root)
     }
 
-    return hasDescendantRelation
-      ? createElement(RelationsContext.Provider,
-          {
-            value: provideRelation(instance, relation)
-          },
-          root
-        )
-      : root
+    if (hasDescendantRelation) {
+      const relationProvide = useMemo(() => {
+        const componentPath = instance.__componentPath
+        if (relation) {
+          return Object.assign({}, relation, { [componentPath]: instance })
+        } else {
+          return {
+            [componentPath]: instance
+          }
+        }
+      }, [relation])
+
+      return createElement(
+        RelationsContext.Provider,
+        {
+          value: relationProvide
+        },
+        root
+      )
+    } else {
+      return root
+    }
   }))
 
   if (rawOptions.options?.isCustomText) {
@@ -571,6 +580,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
+      const routeContextValRef = useRef({
+        pageId: currentPageId,
+        navigation
+      })
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
         const isCustom = pageConfig.navigationStyle === 'custom'
@@ -592,7 +605,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }, [])
 
       const rootRef = useRef(null)
-      const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
+      const keyboardAvoidRef = useRef(null)
       useEffect(() => {
         setTimeout(() => {
           rootRef.current?.measureInWindow((x, y, width, height) => {
@@ -625,12 +638,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         {
           // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
           style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
-          ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          }
-          : {
-            flex: 1
-          }
+            ? {
+              height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+            }
+            : {
+              flex: 1
+            }
         },
         withKeyboardAvoidingView(
           createElement(ReactNative.View,
@@ -643,10 +656,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             },
             createElement(RouteContext.Provider,
               {
-                value: {
-                  pageId: currentPageId,
-                  navigation
-                }
+                value: routeContextValRef.current
               },
               createElement(IntersectionObserverContext.Provider,
                 {

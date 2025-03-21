@@ -6,8 +6,6 @@ import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
-import { Image } from 'react-native'
-
 import { initAppProvides } from './export/inject'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
@@ -183,23 +181,29 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
-    const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
-    const headerBackImageSource = Mpx.config.rnConfig.headerBackImageSource || null
     const navScreenOpts = {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      // 安卓上会出现初始化时闪现导航条的问题
-      headerShown: false,
       headerShadowVisible: false
     }
-    if (headerBackImageProps) {
-      navScreenOpts.headerBackImage = () => {
-        return createElement(Image, headerBackImageProps)
+    if (__mpx_mode__ === 'ios') {
+      // ios使用native-stack
+      const headerBackImageSource = Mpx.config.rnConfig.headerBackImageSource || null
+      if (headerBackImageSource) {
+        navScreenOpts.headerBackImageSource = headerBackImageSource
       }
-    }
-    if (headerBackImageSource) {
-      navScreenOpts.headerBackImageSource = headerBackImageSource
+    } else {
+       // 安卓上会出现导航条闪现的问题所以默认加headerShown false（stack版本， native-stack版本可以干掉）
+       // iOS加上默认headerShown false的话会因为iOS根高度是screenHeight - useHeaderHeight()会导致出现渲染两次情况，因此iOS不加此默认值
+      navScreenOpts.headerShown = false
+      // 安卓和鸿蒙先用stack
+      const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
+      if (headerBackImageProps) {
+        navScreenOpts.headerBackImage = () => {
+          return createElement(ReactNative.Image, headerBackImageProps)
+        }
+      }
     }
 
     return createElement(SafeAreaProvider,
