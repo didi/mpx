@@ -4,15 +4,15 @@
 
 ::: code-group
 
-``` sh [iOS]
+``` sh [ios]
 npx mpx-cli-service build --targets=ios
 ```
 
-``` sh [Android]
+``` sh [android]
 npx mpx-cli-service build --targets=android
 ```
 
-``` sh [HarmonyOS]
+``` sh [harmony]
 npx mpx-cli-service build --targets=harmony
 ```
 
