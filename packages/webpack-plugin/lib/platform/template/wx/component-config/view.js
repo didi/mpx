@@ -1,5 +1,11 @@
 const TAG_NAME = 'view'
-const regex = /{{(.*?)}}/g
+const regex = /{{(.+?)}}/
+
+function getViewType (el) {
+  const simpleValue = el.attrsMap['is-simple'] || ''
+  const match = simpleValue.match(regex)
+  return match && match[1].trim() === 'true' ? 'mpx-simple-view' : 'mpx-view'
+}
 
 module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
@@ -26,21 +32,11 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
-      const simpleValue = el.attrsMap['is-simple'] || ''
-      const matches = regex.exec(simpleValue)
-      if (matches && matches[1] === 'true') {
-        return 'mpx-simple-view'
-      }
-      return 'mpx-view'
+      return getViewType(el)
     },
     android (tag, { el }) {
       el.isBuiltIn = true
-      const simpleValue = el.attrsMap['is-simple'] || ''
-      const matches = regex.exec(simpleValue)
-      if (matches && matches[1] === 'true') {
-        return 'mpx-simple-view'
-      }
-      return 'mpx-view'
+      return getViewType(el)
     },
     qa (tag) {
       return 'div'
