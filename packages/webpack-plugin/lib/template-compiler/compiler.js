@@ -2475,49 +2475,38 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
-function processComponentGenericsReact (el, options) {
-  const { componentGenerics, usingComponentsInfo } = options
+function processComponentGenericsReact (el, options, meta) {
+  const { componentGenerics } = options
   if (componentGenerics && componentGenerics[el.tag]) {
-      const genericKey = el.tag
-      el.is = `this.__props.generic && this.__props.generic['${genericKey}'] && getComponent(this.__props.generic['${genericKey}']) ? this.__props.generic['${genericKey}'] : '${genericKey}default'`
-      el.components = [
-        `this.__props.generic['${genericKey}']`,
-        `${genericKey}default`
-      ]
+      const generic = dash2hump(el.tag)
+      el.tag = 'component'
+      addAttrs(el, [{
+        name: ':is',
+        value: `generic${generic}`
+      }])
   }
 
-  const genericConfig = {}
-  const genericComponentsConfig = {}
+  let hasGeneric = false
 
-  el.attrsList.forEach(attr => {
-    const match = attr.name.match(genericRE)
-    if (match) {
-      const key = match[1]
-      const componentName = attr.value
-      genericConfig[key] = componentName
+  const genericHash = moduleId
 
-      if (usingComponentsInfo[componentName]) {
-        const { mid } = usingComponentsInfo[componentName]
-        genericComponentsConfig[componentName] = mid
-      }
+  el.attrsList.forEach((attr) => {
+    if (genericRE.test(attr.name)) {
+      getAndRemoveAttr(el, attr.name)
+      addAttrs(el, [{
+        name: attr.name.replace(':', ''),
+        value: attr.value
+      }])
+      hasGeneric = true
+      addGenericInfo(meta, genericHash, attr.value)
     }
   })
 
-  if (Object.keys(genericConfig).length) {
-    const attrsToAdd = [
-      {
-        name: 'generic',
-        value: genericConfig
-      }
-    ]
-
-    if (Object.keys(genericComponentsConfig).length) {
-      attrsToAdd.push({
-        name: 'genericComponents',
-        value: genericComponentsConfig
-      })
-    }
-    el.attrsList = el.attrsList.concat(attrsToAdd)
+  if (hasGeneric) {
+    addAttrs(el, [{
+      name: 'generichash',
+      value: genericHash
+    }])
   }
 }
 
@@ -2771,7 +2760,7 @@ function processElement (el, root, options, meta) {
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
-    processComponentGenericsReact(el, options)
+    processComponentGenericsReact(el, options, meta)
     return
   }
 

@@ -3,6 +3,7 @@ const createHelpers = require('../helpers')
 const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
+const isEmptyObject = require('../utils/is-empty-object')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
@@ -137,11 +138,46 @@ function buildI18n ({ loaderContext }) {
   return `require(${stringifyRequest(loaderContext, i18nWxsRequest)})\n`
 }
 
+function buildGenericsComponent ({ genericsInfo, componentGenerics, componentsMap, moduleId }) {
+  let content = ''
+ if (genericsInfo) {
+    content += `
+    const genericHash = ${JSON.stringify(genericsInfo.hash)}
+    global.__mpxGenericsMap[genericHash] = {}
+    const componentsMapObj = {
+      ${Object.entries(componentsMap).map(([key, value]) => `"${key}": ${value}`).join(',\n      ')}
+    }
+    Object.keys(${JSON.stringify(genericsInfo.map)}).forEach((genericValue) => {
+      if (componentsMapObj[genericValue]) {
+        global.__mpxGenericsMap[genericHash][genericValue] = componentsMapObj[genericValue]\n
+      } else {
+        console.warn('[Mpx runtime warn]: generic value "' + genericValue + '" must be registered in parent context!')\n
+      }
+    })\n`
+  }
+
+  if (!isEmptyObject(componentGenerics)) {
+    const defaultProps = {}
+    Object.keys(componentGenerics).forEach(genericName => {
+      defaultProps[`generic${genericName}`] = componentGenerics[genericName].default
+        ? `${genericName}default`
+        : ''
+    })
+    // 输出简化后的内容
+    content += `
+      const option = global.__mpxOptionsMap[${JSON.stringify(moduleId)}] = {}\n
+      option.defaultProps = ${JSON.stringify(defaultProps)}\n`
+  }
+
+  return content
+}
+
 module.exports = {
   buildPagesMap,
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
   stringifyRequest,
-  buildI18n
+  buildI18n,
+  buildGenericsComponent
 }
