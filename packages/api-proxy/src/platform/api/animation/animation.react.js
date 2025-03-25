@@ -68,19 +68,20 @@ class Animation {
   }
 
   rotate (angle) { // 旋转变换
-    this.transform.set('rotate', `${angle}deg`)
+    this.rotateZ(angle)
     return this
   }
 
-  rotate3d (x, y, z, angle) {
-    if (typeof y !== 'number') {
-      this.transform.set('rotate3d', x)
+  rotate3d (...args) {
+    if (args.length === 1) {
+      this.rotateZ(args[0])
     } else {
       // this.transform.set('rotate3d', [x, y, z, angle])
-      this.rotateX(x)
-      this.rotateY(y)
-      this.rotateZ(z)
-      this.rotate(angle)
+      // this.rotateX(x)
+      // this.rotateY(y)
+      // this.rotateZ(z)
+      // this.rotate(angle)
+      console.error('React Native 不支持 transform rotate3d')
     }
     return this
   }

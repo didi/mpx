@@ -404,13 +404,12 @@ module.exports = function getSpec ({ warn, error }) {
           case 'translate':
           case 'scale':
           case 'skew':
-          case 'rotate3d': // x y z angle
           case 'translate3d': // x y 支持 z不支持
           case 'scale3d': // x y 支持 z不支持
           {
             // 2 个以上的值处理
             key = key.replace('3d', '')
-            const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
+            const vals = parseValues(val, ',').splice(0, 3)
             // scale(.5) === scaleX(.5) scaleY(.5)
             if (vals.length === 1 && key === 'scale') {
               vals.push(vals[0])
@@ -422,6 +421,17 @@ module.exports = function getSpec ({ warn, error }) {
               }
               return { [`${key}${xyz[index] || ''}`]: v.trim() }
             }))
+            break
+          }
+          case 'rotate3d': // x y z angle
+          {
+            const vals = parseValues(val, ',')
+            if (vals.length === 1) {
+              key = 'rotateZ'
+              transform.push({ [key]: global.__formatValue(vals[vals.length - 1]) })
+            } else {
+              unsupportedPropError({ prop, value, selector }, { mode })
+            }
             break
           }
           case 'translateZ':

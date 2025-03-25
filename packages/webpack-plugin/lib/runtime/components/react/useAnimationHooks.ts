@@ -50,7 +50,7 @@ const EasingKey = {
 const TransformInitial: ExtendedViewStyle = {
   // matrix: 0,
   // matrix3d: 0,
-  rotate: '0deg',
+  // rotate: '0deg',
   rotateX: '0deg',
   rotateY: '0deg',
   rotateZ: '0deg',
@@ -127,6 +127,8 @@ const parseTransform = (transformStr: string) => {
         case 'skewX':
         case 'skewY':
         case 'perspective':
+          // rotate 处理成 rotateZ
+          key = key === 'rotate' ? 'rotateZ' : key
           // 单个值处理
           transform.push({ [key]: global.__formatValue(val) })
           break
@@ -137,13 +139,12 @@ const parseTransform = (transformStr: string) => {
         case 'translate':
         case 'scale':
         case 'skew':
-        case 'rotate3d': // x y z angle
         case 'translate3d': // x y 支持 z不支持
         case 'scale3d': // x y 支持 z不支持
         {
           // 2 个以上的值处理
           key = key.replace('3d', '')
-          const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
+          const vals = parseValues(val, ',').splice(0, 3)
           // scale(.5) === scaleX(.5) scaleY(.5)
           if (vals.length === 1 && key === 'scale') {
             vals.push(vals[0])
@@ -154,6 +155,15 @@ const parseTransform = (transformStr: string) => {
           }))
           break
         }
+        case 'rotate3d': // x y z angle
+        {
+          const vals = parseValues(val, ',')
+          if (vals.length === 1) {
+            key = 'rotateZ'
+            transform.push({ [key]: global.__formatValue(vals[vals.length - 1]) })
+          }
+          break
+        }
       }
     }
   })
@@ -161,9 +171,17 @@ const parseTransform = (transformStr: string) => {
 }
 // format style
 const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
-  if (!style.transform || Array.isArray(style.transform)) return style
+  if (!style.transform) return style
+  const transform = Array.isArray(style.transform) ? style.transform : parseTransform(style.transform)
+  transform.forEach(item => {
+    if (item.rotate) {
+      item.rotateZ = item.rotate
+      delete item.rotate
+    }
+    return item
+  })
   return Object.assign({}, style, {
-    transform: parseTransform(style.transform)
+    transform
   })
 }
 
