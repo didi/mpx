@@ -48,13 +48,8 @@ function createEffect (proxy, components) {
     if (components[tagName]) return components[tagName]
     const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.__props.generichash
-    const genericComponents = global.__mpxGenericsMap[generichash]
-    if (generichash && genericComponents) {
-      Object.keys(genericComponents).forEach((name) => {
-        return genericComponents[name]
-      })
-    }
-    return appComponents[tagName] || getByPath(ReactNative, tagName)
+    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null

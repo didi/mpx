@@ -90,7 +90,8 @@ function buildGlobalParams ({
   componentsMap,
   pagesMap,
   firstPage,
-  outputPath
+  outputPath,
+  genericsInfo
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -119,6 +120,15 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
     content += `global.currentInject.getComponents = function () {
   return ${shallowStringify(componentsMap)}
 }\n`
+
+    if (genericsInfo) {
+      content += `
+        const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
+        global.__mpxGenericsMap[genericHash] = function (name) {
+          return ${shallowStringify(componentsMap)}[name]
+        }
+      \n`
+    }
     if (ctorType === 'component') {
       content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
     }
@@ -138,24 +148,8 @@ function buildI18n ({ loaderContext }) {
   return `require(${stringifyRequest(loaderContext, i18nWxsRequest)})\n`
 }
 
-function buildGenericsComponent ({ genericsInfo, componentGenerics, componentsMap, moduleId }) {
+function buildGenericsProperties ({ componentGenerics }) {
   let content = ''
- if (genericsInfo) {
-    content += `
-    const genericHash = ${JSON.stringify(genericsInfo.hash)}
-    global.__mpxGenericsMap[genericHash] = {}
-    const componentsMapObj = {
-      ${Object.entries(componentsMap).map(([key, value]) => `"${key}": ${value}`).join(',\n      ')}
-    }
-    Object.keys(${JSON.stringify(genericsInfo.map)}).forEach((genericValue) => {
-      if (componentsMapObj[genericValue]) {
-        global.__mpxGenericsMap[genericHash][genericValue] = componentsMapObj[genericValue]\n
-      } else {
-        console.warn('[Mpx runtime warn]: generic value "' + genericValue + '" must be registered in parent context!')\n
-      }
-    })\n`
-  }
-
   if (!isEmptyObject(componentGenerics)) {
     const defaultProps = {
       generichash: {
@@ -174,10 +168,9 @@ function buildGenericsComponent ({ genericsInfo, componentGenerics, componentsMa
           value: ''
         }
     })
-    // 输出简化后的内容
     content += `
       global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n
-      `;
+      `
   }
 
   return content
@@ -190,5 +183,5 @@ module.exports = {
   buildGlobalParams,
   stringifyRequest,
   buildI18n,
-  buildGenericsComponent
+  buildGenericsProperties
 }
