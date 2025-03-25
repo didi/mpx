@@ -89,7 +89,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       button: 'Reload'
     }
   }
-  const currentErrorText = errorText[(mpx.i18n.locale as LanguageCode) || 'zh-CN']
+  const currentErrorText = errorText[(mpx.i18n?.locale as LanguageCode) || 'zh-CN']
 
   if (props.style) {
     warn('The web-view component does not support the style prop.')
