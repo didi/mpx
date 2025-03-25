@@ -71,6 +71,7 @@ global.__navigationHelper = {
     })
 
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath })
+
     output += getRequireScript({ ctorType, script, loaderContext })
 
     output += buildGenericsComponent({
@@ -80,7 +81,7 @@ global.__navigationHelper = {
       moduleId
     })
 
-   output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
+    output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }
 
   callback(null, {

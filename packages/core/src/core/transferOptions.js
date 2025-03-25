@@ -18,6 +18,10 @@ export default function transferOptions (options, type, needConvert = true) {
   if (!options.__nativeRender__) {
     options = mergeInjectedMixins(options, type)
   }
+  if (currentInject && currentInject.injectProperties) {
+    // 编译计算属性注入
+    options.properties = Object.assign({}, currentInject.injectProperties, options.properties)
+  }
   if (currentInject && currentInject.injectComputed) {
     // 编译计算属性注入
     options.computed = Object.assign({}, currentInject.injectComputed, options.computed)

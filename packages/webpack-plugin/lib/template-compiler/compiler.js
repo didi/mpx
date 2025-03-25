@@ -2478,12 +2478,9 @@ function getVirtualHostRoot (options, meta) {
 function processComponentGenericsReact (el, options, meta) {
   const { componentGenerics } = options
   if (componentGenerics && componentGenerics[el.tag]) {
-      const generic = el.tag
+      const generic = dash2hump(el.tag)
       el.tag = 'component'
-      addAttrs(el, [{
-        name: ':is',
-        value: `generic${generic}`
-      }])
+      el.is = `generic${generic}`
   }
 
   let hasGeneric = false
@@ -2492,7 +2489,7 @@ function processComponentGenericsReact (el, options, meta) {
 
   const genericAttrs = []
 
-  el.attrsList.forEach((attr) => {
+ el.attrsList.forEach((attr) => {
     if (genericRE.test(attr.name)) {
       genericAttrs.push(attr)
       hasGeneric = true
@@ -2504,7 +2501,7 @@ function processComponentGenericsReact (el, options, meta) {
   genericAttrs.forEach((attr) => {
     getAndRemoveAttr(el, attr.name)
     addAttrs(el, [{
-      name: attr.name.replace(':', ''),
+      name: dash2hump(attr.name.replace(':', '')),
       value: attr.value
     }])
   })

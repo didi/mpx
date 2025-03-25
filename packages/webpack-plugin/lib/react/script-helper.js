@@ -4,7 +4,7 @@ const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const isEmptyObject = require('../utils/is-empty-object')
-
+const dash2hump = require('../utils/hump-dash').dash2hump
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
@@ -157,17 +157,27 @@ function buildGenericsComponent ({ genericsInfo, componentGenerics, componentsMa
   }
 
   if (!isEmptyObject(componentGenerics)) {
-    const defaultProps = {}
+    const defaultProps = {
+      generichash: {
+        type: String,
+        value: ''
+      }
+    }
     Object.keys(componentGenerics).forEach(genericName => {
-      defaultProps[`generic${genericName}`] = componentGenerics[genericName].default
-        ? `${genericName}default`
-        : ''
+      defaultProps[`generic${dash2hump(genericName)}`] = componentGenerics[genericName].default
+        ? {
+          type: String,
+          value: `${genericName}default`
+        }
+        : {
+          type: String,
+          value: ''
+        }
     })
     // 输出简化后的内容
     content += `
-      const option = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n
-      option.defaultProps = ${JSON.stringify(defaultProps)}\n
-      `
+      global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n
+      `;
   }
 
   return content
