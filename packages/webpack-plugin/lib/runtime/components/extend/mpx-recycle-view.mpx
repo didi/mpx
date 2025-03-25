@@ -189,11 +189,10 @@
     },
     ready() {
       this.initPositions()
-      const query = mpx.createSelectorQuery().in(this)
-      query
-        .select('.mpx-recycle-view')
-        .boundingClientRect((rect) => {
-          this.containerHeight = rect.height
+      this.$refs.mpxRecycleView
+        .fields({ size: true})
+        .exec((res) => {
+          this.containerHeight = res.height
           this.isReady = true
           this.placeholderStyle = `height: ${this.totalHeight}px`
           if (!this.positions || !this.positions.length) {
@@ -203,7 +202,6 @@
           this.end = this.start + this.visibleCount
           this.setStartOffset()
         })
-        .exec()
     },
     methods: {
       initPositions() {
