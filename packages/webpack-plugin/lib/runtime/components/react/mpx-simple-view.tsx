@@ -1,7 +1,7 @@
 import { View, ViewProps, TextStyle } from 'react-native'
 import { createElement, forwardRef, useRef } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, wrapChildren } from './utils'
+import { extendObject, splitProps, splitStyle, wrapChildren } from './utils'
 
 const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewProps: ViewProps, ref) => {
   const nodeRef = useRef(null)
@@ -11,10 +11,13 @@ const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewPro
   const { textStyle, innerStyle = {} } = splitStyle(props.style || {})
 
   useNodesRef(props, ref, nodeRef, {
-    style: props.style || {}
+    style: innerStyle || {}
   })
 
-  return createElement(View, props, wrapChildren(
+  return createElement(View, extendObject({}, props, {
+    style: innerStyle,
+    ref: nodeRef
+  }), wrapChildren(
     props,
     {
       hasVarDec: false,
