@@ -60,7 +60,7 @@ const TransformInitial: ExtendedViewStyle = {
   scaleX: 1,
   scaleY: 1,
   // scaleZ: 1,
-  skew: 0,
+  // skew: 0,
   skewX: '0deg',
   skewY: '0deg',
   // translate: 0,
