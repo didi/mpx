@@ -1,8 +1,7 @@
 import { View, ViewProps, TextStyle } from 'react-native'
 import { createElement, forwardRef, useRef } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import useInnerProps from './getInnerListeners'
-import { extendObject, splitProps, splitStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, wrapChildren } from './utils'
 
 const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewProps: ViewProps, ref) => {
   const nodeRef = useRef(null)
@@ -15,12 +14,7 @@ const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewPro
     style: props.style || {}
   })
 
-  const innerProps = useInnerProps(props, {
-    style: innerStyle,
-    ref: nodeRef
-  }, [], {})
-
-  return createElement(View, innerProps, wrapChildren(
+  return createElement(View, props, wrapChildren(
     props,
     {
       hasVarDec: false,
