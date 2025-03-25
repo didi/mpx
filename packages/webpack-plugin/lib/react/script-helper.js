@@ -165,8 +165,9 @@ function buildGenericsComponent ({ genericsInfo, componentGenerics, componentsMa
     })
     // 输出简化后的内容
     content += `
-      const option = global.__mpxOptionsMap[${JSON.stringify(moduleId)}] = {}\n
-      option.defaultProps = ${JSON.stringify(defaultProps)}\n`
+      const option = global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n
+      option.defaultProps = ${JSON.stringify(defaultProps)}\n
+      `
   }
 
   return content

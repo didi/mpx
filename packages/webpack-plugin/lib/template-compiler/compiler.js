@@ -2478,7 +2478,7 @@ function getVirtualHostRoot (options, meta) {
 function processComponentGenericsReact (el, options, meta) {
   const { componentGenerics } = options
   if (componentGenerics && componentGenerics[el.tag]) {
-      const generic = dash2hump(el.tag)
+      const generic = el.tag
       el.tag = 'component'
       addAttrs(el, [{
         name: ':is',
@@ -2753,6 +2753,7 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processComponentGenericsReact(el, options, meta)
     if (!pass) {
       processStyleReact(el, options)
       processEventReact(el, options)
@@ -2760,7 +2761,6 @@ function processElement (el, root, options, meta) {
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
-    processComponentGenericsReact(el, options, meta)
     return
   }
 

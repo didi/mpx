@@ -45,6 +45,7 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
+    if (components[tagName]) return components[tagName]
     const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.__props.generichash
     const genericComponents = global.__mpxGenericsMap[generichash]
@@ -53,7 +54,7 @@ function createEffect (proxy, components) {
         return genericComponents[name]
       })
     }
-    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
+    return appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
