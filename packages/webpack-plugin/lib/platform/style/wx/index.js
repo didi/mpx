@@ -428,7 +428,7 @@ module.exports = function getSpec ({ warn, error }) {
             const vals = parseValues(val, ',')
             if (vals.length === 1) {
               key = 'rotateZ'
-              transform.push({ [key]: global.__formatValue(vals[vals.length - 1]) })
+              transform.push({ [key]: global.__formatValue(vals[0]) })
             } else {
               unsupportedPropError({ prop, value, selector }, { mode })
             }
