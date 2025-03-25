@@ -1,6 +1,5 @@
 import { useState, useCallback, forwardRef, ForwardedRef, useImperativeHandle, ReactNode, ReactElement } from 'react'
 import { View, StyleSheet } from 'react-native'
-import { extendObject } from '../utils'
 
 export type State = {
   portals: Array<{
@@ -27,7 +26,7 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
     setState((prevState) => ({
       portals: prevState.portals.map((item) => {
         if (item.key === key) {
-          return extendObject({}, item, { children })
+          return Object.assign({}, item, { children })
         }
         return item
       })

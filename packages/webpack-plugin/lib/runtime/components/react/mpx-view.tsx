@@ -16,6 +16,7 @@ import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wra
 import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
+import Portal from './mpx-portal'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -79,7 +80,7 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string,
-  source?: {uri: string },
+  source?: { uri: string },
   colors: Array<string>,
   locations?: Array<number>
   angle?: number
@@ -483,8 +484,8 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
 }
 
 function parseBgImage (text: string): {
-  linearInfo?: LinearInfo;
-  direction?: string;
+  linearInfo?: LinearInfo
+  direction?: string
   type?: 'image' | 'linear'
   src?: string
 } {
@@ -578,7 +579,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     if (!src) {
       setShow(false)
       return
-    // 一开始未出现，数据改变时出现
+      // 一开始未出现，数据改变时出现
     } else if (!(needLayout || needImageSize)) {
       setShow(true)
       return
@@ -602,7 +603,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
         }
       })
     }
-  // type 添加type 处理无渐变 有渐变的场景
+    // type 添加type 处理无渐变 有渐变的场景
   }, [src, type])
 
   if (!type) return null
@@ -636,7 +637,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   }
 
   return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} /> }
+    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
     {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
   </View>
 }
@@ -703,6 +704,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const {
     normalStyle,
     hasSelfPercent,
+    hasPositionFixed,
     hasVarDec,
     varContextRef,
     setWidth,
@@ -769,13 +771,18 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableFastImage
   })
 
-  const BaseComponent = enableStyleAnimation
+  let finalComponent: JSX.Element = enableStyleAnimation
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
-  return enableHover
-    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, BaseComponent)
-    : BaseComponent
+  if (enableHover) {
+    finalComponent = createElement(GestureDetector, { gesture: gesture as PanGesture }, finalComponent)
+  }
+
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+  return finalComponent
 })
 
 _View.displayName = 'MpxView'
