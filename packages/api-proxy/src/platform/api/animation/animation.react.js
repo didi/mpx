@@ -73,16 +73,12 @@ class Animation {
   }
 
   rotate3d (...args) {
-    if (args.length === 1) {
-      this.rotateZ(args[0])
-    } else {
-      // this.transform.set('rotate3d', [x, y, z, angle])
-      // this.rotateX(x)
-      // this.rotateY(y)
-      // this.rotateZ(z)
-      // this.rotate(angle)
-      console.error('React Native 不支持 transform rotate3d')
-    }
+    // this.transform.set('rotate3d', [x, y, z, angle])
+    // this.rotateX(x)
+    // this.rotateY(y)
+    // this.rotateZ(z)
+    // this.rotate(angle)
+    console.error('React Native 不支持 transform rotate3d')
     return this
   }
 

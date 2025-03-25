@@ -398,7 +398,6 @@ module.exports = function getSpec ({ warn, error }) {
             transform.push({ [key]: val })
             break
           case 'matrix':
-          case 'matrix3d':
             transform.push({ [key]: parseValues(val, ',').map(val => +val) })
             break
           case 'translate':
@@ -423,19 +422,10 @@ module.exports = function getSpec ({ warn, error }) {
             }))
             break
           }
-          case 'rotate3d': // x y z angle
-          {
-            const vals = parseValues(val, ',')
-            if (vals.length === 1) {
-              key = 'rotateZ'
-              transform.push({ [key]: global.__formatValue(vals[0]) })
-            } else {
-              unsupportedPropError({ prop, value, selector }, { mode })
-            }
-            break
-          }
           case 'translateZ':
           case 'scaleZ':
+          case 'rotate3d': // x y z angle
+          case 'matrix3d':
           default:
             // 不支持的属性处理
             unsupportedPropError({ prop, value, selector }, { mode })

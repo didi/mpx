@@ -131,7 +131,6 @@ const parseTransform = (transformStr: string) => {
           transform.push({ [key]: global.__formatValue(val) })
           break
         case 'matrix':
-        case 'matrix3d':
           transform.push({ [key]: parseValues(val, ',').map(val => +val) })
           break
         case 'translate':
@@ -153,15 +152,6 @@ const parseTransform = (transformStr: string) => {
           }))
           break
         }
-        case 'rotate3d': // x y z angle
-        {
-          const vals = parseValues(val, ',')
-          if (vals.length === 1) {
-            key = 'rotateZ'
-            transform.push({ [key]: global.__formatValue(vals[0]) })
-          }
-          break
-        }
       }
     }
   })
@@ -175,6 +165,11 @@ const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
     if (item.rotate) {
       item.rotateZ = item.rotate
       delete item.rotate
+    }
+    if (item.scale) {
+      item.scaleX = item.scale
+      item.scaleY = item.scale
+      delete item.scale
     }
     return item
   })
