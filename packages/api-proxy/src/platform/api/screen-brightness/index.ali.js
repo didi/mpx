@@ -20,7 +20,16 @@ function getScreenBrightness (options = {}) {
   return ENV_OBJ.getScreenBrightness(opts)
 }
 
+const setVisualEffectOnCapture = ENV_OBJ.setVisualEffectOnCapture || envError('setVisualEffectOnCapture')
+
+const onUserCaptureScreen = ENV_OBJ.onUserCaptureScreen || envError('onUserCaptureScreen')
+
+const offUserCaptureScreen = ENV_OBJ.offUserCaptureScreen || envError('offUserCaptureScreen')
+
 export {
   setScreenBrightness,
-  getScreenBrightness
+  getScreenBrightness,
+  setVisualEffectOnCapture,
+  onUserCaptureScreen,
+  offUserCaptureScreen
 }
