@@ -1,27 +1,34 @@
-import { View, ViewProps } from 'react-native'
+import { View, ViewProps, TextStyle } from 'react-native'
 import { createElement, forwardRef, useRef } from 'react'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
-import { extendObject, useLayout } from './utils'
+import { extendObject, splitProps, splitStyle, wrapChildren } from './utils'
 
-const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((props: ViewProps, ref) => {
+const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewProps: ViewProps, ref) => {
   const nodeRef = useRef(null)
 
-  const { layoutRef } = useLayout({ props, nodeRef })
+  const { textProps, innerProps: props = {} } = splitProps(simpleViewProps)
+
+  const { textStyle, innerStyle = {} } = splitStyle(props.style || {})
 
   useNodesRef(props, ref, nodeRef, {
     style: props.style || {}
   })
 
   const innerProps = useInnerProps(props, {
+    style: innerStyle,
     ref: nodeRef
-  }, [], {
-    layoutRef
-  })
+  }, [], {})
 
-  return createElement(View, extendObject({}, innerProps, {
-    children: props.children
-  }))
+  return createElement(View, extendObject({}, innerProps, wrapChildren(
+    props,
+    {
+      hasVarDec: false,
+      varContext: null,
+      textStyle: textStyle as TextStyle,
+      textProps
+    }
+  )))
 })
 
 _View2.displayName = 'MpxSimpleView'

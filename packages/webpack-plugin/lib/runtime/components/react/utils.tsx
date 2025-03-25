@@ -537,7 +537,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
 
 export interface WrapChildrenConfig {
   hasVarDec: boolean
-  varContext?: Record<string, any>
+  varContext?: Record<string, any> | null
   textStyle?: TextStyle
   textProps?: Record<string, any>
 }

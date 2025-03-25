@@ -1,10 +1,4 @@
-const getAndRemoveAttr = require('../../../../utils/get-and-remove-attr')
 const TAG_NAME = 'view'
-
-function getViewType (el) {
-  const hasSimple = getAndRemoveAttr(el, 'is-simple').has
-  return hasSimple ? 'mpx-simple-view' : 'mpx-view'
-}
 
 module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
@@ -31,11 +25,11 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
-      return getViewType(el)
+      return el.hasSimple ? 'mpx-simple-view' : 'mpx-view'
     },
     android (tag, { el }) {
       el.isBuiltIn = true
-      return getViewType(el)
+      return el.hasSimple ? 'mpx-simple-view' : 'mpx-view'
     },
     qa (tag) {
       return 'div'
@@ -53,6 +47,16 @@ module.exports = function ({ print }) {
         test: /^(hover-stop-propagation)$/,
         android: androidPropLog,
         ios: iosPropLog
+      }, {
+        test: /^(is-simple)$/,
+        android (prop, { el }) {
+          el.hasSimple = true
+          return false
+        },
+        ios (prop, { el }) {
+          el.hasSimple = true
+          return false
+        }
       }
     ],
     // 组件事件中的差异部分
