@@ -127,8 +127,6 @@ const parseTransform = (transformStr: string) => {
         case 'skewX':
         case 'skewY':
         case 'perspective':
-          // rotate 处理成 rotateZ
-          key = key === 'rotate' ? 'rotateZ' : key
           // 单个值处理
           transform.push({ [key]: global.__formatValue(val) })
           break
