@@ -1,10 +1,9 @@
+const getAndRemoveAttr = require('../../../../utils/get-and-remove-attr')
 const TAG_NAME = 'view'
-const regex = /{{(.+?)}}/
 
 function getViewType (el) {
-  const simpleValue = el.attrsMap['is-simple'] || ''
-  const match = simpleValue.match(regex)
-  return match && match[1].trim() === 'true' ? 'mpx-simple-view' : 'mpx-view'
+  const hasSimple = getAndRemoveAttr(el, 'is-simple').has
+  return hasSimple ? 'mpx-simple-view' : 'mpx-view'
 }
 
 module.exports = function ({ print }) {
