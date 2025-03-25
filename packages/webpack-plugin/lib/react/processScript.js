@@ -1,6 +1,6 @@
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessorReact')
-const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
+const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest, buildGenericsProperties } = require('./script-helper')
 
 module.exports = function (script, {
   loaderContext,
@@ -12,7 +12,9 @@ module.exports = function (script, {
   outputPath,
   builtInComponentsMap,
   localComponentsMap,
-  localPagesMap
+  localPagesMap,
+  componentGenerics,
+  genericsInfo
 }, callback) {
   let scriptSrcMode = srcMode
   const mode = loaderContext.getMpx().mode
@@ -53,7 +55,8 @@ global.__navigationHelper = {
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, genericsInfo })
+    output += buildGenericsProperties({ componentGenerics })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {

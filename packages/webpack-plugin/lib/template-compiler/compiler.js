@@ -2475,6 +2475,45 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
+function processComponentGenericsReact (el, options, meta) {
+  const { componentGenerics } = options
+  if (componentGenerics && componentGenerics[el.tag]) {
+      const generic = dash2hump(el.tag)
+      el.tag = 'component'
+      el.is = `generic${generic}`
+  }
+
+  let hasGeneric = false
+
+  const genericHash = moduleId
+
+  const genericAttrs = []
+
+  el.attrsList.forEach((attr) => {
+    if (genericRE.test(attr.name)) {
+      genericAttrs.push(attr)
+      hasGeneric = true
+      addGenericInfo(meta, genericHash, attr.value)
+    }
+  })
+
+  // 统一处理所有的generic:属性
+  genericAttrs.forEach((attr) => {
+    getAndRemoveAttr(el, attr.name)
+    addAttrs(el, [{
+      name: dash2hump(attr.name.replace(':', '')),
+      value: attr.value
+    }])
+  })
+
+  if (hasGeneric) {
+    addAttrs(el, [{
+      name: 'generichash',
+      value: genericHash
+    }])
+  }
+}
+
 function processShow (el, options, root) {
   let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (mode === 'swan') show = wrapMustache(show)
@@ -2718,6 +2757,7 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processComponentGenericsReact(el, options, meta)
     if (!pass) {
       processStyleReact(el, options)
       processEventReact(el, options)
