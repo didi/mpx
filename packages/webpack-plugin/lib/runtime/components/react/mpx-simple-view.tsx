@@ -20,7 +20,7 @@ const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewPro
     ref: nodeRef
   }, [], {})
 
-  return createElement(View, extendObject({}, innerProps, wrapChildren(
+  return createElement(View, innerProps, wrapChildren(
     props,
     {
       hasVarDec: false,
@@ -28,7 +28,7 @@ const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewPro
       textStyle: textStyle as TextStyle,
       textProps
     }
-  )))
+  ))
 })
 
 _View2.displayName = 'MpxSimpleView'
