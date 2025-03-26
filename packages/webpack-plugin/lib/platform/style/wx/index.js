@@ -47,7 +47,7 @@ module.exports = function getSpec ({ warn, error }) {
     'flex-wrap': ['wrap', 'nowrap', 'wrap-reverse'],
     'pointer-events': ['auto', 'box-none', 'box-only', 'none'],
     'vertical-align': ['auto', 'top', 'bottom', 'center'],
-    position: ['relative', 'absolute'],
+    position: ['relative', 'absolute', 'fixed'],
     'font-variant': ['small-caps', 'oldstyle-nums', 'lining-nums', 'tabular-nums', 'proportional-nums'],
     'text-align': ['left', 'right', 'center', 'justify'],
     'font-style': ['normal', 'italic'],

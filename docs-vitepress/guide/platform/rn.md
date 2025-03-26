@@ -4,15 +4,15 @@
 
 ::: code-group
 
-``` sh [iOS]
+``` sh [ios]
 npx mpx-cli-service build --targets=ios
 ```
 
-``` sh [Android]
+``` sh [android]
 npx mpx-cli-service build --targets=android
 ```
 
-``` sh [HarmonyOS]
+``` sh [harmony]
 npx mpx-cli-service build --targets=harmony
 ```
 
@@ -770,7 +770,7 @@ movable-view的可移动区域。
 2. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 
 #### root-portal
-使整个子树从页面中脱离出来，类似于在 CSS 中使用 fixed position 的效果。主要用于制作弹窗、弹出层等。
+使整个子树从页面中脱离出来，类似于在 CSS 中使用 position: fixed 的效果。主要用于制作弹窗、弹出层等。
 属性
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
@@ -1332,8 +1332,8 @@ API
 #### position
 设置元素的定位样式
 ##### 值类型
-enum: absolute, relative， 默认relative。
-> 备注：RN 不支持 fixed 定位
+enum: relative, absolute, fixed, 默认relative。
+
 ##### 代码示例
 ``` css
 position: absolute;
