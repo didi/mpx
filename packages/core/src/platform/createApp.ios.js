@@ -56,16 +56,22 @@ export default function createApp (options) {
   const Stack = createStackNavigator()
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pages).map(([key, item]) => {
+      const options = {
+        // __mpxPageStatusMap 为编译注入的全局变量
+        headerShown: !(Object.assign({}, global.__mpxPageConfig, global.pageConfigMap[key]).navigationStyle === 'custom')
+      }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
           component: item,
-          initialParams
+          initialParams,
+          options
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: item
+        component: item,
+        options
       })
     })
   }
@@ -185,7 +191,10 @@ export default function createApp (options) {
       // 7.x替换headerBackTitleVisible
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
-      headerShadowVisible: false
+      headerShadowVisible: false,
+      // 整体切换native-stack时进行修改如下
+      // statusBarTranslucent: true,
+      // statusBarBackgroundColor: 'transparent'
     }
     if (__mpx_mode__ === 'ios') {
       // ios使用native-stack

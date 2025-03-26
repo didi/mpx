@@ -440,6 +440,8 @@ const checkRelation = (options) => {
   }
 }
 
+// 临时用来存储安卓底部（iOS没有这个）的高度（虚拟按键等高度）根据第一次进入推算
+let bottomVirtualHeight = __mpx_mode__ === 'ios' ? 0 : -1
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -577,6 +579,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   if (type === 'page') {
     const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
+    const isCustom = pageConfig.navigationStyle === 'custom'
+    const windowDimensions = ReactNative.Dimensions.get('window')
+    const screenDimensions = ReactNative.Dimensions.get('screen')
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
@@ -586,7 +591,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       })
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
-        const isCustom = pageConfig.navigationStyle === 'custom'
         navigation.setOptions({
           headerShown: !isCustom,
           title: pageConfig.navigationBarTitleText?.trim() || '',
@@ -596,6 +600,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
 
+        // TODO 此部分内容在native-stack可删除，用setOptions设置
         if (__mpx_mode__ === 'android') {
           ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
           ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
@@ -606,13 +611,31 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef(null)
-      useEffect(() => {
-        setTimeout(() => {
+      const headerHeight = useHeaderHeight()
+      const onLayout = () => {
+        if (bottomVirtualHeight !== -1) {
+          navigation.layout = {
+            x: 0,
+            y: headerHeight, // 这个y值
+            width: windowDimensions.width,
+            height: screenDimensions.height - bottomVirtualHeight - headerHeight
+          }
+        }
+        if (__mpx_mode__ === 'android' && bottomVirtualHeight === -1) {
           rootRef.current?.measureInWindow((x, y, width, height) => {
-            navigation.layout = { x, y, width, height }
+            // 沉浸模式的计算方式
+            bottomVirtualHeight = screenDimensions.height - height - headerHeight
+            // 非沉浸模式计算方式, 现在默认是全用沉浸模式，所以先不算这个
+            // bottomVirtualHeight = windowDimensions.height - height - headerHeight
+            navigation.layout = {
+              x: 0,
+              y: headerHeight,
+              width: windowDimensions.width,
+              height: height
+            }
           })
-        }, 100)
-      }, [])
+        }
+      }
       const withKeyboardAvoidingView = (element) => {
         return createElement(KeyboardAvoidContext.Provider,
           {
@@ -652,7 +675,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
                 flex: 1,
                 backgroundColor: pageConfig.backgroundColor || '#ffffff'
               },
-              ref: rootRef
+              ref: rootRef,
+              onLayout
             },
             createElement(RouteContext.Provider,
               {
