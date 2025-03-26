@@ -526,8 +526,8 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
       hasLayoutRef.current = true
       if (hasSelfPercent) {
         const { width, height } = e?.nativeEvent?.layout || {}
-        setWidth(width || 0)
-        setHeight(height || 0)
+        setWidth && setWidth(width || 0)
+        setHeight && setHeight(height || 0)
       }
       if (enableOffset) {
         nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
