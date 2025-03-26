@@ -46,7 +46,7 @@ function createEffect (proxy, components) {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
-    const generichash = proxy.target.__props.generichash
+    const generichash = proxy.target.generichash || ''
     const genericComponents = global.__mpxGenericsMap[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
