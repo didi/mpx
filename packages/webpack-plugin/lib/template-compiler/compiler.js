@@ -2489,7 +2489,7 @@ function processComponentGenericsReact (el, options, meta) {
 
   const genericAttrs = []
 
- el.attrsList.forEach((attr) => {
+  el.attrsList.forEach((attr) => {
     if (genericRE.test(attr.name)) {
       genericAttrs.push(attr)
       hasGeneric = true

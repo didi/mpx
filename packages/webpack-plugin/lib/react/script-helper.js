@@ -5,6 +5,10 @@ const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const isEmptyObject = require('../utils/is-empty-object')
 const dash2hump = require('../utils/hump-dash').dash2hump
+<<<<<<< HEAD
+=======
+
+>>>>>>> feat-generic-rn-new
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
@@ -120,7 +124,6 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
     content += `global.currentInject.getComponents = function () {
   return ${shallowStringify(componentsMap)}
 }\n`
-
     if (genericsInfo) {
       content += `
         const genericHash = ${JSON.stringify(genericsInfo.hash)}\n

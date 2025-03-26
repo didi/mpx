@@ -19,7 +19,7 @@ export default function transferOptions (options, type, needConvert = true) {
     options = mergeInjectedMixins(options, type)
   }
   if (currentInject && currentInject.injectProperties) {
-    // 编译计算属性注入
+    // 编译属性注入
     options.properties = Object.assign({}, currentInject.injectProperties, options.properties)
   }
   if (currentInject && currentInject.injectComputed) {
