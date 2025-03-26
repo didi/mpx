@@ -34,7 +34,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 // const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
-const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigMapDependency')
+const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
@@ -661,7 +661,7 @@ class MpxWebpackPlugin {
           // app信息，便于获取appName
           appInfo: {},
           // pageConfig信息
-          pageConfigMap: {},
+          pageConfigsMap: {},
           // pages全局记录，无需区分主包分包
           pagesMap: {},
           // 组件资源记录，依照所属包进行记录
@@ -1651,7 +1651,7 @@ class MpxWebpackPlugin {
             if (isRuntime) {
               source.add('// inject pageconfigmap for screen\n' +
                 'var context = (function() { return this })() || Function("return this")();\n')
-              source.add(`context.pageConfigMap = ${JSON.stringify(mpx.pageConfigMap)};\n`)
+              source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
             }
             source.add(originalSource)
             compilation.assets[chunkFile] = source

@@ -1,5 +1,6 @@
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
+const isEmptyObject = require('../utils/is-empty-object')
 
 class RecordPageConfigMapDependency extends NullDependency {
   constructor (resourcePath, jsonObj) {
@@ -9,20 +10,13 @@ class RecordPageConfigMapDependency extends NullDependency {
   }
 
   get type () {
-    return 'mpx record pageConfigMap'
+    return 'mpx record pageConfigsMap'
   }
 
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     const pagePath = mpx.pagesMap[this.resourcePath]
-    const keysToExtract = ['navigationStyle']
-    const configObj = {}
-    keysToExtract.forEach(key => {
-      if (this.jsonObj[key]) {
-        configObj[key] = this.jsonObj[key]
-      }
-    })
-    if (Object.keys(configObj).length) mpx.pageConfigMap[pagePath] = configObj
+    if (!isEmptyObject(this.jsonObj)) mpx.pageConfigsMap[pagePath] = this.jsonObj
     return callback()
   }
 

@@ -12,7 +12,7 @@ const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
-const RecordPageConfigMapDependency = require('../dependencies/RecordPageConfigMapDependency')
+const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
 
 module.exports = function (jsonContent, {
   loaderContext,
@@ -87,9 +87,6 @@ module.exports = function (jsonContent, {
   }
   try {
     jsonObj = JSON5.parse(jsonContent)
-    if (isPage) {
-      loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordPageConfigMapDependency(parseRequest(loaderContext.resource)?.resourcePath, jsonObj))
-    }
     // 处理runner
     const rulesRunnerOptions = {
       mode,
@@ -113,10 +110,19 @@ module.exports = function (jsonContent, {
     if (rulesRunner) {
       rulesRunner(jsonObj)
     }
+    if (isPage) {
+      const keysToExtract = ['navigationStyle']
+      const configObj = {}
+      keysToExtract.forEach(key => {
+        if (jsonObj[key]) {
+          configObj[key] = jsonObj[key]
+        }
+      })
+      loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource)?.resourcePath, configObj))
+    }
   } catch (e) {
     return callback(e)
   }
-
   const fs = loaderContext._compiler.inputFileSystem
 
   const defaultTabbar = {
