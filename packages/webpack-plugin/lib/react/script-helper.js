@@ -5,10 +5,6 @@ const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const isEmptyObject = require('../utils/is-empty-object')
 const dash2hump = require('../utils/hump-dash').dash2hump
-<<<<<<< HEAD
-=======
-
->>>>>>> feat-generic-rn-new
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
