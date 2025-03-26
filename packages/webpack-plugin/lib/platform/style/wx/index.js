@@ -395,6 +395,8 @@ module.exports = function getSpec ({ warn, error }) {
           case 'skewY':
           case 'perspective':
             // 单个值处理
+            // rotate 处理成 rotateZ
+            key = key === 'rotate' ? 'rotateZ' : key
             transform.push({ [key]: val })
             break
           case 'matrix':

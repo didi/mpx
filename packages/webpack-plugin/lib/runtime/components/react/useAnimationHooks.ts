@@ -127,6 +127,8 @@ const parseTransform = (transformStr: string) => {
         case 'skewX':
         case 'skewY':
         case 'perspective':
+          // rotate 处理成 rotateZ
+          key = key === 'rotate' ? 'rotateZ' : key
           // 单个值处理
           transform.push({ [key]: global.__formatValue(val) })
           break
@@ -159,22 +161,9 @@ const parseTransform = (transformStr: string) => {
 }
 // format style
 const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
-  if (!style.transform) return style
-  const transform = Array.isArray(style.transform) ? style.transform : parseTransform(style.transform)
-  transform.forEach(item => {
-    if (item.rotate) {
-      item.rotateZ = item.rotate
-      delete item.rotate
-    }
-    if (item.scale) {
-      item.scaleX = item.scale
-      item.scaleY = item.scale
-      delete item.scale
-    }
-    return item
-  })
+  if (!style.transform || Array.isArray(style.transform)) return style
   return Object.assign({}, style, {
-    transform
+    transform: parseTransform(style.transform)
   })
 }
 
