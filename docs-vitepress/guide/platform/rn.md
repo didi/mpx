@@ -68,7 +68,7 @@ Mpx转RN, 支持以下单位，部分单位在部分情况下存在使用限制
 | vh | 支持 | 屏幕的高度，在使用非自定义导航时，页面初次渲染计算出来的vh是屏幕高度，后续更新渲染使用实际可视区域高度，推荐使用此单位的页面使用自定义导航 |
 | vw | 支持 | 无 |
 #### 百分比单位说明
-RN很多原生较多属性不支持百分比，比如font-size、translate等，但是这些属性在编写web、小程序代码的过程中使用较多，框架进行了抹平支持。以下这些属性在Mpx输出RN时专门进行了百分比单位的适配，部分属性存在编写的时候的特殊适配。
+RN原生较多属性不支持百分比，比如font-size、translate等，但是这些属性在编写web、小程序代码的过程中使用较多，框架进行了抹平支持。以下这些属性在Mpx输出RN时专门进行了百分比单位的适配，部分属性存在编写的时候的特殊适配。
 ##### 特殊的百分比计算规则
 ###### font-size
 
@@ -243,7 +243,7 @@ var() 函数可以插入一个自定义属性（有时也被称为“CSS 变量�
   .component .header {
     background-color: var(--header-color, blue);
   }
-  .component .text {
+  .component .content {
     background-color: var(--content-color, black);
   }
   .component .footer {
