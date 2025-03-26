@@ -91,7 +91,8 @@ function buildGlobalParams ({
   pagesMap,
   firstPage,
   outputPath,
-  genericsInfo
+  genericsInfo,
+  componentGenerics
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -118,8 +119,8 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
       content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
     }
     content += `global.currentInject.getComponents = function () {
-  return ${shallowStringify(componentsMap)}
-}\n`
+      return ${shallowStringify(componentsMap)}
+    }\n`
     if (genericsInfo) {
       content += `
         const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
@@ -128,6 +129,26 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
         }
       \n`
     }
+    if (!isEmptyObject(componentGenerics)) {
+      const defaultProps = {
+        generichash: {
+          type: String,
+          value: ''
+        }
+      }
+      Object.keys(componentGenerics).forEach(genericName => {
+        defaultProps[`generic${dash2hump(genericName)}`] = componentGenerics[genericName].default
+          ? {
+            type: String,
+            value: `${genericName}default`
+          }
+          : {
+            type: String,
+            value: ''
+          }
+      })
+    content += `global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n`
+  }
     if (ctorType === 'component') {
       content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
     }
@@ -147,40 +168,11 @@ function buildI18n ({ loaderContext }) {
   return `require(${stringifyRequest(loaderContext, i18nWxsRequest)})\n`
 }
 
-function buildGenericsProperties ({ componentGenerics }) {
-  let content = ''
-  if (!isEmptyObject(componentGenerics)) {
-    const defaultProps = {
-      generichash: {
-        type: String,
-        value: ''
-      }
-    }
-    Object.keys(componentGenerics).forEach(genericName => {
-      defaultProps[`generic${dash2hump(genericName)}`] = componentGenerics[genericName].default
-        ? {
-          type: String,
-          value: `${genericName}default`
-        }
-        : {
-          type: String,
-          value: ''
-        }
-    })
-    content += `
-      global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n
-      `
-  }
-
-  return content
-}
-
 module.exports = {
   buildPagesMap,
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
   stringifyRequest,
-  buildI18n,
-  buildGenericsProperties
+  buildI18n
 }
