@@ -26,8 +26,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const gesture = useMemo(() => {
     return Gesture.Tap()
       .onEnd(() => {
-        runOnJS(dismiss)()
-      })
+        dismiss()
+      }).runOnJS(true)
   }, [])
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -116,5 +116,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     </GestureDetector>
   )
 }
+
+KeyboardAvoidingView.displayName = 'MpxKeyboardAvoidingView'
 
 export default KeyboardAvoidingView

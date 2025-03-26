@@ -314,7 +314,6 @@ const useInnerProps = (
     'parent-font-size',
     'parent-width',
     'parent-height',
-    'is-simple',
     ...userRemoveProps
   ]
 

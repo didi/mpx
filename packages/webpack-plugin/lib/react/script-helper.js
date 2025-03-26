@@ -3,7 +3,12 @@ const createHelpers = require('../helpers')
 const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
+const isEmptyObject = require('../utils/is-empty-object')
+const dash2hump = require('../utils/hump-dash').dash2hump
+<<<<<<< HEAD
+=======
 
+>>>>>>> feat-generic-rn-new
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
@@ -89,7 +94,8 @@ function buildGlobalParams ({
   componentsMap,
   pagesMap,
   firstPage,
-  outputPath
+  outputPath,
+  genericsInfo
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -118,6 +124,14 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
     content += `global.currentInject.getComponents = function () {
   return ${shallowStringify(componentsMap)}
 }\n`
+    if (genericsInfo) {
+      content += `
+        const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
+        global.__mpxGenericsMap[genericHash] = function (name) {
+          return ${shallowStringify(componentsMap)}[name]
+        }
+      \n`
+    }
     if (ctorType === 'component') {
       content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
     }
@@ -137,11 +151,40 @@ function buildI18n ({ loaderContext }) {
   return `require(${stringifyRequest(loaderContext, i18nWxsRequest)})\n`
 }
 
+function buildGenericsProperties ({ componentGenerics }) {
+  let content = ''
+  if (!isEmptyObject(componentGenerics)) {
+    const defaultProps = {
+      generichash: {
+        type: String,
+        value: ''
+      }
+    }
+    Object.keys(componentGenerics).forEach(genericName => {
+      defaultProps[`generic${dash2hump(genericName)}`] = componentGenerics[genericName].default
+        ? {
+          type: String,
+          value: `${genericName}default`
+        }
+        : {
+          type: String,
+          value: ''
+        }
+    })
+    content += `
+      global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n
+      `
+  }
+
+  return content
+}
+
 module.exports = {
   buildPagesMap,
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
   stringifyRequest,
-  buildI18n
+  buildI18n,
+  buildGenericsProperties
 }
