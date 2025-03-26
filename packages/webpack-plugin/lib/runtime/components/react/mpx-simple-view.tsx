@@ -21,7 +21,6 @@ const _View2 = forwardRef<HandlerRef<View, ViewProps>, ViewProps>((simpleViewPro
     props,
     {
       hasVarDec: false,
-      varContext: null,
       textStyle: textStyle as TextStyle,
       textProps
     }
