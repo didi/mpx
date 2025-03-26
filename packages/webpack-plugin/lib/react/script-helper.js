@@ -132,7 +132,10 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
     }
     if (!isEmptyObject(componentGenerics)) {
       const defaultProps = {
-        generichash: String
+        generichash: {
+          type: String,
+          value: ''
+        }
       }
       Object.keys(componentGenerics).forEach(genericName => {
         defaultProps[`generic${dash2hump(genericName)}`] = componentGenerics[genericName].default
@@ -140,7 +143,10 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
             type: String,
             value: `${genericName}default`
           }
-          : String
+          : {
+            type: String,
+            value: ''
+          }
       })
     content += `global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n`
   }
@@ -169,6 +175,5 @@ module.exports = {
   getRequireScript,
   buildGlobalParams,
   stringifyRequest,
-  buildI18n,
-  buildGenericsProperties
+  buildI18n
 }

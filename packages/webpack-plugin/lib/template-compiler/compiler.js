@@ -2482,7 +2482,7 @@ function processComponentGenericsReact (el, options, meta) {
       el.tag = 'component'
       addAttrs(el, [{
         name: 'is',
-        value: `{{generic${generic}}}`
+        value: `{{this.generic${generic}}}`
       }])
   }
 
