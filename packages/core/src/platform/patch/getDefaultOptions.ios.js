@@ -554,10 +554,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
   if (type === 'page') {
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
-    return createElement(
+    return ({ navigation, route }) => createElement(
       PageWrapper, {
         pageConfig,
-        pageStatusMap
+        pageStatusMap,
+        navigation,
+        route
       },
       defaultOptions
     )
