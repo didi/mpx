@@ -1,8 +1,8 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
-import { reactive, set, del } from '../../observer/reactive'
+import { reactive } from '../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
@@ -395,29 +395,7 @@ function usePageEffect (mpxProxy, pageId) {
   }, [])
 }
 
-let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-
-function usePageStatus (navigation, pageId) {
-  navigation.pageId = pageId
-  if (!hasOwn(pageStatusMap, pageId)) {
-    set(pageStatusMap, pageId, '')
-  }
-  useEffect(() => {
-    const focusSubscription = navigation.addListener('focus', () => {
-      pageStatusMap[pageId] = 'show'
-    })
-    const blurSubscription = navigation.addListener('blur', () => {
-      pageStatusMap[pageId] = 'hide'
-    })
-
-    return () => {
-      focusSubscription()
-      blurSubscription()
-      del(pageStatusMap, pageId)
-    }
-  }, [navigation])
-}
 
 const RelationsContext = createContext(null)
 
@@ -575,55 +553,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { useSafeAreaInsets, useHeaderHeight } = global.__navigationHelper
     const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
-    const Page = ({ navigation, route }) => {
-      const currentPageId = useMemo(() => ++pageId, [])
-      usePageStatus(navigation, currentPageId)
-      useLayoutEffect(() => {
-        const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions({
-          headerShown: !isCustom,
-          title: pageConfig.navigationBarTitleText?.trim() || '',
-          headerStyle: {
-            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-          },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-
-        if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
-          color && ReactNative.StatusBar.setBackgroundColor(color)
-        }
-      }, [])
-
-      const rootRef = useRef(null)
-      useEffect(() => {
-        setTimeout(() => {
-          rootRef.current?.measureInWindow((x, y, width, height) => {
-            navigation.layout = { x, y, width, height }
-          })
-        }, 100)
-      }, [])
-
-      navigation.insets = useSafeAreaInsets()
-
-      return createElement(PageWrapper, {
-        navigation,
-        pageId: currentPageId,
+    return createElement(
+      PageWrapper, {
         pageConfig,
-        useHeaderHeight,
-        useSafeAreaInsets,
-        children: createElement(defaultOptions, {
-          navigation,
-          route,
-          id: currentPageId
-        })
-      })
-    }
-    return Page
+        pageStatusMap
+      },
+      defaultOptions
+    )
   }
   return defaultOptions
 }
