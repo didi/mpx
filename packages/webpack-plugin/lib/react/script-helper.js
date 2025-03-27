@@ -130,25 +130,19 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
       \n`
     }
     if (!isEmptyObject(componentGenerics)) {
-      const defaultProps = {
-        generichash: {
-          type: String,
-          value: ''
-        }
-      }
+      content += 'global.currentInject.injectProperties = {\n'
+      content += '  generichash: String,\n'
+
       Object.keys(componentGenerics).forEach(genericName => {
-        defaultProps[`generic${dash2hump(genericName)}`] = componentGenerics[genericName].default
-          ? {
-            type: String,
-            value: `${genericName}default`
-          }
-          : {
-            type: String,
-            value: ''
-          }
+        const defaultValue = componentGenerics[genericName].default
+        if (defaultValue) {
+          content += `  generic${dash2hump(genericName)}: { type: String, value: '${genericName}default' },\n`
+        } else {
+          content += `  generic${dash2hump(genericName)}: String,\n`
+        }
       })
-    content += `global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n`
-  }
+      content += '}\n'
+    }
     if (ctorType === 'component') {
       content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
     }
