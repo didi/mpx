@@ -118,6 +118,7 @@ let processingTemplate = false
 const rulesResultMap = new Map()
 let usingComponents = []
 let usingComponentsInfo = {}
+let componentGenerics = {}
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -634,6 +635,7 @@ function parse (template, options) {
   hasOptionalChaining = false
   processingTemplate = false
   rulesResultMap.clear()
+  componentGenerics = options.componentGenerics
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
@@ -2253,7 +2255,7 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el) {
-  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
 }
 
 function getComponentInfo (el) {
