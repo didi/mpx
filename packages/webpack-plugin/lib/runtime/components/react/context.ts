@@ -74,6 +74,6 @@ export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0), scrollLayoutRef: { current: {} }})
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0), scrollLayoutRef: { current: {} } })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
