@@ -123,7 +123,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       'header-text': headerText = ''
     } = props
 
-    const pageId = useContext(RouteContext)
+    const { pageId } = useContext(RouteContext) || {}
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
     const pickerValue = useRef(value)
     pickerValue.current = Array.isArray(value) ? value.slice() : value

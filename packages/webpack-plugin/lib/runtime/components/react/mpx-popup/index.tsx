@@ -43,7 +43,7 @@ const createPopupManager = (options: IUsePopupOptions = {}) => {
 
   const open = (
     childComponent: React.ReactNode,
-    pageId: number | null,
+    pageId: number | undefined,
     options?: { contentHeight?: number }
   ) => {
     if (!isOpen && pageId != null) {
