@@ -3,7 +3,8 @@ const createHelpers = require('../helpers')
 const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
-
+const isEmptyObject = require('../utils/is-empty-object')
+const dash2hump = require('../utils/hump-dash').dash2hump
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
@@ -89,7 +90,9 @@ function buildGlobalParams ({
   componentsMap,
   pagesMap,
   firstPage,
-  outputPath
+  outputPath,
+  genericsInfo,
+  componentGenerics
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -116,8 +119,36 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
       content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
     }
     content += `global.currentInject.getComponents = function () {
-  return ${shallowStringify(componentsMap)}
-}\n`
+      return ${shallowStringify(componentsMap)}
+    }\n`
+    if (genericsInfo) {
+      content += `
+        const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
+        global.__mpxGenericsMap[genericHash] = function (name) {
+          return ${shallowStringify(componentsMap)}[name]
+        }
+      \n`
+    }
+    if (!isEmptyObject(componentGenerics)) {
+      const defaultProps = {
+        generichash: {
+          type: String,
+          value: ''
+        }
+      }
+      Object.keys(componentGenerics).forEach(genericName => {
+        defaultProps[`generic${dash2hump(genericName)}`] = componentGenerics[genericName].default
+          ? {
+            type: String,
+            value: `${genericName}default`
+          }
+          : {
+            type: String,
+            value: ''
+          }
+      })
+    content += `global.currentInject.injectProperties = ${JSON.stringify(defaultProps)}\n`
+  }
     if (ctorType === 'component') {
       content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
     }

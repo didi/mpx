@@ -274,24 +274,3 @@ moreList:
     actionLink: https://juejin.cn/user/4195392101298510
 
 ---
-
-## 安装使用
-
-```bash
-# 安装mpx命令行工具
-npm i -g @mpxjs/cli
-
-# 初始化项目
-mpx create <project-name>
-
-# 进入项目目录
-cd <project-name>
-
-# development
-npm run serve
-
-# production
-npm run build
-```
-
-使用小程序开发者工具打开项目文件夹下 dist 中对应平台的文件夹即可预览效果。

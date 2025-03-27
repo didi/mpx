@@ -38,7 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view)$/
+const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view|input|textarea)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1104,7 +1104,7 @@ function processStyleReact (el, options) {
   }
 
   if (specialClassReg.test(el.tag)) {
-    const staticClassNames = ['hover', 'indicator', 'mask']
+    const staticClassNames = ['hover', 'indicator', 'mask', 'placeholder']
     staticClassNames.forEach((className) => {
       let staticClass = el.attrsMap[className + '-class'] || ''
       let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
@@ -2475,49 +2475,45 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
-function processComponentGenericsReact (el, options) {
-  const { componentGenerics, usingComponentsInfo } = options
+function processComponentGenericsReact (el, options, meta) {
+  const { componentGenerics } = options
   if (componentGenerics && componentGenerics[el.tag]) {
-      const genericKey = el.tag
-      el.is = `this.__props.generic && this.__props.generic['${genericKey}'] && getComponent(this.__props.generic['${genericKey}']) ? this.__props.generic['${genericKey}'] : '${genericKey}default'`
-      el.components = [
-        `this.__props.generic['${genericKey}']`,
-        `${genericKey}default`
-      ]
+      const generic = dash2hump(el.tag)
+      el.tag = 'component'
+      addAttrs(el, [{
+        name: 'is',
+        value: `{{this.generic${generic}}}`
+      }])
   }
 
-  const genericConfig = {}
-  const genericComponentsConfig = {}
+  let hasGeneric = false
 
-  el.attrsList.forEach(attr => {
-    const match = attr.name.match(genericRE)
-    if (match) {
-      const key = match[1]
-      const componentName = attr.value
-      genericConfig[key] = componentName
+  const genericHash = moduleId
 
-      if (usingComponentsInfo[componentName]) {
-        const { mid } = usingComponentsInfo[componentName]
-        genericComponentsConfig[componentName] = mid
-      }
+  const genericAttrs = []
+
+  el.attrsList.forEach((attr) => {
+    if (genericRE.test(attr.name)) {
+      genericAttrs.push(attr)
+      hasGeneric = true
+      addGenericInfo(meta, genericHash, attr.value)
     }
   })
 
-  if (Object.keys(genericConfig).length) {
-    const attrsToAdd = [
-      {
-        name: 'generic',
-        value: genericConfig
-      }
-    ]
+  // 统一处理所有的generic:属性
+  genericAttrs.forEach((attr) => {
+    getAndRemoveAttr(el, attr.name)
+    addAttrs(el, [{
+      name: dash2hump(attr.name.replace(':', '')),
+      value: attr.value
+    }])
+  })
 
-    if (Object.keys(genericComponentsConfig).length) {
-      attrsToAdd.push({
-        name: 'genericComponents',
-        value: genericComponentsConfig
-      })
-    }
-    el.attrsList = el.attrsList.concat(attrsToAdd)
+  if (hasGeneric) {
+    addAttrs(el, [{
+      name: 'generichash',
+      value: genericHash
+    }])
   }
 }
 
@@ -2767,11 +2763,11 @@ function processElement (el, root, options, meta) {
     if (!pass) {
       processStyleReact(el, options)
       processEventReact(el, options)
+      processComponentGenericsReact(el, options, meta)
       processComponentIs(el, options)
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
-    processComponentGenericsReact(el, options)
     return
   }
 

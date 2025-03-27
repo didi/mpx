@@ -1,25 +1,28 @@
 <template>
   <scroll-view
     class="mpx-recycle-view"
-    wx:ref
+    wx:ref="mpxRecycleView"
     type="list"
     scroll-y="{{scrollY}}"
     scroll-top="{{_scrollTop}}"
+    enhanced="{{enhanced}}"
+    bounces="{{bounces}}"
     scroll-with-animation="{{scrollWithAnimation}}"
     enable-back-to-top="{{enableBackToTop}}"
     lower-threshold="{{lowerThreshold}}"
     upper-threshold="{{upperThreshold}}"
     scroll-options="{{scrollOptions}}"
-    enable-sticky="{{enableSticky}}"
+    scrollEventThrottle="{{scrollEventThrottle}}"
     wx:style="width: {{_width}}; height: {{_height}}"
     bindscroll="onScroll"
+    bindscrollend="onScrollEnd"
     bindscrolltoupper="onScrollToUpper"
     bindscrolltolower="onScrollToLower"
   >
     <view class="content-wrapper">
       <view class="infinite-list-placeholder" wx:style="{{placeholderStyle}}"></view>
       <view class="infinite-list" wx:style="{{contentStyle}}">
-        <recycle-item wx:for="{{visibleData}}" wx:key="_index" current-item="{{item}}"/>
+        <recycle-item wx:for="{{visibleData}}" wx:key="_index" current-item="{{item}}" />
       </view>
     </view>
   </scroll-view>
@@ -65,15 +68,19 @@
         type: Object,
         value: {}
       },
-      scrollThrottleDelay: {
+      scrollEventThrottle: {
         type: Number,
-        value: 16
+        value: 0
       },
       minRenderCount: {
         type: Number,
         value: 10
       },
-      enableSticky: {
+      enhanced: {
+        type: Boolean,
+        value: false
+      },
+      bounces: {
         type: Boolean,
         value: false
       }
@@ -108,16 +115,30 @@
       visibleCount() {
         if (!this.visibleCounts.length) return this.minRenderCount
         return Math.max(this.visibleCounts[this.start], this.minRenderCount)
-      },  
+      },
       aboveCount() {
-        return Math.max(0, Math.min(this.start, this.bufferScale * this.visibleCount))
+        if (!this._listData.length || !this.visibleCounts.length) return 0
+        let count = 0
+        const startIndex = Math.max(0, this.start)
+        const endIndex = Math.max(0, startIndex - this.bufferScale)
+
+        for (let i = startIndex; i > endIndex; i--) {
+          count += this.visibleCounts[i] || 0
+        }
+
+        return count
       },
       belowCount() {
-        if (!this._listData.length) return 0
-        return Math.max(
-          0,
-          Math.min(this._listData.length - this.end, this.bufferScale * this.visibleCount)
-        )
+        if (!this._listData.length || !this.visibleCounts.length) return 0
+        let count = 0
+        const startIndex = Math.min(this.start, this._listData.length - 1)
+        const endIndex = Math.min(startIndex + this.bufferScale, this._listData.length - 1)
+
+        for (let i = startIndex; i < endIndex; i++) {
+          count += this.visibleCounts[i] || 0
+        }
+
+        return count
       },
       visibleData() {
         if (!this._listData.length) return []
@@ -168,11 +189,10 @@
     },
     ready() {
       this.initPositions()
-      const query = mpx.createSelectorQuery().in(this)
-      query
-        .select('.mpx-recycle-view')
-        .boundingClientRect((rect) => {
-          this.containerHeight = rect.height
+      this.$refs.mpxRecycleView
+        .fields({ size: true})
+        .exec((res) => {
+          this.containerHeight = res.height
           this.isReady = true
           this.placeholderStyle = `height: ${this.totalHeight}px`
           if (!this.positions || !this.positions.length) {
@@ -182,7 +202,6 @@
           this.end = this.start + this.visibleCount
           this.setStartOffset()
         })
-        .exec()
     },
     methods: {
       initPositions() {
@@ -293,14 +312,22 @@
       },
       onScroll(e) {
         const now = Date.now()
-        if (now - this.lastScrollTime < this.scrollThrottleDelay) {
+        // 添加16ms的节流，大约60fps
+        if (now - this.lastScrollTime < 16) {
           return
         }
         this.lastScrollTime = now
+
         const { scrollTop } = e.detail
-        this.start = this.getStartIndex(scrollTop)
-        this.end = this.start + this.visibleCount
-        this.setStartOffset()
+        const newStart = this.getStartIndex(scrollTop)
+        
+        // 只有当start发生足够变化时才更新，避免滚动触发重渲染
+        if (Math.abs(newStart - this.end) >= Math.floor(this.belowCount / 2)) {
+          this.start = newStart
+          this.end = this.start + this.visibleCount
+          this.setStartOffset()
+        }
+        
         this.triggerEvent('scroll', e)
       },
       onScrollToUpper(e) {
@@ -308,6 +335,13 @@
       },
       onScrollToLower(e) {
         this.triggerEvent('scrolltolower', e)
+      },
+      scrollTo(params = {}) {
+        this.$refs.mpxRecycleView.node().exec(res => {
+          if (res && res[0]) {
+            res[0].node.scrollTo(params)
+          }
+        })
       }
     }
   })
