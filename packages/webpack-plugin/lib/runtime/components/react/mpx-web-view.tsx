@@ -5,8 +5,7 @@ import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { getCurrentPage } from './utils'
-import { useNavigation } from '@react-navigation/native'
+import { getCurrentPage, useNavigation } from './utils'
 import { WebViewHttpErrorEvent, WebViewEvent, WebViewMessageEvent, WebViewNavigation, WebViewProgressEvent } from 'react-native-webview/lib/WebViewTypes'
 import { RouteContext } from './context'
 import { StyleSheet, View, Text } from 'react-native'
@@ -90,12 +89,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       button: 'Reload'
     }
   }
-  const currentErrorText = errorText[(mpx.i18n.locale as LanguageCode) || 'zh-CN']
+  const currentErrorText = errorText[(mpx.i18n?.locale as LanguageCode) || 'zh-CN']
 
   if (props.style) {
     warn('The web-view component does not support the style prop.')
   }
-  const pageId = useContext(RouteContext)
+  const { pageId } = useContext(RouteContext) || {}
   const [pageLoadErr, setPageLoadErr] = useState<boolean>(false)
   const currentPage = useMemo(() => getCurrentPage(pageId), [pageId])
   const webViewRef = useRef<WebView>(null)
@@ -104,11 +103,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const statusCode = useRef<string|number>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(true)
   const defaultWebViewStyle = {
-    position: 'absolute' as 'absolute' | 'relative' | 'static',
-    left: 0 as number,
-    right: 0 as number,
-    top: 0 as number,
-    bottom: 0 as number
+    position: 'absolute' as const,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0
   }
   const canGoBack = useRef<boolean>(false)
   const isNavigateBack = useRef<boolean>(false)
@@ -208,8 +207,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     switch (type) {
       case 'setTitle':
         { // case下不允许直接声明，包个块解决该问题
-          const title = postData._documentTitle
-          if (title) {
+          const title = postData._documentTitle?.trim()
+          if (title !== undefined) {
             navigation && navigation.setOptions({ title })
           }
         }
@@ -304,6 +303,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
   const onLoadEnd = function (res: WebViewEvent) {
     if (__mpx_mode__ === 'android') {
+      res.persist()
       setTimeout(() => {
         onLoadEndHandle(res)
       }, 0)
@@ -329,7 +329,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   return (
-      <Portal key={pageLoadErr ? 'error' : 'webview'}>
+      <Portal>
         {pageLoadErr
           ? (
             <View style={[styles.loadErrorContext, defaultWebViewStyle]}>
@@ -339,6 +339,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             )
           : (<WebView
             style={ defaultWebViewStyle }
+            pointerEvents={ isLoaded ? 'auto' : 'none' }
             source={{ uri: src }}
             ref={webViewRef}
             javaScriptEnabled={true}
@@ -350,7 +351,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onHttpError={onHttpError}
             onError={onError}
             onLoadStart={onLoadStart}
-            allowsBackForwardNavigationGestures={isLoaded}
+            allowsBackForwardNavigationGestures={true}
       ></WebView>)}
       </Portal>
   )

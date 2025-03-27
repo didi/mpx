@@ -13,7 +13,7 @@ type RemoveProps = string[];
 
 type NativeTouchEvent = NativeSyntheticEvent<NativeEvent>
 
-type Navigation = Record<string, any>
+type Navigation = Record<string, any> | undefined
 
 interface NativeEvent {
   timestamp: number;
@@ -46,7 +46,7 @@ interface InnerRef {
   };
 }
 interface UseInnerPropsConfig {
-  layoutRef: LayoutRef;
+  layoutRef?: LayoutRef;
   disableTouch?: boolean;
   disableTap?: boolean
 }

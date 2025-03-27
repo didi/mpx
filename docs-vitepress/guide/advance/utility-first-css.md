@@ -97,17 +97,38 @@ plugins.push(new MpxUnocssPlugin())
 即可在项目模版中使用基于`unocss`的原子类功能，`unocss`默认的preset兼容`tailwindcss`/`windicss`
 ，可以通过查阅[tailwindcss文档](https://tailwindcss.com/docs/installation)、[windicss文档](https://windicss.org/utilities/general/colors.html)或[unocss可交互文档](https://unocss.dev/interactive/)进行探索使用。
 
-关于`uno.config.js`可用配置项及`@mpxjs/unocss-plugin`及`@mpxjs/unocss-base`的配置项请参考[API文档](../../api/compile.md#mpxunocssplugin-配置)
-### vscode插件支持
-推荐使用unocss官方插件https://unocss.dev/integrations/vscode
-mpx文件则需要在unocss.config.js添加如下参数才能生效
-```js
-const { defineConfig } = require('unocss')
+关于`uno.config.js`可用配置项及`@mpxjs/unocss-plugin`及`@mpxjs/unocss-base`的配置项请参考[API文档](../../api/compile.md#mpxunocssplugin-配置)。
 
-module.exports = defineConfig({
-  include: [/\.mpx($|\?)/]
-})
-``` 
+### vscode插件支持
+
+1. 安装 [unocss 官方插件](https://unocss.dev/integrations/vscode)。
+2.  修改 VSCode 设置中的 `unocss.languageIds` 选项（或者直接修改 VSCode JSON 配置文件），添加 "mpx"，实现智能提示等功能。
+  > _使用最新版本 [@mpxjs/cli](https://mpxjs.cn/guide/basic/start.html#%E5%AE%89%E8%A3%85%E8%84%9A%E6%89%8B%E6%9E%B6) 脚手架创建的项目会自动生成，可忽略这一步。_
+
+  ```json
+  // .vscode/settings.json
+  {
+    "unocss.languageIds": [
+      "mpx"
+    ]
+  }
+  ```
+
+3. 修改 `uno.config.js` 支持 Mpx 预设。
+  > _使用 [@mpxjs/cli](https://mpxjs.cn/guide/basic/start.html#%E5%AE%89%E8%A3%85%E8%84%9A%E6%89%8B%E6%9E%B6) 脚手架创建的项目会自动生成，可忽略这一步。_
+
+  ```js
+  // uno.config.js
+  const { defineConfig } = require('unocss')
+  const presetMpx = require('@mpxjs/unocss-base')
+
+  module.exports = defineConfig({
+    include: [/\.mpx($|\?)/],
+    presets: [
+      presetMpx()
+    ]
+  })
+  ``` 
 
 ## 功能支持范围 {#config-supports}
 

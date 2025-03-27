@@ -1,14 +1,13 @@
-import { defineConfig } from "vitepress"
-import { withPwa } from "@vite-pwa/vitepress"
+import { defineConfig, Plugin } from "vitepress"
 import {
     groupIconMdPlugin,
     groupIconVitePlugin,
+    localIconLoader,
 } from "vitepress-plugin-group-icons"
+import llmstxt from "vitepress-plugin-llms"
+import { withPwa } from "@vite-pwa/vitepress"
 import { transformerTwoslash } from "@shikijs/vitepress-twoslash"
-import {
-    algoliaTranslations,
-    localSearchTranslations,
-} from "./theme/translations"
+import { localSearchTranslations } from "./theme/translations"
 
 const sidebar = {
     "/guide/": [
@@ -288,9 +287,11 @@ export default withPwa(
             },
             workbox: {
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
+                sourcemap: true,
+                navigateFallbackDenylist: [/^\/mpx-cube-ui/],
             },
             devOptions: {
-                enabled: true,
+                enabled: false,
                 suppressWarnings: true,
                 navigateFallback: "/",
             },
@@ -354,6 +355,13 @@ export default withPwa(
                 linkText: "返回首页",
                 quote: "😩 抱歉，迷路了～",
             },
+            lastUpdated: {
+                text: "最后更新于",
+                formatOptions: {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                },
+            },
             docFooter: {
                 prev: "上一页",
                 next: "下一页",
@@ -361,8 +369,19 @@ export default withPwa(
         },
         vite: {
             logLevel: "info",
-            // @ts-ignore
-            plugins: [groupIconVitePlugin()],
+            plugins: [
+                llmstxt() as Plugin,
+                groupIconVitePlugin({
+                    customIcon: {
+                        ios: "logos:apple",
+                        android: "logos:android-icon",
+                        harmony: localIconLoader(
+                            import.meta.url,
+                            "../assets/images/harmonyOS.svg"
+                        ),
+                    },
+                }) as Plugin,
+            ],
         },
         // @ts-ignore
         chainWebpack: (config) => {

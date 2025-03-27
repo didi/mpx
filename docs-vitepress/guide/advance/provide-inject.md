@@ -237,11 +237,11 @@ export const key: InjectionKey<string> = Symbol() // 类型注解
 // const key = Symbol() as InjectionKey<string> // 类型断言写法等效
 
 provide(key, 'foo') // ✅
-provide(key, 123) // ❌
+provide(key, 123) // 提供值应当为字符串类型
 
 const foo1 = inject(key) // ✅ foo1: string | undefined
 const foo2 = inject(key, 'default value') // ✅ foo2: string
-const foo3 = inject(key, 123) // ❌ 默认值应当为字符串类型
+const foo3 = inject(key, 123) // 默认值应当为字符串类型
 ```
 
 > 👀 鼠标悬浮到上面代码可以查看具体 TS 类型

@@ -78,7 +78,7 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(placeholder-style|placeholder-class|cursor-spacing|always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
+        test: /^(always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
         ios: iosPropLog,
         android: androidPropLog
       }

@@ -38,7 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view)$/
+const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view|input|textarea)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1104,7 +1104,7 @@ function processStyleReact (el, options) {
   }
 
   if (specialClassReg.test(el.tag)) {
-    const staticClassNames = ['hover', 'indicator', 'mask']
+    const staticClassNames = ['hover', 'indicator', 'mask', 'placeholder']
     staticClassNames.forEach((className) => {
       let staticClass = el.attrsMap[className + '-class'] || ''
       let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
@@ -1207,12 +1207,13 @@ function processEventWeb (el) {
   }
 }
 
-function processEventReact (el) {
+function processEventReact (el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
       const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
+      const modifiers = (parsedEvent.modifier || '').split('.')
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1221,6 +1222,9 @@ function processEventReact (el) {
           }
         }
         eventConfigMap[type].configs.push(Object.assign({ name, value }, parsedFunc))
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
+          eventConfigMap[type].proxy = true
+        }
       }
     }
   })
@@ -1261,9 +1265,9 @@ function processEventReact (el) {
 
   // let wrapper
   for (const type in eventConfigMap) {
-    const { configs } = eventConfigMap[type]
+    const { configs, proxy } = eventConfigMap[type]
     if (!configs.length) continue
-    const needBind = configs.length > 1 || configs[0].hasArgs
+    const needBind = proxy || configs.length > 1 || configs[0].hasArgs
     if (needBind) {
       configs.forEach(({ name }) => {
         if (name) {
@@ -1283,8 +1287,11 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      const { result } = parseMustacheWithContext(value)
-      modifyAttr(el, name, `{{this[${result}]}}`)
+      const attrValue = isValidIdentifierStr(value)
+        ? `{{this.${value}}}`
+        : `{{this[${parseMustacheWithContext(value).result}]}}`
+
+      modifyAttr(el, name, attrValue)
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
@@ -1825,9 +1832,13 @@ function processRefReact (el, meta) {
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
+    const refFnId = forScopes.reduce((preV, curV) => {
+      return `${preV} + "_" + ${curV.index}`
+    }, `"ref_fn_${++refId}"`)
+
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${type}', [${selectorsConf}], 'ref_fn_${++refId}') }}`
+      value: `{{ this.__getRefVal('${type}', [${selectorsConf}], ${refFnId}) }}`
     }])
   }
 
@@ -2709,7 +2720,7 @@ function processElement (el, root, options, meta) {
     processRefReact(el, meta)
     if (!pass) {
       processStyleReact(el, options)
-      processEventReact(el)
+      processEventReact(el, options)
       processComponentIs(el, options)
       processSlotReact(el, meta)
     }
