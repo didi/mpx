@@ -36,7 +36,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const contentHeight = useRef(0)
   const [headerTop, setHeaderTop] = useState(0)
   const scrollViewContext = useContext(ScrollViewContext)
-  const { scrollOffset, scrollLayoutRef } = scrollViewContext
+  const { scrollOffset, scrollLayoutRef, refresherHeight = 0 } = scrollViewContext
   const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
 
@@ -55,13 +55,24 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   function onLayout (e: LayoutChangeEvent) {
     if (headerRef.current) {
-      // hack 外层做动画 android pageY 可能拿到不准问题
-      setTimeout(() => {
+      // 外层可能有做动画的情况
+      // 不加 setTimeout，安卓 pageY 获取的不准；ios pageY 如果有 refresherHeight 则从 refresherHeight 开始，否则从 0 开始, 均不包含 navigationHeight 的值
+      // 加了 setTimeout 后， 安卓 pageY 为 navigationHeight + refresherHeight； iOS pageY 为 navigationHeight, 不包含 refresherHeight 的值
+      // 现状scrollLayoutRef.current.offsetTop 安卓是 navigationHeight（不符合预期）, ios 是 0，如果后续安卓 scrollLayoutRef 修正为正确的 0，则 pageY 也需要减去 refresherHeight
+      // 所以如果是安卓走定时器什么都不需要处理，ios 不走定时器，但 pageY 需要减去 refresherHeight
+      if (isIOS) {
         headerRef.current!.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
           contentHeight.current = height
-          setHeaderTop(pageY - offsetTop)
+          setHeaderTop(pageY - offsetTop - refresherHeight)
         })
-      }, isIOS ? 0 : 100)
+      } else {
+        setTimeout(() => {
+          headerRef.current!.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+            contentHeight.current = height
+            setHeaderTop(pageY - offsetTop)
+          })
+        }, 100)
+      }
     }
   }
 
