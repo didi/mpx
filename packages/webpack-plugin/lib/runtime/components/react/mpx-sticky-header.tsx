@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode } from 'react'
-import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent } from 'react-native'
+import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, Platform } from 'react-native'
 import { ScrollViewContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
@@ -18,6 +18,7 @@ interface StickyHeaderProps {
   'parent-height'?: number;
   bindstickontopchange?: (e: NativeSyntheticEvent<unknown>) => void;
 }
+const isIOS = Platform.OS === 'ios'
 
 const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHeaderProps>((stickyHeaderProps: StickyHeaderProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(stickyHeaderProps)
@@ -60,7 +61,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
           contentHeight.current = height
           setHeaderTop(pageY - offsetTop)
         })
-      }, 100)
+      }, isIOS ? 0 : 100)
     }
   }
 
