@@ -31,6 +31,7 @@ import './CanvasGradient'
 import { createImage as canvasCreateImage } from './Image'
 import { createImageData as canvasCreateImageData } from './ImageData'
 import { useConstructorsRegistry } from './constructorsRegistry'
+import Portal from '../mpx-portal'
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
@@ -71,6 +72,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const {
     normalStyle,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(extendObject({}, style, stylesheet.container), {
@@ -280,7 +282,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     )
   }
 
-  return createElement(View, innerProps, createElement(WebView, {
+  let canvasComponent: JSX.Element = createElement(View, innerProps, createElement(WebView, {
     ref: (element) => {
       if (canvasRef.current) {
         canvasRef.current.webview = element
@@ -293,6 +295,12 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     onLoad: onLoad,
     scrollEnabled: false
   }))
+
+  if (hasPositionFixed) {
+    canvasComponent = createElement(Portal, null, canvasComponent)
+  }
+
+  return canvasComponent
 })
 
 _Canvas.displayName = 'mpxCanvas'
