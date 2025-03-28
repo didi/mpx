@@ -9,7 +9,7 @@
  * ✔ bindlongtap
  * ✔ binderror
  */
-import React, { createElement, useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
+import { createElement, useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
 import { View, Platform, StyleSheet, NativeSyntheticEvent } from 'react-native'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
@@ -93,11 +93,10 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const { register } = useConstructorsRegistry()
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
-  const innerProps = useInnerProps(props, {
+  const innerProps = useInnerProps(props, extendObject({}, {
     ref: nodeRef,
-    style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
-    ...layoutProps
-  }, [], {
+    style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 })
+  }, layoutProps), [], {
     layoutRef
   })
 
@@ -160,10 +159,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   const postMessage = useCallback(async (message: WebviewMessage) => {
     if (!canvasRef.current?.bus) return
-    const { type, payload } = await canvasRef.current.bus.post({
-      id: ID(),
-      ...message
-    })
+    const { type, payload } = await canvasRef.current.bus.post(extendObject({ id: ID() }, message))
 
     switch (type) {
       case 'error': {
@@ -224,10 +220,9 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
             Object.assign(object, payload, {
               [WEBVIEW_TARGET]: data.meta.target
             })
-            data = {
-              ...data,
+            extendObject(data, {
               payload: object
-            }
+            })
           }
           for (const listener of canvasRef.current.listeners) {
             listener(data.payload)
