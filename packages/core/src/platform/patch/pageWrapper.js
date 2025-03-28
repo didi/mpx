@@ -1,11 +1,6 @@
 import { useRef, createElement, cloneElement, isValidElement, useMemo, useLayoutEffect, useEffect } from 'react'
 import * as ReactNative from 'react-native'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useHeaderHeight } from '@react-navigation/elements'
 import { RouteContext, IntersectionObserverContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-
-import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
 import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
 import { hasOwn } from '@mpxjs/utils'
 import { del, set } from '../../observer/reactive'
@@ -47,6 +42,7 @@ function PageWrapper ({
     pageId: currentPageId
   })
 
+  const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
   const pageStatusMap = global.__mpxPageStatusMap
 
   if (navigation) {
