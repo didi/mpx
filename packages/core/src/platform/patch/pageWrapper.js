@@ -1,6 +1,7 @@
-import { useRef, createElement, useMemo, useLayoutEffect, useEffect } from 'react'
+import { useRef, createElement, cloneElement, isValidElement, useMemo, useLayoutEffect, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { RouteContext, IntersectionObserverContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
@@ -31,23 +32,22 @@ function usePageStatus (navigation, pageId, pageStatusMap) {
   }, [navigation])
 }
 
-const { useSafeAreaInsets } = global.__navigationHelper
-
 function PageWrapper ({
   children,
   navigation,
   pageConfig,
-  route,
-  pageStatusMap
+  route
 }) {
   const rootRef = useRef(null)
   const keyboardAvoidRef = useRef(null)
   const intersectionObservers = useRef({})
+  const currentPageId = useMemo(() => ++pageId, [])
   const routeContextValRef = useRef({
     navigation,
-    pageId
+    pageId: currentPageId
   })
-  const currentPageId = useMemo(() => ++pageId, [])
+
+  const pageStatusMap = global.__mpxPageStatusMap
 
   if (navigation) {
     usePageStatus(navigation, currentPageId, pageStatusMap)
@@ -62,7 +62,6 @@ function PageWrapper ({
           },
           headerTintColor: pageConfig.navigationBarTextStyle || 'white'
         })
-    
         if (__mpx_mode__ === 'android') {
           ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
           ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
@@ -71,7 +70,6 @@ function PageWrapper ({
         }
       }, [])
     }
-  
     useEffect(() => {
       setTimeout(() => {
         rootRef.current?.measureInWindow((x, y, width, height) => {
@@ -81,8 +79,6 @@ function PageWrapper ({
     }, [])
     navigation.insets = useSafeAreaInsets()
   }
-  
-
   const withKeyboardAvoidingView = (element) => {
     return createElement(KeyboardAvoidContext.Provider,
       {
@@ -101,7 +97,6 @@ function PageWrapper ({
       )
     )
   }
-
   return createElement(GestureHandlerRootView,
     {
       // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
@@ -132,11 +127,18 @@ function PageWrapper ({
             },
             createElement(PortalHost,
               null,
-              createElement(children, {
-                navigation,
-                route,
-                id: currentPageId
-              })
+              // 组件单独使用时传递children可能为 element 元素
+              isValidElement(children)
+                ? cloneElement(children, {
+                  navigation,
+                  route,
+                  id: currentPageId
+                })
+                : createElement(children, {
+                  navigation,
+                  route,
+                  id: currentPageId
+                })
             )
           )
         )
