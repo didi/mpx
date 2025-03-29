@@ -11,9 +11,7 @@ import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import PageWrapper from './pageWrapper'
-import navigationHelper from './navigation/index'
 
-global.__navigationHelper = navigationHelper
 const ProviderContext = createContext(null)
 
 function getSystemInfo () {

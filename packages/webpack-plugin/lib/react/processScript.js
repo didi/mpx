@@ -15,7 +15,6 @@ module.exports = function (script, {
   localPagesMap
 }, callback) {
   let scriptSrcMode = srcMode
-  const mode = loaderContext.getMpx().mode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
