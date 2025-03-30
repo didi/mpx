@@ -25,11 +25,11 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
-      return el.hasSimple ? 'mpx-simple-view' : 'mpx-view'
+      return el.isSimple ? 'mpx-simple-view' : 'mpx-view'
     },
     android (tag, { el }) {
       el.isBuiltIn = true
-      return el.hasSimple ? 'mpx-simple-view' : 'mpx-view'
+      return el.isSimple ? 'mpx-simple-view' : 'mpx-view'
     },
     qa (tag) {
       return 'div'
@@ -50,11 +50,11 @@ module.exports = function ({ print }) {
       }, {
         test: /^(is-simple)$/,
         android (prop, { el }) {
-          el.hasSimple = true
+          el.isSimple = true
           return false
         },
         ios (prop, { el }) {
-          el.hasSimple = true
+          el.isSimple = true
           return false
         }
       }
