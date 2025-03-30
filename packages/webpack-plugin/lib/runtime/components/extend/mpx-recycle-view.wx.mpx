@@ -1,0 +1,137 @@
+<template>
+  <scroll-view
+    class="mpx-recycle-view"
+    scroll-y
+    wx:style="{ height: height + 'px', width: width ? width + 'px' : '100%' }"
+    type="{{type}}"
+    enhanced="{{enhanced}}"
+    scroll-with-animation="{{scrollWithAnimation}}"
+    bounces="{{bounces}}"
+    show-scrollbar="{{showScrollbar}}"
+    refresher-enabled="{{refresherEnabled}}"
+    refresher-triggered="{{refresherTriggered}}"
+    bindscroll="onScroll"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- list header -->
+    <template wx:if="{{genericlistHeader}}">
+      <list-header data="{{listData}}" />
+    </template>
+
+    <block wx:for="{{listData}}" wx:key="index">
+      <!-- section header -->
+      <template wx:if="{{genericsectionHeader}}">
+        <sticky-section>
+          <sticky-header>
+            <section-header data="{{item}}"></section-header>
+          </sticky-header>
+        </sticky-section>
+      </template>
+
+      <template
+        wx:if="{{genericrecycleItem}}"
+        wx:for="{{item.data}}"
+        wx:for-item="subItem"
+        wx:key="subIndex"
+      >
+        <!-- section items -->
+        <recycle-item currentItem="{{subItem}}"></recycle-item>
+      </template>
+
+        <!-- section footer -->
+      <template wx:if="{{genericsectionFooter}}">
+        <section-footer data="{{subItem}}"></section-footer>
+      </template>
+    </block>
+
+    <!-- list footer -->
+    <template wx:if="{{genericlistFooter}}">
+      <list-footer data="{{listData}}" />
+    </template>
+  </scroll-view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      height: {
+        type: Number,
+        value: 0
+      },
+      width: {
+        type: Number,
+        value: 0
+      },
+      type: String,
+      listData: {
+        type: Array,
+        value: []
+      },
+      generichash: String,
+      genericrecycleItem: String,
+      genericsectionHeader: String,
+      genericsectionFooter: String,
+      genericlistHeader: String,
+      genericlistFooter: String,
+      scrollWithAnimation: Boolean,
+      enableSticky: {
+        type: Boolean,
+        value: false
+      },
+      showScrollbar: {
+        type: Boolean,
+        value: false
+      },
+      enhanced: {
+        type: Boolean,
+        value: false
+      },
+      bounces: {
+        type: Boolean,
+        value: false
+      },
+      refresherEnable: {
+        type: Boolean,
+        value: false
+      },
+      refresherEnabled: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    methods: {
+      onScroll(e) {
+        this.triggerEvent('scroll', e.detail)
+      },
+      onRefresh(e) {
+        this.triggerEvent('refresh', e.detail)
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "component": true,
+    "componentGenerics": {
+      "recycle-item": {
+        "default": "./mpx-recycle-item-default.mpx"
+      },
+      "list-header": {
+        "default": "./mpx-list-header-default.mpx"
+      },
+      "list-footer": {
+        "default": "./mpx-list-footer-default.mpx"
+      },
+      "section-header": {
+        "default": "./mpx-section-header-default.mpx"
+      },
+      "section-footer": {
+        "default": "./mpx-section-footer-default.mpx"
+      }
+    }
+  }
+</script>

@@ -1,15 +1,14 @@
 import React, { forwardRef } from 'react';
-import {
-  StyleSheet,
-  SafeAreaView,
-  SectionList,
-  StatusBar,
-} from 'react-native';
+import { SectionList, FlatList } from 'react-native';
+import useInnerProps from '../react/getInnerListeners';
+import useNodesRef from '../react/useNodesRef'
+import { extendObject, getCustomEvent } from '../react/utils'
 
 const getGenericComponent = ({props, ref, generichash, generickey}) => {
   const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
   return <GenericComponent ref={ref} {...props}/>
 }
+
 const Item = forwardRef((props, ref) => {
    const { generichash, genericrecycleItem } = props
    return getGenericComponent({props, ref, generichash, generickey: genericrecycleItem})
@@ -37,12 +36,98 @@ const ListFooter= forwardRef((props, ref) => {
 
 
 const RecycleView = forwardRef((props = {}, ref) => {
-  const { style, height, width, listData, generichash, genericrecycleItem, genericsectionHeader, genericsectionFooter, genericlistHeader, genericlistFooter, 'enable-sticky': enableSticky = false} = props
+  const {
+    enhanced = false,
+    bounces = true,
+    scrollEventThrottle = 0,
+    height,
+    width,
+    listData,
+    type,
+    generichash,
+    genericrecycleItem,
+    genericsectionHeader,
+    genericsectionFooter,
+    genericlistHeader,
+    genericlistFooter,
+    'enable-sticky': enableSticky = false,
+    'enable-back-to-top': enableBackToTop = false,
+    'lower-threshold': lowerThreshold = 50,
+    'refresher-enabled': refresherEnabled,
+    'show-scrollbar': showScrollbar = true,
+    'refresher-triggered': refresherTriggered
+  } = props
+
+  const scrollViewRef = useRef(null)
+  const {
+    hasSelfPercent,
+    setWidth,
+    setHeight
+  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props: extendObject({}, props, { 'enable-offset': true }), hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
+  
+  useNodesRef(props, ref, scrollViewRef, { style })
+
+  function onRefresh() {
+    const { bindrefresherrefresh } = props
+    bindrefresherrefresh &&
+      bindrefresherrefresh(
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
+    )
+  }
+
+  function onEndReached() {
+    const { bindscrolltolower } = props
+    bindscrolltolower &&
+      bindscrolltolower(
+        getCustomEvent('scrolltolower', {}, { layoutRef }, props)
+      )
+  }
+
+  const scrollAdditionalProps = extendObject(
+    {
+      alwaysBounceVertical: false,
+      alwaysBounceHorizontal: false,
+      scrollEventThrottle: scrollEventThrottle,
+      scrollsToTop: enableBackToTop,
+      showsHorizontalScrollIndicator: showScrollbar,
+      onEndReachedThreshold: lowerThreshold,
+      ref: scrollViewRef,
+      stickySectionHeadersEnabled: enableSticky,
+      onScroll: onScroll,
+      onEndReached: onEndReached
+    },
+    layoutProps
+  )
+
+  if (enhanced) {
+    Object.assign(scrollAdditionalProps, {
+      bounces
+    })
+  }
+  if (refresherEnabled) {
+    Object.assign(scrollAdditionalProps, {
+      onRefresh: onRefresh,
+      refreshing: refresherTriggered
+    })
+  }
+
+  const innerProps = useInnerProps(props, scrollAdditionalProps, [
+    'id',
+    'show-scrollbar',
+    'lower-threshold',
+    'refresher-triggered',
+    'refresher-enabled',
+    'bindrefresherrefresh'
+  ], { layoutRef })
+
   return (
+    type === 'section' ?
       <SectionList
-        style={[{ height, width }, style]}
+        {...innerProps}
+        style={[{ height, width }, style, layoutStyle]}
         sections={listData}
-        stickySectionHeadersEnabled={enableSticky}
         keyExtractor={(item, index) => item + index}
         renderItem={({item}) => <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>}
         renderSectionHeader={(data) => <SectionHeader data={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/>}
@@ -50,8 +135,17 @@ const RecycleView = forwardRef((props = {}, ref) => {
         ListHeaderComponent={<ListHeader {...props} generichash={generichash} genericlistHeader={genericlistHeader}/>}
         ListFooterComponent={<ListFooter {...props} generichash={generichash} genericlistFooter={genericlistFooter}/>}
       />
+    :
+      <FlatList
+        {...innerProps}
+        style={[{ height, width }, style, layoutStyle]}
+        data={listData}
+        keyExtractor={(item, index) => item + index}
+        renderItem={({item}) => <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>}
+        ListHeaderComponent={<ListHeader {...props} generichash={generichash} genericlistHeader={genericlistHeader}/>}
+        ListFooterComponent={<ListFooter {...props} generichash={generichash} genericlistFooter={genericlistFooter}/>}
+      />
   )
-
 })
 
 export default RecycleView
