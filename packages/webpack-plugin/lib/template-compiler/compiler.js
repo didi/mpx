@@ -635,7 +635,7 @@ function parse (template, options) {
   hasOptionalChaining = false
   processingTemplate = false
   rulesResultMap.clear()
-  componentGenerics = options.componentGenerics
+  componentGenerics = options.componentGenerics || {}
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
