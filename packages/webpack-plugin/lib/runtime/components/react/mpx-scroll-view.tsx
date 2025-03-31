@@ -69,8 +69,8 @@ interface ScrollViewProps {
   'parent-width'?: number;
   'parent-height'?: number;
   'wait-for'?: Array<GestureHandler>;
-  'scroll-event-throttle'?:number;
   'simultaneous-handlers'?: Array<GestureHandler>;
+  'scroll-event-throttle'?:number;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -90,8 +90,8 @@ type ScrollAdditionalProps = {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onContentSizeChange: (width: number, height: number) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
-  scrollsToTop: boolean;
   scrollEventThrottle: number;
+  scrollsToTop: boolean;
   showsHorizontalScrollIndicator: boolean;
   showsVerticalScrollIndicator: boolean;
   scrollEnabled: boolean;
