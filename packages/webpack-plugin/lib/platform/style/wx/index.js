@@ -395,22 +395,22 @@ module.exports = function getSpec ({ warn, error }) {
           case 'skewY':
           case 'perspective':
             // 单个值处理
+            // rotate 处理成 rotateZ
+            key = key === 'rotate' ? 'rotateZ' : key
             transform.push({ [key]: val })
             break
           case 'matrix':
-          case 'matrix3d':
             transform.push({ [key]: parseValues(val, ',').map(val => +val) })
             break
           case 'translate':
           case 'scale':
           case 'skew':
-          case 'rotate3d': // x y z angle
           case 'translate3d': // x y 支持 z不支持
           case 'scale3d': // x y 支持 z不支持
           {
             // 2 个以上的值处理
             key = key.replace('3d', '')
-            const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
+            const vals = parseValues(val, ',').splice(0, 3)
             // scale(.5) === scaleX(.5) scaleY(.5)
             if (vals.length === 1 && key === 'scale') {
               vals.push(vals[0])
@@ -426,6 +426,8 @@ module.exports = function getSpec ({ warn, error }) {
           }
           case 'translateZ':
           case 'scaleZ':
+          case 'rotate3d': // x y z angle
+          case 'matrix3d':
           default:
             // 不支持的属性处理
             unsupportedPropError({ prop, value, selector }, { mode })
