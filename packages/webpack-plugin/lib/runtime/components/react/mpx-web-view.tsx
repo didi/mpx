@@ -123,7 +123,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const navigation = useNavigation()
 
   useEffect(() => {
-    const beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+    let beforeRemoveSubscription:any
+    if (__mpx_mode__ !== 'ios') {
+      beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+    }
     return () => {
       if (isFunction(beforeRemoveSubscription)) {
         beforeRemoveSubscription()
