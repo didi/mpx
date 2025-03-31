@@ -3,8 +3,6 @@ const createHelpers = require('../helpers')
 const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
-const isEmptyObject = require('../utils/is-empty-object')
-const dash2hump = require('../utils/hump-dash').dash2hump
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
@@ -119,30 +117,21 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
       delete pageConfig.usingComponents
       content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
     }
-    content += `global.currentInject.getComponents = function () {
+
+    content += `
+
+    function getComponents() {
       return ${shallowStringify(componentsMap)}
-    }\n`
+    }
+
+    global.currentInject.getComponents = getComponents\n`
     if (genericsInfo) {
       content += `
         const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
         global.__mpxGenericsMap[genericHash] = function (name) {
-          return ${shallowStringify(componentsMap)}[name]
+          return getComponents()[name]
         }
       \n`
-    }
-    if (!isEmptyObject(componentGenerics)) {
-      content += 'global.currentInject.injectProperties = {\n'
-      content += '  generichash: String,\n'
-
-      Object.keys(componentGenerics).forEach(genericName => {
-        const defaultValue = componentGenerics[genericName].default
-        if (defaultValue) {
-          content += `  generic${dash2hump(genericName)}: { type: String, value: '${genericName}default' },\n`
-        } else {
-          content += `  generic${dash2hump(genericName)}: String,\n`
-        }
-      })
-      content += '}\n'
     }
     if (ctorType === 'component') {
       content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
