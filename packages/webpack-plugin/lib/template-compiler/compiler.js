@@ -944,20 +944,18 @@ function stringify (str) {
 
 const genericRE = /^generic:(.+)$/
 
-function processComponentGenericsWeb (el, meta) {
+function processComponentGenerics (el, meta) {
   if (componentGenerics && componentGenerics[el.tag]) {
     const generic = dash2hump(el.tag)
     el.tag = 'component'
     addAttrs(el, [{
-      name: ':is',
-      value: `generic${generic}`
+      name: isWeb(mode) ? ':is' : 'is',
+      value: isWeb(mode) ? `generic${generic}` : `{{generic${generic}}}`
     }])
   }
 
   let hasGeneric = false
-
   const genericHash = moduleId
-
   const genericAttrs = []
 
   el.attrsList.forEach((attr) => {
@@ -2484,47 +2482,6 @@ function getVirtualHostRoot (options, meta) {
   return getTempNode()
 }
 
-function processComponentGenericsReact (el, meta) {
-  if (componentGenerics && componentGenerics[el.tag]) {
-      const generic = dash2hump(el.tag)
-      el.tag = 'component'
-      addAttrs(el, [{
-        name: 'is',
-        value: `{{generic${generic}}}`
-      }])
-  }
-
-  let hasGeneric = false
-
-  const genericHash = moduleId
-
-  const genericAttrs = []
-
-  el.attrsList.forEach((attr) => {
-    if (genericRE.test(attr.name)) {
-      genericAttrs.push(attr)
-      hasGeneric = true
-      addGenericInfo(meta, genericHash, attr.value)
-    }
-  })
-
-  // 统一处理所有的generic:属性
-  genericAttrs.forEach((attr) => {
-    getAndRemoveAttr(el, attr.name)
-    addAttrs(el, [{
-      name: dash2hump(attr.name.replace(':', '')),
-      value: attr.value
-    }])
-  })
-
-  if (hasGeneric) {
-    addAttrs(el, [{
-      name: 'generichash',
-      value: genericHash
-    }])
-  }
-}
-
 function processShow (el, options, root) {
   let { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (mode === 'swan') show = wrapMustache(show)
@@ -2756,7 +2713,7 @@ function processElement (el, root, options, meta) {
     processEventWeb(el)
     // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
-    processComponentGenericsWeb(el, meta)
+    processComponentGenerics(el, meta)
     return
   }
 
@@ -2771,7 +2728,7 @@ function processElement (el, root, options, meta) {
     if (!pass) {
       processStyleReact(el, options)
       processEventReact(el, options)
-      processComponentGenericsReact(el, meta)
+      processComponentGenerics(el, meta)
       processComponentIs(el, options)
       processSlotReact(el, meta)
     }
