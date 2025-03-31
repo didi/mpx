@@ -77,9 +77,6 @@ module.exports = function (css, map) {
       }
     }
 
-    if (mpx.mode === 'web') {
-      plugins.push(vw({ transRpxFn }))
-    }
     // source map
     if (this.sourceMap && !options.map) {
       options.map = {
@@ -94,6 +91,11 @@ module.exports = function (css, map) {
     const cssList = []
     if (runtimeCompile) {
       finalPlugins.push(cssArrayList(cssList))
+    }
+
+    // vw 在最后处理
+    if (mpx.mode === 'web') {
+      finalPlugins.push(vw({ transRpxFn }))
     }
 
     return postcss(finalPlugins)
