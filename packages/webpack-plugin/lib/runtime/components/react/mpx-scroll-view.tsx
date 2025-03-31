@@ -69,6 +69,7 @@ interface ScrollViewProps {
   'parent-width'?: number;
   'parent-height'?: number;
   'wait-for'?: Array<GestureHandler>;
+  'scroll-event-throttle'?:number;
   'simultaneous-handlers'?: Array<GestureHandler>;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -89,8 +90,8 @@ type ScrollAdditionalProps = {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onContentSizeChange: (width: number, height: number) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
-  scrollEventThrottle: number;
   scrollsToTop: boolean;
+  scrollEventThrottle: number;
   showsHorizontalScrollIndicator: boolean;
   showsVerticalScrollIndicator: boolean;
   scrollEnabled: boolean;
@@ -140,6 +141,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
+    'scroll-event-throttle': scrollEventThrottle = 0,
     __selectRef
   } = props
 
@@ -159,7 +161,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     visibleLength: 0
   })
 
-  const scrollEventThrottle = 50
   const hasCallScrollToUpper = useRef(true)
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
