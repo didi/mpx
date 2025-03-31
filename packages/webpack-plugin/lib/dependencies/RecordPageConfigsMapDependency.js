@@ -16,7 +16,7 @@ class RecordPageConfigMapDependency extends NullDependency {
   mpxAction (module, compilation, callback) {
     const mpx = compilation.__mpx__
     const pagePath = mpx.pagesMap[this.resourcePath]
-    if (!isEmptyObject(this.jsonObj)) mpx.pageConfigsMap[pagePath] = this.jsonObj
+    if (pagePath && !isEmptyObject(this.jsonObj)) mpx.pageConfigsMap[pagePath] = this.jsonObj
     return callback()
   }
 

@@ -80,8 +80,6 @@ module.exports = function (jsonContent, {
     })
   }
 
-  const isApp = ctorType === 'app'
-  const isPage = ctorType === 'page'
   if (!jsonContent) {
     return callback()
   }
@@ -101,7 +99,7 @@ module.exports = function (jsonContent, {
       }
     }
 
-    if (!isApp) {
+    if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
     }
 
@@ -110,19 +108,21 @@ module.exports = function (jsonContent, {
     if (rulesRunner) {
       rulesRunner(jsonObj)
     }
-    if (isPage) {
-      const keysToExtract = ['navigationStyle']
-      const configObj = {}
-      keysToExtract.forEach(key => {
-        if (jsonObj[key]) {
-          configObj[key] = jsonObj[key]
-        }
-      })
-      loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource)?.resourcePath, configObj))
-    }
   } catch (e) {
     return callback(e)
   }
+
+  if (ctorType === 'page') {
+    const keysToExtract = ['navigationStyle']
+    const configObj = {}
+    keysToExtract.forEach(key => {
+      if (jsonObj[key]) {
+        configObj[key] = jsonObj[key]
+      }
+    })
+    loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, configObj))
+  }
+
   const fs = loaderContext._compiler.inputFileSystem
 
   const defaultTabbar = {
