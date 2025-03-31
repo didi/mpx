@@ -4,6 +4,20 @@ const walk = require('acorn-walk')
 
 module.exports = parseAsset
 
+/**
+ * @typedef {import("acorn").Program} Program
+ * @typedef {import("acorn").Node} Node
+ * @typedef {import("acorn")} Acorn
+ * @typedef {{ start: number, end: number }} Location
+ * @typedef {{ locations: Record<string, Location>, ast: Program }} ParseAssetResult
+ */
+
+/**
+ *
+ * @param {string} content
+ * @param {Program | undefined} ast
+ * @returns {ParseAssetResult}
+ */
 function parseAsset (content, ast) {
   if (!ast) {
     ast = acorn.parse(content, {
@@ -15,6 +29,9 @@ function parseAsset (content, ast) {
       ecmaVersion: 2050
     })
   }
+  /**
+   * @type {{ locations: ParseAssetResult['locations'] | null, expressionStatementDepth: number }}
+   */
   const walkState = {
     locations: null,
     expressionStatementDepth: 0
@@ -120,6 +137,11 @@ function parseAsset (content, ast) {
   }
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isIIFE (node) {
   // mpx fix
   if (node.type === 'SequenceExpression') {
@@ -129,6 +151,11 @@ function isIIFE (node) {
   return node.type === 'CallExpression' || node.type === 'UnaryExpression' && node.argument.type === 'CallExpression'
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {import('acorn').UnaryExpression['argument'] | Node}
+ */
 function getIIFECallExpression (node) {
   // mpx fix
   if (node.type === 'SequenceExpression') {
@@ -141,11 +168,21 @@ function getIIFECallExpression (node) {
   }
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isModulesList (node) {
   return isSimpleModulesList(node) || // Modules are contained in expression `Array([minimum ID]).concat([<module>, <module>, ...])`
     isOptimizedModulesArray(node)
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isSimpleModulesList (node) {
   return (// Modules are contained in hash. Keys are module ids.
     isModulesHash(node) || // Modules are contained in array. Indexes are module ids.
@@ -153,15 +190,30 @@ function isSimpleModulesList (node) {
   )
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isModulesHash (node) {
   return node.type === 'ObjectExpression' && node.properties.map(node => node.value).every(isModuleWrapper)
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isModulesArray (node) {
   return node.type === 'ArrayExpression' && node.elements.every(elem => // Some of array items may be skipped because there is no module with such id
     !elem || isModuleWrapper(elem))
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isOptimizedModulesArray (node) {
   // Checking whether modules are contained in `Array(<minimum ID>).concat(...modules)` array:
   // https://github.com/webpack/webpack/blob/v1.14.0/lib/Template.js#L91
@@ -172,6 +224,11 @@ function isOptimizedModulesArray (node) {
     node.arguments.length === 1 && isModulesArray(node.arguments[0])
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isModuleWrapper (node) {
   /* eslint-disable no-mixed-operators */
   return (// It's an anonymous function expression that wraps module
@@ -181,31 +238,72 @@ function isModuleWrapper (node) {
   )
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isModuleId (node) {
   return node.type === 'Literal' && (isNumericId(node) || typeof node.value === 'string')
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isNumericId (node) {
   return node.type === 'Literal' && Number.isInteger(node.value) && node.value >= 0
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isChunkIds (node) {
   // Array of numeric or string ids. Chunk IDs are strings when NamedChunksPlugin is used
   return node.type === 'ArrayExpression' && node.elements.every(isModuleId)
 }
 
+/**
+ *
+ * ```unknown
+ * (window.webpackJsonp = window.webpackJsonp||[]).push([[<chunks>], <modules>, ...])
+ *                                                 ^^^^
+ * ```
+ *
+ * ```unknown
+ * var a = 'push';
+ * (window.webpackJsonp = window.webpackJsonp||[])[a]([[<chunks>], <modules>, ...])
+ *                                                ^^^
+ * ```
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isAsyncChunkPushExpression (node) {
   const {
     callee,
     arguments: args
   } = node
-  return callee.type === 'MemberExpression' && callee.property.name === 'push' && callee.object.type === 'AssignmentExpression' && args.length === 1 && args[0].type === 'ArrayExpression' && mayBeAsyncChunkArguments(args[0].elements) && isModulesList(args[0].elements[1])
+  return callee.type === 'MemberExpression' && callee.object.type === 'AssignmentExpression' && args.length === 1 && args[0].type === 'ArrayExpression' && mayBeAsyncChunkArguments(args[0].elements) && isModulesList(args[0].elements[1])
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function mayBeAsyncChunkArguments (args) {
   return args.length >= 2 && isChunkIds(args[0])
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {boolean}
+ */
 function isAsyncWebWorkerChunkExpression (node) {
   const {
     callee,
@@ -215,9 +313,15 @@ function isAsyncWebWorkerChunkExpression (node) {
   return type === 'CallExpression' && callee.type === 'MemberExpression' && args.length === 2 && isChunkIds(args[0]) && isModulesList(args[1])
 }
 
+/**
+ *
+ * @param {Node} node
+ * @returns {Record<string, Location>}
+ */
 function getModulesLocations (node) {
   if (node.type === 'ObjectExpression') {
     // Modules hash
+    /** @type {import('acorn').ObjectExpression['properties']} */
     const modulesNodes = node.properties
     return modulesNodes.reduce((result, moduleNode) => {
       const moduleId = moduleNode.key.name || moduleNode.key.value
@@ -248,6 +352,10 @@ function getModulesLocations (node) {
   return {}
 }
 
+/**
+ * @param {Node} node
+ * @returns {Location}
+ */
 function getModuleLocation (node) {
   return {
     start: node.start,

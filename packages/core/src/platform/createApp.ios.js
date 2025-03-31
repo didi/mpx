@@ -10,8 +10,8 @@ import { initAppProvides } from './export/inject'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
-function getOrientation (window = ReactNative.Dimensions.get('window')) {
-  return window.width > window.height ? 'landscape' : 'portrait'
+function getPageSize (window = ReactNative.Dimensions.get('window')) {
+  return window.width + 'x' + window.height
 }
 
 function filterOptions (options, appData) {
@@ -170,11 +170,11 @@ export default function createApp (options) {
       })
 
       let count = 0
-      let lastOrientation = getOrientation()
+      let lastPageSize = getPageSize()
       const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const orientation = getOrientation(window)
-        if (orientation === lastOrientation) return
-        lastOrientation = orientation
+        const pageSize = getPageSize(window)
+        if (pageSize === lastPageSize) return
+        lastPageSize = pageSize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
           global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
