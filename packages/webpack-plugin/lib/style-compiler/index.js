@@ -37,6 +37,7 @@ module.exports = function (css, map) {
   const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs, inlineConfigFile: path.join(mpx.projectRoot, 'vue.config.js') })
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = [] // init with trim plugin
+    const postPlugins = []
     const options = Object.assign(
       {
         to: this.resourcePath,
@@ -77,9 +78,6 @@ module.exports = function (css, map) {
       }
     }
 
-    if (mpx.mode === 'web') {
-      plugins.push(vw({ transRpxFn }))
-    }
     // source map
     if (this.sourceMap && !options.map) {
       options.map = {
@@ -89,12 +87,16 @@ module.exports = function (css, map) {
       }
     }
 
-    const finalPlugins = config.prePlugins.concat(plugins, config.plugins)
-
     const cssList = []
     if (runtimeCompile) {
-      finalPlugins.push(cssArrayList(cssList))
+      postPlugins.push(cssArrayList(cssList))
     }
+
+    if (mpx.mode === 'web') {
+      postPlugins.push(vw({ transRpxFn }))
+    }
+
+    const finalPlugins = config.prePlugins.concat(plugins, config.plugins, postPlugins)
 
     return postcss(finalPlugins)
       .process(css, options)
