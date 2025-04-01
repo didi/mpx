@@ -77,16 +77,15 @@ module.exports = function (template, {
         defs,
         decodeHTMLText,
         externalClasses,
-        // todo 后续输出web也采用mpx的scoped处理
         hasScoped: false,
         moduleId,
         filePath: rawResourcePath,
         // react中模版i18n不需要特殊处理
         i18n: null,
         checkUsingComponents,
-        // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
+        // rn模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
         globalComponents: [],
-        // web模式下实现抽象组件
+        // rn模式下实现抽象组件
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
         forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
