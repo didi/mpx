@@ -114,7 +114,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     enhanced = false,
     bounces = true,
     style = {},
-    scrollEventThrottle = 0,
     binddragstart,
     binddragging,
     binddragend,
