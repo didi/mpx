@@ -126,5 +126,9 @@ export default function install (Vue) {
   Vue.prototype.createIntersectionObserver = function (options) {
     return createIntersectionObserver(this, options)
   }
+
+  Vue.prototype.getPageId = function () {
+    return this.__pageId
+  }
   hackEffectScope()
 }
