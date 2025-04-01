@@ -2,6 +2,7 @@
 home: true
 layout: homepageLayout
 heroImage: /logo.png
+title: 首页
 heroText: 增强型跨端小程序框架
 tagline: 良好的开发体验，极致的应用性能，完整的原生兼容，一份源码跨端输出所有小程序平台及Web。
 actionText: 快速进入
@@ -274,24 +275,3 @@ moreList:
     actionLink: https://juejin.cn/user/4195392101298510
 
 ---
-
-## 安装使用
-
-```bash
-# 安装mpx命令行工具
-npm i -g @mpxjs/cli
-
-# 初始化项目
-mpx create <project-name>
-
-# 进入项目目录
-cd <project-name>
-
-# development
-npm run serve
-
-# production
-npm run build
-```
-
-使用小程序开发者工具打开项目文件夹下 dist 中对应平台的文件夹即可预览效果。

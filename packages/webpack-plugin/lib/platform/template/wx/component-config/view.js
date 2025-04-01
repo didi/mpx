@@ -26,15 +26,15 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
-      return 'mpx-view'
+      return el.isSimple ? 'mpx-simple-view' : 'mpx-view'
     },
     android (tag, { el }) {
       el.isBuiltIn = true
-      return 'mpx-view'
+      return el.isSimple ? 'mpx-simple-view' : 'mpx-view'
     },
     harmony (tag, { el }) {
       el.isBuiltIn = true
-      return 'mpx-view'
+      return el.isSimple ? 'mpx-simple-view' : 'mpx-view'
     },
     qa (tag) {
       return 'div'
@@ -53,6 +53,20 @@ module.exports = function ({ print }) {
         android: androidPropLog,
         ios: iosPropLog,
         harmony: harmonyPropLog
+      }, {
+        test: /^(is-simple)$/,
+        android (prop, { el }) {
+          el.isSimple = true
+          return false
+        },
+        harmony (prop, { el }) {
+          el.isSimple = true
+          return false
+        },
+        ios (prop, { el }) {
+          el.isSimple = true
+          return false
+        }
       }
     ],
     // 组件事件中的差异部分

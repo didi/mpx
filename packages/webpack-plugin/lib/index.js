@@ -34,6 +34,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 // const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
@@ -617,6 +618,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RemoveEntryDependency, new NullFactory())
       compilation.dependencyTemplates.set(RemoveEntryDependency, new RemoveEntryDependency.Template())
 
+      compilation.dependencyFactories.set(RecordPageConfigMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordPageConfigMapDependency, new RecordPageConfigMapDependency.Template())
+
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
 
@@ -656,6 +660,8 @@ class MpxWebpackPlugin {
           __vfs,
           // app信息，便于获取appName
           appInfo: {},
+          // pageConfig信息
+          pageConfigsMap: {},
           // pages全局记录，无需区分主包分包
           pagesMap: {},
           // 组件资源记录，依照所属包进行记录
@@ -1598,7 +1604,7 @@ class MpxWebpackPlugin {
         name: 'MpxWebpackPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
-        if (isWeb(mpx.mode) || isReact(mpx.mode)) return
+        if (isWeb(mpx.mode)) return
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
@@ -1637,6 +1643,22 @@ class MpxWebpackPlugin {
 
           const originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
+
+          if (isReact(mpx.mode)) {
+            // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
+            source.add('/* @refresh reset */\n')
+            // 注入页面的配置，供screen前置设置导航情况
+            if (isRuntime) {
+              source.add('// inject pageconfigmap for screen\n' +
+                'var context = (function() { return this })() || Function("return this")();\n')
+              source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+            }
+            source.add(originalSource)
+            compilation.assets[chunkFile] = source
+            processedChunk.add(chunk)
+            return
+          }
+
           source.add(`\nvar ${globalObject} = {};\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {

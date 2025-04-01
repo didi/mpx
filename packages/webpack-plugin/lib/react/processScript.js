@@ -12,9 +12,12 @@ module.exports = function (script, {
   outputPath,
   builtInComponentsMap,
   localComponentsMap,
-  localPagesMap
+  localPagesMap,
+  componentGenerics,
+  genericsInfo
 }, callback) {
   let scriptSrcMode = srcMode
+  const mode = loaderContext.getMpx().mode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
@@ -26,7 +29,7 @@ module.exports = function (script, {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 import { NavigationContainer, StackActions } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+${mode === 'ios' ? "import { createNativeStackNavigator as createStackNavigator } from '@react-navigation/native-stack'" : "import { createStackNavigator } from '@react-navigation/stack'"}
 import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
 import { useHeaderHeight } from '@react-navigation/elements';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -34,7 +37,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 global.__navigationHelper = {
   NavigationContainer: NavigationContainer,
-  createStackNavigator: createNativeStackNavigator,
+  createStackNavigator: createStackNavigator,
   useHeaderHeight: useHeaderHeight,
   StackActions: StackActions,
   GestureHandlerRootView: GestureHandlerRootView,
@@ -67,7 +70,7 @@ global.__navigationHelper = {
       jsonConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }
