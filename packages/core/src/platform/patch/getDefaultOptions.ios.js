@@ -15,6 +15,7 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
+import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from './navigation/index'
 
 const ProviderContext = createContext(null)
 
@@ -453,7 +454,6 @@ export function PageWrapper ({ children, navigation, pageConfig, route }) {
     navigation,
     pageId: currentPageId
   })
-  const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
 
   if (navigation) {
     usePageStatus(navigation, currentPageId, pageStatusMap)

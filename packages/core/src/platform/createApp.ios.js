@@ -7,7 +7,7 @@ import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
-import { NavigationContainer, createStackNavigator, SafeAreaProvider } from './patch/navigation/index.ios.js'
+import { NavigationContainer, createStackNavigator, SafeAreaProvider } from './patch/navigation/index'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 

@@ -5,17 +5,6 @@ import { useHeaderHeight } from '@react-navigation/elements'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
-global.__navigationHelper = {
-  createStackNavigator,
-  NavigationContainer,
-  useHeaderHeight,
-  StackActions,
-  GestureHandlerRootView,
-  PortalHost,
-  SafeAreaProvider,
-  useSafeAreaInsets
-}
-
 export {
   createStackNavigator,
   NavigationContainer,
