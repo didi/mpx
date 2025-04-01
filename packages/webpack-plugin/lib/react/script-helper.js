@@ -90,8 +90,7 @@ function buildGlobalParams ({
   pagesMap,
   firstPage,
   outputPath,
-  genericsInfo,
-  componentGenerics
+  genericsInfo
 }) {
   let content = ''
   if (ctorType === 'app') {

@@ -970,7 +970,7 @@ function processComponentGenerics (el, meta) {
   genericAttrs.forEach((attr) => {
     getAndRemoveAttr(el, attr.name)
     addAttrs(el, [{
-      name: dash2hump(attr.name.replace(':', '')),
+      name: attr.name.replace(':', ''),
       value: attr.value
     }])
   })
