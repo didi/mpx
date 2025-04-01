@@ -33,7 +33,6 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
-  const contentHeight = useRef(0)
   const [headerTop, setHeaderTop] = useState(0)
   const scrollViewContext = useContext(ScrollViewContext)
   const { scrollOffset, scrollLayoutRef } = scrollViewContext
@@ -53,16 +52,21 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
+  const hasLayoutRef = useRef(false)
+
   function onLayout (e: LayoutChangeEvent) {
     if (headerRef.current) {
       // 外层可能有做动画的情况
       // 不加 setTimeout，安卓 pageY 获取的不准；ios pageY 如果有 refresherHeight 则从 refresherHeight 开始，否则从 0 开始, 均不包含 navigationHeight 的值
       // 加了 setTimeout 后， 安卓 pageY 为 navigationHeight + refresherHeight； iOS pageY 为 navigationHeight, 不包含 refresherHeight 的值
       setTimeout(() => {
-        headerRef.current!.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-          contentHeight.current = height
-          setHeaderTop(pageY - offsetTop)
-        })
+        // sticky-header 里面的内容动态变更可能会触发 onLayout ，设置开关只以第一次位置为准
+        if (!hasLayoutRef.current) {
+          hasLayoutRef.current = true
+          headerRef.current!.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+            setHeaderTop(pageY - offsetTop)
+          })
+        }
       }, 100)
     }
   }
