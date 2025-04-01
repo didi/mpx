@@ -12,6 +12,7 @@ const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR, EXTEND_COMPONENTS_LIST } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
+const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
 
 module.exports = function (jsonContent, {
   loaderContext,
@@ -80,7 +81,6 @@ module.exports = function (jsonContent, {
     })
   }
 
-  const isApp = ctorType === 'app'
   if (!jsonContent) {
     return callback()
   }
@@ -100,7 +100,7 @@ module.exports = function (jsonContent, {
       }
     }
 
-    if (!isApp) {
+    if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
     } else {
       if (useExtendComponents) {
@@ -123,6 +123,17 @@ module.exports = function (jsonContent, {
     }
   } catch (e) {
     return callback(e)
+  }
+
+  if (ctorType === 'page') {
+    const keysToExtract = ['navigationStyle']
+    const configObj = {}
+    keysToExtract.forEach(key => {
+      if (jsonObj[key]) {
+        configObj[key] = jsonObj[key]
+      }
+    })
+    loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, configObj))
   }
 
   const fs = loaderContext._compiler.inputFileSystem

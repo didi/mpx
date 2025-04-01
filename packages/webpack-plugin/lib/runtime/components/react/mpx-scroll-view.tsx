@@ -72,6 +72,7 @@ interface ScrollViewProps {
   'enable-sticky'?: boolean;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
+  'scroll-event-throttle'?:number;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -115,7 +116,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const {
     enhanced = false,
     bounces = true,
-    scrollEventThrottle = 0,
     style = {},
     binddragstart,
     binddragging,
@@ -147,6 +147,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
     'enable-sticky': enableSticky,
+    'scroll-event-throttle': scrollEventThrottle = 0,
     __selectRef
   } = props
 
