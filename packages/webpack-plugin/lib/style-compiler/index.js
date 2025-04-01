@@ -37,6 +37,7 @@ module.exports = function (css, map) {
   const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs, inlineConfigFile: path.join(mpx.projectRoot, 'vue.config.js') })
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = [] // init with trim plugin
+    const postPlugins = []
     const options = Object.assign(
       {
         to: this.resourcePath,
@@ -86,17 +87,16 @@ module.exports = function (css, map) {
       }
     }
 
-    const finalPlugins = config.prePlugins.concat(plugins, config.plugins)
-
     const cssList = []
     if (runtimeCompile) {
-      finalPlugins.push(cssArrayList(cssList))
+      postPlugins.push(cssArrayList(cssList))
     }
 
-    // vw 在最后处理
     if (mpx.mode === 'web') {
-      finalPlugins.push(vw({ transRpxFn }))
+      postPlugins.push(vw({ transRpxFn }))
     }
+
+    const finalPlugins = config.prePlugins.concat(plugins, config.plugins, postPlugins)
 
     return postcss(finalPlugins)
       .process(css, options)
