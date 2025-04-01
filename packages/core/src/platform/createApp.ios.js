@@ -7,6 +7,7 @@ import Mpx from '../index'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
+import { NavigationContainer, createStackNavigator, SafeAreaProvider } from './patch/navigation/index.ios.js'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -31,8 +32,6 @@ function filterOptions (options, appData) {
 
 export default function createApp (options) {
   const appData = {}
-
-  const { NavigationContainer, createStackNavigator, SafeAreaProvider } = global.__navigationHelper
   // app选项目前不需要进行转换
   const { rawOptions, currentInject } = transferOptions(options, 'app', false)
   initAppProvides(rawOptions.provide, rawOptions)
