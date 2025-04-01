@@ -5,6 +5,8 @@ const loaderUtils = require('loader-utils')
 const templateCompiler = require('../template-compiler/compiler')
 const genNode = require('../template-compiler/gen-node-react')
 const bindThis = require('../template-compiler/bind-this')
+const isEmptyObject = require('../utils/is-empty-object')
+const dash2hump = require('../utils/hump-dash').dash2hump
 
 module.exports = function (template, {
   loaderContext,
@@ -147,6 +149,20 @@ ${e.stack}`)
 
       if (meta.options) {
         output += `global.currentInject.injectOptions = ${JSON.stringify(meta.options)};\n`
+      }
+      if (!isEmptyObject(componentGenerics)) {
+        output += 'global.currentInject.injectProperties = {\n'
+        output += '  generichash: String,\n'
+
+        Object.keys(componentGenerics).forEach(genericName => {
+          const defaultValue = componentGenerics[genericName].default
+          if (defaultValue) {
+            output += `  generic${dash2hump(genericName)}: { type: String, value: '${genericName}default' },\n`
+          } else {
+             output += `  generic${dash2hump(genericName)}: String,\n`
+          }
+        })
+        output += '}\n'
       }
     }
   }
