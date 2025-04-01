@@ -616,7 +616,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           }
         } else {
           if (bottomVirtualHeight === null) {
-            rootRef.current?.measureInWindow((height) => {
+            rootRef.current?.measureInWindow((x, y, width, height) => {
               // 沉浸模式的计算方式
               bottomVirtualHeight = screenDimensions.height - height - headerHeight
               // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
