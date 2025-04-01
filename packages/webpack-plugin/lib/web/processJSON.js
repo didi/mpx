@@ -80,8 +80,6 @@ module.exports = function (jsonContent, {
     })
   }
 
-  const isApp = ctorType === 'app'
-
   if (!jsonContent) {
     return callback()
   }
@@ -101,7 +99,7 @@ module.exports = function (jsonContent, {
       }
     }
 
-    if (!isApp) {
+    if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
     } else {
       if (useExtendComponents) {

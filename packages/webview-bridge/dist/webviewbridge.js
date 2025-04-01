@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.9.70
+ * mpxjs webview bridge v2.10.0
  * (c) 2025 @mpxjs team
  * @license Apache
  */
@@ -115,8 +115,7 @@
     env = 'swan';
   } else if (systemUA.indexOf('toutiao') > -1) {
     env = 'tt';
-  }
-  if (window.ReactNativeWebView) {
+  } else if (window.ReactNativeWebView) {
     env = 'rn';
     window.mpxWebviewMessageCallback = runCallback;
   } else {
