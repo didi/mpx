@@ -12,6 +12,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import Icon from './mpx-icon'
+import Portal from './mpx-portal'
 
 export interface RadioProps {
   value?: string
@@ -117,6 +118,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const {
+      hasPositionFixed,
       hasSelfPercent,
       normalStyle,
       hasVarDec,
@@ -193,7 +195,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       }
     }, [checked])
 
-    return createElement(View, innerProps,
+    const finalComponent = createElement(View, innerProps,
       createElement(
         View,
         { style: defaultStyle },
@@ -214,6 +216,12 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         }
       )
     )
+
+    if (hasPositionFixed) {
+      return createElement(Portal, null, finalComponent)
+    }
+
+    return finalComponent
   }
 )
 
