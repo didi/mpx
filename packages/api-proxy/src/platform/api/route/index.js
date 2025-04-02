@@ -10,10 +10,16 @@ const reLaunch = ENV_OBJ.reLaunch || envError('reLaunch')
 
 const switchTab = ENV_OBJ.switchTab || envError('switchTab')
 
+const reset = envError('reset')
+
+const getState = envError('getState')
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
   reLaunch,
-  switchTab
+  switchTab,
+  reset,
+  getState
 }

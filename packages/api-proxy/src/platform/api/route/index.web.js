@@ -1,4 +1,4 @@
-import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
+import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser, envError } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 let routeCount = 0
@@ -183,10 +183,16 @@ function switchTab (options = {}) {
   }
 }
 
+const reset = envError('reset')
+
+const getState = envError('getState')
+
 export {
   redirectTo,
   navigateTo,
   navigateBack,
   reLaunch,
-  switchTab
+  switchTab,
+  reset,
+  getState
 }
