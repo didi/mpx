@@ -44,7 +44,8 @@ const blackList = [
   'getExptInfoSync',
   'reserveChannelsLive',
   'getNFCAdapter',
-  'isVKSupport'
+  'isVKSupport',
+  'getState'
 ]
 
 function getMapFromList (list) {
