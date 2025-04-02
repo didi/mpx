@@ -1,4 +1,4 @@
-import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess, envError } from '../../../common/js'
 
 function setScreenBrightness (options = {}) {
   const opts = changeOpts(options, {
