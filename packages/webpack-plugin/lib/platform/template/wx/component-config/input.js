@@ -55,7 +55,7 @@ module.exports = function ({ print }) {
         test: 'type',
         web (prop) {
           let { name, value } = prop
-          if (value === 'idcard' || value === 'digit') {
+          if (value === 'idcard') {
             webValueLog(prop)
             value = 'text'
           }
