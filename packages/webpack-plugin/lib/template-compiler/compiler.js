@@ -2136,7 +2136,7 @@ function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
   if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
-    const wrapper = createASTElement('mpx-simple-text')
+    const wrapper = createASTElement('mpx-inline-text')
     wrapper.isBuiltIn = true
     const inheritAttrs = []
     parent.attrsList.forEach(({ name, value }) => {
