@@ -251,7 +251,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     context: context2D
   })
 
-  if (__mpx_mode__ === 'android') {
+  if (__mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
     const isAndroid9 = Platform.Version as number >= 28
     return createElement(View, innerProps, createElement(
       WebView,
