@@ -324,23 +324,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     )
   }
 
-  const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-    evt.nativeEvent.key === 'Enter' &&
-      bindconfirm!(
-        getCustomEvent(
-          'confirm',
-          evt,
-          {
-            detail: {
-              value: tmpValue.current || ''
-            },
-            layoutRef
-          },
-          props
-        )
-      )
-  }
-
   const onSubmitEditing = (evt: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
     bindconfirm!(
       getCustomEvent(
@@ -474,8 +457,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onChange,
         onSelectionChange,
         onContentSizeChange,
-        onKeyPress: bindconfirm && onKeyPress,
-        onSubmitEditing: bindconfirm && multiline && onSubmitEditing
+        onSubmitEditing: bindconfirm && !multiline && onSubmitEditing
       }
     ),
     [

@@ -10,11 +10,11 @@ import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
+import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view'
+
+const ProviderContext = createContext(null)
 const windowDimensions = ReactNative.Dimensions.get('window')
 const screenDimensions = ReactNative.Dimensions.get('screen')
-const ProviderContext = createContext(null)
-
 function getSystemInfo () {
   return {
     deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
@@ -45,7 +45,9 @@ function createEffect (proxy, components) {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
-    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
+    const generichash = proxy.target.generichash || ''
+    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -644,7 +646,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
           {
             value: keyboardAvoidRef
           },
-          createElement(KeyboardAvoidingView,
+          createElement(MpxKeyboardAvoidingView,
             {
               style: {
                 flex: 1
