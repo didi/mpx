@@ -4,14 +4,15 @@ import useInnerProps from './getInnerListeners'
 
 const SimpleText = (props: TextProps): JSX.Element => {
   const {
-    allowFontScaling = false
+    allowFontScaling = false,
+    children
   } = props
 
   const innerProps = useInnerProps(props, {
     allowFontScaling
   }, [])
 
-  return createElement(Text, innerProps)
+  return createElement(Text, innerProps, children)
 }
 
 SimpleText.displayName = 'MpxSimpleText'
