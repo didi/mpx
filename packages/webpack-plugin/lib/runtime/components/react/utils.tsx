@@ -1,11 +1,13 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, getFocusedNavigation } from '@mpxjs/utils'
-import { VarContext } from './context'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
+import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
+import { runOnJS } from 'react-native-reanimated'
+import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
@@ -17,6 +19,11 @@ export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
 }
+
+declare const __mpx_mode__: 'ios' | 'android'
+
+export const isIOS = __mpx_mode__ === 'ios'
+export const isAndroid = __mpx_mode__ === 'android'
 
 const varDecRegExp = /^--/
 const varUseRegExp = /var\(/
@@ -32,10 +39,14 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-left': 'left'
 }
 
-function getSafeAreaInset (name: string) {
-  const navigation = getFocusedNavigation()
+function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
+}
+
+export function useNavigation (): Record<string, any> | undefined {
+  const { navigation } = useContext(RouteContext) || {}
+  return navigation
 }
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
@@ -67,20 +78,6 @@ export const useUpdateEffect = (effect: any, deps: any) => {
       return effect()
     }
   }, deps)
-}
-
-/**
- * 解析行内样式
- * @param inlineStyle
- * @returns
- */
-export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
-  return inlineStyle.split(';').reduce((styleObj, style) => {
-    const [k, v, ...rest] = style.split(':')
-    if (rest.length || !v || !k) return styleObj
-    const key = k.trim().replace(/-./g, c => c.substring(1).toUpperCase())
-    return extendObject(styleObj, { [key]: global.__formatValue(v.trim()) })
-  }, {})
 }
 
 export const parseUrl = (cssUrl = '') => {
@@ -232,7 +229,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
-function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>) {
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any> | undefined) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
@@ -240,7 +237,7 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
       parsed.forEach(({ start, end, args }) => {
         const name = args[0]
         const fallback = args[1] || ''
-        const value = '' + (getSafeAreaInset(name) ?? global.__formatValue(fallback))
+        const value = '' + (getSafeAreaInset(name, navigation) ?? global.__formatValue(fallback))
         replaced.replace(start, end - 1, value)
       })
       target[key] = global.__formatValue(replaced.source())
@@ -294,14 +291,11 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const normalStyleChangedRef = useRef(false)
   let hasVarDec = false
   let hasVarUse = false
-  let hasSelfPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const unoVarKeyPaths: Array<Array<string>> = []
-  const percentKeyPaths: Array<Array<string>> = []
-  const calcKeyPaths: Array<Array<string>> = []
-  const envKeyPaths: Array<Array<string>> = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
+  const navigation = useNavigation()
 
   function varVisitor ({ key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
@@ -339,6 +333,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply css var
   const varContextRef = useRef({})
   if (enableVarRef.current) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const varContext = useContext(VarContext)
     const newVarContext = extendObject({}, varContext, externalVarContext, varStyle)
     // 缓存比较newVarContext是否发生变化
@@ -360,6 +355,11 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
 
   const memoResult = useMemo(() => {
+    let hasSelfPercent = false
+    let hasPositionFixed = false
+    const percentKeyPaths: Array<Array<string>> = []
+    const calcKeyPaths: Array<Array<string>> = []
+    const envKeyPaths: Array<Array<string>> = []
     // transform can be memoized
     function envVisitor ({ value, keyPath }: VisitorArg) {
       if (envUseRegExp.test(value)) {
@@ -382,6 +382,13 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       }
     }
 
+    function transformPosition (styleObj: Record<string, any>) {
+      if (styleObj.position === 'fixed') {
+        hasPositionFixed = true
+        styleObj.position = 'absolute'
+      }
+    }
+
     // traverse env & calc & percent
     traverseStyle(normalStyle, [envVisitor, percentVisitor, calcVisitor])
 
@@ -395,7 +402,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
 
     // apply env
-    transformEnv(normalStyle, envKeyPaths)
+    transformEnv(normalStyle, envKeyPaths, navigation)
     // apply percent
     transformPercent(normalStyle, percentKeyPaths, percentConfig)
     // apply calc
@@ -413,12 +420,15 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
         }
       }
     })
+    // apply position
+    transformPosition(normalStyle)
     // transform number enum stringify
     transformStringify(normalStyle)
 
     return {
       normalStyle,
-      hasSelfPercent
+      hasSelfPercent,
+      hasPositionFixed
     }
   }, [normalStyleChangedRef.current, width, height, parentWidth, parentHeight, parentFontSize])
 
@@ -509,18 +519,20 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   const hasLayoutRef = useRef(false)
   const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
+  const navigation = useNavigation()
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
     layoutProps.onLayout = (e: LayoutChangeEvent) => {
       hasLayoutRef.current = true
       if (hasSelfPercent) {
         const { width, height } = e?.nativeEvent?.layout || {}
-        setWidth(width || 0)
-        setHeight(height || 0)
+        setWidth && setWidth(width || 0)
+        setHeight && setHeight(height || 0)
       }
       if (enableOffset) {
         nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          const { y: navigationY = 0 } = navigation?.layout || {}
+          layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft, offsetTop: offsetTop - navigationY }
         })
       }
       onLayout && onLayout(e)
@@ -564,13 +576,14 @@ export const debounce = <T extends AnyFunc> (
 ): ((...args: Parameters<T>) => void) & { clear: () => void } => {
   let timer: any
   const wrapper = (...args: ReadonlyArray<any>) => {
-    clearTimeout(timer)
+    timer && clearTimeout(timer)
     timer = setTimeout(() => {
       func(...args)
     }, delay)
   }
   wrapper.clear = () => {
-    clearTimeout(timer)
+    timer && clearTimeout(timer)
+    timer = null
   }
   return wrapper
 }
@@ -594,7 +607,7 @@ export const useStableCallback = <T extends AnyFunc | null | undefined> (
   )
 }
 
-export const usePrevious = <T, > (value: T): T | undefined => {
+export function usePrevious<T> (value: T): T | undefined {
   const ref = useRef<T | undefined>()
   const prev = ref.current
   ref.current = value
@@ -618,7 +631,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
 
 export const extendObject = Object.assign
 
-export function getCurrentPage (pageId: number | null) {
+export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return
   const pages = global.getCurrentPages()
   return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
@@ -639,4 +652,68 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
     }
     return acc
   }, {})
+}
+
+export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled }: { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
+  const enableHoverRef = useRef(enableHover)
+  if (enableHoverRef.current !== enableHover) {
+    error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')
+  }
+
+  if (!enableHoverRef.current) return { isHover: false }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const gestureRef = useContext(ScrollViewContext).gestureRef
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [isHover, setIsHover] = useState(false)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const dataRef = useRef<{
+    startTimer?: ReturnType<typeof setTimeout>
+    stayTimer?: ReturnType<typeof setTimeout>
+  }>({})
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    return () => {
+      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    }
+  }, [])
+
+  const setStartTimer = () => {
+    if (disabled) return
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.startTimer = setTimeout(() => {
+      setIsHover(true)
+    }, +hoverStartTime)
+  }
+
+  const setStayTimer = () => {
+    if (disabled) return
+    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
+    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
+    dataRef.current.stayTimer = setTimeout(() => {
+      setIsHover(false)
+    }, +hoverStayTime)
+  }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const gesture = useMemo(() => {
+    return Gesture.Pan()
+      .onTouchesDown(() => {
+        'worklet'
+        runOnJS(setStartTimer)()
+      })
+      .onTouchesUp(() => {
+        'worklet'
+        runOnJS(setStayTimer)()
+      })
+  }, [])
+
+  if (gestureRef) {
+    gesture.simultaneousWithExternalGesture(gestureRef)
+  }
+
+  return {
+    isHover,
+    gesture
+  }
 }

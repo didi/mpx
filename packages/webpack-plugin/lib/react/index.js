@@ -85,7 +85,6 @@ module.exports = function ({
         srcMode,
         moduleId,
         isProduction,
-        componentGenerics,
         jsonConfig: jsonRes.jsonObj,
         outputPath: queryObj.outputPath || '',
         builtInComponentsMap: templateRes.builtInComponentsMap,

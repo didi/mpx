@@ -119,7 +119,8 @@ interface Context {
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
   createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
-  createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver']
+  createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver'],
+  getPageId: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getPageId']
 }
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
@@ -266,7 +267,7 @@ interface MpxConfig {
   observeClassInstance: boolean | Array<AnyConstructor>
   errorHandler: (msg: String, location: String, e: Error) => any | null
   warnHandler: (msg: String, location: String, e: Error) => any | null
-  proxyEventHandler: (e: WechatMiniprogram.CustomEvent) => any | null
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
   forceFlushSync: boolean,
   webRouteConfig: object,

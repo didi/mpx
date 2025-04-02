@@ -106,7 +106,11 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   useEffect(() => {
     const webviewPostMessage = (message: WebviewMessage) => {
       if (canvasRef.current.webview) {
-        canvasRef.current.webview.postMessage(JSON.stringify(message))
+        const jsCode = `
+        window.mpxWebviewMessageCallback(${JSON.stringify(message)});
+        true;
+      `
+        canvasRef.current.webview.injectJavaScript(jsCode)
       }
     }
 
@@ -247,8 +251,8 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     context: context2D
   })
 
-  if (Platform.OS === 'android') {
-    const isAndroid9 = Platform.Version >= 28
+  if (__mpx_mode__ === 'android') {
+    const isAndroid9 = Platform.Version as number >= 28
     return createElement(View, innerProps, createElement(
       WebView,
       {

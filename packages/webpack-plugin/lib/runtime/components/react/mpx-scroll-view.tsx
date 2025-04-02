@@ -31,15 +31,15 @@
  * ✔ bindscrolltolower
  * ✔ bindscroll
  */
-import { ScrollView } from 'react-native-gesture-handler'
-import { View, RefreshControl, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement } from 'react'
+import { ScrollView, RefreshControl } from 'react-native-gesture-handler'
+import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler } from './utils'
-import { IntersectionObserverContext } from './context'
+import { IntersectionObserverContext, ScrollViewContext } from './context'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -70,6 +70,7 @@ interface ScrollViewProps {
   'parent-height'?: number;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
+  'scroll-event-throttle'?:number;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -124,7 +125,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'paging-enabled': pagingEnabled = false,
     'upper-threshold': upperThreshold = 50,
     'lower-threshold': lowerThreshold = 50,
-    'scroll-with-animation': scrollWithAnimation,
+    'scroll-with-animation': scrollWithAnimation = false,
     'refresher-enabled': refresherEnabled,
     'refresher-default-style': refresherDefaultStyle,
     'refresher-background': refresherBackground,
@@ -140,6 +141,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
+    'scroll-event-throttle': scrollEventThrottle = 0,
     __selectRef
   } = props
 
@@ -159,7 +161,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     visibleLength: 0
   })
 
-  const scrollEventThrottle = 50
   const hasCallScrollToUpper = useRef(true)
   const hasCallScrollToLower = useRef(false)
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -189,12 +190,20 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       pagingEnabled,
       fastDeceleration: false,
       decelerationDisabled: false,
-      scrollTo: scrollToOffset
+      scrollTo
     },
     gestureRef: scrollViewRef
   })
 
+  const contextValue = useMemo(() => {
+    return {
+      gestureRef: scrollViewRef
+    }
+  }, [])
+
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+
+  const lastOffset = useRef(0)
 
   if (scrollX && scrollY) {
     warn('scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
@@ -230,6 +239,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     firstScrollIntoViewChange.current = true
   }, [scrollIntoView])
 
+  function scrollTo ({ top = 0, left = 0, animated = false } : { top?: number; left?: number; animated?: boolean }) {
+    scrollToOffset(left, top, animated)
+  }
+
   function handleScrollIntoView () {
     const refs = __selectRef!(`#${scrollIntoView}`, 'node')
     if (!refs) return
@@ -253,7 +266,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onStartReached (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscrolltoupper } = props
     const { offset } = scrollOptions.current
-    if (bindscrolltoupper && (offset <= upperThreshold)) {
+    const isScrollingBackward = offset < lastOffset.current
+    if (bindscrolltoupper && (offset <= upperThreshold) && isScrollingBackward) {
       if (!hasCallScrollToUpper.current) {
         bindscrolltoupper(
           getCustomEvent('scrolltoupper', e, {
@@ -274,13 +288,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const { bindscrolltolower } = props
     const { contentLength, visibleLength, offset } = scrollOptions.current
     const distanceFromEnd = contentLength - visibleLength - offset
-    if (bindscrolltolower && (distanceFromEnd < lowerThreshold)) {
+    const isScrollingForward = offset > lastOffset.current
+
+    if (bindscrolltolower && (distanceFromEnd < lowerThreshold) && isScrollingForward) {
       if (!hasCallScrollToLower.current) {
         hasCallScrollToLower.current = true
         bindscrolltolower(
           getCustomEvent('scrolltolower', e, {
             detail: {
-              direction: scrollX ? 'right' : 'botttom'
+              direction: scrollX ? 'right' : 'bottom'
             },
             layoutRef
           }, props)
@@ -332,11 +348,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, props)
       )
     updateScrollOptions(e, { scrollLeft, scrollTop })
-    if (enableTriggerIntersectionObserver && intersectionObservers) {
-      for (const key in intersectionObservers) {
-        intersectionObservers[key].throttleMeasure()
-      }
-    }
+    onStartReached(e)
+    onEndReached(e)
+    updateIntersection()
+    // 在 onStartReached、onEndReached 执行完后更新 lastOffset
+    lastOffset.current = scrollOptions.current.offset
   }
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -358,11 +374,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateScrollOptions(e, { scrollLeft, scrollTop })
     onStartReached(e)
     onEndReached(e)
+    updateIntersection()
+    lastOffset.current = scrollOptions.current.offset
   }
-
-  function scrollToOffset (x = 0, y = 0) {
+  function updateIntersection () {
+    if (enableTriggerIntersectionObserver && intersectionObservers) {
+      for (const key in intersectionObservers) {
+        intersectionObservers[key].throttleMeasure()
+      }
+    }
+  }
+  function scrollToOffset (x = 0, y = 0, animated = scrollWithAnimation) {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ x, y, animated: !!scrollWithAnimation })
+      scrollViewRef.current.scrollTo({ x, y, animated })
       scrollOptions.current.scrollLeft = x
       scrollOptions.current.scrollTop = y
       snapScrollLeft.current = x
@@ -429,12 +453,21 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onScrollDrag (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
     updateScrollOptions(e, { scrollLeft, scrollTop })
+    updateIntersection()
+  }
+
+  function onScrollDragStart (e: NativeSyntheticEvent<NativeScrollEvent>) {
+    hasCallScrollToLower.current = false
+    hasCallScrollToUpper.current = false
+    onScrollDrag(e)
   }
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
       style: extendObject({}, innerStyle, layoutStyle),
       pinchGestureEnabled: false,
+      alwaysBounceVertical: false,
+      alwaysBounceHorizontal: false,
       horizontal: scrollX && !scrollY,
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
@@ -445,9 +478,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       onScroll: onScroll,
       onContentSizeChange: onContentSizeChange,
       bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
-      bindtouchmove: ((enhanced && binddragging) || bindtouchend) && onScrollTouchMove,
+      bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
       bindtouchend: ((enhanced && binddragend) || bindtouchend) && onScrollTouchEnd,
-      onScrollBeginDrag: onScrollDrag,
+      onScrollBeginDrag: onScrollDragStart,
       onScrollEndDrag: onScrollDrag,
       onMomentumScrollEnd: onScrollEnd
     },
@@ -507,14 +540,17 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }, (refresherDefaultStyle && refresherDefaultStyle !== 'none' ? { colors: refreshColor[refresherDefaultStyle] } : null)))
         : undefined
     }),
-    wrapChildren(
-      props,
-      {
-        hasVarDec,
-        varContext: varContextRef.current,
-        textStyle,
-        textProps
-      }
+    createElement(ScrollViewContext.Provider,
+      { value: contextValue },
+      wrapChildren(
+        props,
+        {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        }
+      )
     )
   )
 })

@@ -10,6 +10,7 @@ const getWindowInfo = function () {
   const insets = Object.assign(initialWindowMetricsInset, navigationInsets)
   let safeArea = {}
   const { top = 0, bottom = 0, left = 0, right = 0 } = insets
+
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - bottom // 解决安卓开启屏幕内三建导航安卓把安全区计算进去后产生的影响
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
   const layout = navigation.layout || {}
@@ -41,18 +42,11 @@ const getWindowInfo = function () {
 }
 
 const getLaunchOptionsSync = function () {
-  const options = global.__mpxEnterOptions || {}
-  const { path, scene, query } = options
-  return {
-    path,
-    scene,
-    query
-  }
+  return global.__mpxLaunchOptions || {}
 }
 
 const getEnterOptionsSync = function () {
-  const result = getLaunchOptionsSync()
-  return result
+  return global.__mpxEnterOptions || {}
 }
 
 export {

@@ -47,7 +47,7 @@ module.exports = function getSpec ({ warn, error }) {
     'flex-wrap': ['wrap', 'nowrap', 'wrap-reverse'],
     'pointer-events': ['auto', 'box-none', 'box-only', 'none'],
     'vertical-align': ['auto', 'top', 'bottom', 'center'],
-    position: ['relative', 'absolute'],
+    position: ['relative', 'absolute', 'fixed'],
     'font-variant': ['small-caps', 'oldstyle-nums', 'lining-nums', 'tabular-nums', 'proportional-nums'],
     'text-align': ['left', 'right', 'center', 'justify'],
     'font-style': ['normal', 'italic'],
@@ -374,11 +374,11 @@ module.exports = function getSpec ({ warn, error }) {
   // transform 转换
   const formatTransform = ({ prop, value, selector }, { mode }) => {
     // css var & 数组直接返回
-    if (Array.isArray(value) || calcExp.test(value)) return { prop, value }
+    if (Array.isArray(value) || cssVariableExp.test(value)) return { prop, value }
     const values = parseValues(value)
     const transform = []
     values.forEach(item => {
-      const match = item.match(/([/\w]+)\(([^)]+)\)/)
+      const match = item.match(/([/\w]+)\((.+)\)/)
       if (match && match.length >= 3) {
         let key = match[1]
         const val = match[2]
@@ -395,37 +395,39 @@ module.exports = function getSpec ({ warn, error }) {
           case 'skewY':
           case 'perspective':
             // 单个值处理
+            // rotate 处理成 rotateZ
+            key = key === 'rotate' ? 'rotateZ' : key
             transform.push({ [key]: val })
             break
           case 'matrix':
-          case 'matrix3d':
             transform.push({ [key]: parseValues(val, ',').map(val => +val) })
             break
           case 'translate':
           case 'scale':
           case 'skew':
-          case 'rotate3d': // x y z angle
           case 'translate3d': // x y 支持 z不支持
           case 'scale3d': // x y 支持 z不支持
-            {
-              // 2 个以上的值处理
-              key = key.replace('3d', '')
-              const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
-              // scale(.5) === scaleX(.5) scaleY(.5)
-              if (vals.length === 1 && key === 'scale') {
-                vals.push(vals[0])
-              }
-              const xyz = ['X', 'Y', 'Z']
-              transform.push(...vals.map((v, index) => {
-                if (key !== 'rotate' && index > 1) {
-                  unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
-                }
-                return { [`${key}${xyz[index] || ''}`]: v.trim() }
-              }))
-              break
+          {
+            // 2 个以上的值处理
+            key = key.replace('3d', '')
+            const vals = parseValues(val, ',').splice(0, 3)
+            // scale(.5) === scaleX(.5) scaleY(.5)
+            if (vals.length === 1 && key === 'scale') {
+              vals.push(vals[0])
             }
+            const xyz = ['X', 'Y', 'Z']
+            transform.push(...vals.map((v, index) => {
+              if (key !== 'rotate' && index > 1) {
+                unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
+              }
+              return { [`${key}${xyz[index] || ''}`]: v.trim() }
+            }))
+            break
+          }
           case 'translateZ':
           case 'scaleZ':
+          case 'rotate3d': // x y z angle
+          case 'matrix3d':
           default:
             // 不支持的属性处理
             unsupportedPropError({ prop, value, selector }, { mode })

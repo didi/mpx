@@ -12,9 +12,11 @@ import useAnimationHooks from './useAnimationHooks'
 import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
 import { error } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
+import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
+import Portal from './mpx-portal'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -78,7 +80,7 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string,
-  source?: {uri: string },
+  source?: { uri: string },
   colors: Array<string>,
   locations?: Array<number>
   angle?: number
@@ -482,8 +484,8 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
 }
 
 function parseBgImage (text: string): {
-  linearInfo?: LinearInfo;
-  direction?: string;
+  linearInfo?: LinearInfo
+  direction?: string
   type?: 'image' | 'linear'
   src?: string
 } {
@@ -551,7 +553,7 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
       : undefined)
 }
 
-function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
+function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, any>, enableFastImage?: boolean) {
   // 预处理数据
   const preImageInfo: PreImageInfo = preParseImage(imageStyle)
   // 预解析
@@ -577,7 +579,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, 
     if (!src) {
       setShow(false)
       return
-    // 一开始未出现，数据改变时出现
+      // 一开始未出现，数据改变时出现
     } else if (!(needLayout || needImageSize)) {
       setShow(true)
       return
@@ -601,7 +603,7 @@ function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, 
         }
       })
     }
-  // type 添加type 处理无渐变 有渐变的场景
+    // type 添加type 处理无渐变 有渐变的场景
   }, [src, type])
 
   if (!type) return null
@@ -635,14 +637,14 @@ function wrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<string, 
   }
 
   return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} /> }
+    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
     {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
   </View>
 }
 
 interface WrapChildrenConfig {
   hasVarDec: boolean
-  enableBackground: boolean
+  enableBackground?: boolean
   textStyle?: TextStyle
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
@@ -660,7 +662,8 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
   })
 
   return [
-    enableBackground ? wrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
     children
   ]
 }
@@ -683,8 +686,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     animation
   } = props
 
-  const [isHover, setIsHover] = useState(false)
-
   // 默认样式
   const defaultStyle: ExtendedViewStyle = style.display === 'flex'
     ? {
@@ -695,11 +696,15 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       }
     : {}
 
+  const enableHover = !!hoverStyle
+  const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
+
   const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
   const {
     normalStyle,
     hasSelfPercent,
+    hasPositionFixed,
     hasVarDec,
     varContextRef,
     setWidth,
@@ -725,45 +730,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     style: normalStyle
   })
 
-  const dataRef = useRef<{
-    startTimer?: ReturnType<typeof setTimeout>
-    stayTimer?: ReturnType<typeof setTimeout>
-  }>({})
-
-  useEffect(() => {
-    return () => {
-      dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-      dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    }
-  }, [])
-
-  const setStartTimer = () => {
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.startTimer = setTimeout(() => {
-      setIsHover(true)
-    }, +hoverStartTime)
-  }
-
-  const setStayTimer = () => {
-    dataRef.current.stayTimer && clearTimeout(dataRef.current.stayTimer)
-    dataRef.current.startTimer && clearTimeout(dataRef.current.startTimer)
-    dataRef.current.stayTimer = setTimeout(() => {
-      setIsHover(false)
-    }, +hoverStayTime)
-  }
-
-  function onTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchstart } = props
-    bindtouchstart && bindtouchstart(e)
-    setStartTimer()
-  }
-
-  function onTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchend } = props
-    bindtouchend && bindtouchend(e)
-    setStayTimer()
-  }
-
   const {
     layoutRef,
     layoutStyle,
@@ -772,30 +738,19 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
 
-  enableAnimation = enableAnimation || !!animation
-  const enableAnimationRef = useRef(enableAnimation)
-  if (enableAnimationRef.current !== enableAnimation) {
-    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
-  const finalStyle = enableAnimationRef.current
-    ? [viewStyle, useAnimationHooks({
-        animation,
-        style: viewStyle
-      })]
-    : viewStyle
+  const { enableStyleAnimation, animationStyle } = useAnimationHooks({
+    enableAnimation,
+    animation,
+    style: viewStyle
+  })
+
   const innerProps = useInnerProps(
     props,
     extendObject({
       ref: nodeRef,
-      style: finalStyle
+      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
     },
-    layoutProps,
-    hoverStyle
-      ? {
-          bindtouchstart: onTouchStart,
-          bindtouchend: onTouchEnd
-        }
-      : {}
+    layoutProps
     ), [
       'hover-start-time',
       'hover-stay-time',
@@ -816,9 +771,18 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableFastImage
   })
 
-  return enableAnimation
+  let finalComponent: JSX.Element = enableStyleAnimation
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
+
+  if (enableHover) {
+    finalComponent = createElement(GestureDetector, { gesture: gesture as PanGesture }, finalComponent)
+  }
+
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+  return finalComponent
 })
 
 _View.displayName = 'MpxView'

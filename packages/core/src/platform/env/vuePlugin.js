@@ -60,17 +60,23 @@ export default function install (Vue) {
     data: {
       get () {
         return Object.assign({}, this.$props, this.$data)
-      }
+      },
+      enumerable: true,
+      configurable: true
     },
     dataset: {
       get () {
         return collectDataset(this.$attrs, true)
-      }
+      },
+      enumerable: true,
+      configurable: true
     },
     id: {
       get () {
         return this.$attrs.id || ''
-      }
+      },
+      enumerable: true,
+      configurable: true
     }
   })
 
@@ -119,6 +125,10 @@ export default function install (Vue) {
   }
   Vue.prototype.createIntersectionObserver = function (options) {
     return createIntersectionObserver(this, options)
+  }
+
+  Vue.prototype.getPageId = function () {
+    return this.__pageId
   }
   hackEffectScope()
 }

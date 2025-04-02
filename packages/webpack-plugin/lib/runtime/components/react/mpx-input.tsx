@@ -4,10 +4,10 @@
  * ✔ password
  * ✔ placeholder
  * - placeholder-style: Only support color.
- * ✘ placeholder-class
+ * - placeholder-class: Only support color.
  * ✔ disabled
  * ✔ maxlength
- * ✘ cursor-spacing
+ * ✔ cursor-spacing
  * ✔ auto-focus
  * ✔ focus
  * ✔ confirm-type
@@ -37,9 +37,8 @@
  * ✘ bind:keyboardcompositionend
  * ✘ bind:onkeyboardheightchange
  */
-import { JSX, forwardRef, useMemo, useRef, useState, useContext, useEffect, createElement } from 'react'
+import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
-  KeyboardTypeOptions,
   Platform,
   TextInput,
   TextStyle,
@@ -55,7 +54,7 @@ import {
   TextInputSubmitEditingEventData
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { parseInlineStyle, useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -74,24 +73,27 @@ type InputStyle = Omit<
 
 type Type = 'text' | 'number' | 'idcard' | 'digit'
 
+type ConfirmType = 'done' | 'send' | 'search' | 'next' | 'go' | 'return'
+
 export interface InputProps {
   name?: string
   style?: InputStyle & Record<string, any>
-  value?: string
+  value?: string | number
   type?: Type
   password?: boolean
   placeholder?: string
   disabled?: boolean
+  'cursor-spacing'?: number
   maxlength?: number
   'auto-focus'?: boolean
   focus?: boolean
-  'confirm-type'?: 'done' | 'send' | 'search' | 'next' | 'go'
+  'confirm-type'?: ConfirmType
   'confirm-hold'?: boolean
   cursor?: number
   'cursor-color'?: string
   'selection-start'?: number
   'selection-end'?: number
-  'placeholder-style'?: string
+  'placeholder-style'?: { color?: string }
   'enable-offset'?: boolean,
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
@@ -133,9 +135,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     type = 'text',
     value,
     password,
-    'placeholder-style': placeholderStyle,
+    'placeholder-style': placeholderStyle = {},
     disabled,
     maxlength = 140,
+    'cursor-spacing': cursorSpacing = 0,
     'auto-focus': autoFocus,
     focus,
     'confirm-type': confirmType = 'done',
@@ -163,7 +166,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const formContext = useContext(FormContext)
 
-  const setKeyboardAvoidEnabled = useContext(KeyboardAvoidContext)
+  const keyboardAvoid = useContext(KeyboardAvoidContext)
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
@@ -171,23 +174,34 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     formValuesMap = formContext.formValuesMap
   }
 
+  const parseValue = (value: string | number | undefined): string => {
+    if (typeof value === 'string') {
+      if (value.length > maxlength && maxlength >= 0) {
+        return value.slice(0, maxlength)
+      }
+      return value
+    }
+    if (typeof value === 'number') return value + ''
+    return ''
+  }
+
   const keyboardType = keyboardTypeMap[type]
-  const defaultValue = type === 'number' && value ? value + '' : value
-  const placeholderTextColor = parseInlineStyle(placeholderStyle)?.color
+  const defaultValue = parseValue(value)
   const textAlignVertical = multiline ? 'top' : 'auto'
 
-  const tmpValue = useRef<string | undefined>(defaultValue)
+  const tmpValue = useRef<string>(defaultValue)
   const cursorIndex = useRef<number>(0)
   const lineCount = useRef<number>(0)
 
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
+  const [selection, setSelection] = useState({ start: -1, end: -1 })
 
   const styleObj = extendObject(
     { padding: 0, backgroundColor: '#fff' },
     style,
     multiline && autoHeight
-      ? { minHeight: Math.max((style as any)?.minHeight || 35, contentHeight) }
+      ? { height: 'auto', minHeight: Math.max((style as any)?.minHeight || 35, contentHeight) }
       : {}
   )
 
@@ -207,54 +221,78 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   useEffect(() => {
     if (inputValue !== value) {
-      setInputValue(value)
+      setInputValue(parseValue(value))
     }
   }, [value])
 
-  const selection = useMemo(() => {
-    if (selectionStart >= 0 && selectionEnd >= 0) {
-      return { start: selectionStart, end: selectionEnd }
-    } else if (typeof cursor === 'number') {
-      return { start: cursor, end: cursor }
+  useEffect(() => {
+    if (typeof cursor === 'number') {
+      setSelection({ start: cursor, end: cursor })
+    } else if (selectionStart >= 0 && selectionEnd >= 0 && selectionStart !== selectionEnd) {
+      setSelection({ start: selectionStart, end: selectionEnd })
     }
   }, [cursor, selectionStart, selectionEnd])
 
-  const onTextInput = ({ nativeEvent }: NativeSyntheticEvent<TextInputTextInputEventData>) => {
-    if (!bindinput && !bindblur) return
-    const {
-      range: { start, end },
-      text
-    } = nativeEvent
-    cursorIndex.current = start < end ? start : start + text.length
+  // have not selection on the Android platformg
+  const getCursorIndex = (
+    changedSelection: TextInputSelectionChangeEventData['selection'] | undefined,
+    prevValue: string,
+    curValue: string
+  ) => {
+    if (changedSelection) return changedSelection.end
+    if (!prevValue || !curValue || prevValue.length === curValue.length) return curValue.length
+    const prevStr = prevValue.substring(cursorIndex.current)
+    const curStr = curValue.substring(cursorIndex.current)
+    return cursorIndex.current + curStr.length - prevStr.length
   }
 
-  const onChange = (evt: NativeSyntheticEvent<TextInputChangeEventData>) => {
-    tmpValue.current = evt.nativeEvent.text
-    if (!bindinput) return
-    const result = bindinput(
-      getCustomEvent(
-        'input',
-        evt,
-        {
-          detail: {
-            value: evt.nativeEvent.text,
-            cursor: cursorIndex.current
+  const onChange = (evt: NativeSyntheticEvent<TextInputChangeEventData & TextInputSelectionChangeEventData>) => {
+    const { text, selection } = evt.nativeEvent
+    // will trigger twice on the Android platformg, prevent the second trigger
+    if (tmpValue.current === text) return
+    const index = getCursorIndex(selection, tmpValue.current, text)
+    tmpValue.current = text
+    cursorIndex.current = index
+    if (bindinput) {
+      const result = bindinput(
+        getCustomEvent(
+          'input',
+          evt,
+          {
+            detail: {
+              value: tmpValue.current,
+              cursor: cursorIndex.current
+            },
+            layoutRef
           },
-          layoutRef
-        },
-        props
+          props
+        )
       )
-    )
-    if (typeof result === 'string') {
-      tmpValue.current = result
-      setInputValue(result)
+      if (typeof result === 'string') {
+        tmpValue.current = result
+        setInputValue(result)
+      } else {
+        setInputValue(tmpValue.current)
+      }
     } else {
       setInputValue(tmpValue.current)
     }
   }
 
-  const onInputFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindfocus!(
+  const setKeyboardAvoidContext = () => {
+    if (adjustPosition && keyboardAvoid) {
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef }
+    }
+  }
+
+  const onTouchStart = () => {
+    // sometimes the focus event occurs later than the keyboardWillShow event
+    setKeyboardAvoidContext()
+  }
+
+  const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    setKeyboardAvoidContext()
+    bindfocus && bindfocus(
       getCustomEvent(
         'focus',
         evt,
@@ -269,8 +307,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     )
   }
 
-  const onInputBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    bindblur!(
+  const onBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    bindblur && bindblur(
       getCustomEvent(
         'blur',
         evt,
@@ -284,23 +322,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         props
       )
     )
-  }
-
-  const onKeyPress = (evt: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-    evt.nativeEvent.key === 'Enter' &&
-      bindconfirm!(
-        getCustomEvent(
-          'confirm',
-          evt,
-          {
-            detail: {
-              value: tmpValue.current || ''
-            },
-            layoutRef
-          },
-          props
-        )
-      )
   }
 
   const onSubmitEditing = (evt: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
@@ -320,14 +341,18 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onSelectionChange = (evt: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-    bindselectionchange!(
+    const { selection } = evt.nativeEvent
+    const { start, end } = selection
+    cursorIndex.current = start
+    setSelection(selection)
+    bindselectionchange && bindselectionchange(
       getCustomEvent(
         'selectionchange',
         evt,
         {
           detail: {
-            selectionStart: evt.nativeEvent.selection.start,
-            selectionEnd: evt.nativeEvent.selection.end
+            selectionStart: start,
+            selectionEnd: end
           },
           layoutRef
         },
@@ -387,8 +412,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }, [])
 
   useEffect(() => {
-    setKeyboardAvoidEnabled?.(adjustPosition)
-  }, [adjustPosition])
+    if (focus) {
+      setKeyboardAvoidContext()
+    }
+  }, [focus])
 
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
@@ -413,25 +440,24 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         maxLength: maxlength === -1 ? undefined : maxlength,
         editable: !disabled,
         autoFocus: !!autoFocus || !!focus,
-        returnKeyType: confirmType,
         selection: selection,
         selectionColor: cursorColor,
         blurOnSubmit: !multiline && !confirmHold,
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
-        placeholderTextColor: placeholderTextColor,
+        placeholderTextColor: placeholderStyle?.color,
         multiline: !!multiline
       },
+      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType },
       layoutProps,
       {
-        onFocus: bindfocus && onInputFocus,
-        onBlur: bindblur && onInputBlur,
-        onKeyPress: bindconfirm && onKeyPress,
-        onSubmitEditing: bindconfirm && multiline && onSubmitEditing,
-        onSelectionChange: bindselectionchange && onSelectionChange,
-        onTextInput: onTextInput,
-        onChange: onChange,
-        onContentSizeChange: onContentSizeChange
+        onTouchStart,
+        onFocus,
+        onBlur,
+        onChange,
+        onSelectionChange,
+        onContentSizeChange,
+        onSubmitEditing: bindconfirm && !multiline && onSubmitEditing
       }
     ),
     [
