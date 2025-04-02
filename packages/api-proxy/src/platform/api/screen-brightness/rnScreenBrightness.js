@@ -1,5 +1,5 @@
 import * as Brightness from 'expo-brightness'
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, envError } from '../../../common/js'
 
 function getScreenBrightness (options = {}) {
   const { success, fail, complete } = options
@@ -32,7 +32,16 @@ function setScreenBrightness (options = {}) {
   })
 }
 
+const setVisualEffectOnCapture = envError('setVisualEffectOnCapture')
+
+const onUserCaptureScreen = envError('onUserCaptureScreen')
+
+const offUserCaptureScreen = envError('offUserCaptureScreen')
+
 export {
   getScreenBrightness,
-  setScreenBrightness
+  setScreenBrightness,
+  setVisualEffectOnCapture,
+  onUserCaptureScreen,
+  offUserCaptureScreen
 }
