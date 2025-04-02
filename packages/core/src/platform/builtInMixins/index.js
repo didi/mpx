@@ -1,4 +1,3 @@
-import { isReact } from '@mpxjs/utils'
 import pageStatusMixin from './pageStatusMixin'
 import proxyEventMixin from './proxyEventMixin'
 import renderHelperMixin from './renderHelperMixin'
@@ -18,7 +17,7 @@ import pageIdMixin from './pageIdMixin'
 
 export default function getBuiltInMixins ({ type, rawOptions = {} }) {
   let bulitInMixins
-  if (isReact) {
+  if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
