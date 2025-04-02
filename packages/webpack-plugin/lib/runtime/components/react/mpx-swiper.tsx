@@ -2,11 +2,12 @@ import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
 
-import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo } from 'react'
+import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
 import { SwiperContext } from './context'
+import Portal from './mpx-portal'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -149,6 +150,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     hasVarDec,
     varContextRef,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(style, {
@@ -708,35 +710,41 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       return { transform: [{ translateY: offset.value }], opacity: step.value > 0 ? 1 : 0 }
     }
   })
-
-  function renderSwiper () {
-    const arrPages: Array<ReactNode> | ReactNode = renderItems()
-    return (<View style={[normalStyle, layoutStyle, styles.swiper]} {...layoutProps} {...innerProps}>
-        <Animated.View style={[{
-          flexDirection: dir === 'x' ? 'row' : 'column',
-          width: '100%',
-          height: '100%'
-        }, animatedStyles]}>
-          {wrapChildren({
-            children: arrPages
-          }, {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          })}
-        </Animated.View>
-        {showsPagination && renderPagination()}
-    </View>)
-  }
-
+  let finalComponent: JSX.Element 
   if (children.length === 1) {
-    return renderSwiper()
+    const mergeProps = Object.assign({
+      style: [normalStyle, layoutStyle]
+    }, layoutProps, innerProps)
+    finalComponent = createElement(View, mergeProps, wrapChildren({
+      children: children
+    }, {
+      hasVarDec,
+      varContext: varContextRef.current,
+      textStyle,
+      textProps
+    }))
   } else {
-    return (<GestureDetector gesture={gestureHandler}>
-      {renderSwiper()}
-    </GestureDetector>)
+    const arrPages: Array<ReactNode> | ReactNode = renderItems()
+    const mergeProps = Object.assign({
+      style: [normalStyle, layoutStyle, styles.swiper]
+    }, layoutProps, innerProps)
+    finalComponent = createElement(GestureDetector, {
+      gesture: gestureHandler
+    }, createElement(View, mergeProps, createElement(Animated.View, {
+      style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
+    }, wrapChildren({
+      children: arrPages
+    }, {
+      hasVarDec,
+      varContext: varContextRef.current,
+      textStyle,
+      textProps
+    }))))
   }
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+  return finalComponent
 })
 SwiperWrapper.displayName = 'MpxSwiperWrapper'
 
