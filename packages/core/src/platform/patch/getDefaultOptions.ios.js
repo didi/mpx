@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -15,7 +15,7 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
-import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from './navigation/index'
+import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
 
 const ProviderContext = createContext(null)
 
@@ -445,7 +445,7 @@ const checkRelation = (options) => {
   }
 }
 
-export function PageWrapper ({ children, navigation, pageConfig, route }) {
+export function PageWrapper ({ children, navigation, pageConfig = {}, route }) {
   const rootRef = useRef(null)
   const keyboardAvoidRef = useRef(null)
   const intersectionObservers = useRef({})
@@ -455,36 +455,36 @@ export function PageWrapper ({ children, navigation, pageConfig, route }) {
     pageId: currentPageId
   })
 
-  if (navigation) {
-    usePageStatus(navigation, currentPageId, pageStatusMap)
-    if (pageConfig) {
-      useLayoutEffect(() => {
-        const isCustom = pageConfig.navigationStyle === 'custom'
-        navigation.setOptions({
-          headerShown: !isCustom,
-          title: pageConfig.navigationBarTitleText?.trim() || '',
-          headerStyle: {
-            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-          },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-        if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-          const color = isCustom ? 'transparent' : pageConfig.statusBarColor
-          color && ReactNative.StatusBar.setBackgroundColor(color)
-        }
-      }, [])
-    }
-    useEffect(() => {
-      setTimeout(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
-      }, 100)
-    }, [])
-    navigation.insets = useSafeAreaInsets()
+  if (!navigation || !route) {
+    // 独立组件使用时要求传递navigation
+    error('use PageWrapper need give ')
   }
+  usePageStatus(navigation, currentPageId, pageStatusMap)
+  useLayoutEffect(() => {
+    const isCustom = pageConfig.navigationStyle === 'custom'
+    navigation.setOptions({
+      headerShown: !isCustom,
+      title: pageConfig.navigationBarTitleText?.trim() || '',
+      headerStyle: {
+        backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+      },
+      headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+    })
+    if (__mpx_mode__ === 'android') {
+      ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+      ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+      const color = isCustom ? 'transparent' : pageConfig.statusBarColor
+      color && ReactNative.StatusBar.setBackgroundColor(color)
+    }
+  }, [])
+  useEffect(() => {
+    setTimeout(() => {
+      rootRef.current?.measureInWindow((x, y, width, height) => {
+        navigation.layout = { x, y, width, height }
+      })
+    }, 100)
+  }, [])
+  navigation.insets = useSafeAreaInsets()
   const withKeyboardAvoidingView = (element) => {
     return createElement(KeyboardAvoidContext.Provider,
       {

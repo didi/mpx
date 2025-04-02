@@ -1,6 +1,6 @@
 import { isFunction, isNumber, isString } from '@mpxjs/utils'
 import { createI18n } from '../builtInMixins/i18nMixin'
-import * as navigationHelper from '../patch/navigation/index'
+import * as navigationHelper from './navigationHelper'
 
 export function init (Mpx) {
   global.__mpx = Mpx
