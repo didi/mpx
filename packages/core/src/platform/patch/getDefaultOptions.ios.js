@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, isValidElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -422,6 +422,7 @@ function usePageStatus (navigation, pageId, pageStatusMap) {
 }
 
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
+let currentInjectPageConfig = {}
 let pageId = 0
 
 const RelationsContext = createContext(null)
@@ -445,111 +446,112 @@ const checkRelation = (options) => {
   }
 }
 
-export function PageWrapper ({ children, navigation, pageConfig = {}, route }) {
-  const rootRef = useRef(null)
-  const keyboardAvoidRef = useRef(null)
-  const intersectionObservers = useRef({})
-  const currentPageId = useMemo(() => ++pageId, [])
-  const routeContextValRef = useRef({
-    navigation,
-    pageId: currentPageId
-  })
-
-  if (!navigation || !route) {
-    // 独立组件使用时要求传递navigation
-    error('use PageWrapper need give ')
-  }
-  usePageStatus(navigation, currentPageId, pageStatusMap)
-  useLayoutEffect(() => {
-    const isCustom = pageConfig.navigationStyle === 'custom'
-    navigation.setOptions({
-      headerShown: !isCustom,
-      title: pageConfig.navigationBarTitleText?.trim() || '',
-      headerStyle: {
-        backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-      },
-      headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+export function withPageWrapper (WrappedComponent) {
+  return function PageWrapperHOC ({ navigation, route, pageConfig = {}, ...props }) {
+    const rootRef = useRef(null)
+    const keyboardAvoidRef = useRef(null)
+    const intersectionObservers = useRef({})
+    const currentPageId = useMemo(() => ++pageId, [])
+    const routeContextValRef = useRef({
+      navigation,
+      pageId: currentPageId
     })
-    if (__mpx_mode__ === 'android') {
-      ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-      ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-      const color = isCustom ? 'transparent' : pageConfig.statusBarColor
-      color && ReactNative.StatusBar.setBackgroundColor(color)
+    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, currentInjectPageConfig, pageConfig)
+    if (!navigation || !route) {
+      // 独立组件使用时要求传递navigation
+      error('use PageWrapper need give ')
     }
-  }, [])
-  useEffect(() => {
-    setTimeout(() => {
-      rootRef.current?.measureInWindow((x, y, width, height) => {
-        navigation.layout = { x, y, width, height }
+    usePageStatus(navigation, currentPageId, pageStatusMap)
+    useLayoutEffect(() => {
+      const isCustom = currentPageConfig.navigationStyle === 'custom'
+      navigation.setOptions({
+        headerShown: !isCustom,
+        title: currentPageConfig.navigationBarTitleText?.trim() || '',
+        headerStyle: {
+          backgroundColor: currentPageConfig.navigationBarBackgroundColor || '#000000'
+        },
+        headerTintColor: currentPageConfig.navigationBarTextStyle || 'white'
       })
-    }, 100)
-  }, [])
-  navigation.insets = useSafeAreaInsets()
-  const withKeyboardAvoidingView = (element) => {
-    return createElement(KeyboardAvoidContext.Provider,
-      {
-        value: keyboardAvoidRef
-      },
-      createElement(KeyboardAvoidingView,
+      if (__mpx_mode__ === 'android') {
+        ReactNative.StatusBar.setBarStyle(currentPageConfig.barStyle || 'dark-content')
+        ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
+        const color = isCustom ? 'transparent' : currentPageConfig.statusBarColor
+        color && ReactNative.StatusBar.setBackgroundColor(color)
+      }
+    }, [])
+    useEffect(() => {
+      setTimeout(() => {
+        rootRef.current?.measureInWindow((x, y, width, height) => {
+          navigation.layout = { x, y, width, height }
+        })
+      }, 100)
+    }, [])
+    navigation.insets = useSafeAreaInsets()
+    const withKeyboardAvoidingView = (element) => {
+      return createElement(KeyboardAvoidContext.Provider,
         {
-          style: {
-            flex: 1
+          value: keyboardAvoidRef
+        },
+        createElement(KeyboardAvoidingView,
+          {
+            style: {
+              flex: 1
+            },
+            contentContainerStyle: {
+              flex: 1
+            }
           },
-          contentContainerStyle: {
+          element
+        )
+      )
+    }
+
+    return createElement(GestureHandlerRootView,
+      {
+        // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
+        style: __mpx_mode__ === 'ios' && currentPageConfig?.navigationStyle !== 'custom'
+          ? {
+            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+          }
+          : {
             flex: 1
           }
-        },
-        element
-      )
-    )
-  }
-  return createElement(GestureHandlerRootView,
-    {
-      // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-      style: __mpx_mode__ === 'ios' && pageConfig?.navigationStyle !== 'custom'
-        ? {
-          height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-        }
-        : {
-          flex: 1
-        }
-    },
-    withKeyboardAvoidingView(
-      createElement(ReactNative.View,
-        {
-          style: {
-            flex: 1,
-            backgroundColor: pageConfig?.backgroundColor || '#fff'
-          },
-          ref: rootRef
-        },
-        createElement(RouteContext.Provider,
+      },
+      withKeyboardAvoidingView(
+        createElement(ReactNative.View,
           {
-            value: routeContextValRef.current
-          },
-          createElement(IntersectionObserverContext.Provider,
-            {
-              value: intersectionObservers.current
+            style: {
+              flex: 1,
+              backgroundColor: currentPageConfig?.backgroundColor || '#fff'
             },
-            createElement(PortalHost,
-              null,
-              // 组件单独使用时传递children可能为 element 元素
-              isValidElement(children)
-                ? cloneElement(children, {
+            ref: rootRef
+          },
+          createElement(RouteContext.Provider,
+            {
+              value: routeContextValRef.current
+            },
+            createElement(IntersectionObserverContext.Provider,
+              {
+                value: intersectionObservers.current
+              },
+              createElement(PortalHost,
+                null,
+                createElement(WrappedComponent, {
+                  ...props,
                   navigation,
                   route,
                   id: currentPageId
                 })
-                : createElement(children, {
-                  navigation,
-                  route,
-                  id: currentPageId
-                })
+              )
             )
           )
         )
-      )
-    ))
+      ))
+  }
+}
+
+export function PageWrapper ({ children, ...props }) {
+  return createElement(withPageWrapper(() => children), props)
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -687,15 +689,8 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
-    return ({ navigation, route }) => createElement(
-      PageWrapper, {
-        pageConfig,
-        navigation,
-        route
-      },
-      defaultOptions
-    )
+    currentInjectPageConfig = currentInject.pageConfig
+    return withPageWrapper(defaultOptions)
   }
   return defaultOptions
 }
