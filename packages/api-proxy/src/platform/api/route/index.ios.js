@@ -163,7 +163,7 @@ function reset (options = {}) {
     failHandle(res, options.fail, options.complete)
     return
   }
-  const resetOption = Object.getOwnPropertyNames(options).reduce((resOpt, key) => {
+  const resetOption = Object.keys(options).reduce((resOpt, key) => {
     if (key !== 'fail' && key !== 'complete' && key !== 'success') {
       resOpt[key] = options[key]
     }
