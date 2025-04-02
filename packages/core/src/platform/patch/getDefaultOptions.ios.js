@@ -459,7 +459,7 @@ export function withPageWrapper (WrappedComponent) {
     const currentPageConfig = Object.assign({}, global.__mpxPageConfig, currentInjectPageConfig, pageConfig)
     if (!navigation || !route) {
       // 独立组件使用时要求传递navigation
-      error('use PageWrapper need give ')
+      error('Using pageWrapper requires passing navigation and route')
     }
     usePageStatus(navigation, currentPageId, pageStatusMap)
     useLayoutEffect(() => {
