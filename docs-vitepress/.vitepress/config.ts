@@ -370,7 +370,13 @@ export default withPwa(
         vite: {
             logLevel: "info",
             plugins: [
-                llmstxt() as Plugin,
+                llmstxt({
+                    customTemplateVariables: {
+                        title,
+                        description,
+                    },
+                    ignoreFiles: ["index.md", "api/index.md"],
+                }) as Plugin,
                 groupIconVitePlugin({
                     customIcon: {
                         ios: "logos:apple",

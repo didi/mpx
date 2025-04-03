@@ -66,7 +66,7 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = 'swan'
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt'
-} if (window.ReactNativeWebView) {
+} else if (window.ReactNativeWebView) {
   env = 'rn'
   window.mpxWebviewMessageCallback = runCallback
 } else {

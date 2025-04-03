@@ -2,6 +2,7 @@
 home: true
 layout: homepageLayout
 heroImage: /logo.png
+title: 首页
 heroText: 增强型跨端小程序框架
 tagline: 良好的开发体验，极致的应用性能，完整的原生兼容，一份源码跨端输出所有小程序平台及Web。
 actionText: 快速进入

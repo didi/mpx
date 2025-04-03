@@ -2,11 +2,12 @@ import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
 
-import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo } from 'react'
+import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
 import { SwiperContext } from './context'
+import Portal from './mpx-portal'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -55,6 +56,7 @@ interface SwiperProps {
   'parent-width'?: number;
   'parent-height'?: number;
   'external-var-context'?: Record<string, any>;
+  disableGesture?: boolean;
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
@@ -126,7 +128,7 @@ const easeMap = {
 
 const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const {
-    'indicator-dots': showsPagination,
+    'indicator-dots': showPagination,
     'indicator-color': dotColor = 'rgba(0, 0, 0, .3)',
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
@@ -136,7 +138,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'external-var-context': externalVarContext,
     style = {},
     autoplay = false,
-    circular = false
+    circular = false,
+    disableGesture = false
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
@@ -149,6 +152,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     hasVarDec,
     varContextRef,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(style, {
@@ -708,35 +712,46 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       return { transform: [{ translateY: offset.value }], opacity: step.value > 0 ? 1 : 0 }
     }
   })
-
-  function renderSwiper () {
-    const arrPages: Array<ReactNode> | ReactNode = renderItems()
-    return (<View style={[normalStyle, layoutStyle, styles.swiper]} {...layoutProps} {...innerProps}>
-        <Animated.View style={[{
-          flexDirection: dir === 'x' ? 'row' : 'column',
-          width: '100%',
-          height: '100%'
-        }, animatedStyles]}>
-          {wrapChildren({
-            children: arrPages
-          }, {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          })}
-        </Animated.View>
-        {showsPagination && renderPagination()}
-    </View>)
-  }
-
+  let finalComponent: JSX.Element
   if (children.length === 1) {
-    return renderSwiper()
+    const mergeProps = Object.assign({
+      style: [normalStyle, layoutStyle]
+    }, layoutProps, innerProps)
+    finalComponent = createElement(View, mergeProps, wrapChildren({
+      children: children
+    }, {
+      hasVarDec,
+      varContext: varContextRef.current,
+      textStyle,
+      textProps
+    }))
   } else {
-    return (<GestureDetector gesture={gestureHandler}>
-      {renderSwiper()}
-    </GestureDetector>)
+    const arrPages: Array<ReactNode> | ReactNode = renderItems()
+    const mergeProps = Object.assign({
+      style: [normalStyle, layoutStyle, styles.swiper]
+    }, layoutProps, innerProps)
+    const animateComponent = createElement(Animated.View, {
+      style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
+    }, wrapChildren({
+      children: arrPages
+    }, {
+      hasVarDec,
+      varContext: varContextRef.current,
+      textStyle,
+      textProps
+    }))
+    const renderChildrens = showPagination ? [animateComponent, renderPagination()] : renderPagination()
+    finalComponent = createElement(View, mergeProps, renderChildrens)
+    if (!disableGesture) {
+      finalComponent = createElement(GestureDetector, {
+        gesture: gestureHandler
+      }, finalComponent)
+    }
   }
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+  return finalComponent
 })
 SwiperWrapper.displayName = 'MpxSwiperWrapper'
 
