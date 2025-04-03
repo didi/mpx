@@ -56,6 +56,7 @@ interface SwiperProps {
   'parent-width'?: number;
   'parent-height'?: number;
   'external-var-context'?: Record<string, any>;
+  disableGesture?: boolean;
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
@@ -127,7 +128,7 @@ const easeMap = {
 
 const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const {
-    'indicator-dots': showsPagination,
+    'indicator-dots': showPagination,
     'indicator-color': dotColor = 'rgba(0, 0, 0, .3)',
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
@@ -137,7 +138,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'external-var-context': externalVarContext,
     style = {},
     autoplay = false,
-    circular = false
+    circular = false,
+    disableGesture = false
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
@@ -710,7 +712,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       return { transform: [{ translateY: offset.value }], opacity: step.value > 0 ? 1 : 0 }
     }
   })
-  let finalComponent: JSX.Element 
+  let finalComponent: JSX.Element
   if (children.length === 1) {
     const mergeProps = Object.assign({
       style: [normalStyle, layoutStyle]
@@ -728,9 +730,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const mergeProps = Object.assign({
       style: [normalStyle, layoutStyle, styles.swiper]
     }, layoutProps, innerProps)
-    finalComponent = createElement(GestureDetector, {
-      gesture: gestureHandler
-    }, createElement(View, mergeProps, createElement(Animated.View, {
+    const animateComponent = createElement(Animated.View, {
       style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
     }, wrapChildren({
       children: arrPages
@@ -739,7 +739,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       varContext: varContextRef.current,
       textStyle,
       textProps
-    }))))
+    }))
+    const renderChildrens = showPagination ? [animateComponent, renderPagination()] : renderPagination()
+    finalComponent = createElement(View, mergeProps, renderChildrens)
+    if (!disableGesture) {
+      finalComponent = createElement(GestureDetector, {
+        gesture: gestureHandler
+      }, finalComponent)
+    }
   }
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)
