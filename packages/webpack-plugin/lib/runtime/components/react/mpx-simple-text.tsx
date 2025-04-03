@@ -1,18 +1,20 @@
 import { Text, TextProps } from 'react-native'
 import { JSX, createElement } from 'react'
+import useInnerProps from './getInnerListeners'
 
-import { extendObject } from './utils'
-
-const _Text2 = (props: TextProps): JSX.Element => {
+const SimpleText = (props: TextProps): JSX.Element => {
   const {
-    allowFontScaling = false
+    allowFontScaling = false,
+    children
   } = props
 
-  return createElement(Text, extendObject({}, props, {
+  const innerProps = useInnerProps(props, {
     allowFontScaling
-  }))
+  }, [])
+
+  return createElement(Text, innerProps, children)
 }
 
-_Text2.displayName = 'MpxSimpleText'
+SimpleText.displayName = 'MpxSimpleText'
 
-export default _Text2
+export default SimpleText
