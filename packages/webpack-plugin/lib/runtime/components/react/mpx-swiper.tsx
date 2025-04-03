@@ -55,6 +55,7 @@ interface SwiperProps {
   'parent-width'?: number;
   'parent-height'?: number;
   'external-var-context'?: Record<string, any>;
+  disableGesture?: boolean;
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
 }
 
@@ -136,7 +137,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'external-var-context': externalVarContext,
     style = {},
     autoplay = false,
-    circular = false
+    circular = false,
+    disableGesture = false
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
@@ -730,7 +732,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     </View>)
   }
 
-  if (children.length === 1) {
+  if (children.length === 1 || disableGesture) {
     return renderSwiper()
   } else {
     return (<GestureDetector gesture={gestureHandler}>
