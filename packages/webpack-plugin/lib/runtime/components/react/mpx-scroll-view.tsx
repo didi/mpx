@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 import { ScrollView, RefreshControl } from 'react-native-gesture-handler'
-import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { Animated, View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
 import { JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, createElement, useMemo } from 'react'
 import { useAnimatedRef } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
@@ -68,6 +68,7 @@ interface ScrollViewProps {
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
+  'enable-sticky'?: boolean;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
   'scroll-event-throttle'?:number;
@@ -106,6 +107,9 @@ type ScrollAdditionalProps = {
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
+
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
+
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
@@ -141,9 +145,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
+    'enable-sticky': enableSticky,
     'scroll-event-throttle': scrollEventThrottle = 0,
     __selectRef
   } = props
+
+  const scrollOffset = useRef(new Animated.Value(0)).current
 
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
@@ -195,13 +202,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     gestureRef: scrollViewRef
   })
 
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props: extendObject({}, props, { 'enable-offset': true }), hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+
   const contextValue = useMemo(() => {
     return {
-      gestureRef: scrollViewRef
+      gestureRef: scrollViewRef,
+      scrollOffset,
+      scrollLayoutRef: layoutRef
     }
   }, [])
-
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
   const lastOffset = useRef(0)
 
@@ -456,6 +465,16 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateIntersection()
   }
 
+  const scrollHandler = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onScroll(event)
+      }
+    }
+  )
+
   function onScrollDragStart (e: NativeSyntheticEvent<NativeScrollEvent>) {
     hasCallScrollToLower.current = false
     hasCallScrollToUpper.current = false
@@ -475,7 +494,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       showsVerticalScrollIndicator: scrollY && showScrollbar,
       scrollEnabled: scrollX || scrollY,
       ref: scrollViewRef,
-      onScroll: onScroll,
+      onScroll: enableSticky ? scrollHandler : onScroll,
       onContentSizeChange: onContentSizeChange,
       bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
       bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
@@ -529,8 +548,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
+  const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
+
   return createElement(
-    ScrollView,
+    ScrollViewComponent,
     extendObject({}, innerProps, {
       refreshControl: refresherEnabled
         ? createElement(RefreshControl, extendObject({
