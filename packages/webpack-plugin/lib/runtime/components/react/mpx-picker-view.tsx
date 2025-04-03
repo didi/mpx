@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import React, { forwardRef, useRef } from 'react'
+import React, { createElement, forwardRef, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import {
@@ -12,6 +12,8 @@ import {
 } from './utils'
 import { PickerViewStyleContext } from './pickerVIewContext'
 import type { AnyFunc } from './types/common'
+import Portal from './mpx-portal'
+
 /**
  * ✔ value
  * ✔ bindchange
@@ -86,7 +88,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     varContextRef,
     hasSelfPercent,
     setWidth,
-    setHeight
+    setHeight,
+    hasPositionFixed
   } = useTransformStyle(style, { enableVar, externalVarContext })
 
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
@@ -219,13 +222,25 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     return renderColumns
   }
 
-  return (
-    <PickerViewStyleContext.Provider value={textStyle}>
-      <View {...innerProps}>
-        <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
-      </View>
-    </PickerViewStyleContext.Provider>
+  const finalComponent = createElement(
+    PickerViewStyleContext.Provider,
+    { value: textStyle },
+    createElement(
+      View,
+      innerProps,
+      createElement(
+        View,
+        { style: [styles.wrapper] },
+        renderPickerColumns()
+      )
+    )
   )
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 _PickerView.displayName = 'MpxPickerView'
