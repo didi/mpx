@@ -61,7 +61,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
-  const touching = useRef(false)
+  const dragging = useRef(false)
   const scrolling = useRef(false)
   const timerResetPosition = useRef<NodeJS.Timeout | null>(null)
   const timerScrollTo = useRef<NodeJS.Timeout | null>(null)
@@ -123,7 +123,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     if (
       !scrollViewRef.current ||
       !itemRawH ||
-      touching.current ||
+      dragging.current ||
       scrolling.current ||
       prevIndex == null ||
       initialIndex === prevIndex ||
@@ -161,8 +161,23 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [itemRawH])
 
+  /**
+   * 和小程序表现对齐，点击（不滑动）非焦点选项自动滚动到对应位置
+   */
+  const onClickOnceItem = useCallback((index: number) => {
+    if (dragging.current || index === activeIndex.current) {
+      return
+    }
+    const y = index * itemRawH
+    scrollViewRef.current?.scrollTo({ x: 0, y, animated: true })
+    if (isAndroid) {
+      // Android scrollTo 不会自动触发 onMomentumScrollEnd，需要手动触发
+      onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+    }
+  }, [])
+
   const resetScrollPosition = useCallback((y: number) => {
-    if (touching.current || scrolling.current) {
+    if (dragging.current || scrolling.current) {
       return
     }
     scrolling.current = true
@@ -190,7 +205,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScrollBeginDrag = useCallback(() => {
     isIOS && clearTimerResetPosition()
-    touching.current = true
+    dragging.current = true
     prevScrollingInfo.current = {
       index: activeIndex.current,
       y: activeIndex.current * itemRawH
@@ -198,7 +213,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH])
 
   const onScrollEndDrag = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    touching.current = false
+    dragging.current = false
     if (isIOS) {
       const { y } = e.nativeEvent.contentOffset
       if (y % itemRawH === 0) {
@@ -219,7 +234,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
     const { y } = e.nativeEvent.contentOffset
     const { index: prevIndex, y: _y } = prevScrollingInfo.current
-    if (touching.current || scrolling.current) {
+    if (dragging.current || scrolling.current) {
       if (Math.abs(y - _y) >= itemRawH) {
         const currentId = getIndex(y)
         if (currentId !== prevIndex) {
@@ -246,6 +261,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           textProps={textProps}
           visibleCount={visibleCount}
           onItemLayout={onItemLayout}
+          onClickOnceItem={onClickOnceItem}
         />
       )
     })

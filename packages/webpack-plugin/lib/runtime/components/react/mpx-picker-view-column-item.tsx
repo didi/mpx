@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { LayoutChangeEvent } from 'react-native'
 import Reanimated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { wrapChildren, extendObject } from './utils'
@@ -14,6 +14,7 @@ interface PickerColumnItemProps {
   visibleCount: number
   textProps?: any
   onItemLayout?: (e: LayoutChangeEvent) => void
+  onClickOnceItem?: (index: number) => void
 }
 
 const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
@@ -24,11 +25,16 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   textStyle,
   textProps,
   visibleCount,
-  onItemLayout
+  onItemLayout,
+  onClickOnceItem
 }) => {
   const textStyleFromAncestor = usePickerViewStyleContext()
   const offsetYShared = usePickerViewColumnAnimationContext()
   const facesShared = useSharedValue(createFaces(itemHeight, visibleCount))
+
+  const onTouchEnd = useCallback(() => {
+    onClickOnceItem?.(index)
+  }, [index])
 
   useEffect(() => {
     facesShared.value = createFaces(itemHeight, visibleCount)
@@ -66,6 +72,7 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
     <Reanimated.View
       key={strKey}
       style={[{ height: itemHeight, width: itemWidth }, animatedStyles]}
+      onTouchEnd={onTouchEnd}
     >
       {realItem}
     </Reanimated.View>
