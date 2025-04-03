@@ -26,6 +26,7 @@ module.exports = function ({ print }) {
   const qaUnsupportedTagError = print({ platform: 'qa', isError: true, type: 'tag' })
   const iosUnsupportedTagError = print({ platform: 'ios', isError: true, type: 'tag' })
   const androidUnsupportedTagError = print({ platform: 'android', isError: true, type: 'tag' })
+  const harmonyUnsupportedTagError = print({ platform: 'harmony', isError: true, type: 'tag' })
 
   const aliUnsupportedExp = new RegExp('^(' + ALI_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const baiduUnsupportedExp = new RegExp('^(' + BAIDU_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
@@ -35,6 +36,7 @@ module.exports = function ({ print }) {
   const qaUnsupportedExp = new RegExp('^(' + QA_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const iosUnsupportedExp = new RegExp('^(' + RN_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const androidUnsupportedExp = new RegExp('^(' + RN_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
+  const harmonyUnsupportedExp = new RegExp('^(' + RN_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
 
   return [
     {
@@ -76,6 +78,11 @@ module.exports = function ({ print }) {
       supportedModes: ['android'],
       test: androidUnsupportedExp,
       android: androidUnsupportedTagError
+    },
+    {
+      supportedModes: ['harmony'],
+      test: harmonyUnsupportedExp,
+      harmony: harmonyUnsupportedTagError
     }
   ]
 }

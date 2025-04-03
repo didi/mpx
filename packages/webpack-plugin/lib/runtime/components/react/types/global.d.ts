@@ -1,4 +1,4 @@
-declare let __mpx_mode__: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' | 'dd' | 'qa' | 'jd' | 'android' | 'ios'
+declare let __mpx_mode__: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' | 'dd' | 'qa' | 'jd' | 'android' | 'ios' | 'harmony'
 declare module '@mpxjs/utils' {
   export function isEmptyObject (obj: Object): boolean
   export function isFunction (fn: unknown): boolean

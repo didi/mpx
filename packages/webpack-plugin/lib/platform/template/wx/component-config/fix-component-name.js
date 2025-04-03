@@ -15,10 +15,11 @@ module.exports = function () {
   return {
     waterfall: true,
     skipNormalize: true,
-    supportedModes: ['web', 'ios', 'android'],
+    supportedModes: ['web', 'ios', 'android', 'harmony'],
     test: (input) => isOriginTag(input) || isBuildInTag(input),
     web: handleComponentTag,
     ios: handleComponentTag,
-    android: handleComponentTag
+    android: handleComponentTag,
+    harmony: handleComponentTag
   }
 }

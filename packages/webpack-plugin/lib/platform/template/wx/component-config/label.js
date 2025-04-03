@@ -10,6 +10,10 @@ module.exports = function () {
     android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-label'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-label'
     }
   }
 }

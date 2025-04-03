@@ -14,6 +14,10 @@ module.exports = function () {
     android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-web-view'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-web-view'
     }
   }
 }

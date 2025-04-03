@@ -28,6 +28,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-view'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-view'
+    },
     props: [
       {
         test: 'scroll-top',

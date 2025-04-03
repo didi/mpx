@@ -9,6 +9,7 @@ module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -25,6 +26,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-form'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-form'
+    },
     props: [
       {
         test: /^(report-submit-timeout)$/,
@@ -38,7 +43,8 @@ module.exports = function ({ print }) {
         web: webPropLog,
         qa: qaPropLog,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ]
   }

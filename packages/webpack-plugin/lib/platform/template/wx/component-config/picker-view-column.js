@@ -14,6 +14,10 @@ module.exports = function () {
     android (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-picker-view-column'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view-column'
     }
   }
 }
