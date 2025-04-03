@@ -194,7 +194,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }
 
   const onMessage = useCallback((e: { nativeEvent: { data: string } }) => {
-    let data = JSON.parse(e.nativeEvent.data)
+    const data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {
       case 'error': {
         const { binderror } = props
@@ -248,9 +248,11 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     context: context2D
   })
 
+  let canvasComponent
+
   if (Platform.OS === 'android') {
     const isAndroid9 = Platform.Version >= 28
-    return createElement(View, innerProps, createElement(
+    canvasComponent = createElement(View, innerProps, createElement(
       WebView,
       {
         ref: (element) => {
@@ -277,7 +279,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     )
   }
 
-  let canvasComponent: JSX.Element = createElement(View, innerProps, createElement(WebView, {
+  canvasComponent = createElement(View, innerProps, createElement(WebView, {
     ref: (element) => {
       if (canvasRef.current) {
         canvasRef.current.webview = element

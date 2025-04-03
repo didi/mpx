@@ -2,6 +2,7 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
+const dash2hump = require('../utils/hump-dash').dash2hump
 
 export function processComponentOption (
   {
@@ -45,12 +46,12 @@ registered in parent context!`)
     option.props.generichash = String
     Object.keys(componentGenerics).forEach((genericName) => {
       if (componentGenerics[genericName].default) {
-        option.props[`generic${genericName}`] = {
+        option.props[`generic${dash2hump(genericName)}`] = {
           type: String,
           default: `${genericName}default`
         }
       } else {
-        option.props[`generic${genericName}`] = String
+        option.props[`generic${dash2hump(genericName)}`] = String
       }
     })
   }

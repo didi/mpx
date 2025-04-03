@@ -28,6 +28,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
+import Portal from './mpx-portal'
 
 interface Selection {
   value?: string
@@ -128,6 +129,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const {
+      hasPositionFixed,
       hasSelfPercent,
       normalStyle,
       hasVarDec,
@@ -207,7 +209,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       }
     }, [checked])
 
-    return createElement(View, innerProps,
+    const finalComponent = createElement(View, innerProps,
       createElement(
         View,
         { style: defaultStyle },
@@ -228,6 +230,12 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         }
       )
     )
+
+    if (hasPositionFixed) {
+      return createElement(Portal, null, finalComponent)
+    }
+
+    return finalComponent
   }
 )
 
