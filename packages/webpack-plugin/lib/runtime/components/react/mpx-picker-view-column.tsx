@@ -161,21 +161,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [itemRawH])
 
-  /**
-   * 和小程序表现对齐，点击（不滑动）非焦点选项自动滚动到对应位置
-   */
-  const onClickOnceItem = useCallback((index: number) => {
-    if (dragging.current || index === activeIndex.current) {
-      return
-    }
-    const y = index * itemRawH
-    scrollViewRef.current?.scrollTo({ x: 0, y, animated: true })
-    if (isAndroid) {
-      // Android scrollTo 不会自动触发 onMomentumScrollEnd，需要手动触发
-      onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
-    }
-  }, [])
-
   const resetScrollPosition = useCallback((y: number) => {
     if (dragging.current || scrolling.current) {
       return
@@ -248,6 +233,21 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       }
     }
   }, [itemRawH, getIndex])
+
+  /**
+   * 和小程序表现对齐，点击（不滑动）非焦点选项自动滚动到对应位置
+   */
+  const onClickOnceItem = useCallback((index: number) => {
+    if (dragging.current || index === activeIndex.current) {
+      return
+    }
+    const y = index * itemRawH
+    scrollViewRef.current?.scrollTo({ x: 0, y, animated: true })
+    if (isAndroid) {
+      // Android scrollTo 不会自动触发 onMomentumScrollEnd，需要手动触发
+      onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+    }
+  }, [itemRawH, onMomentumScrollEnd])
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {
