@@ -65,6 +65,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const scrolling = useRef(false)
   const timerResetPosition = useRef<NodeJS.Timeout | null>(null)
   const timerScrollTo = useRef<NodeJS.Timeout | null>(null)
+  const timerClickOnce = useRef<NodeJS.Timeout | null>(null)
   const activeIndex = useRef(initialIndex)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
@@ -109,6 +110,13 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     if (timerScrollTo.current) {
       clearTimeout(timerScrollTo.current)
       timerScrollTo.current = null
+    }
+  }, [])
+
+  const clearTimerClickOnce = useCallback(() => {
+    if (timerClickOnce.current) {
+      clearTimeout(timerClickOnce.current)
+      timerClickOnce.current = null
     }
   }, [])
 
@@ -245,7 +253,10 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     scrollViewRef.current?.scrollTo({ x: 0, y, animated: true })
     if (isAndroid) {
       // Android scrollTo 不会自动触发 onMomentumScrollEnd，需要手动触发
-      onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+      clearTimerClickOnce()
+      timerClickOnce.current = setTimeout(() => {
+        onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+      }, 250)
     }
   }, [itemRawH, onMomentumScrollEnd])
 
