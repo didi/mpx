@@ -1,12 +1,12 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from './utils'
-import useNodesRef, { HandlerRef } from './useNodesRef'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from '../utils'
+import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
-import MpxPickerVIewColumnItem from './mpx-picker-view-column-item'
-import { PickerViewColumnAnimationContext } from './pickerVIewContext'
+import MpxPickerVIewColumnItem from './pickerViewColumnItem'
+import { PickerViewColumnAnimationContext } from '../mpx-picker-view/pickerVIewContext'
 
 interface ColumnProps {
   columnIndex: number

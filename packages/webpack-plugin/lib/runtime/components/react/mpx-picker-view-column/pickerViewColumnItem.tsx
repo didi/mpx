@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect } from 'react'
 import { LayoutChangeEvent } from 'react-native'
 import Reanimated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
-import { wrapChildren, extendObject } from './utils'
-import { createFaces } from './pickerFaces'
-import { usePickerViewColumnAnimationContext, usePickerViewStyleContext } from './pickerVIewContext'
+import { extendObject } from '../utils'
+import { createFaces } from './pickerViewFaces'
+import { usePickerViewColumnAnimationContext, usePickerViewStyleContext } from '../mpx-picker-view/pickerVIewContext'
 
 interface PickerColumnItemProps {
   item: React.ReactElement
