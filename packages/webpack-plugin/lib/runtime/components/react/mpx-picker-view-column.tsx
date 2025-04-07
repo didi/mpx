@@ -9,14 +9,14 @@ import MpxPickerVIewColumnItem from './mpx-picker-view-column-item'
 import { PickerViewColumnAnimationContext } from './pickerVIewContext'
 
 interface ColumnProps {
-  children?: React.ReactNode
+  columnIndex: number
   columnData: React.ReactNode[]
   initialIndex: number
   onSelectChange: Function
   style: {
     [key: string]: any
   }
-  'enable-var': boolean
+  'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   wrapperStyle: {
     height: number
@@ -24,7 +24,6 @@ interface ColumnProps {
   }
   pickerMaskStyle: Record<string, any>
   pickerIndicatorStyle: Record<string, any>
-  columnIndex: number
 }
 
 const visibleCount = 5

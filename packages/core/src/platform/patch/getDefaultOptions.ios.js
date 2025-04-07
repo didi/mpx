@@ -13,9 +13,9 @@ import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from 
 import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view'
 
 const ProviderContext = createContext(null)
-const windowDimensions = ReactNative.Dimensions.get('window')
-const screenDimensions = ReactNative.Dimensions.get('screen')
 function getSystemInfo () {
+  const windowDimensions = ReactNative.Dimensions.get('window')
+  const screenDimensions = ReactNative.Dimensions.get('screen')
   return {
     deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
     size: {
@@ -609,16 +609,17 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const keyboardAvoidRef = useRef(null)
       const headerHeight = useHeaderHeight()
       const onLayout = () => {
+        const screenDimensions = ReactNative.Dimensions.get('screen')
         if (__mpx_mode__ === 'ios') {
           navigation.layout = {
             x: 0,
             y: headerHeight,
-            width: windowDimensions.width,
+            width: screenDimensions.width,
             height: screenDimensions.height - headerHeight
           }
         } else {
           if (bottomVirtualHeight === null) {
-            rootRef.current?.measureInWindow((height) => {
+            rootRef.current?.measureInWindow((x, y, width, height) => {
               // 沉浸模式的计算方式
               bottomVirtualHeight = screenDimensions.height - height - headerHeight
               // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
@@ -626,7 +627,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
               navigation.layout = {
                 x: 0,
                 y: headerHeight,
-                width: windowDimensions.width,
+                width: screenDimensions.width,
                 height: height
               }
             })
@@ -634,7 +635,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
             navigation.layout = {
               x: 0,
               y: headerHeight, // 这个y值
-              width: windowDimensions.width,
+              width: screenDimensions.width,
               // 后续页面的layout是通过第一次路由进入时候推算出来的底部区域来推算出来的
               height: screenDimensions.height - bottomVirtualHeight - headerHeight
             }
