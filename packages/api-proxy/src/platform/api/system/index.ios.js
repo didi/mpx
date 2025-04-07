@@ -59,7 +59,7 @@ const getSystemInfo = function (options = {}) {
 
 const getDeviceInfo = function () {
   const deviceInfo = {}
-  if (__mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
+  if (__mpx_mode__ !== 'ios') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     deviceInfo.deviceAbi = deviceAbi[0] || null
   }
