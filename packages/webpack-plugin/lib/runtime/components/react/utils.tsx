@@ -99,7 +99,7 @@ export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as ExtendedFunctionComponent)?.displayName
     const isCustomText = (ele.type as ExtendedFunctionComponent)?.isCustomText
-    return displayName === 'MpxText' || displayName === 'MpxSimpleText' || displayName === 'Text' || !!isCustomText
+    return displayName === 'MpxText' || displayName === 'MpxSimpleText' || displayName === 'MpxInlineText' || displayName === 'Text' || !!isCustomText
   }
   return false
 }
