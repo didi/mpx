@@ -48,7 +48,7 @@ function createEffect (proxy, components) {
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
