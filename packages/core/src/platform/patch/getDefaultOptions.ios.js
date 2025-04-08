@@ -9,14 +9,12 @@ import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view'
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
 import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
 
 const ProviderContext = createContext(null)
@@ -403,7 +401,7 @@ function usePageEffect (mpxProxy, pageId) {
   }, [])
 }
 
-function usePageStatus (navigation, pageId, pageStatusMap) {
+function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
@@ -466,38 +464,65 @@ export function withPageWrapper (WrappedComponent) {
       // 独立组件使用时要求传递navigation
       error('Using pageWrapper requires passing navigation and route')
     }
-    usePageStatus(navigation, currentPageId, pageStatusMap)
+    usePageStatus(navigation, currentPageId)
     useLayoutEffect(() => {
-      const isCustom = currentPageConfig.navigationStyle === 'custom'
       navigation.setOptions({
-        headerShown: !isCustom,
-        title: currentPageConfig.navigationBarTitleText?.trim() || '',
+        title: pageConfig.navigationBarTitleText?.trim() || '',
         headerStyle: {
-          backgroundColor: currentPageConfig.navigationBarBackgroundColor || '#000000'
+          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
         },
-        headerTintColor: currentPageConfig.navigationBarTextStyle || 'white'
+        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
       })
+
+      // TODO 此部分内容在native-stack可删除，用setOptions设置
       if (__mpx_mode__ === 'android') {
-        ReactNative.StatusBar.setBarStyle(currentPageConfig.barStyle || 'dark-content')
-        ReactNative.StatusBar.setTranslucent(isCustom) // 控制statusbar是否占位
-        const color = isCustom ? 'transparent' : currentPageConfig.statusBarColor
-        color && ReactNative.StatusBar.setBackgroundColor(color)
+        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+        ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
+        ReactNative.StatusBar.setBackgroundColor('transparent')
       }
     }, [])
-    useEffect(() => {
-      setTimeout(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
-      }, 100)
-    }, [])
-    navigation.insets = useSafeAreaInsets()
+
+    const headerHeight = useHeaderHeight()
+    const onLayout = () => {
+      const screenDimensions = ReactNative.Dimensions.get('screen')
+      if (__mpx_mode__ === 'ios') {
+        navigation.layout = {
+          x: 0,
+          y: headerHeight,
+          width: screenDimensions.width,
+          height: screenDimensions.height - headerHeight
+        }
+      } else {
+        if (bottomVirtualHeight === null) {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            // 沉浸模式的计算方式
+            bottomVirtualHeight = screenDimensions.height - height - headerHeight
+            // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
+            // bottomVirtualHeight = windowDimensions.height - height - headerHeight
+            navigation.layout = {
+              x: 0,
+              y: headerHeight,
+              width: screenDimensions.width,
+              height: height
+            }
+          })
+        } else {
+          navigation.layout = {
+            x: 0,
+            y: headerHeight, // 这个y值
+            width: screenDimensions.width,
+            // 后续页面的layout是通过第一次路由进入时候推算出来的底部区域来推算出来的
+            height: screenDimensions.height - bottomVirtualHeight - headerHeight
+          }
+        }
+      }
+    }
     const withKeyboardAvoidingView = (element) => {
       return createElement(KeyboardAvoidContext.Provider,
         {
           value: keyboardAvoidRef
         },
-        createElement(KeyboardAvoidingView,
+        createElement(MpxKeyboardAvoidingView,
           {
             style: {
               flex: 1
@@ -510,6 +535,8 @@ export function withPageWrapper (WrappedComponent) {
         )
       )
     }
+
+    navigation.insets = useSafeAreaInsets()
 
     return createElement(GestureHandlerRootView,
       {
@@ -529,7 +556,8 @@ export function withPageWrapper (WrappedComponent) {
               flex: 1,
               backgroundColor: currentPageConfig?.backgroundColor || '#fff'
             },
-            ref: rootRef
+            ref: rootRef,
+            onLayout
           },
           createElement(RouteContext.Provider,
             {
@@ -694,140 +722,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
-    const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
-    const Page = ({ navigation, route }) => {
-      const currentPageId = useMemo(() => ++pageId, [])
-      const intersectionObservers = useRef({})
-      const routeContextValRef = useRef({
-        pageId: currentPageId,
-        navigation
-      })
-      usePageStatus(navigation, currentPageId)
-      useLayoutEffect(() => {
-        navigation.setOptions({
-          title: pageConfig.navigationBarTitleText?.trim() || '',
-          headerStyle: {
-            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-          },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-
-        // TODO 此部分内容在native-stack可删除，用setOptions设置
-        if (__mpx_mode__ === 'android') {
-          ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-          ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
-          ReactNative.StatusBar.setBackgroundColor('transparent')
-        }
-      }, [])
-
-      const rootRef = useRef(null)
-      const keyboardAvoidRef = useRef(null)
-      const headerHeight = useHeaderHeight()
-      const onLayout = () => {
-        const screenDimensions = ReactNative.Dimensions.get('screen')
-        if (__mpx_mode__ === 'ios') {
-          navigation.layout = {
-            x: 0,
-            y: headerHeight,
-            width: screenDimensions.width,
-            height: screenDimensions.height - headerHeight
-          }
-        } else {
-          if (bottomVirtualHeight === null) {
-            rootRef.current?.measureInWindow((x, y, width, height) => {
-              // 沉浸模式的计算方式
-              bottomVirtualHeight = screenDimensions.height - height - headerHeight
-              // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
-              // bottomVirtualHeight = windowDimensions.height - height - headerHeight
-              navigation.layout = {
-                x: 0,
-                y: headerHeight,
-                width: screenDimensions.width,
-                height: height
-              }
-            })
-          } else {
-            navigation.layout = {
-              x: 0,
-              y: headerHeight, // 这个y值
-              width: screenDimensions.width,
-              // 后续页面的layout是通过第一次路由进入时候推算出来的底部区域来推算出来的
-              height: screenDimensions.height - bottomVirtualHeight - headerHeight
-            }
-          }
-        }
-      }
-      const withKeyboardAvoidingView = (element) => {
-        return createElement(KeyboardAvoidContext.Provider,
-          {
-            value: keyboardAvoidRef
-          },
-          createElement(MpxKeyboardAvoidingView,
-            {
-              style: {
-                flex: 1
-              },
-              contentContainerStyle: {
-                flex: 1
-              }
-            },
-            element
-          )
-        )
-      }
-
-      navigation.insets = useSafeAreaInsets()
-
-      return createElement(GestureHandlerRootView,
-        {
-          // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
-            ? {
-              height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-            }
-            : {
-              flex: 1
-            }
-        },
-        withKeyboardAvoidingView(
-          createElement(ReactNative.View,
-            {
-              style: {
-                flex: 1,
-                backgroundColor: pageConfig.backgroundColor || '#ffffff'
-              },
-              ref: rootRef,
-              // 测试过了 键盘拉起后不会重新触发onLayout
-              onLayout
-            },
-            createElement(RouteContext.Provider,
-              {
-                value: routeContextValRef.current
-              },
-              createElement(IntersectionObserverContext.Provider,
-                {
-                  value: intersectionObservers.current
-                },
-                createElement(PortalHost,
-                  null,
-                  createElement(defaultOptions,
-                    {
-                      navigation,
-                      route,
-                      id: currentPageId
-                    }
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-      // todo custom portal host for active route
-    }
-    return Page
-
     currentInjectPageConfig = currentInject.pageConfig
     return withPageWrapper(defaultOptions)
   }
