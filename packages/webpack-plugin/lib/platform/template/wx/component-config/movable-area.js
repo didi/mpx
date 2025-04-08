@@ -2,6 +2,7 @@ const TAG_NAME = 'movable-area'
 
 module.exports = function ({ print }) {
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   return {
     test: TAG_NAME,
@@ -13,6 +14,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-movable-area'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-movable-area'
+    },
     ios (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-movable-area'
@@ -21,7 +26,8 @@ module.exports = function ({ print }) {
       {
         test: /^(scale-area)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ]
   }

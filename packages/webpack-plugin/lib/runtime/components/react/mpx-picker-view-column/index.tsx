@@ -149,7 +149,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         animated: false
       })
       activeIndex.current = initialIndex
-    }, isAndroid ? 200 : 0)
+    }, isIOS ? 0 : 200)
   }, [itemRawH, maxIndex, initialIndex])
 
   const onContentSizeChange = useCallback((_w: number, h: number) => {
