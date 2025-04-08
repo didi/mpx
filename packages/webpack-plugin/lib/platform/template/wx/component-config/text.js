@@ -33,7 +33,7 @@ module.exports = function ({ print }) {
     },
     harmony (tag, { el }) {
       el.isBuiltIn = true
-      return 'mpx-text'
+      return el.isSimple ? 'mpx-simple-text' : 'mpx-text'
     },
     props: [
       {
@@ -63,6 +63,10 @@ module.exports = function ({ print }) {
       {
         test: /^(is-simple)$/,
         android (prop, { el }) {
+          el.isSimple = true
+          return false
+        },
+        harmony (prop, { el }) {
           el.isSimple = true
           return false
         },
