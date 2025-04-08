@@ -403,7 +403,6 @@ function usePageEffect (mpxProxy, pageId) {
 
 let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-let currentInjectPageConfig = {}
 
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
@@ -449,8 +448,8 @@ const checkRelation = (options) => {
 
 // 临时用来存储安卓底部（iOS没有这个）的高度（虚拟按键等高度）根据第一次进入推算
 let bottomVirtualHeight = null
-export function withPageWrapper (WrappedComponent) {
-  return function PageWrapperHOC ({ navigation, route, pageConfig = {}, ...props }) {
+export function PageWrapperHOC (WrappedComponent) {
+  return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
     const rootRef = useRef(null)
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
@@ -459,7 +458,7 @@ export function withPageWrapper (WrappedComponent) {
       navigation,
       pageId: currentPageId
     })
-    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, currentInjectPageConfig, pageConfig)
+    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     if (!navigation || !route) {
       // 独立组件使用时要求传递navigation
       error('Using pageWrapper requires passing navigation and route')
@@ -581,10 +580,6 @@ export function withPageWrapper (WrappedComponent) {
         )
       ))
   }
-}
-
-export function PageWrapper ({ children, ...props }) {
-  return createElement(withPageWrapper(() => children), props)
 }
 
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -722,8 +717,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    currentInjectPageConfig = currentInject.pageConfig
-    return withPageWrapper(defaultOptions)
+    return (props) => {
+      createElement(PageWrapperHOC(defaultOptions), {
+        pageConfig: currentInject.pageConfig,
+        ...props
+      })
+    }
   }
   return defaultOptions
 }
