@@ -3,6 +3,7 @@ import { DimensionValue, EmitterSubscription, Keyboard, Platform, View, ViewStyl
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { KeyboardAvoidContext } from './context'
+import { isIOS } from './utils'
 
 type KeyboardAvoidViewProps = {
   children?: ReactNode
@@ -11,7 +12,6 @@ type KeyboardAvoidViewProps = {
 }
 
 const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: KeyboardAvoidViewProps) => {
-  const isIOS = __mpx_mode__ === 'ios'
   const duration = isIOS ? 250 : 300
   const easing = isIOS ? Easing.inOut(Easing.ease) : Easing.out(Easing.quad)
 

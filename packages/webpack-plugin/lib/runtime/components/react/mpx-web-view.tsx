@@ -143,7 +143,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   const _reload = function () {
-    if (__mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
+    if (__mpx_mode__ !== 'ios') {
       fristLoaded.current = false // 安卓需要重新设置
     }
     setPageLoadErr(false)
@@ -189,7 +189,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   const _onLoadProgress = function (event: WebViewProgressEvent) {
-    if (__mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
+    if (__mpx_mode__ !== 'ios') {
       canGoBack.current = event.nativeEvent.canGoBack
     }
   }
@@ -305,7 +305,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
   }
   const onLoadEnd = function (res: WebViewEvent) {
-    if (__mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
+    if (__mpx_mode__ !== 'ios') {
       res.persist()
       setTimeout(() => {
         onLoadEndHandle(res)
