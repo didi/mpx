@@ -105,7 +105,6 @@ class RNIntersectionObserver {
       right: navigationLayout.width + this.margins.right,
       bottom: navigationLayout.y + navigationLayout.height + this.margins.bottom
     }
-
     this.windowRect = windowRect
     return this.windowRect
   }
@@ -153,19 +152,16 @@ class RNIntersectionObserver {
     return Math.min(Math.max(start, value), end)
   }
 
-  _isInsectedFn (intersectionRatio, previousIntersectionRatio, thresholds) {
-  // console.log('nowintersectionRatio, previousIntersectionRatio', [intersectionRatio, previousIntersectionRatio])
-    let nowIndex = -1
-    let previousIndex = -1
+  _getRatioIndex (ratio, thresholds = []) {
+    if (ratio === 0 && thresholds.includes(0)) return -1
+    if (ratio === 1 && thresholds.includes(1)) return thresholds.length
+    let returnIndex = -1
     thresholds.forEach((item, index) => {
-      if (intersectionRatio >= item) {
-        nowIndex = index
-      }
-      if (previousIntersectionRatio >= item) {
-        previousIndex = index
+      if (ratio >= item) {
+       returnIndex = index
       }
     })
-    return !(nowIndex === previousIndex)
+    return returnIndex
   }
 
   // 计算相交区域
@@ -180,10 +176,8 @@ class RNIntersectionObserver {
     const targetArea = (observeRect.bottom - observeRect.top) * (observeRect.right - observeRect.left)
     const visibleArea = (visibleRect.bottom - visibleRect.top) * (visibleRect.right - visibleRect.left)
     const intersectionRatio = targetArea ? visibleArea / targetArea : 0
-
-    const isInsected = isInit ? intersectionRatio > this.initialRatio : this._isInsectedFn(intersectionRatio, this.previousIntersectionRatio[observeIndex], this.thresholds)
+    const isInsected = isInit ? intersectionRatio > this.initialRatio : !(this._getRatioIndex(intersectionRatio, this.thresholds) === this._getRatioIndex(this.previousIntersectionRatio[observeIndex], this.thresholds))
     this.previousIntersectionRatio[observeIndex] = intersectionRatio
-
     return {
       intersectionRatio,
       intersectionRect: {
@@ -217,7 +211,6 @@ class RNIntersectionObserver {
           relativeRect,
           isInit
         })
-        // 初次调用的
         if (isInsected) {
           this.callback({
             // index: index,

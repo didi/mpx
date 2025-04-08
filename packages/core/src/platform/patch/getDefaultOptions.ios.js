@@ -608,6 +608,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       const rootRef = useRef(null)
       const keyboardAvoidRef = useRef(null)
       const headerHeight = useHeaderHeight()
+      // 如果是在onLayout才赋值，组件ready的时候去observe拿不到navigation的值,后续可考虑是否可提前复制？
+      // const screenDimensions = ReactNative.Dimensions.get('screen')
+      // navigation.layout = {
+      //   x: 0,
+      //   y: headerHeight,
+      //   width: screenDimensions.width,
+      //   height: screenDimensions.height - headerHeight
+      // }
       const onLayout = () => {
         const screenDimensions = ReactNative.Dimensions.get('screen')
         if (__mpx_mode__ === 'ios') {
