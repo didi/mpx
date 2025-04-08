@@ -11,7 +11,7 @@ type KeyboardAvoidViewProps = {
 }
 
 const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: KeyboardAvoidViewProps) => {
-  const isIOS = Platform.OS === 'ios'
+  const isIOS = __mpx_mode__ === 'ios'
   const duration = isIOS ? 250 : 300
   const easing = isIOS ? Easing.inOut(Easing.ease) : Easing.out(Easing.quad)
 
@@ -26,8 +26,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const gesture = useMemo(() => {
     return Gesture.Tap()
       .onEnd(() => {
-        runOnJS(dismiss)()
-      })
+        dismiss()
+      }).runOnJS(true)
   }, [])
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -116,5 +116,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     </GestureDetector>
   )
 }
+
+KeyboardAvoidingView.displayName = 'MpxKeyboardAvoidingView'
 
 export default KeyboardAvoidingView

@@ -118,6 +118,7 @@ let processingTemplate = false
 const rulesResultMap = new Map()
 let usingComponents = []
 let usingComponentsInfo = {}
+let componentGenerics = {}
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -177,7 +178,7 @@ const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '__i18n__'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
-const stringifyModuleName = '__stringify__'
+const stringifyModuleName = '__sm__'
 const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
 const optionalChainWxsName = '__oc__'
 
@@ -634,6 +635,7 @@ function parse (template, options) {
   hasOptionalChaining = false
   processingTemplate = false
   rulesResultMap.clear()
+  componentGenerics = options.componentGenerics || {}
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
@@ -942,30 +944,35 @@ function stringify (str) {
 
 const genericRE = /^generic:(.+)$/
 
-function processComponentGenericsWeb (el, options, meta) {
-  if (options.componentGenerics && options.componentGenerics[el.tag]) {
+function processComponentGenerics (el, meta) {
+  if (componentGenerics && componentGenerics[el.tag]) {
     const generic = dash2hump(el.tag)
     el.tag = 'component'
     addAttrs(el, [{
-      name: ':is',
-      value: `generic${generic}`
+      name: isWeb(mode) ? ':is' : 'is',
+      value: isWeb(mode) ? `generic${generic}` : `{{generic${generic}}}`
     }])
   }
 
   let hasGeneric = false
-
   const genericHash = moduleId
+  const genericAttrs = []
 
   el.attrsList.forEach((attr) => {
     if (genericRE.test(attr.name)) {
-      getAndRemoveAttr(el, attr.name)
-      addAttrs(el, [{
-        name: attr.name.replace(':', ''),
-        value: attr.value
-      }])
+      genericAttrs.push(attr)
       hasGeneric = true
       addGenericInfo(meta, genericHash, attr.value)
     }
+  })
+
+  // 统一处理所有的generic:属性
+  genericAttrs.forEach((attr) => {
+    getAndRemoveAttr(el, attr.name)
+    addAttrs(el, [{
+      name: attr.name.replace(':', ''),
+      value: attr.value
+    }])
   })
 
   if (hasGeneric) {
@@ -2128,8 +2135,8 @@ function processText (el, options, meta) {
 function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
-    const wrapper = createASTElement('mpx-simple-text')
+  if (parentTag !== 'mpx-text' && parentTag !== 'mpx-simple-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
+    const wrapper = createASTElement('mpx-inline-text')
     wrapper.isBuiltIn = true
     const inheritAttrs = []
     parent.attrsList.forEach(({ name, value }) => {
@@ -2200,7 +2207,7 @@ function processClass (el, meta) {
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.c('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.c(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
@@ -2233,7 +2240,7 @@ function processStyle (el, meta) {
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      value: `{{${stringifyModuleName}.s(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
@@ -2253,7 +2260,7 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el) {
-  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
 }
 
 function getComponentInfo (el) {
@@ -2706,7 +2713,7 @@ function processElement (el, root, options, meta) {
     processEventWeb(el)
     // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
-    processComponentGenericsWeb(el, options, meta)
+    processComponentGenerics(el, meta)
     return
   }
 
@@ -2721,6 +2728,7 @@ function processElement (el, root, options, meta) {
     if (!pass) {
       processStyleReact(el, options)
       processEventReact(el, options)
+      processComponentGenerics(el, meta)
       processComponentIs(el, options)
       processSlotReact(el, meta)
     }

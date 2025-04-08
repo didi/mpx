@@ -12,7 +12,9 @@ module.exports = function (script, {
   outputPath,
   builtInComponentsMap,
   localComponentsMap,
-  localPagesMap
+  localPagesMap,
+  componentGenerics,
+  genericsInfo
 }, callback) {
   let scriptSrcMode = srcMode
   if (script) {
@@ -51,7 +53,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
       jsonConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }

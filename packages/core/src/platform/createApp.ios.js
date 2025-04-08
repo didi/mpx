@@ -11,8 +11,8 @@ import { NavigationContainer, createStackNavigator, SafeAreaProvider } from './e
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
-function getOrientation (window = ReactNative.Dimensions.get('window')) {
-  return window.width > window.height ? 'landscape' : 'portrait'
+function getPageSize (window = ReactNative.Dimensions.get('window')) {
+  return window.width + 'x' + window.height
 }
 
 function filterOptions (options, appData) {
@@ -55,16 +55,22 @@ export default function createApp (options) {
   const Stack = createStackNavigator()
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pages).map(([key, item]) => {
+      const options = {
+        // __mpxPageStatusMap 为编译注入的全局变量
+        headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
+      }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
           component: item,
-          initialParams
+          initialParams,
+          options
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: item
+        component: item,
+        options
       })
     })
   }
@@ -153,7 +159,9 @@ export default function createApp (options) {
           }
         } else if (currentState === 'inactive' || currentState === 'background') {
           global.__mpxAppCbs.hide.forEach((cb) => {
-            cb()
+            cb({
+              reason: 3
+            })
           })
           const navigation = getFocusedNavigation()
           if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
@@ -163,17 +171,23 @@ export default function createApp (options) {
       })
 
       let count = 0
-      let lastOrientation = getOrientation()
+      let lastPageSize = getPageSize()
       const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const orientation = getOrientation(window)
-        if (orientation === lastOrientation) return
-        lastOrientation = orientation
+        const pageSize = getPageSize(window)
+        if (pageSize === lastPageSize) return
+        lastPageSize = pageSize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
           global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
         }
       })
       return () => {
+        // todo 跳到原生页面或者其他rn bundle可以考虑使用reason 1/2进行模拟抹平
+        global.__mpxAppCbs.hide.forEach((cb) => {
+          cb({
+            reason: 0
+          })
+        })
         changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
       }
@@ -185,6 +199,9 @@ export default function createApp (options) {
       // headerBackButtonDisplayMode: 'minimal',
       headerBackTitleVisible: false,
       headerShadowVisible: false
+      // 整体切换native-stack时进行修改如下
+      // statusBarTranslucent: true,
+      // statusBarBackgroundColor: 'transparent'
     }
     if (__mpx_mode__ === 'ios') {
       // ios使用native-stack
@@ -193,8 +210,8 @@ export default function createApp (options) {
         navScreenOpts.headerBackImageSource = headerBackImageSource
       }
     } else {
-       // 安卓上会出现导航条闪现的问题所以默认加headerShown false（stack版本， native-stack版本可以干掉）
-       // iOS加上默认headerShown false的话会因为iOS根高度是screenHeight - useHeaderHeight()会导致出现渲染两次情况，因此iOS不加此默认值
+      // 安卓上会出现导航条闪现的问题所以默认加headerShown false（stack版本， native-stack版本可以干掉）
+      // iOS加上默认headerShown false的话会因为iOS根高度是screenHeight - useHeaderHeight()会导致出现渲染两次情况，因此iOS不加此默认值
       navScreenOpts.headerShown = false
       // 安卓和鸿蒙先用stack
       const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null

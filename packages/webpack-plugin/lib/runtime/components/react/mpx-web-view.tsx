@@ -89,7 +89,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       button: 'Reload'
     }
   }
-  const currentErrorText = errorText[(mpx.i18n.locale as LanguageCode) || 'zh-CN']
+  const currentErrorText = errorText[(mpx.i18n?.locale as LanguageCode) || 'zh-CN']
 
   if (props.style) {
     warn('The web-view component does not support the style prop.')
@@ -103,11 +103,11 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const statusCode = useRef<string|number>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(true)
   const defaultWebViewStyle = {
-    position: 'absolute' as 'absolute' | 'relative' | 'static',
-    left: 0 as number,
-    right: 0 as number,
-    top: 0 as number,
-    bottom: 0 as number
+    position: 'absolute' as const,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0
   }
   const canGoBack = useRef<boolean>(false)
   const isNavigateBack = useRef<boolean>(false)
@@ -123,7 +123,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const navigation = useNavigation()
 
   useEffect(() => {
-    const beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+    let beforeRemoveSubscription:any
+    if (__mpx_mode__ !== 'ios') {
+      beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+    }
     return () => {
       if (isFunction(beforeRemoveSubscription)) {
         beforeRemoveSubscription()
@@ -329,7 +332,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   return (
-      <Portal key={pageLoadErr ? 'error' : 'webview'}>
+      <Portal>
         {pageLoadErr
           ? (
             <View style={[styles.loadErrorContext, defaultWebViewStyle]}>

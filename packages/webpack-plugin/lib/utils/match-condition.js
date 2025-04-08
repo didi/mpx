@@ -1,3 +1,5 @@
+const toPosix = require('./to-posix')
+
 const orMatcher = items => {
   return str => {
     for (let i = 0; i < items.length; i++) {
@@ -33,16 +35,20 @@ const normalizeCondition = (condition) => {
 
 // 匹配规则为include匹配到且未被exclude匹配到的资源为true，其余资源全部为false，如果需要实现不传include为全部匹配的话可以将include的默认值设置为()=>true进行传入
 const matchCondition = (resourcePath, condition = {}) => {
-  let matched = false
-  const includeMatcher = condition.include && normalizeCondition(condition.include)
-  const excludeMatcher = condition.exclude && normalizeCondition(condition.exclude)
-  if (includeMatcher && includeMatcher(resourcePath)) {
-    matched = true
+  const posixResourcePath = toPosix(resourcePath)
+  const checkPath = (path) => {
+    let matched = false
+    const includeMatcher = condition.include && normalizeCondition(condition.include)
+    const excludeMatcher = condition.exclude && normalizeCondition(condition.exclude)
+    if (includeMatcher?.(path)) matched = true
+    if (excludeMatcher?.(path)) matched = false
+    return matched
   }
-  if (excludeMatcher && excludeMatcher(resourcePath)) {
-    matched = false
+  if (checkPath(resourcePath)) return true
+  if (posixResourcePath !== resourcePath) {
+    return checkPath(posixResourcePath)
   }
-  return matched
+  return false
 }
 
 module.exports = {

@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   }
 })
 
-function ActionSheet ({itemColor, height, success, fail, complete, alertText, itemList}) {
+function ActionSheet ({ itemColor, height, success, fail, complete, alertText, itemList }) {
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
   const [selectedIndex, setSelectedIndex] = useState(null)
@@ -131,20 +131,79 @@ function ActionSheet ({itemColor, height, success, fail, complete, alertText, it
   return (
     <View style={styles.actionAction}>
       <Animated.View style={[styles.maskWrap, maskAnimatedStyles]}>
-        <View activeOpacity={1} style={styles.actionActionMask} onTouchEnd={cancelAction}></View>
+        <View
+          activeOpacity={1}
+          style={styles.actionActionMask}
+          onTouchEnd={cancelAction}
+        ></View>
       </Animated.View>
-      <Animated.View style={[styles.actionSheetContent, actionAnimatedStyles]}>
-        { alertText ? <View style={ styles.itemStyle }><Text style={[styles.itemTextStyle, { color: '#666666' }]}>{alertText}</Text></View> : null }
-        { itemList.map((item, index) => <View onTouchStart={() => startHandle(index)} onTouchEnd={() => selectAction(index)} key={index} style={ [styles.itemStyle, itemList.length -1 === index ? {
-          borderBottomWidth: 6,
-          borderBottomStyle: 'solid',
-          borderBottomColor: '#f7f7f7'
-        } : {}, selectedIndex === index ? {
-          backgroundColor: '#ececec'
-        } : {}] }><Text style={[styles.itemTextStyle, { color: itemColor }]}>{item}</Text></View>) }
-        <View style={[styles.buttonStyle, selectedIndex === -1 ? {
-          backgroundColor: '#ececec'
-        } : {}]}  onTouchStart={() => startHandle(-1)} onTouchEnd={cancelAction}><Text style={{ color: "#000000", fontSize: 18, lineHeight: 22, height: 22, width: "100%", textAlign: "center" }}>取消</Text></View>
+      <Animated.View
+        style={[styles.actionSheetContent, actionAnimatedStyles]}
+      >
+        {alertText
+          ? (
+            <View style={styles.itemStyle}>
+              <Text
+                style={[styles.itemTextStyle, { color: '#666666' }]}
+              >
+                {alertText}
+              </Text>
+            </View>
+            )
+          : null}
+        {itemList.map((item, index) => (
+          <View
+            onTouchStart={() => startHandle(index)}
+            onTouchEnd={() => selectAction(index)}
+            key={index}
+            style={[
+              styles.itemStyle,
+              itemList.length - 1 === index
+                ? {
+                    borderBottomWidth: 6,
+                    borderBottomStyle: 'solid',
+                    borderBottomColor: '#f7f7f7'
+                  }
+                : {},
+              selectedIndex === index
+                ? {
+                    backgroundColor: '#ececec'
+                  }
+                : {}
+            ]}
+          >
+            <Text
+              style={[styles.itemTextStyle, { color: itemColor }]}
+            >
+              {item}
+            </Text>
+          </View>
+        ))}
+        <View
+          style={[
+            styles.buttonStyle,
+            selectedIndex === -1
+              ? {
+                  backgroundColor: '#ececec'
+                }
+              : {}
+          ]}
+          onTouchStart={() => startHandle(-1)}
+          onTouchEnd={cancelAction}
+        >
+          <Text
+            style={{
+              color: '#000000',
+              fontSize: 18,
+              lineHeight: 22,
+              height: 22,
+              width: '100%',
+              textAlign: 'center'
+            }}
+          >
+            取消
+          </Text>
+        </View>
       </Animated.View>
     </View>
   )
@@ -169,11 +228,20 @@ function showActionSheet (options = {}) {
     return
   }
   const height = len * 53 + 46 + bottom + (alertText ? 52 : 0)
-  
-  const actionSheetKey = Portal.add(<ActionSheet itemColor={itemColor} height={height} success={success} fail={fail} complete={complete} alertText={alertText} itemList={itemList} />, id)
+
+  const actionSheetKey = Portal.add(
+    <ActionSheet
+      itemColor={itemColor}
+      height={height}
+      success={success}
+      fail={fail}
+      complete={complete}
+      alertText={alertText}
+      itemList={itemList}
+    />,
+    id
+  )
   actionSheetMap.set(id, actionSheetKey)
 }
 
-export {
-  showActionSheet
-}
+export { showActionSheet }
