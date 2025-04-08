@@ -4,6 +4,7 @@ import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChan
 import { ScrollViewContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
+import { error } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 interface StickyHeaderProps {
@@ -18,7 +19,6 @@ interface StickyHeaderProps {
   'parent-height'?: number;
   bindstickontopchange?: (e: NativeSyntheticEvent<unknown>) => void;
 }
-const isIOS = Platform.OS === 'ios'
 
 const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHeaderProps>((stickyHeaderProps: StickyHeaderProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(stickyHeaderProps)
@@ -35,7 +35,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   } = props
   const [headerTop, setHeaderTop] = useState(0)
   const scrollViewContext = useContext(ScrollViewContext)
-  const { scrollOffset, scrollLayoutRef } = scrollViewContext
+  const { scrollOffset, refresherHeight } = scrollViewContext
   const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
 
@@ -55,19 +55,23 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const hasLayoutRef = useRef(false)
 
   function onLayout (e: LayoutChangeEvent) {
-    if (headerRef.current) {
-      // 外层可能有做动画的情况
-      // 不加 setTimeout，安卓 pageY 获取的不准；ios pageY 如果有 refresherHeight 则从 refresherHeight 开始，否则从 0 开始, 均不包含 navigationHeight 的值
-      // 加了 setTimeout 后， 安卓 pageY 为 navigationHeight + refresherHeight； iOS pageY 为 navigationHeight, 不包含 refresherHeight 的值
-      setTimeout(() => {
-        // sticky-header 里面的内容动态变更可能会触发 onLayout ，设置开关只以第一次位置为准
-        if (!hasLayoutRef.current) {
-          hasLayoutRef.current = true
-          headerRef.current!.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            setHeaderTop(pageY - offsetTop)
-          })
+    if (headerRef.current && scrollViewContext.scrollLayoutRef.current) {
+      // 只测量一次，避免内容变化导致位置变化
+      if (!hasLayoutRef.current) {
+        hasLayoutRef.current = true
+        const scrollViewRef = scrollViewContext.gestureRef
+        if (scrollViewRef && scrollViewRef.current) {
+          // 使用 measureLayout 测量相对于 ScrollView 的位置
+          headerRef.current.measureLayout(
+            scrollViewRef.current,
+            (left: number, top: number) => {
+              setHeaderTop(top - offsetTop)
+            }
+          )
+        } else {
+          error('StickyHeader measureLayout error: scrollViewRef is not a valid native component reference')
         }
-      }, 100)
+      }
     }
   }
 
@@ -80,7 +84,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
-      const newIsStickOnTop = currentScrollValue > (headerTop - (scrollLayoutRef.current._offsetTop || 0))
+      const newIsStickOnTop = currentScrollValue > headerTop
       if (newIsStickOnTop !== isStickOnTopRef.current) {
         isStickOnTopRef.current = newIsStickOnTop
         bindstickontopchange(
@@ -100,11 +104,8 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const animatedStyle = useMemo(() => {
     const threshold = 1
-    const realHeaderTop = headerTop - (scrollLayoutRef.current._offsetTop || 0)
-
-    const inputRange =
-     realHeaderTop <= threshold ? [0, 1] : [realHeaderTop - 1, realHeaderTop]
-
+    // 使用相对位置计算
+    const inputRange = headerTop <= threshold ? [0, 1] : [headerTop - 1, headerTop]
     const outputRange = [0, 1]
 
     const translateY = Animated.multiply(
@@ -113,7 +114,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         outputRange,
         extrapolate: 'clamp'
       }),
-      Animated.subtract(scrollOffset, realHeaderTop <= threshold ? -offsetTop : realHeaderTop)
+      Animated.subtract(scrollOffset, headerTop <= threshold ? -offsetTop : headerTop)
     )
 
     return {
