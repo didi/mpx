@@ -740,7 +740,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       textStyle,
       textProps
     }))
-    const renderChildrens = showPagination ? [animateComponent, renderPagination()] : renderPagination()
+    const renderChildrens = showPagination ? [animateComponent, renderPagination()] : animateComponent
     finalComponent = createElement(View, mergeProps, renderChildrens)
     if (!disableGesture) {
       finalComponent = createElement(GestureDetector, {

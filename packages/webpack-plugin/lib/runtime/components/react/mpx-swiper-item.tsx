@@ -1,9 +1,9 @@
 import { View } from 'react-native'
 import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-native-reanimated'
-import { ReactNode, forwardRef, useRef, useContext } from 'react'
+import { ReactNode, forwardRef, useRef, useContext, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject } from './utils'
 import { SwiperContext } from './context'
 
 interface SwiperItemProps {
@@ -88,24 +88,16 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
       transform: transformStyle
     })
   })
-  return (
-    <Animated.View
-      {...innerProps}
-      style={[innerStyle, layoutStyle, itemAnimatedStyle, customStyle]}
-      data-itemId={props['item-id']}>
-      {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )
-      }
-    </Animated.View>
-  )
+  const mergeProps = extendObject({}, innerProps, {
+    style: [innerStyle, layoutStyle, itemAnimatedStyle, customStyle],
+    'data-itemId': props['item-id']
+  })
+  return createElement(Animated.View, mergeProps, wrapChildren(props, {
+    hasVarDec,
+    varContext: varContextRef.current,
+    textStyle,
+    textProps
+  }))
 })
 
 _SwiperItem.displayName = 'MpxSwiperItem'
