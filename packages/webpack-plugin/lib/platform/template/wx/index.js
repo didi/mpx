@@ -8,18 +8,21 @@ const normalize = require('../../../utils/normalize')
 const { dash2hump } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
-  function rnDirectiveEventHandle ({ name, value, eventRules, el, mode, match }) {
-    const prefix = match[1]
-    const eventName = match[2]
-    const modifierStr = match[3] || ''
-    const meta = {
-      modifierStr
-    }
-    const rPrefix = runRules(spec.event.prefix, prefix, { mode })
-    const rEventName = runRules(eventRules, eventName, { mode, data: { el } })
-    return {
-      name: rPrefix + rEventName + meta.modifierStr,
-      value
+  function getRnDirectiveEventHandle (mode) {
+    return function ({ name, value }, { eventRules, el }) {
+      const match = this.test.exec(name)
+      const prefix = match[1]
+      const eventName = match[2]
+      const modifierStr = match[3] || ''
+      const meta = {
+        modifierStr
+      }
+      const rPrefix = runRules(spec.event.prefix, prefix, { mode })
+      const rEventName = runRules(eventRules, eventName, { mode, data: { el } })
+      return {
+        name: rPrefix + rEventName + meta.modifierStr,
+        value
+      }
     }
   }
 
@@ -421,18 +424,9 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        ios ({ name, value }, { eventRules, el }) {
-          const match = this.test.exec(name)
-          return rnDirectiveEventHandle({ name, value, eventRules, el, mode: 'ios', match })
-        },
-        android ({ name, value }, { eventRules, el }) {
-          const match = this.test.exec(name)
-          return rnDirectiveEventHandle({ name, value, eventRules, el, mode: 'android', match })
-        },
-        harmony ({ name, value }, { eventRules, el }) {
-          const match = this.test.exec(name)
-          return rnDirectiveEventHandle({ name, value, eventRules, el, mode: 'harmony', match })
-        }
+        ios: getRnDirectiveEventHandle('ios'),
+        android: getRnDirectiveEventHandle('android'),
+        harmony: getRnDirectiveEventHandle('harmony')
       },
       // 无障碍
       {
