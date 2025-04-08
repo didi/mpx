@@ -37,6 +37,10 @@ module.exports = function ({ print }) {
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
 
+  const harmonyValueLogError = print({ platform: 'harmony', tag: TAG_NAME, isError: true, type: 'value' })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -48,6 +52,10 @@ module.exports = function ({ print }) {
       return 'mpx-button'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-button'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-button'
     },
@@ -123,6 +131,7 @@ module.exports = function ({ print }) {
           }
         },
         ios ({ name, value }) {
+          // TODO 此处open-type无其他属性支持了？
           const supported = ['share']
           if (!supported.includes(value)) {
             iosValueLogError({ name, value })
@@ -132,6 +141,12 @@ module.exports = function ({ print }) {
           const supported = ['share']
           if (!supported.includes(value)) {
             androidValueLogError({ name, value })
+          }
+        },
+        harmony ({ name, value }) {
+          const supported = ['share']
+          if (!supported.includes(value)) {
+            harmonyValueLogError({ name, value })
           }
         }
       },
@@ -173,7 +188,8 @@ module.exports = function ({ print }) {
       {
         test: /^(lang|from-type|hover-class|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|phone-number-no-quota-toast|bindgetuserinfo|bindcontact|createliveactivity|bindgetphonenumber|bindgetrealtimephonenumber|binderror|bindopensetting|bindlaunchapp|bindchooseavatar|bindagreeprivacyauthorization)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ],
     event: [
@@ -210,7 +226,8 @@ module.exports = function ({ print }) {
       {
         test: /^(getuserinfo|contact|getphonenumber|bindgetrealtimephonenumber|error|opensetting|launchapp|chooseavatar|agreeprivacyauthorization)$/,
         ios: iosEventLog,
-        android: androidEventLog
+        android: androidEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }

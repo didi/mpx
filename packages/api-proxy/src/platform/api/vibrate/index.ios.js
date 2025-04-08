@@ -9,6 +9,7 @@ const vibrateShort = function (options = {}) {
   const { type = 'light', success, fail, complete } = options
   try {
     ReactNativeHapticFeedback.trigger(getType(type), {
+      // harmony RN 属性不变
       ignoreAndroidSystemSettings: true,
       enableVibrateFallback: true
     })

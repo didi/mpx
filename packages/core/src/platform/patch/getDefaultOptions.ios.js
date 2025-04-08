@@ -401,6 +401,10 @@ function usePageEffect (mpxProxy, pageId) {
   }, [])
 }
 
+let pageId = 0
+const pageStatusMap = global.__mpxPageStatusMap = reactive({})
+let currentInjectPageConfig = {}
+
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
@@ -421,10 +425,6 @@ function usePageStatus (navigation, pageId) {
     }
   }, [navigation])
 }
-
-const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-let currentInjectPageConfig = {}
-let pageId = 0
 
 const RelationsContext = createContext(null)
 
@@ -475,7 +475,7 @@ export function withPageWrapper (WrappedComponent) {
       })
 
       // TODO 此部分内容在native-stack可删除，用setOptions设置
-      if (__mpx_mode__ === 'android') {
+      if (__mpx_mode__ !== 'ios') {
         ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
         ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
         ReactNative.StatusBar.setBackgroundColor('transparent')
