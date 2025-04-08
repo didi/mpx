@@ -250,10 +250,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const getViewPosition = useCallback(() => {
     const { y: navigationY = 0 } = navigation?.layout || {}
-    // @ts-expect-error ignore
-    scrollViewRef?.current?.measure((_x: number, _y: number, _width: number, height: number, pageX: number, pageY: number) => {
-      const halfHeight = height / 2
-      baselineY.current = pageY + halfHeight
+    viewRef?.current?.measure((_x: number, _y: number, _width: number, height: number, _pageX: number, pageY: number) => {
+      baselineY.current = pageY + height / 2
       if (isIOS) {
         // iOS measure 不包含 navigationY，Android & Harmony 都包含
         baselineY.current += navigationY
