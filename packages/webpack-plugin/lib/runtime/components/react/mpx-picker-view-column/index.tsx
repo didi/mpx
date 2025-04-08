@@ -1,7 +1,7 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { GestureResponderEvent, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, useNavigation } from '../utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from '../utils'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
@@ -68,8 +68,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const timerScrollTo = useRef<NodeJS.Timeout | null>(null)
   const timerClickOnce = useRef<NodeJS.Timeout | null>(null)
   const activeIndex = useRef(initialIndex)
-  const viewRef = useRef<View>(null)
-  const baselineY = useRef<number>(0)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
 
@@ -82,8 +80,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     setHeight,
     nodeRef: scrollViewRef
   })
-
-  const navigation = useNavigation()
 
   const paddingHeight = useMemo(
     () => Math.round((pickerH - itemHeight) / 2),
@@ -248,22 +244,12 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [itemRawH, getIndex])
 
-  const getViewPosition = useCallback(() => {
-    const { y: navigationY = 0 } = navigation?.layout || {}
-    viewRef?.current?.measure((_x: number, _y: number, _width: number, height: number, _pageX: number, pageY: number) => {
-      baselineY.current = pageY + height / 2
-      if (isIOS) {
-        // iOS measure 不包含 navigationY，Android & Harmony 都包含
-        baselineY.current += navigationY
-      }
-    })
-  }, [])
-
   const offsetHeights = useMemo(() => calcHeightOffsets(itemRawH), [itemRawH])
 
   const calcOffset = useCallback((y: number): number | false => {
-    const diff = Math.abs(y - baselineY.current)
-    const positive = y - baselineY.current > 0 ? 1 : -1
+    const baselineY = activeIndex.current * itemRawH + pickerH / 2
+    const diff = Math.abs(y - baselineY)
+    const positive = y - baselineY > 0 ? 1 : -1
     const [h1, h2, h3] = offsetHeights
     if (diff > h1 && diff < h3) {
       if (diff < h2) {
@@ -279,8 +265,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
    * 和小程序表现对齐，点击（不滑动）非焦点选项自动滚动到对应位置
    */
   const onClickOnceItem = useCallback((e: GestureResponderEvent) => {
-    const { pageY } = e.nativeEvent || {}
-    const offsetIndex = calcOffset(pageY)
+    const { locationY } = e.nativeEvent || {}
+    const offsetIndex = calcOffset(locationY)
     if (dragging.current || !offsetIndex) {
       return
     }
@@ -328,6 +314,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           {...layoutProps}
+          onTouchStart={onClickOnceItem}
           style={[{ width: '100%' }]}
           decelerationRate="fast"
           snapToOffsets={snapToOffsets}
@@ -360,12 +347,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   )
 
   return (
-    <View
-      ref={viewRef}
-      style={[styles.wrapper, normalStyle]}
-      onLayout={getViewPosition}
-      onTouchEnd={onClickOnceItem}
-    >
+    <View style={[styles.wrapper, normalStyle]}>
         {renderScollView()}
         {renderMask()}
         {renderIndicator()}

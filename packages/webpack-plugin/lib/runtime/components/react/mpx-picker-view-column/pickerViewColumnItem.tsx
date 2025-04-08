@@ -65,9 +65,12 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   return (
     <Reanimated.View
       key={strKey}
-      style={[{ height: itemHeight, width: itemWidth }, animatedStyles]}
+      style={[
+        { height: itemHeight, width: itemWidth, pointerEvents: 'none' },
+        animatedStyles
+      ]}
     >
-      {realItem}
+        {realItem}
     </Reanimated.View>
   )
 }
