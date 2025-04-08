@@ -11,6 +11,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-sticky-header'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-sticky-header'
+    },
     web (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-sticky-header'
