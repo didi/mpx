@@ -24,11 +24,11 @@ module.exports = function ({ print }) {
     },
     ios (tag, { el }) {
       el.isBuiltIn = true
-      return 'mpx-text'
+      return el.isSimple ? 'mpx-simple-text' : 'mpx-text'
     },
     android (tag, { el }) {
       el.isBuiltIn = true
-      return 'mpx-text'
+      return el.isSimple ? 'mpx-simple-text' : 'mpx-text'
     },
     props: [
       {
@@ -53,6 +53,17 @@ module.exports = function ({ print }) {
           el.isBuiltIn = true
         },
         qa: qaPropLog
+      },
+      {
+        test: /^(is-simple)$/,
+        android (prop, { el }) {
+          el.isSimple = true
+          return false
+        },
+        ios (prop, { el }) {
+          el.isSimple = true
+          return false
+        }
       }
     ]
   }
