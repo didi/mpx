@@ -533,7 +533,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   // 刷新控件的动画样式
   const refresherAnimatedStyle = useAnimatedStyle(() => {
     return {
-      marginTop: -refresherHeight.value, // 初始隐藏在顶部
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: -refresherHeight.value, // 初始隐藏在顶部
       transform: [{ translateY: Math.min(translateY.value, refresherHeight.value) }],
       backgroundColor: refresherBackground || 'transparent'
     }
