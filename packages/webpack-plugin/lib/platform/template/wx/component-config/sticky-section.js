@@ -11,6 +11,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-sticky-section'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-sticky-section'
+    },
     web (tag, { el }) {
       return 'div'
     }

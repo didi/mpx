@@ -234,6 +234,9 @@
             stop: 56
           }
         }
+        if(this.enableSticky) {
+          originBsOptions.useTransition = false
+        }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false })
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
         this.lastX = -this.currentX
