@@ -155,13 +155,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const snapScrollLeft = useRef(0)
 
   const [refreshing, setRefreshing] = useState(false)
+
   const [enableScroll, setEnableScroll] = useState(true)
   const enableScrollValue = useSharedValue(true)
-  const lastEnableScrollValue = useSharedValue(true)
 
   const [scrollBounces, setScrollBounces] = useState(!!bounces)
   const bouncesValue = useSharedValue(!!bounces)
-  const lastBouncesValue = useSharedValue(!!bounces)
 
   const translateY = useSharedValue(0)
   const isAtTop = useSharedValue(true)
@@ -500,7 +499,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       setTimeout(() => {
         setRefreshing(false)
         translateY.value = withTiming(0)
-        if (!lastEnableScrollValue.value) {
+        if (!enableScrollValue.value) {
           resetScrollState(true)
         }
       }, 500)
@@ -563,16 +562,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'worklet'
     if (enableScrollValue.value !== newValue) {
       enableScrollValue.value = newValue
-      if (lastEnableScrollValue.value !== newValue) {
-        runOnJS(setEnableScroll)(newValue)
-        lastEnableScrollValue.value = newValue
-      }
+      runOnJS(setEnableScroll)(newValue)
     }
   }
 
   const resetScrollState = (value: boolean) => {
     enableScrollValue.value = value
-    lastEnableScrollValue.value = value
     setEnableScroll(value)
   }
 
@@ -580,10 +575,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'worklet'
     if (bouncesValue.value !== newValue) {
       bouncesValue.value = newValue
-      if (lastBouncesValue.value !== newValue) {
-        runOnJS(setScrollBounces)(newValue)
-        lastBouncesValue.value = newValue
-      }
+      runOnJS(setScrollBounces)(newValue)
     }
   }
 
