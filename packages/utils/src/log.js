@@ -4,6 +4,9 @@ const isDev = process.env.NODE_ENV !== 'production'
 
 export function warn (msg, location, e) {
   const condition = global.__mpx?.config.ignoreWarning
+  if (isDev && !e) {
+    e = new Error('Mpx runtime warn')
+  }
   let ignore = false
   if (typeof condition === 'boolean') {
     ignore = condition
@@ -26,6 +29,9 @@ export function warn (msg, location, e) {
 
 export function error (msg, location, e) {
   const errorHandler = global.__mpx?.config.errorHandler
+  if (isDev && !e) {
+    e = new Error('Mpx runtime error')
+  }
   if (isFunction(errorHandler)) {
     errorHandler(msg, location, e)
   } else {

@@ -462,6 +462,7 @@ export function PageWrapperHOC (WrappedComponent) {
     if (!navigation || !route) {
       // 独立组件使用时要求传递navigation
       error('Using pageWrapper requires passing navigation and route')
+      return null
     }
     usePageStatus(navigation, currentPageId)
     useLayoutEffect(() => {
