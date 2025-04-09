@@ -56,10 +56,19 @@ export default function createApp (options) {
   const Stack = createStackNavigator()
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pages).map(([key, item]) => {
-      const options = {
-        // __mpxPageStatusMap 为编译注入的全局变量
-        headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
-      }
+      const mergePageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
+      const isCustom = mergePageConfig.navigationStyle === 'custom'
+      const options = Object.assign({
+        headerShown: !isCustom
+      }, isCustom
+        ? {}
+        : {
+        title: mergePageConfig.navigationBarTitleText?.trim() || '',
+        headerStyle: {
+          backgroundColor: mergePageConfig.navigationBarBackgroundColor || '#000000'
+        },
+        headerTintColor: mergePageConfig.navigationBarTextStyle || 'white'
+      })
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,

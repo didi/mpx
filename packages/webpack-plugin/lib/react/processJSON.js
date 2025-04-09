@@ -113,7 +113,7 @@ module.exports = function (jsonContent, {
   }
 
   if (ctorType === 'page') {
-    const keysToExtract = ['navigationStyle']
+    const keysToExtract = ['navigationStyle', 'navigationBarBackgroundColor', 'navigationBarTextStyle', 'navigationBarTitleText']
     const configObj = {}
     keysToExtract.forEach(key => {
       if (jsonObj[key]) {

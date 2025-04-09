@@ -589,14 +589,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       })
       usePageStatus(navigation, currentPageId)
       useLayoutEffect(() => {
-        navigation.setOptions({
-          title: pageConfig.navigationBarTitleText?.trim() || '',
-          headerStyle: {
-            backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-          },
-          headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-        })
-
         // TODO 此部分内容在native-stack可删除，用setOptions设置
         if (__mpx_mode__ !== 'ios') {
           ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
