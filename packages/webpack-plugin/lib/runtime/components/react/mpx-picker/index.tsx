@@ -229,8 +229,14 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       if (!(_mode in pickerModalMap)) {
         return warn(`[Mpx runtime warn]: Unsupported <picker> mode: ${mode}`)
       }
-      const _value: any = value
-      const PickerModal = pickerModalMap[_mode]
+      const renderPickerModelContent = () =>
+        React.createElement(
+          pickerModalMap[_mode],
+          extendObject({}, specificProps, {
+            value: value as any,
+            ref: pickerRef
+          })
+        )
       const renderPickerModal = (
         <>
           {headerText && (
@@ -238,7 +244,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
               <Text style={[styles.headerText]}>{headerText}</Text>
             </View>
           )}
-          <PickerModal {...specificProps} value={_value} ref={pickerRef}></PickerModal>
+          {renderPickerModelContent()}
           <View style={[styles.footer]}>
             <View
               onTouchEnd={onCancel}
