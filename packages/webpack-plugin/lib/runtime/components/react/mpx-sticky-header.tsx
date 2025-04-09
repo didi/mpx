@@ -33,7 +33,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
-  const [headerTop, setHeaderTop] = useState(0)
+  const headerTop = useRef(0)
   const scrollViewContext = useContext(ScrollViewContext)
   const { scrollOffset } = scrollViewContext
   const headerRef = useRef<View>(null)
@@ -65,7 +65,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
           headerRef.current.measureLayout(
             scrollViewRef.current,
             (left: number, top: number) => {
-              setHeaderTop(top - offsetTop)
+              headerTop.current = top - offsetTop
             }
           )
         } else {
@@ -84,7 +84,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
-      const newIsStickOnTop = currentScrollValue > headerTop
+      const newIsStickOnTop = currentScrollValue > headerTop.current
       if (newIsStickOnTop !== isStickOnTopRef.current) {
         isStickOnTopRef.current = newIsStickOnTop
         bindstickontopchange(
@@ -100,12 +100,12 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     return () => {
       scrollOffset.removeListener(listener)
     }
-  }, [headerTop])
+  }, [headerTop.current])
 
   const animatedStyle = useMemo(() => {
     const threshold = 1
     // 使用相对位置计算
-    const inputRange = headerTop <= threshold ? [0, 1] : [headerTop - 1, headerTop]
+    const inputRange = headerTop.current <= threshold ? [0, 1] : [headerTop.current - 1, headerTop.current]
     const outputRange = [0, 1]
 
     const translateY = Animated.multiply(
@@ -114,13 +114,13 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         outputRange,
         extrapolate: 'clamp'
       }),
-      Animated.subtract(scrollOffset, headerTop <= threshold ? -offsetTop : headerTop)
+      Animated.subtract(scrollOffset, headerTop.current <= threshold ? -offsetTop : headerTop.current)
     )
 
     return {
       transform: [{ translateY }]
     }
-  }, [headerTop, scrollOffset])
+  }, [headerTop.current, scrollOffset])
 
   const innerProps = useInnerProps(props, extendObject({}, {
     ref: headerRef,
