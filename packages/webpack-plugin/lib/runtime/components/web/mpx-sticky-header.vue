@@ -27,7 +27,7 @@
     },
     mounted() {
       this.headerRect = this.$el.getBoundingClientRect()
-      this.headerTop = this.headerRect.top - (this._scrollViewRect.top || 0) - this.offsetTop
+      this.headerTop = this.headerRect.top - (this._scrollViewRect.top || 0)
     },
     watch: {
       _scrollOffset: {
@@ -40,7 +40,6 @@
               isStickOnTop: newIsStickOnTop
             }, this))
           }
-          
           const stickyHeader = this.$refs.stickyHeader
           if (!stickyHeader) return
           if (this.isStickOnTop) {
@@ -53,7 +52,7 @@
       },
       _scrollViewRect: {
         handler(rect = {}) {
-          this.headerTop = this.headerRect.top - (rect.top || 0) - this.offsetTop
+          this.headerTop = this.headerRect.top - (rect.top || 0)
         },
       }
     },
