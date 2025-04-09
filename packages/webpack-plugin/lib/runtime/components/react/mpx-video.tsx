@@ -233,7 +233,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
         {},
         {
           detail: {
-            position: __mpx_mode__ === 'android' ? seekTime * 1000 : seekTime
+            position: __mpx_mode__ !== 'ios' ? seekTime * 1000 : seekTime
           },
           layoutRef
         },
@@ -326,7 +326,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   if (isDrm) {
     source.drm = {
       type: DRMType.FAIRPLAY,
-      certificateUrl: __mpx_mode__ === 'android' ? provisionUrl : certificateUrl,
+      certificateUrl: __mpx_mode__ !== 'ios' ? provisionUrl : certificateUrl,
       licenseServer: licenseUrl
     }
   }
