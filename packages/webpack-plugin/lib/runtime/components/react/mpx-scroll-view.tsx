@@ -741,7 +741,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           ScrollViewContext.Provider,
           { value: contextValue },
           wrapChildren(
-            extendObject(props, { children: otherContent }),
+            extendObject({}, props, { children: otherContent }),
             {
               hasVarDec,
               varContext: varContextRef.current,
