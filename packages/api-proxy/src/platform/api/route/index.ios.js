@@ -1,6 +1,7 @@
 import { successHandle, failHandle } from '../../../common/js'
 import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
+import { EventChannel } from '../event-channel'
 
 function getBasePath (navigation) {
   if (navigation) {
@@ -57,17 +58,24 @@ function navigateTo (options = {}) {
   }
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
+    const eventChannel = new EventChannel()
+    if (options.events) {
+      eventChannel._addListeners(options.events)
+    }
+
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
+    navigationHelper.eventChannelMap[finalPath] = eventChannel
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'navigateTo:ok' }
+      const res = { errMsg: 'navigateTo:ok', eventChannel }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
+      navigationHelper.eventChannelMap[finalPath] = null
     }
   }
 }
