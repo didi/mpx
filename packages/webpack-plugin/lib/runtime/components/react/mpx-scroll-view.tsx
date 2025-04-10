@@ -221,13 +221,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     gestureRef: scrollViewRef
   })
 
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props: extendObject({}, props, { 'enable-offset': true }), hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
   const contextValue = useMemo(() => {
     return {
       gestureRef: scrollViewRef,
-      scrollOffset,
-      scrollLayoutRef: layoutRef
+      scrollOffset
     }
   }, [])
 
