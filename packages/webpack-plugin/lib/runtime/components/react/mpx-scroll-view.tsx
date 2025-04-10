@@ -159,8 +159,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const [enableScroll, setEnableScroll] = useState(true)
   const enableScrollValue = useSharedValue(true)
 
-  const [scrollBounces, setScrollBounces] = useState(!!bounces)
-  const bouncesValue = useSharedValue(!!bounces)
+  const [scrollBounces, setScrollBounces] = useState(false)
+  const bouncesValue = useSharedValue(!!false)
 
   const translateY = useSharedValue(0)
   const isAtTop = useSharedValue(true)
@@ -583,7 +583,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       'worklet'
-      if (enhanced) {
+      if (enhanced && !!bounces) {
         if (event.translationY > 0 && bouncesValue.value) {
           updateBouncesState(false)
         } else if ((event.translationY < 0) && !bouncesValue.value) {
@@ -671,7 +671,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   if (enhanced) {
     Object.assign(scrollAdditionalProps, {
-      bounces: scrollBounces,
+      bounces: hasRefresher ? scrollBounces : !!bounces,
       pagingEnabled
     })
   }
