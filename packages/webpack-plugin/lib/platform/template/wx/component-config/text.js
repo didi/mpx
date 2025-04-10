@@ -8,6 +8,7 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -30,6 +31,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return el.isSimple ? 'mpx-simple-text' : 'mpx-text'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return el.isSimple ? 'mpx-simple-text' : 'mpx-text'
+    },
     props: [
       {
         test: /^(decode|user-select)$/,
@@ -45,7 +50,8 @@ module.exports = function ({ print }) {
       {
         test: /^(space|decode)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       },
       {
         test: /^(selectable|space|decode|use-built-in)$/,
@@ -57,6 +63,10 @@ module.exports = function ({ print }) {
       {
         test: /^(is-simple)$/,
         android (prop, { el }) {
+          el.isSimple = true
+          return false
+        },
+        harmony (prop, { el }) {
           el.isSimple = true
           return false
         },
