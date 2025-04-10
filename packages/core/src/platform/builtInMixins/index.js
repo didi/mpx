@@ -19,13 +19,15 @@ import pageIdMixin from './pageIdMixin'
 export default function getBuiltInMixins ({ type, rawOptions = {} }) {
   let bulitInMixins
   if (isReact) {
+    console.log('1234567', type)
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
       styleHelperMixin(),
       refsMixin(),
       i18nMixin(),
-      relationsMixin(type)
+      relationsMixin(type),
+      pageRouteMixin(type)
     ]
   } else if (isWeb) {
     bulitInMixins = [
