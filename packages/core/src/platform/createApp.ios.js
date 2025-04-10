@@ -75,7 +75,15 @@ export default function createApp (options) {
     })
   }
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+  global.__navigationHelper.eventChannelMap = global.__navigationHelper.eventChannelMap || {}
   const onStateChange = (state) => {
+    // const routes = state.routes || []
+    // const route = routes[routes.length - 1]?.name
+    // const action = global.__navigationHelper.__mpxAction || {}
+    // console.log(action, '----action')
+    // if (action.type === 'to') {
+    //   global.__navigationHelper.eventChannelMap[route] = action.eventChannel
+    // }
     Mpx.config.rnConfig.onStateChange?.(state)
     if (global.__navigationHelper.lastSuccessCallback) {
       global.__navigationHelper.lastSuccessCallback()

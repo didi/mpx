@@ -2,15 +2,10 @@
 export default function pageRouteMixin (mixinType) {
   if (mixinType === 'page') {
     return {
-      // beforeCreate () {
-      //   this.route = this.$options.__mpxPageRoute || ''
-      // },
       methods: {
         getOpenerEventChannel () {
-          console.log(this.getPageId(), 'this.getPageId')
-          // const router = global.__mpxRouter
-          // const eventChannel = router && router.eventChannelMap[this.route]
-          // return eventChannel || {}
+          const eventChannel = global.__navigationHelper?.eventChannelMap[this.route]
+          return eventChannel || {}
         }
       }
     }

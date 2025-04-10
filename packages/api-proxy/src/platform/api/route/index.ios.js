@@ -63,22 +63,27 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-    if (!navigationHelper.eventChannelMap) {
-      navigationHelper.eventChannelMap = {}
-    }
+    // navigationHelper.__mpxAction = {
+    //   type: 'to',
+    //   eventChannel
+    // }
     const id = getCurrentPageId()
     navigationHelper.eventChannelMap[id] = eventChannel
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
+    navigationHelper.eventChannelMap[finalPath] = eventChannel
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok', eventChannel }
       successHandle(res, options.success, options.complete)
+      // navigationHelper.__mpxAction = null
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
+      navigationHelper.eventChannelMap[finalPath] = null
+      // navigationHelper.__mpxAction = null
     }
   }
 }
