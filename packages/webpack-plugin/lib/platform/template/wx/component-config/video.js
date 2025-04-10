@@ -15,6 +15,8 @@ module.exports = function ({ print }) {
   const iosEventLogError = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLogError = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const harmonyEventLogError = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -22,6 +24,10 @@ module.exports = function ({ print }) {
       return 'mpx-video'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-video'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-video'
     },
@@ -66,7 +72,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(duration|enable-danmu|danmu-btn|page-gesture|direction|show-progress|show-fullscreen-btn|show-center-play-btn|enable-progress-gesture|show-mute-btn|title|play-btn-position|enable-play-gesture|auto-pause-if-navigate|auto-pause-if-open-native|vslide-gesture|vslide-gesture-in-fullscreen|show-bottom-progress|ad-unit-id|poster-for-crawler|show-casting-button|picture-in-picture-mode|picture-in-picture-show-progress| picture-in-picture-init-position|enable-auto-rotation|show-snapshot-button|show-screen-lock-button|show-background-playback-button|background-poster|referrer-policy|is-live)$/,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ],
     event: [
@@ -108,7 +115,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(progress|enterpictureinpicture|leavepictureinpicture|castinguserselect|castingstatechange|castinginterrupt)$/,
-        android: androidEventLogError
+        android: androidEventLogError,
+        harmony: harmonyEventLogError
       }
     ]
   }

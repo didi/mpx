@@ -12,6 +12,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-canvas'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-canvas'
+    },
     ios (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-canvas'
