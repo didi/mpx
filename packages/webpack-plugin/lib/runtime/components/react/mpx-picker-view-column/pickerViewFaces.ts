@@ -25,6 +25,13 @@ export const calcPickerHeight = (faces: Faces[], itemHeight: number) => {
   return faces.reduce((r, v) => r + calcHeight(Math.abs(v.deg), itemHeight), 0)
 }
 
+export const calcHeightOffsets = (itemHeight: number) => {
+  const h1 = itemHeight / 2
+  const h2 = h1 + calcHeight(30, itemHeight)
+  const h3 = h2 + calcHeight(60, itemHeight)
+  return [h1, h2, h3]
+}
+
 export const createFaces = (
   itemHeight: number,
   visibleCount: number
