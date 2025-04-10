@@ -1,4 +1,4 @@
-import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
 import { EventChannel } from '../event-channel'
@@ -63,12 +63,7 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-    // navigationHelper.__mpxAction = {
-    //   type: 'to',
-    //   eventChannel
-    // }
-    const id = getCurrentPageId()
-    navigationHelper.eventChannelMap[id] = eventChannel
+
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
@@ -77,13 +72,11 @@ function navigateTo (options = {}) {
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok', eventChannel }
       successHandle(res, options.success, options.complete)
-      // navigationHelper.__mpxAction = null
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `navigateTo:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
       navigationHelper.eventChannelMap[finalPath] = null
-      // navigationHelper.__mpxAction = null
     }
   }
 }
