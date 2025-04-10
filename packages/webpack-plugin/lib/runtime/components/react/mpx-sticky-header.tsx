@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode } from 'react'
-import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, Platform } from 'react-native'
+import { StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent } from 'react-native'
+import Animated, { useAnimatedStyle, useSharedValue, interpolate, Extrapolate } from 'react-native-reanimated'
 import { ScrollViewContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
@@ -33,11 +34,13 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
-  const [headerTop, setHeaderTop] = useState(0)
+
   const scrollViewContext = useContext(ScrollViewContext)
   const { scrollOffset } = scrollViewContext
   const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
+  const reanimatedScrollOffset = useSharedValue(0)
+  const headerTop = useSharedValue(0)
 
   const {
     normalStyle,
@@ -65,7 +68,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
           headerRef.current.measureLayout(
             scrollViewRef.current,
             (left: number, top: number) => {
-              setHeaderTop(top - offsetTop)
+              headerTop.value = top - offsetTop
             }
           )
         } else {
@@ -84,7 +87,8 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
-      const newIsStickOnTop = currentScrollValue > headerTop
+      reanimatedScrollOffset.value = state.value
+      const newIsStickOnTop = currentScrollValue > headerTop.value
       if (newIsStickOnTop !== isStickOnTopRef.current) {
         isStickOnTopRef.current = newIsStickOnTop
         bindstickontopchange(
@@ -100,36 +104,25 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     return () => {
       scrollOffset.removeListener(listener)
     }
-  }, [headerTop])
+  }, [])
 
-  const animatedStyle = useMemo(() => {
-    const threshold = 1
-    // 使用相对位置计算
-    const inputRange = headerTop <= threshold ? [0, 1] : [headerTop - 1, headerTop]
-    const outputRange = [0, 1]
-
-    const translateY = Animated.multiply(
-      scrollOffset.interpolate({
-        inputRange,
-        outputRange,
-        extrapolate: 'clamp'
-      }),
-      Animated.subtract(scrollOffset, headerTop <= threshold ? -offsetTop : headerTop)
-    )
-
+  // 创建动画样式
+  const animatedStyle = useAnimatedStyle(() => {
+    // 计算 translateY
+    const translateY = interpolate(reanimatedScrollOffset.value, [0, headerTop.value, headerTop.value + 1], [0, 0, 1], Extrapolate.CLAMP) * (reanimatedScrollOffset.value - headerTop.value)
     return {
       transform: [{ translateY }]
     }
-  }, [headerTop, scrollOffset])
+  })
 
   const innerProps = useInnerProps(props, extendObject({}, {
     ref: headerRef,
-    style: extendObject({}, styles.content, innerStyle, animatedStyle, {
+    style: [styles.content, innerStyle, animatedStyle, {
       paddingTop: padding[0] || 0,
       paddingRight: padding[1] || 0,
       paddingBottom: padding[2] || 0,
       paddingLeft: padding[3] || 0
-    })
+    }]
   }, layoutProps), [], { layoutRef })
 
   return (
