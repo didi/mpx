@@ -53,6 +53,9 @@ interface UseInnerPropsConfig {
 interface DataSetType {
   [key: string]: string;
 }
+interface ExtendedNativeTouchEvent extends NativeTouchEvent {
+  _stoppedEventTypes?: Set<string>
+}
 
 export {
   NativeTouchEvent,
@@ -64,5 +67,6 @@ export {
   LayoutRef,
   SetTimeoutReturnType,
   DataSetType,
-  Navigation
+  Navigation,
+  ExtendedNativeTouchEvent
 }
