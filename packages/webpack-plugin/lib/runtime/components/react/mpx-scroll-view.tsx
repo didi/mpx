@@ -33,7 +33,7 @@
  */
 import { ScrollView, RefreshControl, Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
-import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo } from 'react'
+import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo, createElement } from 'react'
 import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -704,55 +704,58 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'bindrefresherrefresh'
   ], { layoutRef })
 
-  const withRefresherScrollView = (
-      <GestureDetector gesture={panGesture}>
-        <ScrollView {...innerProps}>
-          {/* 刷新控件 - 有独立的动画 */}
-          <Animated.View style={[refresherAnimatedStyle, refresherLayoutStyle]} onLayout={onRefresherLayout}>
-            {refresherContent}
-          </Animated.View>
-
-          {/* 内容区域 - 有独立的动画 */}
-          <Animated.View style={contentAnimatedStyle}>
-            <ScrollViewContext.Provider value={contextValue}>
-              {wrapChildren(
-                { ...props, children: otherContent },
-                {
-                  hasVarDec,
-                  varContext: varContextRef.current,
-                  textStyle,
-                  textProps
-                }
-              )}
-            </ScrollViewContext.Provider>
-          </Animated.View>
-        </ScrollView>
-      </GestureDetector>
+  const withRefresherScrollView = createElement(
+    GestureDetector,
+    { gesture: panGesture },
+    createElement(
+      ScrollView,
+      innerProps,
+      createElement(
+        Animated.View,
+        { style: [refresherAnimatedStyle, refresherLayoutStyle], onLayout: onRefresherLayout },
+        refresherContent
+      ),
+      createElement(
+        Animated.View,
+        { style: contentAnimatedStyle },
+        createElement(
+          ScrollViewContext.Provider,
+          { value: contextValue },
+          wrapChildren(
+            extendObject(props, { children: otherContent }),
+            {
+              hasVarDec,
+              varContext: varContextRef.current,
+              textStyle,
+              textProps
+            }
+          )
+        )
+      )
+    )
   )
 
-  const commonScrollView = (
-      <ScrollView {...innerProps} refreshControl={
-        refresherEnabled
-          ? (<RefreshControl
-        progressBackgroundColor={refresherBackground}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-        {...(refresherDefaultStyle && refresherDefaultStyle !== 'none'
-          ? {
-              colors: refreshColor[refresherDefaultStyle]
-            }
-          : {})}
-      />)
-          : undefined}>
-        <ScrollViewContext.Provider value={contextValue}>
-          {wrapChildren(props, {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          })}
-        </ScrollViewContext.Provider>
-      </ScrollView>
+  const commonScrollView = createElement(
+    ScrollView,
+    extendObject(innerProps, {
+      refreshControl: refresherEnabled
+        ? createElement(RefreshControl, extendObject({
+          progressBackgroundColor: refresherBackground,
+          refreshing: refreshing,
+          onRefresh: onRefresh
+        }, refresherDefaultStyle && refresherDefaultStyle !== 'none'
+          ? { colors: refreshColor[refresherDefaultStyle] }
+          : {}))
+        : undefined
+    }),
+    createElement(ScrollViewContext.Provider, { value: contextValue },
+      wrapChildren(props, {
+        hasVarDec,
+        varContext: varContextRef.current,
+        textStyle,
+        textProps
+      })
+    )
   )
 
   return hasRefresher ? withRefresherScrollView : commonScrollView
