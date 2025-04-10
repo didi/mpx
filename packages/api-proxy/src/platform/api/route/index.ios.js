@@ -59,7 +59,6 @@ function navigateTo (options = {}) {
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
     const eventChannel = new EventChannel()
-    
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
