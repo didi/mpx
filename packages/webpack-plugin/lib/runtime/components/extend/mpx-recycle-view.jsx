@@ -1,8 +1,8 @@
-import React, { forwardRef, useRef } from 'react'
-import { SectionList, FlatList } from 'react-native'
-import useInnerProps from '../react/getInnerListeners'
-import useNodesRef from '../react/useNodesRef'
-import { extendObject, getCustomEvent, useLayout, useTransformStyle } from '../react/utils'
+import React, { forwardRef, useRef, useCallback, useState, useEffect } from 'react'
+import { SectionList, FlatList, RefreshControl } from 'react-native'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import useNodesRef from './useNodesRef'
+import { extendObject, useLayout, useTransformStyle } from './utils'
 
 const getGenericComponent = ({ props, ref, generichash, generickey }) => {
   const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
@@ -44,12 +44,16 @@ const RecycleView = forwardRef((props = {}, ref) => {
     listData,
     type,
     generichash,
-    genericrecycleItem,
-    genericsectionHeader,
-    genericsectionFooter,
-    genericlistHeader,
-    genericlistFooter,
     style = {},
+    itemHeight = {},
+    sectionHeaderHeight = {},
+    sectionFooterHeight = {},
+    listHeaderHeight = {},
+    'genericrecycle-item': genericrecycleItem,
+    'genericsection-header': genericsectionHeader,
+    'genericsection-footer': genericsectionFooter,
+    'genericlist-header': genericlistHeader,
+    'genericlist-footer': genericlistFooter,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
@@ -63,6 +67,8 @@ const RecycleView = forwardRef((props = {}, ref) => {
     'refresher-triggered': refresherTriggered
   } = props
 
+  const [refreshing, setRefreshing] = useState(!!refresherTriggered)
+
   const scrollViewRef = useRef(null)
   const {
     hasSelfPercent,
@@ -72,7 +78,20 @@ const RecycleView = forwardRef((props = {}, ref) => {
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
-  useNodesRef(props, ref, scrollViewRef, { style })
+  useNodesRef(props, ref, scrollViewRef, {
+    style,
+    node: {
+      scrollToLocation,
+      scrollToOffset,
+      scrollToIndex
+    }
+  })
+
+  useEffect(() => {
+    if (refreshing !== refresherTriggered) {
+      setRefreshing(!!refresherTriggered)
+    }
+  }, [refresherTriggered])
 
   function onRefresh () {
     const { bindrefresherrefresh } = props
@@ -98,6 +117,77 @@ const RecycleView = forwardRef((props = {}, ref) => {
       )
   }
 
+  function getHeight ({ data, index, key }) {
+    if (!key) {
+      return 0
+    }
+    if (key.getter) {
+      return key.getter(data[index], index) || 0
+    } else {
+      return key.value || 0
+    }
+  }
+
+  const renderItem = useCallback(({ item }) => (
+    <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>
+  ), [])
+
+  const renderSectionHeader = useCallback((data) => (
+    <SectionHeader data={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
+  ), [])
+
+  const renderSectionFooter = useCallback((data) => (
+    <SectionFooter data={data.section} generichash={generichash} genericsectionFooter={genericsectionFooter}/>
+  ), [])
+
+  const renderListHeader = useCallback((data) => (
+    <ListHeader {...props} generichash={generichash} genericlistHeader={genericlistHeader}/>
+  ), [])
+
+  const renderListFooter = useCallback((data) => (
+    <ListFooter {...props} generichash={generichash} genericlistFooter={genericlistFooter}/>
+  ), [])
+  function getSectionItemLayout (data, index) {
+    // todo 需要计算 sectionHeader、sectionFooter、listHeader、itemHeight
+    // https://github.com/jsoendermann/rn-section-list-get-item-layout/blob/master/index.ts
+    return {
+      length: getHeight({ data, index, key: itemHeight }),
+      offset: getHeight({ data, index, key: itemHeight }) * index || 0,
+      index
+    }
+  }
+
+  function getItemLayout (data, index) {
+    return {
+      length: getHeight({ data, index, key: itemHeight }),
+      offset: getHeight({ data, index, key: listHeaderHeight }) + getHeight({ data, index, key: itemHeight }) * index || 0,
+      index
+    }
+  }
+
+  function scrollToLocation ({
+    itemIndex,
+    sectionIndex,
+    animated,
+    viewOffset = 0,
+    viewPosition = 0
+  }) {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToLocation?.({ itemIndex, sectionIndex, animated, viewOffset, viewPosition })
+    }
+  }
+
+  function scrollToOffset ({ offset, animated }) {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToOffset({ offset, animated })
+    }
+  }
+
+  function scrollToIndex ({ index, animated, viewOffset = 0, viewPosition = 0 }) {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToIndex?.({ index, animated, viewOffset, viewPosition })
+    }
+  }
   const scrollAdditionalProps = extendObject(
     {
       alwaysBounceVertical: false,
@@ -121,8 +211,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
   }
   if (refresherEnabled) {
     Object.assign(scrollAdditionalProps, {
-      onRefresh: onRefresh,
-      refreshing: refresherTriggered
+      refreshing: refreshing
     })
   }
 
@@ -142,20 +231,24 @@ const RecycleView = forwardRef((props = {}, ref) => {
         style={[{ height, width }, style, layoutStyle]}
         sections={listData}
         keyExtractor={(item, index) => item + index}
-        renderItem={({ item }) => <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>}
-        renderSectionHeader={(data) => <SectionHeader data={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/>}
-        renderSectionFooter={(data) => <SectionFooter data={data.section} generichash={generichash} genericsectionFooter={genericsectionFooter}/>}
-        ListHeaderComponent={<ListHeader {...props} generichash={generichash} genericlistHeader={genericlistHeader}/>}
-        ListFooterComponent={<ListFooter {...props} generichash={generichash} genericlistFooter={genericlistFooter}/>}
+        renderItem={renderItem}
+        getItemLayout={getSectionItemLayout}
+        renderSectionHeader={generichash && genericsectionHeader && renderSectionHeader || null}
+        renderSectionFooter={generichash && genericsectionFooter && renderSectionFooter || null}
+        ListHeaderComponent={generichash && genericlistHeader && renderListHeader || null}
+        ListFooterComponent={generichash && genericlistFooter && renderListFooter || null}
+        refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
       />
       : <FlatList
         {...innerProps}
         style={[{ height, width }, style, layoutStyle]}
         data={listData}
         keyExtractor={(item, index) => item + index}
-        renderItem={({ item }) => <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>}
-        ListHeaderComponent={<ListHeader {...props} generichash={generichash} genericlistHeader={genericlistHeader}/>}
-        ListFooterComponent={<ListFooter {...props} generichash={generichash} genericlistFooter={genericlistFooter}/>}
+        renderItem={renderItem}
+        getItemLayout={getItemLayout}
+        ListHeaderComponent={generichash && genericlistHeader && renderListHeader || null}
+        ListFooterComponent={generichash && genericlistFooter && renderListFooter || null}
+        refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
       />
   )
 })
