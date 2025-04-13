@@ -531,24 +531,21 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
         setHeight && setHeight(height || 0)
       }
       if (enableOffset) {
-        // 导航条可能会导致 measure 到的 pageY 数据不准确，临时 hack 加个延时
-        setTimeout(() => {
-          nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-            const { y: navigationY = 0 } = navigation?.layout || {}
-            layoutRef.current = {
-              x,
-              y: y - navigationY,
-              width,
-              height,
-              offsetLeft,
-              offsetTop: offsetTop - navigationY,
-              _x: x,
-              _y: y,
-              _offsetLeft: offsetLeft,
-              _offsetTop: offsetTop
-            }
-          })
-        }, 100)
+        nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
+          const { y: navigationY = 0 } = navigation?.layout || {}
+          layoutRef.current = {
+            x,
+            y: y - navigationY,
+            width,
+            height,
+            offsetLeft,
+            offsetTop: offsetTop - navigationY,
+            _x: x,
+            _y: y,
+            _offsetLeft: offsetLeft,
+            _offsetTop: offsetTop
+          }
+        })
       }
       onLayout && onLayout(e)
       props.onLayout && props.onLayout(e)

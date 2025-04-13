@@ -52,25 +52,19 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  const hasLayoutRef = useRef(false)
-
   function onLayout (e: LayoutChangeEvent) {
     if (headerRef.current) {
-      // 只测量一次，避免内容变化导致位置变化
-      if (!hasLayoutRef.current) {
-        hasLayoutRef.current = true
-        const scrollViewRef = scrollViewContext.gestureRef
-        if (scrollViewRef && scrollViewRef.current) {
-          // 使用 measureLayout 测量相对于 ScrollView 的位置
-          headerRef.current.measureLayout(
-            scrollViewRef.current,
-            (left: number, top: number) => {
-              setHeaderTop(top - offsetTop)
-            }
-          )
-        } else {
-          error('StickyHeader measureLayout error: scrollViewRef is not a valid native component reference')
-        }
+      const scrollViewRef = scrollViewContext.gestureRef
+      if (scrollViewRef && scrollViewRef.current) {
+        // 使用 measureLayout 测量相对于 ScrollView 的位置
+        headerRef.current.measureLayout(
+          scrollViewRef.current,
+          (left: number, top: number) => {
+            setHeaderTop(top - offsetTop)
+          }
+        )
+      } else {
+        error('StickyHeader measureLayout error: scrollViewRef is not a valid native component reference')
       }
     }
   }
