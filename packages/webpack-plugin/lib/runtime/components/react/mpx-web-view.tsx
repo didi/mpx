@@ -123,7 +123,10 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const navigation = useNavigation()
 
   useEffect(() => {
-    const beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+    let beforeRemoveSubscription:any
+    if (__mpx_mode__ !== 'ios') {
+      beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+    }
     return () => {
       if (isFunction(beforeRemoveSubscription)) {
         beforeRemoveSubscription()
@@ -140,7 +143,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   const _reload = function () {
-    if (__mpx_mode__ === 'android') {
+    if (__mpx_mode__ !== 'ios') {
       fristLoaded.current = false // 安卓需要重新设置
     }
     setPageLoadErr(false)
@@ -186,7 +189,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
 
   const _onLoadProgress = function (event: WebViewProgressEvent) {
-    if (__mpx_mode__ === 'android') {
+    if (__mpx_mode__ !== 'ios') {
       canGoBack.current = event.nativeEvent.canGoBack
     }
   }
@@ -302,7 +305,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
   }
   const onLoadEnd = function (res: WebViewEvent) {
-    if (__mpx_mode__ === 'android') {
+    if (__mpx_mode__ !== 'ios') {
       res.persist()
       setTimeout(() => {
         onLoadEndHandle(res)

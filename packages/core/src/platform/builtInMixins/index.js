@@ -1,3 +1,4 @@
+import { isReact, isWeb } from '@mpxjs/utils'
 import pageStatusMixin from './pageStatusMixin'
 import proxyEventMixin from './proxyEventMixin'
 import renderHelperMixin from './renderHelperMixin'
@@ -17,7 +18,7 @@ import pageIdMixin from './pageIdMixin'
 
 export default function getBuiltInMixins ({ type, rawOptions = {} }) {
   let bulitInMixins
-  if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+  if (isReact) {
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
@@ -26,7 +27,7 @@ export default function getBuiltInMixins ({ type, rawOptions = {} }) {
       i18nMixin(),
       relationsMixin(type)
     ]
-  } else if (__mpx_mode__ === 'web') {
+  } else if (isWeb) {
     bulitInMixins = [
       proxyEventMixin(),
       refsMixin(),
