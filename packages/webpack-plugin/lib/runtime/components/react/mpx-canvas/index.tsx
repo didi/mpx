@@ -220,7 +220,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
             Object.assign(object, payload, {
               [WEBVIEW_TARGET]: data.meta.target
             })
-            extendObject(data, {
+            extendObject({}, data, {
               payload: object
             })
           }
