@@ -314,7 +314,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           {...layoutProps}
-          onTouchStart={onClickOnceItem}
+          onTouchEnd={onClickOnceItem}
           style={[{ width: '100%' }]}
           decelerationRate="fast"
           snapToOffsets={snapToOffsets}
