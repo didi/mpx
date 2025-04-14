@@ -1,7 +1,7 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isIOS } from './utils'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
@@ -9,14 +9,14 @@ import MpxPickerVIewColumnItem from './mpx-picker-view-column-item'
 import { PickerViewColumnAnimationContext } from './pickerVIewContext'
 
 interface ColumnProps {
-  children?: React.ReactNode
+  columnIndex: number
   columnData: React.ReactNode[]
   initialIndex: number
   onSelectChange: Function
   style: {
     [key: string]: any
   }
-  'enable-var': boolean
+  'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   wrapperStyle: {
     height: number
@@ -24,7 +24,6 @@ interface ColumnProps {
   }
   pickerMaskStyle: Record<string, any>
   pickerIndicatorStyle: Record<string, any>
-  columnIndex: number
 }
 
 const visibleCount = 5
@@ -140,7 +139,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         y: initialIndex * itemRawH,
         animated: false
       })
-    }, isAndroid ? 200 : 0)
+    }, isIOS ? 0 : 200)
     activeIndex.current = initialIndex
   }, [itemRawH, maxIndex, initialIndex])
 

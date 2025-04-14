@@ -29,14 +29,14 @@ interface PickerViewProps {
   children: React.ReactNode
   value?: Array<number>
   bindchange?: AnyFunc
-  style: {
+  style?: {
     [key: string]: any
   }
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
-  'enable-var': boolean
+  'enable-var'?: boolean
   'external-var-context'?: Record<string, any>,
-  'enable-offset': boolean
+  'enable-offset'?: boolean
 }
 
 interface PickerLayout {
