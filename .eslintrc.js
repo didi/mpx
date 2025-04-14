@@ -38,7 +38,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.tsx', '**/*.ts'],
+      files: ['**/*.tsx', '**/*.ts', '**/*.jsx'],
       parser: '@typescript-eslint/parser',
       extends: [
         'standard',

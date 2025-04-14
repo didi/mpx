@@ -62,7 +62,7 @@ export class Image {
           }
         }
         callbackFn(
-          extendObject(message.payload, { target: this })
+          extendObject({}, message.payload, { target: this })
         )
       }
     })
