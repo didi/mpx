@@ -1,7 +1,7 @@
 
-import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode } from 'react'
-import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, Platform } from 'react-native'
-import { ScrollViewContext } from './context'
+import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
+import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent } from 'react-native'
+import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
 import { error } from '@mpxjs/utils'
@@ -35,9 +35,12 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   } = props
   const [headerTop, setHeaderTop] = useState(0)
   const scrollViewContext = useContext(ScrollViewContext)
+  const stickyContext = useContext(StickyContext)
   const { scrollOffset } = scrollViewContext
+  const { registerStickyHeader, unregisterStickyHeader } = stickyContext
   const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
+  const id = useId()
 
   const {
     normalStyle,
@@ -52,7 +55,14 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  function onLayout (e: LayoutChangeEvent) {
+  useEffect(() => {
+    registerStickyHeader({ key: id, updatePosition })
+    return () => {
+      unregisterStickyHeader(id)
+    }
+  }, [])
+
+  function updatePosition () {
     if (headerRef.current) {
       const scrollViewRef = scrollViewContext.gestureRef
       if (scrollViewRef && scrollViewRef.current) {
@@ -67,6 +77,10 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         error('StickyHeader measureLayout error: scrollViewRef is not a valid native component reference')
       }
     }
+  }
+
+  function onLayout (e: LayoutChangeEvent) {
+    updatePosition()
   }
 
   useNodesRef(props, ref, headerRef, {
