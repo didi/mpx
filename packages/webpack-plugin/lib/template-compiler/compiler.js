@@ -2135,8 +2135,8 @@ function processText (el, options, meta) {
 function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
-    const wrapper = createASTElement('mpx-simple-text')
+  if (parentTag !== 'mpx-text' && parentTag !== 'mpx-simple-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
+    const wrapper = createASTElement('mpx-inline-text')
     wrapper.isBuiltIn = true
     const inheritAttrs = []
     parent.attrsList.forEach(({ name, value }) => {
@@ -2535,7 +2535,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)

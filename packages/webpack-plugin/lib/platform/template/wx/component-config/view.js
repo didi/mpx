@@ -5,6 +5,7 @@ module.exports = function ({ print }) {
   const qaEventLogError = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
 
   return {
     // 匹配标签名，可传递正则
@@ -31,6 +32,10 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return el.isSimple ? 'mpx-simple-view' : 'mpx-view'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return el.isSimple ? 'mpx-simple-view' : 'mpx-view'
+    },
     qa (tag) {
       return 'div'
     },
@@ -46,10 +51,15 @@ module.exports = function ({ print }) {
       }, {
         test: /^(hover-stop-propagation)$/,
         android: androidPropLog,
-        ios: iosPropLog
+        ios: iosPropLog,
+        harmony: harmonyPropLog
       }, {
         test: /^(is-simple)$/,
         android (prop, { el }) {
+          el.isSimple = true
+          return false
+        },
+        harmony (prop, { el }) {
           el.isSimple = true
           return false
         },
