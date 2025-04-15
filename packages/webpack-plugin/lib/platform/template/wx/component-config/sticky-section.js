@@ -16,7 +16,8 @@ module.exports = function ({ print }) {
       return 'mpx-sticky-section'
     },
     web (tag, { el }) {
-      return 'div'
+      el.isBuiltIn = true
+      return 'mpx-sticky-section'
     }
   }
 }

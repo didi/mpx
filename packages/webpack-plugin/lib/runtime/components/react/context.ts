@@ -1,5 +1,6 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
 import { NativeSyntheticEvent, Animated } from 'react-native'
+import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
@@ -51,6 +52,11 @@ export interface RouteContextValue {
   navigation: Record<string, any>
 }
 
+export interface StickyContextValue {
+  registerStickyHeader: Function,
+  unregisterStickyHeader: Function
+}
+
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -76,3 +82,5 @@ export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | nu
 export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
+
+export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
