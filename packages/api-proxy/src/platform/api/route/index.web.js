@@ -48,7 +48,7 @@ function navigateTo (options = {}) {
     }
     let finalPath = resolvePath(options.url, router.currentRoute.path)
     const eventChannel = new EventChannel()
-    global.__mpxRouter.__mpxAction = {
+    router.__mpxAction = {
       type: 'to'
     }
     finalPath = finalPath.charAt(0) === '/' ? finalPath.substr(1) : finalPath
