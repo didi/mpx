@@ -1,5 +1,6 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
 import { NativeSyntheticEvent, Animated } from 'react-native'
+import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
@@ -43,13 +44,17 @@ export interface PortalContextValue {
 
 export interface ScrollViewContextValue {
   gestureRef: React.RefObject<any> | null,
-  scrollOffset: Animated.Value,
-  scrollLayoutRef: React.RefObject<any>
+  scrollOffset: Animated.Value
 }
 
 export interface RouteContextValue {
   pageId: number
   navigation: Record<string, any>
+}
+
+export interface StickyContextValue {
+  registerStickyHeader: Function,
+  unregisterStickyHeader: Function
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -74,6 +79,8 @@ export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0), scrollLayoutRef: { current: {} } })
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
+
+export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })

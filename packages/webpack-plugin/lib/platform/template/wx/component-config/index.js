@@ -44,6 +44,7 @@ const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
+
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
    * universal print for detail component warn or error
