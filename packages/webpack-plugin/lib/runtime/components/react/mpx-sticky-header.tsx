@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
 import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
@@ -68,12 +67,11 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     if (headerRef.current) {
       const scrollViewRef = scrollViewContext.gestureRef
       if (scrollViewRef && scrollViewRef.current) {
-        // 使用 measureLayout 测量相对于 ScrollView 的位置
         headerRef.current.measureLayout(
           scrollViewRef.current,
           (left: number, top: number) => {
             Animated.timing(headerTopAnimated, {
-              toValue: top - offsetTop,
+              toValue: top,
               duration: 0,
               useNativeDriver: true
             }).start()
@@ -116,26 +114,6 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     }
   }, [])
 
-  // const animatedStyle = useMemo(() => {
-  //   const threshold = 1
-  //   // 使用相对位置计算
-  //   const inputRange = headerTop <= threshold ? [0, 1] : [headerTop - 1, headerTop]
-  //   const outputRange = [0, 1]
-
-  //   const translateY = Animated.multiply(
-  //     scrollOffset.interpolate({
-  //       inputRange,
-  //       outputRange,
-  //       extrapolate: 'clamp'
-  //     }),
-  //     Animated.subtract(scrollOffset, headerTop <= threshold ? -offsetTop : headerTop)
-  //   )
-
-  //   return {
-  //     transform: [{ translateY }]
-  //   }
-  // }, [headerTop, scrollOffset])
-
   const animatedStyle = useMemo(() => {
     const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
       inputRange: [0, 1],
@@ -144,10 +122,25 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
       extrapolateRight: 'extend'
     })
 
+    const finalTranslateY = offsetTop === 0
+      ? translateY
+      : Animated.add(
+        translateY,
+        Animated.multiply(
+          Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, offsetTop],
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp'
+          }),
+          new Animated.Value(1)
+        )
+      )
+
     return {
-      transform: [{ translateY }]
+      transform: [{ translateY: finalTranslateY }]
     }
-  }, [scrollOffset, headerTopAnimated])
+  }, [scrollOffset, headerTopAnimated, offsetTop])
 
   const innerProps = useInnerProps(props, extendObject({}, {
     ref: headerRef,
