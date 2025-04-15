@@ -32,7 +32,7 @@
  * ✔ bindscroll
  */
 import { ScrollView, RefreshControl, Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle } from 'react-native'
+import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Animated as RNAnimated } from 'react-native'
 import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo, createElement } from 'react'
 import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
@@ -46,7 +46,6 @@ interface ScrollViewProps {
   enhanced?: boolean;
   bounces?: boolean;
   style?: ViewStyle;
-  scrollEventThrottle?: number;
   'scroll-x'?: boolean;
   'scroll-y'?: boolean;
   'enable-back-to-top'?: boolean;
@@ -70,6 +69,7 @@ interface ScrollViewProps {
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
+  'enable-sticky'?: boolean;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
   'scroll-event-throttle'?:number;
@@ -108,6 +108,8 @@ type ScrollAdditionalProps = {
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 };
 
+const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
+
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
@@ -144,9 +146,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'parent-height': parentHeight,
     'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
+    'enable-sticky': enableSticky,
     'scroll-event-throttle': scrollEventThrottle = 0,
     __selectRef
   } = props
+
+  const scrollOffset = useRef(new RNAnimated.Value(0)).current
 
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
@@ -216,13 +221,14 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     gestureRef: scrollViewRef
   })
 
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
+
   const contextValue = useMemo(() => {
     return {
-      gestureRef: scrollViewRef
+      gestureRef: scrollViewRef,
+      scrollOffset
     }
   }, [])
-
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
   const hasRefresherLayoutRef = useRef(false)
 
@@ -485,6 +491,16 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     updateIntersection()
   }
 
+  const scrollHandler = RNAnimated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onScroll(event)
+      }
+    }
+  )
+
   function onScrollDragStart (e: NativeSyntheticEvent<NativeScrollEvent>) {
     hasCallScrollToLower.current = false
     hasCallScrollToUpper.current = false
@@ -655,7 +671,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       scrollEnabled: !enableScroll ? false : !!(scrollX || scrollY),
       bounces: false,
       ref: scrollViewRef,
-      onScroll: onScroll,
+      onScroll: enableSticky ? scrollHandler : onScroll,
       onContentSizeChange: onContentSizeChange,
       bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
       bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
@@ -704,11 +720,13 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'bindrefresherrefresh'
   ], { layoutRef })
 
+  const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
+
   const withRefresherScrollView = createElement(
     GestureDetector,
     { gesture: panGesture },
     createElement(
-      ScrollView,
+      ScrollViewComponent,
       innerProps,
       createElement(
         Animated.View,
@@ -736,8 +754,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   )
 
   const commonScrollView = createElement(
-    ScrollView,
-    extendObject(innerProps, {
+    ScrollViewComponent,
+    extendObject({}, innerProps, {
       refreshControl: refresherEnabled
         ? createElement(RefreshControl, extendObject({
           progressBackgroundColor: refresherBackground,
