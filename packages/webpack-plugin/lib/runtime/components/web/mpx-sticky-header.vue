@@ -47,16 +47,25 @@ import { getCustomEvent } from './getInnerListeners'
       },
       _refreshVersion: {
         handler() {
-          const parentElement = this.$el.parentElement || {}
-          if (parentElement.className?.indexOf('mpx-sticky-section') > -1) {
-            this.headerTop = this.$el.offsetTop + this.$el.parentElement.offsetTop
-          } else if (parentElement.className?.indexOf('mpx-inner-wrapper') > -1) {
-             this.headerTop = this.$el.offsetTop
-          } else {
+          const parentElement = this.$el.parentElement
+          if (!parentElement) return
+          
+          const parentClass = parentElement.className || ''
+          const isStickySection = /mpx-sticky-section/.test(parentClass)
+          const isScrollViewWrapper = /mpx-inner-wrapper/.test(parentClass)
+          
+          if (!isStickySection && !isScrollViewWrapper) {
             warn('sticky-header only supports being a direct child of a scroll-view or sticky-section component.')
             return
           }
+          
+          this.headerTop = isStickySection 
+            ? this.$el.offsetTop + parentElement.offsetTop
+            : this.$el.offsetTop
+          
           const stickyHeader = this.$refs.stickyHeader
+          if (!stickyHeader) return
+          
           if (this._scrollOffset > this.headerTop) {
             stickyHeader.style.transform = `translateY(${this._scrollOffset - this.headerTop + this.offsetTop}px)`
           } else {
