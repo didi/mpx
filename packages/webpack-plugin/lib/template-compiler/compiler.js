@@ -730,10 +730,12 @@ function parse (template, options) {
       element.attrsList.forEach((attr) => {
         if (genericRE.test(attr.name)) {
           tagNames.add(attr.value)
-          genericAttrs.push({
-            name: attr.name.replace('generic:', 'mpx-generic-'),
-            value: attr.value
-          })
+          if (mode === 'wx') {
+            genericAttrs.push({
+              name: attr.name.replace('generic:', 'mpx-generic-'),
+              value: attr.value
+            })
+          }
         }
       })
       element.attrsList = element.attrsList.concat(genericAttrs)
@@ -2684,6 +2686,16 @@ function processMpxTagName (el) {
   }
 }
 
+function processMpxExtendComponent (el) {
+  const extendTagList = ['recycle-view']
+  extendTagList.forEach(tag => {
+    if (el.tag === tag) {
+    el.tag = `mpx-${tag}`
+    el.isBuiltIn = true
+  }
+  })
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2692,6 +2704,8 @@ function processElement (el, root, options, meta) {
   }
 
   processMpxTagName(el)
+
+  processMpxExtendComponent(el)
 
   if (runtimeCompile && options.dynamicTemplateRuleRunner) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])

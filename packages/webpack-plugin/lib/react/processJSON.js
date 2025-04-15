@@ -105,13 +105,13 @@ module.exports = function (jsonContent, {
     } else {
       if (useExtendComponents) {
         const extendComponents = {}
-        useExtendComponents.forEach((name) => {
-          if (EXTEND_COMPONENTS_LIST.includes(name)) {
-            extendComponents[name] = require.resolve(`../runtime/components/extend/mpx-${name}.mpx`)
-          } else {
-            emitWarning(`extend component ${name} is not supported!`)
-          }
-        })
+        // useExtendComponents.forEach((name) => {
+        //   if (EXTEND_COMPONENTS_LIST.includes(name)) {
+        //     extendComponents[name] = require.resolve(`../runtime/components/extend/mpx-${name}.mpx`)
+        //   } else {
+        //     emitWarning(`extend component ${name} is not supported!`)
+        //   }
+        // })
         jsonObj.usingComponents = Object.assign({}, extendComponents, jsonObj.usingComponents)
       }
     }
