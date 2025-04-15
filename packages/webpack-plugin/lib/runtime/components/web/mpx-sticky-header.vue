@@ -1,9 +1,10 @@
 <script>
-  import { getCustomEvent } from './getInnerListeners'
+import { warn } from '@mpxjs/utils'
+import { getCustomEvent } from './getInnerListeners'
 
   export default {
     name: 'mpx-sticky-header',
-    inject: ['scrollOffset', 'scrollViewRect'],
+    inject: ['scrollOffset', 'refreshVersion'],
     props: {
       'offsetTop': {
         type: Number,
@@ -13,27 +14,21 @@
     data() {
       return {
         headerTop: 0,
-        isStickOnTop: false,
-        headerRect: {}
+        isStickOnTop: false
       }
     },
     computed: {
       _scrollOffset() {
         return -this.scrollOffset?.get() || 0
       },
-      _scrollViewRect() {
-        return this.scrollViewRect?.get() || {}
+      _refreshVersion() {
+        return this.refreshVersion?.get() || 0
       }
-    },
-    mounted() {
-      this.headerRect = this.$el.getBoundingClientRect()
-      this.headerTop = this.headerRect.top - (this._scrollViewRect.top || 0)
     },
     watch: {
       _scrollOffset: {
         handler(newScrollOffset) {
           const newIsStickOnTop = newScrollOffset > this.headerTop
-
           if (newIsStickOnTop !== this.isStickOnTop) {
             this.isStickOnTop = newIsStickOnTop
             this.$emit('stickontopchange', getCustomEvent('stickontopchange', {
@@ -50,9 +45,23 @@
         },
         immediate: true
       },
-      _scrollViewRect: {
-        handler(rect = {}) {
-          this.headerTop = this.headerRect.top - (rect.top || 0)
+      _refreshVersion: {
+        handler() {
+          const parentElement = this.$el.parentElement || {}
+          if (parentElement.className?.indexOf('mpx-sticky-section') > -1) {
+            this.headerTop = this.$el.offsetTop + this.$el.parentElement.offsetTop
+          } else if (parentElement.className?.indexOf('mpx-inner-wrapper') > -1) {
+             this.headerTop = this.$el.offsetTop
+          } else {
+            warn('sticky-header only supports being a direct child of a scroll-view or sticky-section component.')
+            return
+          }
+          const stickyHeader = this.$refs.stickyHeader
+          if (this._scrollOffset > this.headerTop) {
+            stickyHeader.style.transform = `translateY(${this._scrollOffset - this.headerTop + this.offsetTop}px)`
+          } else {
+            stickyHeader.style.transform = 'none'
+          }
         },
       }
     },
@@ -60,7 +69,8 @@
       const style = {
         width: '100%',
         boxSizing: 'border-box',
-        position: 'relative'
+        position: 'relative',
+        zIndex: 10
       }
 
       return h('div', {
