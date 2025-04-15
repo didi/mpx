@@ -126,15 +126,11 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
       ? translateY
       : Animated.add(
         translateY,
-        Animated.multiply(
-          Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, offsetTop],
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp'
-          }),
-          new Animated.Value(1)
-        )
+        Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, offsetTop],
+          extrapolate: 'clamp'
+        })
       )
 
     return {
