@@ -46,7 +46,6 @@ function navigateTo (options = {}) {
       const res = { errMsg: 'navigateTo:fail can not navigateTo a tabBar page' }
       failHandle(res, options.fail, options.complete)
     }
-    
     let finalPath = resolvePath(options.url, router.currentRoute.path)
     const eventChannel = new EventChannel()
     global.__mpxRouter.__mpxAction = {

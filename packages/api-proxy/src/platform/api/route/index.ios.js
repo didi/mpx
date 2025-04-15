@@ -47,7 +47,6 @@ function navigateTo (options = {}) {
       route: finalPath,
       eventChannel
     }
-    
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok', eventChannel }
