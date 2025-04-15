@@ -246,7 +246,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   })
 
   function renderPagination () {
-    if (children.length <= 1) return null
     const activeColor = activeDotColor || '#007aff'
     const unActionColor = dotColor || 'rgba(0,0,0,.2)'
     // 正常渲染所有dots
@@ -572,6 +571,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         })
       }
     }
+    function handleBackInit () {
+      'worklet'
+      // 微信的效果
+      // 1. 只有一个元素，即使设置了circular，也不会产生循环的效果，2. 可以响应手势，但是会有回弹的效果
+      offset.value = withTiming(0, {
+        duration: easeDuration,
+        easing: easeMap[easeingFunc]
+      })
+    }
     function handleBack (eventData: EventDataType) {
       'worklet'
       const { translation } = eventData
@@ -673,7 +681,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           return
         }
         const { isBoundary, resetOffset } = reachBoundary(eventData)
-        if (isBoundary && circularShared.value) {
+        if (childrenLength.value > 1 && isBoundary && circularShared.value) {
           offset.value = resetOffset
         } else {
           offset.value = moveDistance + offset.value
@@ -688,6 +696,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         touchfinish.value = true
         const eventData = {
           translation: moveDistance
+        }
+        if (childrenLength.value === 1) {
+          return handleBackInit()
         }
         // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
         if (!circularShared.value && !canMove(eventData)) {
@@ -713,40 +724,26 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   })
   let finalComponent: JSX.Element
-  if (children.length === 1) {
-    const mergeProps = Object.assign({
-      style: [normalStyle, layoutStyle]
-    }, layoutProps, innerProps)
-    finalComponent = createElement(View, mergeProps, wrapChildren({
-      children: children
-    }, {
-      hasVarDec,
-      varContext: varContextRef.current,
-      textStyle,
-      textProps
-    }))
-  } else {
-    const arrPages: Array<ReactNode> | ReactNode = renderItems()
-    const mergeProps = Object.assign({
-      style: [normalStyle, layoutStyle, styles.swiper]
-    }, layoutProps, innerProps)
-    const animateComponent = createElement(Animated.View, {
-      style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
-    }, wrapChildren({
-      children: arrPages
-    }, {
-      hasVarDec,
-      varContext: varContextRef.current,
-      textStyle,
-      textProps
-    }))
-    const renderChildrens = showPagination ? [animateComponent, renderPagination()] : animateComponent
-    finalComponent = createElement(View, mergeProps, renderChildrens)
-    if (!disableGesture) {
-      finalComponent = createElement(GestureDetector, {
-        gesture: gestureHandler
-      }, finalComponent)
-    }
+  const arrPages: Array<ReactNode> | ReactNode = renderItems()
+  const mergeProps = Object.assign({
+    style: [normalStyle, layoutStyle, styles.swiper]
+  }, layoutProps, innerProps)
+  const animateComponent = createElement(Animated.View, {
+    style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
+  }, wrapChildren({
+    children: arrPages
+  }, {
+    hasVarDec,
+    varContext: varContextRef.current,
+    textStyle,
+    textProps
+  }))
+  const renderChildrens = showPagination ? [animateComponent, renderPagination()] : animateComponent
+  finalComponent = createElement(View, mergeProps, renderChildrens)
+  if (!disableGesture) {
+    finalComponent = createElement(GestureDetector, {
+      gesture: gestureHandler
+    }, finalComponent)
   }
   if (hasPositionFixed) {
     finalComponent = createElement(Portal, null, finalComponent)
