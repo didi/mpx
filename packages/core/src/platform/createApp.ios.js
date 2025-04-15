@@ -75,7 +75,6 @@ export default function createApp (options) {
     })
   }
   global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-  global.__navigationHelper.eventChannelMap = {}
   const onStateChange = (state) => {
     Mpx.config.rnConfig.onStateChange?.(state)
     if (global.__navigationHelper.lastSuccessCallback) {
