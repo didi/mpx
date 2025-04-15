@@ -16,7 +16,6 @@ function getScreenBrightness (options = {}) {
   handleSuccess(opts, res => {
     return changeOpts(res, { brightness: 'value' }, { errMsg: 'getScreenBrightness:ok' })
   })
-
   return ENV_OBJ.getScreenBrightness(opts)
 }
 
