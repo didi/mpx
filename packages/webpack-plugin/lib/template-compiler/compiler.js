@@ -724,13 +724,19 @@ function parse (template, options) {
       processElement(element, root, options, meta)
 
       tagNames.add(element.tag)
+
+      const genericAttrs = []
       // 统计通过抽象节点方式使用的组件
       element.attrsList.forEach((attr) => {
         if (genericRE.test(attr.name)) {
           tagNames.add(attr.value)
+          genericAttrs.push({
+            name: attr.name.replace('generic:', 'mpx-generic-'),
+            value: attr.value
+          })
         }
       })
-
+      element.attrsList = element.attrsList.concat(genericAttrs)
       if (!unary) {
         currentParent = element
         stack.push(element)

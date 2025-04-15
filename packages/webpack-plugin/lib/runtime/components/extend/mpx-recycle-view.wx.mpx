@@ -1,10 +1,11 @@
 <template>
   <scroll-view
+    wx:ref="recycleViewRef"
     class="mpx-recycle-view"
     scroll-y
-    wx:style="{ height: height + 'px', width: width ? width + 'px' : '100%' }"
-    type="{{type}}"
-    enhanced="{{enhanced}}"
+    wx:style="{{scrollViewStyle}}"
+    type="custom"
+    enhanced="{{true}}"
     scroll-with-animation="{{scrollWithAnimation}}"
     bounces="{{bounces}}"
     show-scrollbar="{{showScrollbar}}"
@@ -14,45 +15,48 @@
     bindrefresherrefresh="onRefresh"
   >
     <!-- list header -->
-    <template wx:if="{{genericlistHeader}}">
-      <list-header data="{{listData}}" />
-    </template>
+    <block wx:if="{{mpxGenericListHeader}}">
+      <list-header dataInfo="{{listData}}" />
+    </block>
 
     <block wx:for="{{listData}}" wx:key="index">
       <!-- section header -->
-      <template wx:if="{{genericsectionHeader}}">
+      <block wx:if="{{mpxGenericSectionHeader}}">
         <sticky-section>
-          <sticky-header>
-            <section-header data="{{item}}"></section-header>
+          <sticky-header wx:if="{{enableSticky}}">
+            <section-header dataInfo="{{item}}"></section-header>
           </sticky-header>
+          <section-header wx:else dataInfo="{{item}}"></section-header>
+
+          <list-view>
+            <block
+              wx:if="{{mpxGenericRecycleItem}}"
+              wx:for="{{item.data}}"
+              wx:for-item="subItem"
+              wx:key="subIndex"
+            >
+              <!-- section items -->
+              <recycle-item currentItem="{{subItem}}"></recycle-item>
+            </block>
+
+            <!-- section footer -->
+            <block wx:if="{{mpxGenericSectionFooter}}">
+              <section-footer dataInfo="{{item}}"></section-footer>
+            </block>
+          </list-view>
         </sticky-section>
-      </template>
-
-      <template
-        wx:if="{{genericrecycleItem}}"
-        wx:for="{{item.data}}"
-        wx:for-item="subItem"
-        wx:key="subIndex"
-      >
-        <!-- section items -->
-        <recycle-item currentItem="{{subItem}}"></recycle-item>
-      </template>
-
-        <!-- section footer -->
-      <template wx:if="{{genericsectionFooter}}">
-        <section-footer data="{{subItem}}"></section-footer>
-      </template>
+      </block>
     </block>
 
     <!-- list footer -->
-    <template wx:if="{{genericlistFooter}}">
+    <block wx:if="{{mpxGenericListFooter}}">
       <list-footer data="{{listData}}" />
-    </template>
+    </block>
   </scroll-view>
 </template>
 
 <script>
-  import { createComponent } from '@mpxjs/core'
+  import mpx, { createComponent } from '@mpxjs/core'
 
   createComponent({
     properties: {
@@ -64,17 +68,19 @@
         type: Number,
         value: 0
       },
-      type: String,
       listData: {
         type: Array,
         value: []
       },
-      generichash: String,
-      genericrecycleItem: String,
-      genericsectionHeader: String,
-      genericsectionFooter: String,
-      genericlistHeader: String,
-      genericlistFooter: String,
+      'a:recycleItem': {
+        type: String,
+        value: ''
+      },
+      mpxGenericRecycleItem: String,
+      mpxGenericSectionHeader: String,
+      mpxGenericSectionFooter: String,
+      mpxGenericListHeader: String,
+      mpxGenericListFooter: String,
       scrollWithAnimation: Boolean,
       enableSticky: {
         type: Boolean,
@@ -101,13 +107,25 @@
         value: false
       }
     },
-
+    computed: {
+      scrollViewStyle() {
+        return `height: ${this.height}px;width: ${this.width}px`
+      }
+    },
     methods: {
       onScroll(e) {
         this.triggerEvent('scroll', e.detail)
       },
       onRefresh(e) {
         this.triggerEvent('refresh', e.detail)
+      },
+      scrollToOffset({ offset, animated}) {
+        this.$refs.recycleViewRef.node().exec(res => {
+           res[0].node.scrollTo({
+            top: offset,
+            animated
+           })
+        })
       }
     }
   })
