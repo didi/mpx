@@ -190,13 +190,13 @@ module.exports = function (content) {
     const { useExtendComponents } = mpx
     if (isApp && useExtendComponents) {
       const extendComponents = {}
-        // useExtendComponents.forEach((name) => {
-        //   if (EXTEND_COMPONENTS_LIST.includes(name)) {
-        //     extendComponents[name] = require.resolve(`../runtime/components/extend/mpx-${name}.mpx`)
-        //   } else {
-        //     emitWarning(`extend component ${name} is not supported!`)
-        //   }
-        // })
+        useExtendComponents.forEach((name) => {
+          if (EXTEND_COMPONENTS_LIST.includes(name)) {
+            extendComponents[name] = require.resolve(`../runtime/components/wx/mpx-${name}.mpx`)
+          } else {
+            emitWarning(`extend component ${name} is not supported!`)
+          }
+        })
         json.usingComponents = Object.assign({}, extendComponents, json.usingComponents)
     }
   }

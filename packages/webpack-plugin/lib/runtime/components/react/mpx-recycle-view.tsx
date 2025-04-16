@@ -1,256 +1,312 @@
-import React, { forwardRef, useRef, useCallback, useState, useEffect } from 'react'
-import { SectionList, FlatList, RefreshControl } from 'react-native'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef from './useNodesRef'
-import { extendObject, useLayout, useTransformStyle } from './utils'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
+import { View, StyleSheet, LayoutChangeEvent, ViewStyle, Animated } from 'react-native'
+import { ScrollView } from 'react-native-gesture-handler'
 
-const getGenericComponent = ({ props, ref, generichash, generickey }) => {
-  const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
-  return <GenericComponent ref={ref} {...props}/>
+interface RecycleViewProps {
+  scrollY?: boolean;
+  height?: number;
+  width?: number;
+  itemHeight?: {
+    value?: number;
+    getter?: (item: any, index: number) => number;
+  };
+  bufferScale?: number;
+  listData?: any[];
+  scrollTop?: number;
+  scrollWithAnimation?: boolean;
+  enableBackToTop?: boolean;
+  lowerThreshold?: number;
+  upperThreshold?: number;
+  scrollOptions?: Record<string, any>;
+  scrollEventThrottle?: number;
+  minRenderCount?: number;
+  enhanced?: boolean;
+  bounces?: boolean;
+  onScroll?: (e: any) => void;
+  onScrollToUpper?: (e: any) => void;
+  onScrollToLower?: (e: any) => void;
+  children?: React.ReactNode;
 }
 
-const Item = forwardRef((props, ref) => {
-  const { generichash, genericrecycleItem } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericrecycleItem })
-})
+const RecycleView: React.FC<RecycleViewProps> = ({
+  scrollY = true,
+  height = 0,
+  width = 0,
+  itemHeight = {},
+  bufferScale = 2,
+  listData = [],
+  scrollTop = 0,
+  scrollWithAnimation = false,
+  enableBackToTop = false,
+  lowerThreshold = 50,
+  upperThreshold = 50,
+  scrollOptions = {},
+  scrollEventThrottle = 0,
+  minRenderCount = 10,
+  enhanced = false,
+  bounces = false,
+  onScroll: onScrollProp,
+  onScrollToUpper,
+  onScrollToLower,
+  children
+}) => {
+  const scrollViewRef = useRef<ScrollView>(null)
 
-const SectionHeader = forwardRef((props, ref) => {
-  const { generichash, genericsectionHeader } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericsectionHeader })
-})
+  const [containerHeight, setContainerHeight] = useState(0)
+  const [_listData, setListData] = useState(listData)
+  const [positions, setPositions] = useState<Array<{
+    index: number;
+    height: number;
+    top: number;
+    bottom: number;
+  }>>([])
+  const [totalHeight, setTotalHeight] = useState(0)
+  const [visibleCounts, setVisibleCounts] = useState<number[]>([])
+  const [visibleData, setVisibleData] = useState([])
 
-const SectionFooter = forwardRef((props, ref) => {
-  const { generichash, genericsectionFooter } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericsectionFooter })
-})
-
-const ListHeader = forwardRef((props, ref) => {
-  const { generichash, genericlistHeader } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericlistHeader })
-})
-
-const ListFooter = forwardRef((props, ref) => {
-  const { generichash, genericlistFooter } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericlistFooter })
-})
-
-const RecycleView = forwardRef((props = {}, ref) => {
-  const {
-    enhanced = false,
-    bounces = true,
-    scrollEventThrottle = 0,
-    height,
-    width,
-    listData,
-    type,
-    generichash,
-    style = {},
-    itemHeight = {},
-    sectionHeaderHeight = {},
-    sectionFooterHeight = {},
-    listHeaderHeight = {},
-    'genericrecycle-item': genericrecycleItem,
-    'genericsection-header': genericsectionHeader,
-    'genericsection-footer': genericsectionFooter,
-    'genericlist-header': genericlistHeader,
-    'genericlist-footer': genericlistFooter,
-    'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
-    'parent-width': parentWidth,
-    'parent-height': parentHeight,
-    'enable-sticky': enableSticky = false,
-    'enable-back-to-top': enableBackToTop = false,
-    'lower-threshold': lowerThreshold = 50,
-    'refresher-enabled': refresherEnabled,
-    'show-scrollbar': showScrollbar = true,
-    'refresher-triggered': refresherTriggered
-  } = props
-
-  const [refreshing, setRefreshing] = useState(!!refresherTriggered)
-
-  const scrollViewRef = useRef(null)
-  const {
-    hasSelfPercent,
-    setWidth,
-    setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
-
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
-
-  useNodesRef(props, ref, scrollViewRef, {
-    style,
-    node: {
-      scrollToLocation,
-      scrollToOffset,
-      scrollToIndex
-    }
-  })
+  const startIndexValueRef = useRef(0)
+  const endIndexValueRef = useRef(0)
+  const transformYRef = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
-    if (refreshing !== refresherTriggered) {
-      setRefreshing(!!refresherTriggered)
+    setListData(listData.map((item, index) => ({
+      ...item,
+      _index: `_${index}`
+    })))
+    initPositions()
+    setStartOffset()
+  }, [listData])
+
+  const getItemHeight = useCallback((item: any, index: number) => {
+    const { value, getter } = itemHeight
+    if (typeof getter === 'function') {
+      return getter(item, index) || 0
     }
-  }, [refresherTriggered])
+    return value || 0
+  }, [itemHeight])
 
-  function onRefresh () {
-    const { bindrefresherrefresh } = props
-    bindrefresherrefresh &&
-      bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
-      )
-  }
+  function initPositions () {
+    let bottom = 0
+    const newPositions = _listData.map((item, index) => {
+      const height = getItemHeight(item, index)
+      const position = {
+        index,
+        height,
+        top: bottom,
+        bottom: bottom + height
+      }
+      bottom = position.bottom
+      return position
+    })
+    setPositions(newPositions)
+    setTotalHeight(!newPositions.length ? 0 : newPositions[newPositions.length - 1].bottom)
 
-  function onEndReached () {
-    const { bindscrolltolower } = props
-    bindscrolltolower &&
-      bindscrolltolower(
-        getCustomEvent('scrolltolower', {}, { layoutRef }, props)
-      )
-  }
-
-  function onScroll (event) {
-    const { bindscroll } = props
-    bindscroll &&
-      bindscroll(
-        getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
-      )
-  }
-
-  function getHeight ({ data, index, key }) {
-    if (!key) {
-      return 0
+    if (containerHeight) {
+      calculateVisibleCounts(newPositions)
     }
-    if (key.getter) {
-      return key.getter(data[index], index) || 0
+  }
+
+  const calculateVisibleCounts = useCallback((currentPositions = positions) => {
+    const newVisibleCounts = currentPositions.map((_, startIndex) => {
+      let count = 0
+      let totalHeight = 0
+
+      for (let i = startIndex; i < currentPositions.length; i++) {
+        totalHeight += currentPositions[i].height
+        if (totalHeight > containerHeight) {
+          break
+        }
+        count++
+      }
+
+      if (startIndex + count > currentPositions.length - 3) {
+        count = currentPositions.length - startIndex
+      }
+
+      return count
+    })
+
+    setVisibleCounts(newVisibleCounts)
+  }, [containerHeight])
+
+  useEffect(() => {
+    calculateVisibleCounts(positions)
+  }, [containerHeight])
+
+  const binarySearch = useCallback((list: typeof positions, value: number) => {
+    if (!list.length) return 0
+
+    if (value >= list[list.length - 1].bottom) {
+      return list.length - 1
+    }
+
+    let start = 0
+    let end = list.length - 1
+
+    while (start <= end) {
+      const midIndex = Math.floor((start + end) / 2)
+      const midValue = list[midIndex]
+
+      if (value >= midValue.top && value < midValue.bottom) {
+        return midIndex
+      }
+
+      if (value < midValue.top) {
+        end = midIndex - 1
+      } else {
+        start = midIndex + 1
+      }
+    }
+
+    return Math.min(Math.max(0, start - 1), list.length - 1)
+  }, [])
+
+  const getStartIndex = (scrollTop: number) => {
+    if (!positions.length) return 0
+    if (scrollTop <= 0) return 0
+    const index = binarySearch(positions, scrollTop)
+    return Math.max(0, Math.min(index, _listData.length - 1))
+  }
+
+  const getVisibleCount = () => {
+    if (!visibleCounts.length) return minRenderCount
+    return Math.max(visibleCounts[startIndexValueRef.current], minRenderCount)
+  }
+
+  const getAboveCount = () => {
+    if (!_listData.length || !visibleCounts.length) return 0
+    let count = 0
+    const startIdx = Math.max(0, startIndexValueRef.current)
+    const endIdx = Math.max(0, startIdx - bufferScale)
+
+    for (let i = startIdx; i >= endIdx; i--) {
+      count += visibleCounts[i] || 0
+    }
+
+    return count
+  }
+
+  const getBelowCount = () => {
+    if (!_listData.length || !visibleCounts.length) return 0
+    let count = 0
+    const startIdx = Math.min(startIndexValueRef.current, _listData.length - 1)
+    const endIdx = Math.min(startIdx + bufferScale, _listData.length - 1)
+
+    for (let i = startIdx; i <= endIdx; i++) {
+      count += visibleCounts[i] || 0
+    }
+
+    return count
+  }
+
+  const getVisibleData = () => {
+    if (!_listData.length) return []
+
+    const currentStart = startIndexValueRef.current
+
+    const startIdx = Math.min(Math.max(0, currentStart - getAboveCount()), _listData.length - 1)
+    let endIdx = Math.min(_listData.length, currentStart + getVisibleCount() + getBelowCount())
+
+    if (endIdx > _listData.length - 3) {
+      endIdx = _listData.length
+    }
+
+    return _listData.slice(startIdx, endIdx).map((item, idx) => {
+      const realIndex = startIdx + idx
+      return {
+        ...item,
+        _index: `_${realIndex}`
+      }
+    })
+  }
+
+  const handleScroll = (e) => {
+    const newStart = getStartIndex(e.contentOffset.y)
+    const newEnd = newStart + getVisibleCount()
+    startIndexValueRef.current = newStart
+    endIndexValueRef.current = newEnd
+    setStartOffset()
+    onScrollProp?.(e)
+  }
+
+  function setStartOffset () {
+    if (positions.length && startIndexValueRef.current >= 1) {
+      const startIdx = Math.min(
+        Math.max(0, startIndexValueRef.current - getAboveCount()),
+        positions.length - 1
+      )
+      const offset = positions[startIdx].top
+      const data = getVisibleData()
+      setVisibleData(data)
+      transformYRef.setValue(offset)
     } else {
-      return key.value || 0
+      transformYRef.setValue(0)
     }
   }
 
-  const renderItem = useCallback(({ item }) => (
-    <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>
-  ), [])
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    const { height: newHeight } = e.nativeEvent.layout
+    setContainerHeight(newHeight)
+  }, [])
 
-  const renderSectionHeader = useCallback((data) => (
-    <SectionHeader data={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
-  ), [])
-
-  const renderSectionFooter = useCallback((data) => (
-    <SectionFooter data={data.section} generichash={generichash} genericsectionFooter={genericsectionFooter}/>
-  ), [])
-
-  const renderListHeader = useCallback((data) => (
-    <ListHeader {...props} generichash={generichash} genericlistHeader={genericlistHeader}/>
-  ), [])
-
-  const renderListFooter = useCallback((data) => (
-    <ListFooter {...props} generichash={generichash} genericlistFooter={genericlistFooter}/>
-  ), [])
-  function getSectionItemLayout (data, index) {
-    // todo 需要计算 sectionHeader、sectionFooter、listHeader、itemHeight
-    // https://github.com/jsoendermann/rn-section-list-get-item-layout/blob/master/index.ts
-    return {
-      length: getHeight({ data, index, key: itemHeight }),
-      offset: getHeight({ data, index, key: itemHeight }) * index || 0,
-      index
-    }
-  }
-
-  function getItemLayout (data, index) {
-    return {
-      length: getHeight({ data, index, key: itemHeight }),
-      offset: getHeight({ data, index, key: listHeaderHeight }) + getHeight({ data, index, key: itemHeight }) * index || 0,
-      index
-    }
-  }
-
-  function scrollToLocation ({
-    itemIndex,
-    sectionIndex,
-    animated,
-    viewOffset = 0,
-    viewPosition = 0
-  }) {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToLocation?.({ itemIndex, sectionIndex, animated, viewOffset, viewPosition })
-    }
-  }
-
-  function scrollToOffset ({ offset, animated }) {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToOffset({ offset, animated })
-    }
-  }
-
-  function scrollToIndex ({ index, animated, viewOffset = 0, viewPosition = 0 }) {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToIndex?.({ index, animated, viewOffset, viewPosition })
-    }
-  }
-  const scrollAdditionalProps = extendObject(
-    {
-      alwaysBounceVertical: false,
-      alwaysBounceHorizontal: false,
-      scrollEventThrottle: scrollEventThrottle,
-      scrollsToTop: enableBackToTop,
-      showsHorizontalScrollIndicator: showScrollbar,
-      onEndReachedThreshold: lowerThreshold,
-      ref: scrollViewRef,
-      stickySectionHeadersEnabled: enableSticky,
-      onScroll: onScroll,
-      onEndReached: onEndReached
-    },
-    layoutProps
-  )
-
-  if (enhanced) {
-    Object.assign(scrollAdditionalProps, {
-      bounces
-    })
-  }
-  if (refresherEnabled) {
-    Object.assign(scrollAdditionalProps, {
-      refreshing: refreshing
-    })
-  }
-
-  const innerProps = useInnerProps(props, scrollAdditionalProps, [
-    'id',
-    'show-scrollbar',
-    'lower-threshold',
-    'refresher-triggered',
-    'refresher-enabled',
-    'bindrefresherrefresh'
-  ], { layoutRef })
+  useEffect(() => {
+    const newStart = getStartIndex(scrollTop)
+    const newEnd = newStart + getVisibleCount()
+    startIndexValueRef.current = newStart
+    endIndexValueRef.current = newEnd
+    setStartOffset()
+  }, [scrollTop])
 
   return (
-    type === 'section'
-      ? <SectionList
-        {...innerProps}
-        style={[{ height, width }, style, layoutStyle]}
-        sections={listData}
-        keyExtractor={(item, index) => item + index}
-        renderItem={renderItem}
-        getItemLayout={getSectionItemLayout}
-        renderSectionHeader={generichash && genericsectionHeader && renderSectionHeader || null}
-        renderSectionFooter={generichash && genericsectionFooter && renderSectionFooter || null}
-        ListHeaderComponent={generichash && genericlistHeader && renderListHeader || null}
-        ListFooterComponent={generichash && genericlistFooter && renderListFooter || null}
-        refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
-      />
-      : <FlatList
-        {...innerProps}
-        style={[{ height, width }, style, layoutStyle]}
-        data={listData}
-        keyExtractor={(item, index) => item + index}
-        renderItem={renderItem}
-        getItemLayout={getItemLayout}
-        ListHeaderComponent={generichash && genericlistHeader && renderListHeader || null}
-        ListFooterComponent={generichash && genericlistFooter && renderListFooter || null}
-        refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
-      />
+    <ScrollView
+      ref={scrollViewRef}
+      style={[styles.container, { width: width || '100%', height: height || '100%' } as ViewStyle]}
+      bounces={bounces}
+      onScroll={handleScroll}
+      onLayout={handleLayout}
+    >
+      <View style={styles.contentWrapper}>
+        <View style={[styles.placeholder, { height: totalHeight }]} />
+        <Animated.View
+          style={[
+            styles.infiniteList,
+            {
+              transform: [{ translateY: transformYRef }]
+            }
+          ]}
+        >
+          {visibleData.map((item) => (
+            <View key={item._index}>
+              {children}
+            </View>
+          ))}
+        </Animated.View>
+      </View>
+    </ScrollView>
   )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'relative',
+    overflow: 'hidden'
+  },
+  contentWrapper: {
+    position: 'relative',
+    width: '100%'
+  },
+  placeholder: {
+    width: '100%'
+  },
+  infiniteList: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    backfaceVisibility: 'hidden'
+  }
 })
+
+RecycleView.displayName = 'MpxRecycleView'
 
 export default RecycleView
