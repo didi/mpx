@@ -39,7 +39,6 @@
  */
 import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
-  Platform,
   TextInput,
   TextStyle,
   ViewStyle,
@@ -191,7 +190,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
-  const [selection, setSelection] = useState({ start: -1, end: -1 })
+  const [selection, setSelection] = useState({ start: -1, end: tmpValue.current.length })
 
   const styleObj = extendObject(
     { padding: 0, backgroundColor: '#fff' },
@@ -217,15 +216,17 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   useEffect(() => {
     if (inputValue !== value) {
-      setInputValue(parseValue(value))
+      const parsed = parseValue(value)
+      tmpValue.current = parsed
+      setInputValue(parsed)
     }
   }, [value])
 
   useEffect(() => {
-    if (typeof cursor === 'number') {
+    if (selectionStart > -1) {
+      setSelection({ start: selectionStart, end: selectionEnd === -1 ? tmpValue.current.length : selectionEnd })
+    } else if (typeof cursor === 'number') {
       setSelection({ start: cursor, end: cursor })
-    } else if (selectionStart >= 0 && selectionEnd >= 0 && selectionStart !== selectionEnd) {
-      setSelection({ start: selectionStart, end: selectionEnd })
     }
   }, [cursor, selectionStart, selectionEnd])
 
@@ -384,6 +385,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const resetValue = () => {
+    tmpValue.current = ''
     setInputValue('')
   }
 
@@ -436,7 +438,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         maxLength: maxlength === -1 ? undefined : maxlength,
         editable: !disabled,
         autoFocus: !!autoFocus || !!focus,
-        selection: selection,
+        selection: selectionStart > -1 || typeof cursor === 'number' ? selection : undefined,
         selectionColor: cursorColor,
         blurOnSubmit: !multiline && !confirmHold,
         underlineColorAndroid: 'rgba(0,0,0,0)',
