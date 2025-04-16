@@ -52,7 +52,7 @@ import {
   TextInputChangeEventData,
   TextInputSubmitEditingEventData
 } from 'react-native'
-import { warn, isNumber } from '@mpxjs/utils'
+import { warn } from '@mpxjs/utils'
 import { useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -227,10 +227,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }, [value])
 
   useEffect(() => {
-    if (typeof cursor === 'number') {
-      setSelection({ start: cursor, end: cursor })
-    } else if (selectionStart > -1) {
+    if (selectionStart > -1) {
       setSelection({ start: selectionStart, end: selectionEnd === -1 ? tmpValue.current.length : selectionEnd })
+    } else if (typeof cursor === 'number') {
+      setSelection({ start: cursor, end: cursor })
     }
   }, [cursor, selectionStart, selectionEnd])
 
@@ -442,7 +442,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         maxLength: maxlength === -1 ? undefined : maxlength,
         editable: !disabled,
         autoFocus: !!autoFocus || !!focus,
-        selection: selectionStart === -1 || !isNumber(cursor) ? undefined : selection,
+        selection: selectionStart > -1 || typeof cursor === 'number' ? selection : undefined,
         selectionColor: cursorColor,
         blurOnSubmit: !multiline && !confirmHold,
         underlineColorAndroid: 'rgba(0,0,0,0)',
