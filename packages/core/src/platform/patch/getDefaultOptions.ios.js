@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -16,6 +16,7 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
+import { innerNav, useInnerHeaderHeight } from './nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -464,41 +465,22 @@ export function PageWrapperHOC (WrappedComponent) {
       error('Using pageWrapper requires passing navigation and route')
       return null
     }
+    const headerHeight = useInnerHeaderHeight(currentPageConfig)
+    const screenDimensions = ReactNative.Dimensions.get('screen')
+    navigation.layout = {
+      x: 0,
+      y: headerHeight,
+      width: screenDimensions.width,
+      height: screenDimensions.height - headerHeight - bottomVirtualHeight ? bottomVirtualHeight : 0
+    }
+
     usePageStatus(navigation, currentPageId)
-    useLayoutEffect(() => {
-      navigation.setOptions({
-        title: pageConfig.navigationBarTitleText?.trim() || '',
-        headerStyle: {
-          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-        },
-        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-      })
-
-      // TODO 此部分内容在native-stack可删除，用setOptions设置
-      if (__mpx_mode__ !== 'ios') {
-        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-        ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
-        ReactNative.StatusBar.setBackgroundColor('transparent')
-      }
-    }, [])
-
-    const headerHeight = useHeaderHeight()
     const onLayout = () => {
-      const screenDimensions = ReactNative.Dimensions.get('screen')
-      if (__mpx_mode__ === 'ios') {
-        navigation.layout = {
-          x: 0,
-          y: headerHeight,
-          width: screenDimensions.width,
-          height: screenDimensions.height - headerHeight
-        }
-      } else {
-        if (bottomVirtualHeight === null) {
+      // 初次反向推算出来底部虚拟按键的高度后进行高度的重新矫正
+      if (__mpx_mode__ === 'android' && bottomVirtualHeight === null) {
           rootRef.current?.measureInWindow((x, y, width, height) => {
             // 沉浸模式的计算方式
             bottomVirtualHeight = screenDimensions.height - height - headerHeight
-            // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
-            // bottomVirtualHeight = windowDimensions.height - height - headerHeight
             navigation.layout = {
               x: 0,
               y: headerHeight,
@@ -506,15 +488,6 @@ export function PageWrapperHOC (WrappedComponent) {
               height: height
             }
           })
-        } else {
-          navigation.layout = {
-            x: 0,
-            y: headerHeight, // 这个y值
-            width: screenDimensions.width,
-            // 后续页面的layout是通过第一次路由进入时候推算出来的底部区域来推算出来的
-            height: screenDimensions.height - bottomVirtualHeight - headerHeight
-          }
-        }
       }
     }
     const withKeyboardAvoidingView = (element) => {
@@ -549,6 +522,10 @@ export function PageWrapperHOC (WrappedComponent) {
             flex: 1
           }
       },
+      createElement(innerNav, {
+        props: { pageConfig: currentPageConfig },
+        navigation
+      }),
       withKeyboardAvoidingView(
         createElement(ReactNative.View,
           {
@@ -582,7 +559,6 @@ export function PageWrapperHOC (WrappedComponent) {
       ))
   }
 }
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())

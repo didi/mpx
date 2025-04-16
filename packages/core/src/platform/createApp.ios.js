@@ -195,33 +195,11 @@ export default function createApp (options) {
 
     const { initialRouteName, initialParams } = initialRouteRef.current
     const navScreenOpts = {
-      // 7.x替换headerBackTitleVisible
-      // headerBackButtonDisplayMode: 'minimal',
-      headerBackTitleVisible: false,
-      headerShadowVisible: false
+      headerShown: false
       // 整体切换native-stack时进行修改如下
       // statusBarTranslucent: true,
       // statusBarBackgroundColor: 'transparent'
     }
-    if (__mpx_mode__ === 'ios') {
-      // ios使用native-stack
-      const headerBackImageSource = Mpx.config.rnConfig.headerBackImageSource || null
-      if (headerBackImageSource) {
-        navScreenOpts.headerBackImageSource = headerBackImageSource
-      }
-    } else {
-      // 安卓上会出现导航条闪现的问题所以默认加headerShown false（stack版本， native-stack版本可以干掉）
-      // iOS加上默认headerShown false的话会因为iOS根高度是screenHeight - useHeaderHeight()会导致出现渲染两次情况，因此iOS不加此默认值
-      navScreenOpts.headerShown = false
-      // 安卓和鸿蒙先用stack
-      const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
-      if (headerBackImageProps) {
-        navScreenOpts.headerBackImage = () => {
-          return createElement(ReactNative.Image, headerBackImageProps)
-        }
-      }
-    }
-
     return createElement(SafeAreaProvider,
       null,
       createElement(NavigationContainer,
