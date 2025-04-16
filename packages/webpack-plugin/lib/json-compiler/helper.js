@@ -20,6 +20,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const mode = mpx.mode
   const supportRequireAsync = mpx.supportRequireAsync
   const asyncSubpackageRules = mpx.asyncSubpackageRules
+  const normalMiniNpmPackage = mpx.normalMiniNpmPackage
 
   const isUrlRequest = r => isUrlRequestRaw(r, root, externals)
   const urlToRequest = r => loaderUtils.urlToRequest(r)
@@ -80,7 +81,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           let root = info.descriptionFileRoot
           let name = 'nativeComponent'
           if (info.descriptionFileData) {
-            if (info.descriptionFileData.miniprogram) {
+            if (info.descriptionFileData.miniprogram && !normalMiniNpmPackage.includes(info.descriptionFileData.name)) {
               root = path.join(root, info.descriptionFileData.miniprogram)
             }
             if (info.descriptionFileData.name) {
