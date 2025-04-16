@@ -1,5 +1,5 @@
 import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
-import { GestureDetector, Gesture } from 'react-native-gesture-handler'
+import { GestureDetector, Gesture, PanGesture } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
 
 import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
@@ -145,7 +145,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
   const nodeRef = useRef<View>(null)
-  useNodesRef<View, SwiperProps>(props, ref, nodeRef, {})
+  const swiperGestureRef = useRef<PanGesture>()
+  useNodesRef<View, SwiperProps>(props, ref, nodeRef, {
+    // scrollView内部会过滤是否绑定了gestureRef，withRef(swiperGestureRef)给gesture对象设置一个ref(2.0版本)
+    gestureRef: swiperGestureRef
+  })
   // 计算transfrom之类的
   const {
     normalStyle,
@@ -710,7 +714,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           handleEnd(eventData)
         }
-      })
+      }).withRef(swiperGestureRef)
     return {
       gestureHandler: gesturePan
     }
