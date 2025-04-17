@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef, useState, useEffect, useCallback } from 'react'
-import { View, Text, StyleSheet, LayoutChangeEvent, Animated } from 'react-native'
+import { View, StyleSheet, LayoutChangeEvent, Animated } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import { HandlerRef } from './useNodesRef'
 
@@ -28,17 +28,6 @@ interface RecycleViewProps {
   onScrollToLower?: (e: any) => void;
   children?: React.ReactNode;
 }
-
-const getGenericComponent = ({ props, ref, generichash, generickey }) => {
-  const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
-  return <GenericComponent ref={ref} {...props}/>
-}
-
-const Item = forwardRef((props, ref) => {
-  const { generichash, genericrecycleItem } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericrecycleItem })
-})
-
 const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewProps>(({
   scrollY = true,
   height = 0,
@@ -59,12 +48,6 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
   onScroll: onScrollProp,
   onScrollToUpper,
   onScrollToLower,
-  generichash,
-  'genericrecycle-item': genericrecycleItem,
-  'genericsection-header': genericsectionHeader,
-  'genericsection-footer': genericsectionFooter,
-  'genericlist-header': genericlistHeader,
-  'genericlist-footer': genericlistFooter,
   children
 }, ref) : React.JSX.Element => {
   const scrollViewRef = useRef<ScrollView>(null)
@@ -93,13 +76,8 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
     }))
     setListData(data)
     initPositions()
+    setStartOffset()
   }, [listData])
-
-  useEffect(() => {
-    if (positions.length > 0) {
-      setStartOffset()
-    }
-  }, [positions])
 
   const getItemHeight = useCallback((item: any, index: number) => {
     const { value, getter } = itemHeight
@@ -251,7 +229,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
       return
     }
     lastScrollTimeRef.current = now
-    const newStart = getStartIndex(e.nativeEvent.contentOffset.y)
+    const newStart = getStartIndex(e.contentOffset.y)
     if (Math.abs(newStart - endIndexValueRef.current) >= Math.floor(getAboveCount() / 2)) {
       startIndexValueRef.current = newStart
       endIndexValueRef.current = newStart + getVisibleCount()
@@ -261,7 +239,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
   }
 
   function setStartOffset () {
-    if (positions.length) {
+    if (positions.length && startIndexValueRef.current >= 1) {
       const startIdx = Math.min(
         Math.max(0, startIndexValueRef.current - getAboveCount()),
         positions.length - 1
@@ -288,9 +266,6 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
     setStartOffset()
   }, [scrollTop])
 
-  const renderItem = useCallback(({ item }) => (
-    <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>
-  ), [])
   return (
     <ScrollView
       ref={scrollViewRef}
@@ -311,7 +286,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
         >
           {visibleData.map((item) => (
             <View key={item._index}>
-              {renderItem({ item })}
+              {children}
             </View>
           ))}
         </Animated.View>
