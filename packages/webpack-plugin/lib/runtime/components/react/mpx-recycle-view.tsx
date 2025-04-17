@@ -1,6 +1,7 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react'
-import { View, StyleSheet, LayoutChangeEvent, ViewStyle, Animated } from 'react-native'
+import React, { forwardRef, useRef, useState, useEffect, useCallback } from 'react'
+import { View, Text, StyleSheet, LayoutChangeEvent, Animated } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
+import { HandlerRef } from './useNodesRef'
 
 interface RecycleViewProps {
   scrollY?: boolean;
@@ -28,7 +29,17 @@ interface RecycleViewProps {
   children?: React.ReactNode;
 }
 
-const RecycleView: React.FC<RecycleViewProps> = ({
+const getGenericComponent = ({ props, ref, generichash, generickey }) => {
+  const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
+  return <GenericComponent ref={ref} {...props}/>
+}
+
+const Item = forwardRef((props, ref) => {
+  const { generichash, genericrecycleItem } = props
+  return getGenericComponent({ props, ref, generichash, generickey: genericrecycleItem })
+})
+
+const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewProps>(({
   scrollY = true,
   height = 0,
   width = 0,
@@ -48,8 +59,14 @@ const RecycleView: React.FC<RecycleViewProps> = ({
   onScroll: onScrollProp,
   onScrollToUpper,
   onScrollToLower,
+  generichash,
+  'genericrecycle-item': genericrecycleItem,
+  'genericsection-header': genericsectionHeader,
+  'genericsection-footer': genericsectionFooter,
+  'genericlist-header': genericlistHeader,
+  'genericlist-footer': genericlistFooter,
   children
-}) => {
+}, ref) : React.JSX.Element => {
   const scrollViewRef = useRef<ScrollView>(null)
 
   const [containerHeight, setContainerHeight] = useState(0)
@@ -67,15 +84,22 @@ const RecycleView: React.FC<RecycleViewProps> = ({
   const startIndexValueRef = useRef(0)
   const endIndexValueRef = useRef(0)
   const transformYRef = useRef(new Animated.Value(0)).current
+  const lastScrollTimeRef = useRef(0)
 
   useEffect(() => {
-    setListData(listData.map((item, index) => ({
+    const data = listData.map((item, index) => ({
       ...item,
       _index: `_${index}`
-    })))
+    }))
+    setListData(data)
     initPositions()
-    setStartOffset()
   }, [listData])
+
+  useEffect(() => {
+    if (positions.length > 0) {
+      setStartOffset()
+    }
+  }, [positions])
 
   const getItemHeight = useCallback((item: any, index: number) => {
     const { value, getter } = itemHeight
@@ -221,16 +245,23 @@ const RecycleView: React.FC<RecycleViewProps> = ({
   }
 
   const handleScroll = (e) => {
-    const newStart = getStartIndex(e.contentOffset.y)
-    const newEnd = newStart + getVisibleCount()
-    startIndexValueRef.current = newStart
-    endIndexValueRef.current = newEnd
-    setStartOffset()
+    const now = Date.now()
+    // 添加16ms的节流，大约60fps
+    if (now - lastScrollTimeRef.current < 16) {
+      return
+    }
+    lastScrollTimeRef.current = now
+    const newStart = getStartIndex(e.nativeEvent.contentOffset.y)
+    if (Math.abs(newStart - endIndexValueRef.current) >= Math.floor(getAboveCount() / 2)) {
+      startIndexValueRef.current = newStart
+      endIndexValueRef.current = newStart + getVisibleCount()
+      setStartOffset()
+    }
     onScrollProp?.(e)
   }
 
   function setStartOffset () {
-    if (positions.length && startIndexValueRef.current >= 1) {
+    if (positions.length) {
       const startIdx = Math.min(
         Math.max(0, startIndexValueRef.current - getAboveCount()),
         positions.length - 1
@@ -257,6 +288,9 @@ const RecycleView: React.FC<RecycleViewProps> = ({
     setStartOffset()
   }, [scrollTop])
 
+  const renderItem = useCallback(({ item }) => (
+    <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>
+  ), [])
   return (
     <ScrollView
       ref={scrollViewRef}
@@ -277,14 +311,14 @@ const RecycleView: React.FC<RecycleViewProps> = ({
         >
           {visibleData.map((item) => (
             <View key={item._index}>
-              {children}
+              {renderItem({ item })}
             </View>
           ))}
         </Animated.View>
       </View>
     </ScrollView>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {
