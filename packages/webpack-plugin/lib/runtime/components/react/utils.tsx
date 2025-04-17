@@ -509,8 +509,8 @@ export function splitProps<T extends Record<string, any>> (props: T): {
 interface LayoutConfig {
   props: Record<string, any>
   hasSelfPercent: boolean
-  setWidth: Dispatch<SetStateAction<number>>
-  setHeight: Dispatch<SetStateAction<number>>
+  setWidth?: Dispatch<SetStateAction<number>>
+  setHeight?: Dispatch<SetStateAction<number>>
   onLayout?: (event?: LayoutChangeEvent) => void
   nodeRef: React.RefObject<any>
 }
