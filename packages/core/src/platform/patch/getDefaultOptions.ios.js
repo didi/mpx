@@ -15,7 +15,7 @@ import {
   KeyboardAvoidContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
+import { PortalHost, useSafeAreaInsets, GestureHandlerRootView } from '../env/navigationHelper'
 import { innerNav, useInnerHeaderHeight } from './nav'
 
 const ProviderContext = createContext(null)
@@ -447,8 +447,6 @@ const checkRelation = (options) => {
   }
 }
 
-// 临时用来存储安卓底部（iOS没有这个）的高度（虚拟按键等高度）根据第一次进入推算
-let bottomVirtualHeight = null
 export function PageWrapperHOC (WrappedComponent) {
   return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
     const rootRef = useRef(null)
@@ -467,29 +465,28 @@ export function PageWrapperHOC (WrappedComponent) {
     }
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     const screenDimensions = ReactNative.Dimensions.get('screen')
+    const windowDimensions = ReactNative.Dimensions.get('window')
+    // 安卓底部会有个虚拟按键区域 计算方式 = screen.height - window.height - statusBarHeight
+    const bottomVirtualHeight = screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight
     navigation.layout = {
       x: 0,
       y: headerHeight,
       width: screenDimensions.width,
-      height: screenDimensions.height - headerHeight - bottomVirtualHeight ? bottomVirtualHeight : 0
+      height: screenDimensions.height - headerHeight - (isNaN(bottomVirtualHeight) ? 0 : bottomVirtualHeight)
     }
+    // 以下为测试case: navigation.layout.height 需要等于measureInWindow.height
+    // console.log('底部虚拟按键区域高度', bottomVirtualHeight)
+    // console.log('mpx内部设置navigation.layout', navigation.layout)
+    // const onLayout = () => {
+    //   setTimeout(() => {
+    //     rootRef.current?.measureInWindow((x, y, width, height) => {
+    //       console.log('1s后计算的高度看看对不对', {x, y, width, height})
+    //     })
+    //   }, 1000)
+    // }
 
     usePageStatus(navigation, currentPageId)
-    const onLayout = () => {
-      // 初次反向推算出来底部虚拟按键的高度后进行高度的重新矫正
-      if (__mpx_mode__ === 'android' && bottomVirtualHeight === null) {
-          rootRef.current?.measureInWindow((x, y, width, height) => {
-            // 沉浸模式的计算方式
-            bottomVirtualHeight = screenDimensions.height - height - headerHeight
-            navigation.layout = {
-              x: 0,
-              y: headerHeight,
-              width: screenDimensions.width,
-              height: height
-            }
-          })
-      }
-    }
+
     const withKeyboardAvoidingView = (element) => {
       return createElement(KeyboardAvoidContext.Provider,
         {
@@ -508,19 +505,13 @@ export function PageWrapperHOC (WrappedComponent) {
         )
       )
     }
-
+    // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
-
     return createElement(GestureHandlerRootView,
       {
-        // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-        style: __mpx_mode__ === 'ios' && currentPageConfig?.navigationStyle !== 'custom'
-          ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          }
-          : {
-            flex: 1
-          }
+        style: {
+          flex: 1
+        }
       },
       createElement(innerNav, {
         props: { pageConfig: currentPageConfig },
@@ -533,8 +524,7 @@ export function PageWrapperHOC (WrappedComponent) {
               flex: 1,
               backgroundColor: currentPageConfig?.backgroundColor || '#fff'
             },
-            ref: rootRef,
-            onLayout
+            ref: rootRef
           },
           createElement(RouteContext.Provider,
             {
