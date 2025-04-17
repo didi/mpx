@@ -8,6 +8,7 @@ module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
 
   return {
     test: TAG_NAME,
@@ -20,6 +21,10 @@ module.exports = function ({ print }) {
       return 'mpx-image'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-image'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-image'
     },
@@ -48,7 +53,8 @@ module.exports = function ({ print }) {
       {
         test: /^(show-menu-by-longpress|fade-in)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ]
   }

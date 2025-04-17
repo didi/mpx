@@ -251,7 +251,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   let canvasComponent
 
   if (__mpx_mode__ === 'android') {
-    const isAndroid9 = Platform.Version >= 28
+    const isAndroid9 = Platform.Version as number >= 28
     canvasComponent = createElement(View, innerProps, createElement(
       WebView,
       {

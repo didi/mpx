@@ -54,7 +54,7 @@ import {
   TextInputSubmitEditingEventData
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -122,11 +122,7 @@ const keyboardTypeMap: Record<Type, string> = {
   text: 'default',
   number: 'numeric',
   idcard: 'default',
-  digit:
-    Platform.select({
-      ios: 'decimal-pad',
-      android: 'numeric'
-    }) || ''
+  digit: isIOS ? 'decimal-pad' : 'numeric'
 }
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {

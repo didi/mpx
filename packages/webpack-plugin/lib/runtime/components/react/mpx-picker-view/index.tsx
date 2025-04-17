@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import React, { createElement, forwardRef, useRef } from 'react'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from './useNodesRef'
+import useInnerProps, { getCustomEvent } from '../getInnerListeners'
+import useNodesRef, { HandlerRef } from '../useNodesRef'
 import {
   useLayout,
   splitProps,
@@ -9,11 +9,10 @@ import {
   wrapChildren,
   useTransformStyle,
   extendObject
-} from './utils'
+} from '../utils'
 import { PickerViewStyleContext } from './pickerVIewContext'
-import type { AnyFunc } from './types/common'
-import Portal from './mpx-portal'
-
+import Portal from '../mpx-portal'
+import type { AnyFunc } from '../types/common'
 /**
  * ✔ value
  * ✔ bindchange

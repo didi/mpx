@@ -7,7 +7,9 @@ module.exports = function getSpec ({ warn, error }) {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
     // React Native android 不支持的 CSS property
-    android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
+    android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
+    // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
+    harmony: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
   // var(xx)
   const cssVariableExp = /var\(/
@@ -529,7 +531,7 @@ module.exports = function getSpec ({ warn, error }) {
       return false
     }
     const cssMap = formatAbbreviation({ prop, value, selector }, { mode })
-    if (mode === 'android') return cssMap
+    if (mode === 'android' || mode === 'harmony') return cssMap
     // ios 阴影需要额外设置 shadowOpacity=1
     cssMap.push({
       prop: 'shadowOpacity',
@@ -539,54 +541,63 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   return {
-    supportedModes: ['ios', 'android'],
+    supportedModes: ['ios', 'android', 'harmony'],
     rules: [
       { // 背景相关属性的处理
         test: /^(background|background-image|background-size|background-position)$/,
         ios: checkBackgroundImage,
-        android: checkBackgroundImage
+        android: checkBackgroundImage,
+        harmony: checkBackgroundImage
       },
       { // margin padding 内外边距的处理
         test: /^(margin|padding|border-radius|border-width|border-color)$/,
         ios: formatCompositeVal,
-        android: formatCompositeVal
+        android: formatCompositeVal,
+        harmony: formatCompositeVal
       },
       { // line-height 换算
         test: 'line-height',
         ios: formatLineHeight,
-        android: formatLineHeight
+        android: formatLineHeight,
+        harmony: formatLineHeight
       },
       {
         test: 'transform',
         ios: formatTransform,
-        android: formatTransform
+        android: formatTransform,
+        harmony: formatTransform
       },
       {
         test: 'flex',
         ios: formatFlex,
-        android: formatFlex
+        android: formatFlex,
+        harmony: formatFlex
       },
       {
         test: 'font-family',
         ios: formatFontFamily,
-        android: formatFontFamily
+        android: formatFontFamily,
+        harmony: formatFontFamily
       },
       {
         test: 'box-shadow',
         ios: formatBoxShadow,
-        android: formatBoxShadow
+        android: formatBoxShadow,
+        harmony: formatBoxShadow
       },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
         ios: formatAbbreviation,
-        android: formatAbbreviation
+        android: formatAbbreviation,
+        harmony: formatAbbreviation
       },
       // 属性&属性值校验
       {
         test: () => true,
         ios: verification,
-        android: verification
+        android: verification,
+        harmony: verification
       }
     ]
   }
