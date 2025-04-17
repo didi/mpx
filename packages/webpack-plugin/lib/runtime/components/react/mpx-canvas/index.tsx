@@ -210,26 +210,27 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
         break
       }
       default: {
+        const newData: { payload?: unknown } = {}
+        // createLinearGradient 方法调用需要在 constructors 中需要注册 CanvasGradient
+        const constructor = constructors[data.meta.constructor]
         if (data.payload) {
-          // createLinearGradient 方法调用需要在 constructors 中需要注册 CanvasGradient
-          const constructor = constructors[data.meta.constructor]
           if (constructor) {
             const { args, payload } = data
             // RN 端同步生成一个 CanvasGradient 的实例
             const object = constructor.constructLocally(canvasRef.current, ...args)
-            Object.assign(object, payload, {
+            extendObject(object, payload, {
               [WEBVIEW_TARGET]: data.meta.target
             })
-            extendObject({}, data, {
+            extendObject(newData, data, {
               payload: object
             })
           }
           for (const listener of canvasRef.current.listeners) {
-            listener(data.payload)
+            listener(constructor ? newData.payload : data.payload)
           }
         }
         if (canvasRef.current.bus) {
-          canvasRef.current.bus.handle(data)
+          canvasRef.current.bus.handle(constructor && data.payload ? newData : data)
         }
       }
     }
