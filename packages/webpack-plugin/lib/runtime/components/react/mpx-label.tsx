@@ -8,6 +8,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import { LabelContext, LabelContextValue } from './context'
+import Portal from './mpx-portal'
 
 export interface LabelProps {
   for?: string
@@ -45,6 +46,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const styleObj = extendObject({}, defaultStyle, style)
 
     const {
+      hasPositionFixed,
       hasSelfPercent,
       normalStyle,
       hasVarDec,
@@ -92,7 +94,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
       }
     )
 
-    return createElement(View, innerProps, createElement(
+    const finalComponent = createElement(View, innerProps, createElement(
       LabelContext.Provider,
       { value: contextRef },
       wrapChildren(
@@ -105,6 +107,12 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
         }
       )
     ))
+
+    if (hasPositionFixed) {
+      return createElement(Portal, null, finalComponent)
+    }
+
+    return finalComponent
   }
 )
 

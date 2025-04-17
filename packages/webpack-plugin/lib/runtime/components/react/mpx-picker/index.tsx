@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef, useContext, useEffect } from 'react'
+import React, { forwardRef, useRef, useContext, useEffect, createElement } from 'react'
 import { StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import PickerSelector from './selector'
@@ -9,7 +9,7 @@ import PickerRegion from './region'
 import { FormContext, FormFieldValue, RouteContext } from '../context'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
-import { extendObject } from '../utils'
+import { extendObject, useLayout } from '../utils'
 import { createPopupManager } from '../mpx-popup'
 import { EventType, LanguageCode, PickerMode, PickerProps } from './type'
 
@@ -127,23 +127,21 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     const buttonText = buttonTextMap[(global.__mpx?.i18n?.locale as LanguageCode) || 'zh-CN']
     const pickerValue = useRef(value)
     pickerValue.current = Array.isArray(value) ? value.slice() : value
-    const innerLayout = useRef({})
-    const nodeRef = useRef(null)
+    const nodeRef = useRef<View>(null)
     const pickerRef = useRef<any>(null)
     const { open, show, hide, remove } = useRef(createPopupManager()).current
 
     useNodesRef<View, PickerProps>(props, ref, nodeRef)
+    const { layoutRef, layoutProps } = useLayout({
+      props,
+      hasSelfPercent: false,
+      nodeRef
+    })
+
     const innerProps = useInnerProps(
       props,
-      {
-        ref: nodeRef
-      },
-      [],
-      { layoutRef: innerLayout }
+      extendObject({ ref: nodeRef }, layoutProps)
     )
-    const getInnerLayout = (layout: React.MutableRefObject<{}>) => {
-      innerLayout.current = layout.current
-    }
 
     useEffect(() => {
       if (range && pickerRef.current && mode === PickerMode.MULTI_SELECTOR) {
@@ -192,7 +190,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       const eventData = getCustomEvent(
         'columnchange',
         {},
-        { detail: { column: columnIndex, value }, layoutRef: innerLayout }
+        { detail: { column: columnIndex, value }, layoutRef }
       )
       props.bindcolumnchange?.(eventData)
     }
@@ -206,7 +204,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       const eventData = getCustomEvent(
         'change',
         {},
-        { detail: { value: pickerValue.current }, layoutRef: innerLayout }
+        { detail: { value: pickerValue.current }, layoutRef }
       )
       bindchange?.(eventData)
       hide()
@@ -217,7 +215,6 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       children,
       bindchange: onChange,
       bindcolumnchange: onColumnChange,
-      getInnerLayout,
       getRange: () => range
     })
 
@@ -266,10 +263,10 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       }
     }, [])
 
-    return (
-      <TouchableWithoutFeedback onPress={show}>
-        {children}
-      </TouchableWithoutFeedback>
+    return createElement(
+      TouchableWithoutFeedback,
+      { onPress: show },
+      createElement(View, innerProps, children)
     )
   }
 )
