@@ -522,7 +522,9 @@ export function PageWrapperHOC (WrappedComponent) {
           {
             style: {
               flex: 1,
-              backgroundColor: currentPageConfig?.backgroundColor || '#fff'
+              backgroundColor: currentPageConfig?.backgroundColor || '#fff',
+              // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+              overflow: 'hidden'
             },
             ref: rootRef
           },
