@@ -175,7 +175,7 @@ function getTransformObj (transforms: { [propName: string]: string | number }[])
   }, {} as { [propName: string]: string | number })
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<{}> }) {
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any> }) {
   const { style = {}, animation, enableAnimation, catchtransitionend, bindtransitionend, layoutRef } = props
   const transitionend = isFunction(catchtransitionend)
     ? catchtransitionend
@@ -289,7 +289,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       })
     })
   }
-  function withTimingCallback (finished?: boolean, current?: AnimatableValue, duration: number) {
+  function withTimingCallback (finished?: boolean, current?: AnimatableValue, duration?: number) {
     if (!transitionend) return
     const target = {
       id: animation?.id || -1,
