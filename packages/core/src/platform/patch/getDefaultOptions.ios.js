@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -15,7 +15,8 @@ import {
   KeyboardAvoidContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
+import { PortalHost, useSafeAreaInsets, GestureHandlerRootView } from '../env/navigationHelper'
+import { innerNav, useInnerHeaderHeight } from './nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -446,8 +447,6 @@ const checkRelation = (options) => {
   }
 }
 
-// 临时用来存储安卓底部（iOS没有这个）的高度（虚拟按键等高度）根据第一次进入推算
-let bottomVirtualHeight = null
 export function PageWrapperHOC (WrappedComponent) {
   return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
     const rootRef = useRef(null)
@@ -464,59 +463,30 @@ export function PageWrapperHOC (WrappedComponent) {
       error('Using pageWrapper requires passing navigation and route')
       return null
     }
-    usePageStatus(navigation, currentPageId)
-    useLayoutEffect(() => {
-      navigation.setOptions({
-        title: pageConfig.navigationBarTitleText?.trim() || '',
-        headerStyle: {
-          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-        },
-        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-      })
-
-      // TODO 此部分内容在native-stack可删除，用setOptions设置
-      if (__mpx_mode__ !== 'ios') {
-        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-        ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
-        ReactNative.StatusBar.setBackgroundColor('transparent')
-      }
-    }, [])
-
-    const headerHeight = useHeaderHeight()
-    const onLayout = () => {
-      const screenDimensions = ReactNative.Dimensions.get('screen')
-      if (__mpx_mode__ === 'ios') {
-        navigation.layout = {
-          x: 0,
-          y: headerHeight,
-          width: screenDimensions.width,
-          height: screenDimensions.height - headerHeight
-        }
-      } else {
-        if (bottomVirtualHeight === null) {
-          rootRef.current?.measureInWindow((x, y, width, height) => {
-            // 沉浸模式的计算方式
-            bottomVirtualHeight = screenDimensions.height - height - headerHeight
-            // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
-            // bottomVirtualHeight = windowDimensions.height - height - headerHeight
-            navigation.layout = {
-              x: 0,
-              y: headerHeight,
-              width: screenDimensions.width,
-              height: height
-            }
-          })
-        } else {
-          navigation.layout = {
-            x: 0,
-            y: headerHeight, // 这个y值
-            width: screenDimensions.width,
-            // 后续页面的layout是通过第一次路由进入时候推算出来的底部区域来推算出来的
-            height: screenDimensions.height - bottomVirtualHeight - headerHeight
-          }
-        }
-      }
+    const headerHeight = useInnerHeaderHeight(currentPageConfig)
+    const screenDimensions = ReactNative.Dimensions.get('screen')
+    const windowDimensions = ReactNative.Dimensions.get('window')
+    // 安卓底部会有个虚拟按键区域 计算方式 = screen.height - window.height - statusBarHeight
+    const bottomVirtualHeight = screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight
+    navigation.layout = {
+      x: 0,
+      y: headerHeight,
+      width: screenDimensions.width,
+      height: screenDimensions.height - headerHeight - (isNaN(bottomVirtualHeight) ? 0 : bottomVirtualHeight)
     }
+    // 以下为测试case: navigation.layout.height 需要等于measureInWindow.height
+    // console.log('底部虚拟按键区域高度', bottomVirtualHeight)
+    // console.log('mpx内部设置navigation.layout', navigation.layout)
+    // const onLayout = () => {
+    //   setTimeout(() => {
+    //     rootRef.current?.measureInWindow((x, y, width, height) => {
+    //       console.log('1s后计算的高度看看对不对', {x, y, width, height})
+    //     })
+    //   }, 1000)
+    // }
+
+    usePageStatus(navigation, currentPageId)
+
     const withKeyboardAvoidingView = (element) => {
       return createElement(KeyboardAvoidContext.Provider,
         {
@@ -535,29 +505,28 @@ export function PageWrapperHOC (WrappedComponent) {
         )
       )
     }
-
+    // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
-
     return createElement(GestureHandlerRootView,
       {
-        // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-        style: __mpx_mode__ === 'ios' && currentPageConfig?.navigationStyle !== 'custom'
-          ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          }
-          : {
-            flex: 1
-          }
+        style: {
+          flex: 1
+        }
       },
+      createElement(innerNav, {
+        props: { pageConfig: currentPageConfig },
+        navigation
+      }),
       withKeyboardAvoidingView(
         createElement(ReactNative.View,
           {
             style: {
               flex: 1,
-              backgroundColor: currentPageConfig?.backgroundColor || '#fff'
+              backgroundColor: currentPageConfig?.backgroundColor || '#fff',
+              // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+              overflow: 'hidden'
             },
-            ref: rootRef,
-            onLayout
+            ref: rootRef
           },
           createElement(RouteContext.Provider,
             {
@@ -582,7 +551,6 @@ export function PageWrapperHOC (WrappedComponent) {
       ))
   }
 }
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
