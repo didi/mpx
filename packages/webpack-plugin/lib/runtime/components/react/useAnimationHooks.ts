@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
+import type { MutableRefObject } from 'react'
 import { TransformsStyle } from 'react-native'
 import {
   Easing,
@@ -9,11 +10,10 @@ import {
   withDelay,
   makeMutable,
   cancelAnimation,
-  SharedValue,
-  WithTimingConfig,
-  AnimationCallback
+  runOnJS
 } from 'react-native-reanimated'
-import { error, hasOwn } from '@mpxjs/utils'
+import type { AnimationCallback, WithTimingConfig, SharedValue, AnimatableValue } from 'react-native-reanimated'
+import { error, hasOwn, isFunction, collectDataset } from '@mpxjs/utils'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
@@ -175,9 +175,13 @@ function getTransformObj (transforms: { [propName: string]: string | number }[])
   }, {} as { [propName: string]: string | number })
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean }) {
-  const { style = {}, animation, enableAnimation } = props
-
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<{}> }) {
+  const { style = {}, animation, enableAnimation, catchtransitionend, bindtransitionend, layoutRef } = props
+  const transitionend = isFunction(catchtransitionend)
+    ? catchtransitionend
+    : isFunction(bindtransitionend)
+      ? bindtransitionend
+      : null
   const enableStyleAnimation = enableAnimation || !!animation
   const enableAnimationRef = useRef(enableStyleAnimation)
   if (enableAnimationRef.current !== enableStyleAnimation) {
@@ -285,10 +289,36 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       })
     })
   }
+  function withTimingCallback (finished?: boolean, current?: AnimatableValue, duration: number) {
+    if (!transitionend) return
+    const target = {
+      id: animation?.id || -1,
+      dataset: collectDataset(props),
+      offsetLeft: layoutRef?.current?.offsetLeft || 0,
+      offsetTop: layoutRef?.current?.offsetTop || 0
+    }
+    // Todo event 是否需要对齐wx，因为本身rn没有这个事件难以完全对齐
+    transitionend({
+      type: 'transitionend',
+      __evName: 'transitionend',
+      _userTap: false,
+      detail: { elapsedTime: duration, finished, current },
+      target,
+      currentTarget: target,
+      timeStamp: Date.now()
+    })
+  }
   // 创建单个animation
   function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
-    const animation = typeof callback === 'function'
-      ? withTiming(value, { duration, easing }, callback)
+    const animation = transitionend || typeof callback === 'function'
+      ? withTiming(value, { duration, easing }, (finished, current) => {
+        if (typeof callback === 'function') {
+          callback(finished, current)
+        }
+        if (transitionend) {
+          runOnJS(withTimingCallback)(finished, current, duration)
+        }
+      })
       : withTiming(value, { duration, easing })
     return delay ? withDelay(delay, animation) : animation
   }
