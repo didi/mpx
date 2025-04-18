@@ -1,10 +1,10 @@
-const WebpackSources = require('webpack-sources')
-const VirtualModulesPlugin = require('webpack-virtual-modules')
-const node_path = require('node:path')
-const process = require('process')
-const fs = require('fs')
-const { createContext, getPath, normalizeAbsolutePath } = require('./utils')
-const { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } = require('./consts')
+import WebpackSources from 'webpack-sources'
+import VirtualModulesPlugin from 'webpack-virtual-modules'
+import node_path from'node:path' 
+import process from 'process'
+import fs from 'fs'
+import { createContext, getPath, normalizeAbsolutePath } from './utils.js'
+import { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer} from './consts.js'
 
 const PLUGIN_NAME = 'unocss:webpack'
 const VIRTUAL_MODULE_PREFIX = node_path.resolve(process.cwd(), '_virtual_')
@@ -133,4 +133,4 @@ function getLayer (id) {
   }
   return layer
 }
-module.exports = WebpackPlugin
+export default WebpackPlugin
