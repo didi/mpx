@@ -7,9 +7,7 @@
  * ✔ url
  * ✔ delta
  */
-import { View } from 'react-native'
-import { useCallback, forwardRef, JSX, createElement } from 'react'
-import useInnerProps from './getInnerListeners'
+import { useCallback, forwardRef, JSX, createElement, MutableRefObject } from 'react'
 import { redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 
 import MpxView, { _ViewProps } from './mpx-view'
@@ -20,7 +18,7 @@ interface _NavigatorProps extends _ViewProps {
   delta: number
 }
 
-const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element => {
+const _Navigator = forwardRef<any, _NavigatorProps>((props, ref): JSX.Element => {
   const {
     children,
     'open-type': openType,
@@ -48,10 +46,10 @@ const _Navigator = forwardRef<View, _NavigatorProps>((props, ref): JSX.Element =
     }
   }, [openType, url, delta])
 
-  const innerProps = useInnerProps(props, {
+  const innerProps = {
     ref,
     bindtap: handleClick
-  })
+  }
 
   return createElement(MpxView, innerProps, children)
 })

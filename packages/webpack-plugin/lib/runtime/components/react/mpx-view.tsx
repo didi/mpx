@@ -544,12 +544,12 @@ function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
         // 盒子内圆角borderWith与borderRadius的关系
         // 当borderRadius 小于 当borderWith 内边框为直角
         // 当borderRadius 大于等于 当borderWith 内边框为圆角
-          if (borderStyles.includes(key)) {
-            const borderVal = +val - borderWidth
-            return borderVal > 0 ? borderVal : 0
-          }
-          return val
+        if (borderStyles.includes(key)) {
+          const borderVal = +val - borderWidth
+          return borderVal > 0 ? borderVal : 0
         }
+        return val
+      }
       : undefined)
 }
 
@@ -689,11 +689,11 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   // 默认样式
   const defaultStyle: ExtendedViewStyle = style.display === 'flex'
     ? {
-        flexDirection: 'row',
-        flexBasis: 'auto',
-        flexShrink: 1,
-        flexWrap: 'nowrap'
-      }
+      flexDirection: 'row',
+      flexBasis: 'auto',
+      flexShrink: 1,
+      flexWrap: 'nowrap'
+    }
     : {}
 
   const enableHover = !!hoverStyle
@@ -745,20 +745,26 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   })
 
   const innerProps = useInnerProps(
-    props,
-    extendObject({
-      ref: nodeRef,
-      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
-    },
-    layoutProps
-    ), [
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
+      }
+
+    ),
+    [
       'hover-start-time',
       'hover-stay-time',
       'hover-style',
       'hover-class'
-    ], {
+    ],
+    {
       layoutRef
-    })
+    }
+  )
 
   const childNode = wrapWithChildren(props, {
     hasVarDec,
