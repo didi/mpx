@@ -643,7 +643,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
-      style: extendObject({}, innerStyle, layoutStyle),
+      style: extendObject({}, {
+        flexGrow: 0
+      }, innerStyle, layoutStyle),
       pinchGestureEnabled: false,
       alwaysBounceVertical: false,
       alwaysBounceHorizontal: false,
