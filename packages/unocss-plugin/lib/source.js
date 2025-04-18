@@ -1,5 +1,5 @@
-const { ReplaceSource, RawSource, ConcatSource, Source } = require('webpack').sources
-
+import  pkg  from 'webpack'
+const { ReplaceSource, RawSource, ConcatSource, Source } = pkg.sources
 function getRawSource (s) {
   if (s instanceof RawSource) { return s }
   if (s instanceof Source) { return new RawSource(s.source()) }
@@ -17,7 +17,7 @@ function getConcatSource (s) {
   return new ConcatSource(s)
 }
 
-module.exports = {
+export {
   getRawSource,
   getReplaceSource,
   getConcatSource

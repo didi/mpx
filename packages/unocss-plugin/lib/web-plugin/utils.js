@@ -1,15 +1,15 @@
-const pluginutils = require('@rollup/pluginutils')
-const config = require('@unocss/config')
-const core = require('@unocss/core')
-const node_path = require('node:path')
-const MagicString = require('magic-string')
-const remapping = require('@ampproject/remapping')
+import pluginutils from '@rollup/pluginutils'
+import { loadConfig } from '@unocss/config'
+import {cssIdRE as defCssIdRE, createGenerator} from '@unocss/core'
+import node_path from 'node:path'
+import MagicString from 'magic-string'
+import remapping from '@ampproject/remapping'
 
 const INCLUDE_COMMENT = '@unocss-include'
 const IGNORE_COMMENT = '@unocss-ignore'
 const CSS_PLACEHOLDER = '@unocss-placeholder'
 
-const defaultExclude = [core.cssIdRE]
+const defaultExclude = [defCssIdRE]
 const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
 const sfcIdRE = /\.(vue|mpx)($|\?)/
 const templateIdRE = /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml|html)($|\?)/
@@ -18,13 +18,13 @@ const cssIdRE = /\.(wxss|acss|css|qss|ttss|jxss|ddss)($|\?)/
 function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
   let rawConfig = {}
-  const uno = core.createGenerator(rawConfig, defaults)
+  const uno = createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
-  const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, core.cssIdRE])
+  const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, defCssIdRE])
   const ready = reloadConfig()
 
   async function reloadConfig () {
-    const result = await config.loadConfig(root, configOrPath, extraConfigSources, defaults)
+    const result = await loadConfig(root, configOrPath, extraConfigSources, defaults)
     rawConfig = result.config
     uno.setConfig(rawConfig)
     rollupFilter = pluginutils.createFilter(
@@ -140,10 +140,10 @@ function getPath (id) {
 }
 
 function isCssId (id) {
-  return core.cssIdRE.test(id) || cssIdRE.test(id)
+  return defCssIdRE.test(id) || cssIdRE.test(id)
 }
 
-module.exports = {
+export {
   createContext,
   applyTransformers,
   getPath,

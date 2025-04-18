@@ -1,7 +1,7 @@
-const { applyTransformers, isCssId } = require('./utils')
-const parseComponent = require('@mpxjs/webpack-plugin/lib/parser')
-const genComponentTag = require('@mpxjs/webpack-plugin/lib/utils/gen-component-tag')
-const path = require('path')
+import { applyTransformers, isCssId } from './utils.js'
+import parseComponent from '@mpxjs/webpack-plugin/lib/parser.js'
+import  genComponentTag from '@mpxjs/webpack-plugin/lib/utils/gen-component-tag.js'
+import path from 'path'
 
 async function transform (code, map) {
   const callback = this.async()
@@ -78,4 +78,4 @@ async function transform (code, map) {
   }
 }
 
-module.exports = transform
+export default  transform
