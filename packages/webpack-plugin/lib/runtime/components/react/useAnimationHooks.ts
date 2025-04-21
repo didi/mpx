@@ -310,11 +310,9 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   }
   // 创建单个animation
   function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
-    const animation = transitionend || typeof callback === 'function'
+    const animation = typeof callback === 'function'
       ? withTiming(value, { duration, easing }, (finished, current) => {
-        if (typeof callback === 'function') {
-          callback(finished, current)
-        }
+        callback(finished, current)
         if (transitionend) {
           runOnJS(withTimingCallback)(finished, current, duration)
         }
