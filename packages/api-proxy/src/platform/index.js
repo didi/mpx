@@ -43,7 +43,7 @@ export * from './api/file'
 // getUserInfo
 export * from './api/get-user-info'
 
-// previewImage, compressImage, getImageInfo
+// previewImage, compressImage, getImageInfo, chooseMedia
 export * from './api/image'
 
 // login
@@ -105,7 +105,7 @@ export * from './api/video'
 // onWindowResize, offWindowResize
 export * from './api/window'
 
-// getLocation, openLocation, chooseLocation
+// getLocation, openLocation, chooseLocation, startLocationUpdate, stopLocationUpdate
 export * from './api/location'
 
 // getExtConfig, getExtConfigSync

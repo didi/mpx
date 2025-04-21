@@ -33,12 +33,46 @@ function getSystemInfoSync () {
 }
 
 const getDeviceInfo = function () {
-  const res = ENV_OBJ.getDeviceBaseInfo
+  let res
+  if (ENV_OBJ.canIUse('getDeviceBaseInfo')) {
+    res = ENV_OBJ.getDeviceBaseInfo()
+  } else {
+    const systemInfo = getSystemInfoSync()
+    res = {
+      abi: systemInfo.abi || null,
+      benchmarkLevel: systemInfo.benchmarkLevel || null,
+      brand: systemInfo.brand,
+      model: systemInfo.model,
+      system: systemInfo.system,
+      platform: systemInfo.platform,
+      memorySize: systemInfo.memorySize || null
+    }
+  }
   defineUnsupportedProps(res, ['deviceAbi', 'benchmarkLevel', 'cpuType'])
   return res
 }
 
-const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
+const getWindowInfo = function() {
+  let res
+  if (ENV_OBJ.canIUse('getWindowInfo')) {
+    res = ENV_OBJ.getWindowInfo()
+  } else {
+    const systemInfo = getSystemInfoSync()
+    res = {
+      pixelRatio: systemInfo.pixelRatio,
+      screenWidth: systemInfo.screenWidth,
+      screenHeight: systemInfo.screenHeight,
+      windowWidth: systemInfo.windowWidth,
+      windowHeight: systemInfo.windowHeight,
+      statusBarHeight: systemInfo.statusBarHeight,
+      safeArea: systemInfo.safeArea || null,
+      screenTop: systemInfo.screenTop || null
+    }
+  }
+  return res
+}
+
+// const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
 
 const getLaunchOptionsSync = ENV_OBJ.getLaunchOptionsSync || envError('getLaunchOptionsSync')
 

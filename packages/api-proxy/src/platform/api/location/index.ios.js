@@ -24,8 +24,14 @@ const openLocation = envError('openLocation')
 
 const chooseLocation = envError('chooseLocation')
 
+const startLocationUpdate = envError('startLocationUpdate')
+
+const stopLocationUpdate = envError('stopLocationUpdate')
+
 export {
   getLocation,
   openLocation,
-  chooseLocation
+  chooseLocation,
+  startLocationUpdate,
+  stopLocationUpdate
 }
