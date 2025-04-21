@@ -83,7 +83,8 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
 
   const startIndexValueRef = useRef(0)
   const endIndexValueRef = useRef(0)
-  const transformYRef = useRef(new Animated.Value(0)).current
+  // const transformYRef = useRef(new Animated.Value(0)).current
+  const transformYRef = useRef(0)
   const lastScrollTimeRef = useRef(0)
 
   useEffect(() => {
@@ -271,9 +272,11 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
       const offset = positions[startIdx].top
       const data = getVisibleData()
       setVisibleData(data)
-      transformYRef.setValue(offset)
+      // transformYRef.setValue(offset)
+      transformYRef.current = offset
     } else {
-      transformYRef.setValue(0)
+      // transformYRef.setValue(0)
+       transformYRef.current = 0
     }
   }
 
@@ -300,18 +303,18 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
     >
       <View style={styles.contentWrapper}>
         <View style={[styles.placeholder, { height: totalHeight }]} />
-        <Animated.View
+        <View
           style={[
             styles.infiniteList,
             {
-              transform: [{ translateY: transformYRef }]
+              transform: [{ translateY: transformYRef.current }]
             }
           ]}
         >
           {visibleData.map((item) => (
             renderItem({item})
           ))}
-        </Animated.View>
+        </View>
       </View>
     </ScrollView>
   )
