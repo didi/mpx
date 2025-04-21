@@ -28,6 +28,17 @@ interface RecycleViewProps {
   onScrollToLower?: (e: any) => void;
   children?: React.ReactNode;
 }
+
+const getGenericComponent = ({ props, ref, generichash, generickey }) => {
+  const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
+  return <GenericComponent ref={ref} {...props}/>
+}
+
+const Item = forwardRef((props, ref) => {
+  const { generichash, genericrecycleItem } = props
+  return getGenericComponent({ props, ref, generichash, generickey: genericrecycleItem })
+})
+
 const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewProps>(({
   scrollY = true,
   height = 0,
@@ -42,13 +53,19 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
   upperThreshold = 50,
   scrollOptions = {},
   scrollEventThrottle = 0,
-  minRenderCount = 10,
+  minRenderCount = 5,
   enhanced = false,
   bounces = false,
   onScroll: onScrollProp,
   onScrollToUpper,
   onScrollToLower,
-  children
+  children,
+  generichash,
+  'genericrecycle-item': genericrecycleItem,
+  'genericsection-header': genericsectionHeader,
+  'genericsection-footer': genericsectionFooter,
+  'genericlist-header': genericlistHeader,
+  'genericlist-footer': genericlistFooter
 }, ref) : React.JSX.Element => {
   const scrollViewRef = useRef<ScrollView>(null)
 
@@ -76,8 +93,11 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
     }))
     setListData(data)
     initPositions()
-    setStartOffset()
   }, [listData])
+
+  useEffect(() => {
+    setStartOffset()
+  }, [positions])
 
   const getItemHeight = useCallback((item: any, index: number) => {
     const { value, getter } = itemHeight
@@ -135,6 +155,10 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
     calculateVisibleCounts(positions)
   }, [containerHeight])
 
+  const renderItem = useCallback(({ item }) => (
+    <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem} key={item._index}/>
+  ), [])
+
   const binarySearch = useCallback((list: typeof positions, value: number) => {
     if (!list.length) return 0
 
@@ -181,7 +205,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
     const startIdx = Math.max(0, startIndexValueRef.current)
     const endIdx = Math.max(0, startIdx - bufferScale)
 
-    for (let i = startIdx; i >= endIdx; i--) {
+    for (let i = startIdx; i > endIdx; i--) {
       count += visibleCounts[i] || 0
     }
 
@@ -194,7 +218,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
     const startIdx = Math.min(startIndexValueRef.current, _listData.length - 1)
     const endIdx = Math.min(startIdx + bufferScale, _listData.length - 1)
 
-    for (let i = startIdx; i <= endIdx; i++) {
+    for (let i = startIdx; i < endIdx; i++) {
       count += visibleCounts[i] || 0
     }
 
@@ -229,7 +253,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
       return
     }
     lastScrollTimeRef.current = now
-    const newStart = getStartIndex(e.contentOffset.y)
+    const newStart = getStartIndex(e.nativeEvent.contentOffset.y)
     if (Math.abs(newStart - endIndexValueRef.current) >= Math.floor(getAboveCount() / 2)) {
       startIndexValueRef.current = newStart
       endIndexValueRef.current = newStart + getVisibleCount()
@@ -239,7 +263,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
   }
 
   function setStartOffset () {
-    if (positions.length && startIndexValueRef.current >= 1) {
+    if (positions.length) {
       const startIdx = Math.min(
         Math.max(0, startIndexValueRef.current - getAboveCount()),
         positions.length - 1
@@ -285,9 +309,7 @@ const RecycleView = forwardRef<HandlerRef<View, RecycleViewProps>, RecycleViewPr
           ]}
         >
           {visibleData.map((item) => (
-            <View key={item._index}>
-              {children}
-            </View>
+            renderItem({item})
           ))}
         </Animated.View>
       </View>
