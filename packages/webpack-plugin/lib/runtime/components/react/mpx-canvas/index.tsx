@@ -98,7 +98,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
       layoutProps,
       {
         ref: nodeRef,
-        style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
+        style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 })
       }
     ),
     [],
