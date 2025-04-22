@@ -194,14 +194,11 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
-    const navScreenOpts = Object.assign({
-      headerShown: false
-    }, __mpx_mode__ === 'android'
-    ? {
+    const navScreenOpts = {
+      headerShown: false,
       statusBarTranslucent: true,
       statusBarBackgroundColor: 'transparent'
-    }
-    : {})
+   }
 
     return createElement(SafeAreaProvider,
       null,

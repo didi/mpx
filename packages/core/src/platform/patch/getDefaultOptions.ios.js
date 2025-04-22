@@ -16,7 +16,7 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets, GestureHandlerRootView } from '../env/navigationHelper'
-import { innerNav, useInnerHeaderHeight } from './nav'
+import { innerNav, useInnerHeaderHeight } from '../env/nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -467,13 +467,18 @@ export function PageWrapperHOC (WrappedComponent) {
     const screenDimensions = ReactNative.Dimensions.get('screen')
     const windowDimensions = ReactNative.Dimensions.get('window')
     // 安卓底部会有个虚拟按键区域 计算方式 = screen.height - window.height - statusBarHeight
-    const bottomVirtualHeight = screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight
+    const bottomVirtualHeight = (screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0
     navigation.layout = {
       x: 0,
       y: headerHeight,
+      left: 0,
+      top: headerHeight,
+      right: screenDimensions.width,
+      bottom: screenDimensions.height - bottomVirtualHeight,
       width: screenDimensions.width,
-      height: screenDimensions.height - headerHeight - (isNaN(bottomVirtualHeight) ? 0 : bottomVirtualHeight)
+      height: screenDimensions.height - headerHeight - bottomVirtualHeight
     }
+    console.log('我是渲染函数我看看执行了多少次')
     // 以下为测试case: navigation.layout.height 需要等于measureInWindow.height
     // console.log('底部虚拟按键区域高度', bottomVirtualHeight)
     // console.log('mpx内部设置navigation.layout', navigation.layout)
