@@ -102,18 +102,18 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   }, [keyboardAvoid])
 
   return (
-    <GestureDetector gesture={gesture}>
-      <View style={style}>
-        <Animated.View
-          style={[
-            contentContainerStyle,
-            animatedStyle
-          ]}
-        >
-          {children}
-        </Animated.View>
-      </View>
-    </GestureDetector>
+    // <GestureDetector gesture={gesture}>
+    <View style={style}>
+      <Animated.View
+        style={[
+          contentContainerStyle,
+          animatedStyle
+        ]}
+      >
+        {children}
+      </Animated.View>
+    </View>
+    // </GestureDetector>
   )
 }
 
