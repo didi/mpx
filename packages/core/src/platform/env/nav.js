@@ -15,7 +15,7 @@ export function useInnerHeaderHeight (pageconfig) {
 
 // 固定写死高度
 function getTitleHeight () {
-  return __mpx_mode__ === 'ios' ? 44 : 56
+  return 44
 }
 
 // 计算颜色亮度

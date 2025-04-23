@@ -122,17 +122,17 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
 
   const navigation = useNavigation()
 
-  useEffect(() => {
-    let beforeRemoveSubscription:any
-    if (__mpx_mode__ !== 'ios') {
-      beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
-    }
-    return () => {
-      if (isFunction(beforeRemoveSubscription)) {
-        beforeRemoveSubscription()
-      }
-    }
-  }, [])
+  // useEffect(() => {
+  //   let beforeRemoveSubscription:any
+  //   if (__mpx_mode__ !== 'ios') {
+  //     beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+  //   }
+  //   return () => {
+  //     if (isFunction(beforeRemoveSubscription)) {
+  //       beforeRemoveSubscription()
+  //     }
+  //   }
+  // }, [])
 
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
     style: defaultWebViewStyle
