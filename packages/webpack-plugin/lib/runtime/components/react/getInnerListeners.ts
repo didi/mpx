@@ -114,7 +114,7 @@ function handleEmitEvent (
   const { propsRef } = eventConfig
   const eventCfg = eventConfig[name]
   if (eventCfg) {
-    if (eventCfg.hasCatch) {
+    if (eventCfg.hasCatch && name !== 'tap' && name !== 'longpress') {
       e.stopPropagation()
     }
     eventCfg[type].forEach((event) => {
@@ -138,6 +138,8 @@ function checkIsNeedPress (e: ExtendedNativeTouchEvent, type: 'bubble' | 'captur
 }
 
 function handleTouchstart (e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
+  // 阻止事件被释放放回对象池，导致对象复用 _stoppedEventTypes 状态被保留
+  e.persist()
   const { innerRef } = eventConfig
   globalEventState.needPress = true
   innerRef.current.mpxPressInfo.detail = {
@@ -155,7 +157,6 @@ function handleTouchstart (e: ExtendedNativeTouchEvent, type: EventType, eventCo
       e._stoppedEventTypes = e._stoppedEventTypes || new Set()
       e._stoppedEventTypes.add('longpress')
     }
-    e.persist()
     innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
     innerRef.current.startTimer[type] = setTimeout(() => {
       // 只要触发过longpress, 全局就不再触发tap
