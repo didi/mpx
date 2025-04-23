@@ -39,6 +39,7 @@
  */
 import { JSX, forwardRef, useRef, useState, useContext, useEffect, createElement } from 'react'
 import {
+  Platform,
   TextInput,
   TextStyle,
   ViewStyle,
