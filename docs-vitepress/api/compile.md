@@ -490,7 +490,7 @@ module.exports = defineConfig({
 })
 ```
 
-### normalMiniNpmPackage
+### normalNpmPackage
 `Array<string>`
 
 使用小程序原生 npm 包时，由于微信小程序 npm 包要求根目录下必须有构建文件生成目录，（默认为 miniprogram_dist 目录），此目录可以通过在 package.json 文件中新增一个 miniprogram 字段来指定。
@@ -505,7 +505,7 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        normalMiniNpmPackage: ['antd-mini']
+        normalNpmPackage: ['antd-mini']
       }
     }
   }

@@ -748,7 +748,7 @@ class MpxWebpackPlugin {
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
-          normalMiniNpmPackage: this.options.normalMiniNpmPackage || [],
+          normalNpmPackages: this.options.normalNpmPackages || [],
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
