@@ -53,8 +53,8 @@ const styles = ReactNative.StyleSheet.create({
     height: 22
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold'
+    fontSize: 17,
+    fontWeight: 600
   }
 })
 
@@ -78,7 +78,6 @@ export function innerNav ({ props, navigation }) {
   // 假设是栈导航，获取栈的长度
   const stackLength = navigation.getState()?.routes?.length
   // 用于外部注册打开RN容器之前的栈长度
-  console.log('-----Mpx', Mpx)
   const beforeStackLength = Mpx.config?.rnConfig?.beforeStackLength || 0
 
   // 回退按钮与图标

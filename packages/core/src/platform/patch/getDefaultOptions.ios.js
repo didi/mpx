@@ -446,6 +446,27 @@ const checkRelation = (options) => {
     hasAncestorRelation
   }
 }
+function getLayoutData (headerHeight) {
+  const screenDimensions = ReactNative.Dimensions.get('screen')
+  const windowDimensions = ReactNative.Dimensions.get('window')
+  // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
+  // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
+  const isLandscape = screenDimensions.height < screenDimensions.width
+  const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+  return {
+    x: 0,
+    y: headerHeight,
+    left: 0,
+    top: headerHeight,
+    // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
+    width: windowDimensions.width,
+    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
+    // ios为0 android为实际statusbar高度
+    statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
+    bottomVirtualHeight: bottomVirtualHeight,
+    isLandscape: isLandscape
+  }
+}
 
 export function PageWrapperHOC (WrappedComponent) {
   return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
@@ -464,31 +485,11 @@ export function PageWrapperHOC (WrappedComponent) {
       return null
     }
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
-    const screenDimensions = ReactNative.Dimensions.get('screen')
-    const windowDimensions = ReactNative.Dimensions.get('window')
-    // 安卓底部会有个虚拟按键区域 计算方式 = screen.height - window.height - statusBarHeight
-    const bottomVirtualHeight = (screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0
-    navigation.layout = {
-      x: 0,
-      y: headerHeight,
-      left: 0,
-      top: headerHeight,
-      right: screenDimensions.width,
-      bottom: screenDimensions.height - bottomVirtualHeight,
-      width: screenDimensions.width,
-      height: screenDimensions.height - headerHeight - bottomVirtualHeight
+    navigation.layout = getLayoutData(headerHeight)
+    const onLayout = () => {
+      // 当用户处于横屏或者竖屏状态的时候，需要进行layout修正
+      navigation.layout = getLayoutData(headerHeight)
     }
-    console.log('我是渲染函数我看看执行了多少次')
-    // 以下为测试case: navigation.layout.height 需要等于measureInWindow.height
-    // console.log('底部虚拟按键区域高度', bottomVirtualHeight)
-    // console.log('mpx内部设置navigation.layout', navigation.layout)
-    // const onLayout = () => {
-    //   setTimeout(() => {
-    //     rootRef.current?.measureInWindow((x, y, width, height) => {
-    //       console.log('1s后计算的高度看看对不对', {x, y, width, height})
-    //     })
-    //   }, 1000)
-    // }
 
     usePageStatus(navigation, currentPageId)
 
@@ -531,7 +532,8 @@ export function PageWrapperHOC (WrappedComponent) {
               // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
               overflow: 'hidden'
             },
-            ref: rootRef
+            ref: rootRef,
+            onLayout
           },
           createElement(RouteContext.Provider,
             {

@@ -95,21 +95,25 @@ class RNIntersectionObserver {
     const navigationLayout = navigation.layout || {
       x: 0,
       y: 0,
+      top: 0,
+      left: 0,
       width: screen.width,
       height: screen.height
     }
 
     const windowRect = {
-      top: navigationLayout.y - this.margins.top,
+      top: navigationLayout.top - this.margins.top,
       left: 0 - this.margins.left,
       right: navigationLayout.width + this.margins.right,
-      bottom: navigationLayout.y + navigationLayout.height + this.margins.bottom
+      bottom: navigationLayout.top + navigationLayout.height + this.margins.bottom
     }
     this.windowRect = windowRect
     return this.windowRect
   }
 
   _getReferenceRect (targetRef) {
+    const navigation = getFocusedNavigation() || {}
+    const layout = navigation.layout || {}
     const targetRefs = isArray(targetRef) ? targetRef : [targetRef]
     const targetPromiseQueue = []
     targetRefs.forEach((targetRefItem) => {
@@ -127,11 +131,12 @@ class RNIntersectionObserver {
       targetPromiseQueue.push(new Promise((resolve) => {
         target.measureInWindow(
           (x, y, width, height) => {
+            // 安卓measureInWindow的参考值在android下为statubar的左下角，因此top需要调整一下
             const boundingClientRect = {
               left: x,
-              top: y,
+              top: y + layout.statusBarHeight || 0,
               right: x + width,
-              bottom: y + height,
+              bottom: y + height + layout.statusBarHeight || 0,
               width: width,
               height: height
             }
