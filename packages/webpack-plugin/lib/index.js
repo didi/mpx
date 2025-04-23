@@ -177,6 +177,7 @@ class MpxWebpackPlugin {
     options.forceProxyEventRules = options.forceProxyEventRules || {}
     options.disableRequireAsync = options.disableRequireAsync || false
     options.miniNpmPackages = options.miniNpmPackages || []
+    options.normalNpmPackages = options.normalNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
@@ -364,7 +365,7 @@ class MpxWebpackPlugin {
     }
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, addModeOptions, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
-    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
+    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
@@ -748,7 +749,6 @@ class MpxWebpackPlugin {
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
-          normalNpmPackages: this.options.normalNpmPackages || [],
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
