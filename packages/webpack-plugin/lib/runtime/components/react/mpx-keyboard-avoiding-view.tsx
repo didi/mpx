@@ -1,6 +1,6 @@
 import React, { ReactNode, useContext, useEffect, useMemo } from 'react'
-import { DimensionValue, EmitterSubscription, Keyboard, Platform, View, ViewStyle } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
+import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { KeyboardAvoidContext } from './context'
 import { isIOS } from './utils'
@@ -30,14 +30,10 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
       }).runOnJS(true)
   }, [])
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return Object.assign(
-      {
-        transform: [{ translateY: -offset.value }]
-      },
-      isIOS ? {} : { flexBasis: basic.value as DimensionValue }
-    )
-  })
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -offset.value }],
+    flexBasis: basic.value as DimensionValue
+  }))
 
   const resetKeyboard = () => {
     if (keyboardAvoid?.current) {
@@ -62,7 +58,12 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
               const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
               const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
               const value = aboveOffset > 0 ? belowValue : aboveValue
-              offset.value = withTiming(value, { duration, easing })
+              offset.value = withTiming(value, { duration, easing }, (finished) => {
+                if (finished) {
+                  // Set flexBasic after animation to trigger re-layout and reset layout information
+                  basic.value = '99.99%'
+                }
+              })
             })
           })
         }),
@@ -82,11 +83,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
             const value = aboveOffset > 0 ? belowValue : aboveValue
             offset.value = withTiming(value, { duration, easing }, (finished) => {
               if (finished) {
-                /**
-                 * In the Android environment, the layout information is not synchronized after the animation,
-                 * which results in the inability to correctly trigger element events.
-                 * Here, we utilize flexBasic to proactively trigger a re-layout
-                 */
+                // Set flexBasic after animation to trigger re-layout and reset layout information
                 basic.value = '99.99%'
               }
             })
