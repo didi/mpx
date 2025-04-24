@@ -1,7 +1,6 @@
-import React, { ReactNode, useContext, useEffect, useMemo } from 'react'
+import React, { ReactNode, useContext, useEffect } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
-import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { KeyboardAvoidContext } from './context'
 import { isIOS } from './utils'
 
@@ -19,17 +18,6 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const basic = useSharedValue('auto')
   const keyboardAvoid = useContext(KeyboardAvoidContext)
 
-  const dismiss = () => {
-    Keyboard.isVisible() && Keyboard.dismiss()
-  }
-
-  const gesture = useMemo(() => {
-    return Gesture.Tap()
-      .onEnd(() => {
-        dismiss()
-      }).runOnJS(true)
-  }, [])
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -offset.value }],
     flexBasis: basic.value as DimensionValue
@@ -41,6 +29,10 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     }
     offset.value = withTiming(0, { duration, easing })
     basic.value = 'auto'
+  }
+
+  const onTouchEnd = () => {
+    Keyboard.isVisible() && Keyboard.dismiss()
   }
 
   useEffect(() => {
@@ -99,18 +91,16 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   }, [keyboardAvoid])
 
   return (
-    <GestureDetector gesture={gesture}>
-      <View style={style}>
-        <Animated.View
-          style={[
-            contentContainerStyle,
-            animatedStyle
-          ]}
-        >
-          {children}
-        </Animated.View>
-      </View>
-    </GestureDetector>
+    <View style={style} onTouchEnd={onTouchEnd}>
+      <Animated.View
+        style={[
+          contentContainerStyle,
+          animatedStyle
+        ]}
+      >
+        {children}
+      </Animated.View>
+    </View>
   )
 }
 
