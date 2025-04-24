@@ -1,5 +1,5 @@
 import React, { ReactNode, useContext, useEffect, useMemo } from 'react'
-import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle } from 'react-native'
+import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle, Platform } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { KeyboardAvoidContext } from './context'
