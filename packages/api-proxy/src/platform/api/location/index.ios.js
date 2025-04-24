@@ -24,6 +24,10 @@ const openLocation = envError('openLocation')
 
 const chooseLocation = envError('chooseLocation')
 
+const onLocationChange = envError('onLocationChange')
+
+const offLocationChange = envError('offLocationChange')
+
 const startLocationUpdate = envError('startLocationUpdate')
 
 const stopLocationUpdate = envError('stopLocationUpdate')
@@ -32,6 +36,8 @@ export {
   getLocation,
   openLocation,
   chooseLocation,
+  onLocationChange,
+  offLocationChange,
   startLocationUpdate,
   stopLocationUpdate
 }
