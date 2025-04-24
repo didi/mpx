@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef, useCallback, useState, useEffect } from 'react'
-import { SectionList, FlatList, RefreshControl } from 'react-native'
+import { SectionList, FlatList, RefreshControl, Text, View} from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
 import { extendObject, useLayout, useTransformStyle } from './utils'
@@ -32,6 +32,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
     generichash,
     style = {},
     itemHeight = {},
+    headerHeight={},
     sectionHeaderHeight = {},
     listHeaderHeight = {},
     'genericrecycle-item': genericrecycleItem,
@@ -69,6 +70,11 @@ const RecycleView = forwardRef((props = {}, ref) => {
     }
   })
 
+  // setTimeout(() => {
+  //   scrollToLocation({
+  //     itemIndex: 1, sectionIndex: 3
+  //   })
+  // }, 3000)
   useEffect(() => {
     if (refreshing !== refresherTriggered) {
       setRefreshing(!!refresherTriggered)
@@ -99,14 +105,26 @@ const RecycleView = forwardRef((props = {}, ref) => {
       )
   }
 
-  function getHeight ({ data, index, key }) {
+  function getHeight ({ sectionIndex, rowIndex, key }) {
     if (!key) {
       return 0
     }
     if (key.getter) {
-      return key.getter(data[index], index) || 0
+      const item = listData[sectionIndex].data[rowIndex]
+      return key.getter(item, item.originalIndex) || 0
     } else {
       return key.value || 0
+    }
+  }
+
+  function getHeaderHeight ({ sectionIndex }) {
+    const item = listData[sectionIndex]
+    const { originalIndex = -1 } = item
+    if (originalIndex === -1) return 0
+    if (headerHeight.getter) {
+      return headerHeight.getter(item, originalIndex) || 0
+    } else {
+      return headerHeight.value || 0
     }
   }
 
@@ -115,7 +133,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
   ), [])
 
   const renderSectionHeader = useCallback((data) => (
-    <SectionHeader dataInfo={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
+    data.section.originalIndex !== -1 ? <SectionHeader dataInfo={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/> : null
   ), [])
 
   // function getSectionItemLayout (data, index) {
@@ -131,8 +149,8 @@ const RecycleView = forwardRef((props = {}, ref) => {
 
   const getSectionItemLayout = sectionListGetItemLayout({
     // The height of the row with rowData at the given sectionIndex and rowIndex
-    getItemHeight: (rowData, sectionIndex, rowIndex) => 400,
-    getSectionHeaderHeight: () => 50
+    getItemHeight: (rowData, sectionIndex, rowIndex) => getHeight({sectionIndex, rowIndex, key: itemHeight  }),
+    getSectionHeaderHeight: (sectionIndex) => getHeaderHeight({ sectionIndex }),
   })
 
   function getItemLayout (data, index) {
