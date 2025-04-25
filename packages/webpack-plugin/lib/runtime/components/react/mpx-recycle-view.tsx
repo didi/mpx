@@ -92,9 +92,11 @@ const RecycleView = forwardRef((props = {}, ref) => {
 
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
 
-  const sectionListData = useMemo(() => {
+  const convertedListData = useMemo(() => {
     if (type === 'section') {
       return convertToSectionListData(listData) || []
+    } else {
+      return listData || []
     }
   }, [listData])
   const scrollViewRef = useRef(null)
@@ -145,20 +147,26 @@ const RecycleView = forwardRef((props = {}, ref) => {
       )
   }
 
-  function getHeight ({ sectionIndex, rowIndex, key }) {
-    if (!key) {
+  function getHeight ({ sectionIndex, rowIndex }) {
+    if (!itemHeight) {
       return 0
     }
-    if (key.getter) {
-      const item = sectionListData[sectionIndex].data[rowIndex]
-      return key.getter(item, item._originalItemIndex) || 0
+    if (itemHeight.getter) {
+      if (type === 'section') {
+        const item = convertedListData[sectionIndex].data[rowIndex]
+        return itemHeight.getter(item, item._originalItemIndex) || 0
+      } else {
+        const item = convertedListData[rowIndex]
+        return itemHeight.getter(item, rowIndex) || 0
+      }
+    
     } else {
-      return key.value || 0
+      return itemHeight.value || 0
     }
   }
 
   function getHeaderHeight ({ sectionIndex }) {
-    const item = sectionListData[sectionIndex]
+    const item = convertedListData[sectionIndex]
     const { headerData, _originalHeaderIndex } = item
     if (!headerData || _originalHeaderIndex === -1) return 0
     if (headerHeight.getter) {
@@ -180,8 +188,9 @@ const RecycleView = forwardRef((props = {}, ref) => {
     const layouts = []
     let offset = 0
 
-    // 遍历所有 sections
-    sectionListData.forEach((section, sectionIndex) => {
+    if (type === 'section') { 
+      // 遍历所有 sections
+    convertedListData.forEach((section, sectionIndex) => {
       // 添加 section header 的位置信息
       const headerHeight = getHeaderHeight({ sectionIndex })
       layouts.push({
@@ -193,7 +202,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
 
       // 添加该 section 中所有 items 的位置信息
       section.data.forEach((item, itemIndex) => {
-        const contenteight = getHeight({ sectionIndex, rowIndex: itemIndex, key: itemHeight })
+        const contenteight = getHeight({ sectionIndex, rowIndex: itemIndex })
         layouts.push({
           length: contenteight,
           offset,
@@ -208,21 +217,23 @@ const RecycleView = forwardRef((props = {}, ref) => {
         index: layouts.length
       })
     })
-
+    } else {
+      convertedListData.forEach((item, index) => {
+        const itemHeightValue = getHeight({ sectionIndex: 0, rowIndex: index })
+        layouts.push({
+          length: itemHeightValue,
+          offset,
+          index: layouts.length
+        })
+        offset += itemHeightValue
+      })
+    }
     return layouts
-  }, [sectionListData])
+  }, [convertedListData])
 
-  const getSectionItemLayout = useCallback((data, index) => {
+  const getItemLayout = useCallback((data, index) => {
     return itemLayouts[index]
   }, [])
-
-  function getItemLayout (data, index) {
-    return {
-      length: getHeight({ data, index, key: itemHeight }),
-      offset: getHeight({ data, index, key: listHeaderHeight }) + getHeight({ data, index, key: itemHeight }) * index || 0,
-      index
-    }
-  }
 
   function scrollToLocation ({
     itemIndex,
@@ -288,17 +299,17 @@ const RecycleView = forwardRef((props = {}, ref) => {
       ? <SectionList
         {...innerProps}
         style={[{ height, width }, style, layoutStyle]}
-        sections={sectionListData}
+        sections={convertedListData}
         keyExtractor={(item, index) => item + index}
         renderItem={renderItem}
-        getItemLayout={getSectionItemLayout}
+        getItemLayout={getItemLayout}
         renderSectionHeader={generichash && genericsectionHeader && renderSectionHeader || null}
         refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
       />
       : <FlatList
         {...innerProps}
         style={[{ height, width }, style, layoutStyle]}
-        data={listData}
+        data={convertedListData}
         keyExtractor={(item, index) => item + index}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
