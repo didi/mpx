@@ -1,7 +1,7 @@
 import { useRef, useMemo, RefObject } from 'react'
 import { hasOwn, collectDataset } from '@mpxjs/utils'
 import { omit, extendObject, useNavigation } from './utils'
-import eventConfigMap, { TAP_EVENTS } from './event.config'
+import eventConfigMap, { TAP_EVENTS, LONGPRESS_EVENTS } from './event.config'
 import {
   Props,
   AdditionalProps,
@@ -10,7 +10,7 @@ import {
   InnerRef,
   SetTimeoutReturnType,
   LayoutRef,
-  NativeTouchEvent,
+  ExtendedNativeTouchEvent,
   Navigation
 } from './types/getInnerListeners'
 
@@ -20,7 +20,7 @@ const globalEventState = {
 
 const getTouchEvent = (
   type: string,
-  event: NativeTouchEvent,
+  event: ExtendedNativeTouchEvent,
   props: Props,
   config: UseInnerPropsConfig,
   navigation: Navigation
@@ -110,7 +110,7 @@ export const getCustomEvent = (
 function handleEmitEvent (
   events: string[],
   type: string,
-  oe: NativeTouchEvent,
+  oe: ExtendedNativeTouchEvent,
   propsRef: Record<string, any>,
   config: UseInnerPropsConfig,
   navigation: Navigation
@@ -118,8 +118,22 @@ function handleEmitEvent (
   events.forEach((event) => {
     if (propsRef.current[event]) {
       const match = /^(catch|capture-catch):?(.*?)(?:\.(.*))?$/.exec(event)
+      // 检查是否已经被上层的 catch 阻止
+      if ((type === 'tap' || type === 'longpress') && oe._stoppedEventTypes?.has(type)) {
+        return
+      }
       if (match) {
-        oe.stopPropagation()
+        const eventBase = match[2] || ''
+        if (eventBase === 'tap' || eventBase === 'longpress') {
+          // 为 tap、longpress 添加标记，影响后续的冒泡
+          if (!oe._stoppedEventTypes) {
+            oe._stoppedEventTypes = new Set()
+          }
+          oe._stoppedEventTypes.add(eventBase)
+        } else {
+          // 原生 touch 事件使用 stopPropagation
+          oe.stopPropagation()
+        }
       }
       propsRef.current[event](
         getTouchEvent(type, oe, propsRef.current, config, navigation)
@@ -128,7 +142,7 @@ function handleEmitEvent (
   })
 }
 
-function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>) {
+function checkIsNeedPress (e: ExtendedNativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>) {
   const tapDetailInfo = ref.current!.mpxPressInfo.detail || { x: 0, y: 0 }
   const nativeEvent = e.nativeEvent
   const currentPageX = nativeEvent.changedTouches[0].pageX
@@ -144,7 +158,7 @@ function checkIsNeedPress (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
   }
 }
 
-function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) {
+function handleTouchstart (e: ExtendedNativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) {
   e.persist()
   const bubbleTouchEvent = ['catchtouchstart', 'bindtouchstart']
   const bubblePressEvent = ['catchlongpress', 'bindlongpress']
@@ -168,18 +182,7 @@ function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
   const currentPressEvent =
         type === 'bubble' ? bubblePressEvent : capturePressEvent
   handleEmitEvent(currentTouchEvent, 'touchstart', e, propsRef, config, navigation)
-  const {
-    catchlongpress,
-    bindlongpress,
-    'capture-catchlongpress': captureCatchlongpress,
-    'capture-bindlongpress': captureBindlongpress
-  } = propsRef.current
-  if (
-    catchlongpress ||
-        bindlongpress ||
-        captureCatchlongpress ||
-        captureBindlongpress
-  ) {
+  if (LONGPRESS_EVENTS.some(eventName => propsRef.current[eventName])) {
     ref.current!.startTimer[type] = setTimeout(() => {
       // 只要触发过longpress, 全局就不再触发tap
       globalEventState.needPress = false
@@ -188,7 +191,7 @@ function handleTouchstart (e: NativeTouchEvent, type: 'bubble' | 'capture', ref:
   }
 }
 
-function handleTouchmove (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) {
+function handleTouchmove (e: ExtendedNativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) {
   const bubbleTouchEvent = ['catchtouchmove', 'bindtouchmove']
   const captureTouchEvent = [
     'capture-catchtouchmove',
@@ -202,7 +205,7 @@ function handleTouchmove (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: 
   }
 }
 
-function handleTouchend (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) {
+function handleTouchend (e: ExtendedNativeTouchEvent, type: 'bubble' | 'capture', ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) {
   // move event may not be triggered
   if (TAP_EVENTS.some(eventName => propsRef.current[eventName])) {
     checkIsNeedPress(e, type, ref)
@@ -231,7 +234,7 @@ function handleTouchend (e: NativeTouchEvent, type: 'bubble' | 'capture', ref: R
 }
 
 function handleTouchcancel (
-  e: NativeTouchEvent,
+  e: ExtendedNativeTouchEvent,
   type: 'bubble' | 'capture',
   ref: RefObject<InnerRef>,
   propsRef: Record<string, any>,
@@ -252,7 +255,7 @@ function handleTouchcancel (
 }
 
 function createTouchEventHandler (eventName: 'onTouchStart'|'onTouchMove'|'onTouchEnd'|'onTouchCancel', type: 'bubble' | 'capture') {
-  return (e: NativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) => {
+  return (e: ExtendedNativeTouchEvent, ref: RefObject<InnerRef>, propsRef: Record<string, any>, config: UseInnerPropsConfig, navigation: Navigation) => {
     const handlerMap = {
       onTouchStart: handleTouchstart,
       onTouchMove: handleTouchmove,
@@ -341,11 +344,11 @@ const useInnerProps = (
       return acc
     }, [])
     const finalEventKeys = [...new Set(transformedEventKeys)]
-    const events: Record<string, (e: NativeTouchEvent) => void> = {}
+    const events: Record<string, (e: ExtendedNativeTouchEvent) => void> = {}
 
     touchEventList.forEach((item) => {
       if (finalEventKeys.includes(item.eventName)) {
-        events[item.eventName] = (e: NativeTouchEvent) =>
+        events[item.eventName] = (e: ExtendedNativeTouchEvent) =>
           item.handler(e, ref, propsRef, config, navigation)
       }
     })

@@ -46,12 +46,15 @@ interface InnerRef {
   };
 }
 interface UseInnerPropsConfig {
-  layoutRef: LayoutRef;
+  layoutRef?: LayoutRef;
   disableTouch?: boolean;
   disableTap?: boolean
 }
 interface DataSetType {
   [key: string]: string;
+}
+interface ExtendedNativeTouchEvent extends NativeTouchEvent {
+  _stoppedEventTypes?: Set<string>
 }
 
 export {
@@ -64,5 +67,6 @@ export {
   LayoutRef,
   SetTimeoutReturnType,
   DataSetType,
-  Navigation
+  Navigation,
+  ExtendedNativeTouchEvent
 }

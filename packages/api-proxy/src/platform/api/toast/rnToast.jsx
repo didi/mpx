@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     zIndex: 10000,
-    position: "absolute",
+    position: 'absolute',
     display: 'flex',
     alignItems: 'center'
   },
@@ -77,14 +77,14 @@ function showToast (options = {}) {
   const pointerEvents = mask ? 'auto' : 'none'
   isLoadingShow = isLoading
   if (image || icon === 'success' || icon === 'error') {
-    ToastView = <View style={[styles.toastWrap, {pointerEvents}]}>
+    ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
       <View style={[styles.toastContent, styles.toastHasIcon]}>
-        <Image style={ styles.toastImg } source={{uri: image || iconImg[icon]}}></Image>
+        <Image style={ styles.toastImg } source={{ uri: image || iconImg[icon] }}></Image>
         { title ? <Text style={styles.toastText}>{title}</Text> : null }
       </View>
     </View>
   } else if (icon === 'loading') {
-    ToastView = <View  style={[styles.toastWrap, {pointerEvents}]}>
+    ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
       <View style={[styles.toastContent, styles.toastHasIcon]}>
         <ActivityIndicator
           animating
@@ -94,13 +94,20 @@ function showToast (options = {}) {
         { title ? <Text style={styles.toastText}>{title}</Text> : null }
       </View>
     </View>
-  }  else  {
-    ToastView = <View style={[styles.toastWrap, {pointerEvents}]}>
+  } else {
+    ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
       <View style={styles.toastContent}>
-        { title ? <Text numberOfLines={2} style={{ ...styles.toastText, ...(icon === 'none' ? {
-            height: 'auto',
-            marginTop: 0
-          } : {}) }}>{title}</Text> : null }
+        { title
+          ? <Text numberOfLines={2} style={{
+            ...styles.toastText,
+            ...(icon === 'none'
+              ? {
+                  height: 'auto',
+                  marginTop: 0
+                }
+              : {})
+          }}>{title}</Text>
+          : null }
       </View>
     </View>
   }
@@ -130,7 +137,7 @@ function showToast (options = {}) {
   }
 }
 
-function hideToast(options = {}) {
+function hideToast (options = {}) {
   const id = getCurrentPageId()
   const { noConflict = false, success, fail, complete } = options
 

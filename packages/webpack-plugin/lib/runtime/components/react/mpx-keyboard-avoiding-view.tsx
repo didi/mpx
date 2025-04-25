@@ -1,8 +1,9 @@
-import React, { ReactNode, useContext, useEffect } from 'react'
+import React, { ReactNode, useContext, useEffect, useMemo } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, Platform, View, ViewStyle } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
+import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { KeyboardAvoidContext } from './context'
-import { extendObject } from './utils'
+import { isIOS } from './utils'
 
 type KeyboardAvoidViewProps = {
   children?: ReactNode
@@ -11,13 +12,23 @@ type KeyboardAvoidViewProps = {
 }
 
 const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: KeyboardAvoidViewProps) => {
-  const isIOS = Platform.OS === 'ios'
   const duration = isIOS ? 250 : 300
   const easing = isIOS ? Easing.inOut(Easing.ease) : Easing.out(Easing.quad)
 
   const offset = useSharedValue(0)
   const basic = useSharedValue('auto')
   const keyboardAvoid = useContext(KeyboardAvoidContext)
+
+  const dismiss = () => {
+    Keyboard.isVisible() && Keyboard.dismiss()
+  }
+
+  const gesture = useMemo(() => {
+    return Gesture.Tap()
+      .onEnd(() => {
+        dismiss()
+      }).runOnJS(true)
+  }, [])
 
   const animatedStyle = useAnimatedStyle(() => {
     return Object.assign(
@@ -29,10 +40,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   })
 
   const resetKeyboard = () => {
-    keyboardAvoid?.current && extendObject(keyboardAvoid.current, {
-      cursorSpacing: 0,
-      ref: null
-    })
+    if (keyboardAvoid?.current) {
+      keyboardAvoid.current = null
+    }
     offset.value = withTiming(0, { duration, easing })
     basic.value = 'auto'
   }
@@ -48,7 +58,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
           const { ref, cursorSpacing = 0 } = keyboardAvoid.current
           setTimeout(() => {
             ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
+              const aboveOffset = pageY + height - endCoordinates.screenY
               const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
               const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
               const value = aboveOffset > 0 ? belowValue : aboveValue
@@ -92,17 +102,21 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   }, [keyboardAvoid])
 
   return (
-    <View style={style}>
-      <Animated.View
-        style={[
-          contentContainerStyle,
-          animatedStyle
-        ]}
-      >
-        {children}
-      </Animated.View>
-    </View>
+    <GestureDetector gesture={gesture}>
+      <View style={style}>
+        <Animated.View
+          style={[
+            contentContainerStyle,
+            animatedStyle
+          ]}
+        >
+          {children}
+        </Animated.View>
+      </View>
+    </GestureDetector>
   )
 }
+
+KeyboardAvoidingView.displayName = 'MpxKeyboardAvoidingView'
 
 export default KeyboardAvoidingView

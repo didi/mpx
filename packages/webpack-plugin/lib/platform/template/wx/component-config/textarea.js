@@ -20,6 +20,9 @@ module.exports = function ({ print }) {
   const androidValueLogError = print({ platform: 'android', tag: TAG_NAME, isError: true, type: 'value' })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyValueLogError = print({ platform: 'harmony', tag: TAG_NAME, isError: true, type: 'value' })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -33,6 +36,10 @@ module.exports = function ({ print }) {
       return 'mpx-textarea'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-textarea'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-textarea'
     },
@@ -75,12 +82,19 @@ module.exports = function ({ print }) {
           if (notSupported.includes(value)) {
             androidValueLogError({ name, value })
           }
+        },
+        harmony ({ name, value }) {
+          const notSupported = ['return']
+          if (notSupported.includes(value)) {
+            harmonyValueLogError({ name, value })
+          }
         }
       },
       {
-        test: /^(placeholder-style|placeholder-class|always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
+        test: /^(always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ],
     event: [
@@ -109,7 +123,8 @@ module.exports = function ({ print }) {
       {
         test: /^keyboard.+$/,
         ios: iosEventLog,
-        android: androidEventLog
+        android: androidEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }

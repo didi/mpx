@@ -1,22 +1,23 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
-import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
+import { GestureResponderEvent, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from './utils'
-import useNodesRef, { HandlerRef } from './useNodesRef'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from '../utils'
+import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
-import MpxPickerVIewColumnItem from './mpx-picker-view-column-item'
-import { PickerViewColumnAnimationContext } from './pickerVIewContext'
+import MpxPickerVIewColumnItem from './pickerViewColumnItem'
+import { PickerViewColumnAnimationContext } from '../mpx-picker-view/pickerVIewContext'
+import { calcHeightOffsets } from './pickerViewFaces'
 
 interface ColumnProps {
-  children?: React.ReactNode
+  columnIndex: number
   columnData: React.ReactNode[]
   initialIndex: number
   onSelectChange: Function
   style: {
     [key: string]: any
   }
-  'enable-var': boolean
+  'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   wrapperStyle: {
     height: number
@@ -24,7 +25,6 @@ interface ColumnProps {
   }
   pickerMaskStyle: Record<string, any>
   pickerIndicatorStyle: Record<string, any>
-  columnIndex: number
 }
 
 const visibleCount = 5
@@ -62,10 +62,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const [itemRawH, setItemRawH] = useState(itemHeight)
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
-  const touching = useRef(false)
+  const dragging = useRef(false)
   const scrolling = useRef(false)
   const timerResetPosition = useRef<NodeJS.Timeout | null>(null)
   const timerScrollTo = useRef<NodeJS.Timeout | null>(null)
+  const timerClickOnce = useRef<NodeJS.Timeout | null>(null)
   const activeIndex = useRef(initialIndex)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
@@ -113,6 +114,13 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [])
 
+  const clearTimerClickOnce = useCallback(() => {
+    if (timerClickOnce.current) {
+      clearTimeout(timerClickOnce.current)
+      timerClickOnce.current = null
+    }
+  }, [])
+
   useEffect(() => {
     return () => {
       clearTimerResetPosition()
@@ -124,7 +132,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     if (
       !scrollViewRef.current ||
       !itemRawH ||
-      touching.current ||
+      dragging.current ||
       scrolling.current ||
       prevIndex == null ||
       initialIndex === prevIndex ||
@@ -140,8 +148,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
         y: initialIndex * itemRawH,
         animated: false
       })
-    }, isAndroid ? 200 : 0)
-    activeIndex.current = initialIndex
+      activeIndex.current = initialIndex
+    }, isIOS ? 0 : 200)
   }, [itemRawH, maxIndex, initialIndex])
 
   const onContentSizeChange = useCallback((_w: number, h: number) => {
@@ -150,6 +158,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       clearTimerScrollTo()
       timerScrollTo.current = setTimeout(() => {
         scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
+        activeIndex.current = initialIndex
       }, 0)
     }
   }, [itemRawH, initialIndex])
@@ -163,7 +172,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH])
 
   const resetScrollPosition = useCallback((y: number) => {
-    if (touching.current || scrolling.current) {
+    if (dragging.current || scrolling.current) {
       return
     }
     scrolling.current = true
@@ -191,7 +200,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScrollBeginDrag = useCallback(() => {
     isIOS && clearTimerResetPosition()
-    touching.current = true
+    dragging.current = true
     prevScrollingInfo.current = {
       index: activeIndex.current,
       y: activeIndex.current * itemRawH
@@ -199,7 +208,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   }, [itemRawH])
 
   const onScrollEndDrag = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    touching.current = false
+    dragging.current = false
     if (isIOS) {
       const { y } = e.nativeEvent.contentOffset
       if (y % itemRawH === 0) {
@@ -220,7 +229,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
     const { y } = e.nativeEvent.contentOffset
     const { index: prevIndex, y: _y } = prevScrollingInfo.current
-    if (touching.current || scrolling.current) {
+    if (dragging.current || scrolling.current) {
       if (Math.abs(y - _y) >= itemRawH) {
         const currentId = getIndex(y)
         if (currentId !== prevIndex) {
@@ -234,6 +243,47 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       }
     }
   }, [itemRawH, getIndex])
+
+  const offsetHeights = useMemo(() => calcHeightOffsets(itemRawH), [itemRawH])
+
+  const calcOffset = useCallback((y: number): number | false => {
+    const baselineY = activeIndex.current * itemRawH + pickerH / 2
+    const diff = Math.abs(y - baselineY)
+    const positive = y - baselineY > 0 ? 1 : -1
+    const [h1, h2, h3] = offsetHeights
+    if (diff > h1 && diff < h3) {
+      if (diff < h2) {
+        return 1 * positive
+      } else {
+        return 2 * positive
+      }
+    }
+    return false
+  }, [offsetHeights])
+
+  /**
+   * 和小程序表现对齐，点击（不滑动）非焦点选项自动滚动到对应位置
+   */
+  const onClickOnceItem = useCallback((e: GestureResponderEvent) => {
+    const { locationY } = e.nativeEvent || {}
+    const offsetIndex = calcOffset(locationY)
+    if (dragging.current || !offsetIndex) {
+      return
+    }
+    const targetIndex = activeIndex.current + offsetIndex
+    if (targetIndex < 0 || targetIndex > maxIndex) {
+      return
+    }
+    const y = targetIndex * itemRawH
+    scrollViewRef.current?.scrollTo({ x: 0, y, animated: true })
+    if (isAndroid) {
+      // Android scrollTo 不会自动触发 onMomentumScrollEnd，需要手动触发
+      clearTimerClickOnce()
+      timerClickOnce.current = setTimeout(() => {
+        onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
+      }, 250)
+    }
+  }, [itemRawH, maxIndex, calcOffset, onMomentumScrollEnd])
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {
@@ -264,6 +314,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           {...layoutProps}
+          onTouchEnd={onClickOnceItem}
           style={[{ width: '100%' }]}
           decelerationRate="fast"
           snapToOffsets={snapToOffsets}
@@ -297,9 +348,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   return (
     <View style={[styles.wrapper, normalStyle]}>
-      {renderScollView()}
-      {renderMask()}
-      {renderIndicator()}
+        {renderScollView()}
+        {renderMask()}
+        {renderIndicator()}
     </View>
   )
 })

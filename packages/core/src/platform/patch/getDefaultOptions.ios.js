@@ -1,30 +1,33 @@
-import { useEffect, useSyncExternalStore, useRef, useMemo, useCallback, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
-import { reactive, set, del } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling } from '@mpxjs/utils'
+import { del, reactive, set } from '../../observer/reactive'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import { IntersectionObserverContext, RouteContext, KeyboardAvoidContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import KeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/KeyboardAvoidingView'
-import usePageLayoutEffect from '@mpxjs/webpack-plugin/lib/runtime/usePageLayoutEffectReact'
+import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view'
+import {
+  IntersectionObserverContext,
+  KeyboardAvoidContext,
+  RouteContext
+} from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
+import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
 
 const ProviderContext = createContext(null)
-
 function getSystemInfo () {
-  const window = ReactNative.Dimensions.get('window')
-  const screen = ReactNative.Dimensions.get('screen')
+  const windowDimensions = ReactNative.Dimensions.get('window')
+  const screenDimensions = ReactNative.Dimensions.get('screen')
   return {
-    deviceOrientation: window.width > window.height ? 'landscape' : 'portrait',
+    deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
     size: {
-      screenWidth: screen.width,
-      screenHeight: screen.height,
-      windowWidth: window.width,
-      windowHeight: window.height
+      screenWidth: screenDimensions.width,
+      screenHeight: screenDimensions.height,
+      windowWidth: windowDimensions.width,
+      windowHeight: windowDimensions.height
     }
   }
 }
@@ -47,7 +50,9 @@ function createEffect (proxy, components) {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
-    return components[tagName] || appComponents[tagName] || getByPath(ReactNative, tagName)
+    const generichash = proxy.target.generichash || ''
+    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -118,7 +123,6 @@ const instanceProto = {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
   },
   __resetInstance () {
-    this.__refs = {}
     this.__dispatchedSlotSet = new WeakSet()
   },
   __iter (val, fn) {
@@ -288,10 +292,26 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    // App onLaunch 在 Page created 之前执行
+    if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
+      global.__mpxAppOnLaunch(props.navigation)
+    }
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
+
+  if (type === 'page') {
+    const loadParams = {}
+    const props = propsRef.current
+    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+    if (isObject(props.route.params)) {
+      for (const key in props.route.params) {
+        loadParams[key] = encodeURIComponent(props.route.params[key])
+      }
+    }
+    proxy.callHook(ONLOAD, [loadParams])
+  }
 
   Object.assign(proxy, {
     onStoreChange: null,
@@ -386,7 +406,9 @@ const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
-  set(pageStatusMap, pageId, '')
+  if (!hasOwn(pageStatusMap, pageId)) {
+    set(pageStatusMap, pageId, '')
+  }
   useEffect(() => {
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
@@ -440,14 +462,141 @@ const checkRelation = (options) => {
   }
 }
 
-const provideRelation = (instance, relation) => {
-  const componentPath = instance.__componentPath
-  if (relation) {
-    return Object.assign({}, relation, { [componentPath]: instance })
-  } else {
-    return {
-      [componentPath]: instance
+// 临时用来存储安卓底部（iOS没有这个）的高度（虚拟按键等高度）根据第一次进入推算
+let bottomVirtualHeight = null
+export function PageWrapperHOC (WrappedComponent) {
+  return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
+    const rootRef = useRef(null)
+    const keyboardAvoidRef = useRef(null)
+    const intersectionObservers = useRef({})
+    const currentPageId = useMemo(() => ++pageId, [])
+    const routeContextValRef = useRef({
+      navigation,
+      pageId: currentPageId
+    })
+    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
+    if (!navigation || !route) {
+      // 独立组件使用时要求传递navigation
+      error('Using pageWrapper requires passing navigation and route')
+      return null
     }
+    usePagePreload(route)
+    usePageStatus(navigation, currentPageId)
+    useLayoutEffect(() => {
+      navigation.setOptions({
+        title: pageConfig.navigationBarTitleText?.trim() || '',
+        headerStyle: {
+          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+        },
+        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+      })
+
+      // TODO 此部分内容在native-stack可删除，用setOptions设置
+      if (__mpx_mode__ !== 'ios') {
+        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+        ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
+        ReactNative.StatusBar.setBackgroundColor('transparent')
+      }
+    }, [])
+
+    const headerHeight = useHeaderHeight()
+    const onLayout = () => {
+      const screenDimensions = ReactNative.Dimensions.get('screen')
+      if (__mpx_mode__ === 'ios') {
+        navigation.layout = {
+          x: 0,
+          y: headerHeight,
+          width: screenDimensions.width,
+          height: screenDimensions.height - headerHeight
+        }
+      } else {
+        if (bottomVirtualHeight === null) {
+          rootRef.current?.measureInWindow((x, y, width, height) => {
+            // 沉浸模式的计算方式
+            bottomVirtualHeight = screenDimensions.height - height - headerHeight
+            // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
+            // bottomVirtualHeight = windowDimensions.height - height - headerHeight
+            navigation.layout = {
+              x: 0,
+              y: headerHeight,
+              width: screenDimensions.width,
+              height: height
+            }
+          })
+        } else {
+          navigation.layout = {
+            x: 0,
+            y: headerHeight, // 这个y值
+            width: screenDimensions.width,
+            // 后续页面的layout是通过第一次路由进入时候推算出来的底部区域来推算出来的
+            height: screenDimensions.height - bottomVirtualHeight - headerHeight
+          }
+        }
+      }
+    }
+    const withKeyboardAvoidingView = (element) => {
+      return createElement(KeyboardAvoidContext.Provider,
+        {
+          value: keyboardAvoidRef
+        },
+        createElement(MpxKeyboardAvoidingView,
+          {
+            style: {
+              flex: 1
+            },
+            contentContainerStyle: {
+              flex: 1
+            }
+          },
+          element
+        )
+      )
+    }
+
+    navigation.insets = useSafeAreaInsets()
+
+    return createElement(GestureHandlerRootView,
+      {
+        // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
+        style: __mpx_mode__ === 'ios' && currentPageConfig?.navigationStyle !== 'custom'
+          ? {
+            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+          }
+          : {
+            flex: 1
+          }
+      },
+      withKeyboardAvoidingView(
+        createElement(ReactNative.View,
+          {
+            style: {
+              flex: 1,
+              backgroundColor: currentPageConfig?.backgroundColor || '#fff'
+            },
+            ref: rootRef,
+            onLayout
+          },
+          createElement(RouteContext.Provider,
+            {
+              value: routeContextValRef.current
+            },
+            createElement(IntersectionObserverContext.Provider,
+              {
+                value: intersectionObservers.current
+              },
+              createElement(PortalHost,
+                null,
+                createElement(WrappedComponent, {
+                  ...props,
+                  navigation,
+                  route,
+                  id: currentPageId
+                })
+              )
+            )
+          )
+        )
+      ))
   }
 }
 
@@ -519,19 +668,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     usePageEffect(proxy, pageId)
     useEffect(() => {
-      if (type === 'page') {
-        if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
-          global.__mpxAppOnLaunch(props.navigation)
-        }
-        const loadParams = {}
-        // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-        if (isObject(props.route.params)) {
-          for (const key in props.route.params) {
-            loadParams[key] = encodeURIComponent(props.route.params[key])
-          }
-        }
-        proxy.callHook(ONLOAD, [loadParams])
-      }
       proxy.mounted()
       return () => {
         proxy.unmounted()
@@ -569,14 +705,28 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       root = createElement(ProviderContext.Provider, { value: provides }, root)
     }
 
-    return hasDescendantRelation
-      ? createElement(RelationsContext.Provider,
-          {
-            value: provideRelation(instance, relation)
-          },
-          root
-        )
-      : root
+    if (hasDescendantRelation) {
+      const relationProvide = useMemo(() => {
+        const componentPath = instance.__componentPath
+        if (relation) {
+          return Object.assign({}, relation, { [componentPath]: instance })
+        } else {
+          return {
+            [componentPath]: instance
+          }
+        }
+      }, [relation])
+
+      return createElement(
+        RelationsContext.Provider,
+        {
+          value: relationProvide
+        },
+        root
+      )
+    } else {
+      return root
+    }
   }))
 
   if (rawOptions.options?.isCustomText) {
@@ -584,94 +734,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    const { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } = global.__navigationHelper
-    const pageConfig = Object.assign({}, global.__mpxPageConfig, currentInject.pageConfig)
-    const Page = ({ navigation, route }) => {
-      const currentPageId = useMemo(() => ++pageId, [])
-      const intersectionObservers = useRef({})
-      usePagePreload(route)
-      usePageStatus(navigation, currentPageId)
-      usePageLayoutEffect(navigation, pageConfig)
-
-      const rootRef = useRef(null)
-      const keyboardAvoidRef = useRef({ cursorSpacing: 0, ref: null })
-      const onLayout = useCallback(() => {
-        rootRef.current?.measureInWindow((x, y, width, height) => {
-          navigation.layout = { x, y, width, height }
-        })
-      }, [])
-
-      const withKeyboardAvoidingView = (element) => {
-        return createElement(KeyboardAvoidContext.Provider,
-          {
-            value: keyboardAvoidRef
-          },
-          createElement(KeyboardAvoidingView,
-            {
-              style: {
-                flex: 1
-              },
-              contentContainerStyle: {
-                flex: 1
-              }
-            },
-            element
-          )
-        )
-      }
-
-      navigation.insets = useSafeAreaInsets()
-
-      return createElement(GestureHandlerRootView,
-        {
-          // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-          style: __mpx_mode__ === 'ios' && pageConfig.navigationStyle !== 'custom'
-          ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          }
-          : {
-            flex: 1
-          }
-        },
-        withKeyboardAvoidingView(
-          createElement(ReactNative.View,
-            {
-              style: {
-                flex: 1,
-                backgroundColor: pageConfig.backgroundColor || '#ffffff'
-              },
-              ref: rootRef,
-              onLayout
-            },
-            createElement(RouteContext.Provider,
-              {
-                value: {
-                  pageId: currentPageId,
-                  navigation
-                }
-              },
-              createElement(IntersectionObserverContext.Provider,
-                {
-                  value: intersectionObservers.current
-                },
-                createElement(PortalHost,
-                  null,
-                  createElement(defaultOptions,
-                    {
-                      navigation,
-                      route,
-                      id: currentPageId
-                    }
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-      // todo custom portal host for active route
-    }
-    return Page
+    return (props) =>
+      createElement(PageWrapperHOC(defaultOptions), {
+        pageConfig: currentInject.pageConfig,
+        ...props
+      })
   }
   return defaultOptions
 }

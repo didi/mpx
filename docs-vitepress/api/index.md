@@ -1,3 +1,7 @@
+---
+title: API 参考
+---
+
 <script>
 import ApiIndex from './ApiIndex.vue';
 
