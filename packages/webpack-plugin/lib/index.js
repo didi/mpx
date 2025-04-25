@@ -1202,7 +1202,7 @@ class MpxWebpackPlugin {
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+          if (isWeb(mpx.mode)) {
             // web独立处理splitChunk
             if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
@@ -1395,7 +1395,7 @@ class MpxWebpackPlugin {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   const depBlock = new AsyncDependenciesBlock(
                     {
-                      name: tarRoot
+                      name: isWeb(mpx.mode) ? tarRoot : tarRoot + '/index'
                     },
                     expr.loc,
                     request

@@ -13,6 +13,7 @@ module.exports = function (script, {
   builtInComponentsMap,
   localComponentsMap,
   localPagesMap,
+  preloadRule,
   rnConfig
 }, callback) {
   let scriptSrcMode = srcMode
@@ -55,7 +56,7 @@ global.__navigationHelper = {
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, preloadRule })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {

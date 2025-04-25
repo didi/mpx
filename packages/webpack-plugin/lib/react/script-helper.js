@@ -13,8 +13,7 @@ function getMpxComponentRequest (component) {
   return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
-const mpxAsyncPage = getMpxComponentRequest('AsyncPage')
-const mpxAsyncComponent = getMpxComponentRequest('AsyncComponent')
+const mpxAsyncContainer = getMpxComponentRequest('AsyncContainer')
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
@@ -23,18 +22,25 @@ function getAsyncChunkName (chunkName) {
   return ''
 }
 
-function getAsyncComponent (componentName, componentRequest, chunkName, fallbackComponentRequest) {
+function getAsyncComponent (componentName, componentRequest, chunkName, fallback) {
   // todo 注入 pageConfig
   return `getComponent(memo(forwardRef(function(props, ref) {
+    const _props = Object.assign({}, props, { ref })
     return createElement(
-      getComponent(require(${mpxAsyncComponent})),
+      getComponent(require(${mpxAsyncContainer})),
       {
-        _props: Object.assign({}, props, {ref}),
-        fallback: getComponent(require(${fallbackComponentRequest})),
-        asyncComponent: getComponent(
-          lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
+        type: 'component',
+        fallback: createElement(
+          getComponent(require(${fallback})),
+          _props
         )
-      }
+      },
+      createElement(
+        getComponent(
+          lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
+        ),
+        _props
+      )
     )
   })))`
 }
@@ -44,15 +50,18 @@ function getAsyncPage (componentName, componentRequest, chunkName, fallback, loa
   loading = loading && `getComponent(require('${loading}?isComponent=true'))`
   return `getComponent(function(props) {
     return createElement(
-      getComponent(require(${mpxAsyncPage})),
+      getComponent(require(${mpxAsyncContainer})),
       {
-        _props: props,
+        type: 'page',
         fallback: ${fallback},
-        loading: ${loading},
-        asyncPage: getComponent(
+        loading: ${loading}
+      },
+      createElement(
+        getComponent(
           lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
         ),
-      }
+        props
+      )
     )
   })`
 }
@@ -150,7 +159,8 @@ function buildGlobalParams ({
   componentsMap,
   pagesMap,
   firstPage,
-  outputPath
+  outputPath,
+  preloadRule
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -166,6 +176,7 @@ global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__getAppComponents = function () {
   return ${shallowStringify(componentsMap)}
 }
+global.__preloadRule = ${JSON.stringify(preloadRule)}
 global.currentInject.getPages = function () {
   return ${shallowStringify(pagesMap)}
 }

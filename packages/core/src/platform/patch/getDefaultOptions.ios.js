@@ -403,6 +403,22 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+function usePagePreload (route) {
+  const name = route.name
+  useEffect(() => {
+    setTimeout(() => {
+      const preloadRule = global.__preloadRule
+      const { packages } = preloadRule[name] || {}
+      if (packages?.length > 0) {
+        const download = global.__mpx.config?.rnConfig?.download
+        if (typeof download !== 'function') {
+          callWithErrorHandling(() => download(packages))
+        }
+      }
+    }, 2000)
+  }, [])
+}
+
 const RelationsContext = createContext(null)
 
 const checkRelation = (options) => {
@@ -573,6 +589,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const Page = ({ navigation, route }) => {
       const currentPageId = useMemo(() => ++pageId, [])
       const intersectionObservers = useRef({})
+      usePagePreload(route)
       usePageStatus(navigation, currentPageId)
       usePageLayoutEffect(navigation, pageConfig)
 

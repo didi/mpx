@@ -6,10 +6,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
   constructor (options = {}) {
     super('load async chunk')
     /**
-     * loadAsyncChunk
      * timeout
-     * publicPath -> 看具体方案(以及是否要拆出来，避免和web的复用)
-     * hash 场景（版本控制） -> webpack 来做还是 metro 来做 -> 本质还是做版本控制，看具体的方案
      * fallbackPage -> 传个组件路径？内置组件
      * loadedEvent 后续需要和 native 对接，事件对象的确认 (状态枚举：loaded/missing/failed/timeout)，
      */
@@ -71,6 +68,8 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           `var timeoutCallback = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
           "var successCallback = callback.bind(null, 'load');",
           "var failedCallback = callback.bind(null, 'fail')", // import 没法加载远程 js 代码，本地调试只能静态路径；
+          // "var loadAsyncChunkFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadAsyncChunk",
+          // "global.__mpx.config.rnConfig.loadAsyncChunk()",
           `var loadAsyncChunkFn = ${this.loadAsyncTemplate.trim()}`,
           'loadAsyncChunkFn(config).then(successCallback).catch(failedCallback)'
         ]
