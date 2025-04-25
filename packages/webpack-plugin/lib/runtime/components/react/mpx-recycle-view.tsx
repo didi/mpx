@@ -1,66 +1,100 @@
-import React, { forwardRef, useRef, useCallback, useState, useEffect, useMemo } from 'react'
-import { SectionList, FlatList, RefreshControl} from 'react-native'
+import React, { forwardRef, useRef, useCallback, useState, useEffect, useMemo, ForwardedRef, ReactElement } from 'react'
+import { SectionList, FlatList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
 import { extendObject, useLayout, useTransformStyle } from './utils'
 
-const getGenericComponent = ({ props, ref, generichash, generickey }) => {
+interface GenericComponentProps {
+  props: Record<string, any>;
+  ref: ForwardedRef<any>;
+  generichash: string;
+  generickey: string;
+}
+
+interface ItemProps {
+  generichash: string;
+  genericrecycleItem: string;
+  itemData: any;
+}
+
+interface SectionHeaderProps {
+  generichash: string;
+  genericsectionHeader: string;
+  itemData: any;
+}
+
+interface ListItem {
+  isSectionHeader?: boolean;
+  _originalItemIndex?: number;
+  [key: string]: any;
+}
+
+interface Section {
+  headerData: ListItem | null;
+  data: ListItem[];
+  hasSectionHeader?: boolean;
+  _originalItemIndex?: number;
+}
+
+interface ItemHeightType {
+  value?: number;
+  getter?: (item: any, index: number) => number;
+}
+
+interface RecycleViewProps {
+  enhanced?: boolean;
+  bounces?: boolean;
+  scrollEventThrottle?: number;
+  height?: number | string;
+  width?: number | string;
+  listData?: ListItem[];
+  type?: 'normal' | 'section';
+  generichash?: string;
+  style?: Record<string, any>;
+  itemHeight?: ItemHeightType;
+  sectionHeaderHeight?: ItemHeightType;
+  'genericrecycle-item'?: string;
+  'genericsection-header'?: string;
+  'enable-var'?: boolean;
+  'external-var-context'?: any;
+  'parent-font-size'?: number;
+  'parent-width'?: number;
+  'parent-height'?: number;
+  'enable-sticky'?: boolean;
+  'enable-back-to-top'?: boolean;
+  'lower-threshold'?: number;
+  'refresher-enabled'?: boolean;
+  'show-scrollbar'?: boolean;
+  'refresher-triggered'?: boolean;
+  bindrefresherrefresh?: (event: any) => void;
+  bindscrolltolower?: (event: any) => void;
+  bindscroll?: (event: any) => void;
+  [key: string]: any;
+}
+
+interface ScrollPositionParams {
+  index: number;
+  animated?: boolean;
+  viewOffset?: number;
+  viewPosition?: number;
+}
+
+const getGenericComponent = ({ props, ref, generichash, generickey }: GenericComponentProps): ReactElement => {
   const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
   return <GenericComponent ref={ref} {...props}/>
 }
 
-const Item = forwardRef((props, ref) => {
+const Item = forwardRef<any, ItemProps>((props, ref) => {
   const { generichash, genericrecycleItem } = props
   return getGenericComponent({ props, ref, generichash, generickey: genericrecycleItem })
 })
 
-const SectionHeader = forwardRef((props, ref) => {
+const SectionHeader = forwardRef<any, SectionHeaderProps>((props, ref) => {
   const { generichash, genericsectionHeader } = props
   return getGenericComponent({ props, ref, generichash, generickey: genericsectionHeader })
 })
 
-
-const convertToSectionListData = (data) => {
-  const sections = []
-  let currentSection = null
-
-  data.forEach((item, index) => {
-    if (item.isSectionHeader) {
-      // 如果已经存在一个 section，先把它添加到 sections 中
-      if (currentSection) {
-        sections.push(currentSection)
-      }
-      // 创建新的 section
-      currentSection = {
-        headerData: item,
-        data: [],
-        _originalHeaderIndex: index 
-      }
-    } else {
-      // 如果没有当前 section，创建一个默认的
-      if (!currentSection) {
-        currentSection = {
-          headerData: null,
-          data: [],
-          _originalHeaderIndex: -1
-        }
-      }
-      // 将 item 添加到当前 section 的 data 中
-      currentSection.data.push({
-        ...item,
-        _originalItemIndex: index
-      })
-    }
-  })
-
-  // 添加最后一个 section
-  if (currentSection) {
-    sections.push(currentSection)
-  }
-
-  return sections
-}
-const RecycleView = forwardRef((props = {}, ref) => {
+const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   const {
     enhanced = false,
     bounces = true,
@@ -72,9 +106,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
     generichash,
     style = {},
     itemHeight = {},
-    headerHeight={},
     sectionHeaderHeight = {},
-    listHeaderHeight = {},
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
     'enable-var': enableVar,
@@ -92,14 +124,12 @@ const RecycleView = forwardRef((props = {}, ref) => {
 
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
 
-  const convertedListData = useMemo(() => {
-    if (type === 'section') {
-      return convertToSectionListData(listData) || []
-    } else {
-      return listData || []
-    }
-  }, [listData])
-  const scrollViewRef = useRef(null)
+  const scrollViewRef = useRef<any>(null)
+
+  const indexMap = useRef<{ [key: string]: string | number }>({})
+
+  const reverseIndexMap = useRef<{ [key: string]: number }>({})
+
   const {
     hasSelfPercent,
     setWidth,
@@ -108,20 +138,13 @@ const RecycleView = forwardRef((props = {}, ref) => {
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
-  useNodesRef(props, ref, scrollViewRef, {
-    style,
-    node: {
-      scrollToIndex
-    }
-  })
-
   useEffect(() => {
     if (refreshing !== refresherTriggered) {
       setRefreshing(!!refresherTriggered)
     }
   }, [refresherTriggered])
 
-  function onRefresh () {
+  const onRefresh = () => {
     const { bindrefresherrefresh } = props
     bindrefresherrefresh &&
       bindrefresherrefresh(
@@ -129,7 +152,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
       )
   }
 
-  function onEndReached () {
+  const onEndReached = () => {
     const { bindscrolltolower } = props
     bindscrolltolower &&
       bindscrolltolower(
@@ -137,7 +160,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
       )
   }
 
-  function onScroll (event) {
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { bindscroll } = props
     bindscroll &&
       bindscroll(
@@ -145,79 +168,188 @@ const RecycleView = forwardRef((props = {}, ref) => {
       )
   }
 
-  function getHeight ({ sectionIndex, rowIndex }) {
+  // 通过sectionIndex和rowIndex获取原始索引
+  const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header'): number => {
+    const key = `${sectionIndex}_${rowIndex}`
+    return reverseIndexMap.current[key] ?? -1 // 如果找不到，返回-1
+  }
+
+  const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
+    if (scrollViewRef.current) {
+      if (type === 'section') {
+        // 通过索引映射表快速定位位置
+        const position = indexMap.current[index]
+        const [sectionIndex, itemIndex] = (position as string).split('_')
+        scrollViewRef.current.scrollToLocation?.({
+          itemIndex: Number(itemIndex) || 0,
+          sectionIndex: Number(sectionIndex) || 0,
+          animated,
+          viewOffset,
+          viewPosition
+        })
+      } else {
+        scrollViewRef.current.scrollToIndex?.({ index, animated, viewOffset, viewPosition })
+      }
+    }
+  }
+
+  const getItemHeight = ({ sectionIndex, rowIndex }: { sectionIndex: number, rowIndex: number }) => {
     if (!itemHeight) {
       return 0
     }
-    if (itemHeight.getter) {
+    if ((itemHeight as ItemHeightType).getter) {
       if (type === 'section') {
         const item = convertedListData[sectionIndex].data[rowIndex]
-        return itemHeight.getter(item, item._originalItemIndex) || 0
+        // 使用getOriginalIndex获取原始索引
+        const originalIndex = getOriginalIndex(sectionIndex, rowIndex)
+        return (itemHeight as ItemHeightType).getter?.(item, originalIndex) || 0
       } else {
         const item = convertedListData[rowIndex]
-        return itemHeight.getter(item, rowIndex) || 0
+        return (itemHeight as ItemHeightType).getter?.(item, rowIndex) || 0
       }
-    
     } else {
-      return itemHeight.value || 0
+      return (itemHeight as ItemHeightType).value || 0
     }
   }
 
-  function getHeaderHeight ({ sectionIndex }) {
+  const getSectionHeaderHeight = ({ sectionIndex }: { sectionIndex: number }) => {
     const item = convertedListData[sectionIndex]
-    const { headerData, _originalHeaderIndex } = item
-    if (!headerData || _originalHeaderIndex === -1) return 0
-    if (headerHeight.getter) {
-      return headerHeight.getter(item, _originalHeaderIndex) || 0
+    const { headerData, hasSectionHeader } = item
+    // 使用getOriginalIndex获取原始索引
+    const originalIndex = getOriginalIndex(sectionIndex, 'header')
+    if (!headerData || !hasSectionHeader) return 0
+    if ((sectionHeaderHeight as ItemHeightType).getter) {
+      return (sectionHeaderHeight as ItemHeightType).getter?.(item, originalIndex) || 0
     } else {
-      return headerHeight.value || 0
+      return (sectionHeaderHeight as ItemHeightType).value || 0
     }
   }
 
-  const renderItem = useCallback(({ item }) => (
-    <Item currentItem={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>
+  const renderItem = useCallback(({ item }: { item: any }) => (
+    <Item itemData={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>
   ), [])
 
-  const renderSectionHeader = useCallback((data) => (
-    !data.section.headerData || data.section._originalHeaderIndex === -1 ? null : <SectionHeader dataInfo={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
-  ), [])
+  const renderSectionHeader = useCallback((data: { section: Section }) => (
+    !data.section.headerData || !data.section.hasSectionHeader ? null : <SectionHeader itemData={data.section.headerData} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
+  ), [generichash, genericsectionHeader])
+
+  const convertToSectionListData = useCallback((data: ListItem[]): Section[] => {
+    const sections: Section[] = []
+    let currentSection: Section | null = null
+    // 清空之前的索引映射
+    indexMap.current = {}
+    // 清空反向索引映射
+    reverseIndexMap.current = {}
+    // 标记是否已创建了默认section (无header的section)
+    let hasDefaultSection = false
+
+    data.forEach((item: ListItem, index: number) => {
+      if (item.isSectionHeader) {
+      // 如果已经存在一个 section，先把它添加到 sections 中
+        if (currentSection) {
+          sections.push(currentSection)
+        }
+        // 创建新的 section
+        currentSection = {
+          headerData: item,
+          data: [],
+          hasSectionHeader: true,
+          _originalItemIndex: index
+        }
+        // 为 section header 添加索引映射
+        const sectionIndex = sections.length
+        indexMap.current[index] = `${sectionIndex}_header`
+        // 添加反向索引映射
+        reverseIndexMap.current[`${sectionIndex}_header`] = index
+      } else {
+      // 如果没有当前 section，创建一个默认的
+        if (!currentSection) {
+          // 创建默认section (无header的section)
+          currentSection = {
+            headerData: null,
+            data: [],
+            hasSectionHeader: false,
+            _originalItemIndex: -1
+          }
+          // 标记已创建默认section
+          hasDefaultSection = true
+        }
+        // 将 item 添加到当前 section 的 data 中
+        const itemIndex = currentSection.data.length
+        currentSection.data.push({
+          ...item,
+          _originalItemIndex: index
+        })
+        let sectionIndex
+        // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
+        if (!currentSection.hasSectionHeader && sections.length === 0) {
+          // 在默认section中(第一个且无header)
+          sectionIndex = 0
+          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
+        } else {
+          // 在普通section中
+          sectionIndex = sections.length
+          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
+        }
+        // 添加反向索引映射
+        reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
+      }
+    })
+
+    // 添加最后一个 section
+    if (currentSection) {
+      sections.push(currentSection)
+    }
+
+    return sections
+  }, [])
+
+  const convertedListData = useMemo(() => {
+    if (type === 'section') {
+      return convertToSectionListData(listData || []) || []
+    } else {
+      return listData
+    }
+  }, [listData])
 
   const itemLayouts = useMemo(() => {
-    const layouts = []
+    const layouts: Array<{ length: number, offset: number, index: number }> = []
     let offset = 0
 
-    if (type === 'section') { 
+    if (type === 'section') {
       // 遍历所有 sections
-    convertedListData.forEach((section, sectionIndex) => {
+      convertedListData.forEach((section: Section, sectionIndex: number) => {
       // 添加 section header 的位置信息
-      const headerHeight = getHeaderHeight({ sectionIndex })
-      layouts.push({
-        length: headerHeight,
-        offset,
-        index: layouts.length
-      })
-      offset += headerHeight
-
-      // 添加该 section 中所有 items 的位置信息
-      section.data.forEach((item, itemIndex) => {
-        const contenteight = getHeight({ sectionIndex, rowIndex: itemIndex })
+        const headerHeight = getSectionHeaderHeight({ sectionIndex })
         layouts.push({
-          length: contenteight,
+          length: headerHeight,
           offset,
           index: layouts.length
         })
-        offset += contenteight
-      })
+        offset += headerHeight
 
-      layouts.push({
-        length: 0,
-        offset,
-        index: layouts.length
+        // 添加该 section 中所有 items 的位置信息
+        section.data.forEach((item: ListItem, itemIndex: number) => {
+          const contenteight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
+          layouts.push({
+            length: contenteight,
+            offset,
+            index: layouts.length
+          })
+          offset += contenteight
+        })
+
+        // 添加该 section 尾部位置信息
+        // 因为即使 sectionList 没传 renderSectionFooter，getItemLayout 中的 index 的计算也会包含尾部节点
+        layouts.push({
+          length: 0,
+          offset,
+          index: layouts.length
+        })
       })
-    })
     } else {
-      convertedListData.forEach((item, index) => {
-        const itemHeightValue = getHeight({ sectionIndex: 0, rowIndex: index })
+      convertedListData.forEach((item: ListItem, index: number) => {
+        const itemHeightValue = getItemHeight({ sectionIndex: 0, rowIndex: index })
         layouts.push({
           length: itemHeightValue,
           offset,
@@ -229,31 +361,9 @@ const RecycleView = forwardRef((props = {}, ref) => {
     return layouts
   }, [convertedListData])
 
-  const getItemLayout = useCallback((data, index) => {
+  const getItemLayout = useCallback((data: any, index: number) => {
     return itemLayouts[index]
-  }, [])
-
-  function scrollToIndex ({ index, animated, viewOffset = 0, viewPosition = 0 }) {
-    if (scrollViewRef.current) {
-      if (type === 'section') {
-        const sectionIndex = convertedListData.findIndex(section => section._originalHeaderIndex === index)
-        if (sectionIndex !== -1) {
-          scrollViewRef.current.scrollToLocation?.({ itemIndex: 0, sectionIndex, animated, viewOffset, viewPosition })
-        } else {
-          for (let i = 0; i < convertedListData.length; i++) {
-            const section = convertedListData[i]
-            const itemIndex = section.data.findIndex(item => item._originalItemIndex === index)
-            if (itemIndex !== -1) {
-              scrollViewRef.current.scrollToLocation?.({ itemIndex, sectionIndex: i, animated, viewOffset, viewPosition })
-              break
-            }
-          }
-        }
-      } else {
-        scrollViewRef.current.scrollToIndex?.({ index, animated, viewOffset, viewPosition })
-      }
-    }
-  }
+  }, [itemLayouts])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -264,6 +374,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
       showsHorizontalScrollIndicator: showScrollbar,
       onEndReachedThreshold: lowerThreshold,
       ref: scrollViewRef,
+      bounces: false,
       stickySectionHeadersEnabled: enableSticky,
       onScroll: onScroll,
       onEndReached: onEndReached
@@ -282,6 +393,13 @@ const RecycleView = forwardRef((props = {}, ref) => {
     })
   }
 
+  useNodesRef(props, ref, scrollViewRef, {
+    style,
+    node: {
+      scrollToIndex
+    }
+  })
+
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
     'id',
     'show-scrollbar',
@@ -294,17 +412,17 @@ const RecycleView = forwardRef((props = {}, ref) => {
   return (
     type === 'section'
       ? <SectionList
-        {...innerProps}
+        {...innerProps as any}
         style={[{ height, width }, style, layoutStyle]}
         sections={convertedListData}
         keyExtractor={(item, index) => item + index}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
-        renderSectionHeader={generichash && genericsectionHeader && renderSectionHeader || null}
+        renderSectionHeader={(generichash && genericsectionHeader && renderSectionHeader) || null}
         refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
       />
       : <FlatList
-        {...innerProps}
+        {...innerProps as any}
         style={[{ height, width }, style, layoutStyle]}
         data={convertedListData}
         keyExtractor={(item, index) => item + index}
