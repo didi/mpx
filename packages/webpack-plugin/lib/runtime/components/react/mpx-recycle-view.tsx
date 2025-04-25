@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef, useCallback, useState, useEffect, useMemo } from 'react'
-import { SectionList, FlatList, RefreshControl } from 'react-native'
+import { SectionList, FlatList, RefreshControl} from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
 import { extendObject, useLayout, useTransformStyle } from './utils'
@@ -19,6 +19,47 @@ const SectionHeader = forwardRef((props, ref) => {
   return getGenericComponent({ props, ref, generichash, generickey: genericsectionHeader })
 })
 
+
+const convertToSectionListData = (data) => {
+  const sections = []
+  let currentSection = null
+
+  data.forEach((item, index) => {
+    if (item.isSectionHeader) {
+      // 如果已经存在一个 section，先把它添加到 sections 中
+      if (currentSection) {
+        sections.push(currentSection)
+      }
+      // 创建新的 section
+      currentSection = {
+        headerData: item,
+        data: [],
+        _originalHeaderIndex: index 
+      }
+    } else {
+      // 如果没有当前 section，创建一个默认的
+      if (!currentSection) {
+        currentSection = {
+          headerData: null,
+          data: [],
+          _originalHeaderIndex: -1
+        }
+      }
+      // 将 item 添加到当前 section 的 data 中
+      currentSection.data.push({
+        ...item,
+        _originalItemIndex: index
+      })
+    }
+  })
+
+  // 添加最后一个 section
+  if (currentSection) {
+    sections.push(currentSection)
+  }
+
+  return sections
+}
 const RecycleView = forwardRef((props = {}, ref) => {
   const {
     enhanced = false,
@@ -51,6 +92,11 @@ const RecycleView = forwardRef((props = {}, ref) => {
 
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
 
+  const sectionListData = useMemo(() => {
+    if (type === 'section') {
+      return convertToSectionListData(listData) || []
+    }
+  }, [listData])
   const scrollViewRef = useRef(null)
   const {
     hasSelfPercent,
@@ -104,19 +150,19 @@ const RecycleView = forwardRef((props = {}, ref) => {
       return 0
     }
     if (key.getter) {
-      const item = listData[sectionIndex].data[rowIndex]
-      return key.getter(item, item.originalIndex) || 0
+      const item = sectionListData[sectionIndex].data[rowIndex]
+      return key.getter(item, item._originalItemIndex) || 0
     } else {
       return key.value || 0
     }
   }
 
   function getHeaderHeight ({ sectionIndex }) {
-    const item = listData[sectionIndex]
-    const { originalIndex = -1 } = item
-    if (originalIndex === -1) return 0
+    const item = sectionListData[sectionIndex]
+    const { headerData, _originalHeaderIndex } = item
+    if (!headerData || _originalHeaderIndex === -1) return 0
     if (headerHeight.getter) {
-      return headerHeight.getter(item, originalIndex) || 0
+      return headerHeight.getter(item, _originalHeaderIndex) || 0
     } else {
       return headerHeight.value || 0
     }
@@ -127,7 +173,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
   ), [])
 
   const renderSectionHeader = useCallback((data) => (
-    data.section.originalIndex !== -1 ? <SectionHeader dataInfo={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/> : null
+    !data.section.headerData || data.section._originalHeaderIndex === -1 ? null : <SectionHeader dataInfo={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
   ), [])
 
   const itemLayouts = useMemo(() => {
@@ -135,7 +181,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
     let offset = 0
 
     // 遍历所有 sections
-    listData.forEach((section, sectionIndex) => {
+    sectionListData.forEach((section, sectionIndex) => {
       // 添加 section header 的位置信息
       const headerHeight = getHeaderHeight({ sectionIndex })
       layouts.push({
@@ -164,7 +210,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
     })
 
     return layouts
-  }, [listData])
+  }, [sectionListData])
 
   const getSectionItemLayout = useCallback((data, index) => {
     return itemLayouts[index]
@@ -242,7 +288,7 @@ const RecycleView = forwardRef((props = {}, ref) => {
       ? <SectionList
         {...innerProps}
         style={[{ height, width }, style, layoutStyle]}
-        sections={listData}
+        sections={sectionListData}
         keyExtractor={(item, index) => item + index}
         renderItem={renderItem}
         getItemLayout={getSectionItemLayout}
