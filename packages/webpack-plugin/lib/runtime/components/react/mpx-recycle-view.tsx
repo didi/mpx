@@ -111,8 +111,6 @@ const RecycleView = forwardRef((props = {}, ref) => {
   useNodesRef(props, ref, scrollViewRef, {
     style,
     node: {
-      scrollToLocation,
-      scrollToOffset,
       scrollToIndex
     }
   })
@@ -235,29 +233,28 @@ const RecycleView = forwardRef((props = {}, ref) => {
     return itemLayouts[index]
   }, [])
 
-  function scrollToLocation ({
-    itemIndex,
-    sectionIndex,
-    animated,
-    viewOffset = 0,
-    viewPosition = 0
-  }) {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToLocation?.({ itemIndex, sectionIndex, animated, viewOffset, viewPosition })
-    }
-  }
-
-  function scrollToOffset ({ offset, animated }) {
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToOffset({ offset, animated })
-    }
-  }
-
   function scrollToIndex ({ index, animated, viewOffset = 0, viewPosition = 0 }) {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToIndex?.({ index, animated, viewOffset, viewPosition })
+      if (type === 'section') {
+        const sectionIndex = convertedListData.findIndex(section => section._originalHeaderIndex === index)
+        if (sectionIndex !== -1) {
+          scrollViewRef.current.scrollToLocation?.({ itemIndex: 0, sectionIndex, animated, viewOffset, viewPosition })
+        } else {
+          for (let i = 0; i < convertedListData.length; i++) {
+            const section = convertedListData[i]
+            const itemIndex = section.data.findIndex(item => item._originalItemIndex === index)
+            if (itemIndex !== -1) {
+              scrollViewRef.current.scrollToLocation?.({ itemIndex, sectionIndex: i, animated, viewOffset, viewPosition })
+              break
+            }
+          }
+        }
+      } else {
+        scrollViewRef.current.scrollToIndex?.({ index, animated, viewOffset, viewPosition })
+      }
     }
   }
+
   const scrollAdditionalProps = extendObject(
     {
       alwaysBounceVertical: false,
