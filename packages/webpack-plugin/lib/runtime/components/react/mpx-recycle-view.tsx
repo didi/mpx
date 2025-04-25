@@ -1,9 +1,8 @@
-import React, { forwardRef, useRef, useCallback, useState, useEffect } from 'react'
-import { SectionList, FlatList, RefreshControl, Text, View} from 'react-native'
+import React, { forwardRef, useRef, useCallback, useState, useEffect, useMemo } from 'react'
+import { SectionList, FlatList, RefreshControl } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
 import { extendObject, useLayout, useTransformStyle } from './utils'
-import sectionListGetItemLayout from './getLayout'
 
 const getGenericComponent = ({ props, ref, generichash, generickey }) => {
   const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
@@ -70,11 +69,6 @@ const RecycleView = forwardRef((props = {}, ref) => {
     }
   })
 
-  // setTimeout(() => {
-  //   scrollToLocation({
-  //     itemIndex: 1, sectionIndex: 3
-  //   })
-  // }, 3000)
   useEffect(() => {
     if (refreshing !== refresherTriggered) {
       setRefreshing(!!refresherTriggered)
@@ -136,22 +130,45 @@ const RecycleView = forwardRef((props = {}, ref) => {
     data.section.originalIndex !== -1 ? <SectionHeader dataInfo={data.section} generichash={generichash} genericsectionHeader={genericsectionHeader}/> : null
   ), [])
 
-  // function getSectionItemLayout (data, index) {
-  //   // console.log(data, index)
-  //   // // todo 需要计算 sectionHeader、sectionFooter、listHeader、itemHeight
-  //   // // https://github.com/jsoendermann/rn-section-list-get-item-layout/blob/master/index.ts
-  //   // return {
-  //   //   length: getHeight({ data, index, key: itemHeight }),
-  //   //   offset: getHeight({ data, index, key: itemHeight }) * index || 0,
-  //   //   index
-  //   // }
-  // }
+  const itemLayouts = useMemo(() => {
+    const layouts = []
+    let offset = 0
 
-  const getSectionItemLayout = sectionListGetItemLayout({
-    // The height of the row with rowData at the given sectionIndex and rowIndex
-    getItemHeight: (rowData, sectionIndex, rowIndex) => getHeight({sectionIndex, rowIndex, key: itemHeight  }),
-    getSectionHeaderHeight: (sectionIndex) => getHeaderHeight({ sectionIndex }),
-  })
+    // 遍历所有 sections
+    listData.forEach((section, sectionIndex) => {
+      // 添加 section header 的位置信息
+      const headerHeight = getHeaderHeight({ sectionIndex })
+      layouts.push({
+        length: headerHeight,
+        offset,
+        index: layouts.length
+      })
+      offset += headerHeight
+
+      // 添加该 section 中所有 items 的位置信息
+      section.data.forEach((item, itemIndex) => {
+        const contenteight = getHeight({ sectionIndex, rowIndex: itemIndex, key: itemHeight })
+        layouts.push({
+          length: contenteight,
+          offset,
+          index: layouts.length
+        })
+        offset += contenteight
+      })
+
+      layouts.push({
+        length: 0,
+        offset,
+        index: layouts.length
+      })
+    })
+
+    return layouts
+  }, [listData])
+
+  const getSectionItemLayout = useCallback((data, index) => {
+    return itemLayouts[index]
+  }, [])
 
   function getItemLayout (data, index) {
     return {
