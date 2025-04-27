@@ -14,19 +14,17 @@
     bindscroll="onScroll"
     bindrefresherrefresh="onRefresh"
   >
-    <!-- list header -->
-    <block wx:if="{{mpxGenericListHeader}}">
-      <list-header dataInfo="{{listData}}" />
-    </block>
-
-    <block wx:for="{{listData}}" wx:key="index">
+    <block wx:for="{{convertedListData}}" wx:key="index">
       <!-- section header -->
-      <block wx:if="{{mpxGenericSectionHeader}}">
+      <block wx:if="{{type === 'section'}}">
         <sticky-section>
-          <sticky-header wx:if="{{enableSticky}}">
-            <section-header dataInfo="{{item}}"></section-header>
+          <sticky-header wx:if="{{enableSticky && item.hasSectionHeader}}">
+            <section-header itemData="{{item.headerData}}"></section-header>
           </sticky-header>
-          <section-header wx:else dataInfo="{{item}}"></section-header>
+          <section-header
+            wx:if="{{!enableSticky && item.hasSectionHeader}}"
+            itemData="{{item}}"
+          ></section-header>
 
           <list-view>
             <block
@@ -36,21 +34,15 @@
               wx:key="subIndex"
             >
               <!-- section items -->
-              <recycle-item currentItem="{{subItem}}"></recycle-item>
-            </block>
-
-            <!-- section footer -->
-            <block wx:if="{{mpxGenericSectionFooter}}">
-              <section-footer dataInfo="{{item}}"></section-footer>
+              <recycle-item itemData="{{subItem}}"></recycle-item>
             </block>
           </list-view>
         </sticky-section>
       </block>
-    </block>
-
-    <!-- list footer -->
-    <block wx:if="{{mpxGenericListFooter}}">
-      <list-footer data="{{listData}}" />
+      <block wx:if="{{mpxGenericRecycleItem}}">
+        <!-- section items -->
+        <recycle-item itemData="{{item}}"></recycle-item>
+      </block>
     </block>
   </scroll-view>
 </template>
@@ -72,7 +64,7 @@
         type: Array,
         value: []
       },
-      'a:recycleItem': {
+      type: {
         type: String,
         value: ''
       },
@@ -107,9 +99,24 @@
         value: false
       }
     },
+    data: {
+      convertedListData: []
+    },
     computed: {
       scrollViewStyle() {
         return `height: ${this.height}px;width: ${this.width}px`
+      }
+    },
+    watch: {
+      listData: {
+        handler(newVal) {
+          if (this.type === 'section') {
+            this.convertedListData = this.convertToSectionListData(newVal)
+          } else {
+            this.convertedListData = newVal
+          }
+        },
+        immediate: true
       }
     },
     methods: {
@@ -119,13 +126,60 @@
       onRefresh(e) {
         this.triggerEvent('refresh', e.detail)
       },
-      scrollToOffset({ offset, animated}) {
-        this.$refs.recycleViewRef.node().exec(res => {
-           res[0].node.scrollTo({
+      scrollToOffset({ offset, animated }) {
+        this.$refs.recycleViewRef.node().exec((res) => {
+          res[0].node.scrollTo({
             top: offset,
             animated
-           })
+          })
         })
+      },
+      convertToSectionListData(data) {
+        const sections = []
+        let currentSection = null
+        // 标记是否已创建了默认section (无header的section)
+        let hasDefaultSection = false
+
+        data.forEach((item, index) => {
+          if (item.isSectionHeader) {
+            // 如果已经存在一个 section，先把它添加到 sections 中
+            if (currentSection) {
+              sections.push(currentSection)
+            }
+            // 创建新的 section
+            currentSection = {
+              headerData: item,
+              data: [],
+              hasSectionHeader: true
+            }
+          } else {
+            // 如果没有当前 section，创建一个默认的
+            if (!currentSection) {
+              // 创建默认section (无header的section)
+              currentSection = {
+                headerData: null,
+                data: [],
+                hasSectionHeader: false,
+                _originalItemIndex: -1
+              }
+              // 标记已创建默认section
+              hasDefaultSection = true
+            }
+            // 将 item 添加到当前 section 的 data 中
+            const itemIndex = currentSection.data.length
+            currentSection.data.push({
+              ...item,
+              _originalItemIndex: index
+            })
+          }
+        })
+
+        // 添加最后一个 section
+        if (currentSection) {
+          sections.push(currentSection)
+        }
+
+        return sections
       }
     }
   })
@@ -138,17 +192,8 @@
       "recycle-item": {
         "default": "./mpx-recycle-item-default.mpx"
       },
-      "list-header": {
-        "default": "./mpx-list-header-default.mpx"
-      },
-      "list-footer": {
-        "default": "./mpx-list-footer-default.mpx"
-      },
       "section-header": {
         "default": "./mpx-section-header-default.mpx"
-      },
-      "section-footer": {
-        "default": "./mpx-section-footer-default.mpx"
       }
     }
   }
