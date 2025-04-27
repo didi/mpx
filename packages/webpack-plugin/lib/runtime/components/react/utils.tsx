@@ -533,7 +533,18 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
       if (enableOffset) {
         nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
           const { y: navigationY = 0 } = navigation?.layout || {}
-          layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft, offsetTop: offsetTop - navigationY }
+          layoutRef.current = {
+            x,
+            y: y - navigationY,
+            width,
+            height,
+            offsetLeft,
+            offsetTop: offsetTop - navigationY,
+            _x: x,
+            _y: y,
+            _offsetLeft: offsetLeft,
+            _offsetTop: offsetTop
+          }
         })
       }
       onLayout && onLayout(e)
