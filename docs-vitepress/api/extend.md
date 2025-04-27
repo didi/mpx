@@ -487,8 +487,8 @@ useFetch().fetch({
 | createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getExtConfig |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | getExtConfigSync |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| onKeyboardHeightChange |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| offKeyboardHeightChange |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| onKeyboardHeightChange |:white_check_mark:|:x:|:x:|:white_check_mark:|
+| offKeyboardHeightChange |:white_check_mark:|:x:|:x:|:white_check_mark:|
 | hideKeyboard |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 | getLocation |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | openLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
@@ -553,9 +553,9 @@ useFetch().fetch({
 | requestPayment |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | createCanvasContext |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | canvasToTempFilePath |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| canvasPutImageData |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| canvasGetImageData |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| canvasPutImageData |:white_check_mark:|:x:|:x:|:x:|
+| canvasGetImageData |:white_check_mark:|:x:|:x:|:x:|
+| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | onWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | offWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | arrayBufferToBase64 |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
