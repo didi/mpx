@@ -13,35 +13,35 @@
     refresher-triggered="{{refresherTriggered}}"
     bindscroll="onScroll"
     bindrefresherrefresh="onRefresh"
+    scroll-into-view="{{scrollIntoViewId}}"
+    scroll-into-view-alignment="{{viewPosition}}"
   >
     <block wx:for="{{convertedListData}}" wx:key="index">
-      <!-- section header -->
       <block wx:if="{{type === 'section'}}">
         <sticky-section>
-          <sticky-header wx:if="{{enableSticky && item.hasSectionHeader}}">
-            <section-header itemData="{{item.headerData}}"></section-header>
-          </sticky-header>
-          <section-header
-            wx:if="{{!enableSticky && item.hasSectionHeader}}"
-            itemData="{{item}}"
-          ></section-header>
+          <!-- section header -->
+          <block wx:if="{{item.hasSectionHeader && mpxGenericSectionHeader}}">
+            <sticky-header wx:if="{{enableSticky}}">
+              <section-header itemData="{{item.headerData}}" id="{{item._domId}}"></section-header>
+            </sticky-header>
+            <section-header wx:else id="{{item._domId}}" itemData="{{item}}"></section-header>
+          </block>
 
-          <list-view>
+          <list-view wx:if="{{mpxGenericRecycleItem}}">
             <block
-              wx:if="{{mpxGenericRecycleItem}}"
               wx:for="{{item.data}}"
               wx:for-item="subItem"
               wx:key="subIndex"
             >
               <!-- section items -->
-              <recycle-item itemData="{{subItem}}"></recycle-item>
+              <recycle-item itemData="{{subItem.itemData}}" id="{{subItem._domId}}"></recycle-item>
             </block>
           </list-view>
         </sticky-section>
       </block>
-      <block wx:if="{{mpxGenericRecycleItem}}">
-        <!-- section items -->
-        <recycle-item itemData="{{item}}"></recycle-item>
+      <block wx:if="{{type !== 'section' && (mpxGenericRecycleItem || mpxGenericSectionHeader)}}">
+        <section-header wx:if="{{item.itemData && item.itemData.isSectionHeader}}" id="{{item._domId}}" itemData="{{item.itemData}}"></section-header>
+        <recycle-item wx:else itemData="{{item.itemData}}" id="{{item._domId}}"></recycle-item>
       </block>
     </block>
   </scroll-view>
@@ -70,9 +70,6 @@
       },
       mpxGenericRecycleItem: String,
       mpxGenericSectionHeader: String,
-      mpxGenericSectionFooter: String,
-      mpxGenericListHeader: String,
-      mpxGenericListFooter: String,
       scrollWithAnimation: Boolean,
       enableSticky: {
         type: Boolean,
@@ -90,22 +87,32 @@
         type: Boolean,
         value: false
       },
-      refresherEnable: {
+      refresherEnabled: {
         type: Boolean,
         value: false
       },
-      refresherEnabled: {
+      refresherTriggered: {
         type: Boolean,
         value: false
       }
     },
     data: {
-      convertedListData: []
+      convertedListData: [],
+      scrollIntoViewId: '',
+      viewPosition: 'start'
     },
     computed: {
       scrollViewStyle() {
         return `height: ${this.height}px;width: ${this.width}px`
       }
+    },
+    created() {
+      // setTimeout(() => {
+      //   this.scrollToIndex({
+      //     index: 303,
+      //     animated: true
+      //   })
+      // }, 3000)
     },
     watch: {
       listData: {
@@ -113,7 +120,7 @@
           if (this.type === 'section') {
             this.convertedListData = this.convertToSectionListData(newVal)
           } else {
-            this.convertedListData = newVal
+            this.convertedListData = this.convertToListData(newVal)
           }
         },
         immediate: true
@@ -121,24 +128,32 @@
     },
     methods: {
       onScroll(e) {
-        this.triggerEvent('scroll', e.detail)
+        this.triggerEvent('scroll', e)
       },
       onRefresh(e) {
-        this.triggerEvent('refresh', e.detail)
+        this.triggerEvent('refresh', e)
       },
-      scrollToOffset({ offset, animated }) {
-        this.$refs.recycleViewRef.node().exec((res) => {
-          res[0].node.scrollTo({
-            top: offset,
-            animated
-          })
-        })
+      scrollToIndex({ index, animated, viewPosition = 0 }) {
+        if (index >= 0) {
+          this.scrollIntoViewId = `mpx-recycle-item-${index}`
+          switch (viewPosition) {
+            case 0:
+              this.viewPosition = 'start'
+              break
+            case 0.5:
+              this.viewPosition = 'center'
+              break
+            case 1:
+              this.viewPosition = 'end'
+              break
+            default:
+              this.viewPosition = 'start'
+          }
+        }
       },
       convertToSectionListData(data) {
         const sections = []
         let currentSection = null
-        // 标记是否已创建了默认section (无header的section)
-        let hasDefaultSection = false
 
         data.forEach((item, index) => {
           if (item.isSectionHeader) {
@@ -160,16 +175,12 @@
                 headerData: null,
                 data: [],
                 hasSectionHeader: false,
-                _originalItemIndex: -1
+                _domId: `mpx-recycle-item-${index}`
               }
-              // 标记已创建默认section
-              hasDefaultSection = true
             }
-            // 将 item 添加到当前 section 的 data 中
-            const itemIndex = currentSection.data.length
             currentSection.data.push({
-              ...item,
-              _originalItemIndex: index
+              itemData: item,
+              _domId: `mpx-recycle-item-${index}`
             })
           }
         })
@@ -180,6 +191,16 @@
         }
 
         return sections
+      },
+      convertToListData(data) {
+        const listData = []
+        data.forEach((item, index) => {
+          listData.push({
+            itemData: item,
+            _domId: `mpx-recycle-item-${index}`
+          })
+        })
+        return listData
       }
     }
   })
