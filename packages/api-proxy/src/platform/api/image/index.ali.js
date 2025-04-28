@@ -32,8 +32,6 @@ function compressImage (options = {}) {
 
 const getImageInfo = ENV_OBJ.getImageInfo || envError('getImageInfo')
 
-// const chooseImage = ENV_OBJ.chooseImage || envError('chooseImage')
-
 const chooseMedia = envError('chooseMedia')
 
 export {
