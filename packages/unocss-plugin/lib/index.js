@@ -1,5 +1,5 @@
-import {loadConfig} from '@unocss/config'
-import {createGenerator,e as cssEscape} from '@unocss/core'
+import { loadConfig } from '@unocss/config'
+import { createGenerator, e as cssEscape } from '@unocss/core'
 import transformerDirectives from '@unocss/transformer-directives'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
 import path from 'path'

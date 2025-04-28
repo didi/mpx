@@ -1,10 +1,10 @@
 import WebpackSources from 'webpack-sources'
 import VirtualModulesPlugin from 'webpack-virtual-modules'
-import node_path from'node:path' 
+import node_path from 'node:path'
 import process from 'process'
 import fs from 'fs'
 import { createContext, getPath, normalizeAbsolutePath } from './utils.js'
-import { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer} from './consts.js'
+import { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } from './consts.js'
 
 const PLUGIN_NAME = 'unocss:webpack'
 const VIRTUAL_MODULE_PREFIX = node_path.resolve(process.cwd(), '_virtual_')

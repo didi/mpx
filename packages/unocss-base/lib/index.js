@@ -1,7 +1,6 @@
 const { presetWind3 } = require('@unocss/preset-wind3')
 const { presetLegacyCompat } = require('@unocss/preset-legacy-compat')
 
-
 // eslint-disable-next-line
 const remRE = /(-?[\.\d]+)rem/g
 

@@ -1,6 +1,6 @@
 import { applyTransformers, isCssId } from './utils.js'
 import parseComponent from '@mpxjs/webpack-plugin/lib/parser.js'
-import  genComponentTag from '@mpxjs/webpack-plugin/lib/utils/gen-component-tag.js'
+import genComponentTag from '@mpxjs/webpack-plugin/lib/utils/gen-component-tag.js'
 import path from 'path'
 
 async function transform (code, map) {
@@ -78,4 +78,4 @@ async function transform (code, map) {
   }
 }
 
-export default  transform
+export default transform

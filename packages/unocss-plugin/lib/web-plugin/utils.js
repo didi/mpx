@@ -1,6 +1,6 @@
 import pluginutils from '@rollup/pluginutils'
 import { loadConfig } from '@unocss/config'
-import {cssIdRE as defCssIdRE, createGenerator} from '@unocss/core'
+import { cssIdRE as defCssIdRE, createGenerator } from '@unocss/core'
 import node_path from 'node:path'
 import MagicString from 'magic-string'
 import remapping from '@ampproject/remapping'
