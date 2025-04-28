@@ -16,6 +16,9 @@
     scroll-into-view="{{scrollIntoViewId}}"
     scroll-into-view-alignment="{{viewPosition}}"
   >
+    <block wx:if="{{mpxGenericListHeader}}">
+      <list-header listHeaderData="{{listHeaderData}}"></list-header>
+    </block>
     <block wx:for="{{convertedListData}}" wx:key="index">
       <block wx:if="{{type === 'section'}}">
         <sticky-section>
@@ -27,20 +30,23 @@
             <section-header wx:else id="{{item._domId}}" itemData="{{item}}"></section-header>
           </block>
 
-          <list-view wx:if="{{mpxGenericRecycleItem}}">
-            <block
-              wx:for="{{item.data}}"
-              wx:for-item="subItem"
-              wx:key="subIndex"
-            >
-              <!-- section items -->
-              <recycle-item itemData="{{subItem.itemData}}" id="{{subItem._domId}}"></recycle-item>
-            </block>
-          </list-view>
+          <block
+            wx:if="{{mpxGenericRecycleItem}}"
+            wx:for="{{item.data}}"
+            wx:for-item="subItem"
+            wx:key="subIndex"
+          >
+            <!-- section items -->
+            <recycle-item itemData="{{subItem.itemData}}" id="{{subItem._domId}}"></recycle-item>
+          </block>
         </sticky-section>
       </block>
       <block wx:if="{{type !== 'section' && (mpxGenericRecycleItem || mpxGenericSectionHeader)}}">
-        <section-header wx:if="{{item.itemData && item.itemData.isSectionHeader}}" id="{{item._domId}}" itemData="{{item.itemData}}"></section-header>
+        <section-header
+          wx:if="{{item.itemData && item.itemData.isSectionHeader}}"
+          id="{{item._domId}}"
+          itemData="{{item.itemData}}"
+        ></section-header>
         <recycle-item wx:else itemData="{{item.itemData}}" id="{{item._domId}}"></recycle-item>
       </block>
     </block>
@@ -54,11 +60,11 @@
     properties: {
       height: {
         type: Number,
-        value: 0
+        value: null
       },
       width: {
         type: Number,
-        value: 0
+        value: null
       },
       listData: {
         type: Array,
@@ -70,6 +76,7 @@
       },
       mpxGenericRecycleItem: String,
       mpxGenericSectionHeader: String,
+      mpxGenericListHeader: String,
       scrollWithAnimation: Boolean,
       enableSticky: {
         type: Boolean,
@@ -94,6 +101,10 @@
       refresherTriggered: {
         type: Boolean,
         value: false
+      },
+      listHeaderData: {
+        type: Object,
+        value: null
       }
     },
     data: {
@@ -103,16 +114,8 @@
     },
     computed: {
       scrollViewStyle() {
-        return `height: ${this.height}px;width: ${this.width}px`
+        return `height: ${this.formatDimension(this.height)};width: ${this.formatDimension(this.width)}`
       }
-    },
-    created() {
-      // setTimeout(() => {
-      //   this.scrollToIndex({
-      //     index: 303,
-      //     animated: true
-      //   })
-      // }, 3000)
     },
     watch: {
       listData: {
@@ -127,6 +130,9 @@
       }
     },
     methods: {
+      formatDimension(value) {
+        return typeof value === 'number' ? `${value}px` : (value || '100%')
+      },
       onScroll(e) {
         this.triggerEvent('scroll', e)
       },
@@ -215,6 +221,9 @@
       },
       "section-header": {
         "default": "./mpx-section-header-default.mpx"
+      },
+      "list-header": {
+        "default": "./mpx-list-header-default.mpx"
       }
     }
   }

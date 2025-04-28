@@ -23,6 +23,11 @@ interface SectionHeaderProps {
   itemData: any;
 }
 
+interface ListHeaderProps {
+  generichash: string;
+  genericlistHeader: string;
+  listHeaderData: any;
+}
 interface ListItem {
   isSectionHeader?: boolean;
   _originalItemIndex?: number;
@@ -53,6 +58,8 @@ interface RecycleViewProps {
   style?: Record<string, any>;
   itemHeight?: ItemHeightType;
   sectionHeaderHeight?: ItemHeightType;
+  listHeaderData?: any;
+  listHeaderHeight?: ItemHeightType;
   'genericrecycle-item'?: string;
   'genericsection-header'?: string;
   'enable-var'?: boolean;
@@ -94,6 +101,11 @@ const SectionHeader = forwardRef<any, SectionHeaderProps>((props, ref) => {
   return getGenericComponent({ props, ref, generichash, generickey: genericsectionHeader })
 })
 
+const ListHeader = forwardRef<any, ListHeaderProps>((props, ref) => {
+  const { generichash, genericlistHeader } = props
+  return getGenericComponent({ props, ref, generichash, generickey: genericlistHeader })
+})
+
 const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   const {
     enhanced = false,
@@ -107,8 +119,11 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     style = {},
     itemHeight = {},
     sectionHeaderHeight = {},
+    listHeaderHeight = {},
+    listHeaderData = null,
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
+    'genericlist-header': genericListHeader,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
@@ -181,7 +196,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         const position = indexMap.current[index]
         const [sectionIndex, itemIndex] = (position as string).split('_')
         scrollViewRef.current.scrollToLocation?.({
-          itemIndex: Number(itemIndex) || 0,
+          itemIndex: itemIndex === 'header' ? 0 : Number(itemIndex) + 1,
           sectionIndex: Number(sectionIndex) || 0,
           animated,
           viewOffset,
@@ -214,10 +229,10 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
 
   const getSectionHeaderHeight = ({ sectionIndex }: { sectionIndex: number }) => {
     const item = convertedListData[sectionIndex]
-    const { headerData, hasSectionHeader } = item
+    const { hasSectionHeader } = item
     // 使用getOriginalIndex获取原始索引
     const originalIndex = getOriginalIndex(sectionIndex, 'header')
-    if (!headerData || !hasSectionHeader) return 0
+    if (!hasSectionHeader) return 0
     if ((sectionHeaderHeight as ItemHeightType).getter) {
       return (sectionHeaderHeight as ItemHeightType).getter?.(item, originalIndex) || 0
     } else {
@@ -230,8 +245,12 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   ), [])
 
   const renderSectionHeader = useCallback((data: { section: Section }) => (
-    !data.section.headerData || !data.section.hasSectionHeader ? null : <SectionHeader itemData={data.section.headerData} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
-  ), [generichash, genericsectionHeader])
+    !data.section.hasSectionHeader ? null : <SectionHeader itemData={data.section.headerData} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
+  ), [])
+
+  const renderListHeader = useCallback(() => (
+    <ListHeader listHeaderData={listHeaderData} generichash={generichash} genericlistHeader={genericListHeader}/>
+  ), [])
 
   const convertToSectionListData = useCallback((data: ListItem[]): Section[] => {
     const sections: Section[] = []
@@ -240,8 +259,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     indexMap.current = {}
     // 清空反向索引映射
     reverseIndexMap.current = {}
-    // 标记是否已创建了默认section (无header的section)
-    let hasDefaultSection = false
 
     data.forEach((item: ListItem, index: number) => {
       if (item.isSectionHeader) {
@@ -271,8 +288,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
             hasSectionHeader: false,
             _originalItemIndex: -1
           }
-          // 标记已创建默认section
-          hasDefaultSection = true
         }
         // 将 item 添加到当前 section 的 data 中
         const itemIndex = currentSection.data.length
@@ -315,6 +330,11 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   const itemLayouts = useMemo(() => {
     const layouts: Array<{ length: number, offset: number, index: number }> = []
     let offset = 0
+
+    if (generichash && genericListHeader) {
+      // 计算列表头部的高度
+      offset += listHeaderHeight.getter?.() || listHeaderHeight.value || 0
+    }
 
     if (type === 'section') {
       // 遍历所有 sections
@@ -418,6 +438,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         keyExtractor={(item, index) => item + index}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
+        ListHeaderComponent={(generichash && genericListHeader && renderListHeader) || null}
         renderSectionHeader={(generichash && genericsectionHeader && renderSectionHeader) || null}
         refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
       />
@@ -428,6 +449,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         keyExtractor={(item, index) => item + index}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
+        ListHeaderComponent={(generichash && genericListHeader && renderListHeader) || null}
         refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
       />
   )
