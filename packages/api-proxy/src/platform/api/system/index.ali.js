@@ -52,7 +52,7 @@ const getDeviceInfo = function () {
   return res
 }
 
-const getWindowInfo = function() {
+const getWindowInfo = function () {
   let res
   if (ENV_OBJ.canIUse('getWindowInfo')) {
     res = ENV_OBJ.getWindowInfo()
