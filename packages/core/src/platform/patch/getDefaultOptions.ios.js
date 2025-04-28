@@ -656,8 +656,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return () => {
         proxy.unmounted()
         proxy.target.__resetInstance()
-        if (type === 'page') {
-          delete global.__mpxPagesMap[props.route.key]
+        // 热更新下会销毁旧页面并创建新页面组件，且旧页面销毁时机晚于新页面创建，此时页面栈中存储的为新页面，不应该删除
+        // 所以需要判断路由表中存储的页面实例是否为当前页面实例
+        const routeKey = props.route.key
+        if (type === 'page' && global.__mpxPagesMap[routeKey] && global.__mpxPagesMap[routeKey][0] === instance) {
+          delete global.__mpxPagesMap[routeKey]
         }
       }
     }, [])
