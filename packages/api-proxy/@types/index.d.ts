@@ -128,6 +128,8 @@ export const getExtConfig: WechatMiniprogram.Wx['getExtConfig']
 export const getExtConfigSync: WechatMiniprogram.Wx['getExtConfigSync']
 export const openLocation: WechatMiniprogram.Wx['openLocation']
 export const chooseLocation: WechatMiniprogram.Wx['chooseLocation']
+export const onLocationChange: WechatMiniprogram.Wx['onLocationChange']
+export const offLocationChange: WechatMiniprogram.Wx['offLocationChange']
 export const startLocationUpdate: WechatMiniprogram.Wx['startLocationUpdate']
 export const stopLocationUpdate: WechatMiniprogram.Wx['stopLocationUpdate']
 

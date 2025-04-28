@@ -105,7 +105,7 @@ export * from './api/video'
 // onWindowResize, offWindowResize
 export * from './api/window'
 
-// getLocation, openLocation, chooseLocation, startLocationUpdate, stopLocationUpdate
+// getLocation, openLocation, chooseLocation, onLocationChange, offLocationChange, startLocationUpdate, stopLocationUpdate
 export * from './api/location'
 
 // getExtConfig, getExtConfigSync
