@@ -27,7 +27,7 @@
             <sticky-header wx:if="{{enableSticky}}">
               <section-header itemData="{{item.headerData}}" id="{{item._domId}}"></section-header>
             </sticky-header>
-            <section-header wx:else id="{{item._domId}}" itemData="{{item}}"></section-header>
+            <section-header wx:else id="{{item._domId}}" itemData="{{item.headerData}}"></section-header>
           </block>
 
           <block
