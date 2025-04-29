@@ -171,7 +171,8 @@
             currentSection = {
               headerData: item,
               data: [],
-              hasSectionHeader: true
+              hasSectionHeader: true,
+              _domId: `mpx-recycle-item-${index}`
             }
           } else {
             // 如果没有当前 section，创建一个默认的
@@ -180,8 +181,7 @@
               currentSection = {
                 headerData: null,
                 data: [],
-                hasSectionHeader: false,
-                _domId: `mpx-recycle-item-${index}`
+                hasSectionHeader: false
               }
             }
             currentSection.data.push({

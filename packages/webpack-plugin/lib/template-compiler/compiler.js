@@ -1810,8 +1810,8 @@ function processFor (el) {
 function processRefReact (el, meta) {
   const { val, has } = getAndRemoveAttr(el, config[mode].directive.ref)
 
-  // rn中只有内建组件和内部扩展组件能被作为node ref处理
-  const type = el.isBuiltIn || isExtendComponentNode(el) ? 'node' : 'component'
+  // rn中只有内建组件能被作为node ref处理
+  const type = el.isBuiltIn ? 'node' : 'component'
   if (has) {
     if (!meta.refs) {
       meta.refs = []
@@ -2268,7 +2268,7 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el) {
-  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
+  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag] || isExtendComponentNode(el)
 }
 
 function isExtendComponentNode (el) {

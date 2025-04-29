@@ -414,10 +414,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   }
 
   useNodesRef(props, ref, scrollViewRef, {
-    style,
-    node: {
-      scrollToIndex
-    }
+    scrollToIndex
   })
 
   const innerProps = useInnerProps(props, scrollAdditionalProps, [
