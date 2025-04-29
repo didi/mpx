@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, EXTEND_COMPONENTS_LIST } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -1810,8 +1810,8 @@ function processFor (el) {
 function processRefReact (el, meta) {
   const { val, has } = getAndRemoveAttr(el, config[mode].directive.ref)
 
-  // rn中只有内建组件能被作为node ref处理
-  const type = el.isBuiltIn ? 'node' : 'component'
+  // rn中只有内建组件和内部扩展组件能被作为node ref处理
+  const type = el.isBuiltIn || isExtendComponentNode(el) ? 'node' : 'component'
   if (has) {
     if (!meta.refs) {
       meta.refs = []
@@ -2271,12 +2271,16 @@ function isComponentNode (el) {
   return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
 }
 
+function isExtendComponentNode (el) {
+  return EXTEND_COMPONENTS_LIST.includes(el.tag)
+}
+
 function getComponentInfo (el) {
   return usingComponentsInfo[el.tag] || {}
 }
 
 function isReactComponent (el) {
-  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
+  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn && !isExtendComponentNode(el)
 }
 
 function processExternalClasses (el, options) {
