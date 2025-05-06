@@ -425,8 +425,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }, [focus])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle),
@@ -444,11 +446,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: !!multiline
-      },
-      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType },
-      layoutProps,
-      {
+        multiline: !!multiline,
         onTouchStart,
         onFocus,
         onBlur,
@@ -456,7 +454,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onSelectionChange,
         onContentSizeChange,
         onSubmitEditing: bindconfirm && !multiline && onSubmitEditing
-      }
+      },
+      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [
       'type',

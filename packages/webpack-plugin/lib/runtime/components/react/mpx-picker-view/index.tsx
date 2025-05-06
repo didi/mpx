@@ -130,20 +130,23 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const innerProps = useInnerProps(
-    props,
-    extendObject({
-      ref: nodeRef,
-      style: extendObject(
-        {},
-        normalStyle,
-        layoutStyle,
-        {
-          position: 'relative',
-          overflow: 'hidden'
-        }
-      ),
-      layoutProps
-    }),
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject(
+          {},
+          normalStyle,
+          layoutStyle,
+          {
+            position: 'relative',
+            overflow: 'hidden'
+          }
+        )
+      }
+    ),
     [
       'enable-offset',
       'indicator-style',
