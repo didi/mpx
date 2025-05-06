@@ -364,6 +364,6 @@ class InnerAudioContext {
   }
 }
 
-const createInnerAudioContext = new InnerAudioContext()
-
-export default createInnerAudioContext
+export const createInnerAudioContext = function () {
+  return new InnerAudioContext()
+}
