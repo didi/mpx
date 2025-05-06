@@ -356,25 +356,31 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   useEffect(() => {
     if (!isSvg && isLayoutMode) {
-      RNImage.getSize(src, (width: number, height: number) => {
-        state.current.imageWidth = width
-        state.current.imageHeight = height
-        state.current.ratio = !width ? 0 : height / width
+      RNImage.getSize(
+        src,
+        (width: number, height: number) => {
+          state.current.imageWidth = width
+          state.current.imageHeight = height
+          state.current.ratio = !width ? 0 : height / width
 
-        if (isWidthFixMode
-          ? state.current.viewWidth
-          : isHeightFixMode
-            ? state.current.viewHeight
-            : state.current.viewWidth && state.current.viewHeight) {
-          state.current.viewWidth && setViewWidth(state.current.viewWidth)
-          state.current.viewHeight && setViewHeight(state.current.viewHeight)
-          setRatio(!width ? 0 : height / width)
-          setImageWidth(width)
-          setImageHeight(height)
-          state.current = {}
+          if (isWidthFixMode
+            ? state.current.viewWidth
+            : isHeightFixMode
+              ? state.current.viewHeight
+              : state.current.viewWidth && state.current.viewHeight) {
+            state.current.viewWidth && setViewWidth(state.current.viewWidth)
+            state.current.viewHeight && setViewHeight(state.current.viewHeight)
+            setRatio(!width ? 0 : height / width)
+            setImageWidth(width)
+            setImageHeight(height)
+            state.current = {}
+            setLoaded(true)
+          }
+        },
+        () => {
           setLoaded(true)
         }
-      })
+      )
     }
   }, [src, isSvg, isLayoutMode])
 
