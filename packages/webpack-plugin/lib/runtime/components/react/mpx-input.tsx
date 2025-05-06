@@ -51,7 +51,8 @@ import {
   TextInputSelectionChangeEventData,
   TextInputFocusEventData,
   TextInputChangeEventData,
-  TextInputSubmitEditingEventData
+  TextInputSubmitEditingEventData,
+  NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { useUpdateEffect, useTransformStyle, useLayout, extendObject } from './utils'
@@ -292,6 +293,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     setKeyboardAvoidContext()
   }
 
+  const onTouchEnd = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
+    evt.nativeEvent.origin = 'input'
+  }
+
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
     setKeyboardAvoidContext()
     bindfocus && bindfocus(
@@ -455,6 +460,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       layoutProps,
       {
         onTouchStart,
+        onTouchEnd,
         onFocus,
         onBlur,
         onChange,
