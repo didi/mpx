@@ -181,7 +181,6 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
-    global.__mpxRouter.eventChannelMap = {}
     global.__mpxRouter.currentActionType = null
     // 处理reLaunch中传递的url并非首页时的replace逻辑
     global.__mpxRouter.beforeEach(function (to, from, next) {
@@ -241,7 +240,6 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         case 'to':
           stack.push(insertItem)
           global.__mpxRouter.needCache = insertItem
-          if (action.eventChannel) global.__mpxRouter.eventChannelMap[to.path.slice(1)] = action.eventChannel
           break
         case 'back':
           global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
