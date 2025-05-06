@@ -138,7 +138,7 @@ export default function createApp (options) {
     useEffect(() => {
       const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
         if (currentState === 'active') {
-          let options = global.__mpxEnterOptions
+          let options = global.__mpxEnterOptions || {}
           const navigation = getFocusedNavigation()
           if (navigation) {
             const state = navigation.getState()
