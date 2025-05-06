@@ -12,6 +12,7 @@ class InnerAudioContext {
     this.isPlaying = false
     this.gainNode.connect(this.audioContext.destination)
 
+    // 初始化属性
     this._src = ''
     this._startTime = 0
     this._autoplay = false
@@ -21,7 +22,9 @@ class InnerAudioContext {
     this._duration = 0
     this._currentTime = 0
     this._buffered = 0
+    this._playStartTime = 0 // Store when playback started
 
+    // 初始化事件监听器列表
     this._onCanplayListeners = []
     this._onPlayListeners = []
     this._onPauseListeners = []
@@ -32,6 +35,9 @@ class InnerAudioContext {
     this._onWaitingListeners = []
     this._onSeekingListeners = []
     this._onSeekedListeners = []
+
+    // 设置时间更新定时器
+    this._timeUpdateInterval = null
   }
 
   set volume (value) {
@@ -57,6 +63,9 @@ class InnerAudioContext {
   }
 
   set src (url) {
+    if (this._src === url) {
+      return
+    }
     this._src = url
     this.loadAudio(url)
       .then(() => {
@@ -71,9 +80,12 @@ class InnerAudioContext {
   }
 
   set currentTime (value) {
-    this.stop()
-    this._currentTime = Math.max(0, Math.min(value, this._duration))
-    this.play()
+    this.source.stop()
+    this.source = ''
+    setTimeout(() => {
+      this._currentTime = Math.max(0, Math.min(value, this._duration))
+      this.play()
+    }, 10)
   }
 
   set startTime (time) {
@@ -103,7 +115,22 @@ class InnerAudioContext {
   }
 
   get currentTime () {
-    return this._currentTime // 返回当前播放位置
+    if (!this.isPlaying || !this.buffer) {
+      return this._currentTime
+    }
+
+    const audioContextTime = this.audioContext.currentTime
+    const elapsedTime = audioContextTime - this._playStartTime
+    const playbackRate = this._playbackRate
+    const adjustedElapsedTime = elapsedTime * playbackRate
+
+    if (this._loop) {
+      const totalElapsedTime = this._currentTime + adjustedElapsedTime
+      return totalElapsedTime % this._duration
+    } else {
+      const calculatedTime = this._currentTime + adjustedElapsedTime
+      return Math.min(calculatedTime, this._duration)
+    }
   }
 
   get startTime () {
@@ -124,41 +151,104 @@ class InnerAudioContext {
 
   async loadAudio (url) {
     this._triggerEvent('onWaiting')
-    const response = await fetch(url)
-    const audioData = await response.arrayBuffer()
-    this.buffer = await this.audioContext.decodeAudioData(audioData)
-    this._duration = this.buffer.duration
-    this._buffered = this.buffer.duration
+    try {
+      const response = await fetch(url)
+
+      const audioData = await response.arrayBuffer()
+
+      this.buffer = await this.audioContext.decodeAudioData(audioData)
+      this._duration = this.buffer.duration
+      this._buffered = this.buffer.duration
+    } catch (error) {
+      this._triggerEvent('onError', { errMsg: error.message, errCode: -1 })
+    }
   }
 
   play () {
-    if (this.buffer) {
-      if (!this.source) {
-        if (this.audioContext.context.state === 'suspended') {
+    // 检查AudioContext状态
+    if (!this.buffer) {
+      this._triggerEvent('onError', {
+        errMsg: '没有音频数据可播放',
+        errCode: -3
+      })
+      return
+    }
+
+    try {
+      // 如果已经在播放状态，则不重复处理
+      if (this.isPlaying && this.source) {
+        return
+      }
+      // 如果已经有source并且已暂停，恢复播放
+      if (this.source) {
+        if (this.paused) {
           this.audioContext.resume()
+          this.isPlaying = true
+          this.paused = false
+          this._triggerEvent('onPlay')
+          this._setupTimeUpdateInterval()
         }
-        this.source = this.audioContext.createBufferSource()
-        this.source.buffer = this.buffer
-        this.source.connect(this.gainNode)
-        this.gainNode.connect(this.audioContext.destination)
-        this.source.loop = this._loop
-        this.source.playbackRate.value = this._playbackRate
-        this.source.start(0, this._currentTime)
-        this.isPlaying = true
-        this.paused = false
-        this.source.onended = () => {
-          if (!this._loop && this.isPlaying) {
+        return
+      }
+
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext
+          .resume()
+          .then(() => {
+            this._continuePlay()
+          })
+          .catch((err) => {
+            this._triggerEvent('onError', {
+              errMsg: `AudioContext恢复失败: ${err.message}`,
+              errCode: -4
+            })
+          })
+      } else {
+        this._continuePlay()
+      }
+    } catch (error) {
+      this._triggerEvent('onError', {
+        errMsg: `播放失败: ${error.message}`,
+        errCode: -2
+      })
+    }
+  }
+
+  _continuePlay () {
+    try {
+      this.source = this.audioContext.createBufferSource()
+      this.source.buffer = this.buffer
+      this.source.connect(this.gainNode)
+      this.gainNode.connect(this.audioContext.destination)
+      this.source.loop = this._loop
+      this.source.playbackRate.value = this._playbackRate
+
+      // 为source添加onended事件
+      this.source.onended = () => {
+        if (!this._loop && this.isPlaying) {
+          // stop 方法也会触发 onended
+          if (this.currentTime >= this._duration - 0.5) {
             this._triggerEvent('onEnded')
             this.stop()
           }
         }
-        this._triggerEvent('onPlay')
-      } else {
-        this.audioContext.resume()
-        this.isPlaying = true
-        this.paused = false
-        this._triggerEvent('onPlay')
       }
+
+      this.source.start(0, this._currentTime)
+      this._playStartTime = this.audioContext.currentTime
+      this.isPlaying = true
+      this.paused = false
+
+      // 启动时间更新
+      this._setupTimeUpdateInterval()
+
+      // 触发play事件
+      this._triggerEvent('onPlay')
+    } catch (error) {
+      this._triggerEvent('onError', {
+        errMsg: `播放失败: ${error.message}`,
+        errCode: -5
+      })
     }
   }
 
@@ -166,6 +256,8 @@ class InnerAudioContext {
     this.audioContext.suspend()
     this.isPlaying = false
     this.paused = true
+    this._currentTime = this.currentTime // Save the current position
+    this._clearTimeUpdateInterval()
     this._triggerEvent('onPause')
   }
 
@@ -174,10 +266,15 @@ class InnerAudioContext {
       throw new RangeError('Position must be between 0 and duration')
     }
     this._triggerEvent('onSeeking')
-    this.stop() // 停止当前播放
-    this._currentTime = Math.max(0, Math.min(position, this._duration))
-    this.play() // 重新播放
-    this._triggerEvent('onSeeked')
+    if (this.source) {
+      this.source.stop()
+      this.source = ''
+    }
+    setTimeout(() => {
+      this._currentTime = Math.max(0, Math.min(position, this._duration))
+      this.play() // 重新播放
+      this._triggerEvent('onSeeked')
+    }, 10)
   }
 
   stop () {
@@ -187,13 +284,19 @@ class InnerAudioContext {
       this.paused = true
       this.isPlaying = false
       this._currentTime = 0
+      this._clearTimeUpdateInterval()
       this._triggerEvent('onStop')
     }
   }
 
   destroy () {
     this.stop()
-    this.audioContext.close()
+    this._clearTimeUpdateInterval()
+    // 关闭音频连接
+    if (this.gainNode) {
+      this.gainNode.disconnect()
+    }
+    // 清除所有事件监听器
     this._onCanplayListeners = []
     this._onPlayListeners = []
     this._onPauseListeners = []
@@ -361,6 +464,22 @@ class InnerAudioContext {
     this._onSeekedListeners = listener
       ? this._onSeekedListeners.filter((item) => item !== listener)
       : []
+  }
+
+  // Helper method to setup time update interval
+  _setupTimeUpdateInterval () {
+    this._clearTimeUpdateInterval()
+    this._timeUpdateInterval = setInterval(() => {
+      this._triggerEvent('onTimeUpdate')
+    }, 250) // Update 4 times per second
+  }
+
+  // Helper method to clear time update interval
+  _clearTimeUpdateInterval () {
+    if (this._timeUpdateInterval) {
+      clearInterval(this._timeUpdateInterval)
+      this._timeUpdateInterval = null
+    }
   }
 }
 
