@@ -1,5 +1,5 @@
 import React, { ReactNode, useContext, useEffect } from 'react'
-import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle } from 'react-native'
+import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle, NativeSyntheticEvent, NativeTouchEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
 import { KeyboardAvoidContext } from './context'
 import { isIOS } from './utils'
@@ -31,8 +31,10 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     basic.value = 'auto'
   }
 
-  const onTouchEnd = () => {
-    Keyboard.isVisible() && Keyboard.dismiss()
+  const onTouchEnd = ({ nativeEvent }: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
+    if (nativeEvent.origin !== 'input') {
+      Keyboard.isVisible() && Keyboard.dismiss()
+    }
   }
 
   useEffect(() => {
