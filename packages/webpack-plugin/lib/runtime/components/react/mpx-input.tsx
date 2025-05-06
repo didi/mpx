@@ -57,6 +57,7 @@ import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } fr
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
+import Portal from './mpx-portal'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -201,6 +202,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   )
 
   const {
+    hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     setWidth,
@@ -476,7 +478,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       layoutRef
     }
   )
-  return createElement(TextInput, innerProps)
+
+  const finalComponent = createElement(TextInput, innerProps)
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 Input.displayName = 'MpxInput'

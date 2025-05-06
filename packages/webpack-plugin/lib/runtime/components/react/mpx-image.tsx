@@ -27,6 +27,7 @@ import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject } from './utils'
+import Portal from './mpx-portal'
 
 export type Mode =
   | 'scaleToFill'
@@ -159,7 +160,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   }
 
-  const { normalStyle, hasSelfPercent, setWidth, setHeight } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  const {
+    hasPositionFixed,
+    hasSelfPercent,
+    normalStyle,
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,
@@ -440,7 +447,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const LayoutImage = createElement(View, innerProps, loaded && BaseImage)
 
-  return isSvg ? SvgImage : isLayoutMode ? LayoutImage : BaseImage
+  const finalComponent = isSvg ? SvgImage : isLayoutMode ? LayoutImage : BaseImage
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 Image.displayName = 'mpx-image'
