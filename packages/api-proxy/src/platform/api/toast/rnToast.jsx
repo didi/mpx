@@ -32,8 +32,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   toastHasIcon: {
-    height: 110,
-    width: 120
+    width: 140
   },
   toastImg: {
     width: 40,
@@ -46,8 +45,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     lineHeight: 18,
-    height: 18,
-    overflow: 'hidden',
     marginTop: 10
   }
 })
@@ -80,7 +77,7 @@ function showToast (options = {}) {
     ToastView = <View style={[styles.toastWrap, { pointerEvents }]}>
       <View style={[styles.toastContent, styles.toastHasIcon]}>
         <Image style={ styles.toastImg } source={{ uri: image || iconImg[icon] }}></Image>
-        { title ? <Text style={styles.toastText}>{title}</Text> : null }
+        { title ? <Text numberOfLines={2} style={styles.toastText}>{title}</Text> : null }
       </View>
     </View>
   } else if (icon === 'loading') {
@@ -91,7 +88,7 @@ function showToast (options = {}) {
           size='small'
           color='#eee'
         />
-        { title ? <Text style={styles.toastText}>{title}</Text> : null }
+        { title ? <Text numberOfLines={2} style={styles.toastText}>{title}</Text> : null }
       </View>
     </View>
   } else {
@@ -102,7 +99,6 @@ function showToast (options = {}) {
             ...styles.toastText,
             ...(icon === 'none'
               ? {
-                  height: 'auto',
                   marginTop: 0
                 }
               : {})
