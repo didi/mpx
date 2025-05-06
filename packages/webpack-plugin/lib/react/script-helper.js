@@ -114,7 +114,7 @@ mpxGlobal.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)
       delete pageConfig.usingComponents
-      content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
+      content += `mpxGlobal.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
     }
 
     content += `
@@ -123,23 +123,23 @@ mpxGlobal.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
       return ${shallowStringify(componentsMap)}
     }
 
-    global.currentInject.getComponents = getComponents\n`
+    mpxGlobal.currentInject.getComponents = getComponents\n`
     if (genericsInfo) {
       content += `
         const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
-        global.__mpxGenericsMap[genericHash] = function (name) {
+        mpxGlobal.__mpxGenericsMap[genericHash] = function (name) {
           return getComponents()[name]
         }
       \n`
     }
     if (ctorType === 'component') {
-      content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
+      content += `mpxGlobal.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
     }
   }
-  content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-  content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+  content += `mpxGlobal.currentModuleId = ${JSON.stringify(moduleId)}\n`
+  content += `mpxGlobal.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
   if (!isProduction) {
-    content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+    content += `mpxGlobal.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
   }
   return content
 }

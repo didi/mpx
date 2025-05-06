@@ -219,7 +219,7 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     }
     replaced.replace(start, end - 1, varValue)
   })
-  return global.__formatValue(replaced.source())
+  return mpxGlobal.__formatValue(replaced.source())
 }
 
 function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>) {
@@ -238,10 +238,10 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
       parsed.forEach(({ start, end, args }) => {
         const name = args[0]
         const fallback = args[1] || ''
-        const value = '' + (getSafeAreaInset(name, navigation) ?? global.__formatValue(fallback))
+        const value = '' + (getSafeAreaInset(name, navigation) ?? mpxGlobal.__formatValue(fallback))
         replaced.replace(start, end - 1, value)
       })
-      target[key] = global.__formatValue(replaced.source())
+      target[key] = mpxGlobal.__formatValue(replaced.source())
     })
   })
 }
@@ -262,7 +262,7 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
           error(`calc(${exp}) parse error.`, undefined, e)
         }
       })
-      target[key] = global.__formatValue(replaced.source())
+      target[key] = mpxGlobal.__formatValue(replaced.source())
     })
   })
 }
@@ -412,7 +412,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
         const resolved = resolvePercent(value, key, percentConfig)
         return typeof resolved === 'number' ? resolved : 0
       } else {
-        const formatted = global.__formatValue(value)
+        const formatted = mpxGlobal.__formatValue(value)
         if (typeof formatted === 'number') {
           return formatted
         } else {
@@ -633,8 +633,8 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
 export const extendObject = Object.assign
 
 export function getCurrentPage (pageId: number | null | undefined) {
-  if (!global.getCurrentPages) return
-  const pages = global.getCurrentPages()
+  if (!mpxGlobal.getCurrentPages) return
+  const pages = mpxGlobal.getCurrentPages()
   return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
 }
 

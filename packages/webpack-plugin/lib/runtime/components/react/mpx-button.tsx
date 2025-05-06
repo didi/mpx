@@ -323,7 +323,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       }
       if (currentPage) {
         const defaultMessage = {
-          title: global.__mpx.config.rnConfig.projectName || 'AwesomeProject',
+          title: mpxGlobal.__mpx.config.rnConfig.projectName || 'AwesomeProject',
           path: currentPage.route || ''
         }
         if (currentPage.onShareAppMessage) {
