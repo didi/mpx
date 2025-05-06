@@ -90,7 +90,8 @@ function buildGlobalParams ({
   pagesMap,
   firstPage,
   outputPath,
-  genericsInfo
+  genericsInfo,
+  hasApp
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -111,6 +112,9 @@ global.currentInject.getPages = function () {
 }
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
+    if (!hasApp) {
+      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+    }
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)
       delete pageConfig.usingComponents
