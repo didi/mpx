@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning } from '../../../common/js'
+import { isBrowser, throwSSRWarning, warn } from '../../../common/js'
 
 const allowPlaybackRate = [0.5, 0.8, 1.0, 1.25, 1.5, 2.0]
 export const createVideoContext = (id, context) => {
@@ -22,22 +22,22 @@ export const createVideoContext = (id, context) => {
 
   // todo 进入后台音频播放模式
   __videoContext.requestBackgroundPlayback = () => {
-    console.warn('暂不支持requestBackgroundPlayback API')
+    warn('暂不支持requestBackgroundPlayback API')
   }
 
   // todo 退出后台音频播放
   __videoContext.exitBackgroundPlayback = () => {
-    console.warn('暂不支持exitBackgroundPlayback API')
+    warn('暂不支持exitBackgroundPlayback API')
   }
 
   // todo 退出小窗，该方法可在任意页面调用
   __videoContext.exitPictureInPicture = ({ success, fail, complete }) => {
-    console.warn('暂不支持exitPictureInPicture API')
+    warn('暂不支持exitPictureInPicture API')
   }
 
   // todo 发送弹幕
   __videoContext.sendDanmu = ({ text, color }) => {
-    console.warn('暂不支持发送弹幕')
+    warn('暂不支持发送弹幕')
   }
 
   // 进入全屏
@@ -90,7 +90,7 @@ export const createVideoContext = (id, context) => {
   // 设置倍速播放
   __videoContext.playbackRate = (number) => {
     if (allowPlaybackRate.indexOf(number) === -1) {
-      console.warn(`不支持${number}倍速播放`)
+      warn(`不支持${number}倍速播放`)
       return
     }
     __videoNode.playbackRate = number
