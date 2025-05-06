@@ -7,7 +7,7 @@ export function pageScrollTo (options = {}) {
     return
   }
   nextTick(() => {
-    const ms = global.__ms
+    const ms = mpxGlobal.__ms
     const { success, fail, complete } = options
 
     if (!ms) {

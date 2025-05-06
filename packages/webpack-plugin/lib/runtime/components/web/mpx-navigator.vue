@@ -37,7 +37,7 @@
     },
     mounted () {
       this.$el.addEventListener('tap', () => {
-        const mpx = global.__mpx
+        const mpx = mpxGlobal.__mpx
         if (mpx) {
           switch (this.openType) {
             case 'navigateBack':

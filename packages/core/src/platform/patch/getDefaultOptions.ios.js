@@ -49,9 +49,9 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    const appComponents = global.__getAppComponents?.() || {}
+    const appComponents = mpxGlobal.__getAppComponents?.() || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    const genericComponents = mpxGlobal.__mpxGenericsMap[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
@@ -290,11 +290,11 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name
-    global.__mpxPagesMap = global.__mpxPagesMap || {}
-    global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    mpxGlobal.__mpxPagesMap = mpxGlobal.__mpxPagesMap || {}
+    mpxGlobal.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     // App onLaunch 在 Page created 之前执行
-    if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
-      global.__mpxAppOnLaunch(props.navigation)
+    if (!mpxGlobal.__mpxAppHotLaunched && mpxGlobal.__mpxAppOnLaunch) {
+      mpxGlobal.__mpxAppOnLaunch(props.navigation)
     }
   }
 
@@ -402,7 +402,7 @@ function usePageEffect (mpxProxy, pageId) {
 }
 
 let pageId = 0
-const pageStatusMap = global.__mpxPageStatusMap = reactive({})
+const pageStatusMap = mpxGlobal.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId

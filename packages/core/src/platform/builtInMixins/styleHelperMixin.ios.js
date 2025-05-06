@@ -41,7 +41,7 @@ function formatValue (value) {
   return value
 }
 
-global.__formatValue = formatValue
+mpxGlobal.__formatValue = formatValue
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {

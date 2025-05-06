@@ -153,13 +153,13 @@ function getByPath (data, pathStrOrArr, defaultVal, errTip) {
 }
 
 function setByPath (data, pathStrOrArr, value) {
-  if (!global.__mpx) {
-    console.warn('[Mpx utils warn]: Can not find "global.__mpx", "setByPath" may encounter some potential problems!')
+  if (!mpxGlobal.__mpx) {
+    console.warn('[Mpx utils warn]: Can not find "mpxGlobal.__mpx", "setByPath" may encounter some potential problems!')
   }
   doGetByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
-      if (global.__mpx) {
-        global.__mpx.set(current, key, value)
+      if (mpxGlobal.__mpx) {
+        mpxGlobal.__mpx.set(current, key, value)
       } else {
         current[key] = value
       }

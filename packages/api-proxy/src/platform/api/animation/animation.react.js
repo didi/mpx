@@ -14,12 +14,12 @@ class Animation {
 
   _transformUnit (...args) {
     return args.map(each => {
-      return global.__formatValue(each)
+      return mpxGlobal.__formatValue(each)
     })
   }
 
   _formatTransformOrigin (transformOrigin) {
-    const transformOriginArr = transformOrigin.trim().split(/\s+/, 3).map(item => global.__formatValue(item))
+    const transformOriginArr = transformOrigin.trim().split(/\s+/, 3).map(item => mpxGlobal.__formatValue(item))
     switch (transformOriginArr.length) {
       case 0:
         transformOriginArr.push('50%', '50%', 0)

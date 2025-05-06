@@ -8,8 +8,8 @@
 </template>
 
 <script>
-  const tabBar = global.__tabBar
-  const tabBarPagesMap = global.__tabBarPagesMap
+  const tabBar = mpxGlobal.__tabBar
+  const tabBarPagesMap = mpxGlobal.__tabBarPagesMap
 
   const components = {
     'mpx-tab-bar': tabBarPagesMap['mpx-tab-bar']
@@ -52,7 +52,7 @@
     },
     methods: {
       itemChange (item, index) {
-        const mpx = global.__mpx
+        const mpx = mpxGlobal.__mpx
         if (mpx && mpx.switchTab) {
           const pagePath = '/' + tabBar.list[index].pagePath
           mpx.switchTab({

@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
 
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
-  const mpx = global.__mpx
+  const mpx = mpxGlobal.__mpx
   const errorText: ErrorTextMap = {
     'zh-CN': {
       text: '网络不可用，请检查网络设置',

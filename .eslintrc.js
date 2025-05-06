@@ -7,6 +7,7 @@ module.exports = {
   extends: 'standard',
   plugins: ['html', 'jest'],
   globals: {
+    mpxGlobal: 'readonly',
     wx: 'readonly',
     my: 'readonly',
     swan: 'readonly',

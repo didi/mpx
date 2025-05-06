@@ -3,7 +3,7 @@
   import { processSize } from '../../utils'
 
   let defaultColor
-  if (global.__style === 'v2') {
+  if (mpxGlobal.__style === 'v2') {
     defaultColor = {
       success: '#07c160',
       'success_no_circle': '#07c160',
@@ -52,7 +52,7 @@
         color: color,
         fontSize: sizeStr
       }
-      if (global.__style === 'v2') {
+      if (mpxGlobal.__style === 'v2') {
         switch (type) {
           case 'success':
           case 'info':

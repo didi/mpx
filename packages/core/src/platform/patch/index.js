@@ -16,13 +16,13 @@ export default function createFactory (type) {
           options.__pageCtor__ = true
         }
       } else {
-        if (global.currentCtor) {
-          ctor = global.currentCtor
-          if (global.currentCtorType === 'page') {
+        if (mpxGlobal.currentCtor) {
+          ctor = mpxGlobal.currentCtor
+          if (mpxGlobal.currentCtorType === 'page') {
             options.__pageCtor__ = true
           }
-          if (global.currentResourceType && global.currentResourceType !== type) {
-            error(`The ${global.currentResourceType} [${global.currentResource}] is not supported to be created by ${type} constructor.`)
+          if (mpxGlobal.currentResourceType && mpxGlobal.currentResourceType !== type) {
+            error(`The ${mpxGlobal.currentResourceType} [${mpxGlobal.currentResource}] is not supported to be created by ${type} constructor.`)
           }
         } else {
           if (type === 'page') {

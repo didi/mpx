@@ -34,7 +34,7 @@ module.exports = function (content) {
     }
   }
 
-  let output = 'global.isIndependent = true\n'
+  let output = 'mpxGlobal.isIndependent = true\n'
   // 注入i18n
   if (i18n) {
     const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
@@ -46,7 +46,7 @@ module.exports = function (content) {
   }
   output += content
   output += '\n'
-  output += 'delete global.isIndependent\n'
+  output += 'delete mpxGlobal.isIndependent\n'
 
   return output
 }
