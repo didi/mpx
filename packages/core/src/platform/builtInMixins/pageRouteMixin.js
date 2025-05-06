@@ -7,7 +7,7 @@ export default function pageRouteMixin (mixinType) {
       },
       methods: {
         getOpenerEventChannel () {
-          const router = global.__mpxRouter
+          const router = mpxGlobal.__mpxRouter
           const eventChannel = router && router.eventChannelMap[this.route]
           return eventChannel || {}
         }

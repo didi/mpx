@@ -42,7 +42,7 @@
       if (!isBrowser || !vnode) {
         return vnode || (slot && slot[0])
       }
-      const router = global.__mpxRouter
+      const router = mpxGlobal.__mpxRouter
       if (router) {
         // 存在routeCount的情况下修改vnode.key避免patch时复用旧节点实例
         if (router.currentRoute.query.routeCount) vnode.key = router.currentRoute.query.routeCount

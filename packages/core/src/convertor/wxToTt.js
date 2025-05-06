@@ -12,7 +12,7 @@ export default {
     if (options.behaviors) {
       options.behaviors.forEach((behavior, idx) => {
         if (BEHAVIORS_MAP.includes(behavior)) {
-          error(`Built-in behavior "${behavior}" is not supported in tt environment!`, global.currentResource)
+          error(`Built-in behavior "${behavior}" is not supported in tt environment!`, mpxGlobal.currentResource)
           options.behaviors.splice(idx, 1)
         }
       })

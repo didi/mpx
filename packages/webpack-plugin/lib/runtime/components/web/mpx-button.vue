@@ -1,7 +1,7 @@
 <script>
   import getInnerListeners from './getInnerListeners'
   // 获取当前小程序样式版本配置
-  const styleVersion = global.__style || ''
+  const styleVersion = mpxGlobal.__style || ''
   const sizeClassMap = {
     'default': '',
     'mini': 'mpx-button-size-mini'

@@ -95,21 +95,21 @@ function buildGlobalParams ({
   let content = ''
   if (ctorType === 'app') {
     content += `
-global.getApp = function () {}
-global.getCurrentPages = function () { return [] }
-global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-global.__mpxGenericsMap = {}
-global.__mpxOptionsMap = {}
-global.__mpxPagesMap = {}
-global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-global.__getAppComponents = function () {
+mpxGlobal.getApp = function () {}
+mpxGlobal.getCurrentPages = function () { return [] }
+mpxGlobal.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+mpxGlobal.__mpxGenericsMap = {}
+mpxGlobal.__mpxOptionsMap = {}
+mpxGlobal.__mpxPagesMap = {}
+mpxGlobal.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+mpxGlobal.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+mpxGlobal.__getAppComponents = function () {
   return ${shallowStringify(componentsMap)}
 }
-global.currentInject.getPages = function () {
+mpxGlobal.currentInject.getPages = function () {
   return ${shallowStringify(pagesMap)}
 }
-global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
+mpxGlobal.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)

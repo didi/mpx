@@ -82,10 +82,10 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
   }
   if (tabBarStr && tabBarPagesMap) {
     globalTabBar += `
-  global.__tabBar = ${tabBarStr}
+  mpxGlobal.__tabBar = ${tabBarStr}
   Vue.observable(global.__tabBar)
   // @ts-ignore
-  global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
+  mpxGlobal.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
   }
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]

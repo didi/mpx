@@ -37,17 +37,17 @@ export default function createApp (options) {
   initAppProvides(rawOptions.provide, rawOptions)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
   // 在页面script执行前填充getApp()
-  global.getApp = function () {
+  mpxGlobal.getApp = function () {
     return appData
   }
 
   // 模拟小程序appInstance在热启动时不会重新创建的行为，在外部创建跟随js context的appInstance
   const appInstance = Object.assign({}, appData, Mpx.prototype)
 
-  defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appInstance))
-  defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appInstance))
-  defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appInstance))
-  defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
+  defaultOptions.onShow && mpxGlobal.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appInstance))
+  defaultOptions.onHide && mpxGlobal.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appInstance))
+  defaultOptions.onError && mpxGlobal.__mpxAppCbs.error.push(defaultOptions.onError.bind(appInstance))
+  defaultOptions.onUnhandledRejection && mpxGlobal.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
   defaultOptions.onAppInit && defaultOptions.onAppInit()
 
   const pages = currentInject.getPages() || {}
@@ -57,7 +57,7 @@ export default function createApp (options) {
     return Object.entries(pages).map(([key, item]) => {
       const options = {
         // __mpxPageStatusMap 为编译注入的全局变量
-        headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
+        headerShown: !(Object.assign({}, mpxGlobal.__mpxPageConfig, mpxGlobal.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
       }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
@@ -74,25 +74,25 @@ export default function createApp (options) {
       })
     })
   }
-  global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+  mpxGlobal.__mpxOptionsMap = mpxGlobal.__mpxOptionsMap || {}
   const onStateChange = (state) => {
     Mpx.config.rnConfig.onStateChange?.(state)
-    if (global.__navigationHelper.lastSuccessCallback) {
-      global.__navigationHelper.lastSuccessCallback()
-      global.__navigationHelper.lastSuccessCallback = null
+    if (mpxGlobal.__navigationHelper.lastSuccessCallback) {
+      mpxGlobal.__navigationHelper.lastSuccessCallback()
+      mpxGlobal.__navigationHelper.lastSuccessCallback = null
     }
   }
   const onUnhandledAction = (action) => {
     const payload = action.payload
     const message = `The action '${action.type}'${payload ? ` with payload ${JSON.stringify(action.payload)}` : ''} was not handled by any navigator.`
-    if (global.__navigationHelper.lastFailCallback) {
-      global.__navigationHelper.lastFailCallback(message)
-      global.__navigationHelper.lastFailCallback = null
+    if (mpxGlobal.__navigationHelper.lastFailCallback) {
+      mpxGlobal.__navigationHelper.lastFailCallback(message)
+      mpxGlobal.__navigationHelper.lastFailCallback = null
     }
   }
 
-  global.__mpxAppLaunched = false
-  global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
+  mpxGlobal.__mpxAppLaunched = false
+  mpxGlobal.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
     const initialRouteRef = useRef({
       initialRouteName: firstPage,
@@ -100,17 +100,17 @@ export default function createApp (options) {
     })
     if (firstRef.current) {
       // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
-      global.__mpxAppHotLaunched = false
+      mpxGlobal.__mpxAppHotLaunched = false
       // 热启动情况下重置__mpxPagesMap避免页面销毁函数未及时执行时错误地引用到之前的navigation
-      global.__mpxPagesMap = {}
+      mpxGlobal.__mpxPagesMap = {}
       firstRef.current = false
     }
-    if (!global.__mpxAppHotLaunched) {
+    if (!mpxGlobal.__mpxAppHotLaunched) {
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
       initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
       initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
 
-      global.__mpxAppOnLaunch = (navigation) => {
+      mpxGlobal.__mpxAppOnLaunch = (navigation) => {
         const state = navigation.getState()
         Mpx.config.rnConfig.onStateChange?.(state)
         const current = state.routes[state.index]
@@ -122,23 +122,23 @@ export default function createApp (options) {
           referrerInfo: {},
           isLaunch: true
         }
-        global.__mpxEnterOptions = options
-        if (!global.__mpxAppLaunched) {
-          global.__mpxLaunchOptions = options
+        mpxGlobal.__mpxEnterOptions = options
+        if (!mpxGlobal.__mpxAppLaunched) {
+          mpxGlobal.__mpxLaunchOptions = options
           defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
-        global.__mpxAppCbs.show.forEach((cb) => {
+        mpxGlobal.__mpxAppCbs.show.forEach((cb) => {
           cb(options)
         })
-        global.__mpxAppLaunched = true
-        global.__mpxAppHotLaunched = true
+        mpxGlobal.__mpxAppLaunched = true
+        mpxGlobal.__mpxAppHotLaunched = true
       }
     }
 
     useEffect(() => {
       const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
         if (currentState === 'active') {
-          let options = global.__mpxEnterOptions || {}
+          let options = mpxGlobal.__mpxEnterOptions || {}
           const navigation = getFocusedNavigation()
           if (navigation) {
             const state = navigation.getState()
@@ -151,21 +151,21 @@ export default function createApp (options) {
               referrerInfo: {}
             }
           }
-          global.__mpxAppCbs.show.forEach((cb) => {
+          mpxGlobal.__mpxAppCbs.show.forEach((cb) => {
             cb(options)
           })
-          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'show'
+          if (navigation && hasOwn(mpxGlobal.__mpxPageStatusMap, navigation.pageId)) {
+            mpxGlobal.__mpxPageStatusMap[navigation.pageId] = 'show'
           }
         } else if (currentState === 'inactive' || currentState === 'background') {
-          global.__mpxAppCbs.hide.forEach((cb) => {
+          mpxGlobal.__mpxAppCbs.hide.forEach((cb) => {
             cb({
               reason: 3
             })
           })
           const navigation = getFocusedNavigation()
-          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'hide'
+          if (navigation && hasOwn(mpxGlobal.__mpxPageStatusMap, navigation.pageId)) {
+            mpxGlobal.__mpxPageStatusMap[navigation.pageId] = 'hide'
           }
         }
       })
@@ -177,13 +177,13 @@ export default function createApp (options) {
         if (pageSize === lastPageSize) return
         lastPageSize = pageSize
         const navigation = getFocusedNavigation()
-        if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-          global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
+        if (navigation && hasOwn(mpxGlobal.__mpxPageStatusMap, navigation.pageId)) {
+          mpxGlobal.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
         }
       })
       return () => {
         // todo 跳到原生页面或者其他rn bundle可以考虑使用reason 1/2进行模拟抹平
-        global.__mpxAppCbs.hide.forEach((cb) => {
+        mpxGlobal.__mpxAppCbs.hide.forEach((cb) => {
           cb({
             reason: 0
           })
@@ -240,20 +240,20 @@ export default function createApp (options) {
     )
   })
 
-  global.getCurrentPages = function () {
+  mpxGlobal.getCurrentPages = function () {
     const navigation = getFocusedNavigation()
     if (navigation) {
       return navigation.getState().routes.map((route) => {
-        return global.__mpxPagesMap[route.key] && global.__mpxPagesMap[route.key][0]
+        return mpxGlobal.__mpxPagesMap[route.key] && mpxGlobal.__mpxPagesMap[route.key][0]
       }).filter(item => item)
     }
     return []
   }
 
-  global.setCurrentPageStatus = function (status) {
+  mpxGlobal.setCurrentPageStatus = function (status) {
     const navigation = getFocusedNavigation()
-    if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-      global.__mpxPageStatusMap[navigation.pageId] = status
+    if (navigation && hasOwn(mpxGlobal.__mpxPageStatusMap, navigation.pageId)) {
+      mpxGlobal.__mpxPageStatusMap[navigation.pageId] = status
     }
   }
 }

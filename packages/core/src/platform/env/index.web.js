@@ -4,8 +4,8 @@ import { isBrowser, error, warn } from '@mpxjs/utils'
 import { initEvent } from './event'
 
 export function init (Mpx) {
-  global.__mpx = Mpx
-  global.__mpxAppCbs = global.__mpxAppCbs || {
+  mpxGlobal.__mpx = Mpx
+  mpxGlobal.__mpxAppCbs = mpxGlobal.__mpxAppCbs || {
     show: [],
     hide: [],
     error: [],
@@ -27,8 +27,8 @@ function initGlobalErrorHandling () {
 
   if (isBrowser) {
     window.addEventListener('error', (event) => {
-      if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
-        global.__mpxAppCbs.error.forEach((cb) => {
+      if (mpxGlobal.__mpxAppCbs && mpxGlobal.__mpxAppCbs.error && mpxGlobal.__mpxAppCbs.error.length) {
+        mpxGlobal.__mpxAppCbs.error.forEach((cb) => {
           cb(event.error)
         })
       } else {
@@ -36,8 +36,8 @@ function initGlobalErrorHandling () {
       }
     })
     window.addEventListener('unhandledrejection', (event) => {
-      if (global.__mpxAppCbs && global.__mpxAppCbs.rejection && global.__mpxAppCbs.rejection.length) {
-        global.__mpxAppCbs.rejection.forEach((cb) => {
+      if (mpxGlobal.__mpxAppCbs && mpxGlobal.__mpxAppCbs.rejection && mpxGlobal.__mpxAppCbs.rejection.length) {
+        mpxGlobal.__mpxAppCbs.rejection.forEach((cb) => {
           cb(event)
         })
       } else {

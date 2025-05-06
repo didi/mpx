@@ -24,13 +24,13 @@ function createPinia () {
       return activePinia
     }
   } else {
-    if (!global.__mpxAppInit) {
+    if (!mpxGlobal.__mpxAppInit) {
       console.error('[@mpxjs/pinia error]: Pinia must be created in the onAppInit lifecycle!')
       return
     }
   }
   const pinia = webCreatePinia()
-  global.__mpxPinia = pinia
+  mpxGlobal.__mpxPinia = pinia
   setActivePinia(pinia)
   return pinia
 }

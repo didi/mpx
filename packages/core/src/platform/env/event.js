@@ -92,8 +92,8 @@ function createMpxEvent (layer) {
 }
 
 export function initEvent () {
-  if (isBrowser && !global.__mpxCreatedEvent) {
-    global.__mpxCreatedEvent = true
+  if (isBrowser && !mpxGlobal.__mpxCreatedEvent) {
+    mpxGlobal.__mpxCreatedEvent = true
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       createMpxEvent(document.body)
     } else {

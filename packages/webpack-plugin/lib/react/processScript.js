@@ -40,7 +40,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
     })
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
     output += getRequireScript({ ctorType, script, loaderContext })
-    output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
+    output += `export default mpxGlobal.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
     // RN环境暂不支持异步加载
     // output += 'import { lazy } from \'react\'\n'
@@ -55,7 +55,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
 
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
     output += getRequireScript({ ctorType, script, loaderContext })
-    output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
+    output += `export default mpxGlobal.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }
 
   callback(null, {

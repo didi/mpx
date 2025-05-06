@@ -38,7 +38,7 @@
         },
         force: true
       }
-      const style = global.__style === 'v2' ? 'v2' : 'v1'
+      const style = mpxGlobal.__style === 'v2' ? 'v2' : 'v1'
       const data = {
         class: [this.disabled ? 'mpx-checkbox-disabled' : 'mpx-checkbox', this.isChecked && 'mpx-checkbox-input-checked-' + style],
         on: getInnerListeners(this, { mergeAfter })

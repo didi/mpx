@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
 
 const getOpenTypeEvent = (openType?: OpenType) => {
   if (!openType) return
-  if (!global.__mpx?.config?.rnConfig) {
+  if (!mpxGlobal.__mpx?.config?.rnConfig) {
     warn('Environment not supported')
     return
   }
@@ -140,7 +140,7 @@ const getOpenTypeEvent = (openType?: OpenType) => {
     return
   }
 
-  const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
+  const event = mpxGlobal.__mpx.config.rnConfig.openTypeHandler?.[eventName]
   if (!event) {
     warn(`Unregistered ${eventName} event`)
     return

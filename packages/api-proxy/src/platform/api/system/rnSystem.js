@@ -42,11 +42,11 @@ const getWindowInfo = function () {
 }
 
 const getLaunchOptionsSync = function () {
-  return global.__mpxLaunchOptions || {}
+  return mpxGlobal.__mpxLaunchOptions || {}
 }
 
 const getEnterOptionsSync = function () {
-  return global.__mpxEnterOptions || {}
+  return mpxGlobal.__mpxEnterOptions || {}
 }
 
 export {

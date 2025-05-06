@@ -17,6 +17,7 @@ const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
 const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
+const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -60,6 +61,7 @@ const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
+const mpxGlobalRuntimePath = normalize.lib('runtime/mpxGlobal')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const { parseQuery } = require('loader-utils')
@@ -324,6 +326,12 @@ class MpxWebpackPlugin {
         compiler.options.plugins.push(__vfs)
       }
     }
+
+    compiler.options.plugins.push(new ProvidePlugin(
+      {
+        mpxGlobal: mpxGlobalRuntimePath
+      }
+    ))
 
     if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       // 强制设置publicPath为'/'

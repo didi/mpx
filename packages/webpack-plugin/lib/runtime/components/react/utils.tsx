@@ -215,7 +215,7 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     if (varUseRegExp.test(varValue)) {
       varValue = '' + resolveVar(varValue, varContext)
     } else {
-      varValue = '' + global.__formatValue(varValue)
+      varValue = '' + mpxGlobal.__formatValue(varValue)
     }
     replaced.replace(start, end - 1, varValue)
   })

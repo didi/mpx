@@ -3,16 +3,16 @@ import { createI18n } from '../builtInMixins/i18nMixin'
 import * as navigationHelper from './navigationHelper'
 
 export function init (Mpx) {
-  global.__mpx = Mpx
-  global.__mpxAppCbs = global.__mpxAppCbs || {
+  mpxGlobal.__mpx = Mpx
+  mpxGlobal.__mpxAppCbs = mpxGlobal.__mpxAppCbs || {
     show: [],
     hide: [],
     error: [],
     rejection: []
   }
-  global.__navigationHelper = navigationHelper
-  if (global.i18n) {
-    Mpx.i18n = createI18n(global.i18n)
+  mpxGlobal.__navigationHelper = navigationHelper
+  if (mpxGlobal.i18n) {
+    Mpx.i18n = createI18n(mpxGlobal.i18n)
   }
   initGlobalErrorHandling()
 }

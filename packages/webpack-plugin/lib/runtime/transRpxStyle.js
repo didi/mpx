@@ -3,7 +3,7 @@ module.exports = function (style) {
     const rpx2vwRatio = +(100 / 750).toFixed(8)
     return '' + ($1 * rpx2vwRatio) + 'vw'
   }
-  const transRpxFn = global.__mpxTransRpxFn || defaultTransRpxFn
+  const transRpxFn = mpxGlobal.__mpxTransRpxFn || defaultTransRpxFn
   const parsedStyleObj = {}
   const rpxRegExpG = /\b(-?\d+(\.\d+)?)rpx\b/g
   const parseStyleText = (cssText) => {
