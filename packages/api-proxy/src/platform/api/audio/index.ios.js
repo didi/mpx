@@ -48,15 +48,15 @@ class InnerAudioContext {
     this.gainNode.gain.value = value
   }
 
-  set playbackRate (value) {
-    if (value < 0.5 || value > 2.0) {
-      throw new RangeError('Playback rate must be between 0.5 and 2.0')
-    }
-    this._playbackRate = value
-    if (this.source) {
-      this.source.playbackRate.value = value
-    }
-  }
+  // set playbackRate (value) {
+  //   if (value < 0.5 || value > 2.0) {
+  //     throw new RangeError('Playback rate must be between 0.5 and 2.0')
+  //   }
+  //   this._playbackRate = value
+  //   if (this.source) {
+  //     this.source.playbackRate.value = value
+  //   }
+  // }
 
   set autoPlay (status) {
     this._autoPlay = status
@@ -141,9 +141,9 @@ class InnerAudioContext {
     return this._buffered // 返回缓冲的时间点
   }
 
-  get playbackRate () {
-    return this._playbackRate // 返回播放速度
-  }
+  // get playbackRate () {
+  //   return this._playbackRate // 返回播放速度
+  // }
 
   get autoPlay () {
     return this._autoPlay
