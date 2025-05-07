@@ -184,7 +184,7 @@ module.exports = function getSpec ({ warn, error }) {
     'border-top': ['borderTopWidth', 'borderTopStyle', 'borderTopColor'],
     // 仅支持 width | style | color 这种排序
     'border-bottom': ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
-    // 0.76 及以上版本RN支持 box-shadow
+    // 0.76 及以上版本RN支持 box-shadow，实测0.77版本drn红米note12pro Android12 不支持内阴影，其他表现和web一致
     // 仅支持 offset-x | offset-y | blur-radius | color 排序
     // 'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
     // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
