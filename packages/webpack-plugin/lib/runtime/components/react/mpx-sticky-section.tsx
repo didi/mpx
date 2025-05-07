@@ -67,7 +67,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
     })
   }
 
-  const innerProps = useInnerProps(props, extendObject({
+  const innerProps = useInnerProps(extendObject({}, props, {
     style: extendObject(innerStyle, layoutStyle),
     ref: sectionRef
   }, layoutProps), [], { layoutRef })

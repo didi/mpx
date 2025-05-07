@@ -745,20 +745,26 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   })
 
   const innerProps = useInnerProps(
-    props,
-    extendObject({
-      ref: nodeRef,
-      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
-    },
-    layoutProps
-    ), [
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
+      }
+
+    ),
+    [
       'hover-start-time',
       'hover-stay-time',
       'hover-style',
       'hover-class'
-    ], {
+    ],
+    {
       layoutRef
-    })
+    }
+  )
 
   const childNode = wrapWithChildren(props, {
     hasVarDec,
