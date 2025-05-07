@@ -417,7 +417,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     scrollToIndex
   })
 
-  const innerProps = useInnerProps(props, scrollAdditionalProps, [
+  const innerProps = useInnerProps(extendObject({}, props, scrollAdditionalProps), [
     'id',
     'show-scrollbar',
     'lower-threshold',

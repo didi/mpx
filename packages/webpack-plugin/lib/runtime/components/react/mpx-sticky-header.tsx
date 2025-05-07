@@ -138,7 +138,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     }
   }, [scrollOffset, headerTopAnimated, offsetTop])
 
-  const innerProps = useInnerProps(props, extendObject({}, {
+  const innerProps = useInnerProps(extendObject({}, props, {
     ref: headerRef,
     style: extendObject({}, styles.content, innerStyle, animatedStyle, {
       paddingTop: padding[0] || 0,

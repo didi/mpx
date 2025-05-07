@@ -87,26 +87,26 @@ interface ScrollViewProps {
   __selectRef?: (selector: string, nodeType: 'node' | 'component', all?: boolean) => HandlerRef<any, any>
 }
 type ScrollAdditionalProps = {
-  pinchGestureEnabled: boolean;
-  horizontal: boolean;
-  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onContentSizeChange: (width: number, height: number) => void;
-  onLayout?: (event: LayoutChangeEvent) => void;
-  scrollsToTop: boolean;
-  showsHorizontalScrollIndicator: boolean;
-  showsVerticalScrollIndicator: boolean;
-  scrollEnabled: boolean;
-  ref: RefObject<ScrollView>;
-  bounces?: boolean;
-  pagingEnabled?: boolean;
-  style?: ViewStyle;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  onScrollBeginDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-};
+  pinchGestureEnabled: boolean
+  horizontal: boolean
+  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  onContentSizeChange: (width: number, height: number) => void
+  onLayout?: (event: LayoutChangeEvent) => void
+  scrollsToTop: boolean
+  showsHorizontalScrollIndicator: boolean
+  showsVerticalScrollIndicator: boolean
+  scrollEnabled: boolean
+  ref: RefObject<ScrollView>
+  bounces?: boolean
+  pagingEnabled?: boolean
+  style?: ViewStyle
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  onScrollBeginDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+}
 
 const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
 
@@ -281,7 +281,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }, [refresherTriggered])
 
-  function scrollTo ({ top = 0, left = 0, animated = false } : { top?: number; left?: number; animated?: boolean }) {
+  function scrollTo ({ top = 0, left = 0, animated = false }: { top?: number; left?: number; animated?: boolean }) {
     scrollToOffset(left, top, animated)
   }
 
@@ -693,33 +693,39 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     })
   }
 
-  const innerProps = useInnerProps(props, scrollAdditionalProps, [
-    'id',
-    'scroll-x',
-    'scroll-y',
-    'enable-back-to-top',
-    'enable-trigger-intersection-observer',
-    'paging-enabled',
-    'show-scrollbar',
-    'upper-threshold',
-    'lower-threshold',
-    'scroll-top',
-    'scroll-left',
-    'scroll-with-animation',
-    'refresher-triggered',
-    'refresher-enabled',
-    'refresher-default-style',
-    'refresher-background',
-    'children',
-    'enhanced',
-    'binddragstart',
-    'binddragging',
-    'binddragend',
-    'bindscroll',
-    'bindscrolltoupper',
-    'bindscrolltolower',
-    'bindrefresherrefresh'
-  ], { layoutRef })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      scrollAdditionalProps
+    ),
+    [
+      'id',
+      'scroll-x',
+      'scroll-y',
+      'enable-back-to-top',
+      'enable-trigger-intersection-observer',
+      'paging-enabled',
+      'show-scrollbar',
+      'upper-threshold',
+      'lower-threshold',
+      'scroll-top',
+      'scroll-left',
+      'scroll-with-animation',
+      'refresher-triggered',
+      'refresher-enabled',
+      'refresher-default-style',
+      'refresher-background',
+      'children',
+      'enhanced',
+      'binddragstart',
+      'binddragging',
+      'binddragend',
+      'bindscroll',
+      'bindscrolltoupper',
+      'bindscrolltolower',
+      'bindrefresherrefresh'
+    ], { layoutRef })
 
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
 

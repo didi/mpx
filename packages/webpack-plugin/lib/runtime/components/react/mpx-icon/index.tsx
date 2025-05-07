@@ -87,14 +87,15 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const innerProps = useInnerProps(
-      props,
       extendObject(
+        {},
+        props,
+        layoutProps,
         {
           ref: nodeRef,
           source,
           style: extendObject({}, normalStyle, layoutStyle, { tintColor: color })
-        },
-        layoutProps
+        }
       ),
       [],
       {
