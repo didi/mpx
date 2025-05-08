@@ -1,16 +1,18 @@
 <template>
   <div class="mpx-recycle-view">
-    <ScrollView ref="scrollView"
+    <ScrollView
+    ref="scrollView"
     :enableSticky="enableSticky"
     :scroll-y="true" 
     :enhanced="enhanced"
     :scrollWithAnimation="scrollWithAnimation"
     :refresherEnabled="refresherEnabled"
     :refresherTriggered="refresherTriggered"
+    :scrollOptions="scrollOptions"
     @scroll="onScroll"
     @scrolltolower="onScrolltolower" 
     @refresherrefresh="onRefresherrefresh" 
-    :style="{ 'width': _width, 'height': _height }"
+    :style="scrollViewStyle"
     >
       <div class="content-wrapper">
         <template v-if="genericlistHeader">
@@ -118,6 +120,12 @@
         type: String,
         default: ''
       },
+      'scrollOptions': {
+        type: Object,
+        default: () => {
+          return {}
+        }
+      }
     },
     data() {
       return {
@@ -157,6 +165,9 @@
           }
         })
         return data
+      },
+      scrollViewStyle() {
+        return `height: ${this.formatDimension(this.height)};width: ${this.formatDimension(this.width)}`
       },
       _scrollTop() {
         // 使用初始值或当前值
@@ -210,9 +221,16 @@
           }
         })
       },
-      totalHeight() {
+      _listHeaderHeight () {
+        let listHeaderHeight = 0
+        if (this.genericlistHeader) {
+          listHeaderHeight = this.getItemHeight(this.listHeaderData, 0, 'listHeaderHeight') || 0
+        }
+        return listHeaderHeight
+      },
+      placeholderHeight() {
         if (!this.positions.length) return 0
-        return this.positions[this.positions.length - 1].bottom
+        return (this.positions[this.positions.length - 1].bottom - this._listHeaderHeight) || 0
       }
     },
     watch: {
@@ -237,28 +255,11 @@
       }
     },
     created() {
-      if (this.generichash && global.__mpxGenericsMap[this.generichash]) {
-        const components = {}
-        if (this.genericrecycleItem) {
-          const value = global.__mpxGenericsMap[this.generichash][this.genericrecycleItem]
-          components['recycle-item'] = value
-        }
-
-        if (this.genericlistHeader) {
-          const value = global.__mpxGenericsMap[this.generichash][this.genericlistHeader]
-          components['list-header'] = value
-        }
-
-        if (this.genericsectionHeader) {
-          const value = global.__mpxGenericsMap[this.generichash][this.genericsectionHeader]
-          components['section-header'] = value
-        }
-        this.$options.components = Object.assign({}, this.$options.components, components)
-      }
+      this.registerGenericComponents()
     },
     mounted() {
       this.initPositions()
-      this.containerHeight = this.$refs.scrollView.clientHeight || 0
+      this.containerHeight = this.$refs.scrollView?.$el?.clientHeight || 0
       this.isReady = true
       this.setPlaceholderStyle()
       if (!this.positions || !this.positions.length) {
@@ -269,17 +270,40 @@
       this.setStartOffset()
     },
     methods: {
+      registerGenericComponents() {
+        if (!this.generichash || !global.__mpxGenericsMap[this.generichash]) {
+          return
+        }
+
+        let components = null
+        const genericList = [
+          ['recycle-item', this.genericrecycleItem],
+          ['list-header', this.genericlistHeader],
+          ['section-header', this.genericsectionHeader]
+        ]
+
+        for (const [key, value] of genericList) {
+          if (value) {
+            components = components || {}
+            components[key] = global.__mpxGenericsMap[this.generichash][value]
+          }
+        }
+
+        if (components) {
+          this.$options.components = Object.assign({}, this.$options.components, components)
+        }
+      },
+      formatDimension(value) {
+        return typeof value === 'number' ? `${value}px` : value || '100%'
+      },
       setPlaceholderStyle () {
         const infinitePlaceholder = this.$refs.infinitePlaceholder
         if (infinitePlaceholder) {
-          infinitePlaceholder.style.height = `${this.totalHeight}px`
+          infinitePlaceholder.style.height = `${this.placeholderHeight}px`
         }
       },
       initPositions() {
-        let bottom = 0
-        if (this.genericlistHeader) {
-          bottom = this.getItemHeight(this.listHeaderData, 0, 'listHeaderHeight') || 0
-        }
+        let bottom = this._listHeaderHeight || 0
         this.positions = this._listData.map((item, index) => {
           const height = this.getItemHeight(item.itemData, index, item.itemData.isSectionHeader ? 'sectionHeaderHeight': 'itemHeight')
           const position = {
