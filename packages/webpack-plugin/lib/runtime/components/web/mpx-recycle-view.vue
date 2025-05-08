@@ -13,15 +13,19 @@
     :style="{ 'width': _width, 'height': _height }"
     >
       <div class="content-wrapper">
-        <div class="infinite-list-placeholder" ref="infinitePlaceholder"></div>
+        <template v-if="genericlistHeader">
+          <list-header :listHeaderData="listHeaderData"></list-header>
+        </template>
+        <div class="infinite-list-placeholder" ref="infinitePlaceholder">
+        </div>
         <div class="infinite-list" ref="infiniteList">
           <template v-for="item in visibleData">
-            <section-header v-if="item.itemData.isSectionHeader" :key="'header' + item._index" :itemData="item.itemData"/>
-            <recycle-item v-else :key="'item' + item._index" :itemData="item.itemData"/>
+            <section-header v-if="item.itemData.isSectionHeader && genericsectionHeader" :key="'header' + item._index" :itemData="item.itemData"/>
+            <recycle-item v-if="!item.itemData.isSectionHeader && genericrecycleItem" :key="'item' + item._index" :itemData="item.itemData"/>
           </template>
         </div>
       </div>
-      <template v-if="_stickyHeaders && _stickyHeaders.length && enableSticky">
+      <template v-if="_stickyHeaders && _stickyHeaders.length && enableSticky && genericsectionHeader">
         <StickyHeader v-for="stickyItem in _stickyHeaders" class="sticky-section" :style="{'top': (positions[stickyItem._index] && positions[stickyItem._index].top || 0) + 'px'}">
           <section-header :key="'header' + stickyItem._index" :itemData="stickyItem.itemData"/>
         </StickyHeader>
@@ -43,6 +47,7 @@
           return []
         }
       },
+      listHeaderData: Object,
       enableSticky: Boolean,
       scrollWithAnimation: Boolean,
       enhanced: {
@@ -272,6 +277,9 @@
       },
       initPositions() {
         let bottom = 0
+        if (this.genericlistHeader) {
+          bottom = this.getItemHeight(this.listHeaderData, 0, 'listHeaderHeight') || 0
+        }
         this.positions = this._listData.map((item, index) => {
           const height = this.getItemHeight(item.itemData, index, item.itemData.isSectionHeader ? 'sectionHeaderHeight': 'itemHeight')
           const position = {
@@ -364,7 +372,7 @@
           const offset = this.positions[startIndex].top
           infiniteList.style.transform = `translateY(${offset}px)`
         } else {
-          infiniteList.style.transform = 'none'
+          infiniteList.style.transform = `translateY(${this.positions[0].top}px)`
         }
       },
       getItemHeight(item, index, key) {
