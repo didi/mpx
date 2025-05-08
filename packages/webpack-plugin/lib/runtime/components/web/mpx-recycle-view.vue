@@ -2,17 +2,19 @@
   <div class="mpx-recycle-view">
     <ScrollView ref="scrollView" :enableSticky="enableSticky" :scroll-y="true" @scroll="handleScroll" :style="{ 'width': _width, 'height': _height }">
       <div class="content-wrapper">
-        <div class="infinite-list-placeholder" :style="placeholderStyle"></div>
-        <div class="infinite-list" :style="contentStyle">
+        <div class="infinite-list-placeholder" ref="infinitePlaceholder"></div>
+        <div class="infinite-list" ref="infiniteList">
           <template v-for="item in visibleData">
-            <section-header v-if="item.isSectionHeader" :key="'header' + item._index" :itemData="item" />
-            <recycle-item v-else :key="'item' + item._index" :itemData="item" />
+            <section-header v-if="item.itemData.isSectionHeader" :key="'header' + item._index" :itemData="item.itemData"/>
+            <recycle-item v-else :key="'item' + item._index" :itemData="item.itemData"/>
           </template>
         </div>
       </div>
-      <StickyHeader v-for="(stickyItem) in _stickyHeaders" class="sticky-section" :style="{'top': (positions[stickyItem._index] && positions[stickyItem._index].top || 0) + 'px'}">
-        <section-header :key="'header' + stickyItem._index" :itemData="stickyItem"/>
-      </StickyHeader>
+      <template v-if="_stickyHeaders && _stickyHeaders.length && enableSticky">
+        <StickyHeader v-for="stickyItem in _stickyHeaders" class="sticky-section" :style="{'top': (positions[stickyItem._index] && positions[stickyItem._index].top || 0) + 'px'}">
+          <section-header :key="'header' + stickyItem._index" :itemData="stickyItem.itemData"/>
+        </StickyHeader>
+      </template>
     </ScrollView>
   </div>
 </template>
@@ -93,7 +95,6 @@
         start: 0,
         end: 0,
         contentStyle: '',
-        placeholderStyle: '',
         containerHeight: 0,
         positions: [],
         isReady: false,
@@ -110,14 +111,20 @@
       },
       _listData() {
         return this.listData.map((item, index) => {
-          return Object.assign({}, item, { _index: `_${index}` })
+          return {
+            itemData: item,
+            _index: `_${index}`
+          }
         })
       },
       _stickyHeaders () {
          const data = []
          this.listData.forEach((item, index) => {
           if (item.isSectionHeader) {
-            data.push(Object.assign({}, item, { _index: `${index}` }))
+            data.push({
+              itemData: item,
+              _index: index
+            })
           }
         })
         return data
@@ -183,7 +190,7 @@
       listData: {
         handler() {
           this.initPositions()
-          this.placeholderStyle = `height: ${this.totalHeight}px`
+          this.setPlaceholderStyle()
           // 更新真实偏移量
           this.setStartOffset()
         }
@@ -222,9 +229,9 @@
     },
     mounted() {
       this.initPositions()
-      this.containerHeight = this.$refs.scrollView.clientHeight
+      this.containerHeight = this.$refs.scrollView.clientHeight || 0
       this.isReady = true
-      this.placeholderStyle = `height: ${this.totalHeight}px`
+      this.setPlaceholderStyle()
       if (!this.positions || !this.positions.length) {
         return
       }
@@ -233,10 +240,16 @@
       this.setStartOffset()
     },
     methods: {
+      setPlaceholderStyle () {
+        const infinitePlaceholder = this.$refs.infinitePlaceholder
+        if (infinitePlaceholder) {
+          infinitePlaceholder.style.height = `${this.totalHeight}px`
+        }
+      },
       initPositions() {
         let bottom = 0
         this.positions = this._listData.map((item, index) => {
-          const height = this.getItemHeight(item, index, item.isSectionHeader ? 'sectionHeaderHeight': 'itemHeight')
+          const height = this.getItemHeight(item.itemData, index, item.itemData.isSectionHeader ? 'sectionHeaderHeight': 'itemHeight')
           const position = {
             index,
             height: height,
@@ -315,8 +328,8 @@
         return Math.min(Math.max(0, start - 1), list.length - 1)
       },
       setStartOffset() {
-        if (!this.positions.length) return
-
+        const infiniteList = this.$refs.infiniteList
+        if (!this.positions.length || !infiniteList) return
         if (this.start >= 1) {
           // 确保 startIndex 不会超出范围
           const startIndex = Math.min(
@@ -325,10 +338,9 @@
           )
 
           const offset = this.positions[startIndex].top
-
-          this.contentStyle = `transform: translateY(${offset}px);`
+          infiniteList.style.transform = `translateY(${offset}px)`
         } else {
-          this.contentStyle = `transform: translateY(0px);`
+          infiniteList.style.transform = 'none'
         }
       },
       getItemHeight(item, index, key) {
@@ -365,11 +377,22 @@
       onScrollToLower(e) {
         this.triggerEvent('scrolltolower', e)
       },
-      scrollTo(params = {}) {
+      scrollToIndex({index, animated}) {
+        const isStickyHeader = this._listData[index].itemData?.isSectionHeader
+        let prevHeaderHeight = 0
+        // 如果不是Sticky header 查找最近一个吸顶的 sticky header
+        if (!isStickyHeader && this.enableSticky) {
+           for (let i = index - 1; i >= 0; i--) {
+          if (this._listData[i].itemData?.isSectionHeader) {
+            prevHeaderHeight = this.positions[i].height
+            break
+          }
+        }
+        }
+       
+        const top = (this.positions[index]?.top || 0) - prevHeaderHeight
+        this.$refs.scrollView?.bs.scrollTo(0, -top, animated ? 200 : 0)
       }
-    },
-    watch: {
-
     },
     components: {
       ScrollView,
