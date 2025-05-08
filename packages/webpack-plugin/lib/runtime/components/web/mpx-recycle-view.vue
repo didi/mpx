@@ -1,6 +1,17 @@
 <template>
   <div class="mpx-recycle-view">
-    <ScrollView ref="scrollView" :enableSticky="enableSticky" :scroll-y="true" @scroll="handleScroll" :style="{ 'width': _width, 'height': _height }">
+    <ScrollView ref="scrollView"
+    :enableSticky="enableSticky"
+    :scroll-y="true" 
+    :enhanced="enhanced"
+    :scrollWithAnimation="scrollWithAnimation"
+    :refresherEnabled="refresherEnabled"
+    :refresherTriggered="refresherTriggered"
+    @scroll="onScroll"
+    @scrolltolower="onScrolltolower" 
+    @refresherrefresh="onRefresherrefresh" 
+    :style="{ 'width': _width, 'height': _height }"
+    >
       <div class="content-wrapper">
         <div class="infinite-list-placeholder" ref="infinitePlaceholder"></div>
         <div class="infinite-list" ref="infiniteList">
@@ -33,6 +44,19 @@
         }
       },
       enableSticky: Boolean,
+      scrollWithAnimation: Boolean,
+      enhanced: {
+        type: Boolean,
+        default: false
+      },
+      refresherEnabled: {
+        type: Boolean,
+        default: false
+      },
+      refresherTriggered: {
+        type: Boolean,
+        default: false
+      },
       minRenderCount: {
         type: Number,
         default: 10
@@ -351,14 +375,7 @@
           return value || 0
         }
       },
-      handleScroll(e) {
-        const now = Date.now()
-        // 添加16ms的节流，大约60fps
-        if (now - this.lastScrollTime < 16) {
-          return
-        }
-        this.lastScrollTime = now
-
+      onScroll(e) {
         const { scrollTop } = e.detail
         const newStart = this.getStartIndex(scrollTop)
 
@@ -369,13 +386,13 @@
           this.setStartOffset()
         }
 
-        this.triggerEvent('scroll', e)
+        this.$emit('scroll', e)
       },
-      onScrollToUpper(e) {
-        this.triggerEvent('scrolltoupper', e)
+      onScrolltolower(e) {
+        this.$emit('scrolltolower', e)
       },
-      onScrollToLower(e) {
-        this.triggerEvent('scrolltolower', e)
+      onRefresherrefresh(e) {
+        this.$emit('refresherrefresh', e)
       },
       scrollToIndex({index, animated}) {
         const isStickyHeader = this._listData[index].itemData?.isSectionHeader
