@@ -20,14 +20,13 @@
       <list-header listHeaderData="{{listHeaderData}}"></list-header>
     </block>
     <block wx:for="{{convertedListData}}" wx:key="index">
-      <block wx:if="{{type === 'section'}}">
+      <block wx:if="{{enableSticky}}">
         <sticky-section>
           <!-- section header -->
           <block wx:if="{{item.hasSectionHeader && mpxGenericSectionHeader}}">
-            <sticky-header wx:if="{{enableSticky}}">
+            <sticky-header>
               <section-header itemData="{{item.headerData}}" id="{{item._domId}}"></section-header>
             </sticky-header>
-            <section-header wx:else id="{{item._domId}}" itemData="{{item.headerData}}"></section-header>
           </block>
 
           <block
@@ -41,13 +40,21 @@
           </block>
         </sticky-section>
       </block>
-      <block wx:if="{{type !== 'section' && (mpxGenericRecycleItem || mpxGenericSectionHeader)}}">
-        <section-header
-          wx:if="{{item.itemData && item.itemData.isSectionHeader}}"
-          id="{{item._domId}}"
-          itemData="{{item.itemData}}"
-        ></section-header>
-        <recycle-item wx:else itemData="{{item.itemData}}" id="{{item._domId}}"></recycle-item>
+      <block wx:else>
+        <block wx:if="{{item.itemData && item.itemData.isSectionHeader}}">
+          <section-header
+            wx:if="{{mpxGenericSectionHeader}}"
+            id="{{item._domId}}"
+            itemData="{{item.itemData}}"
+          ></section-header>
+        </block>
+        <block wx:else>
+          <recycle-item
+            wx:if="{{mpxGenericRecycleItem}}"
+            itemData="{{item.itemData}}"
+            id="{{item._domId}}"
+          ></recycle-item>
+        </block>
       </block>
     </block>
   </scroll-view>
@@ -69,10 +76,6 @@
       listData: {
         type: Array,
         value: []
-      },
-      type: {
-        type: String,
-        value: ''
       },
       mpxGenericRecycleItem: String,
       mpxGenericSectionHeader: String,
@@ -120,7 +123,7 @@
     watch: {
       listData: {
         handler(newVal) {
-          if (this.type === 'section') {
+          if (this.enableSticky) {
             this.convertedListData = this.convertToSectionListData(newVal)
           } else {
             this.convertedListData = this.convertToListData(newVal)
@@ -131,7 +134,7 @@
     },
     methods: {
       formatDimension(value) {
-        return typeof value === 'number' ? `${value}px` : (value || '100%')
+        return typeof value === 'number' ? `${value}px` : value || '100%'
       },
       onScroll(e) {
         this.triggerEvent('scroll', e)
