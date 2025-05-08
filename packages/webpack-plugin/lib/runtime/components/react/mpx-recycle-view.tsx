@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef, useCallback, useState, useEffect, useMemo, ForwardedRef, ReactElement } from 'react'
+import React, { forwardRef, useRef, useCallback, useState, useEffect, useMemo, ForwardedRef, ReactElement, createElement } from 'react'
 import { SectionList, FlatList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
@@ -53,7 +53,6 @@ interface RecycleViewProps {
   height?: number | string;
   width?: number | string;
   listData?: ListItem[];
-  type?: 'normal' | 'section';
   generichash?: string;
   style?: Record<string, any>;
   itemHeight?: ItemHeightType;
@@ -88,7 +87,11 @@ interface ScrollPositionParams {
 
 const getGenericComponent = ({ props, ref, generichash, generickey }: GenericComponentProps): ReactElement => {
   const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
-  return <GenericComponent ref={ref} {...props}/>
+  return createElement(GenericComponent,
+    extendObject({}, {
+      ref: ref
+    }, props)
+  )
 }
 
 const Item = forwardRef<any, ItemProps>((props, ref) => {
@@ -114,7 +117,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     height,
     width,
     listData,
-    type,
     generichash,
     style = {},
     itemHeight = {},
@@ -191,7 +193,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
 
   const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
     if (scrollViewRef.current) {
-      if (type === 'section') {
+      if (enableSticky) {
         // 通过索引映射表快速定位位置
         const position = indexMap.current[index]
         const [sectionIndex, itemIndex] = (position as string).split('_')
@@ -213,7 +215,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       return 0
     }
     if ((itemHeight as ItemHeightType).getter) {
-      if (type === 'section') {
+      if (enableSticky) {
         const item = convertedListData[sectionIndex].data[rowIndex]
         // 使用getOriginalIndex获取原始索引
         const originalIndex = getOriginalIndex(sectionIndex, rowIndex)
@@ -291,10 +293,9 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         }
         // 将 item 添加到当前 section 的 data 中
         const itemIndex = currentSection.data.length
-        currentSection.data.push({
-          ...item,
+        currentSection.data.push(extendObject({}, item, {
           _originalItemIndex: index
-        })
+        }))
         let sectionIndex
         // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
         if (!currentSection.hasSectionHeader && sections.length === 0) {
@@ -320,7 +321,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   }, [])
 
   const convertedListData = useMemo(() => {
-    if (type === 'section') {
+    if (enableSticky) {
       return convertToSectionListData(listData || []) || []
     } else {
       return listData
@@ -336,7 +337,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       offset += listHeaderHeight.getter?.() || listHeaderHeight.value || 0
     }
 
-    if (type === 'section') {
+    if (enableSticky) {
       // 遍历所有 sections
       convertedListData.forEach((section: Section, sectionIndex: number) => {
       // 添加 section header 的位置信息
@@ -426,30 +427,48 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     'bindrefresherrefresh'
   ], { layoutRef })
 
-  return (
-    type === 'section'
-      ? <SectionList
-        {...innerProps as any}
-        style={[{ height, width }, style, layoutStyle]}
-        sections={convertedListData}
-        keyExtractor={(item, index) => item + index}
-        renderItem={renderItem}
-        getItemLayout={getItemLayout}
-        ListHeaderComponent={(generichash && genericListHeader && renderListHeader) || null}
-        renderSectionHeader={(generichash && genericsectionHeader && renderSectionHeader) || null}
-        refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
-      />
-      : <FlatList
-        {...innerProps as any}
-        style={[{ height, width }, style, layoutStyle]}
-        data={convertedListData}
-        keyExtractor={(item, index) => item + index}
-        renderItem={renderItem}
-        getItemLayout={getItemLayout}
-        ListHeaderComponent={(generichash && genericListHeader && renderListHeader) || null}
-        refreshControl={refresherEnabled ? <RefreshControl onRefresh={onRefresh} refreshing={refreshing}/> : undefined}
-      />
-  )
+  return enableSticky
+    ? createElement(
+      SectionList,
+      extendObject(
+        {
+          style: [{ height, width }, style, layoutStyle],
+          sections: convertedListData,
+          keyExtractor: (item: any, index: number) => item + index,
+          renderItem: renderItem,
+          getItemLayout: getItemLayout,
+          ListHeaderComponent: (generichash && genericListHeader && renderListHeader) || null,
+          renderSectionHeader: (generichash && genericsectionHeader && renderSectionHeader) || null,
+          refreshControl: refresherEnabled
+            ? React.createElement(RefreshControl, {
+              onRefresh: onRefresh,
+              refreshing: refreshing
+            })
+            : undefined
+        },
+        innerProps
+      )
+    )
+    : createElement(
+      FlatList,
+      extendObject(
+        {
+          style: [{ height, width }, style, layoutStyle],
+          data: convertedListData,
+          keyExtractor: (item: any, index: number) => item + index,
+          renderItem: renderItem,
+          getItemLayout: getItemLayout,
+          ListHeaderComponent: (generichash && genericListHeader && renderListHeader) || null,
+          refreshControl: refresherEnabled
+            ? React.createElement(RefreshControl, {
+              onRefresh: onRefresh,
+              refreshing: refreshing
+            })
+            : undefined
+        },
+        innerProps
+      )
+    )
 })
 
 export default RecycleView
