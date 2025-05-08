@@ -134,10 +134,13 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
 
     useNodesRef<View, PickerProps>(props, ref, nodeRef)
     const innerProps = useInnerProps(
-      props,
-      {
-        ref: nodeRef
-      },
+      extendObject(
+        {},
+        props,
+        {
+          ref: nodeRef
+        }
+      ),
       [],
       { layoutRef: innerLayout }
     )
