@@ -44,6 +44,7 @@
       >
         <StickyHeader
           v-for="stickyItem in _stickyHeaders"
+          :key="stickyItem._index"
           class="sticky-section"
           :style="{
             top:
@@ -68,13 +69,19 @@ import StickyHeader from "./mpx-sticky-header.vue";
 
 export default {
   props: {
+    width: String | Number,
+    height: String | Number,
     listData: {
       type: Array,
-      default: []
+      default: () => {
+        return []
+      }
     },
     scrollOptions: {
       type: Object,
-      default: {}
+      default: () => {
+        return {}
+      }
     },
     minRenderCount: {
       type: Number,
@@ -86,19 +93,27 @@ export default {
     },
     itemHeight: {
       type: Object,
-      default: {},
+      default: () => {
+        return {}
+      }
     },
     listHeaderHeight: {
       type: Object,
-      default: {},
+      default: () => {
+        return {}
+      }
     },
     sectionHeaderHeight: {
       type: Object,
-      default: {},
+      default: () => {
+        return {}
+      }
     },
     listHeaderData: {
       type: Object,
-      default: {},
+      default: () => {
+        return {}
+      }
     },
     enhanced: {
       type: Boolean,
@@ -135,12 +150,6 @@ export default {
     };
   },
   computed: {
-    _width() {
-      return this.width ? `${this.width}px` : "100%";
-    },
-    _height() {
-      return this.height ? `${this.height}px` : "100%";
-    },
     _listData() {
       return this.listData.map((item, index) => {
         return {
@@ -273,16 +282,17 @@ export default {
       }
 
       let components = null;
-      const genericList = [
-        ["recycle-item", this.genericrecycleItem],
-        ["list-header", this.genericlistHeader],
-        ["section-header", this.genericsectionHeader],
-      ];
+      const genericList = {
+        "recycle-item": this.genericrecycleItem ,
+        "list-header": this.genericlistHeader ,
+        "section-header": this.genericsectionHeader
+      }
 
-      for (const [key, value] of genericList) {
+      for (const key in genericList) {
+        const value = genericList[key]
         if (value) {
           components = components || {};
-          components[key] = global.__mpxGenericsMap[this.generichash][value];
+          components[key] = global.__mpxGenericsMap[this.generichash][value]
         }
       }
 
