@@ -70,15 +70,11 @@ export default {
   props: {
     listData: {
       type: Array,
-      default() {
-        return [];
-      },
+      default: []
     },
     scrollOptions: {
       type: Object,
-      default: () => {
-        return {};
-      },
+      default: {}
     },
     minRenderCount: {
       type: Number,
@@ -100,12 +96,30 @@ export default {
       type: Object,
       default: {},
     },
-    enhanced: Boolean,
-    refresherEnabled: Boolean,
-    refresherTriggered:Boolean,
-    listHeaderData: Object,
-    enableSticky: Boolean,
-    scrollWithAnimation: Boolean,
+    listHeaderData: {
+      type: Object,
+      default: {},
+    },
+    enhanced: {
+      type: Boolean,
+      default: false
+    },
+    refresherEnabled: {
+      type: Boolean,
+      default: false
+    },
+    refresherTriggered: {
+      type: Boolean,
+      default: false
+    },
+    enableSticky: {
+      type: Boolean,
+      default: false
+    },
+    scrollWithAnimation: {
+      type: Boolean,
+      default: false
+    },
     generichash: String,
     genericlistHeader: String,
     genericrecycleItem: String,
