@@ -1,3 +1,8 @@
+import { hasOwn } from '@mpxjs/utils'
+// Todo 不走 createAnimation api 的方式收集，支持 margin-right 4s, color 1s 比较麻烦，需要分割时间
+// Todo 强制定义 transition-property transition 这种方式
+import { createAnimation as createAnimationAPI } from '@mpxjs/api-proxy'
+
 import { useEffect, useMemo, useRef } from 'react'
 import { TransformsStyle } from 'react-native'
 import {
@@ -8,205 +13,30 @@ import {
   withSequence,
   withDelay,
   makeMutable,
-  cancelAnimation,
-  SharedValue,
-  WithTimingConfig,
-  AnimationCallback
+  runOnJS,
+  cancelAnimation
 } from 'react-native-reanimated'
-import { error, hasOwn } from '../../_utils'
-import { createAnimation as createAnimationAPI } from '../animation.ts'
+import {
+  EasingKey, Transform, TransformOrigin, InitialValue,
+  isTransform, getTransformObj, getUnit, parseValues, AnimatedOption
+} from './utils'
 import type { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
+import type { ExtendWithTimingConfig, AnimationProp } from './utils'
+import type { AnimationCallback, SharedValue } from 'react-native-reanimated'
 
-type AnimatedOption = {
-  duration: number
-  delay: number
-  useNativeDriver: boolean
-  timingFunction: 'linear' | 'ease' | 'ease-in' | 'ease-in-out'| 'ease-out'
-  transformOrigin: string
-}
-type ExtendWithTimingConfig = WithTimingConfig & {
-  delay: number
-}
-export type AnimationStepItem = {
-  animatedOption: AnimatedOption
-  rules: Map<string, number | string>
-  transform: Map<string, number>
-}
-export type AnimationProp = {
-  id: number,
-  actions: AnimationStepItem[]
-}
-
-// 微信 timingFunction 和 RN Easing 对应关系
-const EasingKey = {
-  linear: Easing.linear,
-  ease: Easing.inOut(Easing.ease),
-  'ease-in': Easing.in(Easing.poly(3)),
-  'ease-in-out': Easing.inOut(Easing.poly(3)),
-  'ease-out': Easing.out(Easing.poly(3))
-  // 'step-start': '',
-  // 'step-end': ''
-}
-const TransformInitial: ExtendedViewStyle = {
-  // matrix: 0,
-  // matrix3d: 0,
-  // rotate: '0deg',
-  rotateX: '0deg',
-  rotateY: '0deg',
-  rotateZ: '0deg',
-  // rotate3d:[0,0,0]
-  // scale: 1,
-  // scale3d: [1, 1, 1],
-  scaleX: 1,
-  scaleY: 1,
-  // scaleZ: 1,
-  // skew: 0,
-  skewX: '0deg',
-  skewY: '0deg',
-  // translate: 0,
-  // translate3d: 0,
-  translateX: 0,
-  translateY: 0
-  // translateZ: 0,
-}
-// 动画默认初始值
-const InitialValue: ExtendedViewStyle = Object.assign({
-  opacity: 1,
-  backgroundColor: 'transparent',
-  width: 0,
-  height: 0,
-  top: 0,
-  right: 0,
-  bottom: 0,
-  left: 0,
-  transformOrigin: ['50%', '50%', 0]
-}, TransformInitial)
-const PropSupportTransition = Object.assign({
-  borderRadius: 0,
-  borderColor: 'transparent',
-  borderWidth: 0,
-  // Todo 新增的 prop
-  marginTop: 0,
-  marginLeft: 0,
-  marginRight: 0,
-  marginBottom: 0
-}, InitialValue)
-const TransformOrigin = 'transformOrigin'
-const Transform = 'transform'
-const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)\s*$/
-// 动画类型
-const enum AnimationType {
-  None,
-  API,
-  CssTransition,
-  CssAnimation
-}
-// transform
-const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
-// 多value解析
-const parseValues = (str: string, char = ' ') => {
-  let stack = 0
-  let temp = ''
-  const result = []
-  for (let i = 0; i < str.length; i++) {
-    if (str[i] === '(') {
-      stack++
-    } else if (str[i] === ')') {
-      stack--
-    }
-    // 非括号内 或者 非分隔字符
-    if (stack !== 0 || str[i] !== char) {
-      temp += str[i]
-    }
-    if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp.trim())
-      temp = ''
-    }
-  }
-  return result
-}
-// parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
-const parseTransform = (transformStr: string) => {
-  const values = parseValues(transformStr)
-  const transform: {[propName: string]: string|number|number[]}[] = []
-  values.forEach(item => {
-    const match = item.match(/([/\w]+)\((.+)\)/)
-    if (match && match.length >= 3) {
-      let key = match[1]
-      const val = match[2]
-      switch (key) {
-        case 'translateX':
-        case 'translateY':
-        case 'scaleX':
-        case 'scaleY':
-        case 'rotateX':
-        case 'rotateY':
-        case 'rotateZ':
-        case 'rotate':
-        case 'skewX':
-        case 'skewY':
-        case 'perspective':
-          // rotate 处理成 rotateZ
-          key = key === 'rotate' ? 'rotateZ' : key
-          // 单个值处理
-          transform.push({ [key]: global.__formatValue(val) })
-          break
-        case 'matrix':
-          transform.push({ [key]: parseValues(val, ',').map(val => +val) })
-          break
-        case 'translate':
-        case 'scale':
-        case 'skew':
-        case 'translate3d': // x y 支持 z不支持
-        case 'scale3d': // x y 支持 z不支持
-        {
-          // 2 个以上的值处理
-          key = key.replace('3d', '')
-          const vals = parseValues(val, ',').splice(0, 3)
-          // scale(.5) === scaleX(.5) scaleY(.5)
-          if (vals.length === 1 && key === 'scale') {
-            vals.push(vals[0])
-          }
-          const xyz = ['X', 'Y', 'Z']
-          transform.push(...vals.map((v, index) => {
-            return { [`${key}${xyz[index] || ''}`]: global.__formatValue(v.trim()) }
-          }))
-          break
-        }
-      }
-    }
-  })
-  return transform
-}
-// format style
-const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
-  if (!style.transform || Array.isArray(style.transform)) return style
-  return Object.assign({}, style, {
-    transform: parseTransform(style.transform)
-  })
-}
-// transform 数组转对象
-function getTransformObj (transforms: { [propName: string]: string | number }[]) {
-  'worklet'
-  return transforms.reduce((transformObj, item) => {
-    return Object.assign(transformObj, item)
-  }, {} as { [propName: string]: string | number })
-}
 // transition 解析相关方法
-// 解析动画时长
-function getUnit (duration: string) {
-  const match = secondRegExp.exec(duration)
-  return match ? match[2] === 's' ? +match[1] * 1000 : +match[1] : 0
-}
 // 解析 property timingFunction
 function parseSingleTransition (options: string[]) {
+  console.log('parseSingleTransition options=', options)
   if (options.length < 2) return null
   const property = options[0]
   const duration = getUnit(options[1])
+  console.log('parseSingleTransition duration=', duration)
   if (!property || !duration) return null
   const timingFunction = Object.keys(EasingKey).includes(options[2]) ? options[2] : EasingKey.linear
   const delay = getUnit(options[2]) || getUnit(options[3])
+  console.log(`parseSingleTransition property=${property} duration=${duration} delay: ${delay} timingFunction: ${timingFunction}`)
   return {
     property,
     animatedOption: {
@@ -218,11 +48,17 @@ function parseSingleTransition (options: string[]) {
 }
 // transition 解析
 function parseTransition (transition: string) {
+  // Todo 末尾分号;
   const isMulti = transition.includes(',')
   if (isMulti) {
-    const options = parseValues(transition, ' ')
+    const multi = parseValues(transition, ',')
+    console.log('parseTransition multi=', multi)
     // Todo transition: margin-right 4s, color 1s 支持
-    return null
+    return multi.map(item => {
+      const options = parseValues(item)
+      console.log('parseTransition options=', options)
+      return parseSingleTransition(options)
+    })[0]
   } else {
     const options = parseValues(transition)
     return parseSingleTransition(options)
@@ -239,32 +75,14 @@ function getAnimatedKeysFromTransition (propName: string, originalStyle: Extende
       // ins[key](value).step()
       // console.log(key, value, shareValMap[propName]?.value, lastStyleRef.current[propName]);
     })
-  } else if (Object.keys(PropSupportTransition).includes(propName)) {
+  } else {
     animatedKeys[propName] = true
-    // console.log(propName, value, shareValMap[propName]?.value, lastStyleRef.current[propName])
   }
   return animatedKeys
 }
 
 export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean }) {
-  const { style = {}, enableAnimation } = props
-  let animation = props.animation
-  const enableStyleAnimation = enableAnimation || !!animation || !!style.transition
-  const enableAnimationRef = useRef(enableStyleAnimation)
-  if (enableAnimationRef.current !== enableStyleAnimation) {
-    error('[Mpx runtime error]: animation usage should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
-  // 记录动画类型
-  const animationType = style.transition ? AnimationType.CssTransition : style.animation ? AnimationType.CssAnimation : animation ? AnimationType.API : AnimationType.None
-  const animationTypeRef = useRef(animationType)
-  if (animationTypeRef.current !== AnimationType.None && animationTypeRef.current !== animationType) {
-    error('[Mpx runtime error]: animationType should be stable, it is not allowed to switch CSS animation, API animation or CSS animation in the component lifecycle')
-  }
-  if (!enableAnimationRef.current) return { enableStyleAnimation: false }
-
-  const originalStyle = formatStyle(style)
-  // id 标识
-  // const id = animation?.id || -1
+  const { style: originalStyle = {}, bindtransitionend } = props
   // 有动画样式的 style key
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
@@ -286,12 +104,13 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAn
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
+  let animation: AnimationProp
   // ** style更新同步
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (style.transition) {
-      animationTypeRef.current = AnimationType.CssTransition
-      const { property, animatedOption = {} } = parseTransition(style.transition) || {}
+    if (originalStyle.transition) {
+      const { property, animatedOption = {} as AnimatedOption } = parseTransition(originalStyle.transition) || {}
+      console.log('parseValues ====', property, animatedOption)
       if (property && animatedOption.duration) {
         console.log('parseTransition property=', property, ' animatedOption=', animatedOption, `, animatedKeys.current[${property}]=`, animatedKeys.current[property])
         if (originalStyle[property]) {
@@ -304,15 +123,16 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAn
       // style 更新后同步更新 lastStyleRef & shareValMap
       updateStyleVal()
     }
-  }, [style])
+  }, [originalStyle])
   // ** 获取动画样式prop & 驱动动画
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (animation?.id === -1) return
-    // 更新动画样式 key map
-    animatedKeys.current = getAnimatedStyleKeys()
-    startAnimation()
-  }, [animation?.id])
+  // const id = animation?.id || -1
+  // // eslint-disable-next-line react-hooks/rules-of-hooks
+  // useEffect(() => {
+  //   if (id === -1) return
+  //   // 更新动画样式 key map
+  //   animatedKeys.current = getAnimatedStyleKeys()
+  //   startAnimation()
+  // }, [id])
   // ** 清空动画
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -339,7 +159,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAn
         ins[key](value).step()
         // console.log(key, value, shareValMap[propName]?.value, lastStyleRef.current[propName]);
       })
-    } else if (hasOwn(animatedKeys.current, property)) {
+    } else {
       const value = originalStyle[property]
       ins[property](value).step()
       // console.log(propName, value, shareValMap[propName]?.value, lastStyleRef.current[propName])
@@ -374,10 +194,10 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAn
         const ruleV = isTransform(key) ? transform.get(key) : rules.get(key)
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
         const toVal = ruleV !== undefined
-            ? ruleV
-            : index > 0
-                ? lastValueMap[key]
-                : shareValMap[key].value
+          ? ruleV
+          : index > 0
+            ? lastValueMap[key]
+            : shareValMap[key].value
         const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
         needSetCallback = false
         if (!sequence[key]) {
@@ -398,8 +218,13 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAn
   // 创建单个animation
   function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
     const animation = typeof callback === 'function'
-        ? withTiming(value, { duration, easing }, callback)
-        : withTiming(value, { duration, easing })
+      ? withTiming(value, { duration, easing }, (finished, current) => {
+        callback(finished, current)
+        if (finished && bindtransitionend) {
+          runOnJS(bindtransitionend)(finished, current, duration)
+        }
+      })
+      : withTiming(value, { duration, easing })
     return delay ? withDelay(delay, animation) : animation
   }
   // 获取样式初始值（prop style or 默认值）
@@ -442,7 +267,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAn
   // 设置 lastShareValRef & shareValMap
   function updateStyleVal () {
     Object.entries(originalStyle).forEach(([key, value]) => {
-      if (key === 'transform') {
+      if (key === Transform) {
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
@@ -477,9 +302,5 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { enableAn
       return styles
     }, {} as ExtendedViewStyle)
   })
-
-  return {
-    enableStyleAnimation: enableAnimationRef.current,
-    animationStyle
-  }
+  return animationStyle
 }

@@ -1,4 +1,79 @@
+import { Easing } from 'react-native-reanimated'
+import type { WithTimingConfig } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
+
+export type AnimatedOption = {
+  duration: number
+  delay: number
+  useNativeDriver: boolean
+  timingFunction: 'linear' | 'ease' | 'ease-in' | 'ease-in-out'| 'ease-out'
+  transformOrigin: string
+}
+export type ExtendWithTimingConfig = WithTimingConfig & {
+  delay: number
+}
+export type AnimationStepItem = {
+  animatedOption: AnimatedOption
+  rules: Map<string, number | string>
+  transform: Map<string, number>
+}
+export type AnimationProp = {
+  id: number,
+  actions: AnimationStepItem[]
+}
+
+// ms s 单位匹配
+export const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)\s*$/
+// transform
+export const Transform = 'transform'
+export const TransformOrigin = 'transformOrigin'
+
+// 微信 timingFunction 和 RN Easing 对应关系
+export const EasingKey = {
+  linear: Easing.linear,
+  ease: Easing.inOut(Easing.ease),
+  'ease-in': Easing.in(Easing.poly(3)),
+  'ease-in-out': Easing.inOut(Easing.poly(3)),
+  'ease-out': Easing.out(Easing.poly(3))
+  // 'step-start': '',
+  // 'step-end': ''
+}
+export const TransformInitial: ExtendedViewStyle = {
+  // matrix: 0,
+  // matrix3d: 0,
+  // rotate: '0deg',
+  rotateX: '0deg',
+  rotateY: '0deg',
+  rotateZ: '0deg',
+  // rotate3d:[0,0,0]
+  // scale: 1,
+  // scale3d: [1, 1, 1],
+  scaleX: 1,
+  scaleY: 1,
+  // scaleZ: 1,
+  // skew: 0,
+  skewX: '0deg',
+  skewY: '0deg',
+  // translate: 0,
+  // translate3d: 0,
+  translateX: 0,
+  translateY: 0
+  // translateZ: 0,
+}
+// 动画默认初始值
+export const InitialValue: ExtendedViewStyle = Object.assign({
+  opacity: 1,
+  backgroundColor: 'transparent',
+  width: 0,
+  height: 0,
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  transformOrigin: ['50%', '50%', 0]
+}, TransformInitial)
+// transform
+export const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
 
 // 多value解析
 export function parseValues (str: string, char = ' ') {
@@ -23,7 +98,7 @@ export function parseValues (str: string, char = ' ') {
   return result
 }
 
-// parsestring transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
+// parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 export function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
   const transform: {[propName: string]: string|number|number[]}[] = []
@@ -89,4 +164,9 @@ export function getTransformObj (transforms: { [propName: string]: string | numb
   return transforms.reduce((transformObj, item) => {
     return Object.assign(transformObj, item)
   }, {} as { [propName: string]: string | number })
+}
+// 解析动画时长
+export function getUnit (duration: string) {
+  const match = secondRegExp.exec(duration)
+  return match ? match[2] === 's' ? +match[1] * 1000 : +match[1] : 0
 }

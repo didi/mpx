@@ -1,24 +1,12 @@
-import type { _ViewProps } from '../mpx-view'
-import { useRef, useEffect, useMemo } from 'react'
-import { TransformsStyle } from 'react-native'
-import {
-  Easing,
-  useSharedValue,
-  withTiming,
-  useAnimatedStyle,
-  withSequence,
-  withDelay,
-  makeMutable,
-  cancelAnimation,
-  SharedValue,
-  WithTimingConfig,
-  AnimationCallback
-} from 'react-native-reanimated'
-import { error, hasOwn } from '@mpxjs/utils'
-import { formatStyle, getTransformObj } from './utils'
-import type { ExtendedViewStyle } from '../types/common'
+import { error, isFunction, collectDataset } from '@mpxjs/utils'
+
+import { useRef } from 'react'
+import { formatStyle } from './utils'
 import useAnimationAPIHooks from './useAnimationAPIHooks'
 import useTransitionHooks from './useTransitionHooks'
+import type { AnimatableValue } from 'react-native-reanimated'
+import type { MutableRefObject } from 'react'
+import type { _ViewProps } from '../mpx-view'
 
 // 动画类型
 const enum AnimationType {
@@ -28,8 +16,8 @@ const enum AnimationType {
     CssAnimation
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean }) {
-  const { style = {}, enableAnimation, animation } = props
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any> }) {
+  const { style = {}, enableAnimation, animation, catchtransitionend, bindtransitionend, layoutRef } = props
   const enableStyleAnimation = enableAnimation || !!animation || !!style.transition || !!style.transitionProperty || !!style.animation
   const enableAnimationRef = useRef(enableStyleAnimation)
   if (enableAnimationRef.current !== enableStyleAnimation) {
@@ -44,6 +32,32 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   }
   if (!enableAnimationRef.current) return { enableStyleAnimation: false }
 
+  const transitionend = isFunction(catchtransitionend)
+    ? catchtransitionend
+    : isFunction(bindtransitionend)
+      ? bindtransitionend
+      : null
+
+  function withTimingCallback (finished?: boolean, current?: AnimatableValue, duration?: number) {
+    if (!transitionend) return
+    const target = {
+      id: animation?.id || -1,
+      dataset: collectDataset(props),
+      offsetLeft: layoutRef?.current?.offsetLeft || 0,
+      offsetTop: layoutRef?.current?.offsetTop || 0
+    }
+    // Todo event 是否需要对齐wx，因为本身rn没有这个事件难以完全对齐
+    transitionend({
+      type: 'transitionend',
+      __evName: 'transitionend',
+      _userTap: false,
+      detail: { elapsedTime: duration, finished, current },
+      target,
+      currentTarget: target,
+      timeStamp: Date.now()
+    })
+  }
+
   const originalStyle = formatStyle(style)
 
   switch (animationTypeRef.current) {
@@ -52,14 +66,16 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
         enableStyleAnimation: enableAnimationRef.current,
         animationStyle: useAnimationAPIHooks({
           style: originalStyle,
-          animation
+          animation,
+          bindtransitionend: withTimingCallback
         })
       }
     case AnimationType.CssTransition:
       return {
         enableStyleAnimation: enableAnimationRef.current,
-        animationStyle: useAnimationAPIHooks({
-          style: originalStyle
+        animationStyle: useTransitionHooks({
+          style: originalStyle,
+          bindtransitionend: withTimingCallback
         })
       }
     default:
