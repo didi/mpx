@@ -74,20 +74,11 @@ export default {
         return [];
       },
     },
-    listHeaderData: Object,
-    enableSticky: Boolean,
-    scrollWithAnimation: Boolean,
-    enhanced: {
-      type: Boolean,
-      default: false,
-    },
-    refresherEnabled: {
-      type: Boolean,
-      default: false,
-    },
-    refresherTriggered: {
-      type: Boolean,
-      default: false,
+    scrollOptions: {
+      type: Object,
+      default: () => {
+        return {};
+      },
     },
     minRenderCount: {
       type: Number,
@@ -96,22 +87,6 @@ export default {
     bufferScale: {
       type: Number,
       default: 1,
-    },
-    "enable-sticky": {
-      type: Boolean,
-      default: false,
-    },
-    height: {
-      type: [String, Number],
-      default: "100%",
-    },
-    width: {
-      type: [String, Number],
-      default: "100%",
-    },
-    "scroll-y": {
-      type: Boolean,
-      default: true,
     },
     itemHeight: {
       type: Object,
@@ -125,32 +100,16 @@ export default {
       type: Object,
       default: {},
     },
-    type: {
-      type: String,
-      default: "",
-    },
-    generichash: {
-      type: String,
-      default: "",
-    },
-    "genericlist-header": {
-      type: String,
-      default: "",
-    },
-    "genericrecycle-item": {
-      type: String,
-      default: "",
-    },
-    "genericsection-header": {
-      type: String,
-      default: "",
-    },
-    scrollOptions: {
-      type: Object,
-      default: () => {
-        return {};
-      },
-    },
+    enhanced: Boolean,
+    refresherEnabled: Boolean,
+    refresherTriggered:Boolean,
+    listHeaderData: Object,
+    enableSticky: Boolean,
+    scrollWithAnimation: Boolean,
+    generichash: String,
+    genericlistHeader: String,
+    genericrecycleItem: String,
+    genericsectionHeader: String
   },
   data() {
     return {
