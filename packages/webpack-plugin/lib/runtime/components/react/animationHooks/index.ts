@@ -79,6 +79,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
         })
       }
     default:
-      return { enableStyleAnimation: true }
+      return { enableStyleAnimation: false }
   }
 }
