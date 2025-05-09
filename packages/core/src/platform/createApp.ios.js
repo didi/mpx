@@ -91,6 +91,40 @@ export default function createApp (options) {
     }
   }
 
+  const onAppStateChange = (currentState) => {
+    if (currentState === 'active') {
+      let options = global.__mpxEnterOptions || {}
+      const navigation = getFocusedNavigation()
+      if (navigation) {
+        const state = navigation.getState()
+        const current = state.routes[state.index]
+        options = {
+          path: current.name,
+          query: current.params,
+          scene: 0,
+          shareTicket: '',
+          referrerInfo: {}
+        }
+      }
+      global.__mpxAppCbs.show.forEach((cb) => {
+        cb(options)
+      })
+      if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+        global.__mpxPageStatusMap[navigation.pageId] = 'show'
+      }
+    } else if (currentState === 'inactive' || currentState === 'background') {
+      global.__mpxAppCbs.hide.forEach((cb) => {
+        cb({
+          reason: 3
+        })
+      })
+      const navigation = getFocusedNavigation()
+      if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+        global.__mpxPageStatusMap[navigation.pageId] = 'hide'
+      }
+    }
+  }
+
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
@@ -136,39 +170,10 @@ export default function createApp (options) {
     }
 
     useEffect(() => {
-      const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
-        if (currentState === 'active') {
-          let options = global.__mpxEnterOptions || {}
-          const navigation = getFocusedNavigation()
-          if (navigation) {
-            const state = navigation.getState()
-            const current = state.routes[state.index]
-            options = {
-              path: current.name,
-              query: current.params,
-              scene: 0,
-              shareTicket: '',
-              referrerInfo: {}
-            }
-          }
-          global.__mpxAppCbs.show.forEach((cb) => {
-            cb(options)
-          })
-          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'show'
-          }
-        } else if (currentState === 'inactive' || currentState === 'background') {
-          global.__mpxAppCbs.hide.forEach((cb) => {
-            cb({
-              reason: 3
-            })
-          })
-          const navigation = getFocusedNavigation()
-          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'hide'
-          }
-        }
-      })
+      let changeSubscription
+      if (!Mpx.config.rnConfig.disableReactNativeAppStateChange) {
+        changeSubscription = ReactNative.AppState.addEventListener('change', onAppStateChange)
+      }
 
       let count = 0
       let lastPageSize = getPageSize()
@@ -233,5 +238,13 @@ export default function createApp (options) {
     if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
       global.__mpxPageStatusMap[navigation.pageId] = status
     }
+  }
+
+  // 用于外层业务用来设置App的展示情况
+  global.setAppShow = function () {
+    onAppStateChange('active')
+  }
+  global.setAppHide = function () {
+    onAppStateChange('background')
   }
 }
