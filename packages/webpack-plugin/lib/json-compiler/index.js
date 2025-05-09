@@ -193,7 +193,7 @@ module.exports = function (content) {
       useExtendComponents.forEach((name) => {
         if (mode === 'wx') {
           if (EXTEND_COMPONENTS_LIST.includes(name)) {
-            extendComponents[name] = require.resolve(`../runtime/components/${mode}/mpx-${name}/index.mpx`)
+            extendComponents[name] = require.resolve(`../runtime/components/${mode}/mpx-${name}.mpx`)
           } else {
             emitWarning(`extend component ${name} is not supported in ${mode} environment!`)
           }
