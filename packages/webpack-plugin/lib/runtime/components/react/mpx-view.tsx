@@ -9,7 +9,7 @@ import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement 
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks from './animationHooks/index'
-import type { AnimationProp } from './animationHooks/useAnimationAPIHooks'
+import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
