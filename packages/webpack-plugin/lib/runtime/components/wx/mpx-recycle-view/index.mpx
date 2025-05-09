@@ -77,10 +77,6 @@
         type: Array,
         value: []
       },
-      mpxGenericRecycleItem: String,
-      mpxGenericSectionHeader: String,
-      mpxGenericListHeader: String,
-      scrollWithAnimation: Boolean,
       enableSticky: {
         type: Boolean,
         value: false
@@ -108,7 +104,14 @@
       listHeaderData: {
         type: Object,
         value: null
-      }
+      },
+      scrollWithAnimation: {
+        type: Boolean,
+        value: false
+      },
+      mpxGenericRecycleItem: String,
+      mpxGenericSectionHeader: String,
+      mpxGenericListHeader: String
     },
     data: {
       convertedListData: [],
