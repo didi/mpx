@@ -55,6 +55,8 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   const headerTopAnimated = useRef(new Animated.Value(0)).current
+  // harmony animatedValue 不支持通过 _value 访问
+  const headerTopRef = useRef(0)
 
   useEffect(() => {
     registerStickyHeader({ key: id, updatePosition })
@@ -75,6 +77,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
               duration: 0,
               useNativeDriver: true
             }).start()
+            headerTopRef.current = top
           }
         )
       } else {
@@ -96,7 +99,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
-      const newIsStickOnTop = currentScrollValue > (headerTopAnimated as any)._value
+      const newIsStickOnTop = currentScrollValue > headerTopRef.current
       if (newIsStickOnTop !== isStickOnTopRef.current) {
         isStickOnTopRef.current = newIsStickOnTop
         bindstickontopchange(
