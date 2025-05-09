@@ -92,6 +92,7 @@ export default function createApp (options) {
   }
 
   const onAppStateChange = (currentState) => {
+    // 业务上配置禁止的话就不响应监听事件
     if (currentState === 'active') {
       let options = global.__mpxEnterOptions || {}
       const navigation = getFocusedNavigation()
@@ -170,10 +171,11 @@ export default function createApp (options) {
     }
 
     useEffect(() => {
-      let changeSubscription
-      if (!Mpx.config.rnConfig.disableListenReactNativeAppStateChange) {
-        changeSubscription = ReactNative.AppState.addEventListener('change', onAppStateChange)
-      }
+      const changeSubscription = ReactNative.AppState.addEventListener('change', (state) => {
+        // 外层可能会异常设置此配置，因此加载监听函数内部
+        if (Mpx.config.rnConfig.disableReactNativeAppStateChange) return
+        onAppStateChange(state)
+      })
 
       let count = 0
       let lastPageSize = getPageSize()
