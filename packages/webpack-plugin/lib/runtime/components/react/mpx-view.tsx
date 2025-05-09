@@ -8,8 +8,8 @@ import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleShee
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
-import useAnimationHooks from './useAnimationHooks'
-import type { AnimationProp } from './useAnimationHooks'
+import useAnimationHooks from './animationHooks/index'
+import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
@@ -36,6 +36,8 @@ export interface _ViewProps extends ViewProps {
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  catchtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 type Handler = (...args: any[]) => void
@@ -682,8 +684,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight,
-    animation
+    'parent-height': parentHeight
   } = props
 
   // 默认样式
@@ -739,8 +740,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
 
   const { enableStyleAnimation, animationStyle } = useAnimationHooks({
+    ...props,
+    layoutRef,
     enableAnimation,
-    animation,
     style: viewStyle
   })
 
