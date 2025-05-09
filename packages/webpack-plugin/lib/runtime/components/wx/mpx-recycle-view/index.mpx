@@ -5,7 +5,7 @@
     scroll-y
     wx:style="{{scrollViewStyle}}"
     type="custom"
-    enhanced="{{true}}"
+    enhanced="{{enhanced}}"
     scroll-with-animation="{{scrollWithAnimation}}"
     bounces="{{bounces}}"
     show-scrollbar="{{showScrollbar}}"
