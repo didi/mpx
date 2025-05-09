@@ -171,7 +171,7 @@ export default function createApp (options) {
 
     useEffect(() => {
       let changeSubscription
-      if (!Mpx.config.rnConfig.disableReactNativeAppStateChange) {
+      if (!Mpx.config.rnConfig.disableListenReactNativeAppStateChange) {
         changeSubscription = ReactNative.AppState.addEventListener('change', onAppStateChange)
       }
 
