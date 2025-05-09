@@ -14,7 +14,8 @@ import {
   AnimationCallback
 } from 'react-native-reanimated'
 import { error, hasOwn } from '@mpxjs/utils'
-import { ExtendedViewStyle } from './types/common'
+import { createAnimation as createAnimationAPI } from '@mpxjs/api-proxy'
+import type { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
 type AnimatedOption = {
@@ -81,7 +82,26 @@ const InitialValue: ExtendedViewStyle = Object.assign({
   left: 0,
   transformOrigin: ['50%', '50%', 0]
 }, TransformInitial)
+const PropSupportTransition = Object.assign({
+  borderRadius: 0,
+  borderColor: 'transparent',
+  borderWidth: 0,
+  // Todo 新增的 prop
+  marginTop: 0,
+  marginLeft: 0,
+  marginRight: 0,
+  marginBottom: 0
+}, InitialValue)
 const TransformOrigin = 'transformOrigin'
+const Transform = 'transform'
+const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)\s*$/
+// 动画类型
+const enum AnimationType {
+  None,
+  API,
+  CssTransition,
+  CssAnimation
+}
 // transform
 const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
 // 多value解析
@@ -166,7 +186,6 @@ const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
     transform: parseTransform(style.transform)
   })
 }
-
 // transform 数组转对象
 function getTransformObj (transforms: { [propName: string]: string | number }[]) {
   'worklet'
@@ -174,25 +193,82 @@ function getTransformObj (transforms: { [propName: string]: string | number }[])
     return Object.assign(transformObj, item)
   }, {} as { [propName: string]: string | number })
 }
+// transition 解析相关方法
+// 解析动画时长
+function getUnit (duration: string) {
+  const match = secondRegExp.exec(duration)
+  return match ? match[2] === 's' ? +match[1] * 1000 : +match[1] : 0
+}
+// 解析 property timingFunction
+function parseSingleTransition (options: string[]) {
+  if (options.length < 2) return null
+  const property = options[0]
+  const duration = getUnit(options[1])
+  if (!property || !duration) return null
+  const timingFunction = Object.keys(EasingKey).includes(options[2]) ? options[2] : EasingKey.linear
+  const delay = getUnit(options[2]) || getUnit(options[3])
+  return {
+    property,
+    animatedOption: {
+      duration,
+      timingFunction,
+      delay
+    }
+  }
+}
+// transition 解析
+function parseTransition (transition: string) {
+  const isMulti = transition.includes(',')
+  if (isMulti) {
+    const options = parseValues(transition, ' ')
+    // Todo transition: margin-right 4s, color 1s 支持
+    return null
+  } else {
+    const options = parseValues(transition)
+    return parseSingleTransition(options)
+  }
+}
+// 从 transition 获取 AnimatedKeys
+function getAnimatedKeysFromTransition (propName: string, originalStyle: ExtendedViewStyle) {
+  const animatedKeys = {} as { [propName: keyof ExtendedViewStyle]: boolean }
+  if (propName === Transform) {
+    const transform = originalStyle.transform
+    console.log('parseValues transform=', transform)
+    Object.keys(getTransformObj(originalStyle.transform!)).forEach((key) => {
+      animatedKeys[key] = true
+      // ins[key](value).step()
+      // console.log(key, value, shareValMap[propName]?.value, lastStyleRef.current[propName]);
+    })
+  } else if (Object.keys(PropSupportTransition).includes(propName)) {
+    animatedKeys[propName] = true
+    // console.log(propName, value, shareValMap[propName]?.value, lastStyleRef.current[propName])
+  }
+  return animatedKeys
+}
 
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean }) {
-  const { style = {}, animation, enableAnimation } = props
-
-  const enableStyleAnimation = enableAnimation || !!animation
+  const { style = {}, enableAnimation } = props
+  let animation = props.animation
+  const enableStyleAnimation = enableAnimation || !!animation || !!style.transition
   const enableAnimationRef = useRef(enableStyleAnimation)
   if (enableAnimationRef.current !== enableStyleAnimation) {
-    error('[Mpx runtime error]: animation use should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+    error('[Mpx runtime error]: animation usage should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
-
+  // 记录动画类型
+  const animationType = style.transition ? AnimationType.CssTransition : style.animation ? AnimationType.CssAnimation : animation ? AnimationType.API : AnimationType.None
+  const animationTypeRef = useRef(animationType)
+  if (animationTypeRef.current !== AnimationType.None && animationTypeRef.current !== animationType) {
+    error('[Mpx runtime error]: animationType should be stable, it is not allowed to switch CSS animation, API animation or CSS animation in the component lifecycle')
+  }
   if (!enableAnimationRef.current) return { enableStyleAnimation: false }
 
   const originalStyle = formatStyle(style)
   // id 标识
-  const id = animation?.id || -1
+  // const id = animation?.id || -1
   // 有动画样式的 style key
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
-  // 记录动画key的style样式值 没有的话设置为false
+  // 记录有动画的 propName
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // 记录上次style map
@@ -213,20 +289,30 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // ** style更新同步
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    // style 更新后同步更新 lastStyleRef & shareValMap
-    updateStyleVal()
+    if (style.transition) {
+      animationTypeRef.current = AnimationType.CssTransition
+      const { property, animatedOption = {} } = parseTransition(style.transition) || {}
+      if (property && animatedOption.duration) {
+        console.log('parseTransition property=', property, ' animatedOption=', animatedOption, `, animatedKeys.current[${property}]=`, animatedKeys.current[property])
+        if (originalStyle[property]) {
+          animatedKeys.current = getAnimatedKeysFromTransition(property, originalStyle)
+          animation = getAnimationFromTransition({ property, animatedOption })
+          startAnimation()
+        }
+      }
+    } else {
+      // style 更新后同步更新 lastStyleRef & shareValMap
+      updateStyleVal()
+    }
   }, [style])
   // ** 获取动画样式prop & 驱动动画
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (id === -1) return
+    if (animation?.id === -1) return
     // 更新动画样式 key map
     animatedKeys.current = getAnimatedStyleKeys()
-    const keys = Object.keys(animatedKeys.current)
-    animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...keys])
-    // 驱动动画
-    createAnimation(keys)
-  }, [id])
+    startAnimation()
+  }, [animation?.id])
   // ** 清空动画
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -236,6 +322,30 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       })
     }
   }, [])
+  // 开始动画
+  function startAnimation () {
+    const keys = Object.keys(animatedKeys.current)
+    animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...keys])
+    // 驱动动画
+    createAnimation(keys)
+  }
+  // 从transition & style 变更中获取动画数据
+  function getAnimationFromTransition ({ property, animatedOption }: { property: string, animatedOption: Object }) {
+    const ins = createAnimationAPI(animatedOption)
+    if (property === Transform) {
+      const transform = originalStyle.transform
+      console.log('parseValues transform=', transform)
+      Object.entries(getTransformObj(originalStyle.transform!)).forEach(([key, value]) => {
+        ins[key](value).step()
+        // console.log(key, value, shareValMap[propName]?.value, lastStyleRef.current[propName]);
+      })
+    } else if (hasOwn(animatedKeys.current, property)) {
+      const value = originalStyle[property]
+      ins[property](value).step()
+      // console.log(propName, value, shareValMap[propName]?.value, lastStyleRef.current[propName])
+    }
+    return ins.export()
+  }
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
     const actions = animation?.actions || []
@@ -281,7 +391,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       // 赋值驱动动画
       animatedKeys.forEach((key) => {
         const animations = sequence[key]
-        shareValMap[key].value = withSequence(...animations)
+        shareValMap[key].value = animations.length > 1 ? withSequence(...animations) : animations[0]
       })
     })
   }
