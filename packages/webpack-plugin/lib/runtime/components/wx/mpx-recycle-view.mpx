@@ -223,13 +223,13 @@
     "component": true,
     "componentGenerics": {
       "recycle-item": {
-        "default": "./mpx-recycle-item-default.mpx"
+        "default": ""
       },
       "section-header": {
-        "default": "./mpx-section-header-default.mpx"
+        "default": ""
       },
       "list-header": {
-        "default": "./mpx-list-header-default.mpx"
+        "default": ""
       }
     }
   }
