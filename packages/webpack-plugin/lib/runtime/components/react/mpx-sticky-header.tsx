@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
-import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent } from 'react-native'
+import { useEffect, useRef, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
+import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, useAnimatedValue } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
@@ -54,7 +54,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  const headerTopAnimated = useRef(new Animated.Value(0)).current
+  const headerTopAnimated = useAnimatedValue(0)
   // harmony animatedValue 不支持通过 _value 访问
   const headerTopRef = useRef(0)
 
