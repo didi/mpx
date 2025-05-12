@@ -1,4 +1,4 @@
-import { ComponentType, ReactNode, Component, Fragment, Suspense, ErrorInfo } from 'react'
+import { ComponentType, ReactNode, Component, Fragment, Suspense } from 'react'
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
 
 const styles = StyleSheet.create({
@@ -32,14 +32,16 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   retryButton: {
+    position: 'absolute',
+    bottom: 54,
+    left: 20,
+    right: 20,
     backgroundColor: '#fff',
     paddingVertical: 15,
     borderRadius: 30,
     marginTop: 40,
     borderWidth: 1,
-    borderColor: '#FF5F00',
-    marginLeft: 20,
-    marginRight: 20
+    borderColor: '#FF5F00'
   },
   retryButtonText: {
     color: '#FF5F00',

@@ -73,7 +73,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async) {
-      pagesMap[pagePath] = getAsyncPage(pagePath, pageRequest, pageCfg.async, rnConfig.asyncChunk.fallback, rnConfig.asyncChunk.loading)
+      pagesMap[pagePath] = getAsyncPage(pagePath, pageRequest, pageCfg.async, rnConfig.asyncChunk && rnConfig.asyncChunk.fallback, rnConfig.asyncChunk && rnConfig.asyncChunk.loading)
     } else {
     // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
       pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`

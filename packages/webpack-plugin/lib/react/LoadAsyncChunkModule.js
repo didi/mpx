@@ -24,14 +24,16 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
       `${loadScriptFn} = ${runtimeTemplate.basicFunction(
         'url, done, key, chunkId',
         [
+          // todo dev 环境下的测试
+          `var chunkName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId)`,
           'var config = {',
-            Template.indent([
-              'url: url'
-            ]),
+          Template.indent([
+            'url: url,',
+            "chunkName: chunkName.split('/')[0]"
+          ]),
           '}',
           'if(inProgress[url]) { inProgress[url].push(done); return; }',
           'inProgress[url] = [done];',
-          `var chunkName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId)`,
           'var callback = function (type, result) {', // todo 确认下加载函数的回调值是否需要？
           Template.indent([
             "if (type === 'timeout' || type === 'fail') {",
@@ -68,10 +70,10 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           `var timeoutCallback = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
           "var successCallback = callback.bind(null, 'load');",
           "var failedCallback = callback.bind(null, 'fail')", // import 没法加载远程 js 代码，本地调试只能静态路径；
-          // "var loadAsyncChunkFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadAsyncChunk",
+          "var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync",
           // "global.__mpx.config.rnConfig.loadAsyncChunk()",
-          `var loadAsyncChunkFn = ${this.loadAsyncTemplate.trim()}`,
-          'loadAsyncChunkFn(config).then(successCallback).catch(failedCallback)'
+          // `var loadChunkAsyncFn = ${this.loadAsyncTemplate.trim()}`,
+          'loadChunkAsyncFn(config).then(successCallback).catch(failedCallback)'
         ]
       )}`
     ])
