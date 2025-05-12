@@ -1,0 +1,4 @@
+/*@mpx-elif(isMobile)*/
+.mobile {
+  display: block;
+}

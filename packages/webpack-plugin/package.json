@@ -41,6 +41,7 @@
     "he": "^1.1.1",
     "html-minifier": "^3.5.8",
     "icss-utils": "^2.1.0",
+    "jest-environment-jsdom": "^29.7.0",
     "json5": "^2.1.3",
     "loader-utils": "^2.0.0",
     "lodash": "^4.17.15",
@@ -50,6 +51,7 @@
     "mime": "^2.2.2",
     "object-assign": "^4.1.1",
     "postcss": "^8.4.5",
+    "postcss-import": "^16.1.0",
     "postcss-load-config": "^3.1.1",
     "postcss-modules-extract-imports": "^3.0.0",
     "postcss-modules-local-by-default": "^4.0.0",
@@ -62,6 +64,9 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
+    "postcss-less": "^6.0.0",
+    "postcss-scss": "^4.0.9",
+    "postcss-styl": "^0.12.3",
     "webpack": "^5.75.0"
   },
   "publishConfig": {
@@ -77,7 +82,8 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
-    "test": "jest",
+    "test": "npm run test:scripts && jest",
+    "test:scripts": "node ./scripts/test.js",
     "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
     "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
   },
@@ -86,7 +92,13 @@
     "@mpxjs/api-proxy": "^2.10.4",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
+    "@types/glob": "^8.1.0",
+    "@types/postcss-import": "^14.0.3",
     "@types/react": "^18.2.79",
+    "glob": "^11.0.2",
+    "postcss-less": "^6.0.0",
+    "postcss-scss": "^4.0.9",
+    "postcss-styl": "^0.12.3",
     "react-native": "^0.74.5",
     "react-native-gesture-handler": "^2.18.1",
     "react-native-linear-gradient": "^2.8.3",
