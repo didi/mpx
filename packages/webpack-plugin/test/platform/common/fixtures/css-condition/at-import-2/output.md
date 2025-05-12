@@ -13,18 +13,12 @@
 ## Result
 
 ```stylus
-.layout
-  background red
-  
-  color yellow
-  .driver
-    color blue
 
-.wrapper
-  background red
-  
-  color yellow
-  .child
-    color blue
-  
+
+
+.layout-nested-else
+  background #fff
+
+  color blue
+
 ```

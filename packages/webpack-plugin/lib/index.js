@@ -1221,7 +1221,7 @@ class MpxWebpackPlugin {
           }
         }
       })
-      console.log('compilation', typeof compilation);
+
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderModuleContent.tap('MpxWebpackPlugin', (source, module, renderContext) => {
         // 处理dll产生的external模块
         if (module.external && module.userRequest.startsWith('dll-reference ') && !isWeb(mpx.mode) && !isReact(mpx.mode)) {
@@ -1811,18 +1811,6 @@ try {
           const extract = queryObj.extract
 
           if (type === 'styles') {
-            // let insertBeforeIndex = -1
-            // 单次遍历收集所有索引
-            // loaders.forEach((loader, index) => {
-            //   const currentLoader = toPosix(loader.loader)
-            //   if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
-            //     insertBeforeIndex = index
-            //   }
-            // })
-
-            // if (insertBeforeIndex !== -1) {
-            //     loaders.splice(insertBeforeIndex + 1, 0, { loader: styleStripConditionalPath })
-            // }
             loaders.push({ loader: styleStripConditionalPath })
           }
 

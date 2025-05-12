@@ -1,5 +1,9 @@
-/*@mpx-if(isMobile)*/
-@import "./s1.styl"
-/*@mpx-else*/
-@import "./s2.styl"
-/*@mpx-endif*/
+@import "./s1.styl";
+
+.wrapper
+  background red
+  /* @mpx-if (isMobile) */
+  color yellow
+  .child
+    color blue
+  /* @mpx-endif */

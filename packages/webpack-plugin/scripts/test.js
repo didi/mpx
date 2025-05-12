@@ -1,4 +1,4 @@
-const { exec, spawn } = require('node:child_process')
+const { spawn } = require('node:child_process')
 const path = require('node:path')
 
 const resolveTestFile = (filename) => {
@@ -31,7 +31,7 @@ function start() {
       tasks.delete(task)
     })
 
-    function close(code) {
+    function close() {
       tasks.delete(task)
     }
 
