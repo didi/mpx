@@ -170,7 +170,7 @@ export default function styleHelperMixin () {
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         const result = {}
         const classMap = this.__getClassMap?.() || {}
-        const appClassMap = global.__getAppClassMap?.() || {}
+        const appClassMap = mpxGlobal.__getAppClassMap?.() || {}
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape

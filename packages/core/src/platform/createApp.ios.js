@@ -37,7 +37,7 @@ export default function createApp (options) {
   initAppProvides(rawOptions.provide, rawOptions)
   const defaultOptions = filterOptions(spreadProp(rawOptions, 'methods'), appData)
   // 在页面script执行前填充getApp()
-  mpxGlobal.getApp = function () {
+  global.getApp = function () {
     return appData
   }
 

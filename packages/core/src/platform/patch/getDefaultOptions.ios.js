@@ -458,7 +458,7 @@ export function PageWrapperHOC (WrappedComponent) {
       navigation,
       pageId: currentPageId
     })
-    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
+    const currentPageConfig = Object.assign({}, mpxGlobal.__mpxPageConfig, pageConfig)
     if (!navigation || !route) {
       // 独立组件使用时要求传递navigation
       error('Using pageWrapper requires passing navigation and route')
@@ -657,7 +657,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
         proxy.unmounted()
         proxy.target.__resetInstance()
         if (type === 'page') {
-          delete global.__mpxPagesMap[props.route.key]
+          delete mpxGlobal.__mpxPagesMap[props.route.key]
         }
       }
     }, [])

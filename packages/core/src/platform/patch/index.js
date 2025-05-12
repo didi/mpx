@@ -44,8 +44,8 @@ export default function createFactory (type) {
     rawOptions.mixins = getBuiltInMixins({ type, rawOptions, currentInject })
     const defaultOptions = getDefaultOptions({ type, rawOptions, currentInject })
     if (isWeb || isReact) {
-      global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-      global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
+      mpxGlobal.__mpxOptionsMap = mpxGlobal.__mpxOptionsMap || {}
+      mpxGlobal.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     } else if (ctor) {
       return ctor(defaultOptions)
     }

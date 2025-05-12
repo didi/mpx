@@ -18,11 +18,11 @@ export function init (Mpx) {
 }
 
 function initGlobalErrorHandling () {
-  if (global.ErrorUtils) {
-    const defaultHandler = global.ErrorUtils.getGlobalHandler()
-    global.ErrorUtils.setGlobalHandler((error, isFatal) => {
-      if (global.__mpxAppCbs && global.__mpxAppCbs.error && global.__mpxAppCbs.error.length) {
-        global.__mpxAppCbs.error.forEach((cb) => {
+  if (mpxGlobal.ErrorUtils) {
+    const defaultHandler = mpxGlobal.ErrorUtils.getGlobalHandler()
+    mpxGlobal.ErrorUtils.setGlobalHandler((error, isFatal) => {
+      if (mpxGlobal.__mpxAppCbs && mpxGlobal.__mpxAppCbs.error && mpxGlobal.__mpxAppCbs.error.length) {
+        mpxGlobal.__mpxAppCbs.error.forEach((cb) => {
           cb(error)
         })
       } else if (defaultHandler) {
@@ -34,8 +34,8 @@ function initGlobalErrorHandling () {
   }
 
   function onUnhandledRejection (event) {
-    if (global.__mpxAppCbs && global.__mpxAppCbs.rejection && global.__mpxAppCbs.rejection.length) {
-      global.__mpxAppCbs.rejection.forEach((cb) => {
+    if (mpxGlobal.__mpxAppCbs && mpxGlobal.__mpxAppCbs.rejection && mpxGlobal.__mpxAppCbs.rejection.length) {
+      mpxGlobal.__mpxAppCbs.rejection.forEach((cb) => {
         cb(event)
       })
     } else {
@@ -50,8 +50,8 @@ function initGlobalErrorHandling () {
   }
 
   // 支持 core-js promise polyfill
-  const oldOnUnhandledRejection = global.onunhandledrejection
-  global.onunhandledrejection = function onunhandledrejection (event) {
+  const oldOnUnhandledRejection = mpxGlobal.onunhandledrejection
+  mpxGlobal.onunhandledrejection = function onunhandledrejection (event) {
     onUnhandledRejection(event)
     isFunction(oldOnUnhandledRejection) && oldOnUnhandledRejection.call(this, event)
   }

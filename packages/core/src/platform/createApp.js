@@ -56,10 +56,10 @@ export default function createApp (options, config = {}) {
           referrerInfo: {}
         }
         // web不分冷启动和热启动
-        global.__mpxEnterOptions = options
-        global.__mpxLaunchOptions = options
+        mpxGlobal.__mpxEnterOptions = options
+        mpxGlobal.__mpxLaunchOptions = options
         rawOptions.onLaunch && rawOptions.onLaunch.call(this, options)
-        global.__mpxAppCbs.show.forEach((cb) => {
+        mpxGlobal.__mpxAppCbs.show.forEach((cb) => {
           cb(options)
         })
       }
@@ -82,11 +82,11 @@ export default function createApp (options, config = {}) {
       }
       return appData
     }
-    global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-    global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
+    mpxGlobal.__mpxOptionsMap = mpxGlobal.__mpxOptionsMap || {}
+    mpxGlobal.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
   } else {
     defaultOptions.onAppInit && defaultOptions.onAppInit()
-    const ctor = config.customCtor || global.currentCtor || App
+    const ctor = config.customCtor || mpxGlobal.currentCtor || App
     ctor(defaultOptions)
   }
 }
