@@ -13,7 +13,9 @@
     "docs:dev": "vitepress dev docs-vitepress",
     "docs:build": "vitepress build docs-vitepress",
     "docs:preview": "vitepress preview docs-vitepress",
-    "tsc:build": "pnpm --filter='./packages/webpack-plugin' run build"
+    "tsc:build": "pnpm --filter='./packages/webpack-plugin' run build",
+    "e2e:test": "pnpm run e2e:build && pnpm --filter 'mpx-miniprogram-project' --filter 'mpx-webpack5-plugin-project' run test",
+    "e2e:build": "pnpm --filter 'mpx-miniprogram-project' run build:cross && pnpm --filter 'mpx-webpack5-plugin-project' run build"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

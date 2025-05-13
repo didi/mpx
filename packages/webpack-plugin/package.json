@@ -8,10 +8,6 @@
   "author": "donghongping",
   "license": "Apache-2.0",
   "main": "lib/index.js",
-  "exports": {
-    ".": "./lib/index.js",
-    "./*": "./*"
-  },
   "directories": {
     "lib": "lib"
   },

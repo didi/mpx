@@ -56,4 +56,4 @@ jobs:
       - name: exec unit test
         run: |
           pnpm run test
-          pnpm --filter "mpx-miniprogram-project" --filter "mpx-webpack5-plugin-project" run test
+          pnpm run e2e:test
