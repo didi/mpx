@@ -433,7 +433,7 @@ function usePagePreload (route) {
       const { packages } = preloadRule[name] || {}
       if (packages?.length > 0) {
         const download = global.__mpx.config?.rnConfig?.download
-        if (typeof download !== 'function') {
+        if (typeof download === 'function') {
           callWithErrorHandling(() => download(packages))
         }
       }
