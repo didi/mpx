@@ -1701,6 +1701,9 @@ importers:
       semver:
         specifier: ^7.5.4
         version: 7.7.2
+      terser-webpack-plugin:
+        specifier: ^5.3.14
+        version: 5.3.14(webpack@5.99.8)
       vue:
         specifier: ^2.6.10
         version: 2.7.16
@@ -2021,6 +2024,9 @@ importers:
       stylus-loader:
         specifier: ^3.0.2
         version: 3.0.2(stylus@0.54.8)
+      terser-webpack-plugin:
+        specifier: ^5.3.14
+        version: 5.3.14(webpack@5.99.8)
       ts-loader:
         specifier: ^6.0.0
         version: 6.2.2(typescript@4.9.5)
@@ -2187,6 +2193,9 @@ importers:
       stylus-loader:
         specifier: ^3.0.2
         version: 3.0.2(stylus@0.54.8)
+      terser-webpack-plugin:
+        specifier: ^5.3.14
+        version: 5.3.14(webpack@5.99.8)
       ts-jest:
         specifier: ^27.1.2
         version: 27.1.5(@babel/core@7.27.1)(@types/jest@27.5.2)(babel-jest@27.5.1)(jest@27.5.1)(typescript@4.9.5)
