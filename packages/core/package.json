@@ -10,6 +10,10 @@
   "license": "Apache-2.0",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
+  "exports": {
+    ".": "./src/index.js",
+    "./*": "./*"
+  },
   "directories": {
     "src": "src"
   },

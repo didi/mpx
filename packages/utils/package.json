@@ -3,6 +3,10 @@
   "version": "2.10.4",
   "description": "A toolkit for mpx framework",
   "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./*": "./*"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
