@@ -13,7 +13,7 @@ import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
-import { error } from '@mpxjs/utils'
+import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
@@ -684,7 +684,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight
+    'parent-height': parentHeight,
+    animation,
+    catchtransitionend,
+    bindtransitionend
   } = props
 
   // 默认样式
@@ -738,13 +741,26 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
-
-  const { enableStyleAnimation, animationStyle } = useAnimationHooks({
-    ...props,
-    layoutRef,
-    enableAnimation,
-    style: viewStyle
-  })
+  const transitionend = isFunction(catchtransitionend)
+    ? catchtransitionend
+    : isFunction(bindtransitionend)
+      ? bindtransitionend
+      : null
+  const { enableStyleAnimation, animationStyle } = useAnimationHooks(
+    transitionend
+      ? {
+          layoutRef,
+          animation,
+          enableAnimation,
+          style: viewStyle,
+          transitionend
+        }
+      : {
+          layoutRef,
+          animation,
+          enableAnimation,
+          style: viewStyle
+        })
 
   const innerProps = useInnerProps(
     extendObject(

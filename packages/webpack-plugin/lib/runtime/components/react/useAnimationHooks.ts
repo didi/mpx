@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { MutableRefObject } from 'react'
-import { TransformsStyle } from 'react-native'
+import type { NativeSyntheticEvent, TransformsStyle } from 'react-native'
 import {
   Easing,
   useSharedValue,
@@ -175,13 +175,8 @@ function getTransformObj (transforms: { [propName: string]: string | number }[])
   }, {} as { [propName: string]: string | number })
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any> }) {
-  const { style = {}, animation, enableAnimation, catchtransitionend, bindtransitionend, layoutRef } = props
-  const transitionend = isFunction(catchtransitionend)
-    ? catchtransitionend
-    : isFunction(bindtransitionend)
-      ? bindtransitionend
-      : null
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
+  const { style = {}, animation, enableAnimation, transitionend, layoutRef } = props
   const enableStyleAnimation = enableAnimation || !!animation
   const enableAnimationRef = useRef(enableStyleAnimation)
   if (enableAnimationRef.current !== enableStyleAnimation) {
@@ -300,8 +295,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     // Todo event 是否需要对齐wx，因为本身rn没有这个事件难以完全对齐
     transitionend({
       type: 'transitionend',
-      __evName: 'transitionend',
-      _userTap: false,
       detail: { elapsedTime: duration, finished, current },
       target,
       currentTarget: target,
