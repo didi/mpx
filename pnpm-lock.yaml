@@ -1484,6 +1484,9 @@ importers:
       '@better-scroll/zoom':
         specifier: ^2.5.1
         version: 2.5.1
+      '@mpxjs/core':
+        specifier: workspace:^
+        version: link:../core
       '@mpxjs/template-engine':
         specifier: ^2.8.7
         version: 2.8.7(@mpxjs/core@packages+core)(webpack@5.99.8)
