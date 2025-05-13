@@ -521,7 +521,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
   const navigation = useNavigation()
-  const enableOffset = props['enable-offset'] || isFunction(props.catchtransitionend) || isFunction(props.bindtransitionend)
+  const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
     layoutProps.onLayout = (e: LayoutChangeEvent) => {
       hasLayoutRef.current = true
