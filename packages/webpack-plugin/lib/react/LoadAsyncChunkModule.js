@@ -7,11 +7,10 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
     super('load async chunk')
     /**
      * timeout
-     * fallbackPage -> 传个组件路径？内置组件
      * loadedEvent 后续需要和 native 对接，事件对象的确认 (状态枚举：loaded/missing/failed/timeout)，
      */
     this.options = options
-    this.loadAsyncTemplate = options.loadAsyncTemplate
+    this.loadAsyncTemplate = options.loadAsyncTemplate // todo clear
     this.timeout = options.timeout || 5000
   }
 
@@ -25,7 +24,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
         'url, done, key, chunkId',
         [
           // todo dev 环境下的测试
-          `var chunkName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId)`,
+          `var chunkName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
           'var config = {',
           Template.indent([
             'url: url,',
@@ -69,9 +68,8 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           '}',
           `var timeoutCallback = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
           "var successCallback = callback.bind(null, 'load');",
-          "var failedCallback = callback.bind(null, 'fail')", // import 没法加载远程 js 代码，本地调试只能静态路径；
-          "var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync",
-          // "global.__mpx.config.rnConfig.loadAsyncChunk()",
+          "var failedCallback = callback.bind(null, 'fail')",
+          'var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync',
           // `var loadChunkAsyncFn = ${this.loadAsyncTemplate.trim()}`,
           'loadChunkAsyncFn(config).then(successCallback).catch(failedCallback)'
         ]
