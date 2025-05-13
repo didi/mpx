@@ -292,7 +292,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
     }
-    // Todo event 是否需要对齐wx，因为本身rn没有这个事件难以完全对齐
     transitionend({
       type: 'transitionend',
       detail: { elapsedTime: duration, finished, current },
