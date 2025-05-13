@@ -1,8 +1,16 @@
 <template>
   <block>
-    <view class="mpx-sticky-header-check" />
-
-    <view class="mpx-sticky-header" style="{{ top ? `top: ${offsetTop};` : '' }}">
+    <view class="mpx-sticky-header-check" wx:style="{{`top: ${scrollOffsetTop}px;`}}" />
+    <!-- <view
+      class="mpx-sticky-header"
+      wx:style="{{ isStickOnTop && offsetTop ? `top: ${offsetTop}px;` : '' }}"
+    >
+      <slot></slot>
+    </view> -->
+     <view
+      class="mpx-sticky-header"
+     
+    >
       <slot></slot>
     </view>
   </block>
@@ -10,45 +18,112 @@
 <script>
   import mpx, { createComponent } from '@mpxjs/core'
 
-  createPage({
+  createComponent({
     properties: {
       offsetTop: {
         type: Number,
         value: 0
+      },
+      scrollViewId: {
+        type: String,
+        value: ''
+      },
+      id: {
+        type: String,
+        value: ''
       }
     },
     data: {
-      isStickOnTop: false
+      isStickOnTop: false,
+      scrollOffsetTop: 0,
+      lastIntersectionRatio: 0,
+      isInited: false,
+      headerTop: 0
     },
     ready() {
-      this.stickyHeader = this.createIntersectionObserver()
+      if (!this.scrollViewId) {
+        console.error('[mpx runtime error]: scroll-view-id is necessary property in ali environment')
+      }
+      // 先获取元素的初始位置
+      this.createSelectorQuery()
+        .select('.mpx-sticky-header')
+        .boundingClientRect((rect) => {
+          if (!rect) return
+          this.headerTop = rect.top
+        })
+        .exec()
+
+      mpx
+        .createSelectorQuery()
+        .select(`#${this.scrollViewId}`)
+        .boundingClientRect((res) => {
+          if (!res) return
+          this.scrollOffsetTop = res.top || 0
+        })
+        .exec()
+
+      this.stickyHeader = this.createIntersectionObserver({
+        thresholds: [0, 1]
+      })
       this.initTabsObserver()
     },
     methods: {
       initTabsObserver() {
-        this.stickyHeader.relativeTo('.mpx-sticky-header-check').observe('.mpx-sticky-header', (res) => {
-          const newIsStickOnTop = res.intersectionRatio > 0
-          if (newIsStickOnTop !== this.isStickOnTop) {
-            this.isStickOnTop = newIsStickOnTop
-            this.triggerEvent('stickontopchange', {
-              isStickOnTop: newIsStickOnTop
-            })
-          }
-        })
+        let lastScrollTop = 0
+        this.stickyHeader
+          .relativeTo('.mpx-sticky-header-check')
+          .observe('.mpx-sticky-header', (res) => {
+            const currentRatio = res.intersectionRatio
+            const wasRatioZero = this.lastIntersectionRatio === 0
+            const isRatioZero = currentRatio === 0
+            this.lastIntersectionRatio = currentRatio
+
+            // 获取当前滚动位置
+            mpx
+              .createSelectorQuery()
+              .select(`#${this.scrollViewId}`)
+              .scrollOffset((scrollRes) => {
+                if (!scrollRes) return
+                const scrollTop = scrollRes.scrollTop
+                const isScrollingUp = scrollTop < lastScrollTop
+                lastScrollTop = scrollTop
+
+                // 只在以下情况触发事件：
+                // 1. 向上滑动且 intersectionRatio 从 0 变为大于 0
+                // 2. 向下滑动且 intersectionRatio 变为 0
+                if (isScrollingUp && !wasRatioZero && isRatioZero) {
+                  if (this.isStickOnTop) {
+                    this.isStickOnTop = false
+                    this.triggerEvent('stickontopchange', {
+                      isStickOnTop: this.isStickOnTop
+                    })
+                  }
+                }
+                if (!isScrollingUp && wasRatioZero && currentRatio > 0) {
+                  if (!this.isStickOnTop) {
+                    this.isStickOnTop = true
+                    this.triggerEvent('stickontopchange', {
+                      isStickOnTop: this.isStickOnTop
+                    })
+                  }
+                }
+              })
+              .exec()
+          })
       }
     }
   })
 </script>
 <style lang="stylus" scoped>
-  .mpx-sticky-check
+  .mpx-sticky-header-check
     position fixed
     height 2px
-    background transparent
+    background red
     top 0
     left 0
     width 100%
     pointer-events none
-  .mpx-sticky-header 
-    position: sticky
-    top: 0  
+  .mpx-sticky-header
+    position sticky
+    top 0
 </style>
