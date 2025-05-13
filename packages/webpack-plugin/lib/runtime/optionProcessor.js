@@ -30,10 +30,10 @@ export function processComponentOption (
 
   if (genericsInfo) {
     const genericHash = genericsInfo.hash
-    global.__mpxGenericsMap[genericHash] = {}
+    mpxGlobal.__mpxGenericsMap[genericHash] = {}
     Object.keys(genericsInfo.map).forEach((genericValue) => {
       if (componentsMap[genericValue]) {
-        global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
+        mpxGlobal.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
       } else {
         console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
 registered in parent context!`)
@@ -57,7 +57,7 @@ registered in parent context!`)
   }
 
   if (ctorType === 'page') {
-    option.__mpxPageConfig = extend({}, global.__mpxPageConfig, pageConfig)
+    option.__mpxPageConfig = extend({}, mpxGlobal.__mpxPageConfig, pageConfig)
   }
 
   if (!hasApp) {
@@ -79,11 +79,11 @@ registered in parent context!`)
         transitionName: ''
       }
     }
-    if (!global.__mpx.config.webConfig.disablePageTransition) {
+    if (!mpxGlobal.__mpx.config.webConfig.disablePageTransition) {
       option.watch = {
         $route: {
           handler () {
-            const actionType = global.__mpxRouter.currentActionType
+            const actionType = mpxGlobal.__mpxRouter.currentActionType
 
             switch (actionType) {
               case 'to':
@@ -161,8 +161,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         redirect: '/' + firstPage
       })
     }
-    const webRouteConfig = global.__mpx.config.webConfig.routeConfig || global.__mpx.config.webRouteConfig
-    global.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
+    const webRouteConfig = mpxGlobal.__mpx.config.webConfig.routeConfig || mpxGlobal.__mpx.config.webRouteConfig
+    mpxGlobal.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
     let mpxStackPath = []
     if (isBrowser) {
       // 解决webview被刷新导致路由栈丢失后产生错乱问题
@@ -177,16 +177,16 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       } catch (e) {
       }
     }
-    global.__mpxRouter.stack = mpxStackPath
-    global.__mpxRouter.lastStack = null
-    global.__mpxRouter.needCache = null
-    global.__mpxRouter.needRemove = []
-    global.__mpxRouter.eventChannelMap = {}
-    global.__mpxRouter.currentActionType = null
+    mpxGlobal.__mpxRouter.stack = mpxStackPath
+    mpxGlobal.__mpxRouter.lastStack = null
+    mpxGlobal.__mpxRouter.needCache = null
+    mpxGlobal.__mpxRouter.needRemove = []
+    mpxGlobal.__mpxRouter.eventChannelMap = {}
+    mpxGlobal.__mpxRouter.currentActionType = null
     // 处理reLaunch中传递的url并非首页时的replace逻辑
-    global.__mpxRouter.beforeEach(function (to, from, next) {
-      let action = global.__mpxRouter.__mpxAction
-      const stack = global.__mpxRouter.stack
+    mpxGlobal.__mpxRouter.beforeEach(function (to, from, next) {
+      let action = mpxGlobal.__mpxRouter.__mpxAction
+      const stack = mpxGlobal.__mpxRouter.stack
 
       // 处理人为操作
       if (!action) {
@@ -201,13 +201,13 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
           }
         }
       }
-      global.__mpxRouter.currentActionType = action.type
+      mpxGlobal.__mpxRouter.currentActionType = action.type
       const pageInRoutes = routes.some(item => item.path === to.path)
       if (!pageInRoutes) {
         if (stack.length < 1) {
-          if (global.__mpxRouter.app.$options.onPageNotFound) {
+          if (mpxGlobal.__mpxRouter.app.$options.onPageNotFound) {
             // onPageNotFound，仅首次进入时生效
-            global.__mpxRouter.app.$options.onPageNotFound({
+            mpxGlobal.__mpxRouter.app.$options.onPageNotFound({
               path: to.path,
               query: to.query,
               isEntryPage: true
@@ -240,15 +240,15 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
       switch (action.type) {
         case 'to':
           stack.push(insertItem)
-          global.__mpxRouter.needCache = insertItem
-          if (action.eventChannel) global.__mpxRouter.eventChannelMap[to.path.slice(1)] = action.eventChannel
+          mpxGlobal.__mpxRouter.needCache = insertItem
+          if (action.eventChannel) mpxGlobal.__mpxRouter.eventChannelMap[to.path.slice(1)] = action.eventChannel
           break
         case 'back':
-          global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
+          mpxGlobal.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
           break
         case 'redirect':
-          global.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
-          global.__mpxRouter.needCache = insertItem
+          mpxGlobal.__mpxRouter.needRemove = stack.splice(stack.length - 1, 1, insertItem)
+          mpxGlobal.__mpxRouter.needCache = insertItem
           break
         case 'switch':
           if (!action.replaced) {
@@ -260,7 +260,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
           } else {
             // 将非tabBar页面remove
             let tabItem = null
-            global.__mpxRouter.needRemove = stack.filter((item) => {
+            mpxGlobal.__mpxRouter.needRemove = stack.filter((item) => {
               if (tabBarMap[item.path.slice(1)] && !tabItem) {
                 tabItem = item
                 tabItem.path = to.path
@@ -269,10 +269,10 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
               return true
             })
             if (tabItem) {
-              global.__mpxRouter.stack = [tabItem]
+              mpxGlobal.__mpxRouter.stack = [tabItem]
             } else {
-              global.__mpxRouter.stack = [insertItem]
-              global.__mpxRouter.needCache = insertItem
+              mpxGlobal.__mpxRouter.stack = [insertItem]
+              mpxGlobal.__mpxRouter.needCache = insertItem
             }
           }
           break
@@ -287,15 +287,15 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
               replace: true
             })
           } else {
-            global.__mpxRouter.needRemove = stack
-            global.__mpxRouter.stack = [insertItem]
-            global.__mpxRouter.needCache = insertItem
+            mpxGlobal.__mpxRouter.needRemove = stack
+            mpxGlobal.__mpxRouter.stack = [insertItem]
+            mpxGlobal.__mpxRouter.needCache = insertItem
           }
       }
       if (isBrowser) {
         const sessionStorage = window.sessionStorage
         if (sessionStorage) {
-          const stackStorage = global.__mpxRouter.stack.slice(0, global.__mpxRouter.stack.length - 1).map((item) => {
+          const stackStorage = mpxGlobal.__mpxRouter.stack.slice(0, mpxGlobal.__mpxRouter.stack.length - 1).map((item) => {
             return {
               path: item.path
             }
@@ -308,12 +308,12 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     // 处理visibilitychange时触发当前活跃页面组件的onshow/onhide
     if (isBrowser) {
       document.addEventListener('visibilitychange', function () {
-        const vnode = global.__mpxRouter && global.__mpxRouter.__mpxActiveVnode
+        const vnode = mpxGlobal.__mpxRouter && mpxGlobal.__mpxRouter.__mpxActiveVnode
         if (vnode && vnode.componentInstance) {
           const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
           if (document.hidden) {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.hide) {
-              global.__mpxAppCbs.hide.forEach((cb) => {
+            if (mpxGlobal.__mpxAppCbs && mpxGlobal.__mpxAppCbs.hide) {
+              mpxGlobal.__mpxAppCbs.hide.forEach((cb) => {
                 cb()
               })
             }
@@ -321,8 +321,8 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
               currentPage.mpxPageStatus = 'hide'
             }
           } else {
-            if (global.__mpxAppCbs && global.__mpxAppCbs.show) {
-              global.__mpxAppCbs.show.forEach((cb) => {
+            if (mpxGlobal.__mpxAppCbs && mpxGlobal.__mpxAppCbs.show) {
+              mpxGlobal.__mpxAppCbs.show.forEach((cb) => {
                 // todo 实现app.onShow参数
                 /* eslint-disable node/no-callback-literal */
                 cb({})
@@ -335,19 +335,19 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         }
       })
       // 初始化length
-      global.__mpxRouter.__mpxHistoryLength = global.history.length
+      mpxGlobal.__mpxRouter.__mpxHistoryLength = mpxGlobal.history.length
     }
   }
 
   if (App.onAppInit) {
-    global.__mpxAppInit = true
+    mpxGlobal.__mpxAppInit = true
     extend(option, App.onAppInit() || {})
-    global.__mpxAppInit = false
+    mpxGlobal.__mpxAppInit = false
   }
 
-  if (isBrowser && global.__mpxPinia) {
+  if (isBrowser && mpxGlobal.__mpxPinia) {
     // 注入pinia
-    option.pinia = global.__mpxPinia
+    option.pinia = mpxGlobal.__mpxPinia
   }
 
   const app = new Vue(extend(option, { render: (h) => h(App) }))

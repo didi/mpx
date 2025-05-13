@@ -30,9 +30,9 @@ export const isReact = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || _
 export const isWeb = __mpx_mode__ === 'web'
 
 export function getFocusedNavigation () {
-  if (global.__mpxPagesMap) {
-    for (const key in global.__mpxPagesMap) {
-      const navigation = global.__mpxPagesMap[key][1]
+  if (mpxGlobal.__mpxPagesMap) {
+    for (const key in mpxGlobal.__mpxPagesMap) {
+      const navigation = mpxGlobal.__mpxPagesMap[key][1]
       if (navigation && navigation.isFocused()) {
         return navigation
       }

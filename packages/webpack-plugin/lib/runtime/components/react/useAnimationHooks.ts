@@ -130,7 +130,7 @@ const parseTransform = (transformStr: string) => {
           // rotate 处理成 rotateZ
           key = key === 'rotate' ? 'rotateZ' : key
           // 单个值处理
-          transform.push({ [key]: global.__formatValue(val) })
+          transform.push({ [key]: mpxGlobal.__formatValue(val) })
           break
         case 'matrix':
           transform.push({ [key]: parseValues(val, ',').map(val => +val) })
@@ -150,7 +150,7 @@ const parseTransform = (transformStr: string) => {
           }
           const xyz = ['X', 'Y', 'Z']
           transform.push(...vals.map((v, index) => {
-            return { [`${key}${xyz[index] || ''}`]: global.__formatValue(v.trim()) }
+            return { [`${key}${xyz[index] || ''}`]: mpxGlobal.__formatValue(v.trim()) }
           }))
           break
         }

@@ -12,7 +12,7 @@ const BEHAVIORS_MAP = {
 const unsupported = ['moved', 'relations']
 
 function convertErrorDesc (key) {
-  error(`Options.${key} is not supported in runtime conversion from wx to swan.`, global.currentResource)
+  error(`Options.${key} is not supported in runtime conversion from wx to swan.`, mpxGlobal.currentResource)
 }
 
 function notSupportTip (options) {

@@ -95,26 +95,26 @@ function buildGlobalParams ({
   let content = ''
   if (ctorType === 'app') {
     content += `
-global.getApp = function () {}
-global.getCurrentPages = function () { return [] }
-global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-global.__mpxGenericsMap = {}
-global.__mpxOptionsMap = {}
-global.__mpxPagesMap = {}
-global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-global.__getAppComponents = function () {
+mpxGlobal.getApp = function () {}
+mpxGlobal.getCurrentPages = function () { return [] }
+mpxGlobal.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+mpxGlobal.__mpxGenericsMap = {}
+mpxGlobal.__mpxOptionsMap = {}
+mpxGlobal.__mpxPagesMap = {}
+mpxGlobal.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+mpxGlobal.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+mpxGlobal.__getAppComponents = function () {
   return ${shallowStringify(componentsMap)}
 }
-global.currentInject.getPages = function () {
+mpxGlobal.currentInject.getPages = function () {
   return ${shallowStringify(pagesMap)}
 }
-global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
+mpxGlobal.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)
       delete pageConfig.usingComponents
-      content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
+      content += `mpxGlobal.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
     }
 
     content += `
@@ -123,23 +123,23 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
       return ${shallowStringify(componentsMap)}
     }
 
-    global.currentInject.getComponents = getComponents\n`
+    mpxGlobal.currentInject.getComponents = getComponents\n`
     if (genericsInfo) {
       content += `
         const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
-        global.__mpxGenericsMap[genericHash] = function (name) {
+        mpxGlobal.__mpxGenericsMap[genericHash] = function (name) {
           return getComponents()[name]
         }
       \n`
     }
     if (ctorType === 'component') {
-      content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
+      content += `mpxGlobal.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
     }
   }
-  content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-  content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+  content += `mpxGlobal.currentModuleId = ${JSON.stringify(moduleId)}\n`
+  content += `mpxGlobal.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
   if (!isProduction) {
-    content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+    content += `mpxGlobal.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
   }
   return content
 }
