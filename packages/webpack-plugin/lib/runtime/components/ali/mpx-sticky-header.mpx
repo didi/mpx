@@ -1,0 +1,54 @@
+<template>
+  <block>
+    <view class="mpx-sticky-header-check" />
+
+    <view class="mpx-sticky-header" style="{{ top ? `top: ${offsetTop};` : '' }}">
+      <slot></slot>
+    </view>
+  </block>
+</template>
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+
+  createPage({
+    properties: {
+      offsetTop: {
+        type: Number,
+        value: 0
+      }
+    },
+    data: {
+      isStickOnTop: false
+    },
+    ready() {
+      this.stickyHeader = this.createIntersectionObserver()
+      this.initTabsObserver()
+    },
+    methods: {
+      initTabsObserver() {
+        this.stickyHeader.relativeTo('.mpx-sticky-header-check').observe('.mpx-sticky-header', (res) => {
+          const newIsStickOnTop = res.intersectionRatio > 0
+          if (newIsStickOnTop !== this.isStickOnTop) {
+            this.isStickOnTop = newIsStickOnTop
+            this.triggerEvent('stickontopchange', {
+              isStickOnTop: newIsStickOnTop
+            })
+          }
+        })
+      }
+    }
+  })
+</script>
+<style lang="stylus" scoped>
+  .mpx-sticky-check
+    position fixed
+    height 2px
+    background transparent
+    top 0
+    left 0
+    width 100%
+    pointer-events none
+  .mpx-sticky-header 
+    position: sticky
+    top: 0  
+</style>
