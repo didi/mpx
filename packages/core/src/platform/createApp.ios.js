@@ -4,6 +4,8 @@ import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
+import { reactive } from '../observer/reactive'
+import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
@@ -90,10 +92,9 @@ export default function createApp (options) {
       global.__navigationHelper.lastFailCallback = null
     }
   }
-
-  const onAppStateChange = (currentState) => {
-    // 业务上配置禁止的话就不响应监听事件
-    if (currentState === 'active') {
+  const appState = reactive({})
+  watch(() => appState.state, (value) => {
+    if (value === 'show') {
       let options = global.__mpxEnterOptions || {}
       const navigation = getFocusedNavigation()
       if (navigation) {
@@ -110,16 +111,23 @@ export default function createApp (options) {
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
       })
-      if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-        global.__mpxPageStatusMap[navigation.pageId] = 'show'
-      }
-    } else if (currentState === 'inactive' || currentState === 'background') {
+    } else if (value === 'hide') {
       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
           reason: 3
         })
       })
-      const navigation = getFocusedNavigation()
+    }
+  })
+  const onAppStateChange = (currentState) => {
+    const navigation = getFocusedNavigation()
+    if (currentState === 'active') {
+      appState.state = 'show'
+      if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+        global.__mpxPageStatusMap[navigation.pageId] = 'show'
+      }
+    } else if (currentState === 'inactive' || currentState === 'background') {
+      appState.state = 'hide'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'hide'
       }
@@ -162,9 +170,7 @@ export default function createApp (options) {
           global.__mpxLaunchOptions = options
           defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
-        global.__mpxAppCbs.show.forEach((cb) => {
-          cb(options)
-        })
+        appState.state = 'show'
         global.__mpxAppLaunched = true
         global.__mpxAppHotLaunched = true
       }
