@@ -15,11 +15,18 @@ jobs:
             +(docs|docs-vitepress)/**/*
             +(docs|docs-vitepress)/.*/**/*
       # vuepress生成最终文档
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.1
+          run_install: false
+      - name: Install dependencies
+        run: pnpm i
       - name: generate docs file
         if: env.GIT_DIFF
         run: |
-          npm i
-          npm run docs:build
+          pnpm i
+          pnpm run docs:build
 
       # 使用 https://github.com/appleboy/scp-action 进行部署，注意 strip_components 用于控制层级
       - name: Deploy to self-host server

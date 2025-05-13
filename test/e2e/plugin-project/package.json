@@ -23,9 +23,9 @@
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.9.58",
-    "@mpxjs/core": "^2.9.58",
-    "@mpxjs/store": "^2.9.58",
+    "@mpxjs/api-proxy": "workspace:*",
+    "@mpxjs/core": "workspace:*",
+    "@mpxjs/store": "workspace:*",
     "semver": "^7.5.4",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
@@ -44,7 +44,7 @@
     "@mpxjs/miniprogram-simulate": "^1.4.17",
     "@mpxjs/mpx-jest": "^0.0.31",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/webpack-plugin": "^2.9.58",
+    "@mpxjs/webpack-plugin": "workspace:*",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "autoprefixer": "^6.3.1",

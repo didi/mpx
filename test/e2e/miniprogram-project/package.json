@@ -1,5 +1,5 @@
 {
-  "name": "mpx-feature-unit-test",
+  "name": "mpx-miniprogram-project",
   "version": "1.0.0",
   "description": "mpx feature unit test",
   "main": "index.js",
@@ -17,15 +17,12 @@
     "help": "node ./build/build.js --help",
     "test": "jest"
   },
-  "_moduleAliases": {
-    "@mpxjs/webpack-plugin": "../../packages/webpack-plugin"
-  },
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.9.58",
-    "@mpxjs/core": "^2.9.58",
-    "@mpxjs/utils": "^2.9.58",
+    "@mpxjs/api-proxy": "workspace:*",
+    "@mpxjs/core": "workspace:*",
+    "@mpxjs/utils": "workspace:*",
     "semver": "^7.5.4",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
@@ -41,7 +38,7 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.31",
-    "@mpxjs/webpack-plugin": "^2.9.58",
+    "@mpxjs/webpack-plugin": "workspace:*",
     "@mpxjs/template-engine": "^2.8.7",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
