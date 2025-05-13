@@ -37,7 +37,8 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "workspace:*",
+    "@mpxjs/core": "workspace:^",
+    "@mpxjs/utils": "workspace:^",
     "axios": "^1.7.3"
   },
   "peerDependencies": {

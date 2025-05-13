@@ -1202,8 +1202,11 @@ importers:
 
   packages/api-proxy:
     dependencies:
+      '@mpxjs/core':
+        specifier: workspace:^
+        version: link:../core
       '@mpxjs/utils':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../utils
       '@react-native-async-storage/async-storage':
         specifier: '*'
@@ -1235,13 +1238,13 @@ importers:
         specifier: '*'
         version: 8.9.2(react-native@0.74.7)(react@19.1.0)
       '@mpxjs/api-proxy':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../api-proxy
       '@mpxjs/store':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../store
       '@mpxjs/utils':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../utils
       '@react-navigation/native':
         specifier: '*'
@@ -1298,10 +1301,10 @@ importers:
   packages/fetch:
     dependencies:
       '@mpxjs/api-proxy':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../api-proxy
       '@mpxjs/utils':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../utils
       path-to-regexp:
         specifier: ^6.2.0
@@ -1310,10 +1313,10 @@ importers:
   packages/pinia:
     dependencies:
       '@mpxjs/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@mpxjs/utils':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../utils
       pinia:
         specifier: ^2.0.14
@@ -1328,7 +1331,7 @@ importers:
   packages/size-report:
     dependencies:
       '@mpxjs/webpack-plugin':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../webpack-plugin
       acorn:
         specifier: ^8.11.3
@@ -1383,10 +1386,10 @@ importers:
   packages/store:
     dependencies:
       '@mpxjs/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@mpxjs/utils':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../utils
 
   packages/unocss-base:
@@ -1401,7 +1404,7 @@ importers:
         specifier: ^2.2.1
         version: 2.3.0
       '@mpxjs/webpack-plugin':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../webpack-plugin
       '@rollup/pluginutils':
         specifier: ^5.0.2
@@ -1440,7 +1443,7 @@ importers:
   packages/utils:
     dependencies:
       '@mpxjs/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
 
   packages/webpack-plugin:
@@ -1485,7 +1488,7 @@ importers:
         specifier: ^2.8.7
         version: 2.8.7(@mpxjs/core@packages+core)(webpack@5.99.8)
       '@mpxjs/utils':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../utils
       acorn:
         specifier: ^8.11.3
@@ -1580,6 +1583,9 @@ importers:
       source-list-map:
         specifier: ^2.0.0
         version: 2.0.1
+      source-map:
+        specifier: ^0.7.4
+        version: 0.7.4
       webpack:
         specifier: ^5.75.0
         version: 5.99.8(webpack-cli@4.10.0)
@@ -1591,7 +1597,7 @@ importers:
         specifier: ^8.6.12
         version: 8.9.2(react-native@0.74.7)(react@18.2.0)
       '@mpxjs/api-proxy':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../api-proxy
       '@types/babel-traverse':
         specifier: ^6.25.4
@@ -1680,9 +1686,15 @@ importers:
       '@mpxjs/core':
         specifier: workspace:*
         version: link:../../../packages/core
+      '@mpxjs/store':
+        specifier: workspace:^
+        version: link:../../../packages/store
       '@mpxjs/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
+      autoprefixer:
+        specifier: ^10.4.21
+        version: 10.4.21(postcss@8.5.3)
       semver:
         specifier: ^7.5.4
         version: 7.7.2
@@ -1813,6 +1825,9 @@ importers:
       rimraf:
         specifier: ^2.6.2
         version: 2.7.1
+      source-map:
+        specifier: ^0.7.4
+        version: 0.7.4
       stylus:
         specifier: ^0.54.5
         version: 0.54.8
@@ -9644,7 +9659,6 @@ packages:
       picocolors: 1.1.1
       postcss: 8.5.3
       postcss-value-parser: 4.2.0
-    dev: true
 
   /autoprefixer@6.7.7:
     resolution: {integrity: sha512-WKExI/eSGgGAkWAO+wMVdFObZV7hQen54UpD1kCCTN3tvlL3W1jL4+lPP/M7MwoP7Q4RHzKtO3JQ4HxYEcd+xQ==}
@@ -13685,7 +13699,6 @@ packages:
 
   /fraction.js@4.3.7:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
-    dev: true
 
   /fragment-cache@0.2.1:
     resolution: {integrity: sha512-GMBAbW9antB8iZRHLoGw0b3HANt57diZYFO/HL1JGIC1MjKrdmhxvrJbupnVvpys0zsz7yBApXdQyfepKly2kA==}
@@ -18115,7 +18128,6 @@ packages:
   /normalize-range@0.1.2:
     resolution: {integrity: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==}
     engines: {node: '>=0.10.0'}
-    dev: true
 
   /normalize-url@1.9.1:
     resolution: {integrity: sha512-A48My/mtCklowHBlI8Fq2jFWK4tX4lJ5E6ytFsSOq1fzpvT0SQSgKhSg7lN5c2uYFOrUAOQp6zhhJnpp1eMloQ==}

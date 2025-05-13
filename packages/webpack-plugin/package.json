@@ -8,6 +8,10 @@
   "author": "donghongping",
   "license": "Apache-2.0",
   "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./*": "./*"
+  },
   "directories": {
     "lib": "lib"
   },
@@ -28,7 +32,7 @@
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/utils": "workspace:*",
+    "@mpxjs/utils": "workspace:^",
     "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
@@ -60,6 +64,7 @@
     "postcss-value-parser": "^4.0.2",
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
+    "source-map": "^0.7.4",
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
@@ -88,7 +93,7 @@
   },
   "devDependencies": {
     "@d11/react-native-fast-image": "^8.6.12",
-    "@mpxjs/api-proxy": "workspace:*",
+    "@mpxjs/api-proxy": "workspace:^",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^8.1.0",
