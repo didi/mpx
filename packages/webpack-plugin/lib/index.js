@@ -1811,7 +1811,18 @@ try {
           const extract = queryObj.extract
 
           if (type === 'styles') {
-            loaders.push({ loader: styleStripConditionalPath })
+            let insertBeforeIndex = -1
+            // 单次遍历收集所有索引
+            loaders.forEach((loader, index) => {
+              const currentLoader = toPosix(loader.loader)
+              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
+                insertBeforeIndex = index
+              }
+            })
+
+            if (insertBeforeIndex !== -1) {
+                loaders.splice(insertBeforeIndex + 1, 0, { loader: styleStripConditionalPath })
+            }
           }
 
           switch (type) {
