@@ -19,8 +19,8 @@
   "author": "sky-admin <546485299@qq.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "workspace:*",
-    "@mpxjs/core": "workspace:*"
+    "@mpxjs/api-proxy": "workspace:^2.7.28",
+    "@mpxjs/core": "workspace:^2.7.26"
   },
   "devDependencies": {
     "@babel/core": "7.12.10",
@@ -29,7 +29,7 @@
     "@babel/plugin-transform-runtime": "7.12.10",
     "@babel/preset-env": "7.12.11",
     "@babel/runtime-corejs3": "7.12.5",
-    "@mpxjs/webpack-plugin": "workspace:*",
+    "@mpxjs/webpack-plugin": "workspace:^2.7.27",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-jest": "^25.3.0",

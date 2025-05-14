@@ -38,7 +38,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "workspace:^"
+    "@mpxjs/webpack-plugin": "workspace:^2.9.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",

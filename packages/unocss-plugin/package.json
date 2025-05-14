@@ -9,7 +9,7 @@
   "author": "",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "workspace:^",
+    "@mpxjs/webpack-plugin": "workspace:^2.9.0",
     "webpack": "^5.83.1"
   },
   "publishConfig": {

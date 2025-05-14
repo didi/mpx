@@ -29,8 +29,8 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
-    "@mpxjs/api-proxy": "workspace:^",
-    "@mpxjs/utils": "workspace:^",
+    "@mpxjs/api-proxy": "workspace:^2.10.4",
+    "@mpxjs/utils": "workspace:^2.10.4",
     "path-to-regexp": "^6.2.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"

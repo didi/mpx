@@ -31,10 +31,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@mpxjs/utils": "workspace:^"
+    "@mpxjs/utils": "workspace:^2.10.4"
   },
   "peerDependencies": {
-    "@mpxjs/core": "workspace:^",
+    "@mpxjs/core": "workspace:^2.9.0",
     "pinia": "^2.0.14",
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6"

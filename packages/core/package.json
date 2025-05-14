@@ -23,14 +23,14 @@
   ],
   "main": "src/index.js",
   "dependencies": {
-    "@mpxjs/utils": "workspace:^",
+    "@mpxjs/utils": "workspace:^2.10.4",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"
   },
   "peerDependencies": {
     "@d11/react-native-fast-image": "*",
-    "@mpxjs/api-proxy": "workspace:^",
-    "@mpxjs/store": "workspace:^",
+    "@mpxjs/api-proxy": "workspace:^2.9.0",
+    "@mpxjs/store": "workspace:^^2.9.0",
     "@react-navigation/native": "*",
     "@react-navigation/native-stack": "*",
     "react": "*",

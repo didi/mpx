@@ -31,7 +31,7 @@
     "windicss-webpack-plugin": "^1.7.8"
   },
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": "workspace:*",
+    "@mpxjs/webpack-plugin": "workspace:^2.9.0",
     "webpack": "^5.48.0"
   }
 }
