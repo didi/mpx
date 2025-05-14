@@ -12,9 +12,9 @@ const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
-const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
+const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
 
-module.exports = function (json, {
+module.exports = function (jsonContent, {
   loaderContext,
   ctorType,
   pagesMap,
@@ -80,13 +80,11 @@ module.exports = function (json, {
     })
   }
 
-  const isApp = ctorType === 'app'
-  if (!json) {
+  if (!jsonContent) {
     return callback()
   }
-  // 由于json需要提前读取在template处理中使用，src的场景已经在loader中处理了，此处无需考虑json.src的场景
   try {
-    jsonObj = JSON5.parse(json.content)
+    jsonObj = JSON5.parse(jsonContent)
     // 处理runner
     const rulesRunnerOptions = {
       mode,
@@ -96,12 +94,12 @@ module.exports = function (json, {
       warn: emitWarning,
       error: emitError,
       data: {
-        // polyfill global usingComponents & record globalComponents
-        globalComponents: mpx.usingComponents
+        // polyfill global usingComponents
+        globalComponents: mpx.globalComponents
       }
     }
 
-    if (!isApp) {
+    if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
     }
 
@@ -110,14 +108,19 @@ module.exports = function (json, {
     if (rulesRunner) {
       rulesRunner(jsonObj)
     }
-    if (isApp) {
-      // 收集全局组件
-      Object.assign(mpx.usingComponents, jsonObj.usingComponents)
-      // 在 rulesRunner 运行后保存全局注册组件
-      loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, loaderContext.context))
-    }
   } catch (e) {
     return callback(e)
+  }
+
+  if (ctorType === 'page') {
+    const keysToExtract = ['navigationStyle']
+    const configObj = {}
+    keysToExtract.forEach(key => {
+      if (jsonObj[key]) {
+        configObj[key] = jsonObj[key]
+      }
+    })
+    loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, configObj))
   }
 
   const fs = loaderContext._compiler.inputFileSystem

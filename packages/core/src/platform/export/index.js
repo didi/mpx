@@ -1,4 +1,3 @@
-
 export {
   watchEffect,
   watchSyncEffect,
@@ -43,3 +42,8 @@ export {
 export {
   useI18n
 } from '../../platform/builtInMixins/i18nMixin'
+
+export {
+  provide,
+  inject
+} from './inject'

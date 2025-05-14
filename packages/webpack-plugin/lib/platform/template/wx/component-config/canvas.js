@@ -8,6 +8,18 @@ module.exports = function ({ print }) {
   const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-canvas'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-canvas'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-canvas'
+    },
     props: [
       {
         test: /^canvas-id$/,

@@ -9,9 +9,12 @@ module.exports = function (script, {
   moduleId,
   isProduction,
   jsonConfig,
+  outputPath,
   builtInComponentsMap,
   localComponentsMap,
-  localPagesMap
+  localPagesMap,
+  componentGenerics,
+  genericsInfo
 }, callback) {
   let scriptSrcMode = srcMode
   if (script) {
@@ -24,16 +27,7 @@ module.exports = function (script, {
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
-import { NavigationContainer, createNavigationContainerRef, StackActions } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { Provider } from '@ant-design/react-native'
-global.__navigationHelper = {
-  NavigationContainer: NavigationContainer,
-  createNavigationContainerRef: createNavigationContainerRef,
-  createNativeStackNavigator: createNativeStackNavigator,
-  StackActions: StackActions,
-  Provider: Provider
-}\n`
+\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
       loaderContext,
@@ -59,7 +53,7 @@ global.__navigationHelper = {
       jsonConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }

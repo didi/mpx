@@ -10,7 +10,7 @@ const { stringify } = require('./dynamic')
 
 module.exports = function (raw) {
   this.cacheable()
-  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const { resourcePath, queryObj, rawResourcePath } = parseRequest(this.resource)
   const mpx = this.getMpx()
   const projectRoot = mpx.projectRoot
   const mode = mpx.mode
@@ -24,14 +24,14 @@ module.exports = function (raw) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const wxsContentMap = mpx.wxsContentMap
   const optimizeRenderRules = mpx.optimizeRenderRules
-  const usingComponents = queryObj.usingComponents || []
+  const usingComponentsInfo = queryObj.usingComponentsInfo || {}
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const ctorType = queryObj.ctorType
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
-  const moduleId = queryObj.moduleId || '_' + mpx.pathHash(resourcePath)
+  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -57,7 +57,6 @@ module.exports = function (raw) {
     warn,
     error,
     runtimeCompile,
-    usingComponents,
     componentPlaceholder,
     hasComment,
     isNative,
@@ -70,18 +69,20 @@ module.exports = function (raw) {
     externalClasses,
     hasScoped,
     moduleId,
-    // 这里需传递resourcePath和wxsContentMap保持一致
-    filePath: resourcePath,
+    usingComponentsInfo,
+    // 这里需传递rawResourcePath和wxsContentMap保持一致
+    filePath: rawResourcePath,
     i18n,
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
-    globalComponents: Object.keys(mpx.usingComponents),
+    globalComponents: Object.keys(mpx.globalComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules) || runtimeCompile,
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
+    dynamicTemplateRuleRunner: mpx.dynamicTemplateRuleRunner
   })
 
   if (meta.wxsContentMap) {
     for (const module in meta.wxsContentMap) {
-      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+      wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
 

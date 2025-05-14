@@ -4,103 +4,79 @@
  * ✘ space
  * ✘ decode
  */
-import { Text, TextStyle, TextProps, StyleSheet } from 'react-native'
-import { useRef, useEffect, forwardRef, ReactNode, ForwardedRef, JSX } from 'react';
+import { Text, TextStyle, TextProps } from 'react-native'
+import { useRef, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
-// @ts-ignore
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { PERCENT_REGX } from './utils'
-
+import { useTransformStyle, wrapChildren, extendObject } from './utils'
 
 interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
   selectable?: boolean
-  'enable-offset'?: boolean
   'user-select'?: boolean
-  userSelect?: boolean
-  ['disable-default-style']?: boolean
-}
-
-const DEFAULT_STYLE = {
-  fontSize: 16
-}
-
-const transformStyle = (styleObj: TextStyle) => {
-  let { lineHeight } = styleObj
-  if (typeof lineHeight === 'string' && PERCENT_REGX.test(lineHeight)) {
-    lineHeight = (parseFloat(lineHeight)/100) * (styleObj.fontSize || DEFAULT_STYLE.fontSize)
-    styleObj.lineHeight = lineHeight
-  }
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
   const {
-    style = [],
-    children,
+    style = {},
+    allowFontScaling = false,
     selectable,
-    'enable-offset': enableOffset,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
     'user-select': userSelect,
-    'disable-default-style': disableDefaultStyle = false,
-    } = props
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
+  } = props
 
-    const layoutRef = useRef({})
+  const {
+    normalStyle,
+    hasVarDec,
+    varContextRef
+  } = useTransformStyle(style, {
+    enableVar,
+    externalVarContext,
+    parentFontSize,
+    parentWidth,
+    parentHeight
+  })
 
-    const styleObj: TextStyle = StyleSheet.flatten<TextStyle>(style)
+  const nodeRef = useRef(null)
+  useNodesRef<Text, _TextProps>(props, ref, nodeRef, {
+    style: normalStyle
+  })
 
-    let defaultStyle = {}
-
-    if (!disableDefaultStyle) {
-      defaultStyle = DEFAULT_STYLE
-      transformStyle(styleObj)
-    }
-
-    const { nodeRef } = useNodesRef<Text, _TextProps>(props, ref, {
-      defaultStyle
-    })
-
-    const innerProps = useInnerProps(props, {
-      ref: nodeRef
-    }, [
-      'style',
-      'children',
-      'selectable',
-      'user-select',
-      'useInherit',
-      'enable-offset'
-    ], {
-      layoutRef
-    })
-
-    useEffect(() => {
-      let measureTimeout: ReturnType<typeof setTimeout> | null = null
-      if (enableOffset) {
-        measureTimeout = setTimeout(() => {
-          nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-            layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-          })
-        })
-        return () => {
-          if (measureTimeout) {
-            clearTimeout(measureTimeout)
-            measureTimeout = null
-          }
-        }
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      {
+        ref: nodeRef,
+        style: normalStyle,
+        selectable: !!selectable || !!userSelect,
+        allowFontScaling
       }
-    }, [])
+    ),
+    [
+      'user-select'
+    ]
+  )
 
-
-    return (
-      <Text
-        style={{...defaultStyle, ...styleObj}}
-        selectable={!!selectable || !!userSelect}
-        {...innerProps}
-      >
-        {children}
-      </Text>
-    )
+  return createElement(Text, innerProps, wrapChildren(
+    props,
+    {
+      hasVarDec,
+      varContext: varContextRef.current
+    }
+  ))
 })
 
-_Text.displayName = 'mpx-text'
+_Text.displayName = 'MpxText'
 
 export default _Text

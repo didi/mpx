@@ -1,8 +1,11 @@
 import { match } from 'path-to-regexp'
-
-import { type, isFunction, isArray, isString, serialize, buildUrl, parseUrl, getEnvObj, hasOwn, forEach } from '@mpxjs/utils'
+import { type, isFunction, isArray, isString, forEach, isNumber, serialize, buildUrl, parseUrl, extend } from '@mpxjs/utils'
 
 const toString = Object.prototype.toString
+const hasOwnProperty = Object.prototype.hasOwnProperty
+function hasOwn (obj, key) {
+  return hasOwnProperty.call(obj, key)
+}
 
 function isObject (val) {
   return type(val) === 'Object'
@@ -25,6 +28,9 @@ function isNotEmptyArray (ary) {
 function transformReq (config) {
   // 抹平wx & ali 请求参数
   let header = config.header || config.headers
+  if (config.header && config.headers) {
+    header = Object.assign({}, config.headers, config.header)
+  }
   const descriptor = {
     get () {
       return header
@@ -198,10 +204,15 @@ function formatCacheKey (url) {
   return url.split('//')[1].split('?')[0]
 }
 
-function checkCacheConfig (thisConfig, catchData) {
-  return compareParams(thisConfig.params, catchData.params, thisConfig.ignorePreParamKeys) &&
-    compareParams(thisConfig.data, catchData.data, thisConfig.ignorePreParamKeys) &&
-    thisConfig.method === catchData.method
+function checkCacheConfig (thisConfig, cacheData) {
+  let paramsEquals = false
+  if (typeof thisConfig.usePre.equals === 'function') {
+    paramsEquals = thisConfig.usePre.equals(thisConfig, cacheData)
+  } else {
+    paramsEquals = compareParams(thisConfig.params, cacheData.params, thisConfig.usePre.ignorePreParamKeys) &&
+      compareParams(thisConfig.data, cacheData.data, thisConfig.usePre.ignorePreParamKeys)
+  }
+  return paramsEquals && thisConfig.method === cacheData.method
 }
 
 function compareParams (params, cacheParams, ignoreParamKeys = []) {
@@ -221,8 +232,8 @@ function compareParams (params, cacheParams, ignoreParamKeys = []) {
     // ignoreParamKeys 字符串数组化
     ignoreParamKeys = ignoreParamKeys.trim().split(',')
   }
-  const paramsKeys = Object.keys(params)
-  const cacheParamsKeys = Object.keys(cacheParams)
+  const paramsKeys = Object.keys(params).filter(key => !ignoreParamKeys.includes(key))
+  const cacheParamsKeys = Object.keys(cacheParams).filter(key => !ignoreParamKeys.includes(key))
   // key长度不等
   if (paramsKeys.length !== cacheParamsKeys.length) {
     return false
@@ -249,11 +260,12 @@ function compareParams (params, cacheParams, ignoreParamKeys = []) {
 export {
   isThenable,
   isFunction,
+  isNumber,
+  extend,
   parseUrl,
   deepMerge,
   doTest,
   buildUrl,
-  getEnvObj,
   serialize,
   transformRes,
   isString,

@@ -32,6 +32,13 @@ const {
 } = require('./utils')
 const createHelpers = require('../helpers')
 
+const RN_PRESET_OPTIMISATION = {
+  reduceInitial: false,
+  normalizeWhitespace: false,
+  minifyFontValues: false,
+  convertValues: false
+}
+
 module.exports = async function loader (content, map, meta) {
   const rawOptions = this.getOptions(schema)
   const plugins = []
@@ -41,6 +48,7 @@ module.exports = async function loader (content, map, meta) {
   const externals = mpx.externals
   const root = mpx.projectRoot
   const sourceMap = mpx.cssSourceMap || false
+  const isRN = ['ios', 'android', 'harmony'].includes(mpx.mode)
 
   let options
 
@@ -152,12 +160,17 @@ module.exports = async function loader (content, map, meta) {
   if (this.minimize) {
     const cssnano = require('cssnano')
     const minimizeOptions = rawOptions.minimize || {}
+    const presetOptimisation = Object.assign(
+      {},
+      isRN ? RN_PRESET_OPTIMISATION : {},
+      minimizeOptions.optimisation
+    )
     let cssnanoConfig = {
-      preset: ['cssnano-preset-default', minimizeOptions.optimisation || {}]
+      preset: ['cssnano-preset-default', presetOptimisation]
     }
     if (minimizeOptions.advanced) {
       cssnanoConfig = {
-        preset: ['cssnano-preset-advanced', minimizeOptions.optimisation || {}]
+        preset: ['cssnano-preset-advanced', presetOptimisation]
       }
     }
     plugins.push(cssnano(cssnanoConfig))

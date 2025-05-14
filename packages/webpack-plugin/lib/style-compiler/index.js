@@ -4,7 +4,6 @@ const loadPostcssConfig = require('./load-postcss-config')
 const { MPX_ROOT_VIEW, MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
 const rpx = require('./plugins/rpx')
 const vw = require('./plugins/vw')
-const pluginCondStrip = require('./plugins/conditional-strip')
 const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
 const cssArrayList = require('./plugins/css-array-list')
@@ -18,7 +17,8 @@ module.exports = function (css, map) {
   const cb = this.async()
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
-  const id = queryObj.moduleId || queryObj.mid || '_' + mpx.pathHash(resourcePath)
+  const mpxStyleOptions = (queryObj.mpxStyleOptions && JSON.parse(queryObj.mpxStyleOptions)) || {}
+  const id = queryObj.moduleId || mpxStyleOptions.mid || mpx.getModuleId(resourcePath)
   const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
@@ -37,6 +37,7 @@ module.exports = function (css, map) {
   const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, { defs, inlineConfigFile: path.join(mpx.projectRoot, 'vue.config.js') })
   loadPostcssConfig(this, inlineConfig).then(config => {
     const plugins = [] // init with trim plugin
+    const postPlugins = []
     const options = Object.assign(
       {
         to: this.resourcePath,
@@ -46,20 +47,20 @@ module.exports = function (css, map) {
       config.options
     )
     // ali平台下处理scoped和host选择器
-    if (mode === 'ali') {
-      if (queryObj.scoped) {
+    if (mode === 'ali' || mode === 'web') {
+      if (queryObj.scoped || mpxStyleOptions.scoped) {
         plugins.push(scopeId({ id }))
       }
       plugins.push(transSpecial({ id }))
     }
 
-    if (mode === 'web' || isReact(mode)) {
+    if (isReact(mode)) {
       plugins.push(transSpecial({ id }))
     }
 
-    plugins.push(pluginCondStrip({
-      defs
-    }))
+    // plugins.push(pluginCondStrip({
+    //   defs
+    // }))
 
     for (const item of transRpxRules) {
       const {
@@ -77,9 +78,6 @@ module.exports = function (css, map) {
       }
     }
 
-    if (mpx.mode === 'web') {
-      plugins.push(vw({ transRpxFn }))
-    }
     // source map
     if (this.sourceMap && !options.map) {
       options.map = {
@@ -89,12 +87,16 @@ module.exports = function (css, map) {
       }
     }
 
-    const finalPlugins = config.prePlugins.concat(plugins, config.plugins)
-
     const cssList = []
     if (runtimeCompile) {
-      finalPlugins.push(cssArrayList(cssList))
+      postPlugins.push(cssArrayList(cssList))
     }
+
+    if (mpx.mode === 'web') {
+      postPlugins.push(vw({ transRpxFn }))
+    }
+
+    const finalPlugins = config.prePlugins.concat(plugins, config.plugins, postPlugins)
 
     return postcss(finalPlugins)
       .process(css, options)

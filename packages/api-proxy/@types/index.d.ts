@@ -2,29 +2,28 @@
 
 type AddPromise<W> = {
   [K in keyof W]: W[K] extends (...args: any) => any
-    ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }?, ...any[]]
-      ? (...args: Parameters<W[K]>) => ReturnType<W[K]> & Promise<R>
+      ? Parameters<W[K]> extends [{ success?: (res: infer R) => any }?, ...any[]]
+          ? (...args: Parameters<W[K]>) => ReturnType<W[K]> & Promise<R>
+          : W[K]
       : W[K]
-    : W[K]
 }
 
 type AddParam<O, V extends (...args: any) => any> =
-  Parameters<V> extends [{ success?: (res: infer R) => any }, ...any[]]
-    ? (options: O) => ReturnType<V> & Promise<R>
-    : (options: O) => ReturnType<V>
-// @ts-ignore
+    Parameters<V> extends [{ success?: (res: infer R) => any }, ...any[]]
+        ? (options: O) => ReturnType<V> & Promise<R>
+        : (options: O) => ReturnType<V>
+
 type PickApiValue<T extends keyof WechatMiniprogram.Wx> = Pick<WechatMiniprogram.Wx, T>[T]
-// @ts-ignore
+
 interface GetLocationInterface extends WechatMiniprogram.GetLocationOption {
   aliType?: number
 }
-// @ts-ignore
+
 interface RequestPaymentInterface extends WechatMiniprogram.RequestPaymentOption {
   tradeNO?: string
 }
 
 declare module '@mpxjs/core' {
-  // @ts-ignore
   interface Mpx extends AddPromise<WechatMiniprogram.Wx> {
     getLocation: AddParam<GetLocationInterface, PickApiValue<'getLocation'>>
     requestPayment: AddParam<RequestPaymentInterface, PickApiValue<'requestPayment'>>
@@ -33,7 +32,7 @@ declare module '@mpxjs/core' {
 
 export const getProxy: (...args: any) => void
 
-export const promisify: (listObj: object, whiteList: string[], customBlackList: string[]) => object
+export const promisify: (listObj: object, whiteList?: string[], customBlackList?: string[]) => Record<string, any>
 
 export const showActionSheet: WechatMiniprogram.Wx['showActionSheet']
 export const addPhoneContact: WechatMiniprogram.Wx['addPhoneContact']
@@ -84,6 +83,9 @@ export const switchTab: WechatMiniprogram.Wx['switchTab']
 export const scanCode: WechatMiniprogram.Wx['scanCode']
 export const setScreenBrightness: WechatMiniprogram.Wx['setScreenBrightness']
 export const getScreenBrightness: WechatMiniprogram.Wx['getScreenBrightness']
+export const setVisualEffectOnCapture: WechatMiniprogram.Wx['setVisualEffectOnCapture']
+export const onUserCaptureScreen: WechatMiniprogram.Wx['onUserCaptureScreen']
+export const offUserCaptureScreen: WechatMiniprogram.Wx['offUserCaptureScreen']
 export const setNavigationBarTitle: WechatMiniprogram.Wx['setNavigationBarTitle']
 export const setNavigationBarColor: WechatMiniprogram.Wx['setNavigationBarColor']
 export const connectSocket: WechatMiniprogram.Wx['connectSocket']
@@ -99,6 +101,7 @@ export const clearStorage: WechatMiniprogram.Wx['clearStorage']
 export const clearStorageSync: WechatMiniprogram.Wx['clearStorageSync']
 export const getSystemInfo: WechatMiniprogram.Wx['getSystemInfo']
 export const getSystemInfoSync: WechatMiniprogram.Wx['getSystemInfoSync']
+export const getWindowInfo: WechatMiniprogram.Wx['getWindowInfo']
 export const setTabBarItem: WechatMiniprogram.Wx['setTabBarItem']
 export const setTabBarStyle: WechatMiniprogram.Wx['setTabBarStyle']
 export const showTabBar: WechatMiniprogram.Wx['showTabBar']
@@ -111,6 +114,19 @@ export const createVideoContext: WechatMiniprogram.Wx['createVideoContext']
 export const onWindowResize: WechatMiniprogram.Wx['onWindowResize']
 export const offWindowResize: WechatMiniprogram.Wx['offWindowResize']
 export const createAnimation: WechatMiniprogram.Wx['createAnimation']
+export const hideHomeButton: WechatMiniprogram.Wx['hideHomeButton']
+export const getSetting: WechatMiniprogram.Wx['getSetting']
+export const openSetting: WechatMiniprogram.Wx['openSetting']
+export const enableAlertBeforeUnload: WechatMiniprogram.Wx['enableAlertBeforeUnload']
+export const disableAlertBeforeUnload: WechatMiniprogram.Wx['disableAlertBeforeUnload']
+export const getMenuButtonBoundingClientRect: WechatMiniprogram.Wx['getMenuButtonBoundingClientRect']
+export const getImageInfo: WechatMiniprogram.Wx['getImageInfo']
+export const vibrateShort: WechatMiniprogram.Wx['vibrateShort']
+export const vibrateLong: WechatMiniprogram.Wx['vibrateLong']
+export const getExtConfig: WechatMiniprogram.Wx['getExtConfig']
+export const getExtConfigSync: WechatMiniprogram.Wx['getExtConfigSync']
+export const openLocation: WechatMiniprogram.Wx['openLocation']
+export const chooseLocation: WechatMiniprogram.Wx['chooseLocation']
 
 declare const install: (...args: any) => any
 

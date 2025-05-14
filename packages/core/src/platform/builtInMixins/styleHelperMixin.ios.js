@@ -1,8 +1,79 @@
-import { isObject, isArray, dash2hump, isFunction, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions } from 'react-native'
+import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
+import { Dimensions, StyleSheet } from 'react-native'
 
-function concat (a, b) {
-  return a ? b ? (a + ' ' + b) : a : (b || '')
+let { width, height } = Dimensions.get('screen')
+
+Dimensions.addEventListener('change', ({ screen }) => {
+  width = screen.width
+  height = screen.height
+})
+
+function rpx (value) {
+  // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
+  // px = rpx * (750 / 屏幕宽度)
+  return value * width / 750
+}
+function vw (value) {
+  return value * width / 100
+}
+function vh (value) {
+  return value * height / 100
+}
+
+const unit = {
+  rpx,
+  vw,
+  vh
+}
+
+const empty = {}
+
+function formatValue (value) {
+  const matched = unitRegExp.exec(value)
+  if (matched) {
+    if (!matched[2] || matched[2] === 'px') {
+      return +matched[1]
+    } else {
+      return unit[matched[2]](+matched[1])
+    }
+  }
+  if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
+  return value
+}
+
+global.__formatValue = formatValue
+
+const escapeReg = /[()[\]{}#!.:,%'"+$]/g
+const escapeMap = {
+  '(': '_pl_',
+  ')': '_pr_',
+  '[': '_bl_',
+  ']': '_br_',
+  '{': '_cl_',
+  '}': '_cr_',
+  '#': '_h_',
+  '!': '_i_',
+  '/': '_s_',
+  '.': '_d_',
+  ':': '_c_',
+  ',': '_2c_',
+  '%': '_p_',
+  '\'': '_q_',
+  '"': '_dq_',
+  '+': '_a_',
+  $: '_si_'
+}
+
+const mpEscape = cached((str) => {
+  return str.replace(escapeReg, function (match) {
+    if (escapeMap[match]) return escapeMap[match]
+    // unknown escaped
+    return '_u_'
+  })
+})
+
+function concat (a = '', b = '') {
+  return a ? b ? (a + ' ' + b) : a : b
 }
 
 function stringifyArray (value) {
@@ -41,10 +112,12 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
+const varRegExp = /^--/
 
-function parseStyleText (cssText) {
+const parseStyleText = cached((cssText) => {
+  if (typeof cssText !== 'string') return cssText
   const res = {}
   const arr = cssText.split(listDelimiter)
   for (let i = 0; i < arr.length; i++) {
@@ -52,13 +125,14 @@ function parseStyleText (cssText) {
     if (item) {
       const tmp = item.split(propertyDelimiter)
       if (tmp.length > 1) {
-        const k = dash2hump(tmp[0].trim())
+        let k = tmp[0].trim()
+        k = varRegExp.test(k) ? k : dash2hump(k)
         res[k] = tmp[1].trim()
       }
     }
   }
   return res
-}
+})
 
 function normalizeDynamicStyle (value) {
   if (!value) return {}
@@ -79,62 +153,60 @@ function mergeObjectArray (arr) {
   return res
 }
 
-function transformStyleObj (context, styleObj) {
-  const keys = Object.keys(styleObj)
+function transformStyleObj (styleObj) {
   const transformed = {}
-  keys.forEach((prop) => {
-    // todo 检测不支持的prop
-    let value = styleObj[prop]
-    let matched
-    if ((matched = pxRegExp.exec(value))) {
-      value = +matched[1]
-    } else if ((matched = rpxRegExp.exec(value))) {
-      value = context.__rpx(+matched[1])
-    }
-    // todo 检测不支持的value
-    transformed[prop] = value
+  Object.keys(styleObj).forEach((prop) => {
+    transformed[prop] = formatValue(styleObj[prop])
   })
   return transformed
 }
 
-export default function styleHelperMixin (type) {
+export default function styleHelperMixin () {
   return {
     methods: {
-      __rpx (value) {
-        const { width } = Dimensions.get('screen')
-        // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
-        // px = rpx * (750 / 屏幕宽度)
-        return value * width / 750
+      __getClass (staticClass, dynamicClass) {
+        return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
-      __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, show) {
-        const result = []
-        const classMap = {}
-        if (type === 'page' && isFunction(global.__getAppClassMap)) {
-          Object.assign(classMap, global.__getAppClassMap.call(this))
-        }
-        if (isFunction(this.__getClassMap)) {
-          Object.assign(classMap, this.__getClassMap())
-        }
-        if ((staticClass || dynamicClass) && !isEmptyObject(classMap)) {
-          const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
-          classString.split(' ').forEach((className) => {
+      __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        const result = {}
+        const classMap = this.__getClassMap?.() || {}
+        const appClassMap = global.__getAppClassMap?.() || {}
+
+        if (staticClass || dynamicClass) {
+          // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
+          const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
+          classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
-              result.push(classMap[className])
+              Object.assign(result, classMap[className])
+            } else if (appClassMap[className]) {
+              // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
+              Object.assign(result, appClassMap[className])
+            } else if (isObject(this.__props[className])) {
+              // externalClasses必定以对象形式传递下来
+              Object.assign(result, this.__props[className])
             }
           })
         }
 
         if (staticStyle || dynamicStyle) {
-          const styleObj = Object.assign(parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          result.push(transformStyleObj(this, styleObj))
+          const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
+          Object.assign(result, transformStyleObj(styleObj))
         }
 
-        if (show === false) {
-          result.push({
-            display: 'none'
+        if (hide) {
+          Object.assign(result, {
+            // display: 'none'
+            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+            flex: 0,
+            height: 0,
+            width: 0,
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden'
           })
         }
-        return result
+
+        return isEmptyObject(result) ? empty : result
       }
     }
   }

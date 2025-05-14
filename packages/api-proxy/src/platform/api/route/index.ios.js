@@ -1,20 +1,6 @@
-import { webHandleSuccess, webHandleFail } from '../../../common/js'
-import { parseQuery } from '@mpxjs/utils'
-
-function parseUrl (url) {
-  let path = url
-  let query = ''
-  const queryIndex = url.indexOf('?')
-  if (queryIndex >= 0) {
-    path = url.slice(0, queryIndex)
-    query = url.slice(queryIndex)
-  }
-  const queryObj = parseQuery(query || '?')
-  return {
-    path,
-    queryObj
-  }
-}
+import { successHandle, failHandle } from '../../../common/js'
+import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
+import { nextTick } from '../next-tick'
 
 function getBasePath (navigation) {
   if (navigation) {
@@ -47,10 +33,29 @@ function resolvePath (relative, base) {
   }
   return stack.join('/')
 }
+let timerId = null
+function isLock (navigationHelper, type, options) {
+  if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
+    const res = { errMsg: `${type}:fail the previous routing event didn't complete` }
+    failHandle(res, options.fail, options.complete)
+    return true
+  }
+  clearTimeout(timerId)
+  timerId = setTimeout(() => {
+    if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
+      navigationHelper.lastFailCallback('timeout')
+      navigationHelper.lastFailCallback = null
+    }
+  }, 350)
+  return false
+}
 
 function navigateTo (options = {}) {
-  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'navigateTo', options)) {
+    return
+  }
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
@@ -58,11 +63,11 @@ function navigateTo (options = {}) {
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `navigateTo:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     }
   }
 }
@@ -70,6 +75,9 @@ function navigateTo (options = {}) {
 function redirectTo (options = {}) {
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'redirectTo', options)) {
+    return
+  }
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
@@ -77,11 +85,11 @@ function redirectTo (options = {}) {
     navigation.replace(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'redirectTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `redirectTo:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     }
   }
 }
@@ -89,15 +97,27 @@ function redirectTo (options = {}) {
 function navigateBack (options = {}) {
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'navigateBack', options)) {
+    return
+  }
   if (navigation && navigationHelper) {
-    navigation.pop(options.delta || 1)
+    const delta = options.delta || 1
+    const routeLength = navigation.getState().routes.length
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'navigateBack:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `navigateBack:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
+    }
+    if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
+      nextTick(() => {
+        navigationHelper.lastSuccessCallback()
+        navigationHelper.lastSuccessCallback = null
+      })
+    } else {
+      navigation.pop(delta)
     }
   }
 }
@@ -105,6 +125,9 @@ function navigateBack (options = {}) {
 function reLaunch (options = {}) {
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   const navigationHelper = global.__navigationHelper
+  if (isLock(navigationHelper, 'reLaunch', options)) {
+    return
+  }
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
@@ -120,11 +143,11 @@ function reLaunch (options = {}) {
     })
     navigationHelper.lastSuccessCallback = () => {
       const res = { errMsg: 'redirectTo:ok' }
-      webHandleSuccess(res, options.success, options.complete)
+      successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
       const res = { errMsg: `redirectTo:fail ${msg}` }
-      webHandleFail(res, options.fail, options.complete)
+      failHandle(res, options.fail, options.complete)
     }
   }
 }

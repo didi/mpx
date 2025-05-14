@@ -6,6 +6,18 @@ module.exports = function () {
     web (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-web-view'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-web-view'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-web-view'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-web-view'
     }
   }
 }

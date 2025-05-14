@@ -33,16 +33,22 @@ function getSystemInfoSync () {
 }
 
 const getDeviceInfo = function () {
-  const res = ENV_OBJ.getDeviceBaseInfo
+  const res = ENV_OBJ.getDeviceBaseInfo()
   defineUnsupportedProps(res, ['deviceAbi', 'benchmarkLevel', 'cpuType'])
   return res
 }
 
 const getWindowInfo = ENV_OBJ.getWindowInfo || envError('getWindowInfo')
 
+const getLaunchOptionsSync = ENV_OBJ.getLaunchOptionsSync || envError('getLaunchOptionsSync')
+
+const getEnterOptionsSync = ENV_OBJ.getEnterOptionsSync || envError('getEnterOptionsSync')
+
 export {
   getSystemInfo,
   getSystemInfoSync,
   getDeviceInfo,
-  getWindowInfo
+  getWindowInfo,
+  getLaunchOptionsSync,
+  getEnterOptionsSync
 }

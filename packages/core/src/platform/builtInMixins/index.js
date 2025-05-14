@@ -1,3 +1,4 @@
+import { isReact, isWeb } from '@mpxjs/utils'
 import pageStatusMixin from './pageStatusMixin'
 import proxyEventMixin from './proxyEventMixin'
 import renderHelperMixin from './renderHelperMixin'
@@ -13,18 +14,20 @@ import pageRouteMixin from './pageRouteMixin'
 import { dynamicRefsMixin, dynamicRenderHelperMixin, dynamicSlotMixin } from '../../dynamic/dynamicRenderMixin.empty'
 import styleHelperMixin from './styleHelperMixin'
 import directiveHelperMixin from './directiveHelperMixin'
+import pageIdMixin from './pageIdMixin'
 
-export default function getBuiltInMixins (options, type) {
+export default function getBuiltInMixins ({ type, rawOptions = {} }) {
   let bulitInMixins
-  if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android') {
+  if (isReact) {
     bulitInMixins = [
       proxyEventMixin(),
       directiveHelperMixin(),
-      styleHelperMixin(type),
+      styleHelperMixin(),
       refsMixin(),
-      i18nMixin()
+      i18nMixin(),
+      relationsMixin(type)
     ]
-  } else if (__mpx_mode__ === 'web') {
+  } else if (isWeb) {
     bulitInMixins = [
       proxyEventMixin(),
       refsMixin(),
@@ -35,7 +38,8 @@ export default function getBuiltInMixins (options, type) {
       getTabBarMixin(type),
       pageRouteMixin(type),
       // 由于relation可能是通过mixin注入的，不能通过当前的用户options中是否存在relations来简单判断是否注入该项mixin
-      relationsMixin(type)
+      relationsMixin(type),
+      pageIdMixin(type)
     ]
   } else {
     // 此为差异抹平类mixins，原生模式下也需要注入也抹平平台差异
@@ -45,8 +49,13 @@ export default function getBuiltInMixins (options, type) {
       refsMixin(),
       relationsMixin(type)
     ]
+    if (__mpx_mode__ === 'ali') {
+      bulitInMixins = bulitInMixins.concat([
+        pageIdMixin(type)
+      ])
+    }
     // 此为纯增强类mixins，原生模式下不需要注入
-    if (!options.__nativeRender__) {
+    if (!rawOptions.__nativeRender__) {
       bulitInMixins = bulitInMixins.concat([
         renderHelperMixin(),
         showMixin(type),

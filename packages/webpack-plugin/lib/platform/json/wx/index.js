@@ -84,10 +84,9 @@ module.exports = function getSpec ({ warn, error }) {
     return input
   }
 
-  function fillGlobalComponents (input, { globalComponents }) {
-    if (globalComponents) {
-      Object.assign(globalComponents, input.usingComponents)
-    }
+  function fillGlobalComponents (input, { globalComponents }, meta) {
+    // 通过meta进行globalComponents的透传
+    meta.usingComponents = input.usingComponents
     return input
   }
 
@@ -153,12 +152,14 @@ module.exports = function getSpec ({ warn, error }) {
       test: 'componentPlaceholder',
       ali: aliComponentPlaceholderFallback,
       swan: deletePath(),
-      tt: deletePath(),
       jd: deletePath()
     },
     {
       test: 'usingComponents',
-      web: fixComponentName('usingComponents')
+      web: fixComponentName('usingComponents'),
+      ios: fixComponentName('usingComponents'),
+      android: fixComponentName('usingComponents'),
+      harmony: fixComponentName('usingComponents')
     },
     {
       test: 'usingComponents',
@@ -166,8 +167,6 @@ module.exports = function getSpec ({ warn, error }) {
       swan: componentNameCapitalToHyphen('usingComponents')
     },
     {
-      // todo ali 2.0已支持全局组件，待移除
-      ali: addGlobalComponents,
       swan: addGlobalComponents,
       qq: addGlobalComponents,
       tt: addGlobalComponents,
@@ -260,12 +259,22 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd', 'web'],
-    normalizeTest,
-    page: [
-      ...windowRules,
-      ...componentRules
+    supportedModes: [
+      'ali',
+      'swan',
+      'qq',
+      'tt',
+      'jd',
+      'qa',
+      'dd',
+      'web',
+      'ios',
+      'android',
+      'harmony'
     ],
+
+    normalizeTest,
+    page: [...windowRules, ...componentRules],
     component: componentRules,
     window: windowRules,
     tabBar: {
@@ -301,7 +310,7 @@ module.exports = function getSpec ({ warn, error }) {
           ali (input) {
             const value = input.list
             delete input.list
-            input.items = value.map(item => {
+            input.items = value.map((item) => {
               return runRules(spec.tabBar.list, item, {
                 mode: 'ali',
                 normalizeTest,
@@ -365,7 +374,10 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        web: fixComponentName('usingComponents')
+        web: fixComponentName('usingComponents'),
+        ios: fixComponentName('usingComponents'),
+        android: fixComponentName('usingComponents'),
+        harmony: fixComponentName('usingComponents')
       },
       {
         test: 'usingComponents',
@@ -374,8 +386,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: fillGlobalComponents,
         qq: fillGlobalComponents,
         swan: fillGlobalComponents,
         tt: fillGlobalComponents,
@@ -383,8 +393,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: deletePath({ noLog: true }),
         qq: deletePath({ noLog: true }),
         swan: deletePath({ noLog: true }),
         tt: deletePath({ noLog: true }),

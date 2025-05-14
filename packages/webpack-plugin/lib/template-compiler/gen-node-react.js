@@ -19,7 +19,7 @@ function genFor (node) {
   node.forProcessed = true
   const index = node.for.index || 'index'
   const item = node.for.item || 'item'
-  return `_i(${node.for.exp}, function(${item},${index}){return ${genNode(node)}})`
+  return `this.__iter(${node.for.exp}, function(${item},${index}){return ${genNode(node)}})`
 }
 
 const s = JSON.stringify
@@ -56,13 +56,11 @@ function genNode (node) {
             return map
           }, {})
           if (node.slot) {
-            const name = node.slot.name
-            exp += `__getSlot(${name ? s(name) : ''})`
+            const { name, slot } = node.slot
+            exp += `this.__getSlot(${name ? s(name) : ''}${slot ? `, ${s(slot)}` : ''})`
           } else {
             exp += `createElement(${`getComponent(${node.is || s(node.tag)})`}`
-            if (node.isRoot) {
-              exp += `, Object.assign({}, rootProps, {style: [${attrExpMap.style}, rootProps.style]})`
-            } else if (node.attrsList.length) {
+            if (node.attrsList.length) {
               const attrs = []
               node.attrsList && node.attrsList.forEach(({ name, value }) => {
                 const attrExp = attrExpMap[name] ? attrExpMap[name] : s(value)
@@ -75,17 +73,17 @@ function genNode (node) {
 
             if (!node.unary && node.children.length) {
               exp += ','
-              node.children.forEach(function (child, index) {
-                exp += `${index === 0 ? '' : ','}${genNode(child)}`
-              })
+              exp += node.children.map((child) => {
+                return genNode(child)
+              }).filter(fragment => fragment).join(',')
             }
             exp += ')'
           }
         }
       } else {
-        node.children.forEach(function (child, index) {
-          exp += `${index === 0 ? '' : ','}${genNode(child)}`
-        })
+        exp += node.children.map((child) => {
+          return genNode(child)
+        }).filter(fragment => fragment).join(',')
       }
     }
   }

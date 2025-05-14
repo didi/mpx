@@ -1,5 +1,5 @@
-import { useRef, useEffect, useImperativeHandle, RefObject, ForwardedRef } from 'react'
-
+import { useRef, useImperativeHandle, RefObject, ForwardedRef } from 'react'
+import { useAnimatedRef } from 'react-native-reanimated'
 
 type Obj = Record<string, any>
 
@@ -11,16 +11,10 @@ export type HandlerRef<T, P> = {
   }
 }
 
-export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef<T, P>>, instance:Obj = {} ) {
-  const nodeRef = useRef<T>(null)
-  const _props = useRef<P | null>(props)
+export default function useNodesRef<T, P> (props: P, ref: ForwardedRef<HandlerRef<T, P>>, nodeRef: RefObject<T>, instance:Obj = {}) {
+  const _props = useRef<P | null>(null)
+  _props.current = props
 
-  useEffect(() => {
-    _props.current = props
-    return () => {
-      _props.current = null // 组件销毁，清空 _props 依赖数据
-    }
-  }, [props])
   useImperativeHandle(ref, () => {
     return {
       getNodeInstance () {
@@ -32,8 +26,4 @@ export default function useNodesRef<T, P>(props: P, ref: ForwardedRef<HandlerRef
       }
     }
   })
-
-  return {
-    nodeRef
-  }
 }

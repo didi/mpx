@@ -7,6 +7,18 @@ module.exports = function () {
       el.isBuiltIn = true
       return 'mpx-checkbox'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-checkbox'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-checkbox'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-checkbox'
+    },
     event: [
       {
         test: 'tap',

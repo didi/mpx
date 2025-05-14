@@ -56,7 +56,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       if (queryObj.root) {
         // 删除root query
         resource = addQuery(resource, {}, false, ['root'])
-        // 目前只有微信支持分包异步化
         if (supportRequireAsync) {
           tarRoot = queryObj.root
           extraOptions.isAsync = true

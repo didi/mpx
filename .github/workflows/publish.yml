@@ -11,15 +11,16 @@ jobs:
 #  lint:
 #    runs-on: ubuntu-latest
 #    steps:
-#      - uses: actions/checkout@v2
+#      - uses: actions/checkout@v4
 #      - run: npm run lint
   publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: |
         npm i
         echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" >> $HOME/.npmrc 2> /dev/null
+        npm run tsc:build
         npm run lerna:publish
       env:
         NODE_AUTH_TOKEN: ${{secrets.npm_token}}

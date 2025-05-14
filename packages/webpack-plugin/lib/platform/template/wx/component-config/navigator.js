@@ -28,6 +28,18 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-navigator'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-navigator'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-navigator'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-navigator'
+    },
     props: [
       {
         test: /^(target|delta|app-id|path|extra-data|version|hover-stop-propagation)$/,

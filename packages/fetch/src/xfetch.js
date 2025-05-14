@@ -3,8 +3,8 @@ import CancelToken from './cancelToken'
 import InterceptorManager from './interceptorManager'
 import RequestQueue from './queue'
 import { requestProxy } from './proxy'
-import { validate } from './validator'
-import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig } from './util'
+import { Validator } from './validator'
+import { isNotEmptyArray, isNotEmptyObject, transformReq, isObject, formatCacheKey, checkCacheConfig, isArray, isString, extend } from './util'
 
 export default class XFetch {
   constructor (options, MPX) {
@@ -13,14 +13,16 @@ export default class XFetch {
     // this.requestAdapter = (config) => requestAdapter(config, MPX)
     // 当存在 useQueue 配置时，才使用 this.queue 变量
     if (options && options.useQueue && typeof options.useQueue === 'object') {
-      this.queue = new RequestQueue({
-        adapter: (config) => requestAdapter(config, MPX),
-        ...options.useQueue
-      })
+      this.queue = new RequestQueue(extend({
+        adapter: (config) => requestAdapter(config, MPX)
+      }, options.useQueue))
     } else {
       this.requestAdapter = (config) => requestAdapter(config, MPX)
     }
     if (options && options.proxy) this.setProxy(options.proxy)
+    this.onValidatorError = options?.onValidatorError || (error => {
+      console.error(error)
+    })
     this.interceptors = {
       request: new InterceptorManager(),
       response: new InterceptorManager()
@@ -61,6 +63,14 @@ export default class XFetch {
       }
       delete config.emulateJSON
     }
+
+    if (!isObject(config.usePre)) {
+      config.usePre = {
+        enable: !!config.usePre
+      }
+    }
+    config.usePre.cacheInvalidationTime = config.usePre.cacheInvalidationTime || 3000 // 默认值3000
+    config.usePre.ignorePreParamKeys = config.usePre.ignorePreParamKeys || [] // 默认空数组
   }
 
   create (options) {
@@ -95,12 +105,25 @@ export default class XFetch {
 
   setValidator (options) {
     // 添加校验配置
-    if (isNotEmptyArray(options)) {
-      this.validatorOptions = options
-    } else if (isNotEmptyObject(options)) {
-      this.validatorOptions = [options]
-    } else {
-      console.error('仅支持不为空的对象或数组')
+    if (isNotEmptyObject(options)) {
+      const preValidatorOptions = this.validatorOptions || {}
+      this.validatorOptions = options || {}
+      Object.keys(this.validatorOptions).forEach(key => {
+        const preOption = preValidatorOptions[key]
+        const option = this.validatorOptions[key]
+        const objectRule = key === 'rules' && isNotEmptyObject(option)
+        const stringRule = (key === 'exclude' || key === 'include') && isString(option)
+        const isEnv = key === 'env'
+        if (isNotEmptyArray(option)) {
+          this.validatorOptions[key] = isArray(preOption) ? preOption.concat(option) : option
+        } else if (objectRule || stringRule) {
+          this.validatorOptions[key] = isArray(preOption) ? preOption.concat([option]) : [option]
+        } else if (isEnv) {
+          this.validatorOptions[key] = isObject(preOption) ? Object.assign({}, preOption, option) : option
+        } else {
+          console.error('rules仅支持不为空的数组或对象, include和exclude仅支持不为空的字符串或对象')
+        }
+      })
     }
   }
 
@@ -111,7 +134,9 @@ export default class XFetch {
 
   // 校验参数规则
   checkValidator (config) {
-    return validate(this.validatorOptions, config)
+    const env = Object.assign({}, this.validatorOptions?.env, config?.validate?.env)
+    const options = Object.assign({}, this.validatorOptions, config.validate, { env: env })
+    return Validator(options, config)
   }
 
   // 向前追加代理规则
@@ -142,17 +167,19 @@ export default class XFetch {
 
   checkPreCache (config) {
     // 未设置预请求 则直接 return
-    if (!config.usePre) return false
+    if (!config.usePre.enable) return false
     const cacheKey = formatCacheKey(config.url)
     const cacheRequestData = this.cacheRequestData[cacheKey]
     if (cacheRequestData) {
-      delete this.cacheRequestData[cacheKey]
-      const cacheInvalidationTime = config.cacheInvalidationTime || 3000
-      // 缓存是否过期 >3s 则算过期
-      if (Date.now() - cacheRequestData.lastTime <= cacheInvalidationTime &&
-        checkCacheConfig(config, cacheRequestData) &&
-        cacheRequestData.responsePromise) {
-        return cacheRequestData.responsePromise
+      // 缓存是否过期：大于cacheInvalidationTime（默认为3s）则算过期
+      const isNotExpired = Date.now() - cacheRequestData.lastTime <= config.usePre.cacheInvalidationTime
+      if (isNotExpired && checkCacheConfig(config, cacheRequestData) && cacheRequestData.responsePromise) {
+        return cacheRequestData.responsePromise.then(response => {
+          // 添加 isCache 标识该请求来源于缓存
+          return extend({ isCache: true }, response)
+        })
+      } else {
+        delete this.cacheRequestData[cacheKey]
       }
     }
     const { params, data, method } = config
@@ -167,14 +194,12 @@ export default class XFetch {
     return false
   }
 
+  isCancel (value) {
+    return !!(value && value.__CANCEL__)
+  }
+
   fetch (config, priority) {
     // 检查缓存
-    const responsePromise = this.checkPreCache(config)
-    if (responsePromise) {
-      return responsePromise
-    }
-
-    config.timeout = config.timeout || global.__networkTimeout
     // middleware chain
     const chain = []
     let promise = Promise.resolve(config)
@@ -189,13 +214,55 @@ export default class XFetch {
       // 5. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
-      const checkRes = this.checkValidator(config)
-      const validatorRes = isObject(checkRes) ? checkRes.valid : checkRes
-      if (typeof validatorRes !== 'undefined' && !validatorRes) {
-        return Promise.reject(new Error(`xfetch参数校验错误 ${config.url} ${checkRes?.message?.length ? 'error:' + checkRes.message.join(',') : ''}`))
+
+      // 检查缓存
+      const responsePromise = this.checkPreCache(config)
+      if (responsePromise && typeof config.usePre.onUpdate !== 'function') {
+        return responsePromise
+      }
+
+      try {
+        const checkRes = this.checkValidator(config)
+        const isWrong = (typeof checkRes === 'boolean' && !checkRes) || (isObject(checkRes) && !checkRes.valid)
+        if (isWrong) {
+          this.onValidatorError(`xfetch参数校验错误 ${checkRes.url} ${checkRes?.errorResult ? 'error:' + checkRes.errorResult : ''} ${checkRes?.warningResult ? 'warning:' + checkRes?.warningResult : ''}`)
+        }
+      } catch (e) {
+        console.log('xfetch参数校验错误', e)
       }
       config = this.checkProxy(config) // proxy
-      return this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
+
+      let promise = this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
+      // 后置拦截器
+      const chain = []
+      this.interceptors.response.forEach(function pushResponseInterceptors (interceptor) {
+        chain.push(interceptor.fulfilled, interceptor.rejected)
+      })
+      while (chain.length) {
+        promise = promise.then(chain.shift(), chain.shift())
+      }
+
+      // 如果开启缓存，则将 promise 存入缓存
+      if (config.usePre.enable) {
+        const cacheKey = formatCacheKey(config.url)
+        this.cacheRequestData[cacheKey] && (this.cacheRequestData[cacheKey].responsePromise = promise)
+      }
+
+      // 如果命中缓存，则将缓存 responsePromise 与最新 promise 竞速，返回最快的 promise
+      if (responsePromise && typeof config.usePre.onUpdate === 'function') {
+        const returnPromise = Promise.any([responsePromise, promise])
+        returnPromise.then(response => {
+          if (response.isCache) { // 如果预请求先返回，则等待实际请求返回后回调 usePre.onUpdate
+            promise.then(response => {
+              // 回调 usePre.onUpdate
+              config.usePre.onUpdate(response)
+            })
+          }
+        })
+        return returnPromise
+      }
+
+      return promise
     }
 
     this.interceptors.request.forEach(function unshiftRequestInterceptors (interceptor) {
@@ -204,17 +271,8 @@ export default class XFetch {
 
     chain.push(request, undefined)
 
-    this.interceptors.response.forEach(function pushResponseInterceptors (interceptor) {
-      chain.push(interceptor.fulfilled, interceptor.rejected)
-    })
-
     while (chain.length) {
       promise = promise.then(chain.shift(), chain.shift())
-    }
-
-    if (config.usePre) {
-      const cacheKey = formatCacheKey(config.url)
-      this.cacheRequestData[cacheKey] && (this.cacheRequestData[cacheKey].responsePromise = promise)
     }
 
     return promise

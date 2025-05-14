@@ -1,3 +1,5 @@
+const { dash2hump } = require('./utils/hump-dash')
+
 const reactConfig = {
   event: {
     parseEvent (attr) {
@@ -5,9 +7,7 @@ const reactConfig = {
       if (match) {
         return {
           prefix: match[1],
-          eventName: match[2].replace(/^./, function (match) {
-            return match.toLowerCase()
-          }),
+          eventName: match[2],
           modifier: match[3]
         }
       }
@@ -72,7 +72,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -134,9 +138,9 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'on') {
-        return prefix + eventName.replace(/^./, (matched) => {
+        return prefix + dash2hump(eventName.replace(/^./, (matched) => {
           return matched.toUpperCase()
-        })
+        }))
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -194,7 +198,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -251,7 +259,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -308,7 +320,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -379,7 +395,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -436,7 +456,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -493,7 +517,11 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+        if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -526,5 +554,6 @@ module.exports = {
     }
   },
   ios: reactConfig,
-  android: reactConfig
+  android: reactConfig,
+  harmony: reactConfig
 }

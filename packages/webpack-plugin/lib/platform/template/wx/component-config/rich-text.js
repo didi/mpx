@@ -12,6 +12,18 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-rich-text'
     },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-rich-text'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-rich-text'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-rich-text'
+    },
     props: [
       {
         test: /^(space)$/,

@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.9.44
- * (c) 2024 @mpxjs team
+ * mpxjs webview bridge v2.10.0
+ * (c) 2025 @mpxjs team
  * @license Apache
  */
 function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
@@ -44,7 +44,7 @@ function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
 }
 
 let sdkReady;
-const SDK_URL_MAP = {
+const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
   },
@@ -59,9 +59,8 @@ const SDK_URL_MAP = {
   },
   tt: {
     url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
-  },
-  ...window.sdkUrlMap
-};
+  }
+}, window.sdkUrlMap);
 function getMpxWebViewId () {
   const href = location.href;
   const reg = /mpx_webview_id=(\d+)/g;
@@ -76,6 +75,31 @@ let env = null;
 let callbackId = 0;
 const clientUid = getMpxWebViewId();
 const callbacks = {};
+
+const runCallback = (msgData) => {
+  const { callbackId, error, result } = msgData;
+  if (callbackId !== undefined && callbacks[callbackId]) {
+    if (error) {
+      callbacks[callbackId](error);
+    } else {
+      callbacks[callbackId](null, result);
+    }
+    delete callbacks[callbackId];
+  }
+};
+
+const eventListener = (event) => {
+  // 接收web-view的回调
+  let msgData = event.data;
+  try {
+    if (typeof msgData === 'string') {
+      msgData = JSON.parse(msgData);
+    }
+  } catch (e) {
+  }
+  runCallback(msgData);
+};
+
 // 环境判断逻辑
 const systemUA = navigator.userAgent;
 if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
@@ -86,24 +110,16 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = 'swan';
 } else if (systemUA.indexOf('toutiao') > -1) {
   env = 'tt';
+} else if (window.ReactNativeWebView) {
+  env = 'rn';
+  window.mpxWebviewMessageCallback = runCallback;
 } else {
   env = 'web';
-  window.addEventListener('message', (event) => {
-    // 接收web-view的回调
-    const { callbackId, error, result } = event.data;
-    if (callbackId !== undefined && callbacks[callbackId]) {
-      if (error) {
-        callbacks[callbackId](error);
-      } else {
-        callbacks[callbackId](null, result);
-      }
-      delete callbacks[callbackId];
-    }
-  }, false);
+  window.addEventListener('message', eventListener, false);
 }
 
 const initWebviewBridge = () => {
-  sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  sdkReady = (env !== 'web' && env !== 'rn') ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
   getWebviewApi();
 };
 
@@ -133,20 +149,12 @@ const webviewBridge = {
   }
 };
 
-function filterData (data) {
-  if (Object.prototype.toString.call(data) !== '[object Object]') {
-    return data
+function postMessage (type, ...extraData) {
+  if (type === 'invoke') {
+    type = extraData[0];
+    extraData = extraData.slice(1);
   }
-  const newData = {};
-  for (const item in data) {
-    if (typeof data[item] !== 'function') {
-      newData[item] = data[item];
-    }
-  }
-  return newData
-}
-
-function postMessage (type, data = {}) {
+  const data = extraData[0] || {};
   if (type !== 'getEnv') {
     const currentCallbackId = ++callbackId;
     callbacks[currentCallbackId] = (err, res) => {
@@ -162,16 +170,26 @@ function postMessage (type, data = {}) {
     const postParams = {
       type,
       callbackId,
-      payload: filterData(data)
+      args: extraData
     };
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid;
     }
-    window.parent.postMessage && window.parent.postMessage(postParams, '*');
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams));
+    } else {
+      window.parent.postMessage && window.parent.postMessage(JSON.stringify(postParams), '*');
+    }
   } else {
-    data({
+    let result = {
       webapp: true
-    });
+    };
+    if (window.ReactNativeWebView) {
+      result = {
+        reactNative: true
+      };
+    }
+    data(result);
   }
 }
 
@@ -304,8 +322,19 @@ const getWebviewApi = () => {
       'redirectTo',
       'getEnv',
       'postMessage',
-      'getLoadError',
-      'getLocation'
+      'getLocation',
+      'invoke'
+    ],
+    rn: [
+      'navigateTo',
+      'navigateBack',
+      'switchTab',
+      'reLaunch',
+      'redirectTo',
+      'getEnv',
+      'postMessage',
+      'getLocation',
+      'invoke'
     ],
     tt: []
   };
@@ -321,7 +350,7 @@ const getWebviewApi = () => {
   });
   singleApi.forEach((item) => {
     webviewBridge[item] = (...args) => {
-      if (env === 'web') {
+      if (env === 'web' || env === 'rn') {
         postMessage(item, ...args);
       } else if (env === 'wx') {
         runWebviewApiMethod(() => {

@@ -11,9 +11,7 @@ const JD_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher',
 // 快应用不支持的标签集合
 const QA_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image']
 // RN不支持的标签集合
-const RN_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'cover-image',
-  'checkbox', 'checkbox-group', 'radio', 'radio-group', 'switch', 'movable-area', 'movable-view', 'icon', 'progress', 'rich-text', 'form', 'label', 'picker', 'picker-view', 'picker-view-column', 'slider',
-  'audio', 'camera', 'video', 'canvas', 'cover-image', 'cover-view', 'match-media', 'page-container', 'root-portal', 'editor', 'keyboard-accessory', 'navigator', 'map']
+const RN_UNSUPPORTED_TAG_NAME_ARR = ['open-data', 'official-account', 'editor', 'functional-page-navigator', 'live-player', 'live-pusher', 'ad', 'progress', 'slider', 'audio', 'camera', 'match-media', 'page-container', 'editor', 'keyboard-accessory', 'map']
 
 /**
  * @param {function(object): function} print
@@ -28,6 +26,7 @@ module.exports = function ({ print }) {
   const qaUnsupportedTagError = print({ platform: 'qa', isError: true, type: 'tag' })
   const iosUnsupportedTagError = print({ platform: 'ios', isError: true, type: 'tag' })
   const androidUnsupportedTagError = print({ platform: 'android', isError: true, type: 'tag' })
+  const harmonyUnsupportedTagError = print({ platform: 'harmony', isError: true, type: 'tag' })
 
   const aliUnsupportedExp = new RegExp('^(' + ALI_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const baiduUnsupportedExp = new RegExp('^(' + BAIDU_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
@@ -37,6 +36,7 @@ module.exports = function ({ print }) {
   const qaUnsupportedExp = new RegExp('^(' + QA_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const iosUnsupportedExp = new RegExp('^(' + RN_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
   const androidUnsupportedExp = new RegExp('^(' + RN_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
+  const harmonyUnsupportedExp = new RegExp('^(' + RN_UNSUPPORTED_TAG_NAME_ARR.join('|') + ')$')
 
   return [
     {
@@ -78,6 +78,11 @@ module.exports = function ({ print }) {
       supportedModes: ['android'],
       test: androidUnsupportedExp,
       android: androidUnsupportedTagError
+    },
+    {
+      supportedModes: ['harmony'],
+      test: harmonyUnsupportedExp,
+      harmony: harmonyUnsupportedTagError
     }
   ]
 }

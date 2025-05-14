@@ -2,10 +2,12 @@ const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
 const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
-const rpxRegExp = /^\s*(\d+(\.\d+)?)rpx\s*$/
-const pxRegExp = /^\s*(\d+(\.\d+)?)(px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
+const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
+const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, filename, mode, srcMode }) {
+function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   const classMap = {}
 
   const root = postcss.parse(content, {
@@ -15,11 +17,11 @@ function getClassMap ({ content, filename, mode, srcMode }) {
   function formatValue (value) {
     let matched
     let needStringify = true
-    if ((matched = pxRegExp.exec(value))) {
+    if ((matched = numberRegExp.exec(value))) {
       value = matched[1]
       needStringify = false
-    } else if ((matched = rpxRegExp.exec(value))) {
-      value = `this.__rpx(${matched[1]})`
+    } else if (unitRegExp.test(value) || hairlineRegExp.test(value)) {
+      value = `global.__formatValue(${JSON.stringify(value)})`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
@@ -30,28 +32,33 @@ function getClassMap ({ content, filename, mode, srcMode }) {
     srcMode,
     type: 'style',
     testKey: 'prop',
-    warn: (msg) => {
-      console.warn('[style compiler warn]: ' + msg)
-    },
-    error: (msg) => {
-      console.error('[style compiler error]: ' + msg)
-    }
+    warn,
+    error
   })
 
   root.walkRules(rule => {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
       if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
-      let newData = rulesRunner({ prop, value })
+      let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
       if (!Array.isArray(newData)) {
         newData = [newData]
       }
       newData.forEach(item => {
-        prop = dash2hump(item.prop)
+        prop = varRegExp.test(item.prop) ? item.prop : dash2hump(item.prop)
         value = item.value
         if (Array.isArray(value)) {
-          value = value.map(item => formatValue(item))
+          value = value.map(val => {
+            if (typeof val === 'object') {
+              for (const key in val) {
+                val[key] = formatValue(val[key])
+              }
+              return val
+            } else {
+              return formatValue(val)
+            }
+          })
         } else if (typeof value === 'object') {
           for (const key in value) {
             value[key] = formatValue(value[key])
@@ -70,7 +77,7 @@ function getClassMap ({ content, filename, mode, srcMode }) {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
           classMapKeys.push(selector.nodes[0].value)
         } else {
-          rule.error('Only single class selector is supported in react native mode temporarily.')
+          error('Only single class selector is supported in react native mode temporarily.')
         }
       })
     }).processSync(rule.selector)

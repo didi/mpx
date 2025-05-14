@@ -31,7 +31,9 @@ function matchSelector (vnode, selectorGroups) {
     for (let i = 0; i < selectorGroups.length; i++) {
       const { id, classes } = selectorGroups[i]
       if (id === vnodeId) return true
-      if (classes.every((item) => vnodeClasses.includes(item))) return true
+      if (classes.length && classes.every((item) => vnodeClasses.includes(item))) {
+        return true
+      }
     }
   }
   return false
@@ -80,7 +82,8 @@ function collectDataset (props, needParse = false) {
     if (hasOwn(props, key)) {
       const matched = datasetReg.exec(key)
       if (matched) {
-        dataset[matched[1]] = props[key]
+        const attrName = matched[1].replace(/-([a-z])/g, (match, p1) => p1.toUpperCase())
+        dataset[attrName] = props[key]
       }
     }
   }
