@@ -425,6 +425,22 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+function usePagePreload (route) {
+  const name = route.name
+  useEffect(() => {
+    setTimeout(() => {
+      const preloadRule = global.__preloadRule
+      const { packages } = preloadRule[name] || {}
+      if (packages?.length > 0) {
+        const download = global.__mpx.config?.rnConfig?.download
+        if (typeof download === 'function') {
+          callWithErrorHandling(() => download(packages))
+        }
+      }
+    }, 2000)
+  }, [])
+}
+
 const RelationsContext = createContext(null)
 
 const checkRelation = (options) => {
@@ -464,6 +480,7 @@ export function PageWrapperHOC (WrappedComponent) {
       error('Using pageWrapper requires passing navigation and route')
       return null
     }
+    usePagePreload(route)
     usePageStatus(navigation, currentPageId)
     useLayoutEffect(() => {
       navigation.setOptions({
@@ -650,7 +667,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
-
     useEffect(() => {
       proxy.mounted()
       return () => {
