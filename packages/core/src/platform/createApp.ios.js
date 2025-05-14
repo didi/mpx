@@ -4,7 +4,7 @@ import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
-import { reactive } from '../observer/reactive'
+import { ref } from '../observer/ref'
 import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
@@ -92,8 +92,8 @@ export default function createApp (options) {
       global.__navigationHelper.lastFailCallback = null
     }
   }
-  const appState = reactive({ state: '' })
-  watch(() => appState.state, (value) => {
+  const appState = ref('')
+  watch(() => appState.value, (value) => {
     if (value === 'show') {
       let options = global.__mpxEnterOptions || {}
       const navigation = getFocusedNavigation()
@@ -122,12 +122,12 @@ export default function createApp (options) {
   const onAppStateChange = (currentState) => {
     const navigation = getFocusedNavigation()
     if (currentState === 'active') {
-      appState.state = 'show'
+      appState.value = 'show'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'show'
       }
     } else if (currentState === 'inactive' || currentState === 'background') {
-      appState.state = 'hide'
+      appState.value = 'hide'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'hide'
       }
@@ -170,7 +170,7 @@ export default function createApp (options) {
           global.__mpxLaunchOptions = options
           defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
-        appState.state = 'show'
+        appState.value = 'show'
         global.__mpxAppLaunched = true
         global.__mpxAppHotLaunched = true
       }
@@ -275,6 +275,6 @@ export default function createApp (options) {
     onAppStateChange('active')
   }
   global.setAppHide = function () {
-    onAppStateChange('background')
+    onAppStateChange('inactive')
   }
 }
