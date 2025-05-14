@@ -35,7 +35,7 @@ const getLangFromExtension = (filename) => {
 fixture(
   './fixtures/**/index.{styl,css}',
   async ({ filename, config = {}, cwd }) => {
-    console.log(`${filename} start test`)
+    console.log(`strip condition "${path.relative(process.cwd(), filename)}" start test`)
     const { lang = getLangFromExtension(filename), defs = {} } = config
 
     const content = await fs.readFile(filename, 'utf-8')

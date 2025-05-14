@@ -248,6 +248,46 @@ module.exports = async function (css) {
     resolve: this.resolve.bind(this)
   })
 
+  for (const warning of result.warnings()) {
+    this.emitWarning(warning)
+  }
+
+  // todo 后续考虑直接使用postcss-loader来处理postcss
+  for (const message of result.messages) {
+    // eslint-disable-next-line default-case
+    switch (message.type) {
+      case 'dependency':
+        this.addDependency(message.file)
+        break
+
+      case 'build-dependency':
+        this.addBuildDependency(message.file)
+        break
+
+      case 'missing-dependency':
+        this.addMissingDependency(message.file)
+        break
+
+      case 'context-dependency':
+        this.addContextDependency(message.file)
+        break
+
+      case 'dir-dependency':
+        this.addContextDependency(message.dir)
+        break
+
+      case 'asset':
+        if (message.content && message.file) {
+          this.emitFile(
+            message.file,
+            message.content,
+            message.sourceMap,
+            message.info
+          )
+        }
+    }
+  }
+
   callback(null, result.css, result.map)
 }
 
