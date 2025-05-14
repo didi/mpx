@@ -9,7 +9,7 @@ const { stringifyRequest } = require('./script-helper')
 const parseQuery = require('loader-utils').parseQuery
 const wxmlTemplateLoader = normalize.lib('web/wxml-template-loader')
 
-const getRefVarNames = function (str) { // 获取元素属性上用到的动态数据keyname
+const getRefVarNames = function (str = '') { // 获取元素属性上用到的动态数据keyname
   const regex = /\(([a-zA-Z_$]\w*)\)/g
 
   const matches = str.match(regex) || []
@@ -20,7 +20,7 @@ const getRefVarNames = function (str) { // 获取元素属性上用到的动态�
   return variableNames
 }
 
-const getEventName = function (eventStr) { // 获取事件用到的动态数据keyname
+const getEventName = function (eventStr = '') { // 获取事件用到的动态数据keyname
   const regex = /\b(\w+)\s*\(([^)]*?)\)/g
   const regexInParams = /\b(?<!\w+\s)\w+\b(?!\s*["'])/g
   const matches = regex.exec(eventStr)
@@ -29,6 +29,8 @@ const getEventName = function (eventStr) { // 获取事件用到的动态数据k
     result.push(matches[1])
     const matchesInParams = matches[2].match(regexInParams)
     result.push(...matchesInParams)
+  } else {
+    result.push(eventStr)
   }
   return result
 }

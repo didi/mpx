@@ -639,7 +639,7 @@ function parse (template, options) {
   componentGenerics = options.componentGenerics || {}
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
-  usingComponents = Object.keys(options.usingComponentsInfo)
+  usingComponents = Object.keys(options.usingComponentsInfo || {})
   usingComponentsInfo = options.usingComponentsInfo
 
   const _warn = content => {
@@ -2305,7 +2305,7 @@ function processExternalClasses (el, options) {
     let classNames = classLikeAttrValue.split(/\s+/)
     let hasExternalClass = false
     classNames = classNames.map((className) => {
-      if (options.externalClasses.includes(className)) {
+      if (options.externalClasses?.includes(className)) {
         hasExternalClass = true
         return `($attrs[${stringify(className)}] || '')`
       }
