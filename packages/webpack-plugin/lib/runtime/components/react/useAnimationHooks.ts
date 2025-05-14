@@ -13,7 +13,7 @@ import {
   runOnJS
 } from 'react-native-reanimated'
 import type { AnimationCallback, WithTimingConfig, SharedValue, AnimatableValue } from 'react-native-reanimated'
-import { error, hasOwn, isFunction, collectDataset } from '@mpxjs/utils'
+import { error, hasOwn, collectDataset } from '@mpxjs/utils'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
@@ -305,7 +305,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     const animation = typeof callback === 'function'
       ? withTiming(value, { duration, easing }, (finished, current) => {
         callback(finished, current)
-        if (transitionend) {
+        if (transitionend && finished) {
           runOnJS(withTimingCallback)(finished, current, duration)
         }
       })
