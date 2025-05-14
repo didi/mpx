@@ -54,7 +54,9 @@ const styles = ReactNative.StyleSheet.create({
   },
   title: {
     fontSize: 17,
-    fontWeight: 600
+    fontWeight: 600,
+    width: '60%',
+    textAlign: 'center'
   }
 })
 
@@ -102,7 +104,8 @@ export function innerNav ({ props, navigation }) {
         height: getTitleHeight()
       }, backElement,
       createElement(ReactNative.Text, {
-        style: [styles.title, { color: innerPageConfig.navigationBarTextStyle || 'white' }]
+        style: [styles.title, { color: innerPageConfig.navigationBarTextStyle || 'white' }],
+        numberOfLines: 1
       }, innerPageConfig.navigationBarTitleText?.trim() || ''))
     )
 }
