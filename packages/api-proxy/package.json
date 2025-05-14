@@ -68,5 +68,8 @@
     "react-native-haptic-feedback": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "vue": "^2.7.16"
   }
 }
