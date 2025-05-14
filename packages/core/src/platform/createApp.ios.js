@@ -92,7 +92,7 @@ export default function createApp (options) {
       global.__navigationHelper.lastFailCallback = null
     }
   }
-  const appState = reactive({})
+  const appState = reactive({state: ''})
   watch(() => appState.state, (value) => {
     if (value === 'show') {
       let options = global.__mpxEnterOptions || {}
