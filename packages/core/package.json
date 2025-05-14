@@ -30,7 +30,7 @@
   "peerDependencies": {
     "@d11/react-native-fast-image": "*",
     "@mpxjs/api-proxy": "workspace:^2.9.0",
-    "@mpxjs/store": "workspace:^^2.9.0",
+    "@mpxjs/store": "workspace:^2.9.0",
     "@react-navigation/native": "*",
     "@react-navigation/native-stack": "*",
     "react": "*",

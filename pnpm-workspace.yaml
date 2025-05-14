@@ -2,3 +2,4 @@ packages:
   - "./packages/*"
   - "./test/e2e/*"
   - "./examples/*"
+  - "./docs-vitepress"

@@ -1,8 +1,9 @@
 {
-  "name": "mpx-subpackage-demo",
+  "name": "mpx-useuilib",
   "version": "1.0.0",
   "description": "A mpx project",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "watch": "node ./build/build.js -w",
     "watch:prod": "node ./build/build.js -w -p",

@@ -2,6 +2,7 @@
   "name": "mpx-monorepo",
   "description": "mpx monorepo",
   "private": true,
+  "version": "0.0.0",
   "scripts": {
     "lerna:publish": "lerna publish from-package --yes",
     "lint": "eslint --ext .js,.ts,.tsx,.jsx packages/",
@@ -44,9 +45,5 @@
     "typescript": "^4.1.3",
     "vitepress": "^1.5.0"
   },
-  "workspaces": [
-    "packages/*",
-    "docs-vitepress"
-  ],
   "packageManager": "pnpm@8.14.1"
 }
