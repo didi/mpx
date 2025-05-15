@@ -745,22 +745,14 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     ? catchtransitionend
     : isFunction(bindtransitionend)
       ? bindtransitionend
-      : null
-  const { enableStyleAnimation, animationStyle } = useAnimationHooks(
+      : undefined
+  const { enableStyleAnimation, animationStyle } = useAnimationHooks({
+    layoutRef,
+    animation,
+    enableAnimation,
+    style: viewStyle,
     transitionend
-      ? {
-          layoutRef,
-          animation,
-          enableAnimation,
-          style: viewStyle,
-          transitionend
-        }
-      : {
-          layoutRef,
-          animation,
-          enableAnimation,
-          style: viewStyle
-        })
+  })
 
   const innerProps = useInnerProps(
     extendObject(
