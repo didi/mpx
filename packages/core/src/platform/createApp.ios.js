@@ -101,17 +101,22 @@ export default function createApp (options) {
   watch(() => appState.state, (value) => {
     if (value === 'show') {
       let options = global.__mpxEnterOptions || {}
-      const navigation = getFocusedNavigation()
-      if (navigation) {
-        const state = navigation.getState()
-        const current = state.routes[state.index]
-        options = Object.assign(appState.isLaunch ? { isLaunch: true } : {}, {
-          path: current.name,
-          query: current.params,
-          scene: 0,
-          shareTicket: '',
-          referrerInfo: {}
-        })
+      if (appState.showOptions) {
+        options = appState.showOptions
+        delete appState.showOptions
+      } else {
+        const navigation = getFocusedNavigation()
+        if (navigation) {
+          const state = navigation.getState()
+          const current = state.routes[state.index]
+          options = {
+            path: current.name,
+            query: current.params,
+            scene: 0,
+            shareTicket: '',
+            referrerInfo: {}
+          }
+        }
       }
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
@@ -127,7 +132,6 @@ export default function createApp (options) {
   const onAppStateChange = (currentState) => {
     const navigation = getFocusedNavigation()
     if (currentState === 'active') {
-      appState.isLaunch = false
       appState.state = 'show'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'show'
@@ -177,7 +181,7 @@ export default function createApp (options) {
           global.__mpxLaunchOptions = options
           defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
-        appState.isLaunch = true
+        appState.showOptions = options
         appState.state = 'show'
         global.__mpxAppLaunched = true
         global.__mpxAppHotLaunched = true
