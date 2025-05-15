@@ -2,10 +2,11 @@ const path = require('path')
 const toPosix = require('../utils/to-posix')
 
 module.exports = class PackageEntryPlugin {
-  constructor (source, miniNpmPackages, target) {
+  constructor (source, miniNpmPackages, normalNpmPackages, target) {
     this.source = source
     this.target = target
     this.miniNpmPackages = miniNpmPackages
+    this.normalNpmPackages = normalNpmPackages
   }
 
   /**
@@ -23,6 +24,7 @@ module.exports = class PackageEntryPlugin {
 
       let { name, miniprogram } = descriptionFileData
       if (!miniprogram && this.miniNpmPackages.includes(name)) miniprogram = 'miniprogram_dist'
+      if (this.normalNpmPackages.includes(name)) return callback()
       if (!miniprogram) return callback()
 
       let relativePath = path.relative(descriptionFileRoot, resourcePath)
