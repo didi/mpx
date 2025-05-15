@@ -91,12 +91,21 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     layoutRef
   })
 
-  const innerProps = useInnerProps(props, extendObject({
-    ref: nodeRef,
-    style: extendObject(normalStyle, layoutStyle)
-  }, layoutProps), [], {
-    layoutRef
-  })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject(normalStyle, layoutStyle)
+      }
+    ),
+    [],
+    {
+      layoutRef
+    }
+  )
 
   const html: string = typeof nodes === 'string' ? nodes : jsonToHtmlStr(nodes)
 

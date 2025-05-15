@@ -1,7 +1,7 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { GestureResponderEvent, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS } from '../utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, isHarmony } from '../utils'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
@@ -209,9 +209,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScrollEndDrag = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     dragging.current = false
-    if (isIOS) {
+    if (!isAndroid) {
       const { y } = e.nativeEvent.contentOffset
-      if (y % itemRawH === 0) {
+      if (y % itemRawH === 0 || (isHarmony && y > snapToOffsets[maxIndex])) {
         onMomentumScrollEnd({ nativeEvent: { contentOffset: { y } } })
       } else if (y > 0 && y < snapToOffsets[maxIndex]) {
         timerResetPosition.current = setTimeout(() => {
