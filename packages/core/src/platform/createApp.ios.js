@@ -92,7 +92,7 @@ export default function createApp (options) {
       global.__navigationHelper.lastFailCallback = null
     }
   }
-  const appState = reactive({ state: '', hideReason: 3 })
+  const appState = reactive({ state: '' })
   // TODO hideReason 暂未完全模拟
   // 0用户退出小程序
   // 1进入其他小程序
@@ -119,7 +119,7 @@ export default function createApp (options) {
     } else if (value === 'hide') {
       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
-          reason: appState.hideReason || 3
+          reason: appState.hideReason ?? 3
         })
       })
     }
@@ -132,6 +132,7 @@ export default function createApp (options) {
         global.__mpxPageStatusMap[navigation.pageId] = 'show'
       }
     } else if (currentState === 'inactive' || currentState === 'background') {
+      appState.hideReason = 3
       appState.state = 'hide'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'hide'
