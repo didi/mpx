@@ -1821,9 +1821,8 @@ try {
             })
 
             if (insertBeforeIndex !== -1) {
-              loaders.splice(insertBeforeIndex, 0, { loader: styleStripConditionalPath })
+                loaders.splice(insertBeforeIndex + 1, 0, { loader: styleStripConditionalPath })
             }
-            loaders.push({ loader: styleStripConditionalPath })
           }
 
           switch (type) {

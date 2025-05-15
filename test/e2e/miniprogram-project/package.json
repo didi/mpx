@@ -1,8 +1,9 @@
 {
-  "name": "mpx-feature-unit-test",
+  "name": "mpx-miniprogram-project",
   "version": "1.0.0",
   "description": "mpx feature unit test",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "watch": "node ./build/build.js -w",
     "watch:prod": "node ./build/build.js -w -p",
@@ -17,16 +18,16 @@
     "help": "node ./build/build.js --help",
     "test": "jest"
   },
-  "_moduleAliases": {
-    "@mpxjs/webpack-plugin": "../../packages/webpack-plugin"
-  },
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.9.58",
-    "@mpxjs/core": "^2.9.58",
-    "@mpxjs/utils": "^2.9.58",
+    "@mpxjs/api-proxy": "workspace:*",
+    "@mpxjs/core": "workspace:*",
+    "@mpxjs/store": "workspace:^",
+    "@mpxjs/utils": "workspace:*",
+    "autoprefixer": "^10.4.21",
     "semver": "^7.5.4",
+    "terser-webpack-plugin": "^5.3.14",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
   },
@@ -41,8 +42,8 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.31",
-    "@mpxjs/webpack-plugin": "^2.9.58",
     "@mpxjs/template-engine": "^2.8.7",
+    "@mpxjs/webpack-plugin": "workspace:*",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-eslint": "^10.0.1",
@@ -68,6 +69,7 @@
     "html-webpack-plugin": "^5.3.2",
     "http-server": "^0.12.0",
     "jest": "^24.9.0",
+    "jest-environment-jsdom": "26",
     "json5": "^2.2.0",
     "link-module-alias": "^1.2.0",
     "miniprogram-simulate": "^1.1.6",
@@ -75,6 +77,7 @@
     "path": "^0.12.7",
     "progress-bar-webpack-plugin": "^2.1.0",
     "rimraf": "^2.6.2",
+    "source-map": "^0.7.4",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",
     "ts-loader": "^6.0.0",

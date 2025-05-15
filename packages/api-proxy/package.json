@@ -37,7 +37,8 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "^2.10.4",
+    "@mpxjs/core": "workspace:*",
+    "@mpxjs/utils": "workspace:^2.10.4",
     "axios": "^1.7.3"
   },
   "peerDependencies": {
@@ -67,5 +68,8 @@
     "react-native-haptic-feedback": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "vue": "^2.7.16"
   }
 }
