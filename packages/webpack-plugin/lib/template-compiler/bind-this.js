@@ -178,6 +178,20 @@ function checkBIsPrefixOfA (a, b) {
   return a.startsWith(b) && (a[b.length] === '.' || a[b.length] === '[')
 }
 
+function checkIgnore(path, ignoreMap) {
+  let current = path
+  while (current) {
+    if (ignoreMap[current.node.name]) return true
+    if (t.isCallExpression(current)) { // tools.format(name) tools是wxs
+      const callee = current.node.callee
+      const name = callee.name || callee.object?.name
+      if (ignoreMap[name]) return true
+    }
+    current = current.parentPath
+  }
+  return false
+}
+
 function dealRemove (path, replace) {
   try {
     if (replace) {
@@ -298,7 +312,7 @@ module.exports = {
       Identifier (path) {
         if (
           checkBindThis(path) &&
-          !ignoreMap[path.node.name]
+          !checkIgnore(path, ignoreMap)
         ) {
           const scopeBinding = path.scope.hasBinding(path.node.name)
           // 删除局部作用域的变量

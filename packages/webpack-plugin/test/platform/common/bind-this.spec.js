@@ -394,4 +394,33 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
+
+  it('should wxs is correct', function () {
+    const input = `
+      global.currentInject.render = function (_i, _c, _r, _sc) {
+        tools.hexToRgba(bgColor);
+        tools(bgColor);
+        "background-color: " + bgColor;
+        "background-color: " + bgColor;
+      }
+    `
+    const res = bindThis(input, {
+      needCollect: true,
+      renderReduce: true,
+      ignoreMap: {
+        _i: true,
+        _c: true,
+        _r: true,
+        tools: '../tools.wxs'
+      }
+    }).code
+    const output = `
+global.currentInject.render = function (_i, _c, _r, _sc) {
+  tools.hexToRgba(bgColor);
+  tools(bgColor);
+  "background-color: " + _sc("bgColor");
+  "background-color: " + "";
+};`
+    expect(trimBlankRow(res)).toBe(trimBlankRow(output))
+  })
 })
