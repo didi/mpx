@@ -1,6 +1,7 @@
-import { forwardRef, useRef, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import { forwardRef, useRef, useContext, useMemo, useState } from 'react'
 import { warn, isFunction } from '@mpxjs/utils'
 import Portal from './mpx-portal/index'
+import { usePreventRemove, PreventRemoveEvent } from '@react-navigation/native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
     borderRadius: 10
   }
 })
-
+let isNavigateBack = false // 放外层是因为isIntercept值变更会引起组件重新渲染导致内层的值记录不准确
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   const mpx = global.__mpx
@@ -109,30 +110,18 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     top: 0,
     bottom: 0
   }
-  const canGoBack = useRef<boolean>(false)
-  const isNavigateBack = useRef<boolean>(false)
-
-  const beforeRemoveHandle = (e: Event) => {
-    if (canGoBack.current && !isNavigateBack.current) {
-      webViewRef.current?.goBack()
-      e.preventDefault()
-    }
-    isNavigateBack.current = false
-  }
 
   const navigation = useNavigation()
-
-  // useEffect(() => {
-  //   let beforeRemoveSubscription:any
-  //   if (__mpx_mode__ !== 'ios') {
-  //     beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
-  //   }
-  //   return () => {
-  //     if (isFunction(beforeRemoveSubscription)) {
-  //       beforeRemoveSubscription()
-  //     }
-  //   }
-  // }, [])
+  const [isIntercept, setIsIntercept] = useState<boolean>(false)
+  usePreventRemove(isIntercept, (event: PreventRemoveEvent) => {
+    const { data } = event
+    if (isNavigateBack) {
+      navigation?.dispatch(data.action)
+    } else {
+      webViewRef.current?.goBack()
+    }
+    isNavigateBack = false
+  })
 
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
     style: defaultWebViewStyle
@@ -183,14 +172,14 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
   const _changeUrl = function (navState: WebViewNavigation) {
     if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
-      canGoBack.current = navState.canGoBack
       currentPage.__webViewUrl = navState.url
+      setIsIntercept(navState.canGoBack)
     }
   }
 
   const _onLoadProgress = function (event: WebViewProgressEvent) {
     if (__mpx_mode__ !== 'ios') {
-      canGoBack.current = event.nativeEvent.canGoBack
+      setIsIntercept(event.nativeEvent.canGoBack)
     }
   }
   const _message = function (res: WebViewMessageEvent) {
@@ -230,7 +219,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         asyncCallback = navObj.navigateTo(...params)
         break
       case 'navigateBack':
-        isNavigateBack.current = true
+        isNavigateBack = true
         asyncCallback = navObj.navigateBack(...params)
         break
       case 'redirectTo':
@@ -283,7 +272,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const src = res.nativeEvent?.url
     if (isLoadError.current) {
       isLoadError.current = false
-      isNavigateBack.current = false
+      isNavigateBack = false
       const result = {
         type: 'error',
         timeStamp: res.timeStamp,
