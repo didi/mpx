@@ -105,13 +105,13 @@ export default function createApp (options) {
       if (navigation) {
         const state = navigation.getState()
         const current = state.routes[state.index]
-        options = {
+        options = Object.assign(appState.isLaunch ? { isLaunch: true } : {}, {
           path: current.name,
           query: current.params,
           scene: 0,
           shareTicket: '',
           referrerInfo: {}
-        }
+        })
       }
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
@@ -127,6 +127,7 @@ export default function createApp (options) {
   const onAppStateChange = (currentState) => {
     const navigation = getFocusedNavigation()
     if (currentState === 'active') {
+      appState.isLaunch = false
       appState.state = 'show'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'show'
@@ -176,6 +177,7 @@ export default function createApp (options) {
           global.__mpxLaunchOptions = options
           defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
+        appState.isLaunch = true
         appState.state = 'show'
         global.__mpxAppLaunched = true
         global.__mpxAppHotLaunched = true
