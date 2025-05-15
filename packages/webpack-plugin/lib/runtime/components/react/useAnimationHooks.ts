@@ -294,7 +294,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     }
     transitionend({
       type: 'transitionend',
-      detail: { elapsedTime: duration, finished, current },
+      // elapsedTime 对齐wx 单位s
+      detail: { elapsedTime: duration ? duration / 1000 : 0, finished, current },
       target,
       currentTarget: target,
       timeStamp: Date.now()
