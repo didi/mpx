@@ -178,7 +178,7 @@ function checkBIsPrefixOfA (a, b) {
   return a.startsWith(b) && (a[b.length] === '.' || a[b.length] === '[')
 }
 
-function checkIgnore(path, ignoreMap) {
+function checkIgnore (path, ignoreMap) {
   let current = path
   while (current) {
     if (ignoreMap[current.node.name]) return true
