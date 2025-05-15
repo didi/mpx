@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS
 import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject } from './utils'
 import { SwiperContext } from './context'
 /**
  * ✔ indicator-dots
@@ -30,32 +30,32 @@ type EventDataType = {
 }
 
 interface SwiperProps {
-  children?: ReactNode;
-  circular?: boolean;
-  current?: number;
-  interval?: number;
-  autoplay?: boolean;
+  children?: ReactNode
+  circular?: boolean
+  current?: number
+  interval?: number
+  autoplay?: boolean
   // scrollView 只有安卓可以设
-  duration?: number;
+  duration?: number
   // 滑动过程中元素是否scale变化
-  scale?: boolean;
-  'indicator-dots'?: boolean;
-  'indicator-color'?: string;
-  'indicator-active-color'?: string;
-  vertical?: boolean;
+  scale?: boolean
+  'indicator-dots'?: boolean
+  'indicator-color'?: string
+  'indicator-active-color'?: string
+  vertical?: boolean
   style: {
     [key: string]: any
-  };
-  'easing-function'?: EaseType;
-  'previous-margin'?: string;
-  'next-margin'?: string;
-  'enable-offset'?: boolean;
-  'enable-var': boolean;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
-  'external-var-context'?: Record<string, any>;
-  bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void;
+  }
+  'easing-function'?: EaseType
+  'previous-margin'?: string
+  'next-margin'?: string
+  'enable-offset'?: boolean
+  'enable-var': boolean
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  'external-var-context'?: Record<string, any>
+  bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 /**
@@ -201,23 +201,29 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     layoutProps,
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef, onLayout: onWrapperLayout })
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef
-  }, [
-    'style',
-    'indicator-dots',
-    'indicator-color',
-    'indicator-active-color',
-    'previous-margin',
-    'vertical',
-    'previous-margin',
-    'next-margin',
-    'easing-function',
-    'autoplay',
-    'circular',
-    'interval',
-    'easing-function'
-  ], { layoutRef: layoutRef })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      {
+        ref: nodeRef
+      }
+    ),
+    [
+      'style',
+      'indicator-dots',
+      'indicator-color',
+      'indicator-active-color',
+      'previous-margin',
+      'vertical',
+      'previous-margin',
+      'next-margin',
+      'easing-function',
+      'autoplay',
+      'circular',
+      'interval',
+      'easing-function'
+    ], { layoutRef: layoutRef })
 
   function onWrapperLayout (e: LayoutChangeEvent) {
     const { width, height } = e.nativeEvent.layout
@@ -251,8 +257,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       dots.push(<View style={[dotCommonStyle, { backgroundColor: unActionColor }]} key={i}></View>)
     }
     return (
-      <View pointerEvents="none" style = {styles['pagination_' + dir]}>
-        <View style = {[styles['pagerWrapper' + dir]]}>
+      <View pointerEvents="none" style={styles['pagination_' + dir]}>
+        <View style={[styles['pagerWrapper' + dir]]}>
           <Animated.View style={[
             dotCommonStyle,
             activeDotStyle,
@@ -266,8 +272,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           ]}
           />
           {dots}
-      </View>
-    </View>)
+        </View>
+      </View>)
   }
 
   function renderItems () {
@@ -392,7 +398,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }
 
-  function getOffset (index:number, stepValue: number) {
+  function getOffset (index: number, stepValue: number) {
     if (!stepValue) return 0
     let targetOffset = 0
     if (circular && children.length > 1) {
@@ -404,7 +410,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     return targetOffset
   }
 
-  function updateCurrent (index:number, stepValue: number) {
+  function updateCurrent (index: number, stepValue: number) {
     const targetOffset = getOffset(index || 0, stepValue)
     if (targetOffset !== offset.value) {
       // 内部基于props.current!==currentIndex.value决定是否使用动画及更新currentIndex.value
@@ -712,21 +718,21 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   function renderSwiper () {
     const arrPages: Array<ReactNode> | ReactNode = renderItems()
     return (<View style={[normalStyle, layoutStyle, styles.swiper]} {...layoutProps} {...innerProps}>
-        <Animated.View style={[{
-          flexDirection: dir === 'x' ? 'row' : 'column',
-          width: '100%',
-          height: '100%'
-        }, animatedStyles]}>
-          {wrapChildren({
-            children: arrPages
-          }, {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          })}
-        </Animated.View>
-        {showsPagination && renderPagination()}
+      <Animated.View style={[{
+        flexDirection: dir === 'x' ? 'row' : 'column',
+        width: '100%',
+        height: '100%'
+      }, animatedStyles]}>
+        {wrapChildren({
+          children: arrPages
+        }, {
+          hasVarDec,
+          varContext: varContextRef.current,
+          textStyle,
+          textProps
+        })}
+      </Animated.View>
+      {showsPagination && renderPagination()}
     </View>)
   }
 

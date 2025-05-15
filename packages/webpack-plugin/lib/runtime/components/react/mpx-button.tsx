@@ -371,14 +371,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
-      {
-        ref: nodeRef,
-        style: extendObject({}, innerStyle, layoutStyle)
-      },
+      {},
+      props,
       layoutProps,
       {
+        ref: nodeRef,
+        style: extendObject({}, innerStyle, layoutStyle),
         bindtap: !disabled && onTap
       }
     ),

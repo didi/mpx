@@ -42,71 +42,71 @@ import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, ext
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 
 interface ScrollViewProps {
-  children?: ReactNode;
-  enhanced?: boolean;
-  bounces?: boolean;
-  style?: ViewStyle;
-  scrollEventThrottle?: number;
-  'scroll-x'?: boolean;
-  'scroll-y'?: boolean;
-  'enable-back-to-top'?: boolean;
-  'show-scrollbar'?: boolean;
-  'paging-enabled'?: boolean;
-  'upper-threshold'?: number;
-  'lower-threshold'?: number;
-  'scroll-with-animation'?: boolean;
-  'refresher-triggered'?: boolean;
-  'refresher-enabled'?: boolean;
-  'refresher-default-style'?: 'black' | 'white' | 'none';
-  'refresher-background'?: string;
-  'refresher-threshold'?: number;
-  'scroll-top'?: number;
-  'scroll-left'?: number;
-  'enable-offset'?: boolean;
-  'scroll-into-view'?: string;
-  'enable-trigger-intersection-observer'?: boolean;
-  'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
-  'wait-for'?: Array<GestureHandler>;
-  'simultaneous-handlers'?: Array<GestureHandler>;
-  'scroll-event-throttle'?:number;
-  bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  bindrefresherrefresh?: (event: NativeSyntheticEvent<unknown>) => void;
-  binddragstart?: (event: NativeSyntheticEvent<DragEvent>) => void;
-  binddragging?: (event: NativeSyntheticEvent<DragEvent>) => void;
-  binddragend?: (event: NativeSyntheticEvent<DragEvent>) => void;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindscrollend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
+  children?: ReactNode
+  enhanced?: boolean
+  bounces?: boolean
+  style?: ViewStyle
+  scrollEventThrottle?: number
+  'scroll-x'?: boolean
+  'scroll-y'?: boolean
+  'enable-back-to-top'?: boolean
+  'show-scrollbar'?: boolean
+  'paging-enabled'?: boolean
+  'upper-threshold'?: number
+  'lower-threshold'?: number
+  'scroll-with-animation'?: boolean
+  'refresher-triggered'?: boolean
+  'refresher-enabled'?: boolean
+  'refresher-default-style'?: 'black' | 'white' | 'none'
+  'refresher-background'?: string
+  'refresher-threshold'?: number
+  'scroll-top'?: number
+  'scroll-left'?: number
+  'enable-offset'?: boolean
+  'scroll-into-view'?: string
+  'enable-trigger-intersection-observer'?: boolean
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  'wait-for'?: Array<GestureHandler>
+  'simultaneous-handlers'?: Array<GestureHandler>
+  'scroll-event-throttle'?: number
+  bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  bindrefresherrefresh?: (event: NativeSyntheticEvent<unknown>) => void
+  binddragstart?: (event: NativeSyntheticEvent<DragEvent>) => void
+  binddragging?: (event: NativeSyntheticEvent<DragEvent>) => void
+  binddragend?: (event: NativeSyntheticEvent<DragEvent>) => void
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindscrollend?: (event: NativeSyntheticEvent<TouchEvent>) => void
   __selectRef?: (selector: string, nodeType: 'node' | 'component', all?: boolean) => HandlerRef<any, any>
 }
 type ScrollAdditionalProps = {
-  pinchGestureEnabled: boolean;
-  horizontal: boolean;
-  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onContentSizeChange: (width: number, height: number) => void;
-  onLayout?: (event: LayoutChangeEvent) => void;
-  scrollsToTop: boolean;
-  showsHorizontalScrollIndicator: boolean;
-  showsVerticalScrollIndicator: boolean;
-  scrollEnabled: boolean;
-  ref: RefObject<ScrollView>;
-  bounces?: boolean;
-  pagingEnabled?: boolean;
-  style?: ViewStyle;
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  onScrollBeginDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-};
+  pinchGestureEnabled: boolean
+  horizontal: boolean
+  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  onContentSizeChange: (width: number, height: number) => void
+  onLayout?: (event: LayoutChangeEvent) => void
+  scrollsToTop: boolean
+  showsHorizontalScrollIndicator: boolean
+  showsVerticalScrollIndicator: boolean
+  scrollEnabled: boolean
+  ref: RefObject<ScrollView>
+  bounces?: boolean
+  pagingEnabled?: boolean
+  style?: ViewStyle
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  onScrollBeginDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+}
 
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
@@ -274,7 +274,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }, [refresherTriggered])
 
-  function scrollTo ({ top = 0, left = 0, animated = false } : { top?: number; left?: number; animated?: boolean }) {
+  function scrollTo ({ top = 0, left = 0, animated = false }: { top?: number; left?: number; animated?: boolean }) {
     scrollToOffset(left, top, animated)
   }
 
@@ -678,33 +678,39 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     })
   }
 
-  const innerProps = useInnerProps(props, scrollAdditionalProps, [
-    'id',
-    'scroll-x',
-    'scroll-y',
-    'enable-back-to-top',
-    'enable-trigger-intersection-observer',
-    'paging-enabled',
-    'show-scrollbar',
-    'upper-threshold',
-    'lower-threshold',
-    'scroll-top',
-    'scroll-left',
-    'scroll-with-animation',
-    'refresher-triggered',
-    'refresher-enabled',
-    'refresher-default-style',
-    'refresher-background',
-    'children',
-    'enhanced',
-    'binddragstart',
-    'binddragging',
-    'binddragend',
-    'bindscroll',
-    'bindscrolltoupper',
-    'bindscrolltolower',
-    'bindrefresherrefresh'
-  ], { layoutRef })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      scrollAdditionalProps
+    ),
+    [
+      'id',
+      'scroll-x',
+      'scroll-y',
+      'enable-back-to-top',
+      'enable-trigger-intersection-observer',
+      'paging-enabled',
+      'show-scrollbar',
+      'upper-threshold',
+      'lower-threshold',
+      'scroll-top',
+      'scroll-left',
+      'scroll-with-animation',
+      'refresher-triggered',
+      'refresher-enabled',
+      'refresher-default-style',
+      'refresher-background',
+      'children',
+      'enhanced',
+      'binddragstart',
+      'binddragging',
+      'binddragend',
+      'bindscroll',
+      'bindscrolltoupper',
+      'bindscrolltolower',
+      'bindrefresherrefresh'
+    ], { layoutRef })
 
   const withRefresherScrollView = createElement(
     GestureDetector,
