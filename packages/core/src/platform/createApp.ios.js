@@ -190,7 +190,7 @@ export default function createApp (options) {
     useEffect(() => {
       const changeSubscription = ReactNative.AppState.addEventListener('change', (state) => {
         // 外层可能会异常设置此配置，因此加载监听函数内部
-        if (Mpx.config.rnConfig.disableReactNativeAppStateChange) return
+        if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
 
