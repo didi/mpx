@@ -140,30 +140,12 @@ const isPercent = (val: string | number | undefined): val is string => typeof va
 
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
-const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
-  const { sizeList, backgroundPosition, linearInfo } = preImageInfo
-  const [width, height] = sizeList
-  const bp = backgroundPosition
-
-  // 含有百分号，center 需计算布局
-  return isBackgroundSizeKeyword(width) ||
-    (isPercent(height) && width === 'auto') ||
-    (isPercent(width) && height === 'auto') ||
-    isPercent(bp[1]) ||
-    isPercent(bp[3]) ||
-    isDiagonalAngle(linearInfo)
-}
-
-const checkNeedLayout = (preImageInfo: PreImageInfo) => {
+const checkNeedImageSize = (preImageInfo: PreImageInfo) => {
   const { sizeList } = preImageInfo
   const [width] = sizeList
   // 在渐变的时候，background-size的cover，contain, auto属性值，转化为100%, needLayout计算逻辑和原来保持一致，needImageSize始终为false
-  return {
-    // 是否开启layout的计算
-    needLayout: isNeedLayout(preImageInfo),
-    // 是否开启原始宽度的计算
-    needImageSize: isBackgroundSizeKeyword(width) || sizeList.includes('auto')
-  }
+  // 是否开启原始宽度的计算
+  return isBackgroundSizeKeyword(width) || sizeList.includes('auto')
 }
 
 /**
@@ -285,8 +267,10 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
       dimensions = {
-        width: isPercent(width) ? width : +width,
-        height: isPercent(height) ? height : +height
+        // width: isPercent(width) ? width : +width,
+        // height: isPercent(height) ? height : +height
+        width: calcPercent(width, layoutWidth) || 0,
+        height: calcPercent(height, layoutHeight) || 0
       } as { width: NumberVal, height: NumberVal }
     }
   }
@@ -530,10 +514,6 @@ function preParseImage (imageStyle?: ExtendedViewStyle) {
   }
 }
 
-function isDiagonalAngle (linearInfo?: LinearInfo): boolean {
-  return !!(linearInfo?.direction && diagonalAngleMap[linearInfo.direction])
-}
-
 function inheritStyle (innerStyle: ExtendedViewStyle = {}) {
   const { borderWidth, borderRadius } = innerStyle
   const borderStyles = ['borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius']
@@ -559,86 +539,46 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   // 预解析
   const { src, sizeList, type } = preImageInfo
 
-  // 判断是否可挂载onLayout
-  const { needLayout, needImageSize } = checkNeedLayout(preImageInfo)
+  // 判断需要 needImageSize
+  const needImageSize = checkNeedImageSize(preImageInfo)
 
-  const [show, setShow] = useState<boolean>(((type === 'image' && !!src) || type === 'linear') && !needLayout && !needImageSize)
-  const [, setImageSizeWidth] = useState<number | null>(null)
-  const [, setImageSizeHeight] = useState<number | null>(null)
-  const [, setLayoutInfoWidth] = useState<number | null>(null)
-  const [, setLayoutInfoHeight] = useState<number | null>(null)
+  const [show, setShow] = useState<boolean>(false)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
-  useEffect(() => {
-    sizeInfo.current = null
-    if (type === 'linear') {
-      if (!needLayout) setShow(true)
-      return
-    }
-
-    if (!src) {
-      setShow(false)
-      return
-      // 一开始未出现，数据改变时出现
-    } else if (!(needLayout || needImageSize)) {
-      setShow(true)
-      return
-    }
-
-    if (needImageSize) {
-      Image.getSize(src, (width, height) => {
-        sizeInfo.current = {
-          width,
-          height
-        }
-        // 1. 当需要绑定onLayout 2. 获取到布局信息
-        if (!needLayout || layoutInfo.current) {
-          setImageSizeWidth(width)
-          setImageSizeHeight(height)
-          if (layoutInfo.current) {
-            setLayoutInfoWidth(layoutInfo.current.width)
-            setLayoutInfoHeight(layoutInfo.current.height)
-          }
-          setShow(true)
-        }
-      })
-    }
-    // type 添加type 处理无渐变 有渐变的场景
-  }, [src, type])
+  const [finalProps, setFinalProps] = useState({})
 
   if (!type) return null
 
   const onLayout = (res: LayoutChangeEvent) => {
     const { width, height } = res?.nativeEvent?.layout || {}
-    layoutInfo.current = {
-      width,
-      height
-    }
-    if (!needImageSize) {
-      setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height)
-      // 有渐变角度的时候，才触发渲染组件
-      if (type === 'linear') {
-        sizeInfo.current = {
-          width: calcPercent(sizeList[0] as NumberVal, width),
-          height: calcPercent(sizeList[1] as NumberVal, height)
-        }
-        setImageSizeWidth(sizeInfo.current.width)
-        setImageSizeHeight(sizeInfo.current.height)
+    layoutInfo.current = { width, height }
+
+    if (type === 'linear') {
+      sizeInfo.current = {
+        width: calcPercent(sizeList[0] as NumberVal, width) || 0,
+        height: calcPercent(sizeList[1] as NumberVal, height) || 0
       }
       setShow(true)
-    } else if (sizeInfo.current) {
-      setLayoutInfoWidth(width)
-      setLayoutInfoHeight(height)
-      setImageSizeWidth(sizeInfo.current.width)
-      setImageSizeHeight(sizeInfo.current.height)
-      setShow(true)
+      setFinalProps(imageStyleToProps(preImageInfo, sizeInfo.current, layoutInfo.current))
+    } else if (type === 'image' && src) {
+      if (!needImageSize) {
+        setShow(true)
+      } else {
+        Image.getSize(src, (width, height) => {
+          sizeInfo.current = {
+            width,
+            height
+          }
+          setShow(true)
+        })
+        setFinalProps(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))
+      }
     }
   }
-
-  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
-    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
+  console.log('---layouot', imageStyleToProps(preImageInfo, sizeInfo.current, layoutInfo.current))
+  return <View key='backgroundImage' onLayout={onLayout} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+    {show && type === 'linear' && <LinearGradient useAngle={true} {...finalProps} />}
+    {show && type === 'image' && (renderImage(finalProps), enableFastImage))}
   </View>
 }
 
