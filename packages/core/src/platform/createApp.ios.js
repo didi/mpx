@@ -114,17 +114,20 @@ export default function createApp (options) {
             shareTicket: '',
             referrerInfo: {}
           }
+        } else {
+          options = {}
         }
       }
       global.__mpxAppCbs.show.forEach((cb) => {
-        cb(options || {})
+        cb(options)
       })
     } else if (value === 'hide') {
+      const reason = appState.hideReason ?? 3
+      delete appState.hideReason
       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
-          reason: appState.hideReason ?? 3
+          reason
         })
-        delete appState.hideReason
       })
     }
   }, { sync: true })
