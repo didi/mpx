@@ -100,11 +100,9 @@ export default function createApp (options) {
   // 3其他
   watch(() => appState.state, (value) => {
     if (value === 'show') {
-      let options = global.__mpxEnterOptions || {}
-      if (appState.showOptions) {
-        options = appState.showOptions
-        delete appState.showOptions
-      } else {
+      let options = appState.showOptions
+      delete appState.showOptions
+      if (!options) {
         const navigation = getFocusedNavigation()
         if (navigation) {
           const state = navigation.getState()
@@ -119,13 +117,14 @@ export default function createApp (options) {
         }
       }
       global.__mpxAppCbs.show.forEach((cb) => {
-        cb(options)
+        cb(options || {})
       })
     } else if (value === 'hide') {
       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
           reason: appState.hideReason ?? 3
         })
+        delete appState.hideReason
       })
     }
   }, { sync: true })
