@@ -120,7 +120,7 @@ module.exports = function (template, {
         if (meta.genericsInfo) {
           genericsInfo = meta.genericsInfo
         }
-        return templateCompiler.serialize(root)
+        return templateCompiler.serialize(root, moduleId) // 增加moduleId给到template2vue拿到正确的scopedId
       }
     })
     output += '\n'

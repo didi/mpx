@@ -1429,7 +1429,6 @@ function processEvent (el, options) {
           }
         }
       })
-
       addAttrs(el, [
         {
           name: resultName || config[mode].event.getEvent(type),
@@ -2931,7 +2930,7 @@ function stringifyAttr (val) {
   }
 }
 
-function serialize (root) {
+function serialize (root, moduleId) {
   function walk (node) {
     let result = ''
     if (node) {
@@ -2959,7 +2958,7 @@ function serialize (root) {
             if (item.name === ':data') {
               item.name = 'v-bind'
               const bindValue = item.value.replace(/\(|\)/g, '')
-              item.value = bindValue ? `{${bindValue}, _data_v_id}` : '{ _data_v_id }' // 用于处理父组件scoped情况下template中的样式传递
+              item.value = bindValue ? `{${bindValue}, _data_v_id: '${moduleId}'}` : `{ _data_v_id: '${moduleId}' }` // 用于处理父组件scoped情况下template中的样式传递
             }
           })
         }

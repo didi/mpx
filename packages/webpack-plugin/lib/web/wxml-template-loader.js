@@ -20,7 +20,7 @@ module.exports = function (content) {
     const resourcePath = this.resourcePath.replace(/.wxml$/, `-${name}.wxml`)
     this._module.addPresentationalDependency(new WriteVfsDependency(resourcePath, cutContent))
     mpx.__vfs.writeModule(resourcePath, cutContent)
-    templateMaps[name] = `getComponent(require(${stringifyRequest(this, `${resourcePath}?is=${name}&isTemplate`)}))`
+    templateMaps[name] = `getComponent(require(${stringifyRequest(this, `${resourcePath}?is=${name}&localComponentsMap=${encodeURIComponent(JSON.stringify(mpx.parentLocalComponentsMap))}&isTemplate`)}))` // template2vue是在外部配置没办法拿到parentLocalComponentsMap，所以通过query传递
   })
   return `
   const {getComponent} = require(${stringifyRequest(this, optionProcessorPath)})\n

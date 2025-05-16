@@ -28,7 +28,7 @@ module.exports = function (script, {
   inlineTemplateMap,
   localComponentsMap
 }, callback) {
-  const { projectRoot, appInfo, webConfig, __vfs: vfs } = loaderContext.getMpx()
+  const { projectRoot, appInfo, webConfig, __vfs: vfs, parentLocalComponentsMap } = loaderContext.getMpx()
 
   let output = '/* script */\n'
   let scriptSrcMode = srcMode
@@ -70,7 +70,8 @@ module.exports = function (script, {
           Object.assign(templateModules, tempLoaderResult)\n`
         })
       }
-
+      // 把wxml要的localComponentsMap merge到parentLocalComponentsMap中这样在 template2vue中就可以拿到对应的值
+      Object.assign(parentLocalComponentsMap, localComponentsMap)
       // 获取组件集合
       const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
       // 获取pageConfig
@@ -86,7 +87,7 @@ module.exports = function (script, {
             const { filePath, content } = inlineTemplateMap[name]
             loaderContext._module.addPresentationalDependency(new WriteVfsDependency(filePath, content)) // 处理缓存报错的情况
             vfs.writeModule(filePath, content) // 截取template写入文件
-            const expression = `getComponent(require(${stringifyRequest(loaderContext, `${filePath}?is=${name}&isTemplate`)}))`
+            const expression = `getComponent(require(${stringifyRequest(loaderContext, `${filePath}?is=${name}&localComponentsMap=${encodeURIComponent(JSON.stringify(localComponentsMap))}&isTemplate`)}))`
             componentsMap[name] = expression
           })
         }

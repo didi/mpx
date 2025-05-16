@@ -672,6 +672,8 @@ class MpxWebpackPlugin {
           componentsMap: {
             main: {}
           },
+          // 用于template模版获取父组件引用的自定义组件，目前仅输出web时下支持使用
+          parentLocalComponentsMap: {},
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录
           staticResourcesMap: {
             main: {}
