@@ -6,6 +6,7 @@ node_modules/
 *.log
 package-lock.json
 pnpm-lock.yaml
+tsconfig.tsbuildinfo
 yarn.lock
 .DS_Store
 elevate/

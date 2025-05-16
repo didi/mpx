@@ -1,0 +1,45 @@
+{
+  "name": "@mpxjs/reactivity",
+  "version": "2.10.4",
+  "description": "Reactivity system for Mpx",
+  "sideEffects": false,
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs.js",
+      "import": "./dist/index.esm.js",
+      "types": "./types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b && tsup",
+    "test": "jest"
+  },
+  "keywords": [
+    "mpx",
+    "reactivity"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/didi/mpx.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mpxjs/utils": "^2.10.4"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3"
+  }
+}
