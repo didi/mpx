@@ -266,10 +266,15 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      dimensions = {
-        width: calcPercent(width, layoutWidth) || 0,
-        height: calcPercent(height, layoutHeight) || 0
-      } as { width: NumberVal, height: NumberVal }
+      const dimensionWidth = calcPercent(width, layoutWidth) || 0
+      const dimensionHeight = calcPercent(height, layoutHeight) || 0
+      // ios 上只要重新触发渲染，在渲染过程中 width 或者 height 被设置为 0，即使后面再更新为正常宽高，也会渲染不出来
+      if (dimensionWidth && dimensionHeight) {
+        dimensions = {
+          width: dimensionWidth,
+          height: dimensionHeight
+        } as { width: NumberVal, height: NumberVal }
+      }
     }
   }
 
@@ -312,7 +317,7 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
   const imageProps: ImageProps = {
     resizeMode: 'cover',
     style: {
-      position: 'absolute'
+      position: 'absolute',
       // ...StyleSheet.absoluteFillObject
     },
     colors: []
@@ -540,6 +545,8 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   // 判断需要 needImageSize
   const needImageSize = checkNeedImageSize(preImageInfo)
 
+  const [finalProps, setFinalProps] = useState({})
+
   const [show, setShow] = useState<boolean>(false)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
@@ -555,14 +562,12 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
         width: calcPercent(sizeList[0] as NumberVal, width) || 0,
         height: calcPercent(sizeList[1] as NumberVal, height) || 0
       }
-      if (width && height) {
-        setShow(true)
-      } else {
-        setShow(false)
-      }
+      setShow(true)
+      setFinalProps(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))
     } else if (type === 'image' && src) {
       if (!needImageSize) {
         setShow(true)
+        setFinalProps(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))
       } else {
         Image.getSize(src, (width, height) => {
           sizeInfo.current = {
@@ -570,13 +575,14 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
             height
           }
           setShow(true)
+          setFinalProps(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))
         })
       }
     }
   }
   return <View key='backgroundImage' onLayout={onLayout} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
-    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)), enableFastImage)}
+    {show && type === 'linear' && <LinearGradient useAngle={true} {...finalProps} />}
+    {show && type === 'image' && (renderImage(finalProps), enableFastImage)}
   </View>
 }
 
