@@ -267,8 +267,6 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
       dimensions = {
-        // width: isPercent(width) ? width : +width,
-        // height: isPercent(height) ? height : +height
         width: calcPercent(width, layoutWidth) || 0,
         height: calcPercent(height, layoutHeight) || 0
       } as { width: NumberVal, height: NumberVal }
@@ -545,7 +543,6 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   const [show, setShow] = useState<boolean>(false)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
-  const [finalProps, setFinalProps] = useState({})
 
   if (!type) return null
 
@@ -558,8 +555,11 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
         width: calcPercent(sizeList[0] as NumberVal, width) || 0,
         height: calcPercent(sizeList[1] as NumberVal, height) || 0
       }
-      setShow(true)
-      setFinalProps(imageStyleToProps(preImageInfo, sizeInfo.current, layoutInfo.current))
+      if (width && height) {
+        setShow(true)
+      } else {
+        setShow(false)
+      }
     } else if (type === 'image' && src) {
       if (!needImageSize) {
         setShow(true)
@@ -571,14 +571,12 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
           }
           setShow(true)
         })
-        setFinalProps(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))
       }
     }
   }
-  console.log('---layouot', imageStyleToProps(preImageInfo, sizeInfo.current, layoutInfo.current))
   return <View key='backgroundImage' onLayout={onLayout} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...finalProps} />}
-    {show && type === 'image' && (renderImage(finalProps), enableFastImage))}
+    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
+    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)), enableFastImage)}
   </View>
 }
 
