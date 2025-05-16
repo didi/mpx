@@ -273,13 +273,6 @@ export default function createApp (options) {
     return []
   }
 
-  global.setCurrentPageStatus = function (status) {
-    const navigation = getFocusedNavigation()
-    if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-      global.__mpxPageStatusMap[navigation.pageId] = status
-    }
-  }
-
   // 用于外层业务用来设置App的展示情况
   global.setAppShow = function () {
     onAppStateChange('active')
