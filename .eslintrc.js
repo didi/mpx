@@ -62,6 +62,11 @@ module.exports = {
       rules: {
         'react-hooks/rules-of-hooks': 'error'
       }
+    }, {
+      files: ['packages/reactivity/src/**'],
+      rules: {
+        'space-before-function-paren': 'off'
+      }
     }
   ]
 }
