@@ -102,7 +102,6 @@ module.exports = function (content) {
     },
     mode: 'web',
     srcMode: 'wx',
-    wxmlName: query.is,
     filePath: resourcePath,
     usingComponents: []
   })

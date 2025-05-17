@@ -698,7 +698,6 @@ function parse (template, options) {
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldKeepComment: true,
-    wxmlName: options.wxmlName,
     start: function start (tag, attrs, unary) {
       // check namespace.
       // inherit parent ns if there is one
