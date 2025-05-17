@@ -3,12 +3,15 @@ import { defineConfig } from 'tsup'
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
-  splitting: false,
-  clean: true,
-  treeshake: true,
-  minify: true,
   outDir: 'dist',
+  clean: true,
+  minify: true,
+  splitting: false, // unstable: https://esbuild.github.io/api/#line-limit
+  sourcemap: true,
+  treeshake: true,
   outExtension: ({ format }) => ({
     js: `.${format}.js`
   })
 })
+
+// TODO : use tsdown when it is more stable

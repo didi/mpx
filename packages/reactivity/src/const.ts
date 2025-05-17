@@ -2,8 +2,8 @@ export const RefKey = '__composition_api_ref_key__'
 export const ObKey = '__ob__'
 export const DefaultLocale = 'zh-CN'
 
-export enum PausedState {
-  Paused,
-  Dirty,
-  Resumed,
-}
+export const PausedState = {
+  Paused: 0,
+  Dirty: 1,
+  Resumed: 2
+} as const

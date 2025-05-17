@@ -114,13 +114,16 @@ export function getFocusedNavigation():
 
 export function hasChanged<T>(value: T, oldValue: T): boolean
 
-export function hasOwn(obj: Object, key: PropertyKey): boolean
+export function hasOwn(
+  obj: object,
+  key: string | symbol
+): key is keyof typeof obj
 
 export function hump2dash(value: string): string
 
 export function isBoolean(bool: unknown): bool is boolean
 
-export function isEmptyObject(obj: Object): boolean
+export function isEmptyObject(obj: unknown): boolean
 
 export function isFunction(fn: unknown): boolean
 
@@ -128,7 +131,7 @@ export function isNumber(num: unknown): boolean
 
 export function isNumberStr(str: unknown): boolean
 
-export function isObject(value: any): value is Object
+export function isObject(value: any): boolean
 
 export function isPlainObject(obj: unknown): boolean
 

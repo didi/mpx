@@ -63,8 +63,9 @@ module.exports = {
         'react-hooks/rules-of-hooks': 'error'
       }
     }, {
-      files: ['packages/reactivity/src/**'],
+      files: ['packages/reactivity/src/**/*.ts'],
       rules: {
+        'sort-imports': ['error', { ignoreDeclarationSort: true }],
         'space-before-function-paren': 'off'
       }
     }

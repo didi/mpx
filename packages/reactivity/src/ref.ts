@@ -1,16 +1,15 @@
+import { extend, hasOwn, isPlainObject, warn } from '@mpxjs/utils'
 import {
-  reactive,
-  shallowReactive,
-  set,
+  type ShallowReactiveMarker,
   isReactive,
+  reactive,
+  set,
   setForceTrigger,
-  type ShallowReactiveMarker
+  shallowReactive
 } from './reactive'
 import { RefKey } from './const'
-import { warn, isPlainObject, hasOwn, extend } from '@mpxjs/utils'
 
 declare const RefSymbol: unique symbol
-
 export interface Ref<T = any, S = T> {
   get value(): T
   set value(_: S)
@@ -82,7 +81,7 @@ export function toRef<T extends object, K extends keyof T>(
   if (!isReactive(obj)) {
     warn('toRef() expects a reactive object but received a plain one.')
   }
-  if (!hasOwn(obj, key)) set(obj, key, defaultValue)
+  if (!hasOwn(obj, key as any)) set(obj, key as any, defaultValue)
   const val = obj[key]
   if (isRef(val)) return val
   return createRef({
@@ -102,7 +101,7 @@ export function toRefs<T extends object>(obj: T): ToRefs<T> {
   }
   if (!isPlainObject(obj)) return obj as ToRefs<T>
   const result = {} as ToRefs<T>
-  Object.keys(obj).forEach((key) => {
+  Object.keys(obj).forEach(key => {
     result[key as keyof T] = toRef(obj, key as keyof T)
   })
   return result
@@ -149,11 +148,12 @@ export function triggerRef(ref: Ref) {
   setForceTrigger(false)
 }
 
-export type UnwrapRef<T> = T extends ShallowRef<infer V>
-  ? V
-  : T extends Ref<infer V>
-  ? UnwrapRefSimple<V>
-  : UnwrapRefSimple<T>
+export type UnwrapRef<T> =
+  T extends ShallowRef<infer V>
+    ? V
+    : T extends Ref<infer V>
+      ? UnwrapRefSimple<V>
+      : UnwrapRefSimple<T>
 
 export interface RefUnwrapBailTypes {}
 
@@ -171,7 +171,7 @@ export type UnwrapRefSimple<T> = T extends
   | RefUnwrapBailTypes[keyof RefUnwrapBailTypes]
   ? T
   : T extends Array<any>
-  ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
-  : T extends object & { [ShallowReactiveMarker]?: never } // not a shallowReactive
-  ? { [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]> }
-  : T
+    ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
+    : T extends object & { [ShallowReactiveMarker]?: never } // not a shallowReactive
+      ? { [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]> }
+      : T
