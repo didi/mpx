@@ -2529,7 +2529,7 @@ function processTemplate (el) {
   }
 }
 
-function processImport (el, options, meta) {
+function processImport (el, meta) { // 收集import引用的地址
   if (el.tag === 'import' && el.attrsMap.src) {
     if (!meta.templateSrcList) {
       meta.templateSrcList = []
@@ -2546,7 +2546,7 @@ function postProcessTemplate (el, meta, options) {
       if (!meta.inlineTemplateMap) {
         meta.inlineTemplateMap = {}
       }
-      const name = el.attrsMap.name
+      const name = el.attrsMap.name // 行内的template有name就收集template的内容和给内容生成一个地址
       if (name) {
         const content = getTemplateContent(options.template, name)
         const filePath = options.filePath.replace(/.mpx$/, `-${name}.wxml`)
@@ -2742,7 +2742,7 @@ function processElement (el, root, options, meta) {
     // 预处理template逻辑
     processTemplate(el)
     // 预处理import逻辑
-    processImport(el, options, meta)
+    processImport(el, meta)
     processScoped(el)
     processEventWeb(el)
     // processWebExternalClassesHack(el, options)
@@ -2940,11 +2940,8 @@ function serialize (root, moduleId) {
           result += node.text
         }
       }
-      if (node.tag === 'import' && mode === 'web') {
-        return result
-      }
       if (mode === 'web') {
-        if (node.tag === 'template' && node.attrsMap && node.attrsMap.name) {
+        if ((node.tag === 'template' && node.attrsMap && node.attrsMap.name) || node.tag === 'import') {
           return result
         }
         if (node.tag === 'template' && node.attrsMap && node.attrsMap.is) {
