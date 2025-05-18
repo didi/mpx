@@ -10,7 +10,7 @@ import {
 } from '@mpxjs/utils'
 import { arrayMethods } from './array'
 import { ObKey } from './const'
-import Dep from './dep'
+import { Dep } from './dep'
 import { Ref, UnwrapRefSimple, isRef } from './ref'
 
 export interface Target {

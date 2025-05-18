@@ -13,7 +13,7 @@ export interface DepTarget {
  * A dep is an observable that can have multiple
  * directives subscribing to it.
  */
-export default class Dep {
+export class Dep {
   static target?: DepTarget | null
   id: number
   subs: Array<any>

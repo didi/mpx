@@ -5,7 +5,7 @@ export default defineConfig({
   format: ['cjs', 'esm'],
   outDir: 'dist',
   clean: true,
-  minify: true,
+  minify: false,
   splitting: false, // unstable: https://esbuild.github.io/api/#line-limit
   sourcemap: true,
   treeshake: true,

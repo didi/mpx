@@ -43,9 +43,11 @@ export function isRef(val: any): val is Ref {
   return val instanceof RefImpl
 }
 
+// #region ref
 export function ref<T extends Ref>(value: T): T
 export function ref<T>(value: T): Ref<UnwrapRef<T>>
 export function ref<T = any>(): Ref<T | undefined>
+
 export function ref(raw?: unknown) {
   if (isRef(raw)) return raw
   const wrapper = reactive({ [RefKey]: raw })
@@ -56,11 +58,13 @@ export function ref(raw?: unknown) {
     }
   })
 }
+// #endregion
 
 export function unref<T>(ref: T | Ref<T>): T {
   return isRef(ref) ? (ref.value as any) : ref
 }
 
+// #region toRef
 export type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N
 export type ToRef<T> = IfAny<T, Ref<T>, [T] extends [Ref] ? T : Ref<T>>
 
@@ -73,6 +77,7 @@ export function toRef<T extends object, K extends keyof T>(
   key: K,
   defaultValue: T[K]
 ): ToRef<Exclude<T[K], undefined>>
+
 export function toRef<T extends object, K extends keyof T>(
   obj: T,
   key: K,
@@ -91,10 +96,13 @@ export function toRef<T extends object, K extends keyof T>(
     }
   })
 }
+// #endregion
 
+// #region toRefs
 export type ToRefs<T = any> = {
   [K in keyof T]: ToRef<T[K]>
 }
+
 export function toRefs<T extends object>(obj: T): ToRefs<T> {
   if (!isReactive(obj)) {
     warn('toRefs() expects a reactive object but received a plain one.')
@@ -106,6 +114,7 @@ export function toRefs<T extends object>(obj: T): ToRefs<T> {
   })
   return result
 }
+// #endregion
 
 export function customRef(factory: Function) {
   const version = ref(0)
@@ -121,6 +130,7 @@ export function customRef(factory: Function) {
   )
 }
 
+// #region shallowRef
 declare const ShallowRefMarker: unique symbol
 export type ShallowRef<T = any> = Ref<T> & { [ShallowRefMarker]?: true }
 
@@ -128,6 +138,7 @@ export function shallowRef<T>(value: T | Ref<T>): Ref<T> | ShallowRef<T>
 export function shallowRef<T extends Ref>(value: T): T
 export function shallowRef<T>(value: T): ShallowRef<T>
 export function shallowRef<T = any>(): ShallowRef<T | undefined>
+
 export function shallowRef(raw?: unknown) {
   if (isRef(raw)) return raw
   const wrapper = shallowReactive({ [RefKey]: raw })
@@ -138,6 +149,7 @@ export function shallowRef(raw?: unknown) {
     }
   })
 }
+// #endregion
 
 export function triggerRef(ref: Ref) {
   if (!isRef(ref)) return
@@ -148,6 +160,7 @@ export function triggerRef(ref: Ref) {
   setForceTrigger(false)
 }
 
+// #region other internal types
 export type UnwrapRef<T> =
   T extends ShallowRef<infer V>
     ? V
@@ -175,3 +188,4 @@ export type UnwrapRefSimple<T> = T extends
     : T extends object & { [ShallowReactiveMarker]?: never } // not a shallowReactive
       ? { [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]> }
       : T
+// #endregion
