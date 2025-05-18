@@ -115,9 +115,9 @@ export function getFocusedNavigation():
 export function hasChanged<T>(value: T, oldValue: T): boolean
 
 export function hasOwn(
-  obj: object,
+  obj: unknown,
   key: string | symbol
-): key is keyof typeof obj
+): boolean
 
 export function hump2dash(value: string): string
 

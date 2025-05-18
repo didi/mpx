@@ -261,7 +261,7 @@ export function isReactive(value: unknown): boolean {
 }
 
 export function getObserver(value: any) {
-  if (isReactive(value)) return value[ObKey]
+  if (isReactive(value)) return (value as Target)[ObKey]
 }
 
 export function markRaw<T extends object>(value: T): T {
