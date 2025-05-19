@@ -420,14 +420,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           runOnJS(triggerStartOnJS)({ e })
         }
       })
-      .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+      .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
+        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         isMoving.value = true
         if (isFirstTouch.value) {
-          touchEvent.value = Math.abs(e.translationX) > Math.abs(e.translationY) ? 'htouchmove' : 'vtouchmove'
+          touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
         }
-        handleTriggerMove(e as unknown as GestureTouchEvent)
+        handleTriggerMove(e)
+      })
+      .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        'worklet'
         if (disabled) return
         if (direction === 'horizontal' || direction === 'all') {
           const newX = initialViewPosition.value.x + e.translationX
@@ -518,11 +522,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       .withRef(movableGestureRef)
 
     if (direction === 'horizontal') {
-      gesturePan.activeOffsetX([-1, 1]).failOffsetY([-5, 5])
+      gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
     } else if (direction === 'vertical') {
-      gesturePan.activeOffsetY([-1, 1]).failOffsetX([-5, 5])
+      gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
     } else if (direction === 'all') {
-      gesturePan.activeOffsetX([-1, 1]).activeOffsetY([-1, 1])
+      gesturePan.activeOffsetX([-5, 5]).activeOffsetY([-5, 5])
     }
 
     if (simultaneousHandlers && simultaneousHandlers.length) {
