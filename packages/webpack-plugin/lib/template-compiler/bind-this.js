@@ -80,7 +80,7 @@ function checkDelAndGetPath (path) {
     if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
       delPath = current.parentPath
     } else if (t.isCallExpression(current.parent)) {
-      const args = current.node.arguments || current.parent.arguments || []
+      const args = current.parent.arguments || []
       if (
         // case: String(a) || this._p(a)
         args.length === 1 ||
