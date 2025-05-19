@@ -57,7 +57,7 @@ interface PropsType<T extends AsyncType> {
   fallback: T extends 'page' ? ComponentType<DefaultFallbackProps> : ReactNode
   loading?: ComponentType<any>
   type: T
-  children: () => ReactNode,
+  children: () => ReactNode | ReactNode,
 }
 
 interface StateType {
