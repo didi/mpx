@@ -7,7 +7,7 @@ let ms
 function refreshMs () {
   if (ms) ms.destroy()
   try {
-    mpxGlobal.__ms = ms = new MpxScroll()
+    global.__ms = ms = new MpxScroll()
     return true
   } catch (e) {
     error('MpxScroll init error, please check.', undefined, e)

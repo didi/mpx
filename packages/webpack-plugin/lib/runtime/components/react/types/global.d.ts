@@ -36,7 +36,7 @@ declare module '@mpxjs/utils' {
   } | undefined
 }
 
-declare let mpxGlobal: {
+declare let global: {
   __formatValue (value: string): string | number
 } & Record<string, any>
 

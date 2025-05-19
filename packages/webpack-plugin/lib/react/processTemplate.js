@@ -39,7 +39,7 @@ module.exports = function (template, {
   let genericsInfo
   let output = '/* template */\n'
 
-  output += `mpxGlobal.currentInject = {
+  output += `global.currentInject = {
   moduleId: ${JSON.stringify(moduleId)}
 };\n`
 
@@ -126,7 +126,7 @@ module.exports = function (template, {
             //   path.replaceWith(t.callExpression(t.identifier('getValue'), [t.stringLiteral(path.node.name)]))
             // }
           })
-          output += `mpxGlobal.currentInject.render = function (createElement, getComponent) {
+          output += `global.currentInject.render = function (createElement, getComponent) {
   return ${bindResult.code}
 };\n`
         } catch (e) {
@@ -139,18 +139,18 @@ ${e.stack}`)
       }
 
       if (meta.computed) {
-        output += bindThis.transform(`mpxGlobal.currentInject.injectComputed = {${meta.computed.join(',')}};`).code + '\n'
+        output += bindThis.transform(`global.currentInject.injectComputed = {${meta.computed.join(',')}};`).code + '\n'
       }
 
       if (meta.refs) {
-        output += `mpxGlobal.currentInject.getRefsData = function () {return ${JSON.stringify(meta.refs)};};\n`
+        output += `global.currentInject.getRefsData = function () {return ${JSON.stringify(meta.refs)};};\n`
       }
 
       if (meta.options) {
-        output += `mpxGlobal.currentInject.injectOptions = ${JSON.stringify(meta.options)};\n`
+        output += `global.currentInject.injectOptions = ${JSON.stringify(meta.options)};\n`
       }
       if (!isEmptyObject(componentGenerics)) {
-        output += 'mpxGlobal.currentInject.injectProperties = {\n'
+        output += 'global.currentInject.injectProperties = {\n'
         output += '  generichash: String,\n'
 
         Object.keys(componentGenerics).forEach(genericName => {

@@ -46,10 +46,10 @@ export default function createApp (options) {
   // 模拟小程序appInstance在热启动时不会重新创建的行为，在外部创建跟随js context的appInstance
   const appInstance = Object.assign({}, appData, Mpx.prototype)
 
-  defaultOptions.onShow && mpxGlobal.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appInstance))
-  defaultOptions.onHide && mpxGlobal.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appInstance))
-  defaultOptions.onError && mpxGlobal.__mpxAppCbs.error.push(defaultOptions.onError.bind(appInstance))
-  defaultOptions.onUnhandledRejection && mpxGlobal.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
+  defaultOptions.onShow && global.__mpxAppCbs.show.push(defaultOptions.onShow.bind(appInstance))
+  defaultOptions.onHide && global.__mpxAppCbs.hide.push(defaultOptions.onHide.bind(appInstance))
+  defaultOptions.onError && global.__mpxAppCbs.error.push(defaultOptions.onError.bind(appInstance))
+  defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
   defaultOptions.onAppInit && defaultOptions.onAppInit()
 
   const pages = currentInject.getPages() || {}
@@ -59,7 +59,7 @@ export default function createApp (options) {
     return Object.entries(pages).map(([key, item]) => {
       const options = {
         // __mpxPageStatusMap 为编译注入的全局变量
-        headerShown: !(Object.assign({}, mpxGlobal.__mpxPageConfig, mpxGlobal.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
+        headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
       }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
@@ -76,20 +76,20 @@ export default function createApp (options) {
       })
     })
   }
-  mpxGlobal.__mpxOptionsMap = mpxGlobal.__mpxOptionsMap || {}
+  global.__mpxOptionsMap = global.__mpxOptionsMap || {}
   const onStateChange = (state) => {
     Mpx.config.rnConfig.onStateChange?.(state)
-    if (mpxGlobal.__navigationHelper.lastSuccessCallback) {
-      mpxGlobal.__navigationHelper.lastSuccessCallback()
-      mpxGlobal.__navigationHelper.lastSuccessCallback = null
+    if (global.__navigationHelper.lastSuccessCallback) {
+      global.__navigationHelper.lastSuccessCallback()
+      global.__navigationHelper.lastSuccessCallback = null
     }
   }
   const onUnhandledAction = (action) => {
     const payload = action.payload
     const message = `The action '${action.type}'${payload ? ` with payload ${JSON.stringify(action.payload)}` : ''} was not handled by any navigator.`
-    if (mpxGlobal.__navigationHelper.lastFailCallback) {
-      mpxGlobal.__navigationHelper.lastFailCallback(message)
-      mpxGlobal.__navigationHelper.lastFailCallback = null
+    if (global.__navigationHelper.lastFailCallback) {
+      global.__navigationHelper.lastFailCallback(message)
+      global.__navigationHelper.lastFailCallback = null
     }
   }
   const appState = reactive({ state: '' })
@@ -147,8 +147,8 @@ export default function createApp (options) {
     }
   }
 
-  mpxGlobal.__mpxAppLaunched = false
-  mpxGlobal.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
+  global.__mpxAppLaunched = false
+  global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
     const initialRouteRef = useRef({
       initialRouteName: firstPage,
@@ -156,17 +156,17 @@ export default function createApp (options) {
     })
     if (firstRef.current) {
       // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
-      mpxGlobal.__mpxAppHotLaunched = false
+      global.__mpxAppHotLaunched = false
       // 热启动情况下重置__mpxPagesMap避免页面销毁函数未及时执行时错误地引用到之前的navigation
-      mpxGlobal.__mpxPagesMap = {}
+      global.__mpxPagesMap = {}
       firstRef.current = false
     }
-    if (!mpxGlobal.__mpxAppHotLaunched) {
+    if (!global.__mpxAppHotLaunched) {
       const { initialRouteName, initialParams } = Mpx.config.rnConfig.parseAppProps?.(props) || {}
       initialRouteRef.current.initialRouteName = initialRouteName || initialRouteRef.current.initialRouteName
       initialRouteRef.current.initialParams = initialParams || initialRouteRef.current.initialParams
 
-      mpxGlobal.__mpxAppOnLaunch = (navigation) => {
+      global.__mpxAppOnLaunch = (navigation) => {
         const state = navigation.getState()
         Mpx.config.rnConfig.onStateChange?.(state)
         const current = state.routes[state.index]
@@ -178,9 +178,9 @@ export default function createApp (options) {
           referrerInfo: {},
           isLaunch: true
         }
-        mpxGlobal.__mpxEnterOptions = options
-        if (!mpxGlobal.__mpxAppLaunched) {
-          mpxGlobal.__mpxLaunchOptions = options
+        global.__mpxEnterOptions = options
+        if (!global.__mpxAppLaunched) {
+          global.__mpxLaunchOptions = options
           defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
         appState.showOptions = options
@@ -204,8 +204,8 @@ export default function createApp (options) {
         if (pageSize === lastPageSize) return
         lastPageSize = pageSize
         const navigation = getFocusedNavigation()
-        if (navigation && hasOwn(mpxGlobal.__mpxPageStatusMap, navigation.pageId)) {
-          mpxGlobal.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
+        if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+          global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
         }
       })
       return () => {
@@ -263,11 +263,11 @@ export default function createApp (options) {
     )
   })
 
-  mpxGlobal.getCurrentPages = function () {
+  global.getCurrentPages = function () {
     const navigation = getFocusedNavigation()
     if (navigation) {
       return navigation.getState().routes.map((route) => {
-        return mpxGlobal.__mpxPagesMap[route.key] && mpxGlobal.__mpxPagesMap[route.key][0]
+        return global.__mpxPagesMap[route.key] && global.__mpxPagesMap[route.key][0]
       }).filter(item => item)
     }
     return []

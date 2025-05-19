@@ -82,10 +82,10 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
   }
   if (tabBarStr && tabBarPagesMap) {
     globalTabBar += `
-  mpxGlobal.__tabBar = ${tabBarStr}
-  Vue.observable(mpxGlobal.__tabBar)
+  global.__tabBar = ${tabBarStr}
+  Vue.observable(global.__tabBar)
   // @ts-ignore
-  mpxGlobal.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
+  global.__tabBarPagesMap = ${shallowStringify(tabBarPagesMap)}\n`
   }
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
@@ -144,12 +144,12 @@ function buildGlobalParams ({
   let content = ''
   if (isMain) {
     content += `
-  mpxGlobal.getApp = function () {}
-  mpxGlobal.getCurrentPages = function () {
+  global.getApp = function () {}
+  global.getCurrentPages = function () {
     if (!(typeof window !== 'undefined')) {
-      console.error('[Mpx runtime error]: Dangerous API! mpxGlobal.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
+      console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
-    var router = mpxGlobal.__mpxRouter
+    var router = global.__mpxRouter
     if (!router) return []
     // @ts-ignore
     return (router.lastStack || router.stack).map(function (item) {
@@ -161,26 +161,26 @@ function buildGlobalParams ({
       return page || { route: item.path.slice(1) }
     })
   }
-  mpxGlobal.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-  mpxGlobal.__mpxGenericsMap = {}
-  mpxGlobal.__mpxOptionsMap = {}
-  mpxGlobal.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  mpxGlobal.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-  mpxGlobal.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+  global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
+  global.__mpxGenericsMap = {}
+  global.__mpxOptionsMap = {}
+  global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
+  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
     if (globalTabBar) {
       content += globalTabBar
     }
   } else {
     if (!hasApp) {
-      content += '  mpxGlobal.__mpxGenericsMap = mpxGlobal.__mpxGenericsMap || {}\n'
-      content += '  mpxGlobal.__mpxOptionsMap = mpxGlobal.__mpxOptionsMap || {}\n'
-      content += `  mpxGlobal.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+      content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
+      content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
     }
-    content += `  mpxGlobal.currentModuleId = ${JSON.stringify(moduleId)}\n`
-    content += `  mpxGlobal.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-    content += `  mpxGlobal.currentInject = ${JSON.stringify({ moduleId })}\n`
+    content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+    content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+    content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`
     if (!isProduction) {
-      content += `  mpxGlobal.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+      content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
     }
   }
   return content

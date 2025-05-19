@@ -40,10 +40,10 @@ export default function createApp (options, config = {}) {
         // for vue provide vm access
         Object.assign(this, appData, Mpx.prototype)
         if (isBrowser) {
-          rawOptions.onShow && mpxGlobal.__mpxAppCbs.show.push(rawOptions.onShow.bind(this))
-          rawOptions.onHide && mpxGlobal.__mpxAppCbs.hide.push(rawOptions.onHide.bind(this))
-          rawOptions.onError && mpxGlobal.__mpxAppCbs.error.push(rawOptions.onError.bind(this))
-          rawOptions.onUnhandledRejection && mpxGlobal.__mpxAppCbs.rejection.push(rawOptions.onUnhandledRejection.bind(this))
+          rawOptions.onShow && global.__mpxAppCbs.show.push(rawOptions.onShow.bind(this))
+          rawOptions.onHide && global.__mpxAppCbs.hide.push(rawOptions.onHide.bind(this))
+          rawOptions.onError && global.__mpxAppCbs.error.push(rawOptions.onError.bind(this))
+          rawOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(rawOptions.onUnhandledRejection.bind(this))
         }
       },
       created () {
@@ -56,10 +56,10 @@ export default function createApp (options, config = {}) {
           referrerInfo: {}
         }
         // web不分冷启动和热启动
-        mpxGlobal.__mpxEnterOptions = options
-        mpxGlobal.__mpxLaunchOptions = options
+        global.__mpxEnterOptions = options
+        global.__mpxLaunchOptions = options
         rawOptions.onLaunch && rawOptions.onLaunch.call(this, options)
-        mpxGlobal.__mpxAppCbs.show.forEach((cb) => {
+        global.__mpxAppCbs.show.forEach((cb) => {
           cb(options)
         })
       }
@@ -82,11 +82,11 @@ export default function createApp (options, config = {}) {
       }
       return appData
     }
-    mpxGlobal.__mpxOptionsMap = mpxGlobal.__mpxOptionsMap || {}
-    mpxGlobal.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
+    global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+    global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
   } else {
     defaultOptions.onAppInit && defaultOptions.onAppInit()
-    const ctor = config.customCtor || mpxGlobal.currentCtor || App
+    const ctor = config.customCtor || global.currentCtor || App
     ctor(defaultOptions)
   }
 }

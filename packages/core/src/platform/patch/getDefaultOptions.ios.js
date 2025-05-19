@@ -49,9 +49,9 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    const appComponents = mpxGlobal.__getAppComponents?.() || {}
+    const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = mpxGlobal.__mpxGenericsMap[generichash] || noop
+    const genericComponents = global.__mpxGenericsMap[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
@@ -290,11 +290,11 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name
-    mpxGlobal.__mpxPagesMap = mpxGlobal.__mpxPagesMap || {}
-    mpxGlobal.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    global.__mpxPagesMap = global.__mpxPagesMap || {}
+    global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     // App onLaunch 在 Page created 之前执行
-    if (!mpxGlobal.__mpxAppHotLaunched && mpxGlobal.__mpxAppOnLaunch) {
-      mpxGlobal.__mpxAppOnLaunch(props.navigation)
+    if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
+      global.__mpxAppOnLaunch(props.navigation)
     }
   }
 
@@ -402,7 +402,7 @@ function usePageEffect (mpxProxy, pageId) {
 }
 
 let pageId = 0
-const pageStatusMap = mpxGlobal.__mpxPageStatusMap = reactive({})
+const pageStatusMap = global.__mpxPageStatusMap = reactive({})
 
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
@@ -458,7 +458,7 @@ export function PageWrapperHOC (WrappedComponent) {
       navigation,
       pageId: currentPageId
     })
-    const currentPageConfig = Object.assign({}, mpxGlobal.__mpxPageConfig, pageConfig)
+    const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     if (!navigation || !route) {
       // 独立组件使用时要求传递navigation
       error('Using pageWrapper requires passing navigation and route')

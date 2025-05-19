@@ -220,11 +220,11 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     if (varUseRegExp.test(varValue)) {
       varValue = '' + resolveVar(varValue, varContext)
     } else {
-      varValue = '' + mpxGlobal.__formatValue(varValue)
+      varValue = '' + global.__formatValue(varValue)
     }
     replaced.replace(start, end - 1, varValue)
   })
-  return mpxGlobal.__formatValue(replaced.source())
+  return global.__formatValue(replaced.source())
 }
 
 function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>, visitOther: (arg: VisitorArg) => void) {
@@ -244,10 +244,10 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
       parsed.forEach(({ start, end, args }) => {
         const name = args[0]
         const fallback = args[1] || ''
-        const value = '' + (getSafeAreaInset(name, navigation) ?? mpxGlobal.__formatValue(fallback))
+        const value = '' + (getSafeAreaInset(name, navigation) ?? global.__formatValue(fallback))
         replaced.replace(start, end - 1, value)
       })
-      target[key] = mpxGlobal.__formatValue(replaced.source())
+      target[key] = global.__formatValue(replaced.source())
     })
   })
 }
@@ -268,7 +268,7 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
           error(`calc(${exp}) parse error.`, undefined, e)
         }
       })
-      target[key] = mpxGlobal.__formatValue(replaced.source())
+      target[key] = global.__formatValue(replaced.source())
     })
   })
 }
@@ -626,8 +626,8 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
 export const extendObject = Object.assign
 
 export function getCurrentPage (pageId: number | null | undefined) {
-  if (!mpxGlobal.getCurrentPages) return
-  const pages = mpxGlobal.getCurrentPages()
+  if (!global.getCurrentPages) return
+  const pages = global.getCurrentPages()
   return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
 }
 

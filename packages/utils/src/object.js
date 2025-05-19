@@ -115,7 +115,7 @@ function diffAndCloneA (a, b) {
 
 function proxy (target, source, keys, readonly, onConflict) {
   if (!mpxGlobal.__mpx) {
-    console.warn('[Mpx utils warn]: Can not find "mpxGlobal.__mpx", "proxy" may encounter some potential problems!')
+    console.warn('[Mpx utils warn]: Can not find "global.__mpx", "proxy" may encounter some potential problems!')
   }
   keys = keys || Object.keys(source)
   keys.forEach((key) => {

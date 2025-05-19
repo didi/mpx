@@ -183,9 +183,9 @@ module.exports = function (content) {
 
       let output = ''
       // 注入模块id及资源路径
-      output += `mpxGlobal.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
-        output += `mpxGlobal.currentResource = ${JSON.stringify(filePath)}\n`
+        output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
 
       // 为app注入i18n
@@ -214,11 +214,11 @@ module.exports = function (content) {
           ? 'Component'
           : 'App'
 
-      output += `mpxGlobal.currentCtor = ${ctor}\n`
-      output += `mpxGlobal.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+      output += `global.currentCtor = ${ctor}\n`
+      output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
-      output += `mpxGlobal.currentResourceType = ${JSON.stringify(ctorType)}\n`
+      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
 
       // template
       output += '/* template */\n'
@@ -280,7 +280,7 @@ module.exports = function (content) {
       const script = parts.script || {}
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
-        if (scriptSrcMode) output += `mpxGlobal.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+        if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
           ...script.src

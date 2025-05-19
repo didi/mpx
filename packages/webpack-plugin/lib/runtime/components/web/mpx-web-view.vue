@@ -11,7 +11,7 @@ const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switc
 const eventLoad = 'load'
 const eventError = 'error'
 const eventMessage = 'message'
-const mpx = mpxGlobal.__mpx
+const mpx = global.__mpx
 export default {
   props: {
     src: {

@@ -2,12 +2,12 @@
 import { CREATED } from '../../core/innerLifecycle'
 
 export default function componentGenericsMixin (mixinType) {
-  if (mpxGlobal.__mpxGenericsMap && mixinType === 'component') {
+  if (global.__mpxGenericsMap && mixinType === 'component') {
     return {
       [CREATED] () {
-        if (this.generichash && mpxGlobal.__mpxGenericsMap[this.generichash]) {
-          Object.keys(mpxGlobal.__mpxGenericsMap[this.generichash]).forEach((name) => {
-            const value = mpxGlobal.__mpxGenericsMap[this.generichash][name]
+        if (this.generichash && global.__mpxGenericsMap[this.generichash]) {
+          Object.keys(global.__mpxGenericsMap[this.generichash]).forEach((name) => {
+            const value = global.__mpxGenericsMap[this.generichash][name]
             this.$options.components[name] = value
           })
         }

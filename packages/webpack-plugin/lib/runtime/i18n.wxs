@@ -323,8 +323,8 @@ module.exports = {
 }
 
 if (!__mpx_wxs__) {
-  if (!mpxGlobal.i18n) {
-    mpxGlobal.i18n = {
+  if (!global.i18n) {
+    global.i18n = {
       locale: getLocale(),
       fallbackLocale: getFallbackLocale(),
       messages: getMessages(),

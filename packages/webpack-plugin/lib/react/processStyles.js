@@ -58,7 +58,7 @@ module.exports = function (styles, {
         if (ctorType === 'app') {
           output += `
           let __appClassMap
-          mpxGlobal.__getAppClassMap = function() {
+          global.__getAppClassMap = function() {
             if(!__appClassMap) {
               __appClassMap = ${shallowStringify(classMap)};
             }
@@ -67,7 +67,7 @@ module.exports = function (styles, {
         } else {
           output += `
           let __classMap
-          mpxGlobal.currentInject.injectMethods = {
+          global.currentInject.injectMethods = {
             __getClassMap: function() {
               if(!__classMap) {
                 __classMap = ${shallowStringify(classMap)};

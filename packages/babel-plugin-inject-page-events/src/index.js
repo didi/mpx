@@ -40,7 +40,7 @@ module.exports = ({ parse }) => {
               pageEventsFun += `${item}: function(e) { return this.__mpxProxy.callHook('__${item}__', [e]) }`
               if (idx + 1 !== state.sideEffectHooks.size) pageEventsFun += ','
             })
-            const code = `mpxGlobal.currentInject.pageEvents = {${pageEventsFun}};`
+            const code = `global.currentInject.pageEvents = {${pageEventsFun}};`
             const newAst = parse(code, {
               filename: state.filename
             })

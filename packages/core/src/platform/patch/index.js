@@ -16,13 +16,13 @@ export default function createFactory (type) {
           options.__pageCtor__ = true
         }
       } else {
-        if (mpxGlobal.currentCtor) {
-          ctor = mpxGlobal.currentCtor
-          if (mpxGlobal.currentCtorType === 'page') {
+        if (global.currentCtor) {
+          ctor = global.currentCtor
+          if (global.currentCtorType === 'page') {
             options.__pageCtor__ = true
           }
-          if (mpxGlobal.currentResourceType && mpxGlobal.currentResourceType !== type) {
-            error(`The ${mpxGlobal.currentResourceType} [${mpxGlobal.currentResource}] is not supported to be created by ${type} constructor.`)
+          if (global.currentResourceType && global.currentResourceType !== type) {
+            error(`The ${global.currentResourceType} [${global.currentResource}] is not supported to be created by ${type} constructor.`)
           }
         } else {
           if (type === 'page') {
@@ -44,8 +44,8 @@ export default function createFactory (type) {
     rawOptions.mixins = getBuiltInMixins({ type, rawOptions, currentInject })
     const defaultOptions = getDefaultOptions({ type, rawOptions, currentInject })
     if (isWeb || isReact) {
-      mpxGlobal.__mpxOptionsMap = mpxGlobal.__mpxOptionsMap || {}
-      mpxGlobal.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
+      global.__mpxOptionsMap = global.__mpxOptionsMap || {}
+      global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
     } else if (ctor) {
       return ctor(defaultOptions)
     }

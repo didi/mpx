@@ -131,7 +131,7 @@ const getEnterOptionsSync = function () {
     throwSSRWarning('getEnterOptionsSync API is running in non browser environments')
     return
   }
-  return mpxGlobal.__mpxEnterOptions || {}
+  return global.__mpxEnterOptions || {}
 }
 
 const getLaunchOptionsSync = function () {
@@ -139,7 +139,7 @@ const getLaunchOptionsSync = function () {
     throwSSRWarning('getLaunchOptionsSync API is running in non browser environments')
     return
   }
-  return mpxGlobal.__mpxLaunchOptions || {}
+  return global.__mpxLaunchOptions || {}
 }
 
 export {

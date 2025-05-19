@@ -1,6 +1,6 @@
 import { isBrowser, isReact } from '@mpxjs/utils'
 
-mpxGlobal.__mpxAppCbs = mpxGlobal.__mpxAppCbs || {
+global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
   error: [],
@@ -18,42 +18,42 @@ function off (cbs, cb) {
 
 function onUnhandledRejection (callback) {
   if (isBrowser || isReact) {
-    mpxGlobal.__mpxAppCbs.rejection.push(callback)
+    global.__mpxAppCbs.rejection.push(callback)
   }
 }
 
 function offUnhandledRejection (callback) {
-  off(mpxGlobal.__mpxAppCbs.rejection, callback)
+  off(global.__mpxAppCbs.rejection, callback)
 }
 
 function onError (callback) {
   if (isBrowser || isReact) {
-    mpxGlobal.__mpxAppCbs.error.push(callback)
+    global.__mpxAppCbs.error.push(callback)
   }
 }
 
 function offError (callback) {
-  off(mpxGlobal.__mpxAppCbs.error, callback)
+  off(global.__mpxAppCbs.error, callback)
 }
 
 function onAppShow (callback) {
   if (isBrowser || isReact) {
-    mpxGlobal.__mpxAppCbs.show.push(callback)
+    global.__mpxAppCbs.show.push(callback)
   }
 }
 
 function offAppShow (callback) {
-  off(mpxGlobal.__mpxAppCbs.show, callback)
+  off(global.__mpxAppCbs.show, callback)
 }
 
 function onAppHide (callback) {
   if (isBrowser || isReact) {
-    mpxGlobal.__mpxAppCbs.hide.push(callback)
+    global.__mpxAppCbs.hide.push(callback)
   }
 }
 
 function offAppHide (callback) {
-  off(mpxGlobal.__mpxAppCbs.hide, callback)
+  off(global.__mpxAppCbs.hide, callback)
 }
 
 export {

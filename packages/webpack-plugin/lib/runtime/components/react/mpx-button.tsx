@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
 
 const getOpenTypeEvent = (openType?: OpenType) => {
   if (!openType) return
-  if (!mpxGlobal.__mpx?.config?.rnConfig) {
+  if (!global.__mpx?.config?.rnConfig) {
     warn('Environment not supported')
     return
   }
@@ -140,7 +140,7 @@ const getOpenTypeEvent = (openType?: OpenType) => {
     return
   }
 
-  const event = mpxGlobal.__mpx.config.rnConfig.openTypeHandler?.[eventName]
+  const event = global.__mpx.config.rnConfig.openTypeHandler?.[eventName]
   if (!event) {
     warn(`Unregistered ${eventName} event`)
     return
@@ -323,7 +323,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       }
       if (currentPage) {
         const defaultMessage = {
-          title: mpxGlobal.__mpx.config.rnConfig.projectName || 'AwesomeProject',
+          title: global.__mpx.config.rnConfig.projectName || 'AwesomeProject',
           path: currentPage.route || ''
         }
         if (currentPage.onShareAppMessage) {

@@ -160,8 +160,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  const preMargin = props['previous-margin'] ? mpxGlobal.__formatValue(props['previous-margin']) as number : 0
-  const nextMargin = props['next-margin'] ? mpxGlobal.__formatValue(props['next-margin']) as number : 0
+  const preMargin = props['previous-margin'] ? global.__formatValue(props['previous-margin']) as number : 0
+  const nextMargin = props['next-margin'] ? global.__formatValue(props['next-margin']) as number : 0
   const preMarginShared = useSharedValue(preMargin)
   const nextMarginShared = useSharedValue(nextMargin)
   const autoplayShared = useSharedValue(autoplay)

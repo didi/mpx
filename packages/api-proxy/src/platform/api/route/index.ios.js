@@ -51,11 +51,11 @@ function isLock (navigationHelper, type, options) {
 }
 
 function navigateTo (options = {}) {
-  const navigationHelper = mpxGlobal.__navigationHelper
+  const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'navigateTo', options)) {
     return
   }
-  const navigation = Object.values(mpxGlobal.__mpxPagesMap || {})[0]?.[1]
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
@@ -73,8 +73,8 @@ function navigateTo (options = {}) {
 }
 
 function redirectTo (options = {}) {
-  const navigation = Object.values(mpxGlobal.__mpxPagesMap || {})[0]?.[1]
-  const navigationHelper = mpxGlobal.__navigationHelper
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'redirectTo', options)) {
     return
   }
@@ -95,8 +95,8 @@ function redirectTo (options = {}) {
 }
 
 function navigateBack (options = {}) {
-  const navigation = Object.values(mpxGlobal.__mpxPagesMap || {})[0]?.[1]
-  const navigationHelper = mpxGlobal.__navigationHelper
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'navigateBack', options)) {
     return
   }
@@ -111,7 +111,7 @@ function navigateBack (options = {}) {
       const res = { errMsg: `navigateBack:fail ${msg}` }
       failHandle(res, options.fail, options.complete)
     }
-    if (delta >= routeLength && mpxGlobal.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
+    if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
         navigationHelper.lastSuccessCallback()
         navigationHelper.lastSuccessCallback = null
@@ -123,8 +123,8 @@ function navigateBack (options = {}) {
 }
 
 function reLaunch (options = {}) {
-  const navigation = Object.values(mpxGlobal.__mpxPagesMap || {})[0]?.[1]
-  const navigationHelper = mpxGlobal.__navigationHelper
+  const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
+  const navigationHelper = global.__navigationHelper
   if (isLock(navigationHelper, 'reLaunch', options)) {
     return
   }

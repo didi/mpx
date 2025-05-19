@@ -5,7 +5,7 @@ function stopPullDownRefresh (options = {}) {
     throwSSRWarning('stopPullDownRefresh API is running in non browser environments')
     return
   }
-  const router = mpxGlobal.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     let err
 
@@ -35,7 +35,7 @@ function startPullDownRefresh (options = {}) {
     throwSSRWarning('startPullDownRefresh API is running in non browser environments')
     return
   }
-  const router = mpxGlobal.__mpxRouter
+  const router = global.__mpxRouter
   if (router) {
     let err
 

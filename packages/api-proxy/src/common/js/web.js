@@ -1,5 +1,5 @@
 function isTabBarPage (url, router) {
-  const tabBarPagesMap = mpxGlobal.__tabBarPagesMap
+  const tabBarPagesMap = global.__tabBarPagesMap
   if (!tabBarPagesMap || !url) return false
   const path = router.match(url, router.history.current).path
   return !!tabBarPagesMap[path.slice(1)]
