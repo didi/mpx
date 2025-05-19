@@ -147,7 +147,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
-  const initialViewPosition = useSharedValue({ x, y })
+  const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -215,11 +215,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             })
             : newY
         }
-        runOnJS(handleTriggerChange)({
-          x: newX,
-          y: newY,
-          type: 'setData'
-        })
+        if (propsRef.current.bindchange) {
+          runOnJS(handleTriggerChange)({
+            x: newX,
+            y: newY,
+            type: 'setData'
+          })
+        }
       }
     })()
   }, [x, y])
@@ -230,19 +232,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       resetBoundaryAndCheck({ width, height })
     }
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
-
-  useAnimatedReaction(
-    () => ({
-      offsetX: offsetX.value,
-      offsetY: offsetY.value
-    }),
-    (currentValue: { offsetX: any; offsetY: any }) => {
-      const { offsetX, offsetY } = currentValue
-      runOnJS(handleTriggerChange)({
-        x: offsetX,
-        y: offsetY
-      })
-    })
 
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
     const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
@@ -458,6 +447,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newY
           }
         }
+        if (propsRef.current.bindchange) {
+          runOnJS(handleTriggerChange)({
+            x: offsetX.value,
+            y: offsetY.value
+          })
+        }
       })
       .onTouchesUp((e: GestureTouchEvent) => {
         'worklet'
@@ -469,21 +464,29 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (disabled) return
         if (!inertia) {
           const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
-          if (x !== offsetX.value) {
-            offsetX.value = animation
-              ? withSpring(x, {
-                duration: 1500,
-                dampingRatio: 0.8
+          if (x !== offsetX.value || y !== offsetY.value) {
+            if (x !== offsetX.value) {
+              offsetX.value = animation
+                ? withSpring(x, {
+                  duration: 1500,
+                  dampingRatio: 0.8
+                })
+                : x
+            }
+            if (y !== offsetY.value) {
+              offsetY.value = animation
+                ? withSpring(y, {
+                  duration: 1500,
+                  dampingRatio: 0.8
+                })
+                : y
+            }
+            if (propsRef.current.bindchange) {
+              runOnJS(handleTriggerChange)({
+                x,
+                y
               })
-              : x
-          }
-          if (y !== offsetY.value) {
-            offsetY.value = animation
-              ? withSpring(y, {
-                duration: 1500,
-                dampingRatio: 0.8
-              })
-              : y
+            }
           }
         }
       })
@@ -513,6 +516,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
       })
       .withRef(movableGestureRef)
+
+    if (direction === 'horizontal') {
+      gesturePan.activeOffsetX([-1, 1]).failOffsetY([-5, 5])
+    } else if (direction === 'vertical') {
+      gesturePan.activeOffsetY([-1, 1]).failOffsetX([-5, 5])
+    } else if (direction === 'all') {
+      gesturePan.activeOffsetX([-1, 1]).activeOffsetY([-1, 1])
+    }
+
     if (simultaneousHandlers && simultaneousHandlers.length) {
       gesturePan.simultaneousWithExternalGesture(...simultaneousHandlers)
     }
