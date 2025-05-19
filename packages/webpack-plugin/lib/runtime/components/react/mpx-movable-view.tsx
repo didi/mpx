@@ -147,6 +147,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
+  const initialViewPosition = useSharedValue({ x, y })
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -422,24 +423,25 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: changedTouches.x,
           y: changedTouches.y
         }
+        initialViewPosition.value = {
+          x: offsetX.value,
+          y: offsetY.value
+        }
         if (bindtouchstart || catchtouchstart) {
           runOnJS(triggerStartOnJS)({ e })
         }
       })
-      .onTouchesMove((e: GestureTouchEvent) => {
+      .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
-        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         isMoving.value = true
         if (isFirstTouch.value) {
-          touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
+          touchEvent.value = Math.abs(e.translationX) > Math.abs(e.translationY) ? 'htouchmove' : 'vtouchmove'
           isFirstTouch.value = false
         }
-        handleTriggerMove(e)
+        handleTriggerMove(e as unknown as GestureTouchEvent)
         if (disabled) return
-        const changeX = changedTouches.x - startPosition.value.x
-        const changeY = changedTouches.y - startPosition.value.y
         if (direction === 'horizontal' || direction === 'all') {
-          const newX = offsetX.value + changeX
+          const newX = initialViewPosition.value.x + e.translationX
           if (!outOfBounds) {
             const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
             offsetX.value = x
@@ -448,7 +450,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (direction === 'vertical' || direction === 'all') {
-          const newY = offsetY.value + changeY
+          const newY = initialViewPosition.value.y + e.translationY
           if (!outOfBounds) {
             const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY })
             offsetY.value = y
