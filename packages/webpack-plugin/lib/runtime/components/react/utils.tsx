@@ -32,6 +32,7 @@ const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
 const envUseRegExp = /env\(/
+const filterRegExp = /(calc|env|%)/
 
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
@@ -168,6 +169,10 @@ interface PercentConfig {
   parentHeight?: number
 }
 
+interface PositionMeta {
+  hasPositionFixed: boolean
+}
+
 function resolvePercent (value: string | number | undefined, key: string, percentConfig: PercentConfig): string | number | undefined {
   if (!(typeof value === 'string' && PERCENT_REGEX.test(value))) return value
   let base
@@ -222,10 +227,11 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   return mpxGlobal.__formatValue(replaced.source())
 }
 
-function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>) {
+function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>, visitOther: (arg: VisitorArg) => void) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
       target[key] = resolveVar(value, varContext)
+      visitOther({ target, key, value: target[key], keyPath: varKeyPath })
     })
   })
 }
@@ -267,13 +273,17 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
-const stringifyProps = ['fontWeight']
 function transformStringify (styleObj: Record<string, any>) {
-  stringifyProps.forEach((prop) => {
-    if (isNumber(styleObj[prop])) {
-      styleObj[prop] = '' + styleObj[prop]
-    }
-  })
+  if (isNumber(styleObj.fontWeight)) {
+    styleObj.fontWeight = '' + styleObj.fontWeight
+  }
+}
+
+function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
+  if (styleObj.position === 'fixed') {
+    styleObj.position = 'absolute'
+    meta.hasPositionFixed = true
+  }
 }
 
 interface TransformStyleConfig {
@@ -288,17 +298,19 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
-  const normalStyleRef = useRef<Record<string, any>>({})
-  const normalStyleChangedRef = useRef(false)
   let hasVarDec = false
   let hasVarUse = false
+  let hasSelfPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const unoVarKeyPaths: Array<Array<string>> = []
+  const percentKeyPaths: Array<Array<string>> = []
+  const calcKeyPaths: Array<Array<string>> = []
+  const envKeyPaths: Array<Array<string>> = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
   const navigation = useNavigation()
 
-  function varVisitor ({ key, value, keyPath }: VisitorArg) {
+  function varVisitor ({ target, key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
       if (unoVarDecRegExp.test(key)) {
         unoVarStyle[key] = value
@@ -318,7 +330,36 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       } else if (varUseRegExp.test(value)) {
         hasVarUse = true
         varKeyPaths.push(keyPath.slice())
+      } else {
+        visitOther({ target, key, value, keyPath })
       }
+    }
+  }
+
+  function envVisitor ({ value, keyPath }: VisitorArg) {
+    if (envUseRegExp.test(value)) {
+      envKeyPaths.push(keyPath.slice())
+    }
+  }
+
+  function calcVisitor ({ value, keyPath }: VisitorArg) {
+    if (calcUseRegExp.test(value)) {
+      calcKeyPaths.push(keyPath.slice())
+    }
+  }
+
+  function percentVisitor ({ key, value, keyPath }: VisitorArg) {
+    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+      hasSelfPercent = true
+      percentKeyPaths.push(keyPath.slice())
+    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+      percentKeyPaths.push(keyPath.slice())
+    }
+  }
+
+  function visitOther ({ target, key, value, keyPath }: VisitorArg) {
+    if (filterRegExp.test(value)) {
+      [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
 
@@ -341,104 +382,61 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     if (diffAndCloneA(varContextRef.current, newVarContext).diff) {
       varContextRef.current = newVarContext
     }
-    transformVar(normalStyle, varKeyPaths, varContextRef.current)
+    transformVar(normalStyle, varKeyPaths, varContextRef.current, visitOther)
   }
 
   // apply unocss var
   if (unoVarKeyPaths.length) {
-    transformVar(normalStyle, unoVarKeyPaths, unoVarStyle)
+    transformVar(normalStyle, unoVarKeyPaths, unoVarStyle, visitOther)
   }
 
-  const { clone, diff } = diffAndCloneA(normalStyle, normalStyleRef.current)
-  if (diff) {
-    normalStyleRef.current = clone
-    normalStyleChangedRef.current = !normalStyleChangedRef.current
+  const percentConfig = {
+    width,
+    height,
+    fontSize: normalStyle.fontSize,
+    parentWidth,
+    parentHeight,
+    parentFontSize
   }
 
-  const memoResult = useMemo(() => {
-    let hasSelfPercent = false
-    let hasPositionFixed = false
-    const percentKeyPaths: Array<Array<string>> = []
-    const calcKeyPaths: Array<Array<string>> = []
-    const envKeyPaths: Array<Array<string>> = []
-    // transform can be memoized
-    function envVisitor ({ value, keyPath }: VisitorArg) {
-      if (envUseRegExp.test(value)) {
-        envKeyPaths.push(keyPath.slice())
-      }
-    }
+  const positionMeta = {
+    hasPositionFixed: false
+  }
 
-    function calcVisitor ({ value, keyPath }: VisitorArg) {
-      if (calcUseRegExp.test(value)) {
-        calcKeyPaths.push(keyPath.slice())
-      }
-    }
-
-    function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-      if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
-        hasSelfPercent = true
-        percentKeyPaths.push(keyPath.slice())
-      } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
-        percentKeyPaths.push(keyPath.slice())
-      }
-    }
-
-    function transformPosition (styleObj: Record<string, any>) {
-      if (styleObj.position === 'fixed') {
-        hasPositionFixed = true
-        styleObj.position = 'absolute'
-      }
-    }
-
-    // traverse env & calc & percent
-    traverseStyle(normalStyle, [envVisitor, percentVisitor, calcVisitor])
-
-    const percentConfig = {
-      width,
-      height,
-      fontSize: normalStyle.fontSize,
-      parentWidth,
-      parentHeight,
-      parentFontSize
-    }
-
-    // apply env
-    transformEnv(normalStyle, envKeyPaths, navigation)
-    // apply percent
-    transformPercent(normalStyle, percentKeyPaths, percentConfig)
-    // apply calc
-    transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
-      if (PERCENT_REGEX.test(value)) {
-        const resolved = resolvePercent(value, key, percentConfig)
-        return typeof resolved === 'number' ? resolved : 0
+  // apply env
+  transformEnv(normalStyle, envKeyPaths, navigation)
+  // apply percent
+  transformPercent(normalStyle, percentKeyPaths, percentConfig)
+  // apply calc
+  transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
+    if (PERCENT_REGEX.test(value)) {
+      const resolved = resolvePercent(value, key, percentConfig)
+      return typeof resolved === 'number' ? resolved : 0
+    } else {
+      const formatted = global.__formatValue(value)
+      if (typeof formatted === 'number') {
+        return formatted
       } else {
-        const formatted = mpxGlobal.__formatValue(value)
-        if (typeof formatted === 'number') {
-          return formatted
-        } else {
-          warn('calc() only support number, px, rpx, % temporarily.')
-          return 0
-        }
+        warn('calc() only support number, px, rpx, % temporarily.')
+        return 0
       }
-    })
-    // apply position
-    transformPosition(normalStyle)
-    // transform number enum stringify
-    transformStringify(normalStyle)
-
-    return {
-      normalStyle,
-      hasSelfPercent,
-      hasPositionFixed
     }
-  }, [normalStyleChangedRef.current, width, height, parentWidth, parentHeight, parentFontSize])
+  })
 
-  return extendObject({
+  // apply position
+  transformPosition(normalStyle, positionMeta)
+  // transform number enum stringify
+  transformStringify(normalStyle)
+
+  return {
     hasVarDec,
     varContextRef,
     setWidth,
-    setHeight
-  }, memoResult)
+    setHeight,
+    normalStyle,
+    hasSelfPercent,
+    hasPositionFixed: positionMeta.hasPositionFixed
+  }
 }
 
 export interface VisitorArg {
@@ -455,12 +453,7 @@ export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(a
       target.forEach((value, index) => {
         const key = String(index)
         keyPath.push(key)
-        visitors.forEach(visitor => visitor({
-          target,
-          key,
-          value,
-          keyPath
-        }))
+        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
         traverse(value)
         keyPath.pop()
       })
