@@ -465,8 +465,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (bindtouchend || catchtouchend) {
           runOnJS(triggerEndOnJS)({ e })
         }
+      })
+      .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        'worklet'
+        isMoving.value = false
         if (disabled) return
-        if (!inertia) {
+        // 处理没有惯性且超出边界的回弹
+        if (!inertia && outOfBounds) {
           const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
           if (x !== offsetX.value || y !== offsetY.value) {
             if (x !== offsetX.value) {
@@ -492,12 +497,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
               })
             }
           }
+          return
         }
-      })
-      .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
-        'worklet'
-        isMoving.value = false
-        if (!inertia || disabled || !animation) return
+        // 惯性处理
         if (direction === 'horizontal' || direction === 'all') {
           xInertialMotion.value = true
           offsetX.value = withDecay({
@@ -506,6 +508,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             clamp: draggableXRange.value
           }, () => {
             xInertialMotion.value = false
+            if (propsRef.current.bindchange) {
+              runOnJS(handleTriggerChange)({
+                x: offsetX.value,
+                y: offsetY.value
+              })
+            }
           })
         }
         if (direction === 'vertical' || direction === 'all') {
@@ -516,6 +524,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             clamp: draggableYRange.value
           }, () => {
             yInertialMotion.value = false
+            if (propsRef.current.bindchange) {
+              runOnJS(handleTriggerChange)({
+                x: offsetX.value,
+                y: offsetY.value
+              })
+            }
           })
         }
       })
