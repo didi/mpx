@@ -398,10 +398,24 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   it('should wxs is correct', function () {
     const input = `
       global.currentInject.render = function (_i, _c, _r, _sc) {
-        tools.hexToRgba(bgColor);
-        tools(bgColor);
-        "background-color: " + bgColor;
-        "background-color: " + bgColor;
+        a;
+        tools.hexToRgba(a);
+
+        b;
+        tools.hexToRgba(b, 1);
+
+        0 ? tools(c) : 1;
+        0 ? tools(c, 1) : 1;
+        c;
+
+        tools(d, tools(e))
+        d;
+        e;
+        
+        a1;a2;a3;a4;a5;a6;
+        tools(a1) ? a2 || ((a3 || a4) && a5) : a6;
+        a7;a8;a9;a10;
+        (a7 + '') ? a8['a'] : ({name: a9 + a10})
       }
     `
     const res = bindThis(input, {
@@ -416,10 +430,29 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     }).code
     const output = `
 global.currentInject.render = function (_i, _c, _r, _sc) {
-  tools.hexToRgba(bgColor);
-  tools(bgColor);
-  "background-color: " + _sc("bgColor");
-  "background-color: " + "";
+  _sc("a");
+
+  tools.hexToRgba(_sc("b"), 1);
+
+  0 ? "" : 1;
+  0 ? tools(_sc("c"), 1) : 1;
+  _sc("c");
+
+  tools(_sc("d"), tools(_sc("e")));
+
+  _sc("a2");
+  _sc("a3");
+  _sc("a4");
+  _sc("a5");
+  _sc("a6");
+  tools(_sc("a1")) ? _sc("a2") || (_sc("a3") || _sc("a4")) && _sc("a5") : "";
+
+  _sc("a8");
+  _sc("a9");
+  _sc("a10");
+  _sc("a7") + '' ? "" : {
+    name: "" + ""
+  };
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })

@@ -70,7 +70,7 @@ function getCollectPath (path) {
 function checkDelAndGetPath (path) {
   let current = path
   let delPath = path
-  let canDel = true
+  let canDel = true // 是否可删除，优先级比replace高
   let ignore = false
   let replace = false
 
@@ -123,24 +123,20 @@ function checkDelAndGetPath (path) {
 
     if (t.isCallExpression(parent) && listKey === 'arguments') {
       canDel = false
-      break
     }
 
     if (t.isMemberExpression(parent) && parent.computed) {
       canDel = false
-      break
     }
 
     if (t.isLogicalExpression(parent)) { // case: a || ((b || c) && d)
       canDel = false
       ignore = true
-      break
     }
 
     if (t.isConditionalExpression(parent)) {
       if (key === 'test') {
         canDel = false
-        break
       } else {
         ignore = true
         replace = true // 继续往上找，判断是否存在if条件等
@@ -176,20 +172,6 @@ function checkPrefix (keys, key) {
 
 function checkBIsPrefixOfA (a, b) {
   return a.startsWith(b) && (a[b.length] === '.' || a[b.length] === '[')
-}
-
-function checkIgnore (path, ignoreMap) {
-  let current = path
-  while (current) {
-    if (ignoreMap[current.node.name]) return true
-    if (t.isCallExpression(current)) { // tools.format(name) tools是wxs
-      const callee = current.node.callee
-      const name = callee.name || callee.object?.name
-      if (ignoreMap[name]) return true
-    }
-    current = current.parentPath
-  }
-  return false
 }
 
 function dealRemove (path, replace) {
@@ -312,7 +294,7 @@ module.exports = {
       Identifier (path) {
         if (
           checkBindThis(path) &&
-          !checkIgnore(path, ignoreMap)
+          !ignoreMap[path.node.name]
         ) {
           const scopeBinding = path.scope.hasBinding(path.node.name)
           // 删除局部作用域的变量
