@@ -1,7 +1,6 @@
-import { EffectFlags, PausedState, SubscriberFlags } from './const'
-// import { recordEffectScope } from './effectScope'
-import { Dep } from './dep'
-import { Link } from './link'
+import { EffectFlags, SubscriberFlags } from './const'
+import { type EffectScope, recordEffectScope } from './effectScope'
+import { type Link, removeLink } from './link'
 
 export type EffectScheduler = (...args: any[]) => any
 
@@ -9,7 +8,9 @@ export interface Subscriber {
   flags: SubscriberFlags | EffectFlags
   deps: Link | undefined
   depsTail: Link | undefined
-  notify(): true | void
+  notify(
+    dirtyFlag?: SubscriberFlags.MaybeDirty | SubscriberFlags.Dirty
+  ): true | void
 }
 
 export interface ReactiveEffectOptions {
@@ -19,41 +20,24 @@ export interface ReactiveEffectOptions {
 }
 
 export class ReactiveEffect<T = any> implements Subscriber {
-  flags: number = SubscriberFlags.Effect
   deps: Link | undefined
   depsTail: Link | undefined
+  flags: SubscriberFlags = SubscriberFlags.Effect
 
   /** @internal */
   cleanup?: () => void = undefined
   onStop?: () => void
 
-  pausedState: PausedState = PausedState.Resumed
-
   constructor(
     public fn: () => T,
     public scheduler: EffectScheduler,
-    scope?: any // TODO EffectScope
+    scope?: EffectScope
   ) {
-    // @ts-expect-error ignore
-    recordEffectScope(this, scope) // TODO
+    recordEffectScope(this, scope)
   }
 
   get active(): boolean {
     return !(this.flags & EffectFlags.STOP)
-  }
-
-  _notify(
-    dirty:
-      | SubscriberFlags.MaybeDirty
-      | SubscriberFlags.Dirty = SubscriberFlags.Dirty
-  ) {
-    if (!(this.flags & SubscriberFlags.Dirty)) {
-      this.flags &= dirty
-      for (let link = this.subs; link !== undefined; link = link.nextSub) {
-        // 深层订阅者递归地 push PendingComputed
-        link.sub._notify(SubscriberFlags.MaybeDirty)
-      }
-    }
   }
 
   notify(): void {
@@ -72,20 +56,15 @@ export class ReactiveEffect<T = any> implements Subscriber {
     }
 
     cleanupEffect(this)
-    const prevSub = setCurrentSub(this)
+    const prevSub = setActiveSub(this)
     startTracking(this)
 
     try {
       return this.fn()
     } finally {
-      setCurrentSub(prevSub)
+      setActiveSub(prevSub)
       endTracking(this)
     }
-  }
-
-  // add dependency to this
-  addDep(dep: Dep) {
-    // TODO
   }
 
   // Clean up for dependency collection.
@@ -103,35 +82,40 @@ export class ReactiveEffect<T = any> implements Subscriber {
     // TODO
   }
 
-  pause() {
+  pause(): void {
     if (!(this.flags & EffectFlags.PAUSED)) {
       this.flags |= EffectFlags.PAUSED
     }
   }
 
-  resume() {
-    if (this.flags & EffectFlags.PAUSED) {
+  resume(): void {
+    const flags = this.flags
+    if (flags & EffectFlags.PAUSED) {
       this.flags &= ~EffectFlags.PAUSED
+    }
+    if (flags & EffectFlags.NOTIFIED) {
+      this.flags &= ~EffectFlags.NOTIFIED
+      this.notify()
     }
   }
 }
 
-/** @internal */
 function cleanupEffect(e: ReactiveEffect) {
   const { cleanup } = e
   e.cleanup = undefined
   if (cleanup !== undefined) {
     // run cleanup without active effect
-    const prevSub = setCurrentSub(undefined)
+    const prevSub = setActiveSub(undefined)
     try {
       cleanup()
     } finally {
-      setCurrentSub(prevSub)
+      setActiveSub(prevSub)
     }
   }
 }
 
-function startTracking(sub: Subscriber): void {
+/** @internal */
+export function startTracking(sub: Subscriber): void {
   sub.depsTail = undefined
   sub.flags =
     (sub.flags &
@@ -143,47 +127,14 @@ function startTracking(sub: Subscriber): void {
     SubscriberFlags.Tracking
 }
 
-function endTracking(sub: Subscriber): void {
+/** @internal */
+export function endTracking(sub: Subscriber): void {
   const depsTail = sub.depsTail
-  let toRemove = depsTail !== undefined ? depsTail.nextDep : sub.deps
+  let toRemove = depsTail ? depsTail.nextDep : sub.deps
   while (toRemove !== undefined) {
-    toRemove = unlink(toRemove, sub)
+    toRemove = removeLink(toRemove, sub)
   }
   sub.flags &= ~SubscriberFlags.Tracking
-}
-
-function unlink(link: Link, sub = link.sub): Link | undefined {
-  const dep = link.dep
-  const prevDep = link.prevDep
-  const nextDep = link.nextDep
-  const nextSub = link.nextSub
-  const prevSub = link.prevSub
-
-  if (nextDep !== undefined) {
-    nextDep.prevDep = prevDep
-  } else {
-    sub.depsTail = prevDep
-  }
-
-  if (prevDep !== undefined) {
-    prevDep.nextDep = nextDep
-  } else {
-    sub.deps = nextDep
-  }
-
-  if (nextSub !== undefined) {
-    nextSub.prevSub = prevSub
-  } else {
-    dep.subsTail = prevSub
-  }
-
-  if (prevSub !== undefined) {
-    prevSub.nextSub = nextSub
-  } else if ((dep.subs = nextSub) === undefined) {
-    unwatched(dep)
-  }
-
-  return nextDep
 }
 
 /** @internal */
@@ -200,7 +151,8 @@ export function resetTracking(): void {
 
 export let activeSub: Subscriber | undefined
 
-export function setCurrentSub(sub: Subscriber | undefined) {
+/** @internal */
+export function setActiveSub(sub: Subscriber | undefined) {
   const prevSub = activeSub
   activeSub = sub
   return prevSub
