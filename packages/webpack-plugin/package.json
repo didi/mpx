@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.4",
+  "version": "2.10.5",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "@d11/react-native-fast-image": "^8.6.12",
-    "@mpxjs/api-proxy": "^2.10.4",
+    "@mpxjs/api-proxy": "^2.10.5",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/react": "^18.2.79",
