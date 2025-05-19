@@ -1,6 +1,6 @@
 import { View, ViewProps, TextStyle } from 'react-native'
 import { createElement } from 'react'
-import { splitProps, splitStyle, wrapChildren } from './utils'
+import { splitProps, splitStyle, wrapChildren, extendObject } from './utils'
 import useInnerProps from './getInnerListeners'
 
 const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
@@ -8,9 +8,15 @@ const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
 
   const { textStyle, innerStyle = {} } = splitStyle(props.style || {})
 
-  const innerProps = useInnerProps(props, {
-    style: innerStyle
-  }, [])
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      {
+        style: innerStyle
+      }
+    )
+  )
 
   return createElement(View, innerProps, wrapChildren(
     props,

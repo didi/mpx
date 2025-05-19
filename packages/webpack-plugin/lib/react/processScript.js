@@ -16,35 +16,26 @@ module.exports = function (script, {
   componentGenerics,
   genericsInfo
 }, callback) {
+  const { appInfo } = loaderContext.getMpx()
+
   let scriptSrcMode = srcMode
-  const mode = loaderContext.getMpx().mode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
     script = { tag: 'script' }
   }
 
+  let hasApp = true
+
+  if (!appInfo.name) {
+    hasApp = false
+  }
+
   let output = '/* script */\n'
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
-import { NavigationContainer, StackActions } from '@react-navigation/native'
-${mode === 'ios' ? "import { createNativeStackNavigator as createStackNavigator } from '@react-navigation/native-stack'" : "import { createStackNavigator } from '@react-navigation/stack'"}
-import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
-import { useHeaderHeight } from '@react-navigation/elements';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-
-global.__navigationHelper = {
-  NavigationContainer: NavigationContainer,
-  createStackNavigator: createStackNavigator,
-  useHeaderHeight: useHeaderHeight,
-  StackActions: StackActions,
-  GestureHandlerRootView: GestureHandlerRootView,
-  PortalHost: PortalHost,
-  SafeAreaProvider: SafeAreaProvider,
-  useSafeAreaInsets: useSafeAreaInsets
-}\n`
+\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
       loaderContext,
@@ -55,7 +46,7 @@ global.__navigationHelper = {
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {

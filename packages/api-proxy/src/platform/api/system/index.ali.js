@@ -33,7 +33,7 @@ function getSystemInfoSync () {
 }
 
 const getDeviceInfo = function () {
-  const res = ENV_OBJ.getDeviceBaseInfo
+  const res = ENV_OBJ.getDeviceBaseInfo()
   defineUnsupportedProps(res, ['deviceAbi', 'benchmarkLevel', 'cpuType'])
   return res
 }

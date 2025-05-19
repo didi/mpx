@@ -48,19 +48,19 @@ const stylesheet = StyleSheet.create({
 })
 
 interface CanvasProps {
-  style?: Record<string, any>;
-  originWhitelist?: Array<string>;
+  style?: Record<string, any>
+  originWhitelist?: Array<string>
   'enable-var'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   'external-var-context'?: Record<string, any>
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchcancel?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindlongtap?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  binderror?: (event: NativeSyntheticEvent<ErrorEvent>) => void;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchcancel?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindlongtap?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  binderror?: (event: NativeSyntheticEvent<ErrorEvent>) => void
 }
 
 const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasProps>((props: CanvasProps = {}, ref): JSX.Element => {
@@ -91,13 +91,21 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const { register } = useConstructorsRegistry()
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
-    ...layoutProps
-  }, [], {
-    layoutRef
-  })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 })
+      }
+    ),
+    [],
+    {
+      layoutRef
+    }
+  )
 
   const context2D = new CanvasRenderingContext2D(canvasRef.current) as any
 

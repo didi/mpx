@@ -75,14 +75,13 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     }, [])
 
     const innerProps = useInnerProps(
-      props,
       extendObject(
-        {
-          ref: nodeRef,
-          style: extendObject({}, innerStyle, layoutStyle)
-        },
+        {},
+        props,
         layoutProps,
         {
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle),
           bindtap: onTap
         }
       ),

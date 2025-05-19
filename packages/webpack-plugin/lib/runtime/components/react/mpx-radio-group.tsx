@@ -141,13 +141,14 @@ const radioGroup = forwardRef<
   }, [])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle)
-      },
-      layoutProps
+      }
     ),
     ['name'],
     {
