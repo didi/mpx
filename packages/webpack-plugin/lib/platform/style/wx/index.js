@@ -184,8 +184,9 @@ module.exports = function getSpec ({ warn, error }) {
     'border-top': ['borderTopWidth', 'borderTopStyle', 'borderTopColor'],
     // 仅支持 width | style | color 这种排序
     'border-bottom': ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
+    // 0.76 及以上版本RN支持 box-shadow，实测0.77版本drn红米note12pro Android12 不支持内阴影，其他表现和web一致
     // 仅支持 offset-x | offset-y | blur-radius | color 排序
-    'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
+    // 'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
     // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
     'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
     // flex-grow | flex-shrink | flex-basis
@@ -525,20 +526,20 @@ module.exports = function getSpec ({ warn, error }) {
     return { prop, value: values[0].trim() }
   }
 
-  const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
-    value = value.trim()
-    if (value === 'none') {
-      return false
-    }
-    const cssMap = formatAbbreviation({ prop, value, selector }, { mode })
-    if (mode === 'android' || mode === 'harmony') return cssMap
-    // ios 阴影需要额外设置 shadowOpacity=1
-    cssMap.push({
-      prop: 'shadowOpacity',
-      value: 1
-    })
-    return cssMap
-  }
+  // const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
+  //   value = value.trim()
+  //   if (value === 'none') {
+  //     return false
+  //   }
+  //   const cssMap = formatAbbreviation({ prop, value, selector }, { mode })
+  //   if (mode === 'android' || mode === 'harmony') return cssMap
+  //   // ios 阴影需要额外设置 shadowOpacity=1
+  //   cssMap.push({
+  //     prop: 'shadowOpacity',
+  //     value: 1
+  //   })
+  //   return cssMap
+  // }
 
   return {
     supportedModes: ['ios', 'android', 'harmony'],
@@ -579,12 +580,12 @@ module.exports = function getSpec ({ warn, error }) {
         android: formatFontFamily,
         harmony: formatFontFamily
       },
-      {
-        test: 'box-shadow',
-        ios: formatBoxShadow,
-        android: formatBoxShadow,
-        harmony: formatBoxShadow
-      },
+      // {
+      //   test: 'box-shadow',
+      //   ios: formatBoxShadow,
+      //   android: formatBoxShadow,
+      //   harmony: formatBoxShadow
+      // },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
