@@ -54,6 +54,7 @@ module.exports = function (content) {
         ExportNamedDeclaration (path) {
           if (
             path.node.declaration &&
+            path.node.declaration.declarations &&
             path.node.declaration.declarations.length === 1 &&
             path.node.declaration.declarations[0].id.name === path.node.declaration.declarations[0].init.name
           ) {
