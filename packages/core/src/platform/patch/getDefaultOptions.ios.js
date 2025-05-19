@@ -392,7 +392,7 @@ function usePageEffect (mpxProxy, pageId) {
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy)
           }
-        })
+        }, { sync: true })
       }
     }
     return () => {
