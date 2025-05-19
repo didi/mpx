@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import React, { forwardRef, useRef } from 'react'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef, { HandlerRef } from './useNodesRef'
+import useInnerProps, { getCustomEvent } from '../getInnerListeners'
+import useNodesRef, { HandlerRef } from '../useNodesRef'
 import {
   useLayout,
   splitProps,
@@ -9,9 +9,9 @@ import {
   wrapChildren,
   useTransformStyle,
   extendObject
-} from './utils'
+} from '../utils'
 import { PickerViewStyleContext } from './pickerVIewContext'
-import type { AnyFunc } from './types/common'
+import type { AnyFunc } from '../types/common'
 /**
  * ✔ value
  * ✔ bindchange
@@ -130,20 +130,23 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const innerProps = useInnerProps(
-    props,
-    extendObject({
-      ref: nodeRef,
-      style: extendObject(
-        {},
-        normalStyle,
-        layoutStyle,
-        {
-          position: 'relative',
-          overflow: 'hidden'
-        }
-      ),
-      layoutProps
-    }),
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject(
+          {},
+          normalStyle,
+          layoutStyle,
+          {
+            position: 'relative',
+            overflow: 'hidden'
+          }
+        )
+      }
+    ),
     [
       'enable-offset',
       'indicator-style',
