@@ -11,7 +11,8 @@ import {
 import { arrayMethods } from './array'
 import { ObKey } from './const'
 import { Dep } from './dep'
-import { Ref, UnwrapRefSimple, isRef } from './ref'
+import { activeSub } from './effect'
+import { type Ref, type UnwrapRefSimple, isRef } from './ref'
 
 export interface Target {
   [ObKey]?: Observer
@@ -43,9 +44,9 @@ export class Observer {
     if (Array.isArray(value)) {
       const augment = hasProto && arrayProtoAugment ? protoAugment : copyAugment
       augment(value, arrayMethods, arrayKeys)
-      !shallow && this._observeArray(value)
+      !shallow && this.observeArray(value)
     } else {
-      this._walk(value, shallow)
+      this.walk(value, shallow)
     }
   }
 
@@ -54,7 +55,7 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
-  private _walk(obj: Record<string, any>, shallow?: boolean): void {
+  private walk(obj: Record<string, any>, shallow?: boolean): void {
     Object.keys(obj).forEach((key: string) => {
       defineReactive(obj, key, obj[key], shallow)
     })
@@ -63,7 +64,7 @@ export class Observer {
   /**
    * Observe a list of Array items.
    */
-  private _observeArray(arr: any[]): void {
+  observeArray(arr: any[]): void {
     for (let i = 0, l = arr.length; i < l; i++) {
       observe(arr[i])
     }
@@ -136,10 +137,10 @@ export function defineReactive(
     configurable: true,
     get: function reactiveGetter() {
       const value = getter ? getter.call(obj) : val
-      if (Dep.target) {
-        dep.depend()
+      if (activeSub) {
+        dep.track()
         if (childOb) {
-          childOb.dep.depend()
+          childOb.dep.track()
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -149,7 +150,7 @@ export function defineReactive(
     },
     set: function reactiveSetter(newVal) {
       const value = getter ? getter.call(obj) : val
-      if (!(shallow && isForceTrigger) && !hasChanged(newVal, value)) {
+      if (!(shallow || isForceTrigger) && !hasChanged(newVal, value)) {
         return
       }
       if (!shallow && isRef(value) && !isRef(newVal)) {
@@ -165,6 +166,7 @@ export function defineReactive(
   })
 }
 
+// #region set
 /**
  * Set a property on an object. Adds the new property and
  * triggers change notification if the property doesn't
@@ -195,7 +197,9 @@ export function set(
   ob.dep.notify()
   return val
 }
+// #endregion
 
+// #region del
 /**
  * Delete a property and trigger change if necessary.
  */
@@ -216,6 +220,7 @@ export function del(target: any[] | object, key: any) {
   }
   ob.dep.notify()
 }
+// #endregion
 
 /**
  * Collect dependencies on array elements when the array is touched, since
@@ -225,7 +230,9 @@ function dependArray(arr: any[]) {
   for (let i = 0, l = arr.length; i < l; i++) {
     const item = arr[i]
     const ob = getObserver(item)
-    ob && ob.dep.depend()
+    if (ob) {
+      ob.dep.track()
+    }
     if (Array.isArray(item)) {
       dependArray(item)
     }
@@ -235,11 +242,13 @@ function dependArray(arr: any[]) {
 // only unwrap nested ref
 export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>
 
+// #region reactive
 export function reactive<T extends object>(target: T): UnwrapNestedRefs<T>
 export function reactive(target: object) {
   observe(target)
   return target
 }
+// #endregion
 
 export declare const ShallowReactiveMarker: unique symbol
 

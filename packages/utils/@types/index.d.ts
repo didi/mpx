@@ -45,7 +45,7 @@ export function dash2hump(value: string): string
 export function def<T extends object, K extends PropertyKey>(
   obj: T,
   key: K,
-  val: any,
+  value: any,
   enumerable?: boolean
 ): void
 
@@ -114,10 +114,7 @@ export function getFocusedNavigation():
 
 export function hasChanged<T>(value: T, oldValue: T): boolean
 
-export function hasOwn(
-  obj: unknown,
-  key: string | symbol
-): boolean
+export function hasOwn(obj: unknown, key: string | symbol): boolean
 
 export function hump2dash(value: string): string
 
@@ -125,17 +122,17 @@ export function isBoolean(bool: unknown): bool is boolean
 
 export function isEmptyObject(obj: unknown): boolean
 
-export function isFunction(fn: unknown): boolean
+export function isFunction(fn: unknown): fn is Function
 
-export function isNumber(num: unknown): boolean
+export function isNumber(num: unknown): num is number
 
-export function isNumberStr(str: unknown): boolean
+export function isNumberStr(str: unknown): str is string
 
-export function isObject(value: any): boolean
+export function isObject(value: any): value is Record<any, any>
 
 export function isPlainObject(obj: unknown): boolean
 
-export function isPromise<T = any>(val: unknown): val is Promise<T>
+export function isPromise<T = any>(value: unknown): value is Promise<T>
 
 export function isString(str: unknown): str is string
 

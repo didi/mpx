@@ -66,7 +66,8 @@ module.exports = {
       files: ['packages/reactivity/src/**/*.ts'],
       rules: {
         'sort-imports': ['error', { ignoreDeclarationSort: true }],
-        'space-before-function-paren': 'off'
+        'space-before-function-paren': 'off',
+        'no-useless-constructor': 'off'
       }
     }
   ]

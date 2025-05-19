@@ -4,6 +4,7 @@ import {
   isReactive,
   reactive,
   set,
+  setForceTrigger,
   shallowReactive
 } from './reactive'
 import { RefKey } from './const'
@@ -26,14 +27,8 @@ export class RefImpl {
   }
 }
 
-export function createRef(options: PropertyDescriptor, effect?: any) {
+export function createRef(options: PropertyDescriptor) {
   const ref = new RefImpl(options)
-  if (effect) {
-    // @ts-expect-error todo
-    // TODO type
-    ref.effect = effect
-    effect.computed = ref
-  }
   return Object.seal(ref)
 }
 
@@ -46,7 +41,6 @@ export function isRef(val: any): val is Ref {
 export function ref<T extends Ref>(value: T): T
 export function ref<T>(value: T): Ref<UnwrapRef<T>>
 export function ref<T = any>(): Ref<T | undefined>
-
 export function ref(raw?: unknown) {
   if (isRef(raw)) return raw
   const wrapper = reactive({ [RefKey]: raw })
@@ -76,7 +70,6 @@ export function toRef<T extends object, K extends keyof T>(
   key: K,
   defaultValue: T[K]
 ): ToRef<Exclude<T[K], undefined>>
-
 export function toRef<T extends object, K extends keyof T>(
   obj: T,
   key: K,
@@ -101,7 +94,6 @@ export function toRef<T extends object, K extends keyof T>(
 export type ToRefs<T = any> = {
   [K in keyof T]: ToRef<T[K]>
 }
-
 export function toRefs<T extends object>(obj: T): ToRefs<T> {
   if (!isReactive(obj)) {
     warn('toRefs() expects a reactive object but received a plain one.')
@@ -137,7 +129,6 @@ export function shallowRef<T>(value: T | Ref<T>): Ref<T> | ShallowRef<T>
 export function shallowRef<T extends Ref>(value: T): T
 export function shallowRef<T>(value: T): ShallowRef<T>
 export function shallowRef<T = any>(): ShallowRef<T | undefined>
-
 export function shallowRef(raw?: unknown) {
   if (isRef(raw)) return raw
   const wrapper = shallowReactive({ [RefKey]: raw })
@@ -151,10 +142,13 @@ export function shallowRef(raw?: unknown) {
 // #endregion
 
 export function triggerRef(ref: Ref): void {
-  // if (!isRef(ref)) {
-  //   return
-  // }
-  // noop
+  if (!isRef(ref)) {
+    return
+  }
+  setForceTrigger(true)
+  // eslint-disable-next-line no-self-assign
+  ref.value = ref.value
+  setForceTrigger(false)
 }
 
 // #region other internal types
