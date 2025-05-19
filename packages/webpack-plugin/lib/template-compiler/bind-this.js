@@ -81,7 +81,12 @@ function checkDelAndGetPath (path) {
       delPath = current.parentPath
     } else if (t.isCallExpression(current.parent)) {
       const args = current.node.arguments || current.parent.arguments || []
-      if (args.length === 1) { // case: String(a) || this._p(a)
+      if (
+        // case: String(a) || this._p(a)
+        args.length === 1 ||
+        // 除了自身，参数列表里只能是数字或字符串才能删
+        (args.every(node => node === current.node || t.isNumericLiteral(node) || t.isStringLiteral(node)))
+      ) {
         delPath = current.parentPath
       } else {
         break

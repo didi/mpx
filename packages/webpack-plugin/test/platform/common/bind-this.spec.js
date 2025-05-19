@@ -432,10 +432,10 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 global.currentInject.render = function (_i, _c, _r, _sc) {
   _sc("a");
 
-  tools.hexToRgba(_sc("b"), 1);
+  _sc("b");
 
   0 ? "" : 1;
-  0 ? tools(_sc("c"), 1) : 1;
+  0 ? "" : 1;
   _sc("c");
 
   tools(_sc("d"), tools(_sc("e")));
