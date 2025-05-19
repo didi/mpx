@@ -139,8 +139,16 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
     })
 
     const innerProps = useInnerProps(
-      props,
-      extendObject({ ref: nodeRef }, layoutProps)
+      extendObject(
+        {},
+        props,
+        {
+          ref: nodeRef
+        },
+        layoutProps
+      ),
+      [],
+      { layoutRef }
     )
 
     useEffect(() => {

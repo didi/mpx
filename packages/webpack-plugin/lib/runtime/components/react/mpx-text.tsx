@@ -9,7 +9,7 @@ import { useRef, forwardRef, ReactNode, JSX, createElement } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren } from './utils'
+import { useTransformStyle, wrapChildren, extendObject } from './utils'
 
 interface _TextProps extends TextProps {
   style?: TextStyle
@@ -36,8 +36,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'parent-height': parentHeight
   } = props
 
-  const layoutRef = useRef({})
-
   const {
     normalStyle,
     hasVarDec,
@@ -56,16 +54,21 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     style: normalStyle
   })
 
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: normalStyle,
-    selectable: !!selectable || !!userSelect,
-    allowFontScaling
-  }, [
-    'user-select'
-  ], {
-    layoutRef
-  })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      {
+        ref: nodeRef,
+        style: normalStyle,
+        selectable: !!selectable || !!userSelect,
+        allowFontScaling
+      }
+    ),
+    [
+      'user-select'
+    ]
+  )
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     props,

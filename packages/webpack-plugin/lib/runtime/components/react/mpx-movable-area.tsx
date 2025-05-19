@@ -11,16 +11,16 @@ import { useTransformStyle, wrapChildren, useLayout, extendObject } from './util
 import Portal from './mpx-portal'
 
 interface MovableAreaProps {
-  style?: Record<string, any>;
-  children: ReactNode;
-  width?: number;
-  height?: number;
-  'enable-offset'?: boolean;
+  style?: Record<string, any>
+  children: ReactNode
+  width?: number
+  height?: number
+  'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
@@ -48,10 +48,19 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef })
 
-  const innerProps = useInnerProps(props, extendObject({
-    style: extendObject({ height: contextValue.height, width: contextValue.width, overflow: 'hidden' }, normalStyle, layoutStyle),
-    ref: movableViewRef
-  }, layoutProps), [], { layoutRef })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        style: extendObject({ height: contextValue.height, width: contextValue.width, overflow: 'hidden' }, normalStyle, layoutStyle),
+        ref: movableViewRef
+      }
+    ),
+    [],
+    { layoutRef }
+  )
 
   let movableComponent: JSX.Element = createElement(MovableAreaContext.Provider, { value: contextValue }, createElement(
     View,

@@ -43,9 +43,9 @@ export interface CheckboxProps extends Selection {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   children?: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
   _onChange?: (evt: NativeSyntheticEvent<TouchEvent> | unknown, { checked }: { checked: boolean }) => void
@@ -100,7 +100,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
     const groupContext = useContext(CheckboxGroupContext)
-    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined
+    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> } } | undefined
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
     const defaultStyle = extendObject(
@@ -165,14 +165,13 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     }
 
     const innerProps = useInnerProps(
-      props,
       extendObject(
-        {
-          ref: nodeRef,
-          style: extendObject({}, innerStyle, layoutStyle)
-        },
+        {},
+        props,
         layoutProps,
         {
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle),
           bindtap: !disabled && onTap
         }
       ),

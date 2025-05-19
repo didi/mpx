@@ -77,36 +77,36 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Portal from './mpx-portal'
 
 interface VideoProps {
-  src: string;
-  autoplay?: boolean;
-  loop?: boolean;
-  muted?: boolean;
-  controls?: boolean;
-  poster?: string;
-  style?: ViewStyle;
-  'initial-time'?: number;
-  'object-fit'?: null | 'contain' | 'fill' | 'cover';
-  'is-drm'?: boolean;
-  'provision-url'?: string;
-  'certificate-url'?: string;
-  'license-url'?: string;
-  'preferred-peak-bit-rate'?: number;
-  'enable-auto-rotation'?: number;
-  'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
-  bindplay?: (event: Record<string, any>) => void;
-  bindpause?: (event: Record<string, any>) => void;
-  bindended?: (event: Record<string, any>) => void;
-  bindtimeupdate?: (event: Record<string, any>) => void;
-  bindfullscreenchange?: (event: Record<string, any>) => void;
-  bindwaiting?: (event: Record<string, any>) => void;
-  binderror?: (event: Record<string, any>) => void;
-  bindloadedmetadata?: (event: Record<string, any>) => void;
-  bindcontrolstoggle?: (event: Record<string, any>) => void;
-  bindseekcomplete?: (event: Record<string, any>) => void;
+  src: string
+  autoplay?: boolean
+  loop?: boolean
+  muted?: boolean
+  controls?: boolean
+  poster?: string
+  style?: ViewStyle
+  'initial-time'?: number
+  'object-fit'?: null | 'contain' | 'fill' | 'cover'
+  'is-drm'?: boolean
+  'provision-url'?: string
+  'certificate-url'?: string
+  'license-url'?: string
+  'preferred-peak-bit-rate'?: number
+  'enable-auto-rotation'?: number
+  'enable-var'?: boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  bindplay?: (event: Record<string, any>) => void
+  bindpause?: (event: Record<string, any>) => void
+  bindended?: (event: Record<string, any>) => void
+  bindtimeupdate?: (event: Record<string, any>) => void
+  bindfullscreenchange?: (event: Record<string, any>) => void
+  bindwaiting?: (event: Record<string, any>) => void
+  binderror?: (event: Record<string, any>) => void
+  bindloadedmetadata?: (event: Record<string, any>) => void
+  bindcontrolstoggle?: (event: Record<string, any>) => void
+  bindseekcomplete?: (event: Record<string, any>) => void
 }
 interface VideoInfoData {
   naturalSize: {
@@ -333,8 +333,10 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
   }
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         style: styles.video,
         ref: videoRef,
@@ -361,8 +363,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
         onControlsVisibilityChange:
           bindcontrolstoggle && handleAndroidControlsVisibilityChange,
         onLoad: handleVideoLoad
-      },
-      layoutProps
+      }
     ),
     [
       'src',

@@ -7,24 +7,24 @@ import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, ext
 import { SwiperContext } from './context'
 
 interface SwiperItemProps {
-  'item-id'?: string;
-  'enable-offset'?: boolean;
-  'enable-var': boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
-  children?: ReactNode;
-  style?: Object;
-  customStyle: Object;
-  itemIndex: number;
+  'item-id'?: string
+  'enable-offset'?: boolean
+  'enable-var': boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  children?: ReactNode
+  style?: Object
+  customStyle: Object
+  itemIndex: number
 }
 
 interface ContextType {
-  offset: SharedValue<number>;
-  step: SharedValue<number>;
-  scale: boolean;
-  dir: string;
+  offset: SharedValue<number>
+  step: SharedValue<number>
+  scale: boolean
+  dir: string
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
@@ -64,14 +64,21 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
 
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    ...layoutProps
-  }, [
-    'children',
-    'enable-offset',
-    'style'
-  ], { layoutRef })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef
+      }
+    ),
+    [
+      'children',
+      'enable-offset',
+      'style'
+    ],
+    { layoutRef })
   const itemAnimatedStyle = useAnimatedStyle(() => {
     if (!step.value) return {}
     const inputRange = [step.value, 0]

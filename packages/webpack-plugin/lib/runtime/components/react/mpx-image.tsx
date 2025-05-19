@@ -386,8 +386,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }, [src, isSvg, isLayoutMode])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject(
@@ -397,8 +399,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           isHeightFixMode ? { width: fixedWidth } : {},
           isWidthFixMode ? { height: fixedHeight } : {}
         )
-      },
-      layoutProps
+      }
     ),
     [
       'src',
