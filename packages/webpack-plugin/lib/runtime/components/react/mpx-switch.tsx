@@ -120,20 +120,25 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     }
   }, [])
 
-  const innerProps = useInnerProps(props, extendObject({
-    ref: nodeRef,
-    style: extendObject({}, normalStyle, layoutStyle)
-  },
-  layoutProps,
-  !disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {})
-  , [
-    'checked',
-    'disabled',
-    'type',
-    'color'
-  ], {
-    layoutRef
-  })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject({}, normalStyle, layoutStyle)
+      },
+      !disabled ? { [type === 'switch' ? 'onValueChange' : '_onChange']: onChange } : {}
+    ),
+    [
+      'checked',
+      'disabled',
+      'type',
+      'color'
+    ],
+    { layoutRef }
+  )
 
   if (type === 'checkbox') {
     return createElement(

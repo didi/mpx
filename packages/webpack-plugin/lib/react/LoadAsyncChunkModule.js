@@ -5,12 +5,7 @@ const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
 class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
   constructor (options = {}) {
     super('load async chunk')
-    /**
-     * timeout
-     * loadedEvent 后续需要和 native 对接，事件对象的确认 (状态枚举：loaded/missing/failed/timeout)，
-     */
     this.options = options
-    this.loadAsyncTemplate = options.loadAsyncTemplate // todo clear
     this.timeout = options.timeout || 5000
   }
 
@@ -33,7 +28,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           '}',
           'if(inProgress[url]) { inProgress[url].push(done); return; }',
           'inProgress[url] = [done];',
-          'var callback = function (type, result) {', // todo 确认下加载函数的回调值是否需要？
+          'var callback = function (type, result) {',
           Template.indent([
             "if (type === 'timeout' || type === 'fail') {",
             'var lazyLoadEvent = {',
@@ -70,7 +65,6 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           "var successCallback = callback.bind(null, 'load');",
           "var failedCallback = callback.bind(null, 'fail')",
           'var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync',
-          // `var loadChunkAsyncFn = ${this.loadAsyncTemplate.trim()}`,
           'loadChunkAsyncFn(config).then(successCallback).catch(failedCallback)'
         ]
       )}`
