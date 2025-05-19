@@ -57,7 +57,7 @@ interface PropsType<T extends AsyncType> {
   fallback: T extends 'page' ? ComponentType<DefaultFallbackProps> : ReactNode
   loading?: ComponentType<any>
   type: T
-  children: ReactNode
+  children: () => ReactNode,
 }
 
 interface StateType {
@@ -163,7 +163,7 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
       return (
         <Fragment key={this.state.key}>
           <Suspense fallback={this.suspenseFallback}>
-            {this.props.children}
+            {typeof this.props.children === 'function' ? this.props.children() : this.props.children}
           </Suspense>
         </Fragment>
       )

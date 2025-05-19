@@ -56,7 +56,7 @@ function getAsyncPage (componentName, componentRequest, chunkName, fallback, loa
         fallback: ${fallback},
         loading: ${loading}
       },
-      createElement(
+      () => createElement(
         getComponent(
           lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
         ),
