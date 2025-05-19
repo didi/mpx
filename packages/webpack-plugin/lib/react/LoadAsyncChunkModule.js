@@ -18,7 +18,6 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
       `${loadScriptFn} = ${runtimeTemplate.basicFunction(
         'url, done, key, chunkId',
         [
-          // todo dev 环境下的测试
           `var chunkName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
           'var config = {',
           Template.indent([
