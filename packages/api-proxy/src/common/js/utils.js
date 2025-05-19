@@ -1,4 +1,5 @@
-import { hasOwn, noop, getEnvObj, getFocusedNavigation } from '@mpxjs/utils'
+import { hasOwn, noop, getEnvObj, getFocusedNavigation, error as errorHandler, warn as warnHandler } from '@mpxjs/utils'
+import { getCurrentInstance } from '@mpxjs/core'
 
 /**
  *
@@ -46,15 +47,16 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
 }
 
 function warn (msg) {
-  console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
+  warnHandler(msg, '@mpxjs/api-proxy')
 }
 
 function error (msg) {
-  console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
+  errorHandler(msg, '@mpxjs/api-proxy')
 }
+
 function envError (method) {
   return () => {
-    throw Error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
+    errorHandler(`\n ${__mpx_mode__}环境不支持${method}方法`, '@mpxjs/api-proxy')
   }
 }
 
@@ -87,6 +89,12 @@ function failHandle (result, fail, complete) {
   typeof complete === 'function' && complete(result)
 }
 
+function getCurrentPageId () {
+  const currentInstance = getCurrentInstance()
+  const id = currentInstance?.proxy?.getPageId() || getFocusedNavigation()?.pageId || null
+  return id
+}
+
 const ENV_OBJ = getEnvObj()
 
 export {
@@ -101,5 +109,6 @@ export {
   defineUnsupportedProps,
   successHandle,
   failHandle,
-  getFocusedNavigation
+  getFocusedNavigation,
+  getCurrentPageId
 }

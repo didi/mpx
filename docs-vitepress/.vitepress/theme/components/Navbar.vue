@@ -2,12 +2,12 @@
   <header class="header">
     <div class="header-menu" v-if="smallMode">
       <a href="/">
-        <img style="vertical-align: middle;" height="20" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/logo_color.png" alt="logo">
+        <img style="vertical-align: middle;height: 20px;" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/logo_color.png" alt="logo">
       </a>
       <div style="display: flex; align-items: center;">
         <AlgoliaSearchBox v-if="isAlgoliaSearch" :options="algolia" />
         <span class="header-menu-icon">
-          <img @click="toggleSidebar" height="14" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/y_icon_liebiao.png" alt="menu">
+          <img @click="toggleSidebar" style="height: 14px;" src="https://gift-static.hongyibo.com.cn/static/kfpub/3547/y_icon_liebiao.png" alt="menu">
         </span>
       </div>
     </div>
@@ -36,15 +36,15 @@
 </template>
 
 <script>
-// import SearchBox from "@SearchBox";
-import AlgoliaSearchBox from "../components/AlgoliaSearchBox.vue";
-import { useRoute, useRouter, useData } from "vitepress";
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue"
+import { useRoute, useRouter, useData } from "vitepress"
+import { VPNavBarSearch } from "vitepress/theme"
+// import AlgoliaSearchBox from "../components/AlgoliaSearchBox.vue"
 
 export default {
   components: {
     // SearchBox,
-    AlgoliaSearchBox
+    AlgoliaSearchBox: VPNavBarSearch // 首页替换为 local 搜索
   },
   setup() {
     const route = useRoute()
@@ -70,7 +70,8 @@ export default {
     })
 
     const isAlgoliaSearch = computed(() => {
-      return theme.value.algolia && theme.value.algolia.apiKey && theme.value.algolia.indexName;
+      // local 暂时写死 true
+      return true //theme.value.algolia && theme.value.algolia.apiKey && theme.value.algolia.indexName;
     })
     algolia.value = theme.value.algolia
 
@@ -147,6 +148,7 @@ export default {
 
 .header-menu {
   width: 100%;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -180,6 +182,7 @@ export default {
   box-shadow rgb(240 241 242) 0px 2px 8px
   padding: 0.5rem 3rem;
   // justify-content center
+  box-sizing: content-box;
 }
 
 .nav-link {
@@ -188,6 +191,7 @@ export default {
   align-items: center;
   width: 100%;
   justify-content: space-between;
+  font-weight: 500;
 }
 
 a.router-link-active {

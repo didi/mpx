@@ -85,7 +85,7 @@
       const domProps = {
         name: this.name,
         value: this.value,
-        type: this.password ? 'password' : this.type,
+        type: this.password ? 'password' : this.type === 'digit' ? 'number' : this.type,
         placeholder: this.placeholder,
         disabled: this.disabled,
         autofocus: this.focus || this.autoFocus

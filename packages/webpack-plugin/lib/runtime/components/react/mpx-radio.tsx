@@ -12,6 +12,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
 import Icon from './mpx-icon'
+import Portal from './mpx-portal'
 
 export interface RadioProps {
   value?: string
@@ -22,9 +23,9 @@ export interface RadioProps {
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   children: ReactNode
   bindtap?: (evt: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
@@ -84,7 +85,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     const [isChecked, setIsChecked] = useState<boolean>(!!checked)
 
     const groupContext = useContext(RadioGroupContext)
-    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>>; } } | undefined
+    let groupValue: { [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> } } | undefined
     let notifyChange: (evt: NativeSyntheticEvent<TouchEvent>) => void | undefined
 
     const labelContext = useContext(LabelContext)
@@ -117,6 +118,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const {
+      hasPositionFixed,
       hasSelfPercent,
       normalStyle,
       hasVarDec,
@@ -149,14 +151,13 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     }
 
     const innerProps = useInnerProps(
-      props,
       extendObject(
-        {
-          ref: nodeRef,
-          style: extendObject({}, innerStyle, layoutStyle)
-        },
+        {},
+        props,
         layoutProps,
         {
+          ref: nodeRef,
+          style: extendObject({}, innerStyle, layoutStyle),
           bindtap: !disabled && onTap
         }
       ),
@@ -193,7 +194,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       }
     }, [checked])
 
-    return createElement(View, innerProps,
+    const finalComponent = createElement(View, innerProps,
       createElement(
         View,
         { style: defaultStyle },
@@ -214,6 +215,12 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         }
       )
     )
+
+    if (hasPositionFixed) {
+      return createElement(Portal, null, finalComponent)
+    }
+
+    return finalComponent
   }
 )
 

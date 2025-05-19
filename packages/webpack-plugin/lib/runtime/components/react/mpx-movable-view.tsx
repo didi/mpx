@@ -18,11 +18,11 @@
  * ✔ vtouchmove
  */
 import { useEffect, forwardRef, ReactNode, useContext, useCallback, useRef, useMemo, createElement } from 'react'
-import { StyleSheet, NativeSyntheticEvent, View, LayoutChangeEvent } from 'react-native'
+import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -36,39 +36,39 @@ import Animated, {
 import { collectDataset, noop } from '@mpxjs/utils'
 
 interface MovableViewProps {
-  children: ReactNode;
-  style?: Record<string, any>;
-  direction: 'all' | 'vertical' | 'horizontal' | 'none';
-  x?: number;
-  y?: number;
-  disabled?: boolean;
-  animation?: boolean;
-  id?: string;
-  bindchange?: (event: unknown) => void;
-  bindtouchstart?: (event: GestureTouchEvent) => void;
-  catchtouchstart?: (event: GestureTouchEvent) => void;
-  bindtouchmove?: (event: GestureTouchEvent) => void;
-  catchtouchmove?: (event: GestureTouchEvent) => void;
-  catchtouchend?: (event: GestureTouchEvent) => void;
-  bindtouchend?: (event: GestureTouchEvent) => void;
-  bindhtouchmove?: (event: GestureTouchEvent) => void;
-  bindvtouchmove?: (event: GestureTouchEvent) => void;
-  catchhtouchmove?: (event: GestureTouchEvent) => void;
-  catchvtouchmove?: (event: GestureTouchEvent) => void;
-  bindlongpress?: (event: GestureTouchEvent) => void;
-  catchlongpress?: (event: GestureTouchEvent) => void;
-  bindtap?: (event: GestureTouchEvent) => void;
-  catchtap?: (event: GestureTouchEvent) => void;
-  onLayout?: (event: LayoutChangeEvent) => void;
-  'out-of-bounds'?: boolean;
-  'wait-for'?: Array<GestureHandler>;
-  'simultaneous-handlers'?: Array<GestureHandler>;
-  inertia?: boolean;
+  children: ReactNode
+  style?: Record<string, any>
+  direction: 'all' | 'vertical' | 'horizontal' | 'none'
+  x?: number
+  y?: number
+  disabled?: boolean
+  animation?: boolean
+  id?: string
+  bindchange?: (event: unknown) => void
+  bindtouchstart?: (event: GestureTouchEvent) => void
+  catchtouchstart?: (event: GestureTouchEvent) => void
+  bindtouchmove?: (event: GestureTouchEvent) => void
+  catchtouchmove?: (event: GestureTouchEvent) => void
+  catchtouchend?: (event: GestureTouchEvent) => void
+  bindtouchend?: (event: GestureTouchEvent) => void
+  bindhtouchmove?: (event: GestureTouchEvent) => void
+  bindvtouchmove?: (event: GestureTouchEvent) => void
+  catchhtouchmove?: (event: GestureTouchEvent) => void
+  catchvtouchmove?: (event: GestureTouchEvent) => void
+  bindlongpress?: (event: GestureTouchEvent) => void
+  catchlongpress?: (event: GestureTouchEvent) => void
+  bindtap?: (event: GestureTouchEvent) => void
+  catchtap?: (event: GestureTouchEvent) => void
+  onLayout?: (event: LayoutChangeEvent) => void
+  'out-of-bounds'?: boolean
+  'wait-for'?: Array<GestureHandler>
+  'simultaneous-handlers'?: Array<GestureHandler>
+  inertia?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
 }
 
 const styles = StyleSheet.create({
@@ -125,6 +125,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     setWidth,
     setHeight
   } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+
+  const navigation = useNavigation()
 
   const prevSimultaneousHandlersRef = useRef<Array<GestureHandler>>(originSimultaneousHandlers || [])
   const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
@@ -233,7 +235,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       offsetX: offsetX.value,
       offsetY: offsetY.value
     }),
-    (currentValue: { offsetX: any; offsetY: any; }) => {
+    (currentValue: { offsetX: any; offsetY: any }) => {
       const { offsetX, offsetY } = currentValue
       runOnJS(handleTriggerChange)({
         x: offsetX,
@@ -333,43 +335,44 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       setHeight(height || 0)
     }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft: 0, offsetTop: 0 }
+      const { y: navigationY = 0 } = navigation?.layout || {}
+      layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
       resetBoundaryAndCheck({ width, height })
     })
     props.onLayout && props.onLayout(e)
   }
 
-  const extendEvent = useCallback((e: any, obj?: Record<string, any>) => {
+  const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
+    const { y: navigationY = 0 } = navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
-      touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number }) => {
+      touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {
         item.pageX = item.absoluteX
-        item.pageY = item.absoluteY
+        item.pageY = item.absoluteY - navigationY
+        item.clientX = item.absoluteX
+        item.clientY = item.absoluteY - navigationY
       })
     })
     Object.assign(e, {
-      touches: e.allTouches,
-      detail: {
-        x: e.changedTouches[0].absoluteX,
-        y: e.changedTouches[0].absoluteY
-      },
+      touches: type === 'end' ? [] : e.allTouches,
       currentTarget: {
         id: props.id || '',
         dataset: collectDataset(props),
         offsetLeft: 0,
         offsetTop: 0
-      }
-    }, obj)
+      },
+      detail: {}
+    })
   }, [])
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
-    extendEvent(e)
+    extendEvent(e, 'start')
     bindtouchstart && bindtouchstart(e)
     catchtouchstart && catchtouchstart(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
-    extendEvent(e)
+    extendEvent(e, 'move')
     if (hasTouchmove) {
       if (touchEvent === 'htouchmove') {
         bindhtouchmove && bindhtouchmove(e)
@@ -390,7 +393,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
-    extendEvent(e)
+    extendEvent(e, 'end')
     bindtouchend && bindtouchend(e)
     catchtouchend && catchtouchend(e)
   }
@@ -562,11 +565,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'catchtouchend'
   ])
 
-  const innerProps = useInnerProps(filterProps, extendObject({
-    ref: nodeRef,
-    onLayout: onLayout,
-    style: [innerStyle, animatedStyles, layoutStyle]
-  }, rewriteCatchEvent()))
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      filterProps,
+      {
+        ref: nodeRef,
+        onLayout: onLayout,
+        style: [innerStyle, animatedStyles, layoutStyle]
+      },
+      rewriteCatchEvent()
+    )
+  )
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,

@@ -77,12 +77,9 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
 
       if (!outputPath) {
         if (isScript(ext) && resourceName.includes('node_modules') && !isWeb(mode) && !isReact(mode)) {
-          let root = info.descriptionFileRoot
+          const root = info.descriptionFileRoot
           let name = 'nativeComponent'
           if (info.descriptionFileData) {
-            if (info.descriptionFileData.miniprogram) {
-              root = path.join(root, info.descriptionFileData.miniprogram)
-            }
             if (info.descriptionFileData.name) {
               // 去掉name里面的@符号，因为支付宝不支持文件路径上有@
               name = info.descriptionFileData.name.replace(/@/g, '')

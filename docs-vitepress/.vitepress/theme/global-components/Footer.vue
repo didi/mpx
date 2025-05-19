@@ -55,7 +55,7 @@
       </ul>
     </footer>
     <div class="copyright">
-      <div>备案号：<a href="https://beian.miit.gov.cn/">蜀ICP备15023364号-2</a></div>
+      <div>备案号：<a href="https://beian.miit.gov.cn/" style="color: var(--vt-c-brand);">蜀ICP备15023364号-2</a></div>
       <div>Copyright 2020 滴滴出行</div>
     </div>
   </div>
@@ -150,7 +150,8 @@ ul li
 
 @media (max-width: 750px) {
   .footer__list {
-    margin-bottom 16px
+    margin 16px 0
+    padding-left 16px
   }
 
   .footer__text {

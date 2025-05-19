@@ -51,6 +51,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
 import type { ExtendedViewStyle } from './types/common'
+import Portal from './mpx-portal'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -219,7 +220,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     bindtap
   } = props
 
-  const pageId = useContext(RouteContext)
+  const { pageId } = useContext(RouteContext) || {}
 
   const formContext = useContext(FormContext)
 
@@ -290,6 +291,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   )
 
   const {
+    hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     hasVarDec,
@@ -371,14 +373,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
-      {
-        ref: nodeRef,
-        style: extendObject({}, innerStyle, layoutStyle)
-      },
+      {},
+      props,
       layoutProps,
       {
+        ref: nodeRef,
+        style: extendObject({}, innerStyle, layoutStyle),
         bindtap: !disabled && onTap
       }
     ),
@@ -413,9 +414,15 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     )
   )
 
-  return enableHover
+  const finalComponent = enableHover
     ? createElement(GestureDetector, { gesture: gesture as PanGesture }, baseButton)
     : baseButton
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 Button.displayName = 'MpxButton'

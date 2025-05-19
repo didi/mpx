@@ -138,7 +138,9 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'on') {
-        return dash2hump(prefix + '-' + eventName)
+        return prefix + dash2hump(eventName.replace(/^./, (matched) => {
+          return matched.toUpperCase()
+        }))
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
@@ -552,5 +554,6 @@ module.exports = {
     }
   },
   ios: reactConfig,
-  android: reactConfig
+  android: reactConfig,
+  harmony: reactConfig
 }

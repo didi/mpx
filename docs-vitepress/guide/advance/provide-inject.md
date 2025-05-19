@@ -210,39 +210,62 @@ export const InjectionKeys = {
 
 直接使用字符串注入 key 时，注入值的类型默认推导会是 `unknown`，需要通过泛型参数显式声明。因为无法保证运行时一定存在这个 provide，所以推导类型也可能是 `undefined`。当声明一个默认值后，这个 `undefined` 类型就可以成功被移除。
 
-```ts
-<script setup lang="ts">
+```ts twoslash
 import { inject } from '@mpxjs/core'
 
-const foo = inject('foo') // 类型：unknown
-const foo = inject<string>('foo') // 类型：string | undefined
-const foo = inject<string>('foo', 'default value') // 类型：string ✅
-</script>
+const foo1 = inject('foo') // 类型：unknown
+const foo2 = inject<string>('foo') // 类型：string | undefined
+const foo3 = inject<string>('foo', 'default value') // 类型：string ✅
 ```
 
 当然，如果你已经确定注入名肯定被提供了，也可以强制断言。
 
-```ts
+```ts twoslash
+import { inject } from '@mpxjs/core'
+
 const foo = inject('foo') as string
 ```
 
 如果使用 `Symbol` 作为注入名，可以使用我们提供的 `InjectionKey` 泛型接口，使用它对注入名进行注解或者断言后，可以用来在不同组件之间同步注入值的类型。建议将注入 key 放在单独文件，这样方便在多个组件中导入使用。
 
-```ts{4}
+```ts{4} twoslash
+// @errors: 2345 1146 1005
 import { provide, inject } from '@mpxjs/core'
 import type { InjectionKey } from '@mpxjs/core'
 
 export const key: InjectionKey<string> = Symbol() // 类型注解
 // const key = Symbol() as InjectionKey<string> // 类型断言写法等效
 
-provide(key, 'foo') // 若默认值是非字符串则会 TS 类型报错
+provide(key, 'foo') // ✅
+provide(key, 123) // 提供值应当为字符串类型
 
-const foo = inject(key) // ✅ foo 的类型：string | undefined
-const foo = inject(key, 'default value') // ✅ foo 的类型：string
-const foo = inject(key, 1) // ❌ 默认值是非字符串则会 TS 类型报错
+const foo1 = inject(key) // ✅ foo1: string | undefined
+const foo2 = inject(key, 'default value') // ✅ foo2: string
+const foo3 = inject(key, 123) // 默认值应当为字符串类型
 ```
+
+> 👀 鼠标悬浮到上面代码可以查看具体 TS 类型
 
 ## 跨端差异
 
-- Mpx 输出 Web 端后，使用规则与 Vue 一致，`provide/inject` 的生效范围严格遵行父子组件关系，只有父组件可以成功向子孙组件提供依赖。
-- Mpx 输出小程序端会略有不同，由于小程序原生框架限制，暂时无法在子组件获取真实渲染时的父组件引用关系，所以不能像 Vue 那样基于父组件原型继承来实现 `provide`。在 Mpx 底层实现中，我们将组件层的 `provide` 挂载在所属页面实例上，相当于将组件 scope 提升到页面 scope，可以理解成一种“降级模拟”。当然，这并不影响父组件向子孙组件 `provide` 的能力，只是会额外存在“**副作用**”：同一页面中的组件可以向页面中其他所有在其之后渲染子组件提供依赖。比如同一页面下的组件 A 可以向后渲染的兄弟组件 B 的子孙组件提供数据，这在 Web 端是不允许的。因此，针对小程序端可能出现的“副作用”需要开发者自行保证，可以结合上述注入名的管理优化来规避。
+- Mpx 输出 **Web** 端，使用规则与 Vue 一致，`provide/inject` 的生效范围严格遵行父子组件关系，只有父组件可以成功向子孙组件提供依赖。
+- Mpx 输出 **RN** 端，框架内部基于 React 的 `useContext` 钩子来转换实现，表现和 Web 端一致。
+- Mpx 输出 **小程序** 端同样遵循类似 Vue 的父子组件关系，但是在 `slot` 场景下小程序表现会和 Web、RN 端略有差异。举个例子，如下代码所示：在组件 A 的 `template` 模板中包含子组件 B，然后组件 B 通过 `slot` 包含子组件 C，组件 B 和 C 都定义在组件 A 的模板中。该场景下：在 Web 端，组件 A 是 B 的父组件，B 是 C 的父组件，所以 A 和 B 都可以向 C 提供依赖。但在小程序端，B 和 C 的父组件都是 A，组件 B 不能再向 C 提供依赖。这个跨端差异或者说“副作用”可以理解成：Web 端是基于“节点树”，即虚拟组件节点纬度，而小程序的父子组件关系是基于“组件树”，即组件模板维度，也就是说当前组件的创建者（在 WXML/AXML 模板中定义了此组件的组件）才是它的父组件。
+
+```html
+<!-- ComponentA -->
+<template>
+  <view>组件 A</view>
+  <ComponentB>
+    <ComponentC></ComponentC>
+  </ComponentB>
+</template>
+
+<!-- ComponentB -->
+<template>
+  <view>
+    <view>组件 B</view>
+    <slot></slot>
+  </view>
+</template>
+```

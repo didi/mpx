@@ -16,7 +16,7 @@ function nextTick (cb) {
     channel.port1.onmessage = cb
     port.postMessage(1)
   } else {
-    setTimeout(cb, 0)
+    setTimeout(cb)
   }
 }
 

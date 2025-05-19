@@ -1,5 +1,13 @@
-import { defineConfig } from "vitepress"
+import { defineConfig, Plugin } from "vitepress"
+import {
+    groupIconMdPlugin,
+    groupIconVitePlugin,
+    localIconLoader,
+} from "vitepress-plugin-group-icons"
+import llmstxt from "vitepress-plugin-llms"
 import { withPwa } from "@vite-pwa/vitepress"
+import { transformerTwoslash } from "@shikijs/vitepress-twoslash"
+import { localSearchTranslations } from "./theme/translations"
 
 const sidebar = {
     "/guide/": [
@@ -217,6 +225,7 @@ export default withPwa(
         base: "/",
         head: [
             ["link", { rel: "icon", href: "/favicon.ico" }],
+            ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
             [
                 "script",
                 { type: "text/javascript" },
@@ -224,7 +233,7 @@ export default withPwa(
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
                 t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
                 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "jtvvy52wxy");`,
+                })(window, document, "clarity", "script", "jtvvy52wxy");`,
             ],
             ["meta", { name: "author", content: title }],
             ["meta", { property: "og:type", content: "website" }],
@@ -247,36 +256,39 @@ export default withPwa(
             },
         },
         ignoreDeadLinks: true,
+        markdown: {
+            theme: {
+                light: "github-light",
+                dark: "github-dark",
+            },
+            // @ts-ignore
+            codeTransformers: [transformerTwoslash()],
+            config(md) {
+                md.use(groupIconMdPlugin)
+            },
+        },
         pwa: {
             base: "/",
             scope: "/",
+            registerType: "prompt",
             includeAssets: ["favicon.ico", "logo.png"],
             manifest: {
-                name: title,
+                name: "Mpx",
                 short_name: "Mpx",
                 description,
                 theme_color: "#ffffff",
-                // icons: [
-                //     {
-                //         src: 'pwa-192x192.png',
-                //         sizes: '192x192',
-                //         type: 'image/png',
-                //     },
-                //     {
-                //         src: 'pwa-512x512.png',
-                //         sizes: '512x512',
-                //         type: 'image/png',
-                //     },
-                //     {
-                //         src: 'pwa-512x512.png',
-                //         sizes: '512x512',
-                //         type: 'image/png',
-                //         purpose: 'any maskable',
-                //     },
-                // ],
+                icons: [
+                    {
+                        src: "https://dpubstatic.udache.com/static/dpubimg/1ESVodfAED/logo.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                    },
+                ],
             },
             workbox: {
                 globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
+                sourcemap: true,
+                navigateFallbackDenylist: [/^\/mpx-cube-ui/],
             },
             devOptions: {
                 enabled: false,
@@ -286,27 +298,18 @@ export default withPwa(
         },
         themeConfig: {
             // navbar: false,
-            algolia: {
-                // apiKey: '7849f511f78afc4383a81f0137a91c0f',
-                appId: "DZ8S6HN0MP",
-                apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
-                indexName: "mpxjs",
-                placeholder: "搜索文档",
-                translations: {
-                    button: {
-                        buttonText: "搜索",
-                    },
+            search: {
+                provider: "local",
+                options: {
+                    // // apiKey: '7849f511f78afc4383a81f0137a91c0f',
+                    // appId: "DZ8S6HN0MP",
+                    // apiKey: "a34809e24ae1eb13ca3afc255d0a0cef",
+                    // indexName: "mpxjs",
+                    // placeholder: "搜索文档",
+                    translations: localSearchTranslations,
                 },
             },
             logo: "/favicon.ico",
-            docFooter: {
-                prev: "上一页",
-                next: "下一页",
-            },
-            outline: {
-                level: [2, 3],
-                label: "本页目录",
-            },
             socialLinks: [
                 { icon: "github", link: "https://github.com/didi/mpx" },
             ],
@@ -338,7 +341,53 @@ export default withPwa(
                     target: "_blank",
                 },
             ],
+            outline: {
+                level: [2, 3],
+                label: "本页目录",
+            },
             sidebar,
+            darkModeSwitchLabel: "外观",
+            sidebarMenuLabel: "菜单",
+            returnToTopLabel: "返回顶部",
+            langMenuLabel: "语言",
+            notFound: {
+                title: "页面未找到",
+                linkText: "返回首页",
+                quote: "😩 抱歉，迷路了～",
+            },
+            lastUpdated: {
+                text: "最后更新于",
+                formatOptions: {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                },
+            },
+            docFooter: {
+                prev: "上一页",
+                next: "下一页",
+            },
+        },
+        vite: {
+            logLevel: "info",
+            plugins: [
+                llmstxt({
+                    customTemplateVariables: {
+                        title,
+                        description,
+                    },
+                    ignoreFiles: ["index.md", "api/index.md"],
+                }) as Plugin,
+                groupIconVitePlugin({
+                    customIcon: {
+                        ios: "logos:apple",
+                        android: "logos:android-icon",
+                        harmony: localIconLoader(
+                            import.meta.url,
+                            "../assets/images/harmonyOS.svg"
+                        ),
+                    },
+                }) as Plugin,
+            ],
         },
         // @ts-ignore
         chainWebpack: (config) => {

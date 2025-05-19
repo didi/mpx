@@ -9,7 +9,7 @@
  * ✔ bindlongtap
  * ✔ binderror
  */
-import React, { createElement, useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
+import { createElement, useRef, useState, useCallback, useEffect, forwardRef, JSX, TouchEvent, MutableRefObject } from 'react'
 import { View, Platform, StyleSheet, NativeSyntheticEvent } from 'react-native'
 import { WebView } from 'react-native-webview'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
@@ -31,6 +31,7 @@ import './CanvasGradient'
 import { createImage as canvasCreateImage } from './Image'
 import { createImageData as canvasCreateImageData } from './ImageData'
 import { useConstructorsRegistry } from './constructorsRegistry'
+import Portal from '../mpx-portal'
 
 const stylesheet = StyleSheet.create({
   container: { overflow: 'hidden', flex: 0 },
@@ -48,19 +49,19 @@ const stylesheet = StyleSheet.create({
 })
 
 interface CanvasProps {
-  style?: Record<string, any>;
-  originWhitelist?: Array<string>;
+  style?: Record<string, any>
+  originWhitelist?: Array<string>
   'enable-var'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   'external-var-context'?: Record<string, any>
-  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindtouchcancel?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  bindlongtap?: (event: NativeSyntheticEvent<TouchEvent>) => void;
-  binderror?: (event: NativeSyntheticEvent<ErrorEvent>) => void;
+  bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchend?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindtouchcancel?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  bindlongtap?: (event: NativeSyntheticEvent<TouchEvent>) => void
+  binderror?: (event: NativeSyntheticEvent<ErrorEvent>) => void
 }
 
 const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasProps>((props: CanvasProps = {}, ref): JSX.Element => {
@@ -71,6 +72,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const {
     normalStyle,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(extendObject({}, style, stylesheet.container), {
@@ -91,13 +93,21 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   const { register } = useConstructorsRegistry()
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 }),
-    ...layoutProps
-  }, [], {
-    layoutRef
-  })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject({}, normalStyle, layoutStyle, { opacity: isLoaded ? 1 : 0 })
+      }
+    ),
+    [],
+    {
+      layoutRef
+    }
+  )
 
   const context2D = new CanvasRenderingContext2D(canvasRef.current) as any
 
@@ -158,10 +168,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
 
   const postMessage = useCallback(async (message: WebviewMessage) => {
     if (!canvasRef.current?.bus) return
-    const { type, payload } = await canvasRef.current.bus.post({
-      id: ID(),
-      ...message
-    })
+    const { type, payload } = await canvasRef.current.bus.post(extendObject({ id: ID() }, message))
 
     switch (type) {
       case 'error': {
@@ -196,7 +203,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   }
 
   const onMessage = useCallback((e: { nativeEvent: { data: string } }) => {
-    let data = JSON.parse(e.nativeEvent.data)
+    const data = JSON.parse(e.nativeEvent.data)
     switch (data.type) {
       case 'error': {
         const { binderror } = props
@@ -212,27 +219,27 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
         break
       }
       default: {
+        const newData: { payload?: unknown } = {}
+        // createLinearGradient 方法调用需要在 constructors 中需要注册 CanvasGradient
+        const constructor = constructors[data.meta.constructor]
         if (data.payload) {
-          // createLinearGradient 方法调用需要在 constructors 中需要注册 CanvasGradient
-          const constructor = constructors[data.meta.constructor]
           if (constructor) {
             const { args, payload } = data
             // RN 端同步生成一个 CanvasGradient 的实例
             const object = constructor.constructLocally(canvasRef.current, ...args)
-            Object.assign(object, payload, {
+            extendObject(object, payload, {
               [WEBVIEW_TARGET]: data.meta.target
             })
-            data = {
-              ...data,
+            extendObject(newData, data, {
               payload: object
-            }
+            })
           }
           for (const listener of canvasRef.current.listeners) {
-            listener(data.payload)
+            listener(constructor ? newData.payload : data.payload)
           }
         }
         if (canvasRef.current.bus) {
-          canvasRef.current.bus.handle(data)
+          canvasRef.current.bus.handle(constructor && data.payload ? newData : data)
         }
       }
     }
@@ -251,9 +258,11 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     context: context2D
   })
 
-  if (Platform.OS === 'android') {
-    const isAndroid9 = Platform.Version >= 28
-    return createElement(View, innerProps, createElement(
+  let canvasComponent
+
+  if (__mpx_mode__ === 'android') {
+    const isAndroid9 = Platform.Version as number >= 28
+    canvasComponent = createElement(View, innerProps, createElement(
       WebView,
       {
         ref: (element) => {
@@ -280,7 +289,7 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     )
   }
 
-  return createElement(View, innerProps, createElement(WebView, {
+  canvasComponent = createElement(View, innerProps, createElement(WebView, {
     ref: (element) => {
       if (canvasRef.current) {
         canvasRef.current.webview = element
@@ -293,6 +302,12 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
     onLoad: onLoad,
     scrollEnabled: false
   }))
+
+  if (hasPositionFixed) {
+    canvasComponent = createElement(Portal, null, canvasComponent)
+  }
+
+  return canvasComponent
 })
 
 _Canvas.displayName = 'mpxCanvas'
