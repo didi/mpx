@@ -4,7 +4,6 @@ import {
   isReactive,
   reactive,
   set,
-  setForceTrigger,
   shallowReactive
 } from './reactive'
 import { RefKey } from './const'
@@ -151,13 +150,11 @@ export function shallowRef(raw?: unknown) {
 }
 // #endregion
 
-export function triggerRef(ref: Ref) {
-  if (!isRef(ref)) return
-  setForceTrigger(true)
-  // TODO ?
-  /* eslint-disable no-self-assign */
-  ref.value = ref.value
-  setForceTrigger(false)
+export function triggerRef(ref: Ref): void {
+  // if (!isRef(ref)) {
+  //   return
+  // }
+  // noop
 }
 
 // #region other internal types
