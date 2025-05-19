@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
@@ -503,8 +503,8 @@ export function splitProps<T extends Record<string, any>> (props: T): {
 interface LayoutConfig {
   props: Record<string, any>
   hasSelfPercent: boolean
-  setWidth: Dispatch<SetStateAction<number>>
-  setHeight: Dispatch<SetStateAction<number>>
+  setWidth?: Dispatch<SetStateAction<number>>
+  setHeight?: Dispatch<SetStateAction<number>>
   onLayout?: (event?: LayoutChangeEvent) => void
   nodeRef: React.RefObject<any>
 }
@@ -636,7 +636,7 @@ export function renderImage (
   enableFastImage = false
 ) {
   const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
-  return <Component {...imageProps} />
+  return createElement(Component, imageProps)
 }
 
 export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {

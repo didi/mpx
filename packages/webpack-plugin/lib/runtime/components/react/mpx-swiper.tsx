@@ -1,12 +1,13 @@
 import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
-import { GestureDetector, Gesture } from 'react-native-gesture-handler'
+import { GestureDetector, Gesture, PanGesture } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
 
-import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo } from 'react'
+import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture } from './utils'
 import { SwiperContext } from './context'
+import Portal from './mpx-portal'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
@@ -45,7 +46,7 @@ interface SwiperProps {
   vertical?: boolean
   style: {
     [key: string]: any
-  }
+  };
   'easing-function'?: EaseType
   'previous-margin'?: string
   'next-margin'?: string
@@ -53,8 +54,11 @@ interface SwiperProps {
   'enable-var': boolean
   'parent-font-size'?: number
   'parent-width'?: number
-  'parent-height'?: number
+  'parent-height'?: number;
   'external-var-context'?: Record<string, any>
+  'wait-for'?: Array<GestureHandler>
+  'simultaneous-handlers'?: Array<GestureHandler>
+  disableGesture?: boolean
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
@@ -126,7 +130,7 @@ const easeMap = {
 
 const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const {
-    'indicator-dots': showsPagination,
+    'indicator-dots': showPagination,
     'indicator-color': dotColor = 'rgba(0, 0, 0, .3)',
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
@@ -134,21 +138,30 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'external-var-context': externalVarContext,
+    'simultaneous-handlers': originSimultaneousHandlers = [],
+    'wait-for': waitFor = [],
     style = {},
     autoplay = false,
-    circular = false
+    circular = false,
+    disableGesture = false
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
   const nodeRef = useRef<View>(null)
-  useNodesRef<View, SwiperProps>(props, ref, nodeRef, {})
+  // 手势协同gesture 1.0
+  const swiperGestureRef = useRef<PanGesture>()
+  useNodesRef<View, SwiperProps>(props, ref, nodeRef, {
+    // scrollView内部会过滤是否绑定了gestureRef，withRef(swiperGestureRef)给gesture对象设置一个ref(2.0版本)
+    gestureRef: swiperGestureRef
+  })
   // 计算transfrom之类的
   const {
     normalStyle,
     hasVarDec,
     varContextRef,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(style, {
@@ -195,6 +208,27 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const moveTime = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
+
+  const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
+  const waitForHandlers = flatGesture(waitFor)
+  // 判断gesture手势是否需要协同处理、等待手势失败响应
+  const gestureSwitch = useRef(false)
+  // 初始化上一次的手势
+  const prevSimultaneousHandlersRef = useRef<Array<GestureHandler>>(originSimultaneousHandlers || [])
+  const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
+  const hasSimultaneousHandlersChanged = prevSimultaneousHandlersRef.current.length !== (originSimultaneousHandlers?.length || 0) ||
+  (originSimultaneousHandlers || []).some((handler, index) => handler !== prevSimultaneousHandlersRef.current[index])
+
+  const hasWaitForHandlersChanged = prevWaitForHandlersRef.current.length !== (waitFor?.length || 0) ||
+    (waitFor || []).some((handler, index) => handler !== prevWaitForHandlersRef.current[index])
+
+  if (hasSimultaneousHandlersChanged || hasWaitForHandlersChanged) {
+    gestureSwitch.current = !gestureSwitch.current
+  }
+  // 存储上一次的手势
+  prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
+  prevWaitForHandlersRef.current = waitFor || []
+
   const {
     // 存储layout布局信息
     layoutRef,
@@ -248,7 +282,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   })
 
   function renderPagination () {
-    if (children.length <= 1) return null
     const activeColor = activeDotColor || '#007aff'
     const unActionColor = dotColor || 'rgba(0,0,0,.2)'
     // 正常渲染所有dots
@@ -491,7 +524,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       offset.value = getOffset(currentIndex.value, step.value)
     }
   }, [circular, preMargin])
-
   const { gestureHandler } = useMemo(() => {
     function getTargetPosition (eventData: EventDataType) {
       'worklet'
@@ -573,6 +605,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           }
         })
       }
+    }
+    function handleBackInit () {
+      'worklet'
+      // 微信的效果
+      // 1. 只有一个元素，即使设置了circular，也不会产生循环的效果，2. 可以响应手势，但是会有回弹的效果
+      offset.value = withTiming(0, {
+        duration: easeDuration,
+        easing: easeMap[easeingFunc]
+      })
     }
     function handleBack (eventData: EventDataType) {
       'worklet'
@@ -675,7 +716,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           return
         }
         const { isBoundary, resetOffset } = reachBoundary(eventData)
-        if (isBoundary && circularShared.value) {
+        if (childrenLength.value > 1 && isBoundary && circularShared.value) {
           offset.value = resetOffset
         } else {
           offset.value = moveDistance + offset.value
@@ -691,6 +732,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const eventData = {
           translation: moveDistance
         }
+        if (childrenLength.value === 1) {
+          return handleBackInit()
+        }
         // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
         if (!circularShared.value && !canMove(eventData)) {
           return
@@ -702,10 +746,25 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           handleEnd(eventData)
         }
       })
+      .withRef(swiperGestureRef)
+    // swiper横向,当y轴滑动5像素手势失效；swiper纵向只响应swiper的滑动事件
+    if (dir === 'x') {
+      gesturePan.activeOffsetX([-2, 2]).failOffsetY([-5, 5])
+    } else {
+      gesturePan.activeOffsetY([-2, 2]).failOffsetX([-5, 5])
+    }
+    // 手势协同2.0
+    if (simultaneousHandlers && simultaneousHandlers.length) {
+      gesturePan.simultaneousWithExternalGesture(...simultaneousHandlers)
+    }
+
+    if (waitForHandlers && waitForHandlers.length) {
+      gesturePan.requireExternalGestureToFail(...waitForHandlers)
+    }
     return {
       gestureHandler: gesturePan
     }
-  }, [])
+  }, [gestureSwitch.current])
 
   const animatedStyles = useAnimatedStyle(() => {
     if (dir === 'x') {
@@ -715,34 +774,32 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   })
 
-  function renderSwiper () {
-    const arrPages: Array<ReactNode> | ReactNode = renderItems()
-    return (<View style={[normalStyle, layoutStyle, styles.swiper]} {...layoutProps} {...innerProps}>
-      <Animated.View style={[{
-        flexDirection: dir === 'x' ? 'row' : 'column',
-        width: '100%',
-        height: '100%'
-      }, animatedStyles]}>
-        {wrapChildren({
-          children: arrPages
-        }, {
-          hasVarDec,
-          varContext: varContextRef.current,
-          textStyle,
-          textProps
-        })}
-      </Animated.View>
-      {showsPagination && renderPagination()}
-    </View>)
+  let finalComponent: JSX.Element
+  const arrPages: Array<ReactNode> | ReactNode = renderItems()
+  const mergeProps = Object.assign({
+    style: [normalStyle, layoutStyle, styles.swiper]
+  }, layoutProps, innerProps)
+  const animateComponent = createElement(Animated.View, {
+    style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
+  }, wrapChildren({
+    children: arrPages
+  }, {
+    hasVarDec,
+    varContext: varContextRef.current,
+    textStyle,
+    textProps
+  }))
+  const renderChildrens = showPagination ? [animateComponent, renderPagination()] : animateComponent
+  finalComponent = createElement(View, mergeProps, renderChildrens)
+  if (!disableGesture) {
+    finalComponent = createElement(GestureDetector, {
+      gesture: gestureHandler
+    }, finalComponent)
   }
-
-  if (children.length === 1) {
-    return renderSwiper()
-  } else {
-    return (<GestureDetector gesture={gestureHandler}>
-      {renderSwiper()}
-    </GestureDetector>)
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
   }
+  return finalComponent
 })
 SwiperWrapper.displayName = 'MpxSwiperWrapper'
 
