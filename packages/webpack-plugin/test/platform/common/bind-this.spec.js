@@ -79,7 +79,6 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   _sc("obj2");
 
-  String(_sc("obj3"), '123').b.c;
   _i(_sc("obj3"), function () {});
 
   _sc("obj5");
@@ -408,7 +407,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         0 ? tools(c, 1) : 1;
         c;
 
-        tools(d, tools(e))
+        tools(d, tools(e, 1))
         d;
         e;
         
@@ -438,7 +437,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   0 ? "" : 1;
   _sc("c");
 
-  tools(_sc("d"), tools(_sc("e")));
+  tools(_sc("d"), tools(_sc("e"), 1));
 
   _sc("a2");
   _sc("a3");
