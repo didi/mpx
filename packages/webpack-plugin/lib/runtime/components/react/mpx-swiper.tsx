@@ -693,11 +693,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }
     }
     const gesturePan = Gesture.Pan()
-    // swiper横向,当y轴滑动5像素手势失效；swiper纵向只响应swiper的滑动事件
-    if (dir === 'x') {
-      gesturePan.activeOffsetX([-1, 1]).failOffsetY([-5, 5])
-    }
-    gesturePan
       .onBegin((e) => {
         'worklet'
         if (!step.value) return
@@ -750,7 +745,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           handleEnd(eventData)
         }
-      }).withRef(swiperGestureRef)
+      })
+      .withRef(swiperGestureRef)
+    // swiper横向,当y轴滑动5像素手势失效；swiper纵向只响应swiper的滑动事件
+    if (dir === 'x') {
+      gesturePan.activeOffsetX([-2, 2]).failOffsetY([-5, 5])
+    } else {
+      gesturePan.activeOffsetY([-2, 2]).failOffsetX([-5, 5])
+    }
     // 手势协同2.0
     if (simultaneousHandlers && simultaneousHandlers.length) {
       gesturePan.simultaneousWithExternalGesture(...simultaneousHandlers)
