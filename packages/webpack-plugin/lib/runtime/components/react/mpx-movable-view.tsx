@@ -412,12 +412,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: changedTouches.x,
           y: changedTouches.y
         }
+        if (bindtouchstart || catchtouchstart) {
+          runOnJS(triggerStartOnJS)({ e })
+        }
+      })
+      .onStart(() => {
+        'worklet'
         initialViewPosition.value = {
           x: offsetX.value,
           y: offsetY.value
-        }
-        if (bindtouchstart || catchtouchstart) {
-          runOnJS(triggerStartOnJS)({ e })
         }
       })
       .onTouchesMove((e: GestureTouchEvent) => {
