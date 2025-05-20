@@ -114,17 +114,20 @@ export default function createApp (options) {
             shareTicket: '',
             referrerInfo: {}
           }
+        } else {
+          options = {}
         }
       }
       global.__mpxAppCbs.show.forEach((cb) => {
-        cb(options || {})
+        cb(options)
       })
     } else if (value === 'hide') {
+      const reason = appState.hideReason ?? 3
+      delete appState.hideReason
       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
-          reason: appState.hideReason ?? 3
+          reason
         })
-        delete appState.hideReason
       })
     }
   }, { sync: true })
@@ -246,13 +249,6 @@ export default function createApp (options) {
       }).filter(item => item)
     }
     return []
-  }
-
-  global.setCurrentPageStatus = function (status) {
-    const navigation = getFocusedNavigation()
-    if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-      global.__mpxPageStatusMap[navigation.pageId] = status
-    }
   }
 
   // 用于外层业务用来设置App的展示情况

@@ -638,10 +638,14 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
   }
 
-  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
-    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
-  </View>
+  const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
+    { style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
+  )
+
+  return createElement(View, backgroundProps,
+    show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))),
+    show && type === 'image' && renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage)
+  )
 }
 
 interface WrapChildrenConfig {
@@ -745,22 +749,14 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     ? catchtransitionend
     : isFunction(bindtransitionend)
       ? bindtransitionend
-      : null
-  const { enableStyleAnimation, animationStyle } = useAnimationHooks(
+      : undefined
+  const { enableStyleAnimation, animationStyle } = useAnimationHooks({
+    layoutRef,
+    animation,
+    enableAnimation,
+    style: viewStyle,
     transitionend
-      ? {
-          layoutRef,
-          animation,
-          enableAnimation,
-          style: viewStyle,
-          transitionend
-        }
-      : {
-          layoutRef,
-          animation,
-          enableAnimation,
-          style: viewStyle
-        })
+  })
 
   const innerProps = useInnerProps(
     extendObject(
