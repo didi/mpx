@@ -11,6 +11,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
 import CheckBox from './mpx-checkbox'
+import Portal from './mpx-portal'
 import { FormContext, FormFieldValue } from './context'
 import { useTransformStyle, useLayout, extendObject } from './utils'
 
@@ -62,7 +63,8 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     normalStyle,
     hasSelfPercent,
     setWidth,
-    setHeight
+    setHeight,
+    hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
     externalVarContext,
@@ -151,7 +153,7 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
     )
   }
 
-  return createElement(
+  let finalComponent: JSX.Element = createElement(
     Switch,
     extendObject({}, innerProps, {
       style: normalStyle,
@@ -161,6 +163,12 @@ const _Switch = forwardRef<HandlerRef<Switch, _SwitchProps>, _SwitchProps>((prop
       ios_backgroundColor: '#FFF'
     })
   )
+
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 _Switch.displayName = 'MpxSwitch'

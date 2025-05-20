@@ -51,7 +51,7 @@ function createEffect (proxy, components) {
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
@@ -467,16 +467,16 @@ export function PageWrapperHOC (WrappedComponent) {
     usePageStatus(navigation, currentPageId)
     useLayoutEffect(() => {
       navigation.setOptions({
-        title: pageConfig.navigationBarTitleText?.trim() || '',
+        title: currentPageConfig.navigationBarTitleText?.trim() || '',
         headerStyle: {
-          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+          backgroundColor: currentPageConfig.navigationBarBackgroundColor || '#000000'
         },
-        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        headerTintColor: currentPageConfig.navigationBarTextStyle || 'white'
       })
 
       // TODO 此部分内容在native-stack可删除，用setOptions设置
       if (__mpx_mode__ !== 'ios') {
-        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+        ReactNative.StatusBar.setBarStyle(currentPageConfig.barStyle || 'dark-content')
         ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
         ReactNative.StatusBar.setBackgroundColor('transparent')
       }
