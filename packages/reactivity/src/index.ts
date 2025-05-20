@@ -1,4 +1,7 @@
 export * from './const'
 export * from './dep'
+export * from './effect'
+export * from './effectScope'
+export * from './link'
 export * from './reactive'
 export * from './ref'

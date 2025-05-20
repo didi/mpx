@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-
 import { def } from '@mpxjs/utils'
 import { getObserver } from './reactive'
 

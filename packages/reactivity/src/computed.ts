@@ -47,7 +47,7 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
   ) {}
 
   get value(): T {
-    this.checkAndUpdate()
+    this.refreshComputed()
     if (activeSub) {
       addLink(this, activeSub)
     }
@@ -78,23 +78,15 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
   }
 
   /**
-   * Shallow Push Phase
-   */
-  private shallowNotify(): void {
-    for (let link = this.subs; link; link = link.nextSub) {
-      const sub = link.sub
-      sub.flags |= SubscriberFlags.Dirty
-    }
-  }
-
-  /**
    * Pull Phase - Bottom-up traversal to check and resolve final dirty state
    */
-  private checkAndUpdate(): void {
+  refreshComputed(): void {
     if (this.flags & SubscriberFlags.MaybeDirty) {
       for (let link = this.deps; link !== undefined; link = link.nextDep) {
-        const dep = link.dep as ComputedRefImpl
-        dep.checkAndUpdate()
+        const dep = link.dep as Dependency | ComputedRefImpl
+        if ('flags' in dep) {
+          dep.refreshComputed()
+        }
         if (this.flags & SubscriberFlags.Dirty) {
           break
         }
@@ -106,6 +98,16 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
       }
     }
     this.flags && (this.flags &= ~SubscriberFlags.MaybeDirty)
+  }
+
+  /**
+   * Shallow Push Phase
+   */
+  private shallowNotify(): void {
+    for (let link = this.subs; link; link = link.nextSub) {
+      const sub = link.sub
+      sub.flags |= SubscriberFlags.Dirty
+    }
   }
 
   private update(): boolean {

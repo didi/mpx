@@ -1,4 +1,5 @@
 import { extend, hasOwn, isPlainObject, warn } from '@mpxjs/utils'
+import { RefKey } from './const'
 import {
   type ShallowReactiveMarker,
   isReactive,
@@ -7,7 +8,6 @@ import {
   setForceTrigger,
   shallowReactive
 } from './reactive'
-import { RefKey } from './const'
 
 declare const RefSymbol: unique symbol
 export interface Ref<T = any, S = T> {

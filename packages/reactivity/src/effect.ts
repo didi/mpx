@@ -1,4 +1,7 @@
+import { warn } from '@mpxjs/utils'
 import { EffectFlags, SubscriberFlags } from './const'
+import { ComputedRefImpl } from './computed'
+import { Dependency } from './dep'
 import { type EffectScope, recordEffectScope } from './effectScope'
 import { type Link, removeLink } from './link'
 
@@ -28,6 +31,9 @@ export class ReactiveEffect<T = any> implements Subscriber {
   cleanup?: () => void = undefined
   onStop?: () => void
 
+  // for backwards compat
+  private deferStop = false
+
   constructor(
     public fn: () => T,
     public scheduler: EffectScheduler,
@@ -41,20 +47,28 @@ export class ReactiveEffect<T = any> implements Subscriber {
   }
 
   notify(): void {
+    // TODO cycle detection
+
     if (!(this.flags & EffectFlags.PAUSED)) {
-      this.scheduler()
+      if (this.scheduler) {
+        this.scheduler()
+      } else {
+        if (this.dirty) {
+          this.run()
+        }
+      }
     } else {
       this.flags |= EffectFlags.NOTIFIED
     }
   }
 
-  // run fn and return value
   run(): T {
     if (!this.active) {
-      // stopped during cleanup
       return this.fn()
     }
 
+    // TODO flag
+    this.flags |= EffectFlags.RUNNING
     cleanupEffect(this)
     const prevSub = setActiveSub(this)
     startTracking(this)
@@ -62,23 +76,21 @@ export class ReactiveEffect<T = any> implements Subscriber {
     try {
       return this.fn()
     } finally {
+      if (activeSub !== this) {
+        warn('Active effect was not restored correctly.')
+      }
       setActiveSub(prevSub)
       endTracking(this)
+      this.deferStop ? this.stop() : cleanupEffect(this)
+      // TODO flag
+      this.flags &= ~EffectFlags.RUNNING
     }
   }
 
-  // Clean up for dependency collection.
-  cleanupDeps() {
-    // TODO
-  }
-
-  // pass through deps for computed
-  depend() {
-    // TODO
-  }
-
   stop(): void {
-    if (this.active) {
+    if (activeSub === this) {
+      this.deferStop = true
+    } else if (this.active) {
       startTracking(this)
       endTracking(this)
       cleanupEffect(this)
@@ -88,9 +100,7 @@ export class ReactiveEffect<T = any> implements Subscriber {
   }
 
   pause(): void {
-    if (!(this.flags & EffectFlags.PAUSED)) {
-      this.flags |= EffectFlags.PAUSED
-    }
+    this.flags |= EffectFlags.PAUSED
   }
 
   resume(): void {
@@ -98,10 +108,26 @@ export class ReactiveEffect<T = any> implements Subscriber {
     if (flags & EffectFlags.PAUSED) {
       this.flags &= ~EffectFlags.PAUSED
     }
+    // TODO flags
     if (flags & EffectFlags.NOTIFIED) {
       this.flags &= ~EffectFlags.NOTIFIED
       this.notify()
     }
+  }
+
+  get dirty(): boolean {
+    if (this.flags & SubscriberFlags.MaybeDirty) {
+      for (let link = this.deps; link; link = link.nextDep) {
+        const dep = link.dep as Dependency | ComputedRefImpl
+        if ('flags' in dep) {
+          dep.refreshComputed()
+        }
+      }
+    }
+    if (this.flags & SubscriberFlags.Dirty) {
+      return true
+    }
+    return false
   }
 }
 

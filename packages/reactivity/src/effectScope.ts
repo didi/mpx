@@ -1,6 +1,6 @@
+import { EffectFlags } from './const'
 import { type ReactiveEffect } from './effect'
 import { Link } from './link'
-import { EffectFlags } from './const'
 
 export let activeEffectScope: EffectScope | undefined
 

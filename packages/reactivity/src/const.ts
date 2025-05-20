@@ -1,7 +1,9 @@
+/** @internal key for Ref */
 export const RefKey = '__composition_api_ref_key__'
+/** @internal key for Observer */
 export const ObKey = '__ob__'
-export const DefaultLocale = 'zh-CN'
 
+/** @internal */
 export const enum PausedState {
   Paused,
   Dirty,
@@ -26,6 +28,7 @@ export const enum SubscriberFlags {
  * @internal
  */
 export const enum EffectFlags {
+  RUNNING = 1 << 11,
   ALLOW_RECURSE = 1 << 7,
   PAUSED = 1 << 8,
   NOTIFIED = 1 << 9,

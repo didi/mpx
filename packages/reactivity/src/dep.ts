@@ -1,5 +1,5 @@
-import { type Link, addLink } from './link'
 import { activeSub } from './effect'
+import { type Link, addLink } from './link'
 
 export interface Dependency {
   subs: Link | undefined
