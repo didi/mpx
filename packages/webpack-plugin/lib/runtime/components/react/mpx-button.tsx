@@ -42,7 +42,8 @@ import {
   TextStyle,
   Animated,
   Easing,
-  NativeSyntheticEvent
+  NativeSyntheticEvent,
+  useAnimatedValue
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -156,7 +157,7 @@ const timer = (data: any, time = 3000) => new Promise((resolve) => {
 })
 
 const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
-  const image = useRef(new Animated.Value(0)).current
+  const image = useAnimatedValue(0)
 
   const rotate = image.interpolate({
     inputRange: [0, 1],
@@ -371,14 +372,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
-      {
-        ref: nodeRef,
-        style: extendObject({}, innerStyle, layoutStyle)
-      },
+      {},
+      props,
       layoutProps,
       {
+        ref: nodeRef,
+        style: extendObject({}, innerStyle, layoutStyle),
         bindtap: !disabled && onTap
       }
     ),

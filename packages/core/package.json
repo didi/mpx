@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.10.4-beta.3",
+  "version": "2.10.4-beta.12",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -25,7 +25,7 @@
   },
   "peerDependencies": {
     "@d11/react-native-fast-image": "*",
-    "@mpxjs/api-proxy": "^2.9.0",
+    "@mpxjs/api-proxy": "^2.10.4-beta.0",
     "@mpxjs/store": "^2.9.0",
     "@react-navigation/native": "*",
     "@react-navigation/native-stack": "*",
