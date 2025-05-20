@@ -9,6 +9,7 @@ import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
 import { useTransformStyle, useLayout, extendObject } from '../utils'
 import { WebView, WebViewMessageEvent } from 'react-native-webview'
 import { generateHTML } from './html'
+import Portal from '../mpx-portal'
 
 type Node = {
   type: 'node' | 'text'
@@ -69,7 +70,8 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     normalStyle,
     hasSelfPercent,
     setWidth,
-    setHeight
+    setHeight,
+    hasPositionFixed
   } = useTransformStyle(Object.assign({
     width: '100%',
     height: webViewHeight
@@ -91,16 +93,25 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     layoutRef
   })
 
-  const innerProps = useInnerProps(props, extendObject({
-    ref: nodeRef,
-    style: extendObject(normalStyle, layoutStyle)
-  }, layoutProps), [], {
-    layoutRef
-  })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject(normalStyle, layoutStyle)
+      }
+    ),
+    [],
+    {
+      layoutRef
+    }
+  )
 
   const html: string = typeof nodes === 'string' ? nodes : jsonToHtmlStr(nodes)
 
-  return createElement(View, innerProps,
+  let finalComponent: JSX.Element = createElement(View, innerProps,
     createElement(WebView, {
       source: { html: generateHTML(html) },
       onMessage: (event: WebViewMessageEvent) => {
@@ -108,6 +119,12 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
       }
     })
   )
+
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 _RichText.displayName = 'mpx-rich-text'

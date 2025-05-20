@@ -51,7 +51,7 @@ function createEffect (proxy, components) {
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
@@ -392,7 +392,7 @@ function usePageEffect (mpxProxy, pageId) {
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy)
           }
-        })
+        }, { sync: true })
       }
     }
     return () => {
@@ -467,16 +467,16 @@ export function PageWrapperHOC (WrappedComponent) {
     usePageStatus(navigation, currentPageId)
     useLayoutEffect(() => {
       navigation.setOptions({
-        title: pageConfig.navigationBarTitleText?.trim() || '',
+        title: currentPageConfig.navigationBarTitleText?.trim() || '',
         headerStyle: {
-          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+          backgroundColor: currentPageConfig.navigationBarBackgroundColor || '#000000'
         },
-        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        headerTintColor: currentPageConfig.navigationBarTextStyle || 'white'
       })
 
       // TODO 此部分内容在native-stack可删除，用setOptions设置
       if (__mpx_mode__ !== 'ios') {
-        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+        ReactNative.StatusBar.setBarStyle(currentPageConfig.barStyle || 'dark-content')
         ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
         ReactNative.StatusBar.setBackgroundColor('transparent')
       }
@@ -656,8 +656,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return () => {
         proxy.unmounted()
         proxy.target.__resetInstance()
+        // 热更新下会销毁旧页面并创建新页面组件，且旧页面组件销毁时机晚于新页面组件创建，此时__mpxPagesMap中存储的为新页面组件，不应该删除
+        // 所以需要判断路由表中存储的页面实例是否为当前页面实例
         if (type === 'page') {
-          delete global.__mpxPagesMap[props.route.key]
+          const routeKey = props.route.key
+          if (global.__mpxPagesMap[routeKey] && global.__mpxPagesMap[routeKey][0] === instance) {
+            delete global.__mpxPagesMap[routeKey]
+          }
         }
       }
     }, [])
