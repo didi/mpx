@@ -91,7 +91,7 @@ function failHandle (result, fail, complete) {
 
 function getCurrentPageId () {
   const currentInstance = getCurrentInstance()
-  const id = currentInstance?.getPageId() || getFocusedNavigation()?.pageId || null
+  const id = currentInstance?.proxy?.getPageId() || getFocusedNavigation()?.pageId || null
   return id
 }
 
