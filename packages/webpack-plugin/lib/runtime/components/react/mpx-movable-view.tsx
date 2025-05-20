@@ -539,8 +539,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
     } else if (direction === 'vertical') {
       gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
-    } else if (direction === 'all') {
-      gesturePan.activeOffsetX([-5, 5]).activeOffsetY([-5, 5])
     }
 
     if (simultaneousHandlers && simultaneousHandlers.length) {
