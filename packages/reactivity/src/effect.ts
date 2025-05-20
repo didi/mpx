@@ -77,9 +77,14 @@ export class ReactiveEffect<T = any> implements Subscriber {
     // TODO
   }
 
-  // Remove self from all dependencies' subscriber list.
-  stop() {
-    // TODO
+  stop(): void {
+    if (this.active) {
+      startTracking(this)
+      endTracking(this)
+      cleanupEffect(this)
+      this.onStop && this.onStop()
+      this.flags |= EffectFlags.STOP
+    }
   }
 
   pause(): void {

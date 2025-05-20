@@ -65,9 +65,10 @@ module.exports = {
     }, {
       files: ['packages/reactivity/src/**/*.ts'],
       rules: {
+        '@typescript-eslint/no-this-alias': 0,
         'sort-imports': ['error', { ignoreDeclarationSort: true }],
-        'space-before-function-paren': 'off',
-        'no-useless-constructor': 'off'
+        'space-before-function-paren': 0,
+        'no-useless-constructor': 0
       }
     }
   ]

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-this-alias */
 import { type ReactiveEffect } from './effect'
 import { Link } from './link'
 import { EffectFlags } from './const'

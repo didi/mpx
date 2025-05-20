@@ -66,6 +66,9 @@ function isValidLink(checkLink: Link, sub: Subscriber): boolean {
     if (link === checkLink) {
       return true
     }
+    if (link === sub.depsTail) {
+      break
+    }
   }
   return false
 }
