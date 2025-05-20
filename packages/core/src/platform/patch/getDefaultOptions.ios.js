@@ -454,8 +454,6 @@ function getLayoutData (headerHeight) {
   const isLandscape = screenDimensions.height < screenDimensions.width
   const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
   return {
-    x: 0,
-    y: headerHeight,
     left: 0,
     top: headerHeight,
     // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
