@@ -18,7 +18,7 @@ module.exports = function (source, name) {
     let n = 0
     startIndex = match.index
     endIndex = startIndex + matchRes.length
-    let html = source.substr(endIndex)
+    let html = source.slice(endIndex)
     while (html) {
       const matchRes = html.match(reg)
       if (matchRes.length) {
@@ -37,11 +37,11 @@ module.exports = function (source, name) {
           n++
         }
         endIndex += cutLength
-        html = html.substr(cutLength)
+        html = html.slice(cutLength)
       }
     }
   } else {
     return ''
   }
-  return source.substring(startIndex, endIndex)
+  return source.slice(startIndex, endIndex)
 }
