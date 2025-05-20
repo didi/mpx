@@ -4,14 +4,10 @@ export default function pageRouteMixin (mixinType) {
     return {
       beforeCreate () {
         this.route = this.$options.__mpxPageRoute || ''
-      },
-      computed: {
-        _eventChannel () {
-          const mpxEventChannel = global.__mpxEventChannel || {}
-          if (mpxEventChannel.route === this.route) {
-            return mpxEventChannel.eventChannel
-          }
-          return {}
+        this._eventChannel = {}
+        const mpxEventChannel = global.__mpxEventChannel || {}
+        if (mpxEventChannel.route === this.route) {
+          this._eventChannel = mpxEventChannel.eventChannel
         }
       },
       methods: {
