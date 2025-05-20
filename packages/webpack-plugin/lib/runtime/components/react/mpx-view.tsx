@@ -582,7 +582,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   }
   return <View key='backgroundImage' onLayout={onLayout} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
     {show && type === 'linear' && <LinearGradient useAngle={true} {...finalProps} />}
-    {show && type === 'image' && (renderImage(finalProps), enableFastImage)}
+    {show && type === 'image' && (renderImage(finalProps, enableFastImage))}
   </View>
 }
 
