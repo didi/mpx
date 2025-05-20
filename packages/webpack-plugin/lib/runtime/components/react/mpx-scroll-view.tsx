@@ -40,6 +40,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
+import Portal from './mpx-portal'
 
 interface ScrollViewProps {
   children?: ReactNode
@@ -194,6 +195,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasVarDec,
     varContextRef,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
@@ -768,7 +770,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     )
   )
 
-  return hasRefresher ? withRefresherScrollView : commonScrollView
+  let scrollViewComponent = hasRefresher ? withRefresherScrollView : commonScrollView
+
+  if (hasPositionFixed) {
+    scrollViewComponent = createElement(Portal, null, scrollViewComponent)
+  }
+  return scrollViewComponent
 })
 
 _ScrollView.displayName = 'MpxScrollView'
