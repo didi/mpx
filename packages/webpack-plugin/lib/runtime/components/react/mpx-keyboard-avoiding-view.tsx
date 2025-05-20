@@ -1,7 +1,6 @@
-import React, { ReactNode, useContext, useEffect, useMemo } from 'react'
-import { DimensionValue, EmitterSubscription, Keyboard, Platform, View, ViewStyle } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated'
-import { GestureDetector, Gesture } from 'react-native-gesture-handler'
+import React, { ReactNode, useContext, useEffect } from 'react'
+import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle, NativeSyntheticEvent, NativeTouchEvent } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
 import { KeyboardAvoidContext } from './context'
 import { isIOS } from './utils'
 
@@ -19,25 +18,10 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const basic = useSharedValue('auto')
   const keyboardAvoid = useContext(KeyboardAvoidContext)
 
-  const dismiss = () => {
-    Keyboard.isVisible() && Keyboard.dismiss()
-  }
-
-  const gesture = useMemo(() => {
-    return Gesture.Tap()
-      .onEnd(() => {
-        dismiss()
-      }).runOnJS(true)
-  }, [])
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return Object.assign(
-      {
-        transform: [{ translateY: -offset.value }]
-      },
-      isIOS ? {} : { flexBasis: basic.value as DimensionValue }
-    )
-  })
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -offset.value }],
+    flexBasis: basic.value as DimensionValue
+  }))
 
   const resetKeyboard = () => {
     if (keyboardAvoid?.current) {
@@ -45,6 +29,12 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     }
     offset.value = withTiming(0, { duration, easing })
     basic.value = 'auto'
+  }
+
+  const onTouchEnd = ({ nativeEvent }: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
+    if (nativeEvent.origin !== 'input') {
+      Keyboard.isVisible() && Keyboard.dismiss()
+    }
   }
 
   useEffect(() => {
@@ -58,11 +48,16 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
           const { ref, cursorSpacing = 0 } = keyboardAvoid.current
           setTimeout(() => {
             ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-              const aboveOffset = pageY + height - endCoordinates.screenY
+              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
               const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
               const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
               const value = aboveOffset > 0 ? belowValue : aboveValue
-              offset.value = withTiming(value, { duration, easing })
+              offset.value = withTiming(value, { duration, easing }, (finished) => {
+                if (finished) {
+                  // Set flexBasic after animation to trigger re-layout and reset layout information
+                  basic.value = '99.99%'
+                }
+              })
             })
           })
         }),
@@ -82,11 +77,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
             const value = aboveOffset > 0 ? belowValue : aboveValue
             offset.value = withTiming(value, { duration, easing }, (finished) => {
               if (finished) {
-                /**
-                 * In the Android environment, the layout information is not synchronized after the animation,
-                 * which results in the inability to correctly trigger element events.
-                 * Here, we utilize flexBasic to proactively trigger a re-layout
-                 */
+                // Set flexBasic after animation to trigger re-layout and reset layout information
                 basic.value = '99.99%'
               }
             })
@@ -102,8 +93,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   }, [keyboardAvoid])
 
   return (
-    // <GestureDetector gesture={gesture}>
-    <View style={style}>
+    <View style={style} onTouchEnd={onTouchEnd}>
       <Animated.View
         style={[
           contentContainerStyle,
@@ -113,7 +103,6 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         {children}
       </Animated.View>
     </View>
-    // </GestureDetector>
   )
 }
 

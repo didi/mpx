@@ -6,6 +6,7 @@
  */
 import { Text, TextStyle, TextProps } from 'react-native'
 import { useRef, forwardRef, ReactNode, JSX, createElement } from 'react'
+import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, wrapChildren, extendObject } from './utils'
@@ -38,7 +39,8 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   const {
     normalStyle,
     hasVarDec,
-    varContextRef
+    varContextRef,
+    hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
     externalVarContext,
@@ -68,13 +70,19 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     ]
   )
 
-  return createElement(Text, innerProps, wrapChildren(
+  let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     props,
     {
       hasVarDec,
       varContext: varContextRef.current
     }
   ))
+
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 _Text.displayName = 'MpxText'
