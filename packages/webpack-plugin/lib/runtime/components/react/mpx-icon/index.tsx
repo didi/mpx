@@ -17,6 +17,7 @@ import Cancel from './icons/cancel.png'
 import Download from './icons/download.png'
 import Search from './icons/search.png'
 import Clear from './icons/clear.png'
+import Portal from '../mpx-portal'
 
 export type IconType =
   | 'success'
@@ -75,6 +76,7 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
     const styleObj = extendObject({}, defaultStyle, style)
 
     const {
+      hasPositionFixed,
       hasSelfPercent,
       normalStyle,
       setWidth,
@@ -87,14 +89,15 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const innerProps = useInnerProps(
-      props,
       extendObject(
+        {},
+        props,
+        layoutProps,
         {
           ref: nodeRef,
           source,
           style: extendObject({}, normalStyle, layoutStyle, { tintColor: color })
-        },
-        layoutProps
+        }
       ),
       [],
       {
@@ -102,7 +105,13 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
       }
     )
 
-    return createElement(Image, innerProps)
+    const finalComponent = createElement(Image, innerProps)
+
+    if (hasPositionFixed) {
+      return createElement(Portal, null, finalComponent)
+    }
+
+    return finalComponent
   }
 )
 

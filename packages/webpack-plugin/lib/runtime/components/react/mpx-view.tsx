@@ -13,7 +13,7 @@ import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
-import { error } from '@mpxjs/utils'
+import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
@@ -36,6 +36,8 @@ export interface _ViewProps extends ViewProps {
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  catchtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 type Handler = (...args: any[]) => void
@@ -636,10 +638,14 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
   }
 
-  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} />}
-    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
-  </View>
+  const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
+    { style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
+  )
+
+  return createElement(View, backgroundProps,
+    show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))),
+    show && type === 'image' && renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage)
+  )
 }
 
 interface WrapChildrenConfig {
@@ -683,7 +689,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    animation
+    animation,
+    catchtransitionend,
+    bindtransitionend
   } = props
 
   // 默认样式
@@ -737,28 +745,40 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
-
+  const transitionend = isFunction(catchtransitionend)
+    ? catchtransitionend
+    : isFunction(bindtransitionend)
+      ? bindtransitionend
+      : undefined
   const { enableStyleAnimation, animationStyle } = useAnimationHooks({
-    enableAnimation,
+    layoutRef,
     animation,
-    style: viewStyle
+    enableAnimation,
+    style: viewStyle,
+    transitionend
   })
 
   const innerProps = useInnerProps(
-    props,
-    extendObject({
-      ref: nodeRef,
-      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
-    },
-    layoutProps
-    ), [
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
+      }
+
+    ),
+    [
       'hover-start-time',
       'hover-stay-time',
       'hover-style',
       'hover-class'
-    ], {
+    ],
+    {
       layoutRef
-    })
+    }
+  )
 
   const childNode = wrapWithChildren(props, {
     hasVarDec,
