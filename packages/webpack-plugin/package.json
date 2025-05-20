@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.9.70",
+  "version": "2.10.5",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -28,7 +28,7 @@
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/utils": "^2.9.70",
+    "@mpxjs/utils": "^2.10.4",
     "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
@@ -78,12 +78,12 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "rimraf ./lib/runtime/components/react/dist && tsc"
+    "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
+    "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
   },
   "devDependencies": {
-    "@ant-design/react-native": "^5.2.2",
     "@d11/react-native-fast-image": "^8.6.12",
-    "@mpxjs/api-proxy": "^2.9.70",
+    "@mpxjs/api-proxy": "^2.10.5",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/react": "^18.2.79",
@@ -93,6 +93,7 @@
     "react-native-reanimated": "^3.15.2",
     "react-native-safe-area-context": "^4.12.0",
     "react-native-svg": "^15.8.0",
+    "react-native-video": "^6.9.0",
     "react-native-webview": "^13.12.2",
     "rimraf": "^6.0.1"
   },

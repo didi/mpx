@@ -13,8 +13,9 @@ function logCallbackNotFound (context, callbackName) {
 function handleEvent (context, $event, isCapture) {
   if (typeof Mpx.config.proxyEventHandler === 'function') {
     try {
-      Mpx.config.proxyEventHandler($event)
-    } catch (e) {}
+      Mpx.config.proxyEventHandler($event, context)
+    } catch (e) {
+    }
   }
   const location = context.__mpxProxy.options.mpxFileResource
   const type = $event.type
@@ -31,18 +32,16 @@ function handleEvent (context, $event, isCapture) {
   } else if (/-([a-z])/.test(type)) {
     fallbackType = dash2hump(type)
   } else if (__mpx_mode__ === 'ali') {
-    fallbackType = type.replace(/^./, (i) => i.toLowerCase())
+    fallbackType = type.replace(/^./, i => i.toLowerCase())
   }
   const target = $event.currentTarget || $event.target
   if (!target) {
-    error(
-      `[${type}] event object must have [currentTarget/target] property!`,
-      location
-    )
+    error(`[${type}] event object must have [currentTarget/target] property!`, location)
     return
   }
   const mode = isCapture ? 'capture' : 'bubble'
   const eventConfigs = target.dataset.eventconfigs?.[mode] || {}
+
   const curEventConfig = eventConfigs[type] || eventConfigs[fallbackType] || []
   // 如果有 mpxuid 说明是运行时组件，那么需要设置对应的上下文
   const rootRuntimeContext = contextMap.get(target.dataset.mpxuid)
@@ -55,16 +54,15 @@ function handleEvent (context, $event, isCapture) {
       $event = $event.detail.data
     }
     if (callbackName) {
-      const params =
-        item.length > 1
-          ? item.slice(1).map((item) => {
-              if (item === '__mpx_event__') {
-                return $event
-              } else {
-                return item
-              }
-            })
-          : [$event]
+      const params = item.length > 1
+        ? item.slice(1).map(item => {
+          if (item === '__mpx_event__') {
+            return $event
+          } else {
+            return item
+          }
+        })
+      : [$event]
       if (typeof runtimeContext[callbackName] === 'function') {
         returnedValue = runtimeContext[callbackName].apply(
           runtimeContext,

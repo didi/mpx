@@ -1,12 +1,11 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
-import { LayoutChangeEvent, TextStyle, ImageProps, Image, Platform } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
-import { VarContext, ScrollViewContext } from './context'
+import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
-import type { AnyFunc, ExtendedFunctionComponent, ExtendedViewStyle } from './types/common'
+import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
 
@@ -21,10 +20,11 @@ export const HIDDEN_STYLE = {
   opacity: 0
 }
 
-declare const __mpx_mode__: 'ios' | 'android'
+declare const __mpx_mode__: 'ios' | 'android' | 'harmony'
 
 export const isIOS = __mpx_mode__ === 'ios'
 export const isAndroid = __mpx_mode__ === 'android'
+export const isHarmony = __mpx_mode__ === 'harmony'
 
 const varDecRegExp = /^--/
 const varUseRegExp = /var\(/
@@ -32,6 +32,7 @@ const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
 const envUseRegExp = /env\(/
+const filterRegExp = /(calc|env|%)/
 
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
@@ -40,9 +41,14 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-left': 'left'
 }
 
-function getSafeAreaInset (name: string, navigation: Record<string, any>) {
+function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
   return insets[safeAreaInsetMap[name]]
+}
+
+export function useNavigation (): Record<string, any> | undefined {
+  const { navigation } = useContext(RouteContext) || {}
+  return navigation
 }
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
@@ -76,20 +82,6 @@ export const useUpdateEffect = (effect: any, deps: any) => {
   }, deps)
 }
 
-/**
- * 解析行内样式
- * @param inlineStyle
- * @returns
- */
-export const parseInlineStyle = (inlineStyle = ''): Record<string, string> => {
-  return inlineStyle.split(';').reduce((styleObj, style) => {
-    const [k, v, ...rest] = style.split(':')
-    if (rest.length || !v || !k) return styleObj
-    const key = k.trim().replace(/-./g, c => c.substring(1).toUpperCase())
-    return extendObject(styleObj, { [key]: global.__formatValue(v.trim()) })
-  }, {})
-}
-
 export const parseUrl = (cssUrl = '') => {
   if (!cssUrl) return
   const match = cssUrl.match(URL_REGEX)
@@ -108,7 +100,7 @@ export function isText (ele: ReactNode): ele is ReactElement {
   if (isValidElement(ele)) {
     const displayName = (ele.type as ExtendedFunctionComponent)?.displayName
     const isCustomText = (ele.type as ExtendedFunctionComponent)?.isCustomText
-    return displayName === 'MpxText' || displayName === 'MpxSimpleText' || displayName === 'Text' || !!isCustomText
+    return displayName === 'MpxText' || displayName === 'MpxSimpleText' || displayName === 'MpxInlineText' || displayName === 'Text' || !!isCustomText
   }
   return false
 }
@@ -177,6 +169,10 @@ interface PercentConfig {
   parentHeight?: number
 }
 
+interface PositionMeta {
+  hasPositionFixed: boolean
+}
+
 function resolvePercent (value: string | number | undefined, key: string, percentConfig: PercentConfig): string | number | undefined {
   if (!(typeof value === 'string' && PERCENT_REGEX.test(value))) return value
   let base
@@ -231,15 +227,16 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   return global.__formatValue(replaced.source())
 }
 
-function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>) {
+function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>, visitOther: (arg: VisitorArg) => void) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
       target[key] = resolveVar(value, varContext)
+      visitOther({ target, key, value: target[key], keyPath: varKeyPath })
     })
   })
 }
 
-function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any>) {
+function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any> | undefined) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
       const parsed = parseFunc(value, 'env')
@@ -276,13 +273,17 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
-const stringifyProps = ['fontWeight']
 function transformStringify (styleObj: Record<string, any>) {
-  stringifyProps.forEach((prop) => {
-    if (isNumber(styleObj[prop])) {
-      styleObj[prop] = '' + styleObj[prop]
-    }
-  })
+  if (isNumber(styleObj.fontWeight)) {
+    styleObj.fontWeight = '' + styleObj.fontWeight
+  }
+}
+
+function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
+  if (styleObj.position === 'fixed') {
+    styleObj.position = 'absolute'
+    meta.hasPositionFixed = true
+  }
 }
 
 interface TransformStyleConfig {
@@ -297,8 +298,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
-  const normalStyleRef = useRef<Record<string, any>>({})
-  const normalStyleChangedRef = useRef(false)
   let hasVarDec = false
   let hasVarUse = false
   let hasSelfPercent = false
@@ -311,7 +310,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const [height, setHeight] = useState(0)
   const navigation = useNavigation()
 
-  function varVisitor ({ key, value, keyPath }: VisitorArg) {
+  function varVisitor ({ target, key, value, keyPath }: VisitorArg) {
     if (keyPath.length === 1) {
       if (unoVarDecRegExp.test(key)) {
         unoVarStyle[key] = value
@@ -331,7 +330,36 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       } else if (varUseRegExp.test(value)) {
         hasVarUse = true
         varKeyPaths.push(keyPath.slice())
+      } else {
+        visitOther({ target, key, value, keyPath })
       }
+    }
+  }
+
+  function envVisitor ({ value, keyPath }: VisitorArg) {
+    if (envUseRegExp.test(value)) {
+      envKeyPaths.push(keyPath.slice())
+    }
+  }
+
+  function calcVisitor ({ value, keyPath }: VisitorArg) {
+    if (calcUseRegExp.test(value)) {
+      calcKeyPaths.push(keyPath.slice())
+    }
+  }
+
+  function percentVisitor ({ key, value, keyPath }: VisitorArg) {
+    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+      hasSelfPercent = true
+      percentKeyPaths.push(keyPath.slice())
+    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+      percentKeyPaths.push(keyPath.slice())
+    }
+  }
+
+  function visitOther ({ target, key, value, keyPath }: VisitorArg) {
+    if (filterRegExp.test(value)) {
+      [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
 
@@ -354,89 +382,61 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     if (diffAndCloneA(varContextRef.current, newVarContext).diff) {
       varContextRef.current = newVarContext
     }
-    transformVar(normalStyle, varKeyPaths, varContextRef.current)
+    transformVar(normalStyle, varKeyPaths, varContextRef.current, visitOther)
   }
 
   // apply unocss var
   if (unoVarKeyPaths.length) {
-    transformVar(normalStyle, unoVarKeyPaths, unoVarStyle)
+    transformVar(normalStyle, unoVarKeyPaths, unoVarStyle, visitOther)
   }
 
-  const { clone, diff } = diffAndCloneA(normalStyle, normalStyleRef.current)
-  if (diff) {
-    normalStyleRef.current = clone
-    normalStyleChangedRef.current = !normalStyleChangedRef.current
+  const percentConfig = {
+    width,
+    height,
+    fontSize: normalStyle.fontSize,
+    parentWidth,
+    parentHeight,
+    parentFontSize
   }
 
-  const memoResult = useMemo(() => {
-    // transform can be memoized
-    function envVisitor ({ value, keyPath }: VisitorArg) {
-      if (envUseRegExp.test(value)) {
-        envKeyPaths.push(keyPath.slice())
-      }
-    }
+  const positionMeta = {
+    hasPositionFixed: false
+  }
 
-    function calcVisitor ({ value, keyPath }: VisitorArg) {
-      if (calcUseRegExp.test(value)) {
-        calcKeyPaths.push(keyPath.slice())
-      }
-    }
-
-    function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-      if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
-        hasSelfPercent = true
-        percentKeyPaths.push(keyPath.slice())
-      } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
-        percentKeyPaths.push(keyPath.slice())
-      }
-    }
-
-    // traverse env & calc & percent
-    traverseStyle(normalStyle, [envVisitor, percentVisitor, calcVisitor])
-
-    const percentConfig = {
-      width,
-      height,
-      fontSize: normalStyle.fontSize,
-      parentWidth,
-      parentHeight,
-      parentFontSize
-    }
-
-    // apply env
-    transformEnv(normalStyle, envKeyPaths, navigation)
-    // apply percent
-    transformPercent(normalStyle, percentKeyPaths, percentConfig)
-    // apply calc
-    transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
-      if (PERCENT_REGEX.test(value)) {
-        const resolved = resolvePercent(value, key, percentConfig)
-        return typeof resolved === 'number' ? resolved : 0
+  // apply env
+  transformEnv(normalStyle, envKeyPaths, navigation)
+  // apply percent
+  transformPercent(normalStyle, percentKeyPaths, percentConfig)
+  // apply calc
+  transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
+    if (PERCENT_REGEX.test(value)) {
+      const resolved = resolvePercent(value, key, percentConfig)
+      return typeof resolved === 'number' ? resolved : 0
+    } else {
+      const formatted = global.__formatValue(value)
+      if (typeof formatted === 'number') {
+        return formatted
       } else {
-        const formatted = global.__formatValue(value)
-        if (typeof formatted === 'number') {
-          return formatted
-        } else {
-          warn('calc() only support number, px, rpx, % temporarily.')
-          return 0
-        }
+        warn('calc() only support number, px, rpx, % temporarily.')
+        return 0
       }
-    })
-    // transform number enum stringify
-    transformStringify(normalStyle)
-
-    return {
-      normalStyle,
-      hasSelfPercent
     }
-  }, [normalStyleChangedRef.current, width, height, parentWidth, parentHeight, parentFontSize])
+  })
 
-  return extendObject({
+  // apply position
+  transformPosition(normalStyle, positionMeta)
+  // transform number enum stringify
+  transformStringify(normalStyle)
+
+  return {
     hasVarDec,
     varContextRef,
     setWidth,
-    setHeight
-  }, memoResult)
+    setHeight,
+    normalStyle,
+    hasSelfPercent,
+    hasPositionFixed: positionMeta.hasPositionFixed
+  }
 }
 
 export interface VisitorArg {
@@ -453,12 +453,7 @@ export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(a
       target.forEach((value, index) => {
         const key = String(index)
         keyPath.push(key)
-        visitors.forEach(visitor => visitor({
-          target,
-          key,
-          value,
-          keyPath
-        }))
+        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
         traverse(value)
         keyPath.pop()
       })
@@ -518,18 +513,20 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   const hasLayoutRef = useRef(false)
   const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
+  const navigation = useNavigation()
   const enableOffset = props['enable-offset']
   if (hasSelfPercent || onLayout || enableOffset) {
     layoutProps.onLayout = (e: LayoutChangeEvent) => {
       hasLayoutRef.current = true
       if (hasSelfPercent) {
         const { width, height } = e?.nativeEvent?.layout || {}
-        setWidth(width || 0)
-        setHeight(height || 0)
+        setWidth && setWidth(width || 0)
+        setHeight && setHeight(height || 0)
       }
       if (enableOffset) {
         nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-          layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
+          const { y: navigationY = 0 } = navigation?.layout || {}
+          layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft, offsetTop: offsetTop - navigationY }
         })
       }
       onLayout && onLayout(e)
@@ -628,7 +625,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
 
 export const extendObject = Object.assign
 
-export function getCurrentPage (pageId: number | null) {
+export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return
   const pages = global.getCurrentPages()
   return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
@@ -651,7 +648,7 @@ export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array
   }, {})
 }
 
-export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled } : { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
+export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled }: { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
   const enableHoverRef = useRef(enableHover)
   if (enableHoverRef.current !== enableHover) {
     error('[Mpx runtime error]: hover-class use should be stable in the component lifecycle.')

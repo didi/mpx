@@ -7,7 +7,9 @@ module.exports = function getSpec ({ warn, error }) {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
     // React Native android 不支持的 CSS property
-    android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
+    android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
+    // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
+    harmony: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
   // var(xx)
   const cssVariableExp = /var\(/
@@ -47,7 +49,7 @@ module.exports = function getSpec ({ warn, error }) {
     'flex-wrap': ['wrap', 'nowrap', 'wrap-reverse'],
     'pointer-events': ['auto', 'box-none', 'box-only', 'none'],
     'vertical-align': ['auto', 'top', 'bottom', 'center'],
-    position: ['relative', 'absolute'],
+    position: ['relative', 'absolute', 'fixed'],
     'font-variant': ['small-caps', 'oldstyle-nums', 'lining-nums', 'tabular-nums', 'proportional-nums'],
     'text-align': ['left', 'right', 'center', 'justify'],
     'font-style': ['normal', 'italic'],
@@ -182,8 +184,9 @@ module.exports = function getSpec ({ warn, error }) {
     'border-top': ['borderTopWidth', 'borderTopStyle', 'borderTopColor'],
     // 仅支持 width | style | color 这种排序
     'border-bottom': ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
+    // 0.76 及以上版本RN支持 box-shadow，实测0.77版本drn红米note12pro Android12 不支持内阴影，其他表现和web一致
     // 仅支持 offset-x | offset-y | blur-radius | color 排序
-    'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
+    // 'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
     // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
     'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
     // flex-grow | flex-shrink | flex-basis
@@ -395,22 +398,22 @@ module.exports = function getSpec ({ warn, error }) {
           case 'skewY':
           case 'perspective':
             // 单个值处理
+            // rotate 处理成 rotateZ
+            key = key === 'rotate' ? 'rotateZ' : key
             transform.push({ [key]: val })
             break
           case 'matrix':
-          case 'matrix3d':
             transform.push({ [key]: parseValues(val, ',').map(val => +val) })
             break
           case 'translate':
           case 'scale':
           case 'skew':
-          case 'rotate3d': // x y z angle
           case 'translate3d': // x y 支持 z不支持
           case 'scale3d': // x y 支持 z不支持
           {
             // 2 个以上的值处理
             key = key.replace('3d', '')
-            const vals = parseValues(val, ',').splice(0, key === 'rotate' ? 4 : 3)
+            const vals = parseValues(val, ',').splice(0, 3)
             // scale(.5) === scaleX(.5) scaleY(.5)
             if (vals.length === 1 && key === 'scale') {
               vals.push(vals[0])
@@ -426,6 +429,8 @@ module.exports = function getSpec ({ warn, error }) {
           }
           case 'translateZ':
           case 'scaleZ':
+          case 'rotate3d': // x y z angle
+          case 'matrix3d':
           default:
             // 不支持的属性处理
             unsupportedPropError({ prop, value, selector }, { mode })
@@ -521,70 +526,79 @@ module.exports = function getSpec ({ warn, error }) {
     return { prop, value: values[0].trim() }
   }
 
-  const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
-    value = value.trim()
-    if (value === 'none') {
-      return false
-    }
-    const cssMap = formatAbbreviation({ prop, value, selector }, { mode })
-    if (mode === 'android') return cssMap
-    // ios 阴影需要额外设置 shadowOpacity=1
-    cssMap.push({
-      prop: 'shadowOpacity',
-      value: 1
-    })
-    return cssMap
-  }
+  // const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
+  //   value = value.trim()
+  //   if (value === 'none') {
+  //     return false
+  //   }
+  //   const cssMap = formatAbbreviation({ prop, value, selector }, { mode })
+  //   if (mode === 'android' || mode === 'harmony') return cssMap
+  //   // ios 阴影需要额外设置 shadowOpacity=1
+  //   cssMap.push({
+  //     prop: 'shadowOpacity',
+  //     value: 1
+  //   })
+  //   return cssMap
+  // }
 
   return {
-    supportedModes: ['ios', 'android'],
+    supportedModes: ['ios', 'android', 'harmony'],
     rules: [
       { // 背景相关属性的处理
         test: /^(background|background-image|background-size|background-position)$/,
         ios: checkBackgroundImage,
-        android: checkBackgroundImage
+        android: checkBackgroundImage,
+        harmony: checkBackgroundImage
       },
       { // margin padding 内外边距的处理
         test: /^(margin|padding|border-radius|border-width|border-color)$/,
         ios: formatCompositeVal,
-        android: formatCompositeVal
+        android: formatCompositeVal,
+        harmony: formatCompositeVal
       },
       { // line-height 换算
         test: 'line-height',
         ios: formatLineHeight,
-        android: formatLineHeight
+        android: formatLineHeight,
+        harmony: formatLineHeight
       },
       {
         test: 'transform',
         ios: formatTransform,
-        android: formatTransform
+        android: formatTransform,
+        harmony: formatTransform
       },
       {
         test: 'flex',
         ios: formatFlex,
-        android: formatFlex
+        android: formatFlex,
+        harmony: formatFlex
       },
       {
         test: 'font-family',
         ios: formatFontFamily,
-        android: formatFontFamily
+        android: formatFontFamily,
+        harmony: formatFontFamily
       },
-      {
-        test: 'box-shadow',
-        ios: formatBoxShadow,
-        android: formatBoxShadow
-      },
+      // {
+      //   test: 'box-shadow',
+      //   ios: formatBoxShadow,
+      //   android: formatBoxShadow,
+      //   harmony: formatBoxShadow
+      // },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
         ios: formatAbbreviation,
-        android: formatAbbreviation
+        android: formatAbbreviation,
+        harmony: formatAbbreviation
       },
       // 属性&属性值校验
       {
         test: () => true,
         ios: verification,
-        android: verification
+        android: verification,
+        harmony: verification
       }
     ]
   }

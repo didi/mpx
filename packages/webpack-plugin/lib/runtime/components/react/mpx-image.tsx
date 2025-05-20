@@ -49,7 +49,7 @@ export interface ImageProps {
   mode?: Mode
   svg?: boolean
   style?: ImageStyle & Record<string, any>
-  'enable-offset'?: boolean;
+  'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
@@ -379,8 +379,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   }, [src, isSvg, isLayoutMode])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject(
@@ -390,8 +392,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           isHeightFixMode ? { width: fixedWidth } : {},
           isWidthFixMode ? { height: fixedHeight } : {}
         )
-      },
-      layoutProps
+      }
     ),
     [
       'src',
@@ -403,32 +404,44 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   )
 
-  return createElement(View, innerProps,
-    isSvg
-      ? createElement(SvgCssUri, {
-        uri: src,
-        onLayout: onSvgLoad,
-        onError: binderror && onSvgError,
-        style: extendObject(
-          { transformOrigin: 'top left' },
-          modeStyle
-        )
-      })
-      : loaded && renderImage({
+  const SvgImage = createElement(
+    View,
+    innerProps,
+    createElement(SvgCssUri, {
+      uri: src,
+      onLayout: onSvgLoad,
+      onError: binderror && onSvgError,
+      style: extendObject(
+        { transformOrigin: 'left top' },
+        modeStyle
+      )
+    })
+  )
+
+  const BaseImage = renderImage(
+    extendObject(
+      {
         source: { uri: src },
         resizeMode: resizeMode,
         onLoad: bindload && onImageLoad,
         onError: binderror && onImageError,
         style: extendObject(
           {
-            transformOrigin: 'top left',
+            transformOrigin: 'left top',
             width: isCropMode ? imageWidth : '100%',
             height: isCropMode ? imageHeight : '100%'
           },
           isCropMode ? modeStyle : {}
         )
-      }, enableFastImage)
+      },
+      isLayoutMode ? {} : innerProps
+    ),
+    enableFastImage
   )
+
+  const LayoutImage = createElement(View, innerProps, loaded && BaseImage)
+
+  return isSvg ? SvgImage : isLayoutMode ? LayoutImage : BaseImage
 })
 
 Image.displayName = 'mpx-image'

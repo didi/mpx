@@ -219,7 +219,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     bindtap
   } = props
 
-  const pageId = useContext(RouteContext)
+  const { pageId } = useContext(RouteContext) || {}
 
   const formContext = useContext(FormContext)
 
@@ -371,14 +371,13 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   }
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
-      {
-        ref: nodeRef,
-        style: extendObject({}, innerStyle, layoutStyle)
-      },
+      {},
+      props,
       layoutProps,
       {
+        ref: nodeRef,
+        style: extendObject({}, innerStyle, layoutStyle),
         bindtap: !disabled && onTap
       }
     ),

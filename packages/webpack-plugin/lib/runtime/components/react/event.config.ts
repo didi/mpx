@@ -1,7 +1,3 @@
-interface EventConfig {
-  [key: string]: string[];
-}
-
 const eventConfigMap: { [key: string]: { bitFlag: string; events: string[] } } = {
   bindtap: { bitFlag: '0', events: ['onTouchStart', 'onTouchMove', 'onTouchEnd'] },
   bindlongpress: { bitFlag: '1', events: ['onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel'] },
@@ -28,4 +24,5 @@ const eventConfigMap: { [key: string]: { bitFlag: string; events: string[] } } =
   'capture-catchtouchend': { bitFlag: 'm', events: ['onTouchEndCapture'] },
   'capture-catchtouchcancel': { bitFlag: 'n', events: ['onTouchCancelCapture'] }
 }
+
 export default eventConfigMap

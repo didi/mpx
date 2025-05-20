@@ -34,6 +34,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 // const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
@@ -54,6 +55,7 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
+const styleStripConditionalPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -129,7 +131,7 @@ class MpxWebpackPlugin {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
     }
     if (isReact(options.mode) && options.srcMode !== 'wx') {
-      errors.push('MpxWebpackPlugin supports mode to be "ios" or "android" only when srcMode is set to "wx"!')
+      errors.push('MpxWebpackPlugin supports mode to be "ios" | "android" | "harmony" only when srcMode is set to "wx"!')
     }
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
@@ -616,6 +618,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RemoveEntryDependency, new NullFactory())
       compilation.dependencyTemplates.set(RemoveEntryDependency, new RemoveEntryDependency.Template())
 
+      compilation.dependencyFactories.set(RecordPageConfigMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordPageConfigMapDependency, new RecordPageConfigMapDependency.Template())
+
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
 
@@ -655,6 +660,8 @@ class MpxWebpackPlugin {
           __vfs,
           // app信息，便于获取appName
           appInfo: {},
+          // pageConfig信息
+          pageConfigsMap: {},
           // pages全局记录，无需区分主包分包
           pagesMap: {},
           // 组件资源记录，依照所属包进行记录
@@ -1506,12 +1513,12 @@ class MpxWebpackPlugin {
                 '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
                 '    var arr = $1.split(", ")\n' +
                 '    var str = ""\n' +
-                '    var pattern = /(.*):(.*)/\n' +
+                '    var pattern = /(\\w+)(?::\\s*(\\w+))?/\n' +
                 '    for (var i = 0; i < arr.length; i++) {\n' +
                 '      var result = arr[i].match(pattern)\n' +
                 '      var left = result[1]\n' +
-                '      var right = result[2]\n' +
-                '      str += "var" + right + " = ctx." + left\n' +
+                '      var right = result[2] || left\n' +
+                '      str += "var " + right + " = ctx." + left + ";\\n  "\n' +
                 '    }\n' +
                 '    return str\n' +
                 '  })\n' +
@@ -1597,7 +1604,7 @@ class MpxWebpackPlugin {
         name: 'MpxWebpackPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
-        if (isWeb(mpx.mode) || isReact(mpx.mode)) return
+        if (isWeb(mpx.mode)) return
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
@@ -1636,6 +1643,22 @@ class MpxWebpackPlugin {
 
           const originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
+
+          if (isReact(mpx.mode)) {
+            // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
+            source.add('/* @refresh reset */\n')
+            // 注入页面的配置，供screen前置设置导航情况
+            if (isRuntime) {
+              source.add('// inject pageconfigmap for screen\n' +
+                'var context = (function() { return this })() || Function("return this")();\n')
+              source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+            }
+            source.add(originalSource)
+            compilation.assets[chunkFile] = source
+            processedChunk.add(chunk)
+            return
+          }
+
           source.add(`\nvar ${globalObject} = {};\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {
@@ -1786,6 +1809,23 @@ try {
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
+
+          if (type === 'styles') {
+            let insertBeforeIndex = -1
+            // 单次遍历收集所有索引
+            loaders.forEach((loader, index) => {
+              const currentLoader = toPosix(loader.loader)
+              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
+                insertBeforeIndex = index
+              }
+            })
+
+            if (insertBeforeIndex !== -1) {
+              loaders.splice(insertBeforeIndex, 0, { loader: styleStripConditionalPath })
+            }
+            loaders.push({ loader: styleStripConditionalPath })
+          }
+
           switch (type) {
             case 'styles':
             case 'template': {

@@ -176,7 +176,7 @@ export default class XFetch {
       if (isNotExpired && checkCacheConfig(config, cacheRequestData) && cacheRequestData.responsePromise) {
         return cacheRequestData.responsePromise.then(response => {
           // 添加 isCache 标识该请求来源于缓存
-          return extend(response, { isCache: true })
+          return extend({ isCache: true }, response)
         })
       } else {
         delete this.cacheRequestData[cacheKey]

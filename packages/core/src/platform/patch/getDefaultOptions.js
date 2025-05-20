@@ -23,13 +23,11 @@ function transformProperties (properties) {
     } else {
       newFiled = Object.assign({}, rawFiled)
     }
-    const rawObserver = rawFiled?.observer
     newFiled.observer = function (value, oldValue) {
       if (this.__mpxProxy) {
         this[key] = value
         this.__mpxProxy.propsUpdated()
       }
-      rawObserver && rawObserver.call(this, value, oldValue)
     }
     newProps[key] = newFiled
   })
