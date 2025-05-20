@@ -15,8 +15,8 @@ import {
   KeyboardAvoidContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets, GestureHandlerRootView } from '../env/navigationHelper'
-import { innerNav, useInnerHeaderHeight } from '../env/nav'
+import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
+import { useInnerHeaderHeight } from '../env/nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -513,49 +513,39 @@ export function PageWrapperHOC (WrappedComponent) {
     }
     // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
-    return createElement(GestureHandlerRootView,
-      {
-        style: {
-          flex: 1
-        }
-      },
-      createElement(innerNav, {
-        props: { pageConfig: currentPageConfig },
-        navigation
-      }),
-      withKeyboardAvoidingView(
-        createElement(ReactNative.View,
-          {
-            style: {
-              flex: 1,
-              backgroundColor: currentPageConfig?.backgroundColor || '#fff',
-              // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
-              overflow: 'hidden'
-            },
-            ref: rootRef,
-            onLayout
+    return withKeyboardAvoidingView(
+      createElement(ReactNative.View,
+        {
+          style: {
+            flex: 1,
+            backgroundColor: currentPageConfig?.backgroundColor || '#fff',
+            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+            overflow: 'hidden'
           },
-          createElement(RouteContext.Provider,
+          ref: rootRef,
+          onLayout
+        },
+        createElement(RouteContext.Provider,
+          {
+            value: routeContextValRef.current
+          },
+          createElement(IntersectionObserverContext.Provider,
             {
-              value: routeContextValRef.current
+              value: intersectionObservers.current
             },
-            createElement(IntersectionObserverContext.Provider,
-              {
-                value: intersectionObservers.current
-              },
-              createElement(PortalHost,
-                null,
-                createElement(WrappedComponent, {
-                  ...props,
-                  navigation,
-                  route,
-                  id: currentPageId
-                })
-              )
+            createElement(PortalHost,
+              null,
+              createElement(WrappedComponent, {
+                ...props,
+                navigation,
+                route,
+                id: currentPageId
+              })
             )
           )
         )
-      ))
+      )
+    )
   }
 }
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -698,11 +688,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    return (props) =>
-      createElement(PageWrapperHOC(defaultOptions), {
+    return ({ navigation, route, props }) => {
+      return createElement(PageWrapperHOC(defaultOptions), {
         pageConfig: currentInject.pageConfig,
+        navigation,
+        route,
         ...props
       })
+    }
   }
   return defaultOptions
 }

@@ -59,7 +59,6 @@ const styles = ReactNative.StyleSheet.create({
     textAlign: 'center'
   }
 })
-
 export function innerNav ({ props, navigation }) {
   const { pageConfig } = props
   const [innerPageConfig, setPageConfig] = useState(pageConfig || {})
