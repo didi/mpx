@@ -1952,23 +1952,6 @@ function processAttrs (el, options) {
   })
 }
 
-// RN 无障碍适配
-function processAccessibilityReact (el) {
-  const ariaRole = getAndRemoveAttr(el, 'aria-role').val
-  if (ariaRole) {
-    addAttrs(el, [
-      {
-        name: 'accessible',
-        value: true
-      },
-      {
-        name: 'accessibilityRole',
-        value: ariaRole
-      }
-    ])
-  }
-}
-
 function postProcessFor (el) {
   if (el.for) {
     /*
@@ -2750,7 +2733,6 @@ function processElement (el, root, options, meta) {
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
-    processAccessibilityReact(el)
     return
   }
 
