@@ -688,11 +688,9 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    return ({ navigation, route, props }) => {
+    return (props) => {
       return createElement(PageWrapperHOC(defaultOptions), {
         pageConfig: currentInject.pageConfig,
-        navigation,
-        route,
         ...props
       })
     }
