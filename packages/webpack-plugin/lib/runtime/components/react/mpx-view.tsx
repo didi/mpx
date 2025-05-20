@@ -4,7 +4,7 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
-import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
+import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent, ViewStyle } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
@@ -266,8 +266,8 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      const dimensionWidth = calcPercent(width, layoutWidth) || 0
-      const dimensionHeight = calcPercent(height, layoutHeight) || 0
+      const dimensionWidth = calcPercent(width as NumberVal, layoutWidth) || 0
+      const dimensionHeight = calcPercent(height as NumberVal, layoutHeight) || 0
       // ios 上只要重新触发渲染，在渲染过程中 width 或者 height 被设置为 0，即使后面再更新为正常宽高，也会渲染不出来
       if (dimensionWidth && dimensionHeight) {
         dimensions = {
@@ -317,7 +317,7 @@ const imageStyleToProps = (preImageInfo: PreImageInfo, imageSize: Size, layoutIn
   const imageProps: ImageProps = {
     resizeMode: 'cover',
     style: {
-      position: 'absolute',
+      position: 'absolute'
       // ...StyleSheet.absoluteFillObject
     },
     colors: []
@@ -559,6 +559,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
 
     if (type === 'linear') {
       sizeInfo.current = {
+        // 渐变场景 normalizeBackgroundSize 会处理 auto/cover/contain 值为100%
         width: calcPercent(sizeList[0] as NumberVal, width) || 0,
         height: calcPercent(sizeList[1] as NumberVal, height) || 0
       }
@@ -580,10 +581,16 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
       }
     }
   }
-  return <View key='backgroundImage' onLayout={onLayout} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...finalProps} />}
-    {show && type === 'image' && (renderImage(finalProps, enableFastImage))}
-  </View>
+  return createElement(
+    View,
+    {
+      key: 'backgroundImage',
+      onLayout: onLayout,
+      style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' }) as ViewStyle
+    },
+    show && type === 'linear' && createElement(LinearGradient, extendObject({ colors: [], useAngle: true }, finalProps)),
+    show && type === 'image' && renderImage(finalProps, enableFastImage)
+  )
 }
 
 interface WrapChildrenConfig {
