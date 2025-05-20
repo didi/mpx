@@ -336,18 +336,11 @@ module.exports = function getSpec ({ warn, error }) {
           const modifierStr = match[3] || ''
           const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
           const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
-          if (rPrefix === 'capture-on' || rPrefix === 'capture-catch') {
-            return {
-              name: rPrefix + rEventName.replace(/^[a-z]/, l => l.toUpperCase()) + modifierStr,
-              value
-            }
-          } else {
-            return {
-              name: rPrefix + dash2hump(rEventName.replace(/^./, (matched) => {
-                return matched.toUpperCase()
-              })) + modifierStr,
-              value
-            }
+          return {
+            name: rPrefix + dash2hump(rEventName.replace(/^./, (matched) => {
+              return matched.toUpperCase()
+            })) + modifierStr,
+            value
           }
         },
         swan ({ name, value }, { eventRules }) {
