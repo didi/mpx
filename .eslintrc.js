@@ -68,7 +68,9 @@ module.exports = {
         '@typescript-eslint/no-this-alias': 0,
         'sort-imports': ['error', { ignoreDeclarationSort: true }],
         'space-before-function-paren': 0,
-        'no-useless-constructor': 0
+        'no-useless-constructor': 0,
+        indent: 0,
+        'brace-style': 0
       }
     }
   ]

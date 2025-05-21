@@ -1,39 +1,26 @@
 import { EffectFlags } from './const'
 import { type ReactiveEffect } from './effect'
-import { Link } from './link'
 
 export let activeEffectScope: EffectScope | undefined
 
 export class EffectScope {
-  // Subscriber: In order to collect orphans computeds
-  deps: Link | undefined = undefined
-  depsTail: Link | undefined = undefined
-  flags = 0 as EffectFlags
-
-  /**
-   * @internal
-   */
-  effects: ReactiveEffect[] = []
-  /**
-   * @internal
-   */
-  cleanups: (() => void)[] = []
   /**
    * only assigned by undetached scope
-   * @internal
    */
-  parent: EffectScope | undefined
+  private parent: EffectScope | undefined
   /**
    * record undetached scopes
-   * @internal
    */
-  scopes: EffectScope[] | undefined
+  private scopes: EffectScope[] | undefined
   /**
    * track a child scope's index in its parent's scopes array for optimized
    * removal
-   * @internal
    */
   private index: number | undefined
+
+  flags = 0 as EffectFlags
+  effects: ReactiveEffect[] = []
+  cleanups: (() => void)[] = []
 
   constructor(public detached = false) {
     this.parent = activeEffectScope
@@ -115,17 +102,17 @@ export class EffectScope {
     }
   }
 
-  resume(): void {
+  resume(ignoreDirty = false): void {
     if (this.flags & EffectFlags.PAUSED) {
       this.flags &= ~EffectFlags.PAUSED
       let i, l
       if (this.scopes) {
         for (i = 0, l = this.scopes.length; i < l; i++) {
-          this.scopes[i].resume()
+          this.scopes[i].resume(ignoreDirty)
         }
       }
       for (i = 0, l = this.effects.length; i < l; i++) {
-        this.effects[i].resume()
+        this.effects[i].resume(ignoreDirty)
       }
     }
   }

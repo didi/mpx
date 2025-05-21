@@ -1,4 +1,4 @@
-import { warn } from '@mpxjs/utils'
+import { isFunction, warn } from '@mpxjs/utils'
 import { EffectFlags, SubscriberFlags } from './const'
 import { ComputedRefImpl } from './computed'
 import { Dependency } from './dep'
@@ -11,27 +11,21 @@ export interface Subscriber {
   deps: Link | undefined
   depsTail: Link | undefined
   flags: SubscriberFlags | EffectFlags
-  notify(
-    dirtyFlag?: SubscriberFlags.MaybeDirty | SubscriberFlags.Dirty
-  ): true | void
+  notify(dirtyFlag?: SubscriberFlags.MAYBE_DIRTY | SubscriberFlags.DIRTY): void
 }
 
 export interface ReactiveEffectOptions {
   scheduler?: EffectScheduler
-  allowRecurse?: boolean
   onStop?: () => void
+  allowRecurse?: boolean
 }
 
-export class ReactiveEffect<T = any> implements Subscriber {
-  // for backwards compat
-  private deferStop = false
-
+export class ReactiveEffect<T = any>
+  implements Subscriber, ReactiveEffectOptions
+{
   deps: Link | undefined
   depsTail: Link | undefined
-  flags: SubscriberFlags = SubscriberFlags.Effect
-
-  /** @internal */
-  cleanup?: () => void = undefined
+  flags: SubscriberFlags = SubscriberFlags.EFFECT
   onStop?: () => void
 
   constructor(
@@ -47,18 +41,20 @@ export class ReactiveEffect<T = any> implements Subscriber {
   }
 
   notify(): void {
-    // TODO cycle detection
-
-    if (!(this.flags & EffectFlags.PAUSED)) {
-      if (this.scheduler) {
+    if (activeSub === this && !this.allowRecurse) {
+      // cycle detection
+      return
+    }
+    if (this.flags & EffectFlags.PAUSED) {
+      this.flags |= EffectFlags.NOTIFIED
+    } else {
+      if (isFunction(this.scheduler)) {
         this.scheduler()
       } else {
         if (this.dirty) {
           this.run()
         }
       }
-    } else {
-      this.flags |= EffectFlags.NOTIFIED
     }
   }
 
@@ -66,35 +62,31 @@ export class ReactiveEffect<T = any> implements Subscriber {
     if (!this.active) {
       return this.fn()
     }
-
-    // TODO flag
-    this.flags |= EffectFlags.RUNNING
-    cleanupEffect(this)
     const prevSub = setActiveSub(this)
     startTracking(this)
-
     try {
       return this.fn()
     } finally {
       if (activeSub !== this) {
-        warn('Active effect was not restored correctly.')
+        warn('Active effect was not restored correctly after run.')
       }
       setActiveSub(prevSub)
       endTracking(this)
-      this.deferStop ? this.stop() : cleanupEffect(this)
-      // TODO flag
-      this.flags &= ~EffectFlags.RUNNING
+      if (this.flags & EffectFlags.DEFERRED_STOP) {
+        this.stop()
+      }
     }
   }
 
   stop(): void {
     if (activeSub === this) {
-      this.deferStop = true
+      this.flags |= EffectFlags.DEFERRED_STOP
     } else if (this.active) {
       startTracking(this)
       endTracking(this)
-      cleanupEffect(this)
-      this.onStop && this.onStop()
+      if (isFunction(this.onStop)) {
+        this.onStop()
+      }
       this.flags |= EffectFlags.STOP
     }
   }
@@ -103,20 +95,19 @@ export class ReactiveEffect<T = any> implements Subscriber {
     this.flags |= EffectFlags.PAUSED
   }
 
-  resume(): void {
+  resume(ignoreDirty = false): void {
     const flags = this.flags
     if (flags & EffectFlags.PAUSED) {
       this.flags &= ~EffectFlags.PAUSED
     }
-    // TODO flags
-    if (flags & EffectFlags.NOTIFIED) {
+    if (!ignoreDirty && flags & EffectFlags.NOTIFIED) {
       this.flags &= ~EffectFlags.NOTIFIED
       this.notify()
     }
   }
 
-  get dirty(): boolean {
-    if (this.flags & SubscriberFlags.MaybeDirty) {
+  private get dirty(): boolean {
+    if (this.flags & SubscriberFlags.MAYBE_DIRTY) {
       for (let link = this.deps; link; link = link.nextDep) {
         const dep = link.dep as Dependency | ComputedRefImpl
         if ('flags' in dep) {
@@ -124,23 +115,21 @@ export class ReactiveEffect<T = any> implements Subscriber {
         }
       }
     }
-    if (this.flags & SubscriberFlags.Dirty) {
+    if (this.flags & SubscriberFlags.DIRTY) {
       return true
     }
     return false
   }
-}
 
-function cleanupEffect(e: ReactiveEffect) {
-  const { cleanup } = e
-  e.cleanup = undefined
-  if (cleanup !== undefined) {
-    // run cleanup without active effect
-    const prevSub = setActiveSub(undefined)
-    try {
-      cleanup()
-    } finally {
-      setActiveSub(prevSub)
+  get allowRecurse(): boolean {
+    return !!(this.flags & EffectFlags.ALLOW_RECURSE)
+  }
+
+  set allowRecurse(value: boolean) {
+    if (value) {
+      this.flags |= EffectFlags.ALLOW_RECURSE
+    } else {
+      this.flags &= ~EffectFlags.ALLOW_RECURSE
     }
   }
 }
@@ -149,23 +138,18 @@ function cleanupEffect(e: ReactiveEffect) {
 export function startTracking(sub: Subscriber): void {
   sub.depsTail = undefined
   sub.flags =
-    (sub.flags &
-      ~(
-        SubscriberFlags.Recursed |
-        SubscriberFlags.MaybeDirty |
-        SubscriberFlags.Dirty
-      )) |
-    SubscriberFlags.Tracking
+    (sub.flags & ~(SubscriberFlags.MAYBE_DIRTY | SubscriberFlags.DIRTY)) |
+    SubscriberFlags.TRACKING
 }
 
 /** @internal */
 export function endTracking(sub: Subscriber): void {
   const depsTail = sub.depsTail
   let toRemove = depsTail ? depsTail.nextDep : sub.deps
-  while (toRemove !== undefined) {
+  while (toRemove) {
     toRemove = removeLink(toRemove, sub)
   }
-  sub.flags &= ~SubscriberFlags.Tracking
+  sub.flags &= ~SubscriberFlags.TRACKING
 }
 
 /** @internal */

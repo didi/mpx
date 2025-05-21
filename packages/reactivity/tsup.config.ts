@@ -1,5 +1,6 @@
 import { defineConfig } from 'tsup'
 
+// TODO : migrate to tsdown when it is more stable
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
@@ -13,5 +14,3 @@ export default defineConfig({
     js: `.${format}.js`
   })
 })
-
-// TODO : use tsdown when it is more stable

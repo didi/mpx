@@ -38,7 +38,7 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
   // As a Subscriber
   deps: Link | undefined = undefined
   depsTail: Link | undefined = undefined
-  flags: SubscriberFlags = SubscriberFlags.Computed | SubscriberFlags.Dirty
+  flags: SubscriberFlags = SubscriberFlags.COMPUTED | SubscriberFlags.DIRTY
 
   constructor(
     public fn: ComputedGetter<T>,
@@ -64,21 +64,16 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
    */
   notify(
     dirtyFlag:
-      | SubscriberFlags.MaybeDirty
-      | SubscriberFlags.Dirty = SubscriberFlags.Dirty
-  ) {
-    // TODO
-    if (this.flags & SubscriberFlags.Dirty) {
+      | SubscriberFlags.MAYBE_DIRTY
+      | SubscriberFlags.DIRTY = SubscriberFlags.DIRTY
+  ): void {
+    if (this.flags & SubscriberFlags.DIRTY) {
       return
     }
     this.flags |= dirtyFlag
-    if (activeSub !== this) {
-      //  cycle detection
-      return
-    }
     for (let link = this.subs; link; link = link.nextSub) {
       const sub = link.sub
-      sub.notify(SubscriberFlags.MaybeDirty)
+      sub.notify(SubscriberFlags.MAYBE_DIRTY)
     }
   }
 
@@ -86,23 +81,23 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
    * Pull Phase - Bottom-up traversal to check and resolve final dirty state
    */
   refreshComputed(): void {
-    if (this.flags & SubscriberFlags.MaybeDirty) {
+    if (this.flags & SubscriberFlags.MAYBE_DIRTY) {
       for (let link = this.deps; link !== undefined; link = link.nextDep) {
         const dep = link.dep as Dependency | ComputedRefImpl
         if ('flags' in dep) {
           dep.refreshComputed()
         }
-        if (this.flags & SubscriberFlags.Dirty) {
+        if (this.flags & SubscriberFlags.DIRTY) {
           break
         }
       }
     }
-    if (this.flags & SubscriberFlags.Dirty) {
+    if (this.flags & SubscriberFlags.DIRTY) {
       if (this.update()) {
         this.shallowNotify()
       }
     }
-    this.flags && (this.flags &= ~SubscriberFlags.MaybeDirty)
+    this.flags && (this.flags &= ~SubscriberFlags.MAYBE_DIRTY)
   }
 
   /**
@@ -111,7 +106,7 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
   private shallowNotify(): void {
     for (let link = this.subs; link; link = link.nextSub) {
       const sub = link.sub
-      sub.flags |= SubscriberFlags.Dirty
+      sub.flags |= SubscriberFlags.DIRTY
     }
   }
 

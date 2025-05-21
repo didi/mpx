@@ -135,8 +135,12 @@ export function removeLink(link: Link, sub = link.sub): Link | undefined {
 
   if (prevSub) {
     prevSub.nextSub = nextSub
-  } else if (!(dep.subs = nextSub)) {
-    // unwatched(dep) // TODO
+  } else {
+    dep.subs = nextSub
+    if (!nextSub) {
+      // TODO Recursively remove the dep
+      // unwatched(dep)
+    }
   }
 
   return nextDep

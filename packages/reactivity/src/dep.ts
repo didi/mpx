@@ -4,7 +4,6 @@ import { type Link, addLink } from './link'
 export interface Dependency {
   subs: Link | undefined
   subsTail: Link | undefined
-  notify(): void
 }
 
 export class Dep implements Dependency {

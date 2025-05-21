@@ -15,12 +15,11 @@ export const enum PausedState {
  * @internal
  */
 export const enum SubscriberFlags {
-  Computed = 1 << 0,
-  Effect = 1 << 1,
-  Tracking = 1 << 2,
-  Recursed = 1 << 4,
-  MaybeDirty = 1 << 5,
-  Dirty = 1 << 6
+  COMPUTED = 1 << 0,
+  EFFECT = 1 << 1,
+  TRACKING = 1 << 2,
+  MAYBE_DIRTY = 1 << 3,
+  DIRTY = 1 << 4
 }
 
 /**
@@ -28,9 +27,9 @@ export const enum SubscriberFlags {
  * @internal
  */
 export const enum EffectFlags {
-  RUNNING = 1 << 11,
-  ALLOW_RECURSE = 1 << 7,
-  PAUSED = 1 << 8,
-  NOTIFIED = 1 << 9,
-  STOP = 1 << 10
+  ALLOW_RECURSE = 1 << 5,
+  PAUSED = 1 << 6,
+  NOTIFIED = 1 << 7,
+  STOP = 1 << 8,
+  DEFERRED_STOP = 1 << 9
 }

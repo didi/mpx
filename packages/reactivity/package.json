@@ -1,7 +1,7 @@
 {
   "name": "@mpxjs/reactivity",
   "version": "2.10.4",
-  "description": "Reactivity system for Mpx",
+  "description": "Reactivity core system for Mpx",
   "sideEffects": false,
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -18,7 +18,7 @@
     "types"
   ],
   "scripts": {
-    "build": "tsc -b && tsup",
+    "build": "tsc && tsup",
     "test": "jest"
   },
   "keywords": [
