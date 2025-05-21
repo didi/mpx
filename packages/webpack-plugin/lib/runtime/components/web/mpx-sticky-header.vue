@@ -17,16 +17,8 @@ import { getCustomEvent } from './getInnerListeners'
         isStickOnTop: false
       }
     },
-    computed: {
-      _scrollOffset() {
-        return -this.scrollOffset?.get() || 0
-      },
-      _refreshVersion() {
-        return this.refreshVersion?.get() || 0
-      }
-    },
     watch: {
-      _scrollOffset: {
+      scrollOffset: {
         handler(newScrollOffset) {
           const newIsStickOnTop = newScrollOffset > this.headerTop
           if (newIsStickOnTop !== this.isStickOnTop) {
@@ -35,17 +27,12 @@ import { getCustomEvent } from './getInnerListeners'
               isStickOnTop: newIsStickOnTop
             }, this))
           }
-          const stickyHeader = this.$refs.stickyHeader
-          if (!stickyHeader) return
-          if (this.isStickOnTop) {
-            stickyHeader.style.transform = `translateY(${newScrollOffset - this.headerTop + this.offsetTop}px)`
-          } else {
-            stickyHeader.style.transform = 'none'
-          }
+
+          this.setHeaderStyle()
         },
         immediate: true
       },
-      _refreshVersion: {
+      refreshVersion: {
         handler() {
           const parentElement = this.$el.parentElement
           if (!parentElement) return
@@ -63,15 +50,19 @@ import { getCustomEvent } from './getInnerListeners'
             ? this.$el.offsetTop + parentElement.offsetTop
             : this.$el.offsetTop
           
-          const stickyHeader = this.$refs.stickyHeader
+          this.setHeaderStyle()
+        },
+      }
+    },
+    methods: {
+      setHeaderStyle () {
+        const stickyHeader = this.$refs.stickyHeader
           if (!stickyHeader) return
-          
-          if (this._scrollOffset > this.headerTop) {
-            stickyHeader.style.transform = `translateY(${this._scrollOffset - this.headerTop + this.offsetTop}px)`
+          if (this.scrollOffset > this.headerTop) {
+            stickyHeader.style.transform = `translateY(${this.scrollOffset - this.headerTop + this.offsetTop}px)`
           } else {
             stickyHeader.style.transform = 'none'
           }
-        },
       }
     },
     render(h) {
