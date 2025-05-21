@@ -4,7 +4,6 @@ import { type Link, addLink } from './link'
 export interface Dependency {
   subs: Link | undefined
   subsTail: Link | undefined
-  track?(): void
   notify(): void
 }
 
@@ -20,8 +19,7 @@ export class Dep implements Dependency {
 
   notify() {
     for (let link = this.subs; link; link = link.nextSub) {
-      const sub = link.sub
-      sub.notify()
+      link.sub.notify()
     }
   }
 }

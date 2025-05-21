@@ -8,9 +8,9 @@ import { type Link, removeLink } from './link'
 export type EffectScheduler = (...args: any[]) => any
 
 export interface Subscriber {
-  flags: SubscriberFlags | EffectFlags
   deps: Link | undefined
   depsTail: Link | undefined
+  flags: SubscriberFlags | EffectFlags
   notify(
     dirtyFlag?: SubscriberFlags.MaybeDirty | SubscriberFlags.Dirty
   ): true | void
@@ -23,6 +23,9 @@ export interface ReactiveEffectOptions {
 }
 
 export class ReactiveEffect<T = any> implements Subscriber {
+  // for backwards compat
+  private deferStop = false
+
   deps: Link | undefined
   depsTail: Link | undefined
   flags: SubscriberFlags = SubscriberFlags.Effect
@@ -30,9 +33,6 @@ export class ReactiveEffect<T = any> implements Subscriber {
   /** @internal */
   cleanup?: () => void = undefined
   onStop?: () => void
-
-  // for backwards compat
-  private deferStop = false
 
   constructor(
     public fn: () => T,

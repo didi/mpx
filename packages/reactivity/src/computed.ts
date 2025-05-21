@@ -29,8 +29,7 @@ export interface WritableComputedOptions<T, S = T> {
 }
 
 export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
-  /** @internal */
-  _value: T | undefined = undefined
+  private _value: T | undefined = undefined
 
   // As a Dependency
   subs: Link | undefined = undefined
@@ -51,7 +50,7 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
     if (activeSub) {
       addLink(this, activeSub)
     }
-    return this._value!
+    return this._value as T
   }
 
   set value(newValue) {
@@ -68,12 +67,18 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
       | SubscriberFlags.MaybeDirty
       | SubscriberFlags.Dirty = SubscriberFlags.Dirty
   ) {
-    if (!(this.flags & SubscriberFlags.Dirty)) {
-      this.flags |= dirtyFlag
-      for (let link = this.subs; link; link = link.nextSub) {
-        const sub = link.sub
-        sub.notify(SubscriberFlags.MaybeDirty)
-      }
+    // TODO
+    if (this.flags & SubscriberFlags.Dirty) {
+      return
+    }
+    this.flags |= dirtyFlag
+    if (activeSub !== this) {
+      //  cycle detection
+      return
+    }
+    for (let link = this.subs; link; link = link.nextSub) {
+      const sub = link.sub
+      sub.notify(SubscriberFlags.MaybeDirty)
     }
   }
 
