@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
-import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent } from 'react-native'
+import { useEffect, useRef, useContext, forwardRef, useMemo, createElement, ReactNode, useId } from 'react'
+import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, useAnimatedValue } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
@@ -54,7 +54,9 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  const headerTopAnimated = useRef(new Animated.Value(0)).current
+  const headerTopAnimated = useAnimatedValue(0)
+  // harmony animatedValue 不支持通过 _value 访问
+  const headerTopRef = useRef(0)
 
   useEffect(() => {
     registerStickyHeader({ key: id, updatePosition })
@@ -75,6 +77,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
               duration: 0,
               useNativeDriver: true
             }).start()
+            headerTopRef.current = top
           }
         )
       } else {
@@ -96,7 +99,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
-      const newIsStickOnTop = currentScrollValue > (headerTopAnimated as any)._value
+      const newIsStickOnTop = currentScrollValue > headerTopRef.current
       if (newIsStickOnTop !== isStickOnTopRef.current) {
         isStickOnTopRef.current = newIsStickOnTop
         bindstickontopchange(
@@ -168,7 +171,9 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 const styles = StyleSheet.create({
   content: {
     width: '100%',
-    zIndex: 10
+    zIndex: 10,
+    // harmony 需要手动设置 relative， zIndex 才生效
+    position: 'relative'
   }
 })
 
