@@ -28,7 +28,7 @@ import { getCustomEvent } from './getInnerListeners'
             }, this))
           }
 
-          this.setHeaderStyle(this.isStickOnTop)
+          this.setHeaderStyle()
         },
         immediate: true
       },
@@ -50,15 +50,15 @@ import { getCustomEvent } from './getInnerListeners'
             ? this.$el.offsetTop + parentElement.offsetTop
             : this.$el.offsetTop
           
-          this.setHeaderStyle(this.scrollOffset > this.headerTop)
+          this.setHeaderStyle()
         },
       }
     },
     methods: {
-      setHeaderStyle (isSticky) {
+      setHeaderStyle () {
         const stickyHeader = this.$refs.stickyHeader
           if (!stickyHeader) return
-          if (isSticky) {
+          if (this.scrollOffset > this.headerTop) {
             stickyHeader.style.transform = `translateY(${this.scrollOffset - this.headerTop + this.offsetTop}px)`
           } else {
             stickyHeader.style.transform = 'none'
