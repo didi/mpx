@@ -1360,6 +1360,7 @@ function processEventBinding (el, configs) {
 
 function processEvent (el, options) {
   const eventConfigMap = {}
+  const finalEventsMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
 
@@ -1422,7 +1423,6 @@ function processEvent (el, options) {
 
   for (const type in eventConfigMap) {
     const { configs = [], captureConfigs = [], proxy } = eventConfigMap[type]
-    delete eventConfigMap[type]
 
     let needBubblingBind = isNeedBind(configs, proxy)
     let needCaptureBind = isNeedBind(captureConfigs, proxy)
@@ -1444,10 +1444,10 @@ function processEvent (el, options) {
           value: '__invoke'
         }
       ])
-      if (!eventConfigMap.bubble) {
-        eventConfigMap.bubble = {}
+      if (!finalEventsMap.bubble) {
+        finalEventsMap.bubble = {}
       }
-      eventConfigMap.bubble[escapedType] = configs.map((item) => {
+      finalEventsMap.bubble[escapedType] = configs.map((item) => {
         return item.expStr
       })
     }
@@ -1460,19 +1460,19 @@ function processEvent (el, options) {
           value: '__captureInvoke'
         }
       ])
-      if (!eventConfigMap.capture) {
-        eventConfigMap.capture = {}
+      if (!finalEventsMap.capture) {
+        finalEventsMap.capture = {}
       }
-      eventConfigMap.capture[escapedType] = captureConfigs.map((item) => {
+      finalEventsMap.capture[escapedType] = captureConfigs.map((item) => {
         return item.expStr
       })
     }
   }
 
-  if (!isEmptyObject(eventConfigMap)) {
+  if (!isEmptyObject(finalEventsMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${shallowStringify(eventConfigMap, true)}}}`
+      value: `{{${shallowStringify(finalEventsMap, true)}}}`
     }])
   }
 }
