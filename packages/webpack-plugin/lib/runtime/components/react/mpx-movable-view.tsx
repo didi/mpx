@@ -140,6 +140,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     x: 0,
     y: 0
   })
+
+  const hasChangeEvent = useSharedValue(!!props.bindchange)
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
@@ -215,7 +217,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             })
             : newY
         }
-        if (propsRef.current.bindchange) {
+        if (hasChangeEvent.value) {
           runOnJS(handleTriggerChange)({
             x: newX,
             y: newY,
@@ -454,7 +456,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newY
           }
         }
-        if (propsRef.current.bindchange) {
+        if (hasChangeEvent.value) {
           runOnJS(handleTriggerChange)({
             x: offsetX.value,
             y: offsetY.value
@@ -493,7 +495,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 })
                 : y
             }
-            if (propsRef.current.bindchange) {
+            if (hasChangeEvent.value) {
               runOnJS(handleTriggerChange)({
                 x,
                 y
@@ -511,7 +513,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             clamp: draggableXRange.value
           }, () => {
             xInertialMotion.value = false
-            if (propsRef.current.bindchange) {
+            if (hasChangeEvent.value) {
               runOnJS(handleTriggerChange)({
                 x: offsetX.value,
                 y: offsetY.value
@@ -527,7 +529,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             clamp: draggableYRange.value
           }, () => {
             yInertialMotion.value = false
-            if (propsRef.current.bindchange) {
+            if (hasChangeEvent.value) {
               runOnJS(handleTriggerChange)({
                 x: offsetX.value,
                 y: offsetY.value
