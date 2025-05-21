@@ -3,13 +3,6 @@ export const RefKey = '__composition_api_ref_key__'
 /** @internal key for Observer */
 export const ObKey = '__ob__'
 
-/** @internal */
-export const enum PausedState {
-  Paused,
-  Dirty,
-  Resumed
-}
-
 /**
  * Subscriber common flags
  * @internal

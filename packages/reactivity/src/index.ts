@@ -1,4 +1,4 @@
-export * from './const'
+export * from './computed'
 export * from './dep'
 export * from './effect'
 export * from './effectScope'
