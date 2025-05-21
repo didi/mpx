@@ -114,7 +114,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend
+    catchtouchend,
+    bindchange
   } = props
 
   const {
@@ -141,7 +142,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     y: 0
   })
 
-  const hasChangeEvent = useSharedValue(!!props.bindchange)
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
@@ -217,7 +217,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             })
             : newY
         }
-        if (hasChangeEvent.value) {
+        if (bindchange) {
           runOnJS(handleTriggerChange)({
             x: newX,
             y: newY,
@@ -456,7 +456,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newY
           }
         }
-        if (hasChangeEvent.value) {
+        if (bindchange) {
           runOnJS(handleTriggerChange)({
             x: offsetX.value,
             y: offsetY.value
@@ -495,7 +495,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 })
                 : y
             }
-            if (hasChangeEvent.value) {
+            if (bindchange) {
               runOnJS(handleTriggerChange)({
                 x,
                 y
@@ -513,7 +513,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             clamp: draggableXRange.value
           }, () => {
             xInertialMotion.value = false
-            if (hasChangeEvent.value) {
+            if (bindchange) {
               runOnJS(handleTriggerChange)({
                 x: offsetX.value,
                 y: offsetY.value
@@ -529,7 +529,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             clamp: draggableYRange.value
           }, () => {
             yInertialMotion.value = false
-            if (hasChangeEvent.value) {
+            if (bindchange) {
               runOnJS(handleTriggerChange)({
                 x: offsetX.value,
                 y: offsetY.value
