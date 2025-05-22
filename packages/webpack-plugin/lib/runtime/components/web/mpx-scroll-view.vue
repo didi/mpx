@@ -1,4 +1,5 @@
 <script>
+  import { computed } from 'vue'
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
@@ -60,12 +61,8 @@
     },
     provide () {
       return {
-        scrollOffset: {
-          get: () => this.lastY
-        },
-        refreshVersion: {
-          get: () => this.refreshVersion
-        }
+        scrollOffset: computed(() => -this.lastY || 0),
+        refreshVersion: computed(() => this.refreshVersion || 0)
       }
     },
     data () {
