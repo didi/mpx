@@ -58,7 +58,7 @@ export function ref(raw?: unknown) {
 // #endregion
 
 export function unref<T>(ref: T | Ref<T>): T {
-  return isRef(ref) ? (ref.value as any) : ref
+  return isRef(ref) ? ref.value : ref
 }
 
 // #region toRef
@@ -117,7 +117,14 @@ export function toRefs<T extends object>(obj: T): ToRefs<T> {
 }
 // #endregion
 
-export function customRef(factory: Function) {
+export type CustomRefFactory<T> = (
+  track: () => void,
+  trigger: () => void
+) => {
+  get: () => T
+  set: (value: T) => void
+}
+export function customRef<T>(factory: CustomRefFactory<T>): Ref<T> {
   const version = ref(0)
   return createRef(
     factory(
@@ -128,7 +135,7 @@ export function customRef(factory: Function) {
         version.value++
       }
     )
-  )
+  ) as Ref<T>
 }
 
 // #region shallowRef

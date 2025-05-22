@@ -131,7 +131,7 @@ export function defineReactive(
   const getter = property && property.get
   const setter = property && property.set
 
-  let childOb = shallow ? getObserver(val) : observe(val)
+  let childOb = shallow ? getObserver(val) : observe(val, false)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
