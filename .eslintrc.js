@@ -75,6 +75,7 @@ module.exports = {
     }, {
       files: ['packages/reactivity/__tests__/**/*.ts'],
       rules: {
+        'space-before-function-paren': 0,
         'no-unused-expressions': 0
       }
     }
