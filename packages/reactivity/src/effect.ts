@@ -1,4 +1,4 @@
-import { isFunction, warn } from '@mpxjs/utils'
+import { extend, isFunction, warn } from '@mpxjs/utils'
 import { EffectFlags, SubscriberFlags } from './const'
 import { ComputedRefImpl } from './computed'
 import { Dependency } from './dep'
@@ -30,7 +30,7 @@ export class ReactiveEffect<T = any>
 
   constructor(
     public fn: () => T,
-    public scheduler: EffectScheduler,
+    public scheduler?: EffectScheduler,
     scope?: EffectScope
   ) {
     recordEffectScope(this, scope)
@@ -40,7 +40,12 @@ export class ReactiveEffect<T = any>
     return !(this.flags & EffectFlags.STOP)
   }
 
-  notify(): void {
+  notify(
+    dirtyFlag?: SubscriberFlags.MAYBE_DIRTY | SubscriberFlags.DIRTY
+  ): void {
+    if (dirtyFlag && !(this.flags & SubscriberFlags.DIRTY)) {
+      this.flags |= dirtyFlag
+    }
     if (activeSub === this && !this.allowRecurse) {
       // cycle detection
       return
@@ -51,7 +56,7 @@ export class ReactiveEffect<T = any>
       if (isFunction(this.scheduler)) {
         this.scheduler()
       } else {
-        if (this.dirty) {
+        if (this.flags & SubscriberFlags.DIRTY || this.checkDirty()) {
           this.run()
         }
       }
@@ -106,7 +111,7 @@ export class ReactiveEffect<T = any>
     }
   }
 
-  private get dirty(): boolean {
+  private checkDirty(): boolean {
     if (this.flags & SubscriberFlags.MAYBE_DIRTY) {
       for (let link = this.deps; link; link = link.nextDep) {
         const dep = link.dep as Dependency | ComputedRefImpl
@@ -114,6 +119,7 @@ export class ReactiveEffect<T = any>
           dep.refreshComputed()
         }
       }
+      this.flags &= ~SubscriberFlags.MAYBE_DIRTY
     }
     if (this.flags & SubscriberFlags.DIRTY) {
       return true
@@ -172,3 +178,27 @@ export function setActiveSub(sub: Subscriber | undefined) {
   activeSub = sub
   return prevSub
 }
+
+// #region effect
+/**
+ * Since we did not expose `effect` in Mpx,
+ * it is used only for internal testing.
+ *
+ * @internal
+ */
+export function effect<T = any>(
+  fn: () => T,
+  options?: ReactiveEffectOptions
+): void {
+  const e = new ReactiveEffect(fn)
+  if (options) {
+    extend(e, options)
+  }
+  try {
+    e.run()
+  } catch (err) {
+    e.stop()
+    throw err
+  }
+}
+// #endregion

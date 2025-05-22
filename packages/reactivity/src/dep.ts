@@ -1,3 +1,4 @@
+import { SubscriberFlags } from './const'
 import { activeSub } from './effect'
 import { type Link, addLink } from './link'
 
@@ -18,7 +19,7 @@ export class Dep implements Dependency {
 
   notify() {
     for (let link = this.subs; link; link = link.nextSub) {
-      link.sub.notify()
+      link.sub.notify(SubscriberFlags.DIRTY)
     }
   }
 }
