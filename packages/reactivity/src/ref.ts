@@ -79,14 +79,18 @@ export function toRef<T extends object, K extends keyof T>(
   key: K,
   defaultValue?: T[K]
 ) {
-  if (!isReactive(obj)) {
-    warn('toRef() expects a reactive object but received a plain one.')
+  if (!hasOwn(obj, key as any)) {
+    set(obj, key as any, defaultValue)
   }
-  if (!hasOwn(obj, key as any)) set(obj, key as any, defaultValue)
   const val = obj[key]
-  if (isRef(val)) return val
+  if (isRef(val)) {
+    return val
+  }
   return createRef({
-    get: () => obj[key],
+    get: () => {
+      const val = obj[key]
+      return val === undefined ? defaultValue : val
+    },
     set: (val: T[K]) => {
       obj[key] = val
     }
