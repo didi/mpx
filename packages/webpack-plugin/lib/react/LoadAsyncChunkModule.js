@@ -5,12 +5,7 @@ const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
 class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
   constructor (options = {}) {
     super('load async chunk')
-    /**
-     * timeout
-     * loadedEvent 后续需要和 native 对接，事件对象的确认 (状态枚举：loaded/missing/failed/timeout)，
-     */
     this.options = options
-    this.loadAsyncTemplate = options.loadAsyncTemplate // todo clear
     this.timeout = options.timeout || 5000
   }
 
@@ -23,23 +18,23 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
       `${loadScriptFn} = ${runtimeTemplate.basicFunction(
         'url, done, key, chunkId',
         [
-          // todo dev 环境下的测试
-          `var chunkName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
+          `var package = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
+          'package = package.split("/")[0]',
           'var config = {',
           Template.indent([
             'url: url,',
-            "chunkName: chunkName.split('/')[0]"
+            'package: package'
           ]),
           '}',
           'if(inProgress[url]) { inProgress[url].push(done); return; }',
           'inProgress[url] = [done];',
-          'var callback = function (type, result) {', // todo 确认下加载函数的回调值是否需要？
+          'var callback = function (type, result) {',
           Template.indent([
             "if (type === 'timeout' || type === 'fail') {",
             'var lazyLoadEvent = {',
             Template.indent([
               "type: 'subpackage',",
-              'subpackage: [chunkName],',
+              'subpackage: [package],',
               'errMsg: "loadSubpackage: " + type'
             ]),
             '}',
@@ -70,7 +65,12 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           "var successCallback = callback.bind(null, 'load');",
           "var failedCallback = callback.bind(null, 'fail')",
           'var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync',
-          // `var loadChunkAsyncFn = ${this.loadAsyncTemplate.trim()}`,
+          'if (typeof loadChunkAsyncFn !== \'function\') {',
+            Template.indent([
+              'console.error("[Mpx runtime error]: please provide correct loadChunkAsync function")',
+              'return'
+            ]),
+          '}',
           'loadChunkAsyncFn(config).then(successCallback).catch(failedCallback)'
         ]
       )}`

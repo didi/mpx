@@ -432,9 +432,9 @@ function usePagePreload (route) {
       const preloadRule = global.__preloadRule
       const { packages } = preloadRule[name] || {}
       if (packages?.length > 0) {
-        const download = global.__mpx.config?.rnConfig?.download
-        if (typeof download === 'function') {
-          callWithErrorHandling(() => download(packages))
+        const downloadChunkAsync = global.__mpx.config?.rnConfig?.downloadChunkAsync
+        if (typeof downloadChunkAsync === 'function') {
+          callWithErrorHandling(() => downloadChunkAsync(packages))
         }
       }
     }, 2000)

@@ -1,5 +1,6 @@
 import { ComponentType, ReactNode, Component, Fragment, Suspense } from 'react'
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
+import FastImage from '@d11/react-native-fast-image'
 
 const styles = StyleSheet.create({
   container: {
@@ -57,7 +58,7 @@ interface PropsType<T extends AsyncType> {
   fallback: T extends 'page' ? ComponentType<DefaultFallbackProps> : ReactNode
   loading?: ComponentType<any>
   type: T
-  children: () => ReactNode,
+  children: () => ReactNode | ReactNode,
 }
 
 interface StateType {
@@ -72,10 +73,10 @@ interface ComponentError extends Error {
 const DefaultLoading = () => {
   return (
     <View style={styles.container}>
-      <Image
+      <FastImage
         style={styles.loadingImage}
         source={{ uri: 'https://dpubstatic.udache.com/static/dpubimg/439jiCVOtNOnEv9F2LaDs_loading.gif' }}
-        resizeMode='contain'></Image>
+        resizeMode={FastImage.resizeMode.contain}></FastImage>
     </View>
   )
 }
@@ -125,8 +126,10 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
         hasError: true,
         key: 0
       }
+    } else {
+      // 被外层捕获
+      throw error
     }
-    return undefined
   }
 
   reloadPage () {

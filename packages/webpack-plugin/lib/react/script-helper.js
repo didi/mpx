@@ -23,7 +23,6 @@ function getAsyncChunkName (chunkName) {
 }
 
 function getAsyncComponent (componentName, componentRequest, chunkName, fallback) {
-  // todo 注入 pageConfig
   return `getComponent(memo(forwardRef(function(props, ref) {
     const _props = Object.assign({}, props, { ref })
     return createElement(
