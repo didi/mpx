@@ -502,40 +502,40 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
               })
             }
           }
-          return
-        }
-        // 惯性处理
-        if (direction === 'horizontal' || direction === 'all') {
-          xInertialMotion.value = true
-          offsetX.value = withDecay({
-            velocity: e.velocityX / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableXRange.value
-          }, () => {
-            xInertialMotion.value = false
-            if (bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
-        }
-        if (direction === 'vertical' || direction === 'all') {
-          yInertialMotion.value = true
-          offsetY.value = withDecay({
-            velocity: e.velocityY / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableYRange.value
-          }, () => {
-            yInertialMotion.value = false
-            if (bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
+        } else if (inertia) {
+          // 惯性处理
+          if (direction === 'horizontal' || direction === 'all') {
+            xInertialMotion.value = true
+            offsetX.value = withDecay({
+              velocity: e.velocityX / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableXRange.value
+            }, () => {
+              xInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
+          if (direction === 'vertical' || direction === 'all') {
+            yInertialMotion.value = true
+            offsetY.value = withDecay({
+              velocity: e.velocityY / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableYRange.value
+            }, () => {
+              yInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
         }
       })
       .withRef(movableGestureRef)
