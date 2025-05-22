@@ -150,7 +150,7 @@ export function defineReactive(
     },
     set: function reactiveSetter(newVal) {
       const value = getter ? getter.call(obj) : val
-      if (!(shallow || isForceTrigger) && !hasChanged(newVal, value)) {
+      if (!hasChanged(newVal, value) && !isForceTrigger) {
         return
       }
       if (!shallow && isRef(value) && !isRef(newVal)) {

@@ -147,7 +147,9 @@ export function shallowRef<T extends Ref>(value: T): T
 export function shallowRef<T>(value: T): ShallowRef<T>
 export function shallowRef<T = any>(): ShallowRef<T | undefined>
 export function shallowRef(raw?: unknown) {
-  if (isRef(raw)) return raw
+  if (isRef(raw)) {
+    return raw
+  }
   const wrapper = shallowReactive({ [RefKey]: raw })
   return createRef({
     get: () => wrapper[RefKey],
