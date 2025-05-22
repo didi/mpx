@@ -106,8 +106,10 @@ export function toRefs<T extends object>(obj: T): ToRefs<T> {
   if (!isReactive(obj)) {
     warn('toRefs() expects a reactive object but received a plain one.')
   }
-  if (!isPlainObject(obj)) return obj as ToRefs<T>
-  const result = {} as ToRefs<T>
+  if (!isPlainObject(obj) && !Array.isArray(obj)) {
+    return obj as ToRefs<T>
+  }
+  const result: any = Array.isArray(obj) ? new Array(obj.length) : {}
   Object.keys(obj).forEach(key => {
     result[key as keyof T] = toRef(obj, key as keyof T)
   })
