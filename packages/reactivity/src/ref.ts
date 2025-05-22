@@ -46,7 +46,9 @@ export function ref<T extends Ref>(value: T): T
 export function ref<T>(value: T): Ref<UnwrapRef<T>>
 export function ref<T = any>(): Ref<T | undefined>
 export function ref(raw?: unknown) {
-  if (isRef(raw)) return raw
+  if (isRef(raw)) {
+    return raw
+  }
   const wrapper = reactive({ [RefKey]: raw })
   return createRef({
     get: () => wrapper[RefKey],
