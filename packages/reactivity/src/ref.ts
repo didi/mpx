@@ -1,5 +1,5 @@
 import { extend, hasOwn, isPlainObject, warn } from '@mpxjs/utils'
-import { RefKey } from './const'
+import { RefFlag, RefKey } from './const'
 import {
   type ShallowReactiveMarker,
   isReactive,
@@ -19,9 +19,13 @@ export interface Ref<T = any, S = T> {
    * autocomplete, so we use a private Symbol instead.
    */
   [RefSymbol]: true
+  /** @internal */
+  [RefFlag]: true
 }
 
 export class RefImpl {
+  readonly [RefFlag] = true
+
   constructor(options: PropertyDescriptor) {
     Object.defineProperty(this, 'value', extend({ enumerable: true }, options))
   }
@@ -34,7 +38,7 @@ export function createRef(options: PropertyDescriptor) {
 
 export function isRef<T>(r: Ref<T> | unknown): r is Ref<T>
 export function isRef(val: any): val is Ref {
-  return val instanceof RefImpl
+  return val ? val[RefFlag] === true : false
 }
 
 // #region ref

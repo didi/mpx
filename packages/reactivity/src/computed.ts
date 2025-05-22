@@ -1,5 +1,5 @@
 import { hasChanged, isFunction, noop } from '@mpxjs/utils'
-import { SubscriberFlags } from './const'
+import { RefFlag, SubscriberFlags } from './const'
 import type { Dependency } from './dep'
 import {
   type Subscriber,
@@ -29,6 +29,7 @@ export interface WritableComputedOptions<T, S = T> {
 }
 
 export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
+  readonly [RefFlag] = true
   private _value: T | undefined = undefined
 
   // As a Dependency

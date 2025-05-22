@@ -1,8 +1,9 @@
-/** @internal key for Ref */
+/** @internal */
 export const RefKey = '__composition_api_ref_key__'
 /** @internal key for Observer */
 export const ObKey = '__ob__'
-
+/** @internal flag for isRef */
+export const RefFlag = '__is_ref__'
 /**
  * Subscriber common flags
  * @internal
