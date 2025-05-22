@@ -1,5 +1,6 @@
 import { ComponentType, ReactNode, Component, Fragment, Suspense } from 'react'
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
+import FastImage from '@d11/react-native-fast-image'
 
 const styles = StyleSheet.create({
   container: {
@@ -72,10 +73,10 @@ interface ComponentError extends Error {
 const DefaultLoading = () => {
   return (
     <View style={styles.container}>
-      <Image
+      <FastImage
         style={styles.loadingImage}
         source={{ uri: 'https://dpubstatic.udache.com/static/dpubimg/439jiCVOtNOnEv9F2LaDs_loading.gif' }}
-        resizeMode='contain'></Image>
+        resizeMode={FastImage.resizeMode.contain}></FastImage>
     </View>
   )
 }

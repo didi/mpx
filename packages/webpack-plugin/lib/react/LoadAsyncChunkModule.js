@@ -18,11 +18,12 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
       `${loadScriptFn} = ${runtimeTemplate.basicFunction(
         'url, done, key, chunkId',
         [
-          `var chunkName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
+          `var package = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
+          'package = package.split("/")[0]',
           'var config = {',
           Template.indent([
             'url: url,',
-            "chunkName: chunkName.split('/')[0]"
+            'package: package'
           ]),
           '}',
           'if(inProgress[url]) { inProgress[url].push(done); return; }',
@@ -33,7 +34,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
             'var lazyLoadEvent = {',
             Template.indent([
               "type: 'subpackage',",
-              'subpackage: [chunkName],',
+              'subpackage: [package],',
               'errMsg: "loadSubpackage: " + type'
             ]),
             '}',
@@ -64,6 +65,12 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           "var successCallback = callback.bind(null, 'load');",
           "var failedCallback = callback.bind(null, 'fail')",
           'var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync',
+          'if (typeof loadChunkAsyncFn !== \'function\') {',
+            Template.indent([
+              'console.error("[Mpx runtime error]: please provide correct loadChunkAsync function")',
+              'return'
+            ]),
+          '}',
           'loadChunkAsyncFn(config).then(successCallback).catch(failedCallback)'
         ]
       )}`
