@@ -72,6 +72,11 @@ module.exports = {
         indent: 0,
         'brace-style': 0
       }
+    }, {
+      files: ['packages/reactivity/__tests__/**/*.ts'],
+      rules: {
+        'no-unused-expressions': 0
+      }
     }
   ]
 }
