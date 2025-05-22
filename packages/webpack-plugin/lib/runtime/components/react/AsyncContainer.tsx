@@ -125,8 +125,10 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
         hasError: true,
         key: 0
       }
+    } else {
+      // 被外层捕获
+      throw error
     }
-    return undefined
   }
 
   reloadPage () {
