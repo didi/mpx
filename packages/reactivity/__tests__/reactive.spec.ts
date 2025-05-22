@@ -224,16 +224,13 @@ test('should not trigger if value did not change', () => {
     spy()
   })
   expect(spy).toHaveBeenCalledTimes(1)
-
   state.foo = 1
   expect(spy).toHaveBeenCalledTimes(1)
-
   state.foo = NaN
   expect(spy).toHaveBeenCalledTimes(2)
-
   state.foo = NaN
+  // Object.is(NaN, NaN) is true
   expect(spy).toHaveBeenCalledTimes(2)
-
   state.foo = 2
   expect(spy).toHaveBeenCalledTimes(3)
 })

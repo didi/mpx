@@ -132,3 +132,13 @@ export class ReactiveEffect {
     }
   }
 }
+
+export function effect (fn) {
+  const e = new ReactiveEffect(fn)
+  try {
+    e.run()
+  } catch (err) {
+    e.stop()
+    throw err
+  }
+}

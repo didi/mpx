@@ -15,6 +15,10 @@ export {
 } from '../../observer/reactive'
 
 export {
+  effect
+} from '../../observer/effect'
+
+export {
   ref,
   unref,
   toRef,
