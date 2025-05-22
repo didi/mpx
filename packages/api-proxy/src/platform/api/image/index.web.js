@@ -60,8 +60,11 @@ const getImageInfo = function (options = {}) {
   }
 }
 
+const chooseMedia = envError('chooseMedia')
+
 export {
   previewImage,
   compressImage,
-  getImageInfo
+  getImageInfo,
+  chooseMedia
 }
