@@ -154,7 +154,7 @@ const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
     isPercent(bp[1]) ||
     isPercent(bp[3]) ||
     isDiagonalAngle(linearInfo) ||
-    type === 'linear' && (isPercent(height) || isPercent(width))
+    (type === 'linear' && (isPercent(height) || isPercent(width)))
 }
 
 const checkNeedLayout = (preImageInfo: PreImageInfo) => {
