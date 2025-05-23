@@ -1,5 +1,5 @@
-import { test, expect, vi } from 'vitest'
-import { ref, computed, reactive, effect } from '../src'
+import { expect, test, vi } from 'vitest'
+import { computed, effect, reactive, ref } from '../src'
 
 test('should return updated value', () => {
   const value = reactive({ foo: 0 })
@@ -17,7 +17,7 @@ test('pass oldValue to computed getter', () => {
     return count.value
   })
   expect(curValue.value).toBe(0)
-  expect(oldValue.value).toBe(undefined)
+  expect(oldValue.value).toBeUndefined()
   count.value++
   expect(curValue.value).toBe(1)
   expect(oldValue.value).toBe(0)
@@ -31,7 +31,7 @@ test('should compute lazily', () => {
   // lazy
   expect(getter).not.toHaveBeenCalled()
 
-  expect(cValue.value).toBe(undefined)
+  expect(cValue.value).toBeUndefined()
   expect(getter).toHaveBeenCalledTimes(1)
 
   // should not compute again
@@ -89,7 +89,7 @@ test('should trigger effect', () => {
   effect(() => {
     dummy = cValue.value
   })
-  expect(dummy).toBe(undefined)
+  expect(dummy).toBeUndefined()
   value.foo = 1
   expect(dummy).toBe(1)
 })

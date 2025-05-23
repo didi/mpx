@@ -1,4 +1,3 @@
-import { warn } from '@mpxjs/utils'
 import { EffectFlags } from './const'
 import { type ReactiveEffect } from './effect'
 

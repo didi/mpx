@@ -1,4 +1,4 @@
-import { test, expect, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import {
   type Ref,
   computed,
@@ -59,7 +59,7 @@ test('should work without initial value', () => {
   effect(() => {
     dummy = a.value
   })
-  expect(dummy).toBe(undefined)
+  expect(dummy).toBeUndefined()
   a.value = 1
   expect(dummy).toBe(1)
 })
