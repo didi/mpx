@@ -76,7 +76,6 @@ const styles = StyleSheet.create({
     borderRadius: 10
   }
 })
-let isNavigateBack = false // 放外层是因为isIntercept值变更会引起组件重新渲染导致内层的值记录不准确
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   const mpx = global.__mpx
@@ -101,6 +100,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const webViewRef = useRef<WebView>(null)
   const fristLoaded = useRef<boolean>(false)
   const isLoadError = useRef<boolean>(false)
+  const isNavigateBack = useRef<boolean>(false)
   const statusCode = useRef<string|number>('')
   const [isLoaded, setIsLoaded] = useState<boolean>(true)
   const defaultWebViewStyle = {
@@ -115,12 +115,12 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const [isIntercept, setIsIntercept] = useState<boolean>(false)
   usePreventRemove(isIntercept, (event: PreventRemoveEvent) => {
     const { data } = event
-    if (isNavigateBack) {
+    if (isNavigateBack.current) {
       navigation?.dispatch(data.action)
     } else {
       webViewRef.current?.goBack()
     }
-    isNavigateBack = false
+    isNavigateBack.current = false
   })
 
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
@@ -219,7 +219,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         asyncCallback = navObj.navigateTo(...params)
         break
       case 'navigateBack':
-        isNavigateBack = true
+        isNavigateBack.current = true
         asyncCallback = navObj.navigateBack(...params)
         break
       case 'redirectTo':
@@ -272,7 +272,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     const src = res.nativeEvent?.url
     if (isLoadError.current) {
       isLoadError.current = false
-      isNavigateBack = false
+      isNavigateBack.current = false
       const result = {
         type: 'error',
         timeStamp: res.timeStamp,
