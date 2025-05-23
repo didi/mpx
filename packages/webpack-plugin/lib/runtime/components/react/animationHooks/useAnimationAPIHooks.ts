@@ -1,29 +1,25 @@
 import { hasOwn } from '@mpxjs/utils'
-
 import { useEffect, useMemo, useRef } from 'react'
-import { TransformsStyle } from 'react-native'
 import {
   Easing,
   useSharedValue,
-  withTiming,
   useAnimatedStyle,
   withSequence,
-  withDelay,
   makeMutable,
-  cancelAnimation,
-  runOnJS
+  cancelAnimation
 } from 'react-native-reanimated'
 import {
   EasingKey, Transform, TransformOrigin, InitialValue,
-  isTransform, getTransformObj
+  isTransform, getTransformObj, getInitialVal, formatAnimatedKeys, getAnimation
 } from './utils'
+import type { AnimationCallback, SharedValue } from 'react-native-reanimated'
+import type { TransformsStyle } from 'react-native'
 import type { ExtendedViewStyle } from '../types/common'
 import type { _ViewProps } from '../mpx-view'
-import type { AnimationCallback, SharedValue } from 'react-native-reanimated'
-import type { ExtendWithTimingConfig } from './utils'
+import type { ExtendWithTimingConfig, CustomAnimationCallback } from './utils'
 
-export default function useAnimationAPIHooks<T, P> (props: _ViewProps) {
-  const { style = {}, animation, bindtransitionend } = props
+export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transitionend?: CustomAnimationCallback }) {
+  const { style: originalStyle = {}, animation, transitionend } = props
   // 有动画样式的 style key
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
@@ -31,7 +27,6 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // 记录上次style map
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // ** 全量 style prop sharedValue
   // 不能做增量的原因：
@@ -40,7 +35,7 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
-      const defaultVal = getInitialVal(key, isTransform(key))
+      const defaultVal = getInitialVal(originalStyle, key)
       valMap[key] = makeMutable(defaultVal)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
@@ -50,7 +45,7 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps) {
   useEffect(() => {
     // style 更新后同步更新 lastStyleRef & shareValMap
     updateStyleVal()
-  }, [style])
+  }, [originalStyle])
   // ** 获取动画样式prop & 驱动动画
   // id 标识
   const id = animation?.id || -1
@@ -122,30 +117,6 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps) {
       })
     })
   }
-  // 创建单个animation
-  function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
-    const animation = typeof callback === 'function'
-      ? withTiming(value, { duration, easing }, (finished, current) => {
-        callback(finished, current)
-        if (finished && bindtransitionend) {
-          runOnJS(bindtransitionend)(finished, current, duration)
-        }
-      })
-      : withTiming(value, { duration, easing })
-    return delay ? withDelay(delay, animation) : animation
-  }
-  // 获取样式初始值（prop style or 默认值）
-  function getInitialVal (key: keyof ExtendedViewStyle, isTransform = false) {
-    if (isTransform && Array.isArray(style.transform)) {
-      let initialVal = InitialValue[key]
-      // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
-      style.transform.forEach(item => {
-        if (item[key] !== undefined) initialVal = item[key]
-      })
-      return initialVal
-    }
-    return style[key] === undefined ? InitialValue[key] : style[key]
-  }
   // 循环 animation actions 获取所有有动画的 style prop name
   function getAnimatedStyleKeys () {
     return (animation?.actions || []).reduce((keyMap, action) => {
@@ -157,23 +128,9 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps) {
       return keyMap
     }, animatedKeys.current)
   }
-  // animated key transform 格式化
-  function formatAnimatedKeys (keys: string[]) {
-    const animatedKeys = [] as (string|string[])[]
-    const transforms = [] as string[]
-    keys.forEach(key => {
-      if (isTransform(key)) {
-        transforms.push(key)
-      } else {
-        animatedKeys.push(key)
-      }
-    })
-    if (transforms.length) animatedKeys.push(transforms)
-    return animatedKeys
-  }
   // 设置 lastShareValRef & shareValMap
   function updateStyleVal () {
-    Object.entries(style).forEach(([key, value]) => {
+    Object.entries(originalStyle).forEach(([key, value]) => {
       if (key === Transform) {
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
@@ -196,7 +153,7 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps) {
     return animatedStyleKeys.value.reduce((styles, key) => {
       // console.info('getAnimationStyles', key, shareValMap[key].value)
       if (Array.isArray(key)) {
-        const transformStyle = getTransformObj(style.transform || [])
+        const transformStyle = getTransformObj(originalStyle.transform || [])
         key.forEach((transformKey) => {
           transformStyle[transformKey] = shareValMap[transformKey].value
         })

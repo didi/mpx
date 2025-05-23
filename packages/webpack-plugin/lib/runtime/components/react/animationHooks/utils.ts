@@ -1,5 +1,15 @@
-import { Easing } from 'react-native-reanimated'
-import type { WithTimingConfig } from 'react-native-reanimated'
+import {
+  Easing,
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  withSequence,
+  withDelay,
+  makeMutable,
+  cancelAnimation,
+  runOnJS
+} from 'react-native-reanimated'
+import type { AnimatableValue, WithTimingConfig, AnimationCallback } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
 
 export type AnimatedOption = {
@@ -22,8 +32,12 @@ export type AnimationProp = {
   actions: AnimationStepItem[]
 }
 
+export type CustomAnimationCallback = (finished?: boolean, current?: AnimatableValue, duration?: number) => void
+
 // ms s 单位匹配
 export const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)\s*$/
+export const NumberExp = /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/
+export const ColorExp = /^(color|(.+Color))$/
 // transform
 export const Transform = 'transform'
 export const TransformOrigin = 'transformOrigin'
@@ -165,8 +179,83 @@ export function getTransformObj (transforms: { [propName: string]: string | numb
     return Object.assign(transformObj, item)
   }, {} as { [propName: string]: string | number })
 }
+// 获取样式初始值（prop style or 默认值）
+export function getInitialVal (style: ExtendedViewStyle, key: string) {
+  if (isTransform(key) && Array.isArray(style.transform)) {
+    let initialVal = InitialValue[key]
+    // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
+    style.transform.forEach(item => {
+      if (item[key] !== undefined) initialVal = item[key]
+    })
+    return initialVal
+  }
+  return style[key] === undefined ? InitialValue[key] : style[key]
+}
+// animated key transform 格式化
+export function formatAnimatedKeys (keys: string[]) {
+  const animatedKeys = [] as (string|string[])[]
+  const transforms = [] as string[]
+  keys.forEach(key => {
+    if (isTransform(key)) {
+      transforms.push(key)
+    } else {
+      animatedKeys.push(key)
+    }
+  })
+  if (transforms.length) animatedKeys.push(transforms)
+  return animatedKeys
+}
 // 解析动画时长
 export function getUnit (duration: string) {
   const match = secondRegExp.exec(duration)
   return match ? match[2] === 's' ? +match[1] * 1000 : +match[1] : 0
 }
+
+// 根据动画数据创建单个animation
+export function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
+  const animation = typeof callback === 'function'
+    ? withTiming(value, { duration, easing }, callback)
+    : withTiming(value, { duration, easing })
+  return delay ? withDelay(delay, animation) : animation
+}
+
+export const SupportedProperty = Object.assign({
+  color: 'transparent',
+  borderColor: 'transparent',
+  borderBottomColor: 'transparent',
+  borderLeftColor: 'transparent',
+  borderRightColor: 'transparent',
+  borderTopColor: 'transparent',
+  borderTopLeftRadius: 0,
+  borderTopRightRadius: 0,
+  borderBottomLeftRadius: 0,
+  borderBottomRightRadius: 0,
+  borderRadius: 0,
+  borderBottomWidth: 0,
+  borderLeftWidth: 0,
+  borderRightWidth: 0,
+  borderTopWidth: 0,
+  borderWidth: 0,
+  margin: 0,
+  marginBottom: 0,
+  marginLeft: 0,
+  marginRight: 0,
+  marginTop: 0,
+  marginHorizontal: 0,
+  marginVertical: 0,
+  maxHeight: 0,
+  maxWidth: 0,
+  minHeight: 0,
+  minWidth: 0,
+  padding: 0,
+  paddingBottom: 0,
+  paddingLeft: 0,
+  paddingRight: 0,
+  paddingTop: 0,
+  paddingHorizontal: 0,
+  paddingVertical: 0,
+  fontSize: 0, // Todo
+  letterSpacing: 0 // Todo
+}, InitialValue)
+
+export type PropertyType = keyof SupportedProperty
