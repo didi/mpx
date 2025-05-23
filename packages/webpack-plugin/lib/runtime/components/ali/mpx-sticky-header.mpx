@@ -87,7 +87,7 @@
                     id: this.stickyId
                   })
                 }
-              } else if (scrollTop < this.headerTop) {
+              } else if (scrollTop <= this.headerTop) {
                 if (!this.isStickOnTop) return
                 this.isStickOnTop = false
                 this.triggerEvent('stickontopchange', {
