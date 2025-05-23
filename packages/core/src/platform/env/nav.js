@@ -3,19 +3,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ReactNative from 'react-native'
 import Mpx from '../../index'
 
+const titleHeight = 44
 export function useInnerHeaderHeight (pageconfig) {
   if (pageconfig.navigationStyle === 'custom') {
     return 0
   } else {
     const safeAreaTop = useSafeAreaInsets()?.top || 0
-    const headerHeight = safeAreaTop + getTitleHeight()
+    const headerHeight = safeAreaTop + titleHeight
     return headerHeight
   }
-}
-
-// 固定写死高度
-function getTitleHeight () {
-  return 44
 }
 
 // 计算颜色亮度
@@ -59,8 +55,7 @@ const styles = ReactNative.StyleSheet.create({
     textAlign: 'center'
   }
 })
-export function innerNav ({ props, navigation }) {
-  const { pageConfig } = props
+export function innerNav ({ pageConfig, navigation }) {
   const [innerPageConfig, setPageConfig] = useState(pageConfig || {})
   navigation.setPageConfig = (config) => {
     const newConfig = Object.assign({}, innerPageConfig, config)
@@ -100,7 +95,7 @@ export function innerNav ({ props, navigation }) {
       },
       createElement(ReactNative.View, {
         style: styles.headerContent,
-        height: getTitleHeight()
+        height: titleHeight
       }, backElement,
       createElement(ReactNative.Text, {
         style: [styles.title, { color: innerPageConfig.navigationBarTextStyle || 'white' }],

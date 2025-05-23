@@ -65,7 +65,7 @@ export default function createApp (options) {
           }
         },
         createElement(innerNav, {
-          props: { pageConfig: pageConfig },
+          pageConfig: pageConfig,
           navigation
         }),
         createElement(WrappedComponent, { navigation, ...props })
