@@ -1,20 +1,19 @@
 <template>
-  <block>
-    <view class="mpx-sticky-header-check" wx:style="{{`top: ${scrollOffsetTop}px;`}}" />
-    <!-- <view
+  <view class="mpx-sticky-header-container">
+    <view
       class="mpx-sticky-header"
-      wx:style="{{ isStickOnTop && offsetTop ? `top: ${offsetTop}px;` : '' }}"
-    >
-      <slot></slot>
-    </view> -->
-     <view
-      class="mpx-sticky-header"
-     
+      wx:style="{{isStickOnTop ? `position: fixed;top: ${scrollOffsetTop + offsetTop}px`: ''}}"
     >
       <slot></slot>
     </view>
-  </block>
+    <view
+      class="mpx-sticky-header-placeholder"
+      id="{{stickyId}}"
+      wx:style="{{isStickOnTop ? `position: relative;height: ${headerHeight}px;` : `position: absolute;height: ${headerHeight}px;`}}"
+    ></view>
+  </view>
 </template>
+
 <script>
   import mpx, { createComponent } from '@mpxjs/core'
 
@@ -28,7 +27,7 @@
         type: String,
         value: ''
       },
-      id: {
+      stickyId: {
         type: String,
         value: ''
       }
@@ -36,94 +35,88 @@
     data: {
       isStickOnTop: false,
       scrollOffsetTop: 0,
-      lastIntersectionRatio: 0,
-      isInited: false,
+      headerHeight: 0,
+      stickyHeader: '',
       headerTop: 0
     },
     ready() {
       if (!this.scrollViewId) {
         console.error('[mpx runtime error]: scroll-view-id is necessary property in ali environment')
       }
+      if (!this.stickyId) {
+        console.error('[mpx runtime error]: stickyId is necessary property in ali environment')
+      }
       // 先获取元素的初始位置
       this.createSelectorQuery()
         .select('.mpx-sticky-header')
         .boundingClientRect((rect) => {
           if (!rect) return
-          this.headerTop = rect.top
+          mpx
+            .createSelectorQuery()
+            .select(`#${this.scrollViewId}`)
+            .boundingClientRect((res) => {
+              if (!res) return
+              this.scrollOffsetTop = res.top || 0
+              this.headerHeight = rect.height
+              this.headerTop = rect.top - this.scrollOffsetTop
+              this.stickyHeader = my.createIntersectionObserver({
+                thresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+              })
+              this.initTabsObserver()
+            })
+            .exec()
         })
         .exec()
-
-      mpx
-        .createSelectorQuery()
-        .select(`#${this.scrollViewId}`)
-        .boundingClientRect((res) => {
-          if (!res) return
-          this.scrollOffsetTop = res.top || 0
-        })
-        .exec()
-
-      this.stickyHeader = this.createIntersectionObserver({
-        thresholds: [0, 1]
-      })
-      this.initTabsObserver()
     },
     methods: {
       initTabsObserver() {
-        let lastScrollTop = 0
-        this.stickyHeader
-          .relativeTo('.mpx-sticky-header-check')
-          .observe('.mpx-sticky-header', (res) => {
-            const currentRatio = res.intersectionRatio
-            const wasRatioZero = this.lastIntersectionRatio === 0
-            const isRatioZero = currentRatio === 0
-            this.lastIntersectionRatio = currentRatio
-
-            // 获取当前滚动位置
-            mpx
-              .createSelectorQuery()
-              .select(`#${this.scrollViewId}`)
-              .scrollOffset((scrollRes) => {
-                if (!scrollRes) return
-                const scrollTop = scrollRes.scrollTop
-                const isScrollingUp = scrollTop < lastScrollTop
-                lastScrollTop = scrollTop
-
-                // 只在以下情况触发事件：
-                // 1. 向上滑动且 intersectionRatio 从 0 变为大于 0
-                // 2. 向下滑动且 intersectionRatio 变为 0
-                if (isScrollingUp && !wasRatioZero && isRatioZero) {
-                  if (this.isStickOnTop) {
-                    this.isStickOnTop = false
-                    this.triggerEvent('stickontopchange', {
-                      isStickOnTop: this.isStickOnTop
-                    })
-                  }
+        this.stickyHeader.relativeTo(`#${this.scrollViewId}`).observe(`#${this.stickyId}`, (res) => {
+          const { intersectionRatio, intersectionRect, relativeRect } = res
+          // 获取当前滚动位置
+          mpx
+            .createSelectorQuery()
+            .select(`#${this.scrollViewId}`)
+            .scrollOffset((scrollRes) => {
+              const scrollTop = scrollRes.scrollTop
+              if (scrollTop > this.headerTop) {
+                if (intersectionRect.bottom < relativeRect.bottom) {
+                  if (this.isStickOnTop) return
+                  this.isStickOnTop = true
+                  this.triggerEvent('stickontopchange', {
+                    isStickOnTop: this.isStickOnTop,
+                    id: this.stickyId
+                  })
                 }
-                if (!isScrollingUp && wasRatioZero && currentRatio > 0) {
-                  if (!this.isStickOnTop) {
-                    this.isStickOnTop = true
-                    this.triggerEvent('stickontopchange', {
-                      isStickOnTop: this.isStickOnTop
-                    })
-                  }
-                }
-              })
-              .exec()
-          })
+              } else if (scrollTop < this.headerTop) {
+                if (!this.isStickOnTop) return
+                this.isStickOnTop = false
+                this.triggerEvent('stickontopchange', {
+                  isStickOnTop: this.isStickOnTop,
+                  id: this.stickyId
+                })
+              }
+            })
+            .exec()
+        })
+      },
+      detached() {
+        // 清理观察器
+        if (this.stickyHeader) {
+          this.stickyHeader.disconnect()
+        }
       }
     }
   })
 </script>
 <style lang="stylus" scoped>
-  .mpx-sticky-header-check
-    position fixed
-    height 2px
-    background red
-    top 0
+  .mpx-sticky-header-container
+    position relative
+  .mpx-sticky-header-placeholder
+    position absolute
     left 0
-    width 100%
+    right 0
+    top 0
     pointer-events none
   .mpx-sticky-header
-    position sticky
-    top 0
+    width 100%
 </style>
