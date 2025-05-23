@@ -1,5 +1,5 @@
 import { SubscriberFlags } from './const'
-import { activeSub } from './effect'
+import { activeSub, endBatch, startBatch } from './effect'
 import { type Link, addLink } from './link'
 
 export interface Dependency {
@@ -18,8 +18,10 @@ export class Dep implements Dependency {
   }
 
   notify() {
+    startBatch()
     for (let link = this.subs; link; link = link.nextSub) {
       link.sub.notify(SubscriberFlags.DIRTY)
     }
+    endBatch()
   }
 }

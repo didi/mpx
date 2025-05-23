@@ -92,13 +92,13 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
           break
         }
       }
+      this.flags &= ~SubscriberFlags.MAYBE_DIRTY
     }
     if (this.flags & SubscriberFlags.DIRTY) {
       if (this.update()) {
         this.shallowNotify()
       }
     }
-    this.flags && (this.flags &= ~SubscriberFlags.MAYBE_DIRTY)
   }
 
   /**

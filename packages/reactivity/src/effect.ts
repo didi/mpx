@@ -40,12 +40,12 @@ export class ReactiveEffect<T = any>
     return !(this.flags & EffectFlags.STOP)
   }
 
-  notify(
-    dirtyFlag?: SubscriberFlags.MAYBE_DIRTY | SubscriberFlags.DIRTY
-  ): void {
-    if (dirtyFlag && !(this.flags & SubscriberFlags.DIRTY)) {
-      this.flags |= dirtyFlag
-    }
+  notify(dirtyFlag: SubscriberFlags.MAYBE_DIRTY | SubscriberFlags.DIRTY): void {
+    this.flags |= dirtyFlag
+    addToEffectBuffer(this)
+  }
+
+  trigger(): void {
     if (activeSub === this && !this.allowRecurse) {
       // cycle detection
       return
@@ -56,7 +56,7 @@ export class ReactiveEffect<T = any>
       if (isFunction(this.scheduler)) {
         this.scheduler()
       } else {
-        if (this.flags & SubscriberFlags.DIRTY || this.checkDirty()) {
+        if (this.dirty) {
           this.run()
         }
       }
@@ -107,16 +107,19 @@ export class ReactiveEffect<T = any>
     }
     if (!ignoreDirty && flags & EffectFlags.NOTIFIED) {
       this.flags &= ~EffectFlags.NOTIFIED
-      this.notify()
+      this.trigger()
     }
   }
 
-  private checkDirty(): boolean {
+  private get dirty(): boolean {
     if (this.flags & SubscriberFlags.MAYBE_DIRTY) {
       for (let link = this.deps; link; link = link.nextDep) {
         const dep = link.dep as Dependency | ComputedRefImpl
         if ('flags' in dep) {
           dep.refreshComputed()
+        }
+        if (this.flags & SubscriberFlags.DIRTY) {
+          break
         }
       }
       this.flags &= ~SubscriberFlags.MAYBE_DIRTY
@@ -179,11 +182,45 @@ export function setActiveSub(sub: Subscriber | undefined) {
   return prevSub
 }
 
-// #region effect
+// #region effect batch
+const notifiedEffectBuffer: (ReactiveEffect | undefined)[] = []
+let batchDepth = 0
+let notifyIndex = 0
+let notifyBufferLength = 0
+
+/** @internal */
+export function startBatch(): void {
+  ++batchDepth
+}
+
+/** @internal */
+export function endBatch(): void {
+  if (!--batchDepth) {
+    processEffectNotifications()
+  }
+}
+
+/** @internal */
+export function processEffectNotifications(): void {
+  while (notifyIndex < notifyBufferLength) {
+    const effect = notifiedEffectBuffer[notifyIndex++]!
+    effect.trigger()
+  }
+  notifiedEffectBuffer.length = 0
+  notifyIndex = 0
+  notifyBufferLength = 0
+}
+
+/** @internal */
+export function addToEffectBuffer(effect: ReactiveEffect): void {
+  notifiedEffectBuffer[notifyBufferLength++] = effect
+}
+// #endregion
+
+// #region effect API test
 /**
  * Since we did not expose `effect` in Mpx,
  * it is used only for internal testing.
- *
  * @internal
  */
 export function effect<T = any>(
