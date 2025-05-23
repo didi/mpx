@@ -1,3 +1,4 @@
+import { warn } from '@mpxjs/utils'
 import { EffectFlags } from './const'
 import { type ReactiveEffect } from './effect'
 
@@ -9,14 +10,15 @@ export class EffectScope {
    */
   private parent: EffectScope | undefined
   /**
-   * record undetached scopes
-   */
-  private scopes: EffectScope[] | undefined
-  /**
    * track a child scope's index in its parent's scopes array for optimized
    * removal
    */
   private index: number | undefined
+  /**
+   * record undetached scopes
+   * @internal
+   */
+  scopes: EffectScope[] | undefined
 
   flags = 0 as EffectFlags
   effects: ReactiveEffect[] = []
@@ -58,6 +60,7 @@ export class EffectScope {
 
   stop(fromParent?: boolean): void {
     if (this.active) {
+      this.flags |= EffectFlags.STOP
       let i, l
       for (i = 0, l = this.effects.length; i < l; i++) {
         this.effects[i].stop()
