@@ -170,7 +170,7 @@ Mpx 框架抹平了这部分的差异，在使用 Mpx 转 RN 时，我们可以�
 }
 <!-- 
 小程序&web: 
-- 文本1-6 均为字体大小20px，文字居右
+- 文本 1-5 均为字体大小20px，文字居右
 RN: 
 - 文本1 字体大小20px
 - 文本2 字体大小20px，文字居右
@@ -251,8 +251,8 @@ var() 函数可以插入一个自定义属性（有时也被称为“CSS 变量�
   }
 </style>
 <!-- 实际效果 -->
-<!-- Header 背景色是 #b58df1 -->
-<!-- Content 背景色是 pink -->
+<!-- Header 背景色是 pink -->
+<!-- Content 背景色是 #b58df1 -->
 <!-- Footer 背景色是 black（--footer-color 未定义，回退值生效） -->
 ```
 #### calc()
@@ -595,12 +595,9 @@ Mpx 输出 React Native 支持以下模版指令。
 
 注意事项
 
-1. 当同一个元素上同时绑定了 catchtap 和 bindtap 事件时，两个事件都会被触发执行。但是是否阻止事件冒泡的行为,会以模板上第一个绑定的事件标识符为准。
-如果第一个绑定的是 catchtap，那么不管后面绑定的是什么,都会阻止事件冒泡。如果第一个绑定的是 bindtap，则不会阻止事件冒泡。
-2. 当同一个元素上绑定了 capture-bind:tap 和 bindtap 事件时，事件的执行时机会根据模板上第一个绑定事件的标识符来决定。如果第一个绑定的是 capture-bind:tap，则事件会在捕获阶段触发，如果第一个绑定的是 bindtap，则事件会在冒泡阶段触发。
-3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
-4. 由于 tap 事件是由 touchend 事件模拟实现，所以如果子组件绑定了 catchtap，那么父组件的 touchend 事件将不会响应。同理如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
-5. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
+1. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
+2. 由于 tap 事件是由 touchend 事件模拟实现，所以在 RN 环境，如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
+3. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
 
 ### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
@@ -632,10 +629,12 @@ Mpx 输出 React Native 支持以下模版指令。
 | enable-background		  | Boolean  |     false    |  RN环境特有属性，是否要开启background-image、background-size和background-postion的相关计算或渲染，请根据实际情况开启 |
 | enable-animation | Boolean  | false  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
 | enable-fast-image | Boolean  | false  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 注意事项
 
 1. 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+2. 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 
 
 
@@ -810,6 +809,7 @@ movable-view的可移动区域。
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | user-select             | boolean  | `false`       | 文本是否可选。 |
+| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 text 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 
 
@@ -942,17 +942,6 @@ movable-view的可移动区域。
 | bindconfirm          | 点击完成按钮时触发，`event.detail = { value }`                                         |
 | bind:selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }`                      |
 
-方法
-
-可通过 `ref` 方式调用以下组件实例方法
-
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
-
 
 #### textarea
 多行输入框。
@@ -988,17 +977,6 @@ movable-view的可移动区域。
 | bindconfirm          | 点击完成按钮时触发，`event.detail = { value }`                                          |
 | bindlinechange       | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx`    |
 | bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}`                                         |
-
-方法
-
-可通过 `ref` 方式调用以下组件实例方法
-
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
 
 #### picker-view
 
