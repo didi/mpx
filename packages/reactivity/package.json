@@ -19,10 +19,9 @@
   ],
   "scripts": {
     "build": "tsc && tsup",
-    "bench:output": "vitest bench __benchmarks__/computed.bench.ts --outputJson=temp/bench.json",
-    "bench:compare": "vitest bench __benchmarks__/computed.bench.ts --compare=temp/bench.json",
-    "bench": "npm run build && vitest bench",
-    "test": "vitest run"
+    "test": "npm run build && vitest run",
+    "bench": "npm run build && vitest bench --outputJson=temp/bench.json",
+    "bench:compare": "npm run build && vitest bench --compare=temp/bench.json"
   },
   "keywords": [
     "mpx",
