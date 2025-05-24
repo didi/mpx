@@ -16,6 +16,11 @@ declare const ComputedRefSymbol: unique symbol
 export interface ComputedRef<T = any> extends WritableComputedRef<T> {
   readonly value: T
   [ComputedRefSymbol]: true
+  /**
+   * computed should no longer uses effect
+   * @deprecated
+   */
+  effect: ComputedRefImpl
 }
 
 export type WritableComputedRef<T, S = T> = Ref<T, S>
@@ -73,8 +78,7 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
     }
     this.flags |= dirtyFlag
     for (let link = this.subs; link; link = link.nextSub) {
-      const sub = link.sub
-      sub.notify(SubscriberFlags.MAYBE_DIRTY)
+      link.sub.notify(SubscriberFlags.MAYBE_DIRTY)
     }
   }
 
@@ -128,6 +132,14 @@ export class ComputedRefImpl<T = any> implements Dependency, Subscriber {
       endTracking(this)
     }
   }
+
+  /**
+   * for backwards compat
+   * It was used in @mpxjs/pinia to differentiate ref from computed.
+   */
+  get effect(): this {
+    return this
+  }
 }
 
 export function computed<T>(getter: ComputedGetter<T>): ComputedRef<T>
@@ -150,4 +162,8 @@ export function computed<T>(
 
   const cRef = new ComputedRefImpl(getter, setter)
   return cRef as any
+}
+
+export function isComputed(val: any): val is ComputedRef {
+  return !!(val && val instanceof ComputedRefImpl)
 }
