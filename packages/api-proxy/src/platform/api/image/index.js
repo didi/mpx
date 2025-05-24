@@ -6,8 +6,11 @@ const compressImage = ENV_OBJ.compressImage || envError('compressImage')
 
 const getImageInfo = ENV_OBJ.getImageInfo || envError('getImageInfo')
 
+const chooseMedia = ENV_OBJ.chooseMedia || envError('chooseMedia')
+
 export {
   previewImage,
   compressImage,
-  getImageInfo
+  getImageInfo,
+  chooseMedia
 }
