@@ -1,5 +1,4 @@
-import { set, del, reactive, isReactive } from '../../observer/reactive'
-import { isRef } from '../../observer/ref'
+import { set, del, reactive, isRef, isReactive } from '@mpxjs/reactivity'
 import { watch } from '../../observer/watch'
 import { injectMixins } from '../../core/injectMixins'
 

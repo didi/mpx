@@ -6,19 +6,14 @@ export {
 } from '../../observer/watch'
 
 export {
+  // reactive
   reactive,
   isReactive,
   shallowReactive,
   set,
   del,
-  markRaw
-} from '../../observer/reactive'
-
-export {
-  effect
-} from '../../observer/effect'
-
-export {
+  markRaw,
+  // ref
   ref,
   unref,
   toRef,
@@ -26,18 +21,15 @@ export {
   isRef,
   customRef,
   shallowRef,
-  triggerRef
-} from '../../observer/ref'
-
-export {
-  computed
-} from '../../observer/computed'
-
-export {
-  effectScope,
+  triggerRef,
+  // computed
+  computed,
+  // instance
   getCurrentScope,
+  // effectScope
+  effectScope,
   onScopeDispose
-} from '../../observer/effectScope'
+} from '@mpxjs/reactivity'
 
 export {
   getCurrentInstance
