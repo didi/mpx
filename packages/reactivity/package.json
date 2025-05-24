@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/reactivity",
-  "version": "2.10.4",
+  "version": "2.10.6",
   "description": "Reactivity core system for Mpx",
   "sideEffects": false,
   "main": "dist/index.cjs.js",
@@ -19,9 +19,10 @@
   ],
   "scripts": {
     "build": "tsc && tsup",
-    "test": "npm run build && vitest run",
-    "bench": "npm run build && vitest bench --outputJson=temp/bench.json",
-    "bench:compare": "npm run build && vitest bench --compare=temp/bench.json"
+    "test": "vitest run",
+    "bench": "npm run build && vitest bench",
+    "tsc:build": "npm run build",
+    "vitest": "npm run test"
   },
   "keywords": [
     "mpx",
