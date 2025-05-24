@@ -21,7 +21,7 @@
     "build": "tsc && tsup",
     "bench:output": "vitest bench __benchmarks__/computed.bench.ts --outputJson=temp/bench.json",
     "bench:compare": "vitest bench __benchmarks__/computed.bench.ts --compare=temp/bench.json",
-    "bench": "vitest bench",
+    "bench": "npm run build && vitest bench",
     "test": "vitest run"
   },
   "keywords": [

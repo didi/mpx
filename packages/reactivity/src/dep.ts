@@ -3,7 +3,9 @@ import { activeSub, endBatch, startBatch } from './effect'
 import { type Link, addLink } from './link'
 
 export interface Dependency {
+  /** head node of its Subs list */
   subs: Link | undefined
+  /** tail node of its Subs list */
   subsTail: Link | undefined
 }
 

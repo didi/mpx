@@ -8,7 +8,9 @@ import { type Link, removeLink } from './link'
 export type EffectScheduler = (...args: any[]) => any
 
 export interface Subscriber {
+  /** head node of its Deps list */
   deps: Link | undefined
+  /** tail node of its Deps list */
   depsTail: Link | undefined
   flags: SubscriberFlags | EffectFlags
   notify(dirtyFlag?: SubscriberFlags.MAYBE_DIRTY | SubscriberFlags.DIRTY): void
@@ -202,11 +204,14 @@ export function endBatch(): void {
 
 /** @internal */
 export function processEffectNotifications(): void {
+  if (!notifyBufferLength) {
+    return
+  }
   while (notifyIndex < notifyBufferLength) {
-    const effect = notifiedEffectBuffer[notifyIndex++]!
+    const effect = notifiedEffectBuffer[notifyIndex]!
+    notifiedEffectBuffer[notifyIndex++] = undefined
     effect.trigger()
   }
-  notifiedEffectBuffer.length = 0
   notifyIndex = 0
   notifyBufferLength = 0
 }

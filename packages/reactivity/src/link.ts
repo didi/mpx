@@ -47,18 +47,23 @@ export class Link {
 export function addLink(dep: Dependency, sub: Subscriber): Link | undefined {
   const currentDep = sub.depsTail
   if (currentDep?.dep === dep) {
+    // continuously add same dependency
     return
   }
   const nextDep = currentDep ? currentDep.nextDep : sub.deps
   if (nextDep?.dep === dep) {
+    // same order as the previous tracking batch
     sub.depsTail = nextDep
     return
   }
   const depLastSub = dep.subsTail
   if (depLastSub?.sub === sub && isValidLink(depLastSub, sub)) {
+    // If the dep has been added before(in the same tracking batch),
+    // we don't need to add it again.
     return
   }
-  return addNewLink(dep, sub, nextDep, currentDep)
+  // need to create a new link and add it
+  return addNewLink(dep, sub, currentDep, nextDep)
 }
 
 function isValidLink(checkLink: Link, sub: Subscriber): boolean {
@@ -73,24 +78,29 @@ function isValidLink(checkLink: Link, sub: Subscriber): boolean {
   return false
 }
 
+/**
+ * Adds a new link between a dependency and a subscriber.
+ * @internal
+ */
 function addNewLink(
   dep: Dependency,
   sub: Subscriber,
-  nextDep: Link | undefined,
-  depsTail: Link | undefined
+  prevDep: Link | undefined,
+  nextDep: Link | undefined
 ): Link {
   const newLink: Link = {
     dep,
     sub,
+    prevDep,
     nextDep,
     prevSub: undefined,
     nextSub: undefined
   }
 
-  if (!depsTail) {
+  if (!prevDep) {
     sub.deps = newLink
   } else {
-    depsTail.nextDep = newLink
+    prevDep.nextDep = newLink
   }
 
   if (!dep.subs) {
@@ -109,11 +119,7 @@ function addNewLink(
 
 /** @internal */
 export function removeLink(link: Link, sub = link.sub): Link | undefined {
-  const dep = link.dep
-  const prevDep = link.prevDep
-  const nextDep = link.nextDep
-  const nextSub = link.nextSub
-  const prevSub = link.prevSub
+  const { dep, prevDep, nextDep, prevSub, nextSub } = link
 
   if (nextDep) {
     nextDep.prevDep = prevDep
@@ -137,10 +143,7 @@ export function removeLink(link: Link, sub = link.sub): Link | undefined {
     prevSub.nextSub = nextSub
   } else {
     dep.subs = nextSub
-    if (!nextSub) {
-      // TODO Recursively remove the dep
-      // unwatched(dep)
-    }
+    // Maybe we could remove the dep recursively when !nextSub
   }
 
   return nextDep
