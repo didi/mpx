@@ -1,11 +1,9 @@
 /* eslint-disable no-unused-expressions */
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck test
 import { bench, describe } from 'vitest'
 import type { ComputedRef, Ref } from '../src'
 import { computed, effect, ref } from '../dist/index.esm'
-
-declare module '../dist/index.esm' {
-  function computed(...args: any[]): any
-}
 
 describe('computed', () => {
   bench('create computed', () => {
