@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck test
 /**
- * Run memory test: npx tsx --expose-gc __benchmarksmemoryUsage.ts
+ * Run memory test: npm run memory
  *
  * We need to init `__mpx_mode__` in the file `packages/utils/src/env.js`
  * of @mpxjs/util, otherwise the test will fail.
