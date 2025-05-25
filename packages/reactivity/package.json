@@ -21,6 +21,7 @@
     "build": "tsc && tsup",
     "test": "vitest run",
     "bench": "npm run build && vitest bench",
+    "memory": "npm run build && npx tsx --expose-gc __benchmarks__/memoryUsage.ts",
     "tsc:build": "npm run build",
     "vitest": "npm run test"
   },

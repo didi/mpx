@@ -5,7 +5,7 @@ import { bench, describe } from 'vitest'
 import type { ComputedRef, Ref } from '../src'
 import { computed, effect, ref } from '../dist/index.esm'
 
-describe('computed', () => {
+describe('reactivity benchmark', () => {
   bench('create computed', () => {
     computed(() => 100)
   })
