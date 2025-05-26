@@ -1,0 +1,236 @@
+<template>
+  <scroll-view
+    wx:ref="recycleViewRef"
+    class="mpx-recycle-view"
+    scroll-y
+    wx:style="{{scrollViewStyle}}"
+    type="custom"
+    enhanced="{{enhanced}}"
+    scroll-with-animation="{{scrollWithAnimation}}"
+    bounces="{{bounces}}"
+    show-scrollbar="{{showScrollbar}}"
+    refresher-enabled="{{refresherEnabled}}"
+    refresher-triggered="{{refresherTriggered}}"
+    bindscroll="onScroll"
+    bindrefresherrefresh="onRefresh"
+    scroll-into-view="{{scrollIntoViewId}}"
+    scroll-into-view-alignment="{{viewPosition}}"
+  >
+    <block wx:if="{{mpxGenericListHeader}}">
+      <list-header listHeaderData="{{listHeaderData}}"></list-header>
+    </block>
+    <block wx:for="{{convertedListData}}" wx:key="index">
+      <block wx:if="{{enableSticky}}">
+        <sticky-section>
+          <!-- section header -->
+          <block wx:if="{{item.hasSectionHeader && mpxGenericSectionHeader}}">
+            <sticky-header>
+              <section-header itemData="{{item.headerData}}" id="{{item._domId}}"></section-header>
+            </sticky-header>
+          </block>
+
+          <block
+            wx:if="{{mpxGenericRecycleItem}}"
+            wx:for="{{item.data}}"
+            wx:for-item="subItem"
+            wx:key="subIndex"
+          >
+            <!-- section items -->
+            <recycle-item itemData="{{subItem.itemData}}" id="{{subItem._domId}}"></recycle-item>
+          </block>
+        </sticky-section>
+      </block>
+      <block wx:else>
+        <block wx:if="{{item.itemData && item.itemData.isSectionHeader}}">
+          <section-header
+            wx:if="{{mpxGenericSectionHeader}}"
+            id="{{item._domId}}"
+            itemData="{{item.itemData}}"
+          ></section-header>
+        </block>
+        <block wx:else>
+          <recycle-item
+            wx:if="{{mpxGenericRecycleItem}}"
+            itemData="{{item.itemData}}"
+            id="{{item._domId}}"
+          ></recycle-item>
+        </block>
+      </block>
+    </block>
+  </scroll-view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      height: {
+        type: Number,
+        value: null
+      },
+      width: {
+        type: Number,
+        value: null
+      },
+      listData: {
+        type: Array,
+        value: []
+      },
+      enableSticky: {
+        type: Boolean,
+        value: false
+      },
+      showScrollbar: {
+        type: Boolean,
+        value: false
+      },
+      enhanced: {
+        type: Boolean,
+        value: false
+      },
+      bounces: {
+        type: Boolean,
+        value: false
+      },
+      refresherEnabled: {
+        type: Boolean,
+        value: false
+      },
+      refresherTriggered: {
+        type: Boolean,
+        value: false
+      },
+      listHeaderData: {
+        type: Object,
+        value: null
+      },
+      scrollWithAnimation: {
+        type: Boolean,
+        value: false
+      },
+      mpxGenericRecycleItem: String,
+      mpxGenericSectionHeader: String,
+      mpxGenericListHeader: String
+    },
+    data: {
+      convertedListData: [],
+      scrollIntoViewId: '',
+      viewPosition: 'start'
+    },
+    computed: {
+      scrollViewStyle() {
+        return `height: ${this.formatDimension(this.height)};width: ${this.formatDimension(this.width)}`
+      }
+    },
+    watch: {
+      listData: {
+        handler(newVal) {
+          if (this.enableSticky) {
+            this.convertedListData = this.convertToSectionListData(newVal)
+          } else {
+            this.convertedListData = this.convertToListData(newVal)
+          }
+        },
+        immediate: true
+      }
+    },
+    methods: {
+      formatDimension(value) {
+        return typeof value === 'number' ? `${value}px` : value || '100%'
+      },
+      onScroll(e) {
+        this.triggerEvent('scroll', e)
+      },
+      onRefresh(e) {
+        this.triggerEvent('refresh', e)
+      },
+      scrollToIndex({ index, animated, viewPosition = 0 }) {
+        if (index >= 0) {
+          this.scrollIntoViewId = `mpx-recycle-item-${index}`
+          switch (viewPosition) {
+            case 0:
+              this.viewPosition = 'start'
+              break
+            case 0.5:
+              this.viewPosition = 'center'
+              break
+            case 1:
+              this.viewPosition = 'end'
+              break
+            default:
+              this.viewPosition = 'start'
+          }
+        }
+      },
+      convertToSectionListData(data) {
+        const sections = []
+        let currentSection = null
+
+        data.forEach((item, index) => {
+          if (item.isSectionHeader) {
+            // 如果已经存在一个 section，先把它添加到 sections 中
+            if (currentSection) {
+              sections.push(currentSection)
+            }
+            // 创建新的 section
+            currentSection = {
+              headerData: item,
+              data: [],
+              hasSectionHeader: true,
+              _domId: `mpx-recycle-item-${index}`
+            }
+          } else {
+            // 如果没有当前 section，创建一个默认的
+            if (!currentSection) {
+              // 创建默认section (无header的section)
+              currentSection = {
+                headerData: null,
+                data: [],
+                hasSectionHeader: false
+              }
+            }
+            currentSection.data.push({
+              itemData: item,
+              _domId: `mpx-recycle-item-${index}`
+            })
+          }
+        })
+
+        // 添加最后一个 section
+        if (currentSection) {
+          sections.push(currentSection)
+        }
+
+        return sections
+      },
+      convertToListData(data) {
+        const listData = []
+        data.forEach((item, index) => {
+          listData.push({
+            itemData: item,
+            _domId: `mpx-recycle-item-${index}`
+          })
+        })
+        return listData
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "component": true,
+    "componentGenerics": {
+      "recycle-item": {
+        "default": ""
+      },
+      "section-header": {
+        "default": ""
+      },
+      "list-header": {
+        "default": ""
+      }
+    }
+  }
+</script>

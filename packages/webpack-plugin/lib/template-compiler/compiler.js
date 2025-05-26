@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, EXTEND_COMPONENTS_LIST } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -724,13 +724,21 @@ function parse (template, options) {
       processElement(element, root, options, meta)
 
       tagNames.add(element.tag)
+
+      const genericAttrs = []
       // 统计通过抽象节点方式使用的组件
       element.attrsList.forEach((attr) => {
         if (genericRE.test(attr.name)) {
           tagNames.add(attr.value)
+          if (mode === 'wx') {
+            genericAttrs.push({
+              name: attr.name.replace('generic:', 'mpx-generic-'),
+              value: attr.value
+            })
+          }
         }
       })
-
+      element.attrsList = element.attrsList.concat(genericAttrs)
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -2260,7 +2268,11 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el) {
-  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
+  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag] || isExtendComponentNode(el)
+}
+
+function isExtendComponentNode (el) {
+  return EXTEND_COMPONENTS_LIST.includes(el.tag)
 }
 
 function getComponentInfo (el) {
@@ -2268,7 +2280,7 @@ function getComponentInfo (el) {
 }
 
 function isReactComponent (el) {
-  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
+  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn && !isExtendComponentNode(el)
 }
 
 function processExternalClasses (el, options) {
@@ -2725,8 +2737,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processStyleReact(el, options)
     if (!pass) {
-      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)

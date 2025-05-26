@@ -30,7 +30,8 @@ module.exports = function (jsonContent, {
     mode,
     srcMode,
     env,
-    projectRoot
+    projectRoot,
+    useExtendComponents
   } = mpx
 
   const context = loaderContext.context
@@ -100,6 +101,14 @@ module.exports = function (jsonContent, {
 
     if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
+    } else {
+      if (useExtendComponents) {
+        useExtendComponents.forEach((name) => {
+          emitWarning(
+            `extend component ${name} is not supported in web environment!`
+          )
+        })
+      }
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)

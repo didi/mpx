@@ -16,11 +16,19 @@ module.exports = function (script, {
   componentGenerics,
   genericsInfo
 }, callback) {
+  const { appInfo } = loaderContext.getMpx()
+
   let scriptSrcMode = srcMode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
   } else {
     script = { tag: 'script' }
+  }
+
+  let hasApp = true
+
+  if (!appInfo.name) {
+    hasApp = false
   }
 
   let output = '/* script */\n'
@@ -38,7 +46,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
@@ -55,6 +63,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
 
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
     output += getRequireScript({ ctorType, script, loaderContext })
+
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }
 

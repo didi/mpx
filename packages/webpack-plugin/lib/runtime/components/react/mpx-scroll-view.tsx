@@ -35,11 +35,12 @@ import { ScrollView, RefreshControl, Gesture, GestureDetector } from 'react-nati
 import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Animated as RNAnimated } from 'react-native'
 import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo, createElement } from 'react'
 import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
-import { warn } from '@mpxjs/utils'
+import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
+import Portal from './mpx-portal'
 
 interface ScrollViewProps {
   children?: ReactNode;
@@ -199,6 +200,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasVarDec,
     varContextRef,
     hasSelfPercent,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
@@ -234,6 +236,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // layout 完成前先隐藏，避免安卓闪烁问题
   const refresherLayoutStyle = useMemo(() => { return !hasRefresherLayoutRef.current ? HIDDEN_STYLE : {} }, [hasRefresherLayoutRef.current])
+
   const lastOffset = useRef(0)
 
   if (scrollX && scrollY) {
@@ -659,7 +662,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
-      style: extendObject({}, innerStyle, layoutStyle),
+      style: extendObject(hasOwn(innerStyle, 'flex') || hasOwn(innerStyle, 'flexGrow')
+        ? {}
+        : {
+            flexGrow: 0
+          }, innerStyle, layoutStyle),
       pinchGestureEnabled: false,
       alwaysBounceVertical: false,
       alwaysBounceHorizontal: false,
@@ -782,7 +789,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     )
   )
 
-  return hasRefresher ? withRefresherScrollView : commonScrollView
+  let scrollViewComponent = hasRefresher ? withRefresherScrollView : commonScrollView
+
+  if (hasPositionFixed) {
+    scrollViewComponent = createElement(Portal, null, scrollViewComponent)
+  }
+  return scrollViewComponent
 })
 
 _ScrollView.displayName = 'MpxScrollView'
