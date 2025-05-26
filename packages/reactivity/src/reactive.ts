@@ -1,25 +1,29 @@
-import Dep from './dep'
-import { arrayMethods } from './array'
-import { ObKey } from '../helper/const'
-import { isRef } from './ref'
 import {
+  arrayProtoAugment,
+  def,
+  hasChanged,
   hasOwn,
+  hasProto,
   isObject,
   isPlainObject,
-  hasProto,
-  def,
-  isValidArrayIndex,
-  arrayProtoAugment,
-  hasChanged
+  isValidArrayIndex
 } from '@mpxjs/utils'
+import { arrayMethods } from './array'
+import { ObKey } from './const'
+import { Dep } from './dep'
+import { activeSub } from './effect'
+import { type Ref, type UnwrapRefSimple, isRef } from './ref'
+
+export interface Target {
+  [ObKey]?: Observer
+}
 
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
-
 const rawSet = new WeakSet()
 
 let isForceTrigger = false
 
-export function setForceTrigger (val) {
+export function setForceTrigger(val: boolean): void {
   isForceTrigger = val
 }
 
@@ -32,14 +36,13 @@ export function setForceTrigger (val) {
 export class Observer {
   dep = new Dep()
 
-  constructor (value, shallow) {
-    this.value = value
-    this.shallow = shallow
+  constructor(
+    public value: any,
+    public shallow = false
+  ) {
     def(value, ObKey, this)
     if (Array.isArray(value)) {
-      const augment = hasProto && arrayProtoAugment
-        ? protoAugment
-        : copyAugment
+      const augment = hasProto && arrayProtoAugment ? protoAugment : copyAugment
       augment(value, arrayMethods, arrayKeys)
       !shallow && this.observeArray(value)
     } else {
@@ -52,8 +55,8 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
-  walk (obj, shallow) {
-    Object.keys(obj).forEach((key) => {
+  private walk(obj: Record<string, any>, shallow?: boolean): void {
+    Object.keys(obj).forEach((key: string) => {
       defineReactive(obj, key, obj[key], shallow)
     })
   }
@@ -61,7 +64,7 @@ export class Observer {
   /**
    * Observe a list of Array items.
    */
-  observeArray (arr) {
+  observeArray(arr: any[]): void {
     for (let i = 0, l = arr.length; i < l; i++) {
       observe(arr[i])
     }
@@ -72,8 +75,8 @@ export class Observer {
  * Augment an target Object or Array by intercepting
  * the prototype chain using __proto__
  */
-function protoAugment (target, src, keys) {
-  /* eslint-disable no-proto */
+function protoAugment(target: any, src: any): void {
+  // eslint-disable-next-line no-proto
   target.__proto__ = src
 }
 
@@ -81,9 +84,7 @@ function protoAugment (target, src, keys) {
  * Augment an target Object or Array by defining
  * hidden properties.
  */
-
-/* istanbul ignore next */
-function copyAugment (target, src, keys) {
+function copyAugment(target: any[], src: any, keys: string[]): void {
   for (let i = 0, l = keys.length; i < l; i++) {
     const key = keys[i]
     def(target, key, src[key])
@@ -95,12 +96,16 @@ function copyAugment (target, src, keys) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
-function observe (value, shallow) {
+function observe(value: any, shallow?: boolean): Observer | undefined {
   if (!isObject(value) || rawSet.has(value)) {
     return
   }
   let ob = getObserver(value)
-  if (!ob && (Array.isArray(value) || isPlainObject(value)) && Object.isExtensible(value)) {
+  if (
+    !ob &&
+    (Array.isArray(value) || isPlainObject(value)) &&
+    Object.isExtensible(value)
+  ) {
     ob = new Observer(value, shallow)
   }
   return ob
@@ -109,7 +114,12 @@ function observe (value, shallow) {
 /**
  * Define a reactive property on an Object.
  */
-export function defineReactive (obj, key, val, shallow) {
+export function defineReactive(
+  obj: object,
+  key: string,
+  val?: any,
+  shallow?: boolean
+) {
   const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
@@ -121,16 +131,16 @@ export function defineReactive (obj, key, val, shallow) {
   const getter = property && property.get
   const setter = property && property.set
 
-  let childOb = shallow ? getObserver(val) : observe(val)
+  let childOb = shallow ? getObserver(val) : observe(val, false)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
-    get: function reactiveGetter () {
+    get: function reactiveGetter() {
       const value = getter ? getter.call(obj) : val
-      if (Dep.target) {
-        dep.depend()
+      if (activeSub) {
+        dep.track()
         if (childOb) {
-          childOb.dep.depend()
+          childOb.dep.track()
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -138,9 +148,9 @@ export function defineReactive (obj, key, val, shallow) {
       }
       return !shallow && isRef(value) ? value.value : value
     },
-    set: function reactiveSetter (newVal) {
+    set: function reactiveSetter(newVal) {
       const value = getter ? getter.call(obj) : val
-      if (!(shallow && isForceTrigger) && !hasChanged(newVal, value)) {
+      if (!hasChanged(newVal, value) && !isForceTrigger) {
         return
       }
       if (!shallow && isRef(value) && !isRef(newVal)) {
@@ -156,35 +166,46 @@ export function defineReactive (obj, key, val, shallow) {
   })
 }
 
+// #region set
 /**
  * Set a property on an object. Adds the new property and
  * triggers change notification if the property doesn't
  * already exist.
  */
-export function set (target, key, val) {
+export function set<T>(array: T[], key: number, value: T): T
+export function set<T>(object: object, key: string | number, value: T): T
+export function set(
+  target: any[] | Record<string, any>,
+  key: any,
+  val: any
+): any {
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.length = Math.max(target.length, key)
     target.splice(key, 1, val)
     return val
   }
   if (hasOwn(target, key)) {
-    target[key] = val
+    target[key as keyof typeof target] = val
     return val
   }
   const ob = getObserver(target)
   if (!ob) {
-    target[key] = val
+    target[key as keyof typeof target] = val
     return val
   }
   defineReactive(ob.value, key, val, ob.shallow)
   ob.dep.notify()
   return val
 }
+// #endregion
 
+// #region del
 /**
  * Delete a property and trigger change if necessary.
  */
-export function del (target, key) {
+export function del<T>(array: T[], key: number): void
+export function del(object: object, key: string | number): void
+export function del(target: any[] | object, key: any) {
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.splice(key, 1)
     return
@@ -193,47 +214,66 @@ export function del (target, key) {
   if (!hasOwn(target, key)) {
     return
   }
-  delete target[key]
+  delete target[key as keyof typeof target]
   if (!ob) {
     return
   }
   ob.dep.notify()
 }
+// #endregion
 
 /**
  * Collect dependencies on array elements when the array is touched, since
  * we cannot intercept array element access like property getters.
  */
-function dependArray (arr) {
+function dependArray(arr: any[]) {
   for (let i = 0, l = arr.length; i < l; i++) {
     const item = arr[i]
     const ob = getObserver(item)
-    ob && ob.dep.depend()
+    if (ob) {
+      ob.dep.track()
+    }
     if (Array.isArray(item)) {
       dependArray(item)
     }
   }
 }
 
-export function reactive (value) {
-  observe(value)
-  return value
+// only unwrap nested ref
+export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>
+
+// #region reactive
+export function reactive<T extends object>(target: T): UnwrapNestedRefs<T>
+export function reactive(target: object) {
+  observe(target)
+  return target
+}
+// #endregion
+
+export declare const ShallowReactiveMarker: unique symbol
+
+export type ShallowReactive<T> = T & { [ShallowReactiveMarker]?: true }
+
+export function shallowReactive<T extends object>(
+  target: T
+): ShallowReactive<T> {
+  observe(target, true)
+  return target
 }
 
-export function shallowReactive (value) {
-  observe(value, true)
-  return value
+export function isReactive(value: unknown): boolean {
+  return !!(
+    value &&
+    hasOwn(value, ObKey) &&
+    (value as Target)[ObKey] instanceof Observer
+  )
 }
 
-export function isReactive (value) {
-  return hasOwn(value, ObKey) && value[ObKey] instanceof Observer
+export function getObserver(value: any) {
+  if (isReactive(value)) return (value as Target)[ObKey]
 }
 
-export function getObserver (value) {
-  if (isReactive(value)) return value[ObKey]
-}
-
-export function markRaw (value) {
+export function markRaw<T extends object>(value: T): T {
   if (isObject(value)) {
     rawSet.add(value)
   }

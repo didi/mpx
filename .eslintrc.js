@@ -63,6 +63,23 @@ module.exports = {
       rules: {
         'react-hooks/rules-of-hooks': 'error'
       }
+    }, {
+      files: ['packages/reactivity/src/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-this-alias': 0,
+        'sort-imports': ['error', { ignoreDeclarationSort: true }],
+        'space-before-function-paren': 0,
+        'no-useless-constructor': 0,
+        indent: 0,
+        'brace-style': 0
+      }
+    }, {
+      files: ['packages/reactivity/__tests__/**/*.ts'],
+      rules: {
+        'sort-imports': ['error', { ignoreDeclarationSort: true }],
+        'space-before-function-paren': 0,
+        'no-unused-expressions': 0
+      }
     }
   ]
 }
