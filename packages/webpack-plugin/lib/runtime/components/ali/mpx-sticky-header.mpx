@@ -2,14 +2,14 @@
   <view class="mpx-sticky-header-container">
     <view
       class="mpx-sticky-header"
-      wx:style="{{isStickOnTop ? `position: fixed;top: ${scrollOffsetTop + offsetTop}px`: ''}}"
+      wx:style="{{stickyHeaderStyle}}"
     >
       <slot></slot>
     </view>
     <view
       class="mpx-sticky-header-placeholder"
       id="{{stickyId}}"
-      wx:style="{{isStickOnTop ? `position: relative;height: ${headerHeight}px;` : `position: absolute;height: ${headerHeight}px;`}}"
+      wx:style="{{placeholderStyle}}"
     ></view>
   </view>
 </template>
@@ -30,7 +30,8 @@
       stickyId: {
         type: String,
         value: ''
-      }
+      },
+      padding: Array
     },
     data: {
       isStickOnTop: false,
@@ -39,36 +40,61 @@
       stickyHeader: '',
       headerTop: 0
     },
+    computed: {
+      paddingStyle() {
+        if (!this.padding || !Array.isArray(this.padding)) {
+          return ''
+        }
+        const [top = 0, right = 0, bottom = 0, left = 0] = this.padding
+        return `padding: ${top}px ${right}px ${bottom}px ${left}px;`
+      },
+      stickyHeaderStyle() {
+        const baseStyle = this.isStickOnTop 
+          ? `position: fixed;top: ${this.scrollOffsetTop + this.offsetTop}px;` 
+          : ''
+        return baseStyle + this.paddingStyle
+      },
+      placeholderStyle() {
+        const position = this.isStickOnTop ? 'relative' : 'absolute'
+        return `position: ${position};height: ${this.headerHeight}px;`
+      }
+    },
     ready() {
       if (!this.scrollViewId) {
         console.error('[mpx runtime error]: scroll-view-id is necessary property in ali environment')
       }
       if (!this.stickyId) {
-        console.error('[mpx runtime error]: stickyId is necessary property in ali environment')
+        console.error('[mpx runtime error]: sticky-id is necessary property in ali environment')
       }
-      // 先获取元素的初始位置
-      this.createSelectorQuery()
-        .select('.mpx-sticky-header')
-        .boundingClientRect((rect) => {
-          if (!rect) return
-          mpx
-            .createSelectorQuery()
-            .select(`#${this.scrollViewId}`)
-            .boundingClientRect((res) => {
-              if (!res) return
-              this.scrollOffsetTop = res.top || 0
-              this.headerHeight = rect.height
-              this.headerTop = rect.top - this.scrollOffsetTop
-              this.stickyHeader = my.createIntersectionObserver({
-                thresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-              })
-              this.initTabsObserver()
-            })
-            .exec()
-        })
-        .exec()
+      this.initStickyHeader()
     },
     methods: {
+      initStickyHeader() {
+        // 获取元素的初始位置
+        this.createSelectorQuery()
+          .select('.mpx-sticky-header')
+          .boundingClientRect((rect) => {
+            if (!rect) return
+            mpx
+              .createSelectorQuery()
+              .select(`#${this.scrollViewId}`)
+              .boundingClientRect((res) => {
+                if (!res) return
+                this.scrollOffsetTop = res.top || 0
+                this.headerHeight = rect.height
+                this.headerTop = rect.top - this.scrollOffsetTop
+                // 只在首次初始化时创建观察器
+                if (!this.stickyHeader) {
+                  this.stickyHeader = my.createIntersectionObserver({
+                    thresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+                  })
+                  this.initTabsObserver()
+                }
+              })
+              .exec()
+          })
+          .exec()
+      },
       initTabsObserver() {
         this.stickyHeader.relativeTo(`#${this.scrollViewId}`).observe(`#${this.stickyId}`, (res) => {
           const { intersectionRatio, intersectionRect, relativeRect } = res
@@ -99,6 +125,10 @@
             .exec()
         })
       },
+      refresh() {
+        // 刷新时重新获取元素位置
+        this.initStickyHeader()
+      },
       detached() {
         // 清理观察器
         if (this.stickyHeader) {
@@ -119,4 +149,5 @@
     pointer-events none
   .mpx-sticky-header
     width 100%
+    box-sizing border-box
 </style>

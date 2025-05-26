@@ -1,0 +1,18 @@
+<template>
+  <view class="mpx-sticky-section">
+      <slot></slot>
+    </view>
+  </view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    
+  })
+</script>
+<style lang="stylus" scoped>
+  .mpx-sticky-section
+    position relative
+</style>
