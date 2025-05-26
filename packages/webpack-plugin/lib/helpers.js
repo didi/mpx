@@ -81,7 +81,7 @@ module.exports = function createHelpers (loaderContext) {
       return loaderUtils.stringifyRequest(loaderContext, addQuery(src, options, true))
     } else {
       const fakeRequest = getFakeRequest(type, part)
-      let request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(rawRequest, options, true)}`
+      let request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(rawRequest, { ...options, lang: part.lang }, true)}`
       if (part.setup && type === 'script') request = scriptSetupPath + '!' + request
       return loaderUtils.stringifyRequest(loaderContext, `${fakeRequest}!=!${request}`)
     }
