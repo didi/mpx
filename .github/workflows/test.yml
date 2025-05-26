@@ -7,50 +7,53 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm i && npm run tsc:build
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.1
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm i
+      - run: pnpm run tsc:build
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm i && npm run lint
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.1
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm i
+      - run: pnpm run lint
 
   unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cache node modules
-        id: cache
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          path: |
-            ~/.npm
-            node_modules
-            test/e2e/miniprogram-project/node_modules
-            test/e2e/plugin-project/node_modules
-            packages/webpack-plugin/node_modules
-            packages/core/node_modules
-            packages/api-proxy/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          version: 8.14.1
+          run_install: false
 
-      - name: install deps
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project
-
-      - name: copy-webpack-plugin
-        run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run copyPlugin --prefix test/e2e/plugin-project
+      - name: Install dependencies
+        run: pnpm i
 
       - name: build-miniprogram
-        run: npm run build:cross --prefix test/e2e/miniprogram-project
+        run: pnpm --filter "mpx-miniprogram-project" run build:cross
 
       - name: build-plugin
-        run: npm run build --prefix test/e2e/plugin-project
+        run: pnpm --filter "mpx-webpack5-plugin-project" run build
 
       - name: exec unit test
-        run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
+        run: |
+          pnpm run test
+          pnpm --filter "mpx-miniprogram-project" --filter "mpx-webpack5-plugin-project" run test

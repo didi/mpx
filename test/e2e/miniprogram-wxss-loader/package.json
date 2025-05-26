@@ -19,15 +19,12 @@
     "help": "node ./build/build.js --help",
     "test": "jest --no-cache"
   },
-  "_moduleAliases": {
-    "@mpxjs/webpack-plugin": "../../packages/webpack-plugin"
-  },
   "author": "octoberluobin <octoberluobin@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.9.58",
-    "@mpxjs/core": "^2.9.58",
-    "@mpxjs/utils": "^2.9.58",
+    "@mpxjs/api-proxy": "workspace:*",
+    "@mpxjs/core": "workspace:*",
+    "@mpxjs/utils": "workspace:*",
     "semver": "^7.5.4",
     "vue": "^2.6.10",
     "vue-i18n": "^8.15.3"
@@ -43,8 +40,8 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.27",
-    "@mpxjs/webpack-plugin": "^2.9.58",
     "@mpxjs/template-engine": "^2.8.7",
+    "@mpxjs/webpack-plugin": "workspace:*",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-eslint": "^10.0.1",
@@ -81,6 +78,7 @@
     "rimraf": "^2.6.2",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",
+    "terser-webpack-plugin": "^5.3.14",
     "ts-loader": "^6.0.0",
     "typescript": "^4.1.2",
     "vue-loader": "^15.9.3",
