@@ -792,7 +792,7 @@ export default class MpxProxy {
     }
 
     if (this.effect) {
-      options.sync ? this.effect.run() : this.effect.update()
+      options.sync ? this.effect.run() : this.effect.trigger()
     } else {
       if (this.forceUpdateAll) {
         Object.keys(this.localKeysMap).forEach((key) => {
