@@ -4,7 +4,12 @@ declare global {
       [key: string]: any
     }
   }
+  interface Window {
+     mpxGlobal: Record<string, any>
+  }
 }
+
+declare const mpxGlobal: Record<string, any>
 
 export function processComponentOption (...args: any): object
 

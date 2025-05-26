@@ -1,3 +1,4 @@
+import { error } from '../../../common/js'
 class Animation {
   constructor (
     {
@@ -47,7 +48,7 @@ class Animation {
   steps = []
 
   matrix (a, b, c, d, tx, ty) { // Todo
-    console.error('React Native 不支持 matrix 动画')
+    error('React Native 不支持 matrix 动画')
     // this.transform.set('matrix', [a, b, c, d, tx, ty])
     return this
   }
@@ -57,7 +58,7 @@ class Animation {
             a3, b3, c3, d3,
             a4, b4, c4, d4
   ) {
-    console.error('React Native 不支持 matrix3d 动画')
+    error('React Native 不支持 matrix3d 动画')
     // this.transform.set('matrix3d', [ // Todo
     //   a1, b1, c1, d1,
     //   a2, b2, c2, d2,
@@ -78,7 +79,7 @@ class Animation {
     // this.rotateY(y)
     // this.rotateZ(z)
     // this.rotate(angle)
-    console.error('React Native 不支持 transform rotate3d')
+    error('React Native 不支持 transform rotate3d')
     return this
   }
 
@@ -116,13 +117,13 @@ class Animation {
   }
 
   scaleZ (scale) { // Todo Invariant Violation: Invalid transform scaleZ: {"scaleZ":0}
-    console.error('React Native 不支持 transform scaleZ')
+    error('React Native 不支持 transform scaleZ')
     // this.transform.set('scaleZ', scale)
     return this
   }
 
   scale3d (x, y, z) { // Todo Invariant Violation: Invalid transform scaleZ: {"scaleZ":0}
-    console.error('React Native 不支持 transform scaleZ，故不支持 scale3d')
+    error('React Native 不支持 transform scaleZ，故不支持 scale3d')
     // this.scaleX(x)
     // this.scaleY(y)
     // this.scaleZ(z)
@@ -167,14 +168,14 @@ class Animation {
   }
 
   translateZ (translate) { // Todo Invariant Violation: Invalid transform translateZ: {"translateZ":0}
-    console.error('React Native 不支持 transform translateZ')
+    error('React Native 不支持 transform translateZ')
     // [translate] = this._transformUnit(translate)
     // this.transform.set('translateZ', translate)
     return this
   }
 
   translate3d (x, y, z) { // Todo Invariant Violation: Invalid transform translateZ: {"translateZ":0}
-    console.error('React Native 不支持 transform translateZ，故无法支持 translate3d')
+    error('React Native 不支持 transform translateZ，故无法支持 translate3d')
     // [x, y, z] = this._transformUnit(x, y, z)
     // // this.transform.set('translate3d', [x, y, z])
     // this.translateX(x)
@@ -239,7 +240,7 @@ class Animation {
       transformOrigin = DEFAULT.transformOrigin
     } = arg
     if (typeof transformOrigin !== 'string') {
-      console.error('Value of transformOrigin only support string type, please check again')
+      error('Value of transformOrigin only support string type, please check again')
       transformOrigin = DEFAULT.transformOrigin
     }
     this.steps.push({
