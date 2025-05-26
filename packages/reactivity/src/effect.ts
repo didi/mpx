@@ -47,7 +47,10 @@ export class ReactiveEffect<T = any>
     addToEffectBuffer(this)
   }
 
-  trigger(): void {
+  /**
+   * same as trigger for backward compat
+   */
+  update(): void {
     if (activeSub === this && !this.allowRecurse) {
       // cycle detection
       return
@@ -109,7 +112,7 @@ export class ReactiveEffect<T = any>
     }
     if (!ignoreDirty && flags & EffectFlags.NOTIFIED) {
       this.flags &= ~EffectFlags.NOTIFIED
-      this.trigger()
+      this.update()
     }
   }
 
@@ -210,7 +213,7 @@ export function processEffectNotifications(): void {
   while (notifyIndex < notifyBufferLength) {
     const effect = notifiedEffectBuffer[notifyIndex]!
     notifiedEffectBuffer[notifyIndex++] = undefined
-    effect.trigger()
+    effect.update()
   }
   notifyIndex = 0
   notifyBufferLength = 0
