@@ -1,11 +1,34 @@
 /* eslint-disable no-undef */
 import { buildUrl, serialize, transformRes } from './util'
 import { request as requestApi } from '@mpxjs/api-proxy/src/platform/api/request'
+import JSONBig from 'json-bigint'
 
 export default function request (config) {
   return new Promise((resolve, reject) => {
     const paramsSerializer = config.paramsSerializer || serialize
     const bodySerializer = config.bodySerializer || paramsSerializer
+    let useBigInt
+
+    if (config.useBigInt && !config.dataType) {
+      if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony' || __mpx_mode__ === 'wx') {
+        useBigInt = true
+        config.dataType = 'string'
+      } else if (__mpx_mode__ === 'web') {
+        if (!config.transformRes) {
+          config.transformRes = [function (res) {
+            if (typeof res?.data === 'string') {
+              try {
+                res.data = JSONBig.parse(res.data)
+              } catch (e) {
+                console.error('Error parsing BigInt JSON:', e)
+              }
+            }
+            return res
+          }]
+        }
+      }
+      delete config.useBigInt
+    }
 
     if (config.params) {
       config.url = buildUrl(config.url, config.params, paramsSerializer)
@@ -35,6 +58,16 @@ export default function request (config) {
     }
     config.success = function (res) {
       res = Object.assign({ requestConfig: config }, transformRes(res))
+
+      if (useBigInt && typeof res.data === 'string') {
+        try {
+          // 使用json-bigint库解析包含BigInt的JSON字符串
+          res.data = JSONBig.parse(res.data)
+        } catch (e) {
+          console.error('Error parsing BigInt JSON:', e)
+        }
+      }
+
       typeof rawSuccess === 'function' && rawSuccess.call(this, res)
       resolve(res)
     }

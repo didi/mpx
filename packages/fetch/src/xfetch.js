@@ -27,6 +27,7 @@ export default class XFetch {
       request: new InterceptorManager(),
       response: new InterceptorManager()
     }
+    this.useBigInt = options.useBigInt || false
   }
 
   static normalizeConfig (config) {
@@ -214,6 +215,10 @@ export default class XFetch {
       // 5. 对于类POST请求将config.emulateJSON实现为config.header['content-type'] = 'application/x-www-form-urlencoded'
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
+
+      if (this.useBigInt) {
+        config.useBigInt = this.useBigInt
+      }
 
       // 检查缓存
       const responsePromise = this.checkPreCache(config)

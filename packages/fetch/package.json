@@ -31,6 +31,7 @@
   "dependencies": {
     "@mpxjs/api-proxy": "^2.10.6",
     "@mpxjs/utils": "^2.10.6",
+    "json-bigint": "^1.0.0",
     "path-to-regexp": "^6.2.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
