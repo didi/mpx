@@ -6,13 +6,14 @@ import {
   useAnimatedStyle,
   withSequence,
   makeMutable,
-  cancelAnimation
+  cancelAnimation,
+  runOnJS
 } from 'react-native-reanimated'
 import {
   EasingKey, Transform, TransformOrigin, InitialValue,
   isTransform, getTransformObj, getInitialVal, formatAnimatedKeys, getAnimation
 } from './utils'
-import type { AnimationCallback, SharedValue } from 'react-native-reanimated'
+import type { AnimationCallback, SharedValue, AnimatableValue } from 'react-native-reanimated'
 import type { TransformsStyle } from 'react-native'
 import type { ExtendedViewStyle } from '../types/common'
 import type { _ViewProps } from '../mpx-view'
@@ -75,9 +76,9 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
     const lastValueMap = {} as { [propName: keyof ExtendedViewStyle]: string|number }
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
-      const easing = EasingKey[timingFunction] || Easing.inOut(Easing.quad)
+      const easing = timingFunction ? EasingKey[timingFunction] : Easing.inOut(Easing.quad)
       let needSetCallback = true
-      const setTransformOrigin: AnimationCallback = (finished: boolean) => {
+      const callback: AnimationCallback = (finished?: boolean, current?: AnimatableValue) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin
         if (finished) {
@@ -85,11 +86,12 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
             const transformOrigin = actions[index + 1].animatedOption?.transformOrigin
             transformOrigin && (shareValMap[TransformOrigin].value = transformOrigin)
           }
+          transitionend && runOnJS(transitionend)(finished, current, duration)
         }
       }
       if (index === 0) {
         // 设置当次中心
-        shareValMap[TransformOrigin].value = transformOrigin
+        transformOrigin && (shareValMap[TransformOrigin].value = transformOrigin)
       }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
@@ -100,7 +102,7 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
           : index > 0
             ? lastValueMap[key]
             : shareValMap[key].value
-        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? setTransformOrigin : undefined)
+        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
         needSetCallback = false
         if (!sequence[key]) {
           sequence[key] = [animation]
