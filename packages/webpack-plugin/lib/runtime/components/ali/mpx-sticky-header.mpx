@@ -2,6 +2,7 @@
   <view class="mpx-sticky-header-container">
     <view
       class="mpx-sticky-header"
+      wx:ref="stickyHeader"
       wx:style="{{stickyHeaderStyle}}"
     >
       <slot></slot>
@@ -31,7 +32,9 @@
         type: String,
         value: ''
       },
-      padding: Array
+      padding: Array,
+      // 外部设置为 absolute 定位时，支付宝环境 getBoundingClientRect 获取的 top 值一直是 0，需要外部传入，如 recycle 场景
+      top: Number
     },
     data: {
       isStickOnTop: false,
@@ -75,6 +78,7 @@
           .select('.mpx-sticky-header')
           .boundingClientRect((rect) => {
             if (!rect) return
+            const top = rect.top || this.top || 0
             mpx
               .createSelectorQuery()
               .select(`#${this.scrollViewId}`)
@@ -82,7 +86,7 @@
                 if (!res) return
                 this.scrollOffsetTop = res.top || 0
                 this.headerHeight = rect.height
-                this.headerTop = rect.top - this.scrollOffsetTop
+                this.headerTop = top - this.scrollOffsetTop
                 // 只在首次初始化时创建观察器
                 if (!this.stickyHeader) {
                   this.stickyHeader = my.createIntersectionObserver({

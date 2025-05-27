@@ -730,7 +730,7 @@ function parse (template, options) {
       element.attrsList.forEach((attr) => {
         if (genericRE.test(attr.name)) {
           tagNames.add(attr.value)
-          if (mode === 'wx') {
+          if (mode === 'wx' || mode === 'ali') {
             genericAttrs.push({
               name: attr.name.replace('generic:', 'mpx-generic-'),
               value: attr.value

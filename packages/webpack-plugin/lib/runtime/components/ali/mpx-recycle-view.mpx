@@ -1,69 +1,72 @@
 <template>
   <view class="mpx-recycle-view">
     <scroll-view
-      ref="scrollView"
+      id="scrollViewContainer"
+      class="scroll-view-container"
+      ref="mpxRecycleView"
       enableSticky="{{enableSticky}}"
       scroll-y="{{true}}"
       enhanced="{{enhanced}}"
-      scrollWithAnimation="{{scrollWithAnimation}}"
-      refresherEnabled="{{refresherEnabled}}"
-      refresherTriggered="{{refresherTriggered}}"
+      scroll-with-animation="{{scrollWithAnimation}}"
+      refresher-enabled="{{refresherEnabled}}"
+      refresher-triggered="{{refresherTriggered}}"
       bindscroll="onScroll"
       bindscrolltolower="onScrolltolower"
       bindrefresherrefresh="onRefresherrefresh"
       wx:style="{{scrollViewStyle}}"
     >
       <view class="content-wrapper">
-        <template wx:if="{{genericlistHeader}}">
+        <block wx:if="{{mpxGenericListHeader}}">
           <list-header listHeaderData="{{listHeaderData}}"></list-header>
-        </template>
-        <view class="infinite-list-placeholder" ref="infinitePlaceholder"></view>
-        <view class="infinite-list" ref="infiniteList">
-          <template wx:for="{{visibleData}}">
+        </block>
+        <view class="infinite-list-placeholder" ref="infinitePlaceholder" wx:style="{{placeholderStyle}}"></view>
+        <view class="infinite-list" ref="infiniteList" wx:style="{{infiniteListStyle}}">
+          <block wx:for="{{visibleData}}">
             <section-header
-              wx:if="{{item.itemData.isSectionHeader && genericsectionHeader}}"
-              wx:key="{{'header' + item._index}}"
+              wx:if="{{item.itemData.isSectionHeader && mpxGenericSectionHeader}}"
+              wx:key="header{{_index}}"
               itemData="{{item.itemData}}"
             />
             <recycle-item
-              wx:if="{{!item.itemData.isSectionHeader && genericrecycleItem}}"
-              wx:key="{{'item' + item._index}}"
+              wx:if="{{!item.itemData.isSectionHeader && mpxGenericRecycleItem}}"
+              wx:key="item{{_index}}"
               itemData="{{item.itemData}}"
             />
-          </template>
+          </block>
         </view>
       </view>
-      <template
+      <block
         wx:if="{{ _stickyHeaders &&
           _stickyHeaders.length &&
           enableSticky &&
-          genericsectionHeader}}"
+          mpxGenericSectionHeader}}"
       >
-        <sticky-section
+        <view
+          class="sticky-section"
+          wx:style="top: {{(positions[stickyItem._index] && positions[stickyItem._index].top) || 0}}px"
           wx:for="{{_stickyHeaders}}"
           wx:for-item="stickyItem"
           wx:key="_index"
-          class="sticky-section"
-          wx:style="{{
-            top:
-              ((positions[stickyItem._index] &&
-                positions [stickyItem._index].top) ||
-                0) + 'px',
-          }}"
         >
-          <section-header
-            wx:key="{{'header' + stickyItem._index}}"
-            itemData="{{stickyItem.itemData}}"
-          />
-        </sticky-header>
-        </sticky-section>
-      </template>
+          <sticky-header
+            scroll-view-id="scrollViewContainer"
+            sticky-id="mpx-sticky-header-{{index}}"
+            top="{{(positions[stickyItem._index] && positions[stickyItem._index].top) || 0}}"
+          >
+            <section-header
+              wx:key="{{'header' + stickyItem._index}}"
+              itemData="{{stickyItem.itemData}}"
+            />
+          </sticky-header>
+        </view>
+      </block>
     </scroll-view>
   </view>
 </template>
 
 <script>
-  export default {
+  import mpx, { createComponent } from '@mpxjs/core'
+  createComponent({
     properties: {
       width: String | Number,
       height: String | Number,
@@ -131,19 +134,18 @@
         type: Boolean,
         value: false
       },
-      generichash: String,
-      genericlistHeader: String,
-      genericrecycleItem: String,
-      genericsectionHeader: String
+      mpxGenericRecycleItem: String,
+      mpxGenericSectionHeader: String,
+      mpxGenericListHeader: String
     },
-    data() {
-      return {
-        start: 0,
-        end: 0,
-        containerHeight: 0,
-        positions: [],
-        visibleCounts: []
-      }
+    data: {
+      start: 0,
+      end: 0,
+      containerHeight: 0,
+      positions: [],
+      visibleCounts: [],
+      infiniteListStyle: '',
+      placeholderStyle: ''
     },
     computed: {
       _listData() {
@@ -221,7 +223,7 @@
       },
       _listHeaderHeight() {
         let listHeaderHeight = 0
-        if (this.genericlistHeader) {
+        if (this.mpxGenericListHeader) {
           listHeaderHeight = this.getItemHeight(this.listHeaderData, 0, 'listHeaderHeight') || 0
         }
         return listHeaderHeight
@@ -244,12 +246,9 @@
         this.calculateVisibleCounts()
       }
     },
-    created() {
-      this.registerGenericComponents()
-    },
-    mounted() {
+    ready() {
       this.initPositions()
-      this.containerHeight = this.$refs.scrollView?.$el?.clientHeight || 0
+      this.getContainerHeight()
       this.setPlaceholderStyle()
       if (!this.positions || !this.positions.length) {
         return
@@ -259,38 +258,21 @@
       this.setStartOffset()
     },
     methods: {
-      registerGenericComponents() {
-        if (!this.generichash || !global.__mpxGenericsMap[this.generichash]) {
-          return
-        }
-
-        let components = null
-        const genericList = {
-          'recycle-item': this.genericrecycleItem,
-          'list-header': this.genericlistHeader,
-          'section-header': this.genericsectionHeader
-        }
-
-        for (const key in genericList) {
-          const value = genericList[key]
-          if (value) {
-            components = components || {}
-            components[key] = global.__mpxGenericsMap[this.generichash][value]
-          }
-        }
-
-        if (components) {
-          this.$options.components = Object.assign({}, this.$options.components, components)
-        }
+      getContainerHeight() {
+        mpx
+          .createSelectorQuery()
+          .select('#scrollViewContainer')
+          .boundingClientRect((rect) => {
+            if (!rect) return
+            this.containerHeight = rect.height
+          })
+          .exec()
       },
       formatDimension(value) {
         return typeof value === 'number' ? `${value}px` : value || '100%'
       },
       setPlaceholderStyle() {
-        const infinitePlaceholder = this.$refs.infinitePlaceholder
-        if (infinitePlaceholder) {
-          infinitePlaceholder.style.height = `${this.placeholderHeight}px`
-        }
+        this.placeholderStyle = `height: ${this.placeholderHeight}px`
       },
       initPositions() {
         let bottom = this._listHeaderHeight || 0
@@ -378,8 +360,7 @@
         return Math.min(Math.max(0, start - 1), list.length - 1)
       },
       setStartOffset() {
-        const infiniteList = this.$refs.infiniteList
-        if (!this.positions.length || !infiniteList) return
+        if (!this.positions.length) return
         if (this.start >= 1) {
           // 确保 startIndex 不会超出范围
           const startIndex = Math.min(
@@ -388,9 +369,9 @@
           )
 
           const offset = this.positions[startIndex].top
-          infiniteList.style.transform = `translateY(${offset}px)`
+          this.infiniteListStyle = `transform: translateY(${offset}px)`
         } else {
-          infiniteList.style.transform = `translateY(${this.positions[0].top}px)`
+          this.infiniteListStyle = `transform: translateY(${this.positions[0].top}px)`
         }
       },
       getItemHeight(item, index, key) {
@@ -404,7 +385,6 @@
       onScroll(e) {
         const { scrollTop } = e.detail
         const newStart = this.getStartIndex(scrollTop)
-
         // 只有当start发生足够变化时才更新，避免滚动触发重渲染
         if (Math.abs(newStart - this.end) >= Math.floor(this.belowCount / 2)) {
           this.start = newStart
@@ -446,17 +426,23 @@
           targetTop = itemTop - (containerHeight - itemHeight) / 2
         }
 
-        this.$refs.scrollView?.bs.scrollTo(0, -targetTop, animated ? 200 : 0)
+        this.$refs.mpxRecycleView.node().exec((res) => {
+          if (res && res[0]) {
+            res[0].node.scrollTo({
+              top: targetTop,
+              animated: !!animated
+            })
+          }
+        })
       }
-    },
-    components: {
-      ScrollView,
-      StickyHeader
     }
-  }
+  })
 </script>
 
 <style scoped>
+  .scroll-view-container {
+    position: relative;
+  }
   .mpx-recycle-view {
     position: relative;
     overflow: hidden;
@@ -475,27 +461,32 @@
     will-change: transform;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    /* 支付宝环境需要设置允许事件穿透, 否则滑不动 */
+    /* @mpx-if (__mpx_mode__ === 'ali') */
+    pointer-events: none;
+    /* @mpx-endif */
   }
   .sticky-section {
-    position: absolute !important;
+    position: absolute;
+    width: 100%;
+    height: 100%
   }
 </style>
 <script type="application/json">
   {
     "disableScroll": true,
     "usingComponents": {
-      "sticky-section": "./mpx-sticky-section.mpx",
       "sticky-header": "./mpx-sticky-header.mpx"
     },
     "componentGenerics": {
       "recycle-item": {
-        "default": ""
+        "default": "./mpx-view.mpx"
       },
       "section-header": {
-        "default": ""
+        "default": "./mpx-view.mpx"
       },
       "list-header": {
-        "default": ""
+        "default": "./mpx-view.mpx"
       }
     }
   }
