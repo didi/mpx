@@ -1,10 +1,6 @@
 <template>
   <view class="mpx-sticky-header-container">
-    <view
-      class="mpx-sticky-header"
-      wx:ref="stickyHeader"
-      wx:style="{{stickyHeaderStyle}}"
-    >
+    <view class="mpx-sticky-header" wx:ref="stickyHeader" wx:style="{{stickyHeaderStyle}}">
       <slot></slot>
     </view>
     <view
@@ -32,9 +28,7 @@
         type: String,
         value: ''
       },
-      padding: Array,
-      // 外部设置为 absolute 定位时，支付宝环境 getBoundingClientRect 获取的 top 值一直是 0，需要外部传入，如 recycle 场景
-      top: Number
+      padding: Array
     },
     data: {
       isStickOnTop: false,
@@ -52,8 +46,8 @@
         return `padding: ${top}px ${right}px ${bottom}px ${left}px;`
       },
       stickyHeaderStyle() {
-        const baseStyle = this.isStickOnTop 
-          ? `position: fixed;top: ${this.scrollOffsetTop + this.offsetTop}px;` 
+        const baseStyle = this.isStickOnTop
+          ? `position: fixed;top: ${this.scrollOffsetTop + this.offsetTop}px;`
           : ''
         return baseStyle + this.paddingStyle
       },
@@ -78,7 +72,6 @@
           .select('.mpx-sticky-header')
           .boundingClientRect((rect) => {
             if (!rect) return
-            const top = rect.top || this.top || 0
             mpx
               .createSelectorQuery()
               .select(`#${this.scrollViewId}`)
@@ -86,14 +79,37 @@
                 if (!res) return
                 this.scrollOffsetTop = res.top || 0
                 this.headerHeight = rect.height
-                this.headerTop = top - this.scrollOffsetTop
-                // 只在首次初始化时创建观察器
-                if (!this.stickyHeader) {
-                  this.stickyHeader = my.createIntersectionObserver({
-                    thresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+                mpx
+                  .createSelectorQuery()
+                  .select(`#${this.scrollViewId}`)
+                  .scrollOffset((scrollRes) => {
+                    // 模拟 offsetTop 计算：sticky具体顶部距离 - scrollView顶部 + scrollView滚动位置
+                    this.headerTop = rect.top - this.scrollOffsetTop + scrollRes.scrollTop
+                    // 只在首次初始化时创建观察器
+                    if (!this.stickyHeader) {
+                      this.stickyHeader = my.createIntersectionObserver({
+                        thresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+                      })
+                      this.initTabsObserver()
+                    } else {
+                      if (scrollRes.scrollTop > this.headerTop) {
+                        if (this.isStickOnTop) return
+                        this.isStickOnTop = true
+                        this.triggerEvent('stickontopchange', {
+                          isStickOnTop: true,
+                          id: this.stickyId
+                        })
+                      } else if (scrollRes.scrollTop < this.headerTop) {
+                        if (!this.isStickOnTop) return
+                        this.isStickOnTop = false
+                        this.triggerEvent('stickontopchange', {
+                          isStickOnTop: false,
+                          id: this.stickyId
+                        })
+                      }
+                    }
                   })
-                  this.initTabsObserver()
-                }
+                  .exec()
               })
               .exec()
           })

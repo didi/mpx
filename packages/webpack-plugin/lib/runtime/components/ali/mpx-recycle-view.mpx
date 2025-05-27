@@ -3,11 +3,13 @@
     <scroll-view
       id="scrollViewContainer"
       class="scroll-view-container"
-      ref="mpxRecycleView"
+      wx:ref="mpxRecycleView"
       enableSticky="{{enableSticky}}"
       scroll-y="{{true}}"
+      scroll-top="{{scrollTop}}"
       enhanced="{{enhanced}}"
       scroll-with-animation="{{scrollWithAnimation}}"
+      scroll-animation-duration="{{scrollAnimationDuration}}"
       refresher-enabled="{{refresherEnabled}}"
       refresher-triggered="{{refresherTriggered}}"
       bindscroll="onScroll"
@@ -19,7 +21,11 @@
         <block wx:if="{{mpxGenericListHeader}}">
           <list-header listHeaderData="{{listHeaderData}}"></list-header>
         </block>
-        <view class="infinite-list-placeholder" ref="infinitePlaceholder" wx:style="{{placeholderStyle}}"></view>
+        <view
+          class="infinite-list-placeholder"
+          ref="infinitePlaceholder"
+          wx:style="{{placeholderStyle}}"
+        ></view>
         <view class="infinite-list" ref="infiniteList" wx:style="{{infiniteListStyle}}">
           <block wx:for="{{visibleData}}">
             <section-header
@@ -38,27 +44,26 @@
       <block
         wx:if="{{ _stickyHeaders &&
           _stickyHeaders.length &&
+          positions.length && 
           enableSticky &&
-          mpxGenericSectionHeader}}"
+          mpxGenericSectionHeader
+        }}"
       >
-        <view
+        <sticky-header
+          scroll-view-id="scrollViewContainer"
+          sticky-id="mpx-sticky-header-{{index}}"
+          wx:ref="stickyHeader"
           class="sticky-section"
           wx:style="top: {{(positions[stickyItem._index] && positions[stickyItem._index].top) || 0}}px"
           wx:for="{{_stickyHeaders}}"
           wx:for-item="stickyItem"
           wx:key="_index"
         >
-          <sticky-header
-            scroll-view-id="scrollViewContainer"
-            sticky-id="mpx-sticky-header-{{index}}"
-            top="{{(positions[stickyItem._index] && positions[stickyItem._index].top) || 0}}"
-          >
-            <section-header
-              wx:key="{{'header' + stickyItem._index}}"
-              itemData="{{stickyItem.itemData}}"
-            />
-          </sticky-header>
-        </view>
+          <section-header
+            wx:key="{{'header' + stickyItem._index}}"
+            itemData="{{stickyItem.itemData}}"
+          />
+        </sticky-header>
       </block>
     </scroll-view>
   </view>
@@ -134,6 +139,10 @@
         type: Boolean,
         value: false
       },
+      scrollAnimationDuration: {
+        type: Number,
+        value: 300
+      },
       mpxGenericRecycleItem: String,
       mpxGenericSectionHeader: String,
       mpxGenericListHeader: String
@@ -145,7 +154,8 @@
       positions: [],
       visibleCounts: [],
       infiniteListStyle: '',
-      placeholderStyle: ''
+      placeholderStyle: '',
+      scrollTop: 0
     },
     computed: {
       _listData() {
@@ -400,7 +410,7 @@
       onRefresherrefresh(e) {
         this.triggerEvent('refresherrefresh', e)
       },
-      scrollToIndex({ index, animated, viewPosition = 0 }) {
+      scrollToIndex({ index, viewPosition = 0 }) {
         const isStickyHeader = this._listData[index].itemData?.isSectionHeader
         let prevHeaderHeight = 0
         // 如果不是sticky header 查找最近一个吸顶的 sticky header
@@ -425,13 +435,19 @@
           // 滚动到可视区中央
           targetTop = itemTop - (containerHeight - itemHeight) / 2
         }
+        // 支付宝小程序不支持 animated 参数，也不支持 scrollTo 方法滚动
+        this.scrollTop = targetTop
 
-        this.$refs.mpxRecycleView.node().exec((res) => {
-          if (res && res[0]) {
-            res[0].node.scrollTo({
-              top: targetTop,
-              animated: !!animated
-            })
+        setTimeout(() => {
+          this.refreshStickyHeader()
+        }, this.scrollAnimationDuration + 100)
+      },
+      refreshStickyHeader() {
+        if (!this.$refs.stickyHeader) return
+
+        this.$refs.stickyHeader.forEach((header) => {
+          if (header && header.refresh) {
+            header.refresh()
           }
         })
       }
@@ -469,7 +485,7 @@
   .sticky-section {
     position: absolute;
     width: 100%;
-    height: 100%
+    height: 100%;
   }
 </style>
 <script type="application/json">
