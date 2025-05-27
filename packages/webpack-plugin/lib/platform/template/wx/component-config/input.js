@@ -19,6 +19,9 @@ module.exports = function ({ print }) {
   const androidValueLogError = print({ platform: 'android', tag: TAG_NAME, isError: true, type: 'value' })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyValueLogError = print({ platform: 'harmony', tag: TAG_NAME, isError: true, type: 'value' })
+  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -31,6 +34,10 @@ module.exports = function ({ print }) {
       return 'mpx-input'
     },
     android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-input'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-input'
     },
@@ -55,7 +62,7 @@ module.exports = function ({ print }) {
         test: 'type',
         web (prop) {
           let { name, value } = prop
-          if (value === 'idcard' || value === 'digit') {
+          if (value === 'idcard') {
             webValueLog(prop)
             value = 'text'
           }
@@ -75,6 +82,12 @@ module.exports = function ({ print }) {
           if (notSupported.includes(value)) {
             androidValueLogError({ name, value })
           }
+        },
+        harmony ({ name, value }) {
+          const notSupported = ['safe-password', 'nickname']
+          if (notSupported.includes(value)) {
+            harmonyValueLogError({ name, value })
+          }
         }
       },
       {
@@ -92,9 +105,10 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(placeholder-style|placeholder-class|cursor-spacing|always-embed|hold-keyboard|safe-password-.+)$/,
+        test: /^(always-embed|hold-keyboard|safe-password-.+)$/,
         ios: iosPropLog,
-        android: androidPropLog
+        android: androidPropLog,
+        harmony: harmonyPropLog
       }
     ],
     event: [
@@ -113,7 +127,8 @@ module.exports = function ({ print }) {
       {
         test: /^(nicknamereview|onkeyboardheightchange|keyboard.+)$/,
         ios: iosEventLog,
-        android: androidEventLog
+        android: androidEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }

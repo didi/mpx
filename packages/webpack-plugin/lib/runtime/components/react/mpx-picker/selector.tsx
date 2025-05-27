@@ -1,95 +1,90 @@
-/**
- * 普通选择器，range可以是Array<Obj> 也可以是Array
- */
-import { View, TouchableWithoutFeedback } from 'react-native'
-import React, { forwardRef, useState, useRef, useEffect } from 'react'
-import { Picker, PickerColumn, PickerValue } from '@ant-design/react-native'
-import { SelectorProps, Obj, LayoutType } from './type'
-import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import { SelectorProps, Obj, RangeItem } from './type'
+import MpxPickerView from '../mpx-picker-view'
+import MpxPickerViewColumn from '../mpx-picker-view-column'
+import { HandlerRef } from '../useNodesRef'
+import { useUpdateEffect } from '../utils'
 
-type RangeItemType = Obj | number | string
-
-const formatRangeFun = (range: Array<RangeItemType>, rangeKey = ''): any => {
-  let newRange: Object[] = []
-  newRange = (range || []).map((item: RangeItemType, index) => {
-    if (typeof item === 'object') {
-      return { value: index, label: item[rangeKey as string] }
-    } else {
-      return { value: index, label: item }
-    }
-  })
-  return newRange as PickerColumn
-}
-
-const _SelectorPicker = forwardRef<HandlerRef<View, SelectorProps>, SelectorProps>((props: SelectorProps, ref): React.JSX.Element => {
-  const { range, children, value, disabled, bindchange, bindcancel, style } = props
-  // 格式化数据为Array<*>
-  const formatRange: PickerColumn = formatRangeFun(range, props['range-key'])
-  // 选中的索引值
-  const [selected, setSelected] = useState<PickerValue>(value || 0)
-  // range数据源
-  const [data, setData] = useState(formatRange || [])
-  // 存储layout布局信息
-  const layoutRef = useRef({})
-  const viewRef = useRef<View>(null)
-  const nodeRef = useRef(null)
-  useNodesRef<View, SelectorProps>(props, ref, nodeRef, {
-    style
-  })
-
-  useEffect(() => {
-    if (range) {
-      const newFormatRange = formatRangeFun(range, props['range-key'])
-      setData(newFormatRange)
-    }
-    setSelected(() => {
-      return value
-    })
-  }, [range, value])
-  const defaultValue = [value]
-
-  const onChange = (value: PickerValue[]) => {
-    bindchange && bindchange({
-      detail: {
-        value: value && value[0]
-      }
-    })
+const styles = StyleSheet.create({
+  pickerContainer: {
+    height: 240,
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10
+  },
+  pickerIndicator: {
+    height: 45
+  },
+  pickerItem: {
+    fontSize: 18,
+    lineHeight: 45,
+    textAlign: 'center'
   }
-
-  const onElementLayout = (layout: LayoutType) => {
-    viewRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-      layoutRef.current = { x, y, width, height, offsetLeft, offsetTop }
-      props.getInnerLayout && props.getInnerLayout(layoutRef)
-    })
-  }
-
-  const antPickerProps = {
-    ref: nodeRef,
-    data,
-    value: [selected],
-    cols: 1,
-    defaultValue,
-    itemHeight: 40,
-    onChange,
-    onDismiss: bindcancel && bindcancel
-  } as any
-
-  const touchProps = {
-    onLayout: onElementLayout,
-    ref: viewRef
-  }
-  return (
-    <Picker
-      {...antPickerProps}>
-        <TouchableWithoutFeedback>
-          <View {...touchProps}>
-            {children}
-          </View>
-        </TouchableWithoutFeedback>
-    </Picker>
-  )
 })
 
-_SelectorPicker.displayName = 'mpx-picker-selector'
+const formatRangeFun = (range: RangeItem[], rangeKey = '') =>
+  rangeKey ? range.map((item: Obj) => item[rangeKey]) : range
 
-export default _SelectorPicker
+const formatValueFn = (value: number | number[] = 0) => {
+  const _value = Array.isArray(value) ? value[0] : value
+  return +_value
+}
+
+const PickerSelector = forwardRef<
+  HandlerRef<View, SelectorProps>,
+  SelectorProps
+>((props: SelectorProps, ref): React.JSX.Element => {
+  const { value, range = [], bindchange } = props
+  const [formatValue, setFormatValue] = useState<number>(formatValueFn(value))
+  const formatRange: Array<any> = formatRangeFun(range, props['range-key'])
+  const nodeRef = useRef(null)
+
+  const updateValue = (value = 0) => {
+    const newValue = formatValueFn(value)
+    setFormatValue(newValue)
+  }
+
+  useUpdateEffect(() => {
+    updateValue(value)
+  }, [value])
+
+  const _props = useRef(props)
+  _props.current = props
+  useImperativeHandle(ref, () => ({
+    updateValue,
+    getNodeInstance: () => ({
+      props: _props,
+      nodeRef,
+      instance: {
+        style: {}
+      }
+    })
+  }))
+
+  const onChange = (e: { detail: { value: number[] } }) => {
+    const { value } = e.detail
+    if (formatValue !== value[0]) {
+      setFormatValue(value[0])
+    }
+    bindchange?.({ detail: { value: value[0] + '' } })
+  }
+
+  return (
+    <MpxPickerView
+      style={styles.pickerContainer}
+      indicator-style={styles.pickerIndicator}
+      value={[formatValue]}
+      bindchange={onChange}
+    >
+      {/* @ts-expect-error ignore */}
+      <MpxPickerViewColumn>
+        {formatRange.map((item, index) => (
+          <Text key={index} style={styles.pickerItem}>{item}</Text>
+        ))}
+      </MpxPickerViewColumn>
+    </MpxPickerView>)
+})
+
+PickerSelector.displayName = 'MpxPickerSelector'
+export default PickerSelector

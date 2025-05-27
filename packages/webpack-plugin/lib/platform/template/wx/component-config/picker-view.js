@@ -6,10 +6,9 @@ module.exports = function ({ print }) {
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
-  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
-  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -25,12 +24,14 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-picker-view'
     },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
     props: [
       {
         test: /^(indicator-class|mask-class)$/,
-        tt: ttPropLog,
-        ios: iosPropLog,
-        android: androidPropLog
+        tt: ttPropLog
       }
     ],
     event: [
@@ -41,7 +42,8 @@ module.exports = function ({ print }) {
         tt: ttEventLog,
         jd: jdEventLog,
         ios: iosEventLog,
-        android: androidEventLog
+        android: androidEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }

@@ -16,8 +16,8 @@ module.exports = function (content) {
   // 处理内联wxs
   if (wxsModule) {
     const wxsContentMap = mpx.wxsContentMap
-    const resourcePath = parseRequest(this.resource).resourcePath
-    content = wxsContentMap[`${resourcePath}~${wxsModule}`] || content
+    const rawResourcePath = parseRequest(this.resource).rawResourcePath
+    content = wxsContentMap[`${rawResourcePath}~${wxsModule}`] || content
   }
 
   const visitor = {}
@@ -54,6 +54,7 @@ module.exports = function (content) {
         ExportNamedDeclaration (path) {
           if (
             path.node.declaration &&
+            path.node.declaration.declarations &&
             path.node.declaration.declarations.length === 1 &&
             path.node.declaration.declarations[0].id.name === path.node.declaration.declarations[0].init.name
           ) {

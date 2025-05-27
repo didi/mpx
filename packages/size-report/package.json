@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/size-report",
-  "version": "2.9.41",
+  "version": "2.10.6",
   "description": "mpx size report plugin",
   "main": "src/index.js",
   "scripts": {
@@ -25,6 +25,8 @@
   "author": "xuegan",
   "license": "Apache-2.0",
   "dependencies": {
+    "acorn": "^8.11.3",
+    "acorn-walk": "^7.2.0",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
     "loader-utils": "^2.0.0",

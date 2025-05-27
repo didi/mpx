@@ -181,7 +181,14 @@ export default function styleHelperMixin () {
 
         if (hide) {
           Object.assign(result, {
-            display: 'none'
+            // display: 'none'
+            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+            flex: 0,
+            height: 0,
+            width: 0,
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden'
           })
         }
         return isEmptyObject(result) ? empty : result

@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/core",
-  "version": "2.9.69",
+  "version": "2.10.6",
   "description": "mpx runtime core",
   "keywords": [
     "miniprogram",
@@ -19,25 +19,25 @@
   ],
   "main": "src/index.js",
   "dependencies": {
-    "@mpxjs/utils": "^2.9.69",
+    "@mpxjs/utils": "^2.10.6",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"
   },
   "peerDependencies": {
-    "@ant-design/react-native": "^5.1.3",
-    "@d11/react-native-fast-image": "^8.6.12",
+    "@d11/react-native-fast-image": "*",
     "@mpxjs/api-proxy": "^2.9.0",
     "@mpxjs/store": "^2.9.0",
-    "@react-navigation/native": "^7.0.3",
-    "@react-navigation/stack": "^7.0.4",
+    "@react-navigation/native": "*",
+    "@react-navigation/native-stack": "*",
     "react": "*",
     "react-native": "*",
-    "promise": "^8.3.0",
-    "react-native-gesture-handler": "^2.19.0",
-    "react-native-linear-gradient": "^2.8.3",
-    "react-native-safe-area-context": "^4.14.0",
-    "react-native-screens": "^4.1.0",
-    "react-native-webview": "^13.10.5",
+    "react-native-gesture-handler": "*",
+    "react-native-linear-gradient": "*",
+    "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*",
+    "react-native-video": "*",
+    "react-native-webview": "*",
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
@@ -62,16 +62,13 @@
     "react-native": {
       "optional": true
     },
-    "promise": {
+    "react-native-reanimated": {
       "optional": true
     },
     "@react-navigation/native": {
       "optional": true
     },
-    "@react-navigation/stack": {
-      "optional": true
-    },
-    "@ant-design/react-native": {
+    "@react-navigation/native-stack": {
       "optional": true
     },
     "react-native-safe-area-context": {
@@ -90,6 +87,9 @@
       "optional": true
     },
     "@d11/react-native-fast-image": {
+      "optional": true
+    },
+    "react-native-video": {
       "optional": true
     }
   },

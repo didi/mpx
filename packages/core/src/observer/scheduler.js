@@ -1,4 +1,4 @@
-import { warn, isArray, callWithErrorHandling, isDev } from '@mpxjs/utils'
+import { warn, isArray, callWithErrorHandling, isDev, isReact } from '@mpxjs/utils'
 import Mpx from '../index'
 
 let isFlushing = false
@@ -47,6 +47,14 @@ function findInsertionIndex (id) {
 }
 
 export function nextTick (fn) {
+  if (isReact) {
+    const p = new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(fn && fn.call(this))
+      })
+    })
+    return p
+  }
   const p = currentFlushPromise || resolvedPromise
   return fn ? p.then(this ? fn.bind(this) : fn) : p
 }

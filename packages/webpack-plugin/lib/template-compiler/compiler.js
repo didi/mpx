@@ -38,7 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const hoverClassReg = /^mpx-((cover-)?view|button|navigator)$/
+const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view|input|textarea)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -117,6 +117,8 @@ let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
 let usingComponents = []
+let usingComponentsInfo = {}
+let componentGenerics = {}
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -174,11 +176,11 @@ const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
-const i18nModuleName = '__i18n__'
+const i18nModuleName = '_i'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
-const stringifyModuleName = '__stringify__'
+const stringifyModuleName = '_s'
 const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionalChainWxsName = '__oc__'
+const optionalChainWxsName = '_o'
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -633,9 +635,11 @@ function parse (template, options) {
   hasOptionalChaining = false
   processingTemplate = false
   rulesResultMap.clear()
+  componentGenerics = options.componentGenerics || {}
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
+  usingComponentsInfo = options.usingComponentsInfo
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -718,7 +722,14 @@ function parse (template, options) {
       currentParent.children.push(element)
       element.parent = currentParent
       processElement(element, root, options, meta)
+
       tagNames.add(element.tag)
+      // 统计通过抽象节点方式使用的组件
+      element.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name)) {
+          tagNames.add(attr.value)
+        }
+      })
 
       if (!unary) {
         currentParent = element
@@ -806,7 +817,7 @@ function parse (template, options) {
     Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
   })
 
-  if (!tagNames.has('component') && options.checkUsingComponents) {
+  if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
     const arr = []
     usingComponents.forEach((item) => {
       if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
@@ -900,7 +911,7 @@ function postMoveBaseDirective (target, source, isDelete = true) {
 }
 
 function stringify (str) {
-  if (isWeb(mode)) str = str.replace(/'/g, '"')
+  if (isWeb(mode) && typeof str === 'string') str = str.replace(/'/g, '"')
   return JSON.stringify(str)
 }
 
@@ -933,30 +944,35 @@ function stringify (str) {
 
 const genericRE = /^generic:(.+)$/
 
-function processComponentGenericsWeb (el, options, meta) {
-  if (options.componentGenerics && options.componentGenerics[el.tag]) {
+function processComponentGenerics (el, meta) {
+  if (componentGenerics && componentGenerics[el.tag]) {
     const generic = dash2hump(el.tag)
     el.tag = 'component'
     addAttrs(el, [{
-      name: ':is',
-      value: `generic${generic}`
+      name: isWeb(mode) ? ':is' : 'is',
+      value: isWeb(mode) ? `generic${generic}` : `{{generic${generic}}}`
     }])
   }
 
   let hasGeneric = false
-
   const genericHash = moduleId
+  const genericAttrs = []
 
   el.attrsList.forEach((attr) => {
     if (genericRE.test(attr.name)) {
-      getAndRemoveAttr(el, attr.name)
-      addAttrs(el, [{
-        name: attr.name.replace(':', ''),
-        value: attr.value
-      }])
+      genericAttrs.push(attr)
       hasGeneric = true
       addGenericInfo(meta, genericHash, attr.value)
     }
+  })
+
+  // 统一处理所有的generic:属性
+  genericAttrs.forEach((attr) => {
+    getAndRemoveAttr(el, attr.name)
+    addAttrs(el, [{
+      name: attr.name.replace(':', ''),
+      value: attr.value
+    }])
   })
 
   if (hasGeneric) {
@@ -1172,25 +1188,6 @@ function processStyleReact (el, options) {
   let staticClass = getAndRemoveAttr(el, 'class').val || ''
   staticClass = staticClass.replace(/\s+/g, ' ')
 
-  let staticHoverClass = ''
-  if (hoverClassReg.test(el.tag)) {
-    staticHoverClass = el.attrsMap['hover-class'] || ''
-    staticHoverClass = staticHoverClass.replace(/\s+/g, ' ')
-  }
-
-  let mediaQueryClass = []
-  let pseudoWithMediaQueryClass = []
-  if (options.hasUnoCSS) {
-    const variants = initVariants(options.unoCtx)
-    const result = processVariants(staticClass, variants)
-    staticClass = result.newStaticClass
-    if (result.pseudoClass.hover) {
-      staticHoverClass = staticHoverClass + result.pseudoClass.hover.join(' ')
-    }
-    mediaQueryClass = result.mediaQueryClass
-    pseudoWithMediaQueryClass = result.pseudoWithMediaQueryClass
-  }
-
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
   let staticStyle = getAndRemoveAttr(el, 'style').val || ''
   staticStyle = staticStyle.replace(/\s+/g, ' ')
@@ -1198,6 +1195,20 @@ function processStyleReact (el, options) {
   const { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (has && show === undefined) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
+  }
+
+  let mediaQueryClass = []
+  let pseudoWithMediaQueryClass = []
+  let unoStaticHoverClass = ''
+  if (options.hasUnoCSS) {
+    const variants = initVariants(options.unoCtx)
+    const result = processVariants(staticClass, variants)
+    staticClass = result.newStaticClass
+    if (result.pseudoClass.hover) {
+      unoStaticHoverClass = result.pseudoClass.hover.join(' ')
+    }
+    mediaQueryClass = result.mediaQueryClass
+    pseudoWithMediaQueryClass = result.pseudoWithMediaQueryClass
   }
 
   if (dynamicClass || staticClass || dynamicStyle || staticStyle || show || mediaQueryClass.length) {
@@ -1214,13 +1225,25 @@ function processStyleReact (el, options) {
     }])
   }
 
-  // todo pseudo element 的动态计算
-  if ((staticHoverClass && staticHoverClass !== 'none') || pseudoWithMediaQueryClass.length) {
-    const staticClassExp = parseMustacheWithContext(staticHoverClass).result
-    addAttrs(el, [{
-      name: 'hover-style',
-      value: `{{this.__getStyle(${staticClassExp}, ${pseudoWithMediaQueryClass.length ? `this.__getMediaQueryClass(${stringify(pseudoWithMediaQueryClass)})` : ''})}}`
-    }])
+  if (specialClassReg.test(el.tag) || pseudoWithMediaQueryClass.length) {
+    const staticClassNames = ['hover', 'indicator', 'mask', 'placeholder']
+    staticClassNames.forEach((className) => {
+      let staticClass = el.attrsMap[className + '-class'] || ''
+      let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
+      staticClass = staticClass.replace(/\s+/g, ' ')
+      if (unoStaticHoverClass) {
+        staticClass += unoStaticHoverClass
+      }
+      staticStyle = staticStyle.replace(/\s+/g, ' ')
+      if ((staticClass && staticClass !== 'none') || staticStyle) {
+        const staticClassExp = parseMustacheWithContext(staticClass).result
+        const staticStyleExp = parseMustacheWithContext(staticStyle).result
+        addAttrs(el, [{
+          name: className + '-style',
+          value: `{{this.__getStyle(${staticClassExp}, ${pseudoWithMediaQueryClass.length ? `this.__getMediaQueryClass(${stringify(pseudoWithMediaQueryClass)})` : 'null'}, ${staticStyleExp})}}`
+        }])
+      }
+    })
   }
 
   // 处理externalClasses，将其转换为style作为props传递
@@ -1266,12 +1289,56 @@ function getModelConfig (el, match) {
   }
 }
 
-function processEventReact (el) {
+function processEventWeb (el) {
+  const eventConfigMap = {}
+  el.attrsList.forEach(function ({ name, value }) {
+    if (/^@[a-zA-Z]+$/.test(name)) {
+      const parsedFunc = parseFuncStr(value)
+      if (parsedFunc) {
+        if (!eventConfigMap[name]) {
+          eventConfigMap[name] = {
+            configs: []
+          }
+        }
+        eventConfigMap[name].configs.push(
+          Object.assign({ name, value }, parsedFunc)
+        )
+      }
+    }
+  })
+
+  // let wrapper
+  for (const name in eventConfigMap) {
+    const { configs } = eventConfigMap[name]
+    if (!configs.length) continue
+    configs.forEach(({ name }) => {
+      if (name) {
+        // 清空原始事件绑定
+        let has
+        do {
+          has = getAndRemoveAttr(el, name).has
+        } while (has)
+      }
+    })
+    const value = `(e)=>__invoke(e, [${configs.map(
+      (item) => item.expStr
+    )}])`
+    addAttrs(el, [
+      {
+        name,
+        value
+      }
+    ])
+  }
+}
+
+function processEventReact (el, options) {
   const eventConfigMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
     if (parsedEvent) {
       const type = config[mode].event.getEvent(parsedEvent.eventName, parsedEvent.prefix)
+      const modifiers = (parsedEvent.modifier || '').split('.')
       const parsedFunc = parseFuncStr(value)
       if (parsedFunc) {
         if (!eventConfigMap[type]) {
@@ -1280,6 +1347,9 @@ function processEventReact (el) {
           }
         }
         eventConfigMap[type].configs.push(Object.assign({ name, value }, parsedFunc))
+        if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
+          eventConfigMap[type].proxy = true
+        }
       }
     }
   })
@@ -1320,9 +1390,9 @@ function processEventReact (el) {
 
   // let wrapper
   for (const type in eventConfigMap) {
-    const { configs } = eventConfigMap[type]
+    const { configs, proxy } = eventConfigMap[type]
     if (!configs.length) continue
-    const needBind = configs.length > 1 || configs[0].hasArgs
+    const needBind = proxy || configs.length > 1 || configs[0].hasArgs
     if (needBind) {
       configs.forEach(({ name }) => {
         if (name) {
@@ -1342,8 +1412,11 @@ function processEventReact (el) {
       ])
     } else {
       const { name, value } = configs[0]
-      const { result } = parseMustacheWithContext(value)
-      modifyAttr(el, name, `{{this[${result}]}}`)
+      const attrValue = isValidIdentifierStr(value)
+        ? `{{this.${value}}}`
+        : `{{this[${parseMustacheWithContext(value).result}]}}`
+
+      modifyAttr(el, name, attrValue)
     }
 
     // 非button的情况下，press/longPress时间需要包裹TouchableWithoutFeedback进行响应，后续可支持配置
@@ -1884,9 +1957,13 @@ function processRefReact (el, meta) {
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
+    const refFnId = forScopes.reduce((preV, curV) => {
+      return `${preV} + "_" + ${curV.index}`
+    }, `"ref_fn_${++refId}"`)
+
     addAttrs(el, [{
       name: 'ref',
-      value: `{{ this.__getRefVal('${type}', [${selectorsConf}]) }}`
+      value: `{{ this.__getRefVal('${type}', [${selectorsConf}], ${refFnId}) }}`
     }])
   }
 
@@ -2176,8 +2253,8 @@ function processText (el, options, meta) {
 function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
-    const wrapper = createASTElement('mpx-simple-text')
+  if (parentTag !== 'mpx-text' && parentTag !== 'mpx-simple-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
+    const wrapper = createASTElement('mpx-inline-text')
     wrapper.isBuiltIn = true
     const inheritAttrs = []
     parent.attrsList.forEach(({ name, value }) => {
@@ -2248,7 +2325,7 @@ function processClass (el, meta) {
     addAttrs(el, [{
       name: targetType,
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
-      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.stringifyClass('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.stringifyClass(${staticClassExp}, ${dynamicClassExp})}}`
+      value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.c('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.c(${staticClassExp}, ${dynamicClassExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticClass) {
@@ -2281,7 +2358,7 @@ function processStyle (el, meta) {
     const dynamicStyleExp = parseMustacheWithContext(dynamicStyle).result
     addAttrs(el, [{
       name: targetType,
-      value: `{{${stringifyModuleName}.stringifyStyle(${staticStyleExp}, ${dynamicStyleExp})}}`
+      value: `{{${stringifyModuleName}.s(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
     injectWxs(meta, stringifyModuleName, stringifyWxsPath)
   } else if (staticStyle) {
@@ -2300,16 +2377,20 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
-function isComponentNode (el, options) {
-  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
+function isComponentNode (el) {
+  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
 }
 
-function isReactComponent (el, options) {
-  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
+function getComponentInfo (el) {
+  return usingComponentsInfo[el.tag] || {}
+}
+
+function isReactComponent (el) {
+  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
-  const isComponent = isComponentNode(el, options)
+  const isComponent = isComponentNode(el)
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
@@ -2423,8 +2504,7 @@ function postProcessAliComponentRootView (el, options, meta) {
     { condition: /^style$/, action: 'move' },
     { condition: /^slot$/, action: 'move' }
   ]
-  const tagName = el.tag
-  const mid = options.usingComponentsInfo[tagName]?.mid || moduleId
+  const mid = getComponentInfo(el).mid
   const processAppendAttrsRules = [
     { name: 'class', value: `${MPX_ROOT_VIEW} host-${mid}` }
   ]
@@ -2527,11 +2607,11 @@ function processShow (el, options, root) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
     return
   }
-  if (ctorType === 'component' && el.parent === root && isRealNode(el)) {
+  if (ctorType === 'component' && el.parent === root && isRealNode(el) && hasVirtualHost) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
-  if (isComponentNode(el, options)) {
+  if (isComponentNode(el) && getComponentInfo(el).hasVirtualHost) {
     if (show === '') {
       show = '{{false}}'
     }
@@ -2573,7 +2653,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)
@@ -2748,9 +2828,10 @@ function processElement (el, root, options, meta) {
     // 预处理代码维度条件编译
     processIfWeb(el)
     processScoped(el)
+    processEventWeb(el)
     // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
-    processComponentGenericsWeb(el, options, meta)
+    processComponentGenerics(el, meta)
     return
   }
 
@@ -2762,9 +2843,10 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processStyleReact(el, options)
     if (!pass) {
-      processStyleReact(el, options)
-      processEventReact(el)
+      processEventReact(el, options)
+      processComponentGenerics(el, meta)
       processComponentIs(el, options)
       processSlotReact(el, meta)
     }
@@ -2823,14 +2905,14 @@ function closeElement (el, options, meta) {
   if (!isTemplate) {
     if (!isNative) {
       postProcessComponentIs(el, (child) => {
-        if (!hasVirtualHost && mode === 'ali') {
+        if (!getComponentInfo(el).hasVirtualHost && mode === 'ali') {
           postProcessAliComponentRootView(child, options)
         } else {
           postProcessIf(child)
         }
       })
     }
-    if (isComponentNode(el, options) && !hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
+    if (isComponentNode(el) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }

@@ -88,7 +88,10 @@ function buildGlobalParams ({
   jsonConfig,
   componentsMap,
   pagesMap,
-  firstPage
+  firstPage,
+  outputPath,
+  genericsInfo,
+  hasApp
 }) {
   let content = ''
   if (ctorType === 'app') {
@@ -109,14 +112,33 @@ global.currentInject.getPages = function () {
 }
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
+    if (!hasApp) {
+      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+    }
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)
       delete pageConfig.usingComponents
       content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
     }
-    content += `global.currentInject.getComponents = function () {
-  return ${shallowStringify(componentsMap)}
-}\n`
+
+    content += `
+
+    function getComponents() {
+      return ${shallowStringify(componentsMap)}
+    }
+
+    global.currentInject.getComponents = getComponents\n`
+    if (genericsInfo) {
+      content += `
+        const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
+        global.__mpxGenericsMap[genericHash] = function (name) {
+          return getComponents()[name]
+        }
+      \n`
+    }
+    if (ctorType === 'component') {
+      content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
+    }
   }
   content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
   content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`

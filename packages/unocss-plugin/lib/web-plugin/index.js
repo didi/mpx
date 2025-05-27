@@ -121,7 +121,7 @@ function WebpackPlugin (configOrPath, defaults) {
           const result = await uno.generate(tokens, { minify: true })
           const files = Object.keys(compilation.assets)
           for (const file of files) {
-            if (file === '*') { return }
+            if (file === '*') return
             let code = compilation.assets[file].source().toString()
             let replaced = false
             code = code.replace(LAYER_PLACEHOLDER_RE, (_, quote, layer) => {

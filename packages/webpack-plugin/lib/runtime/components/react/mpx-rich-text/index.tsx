@@ -3,12 +3,13 @@
  * ✔ nodes
  */
 import { View, ViewProps, ViewStyle } from 'react-native'
-import { useRef, forwardRef, JSX, useState } from 'react'
+import { useRef, forwardRef, JSX, useState, createElement } from 'react'
 import useInnerProps from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef' // 引入辅助函数
-import { useTransformStyle, useLayout } from '../utils'
+import { useTransformStyle, useLayout, extendObject } from '../utils'
 import { WebView, WebViewMessageEvent } from 'react-native-webview'
 import { generateHTML } from './html'
+import Portal from '../mpx-portal'
 
 type Node = {
   type: 'node' | 'text'
@@ -69,7 +70,8 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     normalStyle,
     hasSelfPercent,
     setWidth,
-    setHeight
+    setHeight,
+    hasPositionFixed
   } = useTransformStyle(Object.assign({
     width: '100%',
     height: webViewHeight
@@ -91,29 +93,38 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
     layoutRef
   })
 
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    style: { ...normalStyle, ...layoutStyle },
-    ...layoutProps
-  }, [], {
-    layoutRef
-  })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject(normalStyle, layoutStyle)
+      }
+    ),
+    [],
+    {
+      layoutRef
+    }
+  )
 
   const html: string = typeof nodes === 'string' ? nodes : jsonToHtmlStr(nodes)
 
-  return (
-    <View
-      {...innerProps}
-    >
-      <WebView
-        source={{ html: generateHTML(html) }}
-        onMessage={(event: WebViewMessageEvent) => {
-          setWebViewHeight(+event.nativeEvent.data)
-        }}
-      >
-      </WebView>
-    </View>
+  let finalComponent: JSX.Element = createElement(View, innerProps,
+    createElement(WebView, {
+      source: { html: generateHTML(html) },
+      onMessage: (event: WebViewMessageEvent) => {
+        setWebViewHeight(+event.nativeEvent.data)
+      }
+    })
   )
+
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 _RichText.displayName = 'mpx-rich-text'

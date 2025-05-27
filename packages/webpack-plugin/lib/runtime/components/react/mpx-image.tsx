@@ -27,6 +27,7 @@ import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject } from './utils'
+import Portal from './mpx-portal'
 
 export type Mode =
   | 'scaleToFill'
@@ -49,7 +50,7 @@ export interface ImageProps {
   mode?: Mode
   svg?: boolean
   style?: ImageStyle & Record<string, any>
-  'enable-offset'?: boolean;
+  'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
@@ -159,7 +160,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   }
 
-  const { normalStyle, hasSelfPercent, setWidth, setHeight } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  const {
+    hasPositionFixed,
+    hasSelfPercent,
+    normalStyle,
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,
@@ -356,31 +363,39 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   useEffect(() => {
     if (!isSvg && isLayoutMode) {
-      RNImage.getSize(src, (width: number, height: number) => {
-        state.current.imageWidth = width
-        state.current.imageHeight = height
-        state.current.ratio = !width ? 0 : height / width
+      RNImage.getSize(
+        src,
+        (width: number, height: number) => {
+          state.current.imageWidth = width
+          state.current.imageHeight = height
+          state.current.ratio = !width ? 0 : height / width
 
-        if (isWidthFixMode
-          ? state.current.viewWidth
-          : isHeightFixMode
-            ? state.current.viewHeight
-            : state.current.viewWidth && state.current.viewHeight) {
-          state.current.viewWidth && setViewWidth(state.current.viewWidth)
-          state.current.viewHeight && setViewHeight(state.current.viewHeight)
-          setRatio(!width ? 0 : height / width)
-          setImageWidth(width)
-          setImageHeight(height)
-          state.current = {}
+          if (isWidthFixMode
+            ? state.current.viewWidth
+            : isHeightFixMode
+              ? state.current.viewHeight
+              : state.current.viewWidth && state.current.viewHeight) {
+            state.current.viewWidth && setViewWidth(state.current.viewWidth)
+            state.current.viewHeight && setViewHeight(state.current.viewHeight)
+            setRatio(!width ? 0 : height / width)
+            setImageWidth(width)
+            setImageHeight(height)
+            state.current = {}
+            setLoaded(true)
+          }
+        },
+        () => {
           setLoaded(true)
         }
-      })
+      )
     }
   }, [src, isSvg, isLayoutMode])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject(
@@ -390,8 +405,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           isHeightFixMode ? { width: fixedWidth } : {},
           isWidthFixMode ? { height: fixedHeight } : {}
         )
-      },
-      layoutProps
+      }
     ),
     [
       'src',
@@ -403,32 +417,50 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   )
 
-  return createElement(View, innerProps,
-    isSvg
-      ? createElement(SvgCssUri, {
-        uri: src,
-        onLayout: onSvgLoad,
-        onError: binderror && onSvgError,
-        style: extendObject(
-          { transformOrigin: 'top left' },
-          modeStyle
-        )
-      })
-      : loaded && renderImage({
+  const SvgImage = createElement(
+    View,
+    innerProps,
+    createElement(SvgCssUri, {
+      uri: src,
+      onLayout: onSvgLoad,
+      onError: binderror && onSvgError,
+      style: extendObject(
+        { transformOrigin: 'left top' },
+        modeStyle
+      )
+    })
+  )
+
+  const BaseImage = renderImage(
+    extendObject(
+      {
         source: { uri: src },
         resizeMode: resizeMode,
         onLoad: bindload && onImageLoad,
         onError: binderror && onImageError,
         style: extendObject(
           {
-            transformOrigin: 'top left',
+            transformOrigin: 'left top',
             width: isCropMode ? imageWidth : '100%',
             height: isCropMode ? imageHeight : '100%'
           },
           isCropMode ? modeStyle : {}
         )
-      }, enableFastImage)
+      },
+      isLayoutMode ? {} : innerProps
+    ),
+    enableFastImage
   )
+
+  const LayoutImage = createElement(View, innerProps, loaded && BaseImage)
+
+  const finalComponent = isSvg ? SvgImage : isLayoutMode ? LayoutImage : BaseImage
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 Image.displayName = 'mpx-image'
