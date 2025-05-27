@@ -3,6 +3,8 @@ import { buildUrl, serialize, transformRes } from './util'
 import { request as requestApi } from '@mpxjs/api-proxy/src/platform/api/request'
 import JSONBig from 'json-bigint'
 
+const isObject = (thing) => thing !== null && typeof thing === 'object'
+
 export default function request (config) {
   return new Promise((resolve, reject) => {
     const paramsSerializer = config.paramsSerializer || serialize
@@ -40,6 +42,8 @@ export default function request (config) {
     const contentType = header['content-type'] || header['Content-Type']
     if (/^POST|PUT$/i.test(config.method) && /application\/x-www-form-urlencoded/i.test(contentType) && typeof config.data === 'object') {
       config.data = bodySerializer(config.data)
+    } else if (/^POST|PUT$/i.test(config.method) && isObject(config.data) && (!contentType || contentType.indexOf('application/json') > -1)) {
+      config.data = JSONBig.stringify(config.data)
     }
 
     const rawSuccess = config.success
