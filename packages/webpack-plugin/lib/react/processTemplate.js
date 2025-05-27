@@ -30,9 +30,10 @@ module.exports = function (template, {
     externalClasses,
     checkUsingComponents,
     autoVirtualHostRules,
+    forceProxyEventRules,
+    customTextRules,
     hasUnoCSS,
-    unoCtx,
-    customTextRules
+    unoCtx
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -89,14 +90,10 @@ module.exports = function (template, {
         // rn模式下实现抽象组件
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
-<<<<<<< HEAD
+        forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
         isCustomText: matchCondition(resourcePath, customTextRules),
         hasUnoCSS,
         unoCtx
-=======
-        forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
-        isCustomText: matchCondition(resourcePath, customTextRules)
->>>>>>> master
       })
 
       if (meta.wxsContentMap) {
