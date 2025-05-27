@@ -157,7 +157,10 @@ function stripCondition(content, defs) {
  * @returns
  */
 async function atImport(content, config) {
-  const atImportReg = /@import\s+\(?['"]([^'"]+)['"]\)?[\s\r\n]*?;?/g
+  /**
+   * @link regexr.com/8evhm
+   */
+  const atImportReg = /@import\s+((url\(['"](?<url1>[^'"]+)['"]\))|(['"](?<url2>[^'"]+)['"]))[\s\r\n]*?;?/g
   const load = config.load ?? ((filename) => fs.readFile(filename, 'utf-8'))
   const resolve =
     config.resolve ??
@@ -170,11 +173,14 @@ async function atImport(content, config) {
   /**
    * @type {RegExpExecArray}
    */
-  let matchd = null
-  while ((matchd = atImportReg.exec(content)) !== null) {
-    const resolvedPath = await resolve(matchd[1], path.dirname(config.from))
-    const start = matchd.index
-    const end = start + matchd[0].length
+  let matched = null
+  while ((matched = atImportReg.exec(content)) !== null) {
+    const url = matched.groups.url1 || matched.groups.url2
+
+    if (!url) continue
+    const resolvedPath = await resolve(url, path.dirname(config.from))
+    const start = matched.index
+    const end = start + matched[0].length
 
     const loadedContent = await load(resolvedPath)
     pendingProcess.push({
@@ -246,7 +252,7 @@ module.exports = async function (css) {
     resolve: this.resolve.bind(this)
   })
 
-  callback(null, result.css, result.map)
+  callback(null, result)
 }
 
 module.exports.stripByPostcss = stripByPostcss

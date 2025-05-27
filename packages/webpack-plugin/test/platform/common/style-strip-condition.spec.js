@@ -29,12 +29,9 @@ const getLangFromExtension = (filename) => {
   return lang
 }
 
-// 为什么不用 jest 本身的 test
-// 1. jest 的 test/it 不能异步定义
-// 2. jest 使用单个 test/it 无法处理一次处理多个 fixtures 文件（postcss 引用会出问题）
-
 describe('strip-conditional-loader', () => {
   fixture(
+    // './fixtures/css-condition/at-import/index.styl',
     './fixtures/**/index.{styl,css}',
     async ({ filename, config = {}, cwd }) => {
       const { lang = getLangFromExtension(filename), defs = {} } = config
@@ -65,7 +62,7 @@ describe('strip-conditional-loader', () => {
     },
     {
       cwd: __dirname,
-      runner: async (fn, config) => {
+      runner: (fn, config) => {
         const name = path.basename(config.cwd)
         test(`${name}`, async () => {
           await fn(config)

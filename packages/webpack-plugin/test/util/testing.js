@@ -1,6 +1,6 @@
 const fs = require('node:fs')
 const path = require('node:path')
-const { globSync } = require('glob')
+const glob = require('glob')
 
 function findConfigFiles(cwd) {
   const files = fs.readdirSync(cwd)
@@ -59,9 +59,9 @@ function testFactor(options, callback) {
   const configFiles = findConfigFiles(cwd)
 
   return Promise.all(
-    configFiles.map(async (item) => {
+    configFiles.map((item) => {
       const configPath = path.join(cwd, item)
-      await callback({ config: loadConfig(configPath), configPath })
+      return callback({ config: loadConfig(configPath), configPath })
     })
   )
 }
@@ -81,18 +81,19 @@ async function updateDiskSnapshot(outputPath, result, filename) {
 
 module.exports.fixture = function fixture(pattern, callback, options = {}) {
   const cwd = options.cwd ?? process.cwd()
+
   let filenameList = []
   try {
-    filenameList = globSync(pattern, { cwd, absolute: true })
+    filenameList = glob.globSync(pattern, { cwd, absolute: true })
   } catch (e) {
     console.error(e)
   }
 
   const runner = options.runner ?? ((fn, ...args) => fn(...args))
-  return filenameList.map((item) => {
+  return Promise.all(filenameList.map((item) => {
     const parent = path.dirname(item)
-    return testFactor({ cwd: parent }, async ({ config, configPath }) => {
-      await runner(
+    return testFactor({ cwd: parent }, ({ config, configPath }) => {
+      return runner(
         async () => {
           const outputPath = path.join(
             parent,
@@ -106,5 +107,5 @@ module.exports.fixture = function fixture(pattern, callback, options = {}) {
         { cwd: parent, filename: item, config }
       )
     })
-  })
+  }))
 }
