@@ -58,13 +58,13 @@ function offAppHide (callback) {
 }
 
 function onLazyLoadError (callback) {
-  if (isReact) { // todo web
+  if (isReact) {
     global.__mpxAppCbs.lazyLoad.push(callback)
   }
 }
 
 function offLazyLoadError (callback) {
-  if (isReact) { // todo web
+  if (isReact) {
     off(global.__mpxAppCbs.lazyLoad, callback)
   }
 }
