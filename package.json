@@ -8,6 +8,8 @@
     "fix": "eslint --fix --ext .js,.ts,.tsx,.jsx packages/",
     "lint:js": "eslint --ext .js packages/",
     "test": "jest",
+    "test:e2e": "pnpm run build:e2e && pnpm --filter 'mpx-miniprogram-project' --filter 'mpx-webpack5-plugin-project' run test",
+    "build:e2e": "pnpm --filter 'mpx-miniprogram-project' run build:cross && pnpm --filter 'mpx-webpack5-plugin-project' run build",
     "release": "pnpm run lint && pnpm run test && npx lerna version",
     "docs:dev": "vitepress dev docs-vitepress",
     "docs:build": "vitepress build docs-vitepress",

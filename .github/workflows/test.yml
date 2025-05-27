@@ -47,13 +47,10 @@ jobs:
       - name: Install dependencies
         run: pnpm i
 
-      - name: build-miniprogram
-        run: pnpm --filter "mpx-miniprogram-project" run build:cross
-
-      - name: build-plugin
-        run: pnpm --filter "mpx-webpack5-plugin-project" run build
+      - name: build-e2e
+        run: pnpm run build:e2e
 
       - name: exec unit test
         run: |
           pnpm run test
-          pnpm --filter "mpx-miniprogram-project" --filter "mpx-webpack5-plugin-project" run test
+          pnpm run test:e2e
