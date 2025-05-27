@@ -7,3 +7,4 @@ output/
 dist/
 .vscode/
 .cache/
+.jest

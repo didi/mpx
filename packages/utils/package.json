@@ -3,6 +3,10 @@
   "version": "2.10.6",
   "description": "A toolkit for mpx framework",
   "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./*": "./*"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -25,7 +29,7 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "peerDependencies": {
-    "@mpxjs/core": "^2.9.58"
+    "@mpxjs/core": "workspace:^"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

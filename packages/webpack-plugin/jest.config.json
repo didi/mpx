@@ -5,5 +5,8 @@
   "testEnvironment": "jsdom",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy"
-  }
+  },
+  "testMatch": [
+    "./**/*.(spec|test).js"
+  ]
 }

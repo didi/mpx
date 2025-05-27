@@ -31,7 +31,8 @@ module.exports = {
     camelcase: 0,
     indent: 0,
     'symbol-description': 0,
-    'node/no-callback-literal': 0
+    'node/no-callback-literal': 0,
+    'space-before-function-paren': 0
   },
   env: {
     'jest/globals': true,
@@ -57,8 +58,11 @@ module.exports = {
         '@typescript-eslint/no-non-null-assertion': 0,
         camelcase: 0
       }
-    }, {
-      files: ['packages/webpack-plugin/lib/runtime/components/react/**/*.{js,jsx,ts,tsx}'],
+    },
+    {
+      files: [
+        'packages/webpack-plugin/lib/runtime/components/react/**/*.{js,jsx,ts,tsx}'
+      ],
       plugins: ['react-hooks'],
       rules: {
         'react-hooks/rules-of-hooks': 'error'
