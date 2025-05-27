@@ -86,13 +86,14 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
     // 有transition 或者 有transitionProperty和transitionDuration
     // 解析 transition、transitionProperty、 transitionDuration 生成动画参数
     // 优先级 transition-xx > transition
-    return properties.reduce((transitionMap, property, idx) => {
-      let { duration = 0, delay = 0, timingFunction = '' } = transitionData[idx] || {}
+    return (properties.length ? properties : transitionData).reduce((transitionMap, item, idx) => {
+      let { property, duration = 0, delay = 0, timingFunction = '' } = transitionData[idx] || {}
+      property = properties[idx] || property
       duration = +(durations[idx] ? durations[idx] : durations[durations.length - 1] || duration)
       delay = +(delays[idx] ? delays[idx] : delays[durations.length - 1] || delay)
       timingFunction = timingFunctions[idx] ? timingFunctions[idx] : timingFunctions[durations.length - 1] || timingFunction
       const easing = EasingKey[timingFunction as TimingFunction] || Easing.inOut(Easing.ease)
-      transitionMap[dash2hump(property)] = {
+      transitionMap[dash2hump(property!)] = {
         duration,
         delay,
         easing
