@@ -26,88 +26,80 @@ import type { TransformsStyle } from 'react-native'
 import type { AnimationCallback, SharedValue, AnimatableValue } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
 import type { _ViewProps } from '../mpx-view'
-import type { CustomAnimationCallback, TransitionMap, TimingFunction, AnimatedOption } from './utils'
+import type { CustomAnimationCallback, TransitionMap, TimingFunction } from './utils'
 
 // transition 解析相关方法
 // 解析 property timingFunction
-function parseTransition (transition: string) {
+function parseTransitionItem (transition: string) {
   const options = parseValues(transition)
-  console.log('parseSingleTransition options=', options)
+  // console.log('parseSingleTransition options=', options)
   if (options.length < 2) return undefined
   const property = options[0]
   const duration = getUnit(options[1])
-  console.log('parseSingleTransition duration=', property, duration)
+  // console.log('parseSingleTransition duration=', property, duration)
   if (!property || !duration) return undefined
-  const timingFunction = (Object.keys(EasingKey).includes(options[2]) ? options[2] : 'linear') as TimingFunction
+  const timingFunction = (Object.keys(EasingKey).includes(options[2]) ? options[2] : '') as TimingFunction
   const delay = getUnit(options[2]) || getUnit(options[3])
-  console.log(`parseSingleTransition property=${property} duration=${duration} delay: ${delay} timingFunction: ${timingFunction}`)
+  // console.log(`parseSingleTransition property=${property} duration=${duration} delay: ${delay} timingFunction: ${timingFunction}`)
   return {
     property: dash2hump(property),
-    animatedOption: {
-      duration,
-      timingFunction,
-      delay
-    }
+    duration,
+    timingFunction,
+    delay
   }
+}
+function parseTransition (transition: string) {
+  // if (!transition) return {}
+  if (!transition) return []
+  const isMulti = transition.includes(',')
+  if (isMulti) {
+    const multi = parseValues(transition, ',')
+    return multi.map(prop => parseTransitionItem(prop)).filter(item => item !== undefined)
+  } else {
+    const data = parseTransitionItem(transition)
+    return data ? [data] : []
+  }
+}
+// 解析 transition-prop
+function parseTransitionSingleProp (prop: string) {
+  return prop ? prop.includes(',') ? parseValues(prop, ',') : [prop] : []
 }
 // transition 解析
 function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
-  const transition = originalStyle.transition
-  if (transition) {
-    // Todo 末尾分号;
-    const isMulti = transition.includes(',')
-    if (isMulti) {
-      const multi = parseValues(transition, ',')
-      // ["transform 3s ease", "color 1s"]
-      // console.log('parseTransition multi=', multi)
-      return multi.reduce((transitionMap, item) => {
-        const { property = '', animatedOption = undefined } = parseTransition(item) || {}
-        console.log(item, property, animatedOption)
-        if (property && (hasOwn(SupportedProperty, property) || property === Transform)) {
-          transitionMap[property] = animatedOption!
-        }
-        return transitionMap
-      }, {} as TransitionMap)
-    } else {
-      const { property, animatedOption } = parseTransition(transition) || {}
-      return property && (hasOwn(SupportedProperty, property) || property === Transform)
-        ? {
-            [property]: animatedOption
-          }
-        : null
-    }
-  } else if (originalStyle.transitionProperty && originalStyle.transitionDuration) {
-    return parseTransitionProp(originalStyle)
-  }
-  return null
-}
-function parseTransitionProp (originalStyle: ExtendedViewStyle) {
-  console.log(`transitionProperty=${originalStyle.transitionProperty} transitionDuration=${originalStyle.transitionDuration}`)
-  // Todo transition-behavior
-  const properties = parseValues(originalStyle.transitionProperty, ',')
-  const durations = parseValues(originalStyle.transitionDuration, ',')
-  const timingFunction = parseValues(originalStyle.transitionTimingFunction, ',')
-  const delays = parseValues(originalStyle.transitionDelay, ',')
-  if (properties.length === 1) {
-    const property = properties[0]
-    return {
-      [property]: {
-        duration: durations[0],
-        timingFunction: timingFunction[0] || 'linear',
-        delay: delays[0] || 0
-      }
-    }
-  } else if (properties.length > 1) {
+  const {
+    transition = '',
+    transitionProperty = '',
+    transitionDuration = '',
+    transitionTimingFunction = '',
+    transitionDelay = ''
+  } = originalStyle
+  const transitionData = parseTransition(transition)
+  const properties = parseTransitionSingleProp(transitionProperty)
+  const durations = parseTransitionSingleProp(transitionDuration).map(item => getUnit(item))
+  const timingFunctions = parseTransitionSingleProp(transitionTimingFunction)
+  const delays = parseTransitionSingleProp(transitionDelay)
+  if (!transitionData.length && (!properties.length || !durations.length)) {
+    // 没有transition 且没有 transitionProperty 或 transitionDuration
+    // 无动画参数
+    return {} as TransitionMap
+  } else {
+    // 有transition 或者 有transitionProperty和transitionDuration
+    // 解析 transition、transitionProperty、 transitionDuration 生成动画参数
+    // 优先级 transition-xx > transition
     return properties.reduce((transitionMap, property, idx) => {
-      transitionMap[property] = {
-        duration: +(durations[idx] ? durations[idx] : durations[0]),
-        timingFunction: (timingFunction[idx] ? timingFunction[idx] : timingFunction[0] || 'linear') as TimingFunction,
-        delay: +(delays[idx] ? delays[idx] : delays[0] || 0)
+      let { duration = 0, delay = 0, timingFunction = '' } = transitionData[idx] || {}
+      duration = +(durations[idx] ? durations[idx] : durations[durations.length - 1] || duration)
+      delay = +(delays[idx] ? delays[idx] : delays[durations.length - 1] || delay)
+      timingFunction = timingFunctions[idx] ? timingFunctions[idx] : timingFunctions[durations.length - 1] || timingFunction
+      const easing = EasingKey[timingFunction as TimingFunction] || Easing.inOut(Easing.ease)
+      transitionMap[dash2hump(property)] = {
+        duration,
+        delay,
+        easing
       }
       return transitionMap
     }, {} as TransitionMap)
   }
-  return null
 }
 export default function useTransitionHooks<T, P> (props: _ViewProps & { transitionend?: CustomAnimationCallback }) {
   const { style: originalStyle = {}, transitionend } = props
@@ -119,7 +111,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   const animatedKeys = useRef({} as {[propName: keyof ExtendedViewStyle]: boolean})
   // ** 从 style 中获取动画数据
   const transitionMap = useMemo(() => {
-    return (parseTransitionStyle(originalStyle) || {}) as TransitionMap
+    return parseTransitionStyle(originalStyle)
   }, [])
   console.log('transitionMap=', transitionMap)
   // ** style prop sharedValue
@@ -178,10 +170,8 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
       const toVal = ruleV !== undefined
         ? ruleV
         : shareValMap[key].value
-      const { delay = 0, duration, timingFunction } = transitionMap[isTransform(key) ? Transform : key]
-      // ease 兜底
-      const easing = EasingKey[timingFunction as TimingFunction] || Easing.inOut(Easing.ease)
-      console.log('animationOptions=', { delay, duration, timingFunction })
+      const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
+      console.log('animationOptions=', { delay, duration, easing })
       const callback: AnimationCallback = (finished?: boolean, current?: AnimatableValue) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin
@@ -197,7 +187,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   // 从 transition 获取 AnimatedKeys
   function getAnimatedKeysFromTransition () {
     return Object.entries(originalStyle).reduce((animatedKeys, [key, value]) => {
-      // console.log('getAnimatedKeysFromTransition init', key, value)
+      console.log('getAnimatedKeysFromTransition init', key, value)
       if (hasOwn(transitionMap, Transform) && key === Transform) {
         Object.keys(getTransformObj(value)).forEach((prop: string) => {
           animatedKeys[prop] = true

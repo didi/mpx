@@ -9,7 +9,7 @@ import {
   // cancelAnimation,
   // runOnJS
 } from 'react-native-reanimated'
-import type { AnimatableValue, WithTimingConfig, AnimationCallback } from 'react-native-reanimated'
+import type { AnimatableValue, WithTimingConfig, AnimationCallback, EasingFunction } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
 
 export type TimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-in-out'| 'ease-out'
@@ -37,7 +37,11 @@ export type AnimationProp = {
 export type CustomAnimationCallback = (finished?: boolean, current?: AnimatableValue, duration?: number) => void
 
 export type TransitionMap = {
-  [propName: string]: AnimatedOption
+  [propName: string]: {
+    duration: number
+    delay?: number
+    easing: EasingFunction
+  }
 }
 
 // ms s 单位匹配
