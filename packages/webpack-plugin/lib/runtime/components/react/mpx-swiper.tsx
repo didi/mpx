@@ -22,6 +22,7 @@ import { SwiperContext } from './context'
  * ✔ easing-function  ="easeOutCubic"
  * ✘ display-multiple-items
  * ✘ snap-to-edge
+ * ✔ disableGesture
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
 type StrAbsoType = 'absoluteX' | 'absoluteY'
@@ -57,6 +58,7 @@ interface SwiperProps {
   'external-var-context'?: Record<string, any>
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
+  disableGesture?: boolean
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
@@ -140,7 +142,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'wait-for': waitFor = [],
     style = {},
     autoplay = false,
-    circular = false
+    circular = false,
+    disableGesture = false
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
@@ -818,7 +821,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     </View>)
   }
 
-  if (children.length === 1) {
+  if (children.length === 1 || disableGesture) {
     return renderSwiper()
   } else {
     return (<GestureDetector gesture={gestureHandler}>
