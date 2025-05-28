@@ -3,31 +3,6 @@ import { SectionList, FlatList, RefreshControl, NativeSyntheticEvent, NativeScro
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
 import { extendObject, useLayout, useTransformStyle } from './utils'
-
-interface GenericComponentProps {
-  props: Record<string, any>;
-  ref: ForwardedRef<any>;
-  generichash: string;
-  generickey: string;
-}
-
-interface ItemProps {
-  generichash: string;
-  genericrecycleItem: string;
-  itemData: any;
-}
-
-interface SectionHeaderProps {
-  generichash: string;
-  genericsectionHeader: string;
-  itemData: any;
-}
-
-interface ListHeaderProps {
-  generichash: string;
-  genericlistHeader: string;
-  listHeaderData: any;
-}
 interface ListItem {
   isSectionHeader?: boolean;
   _originalItemIndex?: number;
@@ -61,6 +36,7 @@ interface RecycleViewProps {
   listHeaderHeight?: ItemHeightType;
   'genericrecycle-item'?: string;
   'genericsection-header'?: string;
+  'genericlist-header'?: string;
   'enable-var'?: boolean;
   'external-var-context'?: any;
   'parent-font-size'?: number;
@@ -85,29 +61,42 @@ interface ScrollPositionParams {
   viewPosition?: number;
 }
 
-const getGenericComponent = ({ props, ref, generichash, generickey }: GenericComponentProps): ReactElement => {
+const getGeneric = (generichash: string, generickey: string) => {
+  if (!generichash || !generickey) return null
   const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
-  return createElement(GenericComponent,
-    extendObject({}, {
+  if (!GenericComponent) return null
+
+  return forwardRef((props: any, ref: any) => {
+    return createElement(GenericComponent, extendObject({}, {
       ref: ref
-    }, props)
-  )
+    }, props))
+  })
 }
 
-const Item = forwardRef<any, ItemProps>((props, ref) => {
-  const { generichash, genericrecycleItem } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericrecycleItem })
-})
+const getListHeaderComponent = (generichash: string, generickey: string, data: any) => {
+  if (!generichash || !generickey) return undefined
+  return () => {
+    const ListHeaderComponent = getGeneric(generichash, generickey)
+    return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
+  }
+}
 
-const SectionHeader = forwardRef<any, SectionHeaderProps>((props, ref) => {
-  const { generichash, genericsectionHeader } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericsectionHeader })
-})
+const getSectionHeaderRenderer = (generichash: string, generickey: string) => {
+  if (!generichash || !generickey) return undefined
+  return (sectionData: { section: Section }) => {
+    if (!sectionData.section.hasSectionHeader) return null
+    const SectionHeaderComponent = getGeneric(generichash, generickey)
+    return SectionHeaderComponent ? createElement(SectionHeaderComponent, { itemData: sectionData.section.headerData }) : null
+  }
+}
 
-const ListHeader = forwardRef<any, ListHeaderProps>((props, ref) => {
-  const { generichash, genericlistHeader } = props
-  return getGenericComponent({ props, ref, generichash, generickey: genericlistHeader })
-})
+const getItemRenderer = (generichash: string, generickey: string) => {
+  if (!generichash || !generickey) return undefined
+  return ({ item }: { item: any }) => {
+    const ItemComponent = getGeneric(generichash, generickey)
+    return ItemComponent ? createElement(ItemComponent, { itemData: item }) : null
+  }
+}
 
 const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   const {
@@ -242,93 +231,74 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     }
   }
 
-  const renderItem = useCallback(({ item }: { item: any }) => (
-    <Item itemData={item} generichash={generichash} genericrecycleItem={genericrecycleItem}/>
-  ), [])
-
-  const renderSectionHeader = useCallback((data: { section: Section }) => (
-    !data.section.hasSectionHeader ? null : <SectionHeader itemData={data.section.headerData} generichash={generichash} genericsectionHeader={genericsectionHeader}/>
-  ), [])
-
-  const renderListHeader = useCallback(() => (
-    <ListHeader listHeaderData={listHeaderData} generichash={generichash} genericlistHeader={genericListHeader}/>
-  ), [])
-
-  const convertToSectionListData = useCallback((data: ListItem[]): Section[] => {
-    const sections: Section[] = []
-    let currentSection: Section | null = null
-    // 清空之前的索引映射
-    indexMap.current = {}
-    // 清空反向索引映射
-    reverseIndexMap.current = {}
-
-    data.forEach((item: ListItem, index: number) => {
-      if (item.isSectionHeader) {
-      // 如果已经存在一个 section，先把它添加到 sections 中
-        if (currentSection) {
-          sections.push(currentSection)
-        }
-        // 创建新的 section
-        currentSection = {
-          headerData: item,
-          data: [],
-          hasSectionHeader: true,
-          _originalItemIndex: index
-        }
-        // 为 section header 添加索引映射
-        const sectionIndex = sections.length
-        indexMap.current[index] = `${sectionIndex}_header`
-        // 添加反向索引映射
-        reverseIndexMap.current[`${sectionIndex}_header`] = index
-      } else {
-      // 如果没有当前 section，创建一个默认的
-        if (!currentSection) {
-          // 创建默认section (无header的section)
-          currentSection = {
-            headerData: null,
-            data: [],
-            hasSectionHeader: false,
-            _originalItemIndex: -1
-          }
-        }
-        // 将 item 添加到当前 section 的 data 中
-        const itemIndex = currentSection.data.length
-        currentSection.data.push(extendObject({}, item, {
-          _originalItemIndex: index
-        }))
-        let sectionIndex
-        // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
-        if (!currentSection.hasSectionHeader && sections.length === 0) {
-          // 在默认section中(第一个且无header)
-          sectionIndex = 0
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        } else {
-          // 在普通section中
-          sectionIndex = sections.length
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        }
-        // 添加反向索引映射
-        reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
-      }
-    })
-
-    // 添加最后一个 section
-    if (currentSection) {
-      sections.push(currentSection)
-    }
-
-    return sections
-  }, [])
-
   const convertedListData = useMemo(() => {
     if (enableSticky) {
-      return convertToSectionListData(listData || []) || []
+      const sections: Section[] = []
+      let currentSection: Section | null = null
+      // 清空之前的索引映射
+      indexMap.current = {}
+      // 清空反向索引映射
+      reverseIndexMap.current = {}
+      listData.forEach((item: ListItem, index: number) => {
+        if (item.isSectionHeader) {
+        // 如果已经存在一个 section，先把它添加到 sections 中
+          if (currentSection) {
+            sections.push(currentSection)
+          }
+          // 创建新的 section
+          currentSection = {
+            headerData: item,
+            data: [],
+            hasSectionHeader: true,
+            _originalItemIndex: index
+          }
+          // 为 section header 添加索引映射
+          const sectionIndex = sections.length
+          indexMap.current[index] = `${sectionIndex}_header`
+          // 添加反向索引映射
+          reverseIndexMap.current[`${sectionIndex}_header`] = index
+        } else {
+        // 如果没有当前 section，创建一个默认的
+          if (!currentSection) {
+            // 创建默认section (无header的section)
+            currentSection = {
+              headerData: null,
+              data: [],
+              hasSectionHeader: false,
+              _originalItemIndex: -1
+            }
+          }
+          // 将 item 添加到当前 section 的 data 中
+          const itemIndex = currentSection.data.length
+          currentSection.data.push(extendObject({}, item, {
+            _originalItemIndex: index
+          }))
+          let sectionIndex
+          // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
+          if (!currentSection.hasSectionHeader && sections.length === 0) {
+            // 在默认section中(第一个且无header)
+            sectionIndex = 0
+            indexMap.current[index] = `${sectionIndex}_${itemIndex}`
+          } else {
+            // 在普通section中
+            sectionIndex = sections.length
+            indexMap.current[index] = `${sectionIndex}_${itemIndex}`
+          }
+          // 添加反向索引映射
+          reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
+        }
+      })
+      // 添加最后一个 section
+      if (currentSection) {
+        sections.push(currentSection)
+      }
+      return sections
     } else {
       return listData
     }
   }, [listData])
 
-  const itemLayouts = useMemo(() => {
+  const { getItemLayout } = useMemo(() => {
     const layouts: Array<{ length: number, offset: number, index: number }> = []
     let offset = 0
 
@@ -379,12 +349,11 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         offset += itemHeightValue
       })
     }
-    return layouts
+    return {
+      itemLayouts: layouts,
+      getItemLayout: (data: any, index: number) => layouts[index]
+    }
   }, [convertedListData])
-
-  const getItemLayout = useCallback((data: any, index: number) => {
-    return itemLayouts[index]
-  }, [itemLayouts])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -434,10 +403,10 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         {
           style: [{ height, width }, style, layoutStyle],
           sections: convertedListData,
-          renderItem: renderItem,
+          renderItem: getItemRenderer(generichash, genericrecycleItem),
           getItemLayout: getItemLayout,
-          ListHeaderComponent: (generichash && genericListHeader && renderListHeader) || null,
-          renderSectionHeader: (generichash && genericsectionHeader && renderSectionHeader) || null,
+          ListHeaderComponent: getListHeaderComponent(generichash, genericListHeader, listHeaderData),
+          renderSectionHeader: getSectionHeaderRenderer(generichash, genericsectionHeader),
           refreshControl: refresherEnabled
             ? React.createElement(RefreshControl, {
               onRefresh: onRefresh,
@@ -454,9 +423,9 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         {
           style: [{ height, width }, style, layoutStyle],
           data: convertedListData,
-          renderItem: renderItem,
+          renderItem: getItemRenderer(generichash, genericrecycleItem),
           getItemLayout: getItemLayout,
-          ListHeaderComponent: (generichash && genericListHeader && renderListHeader) || null,
+          ListHeaderComponent: getListHeaderComponent(generichash, genericListHeader, listHeaderData),
           refreshControl: refresherEnabled
             ? React.createElement(RefreshControl, {
               onRefresh: onRefresh,

@@ -106,7 +106,7 @@ module.exports = function (jsonContent, {
       if (useExtendComponents) {
         const extendComponents = {}
         useExtendComponents.forEach((name) => {
-          if (EXTEND_COMPONENTS_LIST.includes(name)) {
+          if (EXTEND_COMPONENTS_LIST[mode]?.includes(name)) {
             extendComponents[name] = require.resolve(`../runtime/components/react/dist/mpx-${name}.jsx`)
           } else {
             emitWarning(`extend component ${name} is not supported in ${mode} environment!`)

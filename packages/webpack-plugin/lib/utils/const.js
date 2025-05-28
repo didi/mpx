@@ -9,6 +9,9 @@ module.exports = {
   PARENT_MODULE_ID: '__pid',
   EXTEND_COMPONENTS_LIST: {
     wx: ['recycle-view'],
-    web: ['recycle-view']
+    web: ['recycle-view'],
+    ios: ['recycle-view'],
+    android: ['recycle-view'],
+    harmony: ['recycle-view']
   } // 扩展组件列表
 }
