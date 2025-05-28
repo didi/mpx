@@ -43,7 +43,7 @@ const component = require('./component')
 const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
 
-module.exports = function getComponentConfigs ({ warn, error }) {
+module.exports = function getComponentConfigs ({ warn, error, moduleId }) {
   /**
    * universal print for detail component warn or error
    * @param {object} config
@@ -114,7 +114,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     map({ print }),
     canvas({ print }),
     wxs({ print }),
-    template(),
+    template({ moduleId }),
     block(),
     icon(),
     webView({ print }),
