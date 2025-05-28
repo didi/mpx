@@ -19,9 +19,8 @@ module.exports = function ({ moduleId }) {
         },
         web({ value }) {
           let bindValue = value
-          const lastIndex = value.lastIndexOf('}}')
-          
           if (moduleId) {
+            const lastIndex = value.lastIndexOf('}}')
             bindValue = value ? value.slice(0, lastIndex) + `, _data_v_id: '${moduleId}'}}` : `{{ _data_v_id: '${moduleId}' }}`
           }
           return {
