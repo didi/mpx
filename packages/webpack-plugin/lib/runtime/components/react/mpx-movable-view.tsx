@@ -114,7 +114,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend
+    catchtouchend,
+    bindchange
   } = props
 
   const {
@@ -140,6 +141,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     x: 0,
     y: 0
   })
+
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
@@ -215,7 +217,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             })
             : newY
         }
-        if (propsRef.current.bindchange) {
+        if (bindchange) {
           runOnJS(handleTriggerChange)({
             x: newX,
             y: newY,
@@ -356,12 +358,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchstart, catchtouchstart } = propsRef.current
     extendEvent(e, 'start')
     bindtouchstart && bindtouchstart(e)
     catchtouchstart && catchtouchstart(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
     extendEvent(e, 'move')
     if (hasTouchmove) {
       if (touchEvent === 'htouchmove') {
@@ -383,6 +387,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchend, catchtouchend } = propsRef.current
     extendEvent(e, 'end')
     bindtouchend && bindtouchend(e)
     catchtouchend && catchtouchend(e)
@@ -454,7 +459,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newY
           }
         }
-        if (propsRef.current.bindchange) {
+        if (bindchange) {
           runOnJS(handleTriggerChange)({
             x: offsetX.value,
             y: offsetY.value
@@ -493,47 +498,47 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 })
                 : y
             }
-            if (propsRef.current.bindchange) {
+            if (bindchange) {
               runOnJS(handleTriggerChange)({
                 x,
                 y
               })
             }
           }
-          return
-        }
-        // 惯性处理
-        if (direction === 'horizontal' || direction === 'all') {
-          xInertialMotion.value = true
-          offsetX.value = withDecay({
-            velocity: e.velocityX / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableXRange.value
-          }, () => {
-            xInertialMotion.value = false
-            if (propsRef.current.bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
-        }
-        if (direction === 'vertical' || direction === 'all') {
-          yInertialMotion.value = true
-          offsetY.value = withDecay({
-            velocity: e.velocityY / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableYRange.value
-          }, () => {
-            yInertialMotion.value = false
-            if (propsRef.current.bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
+        } else if (inertia) {
+          // 惯性处理
+          if (direction === 'horizontal' || direction === 'all') {
+            xInertialMotion.value = true
+            offsetX.value = withDecay({
+              velocity: e.velocityX / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableXRange.value
+            }, () => {
+              xInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
+          if (direction === 'vertical' || direction === 'all') {
+            yInertialMotion.value = true
+            offsetY.value = withDecay({
+              velocity: e.velocityY / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableYRange.value
+            }, () => {
+              yInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
         }
       })
       .withRef(movableGestureRef)
