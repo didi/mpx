@@ -503,10 +503,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }, [children.length])
 
   useEffect(() => {
-    // 用户手动按着滑动更新当前索引，传到外层，外部会再把current传进来，此时应避免offset的变更
-    if (touchfinish.value !== false) {
-      updateCurrent(props.current || 0, step.value)
-    }
+    // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
+    updateCurrent(props.current || 0, step.value)
   }, [props.current])
 
   useEffect(() => {
