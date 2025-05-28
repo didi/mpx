@@ -2272,7 +2272,7 @@ function isComponentNode (el) {
 }
 
 function isExtendComponentNode (el) {
-  return EXTEND_COMPONENTS_LIST.includes(el.tag)
+  return EXTEND_COMPONENTS_LIST[mode]?.includes(el.tag)
 }
 
 function getComponentInfo (el) {
