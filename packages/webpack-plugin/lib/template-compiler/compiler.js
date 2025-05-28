@@ -2272,7 +2272,7 @@ function isComponentNode (el) {
 }
 
 function isExtendComponentNode (el) {
-  return EXTEND_COMPONENTS_LIST.includes(el.tag)
+  return EXTEND_COMPONENTS_LIST[mode]?.includes(el.tag)
 }
 
 function getComponentInfo (el) {
@@ -2737,8 +2737,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processStyleReact(el, options)
     if (!pass) {
-      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)

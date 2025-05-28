@@ -32,7 +32,7 @@ module.exports = function (jsonContent, {
     srcMode,
     env,
     projectRoot,
-    useExtendComponents
+    useExtendComponents = {}
   } = mpx
 
   const context = loaderContext.context
@@ -103,10 +103,10 @@ module.exports = function (jsonContent, {
     if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
     } else {
-      if (useExtendComponents) {
+      if (useExtendComponents[mode]) {
         const extendComponents = {}
-        useExtendComponents.forEach((name) => {
-          if (EXTEND_COMPONENTS_LIST.includes(name)) {
+        useExtendComponents[mode].forEach((name) => {
+          if (EXTEND_COMPONENTS_LIST[mode]?.includes(name)) {
             extendComponents[name] = require.resolve(`../runtime/components/react/dist/mpx-${name}.jsx`)
           } else {
             emitWarning(`extend component ${name} is not supported in ${mode} environment!`)
