@@ -434,7 +434,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         {
           style: [{ height, width }, style, layoutStyle],
           sections: convertedListData,
-          keyExtractor: (item: any, index: number) => item + index,
           renderItem: renderItem,
           getItemLayout: getItemLayout,
           ListHeaderComponent: (generichash && genericListHeader && renderListHeader) || null,
@@ -455,7 +454,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
         {
           style: [{ height, width }, style, layoutStyle],
           data: convertedListData,
-          keyExtractor: (item: any, index: number) => item + index,
           renderItem: renderItem,
           getItemLayout: getItemLayout,
           ListHeaderComponent: (generichash && genericListHeader && renderListHeader) || null,
