@@ -9,6 +9,7 @@ module.exports = {
   PARENT_MODULE_ID: '__pid',
   EXTEND_COMPONENTS_LIST: {
     wx: ['recycle-view'],
+    ali: ['recycle-view', 'sticky-header', 'sticky-section'],
     web: ['recycle-view'],
     ios: ['recycle-view'],
     android: ['recycle-view'],
