@@ -662,6 +662,7 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
+    moduleId,
     data: {
       usingComponents
     },
@@ -723,8 +724,9 @@ function parse (template, options) {
 
       currentParent.children.push(element)
       element.parent = currentParent
+      
       processElement(element, root, options, meta)
-
+      
       tagNames.add(element.tag)
       // 统计通过抽象节点方式使用的组件
       element.attrsList.forEach((attr) => {
@@ -1461,6 +1463,13 @@ function processSlotReact (el, meta) {
 
 function wrapMustache (val) {
   return val && !tagRE.test(val) ? `{{${val}}}` : val
+}
+
+function vbindMustache (val) {
+  const bindREG = /\{\{((?:.|\n|\r|\.{3})+?)\}\}(?!})/
+  const match = bindREG.exec(val) || []
+  const matchStr = match[1]?.trim()
+  return matchStr ? `{${matchStr}}` : val
 }
 
 function parseOptionalChaining (str) {
@@ -2346,12 +2355,12 @@ function processExternalClasses (el, options) {
 }
 
 function processScoped (el) {
-  if (hasScoped && isRealNode(el)) {
+  if (hasScoped && isRealNode(el) && (isWeb(mode) && el.tag !== 'component')) { // 处理web下 template第一个元素不设置mpx-app-scope
     const rootModuleId = ctorType === 'component' ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
-      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
+      value: `${staticClass || ''} ${moduleId || ''} ${rootModuleId}`
     }])
   }
 }
@@ -2450,7 +2459,7 @@ function getVirtualHostRoot (options, meta) {
         const rootView = createASTElement('view', [
           {
             name: 'class',
-            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+            value: `${MPX_ROOT_VIEW} ${moduleId ? 'host-' + moduleId : ''}` // 解决template2vue中拿不到moduleId的情况
           },
           {
             name: 'v-on',
@@ -2929,7 +2938,7 @@ function stringifyAttr (val) {
   }
 }
 
-function serialize (root, moduleId) {
+function serialize (root) {
   function walk (node) {
     let result = ''
     if (node) {
@@ -2941,22 +2950,8 @@ function serialize (root, moduleId) {
         }
       }
       if (mode === 'web') {
-        if ((node.tag === 'template' && node.attrsMap && node.attrsMap.name) || node.tag === 'import') {
+        if (node.tag === 'template' && node.attrsMap && node.attrsMap.name || node.tag === 'import') {
           return result
-        }
-        if (node.tag === 'template' && node.attrsMap && node.attrsMap.is) {
-          node.tag = 'component'
-          node.attrsList.forEach((item) => {
-            if (item.name === 'is') {
-              item.name = ':is'
-              item.value = `'${item.value}'`
-            }
-            if (item.name === ':data') {
-              item.name = 'v-bind'
-              const bindValue = item.value.replace(/\(|\)/g, '')
-              item.value = bindValue ? `{${bindValue}, _data_v_id: '${moduleId}'}` : `{ _data_v_id: '${moduleId}' }` // 用于处理父组件scoped情况下template中的样式传递
-            }
-          })
         }
       }
 
@@ -3263,6 +3258,7 @@ module.exports = {
   genNode,
   makeAttrsMap,
   stringifyAttr,
+  vbindMustache,
   parseMustache,
   parseMustacheWithContext,
   stringifyWithResolveComputed,

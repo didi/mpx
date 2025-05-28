@@ -54,7 +54,6 @@ module.exports = function (template, {
     if (template.lang) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
-
     output += genComponentTag(template, (template) => {
       if (ctorType === 'app') {
         return template.content

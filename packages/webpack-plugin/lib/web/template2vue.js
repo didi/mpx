@@ -39,15 +39,6 @@ const getTextVarName = function (str = '', discardProp) { // 获取文本中的�
   return variables
 }
 
-// 不是所有的元素都有:class，scoped id需要加到class上才能生效，所以检测如果没有的情况做个补充
-const addBindClassHandle = function (attrList) {
-  const hasBindClass = attrList.some((item) => {
-    return item.name === ':class'
-  })
-  if (!hasBindClass) {
-    attrList.push({ name: ':class', value: '' })
-  }
-}
 // 所有的props是在遍历模版的时候收集的，需要把true/false/for上面定义的item index剔除掉
 const addDiscardProp = function (attrList, discardProp) {
   for (let i = 0; i < attrList.length; i++) {
@@ -100,6 +91,7 @@ module.exports = function (content) {
         new Error('[template compiler][' + this.resource + ']: ' + msg)
       )
     },
+    isTemp2vue: true,
     mode: 'web',
     srcMode: 'wx',
     filePath: resourcePath,
@@ -119,7 +111,6 @@ module.exports = function (content) {
       wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
-
   const eventReg = /^@[a-zA-Z]+/
   let isFindRoot = false
   const componentNames = [] // 记录引用多少个组件
@@ -141,6 +132,20 @@ module.exports = function (content) {
           if (node.tag === 'wxs' || node.tag === 'import') { // wxml文件里不支持import wxs后续支持
             return ''
           } else if (node.tag !== 'temp-node') {
+            if (node.tag === 'component') { // 提前处理component上的bind逻辑，确保传入_data_v_id
+              if (!node.attrsMap['v-bind']) {
+                node.attrsList.push({
+                  name: 'v-bind',
+                  value: '{_data_v_id}'
+                })
+              } else {
+                node.attrsList.forEach(function (attr) {
+                  if (attr.name === 'v-bind') {
+                    attr.value = attr.value.replace('}', ', _data_v_id}')
+                  }
+                })
+              }
+            }
             if (node.tag === 'template' && !node._fakeTemplate) {
               if (node.attrsMap.name) { // template name处理逻辑
                 if (isFindRoot) {
@@ -149,38 +154,16 @@ module.exports = function (content) {
                 }
                 isFindRoot = true
                 result += '<' + node.tag
-              } else if (node.attrsMap.is) { // template is处理逻辑
-                node.tag = 'component'
-                result += '<' + node.tag
-                node.attrsList.forEach((item) => {
-                  if (item.name === 'is') {
-                    item.name = ':is'
-                    item.value = `'${item.value}'`
-                  }
-                  if (item.name === ':data') {
-                    item.name = 'v-bind'
-                    const bindValue = item.value.replace(/\(|\)/g, '')
-                    item.value = bindValue ? `{${bindValue}, _data_v_id}` : '{ _data_v_id }'
-                    // 获取props 清掉传入是写的空格
-                    props.push(...bindValue.split(',').map((item) => item?.trim()))
-                  }
-                  result += ' ' + item.name
-                  const value = item.value
-                  if (value != null) {
-                    result += '=' + templateCompiler.stringifyAttr(value)
-                  }
-                })
               } else { // 其他template逻辑全部丢弃
                 return ''
               }
-            } else {
+            }  else {
               const { isBuildInTag, isOriginTag } = domTagConfig
               if (!isBuildInTag(node.tag) && !isOriginTag(node.tag)) {
                 localComponentsTags.push(node.tag)
               }
               result += '<' + node.tag
               const tagProps = []
-              addBindClassHandle(node.attrsList)
               addDiscardProp(node.attrsList, discardProp)
               node.attrsList.forEach(function (attr) {
                 if (attr.name === ':class') {
@@ -188,8 +171,6 @@ module.exports = function (content) {
                     attr.value = attr.value.replace(']', ', _data_v_id]')
                   } else if (attr.value) {
                     attr.value = `[${attr.value}, _data_v_id]` // 非数组情况下包装成数组后_data_v_id直接插在最后面
-                  } else {
-                    attr.value = '[_data_v_id]'
                   }
                 }
                 const value = attr.value
@@ -239,9 +220,10 @@ module.exports = function (content) {
 
   const localComponentsMap = {}
   localComponentsTags.forEach((item) => { // 做一次过滤避免不必要的自定义组件加载
-    localComponentsMap[item] = parentLocalComponentsMap[item]
+    if (parentLocalComponentsMap[item]) {
+      localComponentsMap[item] = parentLocalComponentsMap[item]
+    }
   })
-
   const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext: this, jsonConfig: {} })
   let script = `\n<script>\n
     import proxyEventMixin from '@mpxjs/core/src/platform/builtInMixins/proxyEventMixin.web.js'
