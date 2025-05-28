@@ -354,7 +354,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'preloadRule',
-        tt: deletePath(),
         jd: deletePath()
       },
       {

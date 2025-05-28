@@ -51,7 +51,7 @@ module.exports = function ({ print }) {
         swan: baiduPropLog
       },
       {
-        test: /^(placeholder-class|auto-focus|confirm-type|confirm-hold|adjust-position|hold-keyboard)$/,
+        test: /^(auto-focus|confirm-type|confirm-hold|adjust-position|hold-keyboard)$/,
         tt: ttPropLog
       },
       {
