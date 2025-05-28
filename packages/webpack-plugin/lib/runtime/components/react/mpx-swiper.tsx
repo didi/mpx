@@ -22,6 +22,7 @@ import { SwiperContext } from './context'
  * ✔ easing-function  ="easeOutCubic"
  * ✘ display-multiple-items
  * ✘ snap-to-edge
+ * ✔ disableGesture
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
 type StrAbsoType = 'absoluteX' | 'absoluteY'
@@ -57,6 +58,7 @@ interface SwiperProps {
   'external-var-context'?: Record<string, any>
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
+  disableGesture?: boolean
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
@@ -140,7 +142,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'wait-for': waitFor = [],
     style = {},
     autoplay = false,
-    circular = false
+    circular = false,
+    disableGesture = false
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
@@ -199,6 +202,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const moveTranstion = useSharedValue(0)
   // 记录从onBegin 到 onTouchesUp 的时间
   const moveTime = useSharedValue(0)
+  // 记录从onBegin 到 onTouchesCancelled 另外一个方向移动的距离
+  const anotherDirectionMove = useSharedValue(0)
+  // 另一个方向的
+  const anotherAbso = 'absolute' + (dir === 'x' ? 'y' : 'x').toUpperCase() as StrAbsoType
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
@@ -496,6 +503,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }, [children.length])
 
   useEffect(() => {
+    // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
     updateCurrent(props.current || 0, step.value)
   }, [props.current])
 
@@ -559,18 +567,25 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         targetOffset: -moveToTargetPos
       }
     }
-    function canMove (eventData: EventDataType) {
+    function checkUnCircular (eventData: EventDataType) {
       'worklet'
       const { translation } = eventData
       const currentOffset = Math.abs(offset.value)
-      if (!circularShared.value) {
-        if (translation < 0) {
-          return currentOffset < step.value * (childrenLength.value - 1)
-        } else {
-          return currentOffset > 0
+      // 向右滑动swiper
+      if (translation < 0) {
+        const boundaryOffset = step.value * (childrenLength.value - 1)
+        const gestureMovePos = Math.abs(translation) + currentOffset
+        return {
+          // 防止快速连续向右滑动时，手势移动的距离 加 当前的offset超出边界
+          targetOffset: gestureMovePos > boundaryOffset ? -boundaryOffset : offset.value + translation,
+          canMove: currentOffset < boundaryOffset
         }
       } else {
-        return true
+        const gestureMovePos = currentOffset - translation
+        return {
+          targetOffset: gestureMovePos < 0 ? 0 : offset.value + translation,
+          canMove: currentOffset > 0
+        }
       }
     }
     function handleEnd (eventData: EventDataType) {
@@ -620,7 +635,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
       })
     }
-    function handleLongPress () {
+    function computeHalf () {
       'worklet'
       const currentOffset = Math.abs(offset.value)
       let preOffset = (currentIndex.value + patchElmNumShared.value) * step.value
@@ -630,6 +645,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 正常事件中拿到的transition值(正向滑动<0，倒着滑>0)
       const diffOffset = preOffset - currentOffset
       const half = Math.abs(diffOffset) > step.value / 2
+      return {
+        diffOffset,
+        half
+      }
+    }
+    function handleLongPress () {
+      'worklet'
+      const { diffOffset, half } = computeHalf()
       if (+diffOffset === 0) {
         runOnJS(resumeLoop)()
       } else if (half) {
@@ -685,19 +708,30 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         runOnJS(pauseLoop)()
         preAbsolutePos.value = e[strAbso]
         moveTranstion.value = e[strAbso]
+        anotherDirectionMove.value = e[anotherAbso]
         moveTime.value = new Date().getTime()
       })
-      .onTouchesMove((e) => {
+      .onUpdate((e) => {
         'worklet'
         if (touchfinish.value) return
-        const touchEventData = e.changedTouches[0]
-        const moveDistance = touchEventData[strAbso] - preAbsolutePos.value
+        const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance
         }
         // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
-        if (!circularShared.value && !canMove(eventData)) {
+        const { canMove, targetOffset } = checkUnCircular(eventData)
+        if (!circularShared.value) {
+          if (canMove) {
+            offset.value = targetOffset
+            preAbsolutePos.value = e[strAbso]
+          }
           return
+        }
+        const { half } = computeHalf()
+        // 在Move过程中，如果手指一直没抬起来，超过一半的话也会更新索引
+        if (half) {
+          const { selectedIndex } = getTargetPosition(eventData)
+          currentIndex.value = selectedIndex
         }
         const { isBoundary, resetOffset } = reachBoundary(eventData)
         if (isBoundary && circularShared.value) {
@@ -705,19 +739,19 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           offset.value = moveDistance + offset.value
         }
-        preAbsolutePos.value = touchEventData[strAbso]
+        preAbsolutePos.value = e[strAbso]
       })
-      .onTouchesUp((e) => {
+      .onFinalize((e) => {
         'worklet'
         if (touchfinish.value) return
-        const touchEventData = e.changedTouches[0]
-        const moveDistance = touchEventData[strAbso] - moveTranstion.value
+        const moveDistance = e[strAbso] - moveTranstion.value
         touchfinish.value = true
         const eventData = {
           translation: moveDistance
         }
         // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
-        if (!circularShared.value && !canMove(eventData)) {
+        const { canMove } = checkUnCircular(eventData)
+        if (!circularShared.value && !canMove) {
           return
         }
         const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
@@ -729,9 +763,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }).withRef(swiperGestureRef)
     // swiper横向,当y轴滑动5像素手势失效；swiper纵向只响应swiper的滑动事件
     if (dir === 'x') {
-      gesturePan.activeOffsetX([-1, 1]).failOffsetY([-5, 5])
+      gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
     } else {
-      gesturePan.activeOffsetY([-1, 1]).failOffsetX([-5, 5])
+      gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
     }
     // 手势协同2.0
     if (simultaneousHandlers && simultaneousHandlers.length) {
@@ -775,7 +809,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     </View>)
   }
 
-  if (children.length === 1) {
+  if (children.length === 1 || disableGesture) {
     return renderSwiper()
   } else {
     return (<GestureDetector gesture={gestureHandler}>
