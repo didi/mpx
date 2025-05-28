@@ -652,16 +652,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     function handleLongPress () {
       'worklet'
-      /*
-      const currentOffset = Math.abs(offset.value)
-      let preOffset = (currentIndex.value + patchElmNumShared.value) * step.value
-      if (circularShared.value) {
-        preOffset -= preMarginShared.value
-      }
-      // 正常事件中拿到的transition值(正向滑动<0，倒着滑>0)
-      const diffOffset = preOffset - currentOffset
-      const half = Math.abs(diffOffset) > step.value / 2
-      */
       const { diffOffset, half } = computeHalf()
       if (+diffOffset === 0) {
         runOnJS(resumeLoop)()
