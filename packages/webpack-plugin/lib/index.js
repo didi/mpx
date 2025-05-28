@@ -17,6 +17,7 @@ const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
 const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
+const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -61,6 +62,7 @@ const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
+const mpxGlobalRuntimePath = normalize.lib('runtime/mpxGlobal')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const { parseQuery } = require('loader-utils')
@@ -178,6 +180,7 @@ class MpxWebpackPlugin {
     options.forceProxyEventRules = options.forceProxyEventRules || {}
     options.disableRequireAsync = options.disableRequireAsync || false
     options.miniNpmPackages = options.miniNpmPackages || []
+    options.normalNpmPackages = options.normalNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
@@ -326,6 +329,12 @@ class MpxWebpackPlugin {
       }
     }
 
+    compiler.options.plugins.push(new ProvidePlugin(
+      {
+        mpxGlobal: mpxGlobalRuntimePath
+      }
+    ))
+
     if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
@@ -365,7 +374,7 @@ class MpxWebpackPlugin {
     }
     const addModePlugin = new AddModePlugin('before-file', this.options.mode, addModeOptions, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
-    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
+    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
