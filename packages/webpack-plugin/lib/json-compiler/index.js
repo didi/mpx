@@ -187,10 +187,10 @@ module.exports = function (content) {
   }
 
   if (mode === 'wx' || mode === 'ali') {
-    const { useExtendComponents } = mpx
-    if (isApp && useExtendComponents) {
+    const { useExtendComponents = {} } = mpx
+    if (isApp && useExtendComponents[mode]) {
       const extendComponents = {}
-      useExtendComponents.forEach((name) => {
+      useExtendComponents[mode].forEach((name) => {
         if (EXTEND_COMPONENTS_LIST[mode]?.includes(name)) {
           extendComponents[name] = normalize.lib(`runtime/components/${mode}/mpx-${name}.mpx`)
         } else {
