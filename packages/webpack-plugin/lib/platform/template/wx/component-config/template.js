@@ -3,7 +3,7 @@ const TAG_NAME = 'template'
 module.exports = function ({ moduleId }) {
   return {
     test: TAG_NAME,
-    web(tag, { el }) {
+    web (tag, { el }) {
       if (el.attrsMap[':is']) {
         return 'component'
       }
@@ -17,7 +17,7 @@ module.exports = function ({ moduleId }) {
             value: `{${value}}`
           }
         },
-        web({ value }) {
+        web ({ value }) {
           let bindValue = value
           if (moduleId) {
             const lastIndex = value.lastIndexOf('}}')
@@ -31,7 +31,7 @@ module.exports = function ({ moduleId }) {
       },
       {
         test: 'is',
-        web({ value }) {
+        web ({ value }) {
           return {
             name: ':is',
             value: `'${value}'`

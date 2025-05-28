@@ -724,9 +724,9 @@ function parse (template, options) {
 
       currentParent.children.push(element)
       element.parent = currentParent
-      
+
       processElement(element, root, options, meta)
-      
+
       tagNames.add(element.tag)
       // 统计通过抽象节点方式使用的组件
       element.attrsList.forEach((attr) => {
@@ -2950,7 +2950,7 @@ function serialize (root) {
         }
       }
       if (mode === 'web') {
-        if (node.tag === 'template' && node.attrsMap && node.attrsMap.name || node.tag === 'import') {
+        if ((node.tag === 'template' && node.attrsMap && node.attrsMap.name) || node.tag === 'import') {
           return result
         }
       }

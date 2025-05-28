@@ -157,7 +157,7 @@ module.exports = function (content) {
               } else { // 其他template逻辑全部丢弃
                 return ''
               }
-            }  else {
+            } else {
               const { isBuildInTag, isOriginTag } = domTagConfig
               if (!isBuildInTag(node.tag) && !isOriginTag(node.tag)) {
                 localComponentsTags.push(node.tag)
