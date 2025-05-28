@@ -59,15 +59,7 @@ export default function getRefsMixin () {
           const res = []
           refs.forEach(({ type, instance }) => {
             if (type === refType) {
-              // 内置扩展的tsx 组件如 recycle-view，既不是内建组件也不是自定义组件
-              if (instance.getNodeInstance) {
-                const { instance: nodeInstance } = instance.getNodeInstance()
-                if (nodeInstance) {
-                  res.push(nodeInstance)
-                }
-              } else {
-                res.push(instance)
-              }
+              res.push(instance)
             }
           })
           return res

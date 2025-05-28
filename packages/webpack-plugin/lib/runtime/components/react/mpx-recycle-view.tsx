@@ -1,7 +1,6 @@
-import React, { forwardRef, useRef, useCallback, useState, useEffect, useMemo, ForwardedRef, ReactElement, createElement } from 'react'
+import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle } from 'react'
 import { SectionList, FlatList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import useNodesRef from './useNodesRef'
 import { extendObject, useLayout, useTransformStyle } from './utils'
 interface ListItem {
   isSectionHeader?: boolean;
@@ -383,8 +382,11 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     })
   }
 
-  useNodesRef(props, ref, scrollViewRef, {
-    scrollToIndex
+  useImperativeHandle(ref, () => {
+    return {
+      ...props,
+      scrollToIndex
+    }
   })
 
   const innerProps = useInnerProps(extendObject({}, props, scrollAdditionalProps), [
