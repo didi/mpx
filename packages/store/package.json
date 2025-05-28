@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/store",
-  "version": "2.10.4",
+  "version": "2.10.6",
   "description": "A store for mpx framework",
   "main": "src/index.js",
   "types": "@types/index.d.ts",
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "^2.10.4"
+    "@mpxjs/utils": "^2.10.6"
   },
   "peerDependencies": {
     "@mpxjs/core": "^2.9.0 || ^2.10.4-beta.0"
