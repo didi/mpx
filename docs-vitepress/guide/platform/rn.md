@@ -942,17 +942,6 @@ movable-view的可移动区域。
 | bindconfirm          | 点击完成按钮时触发，`event.detail = { value }`                                         |
 | bind:selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }`                      |
 
-方法
-
-可通过 `ref` 方式调用以下组件实例方法
-
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
-
 
 #### textarea
 多行输入框。
@@ -988,17 +977,6 @@ movable-view的可移动区域。
 | bindconfirm          | 点击完成按钮时触发，`event.detail = { value }`                                          |
 | bindlinechange       | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx`    |
 | bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}`                                         |
-
-方法
-
-可通过 `ref` 方式调用以下组件实例方法
-
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
 
 #### picker-view
 
