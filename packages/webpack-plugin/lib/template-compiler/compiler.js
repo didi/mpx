@@ -1820,24 +1820,25 @@ function processRefReact (el, meta) {
     /**
      * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
      */
-    if (!val) {
-      const rawId = el.attrsMap.id
-      const rawClass = el.attrsMap.class
-      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
-
-      if (rawId) {
-        const staticId = parseMustacheWithContext(rawId).result
-        selectors.push({ prefix: '#', selector: `${staticId}` })
-      }
-      if (rawClass || rawDynamicClass) {
-        const staticClass = parseMustacheWithContext(rawClass).result
-        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
-      }
-    } else {
+    if (val) {
       meta.refs.push(refConf)
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
+
+    const rawId = el.attrsMap.id
+    const rawClass = el.attrsMap.class
+    const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
+    if (rawId) {
+      const staticId = parseMustacheWithContext(rawId).result
+      selectors.push({ prefix: '#', selector: `${staticId}` })
+    }
+    if (rawClass || rawDynamicClass) {
+      const staticClass = parseMustacheWithContext(rawClass).result
+      const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+      selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
+    }
+
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     const refFnId = forScopes.reduce((preV, curV) => {
       return `${preV} + "_" + ${curV.index}`
