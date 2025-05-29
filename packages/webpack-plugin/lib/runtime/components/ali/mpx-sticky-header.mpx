@@ -28,7 +28,15 @@
         type: String,
         value: ''
       },
-      padding: Array
+      padding: Array,
+      enablePolling: {
+        type: Boolean,
+        value: false
+      },
+      pollingDuration: {
+        type: Number,
+        value: 3000
+      }
     },
     data: {
       isStickOnTop: false,
@@ -36,7 +44,8 @@
       headerHeight: 0,
       stickyHeader: '',
       headerTop: 0,
-      lastIntersectionRatio: -1
+      lastIntersectionRatio: -1,
+      pollingTimer: null
     },
     computed: {
       paddingStyle() {
@@ -65,6 +74,10 @@
         console.error('[mpx runtime error]: sticky-id is necessary property in ali environment')
       }
       this.initStickyHeader()
+        // 启动轮询
+      if (this.enablePolling) {
+        this.startPolling()
+      }
     },
     methods: {
       initStickyHeader() {
@@ -150,11 +163,32 @@
           })
         }
       },
+       // 启动轮询
+      startPolling() {
+        if (this.pollingTimer) {
+          clearInterval(this.pollingTimer)
+        }
+        this.pollingTimer = setInterval(() => {
+          this.refresh()
+        }, this.pollingDuration)
+      },
+      // 停止轮询
+      stopPolling() {
+        if (this.pollingTimer) {
+          clearInterval(this.pollingTimer)
+          this.pollingTimer = null
+        }
+      }
     },
     detached() {
       // 清理观察器
       if (this.stickyHeader) {
         this.stickyHeader.disconnect()
+      }
+       // 清理轮询定时器
+      if (this.pollingTimer) {
+        clearInterval(this.pollingTimer)
+        this.pollingTimer = null
       }
     }
   })
