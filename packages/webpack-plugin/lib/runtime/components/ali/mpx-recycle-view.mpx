@@ -58,6 +58,8 @@
           wx:for="{{_stickyHeaders}}"
           wx:for-item="stickyItem"
           wx:key="_index"
+          enable-polling="{{enablePolling}}"
+          polling-duration="{{pollingDuration}}"
         >
           <section-header
             wx:key="{{'header' + stickyItem._index}}"
@@ -145,7 +147,15 @@
       },
       mpxGenericRecycleItem: String,
       mpxGenericSectionHeader: String,
-      mpxGenericListHeader: String
+      mpxGenericListHeader: String,
+      enablePolling: {
+        type: Boolean,
+        value: false
+      },
+      pollingDuration: {
+        type: Number,
+        value: 3000
+      }
     },
     data: {
       start: 0,
