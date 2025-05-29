@@ -1,6 +1,6 @@
 import { error, collectDataset } from '@mpxjs/utils'
 import { useRef } from 'react'
-import { formatStyle } from './utils'
+import { Transition, formatStyle } from './utils'
 import useAnimationAPIHooks from './useAnimationAPIHooks'
 import useTransitionHooks from './useTransitionHooks'
 import type { AnimatableValue } from 'react-native-reanimated'
@@ -21,7 +21,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // 记录动画类型
   // Todo 优先级
   const propNames = Object.keys(style)
-  const animationType = animation ? AnimationType.API : propNames.find(item => item.includes('transition')) ? AnimationType.CssTransition : propNames.find(item => item.includes('animation')) ? AnimationType.CssAnimation : AnimationType.None
+  const animationType = animation ? AnimationType.API : propNames.find(item => item.includes(Transition)) ? AnimationType.CssTransition : propNames.find(item => item.includes('animation')) ? AnimationType.CssAnimation : AnimationType.None
   const animationTypeRef = useRef(animationType)
   const enableStyleAnimation = enableAnimation || animationType !== AnimationType.None
   const enableAnimationRef = useRef(enableStyleAnimation)

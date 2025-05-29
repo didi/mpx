@@ -16,6 +16,7 @@ import {
   TransformInitial,
   CubicBezierExp,
   secondRegExp,
+  Transition,
   getTransformObj,
   getUnit,
   parseValues,
@@ -36,7 +37,6 @@ type AnimationDataType = {
   delay?: number
   easing: EasingFunction
 }
-
 const propName = {
   transition: '',
   transitionDuration: 'duration',
@@ -59,16 +59,16 @@ function parseTransitionSingleProp (vals: string[], property: string) {
   return vals.map(val => {
     // behavior
     if (behaviorExp.test(val)) {
-      error('transition-behavior is not supported')
+      error('[Mpx runtime error]: transition-behavior is not supported')
       return undefined
     }
     // global values
     if (defaultValueExp.test(val)) {
-      error('Global values is not supported')
+      error('[Mpx runtime error]: global values is not supported')
       return undefined
     }
     if (timingFunctionExp.test(val)) {
-      error('the timingFunction in step-start,step-end,steps() is not supported')
+      error('[Mpx runtime error]: the timingFunction in step-start,step-end,steps() is not supported')
       return undefined
     }
     // timingFunction
@@ -82,7 +82,7 @@ function parseTransitionSingleProp (vals: string[], property: string) {
     if (secondRegExp.test(val)) {
       const newProperty = property || (!setDuration ? 'duration' : 'delay')
       setDuration = true
-      console.log('parseTransitionSingleProp val=', val, property, setDuration)
+      // console.log('parseTransitionSingleProp val=', val, property, setDuration)
       return {
         [newProperty]: getUnit(val)
       }
@@ -96,8 +96,8 @@ function parseTransitionSingleProp (vals: string[], property: string) {
 // transition 解析
 function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   let transitionData: AnimationDataType[] = []
-  Object.entries(originalStyle).filter(arr => arr[0].includes('transition')).forEach(([prop, value]) => {
-    if (prop === 'transition') {
+  Object.entries(originalStyle).filter(arr => arr[0].includes(Transition)).forEach(([prop, value]) => {
+    if (prop === Transition) {
       const vals = parseValues(value, ',').map(item => {
         return parseTransitionSingleProp(parseValues(item), prop).reduce((map, subItem) => {
           return Object.assign(map, subItem)
@@ -165,7 +165,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   const transitionMap = useMemo(() => {
     return parseTransitionStyle(originalStyle)
   }, [])
-  console.log('transitionMap=', transitionMap)
+  // console.log('transitionMap=', transitionMap)
   // ** style prop sharedValue
   const shareValMap = useMemo(() => {
     return Object.keys(transitionMap).reduce((valMap, property) => {
@@ -188,7 +188,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   // ** 驱动动画
   useEffect(() => {
     animatedKeys.current = getAnimatedKeysFromTransition()
-    console.log('animatedKeys=', animatedKeys.current)
+    // console.log('animatedKeys=', animatedKeys.current)
     startAnimation()
   })
   // ** 清空动画
@@ -202,9 +202,9 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   // 开始动画
   function startAnimation () {
     const keys = Object.keys(animatedKeys.current)
-    console.log('animatedKeys=', keys)
+    // console.log('animatedKeys=', keys)
     animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...keys])
-    console.log('animatedStyleKeys=', animatedStyleKeys.value)
+    // console.log('animatedStyleKeys=', animatedStyleKeys.value)
     // 驱动动画
     createAnimation(keys)
   }
@@ -212,18 +212,18 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   function createAnimation (animatedKeys: string[] = []) {
     let needSetCallback = !!transitionend
     animatedKeys.forEach(key => {
-      console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
+      // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
       let ruleV = originalStyle[key]
       if (isTransform(key)) {
         const transform = getTransformObj(originalStyle.transform!)
         ruleV = transform[key]
       }
-      console.log('ruleV=', key, ruleV)
+      // console.log('ruleV=', key, ruleV)
       const toVal = ruleV !== undefined
         ? ruleV
         : shareValMap[key].value
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
-      console.log('animationOptions=', { delay, duration, easing })
+      // console.log('animationOptions=', { delay, duration, easing })
       const callback: AnimationCallback = (finished?: boolean, current?: AnimatableValue) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin

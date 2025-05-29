@@ -52,6 +52,7 @@ export const CubicBezierExp = /cubic-bezier\(["']?(.*?)["']?\)/
 // transform
 export const Transform = 'transform'
 export const TransformOrigin = 'transformOrigin'
+export const Transition = 'transition'
 
 // 微信 timingFunction 和 RN Easing 对应关系
 export const EasingKey = {
