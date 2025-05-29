@@ -17,7 +17,7 @@ import type { AnimationCallback, SharedValue, AnimatableValue } from 'react-nati
 import type { TransformsStyle } from 'react-native'
 import type { ExtendedViewStyle } from '../types/common'
 import type { _ViewProps } from '../mpx-view'
-import type { ExtendWithTimingConfig, CustomAnimationCallback } from './utils'
+import type { CustomAnimationCallback } from './utils'
 
 export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transitionend?: CustomAnimationCallback }) {
   const { style: originalStyle = {}, animation, transitionend } = props

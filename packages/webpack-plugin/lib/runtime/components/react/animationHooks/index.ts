@@ -18,18 +18,19 @@ const enum AnimationType {
 
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
   const { style = {}, enableAnimation, animation, transitionend, layoutRef } = props
-  const enableStyleAnimation = enableAnimation || !!animation || !!style.transition || !!(style.transitionProperty && style.transitionDuration) || !!style.animation
-  const enableAnimationRef = useRef(enableStyleAnimation)
   // 记录动画类型
   // Todo 优先级
-  const animationType = animation ? AnimationType.API : !!style.transition || !!(style.transitionProperty && style.transitionDuration) ? AnimationType.CssTransition : style.animation ? AnimationType.CssAnimation : AnimationType.None
+  const propNames = Object.keys(style)
+  const animationType = animation ? AnimationType.API : propNames.find(item => item.includes('transition')) ? AnimationType.CssTransition : propNames.find(item => item.includes('animation')) ? AnimationType.CssAnimation : AnimationType.None
   const animationTypeRef = useRef(animationType)
+  const enableStyleAnimation = enableAnimation || animationType !== AnimationType.None
+  const enableAnimationRef = useRef(enableStyleAnimation)
   console.log(`useAnimationHooks animationType=${animationTypeRef.current} animationType=${enableAnimationRef.current}`)
-  if (enableAnimationRef.current !== enableStyleAnimation) {
-    error('[Mpx runtime error]: animation usage should be stable in the component lifecycle, or you can set [enable-animation] with true.')
-  }
   if (animationTypeRef.current !== AnimationType.None && animationTypeRef.current !== animationType) {
     error('[Mpx runtime error]: animationType should be stable, it is not allowed to switch CSS animation, API animation or CSS animation in the component lifecycle')
+  }
+  if (enableAnimationRef.current !== enableStyleAnimation) {
+    error('[Mpx runtime error]: animation usage should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
   if (!enableAnimationRef.current) return { enableStyleAnimation: false }
 
@@ -70,6 +71,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
           style: originalStyle,
           transitionend: withTimingCallback
         })
+      }
+    case AnimationType.CssAnimation:
+      error('[Mpx runtime error]: CSS animation is not supported yet')
+      return {
+        enableStyleAnimation: enableAnimationRef.current
       }
     default:
       return { enableStyleAnimation: false }
