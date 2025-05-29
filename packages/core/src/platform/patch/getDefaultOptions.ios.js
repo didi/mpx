@@ -484,10 +484,13 @@ export function PageWrapperHOC (WrappedComponent) {
     }
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
-    const onLayout = () => {
-      // 当用户处于横屏或者竖屏状态的时候，需要进行layout修正
-      navigation.layout = getLayoutData(headerHeight)
-    }
+
+    useEffect(() => {
+      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
+        navigation.layout = getLayoutData(headerHeight)
+      })
+      return () => dimensionListener?.remove()
+    }, [])
 
     usePageStatus(navigation, currentPageId)
 
@@ -520,8 +523,7 @@ export function PageWrapperHOC (WrappedComponent) {
             // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
             overflow: 'hidden'
           },
-          ref: rootRef,
-          onLayout
+          ref: rootRef
         },
         createElement(RouteContext.Provider,
           {
