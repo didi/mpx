@@ -102,7 +102,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const isLoadError = useRef<boolean>(false)
   const isNavigateBack = useRef<boolean>(false)
   const statusCode = useRef<string|number>('')
-  const [isLoaded, setIsLoaded] = useState<boolean>(true)
   const defaultWebViewStyle = {
     position: 'absolute' as const,
     left: 0,
@@ -268,7 +267,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
   const onLoadEndHandle = function (res: WebViewEvent) {
     fristLoaded.current = true
-    setIsLoaded(true)
     const src = res.nativeEvent?.url
     if (isLoadError.current) {
       isLoadError.current = false
@@ -314,11 +312,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       setPageLoadErr(true)
     }
   }
-  const onLoadStart = function () {
-    if (!fristLoaded.current) {
-      setIsLoaded(false)
-    }
-  }
 
   return (
       <Portal>
@@ -331,7 +324,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             )
           : (<WebView
             style={ defaultWebViewStyle }
-            pointerEvents={ isLoaded ? 'auto' : 'none' }
             source={{ uri: src }}
             ref={webViewRef}
             javaScriptEnabled={true}
@@ -342,7 +334,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onLoadEnd={onLoadEnd}
             onHttpError={onHttpError}
             onError={onError}
-            onLoadStart={onLoadStart}
             allowsBackForwardNavigationGestures={true}
       ></WebView>)}
       </Portal>
