@@ -56,7 +56,7 @@ export default function createApp (options) {
   const pages = currentInject.getPages() || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const withHeader = (WrappedComponent, { pageConfig = {} }) => {
+  const withHeader = (wrappedComponent, { pageConfig = {} }) => {
       return ({ navigation, ...props }) => {
         return createElement(GestureHandlerRootView,
         {
@@ -68,7 +68,7 @@ export default function createApp (options) {
           pageConfig: pageConfig,
           navigation
         }),
-        createElement(WrappedComponent, { navigation, ...props })
+        createElement(wrappedComponent, { navigation, ...props })
       )
     }
   }
