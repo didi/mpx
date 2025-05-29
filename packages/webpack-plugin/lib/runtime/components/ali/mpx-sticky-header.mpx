@@ -35,7 +35,8 @@
       scrollOffsetTop: 0,
       headerHeight: 0,
       stickyHeader: '',
-      headerTop: 0
+      headerTop: 0,
+      lastIntersectionRatio: -1
     },
     computed: {
       paddingStyle() {
@@ -67,93 +68,93 @@
     },
     methods: {
       initStickyHeader() {
-        // 获取元素的初始位置
         this.createSelectorQuery()
           .select('.mpx-sticky-header')
-          .boundingClientRect((rect) => {
-            if (!rect) return
-            mpx
-              .createSelectorQuery()
-              .select(`#${this.scrollViewId}`)
-              .boundingClientRect((res) => {
-                if (!res) return
-                this.scrollOffsetTop = res.top || 0
-                this.headerHeight = rect.height
-                mpx
-                  .createSelectorQuery()
-                  .select(`#${this.scrollViewId}`)
-                  .scrollOffset((scrollRes) => {
-                    // 模拟 offsetTop 计算：sticky具体顶部距离 - scrollView顶部 + scrollView滚动位置
-                    this.headerTop = rect.top - this.scrollOffsetTop + scrollRes.scrollTop
-                    // 只在首次初始化时创建观察器
-                    if (!this.stickyHeader) {
-                      this.stickyHeader = my.createIntersectionObserver({
-                        thresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-                      })
-                      this.initTabsObserver()
-                    } else {
-                      if (scrollRes.scrollTop > this.headerTop) {
-                        if (this.isStickOnTop) return
-                        this.isStickOnTop = true
-                        this.triggerEvent('stickontopchange', {
-                          isStickOnTop: true,
-                          id: this.stickyId
-                        })
-                      } else if (scrollRes.scrollTop < this.headerTop) {
-                        if (!this.isStickOnTop) return
-                        this.isStickOnTop = false
-                        this.triggerEvent('stickontopchange', {
-                          isStickOnTop: false,
-                          id: this.stickyId
-                        })
-                      }
-                    }
-                  })
-                  .exec()
-              })
-              .exec()
+          .boundingClientRect()
+          .exec((rect = []) => {
+            this.headerHeight = rect[0]?.height || 0
           })
-          .exec()
-      },
-      initTabsObserver() {
-        this.stickyHeader.relativeTo(`#${this.scrollViewId}`).observe(`#${this.stickyId}`, (res) => {
-          const { intersectionRatio, intersectionRect, relativeRect } = res
-          // 获取当前滚动位置
-          mpx
-            .createSelectorQuery()
-            .select(`#${this.scrollViewId}`)
-            .scrollOffset((scrollRes) => {
-              const scrollTop = scrollRes.scrollTop
-              if (scrollTop > this.headerTop) {
-                if (intersectionRect.bottom < relativeRect.bottom) {
-                  if (this.isStickOnTop) return
-                  this.isStickOnTop = true
-                  this.triggerEvent('stickontopchange', {
-                    isStickOnTop: this.isStickOnTop,
-                    id: this.stickyId
-                  })
-                }
-              } else if (scrollTop <= this.headerTop) {
-                if (!this.isStickOnTop) return
-                this.isStickOnTop = false
-                this.triggerEvent('stickontopchange', {
-                  isStickOnTop: this.isStickOnTop,
-                  id: this.stickyId
-                })
-              }
+
+        mpx
+          .createSelectorQuery()
+          .select(`#${this.scrollViewId}`)
+          .boundingClientRect()
+          .exec((res) => {
+            if (!res) return
+            this.scrollOffsetTop = res[0]?.top || 0
+            this.stickyHeader = mpx.createIntersectionObserver({
+              thresholds: [0.1, 0.9]
             })
-            .exec()
+            this.initObserver()
+          })
+      },
+      initObserver() {
+        this.stickyHeader.relativeTo(`#${this.scrollViewId}`).observe(`#${this.stickyId}`, (res) => {
+          const { intersectionRatio, intersectionRect, relativeRect, boundingClientRect } = res
+          if (intersectionRatio < this.lastIntersectionRatio) {
+            // boundingClientRect.top < relativeRect.top fixed，否则默认布局
+            this.handleStickyStateChange(boundingClientRect.top < relativeRect.top)
+          } else if (intersectionRatio > this.lastIntersectionRatio) {
+            this.handleStickyStateChange(false)
+          }
+          this.lastIntersectionRatio = intersectionRatio
         })
       },
       refresh() {
-        // 刷新时重新获取元素位置
-        this.initStickyHeader()
+        this.createSelectorQuery()
+          .select('.mpx-sticky-header')
+          .boundingClientRect()
+          .select('.mpx-sticky-header-placeholder')
+          .boundingClientRect()
+          .exec((results) => {
+            const [stickyHeaderRect, placeholderRect] = results
+            if (!stickyHeaderRect) return
+
+            mpx
+              .createSelectorQuery()
+              .select(`#${this.scrollViewId}`)
+              .boundingClientRect()
+              .select(`#${this.scrollViewId}`)
+              .scrollOffset()
+              .exec((results) => {
+                const [scrollViewRect, scrollOffsetData] = results
+                if (!scrollViewRect || !scrollOffsetData) return
+
+                this.scrollOffsetTop = scrollViewRect.top || 0
+                this.headerHeight = stickyHeaderRect.height
+
+                // 模拟 offsetTop 计算：sticky placeholder具体顶部距离 - scrollView顶部 + scrollView滚动位置
+                // 必须用 placeholder 到顶部距离，用 sticky 如果刚好差值为 0， 区分不出是本身就在顶部还是 fixed 在顶部
+                this.headerTop =
+                  placeholderRect.top - this.scrollOffsetTop + scrollOffsetData.scrollTop
+                if (scrollOffsetData.scrollTop > this.headerTop) {
+                  this.handleStickyStateChange(true)
+                } else if (scrollOffsetData.scrollTop <= this.headerTop) {
+                  this.handleStickyStateChange(false)
+                }
+              })
+          })
       },
-      detached() {
-        // 清理观察器
-        if (this.stickyHeader) {
-          this.stickyHeader.disconnect()
+      handleStickyStateChange(shouldStick) {
+        if (shouldStick && !this.isStickOnTop) {
+          this.isStickOnTop = true
+          this.triggerEvent('stickontopchange', {
+            isStickOnTop: true,
+            id: this.stickyId
+          })
+        } else if (!shouldStick && this.isStickOnTop) {
+          this.isStickOnTop = false
+          this.triggerEvent('stickontopchange', {
+            isStickOnTop: false,
+            id: this.stickyId
+          })
         }
+      },
+    },
+    detached() {
+      // 清理观察器
+      if (this.stickyHeader) {
+        this.stickyHeader.disconnect()
       }
     }
   })
