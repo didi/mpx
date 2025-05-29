@@ -24,7 +24,7 @@ const checkVars = [
   '--un-skew-y'
 ]
 
-function normalizeTransfromVar (res) {
+function normalizeTransformVar(res) {
   checkVars.forEach(key => {
     if (res[key] !== undefined && res[key] === 0) {
       res[key] = '0deg'
@@ -33,8 +33,21 @@ function normalizeTransfromVar (res) {
   return res
 }
 
-function getPreflight (preflightKeys) {
+function getPreflight(preflightKeys) {
   return Object.fromEntries(preflightKeys.map(key => [key, transformBase[key]]))
+}
+
+const removedKeys = [
+  'scaleZ(var(--un-scale-z))',
+  'translateZ(var(--un-translate-z))'
+]
+
+function normalizeTransform(transform) {
+  if (!transform) return transform
+  return transform
+    .split(' ')
+    .filter(v => !removedKeys.includes(v))
+    .join(' ')
 }
 
 const transformRules = transforms.map(v => {
@@ -50,7 +63,10 @@ const transformRules = transforms.map(v => {
             if (Array.isArray(res)) {
               res = Object.fromEntries(res)
             }
-            normalizeTransfromVar(res)
+            normalizeTransformVar(res)
+            if (res.transform) {
+              res.transform = normalizeTransform(res.transform)
+            }
           }
           return res
         },
@@ -58,6 +74,7 @@ const transformRules = transforms.map(v => {
       ]
     }
     if (typeof matcher === 'object') {
+      matcher.transform = normalizeTransform(matcher.transform)
       const preflight = getPreflight(options.custom.preflightKeys)
       Object.assign(matcher, preflight)
     }
@@ -65,4 +82,4 @@ const transformRules = transforms.map(v => {
   return v
 })
 
-export { transformRules as transforms, normalizeTransfromVar }
+export { transformRules as transforms, normalizeTransformVar }

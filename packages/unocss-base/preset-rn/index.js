@@ -1,12 +1,12 @@
 import rules, { blocklistRules } from './rules/index.js'
-import { normalizeTransfromVar } from './rules/transforms.js'
+import { normalizeTransformVar } from './rules/transforms.js'
 import theme from './theme.js'
 import blocklistVariants from './variants/index.js'
 import { transformBase } from '@unocss/preset-mini/rules'
 import { filterBase } from '@unocss/preset-wind/rules'
 
 function normalizePreflightBase (preflightBase) {
-  normalizeTransfromVar(preflightBase)
+  normalizeTransformVar(preflightBase)
   return preflightBase
 }
 
