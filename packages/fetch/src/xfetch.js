@@ -27,7 +27,7 @@ export default class XFetch {
       request: new InterceptorManager(),
       response: new InterceptorManager()
     }
-    this.useBigInt = options.useBigInt || false
+    this.useBigInt = (options && options.useBigInt) || false
   }
 
   static normalizeConfig (config) {
@@ -216,10 +216,6 @@ export default class XFetch {
       // 后续请求处理都应基于正规化后的config进行处理(proxy/mock/validate/serialize)
       XFetch.normalizeConfig(config)
 
-      if (this.useBigInt) {
-        config.useBigInt = this.useBigInt
-      }
-
       // 检查缓存
       const responsePromise = this.checkPreCache(config)
       if (responsePromise && typeof config.usePre.onUpdate !== 'function') {
@@ -236,6 +232,10 @@ export default class XFetch {
         console.log('xfetch参数校验错误', e)
       }
       config = this.checkProxy(config) // proxy
+
+      if (this.useBigInt) {
+        config.useBigInt = this.useBigInt
+      }
 
       let promise = this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
       // 后置拦截器

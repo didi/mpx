@@ -29,9 +29,10 @@ export default function request (config) {
           }]
         }
       }
+    }
+    if (config.useBigInt) {
       delete config.useBigInt
     }
-
     if (config.params) {
       config.url = buildUrl(config.url, config.params, paramsSerializer)
       // 这个参数保留的话，若其value是响应式数据，在Android支付宝小程序中可能有问题
