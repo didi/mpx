@@ -3,7 +3,7 @@ import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-nati
 import { ReactNode, forwardRef, useRef, useContext } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, isHarmony } from './utils'
 import { SwiperContext } from './context'
 
 interface SwiperItemProps {
@@ -73,7 +73,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     'style'
   ], { layoutRef })
   const itemAnimatedStyle = useAnimatedStyle(() => {
-    if (!step.value) return {}
+    if (!step.value && !isHarmony) return {}
     const inputRange = [step.value, 0]
     const outputRange = [0.7, 1]
     // 实现元素的宽度跟随step从0到真实宽度，且不能触发重新渲染整个组件，通过AnimatedStyle的方式实现
