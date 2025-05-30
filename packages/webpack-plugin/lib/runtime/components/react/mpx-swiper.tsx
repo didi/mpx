@@ -504,7 +504,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
 
   useEffect(() => {
     // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
-    updateCurrent(props.current || 0, step.value)
+    // 2. 手指滑动过程中更新索引，外部会把current再穿进来，导致offset直接更新了
+    if (props.current !== currentIndex.value) {
+      updateCurrent(props.current || 0, step.value)
+    }
   }, [props.current])
 
   useEffect(() => {
@@ -718,7 +721,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const eventData = {
           translation: moveDistance
         }
-        // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
+        // 1. 在Move过程中，如果手指一直没抬起来，超过一半的话也会更新索引
+        const { half } = computeHalf()
+        if (half) {
+          const { selectedIndex } = getTargetPosition(eventData)
+          currentIndex.value = selectedIndex
+        }
+        // 2. 处理用户一直拖拽到临界点的场景, 不会执行onEnd
         const { canMove, targetOffset } = checkUnCircular(eventData)
         if (!circularShared.value) {
           if (canMove) {
@@ -726,12 +735,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             preAbsolutePos.value = e[strAbso]
           }
           return
-        }
-        const { half } = computeHalf()
-        // 在Move过程中，如果手指一直没抬起来，超过一半的话也会更新索引
-        if (half) {
-          const { selectedIndex } = getTargetPosition(eventData)
-          currentIndex.value = selectedIndex
         }
         const { isBoundary, resetOffset } = reachBoundary(eventData)
         if (isBoundary && circularShared.value) {
@@ -749,15 +752,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const eventData = {
           translation: moveDistance
         }
-        // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
-        const { canMove } = checkUnCircular(eventData)
-        if (!circularShared.value && !canMove) {
-          return
-        }
         const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
         if (Math.abs(strVelocity) < longPressRatio) {
           handleLongPress()
         } else {
+          // 如果触发了onTouchesCancelled，不会触发onUpdate不会更新offset值, 索引不会变更
           handleEnd(eventData)
         }
       }).withRef(swiperGestureRef)
