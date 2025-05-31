@@ -1,4 +1,4 @@
-import { createElement, useState } from 'react'
+import { createElement, useState, useMemo } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ReactNative from 'react-native'
 import Mpx from '../../index'
@@ -59,12 +59,13 @@ export function innerNav ({ pageConfig, navigation }) {
     setPageConfig(newConfig)
   }
   const isCustom = innerPageConfig.navigationStyle === 'custom'
-  const navigationBarTextStyle = validBarTextStyle(innerPageConfig.navigationBarTextStyle)
+  const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
+  console.log('--------navigationBarTextStyle', navigationBarTextStyle)
   // 状态栏的颜色
-  const barStyle = (navigationBarTextStyle === 'white') ? 'light-content' : 'dark-content'
   const statusBarElement = createElement(ReactNative.StatusBar, {
+    translucent: true,
     backgroundColor: 'transparent',
-    barStyle: barStyle // 'default'/'light-content'/'dark-content'
+    barStyle: (navigationBarTextStyle === 'white') ? 'light-content' : 'dark-content' // 'default'/'light-content'/'dark-content'
   })
 
   if (isCustom) return statusBarElement
