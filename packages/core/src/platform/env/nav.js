@@ -3,6 +3,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ReactNative from 'react-native'
 import Mpx from '../../index'
 
+function convertToHex (color) {
+  try {
+    const intColor = ReactNative.processColor(color)
+    if (intColor === null || intColor === undefined) {
+      return null
+    }
+    // 将32位整数颜色值转换为RGBA
+    const r = (intColor >> 16) & 255
+    const g = (intColor >> 8) & 255
+    const b = intColor & 255
+    // 转换为十六进制
+    const hexR = r.toString(16).padStart(2, '0')
+    const hexG = g.toString(16).padStart(2, '0')
+    const hexB = b.toString(16).padStart(2, '0')
+    return `#${hexR}${hexG}${hexB}`
+  } catch (error) {
+    return null
+  }
+}
+
 const titleHeight = 44
 export function useInnerHeaderHeight (pageconfig) {
   if (pageconfig.navigationStyle === 'custom') {
@@ -43,13 +63,17 @@ const styles = ReactNative.StyleSheet.create({
     textAlign: 'center'
   }
 })
+const NavColor = {
+  White: '#ffffff',
+  Black: '#000000'
+}
 // navigationBarTextStyle只支持黑白'white'/'black
 const validBarTextStyle = (textStyle) => {
-  const validValues = ['white', 'black']
-  if (textStyle && validValues.includes(textStyle)) {
-    return textStyle
+  const textStyleColor = convertToHex(textStyle)
+  if (textStyle && [NavColor.White, NavColor.Black].includes(textStyleColor)) {
+    return textStyleColor
   } else {
-    return validValues[0]
+    return NavColor.White
   }
 }
 export function innerNav ({ pageConfig, navigation }) {
@@ -60,11 +84,12 @@ export function innerNav ({ pageConfig, navigation }) {
   }
   const isCustom = innerPageConfig.navigationStyle === 'custom'
   const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
+  console.log('navigationBarTextStylenavigationBarTextStyle', navigationBarTextStyle)
   // 状态栏的颜色
   const statusBarElement = createElement(ReactNative.StatusBar, {
     translucent: true,
     backgroundColor: 'transparent',
-    barStyle: (navigationBarTextStyle === 'white') ? 'light-content' : 'dark-content' // 'default'/'light-content'/'dark-content'
+    barStyle: (navigationBarTextStyle === NavColor.White) ? 'light-content' : 'dark-content' // 'default'/'light-content'/'dark-content'
   })
 
   if (isCustom) return statusBarElement
