@@ -80,7 +80,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     ],
     { layoutRef })
   const itemAnimatedStyle = useAnimatedStyle(() => {
-    if (!step.value) return {}
+    // if (!step.value) return {} 鸿蒙系统加上这段代码，渲染延迟未跟上
     const inputRange = [step.value, 0]
     const outputRange = [0.7, 1]
     // 实现元素的宽度跟随step从0到真实宽度，且不能触发重新渲染整个组件，通过AnimatedStyle的方式实现
@@ -93,7 +93,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     }
     return Object.assign(outerLayoutStyle, {
       transform: transformStyle
-    })
+    }) as {}
   })
   return (
     <Animated.View
