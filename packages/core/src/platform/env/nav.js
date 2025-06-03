@@ -84,7 +84,6 @@ export function innerNav ({ pageConfig, navigation }) {
   }
   const isCustom = innerPageConfig.navigationStyle === 'custom'
   const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
-  console.log('navigationBarTextStylenavigationBarTextStyle', navigationBarTextStyle)
   // 状态栏的颜色
   const statusBarElement = createElement(ReactNative.StatusBar, {
     translucent: true,
