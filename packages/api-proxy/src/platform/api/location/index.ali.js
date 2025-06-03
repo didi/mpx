@@ -1,4 +1,4 @@
-import { ENV_OBJ, changeOpts, handleSuccess, defineUnsupportedProps } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess, defineUnsupportedProps, envError } from '../../../common/js'
 
 function getLocation (options = {}) {
   const opts = Object.assign(options, {
@@ -22,10 +22,22 @@ function openLocation (options = {}) {
   return ENV_OBJ.openLocation(opts)
 }
 
-const chooseLocation = ENV_OBJ.chooseLocation
+const chooseLocation = ENV_OBJ.chooseLocation || envError('chooseLocation')
+
+const onLocationChange = envError('onLocationChange')
+
+const offLocationChange = envError('offLocationChange')
+
+const startLocationUpdate = envError('startLocationUpdate')
+
+const stopLocationUpdate = envError('stopLocationUpdate')
 
 export {
   getLocation,
   openLocation,
-  chooseLocation
+  chooseLocation,
+  onLocationChange,
+  offLocationChange,
+  startLocationUpdate,
+  stopLocationUpdate
 }

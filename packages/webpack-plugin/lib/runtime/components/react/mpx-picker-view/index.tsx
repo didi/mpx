@@ -1,5 +1,5 @@
 import { View } from 'react-native'
-import React, { forwardRef, useRef } from 'react'
+import React, { createElement, forwardRef, useRef } from 'react'
 import useInnerProps, { getCustomEvent } from '../getInnerListeners'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import {
@@ -11,6 +11,7 @@ import {
   extendObject
 } from '../utils'
 import { PickerViewStyleContext } from './pickerVIewContext'
+import Portal from '../mpx-portal'
 import type { AnyFunc } from '../types/common'
 /**
  * ✔ value
@@ -86,7 +87,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     varContextRef,
     hasSelfPercent,
     setWidth,
-    setHeight
+    setHeight,
+    hasPositionFixed
   } = useTransformStyle(style, { enableVar, externalVarContext })
 
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
@@ -130,20 +132,23 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   }
 
   const innerProps = useInnerProps(
-    props,
-    extendObject({
-      ref: nodeRef,
-      style: extendObject(
-        {},
-        normalStyle,
-        layoutStyle,
-        {
-          position: 'relative',
-          overflow: 'hidden'
-        }
-      ),
-      layoutProps
-    }),
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: extendObject(
+          {},
+          normalStyle,
+          layoutStyle,
+          {
+            position: 'relative',
+            overflow: 'hidden'
+          }
+        )
+      }
+    ),
     [
       'enable-offset',
       'indicator-style',
@@ -219,13 +224,25 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     return renderColumns
   }
 
-  return (
-    <PickerViewStyleContext.Provider value={textStyle}>
-      <View {...innerProps}>
-        <View style={[styles.wrapper]}>{renderPickerColumns()}</View>
-      </View>
-    </PickerViewStyleContext.Provider>
+  const finalComponent = createElement(
+    PickerViewStyleContext.Provider,
+    { value: textStyle },
+    createElement(
+      View,
+      innerProps,
+      createElement(
+        View,
+        { style: [styles.wrapper] },
+        renderPickerColumns()
+      )
+    )
   )
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 _PickerView.displayName = 'MpxPickerView'

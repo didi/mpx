@@ -11,20 +11,20 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
 import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject } from './utils'
 interface FormProps {
-  style?: Record<string, any>;
-  children?: ReactNode;
-  'enable-offset'?: boolean;
+  style?: Record<string, any>
+  children?: ReactNode
+  'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
   bindsubmit?: (evt: {
     detail: {
-      value: any;
-    };
-  }) => void;
-  bindreset?: () => void;
+      value: any
+    }
+  }) => void
+  bindreset?: () => void
 }
 
 const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: FormProps, ref): JSX.Element => {
@@ -59,14 +59,20 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: formRef })
 
-  const innerProps = useInnerProps(props, extendObject({
-    style: extendObject({}, innerStyle, layoutStyle),
-    ref: formRef
-  }, layoutProps)
-  , [
-    'bindsubmit',
-    'bindreset'
-  ], { layoutRef })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        style: extendObject({}, innerStyle, layoutStyle),
+        ref: formRef
+      }
+    )
+    , [
+      'bindsubmit',
+      'bindreset'
+    ], { layoutRef })
 
   const contextValue = useMemo(() => {
     const formValuesMap = new Map()

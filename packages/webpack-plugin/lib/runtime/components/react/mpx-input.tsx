@@ -50,13 +50,15 @@ import {
   TextInputSelectionChangeEventData,
   TextInputFocusEventData,
   TextInputChangeEventData,
-  TextInputSubmitEditingEventData
+  TextInputSubmitEditingEventData,
+  NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
+import Portal from './mpx-portal'
 
 type InputStyle = Omit<
   TextStyle & ViewStyle & Pick<FlexStyle, 'minHeight'>,
@@ -201,6 +203,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   )
 
   const {
+    hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     setWidth,
@@ -285,6 +288,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const onTouchStart = () => {
     // sometimes the focus event occurs later than the keyboardWillShow event
     setKeyboardAvoidContext()
+  }
+
+  const onTouchEnd = (evt: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
+    evt.nativeEvent.origin = 'input'
   }
 
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
@@ -425,8 +432,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }, [focus])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle),
@@ -444,19 +453,17 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: !!multiline
-      },
-      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType },
-      layoutProps,
-      {
+        multiline: !!multiline,
         onTouchStart,
+        onTouchEnd,
         onFocus,
         onBlur,
         onChange,
         onSelectionChange,
         onContentSizeChange,
         onSubmitEditing: bindconfirm && !multiline && onSubmitEditing
-      }
+      },
+      !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [
       'type',
@@ -476,7 +483,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       layoutRef
     }
   )
-  return createElement(TextInput, innerProps)
+
+  const finalComponent = createElement(TextInput, innerProps)
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 Input.displayName = 'MpxInput'

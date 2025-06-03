@@ -21,6 +21,7 @@ import { FormContext, FormFieldValue, CheckboxGroupContext, GroupValue } from '.
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
+import Portal from './mpx-portal'
 
 export interface CheckboxGroupProps {
   name: string
@@ -68,6 +69,7 @@ const CheckboxGroup = forwardRef<
   const styleObj = extendObject({}, defaultStyle, style)
 
   const {
+    hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     hasVarDec,
@@ -116,13 +118,14 @@ const CheckboxGroup = forwardRef<
   }, [])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle)
-      },
-      layoutProps
+      }
     ),
     [
       'name'
@@ -158,7 +161,7 @@ const CheckboxGroup = forwardRef<
     }
   }, [])
 
-  return createElement(
+  const finalComponent = createElement(
     View,
     innerProps,
     createElement(
@@ -173,6 +176,12 @@ const CheckboxGroup = forwardRef<
       )
     )
   )
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 CheckboxGroup.displayName = 'MpxCheckboxGroup'

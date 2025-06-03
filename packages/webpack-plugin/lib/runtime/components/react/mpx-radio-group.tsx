@@ -22,6 +22,7 @@ import { FormContext, FormFieldValue, RadioGroupContext, GroupValue } from './co
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
+import Portal from './mpx-portal'
 
 export interface RadioGroupProps {
   name: string
@@ -71,6 +72,7 @@ const radioGroup = forwardRef<
   const styleObj = extendObject({}, defaultStyle, style)
 
   const {
+    hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     hasVarDec,
@@ -141,13 +143,14 @@ const radioGroup = forwardRef<
   }, [])
 
   const innerProps = useInnerProps(
-    props,
     extendObject(
+      {},
+      props,
+      layoutProps,
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle)
-      },
-      layoutProps
+      }
     ),
     ['name'],
     {
@@ -155,18 +158,27 @@ const radioGroup = forwardRef<
     }
   )
 
-  return createElement(View, innerProps, createElement(
-    RadioGroupContext.Provider,
-    { value: contextValue },
-    wrapChildren(
-      props,
+  const finalComponent = createElement(View, innerProps,
+    createElement(
+      RadioGroupContext.Provider,
       {
-        hasVarDec,
-        varContext: varContextRef.current
-      }
+        value: contextValue
+      },
+      wrapChildren(
+        props,
+        {
+          hasVarDec,
+          varContext: varContextRef.current
+        }
+      )
     )
   )
-  )
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 radioGroup.displayName = 'MpxRadioGroup'
