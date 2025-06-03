@@ -223,7 +223,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       tmpValue.current = parsed
       setInputValue(parsed)
     }
-  }, [value])
+  }, [value, inputValue])
 
   useEffect(() => {
     if (selectionStart > -1) {
