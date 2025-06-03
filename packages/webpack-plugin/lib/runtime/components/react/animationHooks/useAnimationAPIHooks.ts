@@ -58,10 +58,10 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
         const ruleV = isTransform(key) ? transform.get(key) : rules.get(key)
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
         const toVal = ruleV !== undefined
-            ? ruleV
-            : index > 0
-                ? lastValueMap[key]
-                : shareValMap[key].value
+          ? ruleV
+          : index > 0
+            ? lastValueMap[key]
+            : shareValMap[key].value
         const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
         needSetCallback = false
         if (!sequence[key]) {
