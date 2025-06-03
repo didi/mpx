@@ -166,12 +166,12 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
       if (property === Transform) {
         Object.keys(originalStyle.transform ? getTransformObj(originalStyle.transform!) : TransformInitial).forEach((key) => {
           const defaultVal = getInitialVal(originalStyle, key)
-          console.log(`shareValMap property=${key} defaultVal=${defaultVal}`)
+          // console.log(`shareValMap property=${key} defaultVal=${defaultVal}`)
           valMap[key] = makeMutable(defaultVal)
         })
       } else if (hasOwn(SupportedProperty, property)) {
         const defaultVal = getInitialVal(originalStyle, property)
-        console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
+        // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
         valMap[property] = makeMutable(defaultVal)
       }
       // console.log('shareValMap = ', valMap)
@@ -182,7 +182,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   function createAnimation (animatedKeys: string[] = []) {
     let needSetCallback = !!transitionend
     animatedKeys.forEach(key => {
-      console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
+      // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
       let ruleV = originalStyle[key]
       if (isTransform(key)) {
         const transform = getTransformObj(originalStyle.transform!)
@@ -204,7 +204,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
       const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
       needSetCallback = false
       shareValMap[key].value = animation
-      console.log(`useTransitionHooks, ${key}=`, animation)
+      // console.log(`useTransitionHooks, ${key}=`, animation)
     })
   }
   // 从 transition 获取 AnimatedKeys

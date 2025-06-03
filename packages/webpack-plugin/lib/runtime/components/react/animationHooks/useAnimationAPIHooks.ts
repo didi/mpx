@@ -87,7 +87,7 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
       ruleArr.forEach(key => {
         if (!keyMap[key]) keyMap[key] = true
       })
-      console.log('getAnimatedStyleKeys keyMap=', keyMap)
+      // console.log('getAnimatedStyleKeys keyMap=', keyMap)
       return keyMap
     }, animatedKeys)
   }

@@ -31,9 +31,8 @@ const enum AnimationType {
 
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
   const { style: originalStyle = {}, enableAnimation, animation, transitionend, layoutRef } = props
-  // console.log('useAnimationHooks', animation)
   // 记录动画类型
-  // Todo 优先级
+  // Todo 优先级 API > css transition > css animation
   const propNames = Object.keys(originalStyle)
   const animationType = animation ? AnimationType.API : propNames.find(item => item.includes(Transition)) ? AnimationType.CssTransition : propNames.find(item => item.includes('animation')) ? AnimationType.CssAnimation : AnimationType.None
   const animationTypeRef = useRef(animationType)
@@ -53,6 +52,10 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // style变更标识(首次render不执行)
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animationDeps = useRef(-1)
+  // 若为 animation API，则使用 animation.id 为依赖
+  if (animation?.id) {
+    animationDeps.current = animation.id
+  }
   // 有动画样式的 style key(useAnimatedStyle使用)
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
@@ -62,25 +65,17 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // 记录上次style map
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
-  function startAnimation () {
-    // 更新动画样式 key map
-    animatedKeys.current = getAnimatedStyleKeys(animatedKeys.current)
-    const keys = Object.keys(animatedKeys.current)
-    animatedStyleKeys.value = formatAnimatedKeys(animationTypeRef.current === AnimationType.API ? [TransformOrigin, ...keys] : keys)
-    // 驱动动画
-    createAnimation(keys)
-  }
   // 设置 lastShareValRef & shareValMap
   function updateStyleVal (updateShareVal = false) {
     Object.entries(originalStyle).forEach(([key, value]) => {
-      console.log(`updateStyleVal key=${key} value=${value}`)
+      // console.log(`updateStyleVal key=${key} value=${value}`)
       if (key === Transform) {
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
             if (updateShareVal && hasOwn(shareValMap, key)) {
               shareValMap[key].value = value
-              console.log(`updateStyleVal shareValMap[${key}].value=${value}`)
+              // console.log(`updateStyleVal shareValMap[${key}].value=${value}`)
             }
           }
           // console.log(`updateStyleVal lastStyleRef.current[${key}]=${lastStyleRef.current[key]}`)
@@ -90,7 +85,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
           lastStyleRef.current[key] = value
           if (updateShareVal && hasOwn(shareValMap, key)) {
             shareValMap[key].value = value
-            console.log(`updateStyleVal shareValMap[${key}].value=${value}`)
+            // console.log(`updateStyleVal shareValMap[${key}].value=${value}`)
           }
         }
         // console.log(`updateStyleVal lastStyleRef.current[${key}]=${lastStyleRef.current[key]}`)
@@ -131,14 +126,21 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       style: originalStyle,
       transitionend: withTimingCallback
     })
-  if (animation?.id) {
-    animationDeps.current = animation.id
+  // 获取动画样式&驱动动画
+  function startAnimation () {
+    // 更新动画样式 key map
+    animatedKeys.current = getAnimatedStyleKeys(animatedKeys.current)
+    const keys = Object.keys(animatedKeys.current)
+    animatedStyleKeys.value = formatAnimatedKeys(animationTypeRef.current === AnimationType.API ? [TransformOrigin, ...keys] : keys)
+    // 驱动动画
+    createAnimation(keys)
   }
   // ** style 更新
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     // 仅 animation api style 更新同步更新 shareVal
     updateStyleVal(animationTypeRef.current === AnimationType.API)
+    // css 动画依赖为 style 变更
     if (animationTypeRef.current !== AnimationType.API) {
       // css transition 为 style 变更驱动，但首次不计入
       animationDeps.current += 1
@@ -148,7 +150,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (animationDeps.current === -1) return
-    console.log('useTransitionHooks, useEffect deps=styleChangeTimes', animationDeps.current)
+    // console.log('useTransitionHooks, useEffect deps=styleChangeTimes', animationDeps.current)
     startAnimation()
   }, [animationDeps.current])
   // ** 清空动画
