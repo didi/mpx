@@ -714,7 +714,7 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
 }
 
 // 多value解析
-export const parseValues = (str: string, char = ' ') => {
+export function parseValues (str: string, char = ' ') {
   let stack = 0
   let temp = ''
   const result = []
@@ -725,11 +725,11 @@ export const parseValues = (str: string, char = ' ') => {
       stack--
     }
     // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
+    if (stack !== 0 || str[i] !== char) {
       temp += str[i]
     }
     if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp)
+      result.push(temp.trim())
       temp = ''
     }
   }

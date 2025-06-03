@@ -47,7 +47,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     error('[Mpx runtime error]: animation usage should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
   if (!enableAnimationRef.current || animationTypeRef.current === AnimationType.None || animationTypeRef.current === AnimationType.CssAnimation) {
-    error('[Mpx runtime error]: CSS animation is not supported yet')
+    animationTypeRef.current === AnimationType.CssAnimation && error('[Mpx runtime error]: CSS animation is not supported yet')
     return { enableStyleAnimation: false }
   }
   // style变更标识(首次render不执行)

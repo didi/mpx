@@ -51,6 +51,11 @@ function parseTransitionSingleProp (vals: string[], property: string) {
   let setDuration = false
   property = propName[property as keyof typeof propName]
   return vals.map(val => {
+    // transition-property all
+    if (val === 'all') {
+      error('[Mpx runtime error]: the value of transition-property is not supported \'all\'')
+      return undefined
+    }
     // behavior
     if (behaviorExp.test(val)) {
       error('[Mpx runtime error]: transition-behavior is not supported')
