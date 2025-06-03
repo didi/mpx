@@ -15,11 +15,11 @@ import {
   Transition,
   getTransformObj,
   getUnit,
-  parseValues,
   getInitialVal,
   getAnimation,
   isTransform
 } from './utils'
+import { parseValues } from '../utils'
 import type { AnimationCallback, SharedValue, AnimatableValue, EasingFunction } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
 import type { _ViewProps } from '../mpx-view'

@@ -11,7 +11,6 @@ import {
   TransformOrigin,
   SupportedProperty,
   getTransformObj,
-  formatStyle,
   formatAnimatedKeys
 } from './utils'
 import useAnimationAPIHooks from './useAnimationAPIHooks'
@@ -31,11 +30,11 @@ const enum AnimationType {
 }
 
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
-  const { style = {}, enableAnimation, animation, transitionend, layoutRef } = props
+  const { style: originalStyle = {}, enableAnimation, animation, transitionend, layoutRef } = props
   // console.log('useAnimationHooks', animation)
   // 记录动画类型
   // Todo 优先级
-  const propNames = Object.keys(style)
+  const propNames = Object.keys(originalStyle)
   const animationType = animation ? AnimationType.API : propNames.find(item => item.includes(Transition)) ? AnimationType.CssTransition : propNames.find(item => item.includes('animation')) ? AnimationType.CssAnimation : AnimationType.None
   const animationTypeRef = useRef(animationType)
   const enableStyleAnimation = enableAnimation || animationType !== AnimationType.None
@@ -54,7 +53,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // style变更标识(首次render不执行)
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animationDeps = useRef(-1)
-  const originalStyle = formatStyle(style)
   // 有动画样式的 style key(useAnimatedStyle使用)
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
