@@ -3,31 +3,35 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ReactNative from 'react-native'
 import Mpx from '../../index'
 
+function convertToHex (color) {
+  try {
+    const intColor = ReactNative.processColor(color)
+    if (intColor === null || intColor === undefined) {
+      return null
+    }
+    // 将32位整数颜色值转换为RGBA
+    const r = (intColor >> 16) & 255
+    const g = (intColor >> 8) & 255
+    const b = intColor & 255
+    // 转换为十六进制
+    const hexR = r.toString(16).padStart(2, '0')
+    const hexG = g.toString(16).padStart(2, '0')
+    const hexB = b.toString(16).padStart(2, '0')
+    return `#${hexR}${hexG}${hexB}`
+  } catch (error) {
+    return null
+  }
+}
+
+const titleHeight = 44
 export function useInnerHeaderHeight (pageconfig) {
   if (pageconfig.navigationStyle === 'custom') {
     return 0
   } else {
     const safeAreaTop = useSafeAreaInsets()?.top || 0
-    const headerHeight = safeAreaTop + getTitleHeight()
+    const headerHeight = safeAreaTop + titleHeight
     return headerHeight
   }
-}
-
-// 固定写死高度
-function getTitleHeight () {
-  return 44
-}
-
-// 计算颜色亮度
-const getColorBrightness = (color) => {
-  const processedColor = ReactNative.processColor(color)
-  if (typeof processedColor === 'number') {
-      const r = (processedColor >> 16) & 255
-      const g = (processedColor >> 8) & 255
-      const b = processedColor & 255
-      return (r * 299 + g * 587 + b * 114) / 1000
-  }
-  return 0
 }
 
 const styles = ReactNative.StyleSheet.create({
@@ -54,10 +58,24 @@ const styles = ReactNative.StyleSheet.create({
   },
   title: {
     fontSize: 17,
-    fontWeight: 600
+    fontWeight: 600,
+    width: '60%',
+    textAlign: 'center'
   }
 })
-
+const NavColor = {
+  White: '#ffffff',
+  Black: '#000000'
+}
+// navigationBarTextStyle只支持黑白'white'/'black
+const validBarTextStyle = (textStyle) => {
+  const textStyleColor = convertToHex(textStyle)
+  if (textStyle && [NavColor.White, NavColor.Black].includes(textStyleColor)) {
+    return textStyleColor
+  } else {
+    return NavColor.White
+  }
+}
 export function innerNav ({ props, navigation }) {
   const { pageConfig } = props
   const [innerPageConfig, setPageConfig] = useState(pageConfig || {})
@@ -65,16 +83,17 @@ export function innerNav ({ props, navigation }) {
     const newConfig = Object.assign({}, innerPageConfig, config)
     setPageConfig(newConfig)
   }
-
   const isCustom = innerPageConfig.navigationStyle === 'custom'
-  if (isCustom) return null
+  const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
+  // 状态栏的颜色
+  const statusBarElement = createElement(ReactNative.StatusBar, {
+    translucent: true,
+    backgroundColor: 'transparent',
+    barStyle: (navigationBarTextStyle === NavColor.White) ? 'light-content' : 'dark-content' // 'default'/'light-content'/'dark-content'
+  })
+
+  if (isCustom) return statusBarElement
   const safeAreaTop = useSafeAreaInsets()?.top || 0
-
-  // 回退按钮的颜色，根据背景色的亮度来进行调节
-  const backButtonColor = useMemo(() => {
-    return getColorBrightness(innerPageConfig.navigationBarBackgroundColor) > 128 ? '#000000' : '#ffffff'
-  }, [innerPageConfig.navigationBarBackgroundColor])
-
   // 假设是栈导航，获取栈的长度
   const stackLength = navigation.getState()?.routes?.length
   // 用于外部注册打开RN容器之前的栈长度
@@ -87,7 +106,8 @@ export function innerNav ({ props, navigation }) {
     onPress: () => { navigation.goBack() }
   }, createElement(ReactNative.Image, {
     source: { uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABICAYAAACqT5alAAAA2UlEQVR4nO3bMQrCUBRE0Yla6AYEN2nnBrTL+izcitW3MRDkEUWSvPzJvfCqgMwhZbAppWhNbbIHzB1g9wATERFRVyvpkj1irlpJ5X326D7WHh1hbdFD2CLpLmmftm7kfsEe09aNHFiBrT+wAlt/YAW2/sAKbP2BFdj6Ayuwy+ufz6XPL893krZ//O6iu2n4LT8kndLWTRTo4EC7BDo40C6BDg60S6CDA+0S6OBAuwQ6uNWiD2nrJmoIfU7cNWkR2hbb1UfbY7uuWhGWiIg+a/iHuHmA3QPs3gu4JW9Gan+OJAAAAABJRU5ErkJggg==' },
-    style: [styles.backButtonImage, { tintColor: backButtonColor }]
+    // 回退按钮的颜色与设置的title文案颜色一致
+    style: [styles.backButtonImage, { tintColor: navigationBarTextStyle }]
   }))
   : null
 
@@ -97,12 +117,14 @@ export function innerNav ({ props, navigation }) {
           backgroundColor: innerPageConfig.navigationBarBackgroundColor || '#000000'
         }]
       },
+      statusBarElement,
       createElement(ReactNative.View, {
         style: styles.headerContent,
-        height: getTitleHeight()
+        height: titleHeight
       }, backElement,
       createElement(ReactNative.Text, {
-        style: [styles.title, { color: innerPageConfig.navigationBarTextStyle || 'white' }]
+        style: [styles.title, { color: navigationBarTextStyle }],
+        numberOfLines: 1
       }, innerPageConfig.navigationBarTitleText?.trim() || ''))
     )
 }
