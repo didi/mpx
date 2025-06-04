@@ -1,4 +1,5 @@
 import { WebviewMessage, WEBVIEW_TARGET, registerWebviewProperties, CanvasInstance } from './utils'
+import { extendObject } from '../utils'
 
 const PROPERTIES = {
   crossOrigin: undefined,
@@ -60,10 +61,9 @@ export class Image {
             this[key] = value
           }
         }
-        callbackFn({
-          ...message.payload,
-          target: this
-        })
+        callbackFn(
+          extendObject({}, message.payload, { target: this })
+        )
       }
     })
   }

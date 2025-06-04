@@ -51,7 +51,7 @@ function createEffect (proxy, components) {
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
@@ -302,15 +302,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   proxy.created()
 
   if (type === 'page') {
-    const loadParams = {}
     const props = propsRef.current
-    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-    if (isObject(props.route.params)) {
-      for (const key in props.route.params) {
-        loadParams[key] = encodeURIComponent(props.route.params[key])
-      }
-    }
-    proxy.callHook(ONLOAD, [loadParams])
+    proxy.callHook(ONLOAD, [props.route.params || {}])
   }
 
   Object.assign(proxy, {
@@ -484,16 +477,16 @@ export function PageWrapperHOC (WrappedComponent) {
     usePageStatus(navigation, currentPageId)
     useLayoutEffect(() => {
       navigation.setOptions({
-        title: pageConfig.navigationBarTitleText?.trim() || '',
+        title: currentPageConfig.navigationBarTitleText?.trim() || '',
         headerStyle: {
-          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+          backgroundColor: currentPageConfig.navigationBarBackgroundColor || '#000000'
         },
-        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        headerTintColor: currentPageConfig.navigationBarTextStyle || 'white'
       })
 
       // TODO 此部分内容在native-stack可删除，用setOptions设置
       if (__mpx_mode__ !== 'ios') {
-        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+        ReactNative.StatusBar.setBarStyle(currentPageConfig.barStyle || 'dark-content')
         ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
         ReactNative.StatusBar.setBackgroundColor('transparent')
       }
