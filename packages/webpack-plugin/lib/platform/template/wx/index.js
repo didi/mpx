@@ -43,6 +43,23 @@ module.exports = function getSpec ({ warn, error }) {
     }
   }
 
+  function rnAccessibilityRulesHandle ({ name, value }) {
+    if (name === 'aria-role') {
+      return [
+        {
+          name: 'accessible',
+          value: true
+        },
+        {
+          name: 'accessibilityRole',
+          value: value
+        }
+      ]
+    } else {
+      return { name, value }
+    }
+  }
+
   const spec = {
     supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android', 'harmony'],
     // props预处理
@@ -433,7 +450,10 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^aria-(role|label)$/,
         ali () {
           warn('Ali environment does not support aria-role|label props!')
-        }
+        },
+        ios: rnAccessibilityRulesHandle,
+        android: rnAccessibilityRulesHandle,
+        harmony: rnAccessibilityRulesHandle
       }
     ],
     event: {

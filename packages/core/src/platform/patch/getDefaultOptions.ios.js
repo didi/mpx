@@ -303,15 +303,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   proxy.created()
 
   if (type === 'page') {
-    const loadParams = {}
     const props = propsRef.current
-    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-    if (isObject(props.route.params)) {
-      for (const key in props.route.params) {
-        loadParams[key] = encodeURIComponent(props.route.params[key])
-      }
-    }
-    proxy.callHook(ONLOAD, [loadParams])
+    proxy.callHook(ONLOAD, [props.route.params || {}])
   }
 
   Object.assign(proxy, {
