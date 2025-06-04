@@ -10,13 +10,15 @@ export function init (Mpx) {
     show: [],
     hide: [],
     error: [],
-    rejection: []
+    rejection: [],
+    lazyLoad: []
   }
   global.__navigationHelper = navigationHelper
   if (global.i18n) {
     Mpx.i18n = createI18n(global.i18n)
   }
   initGlobalErrorHandling()
+  initGlobalLazyLoadHandling()
 }
 
 function initGlobalErrorHandling () {
@@ -61,5 +63,15 @@ function initGlobalErrorHandling () {
     global.HermesInternal.enablePromiseRejectionTracker?.(rejectionTrackingOptions)
   } else {
     require('promise/setimmediate/rejection-tracking').enable(rejectionTrackingOptions)
+  }
+}
+
+function initGlobalLazyLoadHandling () {
+  global.onLazyLoadError = function (error) {
+    if (global.__mpxAppCbs?.lazyLoad?.length) {
+      global.__mpxAppCbs.lazyLoad.forEach((cb) => {
+        cb(error)
+      })
+    }
   }
 }
