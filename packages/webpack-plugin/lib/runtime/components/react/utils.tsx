@@ -8,7 +8,6 @@ import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
-import { ExtendedViewStyle } from './types/common'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
