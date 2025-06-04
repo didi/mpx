@@ -155,7 +155,7 @@ export function getInitialVal (style: ExtendedViewStyle, key: string) {
 }
 // animated key transform 格式化
 export function formatAnimatedKeys (keys: string[]) {
-  console.log('formatAnimatedKeys keys=', keys)
+  // console.log('formatAnimatedKeys keys=', keys)
   const animatedKeys = [] as (string|string[])[]
   const transforms = [] as string[]
   keys.forEach(key => {
@@ -166,7 +166,7 @@ export function formatAnimatedKeys (keys: string[]) {
     }
   })
   if (transforms.length) animatedKeys.push(transforms)
-  console.log('formatAnimatedKeys animatedKeys=', animatedKeys)
+  // console.log('formatAnimatedKeys animatedKeys=', animatedKeys)
   return animatedKeys
 }
 // 解析动画时长
@@ -177,7 +177,7 @@ export function getUnit (duration: string) {
 
 // 根据动画数据创建单个animation
 export function getAnimation ({ key, value }: { key: string, value: string|number }, { delay = 0, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
-  console.log('getAnimation', key, value, delay, duration, easing)
+  // console.log('getAnimation', key, value, delay, duration, easing)
   const animation = typeof callback === 'function'
     ? withTiming(value, { duration, easing }, callback)
     : withTiming(value, { duration, easing })

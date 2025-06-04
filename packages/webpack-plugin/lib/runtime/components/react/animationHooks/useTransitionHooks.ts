@@ -188,10 +188,9 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
         const transform = getTransformObj(originalStyle.transform!)
         ruleV = transform[key]
       }
-      // console.log('ruleV=', key, ruleV)
       const toVal = ruleV !== undefined
         ? ruleV
-        : shareValMap[key].value
+        : SupportedProperty[key]
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
       // console.log('animationOptions=', { delay, duration, easing })
       const callback: AnimationCallback = (finished?: boolean, current?: AnimatableValue) => {

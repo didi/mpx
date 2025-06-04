@@ -38,7 +38,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   const animationTypeRef = useRef(animationType)
   const enableStyleAnimation = enableAnimation || animationType !== AnimationType.None
   const enableAnimationRef = useRef(enableStyleAnimation)
-  console.log(`useAnimationHooks animationType=${animationTypeRef.current} animationType=${enableAnimationRef.current}`)
+  // console.log(`useAnimationHooks animationType=${animationTypeRef.current} animationType=${enableAnimationRef.current}`)
   if (animationTypeRef.current !== AnimationType.None && animationTypeRef.current !== animationType) {
     error('[Mpx runtime error]: animationType should be stable, it is not allowed to switch CSS animation, API animation or CSS animation in the component lifecycle')
   }
@@ -66,29 +66,20 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // 设置 lastShareValRef & shareValMap
-  function updateStyleVal (updateShareVal = false) {
+  function updateStyleVal () {
     Object.entries(originalStyle).forEach(([key, value]) => {
-      // console.log(`updateStyleVal key=${key} value=${value}`)
       if (key === Transform) {
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
-            if (updateShareVal && hasOwn(shareValMap, key)) {
-              shareValMap[key].value = value
-              // console.log(`updateStyleVal shareValMap[${key}].value=${value}`)
-            }
+            shareValMap[key].value = value
           }
-          // console.log(`updateStyleVal lastStyleRef.current[${key}]=${lastStyleRef.current[key]}`)
         })
-      } else if (hasOwn(SupportedProperty, key)) {
+      } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
           lastStyleRef.current[key] = value
-          if (updateShareVal && hasOwn(shareValMap, key)) {
-            shareValMap[key].value = value
-            // console.log(`updateStyleVal shareValMap[${key}].value=${value}`)
-          }
+          shareValMap[key].value = value
         }
-        // console.log(`updateStyleVal lastStyleRef.current[${key}]=${lastStyleRef.current[key]}`)
       }
     })
   }
@@ -138,10 +129,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // ** style 更新
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    // 仅 animation api style 更新同步更新 shareVal
-    updateStyleVal(animationTypeRef.current === AnimationType.API)
-    // css 动画依赖为 style 变更
-    if (animationTypeRef.current !== AnimationType.API) {
+    if (animationTypeRef.current === AnimationType.API) {
+      // 仅 animation api style 更新同步更新 shareVal
+      updateStyleVal()
+    } else {
+      // css 动画依赖为 style 变更
       // css transition 为 style 变更驱动，但首次不计入
       animationDeps.current += 1
     }
@@ -150,7 +142,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (animationDeps.current === -1) return
-    // console.log('useTransitionHooks, useEffect deps=styleChangeTimes', animationDeps.current)
     startAnimation()
   }, [animationDeps.current])
   // ** 清空动画
