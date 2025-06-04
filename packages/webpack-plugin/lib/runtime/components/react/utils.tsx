@@ -285,21 +285,6 @@ function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
     meta.hasPositionFixed = true
   }
 }
-
-// format style transform
-function transformTransform (style: Record<string, any>) {
-  if (!style.transform || Array.isArray(style.transform)) return
-  style.transform = parseTransform(style.transform)
-}
-
-interface TransformStyleConfig {
-  enableVar?: boolean
-  externalVarContext?: Record<string, any>
-  parentFontSize?: number
-  parentWidth?: number
-  parentHeight?: number
-}
-
 // 多value解析
 function parseValues (str: string, char = ' ') {
   let stack = 0
@@ -374,6 +359,18 @@ function parseTransform (transformStr: string) {
     }
   })
   return transform
+}
+// format style transform
+function transformTransform (style: Record<string, any>) {
+  if (!style.transform || Array.isArray(style.transform)) return
+  style.transform = parseTransform(style.transform)
+}
+interface TransformStyleConfig {
+  enableVar?: boolean
+  externalVarContext?: Record<string, any>
+  parentFontSize?: number
+  parentWidth?: number
+  parentHeight?: number
 }
 
 export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
