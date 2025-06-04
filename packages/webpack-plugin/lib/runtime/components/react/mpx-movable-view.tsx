@@ -7,13 +7,13 @@
  * ✘ damping
  * ✘ friction
  * ✔ disabled
- * ✘ scale
- * ✘ scale-min
- * ✘ scale-max
- * ✘ scale-value
+ * ✔ scale
+ * ✔ scale-min
+ * ✔ scale-max
+ * ✔ scale-value
  * ✔ animation
  * ✔ bindchange
- * ✘ bindscale
+ * ✔ bindscale
  * ✔ htouchmove
  * ✔ vtouchmove
  */
@@ -43,8 +43,13 @@ interface MovableViewProps {
   y?: number
   disabled?: boolean
   animation?: boolean
+  scale?: boolean
+  'scale-min'?: number
+  'scale-max'?: number
+  'scale-value'?: number
   id?: string
   bindchange?: (event: unknown) => void
+  bindscale?: (event: unknown) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
   catchtouchstart?: (event: GestureTouchEvent) => void
   bindtouchmove?: (event: GestureTouchEvent) => void
@@ -95,6 +100,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     inertia = false,
     disabled = false,
     animation = true,
+    scale = false,
+    'scale-min': scaleMin = 0.1,
+    'scale-max': scaleMax = 10,
+    'scale-value': scaleValue = 1,
     'out-of-bounds': outOfBounds = false,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -114,7 +123,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend
+    catchtouchend,
+    bindscale,
+    onLayout: propsOnLayout
   } = props
 
   const {
@@ -135,6 +146,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
+  const currentScale = useSharedValue(scaleValue || 1)
 
   const startPosition = useSharedValue({
     x: 0,
@@ -195,6 +207,21 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     )
   }, [])
 
+  const handleTriggerScale = useCallback(({ x, y, scale }: { x: number; y: number; scale: number }) => {
+    const { bindscale } = propsRef.current
+    if (!bindscale) return
+    bindscale(
+      getCustomEvent('scale', {}, {
+        detail: {
+          x,
+          y,
+          scale
+        },
+        layoutRef
+      }, propsRef.current)
+    )
+  }, [])
+
   useEffect(() => {
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
@@ -225,6 +252,28 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }
     })()
   }, [x, y])
+
+  useEffect(() => {
+    runOnUI(() => {
+      if (currentScale.value !== scaleValue) {
+        // 限制缩放值在 scaleMin 和 scaleMax 之间
+        const clampedScale = Math.max(scaleMin, Math.min(scaleMax, scaleValue))
+        currentScale.value = animation
+          ? withSpring(clampedScale, {
+            duration: 1500,
+            dampingRatio: 0.8
+          })
+          : clampedScale
+        if (bindscale) {
+          runOnJS(handleTriggerScale)({
+            x: offsetX.value,
+            y: offsetY.value,
+            scale: clampedScale
+          })
+        }
+      }
+    })()
+  }, [scaleValue, scaleMin, scaleMax, animation])
 
   useEffect(() => {
     const { width, height } = layoutRef.current
@@ -258,8 +307,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const top = (style.position === 'absolute' && style.top) || 0
     const left = (style.position === 'absolute' && style.left) || 0
 
-    const scaledWidth = width || 0
-    const scaledHeight = height || 0
+    // 考虑当前缩放值计算实际大小
+    const currentScaleVal = currentScale.value
+    const scaledWidth = (width || 0) * currentScaleVal
+    const scaledHeight = (height || 0) * currentScaleVal
 
     const maxY = MovableAreaLayout.height - scaledHeight - top
     const maxX = MovableAreaLayout.width - scaledWidth - left
@@ -329,7 +380,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
       resetBoundaryAndCheck({ width, height })
     })
-    props.onLayout && props.onLayout(e)
+    propsOnLayout && propsOnLayout(e)
   }
 
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
@@ -404,6 +455,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
 
     const gesturePan = Gesture.Pan()
+      .minPointers(1)
+      .maxPointers(1)
       .onTouchesDown((e: GestureTouchEvent) => {
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
@@ -551,14 +604,92 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     if (waitForHandlers && waitForHandlers.length) {
       gesturePan.requireExternalGestureToFail(...waitForHandlers)
     }
+
+    // 添加缩放手势支持
+    if (scale) {
+      const gesturePinch = Gesture.Pinch()
+        .onUpdate((e: any) => {
+          'worklet'
+          if (disabled) return
+          // 限制缩放值在 scaleMin 和 scaleMax 之间
+          const newScale = Math.max(scaleMin, Math.min(scaleMax, e.scale))
+          currentScale.value = newScale
+
+          // 缩放时重新计算并检查边界
+          const { width, height } = layoutRef.current
+          if (width && height) {
+            runOnJS(() => {
+              setBoundary({ width, height })
+              // 检查当前位置是否还在有效范围内
+              runOnUI(() => {
+                const { x: newX, y: newY } = checkBoundaryPosition({
+                  positionX: offsetX.value,
+                  positionY: offsetY.value
+                })
+                if (newX !== offsetX.value) {
+                  offsetX.value = animation
+                    ? withSpring(newX, { duration: 300, dampingRatio: 0.8 })
+                    : newX
+                }
+                if (newY !== offsetY.value) {
+                  offsetY.value = animation
+                    ? withSpring(newY, { duration: 300, dampingRatio: 0.8 })
+                    : newY
+                }
+              })()
+            })()
+          }
+
+          if (bindscale) {
+            runOnJS(handleTriggerScale)({
+              x: offsetX.value,
+              y: offsetY.value,
+              scale: newScale
+            })
+          }
+        })
+        .onEnd((e: any) => {
+          'worklet'
+          if (disabled) return
+          // 确保最终缩放值在有效范围内
+          const finalScale = Math.max(scaleMin, Math.min(scaleMax, currentScale.value))
+          if (finalScale !== currentScale.value) {
+            currentScale.value = animation
+              ? withSpring(finalScale, {
+                duration: 1500,
+                dampingRatio: 0.8
+              })
+              : finalScale
+            if (propsRef.current.bindscale) {
+              runOnJS(handleTriggerScale)({
+                x: offsetX.value,
+                y: offsetY.value,
+                scale: finalScale
+              })
+            }
+          }
+          // 缩放结束后重新检查边界
+          const { width, height } = layoutRef.current
+          if (width && height) {
+            runOnJS(() => {
+              resetBoundaryAndCheck({ width, height })
+            })()
+          }
+        })
+
+      // 根据手指数量自动区分手势：一指移动，两指缩放
+      return Gesture.Simultaneous(gesturePan, gesturePinch)
+    }
+
     return gesturePan
-  }, [disabled, direction, inertia, outOfBounds, gestureSwitch.current])
+  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
       transform: [
         { translateX: offsetX.value },
-        { translateY: offsetY.value }
+        { translateY: offsetY.value },
+        { scale: currentScale.value }
       ]
     }
   })
