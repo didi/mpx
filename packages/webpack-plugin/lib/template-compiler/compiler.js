@@ -791,6 +791,11 @@ function parse (template, options) {
     }
   })
 
+  // multiRoot
+  if (root.tag === 'temp-node' && root.children && root.children.length > 1) {
+    error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
+  }
+
   if (hasI18n) {
     if (i18nInjectableComputed.length) {
       meta.computed = (meta.computed || []).concat(i18nInjectableComputed)

@@ -113,11 +113,6 @@ module.exports = function (template, {
         output += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
       }
 
-      // 组件/页面 多节点时需要使用 block 包裹
-      if (root.tag === 'temp-node' && root.children && root.children.length > 1) {
-        root.tag = 'block'
-      }
-
       const rawCode = genNode(root)
       if (rawCode) {
         try {
