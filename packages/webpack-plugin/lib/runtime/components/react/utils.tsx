@@ -738,6 +738,8 @@ export function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 const parseTransform = (transformStr: string) => {
   const values = parseValues(transformStr)
+  // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+  values.sort()
   const transform: {[propName: string]: string|number|number[]}[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)

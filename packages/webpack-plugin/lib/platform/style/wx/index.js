@@ -379,6 +379,8 @@ module.exports = function getSpec ({ warn, error }) {
     // css var & 数组直接返回
     if (Array.isArray(value) || cssVariableExp.test(value)) return { prop, value }
     const values = parseValues(value)
+    // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+    values.sort()
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\((.+)\)/)
