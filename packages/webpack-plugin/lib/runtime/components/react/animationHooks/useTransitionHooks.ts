@@ -180,7 +180,8 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   }, [])
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
-    let needSetCallback = !!transitionend
+    // duration 不同需要再次执行回调，这里记录一下上次propName动画的duration
+    let lastDuration = -1
     animatedKeys.forEach(key => {
       // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
       let ruleV = originalStyle[key]
@@ -193,15 +194,15 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
         : SupportedProperty[key]
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
       // console.log('animationOptions=', { delay, duration, easing })
-      const callback: AnimationCallback = (finished?: boolean, current?: AnimatableValue) => {
+      const callback = transitionend && ((finished?: boolean, current?: AnimatableValue) => {
         'worklet'
         // 动画结束后设置下一次transformOrigin
         if (finished && transitionend) {
           runOnJS(transitionend)(finished, current, duration)
         }
-      }
-      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
-      needSetCallback = false
+      })
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, lastDuration !== duration ? callback : undefined)
+      lastDuration = duration
       shareValMap[key].value = animation
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })

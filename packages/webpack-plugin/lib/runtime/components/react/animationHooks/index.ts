@@ -141,7 +141,8 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // ** 获取动画样式prop & 驱动动画
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (animationDeps.current === -1) return
+    // console.log('useEffect animationDeps=', animationDeps.current)
+    if (animationDeps.current <= 0) return
     startAnimation()
   }, [animationDeps.current])
   // ** 清空动画
