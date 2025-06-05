@@ -1,8 +1,13 @@
-import { reactive, defineReactive } from '../observer/reactive'
-import { ReactiveEffect, pauseTracking, resetTracking } from '../observer/effect'
-import { effectScope } from '../platform/export/index'
+import {
+  computed,
+  effectScope,
+  reactive,
+  defineReactive,
+  ReactiveEffect,
+  pauseTracking,
+  resetTracking
+} from '@mpxjs/reactivity'
 import { watch } from '../observer/watch'
-import { computed } from '../observer/computed'
 import { queueJob, nextTick, flushPreFlushCbs } from '../observer/scheduler'
 import Mpx from '../index'
 import {
