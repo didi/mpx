@@ -4,6 +4,8 @@ import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
+import { reactive } from '../observer/reactive'
+import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
@@ -91,6 +93,57 @@ export default function createApp (options) {
       global.__navigationHelper.lastFailCallback = null
     }
   }
+  const appState = reactive({ state: '' })
+  // TODO hideReason 暂未完全模拟
+  // 0用户退出小程序
+  // 1进入其他小程序
+  // 2打开原生功能页
+  // 3其他
+  watch(() => appState.state, (value) => {
+    if (value === 'show') {
+      let options = appState.showOptions
+      delete appState.showOptions
+      if (!options) {
+        const navigation = getFocusedNavigation()
+        if (navigation) {
+          const state = navigation.getState()
+          const current = state.routes[state.index]
+          options = {
+            path: current.name,
+            query: current.params,
+            scene: 0,
+            shareTicket: '',
+            referrerInfo: {}
+          }
+        }
+      }
+      global.__mpxAppCbs.show.forEach((cb) => {
+        cb(options || {})
+      })
+    } else if (value === 'hide') {
+      global.__mpxAppCbs.hide.forEach((cb) => {
+        cb({
+          reason: appState.hideReason ?? 3
+        })
+        delete appState.hideReason
+      })
+    }
+  }, { sync: true })
+  const onAppStateChange = (currentState) => {
+    const navigation = getFocusedNavigation()
+    if (currentState === 'active') {
+      appState.state = 'show'
+      if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+        global.__mpxPageStatusMap[navigation.pageId] = 'show'
+      }
+    } else if (currentState === 'inactive' || currentState === 'background') {
+      appState.hideReason = 3
+      appState.state = 'hide'
+      if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+        global.__mpxPageStatusMap[navigation.pageId] = 'hide'
+      }
+    }
+  }
 
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
@@ -128,47 +181,18 @@ export default function createApp (options) {
           global.__mpxLaunchOptions = options
           defaultOptions.onLaunch && defaultOptions.onLaunch.call(appInstance, options)
         }
-        global.__mpxAppCbs.show.forEach((cb) => {
-          cb(options)
-        })
+        appState.showOptions = options
+        appState.state = 'show'
         global.__mpxAppLaunched = true
         global.__mpxAppHotLaunched = true
       }
     }
 
     useEffect(() => {
-      const changeSubscription = ReactNative.AppState.addEventListener('change', (currentState) => {
-        if (currentState === 'active') {
-          let options = global.__mpxEnterOptions
-          const navigation = getFocusedNavigation()
-          if (navigation) {
-            const state = navigation.getState()
-            const current = state.routes[state.index]
-            options = {
-              path: current.name,
-              query: current.params,
-              scene: 0,
-              shareTicket: '',
-              referrerInfo: {}
-            }
-          }
-          global.__mpxAppCbs.show.forEach((cb) => {
-            cb(options)
-          })
-          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'show'
-          }
-        } else if (currentState === 'inactive' || currentState === 'background') {
-          global.__mpxAppCbs.hide.forEach((cb) => {
-            cb({
-              reason: 3
-            })
-          })
-          const navigation = getFocusedNavigation()
-          if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-            global.__mpxPageStatusMap[navigation.pageId] = 'hide'
-          }
-        }
+      const changeSubscription = ReactNative.AppState.addEventListener('change', (state) => {
+        // 外层可能会异常设置此配置，因此加载监听函数内部
+        if (Mpx.config.rnConfig.disableReactNativeAppStateChange) return
+        onAppStateChange(state)
       })
 
       let count = 0
@@ -184,11 +208,8 @@ export default function createApp (options) {
       })
       return () => {
         // todo 跳到原生页面或者其他rn bundle可以考虑使用reason 1/2进行模拟抹平
-        global.__mpxAppCbs.hide.forEach((cb) => {
-          cb({
-            reason: 0
-          })
-        })
+        appState.hideReason = 0
+        appState.state = 'hide'
         changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
       }
@@ -256,5 +277,13 @@ export default function createApp (options) {
     if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
       global.__mpxPageStatusMap[navigation.pageId] = status
     }
+  }
+
+  // 用于外层业务用来设置App的展示情况
+  global.setAppShow = function () {
+    onAppStateChange('active')
+  }
+  global.setAppHide = function () {
+    onAppStateChange('inactive')
   }
 }
