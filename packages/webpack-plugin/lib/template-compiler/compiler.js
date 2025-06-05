@@ -680,7 +680,6 @@ function parse (template, options) {
     meta.options.virtualHost = true
   }
   let currentParent
-  let multiRootError
   // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
   const tagNames = new Set()
 
@@ -792,7 +791,8 @@ function parse (template, options) {
     }
   })
 
-  if (multiRootError) {
+  // multiRoot
+  if (root.tag === 'temp-node' && root.children && root.children.length > 1) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
   }
 
