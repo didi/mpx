@@ -36,6 +36,7 @@ function getCollectPath (path) {
   let current = path.parentPath
   let last = path
   let keyPath = '' + path.node.name
+  let isSimpleProperty = true
 
   while (current.isMemberExpression() && last.parentKey !== 'property') {
     if (current.node.computed) {
@@ -45,6 +46,7 @@ function getCollectPath (path) {
             break
           }
           keyPath += `.${current.node.property.value}`
+          if (isSimpleProperty) isSimpleProperty = isSimpleKey(current.node.property.value)
         } else {
           keyPath += `[${current.node.property.value}]`
         }
@@ -63,7 +65,8 @@ function getCollectPath (path) {
 
   return {
     last,
-    keyPath
+    keyPath,
+    isSimpleProperty
   }
 }
 
@@ -316,11 +319,12 @@ module.exports = {
             return
           }
           path.needBind = true
-          const { last, keyPath } = getCollectPath(path)
+          const { last, keyPath, isSimpleProperty } = getCollectPath(path)
           if (needCollect) {
             last.collectInfo = {
               key: t.stringLiteral(keyPath),
-              isSimple: isSimpleKey(keyPath)
+              isSimple: isSimpleKey(keyPath),
+              isSimpleProperty
             }
           }
 
@@ -434,9 +438,9 @@ module.exports = {
       MemberExpression: {
         exit (path) {
           if (path.collectInfo) {
-            const { isSimple, key } = path.collectInfo
+            const { isSimple, key, isSimpleProperty } = path.collectInfo
             const callee = isSimple ? t.identifier('_sc') : t.identifier('_c')
-            const replaceNode = renderReduce
+            const replaceNode = (renderReduce && isSimpleProperty)
               ? t.callExpression(callee, [key])
               : t.callExpression(callee, [key, path.node])
             path.node && path.replaceWith(replaceNode)
