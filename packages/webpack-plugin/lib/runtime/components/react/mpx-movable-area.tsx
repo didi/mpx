@@ -54,7 +54,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       props,
       layoutProps,
       {
-        style: extendObject({ height: contextValue.height, width: contextValue.width, overflow: 'hidden' }, normalStyle, layoutStyle),
+        style: extendObject({ height: contextValue.height, width: contextValue.width }, normalStyle, layoutStyle),
         ref: movableViewRef
       }
     ),
