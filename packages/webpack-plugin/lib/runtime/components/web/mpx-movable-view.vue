@@ -38,7 +38,13 @@ export default {
       touchEvent: '',
       isInited: false,
       deactivatedX: 0,
-      deactivatedY: 0
+      deactivatedY: 0,
+      // 缓存高度，用于检测变化
+      cachedContentHeight: 0,
+      cachedWrapperHeight: 0,
+      // 缓存宽度，用于检测变化
+      cachedContentWidth: 0,
+      cachedWrapperWidth: 0
     }
   },
   props: {
@@ -111,14 +117,20 @@ export default {
         return
       }
       this.source = ''
-      const currentX = this.bs.x
-      // 兼容容器尺寸变化且同时改变x的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollX, maxScrollX 拿到的都是上一次的值
-      this.refresh()
-      // bs refresh 方法内会触发 resetPosition()，如果容器宽度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
-      // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
-      if (this.bs.x !== currentX) {
-        this.bs.scrollTo(currentX, this.bs.y, 0)
+      // 检查宽度是否发生变化，只有在变化时才调用 refresh
+      const widthChanged = this.checkWidthChange()
+      let currentX = this.bs.x
+      
+      if (widthChanged) {
+        // 兼容容器尺寸变化且同时改变x的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollX, maxScrollX 拿到的都是上一次的值
+        this.refresh()
+        // bs refresh 方法内会触发 resetPosition()，如果容器宽度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
+        // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
+        if (this.bs.x !== currentX) {
+          this.bs.scrollTo(currentX, this.bs.y, 0)
+        }
       }
+      
       if (newVal > this.bs.minScrollX) {
         newVal = this.bs.minScrollX
       }
@@ -133,14 +145,20 @@ export default {
         return
       }
       this.source = ''
-      // 兼容容器尺寸变化且同时改变y的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollY, maxScrollY 拿到的都是上一次的值
-      const currentY = this.bs.y
-      this.refresh()
-      // bs refresh 方法内会触发 resetPosition()，如果容器高度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
-      // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
-      if (this.bs.y !== currentY) {
-        this.bs.scrollTo(this.bs.x, currentY, 0)
+      // 检查高度是否发生变化，只有在变化时才调用 refresh
+      const heightChanged = this.checkHeightChange()
+      let currentY = this.bs.y
+      
+      if (heightChanged) {
+        // 兼容容器尺寸变化且同时改变y的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollY, maxScrollY 拿到的都是上一次的值
+        this.refresh()
+        // bs refresh 方法内会触发 resetPosition()，如果容器高度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
+        // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
+        if (this.bs.y !== currentY) {
+          this.bs.scrollTo(this.bs.x, currentY, 0)
+        }
       }
+      
       if (newVal > this.bs.minScrollY) {
         newVal = this.bs.minScrollY
       }
@@ -168,6 +186,10 @@ export default {
     if (!this.scrollOptions.closeResizeObserver) {
       this.createResizeObserver()
     }
+    // 初始化尺寸缓存
+    this.$nextTick(() => {
+      this.initSizeCache()
+    })
     this.init()
   },
   activated () {
@@ -206,6 +228,44 @@ export default {
     },
     refresh () {
       this.bs && this.bs.refresh()
+    },
+    // 检查高度是否发生变化
+    checkHeightChange () {
+      if (!this.$refs.scrollContent || !this.$parent.$refs.movableArea) {
+        return false
+      }
+      
+      const currentContentHeight = this.$refs.scrollContent.clientHeight
+      const currentWrapperHeight = this.$parent.$refs.movableArea.clientHeight
+      
+      const heightChanged = 
+        currentContentHeight !== this.cachedContentHeight || 
+        currentWrapperHeight !== this.cachedWrapperHeight
+      
+      // 更新缓存的高度
+      this.cachedContentHeight = currentContentHeight
+      this.cachedWrapperHeight = currentWrapperHeight
+      
+      return heightChanged
+    },
+    // 检查宽度是否发生变化
+    checkWidthChange () {
+      if (!this.$refs.scrollContent || !this.$parent.$refs.movableArea) {
+        return false
+      }
+      
+      const currentContentWidth = this.$refs.scrollContent.clientWidth
+      const currentWrapperWidth = this.$parent.$refs.movableArea.clientWidth
+      
+      const widthChanged = 
+        currentContentWidth !== this.cachedContentWidth || 
+        currentWrapperWidth !== this.cachedWrapperWidth
+      
+      // 更新缓存的宽度
+      this.cachedContentWidth = currentContentWidth
+      this.cachedWrapperWidth = currentWrapperWidth
+      
+      return widthChanged
     },
     destroyBs () {
       if (!this.bs) return
@@ -385,6 +445,15 @@ export default {
         })
       }
       extend(this.bsOptions, this.scrollOptions)
+    },
+    // 初始化尺寸缓存
+    initSizeCache () {
+      if (this.$refs.scrollContent && this.$parent.$refs.movableArea) {
+        this.cachedContentHeight = this.$refs.scrollContent.clientHeight
+        this.cachedWrapperHeight = this.$parent.$refs.movableArea.clientHeight
+        this.cachedContentWidth = this.$refs.scrollContent.clientWidth
+        this.cachedWrapperWidth = this.$parent.$refs.movableArea.clientWidth
+      }
     },
     // 处理小数点，四舍五入，默认保留一位小数
     roundFun (value, n = 1) {
