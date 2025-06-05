@@ -107,6 +107,9 @@ export default {
   },
   watch: {
     x (newVal) {
+      if (this.direction === 'vertical' || this.direction === 'none') {
+        return
+      }
       this.source = ''
       const currentX = this.bs.x
       // 兼容容器尺寸变化且同时改变x的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollX, maxScrollX 拿到的都是上一次的值
@@ -126,6 +129,9 @@ export default {
       this.bs.scrollTo(newVal, this.bs.y, this.speed)
     },
     y (newVal) {
+      if (this.direction === 'horizontal' || this.direction === 'none') {
+        return
+      }
       this.source = ''
       // 兼容容器尺寸变化且同时改变y的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollY, maxScrollY 拿到的都是上一次的值
       const currentY = this.bs.y
