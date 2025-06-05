@@ -108,6 +108,14 @@ export default {
   watch: {
     x (newVal) {
       this.source = ''
+      const currentX = this.bs.x
+      // 兼容容器尺寸变化且同时改变x的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollX, maxScrollX 拿到的都是上一次的值
+      this.refresh()
+      // bs refresh 方法内会触发 resetPosition()，如果容器宽度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
+      // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
+      if (this.bs.x !== currentX) {
+        this.bs.scrollTo(currentX, this.bs.y, 0)
+      }
       if (newVal > this.bs.minScrollX) {
         newVal = this.bs.minScrollX
       }
@@ -119,6 +127,14 @@ export default {
     },
     y (newVal) {
       this.source = ''
+      // 兼容容器尺寸变化且同时改变y的场景，ResizeObserver回调是异步的，如果不直接refresh，minScrollY, maxScrollY 拿到的都是上一次的值
+      const currentY = this.bs.y
+      this.refresh()
+      // bs refresh 方法内会触发 resetPosition()，如果容器高度从 100 - 50，y 从 100 - 50，这会导致位置立即跳转到边界内，没有动画效果，造成视觉突兀
+      // 如果 refresh 导致了位置变化，先恢复到原位置再动画滚动
+      if (this.bs.y !== currentY) {
+        this.bs.scrollTo(this.bs.x, currentY, 0)
+      }
       if (newVal > this.bs.minScrollY) {
         newVal = this.bs.minScrollY
       }
