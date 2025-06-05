@@ -464,4 +464,3 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
 })
-k
