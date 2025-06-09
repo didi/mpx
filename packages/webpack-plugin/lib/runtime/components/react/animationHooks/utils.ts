@@ -38,9 +38,14 @@ export type TransitionMap = {
   }
 }
 
+export type InterpolateOutput = {
+  [propName: string]: string[]
+}
+
 // ms s 单位匹配
 export const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)?\s*$/
 export const CubicBezierExp = /cubic-bezier\(["']?(.*?)["']?\)/
+export const PropNameColorExp = /^c|Color$/
 // export const NumberExp = /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/
 // export const ColorExp = /^(color|(.+Color))$/
 // transform
@@ -137,7 +142,7 @@ export const isTransform = (key: string) => Object.keys(TransformInitial).includ
 // transform 数组转对象
 export function getTransformObj (transforms: { [propName: string]: string | number }[]) {
   'worklet'
-  return transforms.reduce((transformObj, item) => {
+  return (transforms || []).reduce((transformObj, item) => {
     return Object.assign(transformObj, item)
   }, {} as { [propName: string]: string | number })
 }

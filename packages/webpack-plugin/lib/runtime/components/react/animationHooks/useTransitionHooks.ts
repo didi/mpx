@@ -3,7 +3,8 @@ import { useMemo } from 'react'
 import {
   Easing,
   makeMutable,
-  runOnJS
+  runOnJS,
+  useSharedValue
 } from 'react-native-reanimated'
 import {
   EasingKey,
@@ -13,6 +14,7 @@ import {
   CubicBezierExp,
   secondRegExp,
   Transition,
+  PropNameColorExp,
   getTransformObj,
   getUnit,
   getInitialVal,
@@ -20,10 +22,10 @@ import {
   isTransform
 } from './utils'
 import { parseValues } from '../utils'
-import type { AnimationCallback, SharedValue, AnimatableValue, EasingFunction } from 'react-native-reanimated'
+import type { SharedValue, AnimatableValue, EasingFunction } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
 import type { _ViewProps } from '../mpx-view'
-import type { CustomAnimationCallback, TransitionMap, TimingFunction } from './utils'
+import type { CustomAnimationCallback, TransitionMap, TimingFunction, InterpolateOutput } from './utils'
 
 type AnimationDataType = {
   property?: string
@@ -159,7 +161,19 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   const transitionMap = useMemo(() => {
     return parseTransitionStyle(originalStyle)
   }, [])
-  // ** style prop sharedValue
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const colorOutput = useMemo(() => {
+    return Object.keys(transitionMap).reduce((output, property) => {
+      if (PropNameColorExp.test(property)) {
+        const defaultVal = getInitialVal(originalStyle, property)
+        output[property] = [defaultVal, 'transparent']
+      }
+      return output
+    }, {} as InterpolateOutput)
+  }, [])
+  // 插值输出区间值
+  const interpolateOutput = useSharedValue(colorOutput)
+  // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
   const shareValMap = useMemo(() => {
     return Object.keys(transitionMap).reduce((valMap, property) => {
       // const { property } = transition || {}
@@ -172,7 +186,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
       } else if (hasOwn(SupportedProperty, property)) {
         const defaultVal = getInitialVal(originalStyle, property)
         // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
-        valMap[property] = makeMutable(defaultVal)
+        valMap[property] = makeMutable(PropNameColorExp.test(property) ? 0 : defaultVal)
       }
       // console.log('shareValMap = ', valMap)
       return valMap
@@ -189,9 +203,15 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
         const transform = getTransformObj(originalStyle.transform!)
         ruleV = transform[key]
       }
-      const toVal = ruleV !== undefined
-        ? ruleV
-        : SupportedProperty[key]
+      if (PropNameColorExp.test(key)) {
+        interpolateOutput.value[key][1] = (ruleV || 'transparent') as string
+      }
+      const toVal = PropNameColorExp.test(key)
+        ? 1
+        : ruleV !== undefined
+          ? ruleV
+          : SupportedProperty[key]
+      // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
       // console.log('animationOptions=', { delay, duration, easing })
       const callback = transitionend && ((finished?: boolean, current?: AnimatableValue) => {
@@ -223,6 +243,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   }
   return {
     shareValMap,
+    interpolateOutput,
     createAnimation,
     getAnimatedStyleKeys
   }
