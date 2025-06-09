@@ -13,7 +13,6 @@ module.exports = function (script, {
   builtInComponentsMap,
   localComponentsMap,
   localPagesMap,
-  preloadRule,
   rnConfig,
   componentGenerics,
   genericsInfo
@@ -50,7 +49,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp, preloadRule })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
