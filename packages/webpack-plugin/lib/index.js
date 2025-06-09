@@ -1410,7 +1410,7 @@ class MpxWebpackPlugin {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   const depBlock = new AsyncDependenciesBlock(
                     {
-                      name: isWeb(mpx.mode) ? tarRoot : tarRoot + '/index'
+                      name: tarRoot + '/index'
                     },
                     expr.loc,
                     request
