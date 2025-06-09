@@ -2355,7 +2355,8 @@ function processExternalClasses (el, options) {
 }
 
 function processScoped (el) {
-  if (hasScoped && isRealNode(el) && (isWeb(mode) && el.tag !== 'component')) { // 处理web下 template第一个元素不设置mpx-app-scope
+  if (hasScoped && isRealNode(el)) {
+    if (isWeb(mode) && el.tag === 'component') return // 处理web下 template第一个元素不设置mpx-app-scope
     const rootModuleId = ctorType === 'component' ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
