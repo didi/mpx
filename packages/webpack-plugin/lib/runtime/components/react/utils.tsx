@@ -286,6 +286,45 @@ function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
   }
 }
 
+function transformBoxShadow (styleObj: Record<string, any>) {
+  const { boxShadow } = styleObj
+  if (boxShadow) {
+    const len = boxShadow.length
+    const rpx = 'rpx'
+    let res = ''
+    let tempRpx = ''
+    let rpxIndex = 0
+    for (let i = 0; i < len; i++) {
+      const value = boxShadow[i]
+      const num = +value
+      if (value !== ' ' && num === num) {
+        // 记录数字
+        tempRpx += value
+      } else if (tempRpx) {
+        // 有记录数字，判断接下来非数字是不是rpx
+        tempRpx += value
+        if (rpxIndex === 2) {
+          // 捕捉到rpx使用，进行替换
+          res += global.__formatValue(tempRpx)
+          rpxIndex = 0
+          tempRpx = ''
+        } else if (value === rpx[rpxIndex]) {
+          rpxIndex++
+        } else {
+          // 数字后面不是rpx，直接清空rpx记录信息
+          res += tempRpx
+          rpxIndex = 0
+          tempRpx = ''
+        }
+      } else {
+        res += value
+      }
+    }
+    if (tempRpx) res += tempRpx
+    styleObj.boxShadow = res
+  }
+}
+
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -427,6 +466,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformPosition(normalStyle, positionMeta)
   // transform number enum stringify
   transformStringify(normalStyle)
+  // transform rpx to px
+  transformBoxShadow(normalStyle)
 
   return {
     hasVarDec,
