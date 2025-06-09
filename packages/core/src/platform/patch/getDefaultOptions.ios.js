@@ -426,7 +426,7 @@ function usePagePreload (route) {
       const preloadRule = global.__preloadRule || {}
       const { packages } = preloadRule[name] || {}
       if (packages?.length > 0) {
-        const downloadChunkAsync = global.__mpx.config?.rnConfig?.downloadChunkAsync
+        const downloadChunkAsync = mpxGlobal.__mpx.config?.rnConfig?.downloadChunkAsync
         if (typeof downloadChunkAsync === 'function') {
           callWithErrorHandling(() => downloadChunkAsync(packages))
         }
