@@ -260,12 +260,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       if (currentScale.value !== scaleValue) {
         // 限制缩放值在 scaleMin 和 scaleMax 之间
         const clampedScale = Math.max(scaleMin, Math.min(scaleMax, scaleValue))
-        currentScale.value = animation
-          ? withSpring(clampedScale, {
+        if (animation) {
+          currentScale.value = withSpring(clampedScale, {
             duration: 1500,
             dampingRatio: 0.8
+          }, () => {
+            runOnJS(handleRest)()
           })
-          : clampedScale
+        } else {
+          currentScale.value = clampedScale
+          runOnJS(handleRest)()
+        }
         if (bindscale) {
           runOnJS(handleTriggerScale)({
             x: offsetX.value,
@@ -313,7 +318,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const currentScaleVal = currentScale.value
     const scaledWidth = (width || 0) * currentScaleVal
     const scaledHeight = (height || 0) * currentScaleVal
-
+    console.log('currentScaleVal', currentScaleVal, scaledHeight, scaledWidth)
     const maxY = MovableAreaLayout.height - scaledHeight - top
     const maxX = MovableAreaLayout.width - scaledWidth - left
 
@@ -361,6 +366,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       const positionX = offsetX.value
       const positionY = offsetY.value
       const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
+      console.log('------offsetX.value', offsetX.value, offsetY.value, newX, newY)
       if (positionX !== newX) {
         offsetX.value = newX
       }
@@ -380,7 +386,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       const { y: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
-      resetBoundaryAndCheck({ width, height })
+      resetBoundaryAndCheck({ width: width / currentScale.value, height: height / currentScale.value })
     })
     propsOnLayout && propsOnLayout(e)
   }
@@ -442,6 +448,45 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     extendEvent(e, 'end')
     bindtouchend && bindtouchend(e)
     catchtouchend && catchtouchend(e)
+  }
+
+  const handleRest = () => {
+    const { width, height } = layoutRef.current
+    if (width && height) {
+      // 重新计算边界
+      setBoundary({ width, height })
+      // 检查当前位置是否在边界内，如果不在则调整
+      runOnUI(() => {
+        const { x: newX, y: newY } = checkBoundaryPosition({
+          positionX: offsetX.value,
+          positionY: offsetY.value
+        })
+
+        if (newX !== offsetX.value || newY !== offsetY.value) {
+          // 应用边界限制
+          offsetX.value = animation
+            ? withSpring(newX, {
+              duration: 1500,
+              dampingRatio: 0.8
+            })
+            : newX
+          offsetY.value = animation
+            ? withSpring(newY, {
+              duration: 1500,
+              dampingRatio: 0.8
+            })
+            : newY
+
+          // 触发位置变化事件
+          if (bindchange) {
+            runOnJS(handleTriggerChange)({
+              x: newX,
+              y: newY
+            })
+          }
+        }
+      })()
+    }
   }
 
   const gesture = useMemo(() => {
@@ -613,37 +658,41 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     // 添加缩放手势支持
     if (scale) {
       const gesturePinch = Gesture.Pinch()
+        .onStart((e: any) => {
+          'worklet'
+          if (disabled) return
+          // 记录缩放开始时的初始状态
+          initialViewPosition.value = {
+            x: offsetX.value,
+            y: offsetY.value
+          }
+        })
         .onUpdate((e: any) => {
           'worklet'
           if (disabled) return
-          // 限制缩放值在 scaleMin 和 scaleMax 之间
-          const newScale = Math.max(scaleMin, Math.min(scaleMax, e.scale))
-          currentScale.value = newScale
 
-          // 缩放时重新计算并检查边界
-          const { width, height } = layoutRef.current
-          if (width && height) {
-            runOnJS(() => {
-              setBoundary({ width, height })
-              // 检查当前位置是否还在有效范围内
-              runOnUI(() => {
-                const { x: newX, y: newY } = checkBoundaryPosition({
-                  positionX: offsetX.value,
-                  positionY: offsetY.value
-                })
-                if (newX !== offsetX.value) {
-                  offsetX.value = animation
-                    ? withSpring(newX, { duration: 300, dampingRatio: 0.8 })
-                    : newX
-                }
-                if (newY !== offsetY.value) {
-                  offsetY.value = animation
-                    ? withSpring(newY, { duration: 300, dampingRatio: 0.8 })
-                    : newY
-                }
-              })()
-            })()
+          // 判断缩放方向并计算新的缩放值
+          const isZoomingIn = e.scale > 1
+          const isZoomingOut = e.scale < 1
+
+          let newScale
+          if (isZoomingIn) {
+            // 放大：增加缩放值
+            newScale = currentScale.value + (e.scale - 1) * 0.5
+          } else if (isZoomingOut) {
+            // 缩小：减少缩放值
+            newScale = currentScale.value - (1 - e.scale) * 0.5
+          } else {
+            // 没有缩放变化
+            newScale = currentScale.value
           }
+
+          // 限制缩放值在 scaleMin 和 scaleMax 之间
+          newScale = Math.max(scaleMin, Math.min(scaleMax, newScale))
+
+          console.log('---newScale', newScale, 'e.scale', e.scale, 'direction:', isZoomingIn ? '放大' : isZoomingOut ? '缩小' : '无变化')
+
+          currentScale.value = newScale
 
           if (bindscale) {
             runOnJS(handleTriggerScale)({
@@ -659,13 +708,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           // 确保最终缩放值在有效范围内
           const finalScale = Math.max(scaleMin, Math.min(scaleMax, currentScale.value))
           if (finalScale !== currentScale.value) {
-            currentScale.value = animation
-              ? withSpring(finalScale, {
-                duration: 1500,
-                dampingRatio: 0.8
-              })
-              : finalScale
-            if (propsRef.current.bindscale) {
+            currentScale.value = finalScale
+            if (bindscale) {
               runOnJS(handleTriggerScale)({
                 x: offsetX.value,
                 y: offsetY.value,
@@ -674,12 +718,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             }
           }
           // 缩放结束后重新检查边界
-          const { width, height } = layoutRef.current
-          if (width && height) {
-            runOnJS(() => {
-              resetBoundaryAndCheck({ width, height })
-            })()
-          }
+          runOnJS(handleRest)()
         })
 
       // 根据手指数量自动区分手势：一指移动，两指缩放
@@ -696,6 +735,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         { translateY: offsetY.value },
         { scale: currentScale.value }
       ]
+      // 使用左上角作为缩放原点，计算更简单
+      // transformOrigin: 'top left'
     }
   })
 
