@@ -1833,11 +1833,9 @@ try {
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
         const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
-        if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
-          const type = queryObj.type
-          const extract = queryObj.extract
-
-          if (type === 'styles') {
+        const type = queryObj.type
+        if ((queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) || queryObj.vue) {
+          if (type === 'styles' || type === 'style') {
             let insertBeforeIndex = -1
             // 单次遍历收集所有索引
             loaders.forEach((loader, index) => {
@@ -1852,7 +1850,10 @@ try {
             }
             loaders.push({ loader: styleStripConditionalPath })
           }
+        }
 
+        if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
+          const extract = queryObj.extract
           switch (type) {
             case 'styles':
             case 'template': {
