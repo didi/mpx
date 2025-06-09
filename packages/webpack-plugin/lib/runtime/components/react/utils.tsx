@@ -297,7 +297,7 @@ function transformBoxShadow (styleObj: Record<string, any>) {
     for (let i = 0; i < len; i++) {
       const value = boxShadow[i]
       const num = +value
-      if (value !== ' ' && num === num) {
+      if (value !== ' ' && !Number.isNaN(num)) {
         // 记录数字
         tempRpx += value
       } else if (tempRpx) {
