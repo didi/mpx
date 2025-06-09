@@ -3,10 +3,9 @@ const Template = require('webpack/lib/Template')
 const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
 
 class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
-  constructor (options = {}) {
+  constructor (timeout) {
     super('load async chunk')
-    this.options = options
-    this.timeout = options.timeout || 5000
+    this.timeout = timeout || 5000
   }
 
   generate () {
@@ -29,18 +28,6 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           'if(inProgress[url]) { inProgress[url].push(done); return; }',
           'inProgress[url] = [done];',
           'var callback = function (type, result) {',
-          Template.indent([
-            "if (type === 'timeout' || type === 'fail') {",
-            'var lazyLoadEvent = {',
-            Template.indent([
-              "type: 'subpackage',",
-              'subpackage: [package],',
-              'errMsg: "loadSubpackage: " + type'
-            ]),
-            '}',
-            'global.onLazyLoadError(lazyLoadEvent)'
-          ]),
-          '}',
           Template.indent([
             'var event = {',
             Template.indent([

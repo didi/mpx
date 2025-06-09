@@ -24,7 +24,6 @@ module.exports = function (jsonContent, {
   const localComponentsMap = {}
   const output = '/* json */\n'
   let jsonObj = {}
-  let preloadRule = {}
   let tabBarMap
   let tabBarStr
   const mpx = loaderContext.getMpx()
@@ -77,8 +76,7 @@ module.exports = function (jsonContent, {
       localPagesMap,
       localComponentsMap,
       tabBarMap,
-      tabBarStr,
-      preloadRule
+      tabBarStr
     })
   }
 
@@ -335,15 +333,6 @@ module.exports = function (jsonContent, {
     }
   }
 
-  const processPreloadRule = (_preloadRule, callback) => {
-    if (_preloadRule) {
-      preloadRule = _preloadRule
-      callback()
-    } else {
-      callback()
-    }
-  }
-
   async.parallel([
     (callback) => {
       // 添加首页标识
@@ -370,9 +359,6 @@ module.exports = function (jsonContent, {
     },
     (callback) => {
       processTabBar(jsonObj.tabBar, callback)
-    },
-    (callback) => {
-      processPreloadRule(jsonObj.preloadRule, callback)
     }
   ], callback)
 }

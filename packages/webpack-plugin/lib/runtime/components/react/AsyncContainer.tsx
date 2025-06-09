@@ -55,10 +55,11 @@ const styles = StyleSheet.create({
 type AsyncType = 'page' | 'component'
 
 interface PropsType<T extends AsyncType> {
-  fallback: T extends 'page' ? ComponentType<DefaultFallbackProps> : ReactNode
-  loading?: ComponentType<any>
   type: T
-  children: () => ReactNode | ReactNode,
+  props: object
+  loading: ComponentType<unknown>
+  fallback: ComponentType<unknown>
+  children: (props: unknown) => ReactNode
 }
 
 interface StateType {
@@ -68,6 +69,7 @@ interface StateType {
 
 interface ComponentError extends Error {
   request?: string
+  type: 'timeout' | 'fail'
 }
 
 const DefaultLoading = () => {
@@ -132,6 +134,18 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
     }
   }
 
+  componentDidCatch (error: ComponentError): void {
+    if (error.name === 'ChunkLoadError' && this.props.type === 'component') {
+      const request = error.request || ''
+      const subpackage = request.split('/').filter((i: string) => !!i)[0]
+      global.onLazyLoadError({
+        type: 'subpackage',
+        subpackage: [subpackage],
+        errMsg: `loadSubpackage: ${error.type}`
+      })
+    }
+  }
+
   reloadPage () {
     this.setState((prevState) => {
       return {
@@ -146,7 +160,8 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
       const Fallback = this.props.loading || DefaultLoading
       return <Fallback />
     } else {
-      return this.props.fallback as ReactNode
+      const Fallback = this.props.loading
+      return <Fallback {...this.props.props}></Fallback>
     }
   }
 
@@ -155,7 +170,8 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
       const Fallback = this.props.fallback as ComponentType<DefaultFallbackProps> || DefaultFallback
       return <Fallback onReload={this.reloadPage.bind(this)}></Fallback>
     } else {
-      return this.props.fallback as ReactNode
+      const Fallback = this.props.loading
+      return <Fallback {...this.props.props}></Fallback>
     }
   }
 
@@ -164,11 +180,9 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
       return this.errorFallback
     } else {
       return (
-        <Fragment key={this.state.key}>
-          <Suspense fallback={this.suspenseFallback}>
-            {typeof this.props.children === 'function' ? this.props.children() : this.props.children}
-          </Suspense>
-        </Fragment>
+        <Suspense fallback={this.suspenseFallback} key={this.state.key}>
+          {this.props.children(this.props.props)}
+        </Suspense>
       )
     }
   }

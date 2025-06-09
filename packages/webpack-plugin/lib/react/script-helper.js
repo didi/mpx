@@ -4,6 +4,8 @@ const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const addQuery = require('../utils/add-query')
+const path = require('path')
+const { isBuildInReactTag } = require('../utils/dom-tag-config')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
@@ -24,22 +26,19 @@ function getAsyncChunkName (chunkName) {
 
 function getAsyncComponent (componentName, componentRequest, chunkName, fallback) {
   return `getComponent(memo(forwardRef(function(props, ref) {
-    const _props = Object.assign({}, props, { ref })
     return createElement(
       getComponent(require(${mpxAsyncContainer})),
       {
         type: 'component',
-        fallback: createElement(
-          getComponent(require(${fallback})),
-          _props
+        props: Object.assign({}, props, { ref }),
+        loading: getComponent(require(${fallback})),
+        children: (props) => createElement(
+          getComponent(
+            lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
+          ),
+          props
         )
-      },
-      createElement(
-        getComponent(
-          lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
-        ),
-        _props
-      )
+      }
     )
   })))`
 }
@@ -52,15 +51,16 @@ function getAsyncPage (componentName, componentRequest, chunkName, fallback, loa
       getComponent(require(${mpxAsyncContainer})),
       {
         type: 'page',
+        props: props,
         fallback: ${fallback},
-        loading: ${loading}
-      },
-      () => createElement(
-        getComponent(
-          lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
-        ),
-        props
-      )
+        loading: ${loading},
+        children: (props) => createElement(
+          getComponent(
+            lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
+          ),
+          props
+        )
+      }
     )
   })`
 }
@@ -92,14 +92,15 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
 
 function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig }) {
   const componentsMap = {}
+  const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       if (componentCfg.async) {
-        if (jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]) {
-          const placeholder = jsonConfig.componentPlaceholder[componentName]
-          if (localComponentsMap[jsonConfig.componentPlaceholder[componentName]]) {
+        const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
+        if (placeholder) {
+          if (localComponentsMap[placeholder]) {
             const placeholderCfg = localComponentsMap[placeholder]
             const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
             if (placeholderCfg.async) {
@@ -108,12 +109,20 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
               )
             }
             componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, placeholderRequest)
+          } else if (mpx.globalComponents[placeholder]) {
+            const { queryObj, rawResourcePath } = parseRequest(mpx.globalComponents[placeholder])
+            const placeholderRequest = JSON.stringify(path.resolve(queryObj.context, rawResourcePath))
+            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, placeholderRequest)
           } else {
-            const fallbackComponentRequest = `"${addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-${placeholder}`, { isComponent: true })}"`
-            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, fallbackComponentRequest)
+            if (!isBuildInReactTag(placeholder)) {
+              loaderContext.emitError(
+                new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
+              )
+            }
+            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, getMpxComponentRequest(`mpx-${placeholder}`))
           }
         } else {
-          loaderContext.emitWarning(
+          loaderContext.emitError(
             new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
           )
           componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async)
@@ -159,7 +168,6 @@ function buildGlobalParams ({
   pagesMap,
   firstPage,
   outputPath,
-  preloadRule,
   genericsInfo,
   hasApp
 }) {
@@ -177,7 +185,7 @@ global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__getAppComponents = function () {
   return ${shallowStringify(componentsMap)}
 }
-global.__preloadRule = ${JSON.stringify(preloadRule)}
+global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
 global.currentInject.getPages = function () {
   return ${shallowStringify(pagesMap)}
 }

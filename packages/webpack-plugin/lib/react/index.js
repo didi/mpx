@@ -93,7 +93,6 @@ module.exports = function ({
         wxsModuleMap: templateRes.wxsModuleMap,
         localComponentsMap: jsonRes.localComponentsMap,
         localPagesMap: jsonRes.localPagesMap,
-        preloadRule: jsonRes.preloadRule,
         rnConfig
       }, callback)
     }

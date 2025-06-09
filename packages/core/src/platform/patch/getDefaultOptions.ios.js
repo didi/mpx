@@ -422,7 +422,7 @@ function usePagePreload (route) {
   const name = route.name
   useEffect(() => {
     setTimeout(() => {
-      const preloadRule = global.__preloadRule
+      const preloadRule = global.__preloadRule || {}
       const { packages } = preloadRule[name] || {}
       if (packages?.length > 0) {
         const downloadChunkAsync = global.__mpx.config?.rnConfig?.downloadChunkAsync
@@ -430,7 +430,7 @@ function usePagePreload (route) {
           callWithErrorHandling(() => downloadChunkAsync(packages))
         }
       }
-    }, 2000)
+    }, 800)
   }, [])
 }
 

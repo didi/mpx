@@ -618,7 +618,7 @@ class MpxWebpackPlugin {
           }, (chunk, set) => {
             compilation.addRuntimeModule(
               chunk,
-              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk)
+              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk && this.options.rnConfig.asyncChunk.timeout)
             )
             return true
           })

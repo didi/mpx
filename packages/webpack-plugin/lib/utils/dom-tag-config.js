@@ -81,6 +81,19 @@ const isBuildInTag = makeMap(
   'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text'
 )
 
+/**
+ * 是否为mpx2rn内置组件
+ */
+const isBuildInReactTag = makeMap(
+  'mpx-web-view,mpx-view,mpx-video,mpx-textarea,mpx-text,mpx-switch,' +
+  'mpx-swiper,mpx-swiper-item,mpx-simple-view,mpx-simple-text,mpx-scroll-view,' +
+  'mpx-root-portal,mpx-radio,mpx-radio-group,mpx-navigator,mpx-movable-view,' +
+  'mpx-movable-area,mpx-label,mpx-keyboard-avoiding-view,mpx-input,mpx-inline-text,' +
+  'mpx-image,mpx-form,mpx-checkbox,mpx-checkbox-group,mpx-button,' +
+  'mpx-rich-text,mpx-portal,mpx-popup,mpx-picker-view-column,mpx-picker-view,mpx-picker,' +
+  'mpx-icon,mpx-canvas'
+)
+
 const isSpace = makeMap('ensp,emsp,nbsp')
 
 const isContWidth = makeMap('col,colgroup,img,table,td,th,tr')
@@ -111,5 +124,6 @@ module.exports = {
   isContWidth,
   isContHeight,
   isNativeMiniTag,
-  isContConRow
+  isContConRow,
+  isBuildInReactTag
 }
