@@ -708,33 +708,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             // 获取元素尺寸
             const { width = 0, height = 0 } = layoutValue.value
             const prevScale = currentScale.value
+            const isZoomingIn = newScale > prevScale
 
-            // 实现焦点缩放：焦点在屏幕上的位置保持不变
-            // 1. 计算焦点在元素坐标系中的位置（相对于元素左上角）
-            const focalInElementX = focalX - offsetX.value
-            const focalInElementY = focalY - offsetY.value
+            // 计算元素当前中心点（在屏幕上的位置）
+            const currentCenterX = offsetX.value + (width * prevScale) / 2
+            const currentCenterY = offsetY.value + (height * prevScale) / 2
 
-            // 2. 计算缩放后元素需要的新位置，使焦点保持在屏幕上的相同位置
-            // 焦点在缩放后元素中的新位置 = 焦点在元素中的位置 * 缩放比例
-            const scaleRatio = newScale / prevScale
-            const newFocalInElementX = focalInElementX * scaleRatio
-            const newFocalInElementY = focalInElementY * scaleRatio
-
-            // 3. 计算新的元素位置：焦点屏幕位置 - 焦点在新元素中的位置
-            const newOffsetX = focalX - newFocalInElementX
-            const newOffsetY = focalY - newFocalInElementY
+            // 实现中心缩放：保持元素中心点不变
+            // 计算缩放后为了保持中心点不变需要的新offset位置
+            const newOffsetX = currentCenterX - (width * newScale) / 2
+            const newOffsetY = currentCenterY - (height * newScale) / 2
 
             offsetX.value = newOffsetX
             offsetY.value = newOffsetY
-
-            console.log('Focal point scaling:', {
-              focalX: focalX.toFixed(2),
-              focalY: focalY.toFixed(2),
-              oldOffset: `(${offsetX.value.toFixed(2)}, ${offsetY.value.toFixed(2)})`,
-              newOffset: `(${newOffsetX.toFixed(2)}, ${newOffsetY.toFixed(2)})`,
-              scaleRatio: scaleRatio.toFixed(3),
-              focalInElement: `(${focalInElementX.toFixed(2)}, ${focalInElementY.toFixed(2)})`
-            })
           }
 
           currentScale.value = newScale
