@@ -204,7 +204,10 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
         ruleV = transform[key]
       }
       if (PropNameColorExp.test(key)) {
-        interpolateOutput.value[key][1] = (ruleV || 'transparent') as string
+        const val = interpolateOutput.value
+        val[key][1] = (ruleV || 'transparent') as string
+        // fixme 这里直接改 interpolateOutput.value[key][1] 不会触发ui层更新，需通过 interpolateOutput.value = obj 触发一下
+        interpolateOutput.value = val
       }
       const toVal = PropNameColorExp.test(key)
         ? 1
