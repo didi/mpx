@@ -4,16 +4,29 @@
  * ✔ hover-start-time
  * ✔ hover-stay-time
  */
+import { error, isFunction } from '@mpxjs/utils'
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
-import useAnimationHooks from './useAnimationHooks'
-import type { AnimationProp } from './useAnimationHooks'
+import useAnimationHooks from './animationHooks/index'
+import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
-import { error, isFunction } from '@mpxjs/utils'
+import {
+  parseUrl,
+  PERCENT_REGEX,
+  splitStyle,
+  splitProps,
+  useTransformStyle,
+  wrapChildren,
+  useLayout,
+  renderImage,
+  pickStyle,
+  extendObject,
+  useHover,
+  formatTransformStyle
+} from './utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
@@ -707,7 +720,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const enableHover = !!hoverStyle
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
-  const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
+  const styleObj: ExtendedViewStyle = formatTransformStyle(extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {}))
 
   const {
     normalStyle,

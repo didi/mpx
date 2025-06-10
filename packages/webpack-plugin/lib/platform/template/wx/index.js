@@ -34,7 +34,8 @@ module.exports = function getSpec ({ warn, error }) {
       touchstart: 'touchstart',
       touchmove: 'touchmove',
       touchend: 'touchend',
-      touchcancel: 'touchcancel'
+      touchcancel: 'touchcancel',
+      transitionend: 'transitionend'
     }
     if (eventMap[eventName]) {
       return eventMap[eventName]
