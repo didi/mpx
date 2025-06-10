@@ -9,7 +9,8 @@ import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
-import { NavigationContainer, createStackNavigator, SafeAreaProvider } from './env/navigationHelper'
+import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
+import { innerNav } from './env/nav'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -54,25 +55,42 @@ export default function createApp (options) {
 
   const pages = currentInject.getPages() || {}
   const firstPage = currentInject.firstPage
-  const Stack = createStackNavigator()
+  const Stack = createNativeStackNavigator()
+  const withHeader = (wrappedComponent, { pageConfig = {} }) => {
+      return ({ navigation, ...props }) => {
+        return createElement(GestureHandlerRootView,
+        {
+          style: {
+            flex: 1
+          }
+        },
+        createElement(innerNav, {
+          pageConfig: pageConfig,
+          navigation
+        }),
+        createElement(wrappedComponent, { navigation, ...props })
+      )
+    }
+  }
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pages).map(([key, item]) => {
-      const options = {
-        // __mpxPageStatusMap 为编译注入的全局变量
-        headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
-      }
+      // const options = {
+      //   // __mpxPageStatusMap 为编译注入的全局变量
+      //   headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
+      // }
+      const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
-          component: item,
-          initialParams,
-          options
+          component: withHeader(item, { pageConfig }),
+          initialParams
+          // options
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: item,
-        options
+        component: withHeader(item, { pageConfig })
+        // options
       })
     })
   }
@@ -218,32 +236,10 @@ export default function createApp (options) {
 
     const { initialRouteName, initialParams } = initialRouteRef.current
     const navScreenOpts = {
-      // 7.x替换headerBackTitleVisible
-      // headerBackButtonDisplayMode: 'minimal',
-      headerBackTitleVisible: false,
-      headerShadowVisible: false
-      // 整体切换native-stack时进行修改如下
-      // statusBarTranslucent: true,
-      // statusBarBackgroundColor: 'transparent'
-    }
-    if (__mpx_mode__ === 'ios') {
-      // ios使用native-stack
-      const headerBackImageSource = Mpx.config.rnConfig.headerBackImageSource || null
-      if (headerBackImageSource) {
-        navScreenOpts.headerBackImageSource = headerBackImageSource
-      }
-    } else {
-      // 安卓上会出现导航条闪现的问题所以默认加headerShown false（stack版本， native-stack版本可以干掉）
-      // iOS加上默认headerShown false的话会因为iOS根高度是screenHeight - useHeaderHeight()会导致出现渲染两次情况，因此iOS不加此默认值
-      navScreenOpts.headerShown = false
-      // 安卓和鸿蒙先用stack
-      const headerBackImageProps = Mpx.config.rnConfig.headerBackImageProps || null
-      if (headerBackImageProps) {
-        navScreenOpts.headerBackImage = () => {
-          return createElement(ReactNative.Image, headerBackImageProps)
-        }
-      }
-    }
+      headerShown: false,
+      statusBarTranslucent: true,
+      statusBarBackgroundColor: 'transparent'
+   }
 
     return createElement(SafeAreaProvider,
       null,

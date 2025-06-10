@@ -43,6 +43,21 @@ declare let global: {
 
 declare module '@react-navigation/native' {
    export function useNavigation (): Record<string, any>
+   export function usePreventRemove(
+    enabled: boolean,
+    callback: (e: { data: { action: any } }) => void
+  ): void;
+  export interface PreventRemoveEvent {
+    data: {
+      action: NavigationAction;
+      route: {
+        key: string;
+        name: string;
+        params?: unknown;
+      };
+    };
+    preventDefault(): void;
+  }
 }
 
 declare module '*.png'
