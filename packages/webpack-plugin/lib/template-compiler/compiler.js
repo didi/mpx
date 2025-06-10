@@ -792,7 +792,7 @@ function parse (template, options) {
   })
 
   // multiRoot
-  if (root.tag === 'temp-node' && root.children && root.children.length > 1) {
+  if (root.tag === 'temp-node' && root.children && root.children.filter(node => node.tag !== 'temp-node').length > 1) {
     error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
   }
 
