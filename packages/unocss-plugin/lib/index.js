@@ -212,7 +212,8 @@ class MpxUnocssPlugin {
       ]
     })
   }
-  getTemplateParser(uno) {
+
+  getTemplateParser (uno) {
     // process classes
     const transformAlias = buildAliasTransformer(uno.config.alias)
     const transformClasses = (source, classNameHandler = c => c) => {
@@ -225,7 +226,7 @@ class MpxUnocssPlugin {
       // escape & fill classesMap
       return content.split(/\s+/).map(classNameHandler).join(' ')
     }
-    return (source,classNameHandler)=>{
+    return (source, classNameHandler) => {
       source = getReplaceSource(source)
       const content = source.original().source()
       parseClasses(content).forEach(({ result, start, end }) => {
@@ -246,7 +247,7 @@ class MpxUnocssPlugin {
       const commentConfig = {}
       parseComments(content).forEach(({ result, start, end }) => {
         Object.assign(commentConfig, parseCommentConfig(result))
-        newsource.replace(start, end, '')
+        source.replace(start, end, '')
       })
       if (commentConfig.safelist) {
         this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
@@ -353,7 +354,7 @@ class MpxUnocssPlugin {
         safeListClasses.forEach((className) => {
           mainClassesMap[className] = true
         })
-        const parseTemplate = getTemplateParser(uno)
+        const parseTemplate = this.getTemplateParser(uno)
 
         const processTemplate = async (file, source) => {
           const packageName = getPackageName(file)
@@ -373,7 +374,7 @@ class MpxUnocssPlugin {
             }
             return mpEscape(cssEscape(className), this.options.escapeMap)
           }
-          const {newsource, commentConfig} = parseTemplate(source, classNameHandler)
+          const { newsource, commentConfig } = parseTemplate(source, classNameHandler)
           commentConfigMap[filename] = commentConfig
           assets[file] = newsource
         }
