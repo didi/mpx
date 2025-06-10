@@ -148,6 +148,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
   const currentScale = useSharedValue(scaleValue || 1)
+  const layoutValue = useSharedValue<any>({})
 
   const startPosition = useSharedValue({
     x: 0,
@@ -314,28 +315,30 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const top = (style.position === 'absolute' && style.top) || 0
     const left = (style.position === 'absolute' && style.left) || 0
 
-    // 考虑当前缩放值计算实际大小
+    // 使用左上角缩放，计算offset位置的边界范围
     const currentScaleVal = currentScale.value
     const scaledWidth = (width || 0) * currentScaleVal
     const scaledHeight = (height || 0) * currentScaleVal
-    console.log('currentScaleVal', currentScaleVal, scaledHeight, scaledWidth)
-    const maxY = MovableAreaLayout.height - scaledHeight - top
-    const maxX = MovableAreaLayout.width - scaledWidth - left
+
+    // offset位置的边界：左上角可以移动的范围
+    const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
+    const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
 
     let xRange: [min: number, max: number]
     let yRange: [min: number, max: number]
 
     if (MovableAreaLayout.width < scaledWidth) {
-      xRange = [maxX, 0]
+      xRange = [maxOffsetX, 0]
     } else {
-      xRange = [left === 0 ? 0 : -left, maxX < 0 ? 0 : maxX]
+      xRange = [left === 0 ? 0 : -left, maxOffsetX < 0 ? 0 : maxOffsetX]
     }
 
     if (MovableAreaLayout.height < scaledHeight) {
-      yRange = [maxY, 0]
+      yRange = [maxOffsetY, 0]
     } else {
-      yRange = [top === 0 ? 0 : -top, maxY < 0 ? 0 : maxY]
+      yRange = [top === 0 ? 0 : -top, maxOffsetY < 0 ? 0 : maxOffsetY]
     }
+
     draggableXRange.value = xRange
     draggableYRange.value = yRange
   }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
@@ -386,6 +389,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       const { y: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
+      
+      // 同时更新 layoutValue，供缩放逻辑使用
+      runOnUI(() => {
+        layoutValue.value = { width, height }
+      })()
+      
       resetBoundaryAndCheck({ width: width / currentScale.value, height: height / currentScale.value })
     })
     propsOnLayout && propsOnLayout(e)
@@ -455,7 +464,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     if (width && height) {
       // 重新计算边界
       setBoundary({ width, height })
-      // 检查当前位置是否在边界内，如果不在则调整
+      // 直接用offset值进行边界检查
       runOnUI(() => {
         const { x: newX, y: newY } = checkBoundaryPosition({
           positionX: offsetX.value,
@@ -690,7 +699,43 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           // 限制缩放值在 scaleMin 和 scaleMax 之间
           newScale = Math.max(scaleMin, Math.min(scaleMax, newScale))
 
-          console.log('---newScale', newScale, 'e.scale', e.scale, 'direction:', isZoomingIn ? '放大' : isZoomingOut ? '缩小' : '无变化')
+          // 只有当缩放值真正改变时才调整位置
+          if (Math.abs(newScale - currentScale.value) > 0.01) {
+            // 获取缩放手势的焦点坐标
+            const focalX = e.focalX || 0
+            const focalY = e.focalY || 0
+
+            // 获取元素尺寸
+            const { width = 0, height = 0 } = layoutValue.value
+            const prevScale = currentScale.value
+
+            // 实现焦点缩放：焦点在屏幕上的位置保持不变
+            // 1. 计算焦点在元素坐标系中的位置（相对于元素左上角）
+            const focalInElementX = focalX - offsetX.value
+            const focalInElementY = focalY - offsetY.value
+
+            // 2. 计算缩放后元素需要的新位置，使焦点保持在屏幕上的相同位置
+            // 焦点在缩放后元素中的新位置 = 焦点在元素中的位置 * 缩放比例
+            const scaleRatio = newScale / prevScale
+            const newFocalInElementX = focalInElementX * scaleRatio
+            const newFocalInElementY = focalInElementY * scaleRatio
+
+            // 3. 计算新的元素位置：焦点屏幕位置 - 焦点在新元素中的位置
+            const newOffsetX = focalX - newFocalInElementX
+            const newOffsetY = focalY - newFocalInElementY
+
+            offsetX.value = newOffsetX
+            offsetY.value = newOffsetY
+
+            console.log('Focal point scaling:', {
+              focalX: focalX.toFixed(2),
+              focalY: focalY.toFixed(2),
+              oldOffset: `(${offsetX.value.toFixed(2)}, ${offsetY.value.toFixed(2)})`,
+              newOffset: `(${newOffsetX.toFixed(2)}, ${newOffsetY.toFixed(2)})`,
+              scaleRatio: scaleRatio.toFixed(3),
+              focalInElement: `(${focalInElementX.toFixed(2)}, ${focalInElementY.toFixed(2)})`
+            })
+          }
 
           currentScale.value = newScale
 
@@ -735,8 +780,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         { translateY: offsetY.value },
         { scale: currentScale.value }
       ]
-      // 使用左上角作为缩放原点，计算更简单
-      // transformOrigin: 'top left'
     }
   })
 
@@ -782,7 +825,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       {
         ref: nodeRef,
         onLayout: onLayout,
-        style: [innerStyle, animatedStyles, layoutStyle]
+        style: [{ transformOrigin: 'top left' }, innerStyle, animatedStyles, layoutStyle]
       },
       rewriteCatchEvent()
     )
