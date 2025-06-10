@@ -17,12 +17,12 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
       `${loadScriptFn} = ${runtimeTemplate.basicFunction(
         'url, done, key, chunkId',
         [
-          `var package = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
-          'package = package.split("/")[0]',
+          `var packageName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
+          'packageName = packageName.split("/")[0]',
           'var config = {',
           Template.indent([
             'url: url,',
-            'package: package'
+            'package: packageName'
           ]),
           '}',
           'if(inProgress[url]) { inProgress[url].push(done); return; }',
