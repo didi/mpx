@@ -321,6 +321,8 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 - animation.matrix3d() 不支持
 ### CSS transition
 CSS transition 动画至少需要设置动画时长和动画属性，可通过单独属性 transition-property 和 transition-property 设置，也可以通过 transition 缩写设置
+>重要提示：transition 支持设置百分比，如 ```marginTop: 1%;marginTop: 100%;```；要注意的是起始值和结束值需设置为同一类型，同为px或者同为百分比， 支持 ```marginTop: 10px;marginTop: 100px; ```，**不支持 ```marginTop: 10px; marginTop: 100%;```**
+
 #### [transition](https://developer.mozilla.org/en-US/docs/Web/CSS/transition)
 ```css
 /**** 支持 */
@@ -391,6 +393,7 @@ transition-delay: 2s, 4ms;
 不支持
 #### [transition-timing-function](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function)
 仅支持 ease、ease-in、ease-out、ease-in-out、linear、cubic-bezier()，不支持 step-start、step-end、steps()
+
 
 ### CSS animation
 暂不支持
