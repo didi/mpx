@@ -14,6 +14,7 @@ import {
   CubicBezierExp,
   secondRegExp,
   Transition,
+  PercentExp,
   getTransformObj,
   getUnit,
   getInitialVal,
@@ -193,6 +194,13 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
       const toVal = ruleV !== undefined
         ? ruleV
         : SupportedProperty[key]
+      // 获取到的toVal为百分比且初始值为0时，需更新初始值为0%
+      if (PercentExp.test(toVal) && shareValMap[key].value === 0) {
+        shareValMap[key].value = '0%'
+      } else if (typeof toVal !== typeof shareValMap[key].value) {
+        // transition动画起始值和终态值类型不一致报错提示一下
+        error(`[Mpx runtime error]: Value types of property ${key} must be consistent in CSS transition animation`)
+      }
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
       // console.log('animationOptions=', { delay, duration, easing })
