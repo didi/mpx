@@ -30,8 +30,8 @@ import Animated, {
   withDecay,
   runOnJS,
   runOnUI,
-  useAnimatedReaction,
-  withSpring
+  withSpring,
+  withTiming
 } from 'react-native-reanimated'
 import { collectDataset, noop } from '@mpxjs/utils'
 
@@ -147,7 +147,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
-  const currentScale = useSharedValue(scaleValue || 1)
+  const currentScale = useSharedValue(1)
   const layoutValue = useSharedValue<any>({})
 
   const startPosition = useSharedValue({
@@ -262,15 +262,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         // 限制缩放值在 scaleMin 和 scaleMax 之间
         const clampedScale = Math.max(scaleMin, Math.min(scaleMax, scaleValue))
         if (animation) {
-          currentScale.value = withSpring(clampedScale, {
-            duration: 1500,
-            dampingRatio: 0.8
+          currentScale.value = withTiming(clampedScale, {
+            duration: 1000
           }, () => {
-            runOnJS(handleRest)()
+            runOnJS(handleRestBoundaryAndCheck)()
           })
         } else {
           currentScale.value = clampedScale
-          runOnJS(handleRest)()
+          runOnJS(handleRestBoundaryAndCheck)()
         }
         if (bindscale) {
           runOnJS(handleTriggerScale)({
@@ -284,10 +283,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [scaleValue, scaleMin, scaleMax, animation])
 
   useEffect(() => {
-    const { width, height } = layoutRef.current
-    if (width && height) {
-      resetBoundaryAndCheck({ width, height })
-    }
+    handleRestBoundaryAndCheck()
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
 
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
@@ -369,7 +365,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       const positionX = offsetX.value
       const positionY = offsetY.value
       const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
-      console.log('------offsetX.value', offsetX.value, offsetY.value, newX, newY)
       if (positionX !== newX) {
         offsetX.value = newX
       }
@@ -459,42 +454,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchtouchend && catchtouchend(e)
   }
 
-  const handleRest = () => {
+  const handleRestBoundaryAndCheck = () => {
     const { width, height } = layoutRef.current
     if (width && height) {
-      // 重新计算边界
-      setBoundary({ width, height })
-      // 直接用offset值进行边界检查
-      runOnUI(() => {
-        const { x: newX, y: newY } = checkBoundaryPosition({
-          positionX: offsetX.value,
-          positionY: offsetY.value
-        })
-
-        if (newX !== offsetX.value || newY !== offsetY.value) {
-          // 应用边界限制
-          offsetX.value = animation
-            ? withSpring(newX, {
-              duration: 1500,
-              dampingRatio: 0.8
-            })
-            : newX
-          offsetY.value = animation
-            ? withSpring(newY, {
-              duration: 1500,
-              dampingRatio: 0.8
-            })
-            : newY
-
-          // 触发位置变化事件
-          if (bindchange) {
-            runOnJS(handleTriggerChange)({
-              x: newX,
-              y: newY
-            })
-          }
-        }
-      })()
+      resetBoundaryAndCheck({width, height})
     }
   }
 
@@ -721,6 +684,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
             offsetX.value = newOffsetX
             offsetY.value = newOffsetY
+
+            console.log('Center scaling:', {
+              direction: isZoomingIn ? 'ZOOM_IN' : 'ZOOM_OUT',
+              centerPoint: `(${currentCenterX.toFixed(1)}, ${currentCenterY.toFixed(1)})`,
+              oldOffset: `(${offsetX.value.toFixed(1)}, ${offsetY.value.toFixed(1)})`,
+              newOffset: `(${newOffsetX.toFixed(1)}, ${newOffsetY.toFixed(1)})`,
+              scaleChange: `${prevScale.toFixed(2)} -> ${newScale.toFixed(2)}`
+            })
           }
 
           currentScale.value = newScale
@@ -749,7 +720,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             }
           }
           // 缩放结束后重新检查边界
-          runOnJS(handleRest)()
+          runOnJS(handleRestBoundaryAndCheck)()
         })
 
       // 根据手指数量自动区分手势：一指移动，两指缩放
