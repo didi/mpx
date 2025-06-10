@@ -1,6 +1,30 @@
-import { ComponentType, ReactNode, Component, Fragment, Suspense } from 'react'
+import { ComponentType, ReactNode, Component, Suspense } from 'react'
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
 import FastImage from '@d11/react-native-fast-image'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
+
+type PageWrapper = {
+  children: ReactNode
+}
+
+const PageWrapper = ({ children }: PageWrapper) => {
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -0 }],
+    flexBasis: 'auto',
+    flex: 1
+  }))
+
+  return (
+    <Animated.View
+      style={[
+        animatedStyle
+      ]}
+    >
+      {children}
+    </Animated.View>
+  )
+}
+
 
 const styles = StyleSheet.create({
   container: {
@@ -177,7 +201,11 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
 
   render () {
     if (this.state.hasError) {
-      return this.errorFallback
+      if (this.props.type === 'component') {
+        return this.errorFallback
+      } else {
+        return (<PageWrapper>{this.errorFallback}</PageWrapper>)
+      }
     } else {
       return (
         <Suspense fallback={this.suspenseFallback} key={this.state.key}>
