@@ -10,7 +10,6 @@ import {
   Transition,
   Transform,
   TransformOrigin,
-  PropNameColorExp,
   getTransformObj,
   formatAnimatedKeys
 } from './utils'
@@ -79,15 +78,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
           lastStyleRef.current[key] = value
-          // 颜色值走映射值，这里不需要更新 shareValMap[key].value 为最新值
-          if (PropNameColorExp.test(key)) {
-            const newVal = interpolateOutput.value
-            newVal[key][0] = value
-            interpolateOutput.value = newVal
-            shareValMap[key].value = 0
-          } else {
-            shareValMap[key].value = value
-          }
+          shareValMap[key].value = value
         }
       }
     })
@@ -112,7 +103,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
 
   const {
     shareValMap,
-    interpolateOutput,
     getAnimatedStyleKeys,
     createAnimation
   } = animationTypeRef.current === AnimationType.API
@@ -177,11 +167,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
         styles.transform = Object.entries(transformStyle).map(([key, value]) => {
           return { [key]: value }
         }) as Extract<'transform', TransformsStyle>
-      } else if (PropNameColorExp.test(key)) {
-        styles[key] = interpolateColor(shareValMap[key].value as number,
-          [0, 1],
-          interpolateOutput.value[key]
-        )
       } else {
         styles[key] = shareValMap[key].value
       }

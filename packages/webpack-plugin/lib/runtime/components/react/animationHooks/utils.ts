@@ -45,7 +45,7 @@ export type InterpolateOutput = {
 // ms s 单位匹配
 export const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)?\s*$/
 export const CubicBezierExp = /cubic-bezier\(["']?(.*?)["']?\)/
-export const PropNameColorExp = /^c|Color$/
+// export const PropNameColorExp = /^c|Color$/
 // export const NumberExp = /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/
 // export const ColorExp = /^(color|(.+Color))$/
 // transform

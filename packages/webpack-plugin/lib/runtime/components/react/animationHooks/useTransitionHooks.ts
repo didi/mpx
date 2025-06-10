@@ -14,7 +14,6 @@ import {
   CubicBezierExp,
   secondRegExp,
   Transition,
-  PropNameColorExp,
   getTransformObj,
   getUnit,
   getInitialVal,
@@ -161,18 +160,6 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   const transitionMap = useMemo(() => {
     return parseTransitionStyle(originalStyle)
   }, [])
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const colorOutput = useMemo(() => {
-    return Object.keys(transitionMap).reduce((output, property) => {
-      if (PropNameColorExp.test(property)) {
-        const defaultVal = getInitialVal(originalStyle, property)
-        output[property] = [defaultVal, 'transparent']
-      }
-      return output
-    }, {} as InterpolateOutput)
-  }, [])
-  // 插值输出区间值
-  const interpolateOutput = useSharedValue(colorOutput)
   // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
   const shareValMap = useMemo(() => {
     return Object.keys(transitionMap).reduce((valMap, property) => {
@@ -186,7 +173,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
       } else if (hasOwn(SupportedProperty, property)) {
         const defaultVal = getInitialVal(originalStyle, property)
         // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
-        valMap[property] = makeMutable(PropNameColorExp.test(property) ? 0 : defaultVal)
+        valMap[property] = makeMutable(defaultVal)
       }
       // console.log('shareValMap = ', valMap)
       return valMap
@@ -203,17 +190,9 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
         const transform = getTransformObj(originalStyle.transform!)
         ruleV = transform[key]
       }
-      if (PropNameColorExp.test(key)) {
-        const val = interpolateOutput.value
-        val[key][1] = (ruleV || 'transparent') as string
-        // fixme 这里直接改 interpolateOutput.value[key][1] 不会触发ui层更新，需通过 interpolateOutput.value = obj 触发一下
-        interpolateOutput.value = val
-      }
-      const toVal = PropNameColorExp.test(key)
-        ? 1
-        : ruleV !== undefined
-          ? ruleV
-          : SupportedProperty[key]
+      const toVal = ruleV !== undefined
+        ? ruleV
+        : SupportedProperty[key]
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
       // console.log('animationOptions=', { delay, duration, easing })
@@ -246,7 +225,6 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   }
   return {
     shareValMap,
-    interpolateOutput,
     createAnimation,
     getAnimatedStyleKeys
   }

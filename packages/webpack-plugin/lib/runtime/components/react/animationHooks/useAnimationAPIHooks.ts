@@ -3,14 +3,12 @@ import {
   Easing,
   withSequence,
   makeMutable,
-  runOnJS,
-  useSharedValue
+  runOnJS
 } from 'react-native-reanimated'
 import {
   EasingKey,
   TransformOrigin,
   InitialValue,
-  PropNameColorExp,
   isTransform,
   getInitialVal,
   getAnimation
@@ -27,21 +25,10 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
   const shareValMap = useMemo(() => {
     return Object.keys(InitialValue).reduce((valMap, key) => {
       const defaultVal = getInitialVal(originalStyle, key)
-      valMap[key] = makeMutable(PropNameColorExp.test(key) ? 0 : defaultVal)
+      valMap[key] = makeMutable(defaultVal)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
-  const colorOutput = useMemo(() => {
-    return Object.keys(InitialValue).reduce((output, property) => {
-      if (PropNameColorExp.test(property)) {
-        const defaultVal = getInitialVal(originalStyle, property)
-        output[property] = [defaultVal, 'transparent']
-      }
-      return output
-    }, {} as InterpolateOutput)
-  }, [])
-  // 颜色插值
-  const interpolateOutput = useSharedValue(colorOutput)
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
     const actions = animation?.actions || []
@@ -69,21 +56,13 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
         const ruleV = isTransform(key) ? transform.get(key) : rules.get(key)
-        if (PropNameColorExp.test(key)) {
-          const val = interpolateOutput.value
-          val[key][1] = (ruleV || 'transparent') as string
-          // fixme 这里直接改 interpolateOutput.value[key][1] 不会触发ui层更新，需通过 interpolateOutput.value = obj 触发一下
-          interpolateOutput.value = val
-        }
         // color 设置为 1
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
-        const toVal = PropNameColorExp.test(key)
-          ? 1
-          : ruleV !== undefined
-            ? ruleV
-            : index > 0
-              ? lastValueMap[key]
-              : shareValMap[key].value
+        const toVal = ruleV !== undefined
+          ? ruleV
+          : index > 0
+            ? lastValueMap[key]
+            : shareValMap[key].value
         const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
         needSetCallback = false
         if (!sequence[key]) {
@@ -115,7 +94,6 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
   }
   return {
     shareValMap,
-    interpolateOutput,
     createAnimation,
     getAnimatedStyleKeys
   }
