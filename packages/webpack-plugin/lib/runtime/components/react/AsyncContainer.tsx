@@ -25,7 +25,6 @@ const PageWrapper = ({ children }: PageWrapper) => {
   )
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
