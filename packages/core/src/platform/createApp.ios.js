@@ -9,7 +9,8 @@ import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
-import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider } from './env/navigationHelper'
+import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
+import { innerNav } from './env/nav'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -55,23 +56,40 @@ export default function createApp (options) {
   const pages = currentInject.getPages() || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
+  const withHeader = (wrappedComponent, { pageConfig = {} }) => {
+      return ({ navigation, ...props }) => {
+        return createElement(GestureHandlerRootView,
+        {
+          style: {
+            flex: 1
+          }
+        },
+        createElement(innerNav, {
+          pageConfig: pageConfig,
+          navigation
+        }),
+        createElement(wrappedComponent, { navigation, ...props })
+      )
+    }
+  }
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pages).map(([key, item]) => {
       // const options = {
       //   // __mpxPageStatusMap 为编译注入的全局变量
       //   headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
       // }
+      const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
-          component: item,
+          component: withHeader(item, { pageConfig }),
           initialParams
           // options
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: item
+        component: withHeader(item, { pageConfig })
         // options
       })
     })

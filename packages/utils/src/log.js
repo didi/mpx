@@ -1,4 +1,5 @@
 import { isFunction } from './base'
+import { isReact } from './env'
 
 const isDev = process.env.NODE_ENV !== 'production'
 
@@ -45,7 +46,16 @@ function log (type, msg, location, e) {
     if (location) {
       header = `[Mpx runtime ${type} at ${location}]: `
     }
-    console[type](header + msg)
-    if (e) console[type](e)
+
+    const doLog = () => {
+      console[type](header + msg)
+      if (e) console[type](e)
+    }
+
+    if (isReact) {
+      setTimeout(doLog, 0)
+    } else {
+      doLog()
+    }
   }
 }

@@ -327,7 +327,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       setHeight(height || 0)
     }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
-      const { y: navigationY = 0 } = navigation?.layout || {}
+      const { top: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
       resetBoundaryAndCheck({ width, height })
     })
@@ -335,7 +335,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
-    const { y: navigationY = 0 } = navigation?.layout || {}
+    const { top: navigationY = 0 } = navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {
