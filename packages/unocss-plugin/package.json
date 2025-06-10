@@ -4,7 +4,7 @@
   "description": "mpx unocss webpack plugin",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "type": "module",
   "author": "",
@@ -29,5 +29,9 @@
     "unocss": "66.0.0",
     "webpack-sources": "^3.2.3",
     "webpack-virtual-modules": "^0.6.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.3",
+    "@mpxjs/unocss-base": "^2.9.48"
   }
 }

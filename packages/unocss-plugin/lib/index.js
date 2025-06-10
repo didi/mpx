@@ -212,6 +212,53 @@ class MpxUnocssPlugin {
       ]
     })
   }
+  getTemplateParser(uno) {
+    // process classes
+    const transformAlias = buildAliasTransformer(uno.config.alias)
+    const transformClasses = (source, classNameHandler = c => c) => {
+      // pre process
+      source = transformAlias(source)
+      if (this.options.transformGroups) {
+        source = transformGroups(source, this.options.transformGroups)
+      }
+      const content = source.source()
+      // escape & fill classesMap
+      return content.split(/\s+/).map(classNameHandler).join(' ')
+    }
+    return (source,classNameHandler)=>{
+      source = getReplaceSource(source)
+      const content = source.original().source()
+      parseClasses(content).forEach(({ result, start, end }) => {
+        let { replaced, val } = parseMustache(result, (exp) => {
+          const expSource = getReplaceSource(exp)
+          parseStrings(exp).forEach(({ result, start, end }) => {
+            result = transformClasses(result, classNameHandler)
+            expSource.replace(start, end, result)
+          })
+          return expSource.source()
+        }, str => transformClasses(str, classNameHandler))
+        if (replaced) {
+          val = stringifyAttr(val)
+          source.replace(start - 1, end + 1, val)
+        }
+      })
+      // process comments
+      const commentConfig = {}
+      parseComments(content).forEach(({ result, start, end }) => {
+        Object.assign(commentConfig, parseCommentConfig(result))
+        newsource.replace(start, end, '')
+      })
+      if (commentConfig.safelist) {
+        this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
+          classNameHandler(className)
+        })
+      }
+      return {
+        newsource: source,
+        commentConfig
+      }
+    }
+  }
 
   apply (compiler) {
     this.minify = isProductionLikeMode(compiler.options)
@@ -306,22 +353,9 @@ class MpxUnocssPlugin {
         safeListClasses.forEach((className) => {
           mainClassesMap[className] = true
         })
-        const transformAlias = buildAliasTransformer(config.alias)
-        const transformClasses = (source, classNameHandler = c => c) => {
-          // pre process
-          source = transformAlias(source)
-          if (this.options.transformGroups) {
-            source = transformGroups(source, this.options.transformGroups)
-          }
-          const content = source.source()
-          // escape & fill classesMap
-          return content.split(/\s+/).map(classNameHandler).join(' ')
-        }
+        const parseTemplate = getTemplateParser(uno)
 
         const processTemplate = async (file, source) => {
-          source = getReplaceSource(source)
-          const content = source.original().source()
-
           const packageName = getPackageName(file)
           const filename = file.slice(0, -templateExt.length)
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
@@ -339,35 +373,9 @@ class MpxUnocssPlugin {
             }
             return mpEscape(cssEscape(className), this.options.escapeMap)
           }
-          parseClasses(content).forEach(({ result, start, end }) => {
-            let { replaced, val } = parseMustache(result, (exp) => {
-              const expSource = getReplaceSource(exp)
-              parseStrings(exp).forEach(({ result, start, end }) => {
-                result = transformClasses(result, classNameHandler)
-                expSource.replace(start, end, result)
-              })
-              return expSource.source()
-            }, str => transformClasses(str, classNameHandler))
-            if (replaced) {
-              val = stringifyAttr(val)
-              source.replace(start - 1, end + 1, val)
-            }
-          })
-          // process comments
-          const commentConfig = {}
-          parseComments(content).forEach(({ result, start, end }) => {
-            Object.assign(commentConfig, parseCommentConfig(result))
-            source.replace(start, end, '')
-          })
-          if (commentConfig.safelist) {
-            this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
-              classNameHandler(className)
-            })
-          }
-
+          const {newsource, commentConfig} = parseTemplate(source, classNameHandler)
           commentConfigMap[filename] = commentConfig
-
-          assets[file] = source
+          assets[file] = newsource
         }
 
         await Promise.all(Object.entries(assets).map(([file, source]) => {
