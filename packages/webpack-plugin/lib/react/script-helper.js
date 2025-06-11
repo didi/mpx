@@ -114,12 +114,13 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
             const placeholderRequest = JSON.stringify(path.resolve(queryObj.context, rawResourcePath))
             componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, placeholderRequest)
           } else {
-            if (!isBuildInReactTag(placeholder)) {
+            const tag = `mpx-${placeholder}`
+            if (!isBuildInReactTag(tag)) {
               loaderContext.emitError(
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
               )
             }
-            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, getMpxComponentRequest(`mpx-${placeholder}`))
+            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, getMpxComponentRequest(tag))
           }
         } else {
           loaderContext.emitError(

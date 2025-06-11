@@ -1333,6 +1333,15 @@ class MpxWebpackPlugin {
       compilation.hooks.processAssets.tap({
         name: 'MpxWebpackPlugin'
       }, (assets) => {
+        if (isReact(mpx.mode)) {
+          Object.keys(assets).forEach((chunkName) => {
+            if (/\.js$/.test(chunkName)) {
+              let val = assets[chunkName].source()
+              val = val.replace(/_mpx_rn_img_relative_path_/g, chunkName === 'app.js' ? '.' : '..')
+              compilation.assets[chunkName] = new RawSource(val)
+            }
+          })
+        }
         try {
           const dynamicAssets = {}
           for (const packageName in mpx.runtimeInfo) {
