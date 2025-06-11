@@ -136,7 +136,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(Object.assign({}, style, styles.container), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(Object.assign({},styles.container, style), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const navigation = useNavigation()
 
@@ -278,8 +278,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
           // 缩放过程中实时边界检测
           // 计算新的边界范围
-          const top = 0
-          const left = 0
+          const top = (style.position === 'absolute' && style.top) || 0
+          const left = (style.position === 'absolute' && style.left) || 0
           const scaledWidth = width * clampedScale
           const scaledHeight = height * clampedScale
 
@@ -291,18 +291,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
           if (MovableAreaLayout.width < scaledWidth) {
             xMin = maxOffsetX
-            xMax = 0
+            xMax = -left
           } else {
-            xMin = left === 0 ? 0 : -left
-            xMax = maxOffsetX < 0 ? 0 : maxOffsetX
+            xMin = -left
+            xMax = maxOffsetX < 0 ? -left : maxOffsetX
           }
 
           if (MovableAreaLayout.height < scaledHeight) {
             yMin = maxOffsetY
-            yMax = 0
+            yMax = -top
           } else {
-            yMin = top === 0 ? 0 : -top
-            yMax = maxOffsetY < 0 ? 0 : maxOffsetY
+            yMin = -top
+            yMax = maxOffsetY < 0 ? -top : maxOffsetY
           }
 
           // 应用边界限制
@@ -333,14 +333,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newOffsetY
             runOnJS(handleRestBoundaryAndCheck)()
           }
-
-          console.log('ScaleValue prop scaling with boundary:', {
-            direction: clampedScale > prevScale ? 'ZOOM_IN' : 'ZOOM_OUT',
-            centerPoint: `(${currentCenterX.toFixed(1)}, ${currentCenterY.toFixed(1)})`,
-            newOffset: `(${newOffsetX.toFixed(1)}, ${newOffsetY.toFixed(1)})`,
-            boundaries: `x:[${xMin.toFixed(1)}, ${xMax.toFixed(1)}] y:[${yMin.toFixed(1)}, ${yMax.toFixed(1)}]`,
-            scaleChange: `${prevScale.toFixed(2)} -> ${clampedScale.toFixed(2)}`
-          })
         } else {
           // 如果还没有尺寸信息，只更新缩放值
           if (animation) {
@@ -408,15 +400,15 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     let yRange: [min: number, max: number]
 
     if (MovableAreaLayout.width < scaledWidth) {
-      xRange = [maxOffsetX, 0]
+      xRange = [maxOffsetX, -left]
     } else {
-      xRange = [left === 0 ? 0 : -left, maxOffsetX < 0 ? 0 : maxOffsetX]
+      xRange = [-left, maxOffsetX < 0 ? -left : maxOffsetX]
     }
 
     if (MovableAreaLayout.height < scaledHeight) {
-      yRange = [maxOffsetY, 0]
+      yRange = [maxOffsetY, -top]
     } else {
-      yRange = [top === 0 ? 0 : -top, maxOffsetY < 0 ? 0 : maxOffsetY]
+      yRange = [-top, maxOffsetY < 0 ? -top : maxOffsetY]
     }
 
     draggableXRange.value = xRange
@@ -768,8 +760,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
             // 缩放过程中实时边界检测
             // 计算新的边界范围
-            const top = 0
-            const left = 0
+            const top = (style.position === 'absolute' && style.top) || 0
+            const left = (style.position === 'absolute' && style.left) || 0
             const scaledWidth = width * newScale
             const scaledHeight = height * newScale
 
@@ -781,18 +773,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
             if (MovableAreaLayout.width < scaledWidth) {
               xMin = maxOffsetX
-              xMax = 0
+              xMax = -left
             } else {
-              xMin = left === 0 ? 0 : -left
-              xMax = maxOffsetX < 0 ? 0 : maxOffsetX
+              xMin = -left
+              xMax = maxOffsetX < 0 ? -left : maxOffsetX
             }
 
             if (MovableAreaLayout.height < scaledHeight) {
               yMin = maxOffsetY
-              yMax = 0
+              yMax = -top
             } else {
-              yMin = top === 0 ? 0 : -top
-              yMax = maxOffsetY < 0 ? 0 : maxOffsetY
+              yMin = -top
+              yMax = maxOffsetY < 0 ? -top : maxOffsetY
             }
 
             // 应用边界限制
@@ -810,14 +802,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
             offsetX.value = newOffsetX
             offsetY.value = newOffsetY
-
-            console.log('Real-time boundary scaling:', {
-              direction: isZoomingIn ? 'ZOOM_IN' : 'ZOOM_OUT',
-              centerPoint: `(${currentCenterX.toFixed(1)}, ${currentCenterY.toFixed(1)})`,
-              newOffset: `(${newOffsetX.toFixed(1)}, ${newOffsetY.toFixed(1)})`,
-              boundaries: `x:[${xMin.toFixed(1)}, ${xMax.toFixed(1)}] y:[${yMin.toFixed(1)}, ${yMax.toFixed(1)}]`,
-              scaleChange: `${prevScale.toFixed(2)} -> ${newScale.toFixed(2)}`
-            })
           }
 
           currentScale.value = newScale
