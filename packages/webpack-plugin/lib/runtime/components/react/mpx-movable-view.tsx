@@ -136,7 +136,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     varContextRef,
     setWidth,
     setHeight
-  } = useTransformStyle(Object.assign({},styles.container, style), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(Object.assign({}, styles.container, style), { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const navigation = useNavigation()
 
@@ -225,6 +225,26 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     )
   }, [])
 
+  const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
+    'worklet'
+    let x = positionX
+    let y = positionY
+    // 计算边界限制
+    if (x > draggableXRange.value[1]) {
+      x = draggableXRange.value[1]
+    } else if (x < draggableXRange.value[0]) {
+      x = draggableXRange.value[0]
+    }
+
+    if (y > draggableYRange.value[1]) {
+      y = draggableYRange.value[1]
+    } else if (y < draggableYRange.value[0]) {
+      y = draggableYRange.value[0]
+    }
+
+    return { x, y }
+  }, [])
+
   useEffect(() => {
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
@@ -256,6 +276,77 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })()
   }, [x, y])
 
+  // 提取通用的缩放边界计算函数
+  const calculateScaleBoundaryPosition = useCallback(({
+    currentOffsetX,
+    currentOffsetY,
+    newScale,
+    width,
+    height
+  }: {
+    currentOffsetX: number
+    currentOffsetY: number
+    newScale: number
+    width: number
+    height: number
+  }) => {
+    'worklet'
+    const prevScale = currentScale.value
+
+    // 计算元素当前中心点（在屏幕上的位置）
+    const currentCenterX = currentOffsetX + (width * prevScale) / 2
+    const currentCenterY = currentOffsetY + (height * prevScale) / 2
+
+    // 实现中心缩放：保持元素中心点不变
+    // 计算缩放后为了保持中心点不变需要的新offset位置
+    let newOffsetX = currentCenterX - (width * newScale) / 2
+    let newOffsetY = currentCenterY - (height * newScale) / 2
+
+    // 缩放过程中实时边界检测
+    // 计算新的边界范围
+    const top = (style.position === 'absolute' && style.top) || 0
+    const left = (style.position === 'absolute' && style.left) || 0
+    const scaledWidth = width * newScale
+    const scaledHeight = height * newScale
+
+    // 计算新缩放值下的边界限制
+    const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
+    const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
+
+    let xMin, xMax, yMin, yMax
+
+    if (MovableAreaLayout.width < scaledWidth) {
+      xMin = maxOffsetX
+      xMax = -left
+    } else {
+      xMin = -left
+      xMax = maxOffsetX < 0 ? -left : maxOffsetX
+    }
+
+    if (MovableAreaLayout.height < scaledHeight) {
+      yMin = maxOffsetY
+      yMax = -top
+    } else {
+      yMin = -top
+      yMax = maxOffsetY < 0 ? -top : maxOffsetY
+    }
+
+    // 应用边界限制
+    if (newOffsetX > xMax) {
+      newOffsetX = xMax
+    } else if (newOffsetX < xMin) {
+      newOffsetX = xMin
+    }
+
+    if (newOffsetY > yMax) {
+      newOffsetY = yMax
+    } else if (newOffsetY < yMin) {
+      newOffsetY = yMin
+    }
+
+    return { x: newOffsetX, y: newOffsetY }
+  }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
+
   useEffect(() => {
     runOnUI(() => {
       if (currentScale.value !== scaleValue) {
@@ -265,58 +356,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         // 实现中心缩放的位置补偿
         const { width = 0, height = 0 } = layoutValue.value
         if (width > 0 && height > 0) {
-          const prevScale = currentScale.value
-
-          // 计算元素当前中心点（在屏幕上的位置）
-          const currentCenterX = offsetX.value + (width * prevScale) / 2
-          const currentCenterY = offsetY.value + (height * prevScale) / 2
-
-          // 实现中心缩放：保持元素中心点不变
-          // 计算缩放后为了保持中心点不变需要的新offset位置
-          let newOffsetX = currentCenterX - (width * clampedScale) / 2
-          let newOffsetY = currentCenterY - (height * clampedScale) / 2
-
-          // 缩放过程中实时边界检测
-          // 计算新的边界范围
-          const top = (style.position === 'absolute' && style.top) || 0
-          const left = (style.position === 'absolute' && style.left) || 0
-          const scaledWidth = width * clampedScale
-          const scaledHeight = height * clampedScale
-
-          // 计算新缩放值下的边界限制
-          const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
-          const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
-
-          let xMin, xMax, yMin, yMax
-
-          if (MovableAreaLayout.width < scaledWidth) {
-            xMin = maxOffsetX
-            xMax = -left
-          } else {
-            xMin = -left
-            xMax = maxOffsetX < 0 ? -left : maxOffsetX
-          }
-
-          if (MovableAreaLayout.height < scaledHeight) {
-            yMin = maxOffsetY
-            yMax = -top
-          } else {
-            yMin = -top
-            yMax = maxOffsetY < 0 ? -top : maxOffsetY
-          }
-
-          // 应用边界限制
-          if (newOffsetX > xMax) {
-            newOffsetX = xMax
-          } else if (newOffsetX < xMin) {
-            newOffsetX = xMin
-          }
-
-          if (newOffsetY > yMax) {
-            newOffsetY = yMax
-          } else if (newOffsetY < yMin) {
-            newOffsetY = yMin
-          }
+          // 使用通用的边界计算函数
+          const { x: newOffsetX, y: newOffsetY } = calculateScaleBoundaryPosition({
+            currentOffsetX: offsetX.value,
+            currentOffsetY: offsetY.value,
+            newScale: clampedScale,
+            width,
+            height
+          })
 
           // 同时更新缩放值和位置
           if (animation) {
@@ -414,26 +461,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     draggableXRange.value = xRange
     draggableYRange.value = yRange
   }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
-
-  const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
-    'worklet'
-    let x = positionX
-    let y = positionY
-    // 计算边界限制
-    if (x > draggableXRange.value[1]) {
-      x = draggableXRange.value[1]
-    } else if (x < draggableXRange.value[0]) {
-      x = draggableXRange.value[0]
-    }
-
-    if (y > draggableYRange.value[1]) {
-      y = draggableYRange.value[1]
-    } else if (y < draggableYRange.value[0]) {
-      y = draggableYRange.value[0]
-    }
-
-    return { x, y }
-  }, [])
 
   const resetBoundaryAndCheck = ({ width, height }: { width: number; height: number }) => {
     setBoundary({ width, height })
@@ -740,68 +767,22 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
           // 只有当缩放值真正改变时才调整位置
           if (Math.abs(newScale - currentScale.value) > 0.01) {
-            // 获取缩放手势的焦点坐标
-            const focalX = e.focalX || 0
-            const focalY = e.focalY || 0
-
             // 获取元素尺寸
             const { width = 0, height = 0 } = layoutValue.value
-            const prevScale = currentScale.value
-            const isZoomingIn = newScale > prevScale
 
-            // 计算元素当前中心点（在屏幕上的位置）
-            const currentCenterX = offsetX.value + (width * prevScale) / 2
-            const currentCenterY = offsetY.value + (height * prevScale) / 2
+            if (width > 0 && height > 0) {
+              // 使用通用的边界计算函数
+              const { x: newOffsetX, y: newOffsetY } = calculateScaleBoundaryPosition({
+                currentOffsetX: offsetX.value,
+                currentOffsetY: offsetY.value,
+                newScale,
+                width,
+                height
+              })
 
-            // 实现中心缩放：保持元素中心点不变
-            // 计算缩放后为了保持中心点不变需要的新offset位置
-            let newOffsetX = currentCenterX - (width * newScale) / 2
-            let newOffsetY = currentCenterY - (height * newScale) / 2
-
-            // 缩放过程中实时边界检测
-            // 计算新的边界范围
-            const top = (style.position === 'absolute' && style.top) || 0
-            const left = (style.position === 'absolute' && style.left) || 0
-            const scaledWidth = width * newScale
-            const scaledHeight = height * newScale
-
-            // 计算新缩放值下的边界限制
-            const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
-            const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
-
-            let xMin, xMax, yMin, yMax
-
-            if (MovableAreaLayout.width < scaledWidth) {
-              xMin = maxOffsetX
-              xMax = -left
-            } else {
-              xMin = -left
-              xMax = maxOffsetX < 0 ? -left : maxOffsetX
+              offsetX.value = newOffsetX
+              offsetY.value = newOffsetY
             }
-
-            if (MovableAreaLayout.height < scaledHeight) {
-              yMin = maxOffsetY
-              yMax = -top
-            } else {
-              yMin = -top
-              yMax = maxOffsetY < 0 ? -top : maxOffsetY
-            }
-
-            // 应用边界限制
-            if (newOffsetX > xMax) {
-              newOffsetX = xMax
-            } else if (newOffsetX < xMin) {
-              newOffsetX = xMin
-            }
-
-            if (newOffsetY > yMax) {
-              newOffsetY = yMax
-            } else if (newOffsetY < yMin) {
-              newOffsetY = yMin
-            }
-
-            offsetX.value = newOffsetX
-            offsetY.value = newOffsetY
           }
 
           currentScale.value = newScale
