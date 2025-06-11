@@ -1,12 +1,14 @@
 /**
- * ✘ scale-area
+ * ✔ scale-area
  */
 
 import { View } from 'react-native'
-import { JSX, forwardRef, ReactNode, useRef, useMemo, createElement } from 'react'
+import { JSX, forwardRef, ReactNode, useRef, useMemo, useCallback, createElement } from 'react'
+import { GestureDetector, Gesture } from 'react-native-gesture-handler'
+import { runOnJS } from 'react-native-reanimated'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
-import { MovableAreaContext } from './context'
+import { MovableAreaContext, MovableAreaContextValue } from './context'
 import { useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
 import Portal from './mpx-portal'
 
@@ -15,6 +17,7 @@ interface MovableAreaProps {
   children: ReactNode
   width?: number
   height?: number
+  'scale-area'?: boolean
   'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
@@ -24,7 +27,15 @@ interface MovableAreaProps {
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
-  const { style = {}, 'enable-var': enableVar, 'external-var-context': externalVarContext, 'parent-font-size': parentFontSize, 'parent-width': parentWidth, 'parent-height': parentHeight } = props
+  const {
+    style = {},
+    'scale-area': scaleArea = false,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight
+  } = props
 
   const {
     hasSelfPercent,
@@ -37,16 +48,68 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const movableViewRef = useRef(null)
+  const movableViewsRef = useRef<Map<string, { onScale: (scaleInfo: { scale: number }) => void; onScaleEnd?: () => void }>>(new Map())
+
   useNodesRef(props, ref, movableViewRef, {
     style: normalStyle
   })
 
-  const contextValue = useMemo(() => ({
+  // 注册/注销 MovableView 的回调
+  const registerMovableView = useCallback((id: string, callbacks: { onScale: (scaleInfo: { scale: number }) => void; onScaleEnd?: () => void }) => {
+    movableViewsRef.current.set(id, callbacks)
+  }, [])
+
+  const unregisterMovableView = useCallback((id: string) => {
+    movableViewsRef.current.delete(id)
+  }, [])
+
+  // 处理区域缩放手势
+  const handleAreaScale = useCallback((scaleInfo: { scale: number }) => {
+    if (scaleArea && movableViewsRef.current.size > 0) {
+      // 将缩放信息广播给所有注册的 MovableView
+      movableViewsRef.current.forEach((callbacks) => {
+        callbacks.onScale(scaleInfo)
+      })
+    }
+  }, [scaleArea])
+
+  // 处理区域缩放结束
+  const handleAreaScaleEnd = useCallback(() => {
+    if (scaleArea && movableViewsRef.current.size > 0) {
+      // 通知所有注册的 MovableView 缩放结束
+      movableViewsRef.current.forEach((callbacks) => {
+        callbacks.onScaleEnd?.()
+      })
+    }
+  }, [scaleArea])
+
+  const contextValue: MovableAreaContextValue = useMemo(() => ({
     height: normalStyle.height || 10,
-    width: normalStyle.width || 10
-  }), [normalStyle.width, normalStyle.height])
+    width: normalStyle.width || 10,
+    scaleArea,
+    onAreaScale: handleAreaScale,
+    registerMovableView,
+    unregisterMovableView
+  }), [normalStyle.width, normalStyle.height, scaleArea, handleAreaScale, registerMovableView, unregisterMovableView])
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef })
+
+  // 创建缩放手势
+  const scaleGesture = useMemo(() => {
+    if (!scaleArea) return null
+
+    return Gesture.Pinch()
+      .onUpdate((e) => {
+        'worklet'
+        runOnJS(handleAreaScale)({
+          scale: e.scale
+        })
+      })
+      .onEnd(() => {
+        'worklet'
+        runOnJS(handleAreaScaleEnd)()
+      })
+  }, [scaleArea, handleAreaScale, handleAreaScaleEnd])
 
   const innerProps = useInnerProps(
     extendObject(
@@ -73,9 +136,30 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       }
     )
   ))
+
+  // 如果启用了 scale-area，包装一个 GestureDetector
+  if (scaleArea && scaleGesture) {
+    movableComponent = createElement(MovableAreaContext.Provider, { value: contextValue }, createElement(
+      GestureDetector,
+      { gesture: scaleGesture },
+      createElement(
+        View,
+        innerProps,
+        wrapChildren(
+          props,
+          {
+            hasVarDec,
+            varContext: varContextRef.current
+          }
+        )
+      )
+    ))
+  }
+
   if (hasPositionFixed) {
     movableComponent = createElement(Portal, null, movableComponent)
   }
+
   return movableComponent
 })
 

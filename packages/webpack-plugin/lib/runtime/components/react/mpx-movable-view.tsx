@@ -347,6 +347,64 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return { x: newOffsetX, y: newOffsetY }
   }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
 
+  // 提取通用的缩放处理函数
+  const handleScaleUpdate = useCallback((scaleInfo: { scale: number }) => {
+    'worklet'
+    if (disabled) return
+
+    // 判断缩放方向并计算新的缩放值
+    const isZoomingIn = scaleInfo.scale > 1
+    const isZoomingOut = scaleInfo.scale < 1
+
+    let newScale
+    if (isZoomingIn) {
+      // 放大：增加缩放值
+      newScale = currentScale.value + (scaleInfo.scale - 1) * 0.5
+    } else if (isZoomingOut) {
+      // 缩小：减少缩放值
+      newScale = currentScale.value - (1 - scaleInfo.scale) * 0.5
+    } else {
+      // 没有缩放变化
+      newScale = currentScale.value
+    }
+
+    // 限制缩放值在 scaleMin 和 scaleMax 之间
+    newScale = Math.max(scaleMin, Math.min(scaleMax, newScale))
+
+    // 只有当缩放值真正改变时才调整位置
+    if (Math.abs(newScale - currentScale.value) > 0.01) {
+      // 获取元素尺寸
+      const { width = 0, height = 0 } = layoutValue.value
+
+      if (width > 0 && height > 0) {
+        // 使用通用的边界计算函数
+        const { x: newOffsetX, y: newOffsetY } = calculateScaleBoundaryPosition({
+          currentOffsetX: offsetX.value,
+          currentOffsetY: offsetY.value,
+          newScale,
+          width,
+          height
+        })
+
+        offsetX.value = newOffsetX
+        offsetY.value = newOffsetY
+
+        // 更新缩放值
+        currentScale.value = newScale
+      }
+    } else {
+      currentScale.value = newScale
+    }
+
+    if (bindscale) {
+      runOnJS(handleTriggerScale)({
+        x: offsetX.value,
+        y: offsetY.value,
+        scale: newScale
+      })
+    }
+  }, [disabled, scaleMin, scaleMax, bindscale, handleTriggerScale, calculateScaleBoundaryPosition, style.position, style.top, style.left, MovableAreaLayout.height, MovableAreaLayout.width])
+
   useEffect(() => {
     runOnUI(() => {
       if (currentScale.value !== scaleValue) {
@@ -731,7 +789,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
 
     // 添加缩放手势支持
-    if (scale) {
+    if (scale && !MovableAreaLayout.scaleArea) {
       const gesturePinch = Gesture.Pinch()
         .onStart((e: any) => {
           'worklet'
@@ -744,56 +802,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         })
         .onUpdate((e: any) => {
           'worklet'
-          if (disabled) return
-
-          // 判断缩放方向并计算新的缩放值
-          const isZoomingIn = e.scale > 1
-          const isZoomingOut = e.scale < 1
-
-          let newScale
-          if (isZoomingIn) {
-            // 放大：增加缩放值
-            newScale = currentScale.value + (e.scale - 1) * 0.5
-          } else if (isZoomingOut) {
-            // 缩小：减少缩放值
-            newScale = currentScale.value - (1 - e.scale) * 0.5
-          } else {
-            // 没有缩放变化
-            newScale = currentScale.value
-          }
-
-          // 限制缩放值在 scaleMin 和 scaleMax 之间
-          newScale = Math.max(scaleMin, Math.min(scaleMax, newScale))
-
-          // 只有当缩放值真正改变时才调整位置
-          if (Math.abs(newScale - currentScale.value) > 0.01) {
-            // 获取元素尺寸
-            const { width = 0, height = 0 } = layoutValue.value
-
-            if (width > 0 && height > 0) {
-              // 使用通用的边界计算函数
-              const { x: newOffsetX, y: newOffsetY } = calculateScaleBoundaryPosition({
-                currentOffsetX: offsetX.value,
-                currentOffsetY: offsetY.value,
-                newScale,
-                width,
-                height
-              })
-
-              offsetX.value = newOffsetX
-              offsetY.value = newOffsetY
-            }
-          }
-
-          currentScale.value = newScale
-
-          if (bindscale) {
-            runOnJS(handleTriggerScale)({
-              x: offsetX.value,
-              y: offsetY.value,
-              scale: newScale
-            })
-          }
+          handleScaleUpdate({ scale: e.scale })
         })
         .onEnd((e: any) => {
           'worklet'
@@ -819,7 +828,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
 
     return gesturePan
-  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current])
+  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current, handleScaleUpdate, MovableAreaLayout.scaleArea])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
@@ -878,6 +887,53 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       rewriteCatchEvent()
     )
   )
+
+  // 生成唯一 ID
+  const viewId = useMemo(() => `movable-view-${Date.now()}-${Math.random()}`, [])
+
+  // 注册到 MovableArea（如果启用了 scale-area）
+  useEffect(() => {
+    if (MovableAreaLayout.scaleArea && MovableAreaLayout.registerMovableView && MovableAreaLayout.unregisterMovableView) {
+      // 为 scale-area 模式记录初始状态
+      let isFirstUpdate = true
+
+      const handleAreaScale = (scaleInfo: { scale: number }) => {
+        if (!scale) return // 只有当 MovableView 支持缩放时才处理
+
+        runOnUI(() => {
+          'worklet'
+          // 在第一次更新时记录初始状态（类似 onStart）
+          if (isFirstUpdate) {
+            initialViewPosition.value = {
+              x: offsetX.value,
+              y: offsetY.value
+            }
+            isFirstUpdate = false
+          }
+
+          // 直接使用传入的缩放值
+          handleScaleUpdate({ scale: scaleInfo.scale })
+        })()
+      }
+
+      const handleAreaScaleEnd = () => {
+        if (!scale) return
+        // 缩放结束时重新检查边界
+        handleRestBoundaryAndCheck()
+        isFirstUpdate = true // 重置状态
+      }
+
+      MovableAreaLayout.registerMovableView?.(viewId, {
+        onScale: handleAreaScale,
+        onScaleEnd: handleAreaScaleEnd
+      })
+
+      return () => {
+        MovableAreaLayout.unregisterMovableView?.(viewId)
+        isFirstUpdate = true // 重置状态
+      }
+    }
+  }, [MovableAreaLayout.scaleArea, MovableAreaLayout.registerMovableView, MovableAreaLayout.unregisterMovableView, viewId, scale, handleScaleUpdate, handleRestBoundaryAndCheck])
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,
