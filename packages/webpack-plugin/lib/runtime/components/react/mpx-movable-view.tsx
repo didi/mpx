@@ -791,15 +791,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     // 添加缩放手势支持
     if (scale && !MovableAreaLayout.scaleArea) {
       const gesturePinch = Gesture.Pinch()
-        .onStart((e: any) => {
-          'worklet'
-          if (disabled) return
-          // 记录缩放开始时的初始状态
-          initialViewPosition.value = {
-            x: offsetX.value,
-            y: offsetY.value
-          }
-        })
         .onUpdate((e: any) => {
           'worklet'
           handleScaleUpdate({ scale: e.scale })
@@ -894,23 +885,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   // 注册到 MovableArea（如果启用了 scale-area）
   useEffect(() => {
     if (MovableAreaLayout.scaleArea && MovableAreaLayout.registerMovableView && MovableAreaLayout.unregisterMovableView) {
-      // 为 scale-area 模式记录初始状态
-      let isFirstUpdate = true
-
       const handleAreaScale = (scaleInfo: { scale: number }) => {
         if (!scale) return // 只有当 MovableView 支持缩放时才处理
-
         runOnUI(() => {
-          'worklet'
-          // 在第一次更新时记录初始状态（类似 onStart）
-          if (isFirstUpdate) {
-            initialViewPosition.value = {
-              x: offsetX.value,
-              y: offsetY.value
-            }
-            isFirstUpdate = false
-          }
-
           // 直接使用传入的缩放值
           handleScaleUpdate({ scale: scaleInfo.scale })
         })()
@@ -920,7 +897,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (!scale) return
         // 缩放结束时重新检查边界
         handleRestBoundaryAndCheck()
-        isFirstUpdate = true // 重置状态
       }
 
       MovableAreaLayout.registerMovableView?.(viewId, {
@@ -930,7 +906,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
       return () => {
         MovableAreaLayout.unregisterMovableView?.(viewId)
-        isFirstUpdate = true // 重置状态
       }
     }
   }, [MovableAreaLayout.scaleArea, MovableAreaLayout.registerMovableView, MovableAreaLayout.unregisterMovableView, viewId, scale, handleScaleUpdate, handleRestBoundaryAndCheck])
