@@ -261,16 +261,100 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       if (currentScale.value !== scaleValue) {
         // 限制缩放值在 scaleMin 和 scaleMax 之间
         const clampedScale = Math.max(scaleMin, Math.min(scaleMax, scaleValue))
-        if (animation) {
-          currentScale.value = withTiming(clampedScale, {
-            duration: 1000
-          }, () => {
+
+        // 实现中心缩放的位置补偿
+        const { width = 0, height = 0 } = layoutValue.value
+        if (width > 0 && height > 0) {
+          const prevScale = currentScale.value
+
+          // 计算元素当前中心点（在屏幕上的位置）
+          const currentCenterX = offsetX.value + (width * prevScale) / 2
+          const currentCenterY = offsetY.value + (height * prevScale) / 2
+
+          // 实现中心缩放：保持元素中心点不变
+          // 计算缩放后为了保持中心点不变需要的新offset位置
+          let newOffsetX = currentCenterX - (width * clampedScale) / 2
+          let newOffsetY = currentCenterY - (height * clampedScale) / 2
+
+          // 缩放过程中实时边界检测
+          // 计算新的边界范围
+          const top = 0
+          const left = 0
+          const scaledWidth = width * clampedScale
+          const scaledHeight = height * clampedScale
+
+          // 计算新缩放值下的边界限制
+          const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
+          const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
+
+          let xMin, xMax, yMin, yMax
+
+          if (MovableAreaLayout.width < scaledWidth) {
+            xMin = maxOffsetX
+            xMax = 0
+          } else {
+            xMin = left === 0 ? 0 : -left
+            xMax = maxOffsetX < 0 ? 0 : maxOffsetX
+          }
+
+          if (MovableAreaLayout.height < scaledHeight) {
+            yMin = maxOffsetY
+            yMax = 0
+          } else {
+            yMin = top === 0 ? 0 : -top
+            yMax = maxOffsetY < 0 ? 0 : maxOffsetY
+          }
+
+          // 应用边界限制
+          if (newOffsetX > xMax) {
+            newOffsetX = xMax
+          } else if (newOffsetX < xMin) {
+            newOffsetX = xMin
+          }
+
+          if (newOffsetY > yMax) {
+            newOffsetY = yMax
+          } else if (newOffsetY < yMin) {
+            newOffsetY = yMin
+          }
+
+          // 同时更新缩放值和位置
+          if (animation) {
+            currentScale.value = withTiming(clampedScale, {
+              duration: 1000
+            }, () => {
+              runOnJS(handleRestBoundaryAndCheck)()
+            })
+            offsetX.value = withTiming(newOffsetX, { duration: 1000 })
+            offsetY.value = withTiming(newOffsetY, { duration: 1000 })
+          } else {
+            currentScale.value = clampedScale
+            offsetX.value = newOffsetX
+            offsetY.value = newOffsetY
             runOnJS(handleRestBoundaryAndCheck)()
+          }
+
+          console.log('ScaleValue prop scaling with boundary:', {
+            direction: clampedScale > prevScale ? 'ZOOM_IN' : 'ZOOM_OUT',
+            centerPoint: `(${currentCenterX.toFixed(1)}, ${currentCenterY.toFixed(1)})`,
+            newOffset: `(${newOffsetX.toFixed(1)}, ${newOffsetY.toFixed(1)})`,
+            boundaries: `x:[${xMin.toFixed(1)}, ${xMax.toFixed(1)}] y:[${yMin.toFixed(1)}, ${yMax.toFixed(1)}]`,
+            scaleChange: `${prevScale.toFixed(2)} -> ${clampedScale.toFixed(2)}`
           })
         } else {
-          currentScale.value = clampedScale
-          runOnJS(handleRestBoundaryAndCheck)()
+          // 如果还没有尺寸信息，只更新缩放值
+          if (animation) {
+            currentScale.value = withTiming(clampedScale, {
+              duration: 1000
+            }, () => {
+              runOnJS(handleRestBoundaryAndCheck)()
+            })
+          } else {
+            currentScale.value = clampedScale
+            runOnJS(handleRestBoundaryAndCheck)()
+          }
         }
+
         if (bindscale) {
           runOnJS(handleTriggerScale)({
             x: offsetX.value,
