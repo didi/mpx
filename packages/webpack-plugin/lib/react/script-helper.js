@@ -25,13 +25,14 @@ function getAsyncChunkName (chunkName) {
 }
 
 function getAsyncComponent (componentName, componentRequest, chunkName, fallback) {
+  fallback = fallback && `getComponent(require(${fallback}?isComponent=true))`
   return `getComponent(memo(forwardRef(function(props, ref) {
     return createElement(
       getComponent(require(${mpxAsyncContainer})),
       {
         type: 'component',
         props: Object.assign({}, props, { ref }),
-        loading: getComponent(require(${fallback})),
+        loading: ${fallback},
         children: (props) => createElement(
           getComponent(
             lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
@@ -123,9 +124,9 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
             componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, getMpxComponentRequest(tag))
           }
         } else {
-          loaderContext.emitError(
-            new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
-          )
+          // loaderContext.emitError(
+          //   new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
+          // )
           componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async)
         }
       } else {
