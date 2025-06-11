@@ -384,12 +384,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       const { y: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
-      
+
       // 同时更新 layoutValue，供缩放逻辑使用
       runOnUI(() => {
         layoutValue.value = { width, height }
       })()
-      
+
       resetBoundaryAndCheck({ width: width / currentScale.value, height: height / currentScale.value })
     })
     propsOnLayout && propsOnLayout(e)
@@ -457,7 +457,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const handleRestBoundaryAndCheck = () => {
     const { width, height } = layoutRef.current
     if (width && height) {
-      resetBoundaryAndCheck({width, height})
+      resetBoundaryAndCheck({ width, height })
     }
   }
 
@@ -679,17 +679,59 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
             // 实现中心缩放：保持元素中心点不变
             // 计算缩放后为了保持中心点不变需要的新offset位置
-            const newOffsetX = currentCenterX - (width * newScale) / 2
-            const newOffsetY = currentCenterY - (height * newScale) / 2
+            let newOffsetX = currentCenterX - (width * newScale) / 2
+            let newOffsetY = currentCenterY - (height * newScale) / 2
+
+            // 缩放过程中实时边界检测
+            // 计算新的边界范围
+            const top = 0
+            const left = 0
+            const scaledWidth = width * newScale
+            const scaledHeight = height * newScale
+
+            // 计算新缩放值下的边界限制
+            const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
+            const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
+
+            let xMin, xMax, yMin, yMax
+
+            if (MovableAreaLayout.width < scaledWidth) {
+              xMin = maxOffsetX
+              xMax = 0
+            } else {
+              xMin = left === 0 ? 0 : -left
+              xMax = maxOffsetX < 0 ? 0 : maxOffsetX
+            }
+
+            if (MovableAreaLayout.height < scaledHeight) {
+              yMin = maxOffsetY
+              yMax = 0
+            } else {
+              yMin = top === 0 ? 0 : -top
+              yMax = maxOffsetY < 0 ? 0 : maxOffsetY
+            }
+
+            // 应用边界限制
+            if (newOffsetX > xMax) {
+              newOffsetX = xMax
+            } else if (newOffsetX < xMin) {
+              newOffsetX = xMin
+            }
+
+            if (newOffsetY > yMax) {
+              newOffsetY = yMax
+            } else if (newOffsetY < yMin) {
+              newOffsetY = yMin
+            }
 
             offsetX.value = newOffsetX
             offsetY.value = newOffsetY
 
-            console.log('Center scaling:', {
+            console.log('Real-time boundary scaling:', {
               direction: isZoomingIn ? 'ZOOM_IN' : 'ZOOM_OUT',
               centerPoint: `(${currentCenterX.toFixed(1)}, ${currentCenterY.toFixed(1)})`,
-              oldOffset: `(${offsetX.value.toFixed(1)}, ${offsetY.value.toFixed(1)})`,
               newOffset: `(${newOffsetX.toFixed(1)}, ${newOffsetY.toFixed(1)})`,
+              boundaries: `x:[${xMin.toFixed(1)}, ${xMax.toFixed(1)}] y:[${yMin.toFixed(1)}, ${yMax.toFixed(1)}]`,
               scaleChange: `${prevScale.toFixed(2)} -> ${newScale.toFixed(2)}`
             })
           }
