@@ -21,7 +21,7 @@ describe('test plugin', async () => {
   }
   const uno = await plugin.createContext(mockCompilation, mode)
   const parseTemplate = plugin.getTemplateParser(uno)
-  async function testTemplate(content, generateOptions={
+  async function testTemplate (content, generateOptions = {
     preflights: false,
     safelist: false
   }) {
@@ -46,7 +46,7 @@ describe('test plugin', async () => {
     expect(unoFileContent).toMatchSnapshot()
   }
   test('test-template', async () => {
-    await testTemplate(`<view class="translate-[-50%,-50%] text-12px bg-#fff/10" />`)
-    await testTemplate(`<view wx:class="{{['translate-[-50%]',{'text-12px': false},'bg-#fff/10']}}" />`)
+    await testTemplate('<view class="translate-[-50%,-50%] text-12px bg-#fff/10" />')
+    await testTemplate('<view wx:class="{{[\'translate-[-50%]\',{\'text-12px\': false},\'bg-#fff/10\']}}" />')
   })
 })
