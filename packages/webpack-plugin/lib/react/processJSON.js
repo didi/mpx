@@ -133,6 +133,29 @@ module.exports = function (jsonContent, {
     isShow: true
   }
 
+  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
+    const componentPlaceholder = jsonObj.componentPlaceholder || {}
+    if (componentPlaceholder[name]) return
+    componentPlaceholder[name] = placeholder
+    jsonObj.componentPlaceholder = componentPlaceholder
+    if (placeholderEntry && !jsonObj.usingComponents[placeholder]) jsonObj.usingComponents[placeholder] = placeholderEntry
+  }
+  const normalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      const placeholderMap = mode === 'ali'
+        ? {
+          view: { name: 'mpx-view', resource: mpxViewPath },
+          text: { name: 'mpx-text', resource: mpxTextPath }
+        }
+        : {}
+      placeholder = placeholderMap[placeholder] || { name: placeholder }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    return placeholder
+  }
+
   const processTabBar = (tabBar, callback) => {
     if (tabBar) {
       tabBar = Object.assign({}, defaultTabbar, tabBar)
@@ -301,19 +324,48 @@ module.exports = function (jsonContent, {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath } = {}, { tarRoot } = {}) => {
+        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          const { resourcePath, queryObj } = parseRequest(resource)
-          componentsMap[resourcePath] = outputPath
-          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-          localComponentsMap[name] = {
-            resource: addQuery(resource, {
-              isComponent: true,
-              outputPath
-            }),
-            async: queryObj.async || tarRoot
+          const fillComponentsMap = (name, entry, tarRoot) => {
+            const { resource, outputPath } = entry
+            const { resourcePath, queryObj } = parseRequest(resource)
+            componentsMap[resourcePath] = outputPath
+            loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+            localComponentsMap[name] = {
+              resource: addQuery(resource, {
+                isComponent: true,
+                outputPath
+              }),
+              async: queryObj.async || tarRoot
+            }
           }
-          callback()
+          fillComponentsMap(name, entry, tarRoot)
+          const { relativePath } = entry
+
+          if (tarRoot) {
+            if (placeholder) {
+              placeholder = normalizePlaceholder(placeholder)
+              if (placeholder.resource) {
+                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
+                  if (err) return callback(err)
+                  fillInComponentPlaceholder(name, placeholder.name, entry)
+                  fillComponentsMap(placeholder.name, entry, '')
+                  callback()
+                })
+              } else {
+                fillInComponentPlaceholder(name, placeholder.name)
+                callback()
+              }
+            } else {
+              if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {
+                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+                emitError(errMsg)
+              }
+              callback()
+            }
+          } else {
+            callback()
+          }
         })
       }, callback)
     } else {

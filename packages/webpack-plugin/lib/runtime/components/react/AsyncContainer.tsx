@@ -95,19 +95,15 @@ interface ComponentError extends Error {
   type: 'timeout' | 'fail'
 }
 
-const DefaultLoading = (type: AsyncType) => {
-  if (type === 'page') {
-    return () => (
-      <View style={styles.container}>
-        <FastImage
-          style={styles.loadingImage}
-          source={{ uri: 'https://dpubstatic.udache.com/static/dpubimg/439jiCVOtNOnEv9F2LaDs_loading.gif' }}
-          resizeMode={FastImage.resizeMode.contain}></FastImage>
-      </View>
-    )
-  } else {
-    return () => (<View></View>)
-  }
+const DefaultLoading = () => {
+  return (
+    <View style={styles.container}>
+      <FastImage
+        style={styles.loadingImage}
+        source={{ uri: 'https://dpubstatic.udache.com/static/dpubimg/439jiCVOtNOnEv9F2LaDs_loading.gif' }}
+        resizeMode={FastImage.resizeMode.contain}></FastImage>
+    </View>
+  )
 }
 
 interface DefaultFallbackProps {
@@ -184,15 +180,11 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
 
   getSuspenseFallback () {
     if (this.props.type === 'page') {
-      const Fallback = this.props.loading || DefaultLoading('page')
+      const Fallback = this.props.loading || DefaultLoading
       return <Fallback />
     } else {
       const Fallback = this.props.loading
-      if (Fallback) {
-        return <Fallback {...this.props.props}></Fallback>
-      } else {
-        return <View />
-      }
+      return <Fallback {...this.props.props}></Fallback>
     }
   }
 

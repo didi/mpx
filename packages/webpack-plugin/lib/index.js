@@ -1217,12 +1217,12 @@ class MpxWebpackPlugin {
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          if (isWeb(mpx.mode)) {
+          if (isWeb(mpx.mode) || isReact(mpx.mode)) {
             // web独立处理splitChunk
-            if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
+            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
                 chunks: 'initial',
-                name: 'bundle',
+                name: 'bundle/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
                 test: /[\\/]node_modules[\\/]/
               }
               needInit = true
@@ -1230,7 +1230,7 @@ class MpxWebpackPlugin {
             if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
               splitChunksOptions.cacheGroups.async = {
                 chunks: 'async',
-                name: 'async',
+                name: 'async/index',
                 minChunks: 2
               }
               needInit = true
