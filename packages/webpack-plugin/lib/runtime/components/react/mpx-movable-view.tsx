@@ -192,16 +192,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
   prevWaitForHandlersRef.current = waitFor || []
 
-  // 节流版本的 change 事件触发
-  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
-    'worklet'
-    const now = Date.now()
-    if (now - lastChangeTime.value >= changeThrottleTime) {
-      lastChangeTime.value = now
-      runOnJS(handleTriggerChange)({ x, y, type })
-    }
-  }, [changeThrottleTime])
-
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
     if (!bindchange) return
@@ -237,6 +227,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }, propsRef.current)
     )
   }, [])
+
+  // 节流版本的 change 事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(handleTriggerChange)({ x, y, type })
+    }
+  }, [changeThrottleTime])
 
   const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
     'worklet'
