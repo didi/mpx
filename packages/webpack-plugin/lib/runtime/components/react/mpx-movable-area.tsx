@@ -5,7 +5,7 @@
 import { View } from 'react-native'
 import { JSX, forwardRef, ReactNode, useRef, useMemo, useCallback, createElement } from 'react'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
-import { runOnJS } from 'react-native-reanimated'
+import { useSharedValue } from 'react-native-reanimated'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext, MovableAreaContextValue } from './context'
@@ -24,6 +24,11 @@ interface MovableAreaProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+}
+
+interface MovableViewCallbacks {
+  onScale: (scaleInfo: {scale: number}) => void
+  onScaleEnd?: () => void
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
@@ -48,26 +53,27 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const movableViewRef = useRef(null)
-  const movableViewsRef = useRef<Map<string, { onScale: (scaleInfo: { scale: number }) => void; onScaleEnd?: () => void }>>(new Map())
+  const movableViewsRef = useSharedValue<Record<string, MovableViewCallbacks>>({})
 
   useNodesRef(props, ref, movableViewRef, {
     style: normalStyle
   })
 
   // 注册/注销 MovableView 的回调
-  const registerMovableView = useCallback((id: string, callbacks: { onScale: (scaleInfo: { scale: number }) => void; onScaleEnd?: () => void }) => {
-    movableViewsRef.current.set(id, callbacks)
+  const registerMovableView = useCallback((id: string, callbacks: MovableViewCallbacks) => {
+    movableViewsRef.value = { ...movableViewsRef.value, [id]: callbacks }
   }, [])
 
   const unregisterMovableView = useCallback((id: string) => {
-    movableViewsRef.current.delete(id)
+    delete movableViewsRef.value[id]
   }, [])
 
   // 处理区域缩放手势
   const handleAreaScale = useCallback((scaleInfo: { scale: number }) => {
-    if (scaleArea && movableViewsRef.current.size > 0) {
+    'worklet'
+    if (scaleArea && Object.keys(movableViewsRef.value).length > 0) {
       // 将缩放信息广播给所有注册的 MovableView
-      movableViewsRef.current.forEach((callbacks) => {
+      Object.values(movableViewsRef.value).forEach((callbacks) => {
         callbacks.onScale(scaleInfo)
       })
     }
@@ -75,9 +81,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
 
   // 处理区域缩放结束
   const handleAreaScaleEnd = useCallback(() => {
-    if (scaleArea && movableViewsRef.current.size > 0) {
+    'worklet'
+    if (scaleArea && Object.keys(movableViewsRef.value).length > 0) {
       // 通知所有注册的 MovableView 缩放结束
-      movableViewsRef.current.forEach((callbacks) => {
+      Object.values(movableViewsRef.value).forEach((callbacks) => {
         callbacks.onScaleEnd?.()
       })
     }
@@ -87,7 +94,6 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     height: normalStyle.height || 10,
     width: normalStyle.width || 10,
     scaleArea,
-    onAreaScale: handleAreaScale,
     registerMovableView,
     unregisterMovableView
   }), [normalStyle.width, normalStyle.height, scaleArea, handleAreaScale, registerMovableView, unregisterMovableView])
@@ -101,13 +107,11 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     return Gesture.Pinch()
       .onUpdate((e) => {
         'worklet'
-        runOnJS(handleAreaScale)({
-          scale: e.scale
-        })
+        handleAreaScale(e)
       })
       .onEnd(() => {
         'worklet'
-        runOnJS(handleAreaScaleEnd)()
+        handleAreaScaleEnd()
       })
   }, [scaleArea, handleAreaScale, handleAreaScaleEnd])
 

@@ -428,7 +428,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             currentScale.value = withTiming(clampedScale, {
               duration: 1000
             }, () => {
-              runOnJS(handleRestBoundaryAndCheck)()
+              handleRestBoundaryAndCheck()
             })
             offsetX.value = withTiming(newOffsetX, { duration: 1000 })
             offsetY.value = withTiming(newOffsetY, { duration: 1000 })
@@ -436,7 +436,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             currentScale.value = clampedScale
             offsetX.value = newOffsetX
             offsetY.value = newOffsetY
-            runOnJS(handleRestBoundaryAndCheck)()
+            handleRestBoundaryAndCheck()
           }
         } else {
           // 如果还没有尺寸信息，只更新缩放值
@@ -444,11 +444,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             currentScale.value = withTiming(clampedScale, {
               duration: 1000
             }, () => {
-              runOnJS(handleRestBoundaryAndCheck)()
+              handleRestBoundaryAndCheck()
             })
           } else {
             currentScale.value = clampedScale
-            runOnJS(handleRestBoundaryAndCheck)()
+            handleRestBoundaryAndCheck()
           }
         }
 
@@ -464,7 +464,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [scaleValue, scaleMin, scaleMax, animation])
 
   useEffect(() => {
-    handleRestBoundaryAndCheck()
+    runOnUI(handleRestBoundaryAndCheck)()
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
 
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
@@ -489,6 +489,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const setBoundary = useCallback(({ width, height }: { width: number; height: number }) => {
+    'worklet'
     const top = (style.position === 'absolute' && style.top) || 0
     const left = (style.position === 'absolute' && style.left) || 0
 
@@ -521,18 +522,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
 
   const resetBoundaryAndCheck = ({ width, height }: { width: number; height: number }) => {
+    'worklet'
     setBoundary({ width, height })
-    runOnUI(() => {
-      const positionX = offsetX.value
-      const positionY = offsetY.value
-      const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
-      if (positionX !== newX) {
-        offsetX.value = newX
-      }
-      if (positionY !== newY) {
-        offsetY.value = newY
-      }
-    })()
+    const positionX = offsetX.value
+    const positionY = offsetY.value
+    const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
+    if (positionX !== newX) {
+      offsetX.value = newX
+    }
+    if (positionY !== newY) {
+      offsetY.value = newY
+    }
   }
 
   const onLayout = (e: LayoutChangeEvent) => {
@@ -545,13 +545,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
       const { y: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
-
       // 同时更新 layoutValue，供缩放逻辑使用
       runOnUI(() => {
         layoutValue.value = { width, height }
+        resetBoundaryAndCheck({ width: width, height: height })
       })()
-
-      resetBoundaryAndCheck({ width: width / currentScale.value, height: height / currentScale.value })
     })
     propsOnLayout && propsOnLayout(e)
   }
@@ -616,7 +614,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const handleRestBoundaryAndCheck = () => {
-    const { width, height } = layoutRef.current
+    'worklet'
+    const { width, height } = layoutValue.value
     if (width && height) {
       resetBoundaryAndCheck({ width, height })
     }
@@ -811,11 +810,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             }
           }
           // 缩放结束后重新检查边界
-          runOnJS(handleRestBoundaryAndCheck)()
+          handleRestBoundaryAndCheck()
         })
 
       // 根据手指数量自动区分手势：一指移动，两指缩放
-      return Gesture.Simultaneous(gesturePan, gesturePinch)
+      return Gesture.Exclusive(gesturePan, gesturePinch)
     }
 
     return gesturePan
@@ -886,22 +885,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   useEffect(() => {
     if (MovableAreaLayout.scaleArea && MovableAreaLayout.registerMovableView && MovableAreaLayout.unregisterMovableView) {
       const handleAreaScale = (scaleInfo: { scale: number }) => {
-        if (!scale) return // 只有当 MovableView 支持缩放时才处理
-        runOnUI(() => {
-          // 直接使用传入的缩放值
-          handleScaleUpdate({ scale: scaleInfo.scale })
-        })()
+        'worklet'
+        handleScaleUpdate({ scale: scaleInfo.scale })
       }
 
       const handleAreaScaleEnd = () => {
-        if (!scale) return
-        // 缩放结束时重新检查边界
+        'worklet'
         handleRestBoundaryAndCheck()
       }
 
       MovableAreaLayout.registerMovableView?.(viewId, {
-        onScale: handleAreaScale,
-        onScaleEnd: handleAreaScaleEnd
+        onScale: scale ? handleAreaScale : noop,
+        onScaleEnd: scale ? handleAreaScaleEnd : noop
       })
 
       return () => {

@@ -64,7 +64,6 @@ export interface MovableAreaContextValue {
   onAreaScale?: (scaleInfo: { scale: number }) => void
   registerMovableView?: (id: string, callbacks: {
     onScale: (scaleInfo: { scale: number }) => void
-    onScaleStart?: () => void
     onScaleEnd?: () => void
   }) => void
   unregisterMovableView?: (id: string) => void
