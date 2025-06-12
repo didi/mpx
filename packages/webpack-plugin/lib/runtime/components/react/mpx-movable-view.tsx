@@ -48,6 +48,7 @@ interface MovableViewProps {
   'scale-max'?: number
   'scale-value'?: number
   id?: string
+  changeThrottleTime?:number
   bindchange?: (event: unknown) => void
   bindscale?: (event: unknown) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
@@ -114,6 +115,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
+    changeThrottleTime = 60,
     bindtouchstart,
     catchtouchstart,
     bindhtouchmove,
@@ -163,6 +165,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
   const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
+  const lastChangeTime = useSharedValue(0)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -188,6 +191,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
   prevWaitForHandlersRef.current = waitFor || []
+
+  // 节流版本的 change 事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(handleTriggerChange)({ x, y, type })
+    }
+  }, [changeThrottleTime])
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
@@ -485,7 +498,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       setHeight(height || 0)
     }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
-      const { y: navigationY = 0 } = navigation?.layout || {}
+      const { top: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
 
       // 同时更新 layoutValue，供缩放逻辑使用
@@ -499,7 +512,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
-    const { y: navigationY = 0 } = navigation?.layout || {}
+    const { top: navigationY = 0 } = navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {
@@ -633,7 +646,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (bindchange) {
-          runOnJS(handleTriggerChange)({
+          // 使用节流版本减少 runOnJS 调用
+          handleTriggerChangeThrottled({
             x: offsetX.value,
             y: offsetY.value
           })
