@@ -463,13 +463,13 @@ useFetch().fetch({
 | getWindowInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getLaunchOptionsSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getEnterOptionsSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| nextTick |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| showToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| hideToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| showModal |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| showLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| hideLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| showActionSheet |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| nextTick |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| showToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| hideToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| showModal |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| showLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| hideLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| showActionSheet |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | createAnimation |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | onAppShow |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | onAppHide |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
@@ -483,12 +483,12 @@ useFetch().fetch({
 | closeBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | createBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | onBLEConnectionStateChange |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| createIntersectionObserver |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| createIntersectionObserver |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getExtConfig |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | getExtConfigSync |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| onKeyboardHeightChange |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| offKeyboardHeightChange |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| onKeyboardHeightChange |:white_check_mark:|:x:|:x:|:white_check_mark:|
+| offKeyboardHeightChange |:white_check_mark:|:x:|:x:|:white_check_mark:|
 | hideKeyboard |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 | getLocation |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | openLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
@@ -512,7 +512,7 @@ useFetch().fetch({
 | setNavigationBarTitle |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | setNavigationBarColor |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | request |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| downloadFile  |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|:x:|
+| downloadFile  |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | uploadFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | setStorage  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | setStorageSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
@@ -535,10 +535,10 @@ useFetch().fetch({
 | getSavedFileList |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | getSavedFileInfo |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | addPhoneContact |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| setClipboardData |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| getClipboardData |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| setScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| getScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
+| setClipboardData |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getClipboardData |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| setScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
+| getScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | makePhoneCall |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 | stopAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | startAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
@@ -553,9 +553,9 @@ useFetch().fetch({
 | requestPayment |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | createCanvasContext |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | canvasToTempFilePath |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| canvasPutImageData |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| canvasGetImageData |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| canvasPutImageData |:white_check_mark:|:x:|:x:|:x:|
+| canvasGetImageData |:white_check_mark:|:x:|:x:|:x:|
+| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | onWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | offWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | arrayBufferToBase64 |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|

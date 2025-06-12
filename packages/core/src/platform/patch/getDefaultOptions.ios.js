@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -15,7 +15,8 @@ import {
   KeyboardAvoidContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
+import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
+import { useInnerHeaderHeight } from '../env/nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -51,7 +52,7 @@ function createEffect (proxy, components) {
     if (tagName === 'block') return Fragment
     const appComponents = global.__getAppComponents?.() || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap[generichash] || noop
+    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
     return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
@@ -302,15 +303,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   proxy.created()
 
   if (type === 'page') {
-    const loadParams = {}
     const props = propsRef.current
-    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-    if (isObject(props.route.params)) {
-      for (const key in props.route.params) {
-        loadParams[key] = encodeURIComponent(props.route.params[key])
-      }
-    }
-    proxy.callHook(ONLOAD, [loadParams])
+    proxy.callHook(ONLOAD, [props.route.params || {}])
   }
 
   Object.assign(proxy, {
@@ -392,7 +386,7 @@ function usePageEffect (mpxProxy, pageId) {
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy)
           }
-        })
+        }, { sync: true })
       }
     }
     return () => {
@@ -445,9 +439,26 @@ const checkRelation = (options) => {
     hasAncestorRelation
   }
 }
+function getLayoutData (headerHeight) {
+  const screenDimensions = ReactNative.Dimensions.get('screen')
+  const windowDimensions = ReactNative.Dimensions.get('window')
+  // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
+  // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
+  const isLandscape = screenDimensions.height < screenDimensions.width
+  const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+  return {
+    left: 0,
+    top: headerHeight,
+    // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
+    width: windowDimensions.width,
+    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
+    // ios为0 android为实际statusbar高度
+    statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
+    bottomVirtualHeight: bottomVirtualHeight,
+    isLandscape: isLandscape
+  }
+}
 
-// 临时用来存储安卓底部（iOS没有这个）的高度（虚拟按键等高度）根据第一次进入推算
-let bottomVirtualHeight = null
 export function PageWrapperHOC (WrappedComponent) {
   return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
     const rootRef = useRef(null)
@@ -464,59 +475,18 @@ export function PageWrapperHOC (WrappedComponent) {
       error('Using pageWrapper requires passing navigation and route')
       return null
     }
-    usePageStatus(navigation, currentPageId)
-    useLayoutEffect(() => {
-      navigation.setOptions({
-        title: pageConfig.navigationBarTitleText?.trim() || '',
-        headerStyle: {
-          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
-        },
-        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
-      })
+    const headerHeight = useInnerHeaderHeight(currentPageConfig)
+    navigation.layout = getLayoutData(headerHeight)
 
-      // TODO 此部分内容在native-stack可删除，用setOptions设置
-      if (__mpx_mode__ !== 'ios') {
-        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
-        ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
-        ReactNative.StatusBar.setBackgroundColor('transparent')
-      }
+    useEffect(() => {
+      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
+        navigation.layout = getLayoutData(headerHeight)
+      })
+      return () => dimensionListener?.remove()
     }, [])
 
-    const headerHeight = useHeaderHeight()
-    const onLayout = () => {
-      const screenDimensions = ReactNative.Dimensions.get('screen')
-      if (__mpx_mode__ === 'ios') {
-        navigation.layout = {
-          x: 0,
-          y: headerHeight,
-          width: screenDimensions.width,
-          height: screenDimensions.height - headerHeight
-        }
-      } else {
-        if (bottomVirtualHeight === null) {
-          rootRef.current?.measureInWindow((x, y, width, height) => {
-            // 沉浸模式的计算方式
-            bottomVirtualHeight = screenDimensions.height - height - headerHeight
-            // 非沉浸模式（translucent=true）计算方式, 现在默认是全用沉浸模式，所以先不算这个
-            // bottomVirtualHeight = windowDimensions.height - height - headerHeight
-            navigation.layout = {
-              x: 0,
-              y: headerHeight,
-              width: screenDimensions.width,
-              height: height
-            }
-          })
-        } else {
-          navigation.layout = {
-            x: 0,
-            y: headerHeight, // 这个y值
-            width: screenDimensions.width,
-            // 后续页面的layout是通过第一次路由进入时候推算出来的底部区域来推算出来的
-            height: screenDimensions.height - bottomVirtualHeight - headerHeight
-          }
-        }
-      }
-    }
+    usePageStatus(navigation, currentPageId)
+
     const withKeyboardAvoidingView = (element) => {
       return createElement(KeyboardAvoidContext.Provider,
         {
@@ -535,54 +505,42 @@ export function PageWrapperHOC (WrappedComponent) {
         )
       )
     }
-
+    // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
-
-    return createElement(GestureHandlerRootView,
-      {
-        // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
-        style: __mpx_mode__ === 'ios' && currentPageConfig?.navigationStyle !== 'custom'
-          ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
-          }
-          : {
-            flex: 1
-          }
-      },
-      withKeyboardAvoidingView(
-        createElement(ReactNative.View,
-          {
-            style: {
-              flex: 1,
-              backgroundColor: currentPageConfig?.backgroundColor || '#fff'
-            },
-            ref: rootRef,
-            onLayout
+    return withKeyboardAvoidingView(
+      createElement(ReactNative.View,
+        {
+          style: {
+            flex: 1,
+            backgroundColor: currentPageConfig?.backgroundColor || '#fff',
+            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+            overflow: 'hidden'
           },
-          createElement(RouteContext.Provider,
+          ref: rootRef
+        },
+        createElement(RouteContext.Provider,
+          {
+            value: routeContextValRef.current
+          },
+          createElement(IntersectionObserverContext.Provider,
             {
-              value: routeContextValRef.current
+              value: intersectionObservers.current
             },
-            createElement(IntersectionObserverContext.Provider,
-              {
-                value: intersectionObservers.current
-              },
-              createElement(PortalHost,
-                null,
-                createElement(WrappedComponent, {
-                  ...props,
-                  navigation,
-                  route,
-                  id: currentPageId
-                })
-              )
+            createElement(PortalHost,
+              null,
+              createElement(WrappedComponent, {
+                ...props,
+                navigation,
+                route,
+                id: currentPageId
+              })
             )
           )
         )
-      ))
+      )
+    )
   }
 }
-
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
@@ -656,8 +614,13 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       return () => {
         proxy.unmounted()
         proxy.target.__resetInstance()
+        // 热更新下会销毁旧页面并创建新页面组件，且旧页面组件销毁时机晚于新页面组件创建，此时__mpxPagesMap中存储的为新页面组件，不应该删除
+        // 所以需要判断路由表中存储的页面实例是否为当前页面实例
         if (type === 'page') {
-          delete global.__mpxPagesMap[props.route.key]
+          const routeKey = props.route.key
+          if (global.__mpxPagesMap[routeKey] && global.__mpxPagesMap[routeKey][0] === instance) {
+            delete global.__mpxPagesMap[routeKey]
+          }
         }
       }
     }, [])
@@ -718,11 +681,12 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    return (props) =>
-      createElement(PageWrapperHOC(defaultOptions), {
+    return (props) => {
+      return createElement(PageWrapperHOC(defaultOptions), {
         pageConfig: currentInject.pageConfig,
         ...props
       })
+    }
   }
   return defaultOptions
 }
