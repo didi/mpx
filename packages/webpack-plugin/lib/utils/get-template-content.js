@@ -19,26 +19,27 @@ module.exports = function (source, name) {
     startIndex = match.index
     endIndex = startIndex + matchRes.length
     let html = source.slice(endIndex)
-    while (html) {
-      const matchRes = html.match(reg)
-      if (matchRes.length) {
-        const matchTemp = matchRes[0]
-        const matchIndex = html.indexOf(matchTemp)
-        const matchLength = matchTemp.length
-        const cutLength = matchIndex + matchLength
-        if (matchTemp.startsWith('</template>')) {
-          if (n === 0) {
-            endIndex += cutLength
-            break
-          } else {
-            n--
-          }
+    const matchHtml = html.match(reg)
+    const len = matchHtml?.length || 0
+    let l = 0
+    while (l < len) {
+      const matchTemp = matchHtml[l]
+      const matchIndex = html.indexOf(matchTemp)
+      const matchLength = matchTemp.length
+      const cutLength = matchIndex + matchLength
+      if (matchTemp.startsWith('</template>')) {
+        if (n === 0) {
+          endIndex += cutLength
+          break
         } else {
-          n++
+          n--
         }
-        endIndex += cutLength
-        html = html.slice(cutLength)
+      } else {
+        n++
       }
+      endIndex += cutLength
+      html = html.slice(cutLength)
+      l++
     }
   } else {
     return ''
