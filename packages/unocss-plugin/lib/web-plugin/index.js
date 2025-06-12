@@ -11,8 +11,8 @@ const VIRTUAL_MODULE_PREFIX = node_path.resolve(process.cwd(), '_virtual_')
 
 function WebpackPlugin (configOrPath, defaults) {
   return {
-    apply (compiler) {
-      const ctx = createContext(configOrPath, defaults)
+    async apply (compiler) {
+      const ctx = await createContext(configOrPath, defaults)
       const { uno, filter, transformCache } = ctx
       const entries = new Set()
       const __vfsModules = new Set()

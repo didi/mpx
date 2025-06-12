@@ -204,7 +204,7 @@ class MpxUnocssPlugin {
 
     const platformPreflights = platformPreflightsMap[mode] || []
 
-    return createGenerator({
+    return await createGenerator({
       ...resolved,
       preflights: [
         ...(resolved.preflights || []),

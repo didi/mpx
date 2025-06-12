@@ -15,10 +15,10 @@ const sfcIdRE = /\.(vue|mpx)($|\?)/
 const templateIdRE = /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml|html)($|\?)/
 const cssIdRE = /\.(wxss|acss|css|qss|ttss|jxss|ddss)($|\?)/
 
-function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
+async function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
   const root = process.cwd()
   let rawConfig = {}
-  const uno = createGenerator(rawConfig, defaults)
+  const uno = await createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
   const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, defCssIdRE])
   const ready = reloadConfig()
