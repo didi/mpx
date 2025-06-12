@@ -44,6 +44,7 @@ interface MovableViewProps {
   disabled?: boolean
   animation?: boolean
   id?: string
+  changeThrottleTime?:number
   bindchange?: (event: unknown) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
   catchtouchstart?: (event: GestureTouchEvent) => void
@@ -105,6 +106,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
+    changeThrottleTime = 60,
     bindtouchstart,
     catchtouchstart,
     bindhtouchmove,
@@ -150,6 +152,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
   const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
+  const lastChangeTime = useSharedValue(0)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -175,6 +178,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
   prevWaitForHandlersRef.current = waitFor || []
+
+  // 节流版本的 change 事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(handleTriggerChange)({ x, y, type })
+    }
+  }, [changeThrottleTime])
 
   const handleTriggerChange = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     const { bindchange } = propsRef.current
@@ -460,7 +473,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (bindchange) {
-          runOnJS(handleTriggerChange)({
+          // 使用节流版本减少 runOnJS 调用
+          handleTriggerChangeThrottled({
             x: offsetX.value,
             y: offsetY.value
           })
