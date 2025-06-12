@@ -522,7 +522,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
 
   const resetBoundaryAndCheck = ({ width, height }: { width: number; height: number }) => {
-    'worklet'
+    'worklet';
     setBoundary({ width, height })
     const positionX = offsetX.value
     const positionY = offsetY.value

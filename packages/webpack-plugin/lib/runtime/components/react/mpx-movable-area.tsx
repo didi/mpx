@@ -27,8 +27,8 @@ interface MovableAreaProps {
 }
 
 interface MovableViewCallbacks {
-  onScale: (scaleInfo: {scale: number}) => void
-  onScaleEnd?: () => void
+   onScale: (scaleInfo: {scale: number}) => void
+   onScaleEnd?: () => void
 }
 
 const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaProps>((props: MovableAreaProps, ref): JSX.Element => {
@@ -52,28 +52,27 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const movableViewRef = useRef(null)
-  const movableViewsRef = useSharedValue<Record<string, MovableViewCallbacks>>({})
-
-  useNodesRef(props, ref, movableViewRef, {
+  const movableAreaRef = useRef(null)
+  const movableViewsValue = useSharedValue<Record<string, MovableViewCallbacks>>({})
+  useNodesRef(props, ref, movableAreaRef, {
     style: normalStyle
   })
 
   // 注册/注销 MovableView 的回调
-  const registerMovableView = useCallback((id: string, callbacks: MovableViewCallbacks) => {
-    movableViewsRef.value = { ...movableViewsRef.value, [id]: callbacks }
+  const registerMovableView = useCallback((id: string, callbacks: { onScale?: (scaleInfo: { scale: number }) => void; onScaleEnd?: () => void }) => {
+    movableViewsValue.value = extendObject(movableViewsValue.value, {[id]: callbacks})
   }, [])
 
   const unregisterMovableView = useCallback((id: string) => {
-    delete movableViewsRef.value[id]
+    delete movableViewsValue.value[id]
   }, [])
 
   // 处理区域缩放手势
   const handleAreaScale = useCallback((scaleInfo: { scale: number }) => {
     'worklet'
-    if (scaleArea && Object.keys(movableViewsRef.value).length > 0) {
+    if (scaleArea) {
       // 将缩放信息广播给所有注册的 MovableView
-      Object.values(movableViewsRef.value).forEach((callbacks) => {
+      Object.values(movableViewsValue.value).forEach((callbacks) => {
         callbacks.onScale(scaleInfo)
       })
     }
@@ -82,9 +81,9 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
   // 处理区域缩放结束
   const handleAreaScaleEnd = useCallback(() => {
     'worklet'
-    if (scaleArea && Object.keys(movableViewsRef.value).length > 0) {
+    if (scaleArea) {
       // 通知所有注册的 MovableView 缩放结束
-      Object.values(movableViewsRef.value).forEach((callbacks) => {
+      Object.values(movableViewsValue.value).forEach((callbacks) => {
         callbacks.onScaleEnd?.()
       })
     }
@@ -98,7 +97,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     unregisterMovableView
   }), [normalStyle.width, normalStyle.height, scaleArea, handleAreaScale, registerMovableView, unregisterMovableView])
 
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableViewRef })
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableAreaRef })
 
   // 创建缩放手势
   const scaleGesture = useMemo(() => {
@@ -122,7 +121,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       layoutProps,
       {
         style: extendObject({ height: contextValue.height, width: contextValue.width }, normalStyle, layoutStyle),
-        ref: movableViewRef
+        ref: movableAreaRef
       }
     ),
     [],
