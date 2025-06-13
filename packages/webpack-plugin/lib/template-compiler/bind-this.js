@@ -2,6 +2,7 @@ const babylon = require('@babel/parser')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 const names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
@@ -36,17 +37,15 @@ function getCollectPath (path) {
   let current = path.parentPath
   let last = path
   let keyPath = '' + path.node.name
-  let isSimpleProperty = true
 
   while (current.isMemberExpression() && last.parentKey !== 'property') {
     if (current.node.computed) {
       if (t.isLiteral(current.node.property)) {
-        if (t.isStringLiteral(current.node.property)) {
-          if (dangerousKeyMap[current.node.property.value]) {
+        if (t.isStringLiteral(current.node.property) || t.isNumericLiteral(current.node.property)) {
+          if (dangerousKeyMap[current.node.property.value] || !isValidIdentifierStr(current.node.property.value)) {
             break
           }
           keyPath += `.${current.node.property.value}`
-          if (isSimpleProperty) isSimpleProperty = isSimpleKey(current.node.property.value)
         } else {
           keyPath += `[${current.node.property.value}]`
         }
@@ -65,8 +64,7 @@ function getCollectPath (path) {
 
   return {
     last,
-    keyPath,
-    isSimpleProperty
+    keyPath
   }
 }
 
@@ -319,12 +317,11 @@ module.exports = {
             return
           }
           path.needBind = true
-          const { last, keyPath, isSimpleProperty } = getCollectPath(path)
+          const { last, keyPath } = getCollectPath(path)
           if (needCollect) {
             last.collectInfo = {
               key: t.stringLiteral(keyPath),
-              isSimple: isSimpleKey(keyPath),
-              isSimpleProperty
+              isSimple: isSimpleKey(keyPath)
             }
           }
 
@@ -438,9 +435,9 @@ module.exports = {
       MemberExpression: {
         exit (path) {
           if (path.collectInfo) {
-            const { isSimple, key, isSimpleProperty } = path.collectInfo
+            const { isSimple, key } = path.collectInfo
             const callee = isSimple ? t.identifier('_sc') : t.identifier('_c')
-            const replaceNode = (renderReduce && isSimpleProperty)
+            const replaceNode = renderReduce
               ? t.callExpression(callee, [key])
               : t.callExpression(callee, [key, path.node])
             path.node && path.replaceWith(replaceNode)
