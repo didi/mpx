@@ -367,10 +367,9 @@ function transformTransform (style: Record<string, any>) {
 }
 
 function transformBoxShadow (styleObj: Record<string, any>) {
-  const { boxShadow } = styleObj
-  if (!boxShadow) return
-  styleObj.boxShadow = parseValues(boxShadow).reduce((res, i, idx) => {
-    return res + `${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
+  if (!styleObj.boxShadow) return
+  styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
+    return `${res}${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
   }, '')
 }
 
