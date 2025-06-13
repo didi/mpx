@@ -31,7 +31,7 @@ module.exports = function (template, {
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
-  let wxsModuleMap, genericsInfo
+  let wxsModuleMap, genericsInfo, inlineTemplateMap, templateSrcList
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
@@ -54,7 +54,6 @@ module.exports = function (template, {
     if (template.lang) {
       return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
-
     output += genComponentTag(template, (template) => {
       if (ctorType === 'app') {
         return template.content
@@ -104,6 +103,12 @@ module.exports = function (template, {
             wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
+        if (meta.inlineTemplateMap) {
+          inlineTemplateMap = meta.inlineTemplateMap
+        }
+        if (meta.templateSrcList?.length) {
+          templateSrcList = meta.templateSrcList
+        }
         if (meta.builtInComponentsMap) {
           Object.keys(meta.builtInComponentsMap).forEach((name) => {
             builtInComponentsMap[name] = {
@@ -114,15 +119,16 @@ module.exports = function (template, {
         if (meta.genericsInfo) {
           genericsInfo = meta.genericsInfo
         }
-        return templateCompiler.serialize(root)
+        return templateCompiler.serialize(root, moduleId) // 增加moduleId给到template2vue拿到正确的scopedId
       }
     })
     output += '\n'
   }
-
   callback(null, {
     output,
     builtInComponentsMap,
+    inlineTemplateMap,
+    templateSrcList,
     genericsInfo,
     wxsModuleMap
   })

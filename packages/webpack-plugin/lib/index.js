@@ -44,6 +44,7 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
+const WriteVfsDependency = require('./dependencies/WriteVfsDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -654,6 +655,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
 
+      compilation.dependencyFactories.set(WriteVfsDependency, new NullFactory())
+      compilation.dependencyTemplates.set(WriteVfsDependency, new WriteVfsDependency.Template())
+
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
 
@@ -677,6 +681,8 @@ class MpxWebpackPlugin {
           componentsMap: {
             main: {}
           },
+          // 用于template模版获取父组件引用的自定义组件，目前仅输出web时下支持使用
+          parentLocalComponentsMap: {},
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录
           staticResourcesMap: {
             main: {}
