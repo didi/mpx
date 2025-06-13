@@ -114,8 +114,14 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
         a[c];
         c.d;
         a.b[c.d];
-        e;
-        e[0].name
+
+        e1[0].name;
+        e2["a.b.c"]
+        f1["a.b.c"]["d"]
+        f2["a"]["b.c.d"]
+        g1.a["b.c"].d
+        g2.a["b"].c.d
+        g3.a["b"]["c.d"].e
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
@@ -125,7 +131,13 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   _sc("a")[_sc("c")];
   _c("a.b")[_c("c.d")];
 
-  _sc("e");
+  _c("e1[0].name");
+  _sc("e2")["a.b.c"];
+  _sc("f1")["a.b.c"]["d"];
+  _c("f2.a")["b.c.d"];
+  _c("g1.a")["b.c"].d;
+  _c("g2.a.b.c.d");
+  _c("g3.a.b")["c.d"].e;
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
