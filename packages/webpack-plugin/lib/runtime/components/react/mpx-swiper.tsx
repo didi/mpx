@@ -23,6 +23,7 @@ import Portal from './mpx-portal'
  * ✔ easing-function  ="easeOutCubic"
  * ✘ display-multiple-items
  * ✘ snap-to-edge
+ * ✔ disableGesture
  */
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
 type StrAbsoType = 'absoluteX' | 'absoluteY'
@@ -206,6 +207,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const moveTranstion = useSharedValue(0)
   // 记录从onBegin 到 onTouchesUp 的时间
   const moveTime = useSharedValue(0)
+  // 记录从onBegin 到 onTouchesCancelled 另外一个方向移动的距离
+  const anotherDirectionMove = useSharedValue(0)
+  // 另一个方向的
+  const anotherAbso = 'absolute' + (dir === 'x' ? 'y' : 'x').toUpperCase() as StrAbsoType
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
 
@@ -504,7 +509,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }, [children.length])
 
   useEffect(() => {
-    updateCurrent(props.current || 0, step.value)
+    // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
+    // 2. 手指滑动过程中更新索引，外部会把current再穿进来，导致offset直接更新了
+    if (props.current !== currentIndex.value) {
+      updateCurrent(props.current || 0, step.value)
+    }
   }, [props.current])
 
   useEffect(() => {
@@ -566,18 +575,25 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         targetOffset: -moveToTargetPos
       }
     }
-    function canMove (eventData: EventDataType) {
+    function checkUnCircular (eventData: EventDataType) {
       'worklet'
       const { translation } = eventData
       const currentOffset = Math.abs(offset.value)
-      if (!circularShared.value) {
-        if (translation < 0) {
-          return currentOffset < step.value * (childrenLength.value - 1)
-        } else {
-          return currentOffset > 0
+      // 向右滑动swiper
+      if (translation < 0) {
+        const boundaryOffset = step.value * (childrenLength.value - 1)
+        const gestureMovePos = Math.abs(translation) + currentOffset
+        return {
+          // 防止快速连续向右滑动时，手势移动的距离 加 当前的offset超出边界
+          targetOffset: gestureMovePos > boundaryOffset ? -boundaryOffset : offset.value + translation,
+          canMove: currentOffset < boundaryOffset
         }
       } else {
-        return true
+        const gestureMovePos = currentOffset - translation
+        return {
+          targetOffset: gestureMovePos < 0 ? 0 : offset.value + translation,
+          canMove: currentOffset > 0
+        }
       }
     }
     function handleEnd (eventData: EventDataType) {
@@ -636,7 +652,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
       })
     }
-    function handleLongPress () {
+    function computeHalf () {
       'worklet'
       const currentOffset = Math.abs(offset.value)
       let preOffset = (currentIndex.value + patchElmNumShared.value) * step.value
@@ -646,6 +662,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 正常事件中拿到的transition值(正向滑动<0，倒着滑>0)
       const diffOffset = preOffset - currentOffset
       const half = Math.abs(diffOffset) > step.value / 2
+      return {
+        diffOffset,
+        half
+      }
+    }
+    function handleLongPress () {
+      'worklet'
+      const { diffOffset, half } = computeHalf()
       if (+diffOffset === 0) {
         runOnJS(resumeLoop)()
       } else if (half) {
@@ -701,18 +725,29 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         runOnJS(pauseLoop)()
         preAbsolutePos.value = e[strAbso]
         moveTranstion.value = e[strAbso]
+        anotherDirectionMove.value = e[anotherAbso]
         moveTime.value = new Date().getTime()
       })
-      .onTouchesMove((e) => {
+      .onUpdate((e) => {
         'worklet'
         if (touchfinish.value) return
-        const touchEventData = e.changedTouches[0]
-        const moveDistance = touchEventData[strAbso] - preAbsolutePos.value
+        const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance
         }
-        // 处理用户一直拖拽到临界点的场景, 不会执行onEnd
-        if (!circularShared.value && !canMove(eventData)) {
+        // 1. 在Move过程中，如果手指一直没抬起来，超过一半的话也会更新索引
+        const { half } = computeHalf()
+        if (half) {
+          const { selectedIndex } = getTargetPosition(eventData)
+          currentIndex.value = selectedIndex
+        }
+        // 2. 处理用户一直拖拽到临界点的场景, 不会执行onEnd
+        const { canMove, targetOffset } = checkUnCircular(eventData)
+        if (!circularShared.value) {
+          if (canMove) {
+            offset.value = targetOffset
+            preAbsolutePos.value = e[strAbso]
+          }
           return
         }
         const { isBoundary, resetOffset } = reachBoundary(eventData)
@@ -721,28 +756,21 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           offset.value = moveDistance + offset.value
         }
-        preAbsolutePos.value = touchEventData[strAbso]
+        preAbsolutePos.value = e[strAbso]
       })
-      .onTouchesUp((e) => {
+      .onFinalize((e) => {
         'worklet'
         if (touchfinish.value) return
-        const touchEventData = e.changedTouches[0]
-        const moveDistance = touchEventData[strAbso] - moveTranstion.value
+        const moveDistance = e[strAbso] - moveTranstion.value
         touchfinish.value = true
         const eventData = {
           translation: moveDistance
-        }
-        if (childrenLength.value === 1) {
-          return handleBackInit()
-        }
-        // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
-        if (!circularShared.value && !canMove(eventData)) {
-          return
         }
         const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
         if (Math.abs(strVelocity) < longPressRatio) {
           handleLongPress()
         } else {
+          // 如果触发了onTouchesCancelled，不会触发onUpdate不会更新offset值, 索引不会变更
           handleEnd(eventData)
         }
       })
