@@ -339,7 +339,6 @@
         const scrollWrapperHeight = wrapper?.clientHeight || 0
         if (wrapper) {
           const computedStyle = getComputedStyle(wrapper)
-          this.refreshVersion = this.refreshVersion + 1
           // 考虑子元素样式可能会设置100%，如果直接继承 scrollContent 的样式可能会有问题
           // 所以使用 wrapper 作为 innerWrapper 的宽高参考依据
           this.$refs.innerWrapper.style.width = `${scrollWrapperWidth - parseInt(computedStyle.paddingLeft) - parseInt(computedStyle.paddingRight)}px`
@@ -405,6 +404,7 @@
           this.lastContentHeight = scrollContentHeight
           this.lastWrapperWidth = scrollWrapperWidth
           this.lastWrapperHeight = scrollWrapperHeight
+          this.refreshVersion = this.refreshVersion + 1
           if (this.bs) this.bs.refresh()
         }
       },
