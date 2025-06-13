@@ -766,13 +766,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const eventData = {
           translation: moveDistance
         }
-        if (childrenLength.value === 1) {
-          return handleBackInit()
-        }
-        // 用户手指按下起来, 需要计算正确的位置, 比如在滑动过程中突然按下然后起来,需要计算到正确的位置
-        if (!circularShared.value && !canMove(eventData)) {
-          return
-        }
         const strVelocity = moveDistance / (new Date().getTime() - moveTime.value) * 1000
         if (Math.abs(strVelocity) < longPressRatio) {
           handleLongPress()
