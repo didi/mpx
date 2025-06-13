@@ -11,8 +11,11 @@ const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const normalize = require('../utils/normalize')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
+const mpxViewPath = normalize.lib('runtime/components/react/dist/mpx-view.jsx')
+const mpxTextPath = normalize.lib('runtime/components/react/dist/mpx-text.jsx')
 
 module.exports = function (jsonContent, {
   loaderContext,

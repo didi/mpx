@@ -208,7 +208,7 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
     } else {
       return (
         <Suspense fallback={this.suspenseFallback} key={this.state.key}>
-          {typeof this.props.children === 'function' ?  this.props.children(this.props.props) : this.props.children}
+          {typeof this.props.children === 'function' ? this.props.children(this.props.props) : this.props.children}
           {/* {this.props.children(this.props.props)} */}
         </Suspense>
       )

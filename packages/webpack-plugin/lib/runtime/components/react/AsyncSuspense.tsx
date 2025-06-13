@@ -4,7 +4,6 @@ import type { DefaultFallbackProps } from './AsyncContainer'
 
 const asyncChunkMap = new Map()
 
-
 interface props {
   type: 'component' | 'page'
   chunkName: string
@@ -19,7 +18,7 @@ const AsyncSuspense: React.FC<props> = ({ type, props, chunkName, request, loadi
   const [status, setStatus] = useState('pending')
   const loaded = asyncChunkMap.has(request)
   const [, setKey] = useState(0)
-  let chunkPromise = useRef<null | Promise<unknown>>(null)
+  const chunkPromise = useRef<null | Promise<unknown>>(null)
 
   const reloadPage = useCallback(() => {
     setKey((preV) => preV + 1)
