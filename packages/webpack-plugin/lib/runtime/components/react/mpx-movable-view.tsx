@@ -184,7 +184,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const hasWaitForHandlersChanged = prevWaitForHandlersRef.current.length !== (waitFor?.length || 0) ||
     (waitFor || []).some((handler, index) => handler !== prevWaitForHandlersRef.current[index])
-
   if (hasSimultaneousHandlersChanged || hasWaitForHandlersChanged) {
     gestureSwitch.current = !gestureSwitch.current
   }
@@ -230,19 +229,29 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const checkBoundaryPosition = useCallback(({ positionX, positionY }: { positionX: number; positionY: number }) => {
     'worklet'
+    const { width, height } = layoutValue.value
+    const scaledWidth = width * currentScale.value
+    const scaledHeight = height * currentScale.value
+
+    // 计算中心点位置
+    const centerX = positionX + scaledWidth / 2
+    const centerY = positionY + scaledHeight / 2
+
+    // 根据中心点计算边界限制
     let x = positionX
     let y = positionY
+
     // 计算边界限制
-    if (x > draggableXRange.value[1]) {
-      x = draggableXRange.value[1]
-    } else if (x < draggableXRange.value[0]) {
+    if (centerX < draggableXRange.value[0] + scaledWidth / 2) {
       x = draggableXRange.value[0]
+    } else if (centerX > draggableXRange.value[1] - scaledWidth / 2) {
+      x = draggableXRange.value[1] - scaledWidth
     }
 
-    if (y > draggableYRange.value[1]) {
-      y = draggableYRange.value[1]
-    } else if (y < draggableYRange.value[0]) {
+    if (centerY < draggableYRange.value[0] + scaledHeight / 2) {
       y = draggableYRange.value[0]
+    } else if (centerY > draggableYRange.value[1] - scaledHeight / 2) {
+      y = draggableYRange.value[1] - scaledHeight
     }
 
     return { x, y }
@@ -313,17 +322,52 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     // 限制缩放值在 scaleMin 和 scaleMax 之间
     newScale = Math.max(scaleMin, Math.min(scaleMax, newScale))
 
+    // 计算缩放前后的尺寸变化
+    const { width, height } = layoutValue.value
+    const oldScaledWidth = width * currentScale.value
+    const oldScaledHeight = height * currentScale.value
+    const newScaledWidth = width * newScale
+    const newScaledHeight = height * newScale
+
+    // 计算当前中心点位置
+    const currentCenterX = offsetX.value + oldScaledWidth / 2
+    const currentCenterY = offsetY.value + oldScaledHeight / 2
+
+    // 计算新的左上角位置（保持中心点不变）
+    const newX = currentCenterX - newScaledWidth / 2
+    const newY = currentCenterY - newScaledHeight / 2
+
+    // 使用 checkBoundaryPosition 确保新位置不会超出边界
+    const { x: boundedX, y: boundedY } = checkBoundaryPosition({
+      positionX: newX,
+      positionY: newY
+    })
+
     // 更新缩放值
     currentScale.value = newScale
 
+    // 更新位置
+    offsetX.value = boundedX
+    offsetY.value = boundedY
+
+    // 更新初始位置和起始位置
+    initialViewPosition.value = {
+      x: currentCenterX,
+      y: currentCenterY
+    }
+    startPosition.value = {
+      x: currentCenterX,
+      y: currentCenterY
+    }
+
     if (bindscale) {
       runOnJS(handleTriggerScale)({
-        x: offsetX.value,
-        y: offsetY.value,
+        x: boundedX,
+        y: boundedY,
         scale: newScale
       })
     }
-  }, [disabled, scaleMin, scaleMax, bindscale, handleTriggerScale])
+  }, [disabled, scaleMin, scaleMax, bindscale, handleTriggerScale, checkBoundaryPosition])
 
   useEffect(() => {
     runOnUI(() => {
@@ -552,9 +596,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
         isMoving.value = false
+        // 使用当前中心点作为起始位置
+        const currentCenterX = offsetX.value + (layoutValue.value.width * currentScale.value) / 2
+        const currentCenterY = offsetY.value + (layoutValue.value.height * currentScale.value) / 2
         startPosition.value = {
-          x: changedTouches.x,
-          y: changedTouches.y
+          x: currentCenterX,
+          y: currentCenterY
         }
         if (bindtouchstart || catchtouchstart) {
           runOnJS(triggerStartOnJS)({ e })
@@ -562,26 +609,27 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .onStart(() => {
         'worklet'
+        // 使用中心点作为初始位置
+        const centerX = offsetX.value + (layoutValue.value.width * currentScale.value) / 2
+        const centerY = offsetY.value + (layoutValue.value.height * currentScale.value) / 2
         initialViewPosition.value = {
-          x: offsetX.value,
-          y: offsetY.value
+          x: centerX,
+          y: centerY
         }
-      })
-      .onTouchesMove((e: GestureTouchEvent) => {
-        'worklet'
-        const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
-        isMoving.value = true
-        if (isFirstTouch.value) {
-          touchEvent.value = Math.abs(changedTouches.x - startPosition.value.x) > Math.abs(changedTouches.y - startPosition.value.y) ? 'htouchmove' : 'vtouchmove'
-          isFirstTouch.value = false
-        }
-        handleTriggerMove(e)
       })
       .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
         if (disabled) return
+
+        // 计算新的中心点位置
+        const newCenterX = initialViewPosition.value.x + e.translationX
+        const newCenterY = initialViewPosition.value.y + e.translationY
+
+        // 根据中心点计算新的左上角位置
+        const newX = newCenterX - (layoutValue.value.width * currentScale.value) / 2
+        const newY = newCenterY - (layoutValue.value.height * currentScale.value) / 2
+
         if (direction === 'horizontal' || direction === 'all') {
-          const newX = initialViewPosition.value.x + e.translationX
           if (!outOfBounds) {
             const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
             offsetX.value = x
@@ -590,7 +638,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (direction === 'vertical' || direction === 'all') {
-          const newY = initialViewPosition.value.y + e.translationY
           if (!outOfBounds) {
             const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY })
             offsetY.value = y
@@ -599,7 +646,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (bindchange) {
-          // 使用节流版本减少 runOnJS 调用
           handleTriggerChangeThrottled({
             x: offsetX.value,
             y: offsetY.value
@@ -679,6 +725,18 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
               }
             })
           }
+        }
+
+        // 更新初始位置和起始位置，确保下一次缩放不会跳变
+        const centerX = offsetX.value + (layoutValue.value.width * currentScale.value) / 2
+        const centerY = offsetY.value + (layoutValue.value.height * currentScale.value) / 2
+        initialViewPosition.value = {
+          x: centerX,
+          y: centerY
+        }
+        startPosition.value = {
+          x: centerX,
+          y: centerY
         }
       })
       .withRef(movableGestureRef)
