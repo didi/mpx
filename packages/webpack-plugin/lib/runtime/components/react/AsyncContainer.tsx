@@ -7,7 +7,7 @@ type PageWrapper = {
   children: ReactNode
 }
 
-const PageWrapper = ({ children }: PageWrapper) => {
+export const PageWrapper = ({ children }: PageWrapper) => {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -0 }],
     flexBasis: 'auto',
@@ -82,7 +82,7 @@ interface PropsType<T extends AsyncType> {
   props: object
   loading: ComponentType<unknown>
   fallback: ComponentType<unknown>
-  children: (props: unknown) => ReactNode
+  children: (props: any) => ReactNode | ReactNode
 }
 
 interface StateType {
@@ -95,7 +95,7 @@ interface ComponentError extends Error {
   type: 'timeout' | 'fail'
 }
 
-const DefaultLoading = () => {
+export const DefaultLoading = () => {
   return (
     <View style={styles.container}>
       <FastImage
@@ -106,11 +106,11 @@ const DefaultLoading = () => {
   )
 }
 
-interface DefaultFallbackProps {
+export interface DefaultFallbackProps {
   onReload: () => void
 }
 
-const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
+export const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
   return (
     <View style={styles.container}>
       <Image
@@ -208,7 +208,8 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
     } else {
       return (
         <Suspense fallback={this.suspenseFallback} key={this.state.key}>
-          {this.props.children(this.props.props)}
+          {typeof this.props.children === 'function' ?  this.props.children(this.props.props) : this.props.children}
+          {/* {this.props.children(this.props.props)} */}
         </Suspense>
       )
     }

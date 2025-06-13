@@ -15,7 +15,7 @@ function getMpxComponentRequest (component) {
   return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
-const mpxAsyncContainer = getMpxComponentRequest('AsyncContainer')
+const mpxAsyncSuspense = getMpxComponentRequest('AsyncSuspense')
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
@@ -27,17 +27,14 @@ function getAsyncChunkName (chunkName) {
 function getAsyncComponent (componentName, componentRequest, chunkName, fallback) {
   return `getComponent(memo(forwardRef(function(props, ref) {
     return createElement(
-      getComponent(require(${mpxAsyncContainer})),
+      getComponent(require(${mpxAsyncSuspense})),
       {
         type: 'component',
         props: Object.assign({}, props, { ref }),
+        chunkName: ${JSON.stringify(chunkName)},
+        request: ${JSON.stringify(componentRequest)},
         loading: getComponent(require(${fallback})),
-        children: (props) => createElement(
-          getComponent(
-            lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { displayName: ${JSON.stringify(componentName)} }
-          ),
-          props
-        )
+        getChildren: () => import(${getAsyncChunkName(chunkName)}${componentRequest})
       }
     )
   })))`
@@ -48,18 +45,15 @@ function getAsyncPage (componentName, componentRequest, chunkName, fallback, loa
   loading = loading && `getComponent(require('${loading}?isComponent=true'))`
   return `getComponent(function(props) {
     return createElement(
-      getComponent(require(${mpxAsyncContainer})),
+      getComponent(require(${mpxAsyncSuspense})),
       {
         type: 'page',
         props: props,
+        chunkName: ${JSON.stringify(chunkName)},
+        request: ${JSON.stringify(componentRequest)},
         fallback: ${fallback},
         loading: ${loading},
-        children: (props) => createElement(
-          getComponent(
-            lazy(function(){ return import(${getAsyncChunkName(chunkName)}${componentRequest}) }), { __mpxPageRoute: ${JSON.stringify(componentName)}, displayName: 'Page' }
-          ),
-          props
-        )
+        getChildren: () => import(${getAsyncChunkName(chunkName)}${componentRequest})
       }
     )
   })`
