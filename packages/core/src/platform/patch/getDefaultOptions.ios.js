@@ -459,8 +459,8 @@ function getLayoutData (headerHeight) {
   }
 }
 
-export function PageWrapperHOC (WrappedComponent) {
-  return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
+export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
+  return function PageWrapperCom ({ navigation, route, ...props }) {
     const rootRef = useRef(null)
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
@@ -681,12 +681,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    return (props) => {
-      return createElement(PageWrapperHOC(defaultOptions), {
-        pageConfig: currentInject.pageConfig,
-        ...props
-      })
-    }
+    return PageWrapperHOC(defaultOptions, currentInject.pageConfig)
   }
   return defaultOptions
 }

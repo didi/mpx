@@ -44,6 +44,7 @@ interface MovableViewProps {
   disabled?: boolean
   animation?: boolean
   id?: string
+  changeThrottleTime?:number
   bindchange?: (event: unknown) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
   catchtouchstart?: (event: GestureTouchEvent) => void
@@ -105,6 +106,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
+    changeThrottleTime = 60,
     bindtouchstart,
     catchtouchstart,
     bindhtouchmove,
@@ -114,7 +116,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend
+    catchtouchend,
+    bindchange
   } = props
 
   const {
@@ -140,6 +143,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     x: 0,
     y: 0
   })
+
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
@@ -148,6 +152,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
   const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
+  const lastChangeTime = useSharedValue(0)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -195,6 +200,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     )
   }, [])
 
+  // 节流版本的 change 事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(handleTriggerChange)({ x, y, type })
+    }
+  }, [changeThrottleTime])
+
   useEffect(() => {
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
@@ -215,7 +230,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             })
             : newY
         }
-        if (propsRef.current.bindchange) {
+        if (bindchange) {
           runOnJS(handleTriggerChange)({
             x: newX,
             y: newY,
@@ -356,12 +371,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchstart, catchtouchstart } = propsRef.current
     extendEvent(e, 'start')
     bindtouchstart && bindtouchstart(e)
     catchtouchstart && catchtouchstart(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
     extendEvent(e, 'move')
     if (hasTouchmove) {
       if (touchEvent === 'htouchmove') {
@@ -383,6 +400,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchend, catchtouchend } = propsRef.current
     extendEvent(e, 'end')
     bindtouchend && bindtouchend(e)
     catchtouchend && catchtouchend(e)
@@ -454,8 +472,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = newY
           }
         }
-        if (propsRef.current.bindchange) {
-          runOnJS(handleTriggerChange)({
+        if (bindchange) {
+          // 使用节流版本减少 runOnJS 调用
+          handleTriggerChangeThrottled({
             x: offsetX.value,
             y: offsetY.value
           })
@@ -493,47 +512,47 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 })
                 : y
             }
-            if (propsRef.current.bindchange) {
+            if (bindchange) {
               runOnJS(handleTriggerChange)({
                 x,
                 y
               })
             }
           }
-          return
-        }
-        // 惯性处理
-        if (direction === 'horizontal' || direction === 'all') {
-          xInertialMotion.value = true
-          offsetX.value = withDecay({
-            velocity: e.velocityX / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableXRange.value
-          }, () => {
-            xInertialMotion.value = false
-            if (propsRef.current.bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
-        }
-        if (direction === 'vertical' || direction === 'all') {
-          yInertialMotion.value = true
-          offsetY.value = withDecay({
-            velocity: e.velocityY / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableYRange.value
-          }, () => {
-            yInertialMotion.value = false
-            if (propsRef.current.bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
+        } else if (inertia) {
+          // 惯性处理
+          if (direction === 'horizontal' || direction === 'all') {
+            xInertialMotion.value = true
+            offsetX.value = withDecay({
+              velocity: e.velocityX / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableXRange.value
+            }, () => {
+              xInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
+          if (direction === 'vertical' || direction === 'all') {
+            yInertialMotion.value = true
+            offsetY.value = withDecay({
+              velocity: e.velocityY / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableYRange.value
+            }, () => {
+              yInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
         }
       })
       .withRef(movableGestureRef)
