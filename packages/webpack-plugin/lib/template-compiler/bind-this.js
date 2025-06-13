@@ -41,7 +41,7 @@ function getCollectPath (path) {
   while (current.isMemberExpression() && last.parentKey !== 'property') {
     if (current.node.computed) {
       if (t.isLiteral(current.node.property)) {
-        if (t.isStringLiteral(current.node.property) || t.isNumericLiteral(current.node.property)) {
+        if (t.isStringLiteral(current.node.property)) {
           if (dangerousKeyMap[current.node.property.value] || !isValidIdentifierStr(current.node.property.value)) {
             break
           }

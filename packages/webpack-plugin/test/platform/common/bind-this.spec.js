@@ -131,7 +131,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   _sc("a")[_sc("c")];
   _c("a.b")[_c("c.d")];
 
-  _sc("e1")[0].name;
+  _c("e1[0].name");
   _sc("e2")["a.b.c"];
   _sc("f1")["a.b.c"]["d"];
   _c("f2.a")["b.c.d"];
