@@ -1,5 +1,6 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet, useWindowDimensions } from 'react-native'
+import { REACTHOOKSEXEC, useEffect } from '../../core/innerLifecycle'
 
 let { width, height } = Dimensions.get('screen')
 
@@ -177,6 +178,13 @@ export default function styleHelperMixin () {
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
+              const styleObj = classMap[className]
+              if (styleObj.normal) {
+                const { width } = useWindowDimensions()
+                console.log(width, 999000)
+              } else {
+                Object.assign(result, classMap[className])
+              }
               Object.assign(result, classMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
