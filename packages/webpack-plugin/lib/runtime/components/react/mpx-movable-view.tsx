@@ -289,77 +289,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     })()
   }, [x, y])
 
-  // 提取通用的缩放边界计算函数
-  const calculateScaleBoundaryPosition = useCallback(({
-    currentOffsetX,
-    currentOffsetY,
-    newScale,
-    width,
-    height
-  }: {
-    currentOffsetX: number
-    currentOffsetY: number
-    newScale: number
-    width: number
-    height: number
-  }) => {
-    'worklet'
-    const prevScale = currentScale.value
-
-    // 计算元素当前中心点（在屏幕上的位置）
-    const currentCenterX = currentOffsetX + (width * prevScale) / 2
-    const currentCenterY = currentOffsetY + (height * prevScale) / 2
-
-    // 实现中心缩放：保持元素中心点不变
-    // 计算缩放后为了保持中心点不变需要的新offset位置
-    let newOffsetX = currentCenterX - (width * newScale) / 2
-    let newOffsetY = currentCenterY - (height * newScale) / 2
-
-    // 缩放过程中实时边界检测
-    // 计算新的边界范围
-    const top = (style.position === 'absolute' && style.top) || 0
-    const left = (style.position === 'absolute' && style.left) || 0
-    const scaledWidth = width * newScale
-    const scaledHeight = height * newScale
-
-    // 计算新缩放值下的边界限制
-    const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
-    const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
-
-    let xMin, xMax, yMin, yMax
-
-    if (MovableAreaLayout.width < scaledWidth) {
-      xMin = maxOffsetX
-      xMax = -left
-    } else {
-      xMin = -left
-      xMax = maxOffsetX < 0 ? -left : maxOffsetX
-    }
-
-    if (MovableAreaLayout.height < scaledHeight) {
-      yMin = maxOffsetY
-      yMax = -top
-    } else {
-      yMin = -top
-      yMax = maxOffsetY < 0 ? -top : maxOffsetY
-    }
-
-    // 应用边界限制
-    if (newOffsetX > xMax) {
-      newOffsetX = xMax
-    } else if (newOffsetX < xMin) {
-      newOffsetX = xMin
-    }
-
-    if (newOffsetY > yMax) {
-      newOffsetY = yMax
-    } else if (newOffsetY < yMin) {
-      newOffsetY = yMin
-    }
-
-    return { x: newOffsetX, y: newOffsetY }
-  }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
-
   // 提取通用的缩放处理函数
   const handleScaleUpdate = useCallback((scaleInfo: { scale: number }) => {
     'worklet'
@@ -384,30 +313,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     // 限制缩放值在 scaleMin 和 scaleMax 之间
     newScale = Math.max(scaleMin, Math.min(scaleMax, newScale))
 
-    // 只有当缩放值真正改变时才调整位置
-    if (Math.abs(newScale - currentScale.value) > 0.01) {
-      // 获取元素尺寸
-      const { width = 0, height = 0 } = layoutValue.value
-
-      if (width > 0 && height > 0) {
-        // 使用通用的边界计算函数
-        const { x: newOffsetX, y: newOffsetY } = calculateScaleBoundaryPosition({
-          currentOffsetX: offsetX.value,
-          currentOffsetY: offsetY.value,
-          newScale,
-          width,
-          height
-        })
-
-        offsetX.value = newOffsetX
-        offsetY.value = newOffsetY
-
-        // 更新缩放值
-        currentScale.value = newScale
-      }
-    } else {
-      currentScale.value = newScale
-    }
+    // 更新缩放值
+    currentScale.value = newScale
 
     if (bindscale) {
       runOnJS(handleTriggerScale)({
@@ -416,7 +323,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         scale: newScale
       })
     }
-  }, [disabled, scaleMin, scaleMax, bindscale, handleTriggerScale, calculateScaleBoundaryPosition, style.position, style.top, style.left, MovableAreaLayout.height, MovableAreaLayout.width])
+  }, [disabled, scaleMin, scaleMax, bindscale, handleTriggerScale])
 
   useEffect(() => {
     runOnUI(() => {
@@ -424,45 +331,17 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         // 限制缩放值在 scaleMin 和 scaleMax 之间
         const clampedScale = Math.max(scaleMin, Math.min(scaleMax, scaleValue))
 
-        // 实现中心缩放的位置补偿
-        const { width = 0, height = 0 } = layoutValue.value
-        if (width > 0 && height > 0) {
-          // 使用通用的边界计算函数
-          const { x: newOffsetX, y: newOffsetY } = calculateScaleBoundaryPosition({
-            currentOffsetX: offsetX.value,
-            currentOffsetY: offsetY.value,
-            newScale: clampedScale,
-            width,
-            height
+        // 使用 center center 作为 transform-origin，缩放时中心点自动保持不变
+        // 只需要更新缩放值，不需要调整位置
+        if (animation) {
+          currentScale.value = withTiming(clampedScale, {
+            duration: 1000
+          }, () => {
+            handleRestBoundaryAndCheck()
           })
-
-          // 同时更新缩放值和位置
-          if (animation) {
-            currentScale.value = withTiming(clampedScale, {
-              duration: 1000
-            }, () => {
-              handleRestBoundaryAndCheck()
-            })
-            offsetX.value = withTiming(newOffsetX, { duration: 1000 })
-            offsetY.value = withTiming(newOffsetY, { duration: 1000 })
-          } else {
-            currentScale.value = clampedScale
-            offsetX.value = newOffsetX
-            offsetY.value = newOffsetY
-            handleRestBoundaryAndCheck()
-          }
         } else {
-          // 如果还没有尺寸信息，只更新缩放值
-          if (animation) {
-            currentScale.value = withTiming(clampedScale, {
-              duration: 1000
-            }, () => {
-              handleRestBoundaryAndCheck()
-            })
-          } else {
-            currentScale.value = clampedScale
-            handleRestBoundaryAndCheck()
-          }
+          currentScale.value = clampedScale
+          handleRestBoundaryAndCheck()
         }
 
         if (bindscale) {
@@ -506,28 +385,45 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const top = (style.position === 'absolute' && style.top) || 0
     const left = (style.position === 'absolute' && style.left) || 0
 
-    // 使用左上角缩放，计算offset位置的边界范围
+    // 使用 center center 作为 transform-origin 时的关键理解：
+    // 1. translateX/translateY 仍然指定原始左上角位置
+    // 2. 但缩放围绕中心点进行，导致视觉左上角位置偏移
     const currentScaleVal = currentScale.value
-    const scaledWidth = (width || 0) * currentScaleVal
-    const scaledHeight = (height || 0) * currentScaleVal
+    const originalWidth = width || 0
+    const originalHeight = height || 0
+    const scaledWidth = originalWidth * currentScaleVal
+    const scaledHeight = originalHeight * currentScaleVal
 
-    // offset位置的边界：左上角可以移动的范围
-    const maxOffsetY = MovableAreaLayout.height - scaledHeight - top
-    const maxOffsetX = MovableAreaLayout.width - scaledWidth - left
+    // 计算缩放导致的视觉偏移
+    const scaleOffsetX = (scaledWidth - originalWidth) / 2
+    const scaleOffsetY = (scaledHeight - originalHeight) / 2
+
+    // 视觉左上角位置 = translateX - scaleOffsetX
+    // 边界限制：视觉左上角应该在 [-left, MovableAreaLayout.width - scaledWidth - left] 范围内
+    // 转换为对 translateX 的限制：
+    const visualMinX = -left
+    const visualMaxX = MovableAreaLayout.width - scaledWidth - left
+    const translateMinX = visualMinX + scaleOffsetX
+    const translateMaxX = visualMaxX + scaleOffsetX
+
+    const visualMinY = -top
+    const visualMaxY = MovableAreaLayout.height - scaledHeight - top
+    const translateMinY = visualMinY + scaleOffsetY
+    const translateMaxY = visualMaxY + scaleOffsetY
 
     let xRange: [min: number, max: number]
     let yRange: [min: number, max: number]
 
     if (MovableAreaLayout.width < scaledWidth) {
-      xRange = [maxOffsetX, -left]
+      xRange = [translateMaxX, translateMinX] // 元素比容器大，范围反转
     } else {
-      xRange = [-left, maxOffsetX < 0 ? -left : maxOffsetX]
+      xRange = [translateMinX, translateMaxX < translateMinX ? translateMinX : translateMaxX]
     }
 
     if (MovableAreaLayout.height < scaledHeight) {
-      yRange = [maxOffsetY, -top]
+      yRange = [translateMaxY, translateMinY] // 元素比容器大，范围反转
     } else {
-      yRange = [-top, maxOffsetY < 0 ? -top : maxOffsetY]
+      yRange = [translateMinY, translateMaxY < translateMinY ? translateMinY : translateMaxY]
     }
 
     draggableXRange.value = xRange
@@ -886,7 +782,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       {
         ref: nodeRef,
         onLayout: onLayout,
-        style: [{ transformOrigin: 'top left' }, innerStyle, animatedStyles, layoutStyle]
+        style: [{ transformOrigin: 'center center' }, innerStyle, animatedStyles, layoutStyle]
       },
       rewriteCatchEvent()
     )
