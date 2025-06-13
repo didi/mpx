@@ -44,6 +44,7 @@ interface MovableViewProps {
   disabled?: boolean
   animation?: boolean
   id?: string
+  changeThrottleTime?:number
   bindchange?: (event: unknown) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
   catchtouchstart?: (event: GestureTouchEvent) => void
@@ -105,6 +106,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
+    changeThrottleTime = 60,
     bindtouchstart,
     catchtouchstart,
     bindhtouchmove,
@@ -114,7 +116,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend
+    catchtouchend,
+    bindchange
   } = props
 
   const {
@@ -140,6 +143,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     x: 0,
     y: 0
   })
+
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
@@ -147,6 +151,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const yInertialMotion = useSharedValue(false)
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
+  const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
+  const lastChangeTime = useSharedValue(0)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -194,6 +200,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     )
   }, [])
 
+  // 节流版本的 change 事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(handleTriggerChange)({ x, y, type })
+    }
+  }, [changeThrottleTime])
+
   useEffect(() => {
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
@@ -214,11 +230,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             })
             : newY
         }
-        runOnJS(handleTriggerChange)({
-          x: newX,
-          y: newY,
-          type: 'setData'
-        })
+        if (bindchange) {
+          runOnJS(handleTriggerChange)({
+            x: newX,
+            y: newY,
+            type: 'setData'
+          })
+        }
       }
     })()
   }, [x, y])
@@ -229,19 +247,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       resetBoundaryAndCheck({ width, height })
     }
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
-
-  useAnimatedReaction(
-    () => ({
-      offsetX: offsetX.value,
-      offsetY: offsetY.value
-    }),
-    (currentValue: { offsetX: any; offsetY: any }) => {
-      const { offsetX, offsetY } = currentValue
-      runOnJS(handleTriggerChange)({
-        x: offsetX,
-        y: offsetY
-      })
-    })
 
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
     const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
@@ -335,7 +340,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       setHeight(height || 0)
     }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
-      const { y: navigationY = 0 } = navigation?.layout || {}
+      const { top: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
       resetBoundaryAndCheck({ width, height })
     })
@@ -343,7 +348,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
-    const { y: navigationY = 0 } = navigation?.layout || {}
+    const { top: navigationY = 0 } = navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {
@@ -366,12 +371,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchstart, catchtouchstart } = propsRef.current
     extendEvent(e, 'start')
     bindtouchstart && bindtouchstart(e)
     catchtouchstart && catchtouchstart(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
     extendEvent(e, 'move')
     if (hasTouchmove) {
       if (touchEvent === 'htouchmove') {
@@ -393,6 +400,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchend, catchtouchend } = propsRef.current
     extendEvent(e, 'end')
     bindtouchend && bindtouchend(e)
     catchtouchend && catchtouchend(e)
@@ -426,6 +434,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           runOnJS(triggerStartOnJS)({ e })
         }
       })
+      .onStart(() => {
+        'worklet'
+        initialViewPosition.value = {
+          x: offsetX.value,
+          y: offsetY.value
+        }
+      })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
         const changedTouches = e.changedTouches[0] || { x: 0, y: 0 }
@@ -435,11 +450,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           isFirstTouch.value = false
         }
         handleTriggerMove(e)
+      })
+      .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        'worklet'
         if (disabled) return
-        const changeX = changedTouches.x - startPosition.value.x
-        const changeY = changedTouches.y - startPosition.value.y
         if (direction === 'horizontal' || direction === 'all') {
-          const newX = offsetX.value + changeX
+          const newX = initialViewPosition.value.x + e.translationX
           if (!outOfBounds) {
             const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
             offsetX.value = x
@@ -448,13 +464,20 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (direction === 'vertical' || direction === 'all') {
-          const newY = offsetY.value + changeY
+          const newY = initialViewPosition.value.y + e.translationY
           if (!outOfBounds) {
             const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY })
             offsetY.value = y
           } else {
             offsetY.value = newY
           }
+        }
+        if (bindchange) {
+          // 使用节流版本减少 runOnJS 调用
+          handleTriggerChangeThrottled({
+            x: offsetX.value,
+            y: offsetY.value
+          })
         }
       })
       .onTouchesUp((e: GestureTouchEvent) => {
@@ -464,53 +487,82 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         if (bindtouchend || catchtouchend) {
           runOnJS(triggerEndOnJS)({ e })
         }
-        if (disabled) return
-        if (!inertia) {
-          const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
-          if (x !== offsetX.value) {
-            offsetX.value = animation
-              ? withSpring(x, {
-                duration: 1500,
-                dampingRatio: 0.8
-              })
-              : x
-          }
-          if (y !== offsetY.value) {
-            offsetY.value = animation
-              ? withSpring(y, {
-                duration: 1500,
-                dampingRatio: 0.8
-              })
-              : y
-          }
-        }
       })
-      .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+      .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
         isMoving.value = false
-        if (!inertia || disabled || !animation) return
-        if (direction === 'horizontal' || direction === 'all') {
-          xInertialMotion.value = true
-          offsetX.value = withDecay({
-            velocity: e.velocityX / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableXRange.value
-          }, () => {
-            xInertialMotion.value = false
-          })
-        }
-        if (direction === 'vertical' || direction === 'all') {
-          yInertialMotion.value = true
-          offsetY.value = withDecay({
-            velocity: e.velocityY / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableYRange.value
-          }, () => {
-            yInertialMotion.value = false
-          })
+        if (disabled) return
+        // 处理没有惯性且超出边界的回弹
+        if (!inertia && outOfBounds) {
+          const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
+          if (x !== offsetX.value || y !== offsetY.value) {
+            if (x !== offsetX.value) {
+              offsetX.value = animation
+                ? withSpring(x, {
+                  duration: 1500,
+                  dampingRatio: 0.8
+                })
+                : x
+            }
+            if (y !== offsetY.value) {
+              offsetY.value = animation
+                ? withSpring(y, {
+                  duration: 1500,
+                  dampingRatio: 0.8
+                })
+                : y
+            }
+            if (bindchange) {
+              runOnJS(handleTriggerChange)({
+                x,
+                y
+              })
+            }
+          }
+        } else if (inertia) {
+          // 惯性处理
+          if (direction === 'horizontal' || direction === 'all') {
+            xInertialMotion.value = true
+            offsetX.value = withDecay({
+              velocity: e.velocityX / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableXRange.value
+            }, () => {
+              xInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
+          if (direction === 'vertical' || direction === 'all') {
+            yInertialMotion.value = true
+            offsetY.value = withDecay({
+              velocity: e.velocityY / 10,
+              rubberBandEffect: outOfBounds,
+              clamp: draggableYRange.value
+            }, () => {
+              yInertialMotion.value = false
+              if (bindchange) {
+                runOnJS(handleTriggerChange)({
+                  x: offsetX.value,
+                  y: offsetY.value
+                })
+              }
+            })
+          }
         }
       })
       .withRef(movableGestureRef)
+
+    if (direction === 'horizontal') {
+      gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
+    } else if (direction === 'vertical') {
+      gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
+    }
+
     if (simultaneousHandlers && simultaneousHandlers.length) {
       gesturePan.simultaneousWithExternalGesture(...simultaneousHandlers)
     }
