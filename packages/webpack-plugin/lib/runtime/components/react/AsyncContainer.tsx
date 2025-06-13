@@ -1,6 +1,29 @@
-import { ComponentType, ReactNode, Component, Fragment, Suspense } from 'react'
+import { ComponentType, ReactNode, Component, Suspense } from 'react'
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
 import FastImage from '@d11/react-native-fast-image'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
+
+type PageWrapper = {
+  children: ReactNode
+}
+
+export const PageWrapper = ({ children }: PageWrapper) => {
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -0 }],
+    flexBasis: 'auto',
+    flex: 1
+  }))
+
+  return (
+    <Animated.View
+      style={[
+        animatedStyle
+      ]}
+    >
+      {children}
+    </Animated.View>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -59,7 +82,7 @@ interface PropsType<T extends AsyncType> {
   props: object
   loading: ComponentType<unknown>
   fallback: ComponentType<unknown>
-  children: (props: unknown) => ReactNode
+  children: (props: any) => ReactNode | ReactNode
 }
 
 interface StateType {
@@ -72,7 +95,7 @@ interface ComponentError extends Error {
   type: 'timeout' | 'fail'
 }
 
-const DefaultLoading = () => {
+export const DefaultLoading = () => {
   return (
     <View style={styles.container}>
       <FastImage
@@ -83,11 +106,11 @@ const DefaultLoading = () => {
   )
 }
 
-interface DefaultFallbackProps {
+export interface DefaultFallbackProps {
   onReload: () => void
 }
 
-const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
+export const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
   return (
     <View style={styles.container}>
       <Image
@@ -177,11 +200,16 @@ export default class AsyncContainer extends Component<PropsType<AsyncType>, Stat
 
   render () {
     if (this.state.hasError) {
-      return this.errorFallback
+      if (this.props.type === 'component') {
+        return this.errorFallback
+      } else {
+        return (<PageWrapper>{this.errorFallback}</PageWrapper>)
+      }
     } else {
       return (
         <Suspense fallback={this.suspenseFallback} key={this.state.key}>
-          {this.props.children(this.props.props)}
+          {typeof this.props.children === 'function' ? this.props.children(this.props.props) : this.props.children}
+          {/* {this.props.children(this.props.props)} */}
         </Suspense>
       )
     }
