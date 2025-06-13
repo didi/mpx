@@ -365,6 +365,14 @@ function transformTransform (style: Record<string, any>) {
   if (!style.transform || Array.isArray(style.transform)) return
   style.transform = parseTransform(style.transform)
 }
+
+function transformBoxShadow (styleObj: Record<string, any>) {
+  if (!styleObj.boxShadow) return
+  styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
+    return `${res}${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
+  }, '')
+}
+
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -506,6 +514,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformPosition(normalStyle, positionMeta)
   // transform number enum stringify
   transformStringify(normalStyle)
+  // transform rpx to px
+  transformBoxShadow(normalStyle)
 
   // transform 字符串格式转化数组格式
   transformTransform(normalStyle)
