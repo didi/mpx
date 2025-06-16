@@ -141,7 +141,6 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   }, [])
 
   useEffect(() => {
-    console.log('useEffect', status, !!chunkLoaded, loadChunkPromise)
     let cancelled = false
     if (!chunkLoaded && status === 'pending') {
       loadChunkPromise
