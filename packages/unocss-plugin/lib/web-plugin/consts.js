@@ -24,7 +24,7 @@ function resolveLayer (id) {
   if (match) { return match[1] || LAYER_MARK_ALL }
 }
 
-const LAYER_PLACEHOLDER_RE = /(\\?")?#--unocss--\s*{\s*layer\s*:\s*(.+?);?\s*}/g
+const LAYER_PLACEHOLDER_RE = /(\\?")?#(?:\\)?--unocss--\s*{\s*layer\s*:\s*(.+?);?\s*}/g
 function getLayerPlaceholder (layer) {
   return `#--unocss--{layer:${layer}}`
 }
