@@ -1,1 +1,1 @@
-export { scrolls } from '@unocss/preset-wind/rules'
+export { scrolls } from '@unocss/preset-wind3/rules'

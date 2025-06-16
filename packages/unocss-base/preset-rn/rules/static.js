@@ -9,7 +9,7 @@ import {
   textWraps,
   whitespaces
 } from '@unocss/preset-mini/rules'
-import { backgroundBlendModes, mixBlendModes, hyphens, isolations, objectPositions } from '@unocss/preset-wind/rules'
+import { backgroundBlendModes, mixBlendModes, hyphens, isolations, objectPositions } from '@unocss/preset-wind3/rules'
 
 const displays = [
   'inline',

@@ -1,22 +1,26 @@
-import { presetUno } from '@unocss/preset-uno'
-import presetLegacyCompat from '@unocss/preset-legacy-compat'
+import { presetWind3 } from '@unocss/preset-wind3'
+import { presetLegacyCompat } from '@unocss/preset-legacy-compat'
 import presetRn from '../preset-rn/index.js'
 
-// eslint-disable-next-line
+/** eslint-disable-next-line */
 const remRE = /(-?[\.\d]+)rem/g
 
 export default function presetMpx (options = {}) {
+  const uno = presetWind3(options)
   const mpxCurrentTargetMode = process.env.MPX_CURRENT_TARGET_MODE
   const isReact = mpxCurrentTargetMode === 'ios' || mpxCurrentTargetMode === 'android'
   const extraPresets = []
+
   if (isReact) {
     extraPresets.push(presetRn())
-    extraPresets.push(presetLegacyCompat({
-      commaStyleColorFunction: true
-    }))
     options.dark = 'media'
   }
-  const uno = presetUno(options)
+
+  extraPresets.push(presetLegacyCompat({
+    commaStyleColorFunction: true,
+    legacyColorSpace: true
+  }))
+
   const { baseFontSize = 37.5 } = options
 
   return {

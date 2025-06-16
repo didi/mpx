@@ -1,1 +1,1 @@
-export { animations } from '@unocss/preset-wind/rules'
+export { animations } from '@unocss/preset-wind3/rules'

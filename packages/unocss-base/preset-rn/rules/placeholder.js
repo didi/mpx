@@ -1,1 +1,1 @@
-export { placeholders } from '@unocss/preset-wind/rules'
+export { placeholders } from '@unocss/preset-wind3/rules'

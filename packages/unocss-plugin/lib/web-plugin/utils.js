@@ -1,15 +1,15 @@
-import * as pluginutils from '@rollup/pluginutils'
-import * as config from '@unocss/config'
-import * as core from '@unocss/core'
-import nodePath from 'path'
+import pluginutils from '@rollup/pluginutils'
+import { cssIdRE as defCssIdRE, createGenerator } from '@unocss/core'
+import { loadConfig } from '@unocss/config'
 import MagicString from 'magic-string'
 import remapping from '@ampproject/remapping'
+import nodePath from 'path'
 
 const INCLUDE_COMMENT = '@unocss-include'
 const IGNORE_COMMENT = '@unocss-ignore'
 const CSS_PLACEHOLDER = '@unocss-placeholder'
 
-const defaultExclude = [core.cssIdRE]
+const defaultExclude = [defCssIdRE]
 const defaultInclude = [/\.(vue|mpx|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/]
 const sfcIdRE = /\.(vue|mpx)($|\?)/
 const templateIdRE = /\.(wxml|axml|swan|qml|ttml|qxml|jxml|ddml|html)($|\?)/
@@ -19,11 +19,11 @@ async function createContext (configOrPath, defaults = {}, extraConfigSources = 
   const root = process.cwd()
   let rawConfig = {}
 
-  const uno = await core.createGenerator(rawConfig, defaults)
+  const uno = await createGenerator(rawConfig, defaults)
   let rollupFilter = pluginutils.createFilter(defaultInclude, defaultExclude)
-  const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, core.cssIdRE])
+  const idFilter = pluginutils.createFilter([sfcIdRE, templateIdRE, cssIdRE, defCssIdRE])
 
-  const result = await config.loadConfig(root, configOrPath, extraConfigSources, defaults)
+  const result = await loadConfig(root, configOrPath, extraConfigSources, defaults)
   rawConfig = result.config
   await uno.setConfig(rawConfig)
   rollupFilter = pluginutils.createFilter(
@@ -133,7 +133,7 @@ function getPath (id) {
 }
 
 function isCssId (id) {
-  return core.cssIdRE.test(id) || cssIdRE.test(id)
+  return defCssIdRE.test(id) || cssIdRE.test(id)
 }
 
 export {

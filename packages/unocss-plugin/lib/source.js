@@ -1,6 +1,5 @@
 import webpack from 'webpack'
 const { ReplaceSource, RawSource, ConcatSource, Source } = webpack.sources
-
 function getRawSource (s) {
   if (s instanceof RawSource) { return s }
   if (s instanceof Source) { return new RawSource(s.source()) }

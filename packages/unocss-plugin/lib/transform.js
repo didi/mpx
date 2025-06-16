@@ -1,7 +1,6 @@
 import MagicString from 'magic-string'
-import transformerDirectives from '@unocss/transformer-directives'
+import transformerDirectives from '@unocss/transformer-directives' // default
 import { getReplaceSource } from './source.js'
-
 const escapedReg = /\\(.)/g
 
 function mpEscape (str, escapeMap = {}) {

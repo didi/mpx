@@ -3,7 +3,7 @@ import {
   writingOrientations,
   hyphens,
   fontVariantNumeric
-} from '@unocss/preset-wind/rules'
+} from '@unocss/preset-wind3/rules'
 import {
   textStrokes,
   textIndents,

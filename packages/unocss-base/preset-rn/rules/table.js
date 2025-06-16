@@ -1,1 +1,1 @@
-export { tables } from '@unocss/preset-wind/rules'
+export { tables } from '@unocss/preset-wind3/rules'

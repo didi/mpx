@@ -19,7 +19,7 @@ import {
   variantSpaceAndDivide,
   variantStickyHover,
   placeholderModifier
-} from '@unocss/preset-wind/variants'
+} from '@unocss/preset-wind3/variants'
 
 const wrapVariant = function (variant = {}) {
   return function (raw) {

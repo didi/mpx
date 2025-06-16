@@ -15,7 +15,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@unocss/preset-uno": "^0.65.1",
-    "@unocss/preset-legacy-compat": "^0.65.1"
+    "@unocss/preset-wind3": "^66.0.0",
+    "@unocss/preset-legacy-compat": "^66.0.0"
   }
 }

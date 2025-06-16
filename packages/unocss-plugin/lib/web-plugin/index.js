@@ -1,13 +1,9 @@
-import WebpackSources from 'webpack-sources'
-import VirtualModulesPlugin from 'webpack-virtual-modules'
+import fs from 'fs'
 import nodePath, { dirname } from 'path'
 import process from 'process'
-import fs from 'fs'
-import {
-  createContext,
-  getPath,
-  normalizeAbsolutePath
-} from './utils.js'
+import { fileURLToPath } from 'url'
+import WebpackSources from 'webpack-sources'
+import VirtualModulesPlugin from 'webpack-virtual-modules'
 import {
   LAYER_MARK_ALL,
   LAYER_PLACEHOLDER_RE,
@@ -16,7 +12,11 @@ import {
   resolveId,
   resolveLayer
 } from './consts.js'
-import { fileURLToPath } from 'url'
+import {
+  createContext,
+  getPath,
+  normalizeAbsolutePath
+} from './utils.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 

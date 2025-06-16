@@ -1,5 +1,5 @@
 import { margins, paddings } from '@unocss/preset-mini/rules'
-import { spaces } from '@unocss/preset-wind/rules'
+import { spaces } from '@unocss/preset-wind3/rules'
 
 const unSupport = [
   's',

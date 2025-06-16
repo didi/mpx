@@ -1,4 +1,4 @@
-import { filters } from '@unocss/preset-wind/rules'
+import { filters } from '@unocss/preset-wind3/rules'
 import { isReg, isString } from '../../utils/index.js'
 
 const unSupport = [

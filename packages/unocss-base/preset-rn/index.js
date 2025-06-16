@@ -3,7 +3,7 @@ import { normalizeTransformVar } from './rules/transforms.js'
 import theme from './theme.js'
 import blocklistVariants from './variants/index.js'
 import { transformBase } from '@unocss/preset-mini/rules'
-import { filterBase } from '@unocss/preset-wind/rules'
+import { filterBase } from '@unocss/preset-wind3/rules'
 
 function normalizePreflightBase (preflightBase) {
   normalizeTransformVar(preflightBase)

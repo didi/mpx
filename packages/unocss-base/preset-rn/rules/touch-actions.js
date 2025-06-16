@@ -1,1 +1,1 @@
-export { touchActions } from '@unocss/preset-wind/rules'
+export { touchActions } from '@unocss/preset-wind3/rules'

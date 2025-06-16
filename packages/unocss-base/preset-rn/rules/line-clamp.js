@@ -1,1 +1,1 @@
-export { lineClamps } from '@unocss/preset-wind/rules'
+export { lineClamps } from '@unocss/preset-wind3/rules'

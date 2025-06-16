@@ -1,1 +1,1 @@
-export { columns } from '@unocss/preset-wind/rules'
+export { columns } from '@unocss/preset-wind3/rules'
