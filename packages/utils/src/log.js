@@ -45,7 +45,6 @@ function log (type, msg, location, e) {
     if (location) {
       header = `[Mpx runtime ${type} at ${location}]: `
     }
-
     console[type](header + msg)
     if (e) console[type](e)
   }

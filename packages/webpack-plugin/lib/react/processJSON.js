@@ -116,14 +116,14 @@ module.exports = function (jsonContent, {
   }
 
   if (ctorType === 'page') {
-    const keysToExtract = ['navigationStyle', 'navigationBarTitleText', 'navigationBarTextStyle', 'navigationBarBackgroundColor']
+    // const keysToExtract = ['navigationStyle']
     const configObj = {}
     // 暂时先不注入数据，后续如需要使用再用
-    keysToExtract.forEach(key => {
-      if (jsonObj[key]) {
-        configObj[key] = jsonObj[key]
-      }
-    })
+    // keysToExtract.forEach(key => {
+    //   if (jsonObj[key]) {
+    //     configObj[key] = jsonObj[key]
+    //   }
+    // })
     loaderContext._module.addPresentationalDependency(new RecordPageConfigsMapDependency(parseRequest(loaderContext.resource).resourcePath, configObj))
   }
 

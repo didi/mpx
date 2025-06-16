@@ -483,7 +483,7 @@ useFetch().fetch({
 | closeBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | createBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | onBLEConnectionStateChange |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| createIntersectionObserver |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
+| createIntersectionObserver |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | getExtConfig |:white_check_mark:|:white_check_mark:|:x:|:x:|
 | getExtConfigSync |:white_check_mark:|:white_check_mark:|:x:|:x:|

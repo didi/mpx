@@ -4,8 +4,7 @@ global.__mpxAppCbs = global.__mpxAppCbs || {
   show: [],
   hide: [],
   error: [],
-  rejection: [],
-  lazyLoad: []
+  rejection: []
 }
 
 function off (cbs, cb) {
@@ -57,18 +56,6 @@ function offAppHide (callback) {
   off(global.__mpxAppCbs.hide, callback)
 }
 
-function onLazyLoadError (callback) {
-  if (isReact) {
-    global.__mpxAppCbs.lazyLoad.push(callback)
-  }
-}
-
-function offLazyLoadError (callback) {
-  if (isReact) {
-    off(global.__mpxAppCbs.lazyLoad, callback)
-  }
-}
-
 export {
   onAppShow,
   onAppHide,
@@ -77,7 +64,5 @@ export {
   onError,
   offError,
   onUnhandledRejection,
-  offUnhandledRejection,
-  onLazyLoadError,
-  offLazyLoadError
+  offUnhandledRejection
 }

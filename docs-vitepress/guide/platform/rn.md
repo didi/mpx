@@ -732,7 +732,7 @@ movable-view的可移动区域。
 
 注意事项
 
-1. movable-area不支持设置 scale-area
+1. movable-area不支持设置 scale-area，缩放手势生效区域仅在 movable-view 内
 
 #### movable-view
 可移动的视图容器，在页面中可以拖拽滑动。movable-view 必须在 movable-area 组件中，并且必须是直接子节点，否则不能移动。
@@ -758,6 +758,7 @@ movable-view的可移动区域。
 | 事件名               | 说明                                       |
 | -------------------- | ------------------------------------------ |
 | bindchange        | 拖动过程中触发的事件，`event.detail = {x, y, source}` |
+| bindscale         | 缩放过程中触发的事件，`event.detail = {x, y, scale}`    |
 | htouchmove          | 初次手指触摸后移动为横向的移动时触发 |
 | vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
 
@@ -766,8 +767,7 @@ movable-view的可移动区域。
 
 1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 2. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
-3. RN 环境 movable 相关组件暂不支持缩放能力
-   
+
 #### root-portal
 使整个子树从页面中脱离出来，类似于在 CSS 中使用 position: fixed 的效果。主要用于制作弹窗、弹出层等。
 属性

@@ -13,7 +13,6 @@ module.exports = function (script, {
   builtInComponentsMap,
   localComponentsMap,
   localPagesMap,
-  rnConfig,
   componentGenerics,
   genericsInfo
 }, callback) {
@@ -33,7 +32,6 @@ module.exports = function (script, {
   }
 
   let output = '/* script */\n'
-  output += "import { lazy, createElement, memo, forwardRef } from 'react'\n"
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
@@ -41,8 +39,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
       loaderContext,
-      jsonConfig,
-      rnConfig
+      jsonConfig
     })
     const componentsMap = buildComponentsMap({
       localComponentsMap,
@@ -53,6 +50,8 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
+    // RN环境暂不支持异步加载
+    // output += 'import { lazy } from \'react\'\n'
     output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
     // 获取组件集合
     const componentsMap = buildComponentsMap({

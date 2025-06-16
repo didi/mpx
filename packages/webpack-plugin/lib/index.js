@@ -72,8 +72,6 @@ const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
 const VirtualModulesPlugin = require('webpack-virtual-modules')
-const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
-const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -410,7 +408,7 @@ class MpxWebpackPlugin {
     let splitChunksOptions = null
     let splitChunksPlugin = null
     // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
-    if (optimization.splitChunks !== false) {
+    if (optimization.splitChunks !== false && !isReact(this.options.mode)) {
       splitChunksOptions = Object.assign({
         chunks: 'all',
         usedExports: optimization.usedExports === true,
@@ -608,22 +606,6 @@ class MpxWebpackPlugin {
           return mpx
         }
       })
-
-      if (isReact(this.options.mode)) {
-        compilation.hooks.runtimeRequirementInTree
-          .for(RuntimeGlobals.loadScript)
-          .tap({
-            stage: -1000,
-            name: 'LoadAsyncChunk'
-          }, (chunk, set) => {
-            compilation.addRuntimeModule(
-              chunk,
-              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk && this.options.rnConfig.asyncChunk.timeout)
-            )
-            return true
-          })
-      }
-
       compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
       compilation.dependencyTemplates.set(ResolveDependency, new ResolveDependency.Template())
 
@@ -758,7 +740,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
-          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || isReact(this.options.mode)),
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1416,10 +1398,10 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
-                if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                if (isWeb(mpx.mode)) {
                   const depBlock = new AsyncDependenciesBlock(
                     {
-                      name: tarRoot + '/index'
+                      name: tarRoot
                     },
                     expr.loc,
                     request

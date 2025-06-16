@@ -15,8 +15,8 @@ import {
   KeyboardAvoidContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '../env/nav'
+import { PortalHost, useSafeAreaInsets, GestureHandlerRootView } from '../env/navigationHelper'
+import { innerNav, useInnerHeaderHeight } from '../env/nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -419,22 +419,6 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
-function usePagePreload (route) {
-  const name = route.name
-  useEffect(() => {
-    setTimeout(() => {
-      const preloadRule = global.__preloadRule || {}
-      const { packages } = preloadRule[name] || {}
-      if (packages?.length > 0) {
-        const downloadChunkAsync = mpxGlobal.__mpx.config?.rnConfig?.downloadChunkAsync
-        if (typeof downloadChunkAsync === 'function') {
-          callWithErrorHandling(() => downloadChunkAsync(packages))
-        }
-      }
-    }, 800)
-  }, [])
-}
-
 const RelationsContext = createContext(null)
 
 const checkRelation = (options) => {
@@ -463,6 +447,8 @@ function getLayoutData (headerHeight) {
   const isLandscape = screenDimensions.height < screenDimensions.width
   const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
   return {
+    x: 0,
+    y: headerHeight,
     left: 0,
     top: headerHeight,
     // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
@@ -493,15 +479,11 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     }
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
     navigation.layout = getLayoutData(headerHeight)
+    const onLayout = () => {
+      // 当用户处于横屏或者竖屏状态的时候，需要进行layout修正
+      navigation.layout = getLayoutData(headerHeight)
+    }
 
-    useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
-        navigation.layout = getLayoutData(headerHeight)
-      })
-      return () => dimensionListener?.remove()
-    }, [])
-
-    usePagePreload(route)
     usePageStatus(navigation, currentPageId)
 
     const withKeyboardAvoidingView = (element) => {
@@ -524,38 +506,49 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     }
     // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
-    return withKeyboardAvoidingView(
-      createElement(ReactNative.View,
-        {
-          style: {
-            flex: 1,
-            backgroundColor: currentPageConfig?.backgroundColor || '#fff',
-            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
-            overflow: 'hidden'
-          },
-          ref: rootRef
-        },
-        createElement(RouteContext.Provider,
+    return createElement(GestureHandlerRootView,
+      {
+        style: {
+          flex: 1
+        }
+      },
+      createElement(innerNav, {
+        props: { pageConfig: currentPageConfig },
+        navigation
+      }),
+      withKeyboardAvoidingView(
+        createElement(ReactNative.View,
           {
-            value: routeContextValRef.current
-          },
-          createElement(IntersectionObserverContext.Provider,
-            {
-              value: intersectionObservers.current
+            style: {
+              flex: 1,
+              backgroundColor: currentPageConfig?.backgroundColor || '#fff',
+              // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+              overflow: 'hidden'
             },
-            createElement(PortalHost,
-              null,
-              createElement(WrappedComponent, {
-                ...props,
-                navigation,
-                route,
-                id: currentPageId
-              })
+            ref: rootRef,
+            onLayout
+          },
+          createElement(RouteContext.Provider,
+            {
+              value: routeContextValRef.current
+            },
+            createElement(IntersectionObserverContext.Provider,
+              {
+                value: intersectionObservers.current
+              },
+              createElement(PortalHost,
+                null,
+                createElement(WrappedComponent, {
+                  ...props,
+                  navigation,
+                  route,
+                  id: currentPageId
+                })
+              )
             )
           )
         )
-      )
-    )
+      ))
   }
 }
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
@@ -625,6 +618,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
+
     useEffect(() => {
       proxy.mounted()
       return () => {

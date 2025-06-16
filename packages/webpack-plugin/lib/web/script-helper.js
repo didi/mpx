@@ -13,7 +13,7 @@ function stringifyRequest (loaderContext, request) {
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
-    return `/* webpackChunkName: "${chunkName}/index" */`
+    return `/* webpackChunkName: "${chunkName}" */`
   }
   return ''
 }

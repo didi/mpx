@@ -24,7 +24,7 @@ const getTouchEvent = (
 ) => {
   const { navigation, propsRef, layoutRef } = config
   const props = propsRef.current
-  const { top: navigationY = 0 } = navigation?.layout || {}
+  const { y: navigationY = 0 } = navigation?.layout || {}
   const nativeEvent = event.nativeEvent
   const { timestamp, pageX, pageY, touches, changedTouches } = nativeEvent
   const { id } = props
