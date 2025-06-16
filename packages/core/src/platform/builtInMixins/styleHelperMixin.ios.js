@@ -1,30 +1,5 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
-
-let { width, height } = Dimensions.get('screen')
-
-Dimensions.addEventListener('change', ({ screen }) => {
-  width = screen.width
-  height = screen.height
-})
-
-function rpx (value) {
-  // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
-  // px = rpx * (750 / 屏幕宽度)
-  return value * width / 750
-}
-function vw (value) {
-  return value * width / 100
-}
-function vh (value) {
-  return value * height / 100
-}
-
-const unit = {
-  rpx,
-  vw,
-  vh
-}
+import { StyleSheet } from 'react-native'
 
 const empty = {}
 
@@ -33,8 +8,6 @@ function formatValue (value) {
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
-    } else {
-      return unit[matched[2]](+matched[1])
     }
   }
   if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
@@ -112,7 +85,7 @@ function stringifyDynamicClass (value) {
 
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 

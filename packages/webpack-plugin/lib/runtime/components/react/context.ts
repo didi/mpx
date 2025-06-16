@@ -1,5 +1,5 @@
-import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent } from 'react-native'
+import { createContext, Dispatch, MutableRefObject, Ref, SetStateAction } from 'react'
+import { NativeSyntheticEvent, ScaledSize } from 'react-native'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
@@ -50,6 +50,16 @@ export interface RouteContextValue {
   navigation: Record<string, any>
 }
 
+export interface DimensionsValue {
+  window: ScaledSize;
+  screen: ScaledSize;
+}
+
+export interface DimensionsContextValue {
+  value: DimensionsValue,
+  setValue(value: DimensionsValue): void
+}
+
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -75,3 +85,5 @@ export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | nu
 export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
+
+export const DimensionsContext = createContext<DimensionsContextValue | null>(null)

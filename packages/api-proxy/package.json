@@ -46,7 +46,8 @@
     "react-native-device-info": "*",
     "react-native-get-location": "*",
     "react-native-haptic-feedback": "*",
-    "react-native-safe-area-context": "*"
+    "react-native-safe-area-context": "*",
+    "@babel/runtime-corejs3": "*"
   },
   "peerDependenciesMeta": {
     "@react-native-async-storage/async-storage": {

@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
-import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image, DimensionValue } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
-import { VarContext, ScrollViewContext, RouteContext } from './context'
+import { VarContext, ScrollViewContext, RouteContext, DimensionsContext, DimensionsContextValue } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
@@ -32,6 +32,7 @@ const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
 const envUseRegExp = /env\(/
+const dynamicUnitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
 
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
@@ -267,6 +268,34 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
+function transformRpx (value: number, windowWidth: number) {
+  return value * windowWidth / 750
+}
+
+function transformVw (value: number, windowWidth: number) {
+  return value * windowWidth / 100
+}
+
+function transformVh (value: number, windowHeight: number) {
+  return value * windowHeight / 100
+}
+
+// transformFluidUnit
+function transformDynamicUnit (styleObj: Record<string, any> = {}, dimensionsCtx: DimensionsContextValue) {
+  const { height: windowHeight, width: windowWidth } = dimensionsCtx.value.window
+  Object.entries(styleObj).forEach(([key, value]) => {
+    if (typeof value !== 'string') return
+    const matched = dynamicUnitRegExp.exec(value)
+    if (!matched) return
+    const unitProcess = {
+      rpx: (value: number) => transformRpx(value, windowWidth),
+      vw: (value: number) => transformVw(value, windowWidth),
+      vh: (value: number) => transformVh(value, windowHeight)
+    }
+    styleObj[key] = unitProcess[matched[2] as keyof typeof unitProcess](styleObj[key])
+  })
+}
+
 const stringifyProps = ['fontWeight']
 function transformStringify (styleObj: Record<string, any>) {
   stringifyProps.forEach((prop) => {
@@ -355,6 +384,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     normalStyleChangedRef.current = !normalStyleChangedRef.current
   }
 
+  const dimensionsCtx = useContext(DimensionsContext)!
+
   const memoResult = useMemo(() => {
     let hasSelfPercent = false
     let hasPositionFixed = false
@@ -375,11 +406,13 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
 
     function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-      if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
-        hasSelfPercent = true
-        percentKeyPaths.push(keyPath.slice())
-      } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
-        percentKeyPaths.push(keyPath.slice())
+      if (PERCENT_REGEX.test(value)) {
+        if (hasOwn(selfPercentRule, key)) {
+          hasSelfPercent = true
+          percentKeyPaths.push(keyPath.slice())
+        } else if ((key === 'fontSize' || key === 'lineHeight')) {
+          percentKeyPaths.push(keyPath.slice())
+        }
       }
     }
 
@@ -402,6 +435,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       parentFontSize
     }
 
+    // apply rpx & vw & vw
+    transformDynamicUnit(normalStyle, dimensionsCtx)
     // apply env
     transformEnv(normalStyle, envKeyPaths, navigation)
     // apply percent
@@ -431,7 +466,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       hasSelfPercent,
       hasPositionFixed
     }
-  }, [normalStyleChangedRef.current, width, height, parentWidth, parentHeight, parentFontSize])
+  }, [normalStyleChangedRef.current, width, height, parentWidth, parentHeight, parentFontSize, dimensionsCtx.value])
 
   return extendObject({
     hasVarDec,

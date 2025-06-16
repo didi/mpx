@@ -170,12 +170,23 @@ export default function createApp (options) {
         }
       })
 
+      global.__mpxAppDimensionsInfo = {
+        window: ReactNative.Dimensions.get('window'),
+        screen: ReactNative.Dimensions.get('screen')
+      }
       let count = 0
-      let lastPageSize = getPageSize()
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const pageSize = getPageSize(window)
-        if (pageSize === lastPageSize) return
-        lastPageSize = pageSize
+      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
+        console.log('Dimensions change')
+        const oldWindow = global.__mpxAppDimensionsInfo.window
+        // context set & global
+        global.__mpxAppDimensionsInfo = { window, screen }
+
+        // check resize
+        // const equal = (a, b) => !Object.keys(a).some(key => a[key] !== b[key])
+        // if (equal(window, global.__mpxAppDimensionsInfo.window)) return
+        if (getPageSize(window) === getPageSize(oldWindow)) return
+
+        // onResize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
           global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`

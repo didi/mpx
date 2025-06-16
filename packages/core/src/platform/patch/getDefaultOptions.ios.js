@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useLayoutEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext, useState } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -13,7 +13,8 @@ import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/component
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
-  RouteContext
+  RouteContext,
+  DimensionsContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets, GestureHandlerRootView, useHeaderHeight } from '../env/navigationHelper'
 
@@ -379,6 +380,10 @@ const triggerResizeEvent = (mpxProxy) => {
 }
 
 function usePageEffect (mpxProxy, pageId) {
+  const dimensionsCtx = useContext(DimensionsContext)
+  function getPageSize (window) {
+    return window.width + 'x' + window.height
+  }
   useEffect(() => {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
@@ -389,7 +394,12 @@ function usePageEffect (mpxProxy, pageId) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
+            if (newVal === 'show' && getPageSize(global.__mpxAppDimensionsInfo.window) !== getPageSize(dimensionsCtx.value.window)) {
+              dimensionsCtx.setValue(global.__mpxAppDimensionsInfo)
+              triggerResizeEvent(mpxProxy)
+            }
           } else if (/^resize/.test(newVal)) {
+            dimensionsCtx.setValue(global.__mpxAppDimensionsInfo)
             triggerResizeEvent(mpxProxy)
           }
         })
@@ -458,6 +468,7 @@ export function PageWrapperHOC (WrappedComponent) {
       navigation,
       pageId: currentPageId
     })
+    const [dimensionsInfo, setDimensionsInfo] = useState(global.__mpxAppDimensionsInfo)
     const currentPageConfig = Object.assign({}, global.__mpxPageConfig, pageConfig)
     if (!navigation || !route) {
       // 独立组件使用时要求传递navigation
@@ -467,16 +478,16 @@ export function PageWrapperHOC (WrappedComponent) {
     usePageStatus(navigation, currentPageId)
     useLayoutEffect(() => {
       navigation.setOptions({
-        title: pageConfig.navigationBarTitleText?.trim() || '',
+        title: currentPageConfig.navigationBarTitleText?.trim() || '',
         headerStyle: {
-          backgroundColor: pageConfig.navigationBarBackgroundColor || '#000000'
+          backgroundColor: currentPageConfig.navigationBarBackgroundColor || '#000000'
         },
-        headerTintColor: pageConfig.navigationBarTextStyle || 'white'
+        headerTintColor: currentPageConfig.navigationBarTextStyle || 'white'
       })
 
       // TODO 此部分内容在native-stack可删除，用setOptions设置
       if (__mpx_mode__ !== 'ios') {
-        ReactNative.StatusBar.setBarStyle(pageConfig.barStyle || 'dark-content')
+        ReactNative.StatusBar.setBarStyle(currentPageConfig.barStyle || 'dark-content')
         ReactNative.StatusBar.setTranslucent(true) // 控制statusbar是否占位
         ReactNative.StatusBar.setBackgroundColor('transparent')
       }
@@ -484,7 +495,7 @@ export function PageWrapperHOC (WrappedComponent) {
 
     const headerHeight = useHeaderHeight()
     const onLayout = () => {
-      const screenDimensions = ReactNative.Dimensions.get('screen')
+      const screenDimensions = dimensionsInfo.screen
       if (__mpx_mode__ === 'ios') {
         navigation.layout = {
           x: 0,
@@ -543,38 +554,43 @@ export function PageWrapperHOC (WrappedComponent) {
         // https://github.com/software-mansion/react-native-reanimated/issues/6639 因存在此问题，iOS在页面上进行定宽来暂时规避
         style: __mpx_mode__ === 'ios' && currentPageConfig?.navigationStyle !== 'custom'
           ? {
-            height: ReactNative.Dimensions.get('screen').height - useHeaderHeight()
+            height: dimensionsInfo.screen.height - useHeaderHeight()
           }
           : {
             flex: 1
           }
       },
       withKeyboardAvoidingView(
-        createElement(ReactNative.View,
+        createElement(DimensionsContext.Provider,
           {
-            style: {
-              flex: 1,
-              backgroundColor: currentPageConfig?.backgroundColor || '#fff'
-            },
-            ref: rootRef,
-            onLayout
+            value: { value: dimensionsInfo, setValue: setDimensionsInfo }
           },
-          createElement(RouteContext.Provider,
+          createElement(ReactNative.View,
             {
-              value: routeContextValRef.current
-            },
-            createElement(IntersectionObserverContext.Provider,
-              {
-                value: intersectionObservers.current
+              style: {
+                flex: 1,
+                backgroundColor: currentPageConfig?.backgroundColor || '#fff'
               },
-              createElement(PortalHost,
-                null,
-                createElement(WrappedComponent, {
-                  ...props,
-                  navigation,
-                  route,
-                  id: currentPageId
-                })
+              ref: rootRef,
+              onLayout
+            },
+            createElement(RouteContext.Provider,
+              {
+                value: routeContextValRef.current
+              },
+              createElement(IntersectionObserverContext.Provider,
+                {
+                  value: intersectionObservers.current
+                },
+                createElement(PortalHost,
+                  null,
+                  createElement(WrappedComponent, {
+                    ...props,
+                    navigation,
+                    route,
+                    id: currentPageId
+                  })
+                )
               )
             )
           )
