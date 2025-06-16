@@ -44,6 +44,7 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
+const RecordFileUrlDependency = require('./dependencies/RecordFileUrlDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -671,6 +672,9 @@ class MpxWebpackPlugin {
 
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
+
+      compilation.dependencyFactories.set(RecordFileUrlDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordFileUrlDependency, new RecordFileUrlDependency.Template())
 
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
@@ -1333,15 +1337,6 @@ class MpxWebpackPlugin {
       compilation.hooks.processAssets.tap({
         name: 'MpxWebpackPlugin'
       }, (assets) => {
-        if (isReact(mpx.mode)) {
-          Object.keys(assets).forEach((chunkName) => {
-            if (/\.js$/.test(chunkName)) {
-              let val = assets[chunkName].source()
-              val = val.replace(/_mpx_rn_img_relative_path_/g, chunkName === 'app.js' ? '.' : '..')
-              compilation.assets[chunkName] = new RawSource(val)
-            }
-          })
-        }
         try {
           const dynamicAssets = {}
           for (const packageName in mpx.runtimeInfo) {
