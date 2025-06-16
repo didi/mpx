@@ -74,6 +74,7 @@ interface ScrollViewProps {
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
   'scroll-event-throttle'?:number;
+  'scroll-into-view-offset'?: number;
   bindscrolltoupper?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscrolltolower?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   bindscroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -149,6 +150,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'wait-for': waitFor,
     'enable-sticky': enableSticky,
     'scroll-event-throttle': scrollEventThrottle = 0,
+    'scroll-into-view-offset': scrollIntoViewOffset = 0,
     __selectRef
   } = props
 
@@ -293,7 +295,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     nodeRef.current?.measureLayout(
       scrollViewRef.current,
       (left: number, top: number) => {
-        scrollToOffset(left, top)
+        const adjustedLeft = scrollX ? left + scrollIntoViewOffset : left
+        const adjustedTop = scrollY ? top + scrollIntoViewOffset : top
+        scrollToOffset(adjustedLeft, adjustedTop)
       }
     )
   }
