@@ -72,7 +72,7 @@ const isNativeMiniTag = makeMap(
  * 是否为mpx内置组件
  * collected from packages/webpack-plugin/lib/runtime/components/web/
  */
-const isBuildInWebTag = makeMap(
+const isBuildInTag = makeMap(
   'mpx-image,mpx-picker-view,mpx-slider,mpx-textarea,mpx-input,mpx-picker,' +
   'mpx-swiper-item,mpx-video,mpx-button,mpx-keep-alive,mpx-progress,' +
   'mpx-swiper,mpx-view,mpx-checkbox-group,mpx-movable-area,mpx-radio-group,' +
@@ -105,7 +105,7 @@ module.exports = {
   isVoidTag,
   isNonPhrasingTag,
   isRichTextTag,
-  isBuildInWebTag,
+  isBuildInTag,
   isUnaryTag,
   isSpace,
   isContWidth,

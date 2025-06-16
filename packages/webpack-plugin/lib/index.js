@@ -1199,12 +1199,12 @@ class MpxWebpackPlugin {
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+          if (isWeb(mpx.mode)) {
             // web独立处理splitChunk
-            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'main')) {
+            if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
                 chunks: 'initial',
-                name: 'bundle/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
+                name: 'bundle',
                 test: /[\\/]node_modules[\\/]/
               }
               needInit = true
@@ -1212,7 +1212,7 @@ class MpxWebpackPlugin {
             if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
               splitChunksOptions.cacheGroups.async = {
                 chunks: 'async',
-                name: 'async/index',
+                name: 'async',
                 minChunks: 2
               }
               needInit = true
@@ -1315,15 +1315,6 @@ class MpxWebpackPlugin {
       compilation.hooks.processAssets.tap({
         name: 'MpxWebpackPlugin'
       }, (assets) => {
-        if (isReact(mpx.mode)) {
-          Object.keys(assets).forEach((chunkName) => {
-            if (/\.js$/.test(chunkName)) {
-              let val = assets[chunkName].source()
-              val = val.replace(/_mpx_rn_img_relative_path_/g, chunkName === 'app.js' ? '.' : '..')
-              compilation.assets[chunkName] = new RawSource(val)
-            }
-          })
-        }
         try {
           const dynamicAssets = {}
           for (const packageName in mpx.runtimeInfo) {
