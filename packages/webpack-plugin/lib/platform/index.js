@@ -30,8 +30,7 @@ module.exports = function getRulesRunner ({
     const mainRules = mainKey ? spec[mainKey] : spec
     if (mainRules) {
       return function (input) {
-        const a = runRules(mainRules, input, { mode, data, meta, testKey, waterfall, normalizeTest })
-        return a
+        return runRules(mainRules, input, { mode, data, meta, testKey, waterfall, normalizeTest })
       }
     }
   }
