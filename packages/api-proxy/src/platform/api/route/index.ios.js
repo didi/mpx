@@ -1,6 +1,7 @@
-import { successHandle, failHandle } from '../../../common/js'
+import { successHandle, failHandle, resolvePath } from '../../../common/js'
 import { parseUrlQuery as parseUrl } from '@mpxjs/utils'
 import { nextTick } from '../next-tick'
+import { EventChannel } from '../event-channel'
 
 function getBasePath (navigation) {
   if (navigation) {
@@ -10,29 +11,6 @@ function getBasePath (navigation) {
   return '/'
 }
 
-function resolvePath (relative, base) {
-  const firstChar = relative.charAt(0)
-  if (firstChar === '/') {
-    return relative
-  }
-  const stack = base.split('/')
-  stack.pop()
-  // resolve relative path
-  const segments = relative.replace(/^\//, '').split('/')
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i]
-    if (segment === '..') {
-      stack.pop()
-    } else if (segment !== '.') {
-      stack.push(segment)
-    }
-  }
-  // ensure leading slash
-  if (stack[0] !== '') {
-    stack.unshift('')
-  }
-  return stack.join('/')
-}
 let timerId = null
 function isLock (navigationHelper, type, options) {
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
@@ -57,12 +35,21 @@ function navigateTo (options = {}) {
   }
   const navigation = Object.values(global.__mpxPagesMap || {})[0]?.[1]
   if (navigation && navigationHelper) {
+    const eventChannel = new EventChannel()
+    if (options.events) {
+      eventChannel._addListeners(options.events)
+    }
     const { path, queryObj } = parseUrl(options.url)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
+
+    global.__mpxEventChannel = {
+      route: finalPath,
+      eventChannel
+    }
     navigation.push(finalPath, queryObj)
     navigationHelper.lastSuccessCallback = () => {
-      const res = { errMsg: 'navigateTo:ok' }
+      const res = { errMsg: 'navigateTo:ok', eventChannel }
       successHandle(res, options.success, options.complete)
     }
     navigationHelper.lastFailCallback = (msg) => {
