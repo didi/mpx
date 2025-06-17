@@ -54,13 +54,8 @@ const addDiscardProp = function (attrList, discardProp) {
 }
 
 const getEventName = function (eventStr = '') { // 获取事件用到的动态数据keyname 返回数组是避免将空值写入prop
-  const match = eventStr.match(/\[\[\s*"([^"]*)"\s*\]\]/)
-  if (match) {
-    const extractedValue = match[1]
-    const trimmedValue = extractedValue
-    return [trimmedValue]
-  }
-  return []
+  const match = eventStr.match(/\[\[\s*"([^"]+)"/)
+  return match ? [match[1]] : []
 }
 
 module.exports = function (content) {

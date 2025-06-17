@@ -11,7 +11,6 @@ module.exports = function (source, name) {
   let startIndex = 0
   let endIndex = 0
   const match = regex.exec(source)
-  
   // 逐个处理匹配到的 template 标签及其内容
   if (match) {
     // console.log(match, 'match')
