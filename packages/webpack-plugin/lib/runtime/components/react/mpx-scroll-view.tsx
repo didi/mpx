@@ -187,7 +187,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const initialTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intersectionObservers = useContext(IntersectionObserverContext)
 
-  const firstScrollIntoViewChange = useRef<boolean>(false)
+  const firstScrollIntoViewChange = useRef<boolean>(true)
 
   const refreshColor = {
     black: ['#000'],
@@ -220,7 +220,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       pagingEnabled,
       fastDeceleration: false,
       decelerationDisabled: false,
-      scrollTo
+      scrollTo,
+      scrollIntoView: handleScrollIntoView
     },
     gestureRef: scrollViewRef
   })
@@ -259,13 +260,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   useEffect(() => {
     if (scrollIntoView && __selectRef) {
-      if (!firstScrollIntoViewChange.current) {
-        setTimeout(handleScrollIntoView)
+      if (firstScrollIntoViewChange.current) {
+        setTimeout(() => {
+          handleScrollIntoView(scrollIntoView, { offset: scrollIntoViewOffset, animated: scrollWithAnimation })
+        })
       } else {
-        handleScrollIntoView()
+        handleScrollIntoView(scrollIntoView, { offset: scrollIntoViewOffset, animated: scrollWithAnimation })
       }
     }
-    firstScrollIntoViewChange.current = true
+    firstScrollIntoViewChange.current = false
   }, [scrollIntoView])
 
   useEffect(() => {
@@ -288,16 +291,16 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     scrollToOffset(left, top, animated)
   }
 
-  function handleScrollIntoView () {
-    const refs = __selectRef!(`#${scrollIntoView}`, 'node')
+  function handleScrollIntoView (selector = '', { offset = 0, animated = true } = {}) {
+    const refs = __selectRef!(`#${selector}`, 'node')
     if (!refs) return
     const { nodeRef } = refs.getNodeInstance()
     nodeRef.current?.measureLayout(
       scrollViewRef.current,
       (left: number, top: number) => {
-        const adjustedLeft = scrollX ? left + scrollIntoViewOffset : left
-        const adjustedTop = scrollY ? top + scrollIntoViewOffset : top
-        scrollToOffset(adjustedLeft, adjustedTop)
+        const adjustedLeft = scrollX ? left + offset : left
+        const adjustedTop = scrollY ? top + offset : top
+        scrollToOffset(adjustedLeft, adjustedTop, animated)
       }
     )
   }
