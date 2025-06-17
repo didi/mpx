@@ -480,6 +480,33 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     runOnUI(handleRestBoundaryAndCheck)()
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
 
+  // 生成唯一 ID
+  const viewId = useMemo(() => `movable-view-${Date.now()}-${Math.random()}`, [])
+
+  // 注册到 MovableArea（如果启用了 scale-area）
+  useEffect(() => {
+    if (MovableAreaLayout.scaleArea && MovableAreaLayout.registerMovableView && MovableAreaLayout.unregisterMovableView) {
+      const handleAreaScale = (scaleInfo: { scale: number }) => {
+        'worklet'
+        handleScaleUpdate({ scale: scaleInfo.scale })
+      }
+
+      const handleAreaScaleEnd = () => {
+        'worklet'
+        handleRestBoundaryAndCheck()
+      }
+
+      MovableAreaLayout.registerMovableView?.(viewId, {
+        onScale: scale ? handleAreaScale : noop,
+        onScaleEnd: scale ? handleAreaScaleEnd : noop
+      })
+
+      return () => {
+        MovableAreaLayout.unregisterMovableView?.(viewId)
+      }
+    }
+  }, [MovableAreaLayout.scaleArea, viewId, scale, handleScaleUpdate])
+
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
     const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
       offsetY < draggableYRange.value[0] || offsetY > draggableYRange.value[1]
@@ -570,6 +597,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
     const { top: navigationY = 0 } = navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
+    const currentProps = propsRef.current
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {
         item.pageX = item.absoluteX
@@ -581,8 +609,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     Object.assign(e, {
       touches: type === 'end' ? [] : e.allTouches,
       currentTarget: {
-        id: props.id || '',
-        dataset: collectDataset(props),
+        id: currentProps.id || '',
+        dataset: collectDataset(currentProps),
         offsetLeft: 0,
         offsetTop: 0
       },
@@ -891,33 +919,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       rewriteCatchEvent()
     )
   )
-
-  // 生成唯一 ID
-  const viewId = useMemo(() => `movable-view-${Date.now()}-${Math.random()}`, [])
-
-  // 注册到 MovableArea（如果启用了 scale-area）
-  useEffect(() => {
-    if (MovableAreaLayout.scaleArea && MovableAreaLayout.registerMovableView && MovableAreaLayout.unregisterMovableView) {
-      const handleAreaScale = (scaleInfo: { scale: number }) => {
-        'worklet'
-        handleScaleUpdate({ scale: scaleInfo.scale })
-      }
-
-      const handleAreaScaleEnd = () => {
-        'worklet'
-        handleRestBoundaryAndCheck()
-      }
-
-      MovableAreaLayout.registerMovableView?.(viewId, {
-        onScale: scale ? handleAreaScale : noop,
-        onScaleEnd: scale ? handleAreaScaleEnd : noop
-      })
-
-      return () => {
-        MovableAreaLayout.unregisterMovableView?.(viewId)
-      }
-    }
-  }, [MovableAreaLayout.scaleArea, MovableAreaLayout.registerMovableView, MovableAreaLayout.unregisterMovableView, viewId, scale, handleScaleUpdate, handleRestBoundaryAndCheck])
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,

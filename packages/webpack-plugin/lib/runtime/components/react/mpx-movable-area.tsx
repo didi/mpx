@@ -95,7 +95,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     scaleArea,
     registerMovableView,
     unregisterMovableView
-  }), [normalStyle.width, normalStyle.height, scaleArea, handleAreaScale, registerMovableView, unregisterMovableView])
+  }), [normalStyle.width, normalStyle.height, scaleArea])
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: movableAreaRef })
 
@@ -112,7 +112,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
         'worklet'
         handleAreaScaleEnd()
       })
-  }, [scaleArea, handleAreaScale, handleAreaScaleEnd])
+  }, [scaleArea])
 
   const innerProps = useInnerProps(
     extendObject(
