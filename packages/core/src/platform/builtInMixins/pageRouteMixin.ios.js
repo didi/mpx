@@ -4,7 +4,7 @@ export default function pageRouteMixin (mixinType) {
   if (mixinType === 'page') {
     return {
       [BEFORECREATE] () {
-        const mpxEventChannel = global.__mpxEventChannel
+        const mpxEventChannel = global.__mpxEventChannel || {}
         if (mpxEventChannel.route === this.route) {
           this._eventChannel = mpxEventChannel.eventChannel
         } else {
