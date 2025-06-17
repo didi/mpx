@@ -367,7 +367,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         scale: newScale
       })
     }
-  }, [disabled, scaleMin, scaleMax, bindscale, handleTriggerScale, checkBoundaryPosition])
+  }, [disabled, scaleMin, scaleMax])
 
   useEffect(() => {
     runOnUI(() => {
@@ -509,6 +509,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
     const { top: navigationY = 0 } = navigation?.layout || {}
+    const currentProps = propsRef.current
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {
@@ -521,8 +522,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     Object.assign(e, {
       touches: type === 'end' ? [] : e.allTouches,
       currentTarget: {
-        id: props.id || '',
-        dataset: collectDataset(props),
+        id: currentProps.id || '',
+        dataset: collectDataset(currentProps),
         offsetLeft: 0,
         offsetTop: 0
       },
@@ -786,7 +787,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
 
     return gesturePan
-  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current, handleScaleUpdate, MovableAreaLayout.scaleArea])
+  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, handleScaleUpdate, MovableAreaLayout.scaleArea])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
@@ -871,7 +872,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         MovableAreaLayout.unregisterMovableView?.(viewId)
       }
     }
-  }, [MovableAreaLayout.scaleArea, MovableAreaLayout.registerMovableView, MovableAreaLayout.unregisterMovableView, viewId, scale, handleScaleUpdate, handleRestBoundaryAndCheck])
+  }, [MovableAreaLayout.scaleArea, viewId, scale, handleScaleUpdate])
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
     Animated.View,
