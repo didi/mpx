@@ -175,7 +175,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
         (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
       return createElement(LayoutView, null, createElement(Fallback, { onReload: reloadPage }))
     } else {
-      return createElement(loading, innerProps)
+      return createElement(fallback, innerProps)
     }
   } else {
     if (!loadChunkPromise.current) {
@@ -184,7 +184,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     if (type === 'page') {
       return createElement(LayoutView, null, createElement(loading || DefaultLoading))
     } else {
-      return createElement(loading, innerProps)
+      return createElement(fallback, innerProps)
     }
   }
 }

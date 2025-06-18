@@ -36,7 +36,7 @@ module.exports = function (script, {
   output += "import { lazy, createElement, memo, forwardRef } from 'react'\n"
   if (ctorType === 'app') {
     output += `
-import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
+import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 \n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
@@ -53,7 +53,7 @@ import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPa
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
-    output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
+    output += `import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
     // 获取组件集合
     const componentsMap = buildComponentsMap({
       localComponentsMap,
