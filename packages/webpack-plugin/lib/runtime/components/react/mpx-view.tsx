@@ -24,8 +24,7 @@ import {
   renderImage,
   pickStyle,
   extendObject,
-  useHover,
-  formatTransformStyle
+  useHover
 } from './utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
