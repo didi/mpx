@@ -3,7 +3,6 @@ const loaderUtils = require('loader-utils')
 const toPosix = require('./utils/to-posix')
 const parseRequest = require('./utils/parse-request')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const RecordFileUrlDependency = require('./dependencies/RecordFileUrlDependency')
 
 module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
