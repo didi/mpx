@@ -53,22 +53,11 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         if (range.length < 2) {
           return option
         } else {
-          option[range[0]] = range[1]
+          option[range[0]] = +formatValue(range[1])
         }
       }
       return option
     }, {})
-  }
-
-  function getRangeFromMediaOptions (options) {
-    if (options['min-width'] && options['max-width']) {
-      return `${formatValue(options['min-width'])}_${formatValue(options['max-width'])}`
-    } else if (options['min-width']) {
-      return `${formatValue(options['min-width'])}`
-    } else if (options['max-width']) {
-      return `_${formatValue(options['max-width'])}`
-    }
-    return ''
   }
 
   const rulesRunner = getRulesRunner({
@@ -130,19 +119,17 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          const oldVal = classMap[key] || {}
-          if (isMedia && !oldVal.normal) {
-            // Todo 方便对比
-            const name = getRangeFromMediaOptions(options)
-            classMap[key] = {
-              normal: oldVal,
-              [name]: classMapValue
-            }
-          } else if (isMedia && oldVal.normal) {
-            const name = getRangeFromMediaOptions(options)
-            classMap[key] = Object.assign(classMap[key], {
-              [name]: classMapValue
+          if (isMedia) {
+            const _default = classMap[key]?._default || classMap[key] || {}
+            const _media = classMap[key]?._media || []
+            _media.push({
+              options,
+              value: classMapValue
             })
+            classMap[key] = {
+              _default,
+              _media
+            }
           } else {
             classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
           }
@@ -150,7 +137,6 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
       })
     }
   })
-  console.log(classMap, 999888)
   return classMap
 }
 
