@@ -180,7 +180,7 @@ const i18nModuleName = '_i'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '_s'
 const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionalChainWxsName = '_o'
+const optionalChainWxsName = '_oc' // 改成_oc解决web下_o重名问题
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -2737,8 +2737,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
-    processStyleReact(el, options)
     if (!pass) {
+      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)
