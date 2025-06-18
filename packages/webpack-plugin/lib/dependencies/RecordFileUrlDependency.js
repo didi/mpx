@@ -3,8 +3,9 @@ const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
 class RecordFileUrlDependency extends NullDependency {
-  constructor (url) {
+  constructor (range, url) {
     super()
+    this.range = range
     this.url = url
   }
 
@@ -36,6 +37,7 @@ class RecordFileUrlDependency extends NullDependency {
 
 RecordFileUrlDependency.Template = class RecordFileUrlDependencyTemplate {
   apply (dependency, source, { module, chunkGraph, runtimeTemplate }) {
+    const { range } = dependency
     const compliation = runtimeTemplate.compilation
     const publicPath = compliation.outputOptions.publicPath
     const chunks = chunkGraph.getModuleChunks(module)
@@ -47,7 +49,7 @@ RecordFileUrlDependency.Template = class RecordFileUrlDependencyTemplate {
       relativePath = './' + relativePath
     }
 
-    source._source._value = source._source._value.replace(/mpx_rn_img_relative_path/g, relativePath)
+    source.replace(range[0], range[1] - 1, JSON.stringify(relativePath))
   }
 }
 

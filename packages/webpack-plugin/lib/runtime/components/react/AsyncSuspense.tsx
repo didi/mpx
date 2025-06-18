@@ -1,4 +1,4 @@
-import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode } from 'react'
+import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode, createElement } from 'react'
 import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native'
 import FastImage from '@d11/react-native-fast-image'
 
@@ -131,12 +131,10 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   getChildren
 }) => {
   const [status, setStatus] = useState<ComponentStauts>('pending')
-  const [, setKey] = useState(0)
   const chunkLoaded = asyncChunkMap.has(moduleId)
   const loadChunkPromise = useRef<null | Promise<AsyncModule>>(null)
 
   const reloadPage = useCallback(() => {
-    setKey((preV) => preV + 1)
     setStatus('pending')
   }, [])
 
@@ -170,34 +168,23 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
 
   if (chunkLoaded) {
     const Comp = asyncChunkMap.get(moduleId)
-    return <Comp {...props}></Comp>
+    return createElement(Comp, props)
   } else if (status === 'error') {
     if (type === 'page') {
       const Fallback =
         (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
-      return (
-        <LayoutView>
-          <Fallback onReload={reloadPage}></Fallback>
-        </LayoutView>
-      )
+      return createElement(LayoutView, null, createElement(Fallback, { onReload: reloadPage }))
     } else {
-      const Fallback = loading
-      return <Fallback {...props}></Fallback>
+      return createElement(loading, props)
     }
   } else {
     if (!loadChunkPromise.current) {
       loadChunkPromise.current = getChildren()
     }
     if (type === 'page') {
-      const Fallback = loading || DefaultLoading
-      return (
-        <LayoutView>
-          <Fallback></Fallback>
-        </LayoutView>
-      )
+      return createElement(LayoutView, null, createElement(loading || DefaultLoading))
     } else {
-      const Fallback = loading
-      return <Fallback {...props}></Fallback>
+      return createElement(loading, props)
     }
   }
 }

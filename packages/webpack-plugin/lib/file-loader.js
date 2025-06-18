@@ -36,11 +36,8 @@ module.exports = function loader (content, prevOptions) {
 
   let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
 
-  // todo 未来添加分包处理后相对地址不一定是./开头的，需要考虑通过dependency的方式在sourceModule时通过最终的chunkName得到准确的相对路径
   if (isRN) {
-    this.cacheable(false)
-    this._module.addPresentationalDependency(new RecordFileUrlDependency(url))
-    publicPath = `__non_webpack_require__(${JSON.stringify('mpx_rn_img_relative_path')})`
+    publicPath = `__non_webpack_require__(__mpx_rn_resolve_url_path_(${JSON.stringify(url)}))`
   }
 
   if (options.publicPath) {
