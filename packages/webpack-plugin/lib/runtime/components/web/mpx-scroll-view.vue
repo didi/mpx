@@ -404,7 +404,7 @@
           this.lastContentHeight = scrollContentHeight
           this.lastWrapperWidth = scrollWrapperWidth
           this.lastWrapperHeight = scrollWrapperHeight
-          this.refreshVersion = this.refreshVersion + 1
+          this.refreshVersion++
           if (this.bs) this.bs.refresh()
         }
       },
