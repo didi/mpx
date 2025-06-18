@@ -35,7 +35,18 @@ import { getCustomEvent } from './getInnerListeners'
       },
       refreshVersion: {
         handler() {
-          const parentElement = this.$el.parentElement
+          this.setHeaderTop()
+          this.setTransformStyle()
+        },
+      }
+    },
+    mounted() {
+      this.setPaddingStyle()
+      this.setHeaderTop()
+    },
+    methods: {
+      setHeaderTop () {
+        const parentElement = this.$el.parentElement
           if (!parentElement) return
           
           const parentClass = parentElement.className || ''
@@ -46,19 +57,10 @@ import { getCustomEvent } from './getInnerListeners'
             warn('sticky-header only supports being a direct child of a scroll-view or sticky-section component.')
             return
           }
-          
           this.headerTop = isStickySection 
             ? this.$el.offsetTop + parentElement.offsetTop
             : this.$el.offsetTop
-          
-          this.setTransformStyle()
-        },
-      }
-    },
-    mounted() {
-      this.setPaddingStyle()
-    },
-    methods: {
+      },
       setPaddingStyle() {
         const stickyHeader = this.$refs.stickyHeader
         if (!stickyHeader) return

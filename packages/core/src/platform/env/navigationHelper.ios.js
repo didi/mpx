@@ -1,4 +1,4 @@
-import { createNativeStackNavigator as createStackNavigator } from '@react-navigation/native-stack'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { NavigationContainer, StackActions } from '@react-navigation/native'
 import PortalHost from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/portal-host'
 import { useHeaderHeight } from '@react-navigation/elements'
@@ -6,7 +6,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 export {
-  createStackNavigator,
+  createNativeStackNavigator,
   NavigationContainer,
   useHeaderHeight,
   StackActions,
