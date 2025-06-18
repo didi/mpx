@@ -156,7 +156,7 @@ const isPercent = (val: string | number | undefined): val is string => typeof va
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
 const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
-  const { sizeList, backgroundPosition, linearInfo } = preImageInfo
+  const { sizeList, backgroundPosition, linearInfo, type } = preImageInfo
   const [width, height] = sizeList
   const bp = backgroundPosition
 
@@ -166,7 +166,8 @@ const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
     (isPercent(width) && height === 'auto') ||
     isPercent(bp[1]) ||
     isPercent(bp[3]) ||
-    isDiagonalAngle(linearInfo)
+    isDiagonalAngle(linearInfo) ||
+    (type === 'linear' && (isPercent(height) || isPercent(width)))
 }
 
 const checkNeedLayout = (preImageInfo: PreImageInfo) => {
@@ -259,7 +260,7 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
 
 // background-size 转换
 function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
-  const sizeList = preImageInfo.sizeList
+  const { sizeList, type } = preImageInfo
   if (!sizeList) return
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
   const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
@@ -299,10 +300,22 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      dimensions = {
-        width: isPercent(width) ? width : +width,
-        height: isPercent(height) ? height : +height
-      } as { width: NumberVal, height: NumberVal }
+      if (type === 'linear') {
+        const dimensionWidth = calcPercent(width as NumberVal, layoutWidth) || 0
+        const dimensionHeight = calcPercent(height as NumberVal, layoutHeight) || 0
+        // ios 上 linear 组件只要重新触发渲染，在渲染过程中 width 或者 height 被设置为 0，即使后面再更新为正常宽高，也会渲染不出来
+        if (dimensionWidth && dimensionHeight) {
+          dimensions = {
+            width: dimensionWidth,
+            height: dimensionHeight
+          } as { width: NumberVal, height: NumberVal }
+        }
+      } else {
+        dimensions = {
+          width: isPercent(width) ? width : +width,
+          height: isPercent(height) ? height : +height
+        } as { width: NumberVal, height: NumberVal }
+      }
     }
   }
 
@@ -720,7 +733,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const enableHover = !!hoverStyle
   const { isHover, gesture } = useHover({ enableHover, hoverStartTime, hoverStayTime })
 
-  const styleObj: ExtendedViewStyle = formatTransformStyle(extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {}))
+  const styleObj: ExtendedViewStyle = extendObject({}, defaultStyle, style, isHover ? hoverStyle as ExtendedViewStyle : {})
 
   const {
     normalStyle,
