@@ -30,7 +30,7 @@ function getAsyncComponent (moduleId, componentRequest, chunkName, fallback) {
       getComponent(require(${mpxAsyncSuspense})),
       {
         type: 'component',
-        props: Object.assign({}, props, { ref }),
+        innerProps: Object.assign({}, props, { ref }),
         moduleId: ${JSON.stringify(moduleId)},
         chunkName: ${JSON.stringify(chunkName)},
         loading: getComponent(require(${fallback})),
@@ -48,7 +48,7 @@ function getAsyncPage (moduleId, componentRequest, chunkName, fallback, loading)
       getComponent(require(${mpxAsyncSuspense})),
       {
         type: 'page',
-        props: props,
+        innerProps: props,
         moduleId: ${JSON.stringify(moduleId)},
         chunkName: ${JSON.stringify(chunkName)},
         fallback: ${fallback},

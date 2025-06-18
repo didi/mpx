@@ -113,7 +113,7 @@ interface AsyncSuspenseProps {
   type: 'component' | 'page'
   chunkName: string
   moduleId: string
-  props: any,
+  innerProps: any,
   loading: ComponentType<unknown>
   fallback: ComponentType<unknown>
   getChildren: () => Promise<AsyncModule>
@@ -123,7 +123,7 @@ type ComponentStauts = 'pending' | 'error' | 'loaded'
 
 const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   type,
-  props,
+  innerProps,
   chunkName,
   moduleId,
   loading,
@@ -168,14 +168,14 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
 
   if (chunkLoaded) {
     const Comp = asyncChunkMap.get(moduleId)
-    return createElement(Comp, props)
+    return createElement(Comp, innerProps)
   } else if (status === 'error') {
     if (type === 'page') {
       const Fallback =
         (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
       return createElement(LayoutView, null, createElement(Fallback, { onReload: reloadPage }))
     } else {
-      return createElement(loading, props)
+      return createElement(loading, innerProps)
     }
   } else {
     if (!loadChunkPromise.current) {
@@ -184,7 +184,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     if (type === 'page') {
       return createElement(LayoutView, null, createElement(loading || DefaultLoading))
     } else {
-      return createElement(loading, props)
+      return createElement(loading, innerProps)
     }
   }
 }
