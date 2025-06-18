@@ -264,6 +264,13 @@ module.exports = function getSpec ({ warn, error }) {
 
   // line-height
   const formatLineHeight = ({ prop, value, selector }) => {
+    // line-height 0 直接返回
+    if (+value === 0) {
+      return {
+        prop,
+        value
+      }
+    }
     return verifyValues({ prop, value, selector }) && ({
       prop,
       value: /^\s*(-?(\d+(\.\d+)?|\.\d+))\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
