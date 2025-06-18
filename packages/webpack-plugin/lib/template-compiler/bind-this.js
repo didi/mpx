@@ -2,6 +2,7 @@ const babylon = require('@babel/parser')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 const names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
@@ -41,7 +42,7 @@ function getCollectPath (path) {
     if (current.node.computed) {
       if (t.isLiteral(current.node.property)) {
         if (t.isStringLiteral(current.node.property)) {
-          if (dangerousKeyMap[current.node.property.value]) {
+          if (dangerousKeyMap[current.node.property.value] || !isValidIdentifierStr(current.node.property.value)) {
             break
           }
           keyPath += `.${current.node.property.value}`
