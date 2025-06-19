@@ -49,6 +49,11 @@ module.exports = function loader (content, prevOptions) {
     publicPath = JSON.stringify(publicPath)
   }
 
+  if (!this._module.mpxAssetPaths) {
+    this._module.mpxAssetPaths = new Set()
+  }
+  this._module.mpxAssetPaths.add(publicPath)
+
   this.emitFile(outputPath, content)
 
   // TODO revert to ES2015 Module export, when new CSS Pipeline is in place
