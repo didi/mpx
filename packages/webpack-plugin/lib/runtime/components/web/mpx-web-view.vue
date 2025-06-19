@@ -124,7 +124,7 @@ export default {
         case 'postMessage':
           let data = {
             type: 'message',
-            data: params[0]?.data
+            data: params[0]?.data || params[0] // 兜底业务没传data的情况
           }
           this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
           asyncCallback = Promise.resolve({

@@ -45,7 +45,7 @@ const rootPortal = require('./root-portal')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
 
-module.exports = function getComponentConfigs ({ warn, error }) {
+module.exports = function getComponentConfigs ({ warn, error, moduleId }) {
   /**
    * universal print for detail component warn or error
    * @param {object} config
@@ -116,7 +116,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     map({ print }),
     canvas({ print }),
     wxs({ print }),
-    template(),
+    template({ moduleId }),
     block(),
     icon(),
     webView({ print }),

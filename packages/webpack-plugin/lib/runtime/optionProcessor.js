@@ -79,7 +79,7 @@ registered in parent context!`)
         transitionName: ''
       }
     }
-    if (!global.__mpx.config.webConfig.disablePageTransition) {
+    if (!global.__mpx.config.webConfig?.disablePageTransition) {
       option.watch = {
         $route: {
           handler () {
@@ -161,7 +161,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         redirect: '/' + firstPage
       })
     }
-    const webRouteConfig = global.__mpx.config.webConfig.routeConfig || global.__mpx.config.webRouteConfig
+    const webRouteConfig = global.__mpx.config.webConfig?.routeConfig || global.__mpx.config.webRouteConfig
     global.__mpxRouter = option.router = new VueRouter(extend({ routes }, webRouteConfig))
     let mpxStackPath = []
     if (isBrowser) {
