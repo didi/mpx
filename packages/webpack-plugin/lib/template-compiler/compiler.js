@@ -38,7 +38,7 @@ const endTag = new RegExp(('^<\\/' + qnameCapture + '[^>]*>'))
 const doctype = /^<!DOCTYPE [^>]+>/i
 const comment = /^<!--/
 const conditionalComment = /^<!\[/
-const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view|input|textarea)$/
+const specialClassReg = /^mpx-((cover-)?view|button|navigator|picker-view|input|textarea|page-container)$/
 let IS_REGEX_CAPTURING_BROKEN = false
 'x'.replace(/x(.)?/g, function (m, g) {
   IS_REGEX_CAPTURING_BROKEN = g === ''
@@ -1110,8 +1110,28 @@ function processStyleReact (el, options) {
     }])
   }
 
-  if (specialClassReg.test(el.tag)) {
-    const staticClassNames = ['hover', 'indicator', 'mask', 'placeholder']
+  // 原生组件支持 xx-class 与 xx-style（xx-class 将会被合并到 xx-style 中）
+  const match = el.tag.match(specialClassReg)
+  if (match) {
+    let staticClassNames
+    switch (el.tag) {
+      case 'mpx-view':
+      case 'mpx-cover-view':
+      case 'mpx-button':
+      case 'mpx-navigator':
+        staticClassNames = ['hover']
+        break
+      case 'mpx-page-container':
+        staticClassNames = ['custom', 'overlay']
+        break
+      case 'mpx-input':
+      case 'mpx-textarea':
+        staticClassNames = ['placeholder']
+        break
+      case 'mpx-picker-view':
+        staticClassNames = ['mask', 'indicator']
+        break
+    }
     staticClassNames.forEach((className) => {
       let staticClass = el.attrsMap[className + '-class'] || ''
       let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''

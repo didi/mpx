@@ -78,7 +78,7 @@ const isBuildInTag = makeMap(
   'mpx-swiper,mpx-view,mpx-checkbox-group,mpx-movable-area,mpx-radio-group,' +
   'mpx-switch,mpx-web-view,mpx-checkbox,mpx-movable-view,mpx-radio,' +
   'mpx-tab-bar-container,mpx-form,mpx-navigator,mpx-rich-text,mpx-tab-bar,' +
-  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text'
+  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text,mpx-page-container'
 )
 
 const isSpace = makeMap('ensp,emsp,nbsp')
