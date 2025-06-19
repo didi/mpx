@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "2.10.6",
+  "version": "2.10.6-beta.4",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "^2.10.6",
+    "@mpxjs/utils": "^2.10.6 | ^2.10.6-beta.1",
     "axios": "^1.7.3"
   },
   "peerDependencies": {

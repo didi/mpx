@@ -29,7 +29,7 @@
     "@mpxjs/utils": "^2.10.6"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.9.0"
+    "@mpxjs/core": "^2.9.0 || ^2.10.4-beta.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }
