@@ -422,7 +422,7 @@ function usePageStatus (navigation, pageId) {
 function usePagePreload (route) {
   const name = route.name
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       const preloadRule = global.__preloadRule || {}
       const { packages } = preloadRule[name] || {}
       if (packages?.length > 0) {
@@ -432,6 +432,10 @@ function usePagePreload (route) {
         }
       }
     }, 800)
+
+    return () => {
+      clearTimeout(timer)
+    }
   }, [])
 }
 

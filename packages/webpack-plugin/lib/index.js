@@ -44,6 +44,7 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
+const RecordFileUrlDependency = require('./dependencies/RecordFileUrlDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -672,6 +673,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
 
+      compilation.dependencyFactories.set(RecordFileUrlDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordFileUrlDependency, new RecordFileUrlDependency.Template())
+
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
 
@@ -1222,7 +1226,7 @@ class MpxWebpackPlugin {
             if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
                 chunks: 'initial',
-                name: 'bundle/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
+                name: 'lib/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
                 test: /[\\/]node_modules[\\/]/
               }
               needInit = true
@@ -1230,7 +1234,7 @@ class MpxWebpackPlugin {
             if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
               splitChunksOptions.cacheGroups.async = {
                 chunks: 'async',
-                name: 'async/index',
+                name: 'async-common/index',
                 minChunks: 2
               }
               needInit = true
@@ -1333,15 +1337,6 @@ class MpxWebpackPlugin {
       compilation.hooks.processAssets.tap({
         name: 'MpxWebpackPlugin'
       }, (assets) => {
-        if (isReact(mpx.mode)) {
-          Object.keys(assets).forEach((chunkName) => {
-            if (/\.js$/.test(chunkName)) {
-              let val = assets[chunkName].source()
-              val = val.replace(/_mpx_rn_img_relative_path_/g, chunkName === 'app.js' ? '.' : '..')
-              compilation.assets[chunkName] = new RawSource(val)
-            }
-          })
-        }
         try {
           const dynamicAssets = {}
           for (const packageName in mpx.runtimeInfo) {
@@ -1385,6 +1380,15 @@ class MpxWebpackPlugin {
             parser.state.current.addPresentationalDependency(dep)
             return true
           }
+        })
+
+        parser.hooks.call.for('__mpx_rn_resolve_url_path_').tap('MpxWebpackPlugin', (expr) => {
+          const args = expr.arguments.map((i) => i.value)
+          args.unshift(expr.range)
+
+          const dep = new RecordFileUrlDependency(...args)
+          parser.state.current.addPresentationalDependency(dep)
+          return true
         })
 
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {

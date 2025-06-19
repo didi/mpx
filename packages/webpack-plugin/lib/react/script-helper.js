@@ -4,7 +4,6 @@ const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const addQuery = require('../utils/add-query')
-const path = require('path')
 const { isBuildInReactTag } = require('../utils/dom-tag-config')
 
 function stringifyRequest (loaderContext, request) {
@@ -15,8 +14,6 @@ function getMpxComponentRequest (component) {
   return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
-const mpxAsyncSuspense = getMpxComponentRequest('AsyncSuspense')
-
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
     return `/* webpackChunkName: "${chunkName}/index" */`
@@ -24,49 +21,33 @@ function getAsyncChunkName (chunkName) {
   return ''
 }
 
-function getAsyncComponent (componentName, componentRequest, chunkName, fallback) {
-  return `getComponent(memo(forwardRef(function(props, ref) {
-    return createElement(
-      getComponent(require(${mpxAsyncSuspense})),
-      {
-        type: 'component',
-        props: Object.assign({}, props, { ref }),
-        chunkName: ${JSON.stringify(chunkName)},
-        request: ${JSON.stringify(componentRequest)},
-        loading: getComponent(require(${fallback})),
-        getChildren: () => import(${getAsyncChunkName(chunkName)}${componentRequest})
-      }
-    )
-  })))`
-}
-
-function getAsyncPage (componentName, componentRequest, chunkName, fallback, loading) {
-  fallback = fallback && `getComponent(require('${fallback}?isComponent=true'))`
-  loading = loading && `getComponent(require('${loading}?isComponent=true'))`
-  return `getComponent(function(props) {
-    return createElement(
-      getComponent(require(${mpxAsyncSuspense})),
-      {
-        type: 'page',
-        props: props,
-        chunkName: ${JSON.stringify(chunkName)},
-        request: ${JSON.stringify(componentRequest)},
-        fallback: ${fallback},
-        loading: ${loading},
-        getChildren: () => import(${getAsyncChunkName(chunkName)}${componentRequest})
-      }
-    )
-  })`
+function getAsyncSuspense (type, moduleId, componentRequest, chunkName, fallback, loading) {
+  fallback = fallback && `getComponent(require(${fallback}))`
+  loading = loading && `getComponent(require(${loading}))`
+  return `
+    getAsyncSuspense({
+      type: ${JSON.stringify(type)},
+      moduleId: ${JSON.stringify(moduleId)},
+      chunkName: ${JSON.stringify(chunkName)},
+      loading: ${loading},
+      fallback: ${fallback},
+      getChildren: () => import(${getAsyncChunkName(chunkName)}${componentRequest})
+    })
+  `
 }
 
 function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) {
   let firstPage = ''
   const pagesMap = {}
+  const mpx = loaderContext.getMpx()
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async) {
-      pagesMap[pagePath] = getAsyncPage(pagePath, pageRequest, pageCfg.async, rnConfig.asyncChunk && rnConfig.asyncChunk.fallback, rnConfig.asyncChunk && rnConfig.asyncChunk.loading)
+      const moduleId = mpx.getModuleId(pageCfg.resource)
+      const fallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && JSON.stringify(addQuery(rnConfig.asyncChunk.fallback, { isComponent: true }))
+      const loading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && JSON.stringify(addQuery(rnConfig.asyncChunk.loading, { isComponent: true }))
+      pagesMap[pagePath] = getAsyncSuspense('page', moduleId, pageRequest, pageCfg.async, fallback, loading)
     } else {
     // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
       pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`
@@ -92,6 +73,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
       if (componentCfg.async) {
+        const moduleId = mpx.getModuleId(componentCfg.resource)
         const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
         if (placeholder) {
           if (localComponentsMap[placeholder]) {
@@ -102,11 +84,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
-            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, placeholderRequest)
-          } else if (mpx.globalComponents[placeholder]) {
-            const { queryObj, rawResourcePath } = parseRequest(mpx.globalComponents[placeholder])
-            const placeholderRequest = JSON.stringify(path.resolve(queryObj.context, rawResourcePath))
-            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, placeholderRequest)
+            componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async, placeholderRequest)
           } else {
             const tag = `mpx-${placeholder}`
             if (!isBuildInReactTag(tag)) {
@@ -114,13 +92,13 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
               )
             }
-            componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async, getMpxComponentRequest(tag))
+            componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async, getMpxComponentRequest(tag))
           }
         } else {
           loaderContext.emitError(
             new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
           )
-          componentsMap[componentName] = getAsyncComponent(componentName, componentRequest, componentCfg.async)
+          componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async)
         }
       } else {
         componentsMap[componentName] = `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`

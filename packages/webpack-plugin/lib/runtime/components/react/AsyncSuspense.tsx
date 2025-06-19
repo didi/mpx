@@ -1,79 +1,192 @@
-import { useState, ComponentType, useEffect, useCallback, useRef } from 'react'
-import { DefaultFallback, DefaultLoading, PageWrapper } from './AsyncContainer'
-import type { DefaultFallbackProps } from './AsyncContainer'
+import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode, createElement } from 'react'
+import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native'
+import FastImage from '@d11/react-native-fast-image'
 
 const asyncChunkMap = new Map()
 
-interface props {
-  type: 'component' | 'page'
-  chunkName: string
-  request: string
-  props: any,
-  loading: ComponentType<unknown>
-  fallback: ComponentType<unknown>
-  getChildren: () => Promise<unknown>
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff'
+  },
+  loadingImage: {
+    width: 100,
+    height: 100,
+    marginTop: 220,
+    alignSelf: 'center'
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center'
+  },
+  errorImage: {
+    marginTop: 80,
+    width: 220,
+    aspectRatio: 1,
+    alignSelf: 'center'
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 20
+  },
+  retryButton: {
+    position: 'absolute',
+    bottom: 54,
+    left: 20,
+    right: 20,
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    borderRadius: 30,
+    marginTop: 40,
+    borderWidth: 1,
+    borderColor: '#FF5F00'
+  },
+  retryButtonText: {
+    color: '#FF5F00',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center'
+  }
+})
+
+interface LayoutViewProps {
+  children: ReactNode
 }
 
-const AsyncSuspense: React.FC<props> = ({ type, props, chunkName, request, loading, fallback, getChildren }) => {
-  const [status, setStatus] = useState('pending')
-  const loaded = asyncChunkMap.has(request)
-  const [, setKey] = useState(0)
-  const chunkPromise = useRef<null | Promise<unknown>>(null)
+interface AsyncModule {
+  __esModule: boolean
+  default: ReactNode
+}
+
+interface DefaultFallbackProps {
+  onReload: () => void
+}
+
+const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
+  return (
+    <View style={styles.container}>
+      <Image
+        source={{
+          uri: 'https://dpubstatic.udache.com/static/dpubimg/Vak5mZvezPpKV5ZJI6P9b_drn-fallbak.png'
+        }}
+        style={styles.errorImage}
+        resizeMode="contain"
+      />
+      <Text style={styles.errorText}>网络出了点问题，请查看网络环境</Text>
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={onReload}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.retryButtonText}>点击重试</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+const LayoutView = (props: LayoutViewProps) => {
+  return (
+    <View style={{ flex: 1 }} collapsable={false}>{props.children}</View>
+  )
+}
+
+const DefaultLoading = () => {
+  return (
+    <View style={styles.container}>
+      <FastImage
+        style={styles.loadingImage}
+        source={{
+          uri: 'https://dpubstatic.udache.com/static/dpubimg/439jiCVOtNOnEv9F2LaDs_loading.gif'
+        }}
+        resizeMode={FastImage.resizeMode.contain}
+      ></FastImage>
+    </View>
+  )
+}
+
+interface AsyncSuspenseProps {
+  type: 'component' | 'page'
+  chunkName: string
+  moduleId: string
+  innerProps: any,
+  loading: ComponentType<unknown>
+  fallback: ComponentType<unknown>
+  getChildren: () => Promise<AsyncModule>
+}
+
+type ComponentStauts = 'pending' | 'error' | 'loaded'
+
+const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
+  type,
+  innerProps,
+  chunkName,
+  moduleId,
+  loading,
+  fallback,
+  getChildren
+}) => {
+  const [status, setStatus] = useState<ComponentStauts>('pending')
+  const chunkLoaded = asyncChunkMap.has(moduleId)
+  const loadChunkPromise = useRef<null | Promise<AsyncModule>>(null)
 
   const reloadPage = useCallback(() => {
-    setKey((preV) => preV + 1)
-    console.log('[mpxAsyncSuspense]: reload page')
     setStatus('pending')
   }, [])
 
   useEffect(() => {
-    if (!loaded && status === 'pending') {
-      // todo 清楚副作用？
-      console.log('the current :', chunkPromise.current)
-      chunkPromise.current!
-        .then((m: any) => {
-          console.log('[mpxAsyncSuspense]: load sucess')
-          asyncChunkMap.set(request, m.__esModule ? m.default : m)
-          setStatus('loaded')
-        })
-        .catch((e) => {
-          if (type === 'component') {
-            console.log(11111, e)
-            global.onLazyLoadError({
-              type: 'subpackage',
-              subpackage: [chunkName],
-              errMsg: `loadSubpackage: ${e.type}`
-            })
-          }
-          console.log('[mpxAsyncSuspense]: load eror', e)
-          chunkPromise.current = null
-          setStatus('error')
-        })
+    let cancelled = false
+    if (!chunkLoaded && status === 'pending') {
+      if (loadChunkPromise.current) {
+        loadChunkPromise
+          .current.then((m: AsyncModule) => {
+            if (cancelled) return
+            asyncChunkMap.set(moduleId, m.__esModule ? m.default : m)
+            setStatus('loaded')
+          })
+          .catch((e) => {
+            if (cancelled) return
+            if (type === 'component') {
+              global.onLazyLoadError({
+                type: 'subpackage',
+                subpackage: [chunkName],
+                errMsg: `loadSubpackage: ${e.type}`
+              })
+            }
+            loadChunkPromise.current = null
+            setStatus('error')
+          })
+      }
     }
-  })
 
-  if (loaded) {
-    const Comp = asyncChunkMap.get(request)
-    return <Comp {...props}></Comp>
+    return () => {
+      cancelled = true
+    }
+  }, [status])
+
+  if (chunkLoaded) {
+    const Comp = asyncChunkMap.get(moduleId)
+    return createElement(Comp, innerProps)
   } else if (status === 'error') {
-    console.log('the status is:', status)
     if (type === 'page') {
-      const Fallback = fallback as ComponentType<DefaultFallbackProps> || DefaultFallback
-      return <><PageWrapper><Fallback onReload={reloadPage}></Fallback></PageWrapper></>
+      const Fallback =
+        (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
+      return createElement(LayoutView, null, createElement(Fallback, { onReload: reloadPage }))
     } else {
-      const Fallback = loading
-      return <Fallback {...props}></Fallback>
+      return createElement(fallback, innerProps)
     }
   } else {
-    if (!chunkPromise.current) {
-      chunkPromise.current = getChildren()
+    if (!loadChunkPromise.current) {
+      loadChunkPromise.current = getChildren()
     }
     if (type === 'page') {
-      const Fallback = loading || DefaultLoading
-      return <PageWrapper><Fallback /></PageWrapper>
+      return createElement(LayoutView, null, createElement(loading || DefaultLoading))
     } else {
-      const Fallback = loading
-      return <Fallback {...props}></Fallback>
+      return createElement(fallback, innerProps)
     }
   }
 }
