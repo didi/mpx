@@ -49,10 +49,10 @@ module.exports = function loader (content, prevOptions) {
     publicPath = JSON.stringify(publicPath)
   }
 
-  if (!this._module.mpxAssetPaths) {
-    this._module.mpxAssetPaths = new Set()
+  if (!this._module.buildInfo.mpxAssetPaths) {
+    this._module.buildInfo.mpxAssetPaths = new Set()
   }
-  this._module.mpxAssetPaths.add(publicPath)
+  this._module.buildInfo.mpxAssetPaths.add(publicPath)
 
   this.emitFile(outputPath, content)
 
