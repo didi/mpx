@@ -35,7 +35,7 @@
       },
       pollingDuration: {
         type: Number,
-        value: 3000
+        value: 300
       }
     },
     data: {
@@ -114,39 +114,45 @@
         })
       },
       refresh() {
-        this.createSelectorQuery()
-          .select('.mpx-sticky-header')
-          .boundingClientRect()
-          .select('.mpx-sticky-header-placeholder')
-          .boundingClientRect()
-          .exec((results) => {
-            const [stickyHeaderRect, placeholderRect] = results
-            if (!stickyHeaderRect) return
-
-            mpx
-              .createSelectorQuery()
+        // 并行执行两个独立的查询
+        Promise.all([
+          // 查询1：组件内部元素
+          new Promise((resolve) => {
+            this.createSelectorQuery()
+              .select('.mpx-sticky-header')
+              .boundingClientRect()
+              .select('.mpx-sticky-header-placeholder')
+              .boundingClientRect()
+              .exec((results) => {
+                resolve(results)
+              })
+          }),
+          // 查询2：页面级scrollView
+          new Promise((resolve) => {
+            mpx.createSelectorQuery()
               .select(`#${this.scrollViewId}`)
               .boundingClientRect()
               .select(`#${this.scrollViewId}`)
               .scrollOffset()
               .exec((results) => {
-                const [scrollViewRect, scrollOffsetData] = results
-                if (!scrollViewRect || !scrollOffsetData) return
-
-                this.scrollOffsetTop = scrollViewRect.top || 0
-                this.headerHeight = stickyHeaderRect.height
-
-                // 模拟 offsetTop 计算：sticky placeholder具体顶部距离 - scrollView顶部 + scrollView滚动位置
-                // 必须用 placeholder 到顶部距离，用 sticky 如果刚好差值为 0， 区分不出是本身就在顶部还是 fixed 在顶部
-                this.headerTop =
-                  placeholderRect.top - this.scrollOffsetTop + scrollOffsetData.scrollTop
-                if (scrollOffsetData.scrollTop > this.headerTop) {
-                  this.handleStickyStateChange(true)
-                } else if (scrollOffsetData.scrollTop <= this.headerTop) {
-                  this.handleStickyStateChange(false)
-                }
+                resolve(results)
               })
           })
+        ]).then(([componentResults, scrollResults]) => {
+          const [stickyHeaderRect, placeholderRect] = componentResults
+          const [scrollViewRect, scrollOffsetData] = scrollResults
+          
+          if (!stickyHeaderRect || !placeholderRect || !scrollViewRect || !scrollOffsetData) return
+
+          this.scrollOffsetTop = scrollViewRect.top || 0
+          this.headerHeight = stickyHeaderRect.height
+
+          // 模拟 offsetTop 计算：sticky placeholder具体顶部距离 - scrollView顶部 + scrollView滚动位置
+          // 必须用 placeholder 到顶部距离，用 sticky 如果刚好差值为 0， 区分不出是本身就在顶部还是 fixed 在顶部
+          this.headerTop = placeholderRect.top - this.scrollOffsetTop + scrollOffsetData.scrollTop
+          
+          this.handleStickyStateChange(scrollOffsetData.scrollTop > this.headerTop)
+        })
       },
       handleStickyStateChange(shouldStick) {
         if (shouldStick && !this.isStickOnTop) {
