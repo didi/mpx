@@ -104,7 +104,9 @@ export function innerNav ({ props, navigation }) {
     style: [styles.backButton],
     onPress: () => {
       navigation.goBack()
-      stackTopConfig.listener?.()
+      if (stackLength <= 1 && stackTopConfig.show && typeof stackTopConfig.listener === 'function') {
+        stackTopConfig.listener?.()
+      }
     }
   }, createElement(ReactNative.Image, {
     source: { uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABICAYAAACqT5alAAAA2UlEQVR4nO3bMQrCUBRE0Yla6AYEN2nnBrTL+izcitW3MRDkEUWSvPzJvfCqgMwhZbAppWhNbbIHzB1g9wATERFRVyvpkj1irlpJ5X326D7WHh1hbdFD2CLpLmmftm7kfsEe09aNHFiBrT+wAlt/YAW2/sAKbP2BFdj6Ayuwy+ufz6XPL893krZ//O6iu2n4LT8kndLWTRTo4EC7BDo40C6BDg60S6CDA+0S6OBAuwQ6uNWiD2nrJmoIfU7cNWkR2hbb1UfbY7uuWhGWiIg+a/iHuHmA3QPs3gu4JW9Gan+OJAAAAABJRU5ErkJggg==' },
