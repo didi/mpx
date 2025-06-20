@@ -23,7 +23,7 @@ module.exports = function (styles, {
         new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
       )
     }
-    const { mode, srcMode } = loaderContext.getMpx()
+    const { mode, srcMode, hasUnoCSS } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -56,6 +56,23 @@ module.exports = function (styles, {
           error
         })
         if (ctorType === 'app') {
+          if (hasUnoCSS) {
+            output += `
+            let __unoClass
+            global.__getUnoClass = function () {
+              const formatValue = global.__formatValue
+              if (!__unoClass) {
+                __unoClass = {
+                  unoClassMap: __unoCssMapPlaceholder__,
+                  unoVarClassMap: __unoVarUtilitiesCssMap__,
+                  unoPreflightsClassMap: __unoCssMapPreflights__,
+                  unoBreakpoints:__unoCssBreakpointsPlaceholder__
+                }
+              }
+              return __unoClass
+            };\n
+            `
+          }
           output += `
           let __appClassMap
           global.__getAppClassMap = function() {
