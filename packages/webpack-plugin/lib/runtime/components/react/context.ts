@@ -1,5 +1,6 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent } from 'react-native'
+import { NativeSyntheticEvent, Animated } from 'react-native'
+import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
@@ -42,7 +43,8 @@ export interface PortalContextValue {
 }
 
 export interface ScrollViewContextValue {
-   gestureRef: React.RefObject<any> | null
+  gestureRef: React.RefObject<any> | null,
+  scrollOffset: Animated.Value
 }
 
 export interface RouteContextValue {
@@ -62,6 +64,11 @@ export interface MovableAreaContextValue {
 }
 
 export const MovableAreaContext = createContext<MovableAreaContextValue>({ width: 0, height: 0, scaleArea: false })
+export interface StickyContextValue {
+  registerStickyHeader: Function,
+  unregisterStickyHeader: Function
+}
+
 
 export const FormContext = createContext<FormContextValue | null>(null)
 
@@ -83,6 +90,8 @@ export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
+
+export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
