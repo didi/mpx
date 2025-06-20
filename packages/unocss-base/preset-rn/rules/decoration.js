@@ -1,5 +1,5 @@
 import { textDecorations } from '@unocss/preset-mini/rules'
-import { isReg } from '../../utils/index.js'
+import { isReg } from '../../utils/index'
 
 const unSupport = [
   'auto',

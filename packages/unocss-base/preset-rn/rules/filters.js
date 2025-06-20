@@ -1,5 +1,5 @@
 import { filters } from '@unocss/preset-wind3/rules'
-import { isReg, isString } from '../../utils/index.js'
+import { isReg, isString } from '../../utils/index'
 
 const unSupport = [
   'backdrop-filter',

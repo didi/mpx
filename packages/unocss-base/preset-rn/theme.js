@@ -1,4 +1,4 @@
-import { platformSelect } from '../utils/index.js'
+import { platformSelect } from '../utils/index'
 
 export default {
   preflightRoot: [],

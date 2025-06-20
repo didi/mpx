@@ -1,7 +1,7 @@
-import rules, { blocklistRules } from './rules/index.js'
-import { normalizeTransformVar } from './rules/transforms.js'
-import theme from './theme.js'
-import blocklistVariants from './variants/index.js'
+import rules, { blocklistRules } from './rules/index'
+import { normalizeTransformVar } from './rules/transforms'
+import theme from './theme'
+import blocklistVariants from './variants/index'
 import { transformBase } from '@unocss/preset-mini/rules'
 import { filterBase } from '@unocss/preset-wind3/rules'
 

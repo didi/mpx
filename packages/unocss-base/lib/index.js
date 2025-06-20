@@ -1,6 +1,6 @@
 import { presetWind3 } from '@unocss/preset-wind3'
 import { presetLegacyCompat } from '@unocss/preset-legacy-compat'
-import presetRn from '../preset-rn/index.js'
+import presetRn from '../preset-rn/index'
 
 /** eslint-disable-next-line */
 const remRE = /(-?[\.\d]+)rem/g

@@ -7,7 +7,7 @@ import {
   floats
 } from '@unocss/preset-mini/rules'
 
-const unSupport = ['sticky', 'fixed']
+const unSupport = ['sticky']
 
 const positionsRules = positions.map(([rule]) => (raw) => {
   const result = raw.match(rule)
