@@ -2478,6 +2478,32 @@ function getVirtualHostRoot (options, meta) {
     if (isWeb(mode) && ctorType === 'page') {
       return createASTElement('page')
     }
+    if (isReact(mode) && ctorType === 'page') {
+      // Todo 优先级
+      // style: {
+      //   flex: 1,
+      //   global.__mpxPageConfig, currentInject.pageConfig
+      //   backgroundColor: currentPageConfig?.backgroundColor || '#fff',
+      //   // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+      //   overflow: 'hidden'
+      // },
+      const rootView = createASTElement('view', [
+        {
+          name: 'style',
+          value: {
+            flex: 1,
+            overflow: 'hidden',
+            backgroundColor: '#fff'
+          }
+        },
+        {
+          name: 'class',
+          value: '_tag-page'
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
+    }
   }
   return getTempNode()
 }
