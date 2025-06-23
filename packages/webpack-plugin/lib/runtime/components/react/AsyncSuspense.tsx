@@ -141,24 +141,26 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   useEffect(() => {
     let cancelled = false
     if (!chunkLoaded && status === 'pending') {
-      loadChunkPromise
-        .current!.then((m: AsyncModule) => {
-          if (cancelled) return
-          asyncChunkMap.set(moduleId, m.__esModule ? m.default : m)
-          setStatus('loaded')
-        })
-        .catch((e) => {
-          if (cancelled) return
-          if (type === 'component') {
-            global.onLazyLoadError({
-              type: 'subpackage',
-              subpackage: [chunkName],
-              errMsg: `loadSubpackage: ${e.type}`
-            })
-          }
-          loadChunkPromise.current = null
-          setStatus('error')
-        })
+      if (loadChunkPromise.current) {
+        loadChunkPromise
+          .current.then((m: AsyncModule) => {
+            if (cancelled) return
+            asyncChunkMap.set(moduleId, m.__esModule ? m.default : m)
+            setStatus('loaded')
+          })
+          .catch((e) => {
+            if (cancelled) return
+            if (type === 'component') {
+              global.onLazyLoadError({
+                type: 'subpackage',
+                subpackage: [chunkName],
+                errMsg: `loadSubpackage: ${e.type}`
+              })
+            }
+            loadChunkPromise.current = null
+            setStatus('error')
+          })
+      }
     }
 
     return () => {
