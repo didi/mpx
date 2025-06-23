@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "noEmit": true,
+        "target": "esnext",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "baseUrl": "."
+    },
+    "include": [
+        "@types/",
+        "src/**/*.js"
+    ]
+}
