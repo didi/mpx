@@ -73,7 +73,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     if (scaleArea) {
       // 将缩放信息广播给所有注册的 MovableView
       Object.values(movableViewsValue.value).forEach((callbacks) => {
-        callbacks.onScale(scaleInfo)
+        callbacks.onScale && callbacks.onScale(scaleInfo)
       })
     }
   }, [scaleArea])
@@ -84,7 +84,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     if (scaleArea) {
       // 通知所有注册的 MovableView 缩放结束
       Object.values(movableViewsValue.value).forEach((callbacks) => {
-        callbacks.onScaleEnd?.()
+        callbacks.onScaleEnd && callbacks.onScaleEnd()
       })
     }
   }, [scaleArea])
