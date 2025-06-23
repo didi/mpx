@@ -69,7 +69,6 @@ export interface StickyContextValue {
   unregisterStickyHeader: Function
 }
 
-
 export const FormContext = createContext<FormContextValue | null>(null)
 
 export const CheckboxGroupContext = createContext<GroupContextValue | null>(null)
