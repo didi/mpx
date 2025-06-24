@@ -3,6 +3,7 @@ const loaderUtils = require('loader-utils')
 const toPosix = require('./utils/to-posix')
 const parseRequest = require('./utils/parse-request')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordAssetPathDependency = require('./dependencies/RecordAssetPathDependency')
 
 module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
@@ -49,10 +50,7 @@ module.exports = function loader (content, prevOptions) {
     publicPath = JSON.stringify(publicPath)
   }
 
-  if (!this._module.buildInfo.mpxAssetPaths) {
-    this._module.buildInfo.mpxAssetPaths = new Set()
-  }
-  this._module.buildInfo.mpxAssetPaths.add(publicPath)
+  this._module.addPresentationalDependency(new RecordAssetPathDependency(publicPath))
 
   this.emitFile(outputPath, content)
 
