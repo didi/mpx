@@ -1967,7 +1967,7 @@ function processRefReact (el, meta) {
     }])
   }
 
-  if (el.tag === 'mpx-scroll-view' && el.attrsMap['scroll-into-view']) {
+  if (el.tag === 'mpx-scroll-view') {
     addAttrs(el, [
       {
         name: '__selectRef',
@@ -2843,8 +2843,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
-    processStyleReact(el, options)
     if (!pass) {
+      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)
