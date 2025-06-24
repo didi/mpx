@@ -12,11 +12,8 @@ class RecordAssetPathDependency extends NullDependency {
   }
 
   mpxAction (module, compilation, callback) {
-    // 在module的buildInfo上记录asset paths
-    if (!module.buildInfo.mpxAssetPaths) {
-      module.buildInfo.mpxAssetPaths = new Set()
-    }
-    module.buildInfo.mpxAssetPaths.add(this.assetPath)
+    const mpx = compilation.__mpx__
+    mpx.assetPaths.add(this.assetPath)
     return callback()
   }
 
@@ -41,3 +38,4 @@ RecordAssetPathDependency.Template = class RecordAssetPathDependencyTemplate {
 makeSerializable(RecordAssetPathDependency, '@mpxjs/webpack-plugin/lib/dependencies/RecordAssetPathDependency')
 
 module.exports = RecordAssetPathDependency
+
