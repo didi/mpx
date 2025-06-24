@@ -36,7 +36,7 @@ module.exports = function ({ print }) {
         harmony: harmonyPropLog
       },
       {
-        test: /^(damping|friction|scale|scale-min|scale-max|scale-value)$/,
+        test: /^(damping|friction)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog
@@ -46,12 +46,6 @@ module.exports = function ({ print }) {
       {
         test: /^(htouchmove|vtouchmove)$/,
         ali: aliEventLog
-      },
-      {
-        test: /^(bindscale)$/,
-        ios: iosEventLog,
-        android: androidEventLog,
-        harmony: harmonyEventLog
       }
     ]
   }
