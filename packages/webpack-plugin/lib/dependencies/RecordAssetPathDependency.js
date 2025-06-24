@@ -38,4 +38,3 @@ RecordAssetPathDependency.Template = class RecordAssetPathDependencyTemplate {
 makeSerializable(RecordAssetPathDependency, '@mpxjs/webpack-plugin/lib/dependencies/RecordAssetPathDependency')
 
 module.exports = RecordAssetPathDependency
-
