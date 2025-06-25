@@ -143,6 +143,21 @@ module.exports = function (jsonContent, {
     jsonObj.componentPlaceholder = componentPlaceholder
     if (placeholderEntry && !jsonObj.usingComponents[placeholder]) jsonObj.usingComponents[placeholder] = placeholderEntry
   }
+
+  const fillInComponentsMap = (name, entry, tarRoot) => {
+    const { resource, outputPath } = entry
+    const { resourcePath, queryObj } = parseRequest(resource)
+    componentsMap[resourcePath] = outputPath
+    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+    localComponentsMap[name] = {
+      resource: addQuery(resource, {
+        isComponent: true,
+        outputPath
+      }),
+      async: queryObj.async || tarRoot
+    }
+  }
+
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
       const placeholderMap = mode === 'ali'
@@ -329,20 +344,7 @@ module.exports = function (jsonContent, {
       async.eachOf(components, (component, name, callback) => {
         processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          const fillComponentsMap = (name, entry, tarRoot) => {
-            const { resource, outputPath } = entry
-            const { resourcePath, queryObj } = parseRequest(resource)
-            componentsMap[resourcePath] = outputPath
-            loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-            localComponentsMap[name] = {
-              resource: addQuery(resource, {
-                isComponent: true,
-                outputPath
-              }),
-              async: queryObj.async || tarRoot
-            }
-          }
-          fillComponentsMap(name, entry, tarRoot)
+          fillInComponentsMap(name, entry, tarRoot)
           const { relativePath } = entry
 
           if (tarRoot) {
@@ -352,7 +354,7 @@ module.exports = function (jsonContent, {
                 processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
                   if (err) return callback(err)
                   fillInComponentPlaceholder(name, placeholder.name, entry)
-                  fillComponentsMap(placeholder.name, entry, '')
+                  fillInComponentsMap(placeholder.name, entry, '')
                   callback()
                 })
               } else {
