@@ -39,6 +39,10 @@
           return {}
         }
       },
+      scrollIntoViewOffset: {
+        type: Number,
+        default: 0
+      },
       scrollIntoView: String,
       scrollWithAnimation: Boolean,
       enableFlex: Boolean,
@@ -156,7 +160,9 @@
     },
     watch: {
       scrollIntoView (val) {
-        this.scrollToView(val, this.scrollWithAnimation ? 200 : 0)
+        const offsetX = this.scrollX ? this.scrollIntoViewOffset : 0
+        const offsetY = this.scrollY ? this.scrollIntoViewOffset : 0
+        this.scrollToView(val, this.scrollWithAnimation ? 200 : 0, offsetX, offsetY)
       },
       _scrollTop (val) {
         this.bs && this.bs.scrollTo(this.bs.x, -val, this.scrollWithAnimation ? 200 : 0)
@@ -271,7 +277,11 @@
           this.currentX = -this.bs.x
           this.currentY = -this.bs.y
         })
-        if (this.scrollIntoView) this.scrollToView(this.scrollIntoView)
+        if (this.scrollIntoView) {
+          const offsetX = this.scrollX ? this.scrollIntoViewOffset : 0
+          const offsetY = this.scrollY ? this.scrollIntoViewOffset : 0
+          this.scrollToView(this.scrollIntoView, this.scrollWithAnimation ? 200 : 0, offsetX, offsetY)
+        }
         // 若开启自定义下拉刷新 或 开启 scroll-view 增强特性
         if (this.refresherEnabled || this.enhanced) {
           const actionsHandlerHooks = this.bs.scroller.actionsHandler.hooks
@@ -327,11 +337,11 @@
           }
         }
       },
-      scrollToView (id, duration = 0) {
+      scrollToView (id, duration = 0, offsetX = 0, offsetY = 0) {
         if (!id) return
         id = '#' + id
         if (!document.querySelector(id)) return // 不存在元素时阻断，直接调用better-scroll的方法会报错
-        this.bs?.scrollToElement(id, duration)
+        this.bs?.scrollToElement(id, duration, offsetX, offsetY)
       },
       initLayerComputed () {
         const wrapper = this.$refs.wrapper
