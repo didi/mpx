@@ -48,6 +48,7 @@ const RecordFileUrlDependency = require('./dependencies/RecordFileUrlDependency'
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
+const { transAsyncSubNameRules, transAsyncSubRules } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
@@ -778,6 +779,7 @@ class MpxWebpackPlugin {
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
+          asyncSubpackageNameMap: this.options.asyncSubpackageNameMap,
           optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
@@ -1406,21 +1408,14 @@ class MpxWebpackPlugin {
             const range = expr.arguments[0].range
             const context = parser.state.module.context
             const { queryObj, resourcePath } = parseRequest(request)
-            let tarRoot = queryObj.root
-            if (!tarRoot && mpx.asyncSubpackageRules) {
-              for (const item of mpx.asyncSubpackageRules) {
-                if (matchCondition(resourcePath, item)) {
-                  tarRoot = item.root
-                  break
-                }
-              }
-            }
+            let tarRoot = transAsyncSubRules(resourcePath, mpx.asyncSubpackageRules, queryObj.root)
             if (tarRoot) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                  tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
