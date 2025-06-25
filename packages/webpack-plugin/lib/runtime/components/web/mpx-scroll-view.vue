@@ -160,9 +160,7 @@
     },
     watch: {
       scrollIntoView (val) {
-        const offsetX = this.scrollX ? this.scrollIntoViewOffset : 0
-        const offsetY = this.scrollY ? this.scrollIntoViewOffset : 0
-        this.scrollToView(val, this.scrollWithAnimation ? 200 : 0, offsetX, offsetY)
+        this.scrollToView(val, this.scrollWithAnimation ? 200 : 0, this.scrollX ? this.scrollIntoViewOffset : 0, this.scrollY ? this.scrollIntoViewOffset : 0)
       },
       _scrollTop (val) {
         this.bs && this.bs.scrollTo(this.bs.x, -val, this.scrollWithAnimation ? 200 : 0)
@@ -212,6 +210,14 @@
         this.bs.disable()
         this.currentX = -this.bs.x
         this.currentY = -this.bs.y
+      },
+      scrollTo ({ top, left, duration, animated}) {
+        const scrollTop = this.scrollY ? top : this.bs.y
+        const scrollLeft = this.scrollX ? left : this.bs.x
+        this.bs?.scrollTo(-scrollLeft, -scrollTop, animated ? duration : 0)
+      },
+      handleScrollIntoView (selector, { offset, animated }) {
+        this.scrollToView(selector, animated ? 200 : 0, this.scrollX ? offset : 0, this.scrollY ? offset : 0)
       },
       initBs () {
         this.destroyBs()
@@ -278,9 +284,7 @@
           this.currentY = -this.bs.y
         })
         if (this.scrollIntoView) {
-          const offsetX = this.scrollX ? this.scrollIntoViewOffset : 0
-          const offsetY = this.scrollY ? this.scrollIntoViewOffset : 0
-          this.scrollToView(this.scrollIntoView, this.scrollWithAnimation ? 200 : 0, offsetX, offsetY)
+          this.scrollToView(this.scrollIntoView, this.scrollWithAnimation ? 200 : 0, this.scrollX ? this.scrollIntoViewOffset : 0, this.scrollY ? this.scrollIntoViewOffset : 0)
         }
         // 若开启自定义下拉刷新 或 开启 scroll-view 增强特性
         if (this.refresherEnabled || this.enhanced) {
