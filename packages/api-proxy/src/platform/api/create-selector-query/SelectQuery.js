@@ -135,7 +135,7 @@ class SelectQuery {
           return context
         }
       }
-      //如果是 scrollView 节点
+      // 如果是 scrollView 节点
       if (el.className && el.className.indexOf('mpx-scroll-view') > -1 && el.isBScrollContainer) {
         el.scrollTo = function (...args) {
           el?.__vue__?.scrollTo(...args)
