@@ -218,7 +218,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   useEffect(() => {
-    if (inputValue !== value) {
+    if (value !== tmpValue.current) {
       const parsed = parseValue(value)
       tmpValue.current = parsed
       setInputValue(parsed)
