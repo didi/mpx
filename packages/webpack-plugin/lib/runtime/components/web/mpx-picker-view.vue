@@ -19,6 +19,7 @@
 </template>
 
 <script type="text/ecmascript-6">
+  import { computed } from 'vue'
   import {getCustomEvent} from './getInnerListeners'
 
   function travelSlot(slot, effect) {
@@ -42,23 +43,40 @@
       maskStyle: String,
       maskClass: String
     },
-    data() {
+    provide() {
       return {
-        maskHeight: 0
+        indicatorMaskHeight: computed(() => this.indicatorMaskHeight || 0)
       }
     },
-    computed: {},
+    data() {
+      return {
+        maskHeight: 0,
+        indicatorMaskHeight: 0
+      }
+    },
     watch: {
       value: {
         handler(newVal) {
           this.setValue(newVal)
         }
+      },
+      indicatorStyle: {
+        handler() {
+          this.$nextTick(() => {
+            this.updateIndicatorMaskHeight()
+          })
+        }
+      },
+      indicatorClass: {
+        handler() {
+          this.$nextTick(() => {
+            this.updateIndicatorMaskHeight()
+          })
+        }
       }
     },
     mounted() {
-      let containerHeight = this.$refs.mpxView.offsetHeight
-      let indicatorMaskHeight = this.$refs.indicatorMask.offsetHeight
-      this.maskHeight = (containerHeight - indicatorMaskHeight) / 2
+      this.updateIndicatorMaskHeight()
       if (this.value) {
         this.setValue(this.value)
       } else {
@@ -104,6 +122,11 @@
       },
       notifyPickend() {
         this.$emit('pickend', getCustomEvent('pickend', {}, this))
+      },
+      updateIndicatorMaskHeight() {
+        let containerHeight = this.$refs.mpxView.offsetHeight
+        this.indicatorMaskHeight = this.$refs.indicatorMask.offsetHeight
+        this.maskHeight = (containerHeight - this.indicatorMaskHeight) / 2
       }
     }
   }

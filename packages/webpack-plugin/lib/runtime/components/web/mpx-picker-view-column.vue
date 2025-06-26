@@ -15,6 +15,7 @@ BScroll.use(Wheel)
 
 export default {
   name: 'mpx-picker-view-column',
+  inject: ['indicatorMaskHeight'],
   props: {
     value: Array,
     scrollOptions: {
@@ -28,10 +29,9 @@ export default {
     return {
       wheels: [],
       selectedIndex: [0],
-      indicatorMaskHeight: 0
+      currentIndicatorMaskHeight: 0
     }
   },
-  computed: {},
   watch: {
     selectedIndex (newVal) {
       if (this.wheels[0]) {
@@ -42,10 +42,18 @@ export default {
         })
       }
     },
+    indicatorMaskHeight: {
+      handler(newHeight) {
+        if (newHeight && newHeight !== this.currentIndicatorMaskHeight) {
+          this.currentIndicatorMaskHeight = newHeight
+          this.refresh()
+        }
+      },
+      immediate: true
+    }
   },
   mounted () {
     this.wheels = []
-    this.indicatorMaskHeight = this.$parent.$refs?.indicatorMask?.offsetHeight || 0
     this.refresh()
   },
   updated () {
@@ -63,8 +71,8 @@ export default {
      
       this.refreshing = true
       for (let i = 0; i < this.$refs.wheelScroll.children.length; i++) {
-        if (this.indicatorMaskHeight) {
-          this.$refs.wheelScroll.children[i].style.height = this.indicatorMaskHeight + 'px'
+        if (this.currentIndicatorMaskHeight) {
+          this.$refs.wheelScroll.children[i].style.height = this.currentIndicatorMaskHeight + 'px'
         }
       }
       this.$nextTick(() => {
