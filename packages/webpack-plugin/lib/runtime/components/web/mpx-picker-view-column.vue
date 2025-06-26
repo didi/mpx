@@ -27,18 +27,19 @@ export default {
   },
   data () {
     return {
-      wheels: [],
+      wheel: null,
       selectedIndex: [0],
-      currentIndicatorMaskHeight: 0
+      currentIndicatorMaskHeight: 0,
+      childrenCount: 0
     }
   },
   watch: {
     selectedIndex (newVal) {
-      if (this.wheels[0]) {
+      if (this.wheel) {
         this.$nextTick(() => {
           // make sure the dom rendering is complete
-          this.wheels[0].refresh()
-          this.wheels[0].wheelTo(newVal[0])
+          this.wheel.refresh()
+          this.wheel.wheelTo(newVal[0])
         })
       }
     },
@@ -53,17 +54,21 @@ export default {
     }
   },
   mounted () {
-    this.wheels = []
+    this.wheel = null
+    this.childrenCount = this.$refs.wheelScroll ? this.$refs.wheelScroll.children.length : 0
     this.refresh()
   },
   updated () {
-    this.refresh()
+    const currentChildrenCount = this.$refs.wheelScroll ? this.$refs.wheelScroll.children.length : 0
+    if (currentChildrenCount !== this.childrenCount) {
+      this.childrenCount = currentChildrenCount
+      this.refresh()
+    }
   },
   beforeDestroy () {
-    this.wheels.forEach((wheel) => {
-      wheel.destroy()
-    })
-    this.wheels = []
+    if (this.wheel) {
+      this.wheel.destroy()
+    }
   },
   methods: {
     refresh () {
@@ -77,12 +82,12 @@ export default {
       }
       this.$nextTick(() => {
         const wheelWrapper = this.$refs.wheelWrapper
-        if (this.wheels[0]) {
-          this.wheels[0].refresh()
+        if (this.wheel) {
+          this.wheel.refresh()
           this.refreshing = false
           return
         }
-        this.wheels[0] = new BScroll(wheelWrapper, extend({
+        this.wheel = new BScroll(wheelWrapper, extend({
           wheel: {
             selectedIndex: this.selectedIndex[0],
             rotate: -5,
@@ -91,12 +96,12 @@ export default {
           probeType: 3,
           bindToWrapper: true
         }, this.scrollOptions))
-        this.wheels[0].on('scrollStart', function () {
+        this.wheel.on('scrollStart', function () {
           if (this.pickerView) {
             this.pickerView.notifyPickstart()
           }
         }.bind(this))
-        this.wheels[0].on('scrollEnd', function () {
+        this.wheel.on('scrollEnd', function () {
           if (this.refreshing) return
           if (this.pickerView) {
             this.pickerView.notifyChange()
