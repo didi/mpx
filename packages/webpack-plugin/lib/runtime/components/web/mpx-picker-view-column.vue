@@ -28,8 +28,7 @@ export default {
     return {
       wheels: [],
       selectedIndex: [0],
-      cachedIndicatorMaskHeight: 0, // 缓存指示器高度
-      refreshTimer: null // 防抖定时器
+      indicatorMaskHeight: 0
     }
   },
   computed: {},
@@ -43,71 +42,30 @@ export default {
         })
       }
     },
-    // 监听父组件的indicatorStyle变化
-    '$parent.indicatorStyle': {
-      handler() {
-        // 使用防抖版本，避免频繁调用
-        this.debouncedRefresh()
-      },
-      immediate: false
-    }
   },
   mounted () {
     this.wheels = []
+    this.indicatorMaskHeight = this.$parent.$refs?.indicatorMask?.offsetHeight || 0
     this.refresh()
   },
-  // 移除updated钩子，改为使用activated处理页面切换
-  activated () {
-    // 页面被激活时，检查是否需要重新计算尺寸
-    if (this.cachedIndicatorMaskHeight === 0) {
-      this.$nextTick(() => {
-        this.refresh()
-      })
-    }
+  updated () {
+    this.refresh()
   },
   beforeDestroy () {
-    // 清理定时器
-    if (this.refreshTimer) {
-      clearTimeout(this.refreshTimer)
-    }
     this.wheels.forEach((wheel) => {
       wheel.destroy()
     })
     this.wheels = []
   },
   methods: {
-    // 防抖版本的refresh
-    debouncedRefresh() {
-      if (this.refreshTimer) {
-        clearTimeout(this.refreshTimer)
-      }
-      this.refreshTimer = setTimeout(() => {
-        this.refresh()
-      }, 16) // 大约一帧的时间
-    },
-    
     refresh () {
       if (this.refreshing) return
      
       this.refreshing = true
-      const indicatorMask = this.$parent.$refs.indicatorMask
-      let indicatorMaskHeight = indicatorMask.offsetHeight
-      
-      if (!indicatorMaskHeight) {
-        const computedStyle = getComputedStyle(indicatorMask)
-        indicatorMaskHeight = parseInt(computedStyle.height) || 0
-      }
-      
-      // 缓存有效的高度值
-      if (indicatorMaskHeight > 0) {
-        this.cachedIndicatorMaskHeight = indicatorMaskHeight
-      } else if (this.cachedIndicatorMaskHeight > 0) {
-        // 如果获取不到当前高度，使用缓存值
-        indicatorMaskHeight = this.cachedIndicatorMaskHeight
-      }
-
       for (let i = 0; i < this.$refs.wheelScroll.children.length; i++) {
-        this.$refs.wheelScroll.children[i].style.height = `${indicatorMaskHeight}px`
+        if (this.indicatorMaskHeight) {
+          this.$refs.wheelScroll.children[i].style.height = this.indicatorMaskHeight + 'px'
+        }
       }
       this.$nextTick(() => {
         const wheelWrapper = this.$refs.wheelWrapper
