@@ -222,8 +222,7 @@ export default function createApp (options) {
       })
       let count = 0
       const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
-        console.log('======== mackwang debug Dimensions change')
-        const oldWindow = global.__mpxAppDimensionsInfo.window
+        const oldWindow = getPageSize(global.__mpxAppDimensionsInfo.window)
         // 将最新数据设置到全局
         dimensionsInfoRef.current.window.width = window.width
         dimensionsInfoRef.current.window.height = window.height
@@ -231,7 +230,7 @@ export default function createApp (options) {
         dimensionsInfoRef.current.screen.height = screen.height
 
         // // 对比 window 高宽是否存在变化
-        if (getPageSize(window) === getPageSize(oldWindow)) return
+        if (getPageSize(window) === oldWindow) return
 
         // // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()

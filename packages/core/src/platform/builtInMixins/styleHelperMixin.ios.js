@@ -22,7 +22,6 @@ const unit = {
 const empty = {}
 
 function formatValue (value, windowInfo = global.__mpxAppDimensionsInfo.window) {
-  console.log('======mackwang formatValue', value, windowInfo)
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
@@ -166,7 +165,6 @@ export default function styleHelperMixin () {
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
         const dimensionsInfo = this.__dimensionsInfo
-        console.log('======mackwang __getStyle', dimensionsInfo, this)
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
