@@ -1413,9 +1413,12 @@ class MpxWebpackPlugin {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.supportRequireAsync) {
+              if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                // web 和 react 平台支持分包名转换，如果转换tarRoot为空，则降级到主包
+                tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
+              }
+              if (mpx.supportRequireAsync && tarRoot) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
