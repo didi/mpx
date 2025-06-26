@@ -1,23 +1,16 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 
-let { width, height } = Dimensions.get('screen')
-
-Dimensions.addEventListener('change', ({ screen }) => {
-  width = screen.width
-  height = screen.height
-})
-
-function rpx (value) {
+function rpx (value, windowInfo) {
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (750 / 屏幕宽度)
-  return value * width / 750
+  return value * windowInfo.width / 750
 }
-function vw (value) {
-  return value * width / 100
+function vw (value, windowInfo) {
+  return value * windowInfo.width / 100
 }
-function vh (value) {
-  return value * height / 100
+function vh (value, windowInfo) {
+  return value * windowInfo.height / 100
 }
 
 const unit = {
@@ -28,13 +21,14 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value) {
+function formatValue (value, windowInfo = global.__mpxAppDimensionsInfo.window) {
+  console.log('======mackwang formatValue', value, windowInfo)
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
     } else {
-      return unit[matched[2]](+matched[1])
+      return unit[matched[2]](+matched[1], windowInfo)
     }
   }
   if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
@@ -153,10 +147,10 @@ function mergeObjectArray (arr) {
   return res
 }
 
-function transformStyleObj (styleObj) {
+function transformStyleObj (styleObj, windowInfo) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    transformed[prop] = formatValue(styleObj[prop], windowInfo)
   })
   return transformed
 }
@@ -171,6 +165,8 @@ export default function styleHelperMixin () {
         const result = {}
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
+        const dimensionsInfo = this.__dimensionsInfo
+        console.log('======mackwang __getStyle', dimensionsInfo, this)
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -190,7 +186,7 @@ export default function styleHelperMixin () {
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj))
+          Object.assign(result, transformStyleObj(styleObj, dimensionsInfo.window))
         }
 
         if (hide) {

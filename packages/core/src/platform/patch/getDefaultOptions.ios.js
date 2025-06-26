@@ -13,7 +13,8 @@ import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/component
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
-  RouteContext
+  RouteContext,
+  DimensionsContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '../env/nav'
@@ -203,7 +204,8 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo }) {
+  console.log('======mackwang createInstance', dimensionsInfo)
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -258,6 +260,13 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __parentProvides: {
       get () {
         return parentProvides || null
+      },
+      enumerable: false
+    },
+    __dimensionsInfo: {
+      get () {
+        console.log('======mackwang __dimensionsInfo', dimensionsInfo)
+        return dimensionsInfo
       },
       enumerable: false
     }
@@ -553,6 +562,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
+    const dimensionsInfo = useContext(DimensionsContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
@@ -561,7 +571,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
