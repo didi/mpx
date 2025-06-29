@@ -6,6 +6,9 @@ const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
 const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
 const { dash2hump } = require('../../../utils/hump-dash')
+const acorn = require('acorn')
+const { parseMpxExpression } = require('./slotParser')
+const escodegen = require('escodegen')
 
 module.exports = function getSpec ({ warn, error }) {
   function getRnDirectiveEventHandle (mode) {
@@ -62,7 +65,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android', 'harmony'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android', 'harmony', 'wx'],
     // props预处理
     preProps: [],
     // props后处理
@@ -455,6 +458,62 @@ module.exports = function getSpec ({ warn, error }) {
         ios: rnAccessibilityRulesHandle,
         android: rnAccessibilityRulesHandle,
         harmony: rnAccessibilityRulesHandle
+      },
+      {
+        test: /.+/,
+        wx ({ name, value }) {
+          const exprs = parseMpxExpression(value)
+
+          if (exprs.length) {
+            const result = exprs.map(([expr, offset]) => {
+              const ast = acorn.parse(expr.trim(), { ecmaVersion: 5 })
+              return [
+                escodegen.generate(ast, {
+                  directive: true,
+                  format: {
+                    quotes: 'auto',
+                    compact: true,
+                    semicolons: false
+                  }
+                }),
+                {
+                  start: offset,
+                  end: offset + expr.length
+                }
+              ]
+            })
+
+            let combineValue = ''
+
+            let offset = 0
+
+            const join = (start, end) => {
+              const v = value.slice(start, end)
+              combineValue += v
+              offset += v.length
+            }
+
+            for (let i = 0; i < result.length; i++) {
+              const [expr, range] = result[i]
+              if (offset < range.start) {
+                join(offset, range.start)
+              }
+              combineValue += expr
+              offset = range.end
+            }
+
+            if (offset < value.length) {
+              join(offset, value.length)
+            }
+
+            return {
+              name,
+              value: combineValue
+            }
+          }
+
+          return { name, value }
+        }
       }
     ],
     event: {
