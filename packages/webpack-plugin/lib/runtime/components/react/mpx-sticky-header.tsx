@@ -171,7 +171,9 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 const styles = StyleSheet.create({
   content: {
     width: '100%',
-    zIndex: 10
+    zIndex: 10,
+    // harmony 需要手动设置 relative， zIndex 才生效
+    position: 'relative'
   }
 })
 

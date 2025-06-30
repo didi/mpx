@@ -6,10 +6,11 @@ import { getCustomEvent } from './getInnerListeners'
     name: 'mpx-sticky-header',
     inject: ['scrollOffset', 'refreshVersion'],
     props: {
-      'offsetTop': {
+      offsetTop: {
         type: Number,
         default: 0
-      }
+      },
+      padding: Array
     },
     data() {
       return {
@@ -17,16 +18,8 @@ import { getCustomEvent } from './getInnerListeners'
         isStickOnTop: false
       }
     },
-    computed: {
-      _scrollOffset() {
-        return -this.scrollOffset?.get() || 0
-      },
-      _refreshVersion() {
-        return this.refreshVersion?.get() || 0
-      }
-    },
     watch: {
-      _scrollOffset: {
+      scrollOffset: {
         handler(newScrollOffset) {
           const newIsStickOnTop = newScrollOffset > this.headerTop
           if (newIsStickOnTop !== this.isStickOnTop) {
@@ -35,19 +28,25 @@ import { getCustomEvent } from './getInnerListeners'
               isStickOnTop: newIsStickOnTop
             }, this))
           }
-          const stickyHeader = this.$refs.stickyHeader
-          if (!stickyHeader) return
-          if (this.isStickOnTop) {
-            stickyHeader.style.transform = `translateY(${newScrollOffset - this.headerTop + this.offsetTop}px)`
-          } else {
-            stickyHeader.style.transform = 'none'
-          }
+
+          this.setTransformStyle()
         },
         immediate: true
       },
-      _refreshVersion: {
+      refreshVersion: {
         handler() {
-          const parentElement = this.$el.parentElement
+          this.setHeaderTop()
+          this.setTransformStyle()
+        },
+      }
+    },
+    mounted() {
+      this.setPaddingStyle()
+      this.setHeaderTop()
+    },
+    methods: {
+      setHeaderTop () {
+        const parentElement = this.$el.parentElement
           if (!parentElement) return
           
           const parentClass = parentElement.className || ''
@@ -58,20 +57,29 @@ import { getCustomEvent } from './getInnerListeners'
             warn('sticky-header only supports being a direct child of a scroll-view or sticky-section component.')
             return
           }
-          
           this.headerTop = isStickySection 
             ? this.$el.offsetTop + parentElement.offsetTop
             : this.$el.offsetTop
-          
-          const stickyHeader = this.$refs.stickyHeader
-          if (!stickyHeader) return
-          
-          if (this._scrollOffset > this.headerTop) {
-            stickyHeader.style.transform = `translateY(${this._scrollOffset - this.headerTop + this.offsetTop}px)`
-          } else {
-            stickyHeader.style.transform = 'none'
-          }
-        },
+      },
+      setPaddingStyle() {
+        const stickyHeader = this.$refs.stickyHeader
+        if (!stickyHeader) return
+        
+        if (this.padding && Array.isArray(this.padding)) {
+          const [top = 0, right = 0, bottom = 0, left = 0] = this.padding
+          stickyHeader.style.padding = `${top}px ${right}px ${bottom}px ${left}px`
+        }
+      },
+      setTransformStyle () {
+        const stickyHeader = this.$refs.stickyHeader
+        if (!stickyHeader) return
+        
+        // 设置 transform
+        if (this.scrollOffset > this.headerTop) {
+          stickyHeader.style.transform = `translateY(${this.scrollOffset - this.headerTop + this.offsetTop}px)`
+        } else {
+          stickyHeader.style.transform = 'none'
+        }
       }
     },
     render(h) {
