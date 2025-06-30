@@ -25,12 +25,14 @@ class RecordFileUrlDependency extends NullDependency {
   serialize (context) {
     const { write } = context
     write(this.url)
+    write(this.range)
     super.serialize(context)
   }
 
   deserialize (context) {
     const { read } = context
     this.url = read()
+    this.range = read()
     super.deserialize(context)
   }
 }
