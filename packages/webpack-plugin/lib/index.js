@@ -44,7 +44,7 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
-const RecordAssetPathDependency = require('./dependencies/RecordAssetPathDependency')
+const RecordRNExternalDependency = require('./dependencies/RecordRNExternalDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -655,8 +655,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
 
-      compilation.dependencyFactories.set(RecordAssetPathDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordAssetPathDependency, new RecordAssetPathDependency.Template())
+      compilation.dependencyFactories.set(RecordRNExternalDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordRNExternalDependency, new RecordRNExternalDependency.Template())
 
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
@@ -705,8 +705,8 @@ class MpxWebpackPlugin {
           assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
-          // 记录 asset 导入路径
-          assetPaths: new Set(),
+          // 记录 rn 环境 asset 导入路径
+          rnExternalRequests: new Set(),
           globalComponents: {},
           globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
