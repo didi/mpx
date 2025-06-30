@@ -13,9 +13,10 @@ import type { AnimationProp } from './useAnimationHooks'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
-import { error } from '@mpxjs/utils'
+import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
+import Portal from './mpx-portal'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -35,6 +36,8 @@ export interface _ViewProps extends ViewProps {
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  catchtransitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 type Handler = (...args: any[]) => void
@@ -79,7 +82,7 @@ type PreImageInfo = {
 type ImageProps = {
   style: ImageStyle,
   src?: string,
-  source?: {uri: string },
+  source?: { uri: string },
   colors: Array<string>,
   locations?: Array<number>
   angle?: number
@@ -140,7 +143,7 @@ const isPercent = (val: string | number | undefined): val is string => typeof va
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
 const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
-  const { sizeList, backgroundPosition, linearInfo } = preImageInfo
+  const { sizeList, backgroundPosition, linearInfo, type } = preImageInfo
   const [width, height] = sizeList
   const bp = backgroundPosition
 
@@ -150,7 +153,8 @@ const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
     (isPercent(width) && height === 'auto') ||
     isPercent(bp[1]) ||
     isPercent(bp[3]) ||
-    isDiagonalAngle(linearInfo)
+    isDiagonalAngle(linearInfo) ||
+    (type === 'linear' && (isPercent(height) || isPercent(width)))
 }
 
 const checkNeedLayout = (preImageInfo: PreImageInfo) => {
@@ -243,7 +247,7 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
 
 // background-size 转换
 function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
-  const sizeList = preImageInfo.sizeList
+  const { sizeList, type } = preImageInfo
   if (!sizeList) return
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
   const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
@@ -283,10 +287,22 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      dimensions = {
-        width: isPercent(width) ? width : +width,
-        height: isPercent(height) ? height : +height
-      } as { width: NumberVal, height: NumberVal }
+      if (type === 'linear') {
+        const dimensionWidth = calcPercent(width as NumberVal, layoutWidth) || 0
+        const dimensionHeight = calcPercent(height as NumberVal, layoutHeight) || 0
+        // ios 上 linear 组件只要重新触发渲染，在渲染过程中 width 或者 height 被设置为 0，即使后面再更新为正常宽高，也会渲染不出来
+        if (dimensionWidth && dimensionHeight) {
+          dimensions = {
+            width: dimensionWidth,
+            height: dimensionHeight
+          } as { width: NumberVal, height: NumberVal }
+        }
+      } else {
+        dimensions = {
+          width: isPercent(width) ? width : +width,
+          height: isPercent(height) ? height : +height
+        } as { width: NumberVal, height: NumberVal }
+      }
     }
   }
 
@@ -483,8 +499,8 @@ function parseLinearGradient (text: string): LinearInfo | undefined {
 }
 
 function parseBgImage (text: string): {
-  linearInfo?: LinearInfo;
-  direction?: string;
+  linearInfo?: LinearInfo
+  direction?: string
   type?: 'image' | 'linear'
   src?: string
 } {
@@ -578,7 +594,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     if (!src) {
       setShow(false)
       return
-    // 一开始未出现，数据改变时出现
+      // 一开始未出现，数据改变时出现
     } else if (!(needLayout || needImageSize)) {
       setShow(true)
       return
@@ -602,7 +618,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
         }
       })
     }
-  // type 添加type 处理无渐变 有渐变的场景
+    // type 添加type 处理无渐变 有渐变的场景
   }, [src, type])
 
   if (!type) return null
@@ -635,10 +651,14 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
   }
 
-  return <View key='backgroundImage' {...needLayout ? { onLayout } : null} style={{ ...inheritStyle(innerStyle), ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-    {show && type === 'linear' && <LinearGradient useAngle={true} {...imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size)} /> }
-    {show && type === 'image' && (renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage))}
-  </View>
+  const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
+    { style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
+  )
+
+  return createElement(View, backgroundProps,
+    show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))),
+    show && type === 'image' && renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage)
+  )
 }
 
 interface WrapChildrenConfig {
@@ -682,7 +702,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    animation
+    animation,
+    catchtransitionend,
+    bindtransitionend
   } = props
 
   // 默认样式
@@ -703,6 +725,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const {
     normalStyle,
     hasSelfPercent,
+    hasPositionFixed,
     hasVarDec,
     varContextRef,
     setWidth,
@@ -735,28 +758,40 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
-
+  const transitionend = isFunction(catchtransitionend)
+    ? catchtransitionend
+    : isFunction(bindtransitionend)
+      ? bindtransitionend
+      : undefined
   const { enableStyleAnimation, animationStyle } = useAnimationHooks({
-    enableAnimation,
+    layoutRef,
     animation,
-    style: viewStyle
+    enableAnimation,
+    style: viewStyle,
+    transitionend
   })
 
   const innerProps = useInnerProps(
-    props,
-    extendObject({
-      ref: nodeRef,
-      style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
-    },
-    layoutProps
-    ), [
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef,
+        style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
+      }
+
+    ),
+    [
       'hover-start-time',
       'hover-stay-time',
       'hover-style',
       'hover-class'
-    ], {
+    ],
+    {
       layoutRef
-    })
+    }
+  )
 
   const childNode = wrapWithChildren(props, {
     hasVarDec,
@@ -769,13 +804,18 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableFastImage
   })
 
-  const BaseComponent = enableStyleAnimation
+  let finalComponent: JSX.Element = enableStyleAnimation
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 
-  return enableHover
-    ? createElement(GestureDetector, { gesture: gesture as PanGesture }, BaseComponent)
-    : BaseComponent
+  if (enableHover) {
+    finalComponent = createElement(GestureDetector, { gesture: gesture as PanGesture }, finalComponent)
+  }
+
+  if (hasPositionFixed) {
+    finalComponent = createElement(Portal, null, finalComponent)
+  }
+  return finalComponent
 })
 
 _View.displayName = 'MpxView'

@@ -1,30 +1,30 @@
 import { View } from 'react-native'
 import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-native-reanimated'
-import { ReactNode, forwardRef, useRef, useContext } from 'react'
+import { ReactNode, forwardRef, useRef, useContext, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout } from './utils'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject, isHarmony } from './utils'
 import { SwiperContext } from './context'
 
 interface SwiperItemProps {
-  'item-id'?: string;
-  'enable-offset'?: boolean;
-  'enable-var': boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
-  'parent-width'?: number;
-  'parent-height'?: number;
-  children?: ReactNode;
-  style?: Object;
-  customStyle: Object;
-  itemIndex: number;
+  'item-id'?: string
+  'enable-offset'?: boolean
+  'enable-var': boolean
+  'external-var-context'?: Record<string, any>
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  children?: ReactNode
+  style?: Object
+  customStyle: Object
+  itemIndex: number
 }
 
 interface ContextType {
-  offset: SharedValue<number>;
-  step: SharedValue<number>;
-  scale: boolean;
-  dir: string;
+  offset: SharedValue<number>
+  step: SharedValue<number>
+  scale: boolean
+  dir: string
 }
 
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
@@ -64,16 +64,23 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     layoutStyle
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
 
-  const innerProps = useInnerProps(props, {
-    ref: nodeRef,
-    ...layoutProps
-  }, [
-    'children',
-    'enable-offset',
-    'style'
-  ], { layoutRef })
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: nodeRef
+      }
+    ),
+    [
+      'children',
+      'enable-offset',
+      'style'
+    ],
+    { layoutRef })
   const itemAnimatedStyle = useAnimatedStyle(() => {
-    if (!step.value) return {}
+    if (!step.value && !isHarmony) return {}
     const inputRange = [step.value, 0]
     const outputRange = [0.7, 1]
     // 实现元素的宽度跟随step从0到真实宽度，且不能触发重新渲染整个组件，通过AnimatedStyle的方式实现
@@ -88,24 +95,16 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
       transform: transformStyle
     })
   })
-  return (
-    <Animated.View
-      {...innerProps}
-      style={[innerStyle, layoutStyle, itemAnimatedStyle, customStyle]}
-      data-itemId={props['item-id']}>
-      {
-        wrapChildren(
-          props,
-          {
-            hasVarDec,
-            varContext: varContextRef.current,
-            textStyle,
-            textProps
-          }
-        )
-      }
-    </Animated.View>
-  )
+  const mergeProps = extendObject({}, innerProps, {
+    style: [innerStyle, layoutStyle, itemAnimatedStyle, customStyle],
+    'data-itemId': props['item-id']
+  })
+  return createElement(Animated.View, mergeProps, wrapChildren(props, {
+    hasVarDec,
+    varContext: varContextRef.current,
+    textStyle,
+    textProps
+  }))
 })
 
 _SwiperItem.displayName = 'MpxSwiperItem'

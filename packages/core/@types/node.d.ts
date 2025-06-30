@@ -1,5 +1,7 @@
 declare let global: Record<string, any> // in web, we use global varible to do some things, here to declare
 
+declare let mpxGlobal: Record<string, any>
+
 type Dict<T> = {
   [k: string]: T | undefined
 }

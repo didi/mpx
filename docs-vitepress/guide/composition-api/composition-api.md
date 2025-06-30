@@ -11,7 +11,7 @@
 
 更多关于组合式 API 的说明可以查看 [Vue3 官方文档](https://vuejs.org/guide/extras/composition-api-faq.html)。
 
-Mpx 是一个小程序优先的增强型跨端框架，因此我们在为 Mpx 设计实现组合式 API 的过程中，并不追求与 Vue3 中的组合式 API 完全一致，我们更多是借鉴 Vue3 中组合式 API 的设计思想，将其与目前 Mpx 及小程序中的开发模式结合起来，而非完全照搬其实现。因此在 Mpx 中一些具体的 API 设计实现会与 Vue3 存在差异，我们会在后续相关的文档中进行标注说明，如果你想查看 Mpx 与 Vue3 在组合式 API 中的差异，可以跳转到[这里](#组合式-API-与-Vue3-中的区别)查看。 
+Mpx 是一个小程序优先的增强型跨端框架，因此我们在为 Mpx 设计实现组合式 API 的过程中，并不追求与 Vue3 中的组合式 API 完全一致，我们更多是借鉴 Vue3 中组合式 API 的设计思想，将其与目前 Mpx 及小程序中的开发模式结合起来，而非完全照搬其实现。因此在 Mpx 中一些具体的 API 设计实现会与 Vue3 存在差异，我们会在后续相关的文档中进行标注说明，如果你想查看 Mpx 与 Vue3 在组合式 API 中的差异，可以跳转到[这里](#组合式-api-与-vue3-中的区别)查看。 
 
 ## 组合式 API 基础
 
@@ -19,7 +19,7 @@ Mpx 是一个小程序优先的增强型跨端框架，因此我们在为 Mpx �
 
 同 Vue3 一样，在 Mpx 当中 `setup` 函数是组合式 API 的基础，我们可以在 `createPage` 和 `createComponent` 中声明 `setup` 函数。
 
-`setup` 函数接收 `props` 和 `context` 两个参数，其中 `context` 参数与 Vue3 中存在差别，详情可以查看[这里](#Setup)。
+`setup` 函数接收 `props` 和 `context` 两个参数，其中 `context` 参数与 Vue3 中存在差别，详情可以查看[这里](#setup)。
 
 我们参考 Vue3 中的示例实现一个小程序版本，可以看到它和 Vue3 中的实现基本一致，包含以下功能：
 
@@ -94,7 +94,7 @@ createComponent({
 
 ### 在 `setup` 中注册生命周期钩子
 
-为了完整实现选项式 API 中的能力，我们需要支持在 `setup` 中注册生命周期钩子，同 Vue3 类似，我们也提供了一系列生命周期钩子的注册函数，这些函数都以 `on` 开头，不过由于 Mpx 的跨平台特性，我们不可能针对不同的平台提供不同的生命周期钩子函数，因此我们提供了一份抹平跨平台差异后统一的生命周期钩子，与小程序原生生命周期的映射关系可查看[这里](#生命周期钩子)。
+为了完整实现选项式 API 中的能力，我们需要支持在 `setup` 中注册生命周期钩子，同 Vue3 类似，我们也提供了一系列生命周期钩子的注册函数，这些函数都以 `on` 开头，不过由于 Mpx 的跨平台特性，我们不可能针对不同的平台提供不同的生命周期钩子函数，因此我们提供了一份抹平跨平台差异后统一的生命周期钩子，与小程序原生生命周期的映射关系可查看[这里](#lifecycle-hooks)。
 
 我们希望在组件挂载时调用 `getUserRepositories`，可以使用 `onMounted` 钩子来实现，注意这里不是 `onReady`，不过它确实对应于微信小程序中组件的 `ready` 钩子：
 
@@ -828,14 +828,14 @@ const props = withDefaults(defineProps<Props>(), {
 
 下面我们来总结一下 Mpx 中组合式 API 与 Vue3 中的区别：
 
-* `setup` 的 `context` 参数不同，详见[这里](#Context)
+* `setup` 的 `context` 参数不同，详见[这里](#context)
 * `setup` 不支持返回**渲染函数**
 * `setup` 不能是异步函数
 * `<script setup>` 提供的宏方法不同，详见[这里](#script-setup)
 * `<script setup>` 不支持 `import` 快捷引入组件
-* `<script setup>` 必须使用 [defineExpose](#defineprops)
-* 支持的生命周期钩子不同，详见[这里](#生命周期钩子)
-* 模板引用的方式不同，详见[这里](#模板引用)
+* `<script setup>` 必须使用 [defineExpose](#defineexpose)
+* 支持的生命周期钩子不同，详见[这里](#lifecycle-hooks)
+* 模板引用的方式不同，详见[这里](#template-ref)
 
 ## 组合式 API 周边生态能力的使用
 
@@ -843,5 +843,5 @@ const props = withDefaults(defineProps<Props>(), {
 
 * `store` 在组合式 API 中使用，详见[这里](../advance/store.md#use-store-in-composition-api)
 * `pinia` 在组合式 API 中使用，详见[这里](../advance/pinia.md)
-* `fetch` 在组合式 API 中使用，详见[这里](../extend/fetch.md/#composition-api-usage)
+* `fetch` 在组合式 API 中使用，详见[这里](../extend.md#usefetch)
 * `i18n` 在组合式 API 中使用，详见[这里](../advance/i18n.md#composition-api-usage)

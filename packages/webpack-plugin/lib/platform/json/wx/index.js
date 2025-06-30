@@ -158,7 +158,8 @@ module.exports = function getSpec ({ warn, error }) {
       test: 'usingComponents',
       web: fixComponentName('usingComponents'),
       ios: fixComponentName('usingComponents'),
-      android: fixComponentName('usingComponents')
+      android: fixComponentName('usingComponents'),
+      harmony: fixComponentName('usingComponents')
     },
     {
       test: 'usingComponents',
@@ -268,7 +269,8 @@ module.exports = function getSpec ({ warn, error }) {
       'dd',
       'web',
       'ios',
-      'android'
+      'android',
+      'harmony'
     ],
 
     normalizeTest,
@@ -352,7 +354,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'preloadRule',
-        tt: deletePath(),
         jd: deletePath()
       },
       {
@@ -374,7 +375,8 @@ module.exports = function getSpec ({ warn, error }) {
         test: 'usingComponents',
         web: fixComponentName('usingComponents'),
         ios: fixComponentName('usingComponents'),
-        android: fixComponentName('usingComponents')
+        android: fixComponentName('usingComponents'),
+        harmony: fixComponentName('usingComponents')
       },
       {
         test: 'usingComponents',

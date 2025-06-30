@@ -1,5 +1,5 @@
 function isReact (mode) {
-    return mode === 'ios' || mode === 'android'
+    return mode === 'ios' || mode === 'android' || mode === 'harmony'
 }
 
 function isWeb (mode) {

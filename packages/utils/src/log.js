@@ -3,7 +3,10 @@ import { isFunction } from './base'
 const isDev = process.env.NODE_ENV !== 'production'
 
 export function warn (msg, location, e) {
-  const condition = global.__mpx?.config.ignoreWarning
+  const condition = mpxGlobal.__mpx?.config.ignoreWarning
+  if (isDev && !e) {
+    e = new Error('Mpx runtime warn')
+  }
   let ignore = false
   if (typeof condition === 'boolean') {
     ignore = condition
@@ -15,7 +18,7 @@ export function warn (msg, location, e) {
     ignore = condition.test(msg)
   }
   if (!ignore) {
-    const warnHandler = global.__mpx?.config.warnHandler
+    const warnHandler = mpxGlobal.__mpx?.config.warnHandler
     if (isFunction(warnHandler)) {
       warnHandler(msg, location, e)
     } else {
@@ -25,7 +28,10 @@ export function warn (msg, location, e) {
 }
 
 export function error (msg, location, e) {
-  const errorHandler = global.__mpx?.config.errorHandler
+  const errorHandler = mpxGlobal.__mpx?.config.errorHandler
+  if (isDev && !e) {
+    e = new Error('Mpx runtime error')
+  }
   if (isFunction(errorHandler)) {
     errorHandler(msg, location, e)
   } else {

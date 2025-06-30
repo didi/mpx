@@ -7,7 +7,9 @@ function setNavigationBarTitle (options = {}) {
     failHandle({ errMsg: 'setNavigationBarTitle:fail' }, fail, complete)
   } else {
     nextTick(() => {
-      navigation.setOptions({ title })
+      navigation.setPageConfig({
+        navigationBarTitleText: title.trim()
+      })
       successHandle({ errMsg: 'setNavigationBarTitle:ok' }, success, complete)
     })
   }
@@ -20,11 +22,9 @@ function setNavigationBarColor (options = {}) {
     failHandle({ errMsg: 'setNavigationBarColor:fail' }, fail, complete)
   } else {
     nextTick(() => {
-      navigation.setOptions({
-        headerStyle: {
-          backgroundColor: backgroundColor
-        },
-        headerTintColor: frontColor
+      navigation.setPageConfig({
+        navigationBarBackgroundColor: backgroundColor,
+        navigationBarTextStyle: frontColor
       })
       successHandle({ errMsg: 'setNavigationBarColor:ok' }, success, complete)
     })

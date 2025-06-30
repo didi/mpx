@@ -12,8 +12,12 @@ module.exports = function (script, {
   outputPath,
   builtInComponentsMap,
   localComponentsMap,
-  localPagesMap
+  localPagesMap,
+  componentGenerics,
+  genericsInfo
 }, callback) {
+  const { appInfo } = loaderContext.getMpx()
+
   let scriptSrcMode = srcMode
   if (script) {
     scriptSrcMode = script.mode || scriptSrcMode
@@ -21,25 +25,17 @@ module.exports = function (script, {
     script = { tag: 'script' }
   }
 
+  let hasApp = true
+
+  if (!appInfo.name) {
+    hasApp = false
+  }
+
   let output = '/* script */\n'
   if (ctorType === 'app') {
     output += `
 import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
-import { NavigationContainer, StackActions } from '@react-navigation/native'
-import { createStackNavigator } from '@react-navigation/stack'
-import { Provider } from '@ant-design/react-native'
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-
-global.__navigationHelper = {
-  NavigationContainer: NavigationContainer,
-  createStackNavigator: createStackNavigator,
-  StackActions: StackActions,
-  GestureHandlerRootView: GestureHandlerRootView,
-  Provider: Provider,
-  SafeAreaProvider: SafeAreaProvider,
-  useSafeAreaInsets: useSafeAreaInsets
-}\n`
+\n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
       loaderContext,
@@ -50,7 +46,7 @@ global.__navigationHelper = {
       loaderContext,
       jsonConfig
     })
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
@@ -65,7 +61,7 @@ global.__navigationHelper = {
       jsonConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }

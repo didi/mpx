@@ -1,11 +1,14 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent } from 'react-native'
+import { NativeSyntheticEvent, Animated } from 'react-native'
+import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
-export type KeyboardAvoidContextValue = (enabled: boolean) => void
+export type KeyboardAvoidContextValue = MutableRefObject<
+  { cursorSpacing: number, ref: MutableRefObject<any> } | null
+>
 
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
@@ -33,8 +36,25 @@ export interface IntersectionObserver {
   }
 }
 
+export interface PortalContextValue {
+  mount: (children: React.ReactNode, key?: number | null, id?: number| null) => number| undefined
+  update: (key: number, children: React.ReactNode) => void
+  unmount: (key: number) => void
+}
+
 export interface ScrollViewContextValue {
-   gestureRef: React.RefObject<any> | null
+  gestureRef: React.RefObject<any> | null,
+  scrollOffset: Animated.Value
+}
+
+export interface RouteContextValue {
+  pageId: number
+  navigation: Record<string, any>
+}
+
+export interface StickyContextValue {
+  registerStickyHeader: Function,
+  unregisterStickyHeader: Function
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -53,10 +73,14 @@ export const VarContext = createContext({})
 
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
-export const RouteContext = createContext<number | null>(null)
+export const RouteContext = createContext<RouteContextValue | null>(null)
 
 export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null })
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
+
+export const PortalContext = createContext<PortalContextValue>(null as any)
+
+export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })

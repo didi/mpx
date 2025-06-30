@@ -2,6 +2,7 @@ const babylon = require('@babel/parser')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const generate = require('@babel/generator').default
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 const names = 'Infinity,undefined,NaN,isFinite,isNaN,' +
   'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
@@ -41,7 +42,7 @@ function getCollectPath (path) {
     if (current.node.computed) {
       if (t.isLiteral(current.node.property)) {
         if (t.isStringLiteral(current.node.property)) {
-          if (dangerousKeyMap[current.node.property.value]) {
+          if (dangerousKeyMap[current.node.property.value] || !isValidIdentifierStr(current.node.property.value)) {
             break
           }
           keyPath += `.${current.node.property.value}`
@@ -70,7 +71,7 @@ function getCollectPath (path) {
 function checkDelAndGetPath (path) {
   let current = path
   let delPath = path
-  let canDel = true
+  let canDel = true // 是否可删除，优先级比replace高
   let ignore = false
   let replace = false
 
@@ -80,8 +81,13 @@ function checkDelAndGetPath (path) {
     if (t.isUnaryExpression(current.parent) && current.key === 'argument') {
       delPath = current.parentPath
     } else if (t.isCallExpression(current.parent)) {
-      const args = current.node.arguments || current.parent.arguments || []
-      if (args.length === 1) { // case: String(a) || this._p(a)
+      const args = current.parent.arguments || []
+      if (
+        // case: String(a) || this._p(a)
+        args.length === 1 ||
+        // 除了自身，参数列表里只能是数字或字符串才能删
+        (args.every(node => node === current.node || t.isNumericLiteral(node) || t.isStringLiteral(node)))
+      ) {
         delPath = current.parentPath
       } else {
         break
@@ -123,24 +129,20 @@ function checkDelAndGetPath (path) {
 
     if (t.isCallExpression(parent) && listKey === 'arguments') {
       canDel = false
-      break
     }
 
     if (t.isMemberExpression(parent) && parent.computed) {
       canDel = false
-      break
     }
 
     if (t.isLogicalExpression(parent)) { // case: a || ((b || c) && d)
       canDel = false
       ignore = true
-      break
     }
 
     if (t.isConditionalExpression(parent)) {
       if (key === 'test') {
         canDel = false
-        break
       } else {
         ignore = true
         replace = true // 继续往上找，判断是否存在if条件等

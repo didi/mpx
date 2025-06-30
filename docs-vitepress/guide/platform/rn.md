@@ -1,7 +1,27 @@
 # 跨端输出RN
 
+## 快速使用 RN
+
+::: code-group
+
+``` sh [ios]
+npx mpx-cli-service build --targets=ios
+```
+
+``` sh [android]
+npx mpx-cli-service build --targets=android
+```
+
+``` sh [harmony]
+npx mpx-cli-service build --targets=harmony
+```
+
+:::
+
+> 构建其他平台参考 [快速开始](../basic/start.html)
+
 ## 跨端样式定义
-RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation、transition 等）。
+RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation、transition 等等）。
 
 因此，一方面，在我们进行跨平台开发时，跨平台样式属性声明要尽量使用两边样式属性的交集；另一方面为了减少开发适配的成本，Mpx 内部也对 RN 的样式作了部分抹平。
 
@@ -48,7 +68,7 @@ Mpx转RN, 支持以下单位，部分单位在部分情况下存在使用限制
 | vh | 支持 | 屏幕的高度，在使用非自定义导航时，页面初次渲染计算出来的vh是屏幕高度，后续更新渲染使用实际可视区域高度，推荐使用此单位的页面使用自定义导航 |
 | vw | 支持 | 无 |
 #### 百分比单位说明
-RN很多原生较多属性不支持百分比，比如font-size、translate等，但是这些属性在编写web、小程序代码的过程中使用较多，框架进行了抹平支持。以下这些属性在Mpx输出RN时专门进行了百分比单位的适配，部分属性存在编写的时候的特殊适配。
+RN原生较多属性不支持百分比，比如font-size、translate等，但是这些属性在编写web、小程序代码的过程中使用较多，框架进行了抹平支持。以下这些属性在Mpx输出RN时专门进行了百分比单位的适配，部分属性存在编写的时候的特殊适配。
 ##### 特殊的百分比计算规则
 ###### font-size
 
@@ -150,7 +170,7 @@ Mpx 框架抹平了这部分的差异，在使用 Mpx 转 RN 时，我们可以�
 }
 <!-- 
 小程序&web: 
-- 文本1-6 均为字体大小20px，文字居右
+- 文本 1-5 均为字体大小20px，文字居右
 RN: 
 - 文本1 字体大小20px
 - 文本2 字体大小20px，文字居右
@@ -223,7 +243,7 @@ var() 函数可以插入一个自定义属性（有时也被称为“CSS 变量�
   .component .header {
     background-color: var(--header-color, blue);
   }
-  .component .text {
+  .component .content {
     background-color: var(--content-color, black);
   }
   .component .footer {
@@ -231,8 +251,8 @@ var() 函数可以插入一个自定义属性（有时也被称为“CSS 变量�
   }
 </style>
 <!-- 实际效果 -->
-<!-- Header 背景色是 #b58df1 -->
-<!-- Content 背景色是 pink -->
+<!-- Header 背景色是 pink -->
+<!-- Content 背景色是 #b58df1 -->
 <!-- Footer 背景色是 black（--footer-color 未定义，回退值生效） -->
 ```
 #### calc()
@@ -575,12 +595,9 @@ Mpx 输出 React Native 支持以下模版指令。
 
 注意事项
 
-1. 当同一个元素上同时绑定了 catchtap 和 bindtap 事件时，两个事件都会被触发执行。但是是否阻止事件冒泡的行为,会以模板上第一个绑定的事件标识符为准。
-如果第一个绑定的是 catchtap，那么不管后面绑定的是什么,都会阻止事件冒泡。如果第一个绑定的是 bindtap，则不会阻止事件冒泡。
-2. 当同一个元素上绑定了 capture-bind:tap 和 bindtap 事件时，事件的执行时机会根据模板上第一个绑定事件的标识符来决定。如果第一个绑定的是 capture-bind:tap，则事件会在捕获阶段触发，如果第一个绑定的是 bindtap，则事件会在冒泡阶段触发。
-3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
-4. 由于 tap 事件是由 touchend 事件模拟实现，所以如果子组件绑定了 catchtap，那么父组件的 touchend 事件将不会响应。同理如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
-5. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
+1. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
+2. 由于 tap 事件是由 touchend 事件模拟实现，所以在 RN 环境，如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
+3. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
 
 ### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
@@ -612,10 +629,12 @@ Mpx 输出 React Native 支持以下模版指令。
 | enable-background		  | Boolean  |     false    |  RN环境特有属性，是否要开启background-image、background-size和background-postion的相关计算或渲染，请根据实际情况开启 |
 | enable-animation | Boolean  | false  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
 | enable-fast-image | Boolean  | false  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 注意事项
 
 1. 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+2. 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 
 
 
@@ -643,7 +662,7 @@ Mpx 输出 React Native 支持以下模版指令。
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
 | paging-enabled          | Number  | `false`   | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置  |
 | show-scrollbar          | Number  | `true`   | 滚动条显隐控制 (同时开启 enhanced 属性后生效)|
-| enable-trigger-intersection-observer  |  Boolean   |  []    | RN环境特有属性，是否开启intersection-observer |
+| enable-trigger-intersection-observer  |  Boolean   |  false    | RN环境特有属性，是否开启intersection-observer |
 | simultaneous-handlers  | `Array<object>`  |    []    | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | wait-for  |  `Array<object>`   |  []    | RN环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 
@@ -713,7 +732,7 @@ movable-view的可移动区域。
 
 注意事项
 
-1. movable-area不支持设置 scale-area，缩放手势生效区域仅在 movable-view 内
+1. movable-area不支持设置 scale-area
 
 #### movable-view
 可移动的视图容器，在页面中可以拖拽滑动。movable-view 必须在 movable-area 组件中，并且必须是直接子节点，否则不能移动。
@@ -739,7 +758,6 @@ movable-view的可移动区域。
 | 事件名               | 说明                                       |
 | -------------------- | ------------------------------------------ |
 | bindchange        | 拖动过程中触发的事件，`event.detail = {x, y, source}` |
-| bindscale         | 缩放过程中触发的事件，`event.detail = {x, y, scale}`    |
 | htouchmove          | 初次手指触摸后移动为横向的移动时触发 |
 | vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
 
@@ -748,9 +766,10 @@ movable-view的可移动区域。
 
 1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 2. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
-
+3. RN 环境 movable 相关组件暂不支持缩放能力
+   
 #### root-portal
-使整个子树从页面中脱离出来，类似于在 CSS 中使用 fixed position 的效果。主要用于制作弹窗、弹出层等。
+使整个子树从页面中脱离出来，类似于在 CSS 中使用 position: fixed 的效果。主要用于制作弹窗、弹出层等。
 属性
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
@@ -790,6 +809,7 @@ movable-view的可移动区域。
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | user-select             | boolean  | `false`       | 文本是否可选。 |
+| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 text 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 
 
@@ -922,17 +942,6 @@ movable-view的可移动区域。
 | bindconfirm          | 点击完成按钮时触发，`event.detail = { value }`                                         |
 | bind:selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }`                      |
 
-方法
-
-可通过 `ref` 方式调用以下组件实例方法
-
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
-
 
 #### textarea
 多行输入框。
@@ -968,17 +977,6 @@ movable-view的可移动区域。
 | bindconfirm          | 点击完成按钮时触发，`event.detail = { value }`                                          |
 | bindlinechange       | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx`    |
 | bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}`                                         |
-
-方法
-
-可通过 `ref` 方式调用以下组件实例方法
-
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
 
 #### picker-view
 
@@ -1206,7 +1204,7 @@ API
 注意事项
 
 1. canvas 组件目前仅支持 2D 类型，不支持 webgl
-2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 (HTML Canvas 2D Context)[https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D] 定义的属性、方法
+2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 [HTML Canvas 2D Context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) 定义的属性、方法
 3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 4. 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
@@ -1226,7 +1224,7 @@ API
 
 注意事项
 
-1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#WebviewAPI)
+1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#webview-api)
 
 #### 自定义组件
 创建自定义组件在 RN 环境下部分实例方法、属性存在兼容性问题不支持，
@@ -1267,9 +1265,9 @@ API
 |---------------------|--|--------------------------|
 | setData             | ✓ | 设置data并执行视图层渲染           |
 | triggerEvent        | ✓ | 触发事件                     |
-| createSelectorQuery| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref |
-| selectComponent     | ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
-| selectAllComponents| ✗ | 输出 RN 暂不支持，未来支持，建议使用 ref       |
+| createSelectorQuery| ✓ | 返回一个 SelectorQuery 对象实例，用以查询基础节点位置等属性 |
+| selectComponent     | ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例       |
+| selectAllComponents| ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的全部组件实例对象组成的数组      |
 | $set             | ✓ | 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新       |
 | $watch         | ✓ | 观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化                               |
 | $delete        | ✓ | 删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）             |
@@ -1279,13 +1277,41 @@ API
 | $i18n        | ✗ | 输出 RN 暂不支持，国际化功能访问器，用于获取多语言字符串资源                                            |
 | $rawOptions        | ✓ | 访问组件原始选项对象                                      |
 
+注意事项：
+
+1. `selectComponent`/`selectAllComponents` api 目前支持的选择器仅包括：
+  * id 选择器：`#id`
+  * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
+2. 使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致：
+
+```javascript
+<template>
+  <view wx:ref class="title">this is view</view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+  
+  createComponent({
+    ready() {
+      this.createSelectorQuery()
+        .select('.title')
+        .boundingClientRect(res => {
+          console.log('the rect res is:', res)
+        })
+        .exec()
+    }
+  })
+</script>
+```
+
 
 ### 样式规则
 #### position
 设置元素的定位样式
 ##### 值类型
-enum: absolute, relative， 默认relative。
-> 备注：RN 不支持 fixed 定位
+enum: relative, absolute, fixed, 默认relative。
+
 ##### 代码示例
 ``` css
 position: absolute;
@@ -2335,29 +2361,31 @@ app里面的window配置，参考[微信内window配置说明](https://developer
 | disableScroll | 不支持 | RN下默认页面不支持滚动，如需滚动需要使用可滚动的元素包裹 |
 
 #### 状态管理
+
 ##### pinia 
-暂未支持
+跨端输出 RN 支持完整的 pinia 相关能力，详情可点击[查看](/guide/advance/pinia.html)。
 ##### store 
-已支持
+跨端输出 RN 支持所有 store 相关能力，详情可点击[查看](/guide/advance/store.html)。
 #### i18n
-支持
+Mpx 支持国际化 i18n，相关能力在跨端输出 RN 时也做了完整支持，详情可点击[查看](/guide/advance/i18n.html)。
 #### 原子类能力
 开发中，暂未支持
 #### 依赖注入（Provide/Inject）
-开发中，暂未支持
+跨端输出 RN 支持使用依赖注入能力，详情可[查看](/guide/advance/provide-inject.html#依赖注入-provide-inject)。
 
 #### 环境API
-在RN环境中也提供了一部分常用api能力，方法名与使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用是有warn提醒)会比微信小程序提供的能力少一些，以下是使用说明：
+在RN环境中也提供了一部分常用 api 能力，方法名和使用方式与小程序相同，个别api提供的能力或者返回值(返回值部分如果不支持，会在调用时有warn提醒)会比微信小程序提供的能力少一些，
+具体 api 支持列表可点击[查看](/api/extend.html#api-proxy)，以下是使用说明：
 ##### 使用说明
 如果全量引入api-proxy这种情况下，需要如下配置
 ```javascript
 // 全量引入api-proxy
 import mpx from '@mpxjs/core'
-import apiProxy from '@didi/mpxjs-api-proxy'
+import apiProxy from '@mpxjs/api-proxy'
 mpx.use(apiProxy, { usePromise: true })
 ```
 
-需要在mpx项目中需要配置externals
+需要在mpx项目中需要配置externals，使用 mpx-cli 创建的项目默认已配置，开发者无需进行二次配置。
 ```bash
 externals: {
   ...
@@ -2371,7 +2399,7 @@ externals: {
   'react-native-haptic-feedback': 'react-native-haptic-feedback'
 },
 ```
-如果引用单独的api-proxy方法这种情况，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例
+如果单独使用api-proxy方法，需要根据下表说明是否用到以下方法，来确定是否需要配置externals，配置参考上面示例：
 
 
 | api方法                                                                                                                                                                                              | 依赖的react-native三方库                        |
@@ -2540,7 +2568,3 @@ webviewBridge.invoke('getTime', {
   }
 })
 ```
-
-
-### 其他使用限制
-如事件的target等

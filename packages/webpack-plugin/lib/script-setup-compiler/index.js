@@ -381,7 +381,9 @@ function compileScriptSetup (
 
     if (node.type === 'ImportDeclaration') {
       // import declarations are moved to top
-      _s.move(start, end, 0)
+      if (start !== 0) {
+        _s.move(start, end, 0)
+      }
       // dedupe imports
       let removed = 0
       const removeSpecifier = (i) => {
@@ -534,7 +536,9 @@ function compileScriptSetup (
         (node.type === 'VariableDeclaration' && node.declare)
       ) {
         recordType(node, declaredTypes)
-        _s.move(node.start, node.end + 1, 0)
+        if (node.start !== 0) {
+          _s.move(node.start, node.end + 1, 0)
+        }
       }
     }
 

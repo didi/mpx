@@ -1,3 +1,4 @@
+declare let __mpx_mode__: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' | 'dd' | 'qa' | 'jd' | 'android' | 'ios' | 'harmony'
 declare module '@mpxjs/utils' {
   export function isEmptyObject (obj: Object): boolean
   export function isFunction (fn: unknown): boolean
@@ -20,6 +21,11 @@ declare module '@mpxjs/utils' {
       left: number
       right: number
     },
+    setOptions: (params: Record<string, any>) => void,
+    addListener: (eventName: string, callback: (e: Event) => void) => void
+    removeListener: (eventName: string, callback: (e: Event) => void) => void
+    dispatch: (eventName: string) => void
+    pageId: number
     layout: {
       x: number
       y: number
@@ -36,4 +42,21 @@ declare let global: {
 
 declare module '@react-navigation/native' {
    export function useNavigation (): Record<string, any>
+   export function usePreventRemove(
+    enabled: boolean,
+    callback: (e: { data: { action: any } }) => void
+  ): void;
+  export interface PreventRemoveEvent {
+    data: {
+      action: NavigationAction;
+      route: {
+        key: string;
+        name: string;
+        params?: unknown;
+      };
+    };
+    preventDefault(): void;
+  }
 }
+
+declare module '*.png'

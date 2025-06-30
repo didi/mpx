@@ -7,6 +7,7 @@ module.exports = {
   extends: 'standard',
   plugins: ['html', 'jest'],
   globals: {
+    mpxGlobal: 'readonly',
     wx: 'readonly',
     my: 'readonly',
     swan: 'readonly',
@@ -29,7 +30,8 @@ module.exports = {
     'no-cond-assign': 0,
     camelcase: 0,
     indent: 0,
-    'symbol-description': 0
+    'symbol-description': 0,
+    'node/no-callback-literal': 0
   },
   env: {
     'jest/globals': true,
@@ -37,7 +39,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.tsx', '**/*.ts'],
+      files: ['**/*.tsx', '**/*.ts', '**/*.jsx'],
       parser: '@typescript-eslint/parser',
       extends: [
         'standard',
