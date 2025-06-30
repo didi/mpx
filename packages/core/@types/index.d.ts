@@ -268,12 +268,7 @@ export interface RnConfig {
    */
   disableAppStateListener?: boolean
   /** 进入页面是否控制回推按钮的展示以及监听回推按钮的点击 */
-  stackTopConfig?: {
-    /** 是否展示回退按钮 */
-    show?: boolean,
-    /** 监听回退按钮点击 */
-    listener?: Function
-  }
+  onStackTopBack: () => void
 }
 
 interface MpxConfig {
