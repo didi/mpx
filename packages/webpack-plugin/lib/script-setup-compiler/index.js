@@ -626,7 +626,7 @@ function compileScriptSetup (
     map: _s.generateMap({
       source: filePath,
       hires: true,
-      includeContent: true,
+      includeContent: true
     })
   }
 }

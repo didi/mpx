@@ -14,7 +14,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
   output = compiler.parseComponent(content, {
     mode,
     filePath,
-    // pad: 'line', // stylus编译遇到大量空行时会出现栈溢出，故注释掉
+    pad: 'line',
     env
   })
   if (needMap) {
@@ -25,8 +25,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
       output.script.map = generateSourceMap(
         filename,
         content,
-        output.script.content,
-        output.script.offset
+        output.script.content
       )
     }
     if (output.styles) {
@@ -35,8 +34,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
           style.map = generateSourceMap(
             filename,
             content,
-            style.content,
-            output.script.offset
+            style.content
           )
         }
       })
@@ -47,7 +45,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
   return output
 }
 
-function generateSourceMap (filename, source, generated, offset = 0) {
+function generateSourceMap (filename, source, generated) {
   const map = new SourceMapGenerator()
   map.setSourceContent(filename, source)
   generated.split(splitRE).forEach((line, index) => {
@@ -55,7 +53,7 @@ function generateSourceMap (filename, source, generated, offset = 0) {
       map.addMapping({
         source: filename,
         original: {
-          line: offset + index + 1,
+          line: index + 1,
           column: 0
         },
         generated: {
