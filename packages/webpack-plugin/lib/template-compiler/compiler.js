@@ -2489,11 +2489,10 @@ function getVirtualHostRoot (options, meta) {
       // },
       const rootView = createASTElement('view', [
         {
-          name: 'style',
+          name: 'wx:style',
           value: {
             flex: 1,
-            overflow: 'hidden',
-            backgroundColor: '#fff'
+            overflow: 'hidden'
           }
         },
         {
