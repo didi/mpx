@@ -41,6 +41,12 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
 
   root.walkRules(rule => {
     const classMapValue = {}
+    const prev = rule.prev()
+    let layer
+    if (prev && prev.type === 'comment' && prev.text.includes('layer:')) {
+      layer = JSON.stringify(prev.text.split(':')[1].trim())
+    }
+
     rule.walkDecls(({ prop, value }) => {
       if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
@@ -90,7 +96,8 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+          const layerObj = layer ? { __layer: layer } : {}
+          classMap[key] = Object.assign(classMap[key] || {}, classMapValue, layerObj)
         }
       })
     }

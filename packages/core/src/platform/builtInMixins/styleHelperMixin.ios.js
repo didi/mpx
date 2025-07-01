@@ -139,40 +139,37 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        let result = {}
-        let unoResult = {}
-        const unoVarResult = {}
         const classMap = this.__getClassMap?.() || {}
         const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
-        let hasUnoClass = false
         const appClassMap = global.__getAppClassMap?.() || {}
+        const layers = {
+          'preflight': {},
+          'normal': {},
+          'important': {}
+        }
+        let needAddUnoPreflight = false
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
-              Object.assign(result, classMap[className])
+              mergeToLayer(classMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              Object.assign(result, appClassMap[className])
+              Object.assign(layers.normal, appClassMap[className])
             } else if (unoClassMap[className]) {
-              hasUnoClass = true
-              Object.assign(unoResult, unoClassMap[className])
+              Object.assign(layers.normal, unoClassMap[className])
+              needAddUnoPreflight = !!(unoClassMap[className].transform || unoClassMap[className].filter)
             } else if (unoVarClassMap[className]) {
-              Object.assign(unoVarResult, unoVarClassMap[className])
+              Object.assign(layers.important, unoVarClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              Object.assign(result, this.__props[className])
+              Object.assign(layers.normal, this.__props[className])
             }
           })
-          if (hasUnoClass) {
-            // 两个类需要前置默认css变量
-            if (unoResult.transform || unoResult.filter) {
-              unoResult = Object.assign({}, unoPreflightsClassMap, unoResult)
-            }
-            // 合并uno工具变量
-            result = Object.assign({}, unoResult, unoVarResult, result)
-          }
+          if (needAddUnoPreflight) Object.assign(layers.preflight, unoPreflightsClassMap)
         }
+
+        const result = Object.assign({}, layers.preflight, layers.normal, layers.important)
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
@@ -191,6 +188,7 @@ export default function styleHelperMixin () {
             overflow: 'hidden'
           })
         }
+
         return isEmptyObject(result) ? empty : result
       },
       __getDynamicClass (dynamicClass, mediaQueryClass) {
