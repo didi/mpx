@@ -1,1 +1,1 @@
-export { tables } from '@unocss/preset-wind3/rules'
+export { tables as blockTables } from '@unocss/preset-wind3/rules'

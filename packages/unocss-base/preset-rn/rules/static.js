@@ -11,7 +11,7 @@ import {
 } from '@unocss/preset-mini/rules'
 import { backgroundBlendModes, mixBlendModes, hyphens, isolations, objectPositions } from '@unocss/preset-wind3/rules'
 
-const displays = [
+const blockDisplays = [
   'inline',
   'block',
   'inline-block',
@@ -20,24 +20,24 @@ const displays = [
   'list-item'
 ]
 
-const appearances = ['visible', 'invisible']
+const blockAppearances = ['visible', 'invisible']
 
-const textOverflows = ['text-ellipsis', 'text-clip']
+const blockTextOverflows = ['text-ellipsis', 'text-clip']
 
-const fontStyles = ['oblique', 'font-oblique']
+const blockFontStyles = ['oblique', 'font-oblique']
 
-export default [
-  ...appearances,
+const blockStatics = [
+  ...blockAppearances,
   ...breaks,
   ...contains,
   ...contents,
   ...contentVisibility,
   ...cursors,
-  ...displays,
+  ...blockDisplays,
   ...fontSmoothings,
-  ...fontStyles,
+  ...blockFontStyles,
   ...resizes,
-  ...textOverflows,
+  ...blockTextOverflows,
   ...textWraps,
   ...whitespaces,
   ...backgroundBlendModes,
@@ -46,3 +46,5 @@ export default [
   ...isolations,
   ...objectPositions
 ]
+
+export { blockStatics }

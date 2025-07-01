@@ -1,4 +1,4 @@
-const overflows = [
+const blockOverflows = [
   (raw) => {
     const reg = /^(?:overflow|of)-(.+)$/
     const match = raw.match(reg)
@@ -9,4 +9,4 @@ const overflows = [
   /^(?:overflow|of)-([xy])-(.+)$/
 ]
 
-export { overflows }
+export { blockOverflows }

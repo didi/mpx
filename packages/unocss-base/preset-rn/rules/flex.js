@@ -1,9 +1,9 @@
 
-const flex = [
+const blockFlex = [
   'flex-inline',
   'inline-flex'
 ]
 
 export {
-  flex
+  blockFlex
 }
