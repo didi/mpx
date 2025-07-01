@@ -137,7 +137,7 @@ function mergeToLayer(layerMap, name, classObj) {
   Object.assign(layer, classObj)
 }
 
-function styleHelperMixin2 () {
+export default function styleHelperMixin () {
   return {
     methods: {
       __getClass (staticClass, dynamicClass) {
@@ -235,105 +235,3 @@ function styleHelperMixin2 () {
     }
   }
 }
-
-
-function styleHelperMixin () {
-  return {
-    methods: {
-      __getClass (staticClass, dynamicClass) {
-        return concat(staticClass, stringifyDynamicClass(dynamicClass))
-      },
-      __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const timeNow = Date.now()
-        let result = {}
-        let unoResult = {}
-        const unoVarResult = {}
-        const classMap = this.__getClassMap?.() || {}
-        const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
-        let hasUnoClass = false
-        const appClassMap = global.__getAppClassMap?.() || {}
-        if (staticClass || dynamicClass) {
-          const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
-          classString.split(/\s+/).forEach((className) => {
-            if (classMap[className]) {
-              Object.assign(result, classMap[className])
-            } else if (appClassMap[className]) {
-              // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              Object.assign(result, appClassMap[className])
-            } else if (unoClassMap[className]) {
-              hasUnoClass = true
-              Object.assign(unoResult, unoClassMap[className])
-            } else if (unoVarClassMap[className]) {
-              Object.assign(unoVarResult, unoVarClassMap[className])
-            } else if (isObject(this.__props[className])) {
-              // externalClasses必定以对象形式传递下来
-              Object.assign(result, this.__props[className])
-            }
-          })
-          if (hasUnoClass) {
-            // 两个类需要前置默认css变量
-            if (unoResult.transform || unoResult.filter) {
-              unoResult = Object.assign({}, unoPreflightsClassMap, unoResult)
-            }
-            // 合并uno工具变量
-            result = Object.assign({}, unoResult, unoVarResult, result)
-          }
-        }
-
-        console.log('__getStyle', Date.now() - timeNow)
-
-        if (staticStyle || dynamicStyle) {
-          const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj))
-        }
-
-        if (hide) {
-          Object.assign(result, {
-            // display: 'none'
-            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
-            flex: 0,
-            height: 0,
-            width: 0,
-            padding: 0,
-            margin: 0,
-            overflow: 'hidden'
-          })
-        }
-        return isEmptyObject(result) ? empty : result
-      },
-      __getDynamicClass (dynamicClass, mediaQueryClass) {
-        return [dynamicClass, this.__getMediaQueryClass(mediaQueryClass)]
-      },
-      __getMediaQueryClass (mediaQueryClass = []) {
-        if (!mediaQueryClass.length) return ''
-        const { width, height } = Dimensions.get('screen')
-        const colorScheme = Appearance.getColorScheme()
-        const { unoBreakpoints } = global.__getUnoClass?.() || {}
-        const { entries = [], entriesMap = {} } = unoBreakpoints
-        return mediaQueryClass.map(([className, querypoints = []]) => {
-          const res = querypoints.every(([prefix = '', point = 0]) => {
-            if (prefix === 'landscape') return width > height
-            if (prefix === 'portrait') return width <= height
-            if (prefix === 'dark') return colorScheme === 'dark'
-            if (prefix === 'light') return colorScheme === 'light'
-            const size = formatValue(entriesMap[point] || point)
-            const index = entries.findIndex(item => item[0] === point)
-            const isGtPrefix = prefix.startsWith('min-')
-            const isLtPrefix = prefix.startsWith('lt-') || prefix.startsWith('<') || prefix.startsWith('max-')
-            const isAtPrefix = prefix.startsWith('at-') || prefix.startsWith('~')
-            if (isGtPrefix) return width > size
-            if (isLtPrefix) return width < size
-            if (isAtPrefix && (index && index < entries.length - 1)) {
-              return width >= size && width < formatValue(entries[index + 1][1])
-            }
-            return width > size
-          })
-
-          return res ? className : ''
-        })
-      }
-    }
-  }
-}
-
-export default styleHelperMixin2
