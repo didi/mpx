@@ -7,7 +7,7 @@
             <div class="mask-top" :style="'height:' + maskHeight + 'px'"></div>
             <div class="mask-bottom" :style="'height:' + maskHeight + 'px'"></div>
             <div :class="['indicator-mask', 'border-bottom-1px', 'border-top-1px', indicatorClass]"
-                 :style="indicatorStyle" ref="indicatorMask"></div>
+              :style="indicatorStyle" ref="indicatorMask"></div>
             <div class="wheel-container" :style="'padding-top:' + maskHeight + 'px'">
               <slot></slot>
             </div>
@@ -20,7 +20,7 @@
 
 <script type="text/ecmascript-6">
   import { computed } from 'vue'
-  import {getCustomEvent} from './getInnerListeners'
+  import { getCustomEvent } from './getInnerListeners'
 
   function travelSlot(slot, effect) {
     let index = 0
@@ -52,15 +52,17 @@
       return {
         maskHeight: 0,
         indicatorMaskHeight: 0,
-        lastChangeValue: null,
-        changeTimer: null
+        isExternalUpdate: false,
+        pendingWheelToCount: 0
       }
     },
     watch: {
       value: {
         handler(newVal) {
+          console.log('column set value==', newVal)
           this.setValue(newVal)
-        }
+        },
+        deep: true
       },
       indicatorStyle: {
         handler() {
@@ -87,24 +89,39 @@
     },
     methods: {
       setValue(value) {
-        this.selectedIndex = value
-        // 比较新value和上次change事件的值
-        const shouldUpdate = !this.lastChangeValue || 
-          !this.arraysEqual(value, this.lastChangeValue)
-        console.log('shouldUpdate', shouldUpdate, value, this.lastChangeValue)
-        if (shouldUpdate) {
-          // 直接遍历 $children，而不依赖 VNode.componentInstance
-          this.$children.forEach((child, i) => {
-            if (child.$options.name === 'mpx-picker-view-column') {
-              if (!child.pickerView) {
-                child.pickerView = this
-              }
-              if (value[i] !== undefined) {
-                console.log('updating column', i, 'from', child.selectedIndex[0], 'to', value[i])
-                child.selectedIndex.splice(0, 1, value[i])
-              }
+        console.log('setValue called with:', value)
+        // 标记这是外部更新，计算需要wheelTo的列数
+        this.isExternalUpdate = true
+        this.pendingWheelToCount = 0
+
+        // 先统计需要wheelTo的列数
+        this.$children.forEach((child, i) => {
+          if (child.$options.name === 'mpx-picker-view-column' && value[i] !== undefined) {
+            const currentActualIndex = child.wheel && child.wheel.getSelectedIndex() || 0
+            if (value[i] !== currentActualIndex) {
+              this.pendingWheelToCount = this.pendingWheelToCount + 1
             }
-          })
+          }
+        })
+
+        console.log('setValue pendingWheelToCount:', this.pendingWheelToCount)
+
+        // 直接遍历 $children，更新值
+        this.$children.forEach((child, i) => {
+          if (child.$options.name === 'mpx-picker-view-column') {
+            if (!child.pickerView) {
+              child.pickerView = this
+            }
+            if (value[i] !== undefined) {
+              console.log('updating column', i, 'from', child.selectedIndex[0], 'to', value[i])
+              child.selectedIndex.splice(0, 1, value[i])
+            }
+          }
+        })
+
+        // 如果没有需要wheelTo的列，立即重置状态
+        if (this.pendingWheelToCount === 0) {
+          this.isExternalUpdate = false
         }
       },
       getValue() {
@@ -120,26 +137,16 @@
         return value
       },
       notifyChange() {
-        // 清除之前的定时器
-        if (this.changeTimer) {
-          clearTimeout(this.changeTimer)
+        // 如果是外部更新引起的滚动，不触发 change 事件
+        if (this.isExternalUpdate) {
+          console.log('skip notifyChange during external update')
+          return
         }
-        
-        // 延迟触发 change 事件，避免频繁触发
-        this.changeTimer = setTimeout(() => {
-          const value = this.getValue()
-          // 记录本次change事件的值，使用JSON深拷贝避免响应式对象影响比较
-          this.lastChangeValue = JSON.parse(JSON.stringify(value))
-          this.$emit('change', getCustomEvent('change', { value }, this))
-          this.changeTimer = null
-        }, 150) // 150ms 延迟，可以根据需要调整
+        const value = this.getValue()
+        console.log('notifyChange column', value)
+        this.$emit('change', getCustomEvent('change', { value }, this))
       },
       notifyPickstart() {
-        // 用户开始滚动时，取消待触发的 change 事件
-        if (this.changeTimer) {
-          clearTimeout(this.changeTimer)
-          this.changeTimer = null
-        }
         this.$emit('pickstart', getCustomEvent('pickstart', {}, this))
       },
       notifyPickend() {
@@ -150,16 +157,20 @@
         this.indicatorMaskHeight = this.$refs.indicatorMask.offsetHeight
         this.maskHeight = (containerHeight - this.indicatorMaskHeight) / 2
       },
-      arraysEqual(a, b) {
-        if (!a || !b) return false
-        if (a.length !== b.length) return false
-        return a.every((val, index) => val === b[index])
-      }
-    },
-    beforeDestroy() {
-      // 清理定时器
-      if (this.changeTimer) {
-        clearTimeout(this.changeTimer)
+      onWheelToComplete() {
+        this.pendingWheelToCount = this.pendingWheelToCount - 1
+        console.log('wheelTo complete, remaining:', this.pendingWheelToCount)
+
+        // 所有 wheelTo 都完成了，触发 change 事件并重置状态
+        if (this.pendingWheelToCount <= 0) {
+          this.isExternalUpdate = false
+          console.log('all wheelTo completed, external update finished')
+
+          // 外部更新完成后，触发一次 change 事件
+          const value = this.getValue()
+          this.$emit('change', getCustomEvent('change', { value }, this))
+          console.log('external update change event:', value)
+        }
       }
     }
   }
