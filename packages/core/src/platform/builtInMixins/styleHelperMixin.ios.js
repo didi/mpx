@@ -144,7 +144,6 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const time = Date.now()
         const classMap = this.__getClassMap?.() || {}
         const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
@@ -178,8 +177,6 @@ export default function styleHelperMixin () {
         }
 
         const result = Object.assign({}, layerMap.preflight, layerMap.unoNormal, layerMap.normal, layerMap.important)
-
-        console.log('__getStyle', time - Date.now())
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
