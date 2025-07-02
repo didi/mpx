@@ -461,7 +461,6 @@ function getLayoutData (headerHeight) {
 
 export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom ({ navigation, route, ...props }) {
-    const rootRef = useRef(null)
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
     const currentPageId = useMemo(() => ++pageId, [])
