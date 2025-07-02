@@ -52,7 +52,7 @@ RecordFileUrlDependency.Template = class RecordFileUrlDependencyTemplate {
     }
 
     compliation.__mpx__.rnExternalRequests.add(relativePath)
-    source.replace(range[0], range[1] - 1, JSON.stringify(relativePath))
+    source.replace(range[0], range[1] - 1, `require(${JSON.stringify(relativePath)})`)
   }
 }
 

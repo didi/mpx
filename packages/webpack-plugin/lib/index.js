@@ -1384,7 +1384,7 @@ class MpxWebpackPlugin {
           }
         })
 
-        parser.hooks.call.for('__mpx_rn_resolve_url_path_').tap('MpxWebpackPlugin', (expr) => {
+        parser.hooks.call.for('__mpx_rn_require_external_asset__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
           args.unshift(expr.range)
 
