@@ -89,12 +89,6 @@ const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
   )
 }
 
-const LayoutView = (props: LayoutViewProps) => {
-  return (
-    <View style={{ flex: 1 }} collapsable={false}>{props.children}</View>
-  )
-}
-
 const DefaultLoading = () => {
   return (
     <View style={styles.container}>
@@ -175,7 +169,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     if (type === 'page') {
       const Fallback =
         (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
-      return createElement(LayoutView, null, createElement(Fallback, { onReload: reloadPage }))
+      return createElement(View, { collapsable: false, style: { flex: 1 } }, createElement(Fallback, { onReload: reloadPage }))
     } else {
       return createElement(fallback, innerProps)
     }
@@ -184,7 +178,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
       loadChunkPromise.current = getChildren()
     }
     if (type === 'page') {
-      return createElement(LayoutView, null, createElement(loading || DefaultLoading))
+      return createElement(View, { collapsable: false, style: { flex: 1 } }, createElement(loading || DefaultLoading))
     } else {
       return createElement(fallback, innerProps)
     }
