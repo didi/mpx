@@ -25,12 +25,14 @@ class RecordFileUrlDependency extends NullDependency {
   serialize (context) {
     const { write } = context
     write(this.url)
+    write(this.range)
     super.serialize(context)
   }
 
   deserialize (context) {
     const { read } = context
     this.url = read()
+    this.range = read()
     super.deserialize(context)
   }
 }
@@ -49,6 +51,7 @@ RecordFileUrlDependency.Template = class RecordFileUrlDependencyTemplate {
       relativePath = './' + relativePath
     }
 
+    compliation.__mpx__.rnExternalRequests.add(relativePath)
     source.replace(range[0], range[1] - 1, JSON.stringify(relativePath))
   }
 }
