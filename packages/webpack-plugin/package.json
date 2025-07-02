@@ -79,7 +79,7 @@
   "scripts": {
     "test": "jest",
     "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
-    "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
+    "tsc:build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
   },
   "devDependencies": {
     "@d11/react-native-fast-image": "^8.6.12",
