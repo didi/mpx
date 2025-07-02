@@ -2475,10 +2475,8 @@ function getVirtualHostRoot (options, meta) {
         return rootView
       }
     }
-    if (ctorType === 'page') {
-      if (isWeb(mode)) {
-        return createASTElement('page')
-      }
+    if (isWeb(mode) && ctorType === 'page') {
+      return createASTElement('page')
     }
   }
   return getTempNode()
