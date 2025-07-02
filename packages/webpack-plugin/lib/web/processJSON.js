@@ -10,7 +10,7 @@ const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const { RESOLVE_IGNORED_ERR, EXTEND_COMPONENTS_LIST } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
 module.exports = function (jsonContent, {
@@ -30,7 +30,8 @@ module.exports = function (jsonContent, {
     mode,
     srcMode,
     env,
-    projectRoot
+    projectRoot,
+    useExtendComponents = {}
   } = mpx
 
   const context = loaderContext.context
@@ -100,6 +101,18 @@ module.exports = function (jsonContent, {
 
     if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
+    } else {
+      if (useExtendComponents[mode]) {
+        const extendComponents = {}
+        useExtendComponents[mode].forEach((name) => {
+          if (EXTEND_COMPONENTS_LIST[mode].includes(name)) {
+            extendComponents[name] = require.resolve(`../runtime/components/web/mpx-${name}.vue`)
+          } else {
+            emitWarning(`extend component ${name} is not supported in ${mode} environment!`)
+          }
+        })
+        jsonObj.usingComponents = Object.assign({}, extendComponents, jsonObj.usingComponents)
+      }
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)
