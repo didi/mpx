@@ -461,7 +461,6 @@ function getLayoutData (headerHeight) {
 
 export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom ({ navigation, route, ...props }) {
-    const rootRef = useRef(null)
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
     const currentPageId = useMemo(() => ++pageId, [])
@@ -508,36 +507,25 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
     return withKeyboardAvoidingView(
-      createElement(ReactNative.View,
-        {
-          style: {
-            flex: 1,
-            backgroundColor: currentPageConfig?.backgroundColor || '#fff',
-            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
-            overflow: 'hidden'
-          },
-          ref: rootRef
-        },
         createElement(RouteContext.Provider,
-          {
-            value: routeContextValRef.current
-          },
-          createElement(IntersectionObserverContext.Provider,
             {
-              value: intersectionObservers.current
+              value: routeContextValRef.current
             },
-            createElement(PortalHost,
-              null,
-              createElement(WrappedComponent, {
-                ...props,
-                navigation,
-                route,
-                id: currentPageId
-              })
+            createElement(IntersectionObserverContext.Provider,
+                {
+                  value: intersectionObservers.current
+                },
+                createElement(PortalHost,
+                    null,
+                    createElement(WrappedComponent, {
+                      ...props,
+                      navigation,
+                      route,
+                      id: currentPageId
+                    })
+                )
             )
-          )
         )
-      )
     )
   }
 }
