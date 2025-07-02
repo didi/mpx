@@ -59,7 +59,7 @@
     watch: {
       value: {
         handler(newVal) {
-          console.log('column set value==', newVal)
+          // console.log('column set value', newVal)
           this.setValue(newVal)
         },
         deep: true
@@ -89,7 +89,7 @@
     },
     methods: {
       setValue(value) {
-        console.log('setValue called with:', value)
+        // console.log('setValue called with:', value)
         // 标记这是外部更新，计算需要wheelTo的列数
         this.isExternalUpdate = true
         this.pendingWheelToCount = 0
@@ -104,7 +104,7 @@
           }
         })
 
-        console.log('setValue pendingWheelToCount:', this.pendingWheelToCount)
+        // console.log('setValue pendingWheelToCount:', this.pendingWheelToCount)
 
         // 直接遍历 $children，更新值
         this.$children.forEach((child, i) => {
@@ -113,8 +113,8 @@
               child.pickerView = this
             }
             if (value[i] !== undefined) {
-              console.log('updating column', i, 'from', child.selectedIndex[0], 'to', value[i])
-              child.selectedIndex.splice(0, 1, value[i])
+              // console.log('updating column', i, 'from', child.selectedIndex, 'to', value[i])
+              this.$set(child, 'selectedIndex', value[i])
             }
           }
         })
@@ -139,11 +139,11 @@
       notifyChange() {
         // 如果是外部更新引起的滚动，不触发 change 事件
         if (this.isExternalUpdate) {
-          console.log('skip notifyChange during external update')
+          // console.log('skip notifyChange during external update')
           return
         }
         const value = this.getValue()
-        console.log('notifyChange column', value)
+        // console.log('notifyChange column', value)
         this.$emit('change', getCustomEvent('change', { value }, this))
       },
       notifyPickstart() {
@@ -159,17 +159,17 @@
       },
       onWheelToComplete() {
         this.pendingWheelToCount = this.pendingWheelToCount - 1
-        console.log('wheelTo complete, remaining:', this.pendingWheelToCount)
+        // console.log('wheelTo complete, remaining:', this.pendingWheelToCount)
 
         // 所有 wheelTo 都完成了，触发 change 事件并重置状态
         if (this.pendingWheelToCount <= 0) {
           this.isExternalUpdate = false
-          console.log('all wheelTo completed, external update finished')
+          // console.log('all wheelTo completed, external update finished')
 
           // 外部更新完成后，触发一次 change 事件
           const value = this.getValue()
           this.$emit('change', getCustomEvent('change', { value }, this))
-          console.log('external update change event:', value)
+          // console.log('external update change event:', value)
         }
       }
     }

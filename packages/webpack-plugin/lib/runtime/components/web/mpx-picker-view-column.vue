@@ -16,8 +16,7 @@
   export default {
     name: 'mpx-picker-view-column',
     inject: ['indicatorMaskHeight'],
-    props: {
-      value: Array,
+      props: {
       scrollOptions: {
         type: Object,
         default: () => {
@@ -28,20 +27,19 @@
     data() {
       return {
         wheel: null,
-        selectedIndex: [0],
+        selectedIndex: 0,
         currentIndicatorMaskHeight: 0,
         childrenCount: 0
       }
     },
     watch: {
       selectedIndex(newVal, oldVal) {
-        console.log('selectedIndex changed from', oldVal, 'to', newVal)
+        // console.log('selectedIndex changed from', oldVal, 'to', newVal)
+        // console.log('currentIndex', this.wheel.getSelectedIndex())
         if (this.wheel) {
-          const currentActualIndex = this.wheel.getSelectedIndex()[0] || 0
-          console.log('wheelTo', newVal[0], 'from actual:', currentActualIndex)
           this.$nextTick(() => {
             this.wheel.refresh()
-            this.wheel.wheelTo(newVal[0])
+            this.wheel.wheelTo(newVal)
 
             // 通知 picker-view wheelTo 完成
             this.$nextTick(() => {
@@ -101,7 +99,7 @@
           }
           this.wheel = new BScroll(wheelWrapper, extend({
             wheel: {
-              selectedIndex: this.selectedIndex[0],
+              selectedIndex: this.selectedIndex,
               rotate: -5,
               wheelWrapperClass: 'wheel-scroll'
             },
@@ -114,7 +112,7 @@
             }
           }.bind(this))
           this.wheel.on('scrollEnd', function () {
-            console.log('scrollEnd', this.refreshing)
+            // console.log('scrollEnd', this.refreshing)
             if (this.refreshing) return
             if (this.pickerView) {
               this.pickerView.notifyChange()
