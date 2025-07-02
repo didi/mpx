@@ -61,7 +61,6 @@
       }
     },
     mounted() {
-      this.wheel = null
       this.childrenCount = this.$refs.wheelScroll ? this.$refs.wheelScroll.children.length : 0
       this.setColumnHeight()
       this.refresh()
@@ -76,10 +75,11 @@
     beforeDestroy() {
       if (this.wheel) {
         this.wheel.destroy()
+        this.wheel = null
       }
     },
     methods: {
-      setColumnHeight(height) {
+      setColumnHeight() {
         for (let i = 0; i < this.$refs.wheelScroll.children.length; i++) {
           if (this.currentIndicatorMaskHeight) {
             this.$refs.wheelScroll.children[i].style.height = this.currentIndicatorMaskHeight + 'px'
@@ -88,16 +88,15 @@
       },
       refresh() {
         if (this.refreshing) return
-
         this.refreshing = true
         this.$nextTick(() => {
-          const wheelWrapper = this.$refs.wheelWrapper
           if (this.wheel) {
             this.wheel.refresh()
             this.refreshing = false
             return
           }
-          this.wheel = new BScroll(wheelWrapper, extend({
+
+          this.wheel = new BScroll(this.$refs.wheelWrapper, extend({
             wheel: {
               selectedIndex: this.selectedIndex,
               rotate: -5,
@@ -106,19 +105,22 @@
             probeType: 3,
             bindToWrapper: true
           }, this.scrollOptions))
-          this.wheel.on('scrollStart', function () {
+
+          this.wheel.on('scrollStart', () => {
             if (this.pickerView) {
               this.pickerView.notifyPickstart()
             }
-          }.bind(this))
-          this.wheel.on('scrollEnd', function () {
+          })
+
+          this.wheel.on('scrollEnd', () => {
             // console.log('scrollEnd', this.refreshing)
             if (this.refreshing) return
             if (this.pickerView) {
               this.pickerView.notifyChange()
               this.pickerView.notifyPickend()
             }
-          }.bind(this))
+          })
+
           this.refreshing = false
         })
       }
