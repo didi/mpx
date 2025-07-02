@@ -2461,18 +2461,18 @@ function getVirtualHostRoot (options, meta) {
       }
       if (isReact(mode) && !hasVirtualHost) {
         const tagName = isCustomText ? 'text' : 'view'
-          const rootView = createASTElement(tagName, [
-            {
-              name: 'class',
-              value: `${MPX_ROOT_VIEW} host-${moduleId}`
-            },
-            {
-              name: 'ishost',
-              value: '{{true}}'
-            }
-          ])
-          processElement(rootView, rootView, options, meta)
-          return rootView
+        const rootView = createASTElement(tagName, [
+          {
+            name: 'class',
+            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+          },
+          {
+            name: 'ishost',
+            value: '{{true}}'
+          }
+        ])
+        processElement(rootView, rootView, options, meta)
+        return rootView
       }
     }
     if (ctorType === 'page') {
