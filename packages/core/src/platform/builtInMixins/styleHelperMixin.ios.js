@@ -161,7 +161,7 @@ export default function styleHelperMixin () {
               mergeToLayer(layerMap, classMap[className].__layer, classMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              mergeToLayer(layerMap, classMap[className].__layer, classMap[className])
+              mergeToLayer(layerMap, appClassMap[className].__layer, appClassMap[className])
             } else if (unoClassMap[className]) {
               const nuoClass = unoClassMap[className]
               mergeToLayer(layerMap, 'unoNormal', nuoClass)

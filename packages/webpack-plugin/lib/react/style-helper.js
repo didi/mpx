@@ -43,7 +43,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
     const classMapValue = {}
     const prev = rule.prev()
     let layer
-    if (prev && prev.type === 'comment' && prev.text.includes('layer:')) {
+    if (prev && prev.type === 'comment' && prev.text.includes('rn-layer:')) {
       layer = JSON.stringify(prev.text.split(':')[1].trim())
     }
 
