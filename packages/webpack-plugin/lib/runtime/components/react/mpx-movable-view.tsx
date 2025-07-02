@@ -75,6 +75,7 @@ interface MovableViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'disable-event-passthrough'?: boolean
 }
 
 const styles = StyleSheet.create({
@@ -112,6 +113,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     direction = 'none',
+    'disable-event-passthrough': disableEventPassthrough = false,
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
@@ -815,10 +817,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .withRef(movableGestureRef)
 
-    if (direction === 'horizontal') {
-      gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
-    } else if (direction === 'vertical') {
-      gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
+    if (!disableEventPassthrough) {
+      if (direction === 'horizontal') {
+        gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
+      } else if (direction === 'vertical') {
+        gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
+      }
     }
 
     if (simultaneousHandlers && simultaneousHandlers.length) {
