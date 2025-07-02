@@ -6,5 +6,13 @@ module.exports = {
   JSON_JS_EXT: '.json.js',
   MPX_ROOT_VIEW: 'mpx-root-view', // 根节点类名
   MPX_APP_MODULE_ID: 'mpx-app-scope', // app文件moduleId
-  PARENT_MODULE_ID: '__pid'
+  PARENT_MODULE_ID: '__pid',
+  EXTEND_COMPONENTS_LIST: {
+    wx: ['recycle-view'],
+    ali: ['recycle-view', 'sticky-header', 'sticky-section'],
+    web: ['recycle-view'],
+    ios: ['recycle-view'],
+    android: ['recycle-view'],
+    harmony: ['recycle-view']
+  } // 扩展组件列表
 }
