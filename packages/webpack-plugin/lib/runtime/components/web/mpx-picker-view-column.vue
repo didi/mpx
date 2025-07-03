@@ -34,8 +34,8 @@
     },
     watch: {
       selectedIndex(newVal, oldVal) {
-        // console.log('selectedIndex changed from', oldVal, 'to', newVal)
-        // console.log('currentIndex', this.wheel.getSelectedIndex())
+        console.log('selectedIndex changed from', oldVal, 'to', newVal)
+        console.log('currentIndex', this.wheel.getSelectedIndex())
         if (this.wheel) {
           this.$nextTick(() => {
             this.wheel.refresh()
@@ -113,8 +113,9 @@
           })
 
           this.wheel.on('scrollEnd', () => {
-            // console.log('scrollEnd', this.refreshing)
+            console.log('scrollEnd', this.refreshing)
             if (this.refreshing) return
+            this.selectedIndex = this.wheel.getSelectedIndex()
             if (this.pickerView) {
               this.pickerView.notifyChange()
               this.pickerView.notifyPickend()

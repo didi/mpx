@@ -96,28 +96,22 @@
 
         // 先统计需要wheelTo的列数
         this.$children.forEach((child, i) => {
-          if (child.$options.name === 'mpx-picker-view-column' && value[i] !== undefined) {
-            const currentActualIndex = child.wheel && child.wheel.getSelectedIndex() || 0
-            if (value[i] !== currentActualIndex) {
-              this.pendingWheelToCount = this.pendingWheelToCount + 1
-            }
-          }
-        })
-
-        // console.log('setValue pendingWheelToCount:', this.pendingWheelToCount)
-
-        // 直接遍历 $children，更新值
-        this.$children.forEach((child, i) => {
           if (child.$options.name === 'mpx-picker-view-column') {
             if (!child.pickerView) {
               child.pickerView = this
             }
             if (value[i] !== undefined) {
-              // console.log('updating column', i, 'from', child.selectedIndex, 'to', value[i])
-              this.$set(child, 'selectedIndex', value[i])
+              const currentActualIndex = child.wheel && child.wheel.getSelectedIndex() || 0
+              if (value[i] !== currentActualIndex) {
+                this.pendingWheelToCount = this.pendingWheelToCount + 1
+                this.$set(child, 'selectedIndex', value[i])
+                console.log('pendingWheelToCount incremented for column==', i, 'from', currentActualIndex, 'to', value[i], child.selectedIndex)
+              }
             }
           }
         })
+
+        console.log('setValue pendingWheelToCount:', this.pendingWheelToCount)
 
         // 如果没有需要wheelTo的列，立即重置状态
         if (this.pendingWheelToCount === 0) {
@@ -139,7 +133,7 @@
       notifyChange() {
         // 如果是外部更新引起的滚动，不触发 change 事件
         if (this.isExternalUpdate) {
-          // console.log('skip notifyChange during external update')
+          console.log('skip notifyChange during external update')
           return
         }
         const value = this.getValue()
@@ -159,7 +153,7 @@
       },
       onWheelToComplete() {
         this.pendingWheelToCount = this.pendingWheelToCount - 1
-        // console.log('wheelTo complete, remaining:', this.pendingWheelToCount)
+        console.log('wheelTo complete, remaining:', this.pendingWheelToCount)
 
         // 所有 wheelTo 都完成了，触发 change 事件并重置状态
         if (this.pendingWheelToCount <= 0) {
@@ -169,7 +163,7 @@
           // 外部更新完成后，触发一次 change 事件
           const value = this.getValue()
           this.$emit('change', getCustomEvent('change', { value }, this))
-          // console.log('external update change event:', value)
+          console.log('external update change event:', value)
         }
       }
     }
