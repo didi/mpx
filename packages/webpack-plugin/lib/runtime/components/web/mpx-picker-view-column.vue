@@ -41,8 +41,11 @@
           
           // 只有当目标值与实际位置不同时才执行wheelTo
           if (newVal !== currentIndex) {
-            console.log('wheelTo from', currentIndex, 'to', newVal)
-            this.wheel.wheelTo(newVal)
+            this.$nextTick(() => {
+              console.log('wheelTo from', currentIndex, 'to', newVal)
+              this.wheel.refresh()
+              this.wheel.wheelTo(newVal)
+            })
           }
         }
       },
