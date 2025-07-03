@@ -656,7 +656,8 @@ Mpx 输出 React Native 支持以下模版指令。
 | enhanced                | Boolean | `false`   | scroll-view 组件功能增强                             |
 | refresher-enabled       | Boolean | `false`   | 开启自定义下拉刷新                                    |
 | scroll-anchoring        | Boolean | `false`   | 开启滚动区域滚动锚点                                   |
-| scroll-into-view	        | Boolean | `false` | 值应为某子元素id（id不能以数字开头）                               |
+| scroll-into-view	      | Boolean | `false` | 值应为某子元素id（id不能以数字开头）                               |
+|	scroll-into-view-offset	| Number | `0` | 跳转到 scroll-into-view 目标节点时的额外偏移                               |
 | refresher-default-style | String  | `'black'` | 设置下拉刷新默认样式,支持 `black`、`white`、`none`，仅安卓支持 |
 | refresher-background    | String  | `'#fff'`  | 设置自定义下拉刷新背景颜色，仅安卓支持                         |
 | refresher-triggered     | Boolean | `false`   | 设置当前下拉刷新状态,true 表示已触发               |
@@ -681,10 +682,9 @@ Mpx 输出 React Native 支持以下模版指令。
 
 注意事项
 
-1. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
-2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动
-3. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
-4. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
+1. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动
+2. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
+3. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 
 
 #### swiper
