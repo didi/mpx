@@ -730,9 +730,16 @@ Mpx 输出 React Native 支持以下模版指令。
 #### movable-area
 movable-view的可移动区域。
 
+属性
+
+| 属性名                   | 类型     | 默认值              | 说明                                 |
+| ----------------------- | ------- | ------------------  | ------------------------------------|
+| scale-area        | Boolean  | false  | 当里面的movable-view设置为支持双指缩放时，设置此值可将缩放手势生效区域修改为整个movable-area  |
+
 注意事项
 
-1. movable-area不支持设置 scale-area
+1. movable-area 必须设置 width 和 height 属性，不设置默认为10
+2. RN 环境缩放能力仅 React Native 0.73 及以上版本支持
 
 #### movable-view
 可移动的视图容器，在页面中可以拖拽滑动。movable-view 必须在 movable-area 组件中，并且必须是直接子节点，否则不能移动。
@@ -750,6 +757,10 @@ movable-view的可移动区域。
 | friction  | Number  |    7    | 摩擦系数 |
 | disabled  | boolean  |    false    | 是否禁用 |
 | animation  | boolean  |    true    | 是否使用动画	 |
+| scale  | boolean  |    false    | 是否支持双指缩放，默认缩放手势生效区域是在movable-view内	 |
+| scale-min  | number  |    0.1    | 定义缩放倍数最小值	 |
+| scale-max  | number  |    10    | 定义缩放倍数最大值	 |
+| scale-value  | number  |    1    | 定义缩放倍数，取值范围为 0.1 - 10	 |
 | simultaneous-handlers  | `Array<object>`  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | wait-for  |  `Array<object>`  |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | disable-event-passthrough | boolean  |  false   | RN 环境特有属性，有时候我们希望movable-view 在水平方向滑动，并且竖直方向的手势也希望被 movable-view 组件消费掉，不被其他组件响应，可以将这个属性设置为true） |
@@ -761,13 +772,14 @@ movable-view的可移动区域。
 | bindchange        | 拖动过程中触发的事件，`event.detail = {x, y, source}` |
 | htouchmove          | 初次手指触摸后移动为横向的移动时触发 |
 | vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
+| bindscale    | 缩放过程中触发的事件          |
 
 
 注意事项
 
 1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 2. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
-3. RN 环境 movable 相关组件暂不支持缩放能力
+3. RN 环境缩放能力仅 React Native 0.73 及以上版本支持
    
 #### root-portal
 使整个子树从页面中脱离出来，类似于在 CSS 中使用 position: fixed 的效果。主要用于制作弹窗、弹出层等。
