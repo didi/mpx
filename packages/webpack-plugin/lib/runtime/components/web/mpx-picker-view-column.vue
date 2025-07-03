@@ -34,20 +34,16 @@
     },
     watch: {
       selectedIndex(newVal, oldVal) {
-        // console.log('selectedIndex changed from', oldVal, 'to', newVal)
-        // console.log('currentIndex', this.wheel.getSelectedIndex())
+        console.log('selectedIndex changed from', oldVal, 'to', newVal)
         if (this.wheel) {
-          this.$nextTick(() => {
-            this.wheel.refresh()
+          const currentIndex = this.wheel.getSelectedIndex()
+          console.log('wheel currentIndex:', currentIndex)
+          
+          // 只有当目标值与实际位置不同时才执行wheelTo
+          if (newVal !== currentIndex) {
+            console.log('wheelTo from', currentIndex, 'to', newVal)
             this.wheel.wheelTo(newVal)
-
-            // 通知 picker-view wheelTo 完成
-            this.$nextTick(() => {
-              if (this.pickerView && this.pickerView.isExternalUpdate) {
-                this.pickerView.onWheelToComplete()
-              }
-            })
-          })
+          }
         }
       },
       indicatorMaskHeight: {
@@ -113,8 +109,15 @@
           })
 
           this.wheel.on('scrollEnd', () => {
-            // console.log('scrollEnd', this.refreshing)
+            console.log('scrollEnd', this.refreshing)
             if (this.refreshing) return
+            
+            // 同步 selectedIndex 与 wheel 状态
+            const currentIndex = this.wheel.getSelectedIndex()
+            if (this.selectedIndex !== currentIndex) {
+              this.selectedIndex = currentIndex
+            }
+            
             if (this.pickerView) {
               this.pickerView.notifyChange()
               this.pickerView.notifyPickend()

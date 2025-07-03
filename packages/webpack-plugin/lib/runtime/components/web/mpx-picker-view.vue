@@ -51,9 +51,7 @@
     data() {
       return {
         maskHeight: 0,
-        indicatorMaskHeight: 0,
-        isExternalUpdate: false,
-        pendingWheelToCount: 0
+        indicatorMaskHeight: 0
       }
     },
     watch: {
@@ -89,40 +87,50 @@
     },
     methods: {
       setValue(value) {
-        // console.log('setValue called with:', value)
-        // 标记这是外部更新，计算需要wheelTo的列数
-        this.isExternalUpdate = true
-        this.pendingWheelToCount = 0
-
-        // 先统计需要wheelTo的列数
-        this.$children.forEach((child, i) => {
-          if (child.$options.name === 'mpx-picker-view-column' && value[i] !== undefined) {
-            const currentActualIndex = child.wheel && child.wheel.getSelectedIndex() || 0
-            if (value[i] !== currentActualIndex) {
-              this.pendingWheelToCount = this.pendingWheelToCount + 1
+        console.log('setValue called with:', value)
+        
+        // 获取当前值进行比较
+        const currentValue = this.getValue()
+        console.log('current value:', currentValue)
+        
+        // 检查是否有值发生变化
+        let hasChanged = false
+        if (!currentValue || currentValue.length !== value.length) {
+          hasChanged = true
+        } else {
+          for (let i = 0; i < value.length; i++) {
+            if (value[i] !== currentValue[i]) {
+              hasChanged = true
+              break
             }
           }
-        })
-
-        // console.log('setValue pendingWheelToCount:', this.pendingWheelToCount)
-
-        // 直接遍历 $children，更新值
+        }
+        
+        console.log('value changed:', hasChanged)
+        
+        // 如果值没有变化，直接返回
+        if (!hasChanged) {
+          console.log('setValue: no change, skip update')
+          return
+        }
+        
+        // 直接更新所有列
         this.$children.forEach((child, i) => {
           if (child.$options.name === 'mpx-picker-view-column') {
             if (!child.pickerView) {
               child.pickerView = this
             }
             if (value[i] !== undefined) {
-              // console.log('updating column', i, 'from', child.selectedIndex, 'to', value[i])
-              this.$set(child, 'selectedIndex', value[i])
+              console.log('updating column', i, 'to', value[i])
+              // 直接设置selectedIndex，让watch处理实际的wheel更新
+              child.selectedIndex = value[i]
             }
           }
         })
-
-        // 如果没有需要wheelTo的列，立即重置状态
-        if (this.pendingWheelToCount === 0) {
-          this.isExternalUpdate = false
-        }
+        
+        // 立即触发change事件，使用目标值
+        this.$emit('change', getCustomEvent('change', { value: value }, this))
+        console.log('setValue completed, target value:', value)
       },
       getValue() {
         let value = []
@@ -137,13 +145,8 @@
         return value
       },
       notifyChange() {
-        // 如果是外部更新引起的滚动，不触发 change 事件
-        if (this.isExternalUpdate) {
-          // console.log('skip notifyChange during external update')
-          return
-        }
         const value = this.getValue()
-        // console.log('notifyChange column', value)
+        console.log('notifyChange with value:', value)
         this.$emit('change', getCustomEvent('change', { value }, this))
       },
       notifyPickstart() {
@@ -156,21 +159,6 @@
         let containerHeight = this.$refs.mpxView.offsetHeight
         this.indicatorMaskHeight = this.$refs.indicatorMask.offsetHeight
         this.maskHeight = (containerHeight - this.indicatorMaskHeight) / 2
-      },
-      onWheelToComplete() {
-        this.pendingWheelToCount = this.pendingWheelToCount - 1
-        // console.log('wheelTo complete, remaining:', this.pendingWheelToCount)
-
-        // 所有 wheelTo 都完成了，触发 change 事件并重置状态
-        if (this.pendingWheelToCount <= 0) {
-          this.isExternalUpdate = false
-          // console.log('all wheelTo completed, external update finished')
-
-          // 外部更新完成后，触发一次 change 事件
-          const value = this.getValue()
-          this.$emit('change', getCustomEvent('change', { value }, this))
-          // console.log('external update change event:', value)
-        }
       }
     }
   }
