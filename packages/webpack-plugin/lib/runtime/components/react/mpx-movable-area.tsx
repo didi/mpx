@@ -60,11 +60,13 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
 
   // 注册/注销 MovableView 的回调
   const registerMovableView = useCallback((id: string, callbacks: { onScale?: (scaleInfo: { scale: number }) => void; onScaleEnd?: () => void }) => {
-    movableViewsValue.value = extendObject(movableViewsValue.value, { [id]: callbacks })
+    movableViewsValue.value = extendObject({}, movableViewsValue.value, { [id]: callbacks })
   }, [])
 
   const unregisterMovableView = useCallback((id: string) => {
-    delete movableViewsValue.value[id]
+    const newValue = extendObject({}, movableViewsValue.value)
+    delete newValue[id]
+    movableViewsValue.value = newValue
   }, [])
 
   // 处理区域缩放手势
