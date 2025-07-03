@@ -1,5 +1,5 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet, Appearance } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
 
 let { width, height } = Dimensions.get('screen')
 
@@ -198,37 +198,6 @@ export default function styleHelperMixin () {
         }
 
         return isEmptyObject(result) ? empty : result
-      },
-      __getDynamicClass (dynamicClass, mediaQueryClass) {
-        return [dynamicClass, this.__getMediaQueryClass(mediaQueryClass)]
-      },
-      __getMediaQueryClass (mediaQueryClass = []) {
-        if (!mediaQueryClass.length) return ''
-        const { width, height } = Dimensions.get('screen')
-        const colorScheme = Appearance.getColorScheme()
-        const { unoBreakpoints } = global.__getUnoClass?.() || {}
-        const { entries = [], entriesMap = {} } = unoBreakpoints
-        return mediaQueryClass.map(([className, querypoints = []]) => {
-          const res = querypoints.every(([prefix = '', point = 0]) => {
-            if (prefix === 'landscape') return width > height
-            if (prefix === 'portrait') return width <= height
-            if (prefix === 'dark') return colorScheme === 'dark'
-            if (prefix === 'light') return colorScheme === 'light'
-            const size = formatValue(entriesMap[point] || point)
-            const index = entries.findIndex(item => item[0] === point)
-            const isGtPrefix = prefix.startsWith('min-')
-            const isLtPrefix = prefix.startsWith('lt-') || prefix.startsWith('<') || prefix.startsWith('max-')
-            const isAtPrefix = prefix.startsWith('at-') || prefix.startsWith('~')
-            if (isGtPrefix) return width > size
-            if (isLtPrefix) return width < size
-            if (isAtPrefix && (index && index < entries.length - 1)) {
-              return width >= size && width < formatValue(entries[index + 1][1])
-            }
-            return width > size
-          })
-
-          return res ? className : ''
-        })
       }
     }
   }
