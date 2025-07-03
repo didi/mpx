@@ -149,7 +149,7 @@ export default function styleHelperMixin () {
         const appClassMap = global.__getAppClassMap?.() || {}
         const layerMap = {
           'preflight': {},
-          'unoNormal': {},
+          'uno': {},
           'normal': {},
           'important': {}
         }
@@ -164,7 +164,8 @@ export default function styleHelperMixin () {
               mergeToLayer(layerMap, appClassMap[className].__layer, appClassMap[className])
             } else if (unoClassMap[className]) {
               const nuoClass = unoClassMap[className]
-              mergeToLayer(layerMap, 'unoNormal', nuoClass)
+              const importantClass = className.endsWith('!')
+              mergeToLayer(layerMap, importantClass ? 'important': 'uno', nuoClass)
               needAddUnoPreflight = !!(nuoClass.transform || nuoClass.filter)
             } else if (unoVarClassMap[className]) {
               mergeToLayer(layerMap, 'important', unoVarClassMap[className])
@@ -176,7 +177,7 @@ export default function styleHelperMixin () {
           if (needAddUnoPreflight) mergeToLayer(layerMap, 'preflight',  unoPreflightsClassMap)
         }
 
-        const result = Object.assign({}, layerMap.preflight, layerMap.unoNormal, layerMap.normal, layerMap.important)
+        const result = Object.assign({}, layerMap.preflight, layerMap.uno, layerMap.normal, layerMap.important)
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
