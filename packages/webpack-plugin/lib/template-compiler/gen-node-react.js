@@ -40,7 +40,7 @@ function mapAttrName (name) {
   return name
 }
 
-function genNode (node) {
+function genNode (node, isRoot = false) {
   let exp = ''
   if (node) {
     if (node.type === 3) {
@@ -97,7 +97,7 @@ function genNode (node) {
         const nodes = node.children.map((child) => {
           return genNode(child)
         }).filter(fragment => fragment && fragment !== 'null')
-        if (!exp && nodes.length > 1) {
+        if (isRoot && nodes.length > 1) {
           // 如果存在多个根节点，使用 block 包裹
           exp = `createElement(getComponent("block"), null, ${nodes.join(',')})`
         } else {
