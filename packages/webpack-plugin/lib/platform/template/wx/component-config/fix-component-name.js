@@ -1,4 +1,4 @@
-const { isOriginTag, isBuildInTag } = require('../../../../utils/dom-tag-config')
+const { isOriginTag, isBuildInWebTag } = require('../../../../utils/dom-tag-config')
 
 module.exports = function () {
   const handleComponentTag = (el, data) => {
@@ -16,7 +16,7 @@ module.exports = function () {
     waterfall: true,
     skipNormalize: true,
     supportedModes: ['web', 'ios', 'android', 'harmony'],
-    test: (input) => isOriginTag(input) || isBuildInTag(input),
+    test: (input) => isOriginTag(input) || isBuildInWebTag(input),
     web: handleComponentTag,
     ios: handleComponentTag,
     android: handleComponentTag,
