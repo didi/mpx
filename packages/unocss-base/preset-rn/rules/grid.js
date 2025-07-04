@@ -1,1 +1,3 @@
-export { grids } from '@unocss/preset-mini/rules'
+import { grids } from '@unocss/preset-mini/rules'
+
+export { grids as blockGrids }

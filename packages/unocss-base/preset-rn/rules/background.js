@@ -1,4 +1,4 @@
-const backgroundStyles = [
+const blockBackgroundStyles = [
   // attachments
   'bg-fixed',
   'bg-locale',
@@ -20,4 +20,4 @@ const backgroundStyles = [
   'bg-clip-text'
 ]
 
-export { backgroundStyles }
+export { blockBackgroundStyles }

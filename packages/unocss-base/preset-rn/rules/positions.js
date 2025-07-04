@@ -9,7 +9,7 @@ import {
 
 const unSupport = ['sticky']
 
-const positionsRules = positions.map(([rule]) => (raw) => {
+const blockPositions = positions.map(([rule]) => (raw) => {
   const result = raw.match(rule)
   if (result && unSupport.includes(result[1])) {
     return true
@@ -17,7 +17,7 @@ const positionsRules = positions.map(([rule]) => (raw) => {
 })
 
 // 不支持的规则过滤覆盖
-const justifiesRules = [
+const blockJustifies = [
   'justify-left',
   'justify-right',
   'justify-stretch',
@@ -32,23 +32,23 @@ const justifiesRules = [
   'justify-self-start'
 ]
 
-const flexGridJustifiesAlignments = [
+const blockFlexGridJustifiesAlignments = [
   // flex部分不支持
-  ...[...justifiesRules, ...placements].map((k) => `flex-${k}`),
+  ...[...blockJustifies, ...placements].map((k) => `flex-${k}`),
   // grid全部不支持
   ...[...justifies, ...alignments, ...placements].map((k) => `grid-${k}`)
 ]
 
-const boxSizing = [
+const blockBoxSizing = [
   'box-content'
 ]
 
 export {
-  positionsRules as positions,
-  justifiesRules as justifies,
-  orders,
-  placements,
-  flexGridJustifiesAlignments,
-  floats,
-  boxSizing
+  blockPositions,
+  blockJustifies,
+  orders as blockOrders,
+  placements as blockPlacements,
+  blockFlexGridJustifiesAlignments,
+  floats as blockFloats,
+  blockBoxSizing
 }

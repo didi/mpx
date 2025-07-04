@@ -1,1 +1,1 @@
-export { divides } from '@unocss/preset-wind3/rules'
+export { divides as blockDivides } from '@unocss/preset-wind3/rules'

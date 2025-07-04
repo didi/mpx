@@ -12,7 +12,7 @@ const unSupport = [
   'inline'
 ]
 
-const paddingAndMargins = [...paddings, ...margins].map(([rule]) => (raw) => {
+const blockPaddingAndMargins = [...paddings, ...margins].map(([rule]) => (raw) => {
   const result = raw.match(rule)
   if (result && unSupport.includes(result[1])) {
     return true
@@ -20,6 +20,6 @@ const paddingAndMargins = [...paddings, ...margins].map(([rule]) => (raw) => {
 })
 
 export {
-  paddingAndMargins,
-  spaces
+  blockPaddingAndMargins,
+  spaces as blockSpaces
 }

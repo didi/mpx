@@ -1,3 +1,3 @@
 import { globalKeywords } from '../../utils/index'
 
-export const globalRules = globalKeywords.map((v) => [new RegExp(`.*-${v}$`)])
+export const blockGlobalRules = globalKeywords.map((v) => [new RegExp(`.*-${v}$`)])

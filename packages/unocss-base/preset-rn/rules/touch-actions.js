@@ -1,1 +1,1 @@
-export { touchActions } from '@unocss/preset-wind3/rules'
+export { touchActions as blockTouchActions } from '@unocss/preset-wind3/rules'
