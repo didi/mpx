@@ -1217,7 +1217,7 @@ API
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| src	    | String  |               | webview 指向网页的链接，如果需要对跳转的URL设定白名单可跳转，需要在业务跳转之前出来该逻辑
+| src	    | string  |               | webview 指向网页的链接，如果需要对跳转的URL设定白名单可跳转，需要在业务跳转之前出来该逻辑
 | bindmessage	    | EventHandler  |               | 网页向RN通过 postMessage 传递数据
 | bindload	    | EventHandler  |               | 网页加载成功时候触发此事件
 | binderror	    | EventHandler  |               | 网页加载失败的时候触发此事件
@@ -1226,6 +1226,69 @@ API
 注意事项
 
 1. web-view网页中可使用@mpxjs/webview-bridge@2.9.68版本提供的接口返回RN页面或与RN页面通信，具体使用细节可以参见[Webview API](#webview-api)
+
+
+
+#### video
+视频
+
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| src	    | string  |               | 要播放视频的资源地址|
+| controls	    | boolean  |     true          | 是否显示默认播放控件|
+| autoplay	    | boolean  |   false  | 是否自动播放|
+| loop	    | boolean  |       false        | 是否循环播放	|
+| muted	    | boolean  |        false       | 是否静音播放|
+| initial-time	    | number  |     0          | 指定视频初始播放位置|
+| object-fit  | string  |      contain         | 当视频大小与 video 容器大小不一致时，视频的表现形式|
+| poster	    | string  |               | 视频封面的图片地址|
+| enable-auto-rotation	    | boolean  |         false      | 是否开启手机横屏时自动全屏，当系统设置开启自动旋转时生效，仅 ios 支持|
+| preferred-peak-bit-rate	    | number  |               | 指定码率上界，单位为比特每秒|
+
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindplay       |  当开始/继续播放时触发play事件   |
+| bindpause       |  当暂停播放时触发 pause 事件	   |
+| bindended       |  当播放到末尾时触发 ended 事件   |
+| bindtimeupdate       |  播放进度变化时触发，`event.detail = {currentTime, duration}`   |
+| bindfullscreenchange       |  视频进入和退出全屏时触发，`event.detail = {fullScreen` }   |
+| bindwaiting       |  视频出现缓冲时触发   |
+| binderror       |  视频播放出错时触发	   |
+| bindloadedmetadata       |  视频元数据加载完成时触发。`event.detail = {width, height, duration}`   |
+| bindcontrolstoggle       |  切换 controls 显示隐藏时触发。`event.detail = {show}`	   |
+| bindseekcomplete       |  seek 完成时触发    |
+
+注意事项
+1. 手动拖拽进度条场景，bindseekcomplete 事件，android 可以触发，ios 不支持
+
+
+#### sticky-section
+吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
+
+#### sticky-header
+吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| offset-top	    | number  |    0      | 吸顶时与顶部的距离 |
+| padding	    | `Array`  |     [0, 0, 0, 0]          | 长度为 4 的数组，按 top、right、bottom、left 顺序指定内边距 |
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindstickontopchange      |  吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false   |
+
+
+
 
 #### 自定义组件
 创建自定义组件在 RN 环境下部分实例方法、属性存在兼容性问题不支持，
