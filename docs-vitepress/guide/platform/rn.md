@@ -1271,6 +1271,9 @@ API
 #### sticky-section
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
 
+注意事项
+1. sticky-section 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
+
 #### sticky-header
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
 
@@ -1287,6 +1290,8 @@ API
 | ----------------| --------------------------------------------------- |
 | bindstickontopchange      |  吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false   |
 
+注意事项
+1. sticky-header 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
 
 
 
