@@ -16,6 +16,7 @@ const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb } = require('../utils/env')
+const getTemplateContent = require('../utils/get-template-content')
 
 const no = function () {
   return false
@@ -639,7 +640,7 @@ function parse (template, options) {
   componentGenerics = options.componentGenerics || {}
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
-  usingComponents = Object.keys(options.usingComponentsInfo)
+  usingComponents = Object.keys(options.usingComponentsInfo || {})
   usingComponentsInfo = options.usingComponentsInfo
 
   const _warn = content => {
@@ -662,6 +663,7 @@ function parse (template, options) {
     srcMode,
     type: 'template',
     testKey: 'tag',
+    moduleId,
     data: {
       usingComponents
     },
@@ -690,6 +692,7 @@ function parse (template, options) {
     root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
   }
+  options.template = template // processTemplate时需要对template(只用于处理含name的情况)做截取
 
   parseHTML(template, {
     warn: warn$1,
@@ -722,6 +725,7 @@ function parse (template, options) {
 
       currentParent.children.push(element)
       element.parent = currentParent
+
       processElement(element, root, options, meta)
 
       tagNames.add(element.tag)
@@ -1427,7 +1431,6 @@ function processEvent (el, options) {
           }
         }
       })
-
       addAttrs(el, [
         {
           name: resultName || config[mode].event.getEvent(type),
@@ -1461,6 +1464,13 @@ function processSlotReact (el, meta) {
 
 function wrapMustache (val) {
   return val && !tagRE.test(val) ? `{{${val}}}` : val
+}
+
+function vbindMustache (val) {
+  const bindREG = /\{\{((?:.|\n|\r|\.{3})+?)\}\}(?!})/
+  const match = bindREG.exec(val) || []
+  const matchStr = match[1]?.trim()
+  return matchStr ? `{${matchStr}}` : val
 }
 
 function parseOptionalChaining (str) {
@@ -2303,7 +2313,7 @@ function processExternalClasses (el, options) {
     let classNames = classLikeAttrValue.split(/\s+/)
     let hasExternalClass = false
     classNames = classNames.map((className) => {
-      if (options.externalClasses.includes(className)) {
+      if (options.externalClasses?.includes(className)) {
         hasExternalClass = true
         return `($attrs[${stringify(className)}] || '')`
       }
@@ -2347,11 +2357,12 @@ function processExternalClasses (el, options) {
 
 function processScoped (el) {
   if (hasScoped && isRealNode(el)) {
+    if (isWeb(mode) && el.tag === 'component') return // 处理web下 template第一个元素不设置mpx-app-scope
     const rootModuleId = ctorType === 'component' ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
       name: 'class',
-      value: `${staticClass || ''} ${moduleId} ${rootModuleId}`
+      value: `${staticClass || ''} ${moduleId || ''} ${rootModuleId}`
     }])
   }
 }
@@ -2450,7 +2461,7 @@ function getVirtualHostRoot (options, meta) {
         const rootView = createASTElement('view', [
           {
             name: 'class',
-            value: `${MPX_ROOT_VIEW} host-${moduleId}`
+            value: `${MPX_ROOT_VIEW} ${moduleId ? 'host-' + moduleId : ''}` // 解决template2vue中拿不到moduleId的情况
           },
           {
             name: 'v-on',
@@ -2529,8 +2540,33 @@ function processTemplate (el) {
   }
 }
 
-function postProcessTemplate (el) {
+function processImport (el, meta) { // 收集import引用的地址
+  if (el.tag === 'import' && el.attrsMap.src) {
+    if (!meta.templateSrcList) {
+      meta.templateSrcList = []
+    }
+    if (!meta.templateSrcList.includes(el.attrsMap.src)) {
+      meta.templateSrcList.push(el.attrsMap.src)
+    }
+  }
+}
+
+function postProcessTemplate (el, meta, options) {
   if (el.isTemplate) {
+    if (mode === 'web') {
+      if (!meta.inlineTemplateMap) {
+        meta.inlineTemplateMap = {}
+      }
+      const name = el.attrsMap.name // 行内的template有name就收集template的内容和给内容生成一个地址
+      if (name) {
+        const content = getTemplateContent(options.template, name)
+        const filePath = options.filePath.replace(/.mpx$/, `-${name}.wxml`)
+        meta.inlineTemplateMap[name] = {
+          filePath,
+          content
+        }
+      }
+    }
     processingTemplate = false
     return true
   }
@@ -2680,6 +2716,7 @@ function processMpxTagName (el) {
 }
 
 function processElement (el, root, options, meta) {
+  const initialTag = el.tag // 预存，在这个阶段增加_fakeTemplate值会影响web小程序元素trans web元素
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._matchStatus === statusEnum.MISMATCH) {
@@ -2706,10 +2743,17 @@ function processElement (el, root, options, meta) {
   const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (isWeb(mode)) {
+    if (initialTag === 'block') {
+      el._fakeTemplate = true // 该值是在template2vue中处理block转换的template的情况
+    }
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIfWeb(el)
+    // 预处理template逻辑
+    processTemplate(el)
+    // 预处理import逻辑
+    processImport(el, meta)
     processScoped(el)
     processEventWeb(el)
     // processWebExternalClassesHack(el, options)
@@ -2772,8 +2816,9 @@ function processElement (el, root, options, meta) {
 function closeElement (el, options, meta) {
   postProcessAtMode(el)
   postProcessWxs(el, meta)
-
   if (isWeb(mode)) {
+    // 处理web下template逻辑
+    postProcessTemplate(el, meta, options)
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
     return
@@ -2784,7 +2829,7 @@ function closeElement (el, options, meta) {
     return
   }
 
-  const isTemplate = postProcessTemplate(el) || processingTemplate
+  const isTemplate = postProcessTemplate(el, meta) || processingTemplate
   if (!isTemplate) {
     if (!isNative) {
       postProcessComponentIs(el, (child) => {
@@ -2904,6 +2949,11 @@ function serialize (root) {
           result += '<!--' + node.text + '-->'
         } else {
           result += node.text
+        }
+      }
+      if (mode === 'web') {
+        if ((node.tag === 'template' && node.attrsMap && node.attrsMap.name) || node.tag === 'import') {
+          return result
         }
       }
 
@@ -3210,6 +3260,7 @@ module.exports = {
   genNode,
   makeAttrsMap,
   stringifyAttr,
+  vbindMustache,
   parseMustache,
   parseMustacheWithContext,
   stringifyWithResolveComputed,

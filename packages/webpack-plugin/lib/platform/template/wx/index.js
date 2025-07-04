@@ -3,11 +3,11 @@ const JSON5 = require('json5')
 const getComponentConfigs = require('./component-config')
 const normalizeComponentRules = require('../normalize-component-rules')
 const isValidIdentifierStr = require('../../../utils/is-valid-identifier-str')
-const { parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
+const { vbindMustache, parseMustacheWithContext, stringifyWithResolveComputed } = require('../../../template-compiler/compiler')
 const normalize = require('../../../utils/normalize')
 const { dash2hump } = require('../../../utils/hump-dash')
 
-module.exports = function getSpec ({ warn, error }) {
+module.exports = function getSpec ({ warn, error, moduleId }) {
   function getRnDirectiveEventHandle (mode) {
     return function ({ name, value }, { eventRules, el }) {
       const match = this.test.exec(name)
@@ -69,6 +69,13 @@ module.exports = function getSpec ({ warn, error }) {
     postProps: [
       {
         web ({ name, value }) {
+          if (name === 'v-bind') {
+            const vbindValue = vbindMustache(value)
+            return {
+              name,
+              value: vbindValue
+            }
+          }
           const parsed = parseMustacheWithContext(value)
           if (name.startsWith('data-')) {
             return {
@@ -568,6 +575,6 @@ module.exports = function getSpec ({ warn, error }) {
       ]
     }
   }
-  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec)
+  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error, moduleId }).concat({}), spec)
   return spec
 }
