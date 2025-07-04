@@ -165,7 +165,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     if (type === 'page') {
       const Fallback =
         (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
-      return createElement(View, { collapsable: false, style: { flex: 1 } }, createElement(Fallback, { onReload: reloadPage }))
+      return createElement(Fallback, { onReload: reloadPage })
     } else {
       return createElement(fallback, innerProps)
     }
@@ -174,7 +174,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
       loadChunkPromise.current = getChildren()
     }
     if (type === 'page') {
-      return createElement(View, { collapsable: false, style: { flex: 1 } }, createElement(loading || DefaultLoading))
+      return createElement(loading || DefaultLoading)
     } else {
       return createElement(fallback, innerProps)
     }
