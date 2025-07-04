@@ -54,10 +54,6 @@ const styles = StyleSheet.create({
   }
 })
 
-interface LayoutViewProps {
-  children: ReactNode
-}
-
 interface AsyncModule {
   __esModule: boolean
   default: ReactNode
