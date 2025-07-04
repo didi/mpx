@@ -51,7 +51,11 @@ RecordFileUrlDependency.Template = class RecordFileUrlDependencyTemplate {
       relativePath = './' + relativePath
     }
 
-    compliation.__mpx__.rnExternalRequests.add(relativePath)
+    if (compliation.__mpx__.rnExternalRequests[chunk.name] === undefined) {
+      compliation.__mpx__.rnExternalRequests[chunk.name] = new Set()
+    }
+    compliation.__mpx__.rnExternalRequests[chunk.name].add(relativePath)
+
     source.replace(range[0], range[1] - 1, `require(${JSON.stringify(relativePath)})`)
   }
 }
