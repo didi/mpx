@@ -1849,7 +1849,7 @@ function processRefReact (el, meta) {
     }])
   }
 
-  if (el.tag === 'mpx-scroll-view' && el.attrsMap['scroll-into-view']) {
+  if (el.tag === 'mpx-scroll-view') {
     addAttrs(el, [
       {
         name: '__selectRef',
