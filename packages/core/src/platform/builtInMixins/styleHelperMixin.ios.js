@@ -154,6 +154,23 @@ function transformStyleObj (styleObj, windowInfo) {
   return transformed
 }
 
+function getMediaStyle (media, windowInfo) {
+  if (!media || !media.length) return {}
+  const { width } = windowInfo
+  return media.reduce((styleObj, item) => {
+    const { options = {}, value = {} } = item
+    const { minWidth, maxWidth } = options
+    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(minWidth) && width >= minWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(maxWidth) && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    }
+    return styleObj
+  }, {})
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -171,13 +188,12 @@ export default function styleHelperMixin () {
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
-              // const styleObj = classMap[className]
-              // if (styleObj.normal) {
-              //   const { width } = useWindowDimensions()
-              //   console.log(width, 999000)
-              // } else {
-              //   Object.assign(result, classMap[className])
-              // }
+              const styleObj = classMap[className]
+              if (styleObj._default) {
+                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.window))
+              } else {
+                Object.assign(result, classMap[className])
+              }
               Object.assign(result, classMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
