@@ -11,8 +11,6 @@ const __dirname = nodePath.dirname(__filename) // 当前文件的目录路径
 
 const PLUGIN_NAME = 'unocss:webpack'
 
-const reLetters = /[a-z]+/gi
-
 function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {

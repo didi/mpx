@@ -132,8 +132,8 @@ function transformStyleObj (styleObj) {
   return transformed
 }
 
-function mergeToLayer(layerMap, name, classObj) {
-  const layer = layerMap[name] || layerMap['normal']
+function mergeToLayer (layerMap, name, classObj) {
+  const layer = layerMap[name] || layerMap.normal
   Object.assign(layer, classObj)
 }
 
@@ -148,10 +148,10 @@ export default function styleHelperMixin () {
         const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
         const layerMap = {
-          'preflight': {},
-          'uno': {},
-          'normal': {},
-          'important': {}
+          preflight: {},
+          uno: {},
+          normal: {},
+          important: {}
         }
         let needAddUnoPreflight = false
         if (staticClass || dynamicClass) {
@@ -165,16 +165,16 @@ export default function styleHelperMixin () {
             } else if (unoClassMap[className]) {
               const nuoClass = unoClassMap[className]
               const importantClass = className.endsWith('!')
-              mergeToLayer(layerMap, importantClass ? 'important': 'uno', nuoClass)
+              mergeToLayer(layerMap, importantClass ? 'important' : 'uno', nuoClass)
               needAddUnoPreflight = !!(nuoClass.transform || nuoClass.filter)
             } else if (unoVarClassMap[className]) {
               mergeToLayer(layerMap, 'important', unoVarClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeToLayer(layerMap, 'normal',  this.__props[className])
+              mergeToLayer(layerMap, 'normal', this.__props[className])
             }
           })
-          if (needAddUnoPreflight) mergeToLayer(layerMap, 'preflight',  unoPreflightsClassMap)
+          if (needAddUnoPreflight) mergeToLayer(layerMap, 'preflight', unoPreflightsClassMap)
         }
 
         const result = Object.assign({}, layerMap.preflight, layerMap.uno, layerMap.normal, layerMap.important)

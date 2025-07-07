@@ -39,13 +39,12 @@ describe('test plugin', async () => {
     const classList = Object.keys(classmap)
     // 测试类名是否正确识别
     expect(classList).toMatchSnapshot()
-    const list = new Set(classList)
     const unoFileContent = await plugin.generateStyle(uno, classList, generateOptions)
     // 测试css输出是否正确
     expect(unoFileContent).toMatchSnapshot()
   }
   test('test-template', async () => {
     await testTemplate('<view class="translate-[-50%,-50%] text-12px bg-#fff/10" />')
-    await testTemplate(`<view wx:class="{{['translate-[-50%]',{'text-12px text-16px': false},'bg-#fff/10']}}" />`)
+    await testTemplate('<view wx:class="{{[\'translate-[-50%]\',{\'text-12px text-16px\': false},\'bg-#fff/10\']}}" />')
   })
 })

@@ -19,4 +19,3 @@ export const blockFilters = filters.map(([rule]) => (raw) => {
     }
   }
 })
-
