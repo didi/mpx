@@ -74,12 +74,14 @@ registered in parent context!`)
     option.componentPath = '/' + outputPath
   }
   if (ctorType === 'app') {
+    const disablePageTransition = !!global.__mpx.config.webConfig.disablePageTransition
     option.data = function () {
       return {
-        transitionName: ''
+        transitionName: '',
+        disablePageTransition: disablePageTransition
       }
     }
-    if (!global.__mpx.config.webConfig.disablePageTransition) {
+    if (!disablePageTransition) {
       option.watch = {
         $route: {
           handler () {
