@@ -158,7 +158,7 @@ mpx.config.webRouteConfig = {
 ```
 
 ## webConfig
-web 环境下的一些配置，如路由模式等
+web 环境下的一些配置，如路由模式
 
 - **用法**:
 ```js
