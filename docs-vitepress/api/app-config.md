@@ -158,7 +158,7 @@ mpx.config.webRouteConfig = {
 ```
 
 ## webConfig
-web 环境下的一些配置，如路由模式，页面切换动画效果等
+web 环境下的一些配置，如路由模式等
 
 - **用法**:
 ```js
@@ -166,6 +166,4 @@ web 环境下的一些配置，如路由模式，页面切换动画效果等
 mpx.config.webConfig.routeConfig = {
   mode: 'history'
 }
-// 禁用页面切换动画
-mpx.config.webConfig.disablePageTransition = true
 ```
