@@ -53,7 +53,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
         if (range.length < 2) {
           return option
         } else {
-          option[range[0]] = +formatValue(range[1])
+          option[dash2hump(range[0])] = +formatValue(range[1])
         }
       }
       return option
@@ -105,7 +105,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
 
     const classMapKeys = []
     const options = getMediaOptions(rule.parent.params || '')
-    const isMedia = options['max-width'] || options['min-width']
+    const isMedia = options.maxWidth || options.minWidth
     selectorParser(selectors => {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
