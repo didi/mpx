@@ -677,6 +677,8 @@ class MpxWebpackPlugin {
           componentsMap: {
             main: {}
           },
+          // 资源与moduleId关系记录
+          resourceModuleIdMap: {},
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录
           staticResourcesMap: {
             main: {}
@@ -770,12 +772,17 @@ class MpxWebpackPlugin {
           },
           getModuleId: (filePath, isApp = false) => {
             if (isApp) return MPX_APP_MODULE_ID
-            const customComponentModuleId = this.options.customComponentModuleId
-            if (typeof customComponentModuleId === 'function') {
-              const customModuleId = customComponentModuleId(filePath)
-              if (customModuleId) return customModuleId
+            const { customComponentModuleId } = this.options
+            let moduleId
+
+            if (customComponentModuleId && typeof customComponentModuleId === 'function') {
+              moduleId = customComponentModuleId(filePath)
             }
-            return '_' + mpx.pathHash(filePath)
+            if (!moduleId) {
+              moduleId = '_' + mpx.pathHash(filePath)
+            }
+            mpx.resourceModuleIdMap[moduleId] = filePath
+            return moduleId
           },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
@@ -1617,11 +1624,12 @@ class MpxWebpackPlugin {
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
+          const resourceModuleIdMap = compilation.__mpx__.resourceModuleIdMap
           const componentsPackageMap = compilation.__mpx__.componentsMap
           const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
             return { ...pre, ...cur }
           }, {})
-          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap, ...resourceModuleIdMap })
           const filename = this.options.generateBuildMap.filename || 'outputMap.json'
           compilation.assets[filename] = new RawSource(outputMap)
         }
