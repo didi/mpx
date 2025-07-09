@@ -75,6 +75,7 @@ const { isReact, isWeb } = require('./utils/env')
 const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
+const ExternalModule = require('webpack/lib/ExternalModule')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -1174,6 +1175,9 @@ class MpxWebpackPlugin {
             hackModuleIdentifier(module)
             return rawCallback(null, module)
           }
+        } else if (isReact(mpx.mode) && module instanceof ExternalModule) {
+          module.hasChunkCondition = () => false // 跳过 EnsureChunkConditionsPlugin 的过滤，避免被输出到包含 entry module 的 chunk 当中
+          module.chunkCondition = () => true // 可以正常被 SplitChunkPlugin 处理
         }
         return rawAddModule.call(compilation, module, callback)
       }
@@ -1237,7 +1241,8 @@ class MpxWebpackPlugin {
               splitChunksOptions.cacheGroups.async = {
                 chunks: 'async',
                 name: 'async-common/index',
-                minChunks: 2
+                minChunks: 2,
+                minSize: 1
               }
               needInit = true
             }
