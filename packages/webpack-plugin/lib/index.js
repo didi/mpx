@@ -1176,7 +1176,7 @@ class MpxWebpackPlugin {
             return rawCallback(null, module)
           }
         } else if (isReact(mpx.mode) && module instanceof ExternalModule) {
-          module.hasChunkCondition = () => false // 跳过 EnsureChunkConditionsPlugin 的过滤
+          module.hasChunkCondition = () => false // 跳过 EnsureChunkConditionsPlugin 的过滤，避免被输出到包含 entry module 的 chunk 当中
           module.chunkCondition = () => true // 可以正常被 SplitChunkPlugin 处理
         }
         return rawAddModule.call(compilation, module, callback)
@@ -1242,7 +1242,7 @@ class MpxWebpackPlugin {
                 chunks: 'async',
                 name: 'async-common/index',
                 minChunks: 2,
-                enforce: true
+                minSize: 1
               }
               needInit = true
             }
