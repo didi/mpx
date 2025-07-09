@@ -82,6 +82,7 @@ registered in parent context!`)
         disablePageTransition: disablePageTransition
       }
     }
+
     if (!disablePageTransition) {
       option.watch = {
         $route: {
