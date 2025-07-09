@@ -2679,6 +2679,30 @@ function processMpxTagName (el) {
   }
 }
 
+function earlyProcessIf (el) {
+  // 检查是否有 wx:if 指令
+  const ifAttr = el.attrsMap[config[mode].directive.if]
+  if (ifAttr) {
+    if (mode === 'swan') {
+      const wrappedIfAttr = wrapMustache(ifAttr)
+      const parsed = parseMustacheWithContext(wrappedIfAttr)
+      const result = evalExp(parsed.result)
+      if (result.success && !result.result) {
+        // 如果条件为 false，标记跳过规则检查
+        return true
+      }
+    } else {
+      const parsed = parseMustacheWithContext(ifAttr)
+      const result = evalExp(parsed.result)
+      if (result.success && !result.result) {
+        // 如果条件为 false，标记跳过规则检查
+        return true
+      }
+    }
+  }
+  return false
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2692,7 +2716,10 @@ function processElement (el, root, options, meta) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
-  if (rulesRunner && el._matchStatus !== statusEnum.MATCH) {
+  // 在规则检查之前进行条件编译的预处理
+  const shouldSkipRulesCheck = earlyProcessIf(el)
+
+  if (rulesRunner && el._matchStatus !== statusEnum.MATCH && !shouldSkipRulesCheck) {
     currentEl = el
     rulesRunner(el)
   }
