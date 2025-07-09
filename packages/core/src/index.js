@@ -138,7 +138,9 @@ Mpx.config = {
   setDataHandler: null,
   forceFlushSync: false,
   webRouteConfig: {},
-  webConfig: {},
+  webConfig: {
+    disablePageTransition: true // 默认禁用页面切换动画
+  },
   /*
     支持两个属性
     hostWhitelists Array 类型 支持h5域名白名单安全校验
