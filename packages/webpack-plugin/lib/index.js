@@ -72,7 +72,9 @@ const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
 const VirtualModulesPlugin = require('webpack-virtual-modules')
-require('./utils/check-core-version-match')
+const checkVersionCompatibility = require('./utils/check-core-version-match')
+
+checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
