@@ -2679,27 +2679,64 @@ function processMpxTagName (el) {
   }
 }
 
-function earlyProcessIf (el) {
-  // 检查是否有 wx:if 指令
-  const ifAttr = el.attrsMap[config[mode].directive.if]
-  if (ifAttr) {
-    if (mode === 'swan') {
-      const wrappedIfAttr = wrapMustache(ifAttr)
-      const parsed = parseMustacheWithContext(wrappedIfAttr)
-      const result = evalExp(parsed.result)
-      if (result.success && !result.result) {
-        // 如果条件为 false，标记跳过规则检查
+/**
+ * 计算条件指令的静态值
+ * @param {string} conditionAttr - 条件属性值
+ * @param {string} directiveType - 指令类型（如 'if', 'elseif'）
+ * @returns {Object} - { success: boolean, result: any }
+ */
+function evaluateConditionStatic (conditionAttr, directiveType = 'if') {
+  if (!conditionAttr) {
+    return { success: false, result: null }
+  }
+
+  let processedAttr = conditionAttr
+
+  // swan 模式需要特殊处理 mustache 包装
+  if (mode === 'swan') {
+    processedAttr = wrapMustache(conditionAttr)
+  }
+
+  const parsed = parseMustacheWithContext(processedAttr)
+  const result = evalExp(parsed.result)
+
+  return result
+}
+
+/**
+ * 检查条件指令是否应该跳过规则检查
+ * @param {Object} el - AST 元素节点
+ * @returns {boolean} - 是否跳过规则检查
+ */
+function shouldSkipRulesForCondition (el) {
+  const directives = config[mode].directive
+
+  // 按优先级检查条件指令
+  const conditionChecks = [
+    { attr: el.attrsMap[directives.if], type: 'if' },
+    { attr: el.attrsMap[directives.elseif], type: 'elseif' },
+    { attr: el.attrsMap[directives.else], type: 'else' }
+  ]
+
+  for (const check of conditionChecks) {
+    if (check.attr !== undefined) {
+      // wx:else 不需要条件求值，直接返回
+      if (check.type === 'else') {
+        return false
+      }
+
+      const evalResult = evaluateConditionStatic(check.attr, check.type)
+
+      // 如果条件能够静态计算且结果为 false，则跳过规则检查
+      if (evalResult.success && !evalResult.result) {
         return true
       }
-    } else {
-      const parsed = parseMustacheWithContext(ifAttr)
-      const result = evalExp(parsed.result)
-      if (result.success && !result.result) {
-        // 如果条件为 false，标记跳过规则检查
-        return true
-      }
+
+      // 只处理第一个找到的条件指令
+      break
     }
   }
+
   return false
 }
 
@@ -2717,7 +2754,7 @@ function processElement (el, root, options, meta) {
   }
 
   // 在规则检查之前进行条件编译的预处理
-  const shouldSkipRulesCheck = earlyProcessIf(el)
+  const shouldSkipRulesCheck = shouldSkipRulesForCondition(el)
 
   if (rulesRunner && el._matchStatus !== statusEnum.MATCH && !shouldSkipRulesCheck) {
     currentEl = el
