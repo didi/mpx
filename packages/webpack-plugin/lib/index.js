@@ -44,6 +44,7 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
+const RecordFileUrlDependency = require('./dependencies/RecordFileUrlDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -72,6 +73,9 @@ const isEmptyObject = require('./utils/is-empty-object')
 const DynamicPlugin = require('./resolver/DynamicPlugin')
 const { isReact, isWeb } = require('./utils/env')
 const VirtualModulesPlugin = require('webpack-virtual-modules')
+const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
+const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
+const ExternalModule = require('webpack/lib/ExternalModule')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -408,7 +412,7 @@ class MpxWebpackPlugin {
     let splitChunksOptions = null
     let splitChunksPlugin = null
     // 输出web ssr需要将optimization.splitChunks设置为false以关闭splitChunks
-    if (optimization.splitChunks !== false && !isReact(this.options.mode)) {
+    if (optimization.splitChunks !== false) {
       splitChunksOptions = Object.assign({
         chunks: 'all',
         usedExports: optimization.usedExports === true,
@@ -606,6 +610,22 @@ class MpxWebpackPlugin {
           return mpx
         }
       })
+
+      if (isReact(this.options.mode)) {
+        compilation.hooks.runtimeRequirementInTree
+          .for(RuntimeGlobals.loadScript)
+          .tap({
+            stage: -1000,
+            name: 'LoadAsyncChunk'
+          }, (chunk, set) => {
+            compilation.addRuntimeModule(
+              chunk,
+              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk && this.options.rnConfig.asyncChunk.timeout)
+            )
+            return true
+          })
+      }
+
       compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
       compilation.dependencyTemplates.set(ResolveDependency, new ResolveDependency.Template())
 
@@ -654,6 +674,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
 
+      compilation.dependencyFactories.set(RecordFileUrlDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordFileUrlDependency, new RecordFileUrlDependency.Template())
+
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
 
@@ -701,6 +724,8 @@ class MpxWebpackPlugin {
           assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
+          // 记录 RN 相关资源路径
+          rnExternalRequests: new Set(),
           globalComponents: {},
           globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
@@ -740,7 +765,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
-          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode)),
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || isReact(this.options.mode)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1150,6 +1175,9 @@ class MpxWebpackPlugin {
             hackModuleIdentifier(module)
             return rawCallback(null, module)
           }
+        } else if (isReact(mpx.mode) && module instanceof ExternalModule) {
+          module.hasChunkCondition = () => false // 跳过 EnsureChunkConditionsPlugin 的过滤，避免被输出到包含 entry module 的 chunk 当中
+          module.chunkCondition = () => true // 可以正常被 SplitChunkPlugin 处理
         }
         return rawAddModule.call(compilation, module, callback)
       }
@@ -1199,12 +1227,12 @@ class MpxWebpackPlugin {
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          if (isWeb(mpx.mode)) {
+          if (isWeb(mpx.mode) || isReact(mpx.mode)) {
             // web独立处理splitChunk
-            if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
+            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
                 chunks: 'initial',
-                name: 'bundle',
+                name: 'lib/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
                 test: /[\\/]node_modules[\\/]/
               }
               needInit = true
@@ -1212,8 +1240,9 @@ class MpxWebpackPlugin {
             if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
               splitChunksOptions.cacheGroups.async = {
                 chunks: 'async',
-                name: 'async',
-                minChunks: 2
+                name: 'async-common/index',
+                minChunks: 2,
+                minSize: 1
               }
               needInit = true
             }
@@ -1360,6 +1389,15 @@ class MpxWebpackPlugin {
           }
         })
 
+        parser.hooks.call.for('__mpx_rn_require_external_asset__').tap('MpxWebpackPlugin', (expr) => {
+          const args = expr.arguments.map((i) => i.value)
+          args.unshift(expr.range)
+
+          const dep = new RecordFileUrlDependency(...args)
+          parser.state.current.addPresentationalDependency(dep)
+          return true
+        })
+
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
           args.unshift(expr.range)
@@ -1389,10 +1427,10 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
-                if (isWeb(mpx.mode)) {
+                if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   const depBlock = new AsyncDependenciesBlock(
                     {
-                      name: tarRoot
+                      name: tarRoot + '/index'
                     },
                     expr.loc,
                     request
