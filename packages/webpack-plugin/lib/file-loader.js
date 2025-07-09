@@ -36,7 +36,7 @@ module.exports = function loader (content, prevOptions) {
   let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
 
   if (isRN) {
-    publicPath = `__mpx_rn_require_external_asset__(${JSON.stringify(url)})`
+    publicPath = `__mpx_require_external__(${JSON.stringify(url)})`
   }
 
   if (options.publicPath) {

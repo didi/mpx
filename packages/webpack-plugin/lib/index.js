@@ -44,7 +44,7 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
-const RecordFileUrlDependency = require('./dependencies/RecordFileUrlDependency')
+const RequireExternalDependency = require('./dependencies/RequireExternalDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -674,8 +674,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
 
-      compilation.dependencyFactories.set(RecordFileUrlDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordFileUrlDependency, new RecordFileUrlDependency.Template())
+      compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
@@ -724,8 +724,8 @@ class MpxWebpackPlugin {
           assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
-          // 记录 RN 相关资源路径
-          rnExternalRequests: new Map(),
+          // 记录RequireExternalDependency相关资源路径
+          externalRequests: new Map(),
           globalComponents: {},
           globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
@@ -1389,11 +1389,11 @@ class MpxWebpackPlugin {
           }
         })
 
-        parser.hooks.call.for('__mpx_rn_require_external_asset__').tap('MpxWebpackPlugin', (expr) => {
+        parser.hooks.call.for('__mpx_require_external__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
           args.unshift(expr.range)
 
-          const dep = new RecordFileUrlDependency(...args)
+          const dep = new RequireExternalDependency(...args)
           parser.state.current.addPresentationalDependency(dep)
           return true
         })
