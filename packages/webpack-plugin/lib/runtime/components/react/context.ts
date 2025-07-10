@@ -1,5 +1,5 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent, Animated } from 'react-native'
+import { NativeSyntheticEvent, Animated, ScaledSize } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
@@ -52,6 +52,16 @@ export interface RouteContextValue {
   navigation: Record<string, any>
 }
 
+export interface DimensionsValue {
+  window: ScaledSize;
+  screen: ScaledSize;
+}
+
+export interface DimensionsContextValue {
+  value: DimensionsValue,
+  setValue(value: DimensionsValue): void
+}
+
 export interface StickyContextValue {
   registerStickyHeader: Function,
   unregisterStickyHeader: Function
@@ -82,5 +92,7 @@ export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | nu
 export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
+
+export const DimensionsContext = createContext<DimensionsContextValue | null>(null)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })

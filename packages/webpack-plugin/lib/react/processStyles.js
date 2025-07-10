@@ -55,22 +55,30 @@ module.exports = function (styles, {
           warn,
           error
         })
+        const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+          result += `'${key}': function(){ return ${shallowStringify(value)}},`
+          return result
+        }, '')
         if (ctorType === 'app') {
           output += `
           let __appClassMap
+          global.__appClassMapValueCache = {}
           global.__getAppClassMap = function() {
             if(!__appClassMap) {
-              __appClassMap = ${shallowStringify(classMap)};
+              __appClassMap = {${classMapCode}};
             }
             return __appClassMap;
           };\n`
         } else {
           output += `
           let __classMap
+          global.currentInject.injectOptions = {
+            __classMapValueCache: {}
+          }
           global.currentInject.injectMethods = {
             __getClassMap: function() {
               if(!__classMap) {
-                __classMap = ${shallowStringify(classMap)};
+                __classMap = {${classMapCode}};
               }
               return __classMap;
             }

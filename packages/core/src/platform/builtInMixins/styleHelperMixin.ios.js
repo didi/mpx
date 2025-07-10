@@ -1,23 +1,16 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 
-let { width, height } = Dimensions.get('screen')
-
-Dimensions.addEventListener('change', ({ screen }) => {
-  width = screen.width
-  height = screen.height
-})
-
-function rpx (value) {
+function rpx (value, windowInfo) {
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (750 / 屏幕宽度)
-  return value * width / 750
+  return value * windowInfo.width / 750
 }
-function vw (value) {
-  return value * width / 100
+function vw (value, windowInfo) {
+  return value * windowInfo.width / 100
 }
-function vh (value) {
-  return value * height / 100
+function vh (value, windowInfo) {
+  return value * windowInfo.height / 100
 }
 
 const unit = {
@@ -28,13 +21,13 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value) {
+function formatValue (value, windowInfo = global.__mpxAppDimensionsInfo.window) {
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
     } else {
-      return unit[matched[2]](+matched[1])
+      return unit[matched[2]](+matched[1], windowInfo)
     }
   }
   if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
@@ -153,12 +146,29 @@ function mergeObjectArray (arr) {
   return res
 }
 
-function transformStyleObj (styleObj) {
+function transformStyleObj (styleObj, windowInfo) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    transformed[prop] = formatValue(styleObj[prop], windowInfo)
   })
   return transformed
+}
+
+function getMediaStyle (media, windowInfo) {
+  if (!media || !media.length) return {}
+  const { width } = windowInfo
+  return media.reduce((styleObj, item) => {
+    const { options = {}, value = {} } = item
+    const { minWidth, maxWidth } = options
+    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(minWidth) && width >= minWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(maxWidth) && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    }
+    return styleObj
+  }, {})
 }
 
 export default function styleHelperMixin () {
@@ -171,16 +181,29 @@ export default function styleHelperMixin () {
         const result = {}
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
+        const dimensionsInfo = this.__dimensionsInfo
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
           classString.split(/\s+/).forEach((className) => {
-            if (classMap[className]) {
-              Object.assign(result, classMap[className])
-            } else if (appClassMap[className]) {
+            if (typeof classMap[className] === 'function') {
+              const styleObj = classMap[className]() || {}
+              if (styleObj._default) {
+                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.window))
+              } else {
+                Object.assign(result, styleObj)
+              }
+              this.$rawOptions.options.__classMapValueCache[className] = styleObj
+            } else if (typeof appClassMap[className] === 'function') {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              Object.assign(result, appClassMap[className])
+              const styleObj = appClassMap[className]() || {}
+              if (styleObj._default) {
+                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.window))
+              } else {
+                Object.assign(result, styleObj)
+              }
+              global.__appClassMapValueCache[className] = styleObj
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.__props[className])
@@ -190,7 +213,7 @@ export default function styleHelperMixin () {
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj))
+          Object.assign(result, transformStyleObj(styleObj, dimensionsInfo.window))
         }
 
         if (hide) {
