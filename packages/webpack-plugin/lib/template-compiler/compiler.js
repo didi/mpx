@@ -2690,41 +2690,30 @@ function evaluateConditionStatic (conditionAttr, directiveType = 'if') {
     return { success: false, result: null }
   }
 
-  let processedAttr = conditionAttr
-
-  // swan 模式需要特殊处理 mustache 包装
-  if (mode === 'swan') {
-    processedAttr = wrapMustache(conditionAttr)
-  }
-
-  const parsed = parseMustacheWithContext(processedAttr)
+  const parsed = parseMustacheWithContext(conditionAttr)
   const result = evalExp(parsed.result)
 
   return result
 }
 
 /**
- * 检查条件指令是否应该跳过规则检查
+ * 检查条件指令是否应该跳过规则检查（专为 RN 环境设计）
+ * 在 RN 环境中，即使条件为 false 的节点也会保留在 AST 中，
+ * 但通过 JavaScript 运行时的三元表达式优化来避免渲染
  * @param {Object} el - AST 元素节点
  * @returns {boolean} - 是否跳过规则检查
  */
 function shouldSkipRulesForCondition (el) {
   const directives = config[mode].directive
 
-  // 按优先级检查条件指令
+  // 只检查有条件值的指令：wx:if 和 wx:elseif
   const conditionChecks = [
     { attr: el.attrsMap[directives.if], type: 'if' },
-    { attr: el.attrsMap[directives.elseif], type: 'elseif' },
-    { attr: el.attrsMap[directives.else], type: 'else' }
+    { attr: el.attrsMap[directives.elseif], type: 'elseif' }
   ]
 
   for (const check of conditionChecks) {
     if (check.attr !== undefined) {
-      // wx:else 不需要条件求值，直接返回
-      if (check.type === 'else') {
-        return false
-      }
-
       const evalResult = evaluateConditionStatic(check.attr, check.type)
 
       // 如果条件能够静态计算且结果为 false，则跳过规则检查
@@ -2753,8 +2742,8 @@ function processElement (el, root, options, meta) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
   }
 
-  // 在规则检查之前进行条件编译的预处理
-  const shouldSkipRulesCheck = shouldSkipRulesForCondition(el)
+  // 在规则检查之前进行条件编译的预处理（仅针对 RN 环境）
+  const shouldSkipRulesCheck = isReact(mode) && shouldSkipRulesForCondition(el)
 
   if (rulesRunner && el._matchStatus !== statusEnum.MATCH && !shouldSkipRulesCheck) {
     currentEl = el
