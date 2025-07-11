@@ -514,11 +514,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           // 鸿蒙中通过scrollOffset.__getValue获取值一直等于event.nativeEvent.contentOffset.y
           if (__mpx_mode__ === 'harmony') {
             scrollOffset.setValue(y)
-            isContentSizeChange.current = false
+            setTimeout(() => {
+              isContentSizeChange.current = false
+            })
           } else {
             if (y !== (scrollOffset as any).__getValue()) {
               scrollOffset.setValue(y)
-              isContentSizeChange.current = false
+              setTimeout(() => {
+                isContentSizeChange.current = false
+              })
             }
           }
         }
