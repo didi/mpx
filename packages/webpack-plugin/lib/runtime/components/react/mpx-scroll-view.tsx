@@ -194,6 +194,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
+  const isContentSizeChange = useRef(false)
+
   const { refresherContent, otherContent } = getRefresherContent(props.children)
   const hasRefresher = refresherContent && refresherEnabled
 
@@ -358,6 +360,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onContentSizeChange (width: number, height: number) {
+    isContentSizeChange.current = true
     scrollOptions.current.contentLength = selectLength({ height, width })
   }
 
@@ -505,6 +508,11 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     {
       useNativeDriver: true,
       listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const y = event.nativeEvent.contentOffset.y || 0
+        if (isContentSizeChange.current && y !== (scrollOffset as any).__getValue()) {
+          scrollOffset.setValue(y)
+          isContentSizeChange.current = false
+        }
         onScroll(event)
       }
     }
