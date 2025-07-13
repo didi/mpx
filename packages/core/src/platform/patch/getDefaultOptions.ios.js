@@ -419,6 +419,26 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+function usePagePreload (route) {
+  const name = route.name
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const preloadRule = global.__preloadRule || {}
+      const { packages } = preloadRule[name] || {}
+      if (packages?.length > 0) {
+        const downloadChunkAsync = mpxGlobal.__mpx.config?.rnConfig?.downloadChunkAsync
+        if (typeof downloadChunkAsync === 'function') {
+          callWithErrorHandling(() => downloadChunkAsync(packages))
+        }
+      }
+    }, 800)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [])
+}
+
 const RelationsContext = createContext(null)
 
 const checkRelation = (options) => {
@@ -459,8 +479,8 @@ function getLayoutData (headerHeight) {
   }
 }
 
-export function PageWrapperHOC (WrappedComponent) {
-  return function PageWrapperCom ({ navigation, route, pageConfig = {}, ...props }) {
+export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
+  return function PageWrapperCom ({ navigation, route, ...props }) {
     const rootRef = useRef(null)
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
@@ -485,6 +505,7 @@ export function PageWrapperHOC (WrappedComponent) {
       return () => dimensionListener?.remove()
     }, [])
 
+    usePagePreload(route)
     usePageStatus(navigation, currentPageId)
 
     const withKeyboardAvoidingView = (element) => {
@@ -608,7 +629,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
-
     useEffect(() => {
       proxy.mounted()
       return () => {
@@ -681,12 +701,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    return (props) => {
-      return createElement(PageWrapperHOC(defaultOptions), {
-        pageConfig: currentInject.pageConfig,
-        ...props
-      })
-    }
+    return PageWrapperHOC(defaultOptions, currentInject.pageConfig)
   }
   return defaultOptions
 }

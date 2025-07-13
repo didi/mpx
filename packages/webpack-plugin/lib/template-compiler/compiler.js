@@ -581,7 +581,8 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (options.pad) {
+      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
+      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -1849,7 +1850,7 @@ function processRefReact (el, meta) {
     }])
   }
 
-  if (el.tag === 'mpx-scroll-view' && el.attrsMap['scroll-into-view']) {
+  if (el.tag === 'mpx-scroll-view') {
     addAttrs(el, [
       {
         name: '__selectRef',
@@ -2725,8 +2726,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
-    processStyleReact(el, options)
     if (!pass) {
+      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)
