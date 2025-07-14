@@ -1,8 +1,15 @@
 const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
+const { RetryRuntimeGlobal } = require('../retry-runtime-module')
 
 class ImportDependencyTemplate extends (
   ModuleDependency.Template
 ) {
+  constructor(options = {}) {
+    super()
+    this.times = options.times || 0
+    this.interval = options.interval || 0
+  }
+
   /**
    * @param {Dependency} dependency the dependency for which the template should be applied
    * @param {ReplaceSource} source the current replace source which can be modified
@@ -31,7 +38,10 @@ class ImportDependencyTemplate extends (
     content = content.replace(/(__webpack_require__\.t\.bind\(.+,\s*)(\d+)(\s*\))/, (_, p1, p2, p3) => {
       return p1 + '9' + p3
     })
-    source.replace(dep.range[0], dep.range[1] - 1, content)
+
+    runtimeRequirements.add(RetryRuntimeGlobal)
+
+    source.replace(dep.range[0], dep.range[1] - 1, `${RetryRuntimeGlobal}(function() { return ${content} }, ${this.times}, ${this.interval})`)
   }
 }
 

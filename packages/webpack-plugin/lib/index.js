@@ -76,6 +76,7 @@ const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -610,6 +611,16 @@ class MpxWebpackPlugin {
           return mpx
         }
       })
+
+      // todo 添加判断来决策是否要注入 RetryRuntimeModule
+      // if (isReact(this.options.mode) || isWeb(this.options.mode)) {
+        compilation.hooks.runtimeRequirementInTree
+          .for(RetryRuntimeGlobal)
+          .tap('MpxWebpackPlugin', (chunk) => {
+            compilation.addRuntimeModule(chunk, new RetryRuntimeModule())
+            return true
+          })
+      // }
 
       if (isReact(this.options.mode)) {
         compilation.hooks.runtimeRequirementInTree
@@ -1443,7 +1454,7 @@ class MpxWebpackPlugin {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isAsync: true,
                     isRequireAsync: true,
-                    retryRequireAsync: !!this.options.retryRequireAsync
+                    retryRequireAsync: this.options.retryRequireAsync
                   })
 
                   parser.state.current.addPresentationalDependency(dep)

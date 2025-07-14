@@ -6,6 +6,7 @@ const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
 const hasOwn = require('../utils/has-own')
+const { RetryRuntimeGlobal } = require('../retry-runtime-module')
 
 class DynamicEntryDependency extends NullDependency {
   constructor (range, request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', extraOptions = {}) {
@@ -215,9 +216,16 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
         if (!relativePath.startsWith('.')) relativePath = './' + relativePath
         replaceContent = JSON.stringify(relativePath)
         if (extraOptions.retryRequireAsync) {
-          replaceContent += `).catch(function (e) {
-  return require.async(${JSON.stringify(relativePath)});
-}`
+          if (typeof extraOptions.retryRequireAsync === 'boolean') {
+            extraOptions.retryRequireAsync = {
+              times: 1,
+              interval: 0
+            }
+          }
+          replaceContent = `${RetryRuntimeGlobal}(function() { return ${replaceContent} }, ${extraOptions.retryRequireAsync.times}, ${extraOptions.retryRequireAsync.interval})`
+//           replaceContent += `).catch(function (e) {
+//   return require.async(${JSON.stringify(relativePath)});
+// }`
         }
       } else {
         replaceContent = JSON.stringify(resultPath)
