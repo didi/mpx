@@ -63,12 +63,12 @@ module.exports = function (template, {
         const templateSrcMode = template.mode || srcMode
         const warn = (msg) => {
           loaderContext.emitWarning(
-            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
           )
         }
         const error = (msg) => {
           loaderContext.emitError(
-            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
           )
         }
         const { root, meta } = templateCompiler.parse(template.content, {

@@ -10,7 +10,7 @@ const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 
 module.exports = function getSpec ({ warn, error }) {
   function print (mode, path, isError) {
-    const msg = `Json path <${path}> is not supported in ${mode} environment!`
+    const msg = `[Mpx json error]: Json path <${path}> is not supported in ${mode} environment!`
     isError ? error(msg) : warn(msg)
   }
 
@@ -77,7 +77,7 @@ module.exports = function getSpec ({ warn, error }) {
     if (componentGenerics && typeof componentGenerics === 'object') {
       Object.keys(componentGenerics).forEach(key => {
         if (!componentGenerics[key].default) {
-          error(`Ali environment componentGenerics need to specify a default custom component! please check the configuration of component ${key}`)
+          error(`[Mpx json error]: Ali environment componentGenerics need to specify a default custom component! please check the configuration of component ${key}`)
         }
       })
     }

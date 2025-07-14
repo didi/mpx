@@ -38,13 +38,13 @@ module.exports = function (jsonContent, {
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
-      new Error('[json processor][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     loaderContext.emitError(
-      new Error('[json compiler][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
