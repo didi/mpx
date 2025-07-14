@@ -686,6 +686,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const posReverseEnd = (patchElmNumShared.value - 1) * step.value
         if (currentOffset < -posEnd) {
           isBoundary = true
+          // currentOffset + posEnd当前超过边界的值， 还需要加上transition的值，才是真正的超出边界的值
           const exceedLength = Math.abs(currentOffset + posEnd) + Math.abs(translation)
           // 计算对标正常元素所在的offset
           resetOffset = Math.abs(moveStep) === 0 ? patchElmNumShared.value * step.value + exceedLength : moveStep * elementsLength
@@ -771,7 +772,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (childrenLength.value > 1 && half) {
           const { selectedIndex } = getTargetPosition(eventData)
           currentIndex.value = selectedIndex
-
         }
         // 2. 非循环: 处理用户一直拖拽到临界点的场景,如果放到onFinalize无法阻止offset.value更新为越界的值
         if (!circularShared.value) {
@@ -818,8 +818,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
         // 2.非循环状态不可移动态：最后一个元素 和 第一个元素
         // 非循环支持最后元素可滑动能力后，向左快速移动未超过最大可移动范围一半，因为offset为正值，向左滑动handleBack，默认向上取整
-        // 但是在offset大于0时，取0。[-100, 0](back取0), [0, 100](back取1)， 所以handleLongPress里的处理逻辑需要兼容支持。
-        // 这里直接单独处理，不耦合下方公共的判断逻辑。
+        // 但是在offset大于0时，取0。[-100, 0](back取0), [0, 100](back取1)， 所以handleLongPress里的处理逻辑需要兼容支持，因此这里直接单独处理，不耦合下方公共的判断逻辑。
         if (!circularShared.value && !canMove(eventData, false)) {
           if (moveDistance < 0) {
             handleBack(eventData)
