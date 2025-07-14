@@ -2039,6 +2039,7 @@ function postProcessIf (el) {
         replaceNode(el, getTempNode())._if = false
       }
     } else {
+      el._if = null
       attrs = [{
         name: config[mode].directive.if,
         value: el.if.raw
@@ -2046,42 +2047,51 @@ function postProcessIf (el) {
     }
   } else if (el.elseif) {
     prevNode = findPrevNode(el)
-    if (prevNode._if === true) {
-      removeNode(el)
-    } else if (prevNode._if === false) {
-      // 当做if处理
-      el.if = el.elseif
-      delete el.elseif
-      postProcessIf(el)
-    } else {
-      result = evalExp(el.elseif.exp)
-      if (result.success) {
-        if (result.result) {
-          // 当做else处理
-          delete el.elseif
-          el._if = el.else = true
-          postProcessIf(el)
-        } else {
-          removeNode(el)
-        }
+    if (prevNode && prevNode._if !== undefined) {
+      if (prevNode._if === true) {
+        removeNode(el)
+      } else if (prevNode._if === false) {
+        // 当做if处理
+        el.if = el.elseif
+        delete el.elseif
+        postProcessIf(el)
       } else {
-        attrs = [{
-          name: config[mode].directive.elseif,
-          value: el.elseif.raw
-        }]
+        result = evalExp(el.elseif.exp)
+        if (result.success) {
+          if (result.result) {
+            // 当做else处理
+            delete el.elseif
+            el._if = el.else = true
+            postProcessIf(el)
+          } else {
+            removeNode(el)
+          }
+        } else {
+          el._if = null
+          attrs = [{
+            name: config[mode].directive.elseif,
+            value: el.elseif.raw
+          }]
+        }
       }
+    } else {
+      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
     }
   } else if (el.else) {
     prevNode = findPrevNode(el)
-    if (prevNode._if === true) {
-      removeNode(el)
-    } else if (prevNode._if === false) {
-      delete el.else
+    if (prevNode && prevNode._if !== undefined) {
+      if (prevNode._if === true) {
+        removeNode(el)
+      } else if (prevNode._if === false) {
+        delete el.else
+      } else {
+        attrs = [{
+          name: config[mode].directive.else,
+          value: undefined
+        }]
+      }
     } else {
-      attrs = [{
-        name: config[mode].directive.else,
-        value: undefined
-      }]
+      error$1(`wx:else used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
     }
   }
   if (attrs) {
@@ -2096,23 +2106,88 @@ function addIfCondition (el, condition) {
   el.ifConditions.push(condition)
 }
 
+function getIfConditions (el) {
+  return el?.ifConditions || []
+}
+
 function postProcessIfReact (el) {
-  let prevNode
+  let prevNode, ifNode, result, ifConditions
   if (el.if) {
-    addIfCondition(el, {
-      exp: el.if.exp,
-      block: el
-    })
-  } else if (el.elseif || el.else) {
-    prevNode = findPrevNode(el)
-    if (prevNode && prevNode.if) {
-      addIfCondition(prevNode, {
-        exp: el.elseif && el.elseif.exp,
+    // 取值
+    // false -> 节点变为temp-node，并添加_if=false
+    // true -> 添加_if=true，移除if
+    // dynamic -> addIfCondition
+    result = evalExp(el.if.exp)
+    if (result.success) {
+      if (result.result) {
+        el._if = true
+        addIfCondition(el, {
+          exp: el.if.exp,
+          block: el
+        })
+      } else {
+        replaceNode(el, getTempNode())._if = false
+      }
+    } else {
+      el._if = null
+      addIfCondition(el, {
+        exp: el.if.exp,
         block: el
       })
-      removeNode(el, true)
+    }
+  } else if (el.elseif) {
+    ifNode = findPrevNode(el)
+    ifConditions = getIfConditions(ifNode)
+    prevNode = ifConditions.length > 0 ? ifConditions[ifConditions.length - 1].block : ifNode
+    if (prevNode && prevNode._if !== undefined) {
+      if (prevNode._if === true) {
+        removeNode(el)
+      } else if (prevNode._if === false) {
+        el.if = el.elseif
+        delete el.elseif
+        postProcessIfReact(el)
+      } else {
+        result = evalExp(el.elseif.exp)
+        if (result.success) {
+          if (result.result) {
+            el._if = true
+            addIfCondition(ifNode, {
+              exp: el.elseif.exp,
+              block: el
+            })
+            removeNode(el, true)
+          } else {
+            removeNode(el)
+          }
+        } else {
+          el._if = null
+          addIfCondition(ifNode, {
+            exp: el.elseif.exp,
+            block: el
+          })
+          removeNode(el, true)
+        }
+      }
     } else {
-      warn$1(`wx:${el.elseif ? `elif="${el.elseif.raw}"` : 'else'} used on element [${el.tag}] without corresponding wx:if.`)
+      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+    }
+  } else if (el.else) {
+    ifNode = findPrevNode(el)
+    ifConditions = getIfConditions(ifNode)
+    prevNode = ifConditions.length > 0 ? ifConditions[ifConditions.length - 1].block : ifNode
+    if (prevNode && prevNode._if !== undefined) {
+      if (prevNode._if === true) {
+        removeNode(el)
+      } else if (prevNode._if === false) {
+        delete el.else
+      } else {
+        addIfCondition(ifNode, {
+          block: el
+        })
+        removeNode(el, true)
+      }
+    } else {
+      error$1(`wx:else used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
     }
   }
 }

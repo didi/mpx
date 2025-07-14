@@ -1,5 +1,4 @@
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
-const { evalExp } = require('./compiler')
 
 function genIf (node) {
   node.ifProcessed = true
@@ -10,13 +9,11 @@ function genIfConditions (conditions) {
   if (!conditions.length) return 'null'
   const condition = conditions.shift()
   if (condition.exp) {
-    const result = evalExp(condition.exp)
-    if (result.success) {
-      if (result.result) {
-        return genNode(condition.block)
-      } else {
-        return genIfConditions(conditions)
-      }
+    const node = condition.block
+    if (node._if === true) {
+      return genNode(condition.block)
+    } else if (node._if === false) {
+      return genIfConditions(conditions)
     } else {
       return `(${condition.exp})?${genNode(condition.block)}:${genIfConditions(conditions)}`
     }
