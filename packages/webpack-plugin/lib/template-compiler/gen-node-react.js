@@ -9,7 +9,14 @@ function genIfConditions (conditions) {
   if (!conditions.length) return 'null'
   const condition = conditions.shift()
   if (condition.exp) {
-    return `(${condition.exp})?${genNode(condition.block)}:${genIfConditions(conditions)}`
+    const node = condition.block
+    if (node._if === true) {
+      return genNode(condition.block)
+    } else if (node._if === false) {
+      return genIfConditions(conditions)
+    } else {
+      return `(${condition.exp})?${genNode(condition.block)}:${genIfConditions(conditions)}`
+    }
   } else {
     return genNode(condition.block)
   }
@@ -30,7 +37,7 @@ function mapAttrName (name) {
   return name
 }
 
-function genNode (node) {
+function genNode (node, isRoot = false) {
   let exp = ''
   if (node) {
     if (node.type === 3) {
@@ -47,7 +54,10 @@ function genNode (node) {
         if (node.for && !node.forProcessed) {
           exp += genFor(node)
         } else if (node.if && !node.ifProcessed) {
-          exp += genIf(node)
+          const ifNode = genIf(node)
+          if (ifNode !== 'null') {
+            exp += genIf(node)
+          }
         } else {
           const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
             if (attrName) {
@@ -81,9 +91,15 @@ function genNode (node) {
           }
         }
       } else {
-        exp += node.children.map((child) => {
+        const nodes = node.children.map((child) => {
           return genNode(child)
-        }).filter(fragment => fragment).join(',')
+        }).filter(fragment => fragment && fragment !== 'null')
+        if (isRoot && nodes.length > 1) {
+          // 如果存在多个根节点，使用 block 包裹
+          exp = `createElement(getComponent("block"), null, ${nodes.join(',')})`
+        } else {
+          exp += nodes.join(',')
+        }
       }
     }
   }
