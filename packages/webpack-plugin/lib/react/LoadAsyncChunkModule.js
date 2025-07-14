@@ -49,7 +49,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           ]),
           '}',
           `var timeoutCallback = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
-          "var successCallback = callback.bind(null, 'load');",
+          "var successCallback = callback.bind(null, 'fail');", // 错误类型和 wx 对齐
           "var failedCallback = callback.bind(null, 'fail')",
           'var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync',
           'if (typeof loadChunkAsyncFn !== \'function\') {',

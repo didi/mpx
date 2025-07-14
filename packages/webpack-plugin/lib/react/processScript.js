@@ -33,7 +33,6 @@ module.exports = function (script, {
   }
 
   let output = '/* script */\n'
-  output += "import { lazy, createElement, memo, forwardRef } from 'react'\n"
   if (ctorType === 'app') {
     output += `
 import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext, optionProcessorPath)}

@@ -2,7 +2,7 @@ const path = require('path')
 const NullDependency = require('webpack/lib/dependencies/NullDependency')
 const makeSerializable = require('webpack/lib/util/makeSerializable')
 
-class RecordFileUrlDependency extends NullDependency {
+class RequireExternalDependency extends NullDependency {
   constructor (range, url) {
     super()
     this.range = range
@@ -10,11 +10,7 @@ class RecordFileUrlDependency extends NullDependency {
   }
 
   get type () {
-    return 'mpx record file url'
-  }
-
-  mpxAction (module, compilation, callback) {
-    return callback()
+    return 'mpx require external'
   }
 
   updateHash (hash, context) {
@@ -25,17 +21,19 @@ class RecordFileUrlDependency extends NullDependency {
   serialize (context) {
     const { write } = context
     write(this.url)
+    write(this.range)
     super.serialize(context)
   }
 
   deserialize (context) {
     const { read } = context
     this.url = read()
+    this.range = read()
     super.deserialize(context)
   }
 }
 
-RecordFileUrlDependency.Template = class RecordFileUrlDependencyTemplate {
+RequireExternalDependency.Template = class RequireExternalDependencyTemplate {
   apply (dependency, source, { module, chunkGraph, runtimeTemplate }) {
     const { range } = dependency
     const compliation = runtimeTemplate.compilation
@@ -49,10 +47,11 @@ RecordFileUrlDependency.Template = class RecordFileUrlDependencyTemplate {
       relativePath = './' + relativePath
     }
 
-    source.replace(range[0], range[1] - 1, JSON.stringify(relativePath))
+    compliation.__mpx__.externalRequests.add(relativePath)
+    source.replace(range[0], range[1] - 1, `require(${JSON.stringify(relativePath)})`)
   }
 }
 
-makeSerializable(RecordFileUrlDependency, '@mpxjs/webpack-plugin/lib/dependencies/RecordFileUrlDependency')
+makeSerializable(RequireExternalDependency, '@mpxjs/webpack-plugin/lib/dependencies/RequireExternalDependency')
 
-module.exports = RecordFileUrlDependency
+module.exports = RequireExternalDependency

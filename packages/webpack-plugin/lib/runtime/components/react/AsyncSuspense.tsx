@@ -54,10 +54,6 @@ const styles = StyleSheet.create({
   }
 })
 
-interface LayoutViewProps {
-  children: ReactNode
-}
-
 interface AsyncModule {
   __esModule: boolean
   default: ReactNode
@@ -86,12 +82,6 @@ const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
         <Text style={styles.retryButtonText}>点击重试</Text>
       </TouchableOpacity>
     </View>
-  )
-}
-
-const LayoutView = (props: LayoutViewProps) => {
-  return (
-    <View style={{ flex: 1 }} collapsable={false}>{props.children}</View>
   )
 }
 
@@ -175,7 +165,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     if (type === 'page') {
       const Fallback =
         (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
-      return createElement(LayoutView, null, createElement(Fallback, { onReload: reloadPage }))
+      return createElement(Fallback, { onReload: reloadPage })
     } else {
       return createElement(fallback, innerProps)
     }
@@ -184,7 +174,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
       loadChunkPromise.current = getChildren()
     }
     if (type === 'page') {
-      return createElement(LayoutView, null, createElement(loading || DefaultLoading))
+      return createElement(loading || DefaultLoading)
     } else {
       return createElement(fallback, innerProps)
     }

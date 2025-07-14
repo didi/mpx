@@ -44,6 +44,7 @@ interface MovableViewProps {
   disabled?: boolean
   animation?: boolean
   id?: string
+  changeThrottleTime?:number
   bindchange?: (event: unknown) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
   catchtouchstart?: (event: GestureTouchEvent) => void
@@ -69,6 +70,7 @@ interface MovableViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'disable-event-passthrough'?: boolean
 }
 
 const styles = StyleSheet.create({
@@ -102,9 +104,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     direction = 'none',
+    'disable-event-passthrough': disableEventPassthrough = false,
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
+    changeThrottleTime = 60,
     bindtouchstart,
     catchtouchstart,
     bindhtouchmove,
@@ -150,6 +154,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
   const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
+  const lastChangeTime = useSharedValue(0)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -196,6 +201,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       }, propsRef.current)
     )
   }, [])
+
+  // 节流版本的 change 事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(handleTriggerChange)({ x, y, type })
+    }
+  }, [changeThrottleTime])
 
   useEffect(() => {
     runOnUI(() => {
@@ -460,7 +475,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         if (bindchange) {
-          runOnJS(handleTriggerChange)({
+          // 使用节流版本减少 runOnJS 调用
+          handleTriggerChangeThrottled({
             x: offsetX.value,
             y: offsetY.value
           })
@@ -543,10 +559,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       })
       .withRef(movableGestureRef)
 
-    if (direction === 'horizontal') {
-      gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
-    } else if (direction === 'vertical') {
-      gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
+    if (!disableEventPassthrough) {
+      if (direction === 'horizontal') {
+        gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
+      } else if (direction === 'vertical') {
+        gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
+      }
     }
 
     if (simultaneousHandlers && simultaneousHandlers.length) {

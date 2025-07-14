@@ -365,6 +365,14 @@ function transformTransform (style: Record<string, any>) {
   if (!style.transform || Array.isArray(style.transform)) return
   style.transform = parseTransform(style.transform)
 }
+
+function transformBoxShadow (styleObj: Record<string, any>) {
+  if (!styleObj.boxShadow) return
+  styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
+    return `${res}${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
+  }, '')
+}
+
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -506,6 +514,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformPosition(normalStyle, positionMeta)
   // transform number enum stringify
   transformStringify(normalStyle)
+  // transform rpx to px
+  transformBoxShadow(normalStyle)
 
   // transform 字符串格式转化数组格式
   transformTransform(normalStyle)
@@ -607,19 +617,8 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
       }
       if (enableOffset) {
         nodeRef.current?.measure((x: number, y: number, width: number, height: number, offsetLeft: number, offsetTop: number) => {
-          const { y: navigationY = 0 } = navigation?.layout || {}
-          layoutRef.current = {
-            x,
-            y: y - navigationY,
-            width,
-            height,
-            offsetLeft,
-            offsetTop: offsetTop - navigationY,
-            _x: x,
-            _y: y,
-            _offsetLeft: offsetLeft,
-            _offsetTop: offsetTop
-          }
+          const { top: navigationY = 0 } = navigation?.layout || {}
+          layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft, offsetTop: offsetTop - navigationY }
         })
       }
       onLayout && onLayout(e)

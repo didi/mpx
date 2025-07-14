@@ -44,7 +44,7 @@ const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
 const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
 const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
-const RecordFileUrlDependency = require('./dependencies/RecordFileUrlDependency')
+const RequireExternalDependency = require('./dependencies/RequireExternalDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
@@ -76,6 +76,7 @@ const { isReact, isWeb } = require('./utils/env')
 const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
+const ExternalModule = require('webpack/lib/ExternalModule')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -674,8 +675,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
 
-      compilation.dependencyFactories.set(RecordFileUrlDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordFileUrlDependency, new RecordFileUrlDependency.Template())
+      compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
@@ -724,6 +725,8 @@ class MpxWebpackPlugin {
           assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
+          // 记录RequireExternalDependency相关资源路径
+          externalRequests: new Set(),
           globalComponents: {},
           globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
@@ -1174,6 +1177,9 @@ class MpxWebpackPlugin {
             hackModuleIdentifier(module)
             return rawCallback(null, module)
           }
+        } else if (isReact(mpx.mode) && module instanceof ExternalModule) {
+          module.hasChunkCondition = () => false // 跳过 EnsureChunkConditionsPlugin 的过滤，避免被输出到包含 entry module 的 chunk 当中
+          module.chunkCondition = () => true // 可以正常被 SplitChunkPlugin 处理
         }
         return rawAddModule.call(compilation, module, callback)
       }
@@ -1237,7 +1243,8 @@ class MpxWebpackPlugin {
               splitChunksOptions.cacheGroups.async = {
                 chunks: 'async',
                 name: 'async-common/index',
-                minChunks: 2
+                minChunks: 2,
+                minSize: 1
               }
               needInit = true
             }
@@ -1384,11 +1391,11 @@ class MpxWebpackPlugin {
           }
         })
 
-        parser.hooks.call.for('__mpx_rn_resolve_url_path_').tap('MpxWebpackPlugin', (expr) => {
+        parser.hooks.call.for('__mpx_require_external__').tap('MpxWebpackPlugin', (expr) => {
           const args = expr.arguments.map((i) => i.value)
           args.unshift(expr.range)
 
-          const dep = new RecordFileUrlDependency(...args)
+          const dep = new RequireExternalDependency(...args)
           parser.state.current.addPresentationalDependency(dep)
           return true
         })
