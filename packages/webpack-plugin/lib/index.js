@@ -143,6 +143,9 @@ class MpxWebpackPlugin {
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
     }
+    if (options.asyncSubpackageNameMap && !isReact(options.mode)) {
+      errors.push('MpxWebpackPlugin asyncSubpackageNameMap option only supports "ios", "android", or "harmony" mode')
+    }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
@@ -1422,7 +1425,7 @@ class MpxWebpackPlugin {
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
+                  if (isReact(mpx.mode)) tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
