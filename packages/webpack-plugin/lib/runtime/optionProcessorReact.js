@@ -1,4 +1,4 @@
-import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/AsyncSuspense'
+import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-async-suspense'
 import { memo, forwardRef, createElement } from 'react'
 import { extend } from './utils'
 
@@ -26,5 +26,11 @@ export function getAsyncSuspense (commonProps) {
         })
       )
     }
+  }
+}
+
+export function getLazyPage (getComponent) {
+  return function (props) {
+    return createElement(getComponent(), props)
   }
 }

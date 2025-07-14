@@ -53,12 +53,12 @@ export default function createApp (options) {
   defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
   defaultOptions.onAppInit && defaultOptions.onAppInit()
 
-  const pages = currentInject.getPages() || {}
+  const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
   const withHeader = (wrappedComponent, { pageConfig = {} }) => {
-      return ({ navigation, ...props }) => {
-        return createElement(GestureHandlerRootView,
+    return ({ navigation, ...props }) => {
+      return createElement(GestureHandlerRootView,
         {
           style: {
             flex: 1
@@ -73,23 +73,19 @@ export default function createApp (options) {
     }
   }
   const getPageScreens = (initialRouteName, initialParams) => {
-    return Object.entries(pages).map(([key, item]) => {
-      // const options = {
-      //   // __mpxPageStatusMap 为编译注入的全局变量
-      //   headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
-      // }
+    return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
-          component: withHeader(item, { pageConfig }),
+          getComponent: () => withHeader(item(), { pageConfig }),
           initialParams
           // options
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: withHeader(item, { pageConfig })
+        getComponent: () => withHeader(item(), { pageConfig })
         // options
       })
     })
@@ -239,7 +235,7 @@ export default function createApp (options) {
       headerShown: false,
       statusBarTranslucent: true,
       statusBarBackgroundColor: 'transparent'
-   }
+    }
 
     return createElement(SafeAreaProvider,
       null,
