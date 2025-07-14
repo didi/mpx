@@ -62,8 +62,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           '} catch (e) {',
           Template.indent([
             'console.error(\'[Mpx runtime error]: please provide correct mpx.config.rnConfig.loadChunkAsync implemention!\', e)',
-            'Promise.resolve().then(callback)',
-            'return'
+            'Promise.resolve().then(callback)'
           ]),
           '}'
         ]
