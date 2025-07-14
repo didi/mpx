@@ -35,7 +35,7 @@ module.exports = function (script, {
   let output = '/* script */\n'
   if (ctorType === 'app') {
     output += `
-import { getComponent, getAsyncSuspense, getLazyPage } from ${stringifyRequest(loaderContext, optionProcessorPath)}
+import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 \n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
@@ -61,7 +61,7 @@ import { getComponent, getAsyncSuspense, getLazyPage } from ${stringifyRequest(l
       jsonConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics, hasApp })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }

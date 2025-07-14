@@ -178,9 +178,6 @@ global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
 global.currentInject.pagesMap = ${shallowStringify(pagesMap)}
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
-    if (!hasApp) {
-      content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
-    }
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)
       delete pageConfig.usingComponents
@@ -191,6 +188,9 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
 var componentsMap = ${shallowStringify(componentsMap)}
 global.currentInject.componentsMap = componentsMap\n`
     if (genericsInfo) {
+      if (!hasApp) {
+        content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+      }
       content += `
 const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
 global.__mpxGenericsMap[genericHash] = componentsMap\n`
