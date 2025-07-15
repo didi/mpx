@@ -8,6 +8,7 @@ const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
+const { transAsyncSubNameRules } = require('../utils/trans-async-sub-rules')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
@@ -147,6 +148,7 @@ module.exports = function (jsonContent, {
   const fillInComponentsMap = (name, entry, tarRoot) => {
     const { resource, outputPath } = entry
     const { resourcePath, queryObj } = parseRequest(resource)
+    tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
     componentsMap[resourcePath] = outputPath
     loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
     localComponentsMap[name] = {
@@ -300,6 +302,8 @@ module.exports = function (jsonContent, {
 
           pagesMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
+          // 通过asyncSubPackagesNameRules对tarRoot进行修改，仅修改tarRoot，不修改outputPath页面路径
+          tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
             async: queryObj.async || tarRoot,
