@@ -168,17 +168,11 @@ export default function createApp (options) {
 
   const windowInfo = ReactNative.Dimensions.get('window')
   const screenInfo = ReactNative.Dimensions.get('screen')
-  const isLargeFoldableLike = (__mpx_mode__ === 'android') && (window.height / window.width < 1.5) && (window.width > 600)
-  if (isLargeFoldableLike) {
-    windowInfo.width = windowInfo.width >> 2
-    windowInfo.height = windowInfo.height >> 2
-    screenInfo.width = screenInfo.width >> 2
-    screenInfo.height = screenInfo.height >> 2
-  }
   global.__mpxAppDimensionsInfo = {
     window: windowInfo,
     screen: screenInfo
   }
+  Mpx.config.rnConfig?.dimensionsInfoEdit?.(global.__mpxAppDimensionsInfo)
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
@@ -232,18 +226,13 @@ export default function createApp (options) {
       let count = 0
       const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
         const oldWindow = getPageSize(global.__mpxAppDimensionsInfo.window)
-        const isLargeFoldableLike = (__mpx_mode__ === 'android') && (window.height / window.width < 1.5) && (window.width > 600)
-        if (isLargeFoldableLike) {
-          window.width = window.width >> 2
-          window.height = window.height >> 2
-          screen.width = screen.width >> 2
-          screen.height = screen.height >> 2
-        }
         // 将最新数据设置到全局
         dimensionsInfoRef.current.window.width = window.width
         dimensionsInfoRef.current.window.height = window.height
         dimensionsInfoRef.current.screen.width = screen.width
         dimensionsInfoRef.current.screen.height = screen.height
+        // 暴露接口给业务修改 dimensionsInfo
+        Mpx.config.rnConfig?.dimensionsInfoEdit?.(dimensionsInfoRef.current)
 
         // // 对比 window 高宽是否存在变化
         if (getPageSize(window) === oldWindow) return
