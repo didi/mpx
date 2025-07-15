@@ -384,8 +384,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   function onScroll (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscroll } = props
-    const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
-    const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
+    const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent
+    const { x: scrollLeft, y: scrollTop } = contentOffset
+    const { width: scrollWidth, height: scrollHeight } = contentSize
     isAtTop.value = scrollTop <= 0
     bindscroll &&
       bindscroll(
@@ -396,7 +397,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
             scrollHeight,
             scrollWidth,
             deltaX: scrollLeft - scrollOptions.current.scrollLeft,
-            deltaY: scrollTop - scrollOptions.current.scrollTop
+            deltaY: scrollTop - scrollOptions.current.scrollTop,
+            layoutMeasurement
           },
           layoutRef
         }, props)
@@ -411,8 +413,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscrollend } = props
-    const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
-    const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
+    const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent
+    const { x: scrollLeft, y: scrollTop } = contentOffset
+    const { width: scrollWidth, height: scrollHeight } = contentSize
     isAtTop.value = scrollTop <= 0
     bindscrollend &&
       bindscrollend(
@@ -421,7 +424,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
             scrollLeft,
             scrollTop,
             scrollHeight,
-            scrollWidth
+            scrollWidth,
+            layoutMeasurement
           },
           layoutRef
         }, props)
