@@ -725,7 +725,7 @@ class MpxWebpackPlugin {
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
           // 记录RequireExternalDependency相关资源路径
-          externalRequests: new Map(),
+          externalRequestsMap: new Map(),
           globalComponents: {},
           globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换

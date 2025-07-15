@@ -47,10 +47,10 @@ RequireExternalDependency.Template = class RequireExternalDependencyTemplate {
       relativePath = './' + relativePath
     }
 
-    if (!compliation.__mpx__.externalRequests.has(chunk.name)) {
-      compliation.__mpx__.externalRequests.set(chunk.name, new Set())
+    if (!compliation.__mpx__.externalRequestsMap.has(chunk.name)) {
+      compliation.__mpx__.externalRequestsMap.set(chunk.name, new Set())
     }
-    compliation.__mpx__.externalRequests.get(chunk.name).add(relativePath)
+    compliation.__mpx__.externalRequestsMap.get(chunk.name).add(relativePath)
 
     source.replace(range[0], range[1] - 1, `require(${JSON.stringify(relativePath)})`)
   }
