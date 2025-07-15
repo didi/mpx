@@ -95,13 +95,21 @@ export const innerNav = memo(({ pageConfig, navigation }) => {
   const safeAreaTop = useSafeAreaInsets()?.top || 0
   // 假设是栈导航，获取栈的长度
   const stackLength = navigation.getState()?.routes?.length
-  // 用于外部注册打开RN容器之前的栈长度
-  const beforeStackLength = Mpx.config?.rnConfig?.beforeStackLength || 0
+  const onStackTopBack = Mpx.config?.rnConfig?.onStackTopBack
+  const isHandleStackTopBack = typeof onStackTopBack === 'function'
 
   // 回退按钮与图标
-  const backElement = stackLength + beforeStackLength > 1
+  const backElement = stackLength > 1 || isHandleStackTopBack
     ? createElement(TouchableWithoutFeedback, {
-      onPress: () => { navigation.goBack() }
+      onPress: () => {
+        if (stackLength <= 1) {
+          if (isHandleStackTopBack) {
+            onStackTopBack()
+          }
+          return
+        }
+        navigation.goBack()
+      }
     }, createElement(View, {
         style: [styles.backButton]
       }, createElement(Image, {
