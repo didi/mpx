@@ -15,6 +15,8 @@ class RetryRuntimeModule extends RuntimeModule {
       `${RetryRuntimeGlobal} = ${runtimeTemplate.basicFunction(
         'fn, times, interval',
         [
+          'times = times || 1;',
+          'interval = interval || 0;',
           `return new Promise(${runtimeTemplate.basicFunction(
             'resolve, reject',
             [
@@ -28,8 +30,7 @@ class RetryRuntimeModule extends RuntimeModule {
                         'console.log("the _t is:", _t)',
                         'if (_t < times) {',
                           Template.indent([
-                            // todo interval 有值的时候才是异步的？
-                            'setTimeout(_retry, interval);'
+                            'interval > 0 ? setTimeout(_retry, interval) : _retry()'
                           ]),
                         '} else {',
                           Template.indent([

@@ -6,8 +6,7 @@ class ImportDependencyTemplate extends (
 ) {
   constructor(options = {}) {
     super()
-    this.times = options.times || 0
-    this.interval = options.interval || 0
+    this.retryRequireAsync = options.retryRequireAsync
   }
 
   /**
@@ -39,9 +38,13 @@ class ImportDependencyTemplate extends (
       return p1 + '9' + p3
     })
 
-    runtimeRequirements.add(RetryRuntimeGlobal)
+    if (this.retryRequireAsync && this.retryRequireAsync.times > 0) {
+      runtimeRequirements.add(RetryRuntimeGlobal)
+      content = `${RetryRuntimeGlobal}(function() { return ${content} }, ${this.retryRequireAsync.times}, ${this.retryRequireAsync.interval})`
+    }
 
-    source.replace(dep.range[0], dep.range[1] - 1, `${RetryRuntimeGlobal}(function() { return ${content} }, ${this.times}, ${this.interval})`)
+
+    source.replace(dep.range[0], dep.range[1] - 1, content)
   }
 }
 

@@ -199,6 +199,12 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
+    if (options.retryRequireAsync === true) {
+      options.retryRequireAsync = {
+        times: 1,
+        interval: 0
+      }
+    }
     options.optimizeSize = options.optimizeSize || false
     options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
     this.options = options
@@ -688,7 +694,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
       compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
-      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate({
+        retryRequireAsync: this.options.retryRequireAsync
+      }))
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -1454,7 +1462,8 @@ class MpxWebpackPlugin {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isAsync: true,
                     isRequireAsync: true,
-                    retryRequireAsync: this.options.retryRequireAsync
+                    retryRequireAsync: this.options.retryRequireAsync,
+                    requireAsyncRange: expr.range
                   })
 
                   parser.state.current.addPresentationalDependency(dep)

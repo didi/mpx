@@ -202,9 +202,11 @@ class DynamicEntryDependency extends NullDependency {
 DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
   apply (dep, source, {
     module,
-    chunkGraph
+    chunkGraph,
+    runtimeRequirements
   }) {
-    const { resultPath, range, key, publicPath, extraOptions } = dep
+    const { resultPath, key, publicPath, extraOptions } = dep
+    let range = dep.range
 
     let replaceContent = ''
 
@@ -215,17 +217,10 @@ DynamicEntryDependency.Template = class DynamicEntryDependencyTemplate {
         let relativePath = toPosix(path.relative(publicPath + path.dirname(chunkGraph.getModuleChunks(module)[0].name), resultPath))
         if (!relativePath.startsWith('.')) relativePath = './' + relativePath
         replaceContent = JSON.stringify(relativePath)
-        if (extraOptions.retryRequireAsync) {
-          if (typeof extraOptions.retryRequireAsync === 'boolean') {
-            extraOptions.retryRequireAsync = {
-              times: 1,
-              interval: 0
-            }
-          }
-          replaceContent = `${RetryRuntimeGlobal}(function() { return ${replaceContent} }, ${extraOptions.retryRequireAsync.times}, ${extraOptions.retryRequireAsync.interval})`
-//           replaceContent += `).catch(function (e) {
-//   return require.async(${JSON.stringify(relativePath)});
-// }`
+        if (extraOptions.retryRequireAsync && extraOptions.retryRequireAsync.times > 0) {
+          range = extraOptions.requireAsyncRange
+          runtimeRequirements.add(RetryRuntimeGlobal)
+          replaceContent = `${RetryRuntimeGlobal}(function() { return require.async(${JSON.stringify(relativePath)}) }, ${extraOptions.retryRequireAsync.times}, ${extraOptions.retryRequireAsync.interval})`
         }
       } else {
         replaceContent = JSON.stringify(resultPath)
