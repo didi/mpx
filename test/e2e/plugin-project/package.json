@@ -1,6 +1,6 @@
 {
   "name": "mpx-webpack5-plugin-project",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A mpx project",
   "main": "index.js",
   "scripts": {
