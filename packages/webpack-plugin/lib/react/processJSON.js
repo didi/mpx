@@ -290,7 +290,7 @@ module.exports = function (jsonContent, {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           if (pageKeySet.has(key)) return callback()
           pageKeySet.add(key)
-          const { resourcePath, queryObj } = parseRequest(resource)
+          const { resourcePath } = parseRequest(resource)
           if (localPagesMap[outputPath]) {
             const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
             if (oldResourcePath !== resourcePath) {
