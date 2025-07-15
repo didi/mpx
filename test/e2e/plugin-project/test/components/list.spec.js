@@ -4,6 +4,8 @@
  */
 const simulate = require('@mpxjs/miniprogram-simulate')
 
+global.mpxGlobal = global
+
 describe('test list component', () => {
   beforeEach(() => {
     simulate.mockComponent('mp-view', {
