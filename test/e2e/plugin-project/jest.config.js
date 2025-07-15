@@ -17,6 +17,7 @@ module.exports = {
       },
       babelConfig: true
     },
+    mpxGlobal: global
   },
   testPathIgnorePatterns: ['dist', 'node_modules'],
   testURL: 'http://test.api.com',
