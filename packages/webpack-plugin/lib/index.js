@@ -48,7 +48,7 @@ const RequireExternalDependency = require('./dependencies/RequireExternalDepende
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
-const { transAsyncSubNameRules, transAsyncSubRules } = require('./utils/trans-async-sub-rules')
+const { transSubNameRules } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
@@ -143,8 +143,8 @@ class MpxWebpackPlugin {
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
     }
-    if (options.asyncSubpackageNameMap && !isReact(options.mode)) {
-      errors.push('MpxWebpackPlugin asyncSubpackageNameMap option only supports "ios", "android", or "harmony" mode')
+    if (options.subpackageNameMap && !isReact(options.mode)) {
+      errors.push('MpxWebpackPlugin subpackageNameMap option only supports "ios", "android", or "harmony" mode')
     }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
@@ -785,7 +785,7 @@ class MpxWebpackPlugin {
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
-          asyncSubpackageNameMap: this.options.asyncSubpackageNameMap,
+          subpackageNameMap: this.options.subpackageNameMap,
           optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
@@ -1418,14 +1418,22 @@ class MpxWebpackPlugin {
             const range = expr.arguments[0].range
             const context = parser.state.module.context
             const { queryObj, resourcePath } = parseRequest(request)
-            let tarRoot = transAsyncSubRules(resourcePath, mpx.asyncSubpackageRules, queryObj.root)
+            let tarRoot = queryObj.root
+            if (!tarRoot && mpx.asyncSubpackageRules) {
+              for (const item of mpx.asyncSubpackageRules) {
+                if (matchCondition(resourcePath, item)) {
+                  tarRoot = item.root
+                  break
+                }
+              }
+            }
             if (tarRoot) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  if (isReact(mpx.mode)) tarRoot = transAsyncSubNameRules(mpx.asyncSubpackageNameMap, tarRoot)
+                  if (isReact(mpx.mode)) tarRoot = transSubNameRules(mpx.subpackageNameMap, tarRoot)
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
