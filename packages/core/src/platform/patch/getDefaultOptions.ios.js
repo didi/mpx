@@ -304,7 +304,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    proxy.callHook(ONLOAD, [props.route.params || {}])
+    const loadParams = {}
+    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+    if (isObject(props.route.params)) {
+      for (const key in props.route.params) {
+        loadParams[key] = encodeURIComponent(props.route.params[key])
+      }
+    }
+    proxy.callHook(ONLOAD, [loadParams])
   }
 
   Object.assign(proxy, {
@@ -419,6 +426,26 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+function usePagePreload (route) {
+  const name = route.name
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const preloadRule = global.__preloadRule || {}
+      const { packages } = preloadRule[name] || {}
+      if (packages?.length > 0) {
+        const downloadChunkAsync = mpxGlobal.__mpx.config?.rnConfig?.downloadChunkAsync
+        if (typeof downloadChunkAsync === 'function') {
+          callWithErrorHandling(() => downloadChunkAsync(packages))
+        }
+      }
+    }, 800)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [])
+}
+
 const RelationsContext = createContext(null)
 
 const checkRelation = (options) => {
@@ -485,6 +512,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
       return () => dimensionListener?.remove()
     }, [])
 
+    usePagePreload(route)
     usePageStatus(navigation, currentPageId)
 
     const withKeyboardAvoidingView = (element) => {
@@ -608,7 +636,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
-
     useEffect(() => {
       proxy.mounted()
       return () => {

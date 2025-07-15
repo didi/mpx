@@ -581,7 +581,8 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (options.pad) {
+      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
+      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -2002,7 +2003,7 @@ function postProcessFor (el) {
 function postProcessForReact (el) {
   if (el.for) {
     if (el.for.key) {
-      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key === '_' ? 'index' : el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
       addAttrs(el, [{
         name: 'key',
         value: el.for.key
