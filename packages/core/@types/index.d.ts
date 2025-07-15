@@ -267,8 +267,8 @@ export interface RnConfig {
    * 外层可能会异常设置此配置，因此加载监听函数内部
    */
   disableAppStateListener?: boolean
-  /** 进入页面是否控制回推按钮的展示以及监听回推按钮的点击 */
-  onStackTopBack: () => void
+  /** 进入页面是否控制回退按钮的展示以及监听回退按钮的点击 */
+  onStackTopBack?: () => void
 }
 
 interface MpxConfig {
