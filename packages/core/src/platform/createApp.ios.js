@@ -56,37 +56,35 @@ export default function createApp (options) {
   const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const withHeader = (wrappedComponent, { pageConfig = {} }) => {
-    return ({ navigation, ...props }) => {
-      return createElement(GestureHandlerRootView,
-        {
-          style: {
-            flex: 1
-          }
-        },
-        createElement(innerNav, {
-          pageConfig: pageConfig,
-          navigation
-        }),
-        createElement(wrappedComponent, { navigation, ...props })
-      )
-    }
-  }
   const getPageScreens = (initialRouteName, initialParams) => {
     return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
+      const headerLayout = ({ navigation, children }) => {
+        return createElement(GestureHandlerRootView,
+          {
+            style: {
+              flex: 1
+            }
+          },
+          createElement(innerNav, {
+            pageConfig: pageConfig,
+            navigation
+          }),
+          children
+        )
+      }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
-          getComponent: () => withHeader(item(), { pageConfig }),
-          initialParams
-          // options
+          getComponent: () => item(),
+          initialParams,
+          layout: headerLayout
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        getComponent: () => withHeader(item(), { pageConfig })
-        // options
+        getComponent: () => item(),
+        layout: headerLayout
       })
     })
   }
