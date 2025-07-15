@@ -193,6 +193,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     white: ['#fff']
   }
 
+  const isContentSizeChange = useRef(false)
+
   const { refresherContent, otherContent } = getRefresherContent(props.children)
   const hasRefresher = refresherContent && refresherEnabled
 
@@ -356,6 +358,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   }
 
   function onContentSizeChange (width: number, height: number) {
+    isContentSizeChange.current = true
     scrollOptions.current.contentLength = selectLength({ height, width })
   }
 
@@ -379,8 +382,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   function onScroll (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscroll } = props
-    const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
-    const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
+    const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent
+    const { x: scrollLeft, y: scrollTop } = contentOffset
+    const { width: scrollWidth, height: scrollHeight } = contentSize
     isAtTop.value = scrollTop <= 0
     bindscroll &&
       bindscroll(
@@ -391,7 +395,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
             scrollHeight,
             scrollWidth,
             deltaX: scrollLeft - scrollOptions.current.scrollLeft,
-            deltaY: scrollTop - scrollOptions.current.scrollTop
+            deltaY: scrollTop - scrollOptions.current.scrollTop,
+            layoutMeasurement
           },
           layoutRef
         }, props)
@@ -406,8 +411,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   function onScrollEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { bindscrollend } = props
-    const { x: scrollLeft, y: scrollTop } = e.nativeEvent.contentOffset
-    const { width: scrollWidth, height: scrollHeight } = e.nativeEvent.contentSize
+    const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent
+    const { x: scrollLeft, y: scrollTop } = contentOffset
+    const { width: scrollWidth, height: scrollHeight } = contentSize
     isAtTop.value = scrollTop <= 0
     bindscrollend &&
       bindscrollend(
@@ -416,7 +422,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
             scrollLeft,
             scrollTop,
             scrollHeight,
-            scrollWidth
+            scrollWidth,
+            layoutMeasurement
           },
           layoutRef
         }, props)
@@ -503,6 +510,24 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     {
       useNativeDriver: true,
       listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const y = event.nativeEvent.contentOffset.y || 0
+        // 内容高度变化时，Animated.event 的映射可能会有不生效的场景，只有在 listener 中获取到正确的 y 值再去修正
+        if (isContentSizeChange.current) {
+          // 鸿蒙中通过scrollOffset.__getValue获取值一直等于event.nativeEvent.contentOffset.y
+          if (__mpx_mode__ === 'harmony') {
+            scrollOffset.setValue(y)
+            setTimeout(() => {
+              isContentSizeChange.current = false
+            })
+          } else {
+            if (y !== (scrollOffset as any).__getValue()) {
+              scrollOffset.setValue(y)
+              setTimeout(() => {
+                isContentSizeChange.current = false
+              })
+            }
+          }
+        }
         onScroll(event)
       }
     }
