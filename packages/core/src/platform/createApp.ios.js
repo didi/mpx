@@ -166,9 +166,18 @@ export default function createApp (options) {
     }
   }
 
+  const windowInfo = ReactNative.Dimensions.get('window')
+  const screenInfo = ReactNative.Dimensions.get('screen')
+  const isLargeFoldableLike = (__mpx_mode__ === 'android') && (window.height / window.width < 1.5) && (window.width > 600)
+  if (isLargeFoldableLike) {
+    windowInfo.width = windowInfo.width >> 2
+    windowInfo.height = windowInfo.height >> 2
+    screenInfo.width = screenInfo.width >> 2
+    screenInfo.height = screenInfo.height >> 2
+  }
   global.__mpxAppDimensionsInfo = {
-    window: ReactNative.Dimensions.get('window'),
-    screen: ReactNative.Dimensions.get('screen')
+    window: windowInfo,
+    screen: screenInfo
   }
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
@@ -223,6 +232,13 @@ export default function createApp (options) {
       let count = 0
       const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
         const oldWindow = getPageSize(global.__mpxAppDimensionsInfo.window)
+        const isLargeFoldableLike = (__mpx_mode__ === 'android') && (window.height / window.width < 1.5) && (window.width > 600)
+        if (isLargeFoldableLike) {
+          window.width = window.width >> 2
+          window.height = window.height >> 2
+          screen.width = screen.width >> 2
+          screen.height = screen.height >> 2
+        }
         // 将最新数据设置到全局
         dimensionsInfoRef.current.window.width = window.width
         dimensionsInfoRef.current.window.height = window.height
