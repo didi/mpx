@@ -4,7 +4,7 @@ const { RetryRuntimeGlobal } = require('../retry-runtime-module')
 class ImportDependencyTemplate extends (
   ModuleDependency.Template
 ) {
-  constructor(options = {}) {
+  constructor (options = {}) {
     super()
     this.retryRequireAsync = options.retryRequireAsync
   }
@@ -42,7 +42,6 @@ class ImportDependencyTemplate extends (
       runtimeRequirements.add(RetryRuntimeGlobal)
       content = `${RetryRuntimeGlobal}(function() { return ${content} }, ${this.retryRequireAsync.times}, ${this.retryRequireAsync.interval})`
     }
-
 
     source.replace(dep.range[0], dep.range[1] - 1, content)
   }

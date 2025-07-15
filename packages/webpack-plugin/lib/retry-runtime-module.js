@@ -4,7 +4,7 @@ const RuntimeModule = require('webpack/lib/RuntimeModule')
 const RetryRuntimeGlobal = '__webpack_require__.__retry'
 
 class RetryRuntimeModule extends RuntimeModule {
-  constructor() {
+  constructor () {
     super('mpx retry module')
   }
 
@@ -27,7 +27,6 @@ class RetryRuntimeModule extends RuntimeModule {
                     `fn().then(resolve).catch(${runtimeTemplate.basicFunction('err', [
                       Template.indent([
                         '_t++;',
-                        'console.log("the _t is:", _t)',
                         'if (_t < times) {',
                           Template.indent([
                             'interval > 0 ? setTimeout(_retry, interval) : _retry()'
@@ -42,7 +41,7 @@ class RetryRuntimeModule extends RuntimeModule {
                   ])
                 ])};`,
                 '_retry();'
-              ]),
+              ])
             ]
           )})`
         ]
