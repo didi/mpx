@@ -231,7 +231,7 @@ export default function createApp (options) {
 
         // // 对比 window 高宽是否存在变化
         if (getPageSize(window) === oldWindow) return
-
+        global.__appClassMapValueCache = {}
         // // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {

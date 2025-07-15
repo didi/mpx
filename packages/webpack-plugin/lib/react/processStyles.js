@@ -55,14 +55,19 @@ module.exports = function (styles, {
           warn,
           error
         })
-        const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
-          result += `'${key}': function(){ return ${shallowStringify(value)}},`
-          return result
-        }, '')
         if (ctorType === 'app') {
+          const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+            result += `get ['${key}']() {
+            if(!global.__appClassMapValueCache.get('${key}')) {
+              global.__appClassMapValueCache.set('${key}', ${shallowStringify(value)});
+            }
+            return global.__appClassMapValueCache.get('${key}');
+          },`
+            return result
+          }, '')
           output += `
           let __appClassMap
-          global.__appClassMapValueCache = {}
+          global.__appClassMapValueCache = new Map();
           global.__getAppClassMap = function() {
             if(!__appClassMap) {
               __appClassMap = {${classMapCode}};
@@ -70,11 +75,20 @@ module.exports = function (styles, {
             return __appClassMap;
           };\n`
         } else {
+          const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+            result += `get ['${key}']() {
+            if(!this.__classMapValueCache) {
+              this.__classMapValueCache = new Map();
+            }
+            if(!this.__classMapValueCache.get('${key}')) {
+                this.__classMapValueCache.set('${key}', ${shallowStringify(value)});
+              }
+              return this.__classMapValueCache.get('${key}');
+          },`
+            return result
+          }, '')
           output += `
           let __classMap
-          global.currentInject.injectOptions = {
-            __classMapValueCache: {}
-          }
           global.currentInject.injectMethods = {
             __getClassMap: function() {
               if(!__classMap) {

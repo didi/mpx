@@ -173,6 +173,12 @@ function getMediaStyle (media, windowInfo) {
 
 export default function styleHelperMixin () {
   return {
+    watch: {
+      '__dimensionsInfo.window.width, __dimensionsInfo.window.height' (newValue, oldValue) {
+        if (newValue[0] === oldValue[0] && newValue[1] === oldValue[1]) return
+        this.__classMapValueCache = {}
+      }
+    },
     methods: {
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -186,24 +192,23 @@ export default function styleHelperMixin () {
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
+
           classString.split(/\s+/).forEach((className) => {
-            if (typeof classMap[className] === 'function') {
-              const styleObj = classMap[className]() || {}
+            if (classMap[className]) {
+              const styleObj = classMap[className] || empty
               if (styleObj._default) {
                 Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.window))
               } else {
                 Object.assign(result, styleObj)
               }
-              this.$rawOptions.options.__classMapValueCache[className] = styleObj
-            } else if (typeof appClassMap[className] === 'function') {
+            } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              const styleObj = appClassMap[className]() || {}
+              const styleObj = appClassMap[className] || empty
               if (styleObj._default) {
                 Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.window))
               } else {
                 Object.assign(result, styleObj)
               }
-              global.__appClassMapValueCache[className] = styleObj
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               Object.assign(result, this.__props[className])
