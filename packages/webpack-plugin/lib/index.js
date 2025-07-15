@@ -618,15 +618,12 @@ class MpxWebpackPlugin {
         }
       })
 
-      // todo 添加判断来决策是否要注入 RetryRuntimeModule
-      // if (isReact(this.options.mode) || isWeb(this.options.mode)) {
-        compilation.hooks.runtimeRequirementInTree
-          .for(RetryRuntimeGlobal)
-          .tap('MpxWebpackPlugin', (chunk) => {
-            compilation.addRuntimeModule(chunk, new RetryRuntimeModule())
-            return true
-          })
-      // }
+      compilation.hooks.runtimeRequirementInTree
+        .for(RetryRuntimeGlobal)
+        .tap('MpxWebpackPlugin', (chunk) => {
+          compilation.addRuntimeModule(chunk, new RetryRuntimeModule())
+          return true
+        })
 
       if (isReact(this.options.mode)) {
         compilation.hooks.runtimeRequirementInTree
