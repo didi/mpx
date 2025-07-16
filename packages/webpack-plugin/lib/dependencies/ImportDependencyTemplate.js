@@ -38,7 +38,8 @@ class ImportDependencyTemplate extends (
       return p1 + '9' + p3
     })
 
-    if (this.retryRequireAsync && this.retryRequireAsync.times > 0) {
+    // require.async 的场景且配置了重试次数才注入 RetryRuntimeModule
+    if (dep.isRequireAsync && this.retryRequireAsync && this.retryRequireAsync.times > 0) {
       runtimeRequirements.add(RetryRuntimeGlobal)
       content = `${RetryRuntimeGlobal}(function() { return ${content} }, ${this.retryRequireAsync.times}, ${this.retryRequireAsync.interval})`
     }

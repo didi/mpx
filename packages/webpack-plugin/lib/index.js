@@ -1453,6 +1453,7 @@ class MpxWebpackPlugin {
                   )
                   const dep = new ImportDependency(request, expr.range)
                   dep.loc = expr.loc
+                  dep.isRequireAsync = true
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
                 } else {
