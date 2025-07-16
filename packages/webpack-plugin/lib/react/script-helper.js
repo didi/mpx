@@ -10,7 +10,7 @@ function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
 
-function getMpxComponentRequest (component) {
+function getBuiltInComponentRequest (component) {
   return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
@@ -21,19 +21,35 @@ function getAsyncChunkName (chunkName) {
   return ''
 }
 
-function getAsyncSuspense (type, moduleId, componentRequest, chunkName, fallback, loading) {
-  fallback = fallback && `getComponent(require(${fallback}))`
-  loading = loading && `getComponent(require(${loading}))`
-  return `
-    getAsyncSuspense({
-      type: ${JSON.stringify(type)},
-      moduleId: ${JSON.stringify(moduleId)},
-      chunkName: ${JSON.stringify(chunkName)},
-      loading: ${loading},
-      fallback: ${fallback},
-      getChildren: () => import(${getAsyncChunkName(chunkName)}${componentRequest})
+function getAsyncSuspense (type, moduleId, componentRequest, componentName, chunkName, fallback, loading) {
+  return `getAsyncSuspense({
+  type: ${JSON.stringify(type)},
+  moduleId: ${JSON.stringify(moduleId)},
+  chunkName: ${JSON.stringify(chunkName)},
+  loading: ${loading},
+  fallback: ${fallback},
+  getChildren () {
+    return import(${getAsyncChunkName(chunkName)}${componentRequest}).then(function (res) {
+      return getComponent(res, {displayName: ${JSON.stringify(componentName)}})
     })
-  `
+  }
+})`
+}
+
+function getComponent (componentRequest, componentName) {
+  return `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`
+}
+
+function getBuiltInComponent (componentRequest) {
+  return `getComponent(require(${componentRequest}), {__mpxBuiltIn: true})`
+}
+
+// function getLazyPage (componentRequest) {
+//   return `getLazyPage(${getComponentGetter(getComponent(componentRequest, 'Page'))})`
+// }
+
+function getComponentGetter (component) {
+  return `function(){ return ${component} }`
 }
 
 function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) {
@@ -45,12 +61,12 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async) {
       const moduleId = mpx.getModuleId(pageCfg.resource)
-      const fallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && JSON.stringify(addQuery(rnConfig.asyncChunk.fallback, { isComponent: true }))
-      const loading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && JSON.stringify(addQuery(rnConfig.asyncChunk.loading, { isComponent: true }))
-      pagesMap[pagePath] = getAsyncSuspense('page', moduleId, pageRequest, pageCfg.async, fallback, loading)
+      const fallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback')
+      const loading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading')
+      pagesMap[pagePath] = getComponentGetter(getAsyncSuspense('page', moduleId, pageRequest, 'Page', pageCfg.async, fallback, loading))
     } else {
-    // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-      pagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}, displayName: "Page"})`
+      // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
+      pagesMap[pagePath] = getComponentGetter(getComponent(pageRequest, 'Page'))
     }
     if (pagePath === jsonConfig.entryPagePath) {
       firstPage = pagePath
@@ -75,6 +91,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
       if (componentCfg.async) {
         const moduleId = mpx.getModuleId(componentCfg.resource)
         const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
+        let fallback
         if (placeholder) {
           if (localComponentsMap[placeholder]) {
             const placeholderCfg = localComponentsMap[placeholder]
@@ -84,24 +101,25 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
-            componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async, placeholderRequest)
+            fallback = getComponent(placeholderRequest, placeholder)
           } else {
             const tag = `mpx-${placeholder}`
-            if (!isBuildInReactTag(tag)) {
+            if (isBuildInReactTag(tag)) {
+              fallback = getBuiltInComponent(getBuiltInComponentRequest(tag))
+            } else {
               loaderContext.emitError(
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
               )
             }
-            componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async, getMpxComponentRequest(tag))
           }
         } else {
           loaderContext.emitError(
             new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
           )
-          componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async)
         }
+        componentsMap[componentName] = getComponentGetter(getAsyncSuspense('component', moduleId, componentRequest, componentName, componentCfg.async, fallback))
       } else {
-        componentsMap[componentName] = `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`
+        componentsMap[componentName] = getComponentGetter(getComponent(componentRequest, componentName))
       }
     })
   }
@@ -109,14 +127,14 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     Object.keys(builtInComponentsMap).forEach((componentName) => {
       const componentCfg = builtInComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      componentsMap[componentName] = `getComponent(require(${componentRequest}), {__mpxBuiltIn: true})`
+      componentsMap[componentName] = getComponentGetter(getBuiltInComponent(componentRequest))
     })
   }
   return componentsMap
 }
 
 function getRequireScript ({ script, ctorType, loaderContext }) {
-  let content = '  /** script content **/\n'
+  let content = '/** script content **/\n'
   const { getRequire } = createHelpers(loaderContext)
   const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
   const extraOptions = {
@@ -126,7 +144,7 @@ function getRequireScript ({ script, ctorType, loaderContext }) {
     ctorType,
     lang: script.lang || 'js'
   }
-  content += `  ${getRequire('script', script, extraOptions)}\n`
+  content += `${getRequire('script', script, extraOptions)}\n`
   return content
 }
 
@@ -155,18 +173,11 @@ global.__mpxOptionsMap = {}
 global.__mpxPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-global.__getAppComponents = function () {
-  return ${shallowStringify(componentsMap)}
-}
+global.__appComponentsMap = ${shallowStringify(componentsMap)}
 global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
-global.currentInject.getPages = function () {
-  return ${shallowStringify(pagesMap)}
-}
+global.currentInject.pagesMap = ${shallowStringify(pagesMap)}
 global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
-    if (!hasApp) {
-      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
-    }
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)
       delete pageConfig.usingComponents
@@ -174,19 +185,15 @@ global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
     }
 
     content += `
-
-    function getComponents() {
-      return ${shallowStringify(componentsMap)}
-    }
-
-    global.currentInject.getComponents = getComponents\n`
+var componentsMap = ${shallowStringify(componentsMap)}
+global.currentInject.componentsMap = componentsMap\n`
     if (genericsInfo) {
+      if (!hasApp) {
+        content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+      }
       content += `
-        const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
-        global.__mpxGenericsMap[genericHash] = function (name) {
-          return getComponents()[name]
-        }
-      \n`
+const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
+global.__mpxGenericsMap[genericHash] = componentsMap\n`
     }
     if (ctorType === 'component') {
       content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
