@@ -29,7 +29,7 @@ class RecordPageConfigMapDependency extends NullDependency {
 
   deserialize (context) {
     const { read } = context
-    this.pagePath = read()
+    this.resourcePath = read()
     this.jsonObj = read()
     super.deserialize(context)
   }
