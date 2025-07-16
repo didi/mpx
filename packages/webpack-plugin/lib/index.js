@@ -144,7 +144,7 @@ class MpxWebpackPlugin {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
     }
     if (options.transSubpackageRules && !isReact(options.mode)) {
-      errors.push('MpxWebpackPlugin transSubpackageRules option only supports "ios", "android", or "harmony" mode')
+      warnings.push('MpxWebpackPlugin transSubpackageRules option only supports "ios", "android", or "harmony" mode')
     }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
