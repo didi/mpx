@@ -48,7 +48,7 @@ const RequireExternalDependency = require('./dependencies/RequireExternalDepende
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
-const { transSubNameRules } = require('./utils/trans-async-sub-rules')
+const { transSubpackage } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
@@ -143,8 +143,8 @@ class MpxWebpackPlugin {
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
     }
-    if (options.subpackageNameMap && !isReact(options.mode)) {
-      errors.push('MpxWebpackPlugin subpackageNameMap option only supports "ios", "android", or "harmony" mode')
+    if (options.transSubpackageRules && !isReact(options.mode)) {
+      errors.push('MpxWebpackPlugin transSubpackageRules option only supports "ios", "android", or "harmony" mode')
     }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
@@ -785,7 +785,7 @@ class MpxWebpackPlugin {
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
-          subpackageNameMap: this.options.subpackageNameMap,
+          transSubpackageRules: this.options.transSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
@@ -1433,7 +1433,7 @@ class MpxWebpackPlugin {
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  if (isReact(mpx.mode)) tarRoot = transSubNameRules(mpx.subpackageNameMap, tarRoot)
+                  if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'

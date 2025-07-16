@@ -1,4 +1,4 @@
-function transSubNameRules (asyncSubpackageNameRules, tarRoot) {
+function transSubpackage (asyncSubpackageNameRules, tarRoot) {
   // 如果没有tarRoot，则无需进行tarRoot的修改，因此
   if (tarRoot && Array.isArray(asyncSubpackageNameRules) && asyncSubpackageNameRules.length >= 1) {
     for (const item of asyncSubpackageNameRules) {
@@ -15,5 +15,5 @@ function transSubNameRules (asyncSubpackageNameRules, tarRoot) {
 }
 
 module.exports = {
-  transSubNameRules
+  transSubpackage
 }
