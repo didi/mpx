@@ -11,6 +11,7 @@ import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
 import { innerNav } from './env/nav'
+import { DimensionsContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -165,6 +166,17 @@ export default function createApp (options) {
     }
   }
 
+  const windowInfo = ReactNative.Dimensions.get('window')
+  const screenInfo = ReactNative.Dimensions.get('screen')
+  global.__mpxAppDimensionsInfo = {
+    window: windowInfo,
+    screen: screenInfo
+  }
+  if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
+    const customDimensionsInfo = Mpx.config.rnConfig?.customDimensionsInfo?.(global.__mpxAppDimensionsInfo)
+    global.__mpxAppDimensionsInfo = customDimensionsInfo || global.__mpxAppDimensionsInfo
+  }
+
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
@@ -172,6 +184,7 @@ export default function createApp (options) {
       initialRouteName: firstPage,
       initialParams: {}
     })
+    const dimensionsInfoRef = useRef(reactive(global.__mpxAppDimensionsInfo))
     if (firstRef.current) {
       // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
       global.__mpxAppHotLaunched = false
@@ -214,13 +227,25 @@ export default function createApp (options) {
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
-
       let count = 0
-      let lastPageSize = getPageSize()
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const pageSize = getPageSize(window)
-        if (pageSize === lastPageSize) return
-        lastPageSize = pageSize
+      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
+        const oldWindow = getPageSize(global.__mpxAppDimensionsInfo.window)
+        // 将最新数据设置到全局
+        global.__mpxAppDimensionsInfo.window = window
+        global.__mpxAppDimensionsInfo.screen = screen
+        // 暴露接口给业务修改 dimensionsInfo
+        if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
+          const customDimensionsInfo = Mpx.config.rnConfig?.customDimensionsInfo?.(global.__mpxAppDimensionsInfo)
+          if (customDimensionsInfo) {
+            global.__mpxAppDimensionsInfo.window = customDimensionsInfo.window
+            global.__mpxAppDimensionsInfo.screen = customDimensionsInfo.screen
+          }
+        }
+
+        // // 对比 window 高宽是否存在变化
+        if (getPageSize(window) === oldWindow) return
+        global.__appClassMapValueCache = {}
+        // // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
           global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
@@ -241,19 +266,28 @@ export default function createApp (options) {
       statusBarBackgroundColor: 'transparent'
    }
 
-    return createElement(SafeAreaProvider,
+    function DimensionsProvider (props) {
+      return createElement(DimensionsContext.Provider, {
+        value: dimensionsInfoRef.current
+      }, props.children)
+    }
+
+    return createElement(DimensionsProvider,
       null,
-      createElement(NavigationContainer,
-        {
-          onStateChange,
-          onUnhandledAction
-        },
-        createElement(Stack.Navigator,
+      createElement(SafeAreaProvider,
+        null,
+        createElement(NavigationContainer,
           {
-            initialRouteName,
-            screenOptions: navScreenOpts
+            onStateChange,
+            onUnhandledAction
           },
-          ...getPageScreens(initialRouteName, initialParams)
+          createElement(Stack.Navigator,
+            {
+              initialRouteName,
+              screenOptions: navScreenOpts
+            },
+            ...getPageScreens(initialRouteName, initialParams)
+          )
         )
       )
     )
