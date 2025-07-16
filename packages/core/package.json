@@ -19,6 +19,7 @@
   ],
   "main": "src/index.js",
   "dependencies": {
+    "@mpxjs/reactivity": "^2.10.6",
     "@mpxjs/utils": "^2.10.6",
     "lodash": "^4.1.1",
     "miniprogram-api-typings": "^3.10.0"

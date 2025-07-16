@@ -1,11 +1,12 @@
-import { getObserver } from './reactive'
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { def } from '@mpxjs/utils'
+import { getObserver } from './reactive'
 
 const arrayProto = Array.prototype
-
 export const arrayMethods = Object.create(arrayProto)
 
-;[
+const methodsToPatch = [
   'push',
   'pop',
   'shift',
@@ -13,10 +14,12 @@ export const arrayMethods = Object.create(arrayProto)
   'splice',
   'sort',
   'reverse'
-].forEach(function (method) {
+]
+
+methodsToPatch.forEach(function (method) {
   // cache original method
   const original = arrayProto[method]
-  def(arrayMethods, method, function mutator (...args) {
+  def(arrayMethods, method, function mutator(...args) {
     const result = original.apply(this, args)
     const ob = getObserver(this)
     if (ob) {

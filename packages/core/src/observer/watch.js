@@ -1,6 +1,4 @@
-import { ReactiveEffect } from './effect'
-import { isRef } from './ref'
-import { isReactive } from './reactive'
+import { isReactive, isRef, ReactiveEffect } from '@mpxjs/reactivity'
 import { queueJob, queuePostFlushCb } from './scheduler'
 import { currentInstance } from '../core/proxy'
 import {
