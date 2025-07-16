@@ -124,6 +124,13 @@ const instanceProto = {
   createIntersectionObserver (opt) {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
   },
+  // 触发页面范围内的所有observer的计算
+  __triggerIntersectionObserver () {
+    const intersectionObservers = this.__intersectionCtx
+    for (const key in this.__intersectionCtx) {
+      intersectionObservers[key].throttleMeasure()
+    }
+  },
   __resetInstance () {
     this.__dispatchedSlotSet = new WeakSet()
   },
