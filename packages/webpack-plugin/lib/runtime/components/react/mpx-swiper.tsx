@@ -719,8 +719,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         resetOffset: -resetOffset
       }
     }
-    // 非循环超出边界，应用阻力;
-    // 0.1-1之间，1无阻力，数值越小阻力越大, 开始滑动少阻力小，滑动越长阻力越大
+    // 非循环超出边界，应用阻力; 开始滑动少阻力小，滑动越长阻力越大
     function handleResistanceMove (eventData: EventDataType) {
       'worklet'
       const { translation } = eventData
@@ -736,9 +735,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       } else {
         overDrag = Math.abs(moveToOffset)
       }
-      resistance = 1 / (1 + overDrag / maxOverDrag)
+      // 滑动越多resistance越小
+      resistance = 1 - overDrag / maxOverDrag
       // 确保阻力在合理范围内
-      resistance = Math.max(0.1, resistance)
+      resistance = Math.min(0.5, resistance)
       // 限制在最大拖拽范围内
       if (translation < 0) {
         const adjustOffset = offset.value + translation * resistance
