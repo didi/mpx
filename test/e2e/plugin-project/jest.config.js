@@ -16,8 +16,7 @@ module.exports = {
         target: 'ES2019'
       },
       babelConfig: true
-    },
-    mpxGlobal: global
+    }
   },
   testPathIgnorePatterns: ['dist', 'node_modules'],
   testURL: 'http://test.api.com',
