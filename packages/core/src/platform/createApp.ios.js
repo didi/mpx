@@ -172,7 +172,11 @@ export default function createApp (options) {
     window: windowInfo,
     screen: screenInfo
   }
-  Mpx.config.rnConfig?.dimensionsInfoEdit?.(global.__mpxAppDimensionsInfo)
+  if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
+    const customDimensionsInfo = Mpx.config.rnConfig?.customDimensionsInfo?.(global.__mpxAppDimensionsInfo)
+    global.__mpxAppDimensionsInfo = customDimensionsInfo || global.__mpxAppDimensionsInfo
+  }
+
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
@@ -227,12 +231,16 @@ export default function createApp (options) {
       const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
         const oldWindow = getPageSize(global.__mpxAppDimensionsInfo.window)
         // 将最新数据设置到全局
-        dimensionsInfoRef.current.window.width = window.width
-        dimensionsInfoRef.current.window.height = window.height
-        dimensionsInfoRef.current.screen.width = screen.width
-        dimensionsInfoRef.current.screen.height = screen.height
+        global.__mpxAppDimensionsInfo.window = window
+        global.__mpxAppDimensionsInfo.screen = screen
         // 暴露接口给业务修改 dimensionsInfo
-        Mpx.config.rnConfig?.dimensionsInfoEdit?.(dimensionsInfoRef.current)
+        if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
+          const customDimensionsInfo = Mpx.config.rnConfig?.customDimensionsInfo?.(global.__mpxAppDimensionsInfo)
+          if (customDimensionsInfo) {
+            global.__mpxAppDimensionsInfo.window = customDimensionsInfo.window
+            global.__mpxAppDimensionsInfo.screen = customDimensionsInfo.screen
+          }
+        }
 
         // // 对比 window 高宽是否存在变化
         if (getPageSize(window) === oldWindow) return
