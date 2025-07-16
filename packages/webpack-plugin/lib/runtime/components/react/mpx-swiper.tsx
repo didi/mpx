@@ -741,10 +741,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       resistance = Math.max(0.1, resistance)
       // 限制在最大拖拽范围内
       if (translation < 0) {
-        const adjustOffset = Math.ceil(offset.value + translation * resistance)
+        const adjustOffset = offset.value + translation * resistance
         finalOffset = Math.max(adjustOffset, maxOffset - maxOverDrag)
       } else {
-        const adjustOffset = Math.floor(offset.value + translation * resistance)
+        const adjustOffset = offset.value + translation * resistance
         finalOffset = Math.min(adjustOffset, maxOverDrag)
       }
       return finalOffset
