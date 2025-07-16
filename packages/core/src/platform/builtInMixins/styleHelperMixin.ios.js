@@ -2,6 +2,9 @@ import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/util
 import { Dimensions, StyleSheet } from 'react-native'
 
 let { width, height } = Dimensions.get('screen')
+// TODO 临时适配折叠屏场景适配
+const isLargeFoldableLike = (__mpx_mode__ === 'android') && (height / width < 1.5) && (width > 600)
+if (isLargeFoldableLike) width = width / 2
 
 Dimensions.addEventListener('change', ({ screen }) => {
   width = screen.width
