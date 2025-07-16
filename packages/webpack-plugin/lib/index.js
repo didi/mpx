@@ -775,7 +775,7 @@ class MpxWebpackPlugin {
             const { customComponentModuleId } = this.options
             let moduleId
 
-            if (customComponentModuleId && typeof customComponentModuleId === 'function') {
+            if (typeof customComponentModuleId === 'function') {
               moduleId = customComponentModuleId(filePath)
             }
             if (!moduleId) {
@@ -1629,7 +1629,7 @@ class MpxWebpackPlugin {
           const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
             return { ...pre, ...cur }
           }, {})
-          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap, ...resourceModuleIdMap })
+          const outputMap = JSON.stringify({ outputPathMap: { ...pagesMap, ...componentsMap }, moduleIdMap: resourceModuleIdMap })
           const filename = this.options.generateBuildMap.filename || 'outputMap.json'
           compilation.assets[filename] = new RawSource(outputMap)
         }
