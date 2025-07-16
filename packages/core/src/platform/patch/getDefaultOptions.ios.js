@@ -33,7 +33,7 @@ function getSystemInfo () {
   }
 }
 
-function createEffect (proxy, components) {
+function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
     // react update props in child render(async), do not need exec pre render
     // if (proxy.propsUpdatedFlag) {
@@ -50,10 +50,11 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    const appComponents = global.__getAppComponents?.() || {}
+    const appComponentsMap = global.__appComponentsMap || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
-    return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
+    const genericComponentsMap = global.__mpxGenericsMap?.[generichash] || {}
+    const componentGetter = componentsMap[tagName] || genericComponentsMap[tagName] || appComponentsMap[tagName]
+    return componentGetter ? componentGetter() : getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -203,7 +204,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -304,7 +305,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    proxy.callHook(ONLOAD, [props.route.params || {}])
+    const loadParams = {}
+    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
+    if (isObject(props.route.params)) {
+      for (const key in props.route.params) {
+        loadParams[key] = encodeURIComponent(props.route.params[key])
+      }
+    }
+    proxy.callHook(ONLOAD, [loadParams])
   }
 
   Object.assign(proxy, {
@@ -312,7 +320,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components)
+        createEffect(proxy, componentsMap)
         proxy.stateVersion = Symbol()
       }
       proxy.onStoreChange = onStoreChange
@@ -328,7 +336,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components)
+    createEffect(proxy, componentsMap)
   }
 
   return instance
@@ -419,6 +427,26 @@ function usePageStatus (navigation, pageId) {
   }, [navigation])
 }
 
+function usePagePreload (route) {
+  const name = route.name
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const preloadRule = global.__preloadRule || {}
+      const { packages } = preloadRule[name] || {}
+      if (packages?.length > 0) {
+        const downloadChunkAsync = mpxGlobal.__mpx.config?.rnConfig?.downloadChunkAsync
+        if (typeof downloadChunkAsync === 'function') {
+          callWithErrorHandling(() => downloadChunkAsync(packages))
+        }
+      }
+    }, 800)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [])
+}
+
 const RelationsContext = createContext(null)
 
 const checkRelation = (options) => {
@@ -485,6 +513,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
       return () => dimensionListener?.remove()
     }, [])
 
+    usePagePreload(route)
     usePageStatus(navigation, currentPageId)
 
     const withKeyboardAvoidingView = (element) => {
@@ -543,7 +572,12 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
 }
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
+  const componentsMap = currentInject.componentsMap
+  if (rawOptions.components) {
+    Object.entries(rawOptions.components).forEach(([key, item]) => {
+      componentsMap[key] = () => item
+    })
+  }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
@@ -561,7 +595,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -608,7 +642,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
-
     useEffect(() => {
       proxy.mounted()
       return () => {
