@@ -30,6 +30,12 @@ type StrVelocityType = 'velocityX' | 'velocityY'
 type EventDataType = {
   translation: number
 }
+type MoveDataType = {
+  // 记录从onBegin到onUpdate/onFinalize 移动的距离
+  translation: number
+  // 记录移动的方向
+  transdir: number
+}
 
 interface SwiperProps {
   children?: ReactNode
@@ -572,14 +578,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         targetOffset: -moveToTargetPos
       }
     }
-    function canMove (eventData: EventDataType, flag: Boolean) {
+    function canMove (moveData: MoveDataType) {
       'worklet'
       // 旧版：如果在快速多次滑动时，只根据当前的offset判断，会出现offset没超出，加上translation后越界的场景(如在倒数第二个元素快速滑动)
       // 新版：会加上translation
-      const { translation } = eventData
-      const gestureMovePos = flag ? offset.value + translation : offset.value
+      const { translation, transdir } = moveData
+      const gestureMovePos = offset.value + translation
       if (!circularShared.value) {
-        if (translation < 0) {
+        if (transdir < 0) {
           return gestureMovePos > -step.value * (childrenLength.value - 1)
         } else {
           return gestureMovePos < 0
@@ -774,8 +780,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           currentIndex.value = selectedIndex
         }
         // 2. 非循环: 处理用户一直拖拽到临界点的场景,如果放到onFinalize无法阻止offset.value更新为越界的值
+        const moveData = {
+          translation: moveDistance,
+          transdir: moveDistance
+        }
         if (!circularShared.value) {
-          if (canMove(eventData, true)) {
+          if (canMove(moveData)) {
             offset.value = moveDistance + offset.value
           } else {
             const finalOffset = handleResistanceMove(eventData)
@@ -805,8 +815,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (touchfinish.value) return
         const moveDistance = e[strAbso] - moveTranstion.value
         touchfinish.value = true
+        // 记录从onBegin到onFinalize移动的距离，translation主要用于后续判断方向
         const eventData = {
           translation: moveDistance
+        }
+        // 1. 触发过onUpdate正常情况下e[strAbso] - preAbsolutePos.value=0
+        // 2. 未出发过onUpdate的情况下e[strAbso] - preAbsolutePos.value 不为0
+        const moveData = {
+          translation: e[strAbso] - preAbsolutePos.value,
+          transdir: moveDistance
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
@@ -819,7 +836,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         // 2.非循环状态不可移动态：最后一个元素 和 第一个元素
         // 非循环支持最后元素可滑动能力后，向左快速移动未超过最大可移动范围一半，因为offset为正值，向左滑动handleBack，默认向上取整
         // 但是在offset大于0时，取0。[-100, 0](back取0), [0, 100](back取1)， 所以handleLongPress里的处理逻辑需要兼容支持，因此这里直接单独处理，不耦合下方公共的判断逻辑。
-        if (!circularShared.value && !canMove(eventData, false)) {
+        if (!circularShared.value && !canMove(moveData)) {
           if (moveDistance < 0) {
             handleBack(eventData)
           } else {
