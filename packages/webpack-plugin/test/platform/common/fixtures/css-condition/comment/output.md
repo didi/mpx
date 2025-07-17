@@ -13,18 +13,13 @@
 ## Result
 
 ```stylus
-.layout
-  background red
-  
-  color yellow
-  .driver
-    color blue
+// @import "./s1.styl"
 
-.wrapper
-  background red
-  
-  color yellow
-  .child
-    color blue
-  
+/**
+@import "./s2.styl"
+*/
+
+.s3
+    color green
+
 ```

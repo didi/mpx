@@ -1,6 +1,7 @@
 const fs = require('fs/promises')
 const parseRequest = require('../utils/parse-request')
-const path = require('path')
+const atImport = require('postcss-import')
+const { default: postcss } = require('postcss')
 
 class Node {
   constructor(type, condition = null) {
@@ -152,83 +153,90 @@ function stripCondition(content, defs) {
 
 /**
  *
- * @param {string} content
- * @param {AtImportConfig} config
+ * @param {Function} callback
+ * @param {string} name
  * @returns
  */
-async function atImport(content, config) {
-  /**
-   * @link regexr.com/8evhm
-   */
-  const atImportReg = /@import\s+((url\(['"](?<url1>[^'"]+)['"]\))|(['"](?<url2>[^'"]+)['"]))[\s\r\n]*?;?/g
-  const load = config.load ?? ((filename) => fs.readFile(filename, 'utf-8'))
-  const resolve =
-    config.resolve ??
-    ((id, base) => {
-      if (path.isAbsolute(id)) return id
-      return path.join(base, id)
-    })
-
-  const pendingProcess = []
-  /**
-   * @type {RegExpExecArray}
-   */
-  let matched = null
-  while ((matched = atImportReg.exec(content)) !== null) {
-    const url = matched.groups.url1 || matched.groups.url2
-
-    if (!url) continue
-    const resolvedPath = await resolve(url, path.dirname(config.from))
-    const start = matched.index
-    const end = start + matched[0].length
-
-    const loadedContent = await load(resolvedPath)
-    pendingProcess.push({
-      range: [start, end],
-      content: loadedContent
-    })
+const shouldInstallWarning = (callback, name) => {
+  return () => {
+    try {
+      return callback()
+    } catch (error) {
+      throw new Error(
+        `[mpx-strip-conditional-loader]: ${name} is not installed, please install it first.\norginal Error: ${
+          error?.message ?? error.toString()
+        }`,
+        {
+          cause: error
+        }
+      )
+    }
   }
-
-  pendingProcess.reverse()
-
-  pendingProcess.forEach(({ range: [start, end], content: replaceContent }) => {
-    content = content.slice(0, start) + replaceContent + content.slice(end)
-  })
-
-  return content
+}
+/**
+ *
+ * @typedef {import('postcss').ProcessOptions} ProcessOptions
+ * @typedef {import('postcss').Root} Root
+ *
+ * @type {Record<string, ProcessOptions['syntax']>}
+ */
+const styleSyntaxProcesserMap = {
+  stylus: shouldInstallWarning(() => require('postcss-styl'), 'postcss-styl'),
+  less: shouldInstallWarning(() => require('postcss-less'), 'postcss-less'),
+  scss: shouldInstallWarning(() => require('postcss-scss'), 'postcss-scss')
 }
 
 /**
  * @param {StripByPostcssOption} options
  */
 async function stripByPostcss(options) {
+  const syntax = styleSyntaxProcesserMap[options.lang]?.()
   const defs = options.defs ?? {}
 
   const afterConditionStrip = stripCondition(options.css, defs)
 
-  const result = await atImport(afterConditionStrip, {
-    async load(filename) {
-      return stripCondition(await fs.readFile(filename, 'utf-8'), defs)
-    },
-    resolve: (id, base) => {
-      return new Promise((resolve, reject) => {
-        options.resolve(base, id, (err, res) => {
-          if (err) return reject(err)
-          if (typeof res !== 'string') {
-            return reject(
-              new Error(
-                `[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`
-              )
-            )
-          }
-          resolve(res)
-        })
-      })
-    },
-    from: options.resourcePath
-  })
+    /**
+   * @type {import('postcss').AcceptedPlugin[]}
+   */
+  const plugins = [
+    atImport({
+      async load(filename) {
+        let content = await fs.readFile(filename, 'utf-8')
+        const processer = postcss(plugins)
 
-  return result
+        content = stripCondition(content, defs)
+
+        const { css } = await processer.process(content, {
+          syntax,
+          from: filename,
+          to: options.resourcePath
+        })
+        return css
+      },
+      resolve: (id, base) => {
+        return new Promise((resolve, reject) => {
+          options.resolve(base, id, (err, res) => {
+            if (err) return reject(err)
+            if (typeof res !== 'string') {
+              return reject(
+                new Error(
+                  `[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`
+                )
+              )
+            }
+            resolve(res)
+          })
+        })
+      }
+    })
+  ]
+
+  const processer = postcss(plugins)
+
+  return processer.process(afterConditionStrip, {
+    from: options.resourcePath,
+    syntax
+  })
 }
 
 /**

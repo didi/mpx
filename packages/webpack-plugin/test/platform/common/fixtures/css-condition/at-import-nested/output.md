@@ -4,9 +4,7 @@
 {
     "lang": "stylus",
     "resourcePath": "index.styl",
-    "defs": {
-        "isMobile": true
-    }
+    "defs": {}
 }
 ```
 
@@ -14,11 +12,12 @@
 
 ```stylus
 
+.s3
+    color green
 
+.s1
+    color: blue
 
-.layout-nested-else
-  background #fff
-
-  color blue
-
+.index
+    color: red
 ```

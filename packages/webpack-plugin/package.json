@@ -50,6 +50,7 @@
     "mime": "^2.2.2",
     "object-assign": "^4.1.1",
     "postcss": "^8.4.5",
+    "postcss-import": "^16.1.1",
     "postcss-load-config": "^3.1.1",
     "postcss-modules-extract-imports": "^3.0.0",
     "postcss-modules-local-by-default": "^4.0.0",
@@ -62,6 +63,9 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
+    "postcss-less": "^6.0.0",
+    "postcss-scss": "^4.0.9",
+    "postcss-styl": "^0.12.3",
     "webpack": "^5.75.0"
   },
   "publishConfig": {
@@ -87,6 +91,7 @@
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^8.1.0",
+    "@types/postcss-import": "^14.0.3",
     "@types/react": "^18.2.79",
     "glob": "^11.0.2",
     "react-native": "^0.74.5",
