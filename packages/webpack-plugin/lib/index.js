@@ -1813,76 +1813,87 @@ try {
 
       // 应用过rules后，注入mpx相关资源编译loader
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
-        const { queryObj } = parseRequest(createData.request)
+        const { queryObj, resourcePath } = parseRequest(createData.request)
         const loaders = createData.loaders
-        if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
-          const type = queryObj.type
-          const extract = queryObj.extract
 
-          if (type === 'styles') {
-            let insertBeforeIndex = -1
-            // 单次遍历收集所有索引
-            loaders.forEach((loader, index) => {
-              const currentLoader = toPosix(loader.loader)
-              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
-                insertBeforeIndex = index
-              }
-            })
+        const isVue = queryObj.vue && resourcePath?.endsWith('.vue')
 
-            if (insertBeforeIndex !== -1) {
-                loaders.splice(insertBeforeIndex + 1, 0, { loader: styleStripConditionalPath })
-            }
-          }
+        function processLoader() {
+          if (((queryObj.mpx || isVue) && queryObj.mpx !== MPX_PROCESSED_FLAG)) {
+            const type = queryObj.type
+            const extract = queryObj.extract
 
-          switch (type) {
-            case 'styles':
-            case 'template': {
+            if (type === 'styles' || (isVue && type === 'style')) {
               let insertBeforeIndex = -1
-              const info = typeLoaderProcessInfo[type]
+              // 单次遍历收集所有索引
               loaders.forEach((loader, index) => {
                 const currentLoader = toPosix(loader.loader)
-                if (currentLoader.includes(info[0])) {
-                  loader.loader = info[1]
-                  insertBeforeIndex = index
-                } else if (currentLoader.includes(info[1])) {
+                if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
                   insertBeforeIndex = index
                 }
               })
-              if (insertBeforeIndex > -1) {
-                loaders.splice(insertBeforeIndex + 1, 0, {
-                  loader: info[2]
-                })
+
+              if (insertBeforeIndex !== -1) {
+                  loaders.splice(insertBeforeIndex + 1, 0, { loader: styleStripConditionalPath })
               }
-              break
             }
-            case 'json':
-              if (queryObj.isTheme) {
+
+            if (!isVue) {
+              switch (type) {
+                case 'styles':
+                case 'template': {
+                  let insertBeforeIndex = -1
+                  const info = typeLoaderProcessInfo[type]
+                  loaders.forEach((loader, index) => {
+                    const currentLoader = toPosix(loader.loader)
+                    if (currentLoader.includes(info[0])) {
+                      loader.loader = info[1]
+                      insertBeforeIndex = index
+                    } else if (currentLoader.includes(info[1])) {
+                      insertBeforeIndex = index
+                    }
+                  })
+                  if (insertBeforeIndex > -1) {
+                    loaders.splice(insertBeforeIndex + 1, 0, {
+                      loader: info[2]
+                    })
+                  }
+                  break
+                }
+                case 'json':
+                  if (queryObj.isTheme) {
+                    loaders.unshift({
+                      loader: jsonThemeCompilerPath
+                    })
+                  } else if (queryObj.isPlugin) {
+                    loaders.unshift({
+                      loader: jsonPluginCompilerPath
+                    })
+                  } else {
+                    loaders.unshift({
+                      loader: jsonCompilerPath
+                    })
+                  }
+                  break
+                case 'wxs':
+                  loaders.unshift({
+                    loader: wxsLoaderPath
+                  })
+                  break
+              }
+              if (extract) {
                 loaders.unshift({
-                  loader: jsonThemeCompilerPath
-                })
-              } else if (queryObj.isPlugin) {
-                loaders.unshift({
-                  loader: jsonPluginCompilerPath
-                })
-              } else {
-                loaders.unshift({
-                  loader: jsonCompilerPath
+                  loader: extractorPath
                 })
               }
-              break
-            case 'wxs':
-              loaders.unshift({
-                loader: wxsLoaderPath
-              })
-              break
+            }
+
+            createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
           }
-          if (extract) {
-            loaders.unshift({
-              loader: extractorPath
-            })
-          }
-          createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
+
+        processLoader()
+
         // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
         if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''

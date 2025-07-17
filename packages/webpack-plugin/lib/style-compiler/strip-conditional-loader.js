@@ -260,7 +260,7 @@ module.exports = async function (css) {
     resolve: this.resolve.bind(this)
   })
 
-  callback(null, result)
+  callback(null, result.css, result.map)
 }
 
 module.exports.stripByPostcss = stripByPostcss
