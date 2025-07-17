@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/fetch",
-  "version": "2.10.7",
+  "version": "2.10.8",
   "description": "mpx fetch lib",
   "author": "donghongping",
   "license": "Apache-2.0",
@@ -29,8 +29,8 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.10.7",
-    "@mpxjs/utils": "^2.10.6",
+    "@mpxjs/api-proxy": "^2.10.8",
+    "@mpxjs/utils": "^2.10.8",
     "path-to-regexp": "^6.2.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
