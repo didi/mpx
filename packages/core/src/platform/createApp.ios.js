@@ -73,17 +73,20 @@ export default function createApp (options) {
           children
         )
       }
+      const getComponent = () => {
+        return item.displayName ? item : item()
+      }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
-          getComponent: () => item(),
+          getComponent,
           initialParams,
           layout: headerLayout
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        getComponent: () => item(),
+        getComponent,
         layout: headerLayout
       })
     })
