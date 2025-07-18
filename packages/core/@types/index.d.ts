@@ -7,7 +7,7 @@
 /// <reference path="./global.d.ts" />
 /// <reference path="./node.d.ts" />
 
-import { GetComputedType } from '@mpxjs/store'
+import type { GetComputedType } from '@mpxjs/store'
 
 export * from '@mpxjs/store'
 
@@ -255,9 +255,20 @@ interface AnyConstructor {
   prototype: any
 }
 
-interface WebviewConfig {
+export interface WebviewConfig {
   hostWhitelists?: Array<string>
   apiImplementations?: object
+}
+
+export interface RnConfig {
+  onStateChange?: (state: any) => void
+  parseAppProps?: (props: any) => ({ initialRouteName?: string, initialParams?: any } | undefined | null | void)
+  /**
+   * 外层可能会异常设置此配置，因此加载监听函数内部
+   */
+  disableAppStateListener?: boolean
+  /** 进入页面是否控制回退按钮的展示以及监听回退按钮的点击 */
+  onStackTopBack?: () => void
 }
 
 interface MpxConfig {
@@ -272,8 +283,14 @@ interface MpxConfig {
   forceFlushSync: boolean,
   webRouteConfig: object,
   webConfig: object,
+  /*
+   * 支持两个属性
+   * hostWhitelists Array 类型 支持h5域名白名单安全校验
+   * apiImplementations webview JSSDK接口 例如getlocation
+  */
   webviewConfig: WebviewConfig,
-  rnConfig: object,
+  /** react-native 相关配置，用于挂载事件等，如 onShareAppMessage */
+  rnConfig?: RnConfig,
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
@@ -664,9 +681,15 @@ export const SERVERPREFETCH: string
 export const REACTHOOKSEXEC: string
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const defineProps: (<T extends Properties = {}>(props: T) => Readonly<GetPropsType<T>>) & (<T>() => Readonly<T>)
   const defineOptions: <D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends AnyObject = {}, O extends AnyObject = {}> (opt: ThisTypedComponentOpt<D, P, C, M, Mi, S, O>) => void
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const defineExpose: <E extends AnyObject = AnyObject>(exposed?: E) => void
   const useContext: () => Context
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const withDefaults: <Props, Defaults extends InferDefaults<Props>>(props: Props, defaults: Defaults) => PropsWithDefaults<Props, Defaults>
 }

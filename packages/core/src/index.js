@@ -115,6 +115,9 @@ function use (plugin, options = {}) {
 
 APIs.use = use
 
+/**
+ * @returns {import('@mpxjs/core').Mpx}
+ */
 function factory () {
   // 作为原型挂载属性的中间层
   function Mpx () {
@@ -125,6 +128,9 @@ function factory () {
   return Mpx
 }
 
+/**
+ * @type {import('@mpxjs/core').Mpx}
+ */
 const Mpx = factory()
 
 Mpx.config = {
