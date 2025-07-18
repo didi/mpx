@@ -99,8 +99,8 @@ interface AsyncSuspenseProps {
   chunkName: string
   moduleId: string
   innerProps: any,
-  loading?: ComponentType<unknown>
-  fallback?: ComponentType<unknown>
+  getLoading?: () => ComponentType<unknown>
+  getFallback?: () => ComponentType<unknown>
   getChildren: () => Promise<ReactNode>
 }
 
@@ -108,11 +108,11 @@ type ComponentStauts = 'pending' | 'error' | 'loaded'
 
 const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   type,
-  innerProps,
   chunkName,
   moduleId,
-  loading,
-  fallback,
+  innerProps,
+  getLoading,
+  getFallback,
   getChildren
 }) => {
   const [status, setStatus] = useState<ComponentStauts>('pending')
@@ -158,19 +158,20 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     return createElement(Comp, innerProps)
   } else if (status === 'error') {
     if (type === 'page') {
-      fallback = fallback || DefaultFallback
+      const fallback = getFallback ? getFallback() : DefaultFallback
       return createElement(fallback as ComponentType<DefaultFallbackProps>, { onReload: reloadPage })
     } else {
-      return fallback ? createElement(fallback, innerProps) : null
+      return getFallback ? createElement(getFallback(), innerProps) : null
     }
   } else {
     if (!loadChunkPromise.current) {
       loadChunkPromise.current = getChildren()
     }
     if (type === 'page') {
-      return createElement(loading || DefaultLoading)
+      const loading = getLoading ? getLoading() : DefaultLoading
+      return createElement(loading)
     } else {
-      return fallback ? createElement(fallback, innerProps) : null
+      return getFallback ? createElement(getFallback(), innerProps) : null
     }
   }
 }
