@@ -1,13 +1,22 @@
-import React, { createElement, forwardRef, useEffect, useRef, useState } from 'react'
+import React, { createElement, forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import {
   StyleSheet,
-  Animated,
   Dimensions,
   TouchableWithoutFeedback,
-  PanResponder,
   StyleProp,
   ViewStyle
 } from 'react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  cancelAnimation,
+  runOnJS
+} from 'react-native-reanimated'
+import {
+  GestureDetector,
+  Gesture
+} from 'react-native-gesture-handler'
 import Portal from './mpx-portal/index'
 import { PreventRemoveEvent, usePreventRemove } from '@react-navigation/native'
 import { extendObject, useLayout, useNavigation } from './utils'
@@ -39,14 +48,41 @@ interface PageContainerProps {
     children: React.ReactNode;
 }
 
-const screenHeight = Dimensions.get('window').height
-const screenWidth = Dimensions.get('window').width
+const windowWidth = Dimensions.get('window').width
 
 function nextTick (cb: () => void) {
   setTimeout(cb, 0)
 }
 
-export default forwardRef<any, PageContainerProps>((props, ref) => {
+function getInitialTranslate (position: Position) {
+  switch (position) {
+    case 'top':
+      return -100
+    case 'bottom':
+      return 100
+    case 'right':
+      return 100
+    case 'center':
+      return 0
+  }
+}
+function getRoundStyle (position: Position) {
+  switch (position) {
+    case 'top':
+      return {
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20
+      }
+    case 'bottom':
+      return {
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20
+      }
+    default: return {}
+  }
+}
+
+const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
   const {
     show,
     duration = 300,
@@ -74,165 +110,145 @@ export default forwardRef<any, PageContainerProps>((props, ref) => {
     isFirstRenderFlag.current = false
   }
 
-  const close = () => {
-    bindclose(getCustomEvent(
-      'close',
-      {},
-      { detail: { value: false, source: 'close' } },
-      props
-    ))
-  }
+  const triggerBeforeEnterEvent = () => bindbeforeenter?.(getCustomEvent('beforeenter', {}, {}, props))
+  const triggerEnterEvent = () => bindenter?.(getCustomEvent('enter', {}, {}, props))
+  const triggerAfterEnterEvent = () => bindafterenter?.(getCustomEvent('afterenter', {}, {}, props))
+  const triggerBeforeLeaveEvent = () => bindbeforeleave?.(getCustomEvent('beforeleave', {}, {}, props))
+  const triggerLeaveEvent = () => bindleave?.(getCustomEvent('leave', {}, {}, props))
+  const triggerAfterLeaveEvent = () => bindafterleave?.(getCustomEvent('afterleave', {}, {}, props))
 
-  const [internalVisible, setInternalVisible] = useState(show) // 控制组件是否挂载
+  const close = () => bindclose(getCustomEvent('close', {}, { detail: { value: false, source: 'close' } }, props))
 
-  const overlayOpacity = useRef(new Animated.Value(0)).current
-  const contentOpacity = useRef(new Animated.Value(position === 'center' ? 0 : 1)).current
-  const contentTranslate = useRef(new Animated.Value(getInitialPosition())).current
+  // 控制组件是否挂载
+  const [internalVisible, setInternalVisible] = useState(show)
 
-  const currentAnimation = useRef<Array<Animated.CompositeAnimation> | null>(null)
+  const overlayOpacity = useSharedValue(0)
+  const contentOpacity = useSharedValue(position === 'center' ? 0 : 1)
+  const contentTranslate = useSharedValue(getInitialTranslate(position))
 
-  function getInitialPosition () {
-    switch (position) {
-      case 'top':
-        return -screenHeight
-      case 'bottom':
-        return screenHeight
-      case 'right':
-        return screenWidth
-      case 'center':
-        return 0
-      default:
-        return screenHeight
+  const overlayAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value
+  }))
+
+  const sharedPosition = useSharedValue(position)
+  useEffect(() => {
+    sharedPosition.set(position)
+  }, [position])
+  const contentAnimatedStyle = useAnimatedStyle(() => {
+    let transform: ViewStyle['transform'] = []
+    if (sharedPosition.value === 'top' || sharedPosition.value === 'bottom') {
+      transform = [{ translateY: `${contentTranslate.value}%` }]
+    } else if (sharedPosition.value === 'right') {
+      transform = [{ translateX: `${contentTranslate.value}%` }]
     }
-  }
 
+    return {
+      opacity: contentOpacity.value,
+      transform
+    }
+  })
+
+  function clearAnimation () {
+    cancelAnimation(overlayOpacity)
+    cancelAnimation(contentOpacity)
+    cancelAnimation(contentTranslate)
+  }
   const currentTick = useRef(0)
   function createTick () {
     currentTick.current++
-    console.log('currentTick.current++', currentTick.current)
     const current = currentTick.current
+    console.log('createTick ', current)
     return () => {
-      console.log('currentTick.current', currentTick.current, 'current', current)
+      console.log('isCurrentTick ', current, ', global tick is ' + currentTick.current)
       return currentTick.current === current
     }
   }
   // 播放入场动画
   const animateIn = () => {
     const isCurrentTick = createTick()
-    const animateOutFinish = currentAnimation.current === null
-    if (!animateOutFinish) {
-            currentAnimation.current!.forEach((animation) => animation.stop())
-    }
-    const animations: Animated.CompositeAnimation[] = [
-      Animated.timing(contentTranslate, {
-        toValue: 0,
-        duration,
-        useNativeDriver: true
-      }),
-      Animated.timing(contentOpacity, {
-        toValue: 1,
-        duration,
-        useNativeDriver: true
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration,
-        useNativeDriver: true
-      })
-    ]
-    currentAnimation.current = animations
-    // 所有生命周期需相隔一个nextTick以保证在生命周期中修改show可在组件内部监听到
-    bindbeforeenter && bindbeforeenter(getCustomEvent(
-      'beforeenter',
-      {},
-      { detail: { value: false, source: 'beforeenter' } },
-      props
-    ))
+    // TODO
+    // const animateOutFinish = true
+    // if (!animateOutFinish) {
+    //   cancelAnimation(overlayOpacity)
+    //   cancelAnimation(contentOpacity)
+    //   cancelAnimation(contentTranslate)
+    // }
+    triggerBeforeEnterEvent()
     nextTick(() => {
-      bindenter && bindenter(getCustomEvent(
-        'enter',
-        {},
-        { detail: { value: false, source: 'enter' } },
-        props
-      ))
-      // 与微信对其， bindenter 需要执行，所以 isCurrentTick 放在后面
+      const animateOutFinish = internalVisible === false
+      setInternalVisible(true)
+      triggerEnterEvent()
       if (!isCurrentTick()) return
 
-      console.log('animateIn start')
-      // 设置为动画初始状态(特殊情况， 如果退场动画没有结束 或者 退场动画还未开始，则无需初始化，而是从当前位置完成动画)
-      if (animateOutFinish) {
-        contentTranslate.setValue(getInitialPosition())
-        contentOpacity.setValue(position === 'center' ? 0 : 1)
+      const animateEnd = () => {
+        if (!isCurrentTick()) return
+        triggerAfterEnterEvent()
       }
-      Animated.parallel(animations).start(() => {
-        bindafterenter && bindafterenter(getCustomEvent(
-          'afterenter',
-          {},
-          { detail: { value: false, source: 'afterenter' } },
-          props
-        ))
-      })
+      /**
+       * 对齐 微信小程序
+       * 如果退场动画已经结束，则需将内容先移动到对应动画的初始位置
+       * 否则，结束退场动画，从当前位置作为初始位置完成进场动画，且退场动画时长将缩短
+       */
+      let durationTime = duration
+      if (animateOutFinish) {
+        contentTranslate.set(getInitialTranslate(position))
+        contentOpacity.set(position === 'center' ? 0 : 1)
+      } else {
+        clearAnimation()
+        if (position === 'center') {
+          durationTime = durationTime * (1 - contentOpacity.value)
+        } else {
+          durationTime = durationTime * (contentTranslate.value / 100)
+        }
+      }
+
+      overlayOpacity.value = withTiming(1, { duration: durationTime })
+      if (position === 'center') {
+        contentOpacity.value = withTiming(1, { duration: durationTime }, () => {
+          runOnJS(animateEnd)()
+        })
+        contentTranslate.value = withTiming(0, { duration: durationTime })
+      } else {
+        contentOpacity.value = withTiming(1, { duration: durationTime })
+        contentTranslate.value = withTiming(0, { duration: durationTime }, () => {
+          runOnJS(animateEnd)()
+        })
+      }
     })
   }
 
   // 播放离场动画
   const animateOut = () => {
     const isCurrentTick = createTick()
-    // 停止入场动画
-    currentAnimation.current?.forEach((animation) => animation.stop())
-    const animations: Animated.CompositeAnimation[] = [Animated.timing(overlayOpacity, {
-      toValue: 0,
-      duration,
-      useNativeDriver: true
-    })
-    ]
-    if (position === 'center') {
-      animations.push(Animated.timing(contentOpacity, {
-        toValue: 0,
-        duration,
-        useNativeDriver: true
-      }))
-    } else {
-      animations.push(Animated.timing(contentTranslate, {
-        toValue: getInitialPosition(),
-        duration,
-        useNativeDriver: true
-      }))
-    }
-    currentAnimation.current = animations
-    bindbeforeleave && bindbeforeleave(getCustomEvent(
-      'beforeleave',
-      {},
-      { detail: { value: false, source: 'beforeleave' } },
-      props
-    ))
+    triggerBeforeLeaveEvent()
     nextTick(() => {
-      bindleave && bindleave(getCustomEvent(
-        'leave',
-        {},
-        { detail: { value: false, source: 'leave' } },
-        props
-      ))
+      triggerLeaveEvent()
       if (!isCurrentTick()) return
-      console.log('animateOut start')
-      Animated.parallel(animations).start(() => {
-        currentAnimation.current = null
-        bindafterleave && bindafterleave(getCustomEvent(
-          'afterleave',
-          {},
-          { detail: { value: false, source: 'afterleave' } },
-          props
-        ))
-        setInternalVisible(false) // 动画播放完后，才卸载
-      })
+
+      const animateEnd = () => {
+        if (!isCurrentTick()) return // 如果动画被cancelAnimation依然会触发回调，所以在此也需要判断Tick
+        triggerAfterLeaveEvent()
+        setInternalVisible(false)
+      }
+
+      if (position === 'center') {
+        contentOpacity.value = withTiming(0, { duration }, () => {
+          runOnJS(animateEnd)()
+        })
+        contentTranslate.value = withTiming(getInitialTranslate(position), { duration })
+      } else {
+        contentOpacity.value = withTiming(0, { duration })
+        contentTranslate.value = withTiming(getInitialTranslate(position), { duration }, () => {
+          runOnJS(animateEnd)()
+        })
+      }
+      overlayOpacity.value = withTiming(0, { duration })
     })
   }
 
   useEffect(() => {
-    console.log('====comp show', show, 'internalVisible', internalVisible)
     // 如果展示状态和挂载状态一致，则不需要做任何操作
     if (show) {
-      setInternalVisible(true) // 确保挂载
       animateIn()
     } else {
       if (!isFirstRender) animateOut()
@@ -249,53 +265,54 @@ export default forwardRef<any, PageContainerProps>((props, ref) => {
     }
   })
 
-  // IOS 下需要关闭手势返回（原因： IOS手势返回时页面会跟随手指滑动，但是实际返回动作是在松手时触发，需禁掉页面跟随手指滑动的效果）
-  useEffect(() => {
-    navigation?.setOptions({
-      gestureEnabled: !show
-    })
-  }, [show])
+  /**
+     * IOS 下需要关闭手势返回（原因： IOS手势返回时页面会跟随手指滑动，但是实际返回动作是在松手时触发，需禁掉页面跟随手指滑动的效果）
+     * 禁用与启用逻辑抽离为rnConfig由外部实现，并补充纯RN下默认实现
+     */
 
-  const SCREEN_EDGE_THRESHOLD = 60 // 从屏幕左侧 30px 内触发
-
-  // 内容区 手势下滑关闭
-  const contentPanResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      const { dx, dy } = gestureState
-      return dy > 200 && Math.abs(dx) < 60
-    },
-    onPanResponderRelease: () => {
-      close()
-    }
-  })
-
-  // 全屏幕 IOS 右滑手势返回
-  const screenPanResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      const { moveX, dx, dy } = gestureState
-
-      const isFromEdge = moveX < SCREEN_EDGE_THRESHOLD
-      const isHorizontalSwipe = dx > 10 && Math.abs(dy) < 20
-      return isFromEdge && isHorizontalSwipe
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      if (gestureState.dx > 100) {
-        close()
+  if (__mpx_mode__ === 'ios') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
+        global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
+      } else {
+        navigation?.setOptions({
+          gestureEnabled: !show
+        })
       }
-    }
-  })
-
-  const getTransformStyle: () => ViewStyle = () => {
-    switch (position) {
-      case 'top':
-      case 'bottom':
-        return { transform: [{ translateY: contentTranslate }] }
-      case 'right':
-        return { transform: [{ translateX: contentTranslate }] }
-      case 'center':
-        return {}
-    }
+    }, [show])
   }
+
+  const THRESHOLD = windowWidth * 0.3 // 距离阈值
+  const VELOCITY_THRESHOLD = 1000 // px/s
+  const SCREEN_EDGE_THRESHOLD = 30 // 从屏幕左侧 30px 内触发
+  const contentGesture = Gesture.Pan()
+    .activeOffsetY(200)
+    .onEnd((e) => {
+      const { velocityY, translationY } = e
+      const shouldGoBack = translationY > THRESHOLD || velocityY > VELOCITY_THRESHOLD
+      console.log('触发手势下滑关闭1', e, translationY, THRESHOLD, velocityY, VELOCITY_THRESHOLD)
+      if (shouldGoBack) {
+        console.log('触发手势下滑关闭')
+        runOnJS(close)()
+      }
+    })
+  /**
+   * 全屏幕 IOS 左滑手势返回
+   * 1: 仅在屏幕左边缘滑动 才触发返回手势。
+   * 2: 用户滑动距离足够 或 滑动速度足够快，才触发返回。
+   * 3: 用户中途回退（滑回来）或滑太慢/太短，则应取消返回。
+   */
+  const screenGesture = Gesture.Pan()
+    .onEnd((e) => {
+      const { velocityX, translationX } = e
+      const shouldGoBack = translationX > THRESHOLD || velocityX > VELOCITY_THRESHOLD
+      if (shouldGoBack) {
+        console.log('触发左滑手势返回')
+        runOnJS(close)()
+      }
+    })
+    .hitSlop({ left: 0, width: SCREEN_EDGE_THRESHOLD })
 
   const renderMask = () => {
     const onPress = () => {
@@ -308,24 +325,25 @@ export default forwardRef<any, PageContainerProps>((props, ref) => {
       ))
     }
     return createElement(TouchableWithoutFeedback, { onPress },
-      createElement(Animated.View, { style: [styles.overlay, overlayStyle, { opacity: overlayOpacity }] }))
+      createElement(Animated.View, { style: [styles.overlay, overlayStyle, overlayAnimatedStyle] }))
   }
 
-  const renderContent = (children: React.ReactNode) => {
-    const contentProps = extendObject(
-      {
-        style: [
-          styles.container,
-          round ? styles.rounded : null,
-          positionStyle[position],
-          customStyle,
-          getTransformStyle(),
-          { opacity: contentOpacity }
-        ]
-      },
-      closeOnSlideDown ? contentPanResponder.panHandlers : null
+  const renderContent = () => {
+    const contentView = (
+      <Animated.View style={[
+        styles.container,
+        getRoundStyle(position),
+        positionStyle[position],
+        customStyle,
+        contentAnimatedStyle
+      ]}>
+        {children}
+      </Animated.View>
     )
-    return createElement(Animated.View, contentProps, children)
+
+    return closeOnSlideDown
+      ? <GestureDetector gesture={contentGesture}>{contentView}</GestureDetector>
+      : contentView
   }
 
   const nodeRef = useRef(null)
@@ -347,19 +365,23 @@ export default forwardRef<any, PageContainerProps>((props, ref) => {
     innerProps,
     {
       style: [styles.wrapper, { zIndex }]
-    },
-    __mpx_mode__ === 'ios' ? screenPanResponder.panHandlers : {}
+    }
   )
 
+  const renderWrapped = () => {
+    const wrappedView = (
+      <Animated.View {...wrapperProps}>
+        {overlay ? renderMask() : null}
+        {renderContent()}
+      </Animated.View>
+    )
+    return __mpx_mode__ === 'ios'
+      ? <GestureDetector gesture={screenGesture}>{wrappedView}</GestureDetector>
+      : wrappedView
+  }
+
   // TODO 是否有必要支持refs? dataset?
-  return createElement(Portal, null,
-    internalVisible
-      ? createElement(Animated.View, wrapperProps,
-        overlay ? renderMask() : null,
-        renderContent(children)
-      )
-      : null
-  )
+  return createElement(Portal, null, internalVisible ? renderWrapped() : null)
 })
 
 const styles = StyleSheet.create({
@@ -378,11 +400,8 @@ const styles = StyleSheet.create({
   ),
   container: {
     position: 'absolute',
-    backgroundColor: 'white'
-  },
-  rounded: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20
+    backgroundColor: 'white',
+    overflow: 'hidden'
   }
 })
 
@@ -392,3 +411,7 @@ const positionStyle: Record<Position, ViewStyle> = {
   right: extendObject({}, StyleSheet.absoluteFillObject, { right: 0 }),
   center: extendObject({}, StyleSheet.absoluteFillObject)
 }
+
+PageContainer.displayName = 'PageContainer'
+
+export default PageContainer
