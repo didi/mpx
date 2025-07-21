@@ -1,15 +1,27 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
+import Mpx from '../../index'
 
-let { width, height } = Dimensions.get('screen')
+let dimensionsInfo = {
+  screen: Dimensions.get('screen'),
+  window: Dimensions.get('window')
+}
+let width, height
+
 // TODO 临时适配折叠屏场景适配
-const isLargeFoldableLike = (__mpx_mode__ === 'android') && (height / width < 1.5) && (width > 600)
-if (isLargeFoldableLike) width = width / 2
+// const isLargeFoldableLike = (__mpx_mode__ === 'android') && (height / width < 1.5) && (width > 600)
+// if (isLargeFoldableLike) width = width / 2
 
-Dimensions.addEventListener('change', ({ screen }) => {
-  width = screen.width
-  height = screen.height
-})
+function customDimensionsInfo (dimensions) {
+  if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
+    dimensionsInfo = Mpx.config.rnConfig.customDimensionsInfo(dimensions) || dimensions
+    width = dimensionsInfo.screen.width
+    height = dimensionsInfo.screen.height
+  }
+}
+
+customDimensionsInfo(dimensionsInfo)
+Dimensions.addEventListener('change', customDimensionsInfo)
 
 function rpx (value) {
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
