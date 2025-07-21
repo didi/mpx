@@ -25,6 +25,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
   const resetKeyboard = () => {
     if (keyboardAvoid?.current) {
+      const inputRef = keyboardAvoid.current.ref?.current
+      if (inputRef && inputRef.isFocused()) {
+        // 修复 Android 点击键盘收起按钮时当前 input 没触发失焦的问题
+        inputRef.blur()
+      }
       keyboardAvoid.current = null
     }
     offset.value = withTiming(0, { duration, easing })
