@@ -15,8 +15,8 @@ let width, height
 function customDimensionsInfo (dimensions) {
   if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
     dimensionsInfo = Mpx.config.rnConfig.customDimensionsInfo(dimensions) || dimensions
-    width = dimensionsInfo.window.width
-    height = dimensionsInfo.window.height
+    width = dimensionsInfo.screen.width
+    height = dimensionsInfo.screen.height
   }
 }
 
