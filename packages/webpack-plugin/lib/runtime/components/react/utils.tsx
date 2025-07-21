@@ -156,6 +156,8 @@ const selfPercentRule: Record<string, 'height' | 'width'> = {
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
+  minHeight: true,
+  maxHeight: true,
   top: true,
   bottom: true
 }
@@ -312,7 +314,7 @@ function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
   // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
   values.sort()
-  const transform: {[propName: string]: string|number|number[]}[] = []
+  const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
     if (match && match.length >= 3) {
