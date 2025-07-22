@@ -166,16 +166,18 @@ export default function createApp (options) {
     }
   }
 
-  const windowInfo = ReactNative.Dimensions.get('window')
-  const screenInfo = ReactNative.Dimensions.get('screen')
-  global.__mpxAppDimensionsInfo = {
-    window: windowInfo,
-    screen: screenInfo
+  global.__mpxAppDimensionsInfo = reactive({
+    window: ReactNative.Dimensions.get('window'),
+    screen: ReactNative.Dimensions.get('screen')
+  })
+  function useDimensionsInfo (dimensions) {
+    if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
+      dimensions = Mpx.config.rnConfig.customDimensionsInfo(dimensions) || dimensions
+    }
+    global.__mpxAppDimensionsInfo.window = dimensions.window
+    global.__mpxAppDimensionsInfo.screen = dimensions.screen
   }
-  if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
-    const customDimensionsInfo = Mpx.config.rnConfig?.customDimensionsInfo?.(global.__mpxAppDimensionsInfo)
-    global.__mpxAppDimensionsInfo = customDimensionsInfo || global.__mpxAppDimensionsInfo
-  }
+  useDimensionsInfo(global.__mpxAppDimensionsInfo)
 
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
@@ -184,7 +186,6 @@ export default function createApp (options) {
       initialRouteName: firstPage,
       initialParams: {}
     })
-    const dimensionsInfoRef = useRef(reactive(global.__mpxAppDimensionsInfo))
     if (firstRef.current) {
       // 热启动情况下，app会被销毁重建，将__mpxAppHotLaunched重置保障路由等初始化逻辑正确执行
       global.__mpxAppHotLaunched = false
@@ -229,21 +230,11 @@ export default function createApp (options) {
       })
       let count = 0
       const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
-        const oldWindow = getPageSize(global.__mpxAppDimensionsInfo.window)
-        // 将最新数据设置到全局
-        global.__mpxAppDimensionsInfo.window = window
-        global.__mpxAppDimensionsInfo.screen = screen
-        // 暴露接口给业务修改 dimensionsInfo
-        if (typeof Mpx.config.rnConfig?.customDimensionsInfo === 'function') {
-          const customDimensionsInfo = Mpx.config.rnConfig?.customDimensionsInfo?.(global.__mpxAppDimensionsInfo)
-          if (customDimensionsInfo) {
-            global.__mpxAppDimensionsInfo.window = customDimensionsInfo.window
-            global.__mpxAppDimensionsInfo.screen = customDimensionsInfo.screen
-          }
-        }
+        const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
+        useDimensionsInfo({ window, screen })
 
-        // // 对比 window 高宽是否存在变化
-        if (getPageSize(window) === oldWindow) return
+        // // 对比 screen 高宽是否存在变化
+        if (getPageSize(screen) === oldScreen) return
         global.__appClassMapValueCache = {}
         // // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()
@@ -268,7 +259,7 @@ export default function createApp (options) {
 
     function DimensionsProvider (props) {
       return createElement(DimensionsContext.Provider, {
-        value: dimensionsInfoRef.current
+        value: global.__mpxAppDimensionsInfo
       }, props.children)
     }
 

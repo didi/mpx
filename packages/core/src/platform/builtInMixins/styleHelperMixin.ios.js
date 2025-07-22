@@ -1,16 +1,16 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
 import { StyleSheet } from 'react-native'
 
-function rpx (value, windowInfo) {
+function rpx (value, screenInfo) {
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (750 / 屏幕宽度)
-  return value * windowInfo.width / 750
+  return value * screenInfo.width / 750
 }
-function vw (value, windowInfo) {
-  return value * windowInfo.width / 100
+function vw (value, screenInfo) {
+  return value * screenInfo.width / 100
 }
-function vh (value, windowInfo) {
-  return value * windowInfo.height / 100
+function vh (value, screenInfo) {
+  return value * screenInfo.height / 100
 }
 
 const unit = {
@@ -21,13 +21,13 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value, windowInfo = global.__mpxAppDimensionsInfo.window) {
+function formatValue (value, screenInfo = global.__mpxAppDimensionsInfo.screen) {
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
     } else {
-      return unit[matched[2]](+matched[1], windowInfo)
+      return unit[matched[2]](+matched[1], screenInfo)
     }
   }
   if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
@@ -174,7 +174,7 @@ function getMediaStyle (media, windowInfo) {
 export default function styleHelperMixin () {
   return {
     watch: {
-      '__dimensionsInfo.window.width, __dimensionsInfo.window.height' (newValue, oldValue) {
+      '__dimensionsInfo.screen.width, __dimensionsInfo.screen.height' (newValue, oldValue) {
         if (newValue[0] === oldValue[0] && newValue[1] === oldValue[1]) return
         this.__classMapValueCache = {}
       }
@@ -197,7 +197,7 @@ export default function styleHelperMixin () {
             if (classMap[className]) {
               const styleObj = classMap[className] || empty
               if (styleObj._default) {
-                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.window))
+                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.screen))
               } else {
                 Object.assign(result, styleObj)
               }
@@ -205,7 +205,7 @@ export default function styleHelperMixin () {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               const styleObj = appClassMap[className] || empty
               if (styleObj._default) {
-                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.window))
+                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.screen))
               } else {
                 Object.assign(result, styleObj)
               }
