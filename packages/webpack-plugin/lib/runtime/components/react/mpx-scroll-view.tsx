@@ -209,7 +209,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  const scrollViewRef = useRef<ScrollView>()
+  const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {
     style: normalStyle,
     scrollOffset: scrollOptions,
