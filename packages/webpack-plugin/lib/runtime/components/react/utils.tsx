@@ -156,6 +156,8 @@ const selfPercentRule: Record<string, 'height' | 'width'> = {
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
+  minHeight: true,
+  maxHeight: true,
   top: true,
   bottom: true
 }
@@ -310,7 +312,7 @@ function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
-  const transform: {[propName: string]: string|number|number[]}[] = []
+  const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
     if (match && match.length >= 3) {
