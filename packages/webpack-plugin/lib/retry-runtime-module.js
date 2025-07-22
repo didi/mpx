@@ -26,9 +26,9 @@ class RetryRuntimeModule extends RuntimeModule {
                   Template.indent([
                     `fn().then(resolve).catch(${runtimeTemplate.basicFunction('err', [
                       Template.indent([
-                        '_t++;',
                         'if (_t < times) {',
-                          Template.indent([
+                        Template.indent([
+                            '++_t;',
                             'interval > 0 ? setTimeout(_retry, interval) : _retry()'
                           ]),
                         '} else {',
