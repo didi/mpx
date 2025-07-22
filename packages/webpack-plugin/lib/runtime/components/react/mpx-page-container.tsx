@@ -1,22 +1,7 @@
 import React, { createElement, forwardRef, useCallback, useEffect, useRef, useState } from 'react'
-import {
-  StyleSheet,
-  Dimensions,
-  TouchableWithoutFeedback,
-  StyleProp,
-  ViewStyle
-} from 'react-native'
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  cancelAnimation,
-  runOnJS
-} from 'react-native-reanimated'
-import {
-  GestureDetector,
-  Gesture
-} from 'react-native-gesture-handler'
+import { StyleSheet, Dimensions, TouchableWithoutFeedback, StyleProp, ViewStyle } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, runOnJS } from 'react-native-reanimated'
+import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal/index'
 import { PreventRemoveEvent, usePreventRemove } from '@react-navigation/native'
 import { extendObject, useLayout, useNavigation } from './utils'
@@ -35,9 +20,6 @@ interface PageContainerProps {
     'close-on-slide-down'?: boolean;
     'overlay-style'?: StyleProp<ViewStyle>;
     'custom-style'?: StyleProp<ViewStyle>;
-
-    bindclose: (event: CustomEvent<{ value: boolean}>) => void;
-
     bindbeforeenter?: (event: CustomEvent) => void;
     bindenter?: (event: CustomEvent) => void;
     bindafterenter?: (event: CustomEvent) => void;
@@ -45,10 +27,12 @@ interface PageContainerProps {
     bindleave?: (event: CustomEvent) => void;
     bindafterleave?: (event: CustomEvent) => void;
     bindclickoverlay?: (event: CustomEvent) => void;
+
+    bindclose: (event: CustomEvent<{ value: boolean}>) => void;
     children: React.ReactNode;
 }
 
-const windowWidth = Dimensions.get('window').width
+const screenWidth = Dimensions.get('screen').width
 
 function nextTick (cb: () => void) {
   setTimeout(cb, 0)
@@ -148,11 +132,6 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     }
   })
 
-  function clearAnimation () {
-    cancelAnimation(overlayOpacity)
-    cancelAnimation(contentOpacity)
-    cancelAnimation(contentTranslate)
-  }
   const currentTick = useRef(0)
   function createTick () {
     currentTick.current++
@@ -163,16 +142,16 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       return currentTick.current === current
     }
   }
+
+  function clearAnimation () {
+    cancelAnimation(overlayOpacity)
+    cancelAnimation(contentOpacity)
+    cancelAnimation(contentTranslate)
+  }
+
   // 播放入场动画
   const animateIn = () => {
     const isCurrentTick = createTick()
-    // TODO
-    // const animateOutFinish = true
-    // if (!animateOutFinish) {
-    //   cancelAnimation(overlayOpacity)
-    //   cancelAnimation(contentOpacity)
-    //   cancelAnimation(contentTranslate)
-    // }
     triggerBeforeEnterEvent()
     nextTick(() => {
       const animateOutFinish = internalVisible === false
@@ -283,22 +262,19 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     }, [show])
   }
 
-  const THRESHOLD = windowWidth * 0.3 // 距离阈值
+  const THRESHOLD = screenWidth * 0.3 // 距离阈值
   const VELOCITY_THRESHOLD = 1000 // px/s
-  const SCREEN_EDGE_THRESHOLD = 30 // 从屏幕左侧 30px 内触发
   const contentGesture = Gesture.Pan()
-    .activeOffsetY(200)
+    .activeOffsetY(150) // 下滑至少滑动 150px 才处理
     .onEnd((e) => {
       const { velocityY, translationY } = e
       const shouldGoBack = translationY > THRESHOLD || velocityY > VELOCITY_THRESHOLD
-      console.log('触发手势下滑关闭1', e, translationY, THRESHOLD, velocityY, VELOCITY_THRESHOLD)
       if (shouldGoBack) {
-        console.log('触发手势下滑关闭')
         runOnJS(close)()
       }
     })
   /**
-   * 全屏幕 IOS 左滑手势返回
+   * 全屏幕 IOS 左滑手势返回（ios默认页面返回存在页面跟手逻辑，page-container暂不支持，对齐微信小程序）
    * 1: 仅在屏幕左边缘滑动 才触发返回手势。
    * 2: 用户滑动距离足够 或 滑动速度足够快，才触发返回。
    * 3: 用户中途回退（滑回来）或滑太慢/太短，则应取消返回。
@@ -308,16 +284,15 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       const { velocityX, translationX } = e
       const shouldGoBack = translationX > THRESHOLD || velocityX > VELOCITY_THRESHOLD
       if (shouldGoBack) {
-        console.log('触发左滑手势返回')
         runOnJS(close)()
       }
     })
-    .hitSlop({ left: 0, width: SCREEN_EDGE_THRESHOLD })
+    .hitSlop({ left: 0, width: 30 }) // 从屏幕左侧 30px 内触发才处理
 
   const renderMask = () => {
     const onPress = () => {
       close()
-      bindclickoverlay && bindclickoverlay(getCustomEvent(
+      bindclickoverlay?.(getCustomEvent(
         'clickoverlay',
         {},
         { detail: { value: false, source: 'clickoverlay' } },
