@@ -301,6 +301,35 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 }
 ```
 > 注意事项
+### [媒体查询](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Using_media_queries)
+- 媒体类型
+  - print 不支持
+  - **screen 支持**
+  - **all 支持**
+- 媒体特性
+  - **width-视口（包括纵向滚动条）的宽度，支持**
+  - height-视口的高度，暂不支持
+  - aspect-ratio-视口（viewport）的宽高比，暂不支持
+  - orientation-视口的旋转方向，暂不支持
+  - prefers-color-scheme 系统的主题色设置为亮色或者暗色，暂不支持
+- 逻辑运算符
+  - **and 支持**
+  - not 不支持
+  - only 不支持
+  - or 不支持
+```css
+/* 支持 */
+@media screen and (min-width: 900px) {}
+@media (max-width: 12450px) {  }
+@media screen and (min-width: 320px) and (max-width: 480px) {}
+/* 不支持 */
+/* 单位仅支持px */
+@media (max-width: 30em) {  }
+@media (min-width: 30em) and (max-width: 50em) {  }
+/* 媒体查询 4 级规范，暂不支持 */
+@media (width <= 30em) {  }
+@media (30em <= width <= 50em ) {  }
+```
 ### 使用原子类
 后续支持。
 
