@@ -50,7 +50,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         Keyboard.addListener('keyboardWillShow', (evt: any) => {
           if (!keyboardAvoid?.current) return
           const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
+          const { ref, cursorSpacing = 0, onKeyboardShow } = keyboardAvoid.current
+          keyboardAvoid.current.keyboardHeight = endCoordinates.height
+          onKeyboardShow?.()
           setTimeout(() => {
             ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
               const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
@@ -73,7 +75,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         Keyboard.addListener('keyboardDidShow', (evt: any) => {
           if (!keyboardAvoid?.current) return
           const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
+          const { ref, cursorSpacing = 0, onKeyboardShow } = keyboardAvoid.current
+          keyboardAvoid.current.keyboardHeight = endCoordinates.height
+          onKeyboardShow?.()
           ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
             const aboveOffset = pageY + height - endCoordinates.screenY
             const belowOffset = endCoordinates.height - aboveOffset
