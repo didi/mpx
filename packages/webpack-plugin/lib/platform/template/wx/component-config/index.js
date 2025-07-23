@@ -42,6 +42,7 @@ const wxs = require('./wxs')
 const component = require('./component')
 const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
+const pageContainer = require('./page-container')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
 
@@ -128,6 +129,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     label({ print }),
     component(),
     rootPortal({ print }),
+    pageContainer({ print }),
     stickyHeader({ print }),
     stickySection({ print })
   ]
