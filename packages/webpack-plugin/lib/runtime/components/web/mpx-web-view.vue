@@ -124,7 +124,7 @@ export default {
         case 'postMessage':
           let data = {
             type: 'message',
-            data: params[0]?.data
+            data: params[0]?.data || params[0] // 补充兜底逻辑
           }
           this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
           asyncCallback = Promise.resolve({
