@@ -1,12 +1,9 @@
 const runRules = require('../../run-rules')
 const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
-const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
 const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../utils/dom-tag-config')
-
-const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
+const getBuildTagComponent = require('../../../utils/get-build-tag-component')
 
 module.exports = function getSpec ({ warn, error }) {
   function print (mode, path, isError) {
@@ -46,27 +43,21 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
-  function aliComponentPlaceholderFallback (input) {
-    // 处理 驼峰转连字符
-    input = componentNameCapitalToHyphen('componentPlaceholder')(input)
-    const componentPlaceholder = input.componentPlaceholder
+  // 将 placeholder 中使用的内建组件转化为 mpx-xxx, 并在 usingComponents 填充
+  function fixBuildComponentPlaceholder (input, { mode }) {
+    if (mode === 'ali') {
+      // 处理 驼峰转连字符
+      input = componentNameCapitalToHyphen('componentPlaceholder')(input)
+    }
+    const componentPlaceholder = input.componentPlaceholder || (input.componentPlaceholder = {})
     const usingComponents = input.usingComponents || (input.usingComponents = {})
     for (const cph in componentPlaceholder) {
       const cur = componentPlaceholder[cph]
-      const placeholderCompMatched = cur.match(/^(?:view|text)$/g)
-      if (!Array.isArray(placeholderCompMatched)) continue
-      let compName, compPath
-      switch (placeholderCompMatched[0]) {
-        case 'view':
-          compName = 'mpx-view'
-          compPath = mpxViewPath
-          break
-        case 'text':
-          compName = 'mpx-text'
-          compPath = mpxTextPath
-      }
-      usingComponents[compName] = compPath
-      componentPlaceholder[cph] = compName
+      const comp = getBuildTagComponent(mode, cur)
+      if (!comp || usingComponents[cur]) continue
+      const { name, resource } = comp
+      usingComponents[name] = resource
+      componentPlaceholder[cph] = name
     }
     return input
   }
@@ -172,7 +163,6 @@ module.exports = function getSpec ({ warn, error }) {
     },
     {
       test: 'componentPlaceholder',
-      ali: aliComponentPlaceholderFallback,
       swan: deletePath(),
       jd: deletePath()
     },
@@ -190,6 +180,13 @@ module.exports = function getSpec ({ warn, error }) {
       ios: fixComponentName,
       android: fixComponentName,
       harmony: fixComponentName
+    },
+    {
+      ali: fixBuildComponentPlaceholder,
+      web: fixBuildComponentPlaceholder,
+      ios: fixBuildComponentPlaceholder,
+      android: fixBuildComponentPlaceholder,
+      harmony: fixBuildComponentPlaceholder
     }
   ]
 
@@ -454,12 +451,6 @@ module.exports = function getSpec ({ warn, error }) {
         swan: getWindowRule(),
         tt: getWindowRule(),
         jd: getWindowRule()
-      },
-      {
-        web: fixComponentName,
-        ios: fixComponentName,
-        android: fixComponentName,
-        harmony: fixComponentName
       }
     ]
   }

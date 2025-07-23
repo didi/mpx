@@ -86,13 +86,10 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
             }
             componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async, placeholderRequest)
           } else {
-            const tag = `mpx-${placeholder}`
-            if (!isBuildInReactTag(tag)) {
-              loaderContext.emitError(
-                new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
-              )
-            }
-            componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async, getMpxComponentRequest(tag))
+            loaderContext.emitError(
+              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
+            )
+            componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentCfg.async, getMpxComponentRequest(placeholder))
           }
         } else {
           loaderContext.emitError(
