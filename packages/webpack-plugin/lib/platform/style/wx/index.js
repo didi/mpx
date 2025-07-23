@@ -19,7 +19,7 @@ module.exports = function getSpec ({ warn, error }) {
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, value, selector }, { mode }, isError = true) => {
     const tips = isError ? error : warn
-    tips(`[Mpx style error]: Property [${prop}] on ${selector} is not supported in ${mode} environment!`)
+    tips(`Property [${prop}] on ${selector} is not supported in ${mode} environment!`)
   }
   // prop 校验
   const verifyProps = ({ prop, value, selector }, { mode }, isError = true) => {
@@ -206,7 +206,7 @@ module.exports = function getSpec ({ warn, error }) {
     const cssMap = []
     // 复合属性不支持单个css var（css var可以接收单个值可以是复合值，复合值运行时不处理，这里前置提示一下）
     if (values.length === 1 && cssVariableExp.test(value)) {
-      error(`[Mpx style error]: Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
+      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
       return cssMap
     }
     let idx = 0
@@ -215,7 +215,7 @@ module.exports = function getSpec ({ warn, error }) {
     while (idx < values.length) {
       const prop = props[propsIdx]
       if (!prop) {
-        warn(`[Mpx style error]: Value of [${original}] in ${selector} has not enough props to assign, please check again!`)
+        warn(`Value of [${original}] in ${selector} has not enough props to assign, please check again!`)
         break
       }
       const value = values[idx]
@@ -318,7 +318,7 @@ module.exports = function getSpec ({ warn, error }) {
         if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value)) {
           return { prop, value }
         } else {
-          error(`[Mpx style error]: Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
+          error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
           return false
         }
       }
@@ -328,7 +328,7 @@ module.exports = function getSpec ({ warn, error }) {
         // 支持一个值:这个值指定图片的宽度，图片的高度隐式的为 auto
         // 支持两个值:第一个值指定图片的宽度，第二个值指定图片的高度
         if (parseValues(value, ',').length > 1) { // commas are not allowed in values
-          error(`[Mpx style error]: Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
+          error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
           return false
         }
         const values = []
@@ -348,7 +348,7 @@ module.exports = function getSpec ({ warn, error }) {
             // 支持 number 值 /  枚举, center与50%等价
             values.push(item === 'center' ? '50%' : item)
           } else {
-            error(`[Mpx style error]: Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
+            error(`Value of [${bgPropMap.size}] in ${selector} does not support commas, received [${value}], please check again!`)
           }
         })
         return { prop, value: values }
@@ -356,7 +356,7 @@ module.exports = function getSpec ({ warn, error }) {
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
         if (cssVariableExp.test(value)) {
-          error(`[Mpx style error]: Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
+          error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
         }
         const bgMap = []
@@ -444,7 +444,7 @@ module.exports = function getSpec ({ warn, error }) {
             break
         }
       } else {
-        error(`[Mpx style error]: Property [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
+        error(`Property [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
       }
     })
     return {
@@ -461,7 +461,7 @@ module.exports = function getSpec ({ warn, error }) {
     if ((isNumber(value) && value >= 0) || cssVariableExp.test(value)) {
       return { prop, value }
     } else {
-      error(`[Mpx style error]: Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
+      error(`Value of [${prop}] in ${selector} accepts any floating point value >= 0, received [${value}], please check again!`)
       return false
     }
   }
@@ -470,7 +470,7 @@ module.exports = function getSpec ({ warn, error }) {
     let values = parseValues(value)
     // 值大于3 去前三
     if (values.length > 3) {
-      warn(`[Mpx style warn]: Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
+      warn(`Value of [flex] in ${selector} supports up to three values, received [${value}], please check again!`)
       values = values.splice(0, 3)
     }
     const cssMap = []
@@ -487,7 +487,7 @@ module.exports = function getSpec ({ warn, error }) {
         // value=initial 则 flexShrink=1，其他场景都是0
         cssMap.push(...[{ prop: 'flexGrow', value: 0 }, { prop: 'flexShrink', value: +(values[0] === 'initial') }])
       } else {
-        error(`[Mpx style error]: Value of [${prop}] in ${selector} is invalid, When setting the value of flex to none or initial, only one value is supported.`)
+        error(`Value of [${prop}] in ${selector} is invalid, When setting the value of flex to none or initial, only one value is supported.`)
       }
       return cssMap
     }
@@ -525,10 +525,10 @@ module.exports = function getSpec ({ warn, error }) {
     const newVal = value.replace(/"|'/g, '').trim()
     const values = parseValues(newVal, ',')
     if (!newVal || !values.length) {
-      error(`[Mpx style error]: Value of [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
+      error(`Value of [${prop}] is invalid in ${selector}, received [${value}], please check again!`)
       return false
     } else if (values.length > 1) {
-      warn(`[Mpx style warn]: Value of [${prop}] only supports one in ${selector}, received [${value}], and the first one is used by default.`)
+      warn(`Value of [${prop}] only supports one in ${selector}, received [${value}], and the first one is used by default.`)
     }
     return { prop, value: values[0].trim() }
   }

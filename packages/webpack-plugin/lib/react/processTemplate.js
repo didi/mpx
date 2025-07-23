@@ -56,7 +56,7 @@ module.exports = function (template, {
       const templateSrcMode = template.mode || srcMode
       const warn = (msg) => {
         loaderContext.emitWarning(
-          new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
+          new Error('[Mpx template warning][' + loaderContext.resource + ']: ' + msg)
         )
       }
       const error = (msg) => {

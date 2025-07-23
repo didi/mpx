@@ -15,7 +15,7 @@ module.exports = function (styles, {
   if (styles.length) {
     const warn = (msg) => {
       loaderContext.emitWarning(
-        new Error('[Mpx style error][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style warning][' + loaderContext.resource + ']: ' + msg)
       )
     }
     const error = (msg) => {

@@ -48,15 +48,15 @@ module.exports = function (content) {
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
 
-  const emitWarning = (msg) => {
+  const preJsonEmitWarning = (msg) => {
     this.emitWarning(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const preJsonEmitError = (msg) => {
     this.emitError(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
@@ -106,8 +106,8 @@ module.exports = function (content) {
       preProcessJson({
         json: parts.json || {},
         srcMode,
-        emitWarning,
-        emitError,
+        emitWarning: preJsonEmitWarning,
+        emitError: preJsonEmitError,
         ctorType,
         resourcePath,
         loaderContext

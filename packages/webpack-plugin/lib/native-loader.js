@@ -102,15 +102,15 @@ module.exports = function (content) {
     })
   }
 
-  const emitWarning = (msg) => {
+  const preJsonEmitWarning = (msg) => {
     this.emitWarning(
-      new Error('[native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning]: [native-loader][' + this.resource + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const preJsonEmitError = (msg) => {
     this.emitError(
-      new Error('[native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error]: [native-loader][' + this.resource + ']: ' + msg)
     )
   }
   let ctorType = pagesMap[resourcePath]
@@ -168,8 +168,8 @@ module.exports = function (content) {
           useJSONJS
         },
         srcMode,
-        emitWarning,
-        emitError,
+        emitWarning: preJsonEmitWarning,
+        emitError: preJsonEmitError,
         ctorType,
         resourcePath,
         loaderContext

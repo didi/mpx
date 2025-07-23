@@ -38,7 +38,7 @@ module.exports = function (jsonContent, {
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
-      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + loaderContext.resource + ']: ' + msg)
     )
   }
 

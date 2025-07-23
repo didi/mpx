@@ -49,10 +49,10 @@ module.exports = function (template, {
   if (template) {
     // 由于远端src template资源引用的相对路径可能发生变化，暂时不支持。
     if (template.src) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
+      return callback(new Error('[Mpx template error][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
     }
     if (template.lang) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
+      return callback(new Error('[Mpx template error][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
 
     output += genComponentTag(template, (template) => {
