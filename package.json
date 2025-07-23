@@ -22,6 +22,7 @@
     "@docsearch/js": "^3.0.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@types/jest": "^27.0.1",
+    "@types/react": "^18.3.21",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "@vite-pwa/vitepress": "^0.5.3",
