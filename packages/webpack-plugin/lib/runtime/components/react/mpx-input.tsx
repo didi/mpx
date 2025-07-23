@@ -280,8 +280,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const setKeyboardAvoidContext = () => {
-    if (adjustPosition && keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef }
+    if (keyboardAvoid) {
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition }
     }
   }
 
@@ -307,22 +307,22 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
             {
               detail: {
                 value: tmpValue.current || '',
-                height: keyboardAvoid?.current?.keyboardHeight
+                height: keyboardAvoid.current?.keyboardHeight
               },
               layoutRef
             },
             props
           )
         )
-        if (keyboardAvoid?.current?.keyboardHeight) {
+        if (keyboardAvoid.current?.onKeyboardShow) {
           keyboardAvoid.current.onKeyboardShow = undefined
         }
       }
-      if (keyboardAvoid.current?.keyboardHeight) {
+      if (keyboardAvoid.current.keyboardHeight) {
         // iOS: keyboard 获取高度时机 keyboardWillShow 在 input focus 之前，可以立即执行
         focusAction()
       } else {
-        // Android: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
+        // Android,Harmony: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
         evt.persist()
         keyboardAvoid.current.onKeyboardShow = focusAction
       }

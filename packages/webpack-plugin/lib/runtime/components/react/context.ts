@@ -9,6 +9,7 @@ export type LabelContextValue = MutableRefObject<{
 export type KeyboardAvoidContextValue = MutableRefObject<{
   cursorSpacing: number
   ref: MutableRefObject<any>
+  adjustPosition: boolean
   keyboardHeight?: number
   onKeyboardShow?: () => void
 } | null>
