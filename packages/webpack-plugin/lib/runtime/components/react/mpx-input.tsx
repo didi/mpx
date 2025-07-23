@@ -295,20 +295,38 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    setKeyboardAvoidContext()
-    bindfocus && bindfocus(
-      getCustomEvent(
-        'focus',
-        evt,
-        {
-          detail: {
-            value: tmpValue.current || ''
-          },
-          layoutRef
-        },
-        props
-      )
-    )
+    if (!keyboardAvoid?.current) {
+      setKeyboardAvoidContext()
+    }
+    if (bindfocus && keyboardAvoid?.current) {
+      const focusAction = () => {
+        bindfocus(
+          getCustomEvent(
+            'focus',
+            evt,
+            {
+              detail: {
+                value: tmpValue.current || '',
+                height: keyboardAvoid?.current?.keyboardHeight
+              },
+              layoutRef
+            },
+            props
+          )
+        )
+        if (keyboardAvoid?.current?.keyboardHeight) {
+          keyboardAvoid.current.onKeyboardShow = undefined
+        }
+      }
+      if (keyboardAvoid.current?.keyboardHeight) {
+        // iOS: keyboard 获取高度时机 keyboardWillShow 在 input focus 之前，可以立即执行
+        focusAction()
+      } else {
+        // Android: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
+        evt.persist()
+        keyboardAvoid.current.onKeyboardShow = focusAction
+      }
+    }
   }
 
   const onBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
