@@ -1,6 +1,6 @@
 import React, { createElement, forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import { StyleSheet, Dimensions, TouchableWithoutFeedback, StyleProp, ViewStyle } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, runOnJS } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, runOnJS, WithTimingConfig, Easing, AnimationCallback } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal/index'
 import { PreventRemoveEvent, usePreventRemove } from '@react-navigation/native'
@@ -177,21 +177,27 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
         if (position === 'center') {
           durationTime = durationTime * (1 - contentOpacity.value)
         } else {
-          durationTime = durationTime * (contentTranslate.value / 100)
+          // durationTime * (1 - |contentTranslate| / 100)
+          durationTime = durationTime * (Math.abs(contentTranslate.value) / 100)
         }
       }
 
-      overlayOpacity.value = withTiming(1, { duration: durationTime })
+      const timingConfig: WithTimingConfig = {
+        duration: durationTime,
+        easing: Easing.out(Easing.quad)
+      }
+      const animationCallback: AnimationCallback = () => {
+        'worklet'
+        runOnJS(animateEnd)()
+      }
+
+      overlayOpacity.value = withTiming(1, timingConfig)
       if (position === 'center') {
-        contentOpacity.value = withTiming(1, { duration: durationTime }, () => {
-          runOnJS(animateEnd)()
-        })
-        contentTranslate.value = withTiming(0, { duration: durationTime })
+        contentOpacity.value = withTiming(1, timingConfig, animationCallback)
+        contentTranslate.value = withTiming(0, timingConfig)
       } else {
-        contentOpacity.value = withTiming(1, { duration: durationTime })
-        contentTranslate.value = withTiming(0, { duration: durationTime }, () => {
-          runOnJS(animateEnd)()
-        })
+        contentOpacity.value = withTiming(1, timingConfig)
+        contentTranslate.value = withTiming(0, timingConfig, animationCallback)
       }
     })
   }
@@ -210,18 +216,29 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
         setInternalVisible(false)
       }
 
+      let durationTime = duration
       if (position === 'center') {
-        contentOpacity.value = withTiming(0, { duration }, () => {
-          runOnJS(animateEnd)()
-        })
-        contentTranslate.value = withTiming(getInitialTranslate(position), { duration })
+        durationTime = durationTime * (contentOpacity.value)
       } else {
-        contentOpacity.value = withTiming(0, { duration })
-        contentTranslate.value = withTiming(getInitialTranslate(position), { duration }, () => {
-          runOnJS(animateEnd)()
-        })
+        // durationTime * (1 - |contentTranslate| / 100)
+        durationTime = durationTime * (1 - Math.abs(contentTranslate.value) / 100)
       }
-      overlayOpacity.value = withTiming(0, { duration })
+      const timingConfig: WithTimingConfig = {
+        duration: durationTime,
+        easing: Easing.out(Easing.quad)
+      }
+      const animationCallback: AnimationCallback = () => {
+        'worklet'
+        runOnJS(animateEnd)()
+      }
+      if (position === 'center') {
+        contentOpacity.value = withTiming(0, timingConfig, animationCallback)
+        contentTranslate.value = withTiming(getInitialTranslate(position), timingConfig)
+      } else {
+        contentOpacity.value = withTiming(1, timingConfig)
+        contentTranslate.value = withTiming(getInitialTranslate(position), timingConfig, animationCallback)
+      }
+      overlayOpacity.value = withTiming(0, timingConfig)
     })
   }
 
@@ -234,33 +251,55 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     }
   }, [show])
 
-  const navigation = useNavigation()
-  usePreventRemove(show, (event: PreventRemoveEvent) => {
-    const { data } = event
-    if (show) {
-      close()
-    } else {
-      navigation?.dispatch(data.action)
-    }
-  })
-
-  /**
-     * IOS 下需要关闭手势返回（原因： IOS手势返回时页面会跟随手指滑动，但是实际返回动作是在松手时触发，需禁掉页面跟随手指滑动的效果）
-     * 禁用与启用逻辑抽离为rnConfig由外部实现，并补充纯RN下默认实现
+  // 禁用页面返回
+  function useDisablePageBack () {
+    /**
+     * 如果当前页面是首页，则需要拦截返回关闭容器的逻辑
+     * 如果不是首页，则由RN逻辑完成拦截（usePreventRemove + gestureEnabled:false）
      */
+    const navigation = useNavigation()!
+    // TODO resetRouterStack 可能会导致 isFirstPage 发生变化，需要监听路由变化
+    const isFirstPage = navigation.getState().routes.length === 1
 
-  if (__mpx_mode__ === 'ios') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
-      if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
-        global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
+      if (isFirstPage) {
+        if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
+          // DRN 问题，当 resetRouterStack 页面数为1时会关闭 disableSwipeBack，此时需要再次 disableSwipeBack
+          global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
+        }
       } else {
-        navigation?.setOptions({
+        navigation.setOptions({
           gestureEnabled: !show
         })
       }
     }, [show])
+
+    // 路由返回拦截
+    usePreventRemove(show, (event: PreventRemoveEvent) => {
+      const { data } = event
+      if (show) {
+        close()
+      } else {
+        navigation?.dispatch(data.action)
+      }
+    })
   }
+  useDisablePageBack()
+  /**
+   * IOS 下需要关闭手势返回（原因： IOS手势返回时页面会跟随手指滑动，但是实际返回动作是在松手时触发，需禁掉页面跟随手指滑动的效果）
+   * 禁用与启用逻辑抽离为rnConfig由外部实现，并补充纯RN下默认实现
+   */
+  // TODO 如果是首页，需要拦截调用NA的disableSwipeBack拦截关闭容器的逻辑
+  // 如果不是首页，由RN逻辑完成拦截
+  // useEffect(() => {
+  //   if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
+  //     global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
+  //   } else {
+  //     navigation?.setOptions({
+  //       gestureEnabled: !show
+  //     })
+  //   }
+  // }, [show])
 
   const THRESHOLD = screenWidth * 0.3 // 距离阈值
   const VELOCITY_THRESHOLD = 1000 // px/s
@@ -280,14 +319,16 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
    * 3: 用户中途回退（滑回来）或滑太慢/太短，则应取消返回。
    */
   const screenGesture = Gesture.Pan()
+    .activeOffsetX(THRESHOLD) // 左滑至少滑动 30% 屏幕宽度才处理
+    .hitSlop({ left: 0, width: 30 }) // 从屏幕左侧 30px 内触发才处理
     .onEnd((e) => {
       const { velocityX, translationX } = e
-      const shouldGoBack = translationX > THRESHOLD || velocityX > VELOCITY_THRESHOLD
+      // const shouldGoBack = translationX > THRESHOLD || velocityX > VELOCITY_THRESHOLD
+      const shouldGoBack = velocityX > VELOCITY_THRESHOLD
       if (shouldGoBack) {
         runOnJS(close)()
       }
     })
-    .hitSlop({ left: 0, width: 30 }) // 从屏幕左侧 30px 内触发才处理
 
   const renderMask = () => {
     const onPress = () => {
@@ -345,6 +386,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
 
   const renderWrapped = () => {
     const wrappedView = (
+      // TODO 若开启pointerEvents="box-none" screenGesture 应包裹在page/app中才能保证手势全屏生效，如不开启pointerEvents="box-none" 则后方元素不可操作
       <Animated.View {...wrapperProps}>
         {overlay ? renderMask() : null}
         {renderContent()}
