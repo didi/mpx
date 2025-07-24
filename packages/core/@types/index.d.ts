@@ -122,6 +122,10 @@ interface Context {
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver'],
   getPageId: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getPageId']
 }
+type ExtendedComponentOptions = {
+  disconnectOnUnmounted: boolean
+  shallowReactivePattern: RegExp
+} & WechatMiniprogram.Component.ComponentOptions
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
   data?: D
@@ -130,6 +134,7 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
   methods?: M
   mixins?: Mi
   watch?: WatchField
+  options?: ExtendedComponentOptions
   setup?: (props: GetPropsType<P & UnboxMixinsField<Mi, 'properties'>>, context: Context) => S
 
   pageShow?: () => void
@@ -140,8 +145,8 @@ interface ComponentOpt<D extends Data, P extends Properties, C, M extends Method
 
   provide?: Record<string, any> | (() => Record<string, any>)
   inject?:
-    | { [key: string]: string | Symbol | { from?: string | Symbol; default?: any } }
-    | Array<string>
+  | { [key: string]: string | Symbol | { from?: string | Symbol; default?: any } }
+  | Array<string>
 
   [index: string]: any
 }
@@ -598,11 +603,11 @@ export function set<T extends object> (target: T, key: string | number, value: a
 export function del<T extends object> (target: T, key: keyof T): void
 
 // provide & inject
-export declare function provide<T>(key: InjectionKey<T> | string | number, value: T): void;
-export declare function inject<T>(key: InjectionKey<T> | string): T | undefined;
-export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T, treatDefaultAsFactory?: false): T;
-export declare function inject<T>(key: InjectionKey<T> | string, defaultValue: T | (() => T), treatDefaultAsFactory: true): T;
-export declare interface InjectionKey<T> extends Symbol {}
+export declare function provide<T> (key: InjectionKey<T> | string | number, value: T): void
+export declare function inject<T> (key: InjectionKey<T> | string): T | undefined
+export declare function inject<T> (key: InjectionKey<T> | string, defaultValue: T, treatDefaultAsFactory?: false): T
+export declare function inject<T> (key: InjectionKey<T> | string, defaultValue: T | (() => T), treatDefaultAsFactory: true): T
+export declare interface InjectionKey<T> extends Symbol { }
 
 // nextTick
 export function nextTick (fn: () => any): void
