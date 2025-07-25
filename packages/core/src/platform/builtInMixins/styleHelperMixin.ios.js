@@ -20,7 +20,6 @@ function customDimensions (dimensions) {
   height = dimensions.screen.height
 }
 
-customDimensions(rawDimensions)
 Dimensions.addEventListener('change', customDimensions)
 
 function rpx (value) {
@@ -44,6 +43,7 @@ const unit = {
 const empty = {}
 
 function formatValue (value) {
+  if (width === undefined) customDimensions(rawDimensions)
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
