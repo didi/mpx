@@ -106,7 +106,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   }, [keyboardAvoid])
 
   return (
-    <View style={style} onTouchEnd={onTouchEnd}>
+    <View style={style} onTouchEnd={onTouchEnd} onTouchMove={onTouchEnd}>
       <Animated.View
         style={[
           contentContainerStyle,
