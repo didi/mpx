@@ -1,6 +1,7 @@
 import React, { ReactNode, useContext, useEffect } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle, NativeSyntheticEvent, NativeTouchEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
+import { getWindowInfo } from '@mpxjs/api-proxy'
 import { KeyboardAvoidContext } from './context'
 import { isIOS } from './utils'
 
@@ -8,9 +9,10 @@ type KeyboardAvoidViewProps = {
   children?: ReactNode
   style?: ViewStyle
   contentContainerStyle?: ViewStyle
+  navigation?: any
 }
 
-const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: KeyboardAvoidViewProps) => {
+const KeyboardAvoidingView = ({ children, style, contentContainerStyle, navigation }: KeyboardAvoidViewProps) => {
   const duration = isIOS ? 250 : 300
   const easing = isIOS ? Easing.inOut(Easing.ease) : Easing.out(Easing.quad)
 
@@ -26,6 +28,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const resetKeyboard = () => {
     if (keyboardAvoid?.current) {
       keyboardAvoid.current = null
+      navigation.setPageConfig({
+        animatedNavStyle: {
+          top: withTiming(0, { duration: 100, easing: Easing.in(Easing.bezierFn(0.51, 1.18, 0.97, 0.94)) })
+        }
+      })
     }
     offset.value = withTiming(0, { duration, easing })
     basic.value = 'auto'
@@ -69,12 +76,31 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
           if (!keyboardAvoid?.current) return
           const { endCoordinates } = evt
           const { ref, cursorSpacing = 0 } = keyboardAvoid.current
+          // android 上键盘消失只能使用 keyboardDidHide 事件，对于需要和键盘一起改变位置的 nav 来说
+          // keyboardDidHide 是比较晚的，从动画上看也并不同步，因此采用比较早的blur
+          keyboardAvoid.current.blurCallbacks.push(resetKeyboard)
           ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+            const screenHeightRatio =
+            getWindowInfo().screenHeight /
+            (endCoordinates.screenY + endCoordinates.height)
+
+            const navAboveOffset = pageY + height - Math.floor(endCoordinates.screenY * screenHeightRatio)
+
             const aboveOffset = pageY + height - endCoordinates.screenY
             const belowOffset = endCoordinates.height - aboveOffset
             const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
             const belowValue = Math.min(belowOffset, cursorSpacing)
             const value = aboveOffset > 0 ? belowValue : aboveValue
+            navigation.setPageConfig({
+              animatedNavStyle: {
+                // android 手机本身支持将页面整体上移（包含 nav 和 body）
+                // mpx-keyboard-avoiding-view 和 nav 使用 transform 时互不影响，因此这里只需要计算 android 键盘出现导致上移的高度即可
+                top: withTiming(navAboveOffset, {
+                  duration: 100,
+                  easing
+                })
+              }
+            })
             offset.value = withTiming(value, { duration, easing }, (finished) => {
               if (finished) {
                 // Set flexBasic after animation to trigger re-layout and reset layout information
