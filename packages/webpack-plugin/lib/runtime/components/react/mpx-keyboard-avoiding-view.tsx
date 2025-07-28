@@ -25,6 +25,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
   const resetKeyboard = () => {
     if (keyboardAvoid?.current) {
+      const inputRef = keyboardAvoid.current.ref?.current
+      if (inputRef && inputRef.isFocused()) {
+        // 修复 Android 点击键盘收起按钮时当前 input 没触发失焦的问题
+        inputRef.blur()
+      }
       keyboardAvoid.current = null
     }
     offset.value = withTiming(0, { duration, easing })
@@ -45,21 +50,25 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         Keyboard.addListener('keyboardWillShow', (evt: any) => {
           if (!keyboardAvoid?.current) return
           const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
-          setTimeout(() => {
-            ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
-              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
-              const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
-              const value = aboveOffset > 0 ? belowValue : aboveValue
-              offset.value = withTiming(value, { duration, easing }, (finished) => {
-                if (finished) {
-                  // Set flexBasic after animation to trigger re-layout and reset layout information
-                  basic.value = '99.99%'
-                }
+          const { ref, cursorSpacing = 0, adjustPosition, onKeyboardShow } = keyboardAvoid.current
+          keyboardAvoid.current.keyboardHeight = endCoordinates.height
+          onKeyboardShow?.()
+          if (adjustPosition) {
+            setTimeout(() => {
+              ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+                const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
+                const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
+                const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
+                const value = aboveOffset > 0 ? belowValue : aboveValue
+                offset.value = withTiming(value, { duration, easing }, (finished) => {
+                  if (finished) {
+                    // Set flexBasic after animation to trigger re-layout and reset layout information
+                    basic.value = '99.99%'
+                  }
+                })
               })
             })
-          })
+          }
         }),
         Keyboard.addListener('keyboardWillHide', resetKeyboard)
       ]
@@ -68,20 +77,24 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         Keyboard.addListener('keyboardDidShow', (evt: any) => {
           if (!keyboardAvoid?.current) return
           const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
-          ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            const aboveOffset = pageY + height - endCoordinates.screenY
-            const belowOffset = endCoordinates.height - aboveOffset
-            const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
-            const belowValue = Math.min(belowOffset, cursorSpacing)
-            const value = aboveOffset > 0 ? belowValue : aboveValue
-            offset.value = withTiming(value, { duration, easing }, (finished) => {
-              if (finished) {
-                // Set flexBasic after animation to trigger re-layout and reset layout information
-                basic.value = '99.99%'
-              }
+          const { ref, cursorSpacing = 0, adjustPosition, onKeyboardShow } = keyboardAvoid.current
+          keyboardAvoid.current.keyboardHeight = endCoordinates.height
+          onKeyboardShow?.()
+          if (adjustPosition) {
+            ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+              const aboveOffset = pageY + height - endCoordinates.screenY
+              const belowOffset = endCoordinates.height - aboveOffset
+              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
+              const belowValue = Math.min(belowOffset, cursorSpacing)
+              const value = aboveOffset > 0 ? belowValue : aboveValue
+              offset.value = withTiming(value, { duration, easing }, (finished) => {
+                if (finished) {
+                  // Set flexBasic after animation to trigger re-layout and reset layout information
+                  basic.value = '99.99%'
+                }
+              })
             })
-          })
+          }
         }),
         Keyboard.addListener('keyboardDidHide', resetKeyboard)
       ]
@@ -93,7 +106,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   }, [keyboardAvoid])
 
   return (
-    <View style={style} onTouchEnd={onTouchEnd}>
+    <View style={style} onTouchEnd={onTouchEnd} onTouchMove={onTouchEnd}>
       <Animated.View
         style={[
           contentContainerStyle,
