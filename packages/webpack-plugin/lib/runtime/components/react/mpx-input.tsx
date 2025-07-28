@@ -474,6 +474,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         multiline: !!multiline,
         onTouchStart,
         onTouchEnd,
+        onTouchMove: onTouchEnd,
         onFocus,
         onBlur,
         onChange,
