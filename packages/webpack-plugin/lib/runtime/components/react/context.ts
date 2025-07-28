@@ -7,7 +7,7 @@ export type LabelContextValue = MutableRefObject<{
 }>
 
 export type KeyboardAvoidContextValue = MutableRefObject<
-  { cursorSpacing: number, ref: MutableRefObject<any> } | null
+  { cursorSpacing: number, ref: MutableRefObject<any>, blurCallbacks: (() => void)[] } | null
 >
 
 export interface GroupValue {
