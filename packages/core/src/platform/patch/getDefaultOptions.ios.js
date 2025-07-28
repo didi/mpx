@@ -16,7 +16,7 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '../env/nav'
+import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -520,7 +520,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
             },
             contentContainerStyle: {
               flex: 1
-            }
+            },
+            navigation
           },
           element
         )

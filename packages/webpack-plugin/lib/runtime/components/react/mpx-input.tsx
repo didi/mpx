@@ -281,7 +281,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition }
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, blurCallbacks: [] }
     }
   }
 
@@ -330,6 +330,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    keyboardAvoid?.current?.blurCallbacks.forEach(fn => fn())
     bindblur && bindblur(
       getCustomEvent(
         'blur',
