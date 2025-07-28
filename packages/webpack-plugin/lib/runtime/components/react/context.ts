@@ -6,9 +6,14 @@ export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
-export type KeyboardAvoidContextValue = MutableRefObject<
-  { cursorSpacing: number, ref: MutableRefObject<any>, blurCallbacks: (() => void)[] } | null
->
+export type KeyboardAvoidContextValue = MutableRefObject<{
+  cursorSpacing: number
+  ref: MutableRefObject<any>
+  adjustPosition: boolean
+  keyboardHeight?: number
+  onKeyboardShow?: () => void
+  blurCallbacks: (() => void)[]
+} | null>
 
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
