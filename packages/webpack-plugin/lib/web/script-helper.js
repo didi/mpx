@@ -205,9 +205,9 @@ function buildI18n ({ i18n, isMain, loaderContext }) {
       delete i18nObj[`${key}Path`]
     }
   })
-  i18nContent += `  var i18nCfg = ${JSON.stringify(i18nObj)}\n`
+  i18nContent += `    var i18nCfg = ${JSON.stringify(i18nObj)}\n`
   Object.keys(requestObj).forEach((key) => {
-    i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
+    i18nContent += `    i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += `
     i18nCfg.legacy = false
