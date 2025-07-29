@@ -4,9 +4,10 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal/index'
 import { PreventRemoveEvent, usePreventRemove } from '@react-navigation/native'
-import { extendObject, useLayout, useNavigation } from './utils'
+import { extendObject, useLayout, useNavigation, useRunOnJSCallback } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
+import { noop } from '@mpxjs/utils'
 
 type Position = 'top' | 'bottom' | 'right' | 'center';
 
@@ -143,11 +144,12 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     }
   }
 
-  function clearAnimation () {
-    cancelAnimation(overlayOpacity)
-    cancelAnimation(contentOpacity)
-    cancelAnimation(contentTranslate)
-  }
+  const invokeRunOnJSRef = useRef({
+    animateInEnd: noop,
+    animateOutEnd: noop,
+    close
+  })
+  const invokeRunOnJS = useRunOnJSCallback(invokeRunOnJSRef)
 
   // 播放入场动画
   const animateIn = () => {
@@ -159,7 +161,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       triggerEnterEvent()
       if (!isCurrentTick()) return
 
-      const animateEnd = () => {
+      invokeRunOnJSRef.current.animateInEnd = () => {
         if (!isCurrentTick()) return
         triggerAfterEnterEvent()
       }
@@ -188,7 +190,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       }
       const animationCallback: AnimationCallback = () => {
         'worklet'
-        runOnJS(animateEnd)()
+        runOnJS(invokeRunOnJS)('animateInEnd')
       }
 
       overlayOpacity.value = withTiming(1, timingConfig)
@@ -210,7 +212,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       triggerLeaveEvent()
       if (!isCurrentTick()) return
 
-      const animateEnd = () => {
+      invokeRunOnJSRef.current.animateOutEnd = () => {
         if (!isCurrentTick()) return // 如果动画被cancelAnimation依然会触发回调，所以在此也需要判断Tick
         triggerAfterLeaveEvent()
         setInternalVisible(false)
@@ -229,7 +231,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       }
       const animationCallback: AnimationCallback = () => {
         'worklet'
-        runOnJS(animateEnd)()
+        runOnJS(invokeRunOnJS)('animateOutEnd')
       }
       if (position === 'center') {
         contentOpacity.value = withTiming(0, timingConfig, animationCallback)
@@ -309,7 +311,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       const { velocityY, translationY } = e
       const shouldGoBack = translationY > THRESHOLD || velocityY > VELOCITY_THRESHOLD
       if (shouldGoBack) {
-        runOnJS(close)()
+        runOnJS(invokeRunOnJS)('close')
       }
     })
   /**
@@ -326,7 +328,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
       // const shouldGoBack = translationX > THRESHOLD || velocityX > VELOCITY_THRESHOLD
       const shouldGoBack = velocityX > VELOCITY_THRESHOLD
       if (shouldGoBack) {
-        runOnJS(close)()
+        runOnJS(invokeRunOnJS)('close')
       }
     })
 

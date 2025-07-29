@@ -806,9 +806,8 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   }
 }
 
-export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<string, AnyFunc>>) {
-  // const callbackMapRef = useRef(callbackMap)
-  const invokeCallback = useCallback((key: string, ...args: any) => {
+export function useRunOnJSCallback<T extends Record<string, AnyFunc>> (callbackMapRef: MutableRefObject<T>) {
+  const invokeCallback = useCallback(<K extends keyof T>(key: K, ...args: Parameters<T[K]>) => {
     const callback = callbackMapRef.current[key]
     // eslint-disable-next-line node/no-callback-literal
     if (isFunction(callback)) return callback(...args)
@@ -816,7 +815,7 @@ export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<stri
 
   useEffect(() => {
     return () => {
-      callbackMapRef.current = {}
+      callbackMapRef.current = {} as T
     }
   }, [])
 
