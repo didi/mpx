@@ -151,6 +151,12 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
   })
   const invokeRunOnJS = useRunOnJSCallback(invokeRunOnJSRef)
 
+  function clearAnimation () {
+    cancelAnimation(overlayOpacity)
+    cancelAnimation(contentOpacity)
+    cancelAnimation(contentTranslate)
+  }
+
   // 播放入场动画
   const animateIn = () => {
     const isCurrentTick = createTick()
