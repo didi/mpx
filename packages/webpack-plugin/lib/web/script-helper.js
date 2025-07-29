@@ -195,7 +195,8 @@ function buildI18n ({ i18n, isMain, loaderContext }) {
   }
   i18nContent += `import VueI18n from 'vue-i18n'
   import { createI18n } from 'vue-i18n-bridge'
-  Vue.use(VueI18n , { bridge: true })\n`
+  if (!Mpx.i18n) {
+    Vue.use(VueI18n , { bridge: true })\n`
   const requestObj = {}
   const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
   i18nKeys.forEach((key) => {
@@ -209,10 +210,11 @@ function buildI18n ({ i18n, isMain, loaderContext }) {
     i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += `
-  i18nCfg.legacy = false
-  var i18n = createI18n(i18nCfg, VueI18n)
-  Vue.use(i18n)
-  Mpx.i18n = i18n\n`
+    i18nCfg.legacy = false
+    var i18n = createI18n(i18nCfg, VueI18n)
+    Vue.use(i18n)
+    Mpx.i18n = i18n
+  }\n`
   return i18nContent
 }
 
