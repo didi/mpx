@@ -137,48 +137,74 @@ function checkIsNeedPress (e: ExtendedNativeTouchEvent, type: 'bubble' | 'captur
   }
 }
 
-function handleTouchstart (e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
-  // 阻止事件被释放放回对象池，导致对象复用 _stoppedEventTypes 状态被保留
+function handleTouchstart(e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
   e.persist()
   const { innerRef } = eventConfig
+  const touch = e.nativeEvent.changedTouches[0]
+  const isSingleTouch = innerRef.current.activeTouches.size === 0
+  if (!isSingleTouch) {
+    return
+  }
+  // 记录新的触摸点
+  innerRef.current.activeTouches.add(touch.identifier)
   globalEventState.needPress = true
   innerRef.current.mpxPressInfo.detail = {
-    x: e.nativeEvent.changedTouches[0].pageX,
-    y: e.nativeEvent.changedTouches[0].pageY
+    x: touch.pageX,
+    y: touch.pageY
   }
 
   handleEmitEvent('touchstart', e, type, eventConfig)
 
   if (eventConfig.longpress) {
-    if (e._stoppedEventTypes?.has('longpress')) {
-      return
+    // 只有单指触摸时才启动长按定时器
+    if (innerRef.current.activeTouches.size === 1) {
+      if (e._stoppedEventTypes?.has('longpress')) {
+        return
+      }
+      if (eventConfig.longpress.hasCatch) {
+        e._stoppedEventTypes = e._stoppedEventTypes || new Set()
+        e._stoppedEventTypes.add('longpress')
+      }
+      innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
+      innerRef.current.startTimer[type] = setTimeout(() => {
+        globalEventState.needPress = false
+        handleEmitEvent('longpress', e, type, eventConfig)
+      }, 350)
     }
-    if (eventConfig.longpress.hasCatch) {
-      e._stoppedEventTypes = e._stoppedEventTypes || new Set()
-      e._stoppedEventTypes.add('longpress')
-    }
-    innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
-    innerRef.current.startTimer[type] = setTimeout(() => {
-      // 只要触发过longpress, 全局就不再触发tap
-      globalEventState.needPress = false
-      handleEmitEvent('longpress', e, type, eventConfig)
-    }, 350)
   }
 }
 
-function handleTouchmove (e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
+function handleTouchmove(e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
   const { innerRef } = eventConfig
+  const touch = e.nativeEvent.changedTouches[0]
+  // 检查是否是已跟踪的触摸点
+  if (!innerRef.current.activeTouches.has(touch.identifier)) {
+    return
+  }
+
   handleEmitEvent('touchmove', e, type, eventConfig)
   if (eventConfig.tap) {
     checkIsNeedPress(e, type, innerRef)
   }
 }
 
-function handleTouchend (e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
+function handleTouchend(e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
   const { innerRef, disableTap } = eventConfig
+  const touch = e.nativeEvent.changedTouches[0]
+  
+  // 检查是否是已跟踪的触摸点
+  if (!innerRef.current.activeTouches.has(touch.identifier)) {
+    return
+  }
+  
+  // 移除结束的触摸点
+  innerRef.current.activeTouches.delete(touch.identifier)
+
   handleEmitEvent('touchend', e, type, eventConfig)
   innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
-  if (eventConfig.tap) {
+  
+  // 只有单指触摸结束时才触发 tap
+  if (eventConfig.tap && innerRef.current.activeTouches.size === 0) {
     checkIsNeedPress(e, type, innerRef)
     if (!globalEventState.needPress || (type === 'bubble' && disableTap) || e._stoppedEventTypes?.has('tap')) {
       return
@@ -191,8 +217,18 @@ function handleTouchend (e: ExtendedNativeTouchEvent, type: EventType, eventConf
   }
 }
 
-function handleTouchcancel (e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
+function handleTouchcancel(e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
   const { innerRef } = eventConfig
+  const touch = e.nativeEvent.changedTouches[0]
+  
+  // 检查是否是已跟踪的触摸点
+  if (!innerRef.current.activeTouches.has(touch.identifier)) {
+    return
+  }
+  
+  // 移除取消的触摸点
+  innerRef.current.activeTouches.delete(touch.identifier)
+
   handleEmitEvent('touchcancel', e, type, eventConfig)
   innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
 }
@@ -238,7 +274,9 @@ const useInnerProps = (
         x: 0,
         y: 0
       }
-    }
+    },
+    // 添加 activeTouches 来跟踪触摸点
+    activeTouches: new Set<number>()
   })
   const propsRef = useRef({})
   propsRef.current = props
