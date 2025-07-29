@@ -48,6 +48,7 @@ const RequireExternalDependency = require('./dependencies/RequireExternalDepende
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
+const { transSubpackage } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
@@ -141,6 +142,9 @@ class MpxWebpackPlugin {
     }
     if (options.dynamicComponentRules && !options.dynamicRuntime) {
       errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
+    }
+    if (options.transSubpackageRules && !isReact(options.mode)) {
+      warnings.push('MpxWebpackPlugin transSubpackageRules option only supports "ios", "android", or "harmony" mode')
     }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
@@ -725,7 +729,7 @@ class MpxWebpackPlugin {
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
           // 记录RequireExternalDependency相关资源路径
-          externalRequests: new Set(),
+          externalRequestsMap: new Map(),
           globalComponents: {},
           globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
@@ -781,6 +785,7 @@ class MpxWebpackPlugin {
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
+          transSubpackageRules: this.options.transSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
@@ -1175,7 +1180,9 @@ class MpxWebpackPlugin {
             hackModuleIdentifier(module)
             return rawCallback(null, module)
           }
-        } else if (isReact(mpx.mode) && module instanceof ExternalModule) {
+        }
+
+        if (isReact(mpx.mode) && module instanceof ExternalModule) {
           module.hasChunkCondition = () => false // 跳过 EnsureChunkConditionsPlugin 的过滤，避免被输出到包含 entry module 的 chunk 当中
           module.chunkCondition = () => true // 可以正常被 SplitChunkPlugin 处理
         }
@@ -1428,6 +1435,7 @@ class MpxWebpackPlugin {
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                  if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
@@ -1598,7 +1606,7 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || toPosix(resourcePath).indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
