@@ -5,10 +5,6 @@ const parseRequest = require('../utils/parse-request')
 class ImportDependencyTemplate extends (
   ModuleDependency.Template
 ) {
-  constructor () {
-    super()
-  }
-
   /**
    * @param {Dependency} dependency the dependency for which the template should be applied
    * @param {ReplaceSource} source the current replace source which can be modified
