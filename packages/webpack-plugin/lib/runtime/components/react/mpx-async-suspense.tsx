@@ -1,6 +1,7 @@
 import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode, createElement } from 'react'
 import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native'
 import FastImage from '@d11/react-native-fast-image'
+import { AnyFunc } from './types/common'
 
 const asyncChunkMap = new Map()
 
@@ -136,10 +137,13 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
           .catch((e) => {
             if (cancelled) return
             if (type === 'component') {
-              global.onLazyLoadError({
-                type: 'subpackage',
-                subpackage: [chunkName],
-                errMsg: `loadSubpackage: ${e.type}`
+              global.__mpxAppCbs.lazyLoad.forEach((cb: AnyFunc) => {
+                // eslint-disable-next-line node/no-callback-literal
+                cb({
+                  type: 'subpackage',
+                  subpackage: [chunkName],
+                  errMsg: `loadSubpackage: ${e.type}`
+                })
               })
             }
             loadChunkPromise.current = null
