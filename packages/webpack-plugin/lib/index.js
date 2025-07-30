@@ -695,9 +695,7 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
       compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
-      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate({
-        retryRequireAsync: this.options.retryRequireAsync
-      }))
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -1452,6 +1450,10 @@ class MpxWebpackPlugin {
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+                  request = addQuery(request, {
+                    isRequireAsync: true,
+                    retryRequireAsync: JSON.stringify(this.options.retryRequireAsync)
+                  })
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
@@ -1461,7 +1463,7 @@ class MpxWebpackPlugin {
                   )
                   const dep = new ImportDependency(request, expr.range)
                   dep.loc = expr.loc
-                  dep.isRequireAsync = true
+                  // dep.isRequireAsync = true
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
                 } else {
