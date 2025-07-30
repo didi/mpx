@@ -54,11 +54,6 @@ const styles = StyleSheet.create({
   }
 })
 
-interface AsyncModule {
-  __esModule: boolean
-  default: ReactNode
-}
-
 interface DefaultFallbackProps {
   onReload: () => void
 }
@@ -104,25 +99,25 @@ interface AsyncSuspenseProps {
   chunkName: string
   moduleId: string
   innerProps: any,
-  loading: ComponentType<unknown>
-  fallback: ComponentType<unknown>
-  getChildren: () => Promise<AsyncModule>
+  getLoading?: () => ComponentType<unknown>
+  getFallback?: () => ComponentType<unknown>
+  getChildren: () => Promise<ReactNode>
 }
 
 type ComponentStauts = 'pending' | 'error' | 'loaded'
 
 const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   type,
-  innerProps,
   chunkName,
   moduleId,
-  loading,
-  fallback,
+  innerProps,
+  getLoading,
+  getFallback,
   getChildren
 }) => {
   const [status, setStatus] = useState<ComponentStauts>('pending')
   const chunkLoaded = asyncChunkMap.has(moduleId)
-  const loadChunkPromise = useRef<null | Promise<AsyncModule>>(null)
+  const loadChunkPromise = useRef<null | Promise<ReactNode>>(null)
 
   const reloadPage = useCallback(() => {
     setStatus('pending')
@@ -133,9 +128,9 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     if (!chunkLoaded && status === 'pending') {
       if (loadChunkPromise.current) {
         loadChunkPromise
-          .current.then((m: AsyncModule) => {
+          .current.then((res: ReactNode) => {
             if (cancelled) return
-            asyncChunkMap.set(moduleId, m.__esModule ? m.default : m)
+            asyncChunkMap.set(moduleId, res)
             setStatus('loaded')
           })
           .catch((e) => {
@@ -163,22 +158,24 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
     return createElement(Comp, innerProps)
   } else if (status === 'error') {
     if (type === 'page') {
-      const Fallback =
-        (fallback as ComponentType<DefaultFallbackProps>) || DefaultFallback
-      return createElement(Fallback, { onReload: reloadPage })
+      const fallback = getFallback ? getFallback() : DefaultFallback
+      return createElement(fallback as ComponentType<DefaultFallbackProps>, { onReload: reloadPage })
     } else {
-      return createElement(fallback, innerProps)
+      return getFallback ? createElement(getFallback(), innerProps) : null
     }
   } else {
     if (!loadChunkPromise.current) {
       loadChunkPromise.current = getChildren()
     }
     if (type === 'page') {
-      return createElement(loading || DefaultLoading)
+      const loading = getLoading ? getLoading() : DefaultLoading
+      return createElement(loading)
     } else {
-      return createElement(fallback, innerProps)
+      return getFallback ? createElement(getFallback(), innerProps) : null
     }
   }
 }
+
+AsyncSuspense.displayName = 'MpxAsyncSuspense'
 
 export default AsyncSuspense

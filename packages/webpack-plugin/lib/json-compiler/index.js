@@ -84,11 +84,14 @@ module.exports = function (content) {
 
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      // ali 下与 rulesRunner 规则一致，组件名驼峰转连字符
-      placeholder = getBuildTagComponent(mode, placeholder) || { name: mode === 'ali' ? capitalToHyphen(placeholder) : placeholder }
+      placeholder = getBuildTagComponent(mode, placeholder) || { name: placeholder }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    // ali 下与 rulesRunner 规则一致，组件名驼峰转连字符
+    if (mode === 'ali') {
+      placeholder.name = capitalToHyphen(placeholder.name)
     }
     return placeholder
   }
@@ -631,6 +634,7 @@ module.exports = function (content) {
             }
             if (err) return callback(err)
             genericComponents[name] = entry
+            callback()
           })
         }, callback)
       }, callback)
