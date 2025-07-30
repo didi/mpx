@@ -10,7 +10,6 @@ module.exports = function (content) {
   if (!mpx) {
     return content
   }
-
   const mode = mpx.mode
   const env = mpx.env
   const i18n = mpx.i18n
