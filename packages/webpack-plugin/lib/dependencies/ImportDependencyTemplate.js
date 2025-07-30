@@ -5,9 +5,8 @@ const parseRequest = require('../utils/parse-request')
 class ImportDependencyTemplate extends (
   ModuleDependency.Template
 ) {
-  constructor (options = {}) {
+  constructor () {
     super()
-    this.retryRequireAsync = options.retryRequireAsync
   }
 
   /**
@@ -40,7 +39,7 @@ class ImportDependencyTemplate extends (
     })
 
     const { queryObj } = parseRequest(dep.request)
-    const retryRequireAsync = JSON.parse(queryObj.retryRequireAsync)
+    const retryRequireAsync = queryObj.retryRequireAsync && JSON.parse(queryObj.retryRequireAsync)
 
     // require.async 的场景且配置了重试次数才注入 RetryRuntimeModule
     if (queryObj.isRequireAsync && retryRequireAsync && retryRequireAsync.times > 0) {
