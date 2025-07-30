@@ -2590,6 +2590,21 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 }
 ```
 
+针对异步分包加载异常的场景：
+
+* 异步组件加载失败：微信小程序提供了 [`wx.onLazyLoadError`](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.onLazyLoadError.html) 的全局 api 来监听异步组件加载失败，这个 api 同样在Mpx转RN场景下生效；
+* 异步页面加载失败：微信小程序未提供相关的监听异常的 api，Mpx转RN提供了一个额外的全局监听函数：
+
+```javascript
+// RN 场景下监听异步页面加载失败的全局配置
+mpx.config.rnConfig.catchLazyLoadPage = function (error) {
+  console.log(
+    error.subpackage, // 加载失败的分包名
+    error.errType // 加载失败的类型：'timeout' | 'fail'
+  )
+}
+```
+
 此外针对Mpx转RN的场景，还提供了一些异步分包的配置选项：
 
 ```javascript
@@ -2650,7 +2665,7 @@ module.exports = defineConfig({
 其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
 
 `(shareInfo: { title: string, path: string, imageUrl?: string }) => void`
- 
+
 
 
 #### 路由
