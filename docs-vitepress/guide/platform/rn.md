@@ -2597,7 +2597,7 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 
 ```javascript
 // RN 场景下监听异步页面加载失败的全局配置
-mpx.config.rnConfig.catchLazyLoadPage = function (error) {
+mpx.config.rnConfig.lazyLoadPageErrorHandler = function (error) {
   console.log(
     error.subpackage, // 加载失败的分包名
     error.errType // 加载失败的类型：'timeout' | 'fail'
