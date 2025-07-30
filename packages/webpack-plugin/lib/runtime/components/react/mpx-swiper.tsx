@@ -209,8 +209,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const preAbsolutePos = useSharedValue(0)
   // 记录从onBegin 到 onTouchesUp 时移动的距离
   const moveTranstion = useSharedValue(0)
-  // 记录从onBegin 到 onTouchesUp 的时间
-  const moveTime = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
 
@@ -575,8 +573,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         targetOffset: -moveToTargetPos
       }
     }
-    // 1. onUpdate: transition => 和上一帧的偏移量(因为offset是实时更新的)
-    // 2. onFinalize：transition => 和上一帧的偏移量(因为offset是实时更新的)
     function canMove (eventData: EventDataType) {
       'worklet'
       // 旧版：如果在快速多次滑动时，只根据当前的offset判断，会出现offset没超出，加上translation后越界的场景(如在倒数第二个元素快速滑动)
@@ -584,7 +580,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const { translation, transdir } = eventData
       const gestureMovePos = offset.value + translation
       if (!circularShared.value) {
-        // 如果只判断区间中间非滑动状态向左滑动，突然改为向右滑动，但是还在非滑动态，本应该可滑动判断为了不可滑动
+        // 如果只判断区间，中间非滑动状态(handleResistanceMove)向左滑动，突然改为向右滑动，但是还在非滑动态，本应该可滑动判断为了不可滑动
         const posEnd = -step.value * (childrenLength.value - 1)
         if (transdir < 0) {
           return gestureMovePos > posEnd
@@ -751,7 +747,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         runOnJS(pauseLoop)()
         preAbsolutePos.value = e[strAbso]
         moveTranstion.value = e[strAbso]
-        moveTime.value = new Date().getTime()
       })
       .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
