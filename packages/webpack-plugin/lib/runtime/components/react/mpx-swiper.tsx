@@ -794,9 +794,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (touchfinish.value) return
         touchfinish.value = true
         // 触发过onUpdate正常情况下e[strAbso] - preAbsolutePos.value=0; 未触发过onUpdate的情况下e[strAbso] - preAbsolutePos.value 不为0
+        const moveTrans = e[strAbso] - preAbsolutePos.value
         const eventData = {
-          translation: e[strAbso] - preAbsolutePos.value,
-          transdir: e[strAbso] - moveTranstion.value
+          translation: moveTrans,
+          transdir: moveTrans !== 0 ? moveTrans : e[strAbso] - moveTranstion.value
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
