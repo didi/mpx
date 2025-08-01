@@ -7,7 +7,8 @@ const {
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
-  stringifyRequest
+  stringifyRequest,
+  buildI18n
 } = require('./script-helper')
 
 module.exports = function (script, {
@@ -24,7 +25,7 @@ module.exports = function (script, {
   wxsModuleMap,
   localComponentsMap
 }, callback) {
-  const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
+  const { projectRoot, appInfo, webConfig, i18n } = loaderContext.getMpx()
 
   let output = '/* script */\n'
 
@@ -70,6 +71,9 @@ module.exports = function (script, {
       }
 
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
+      if (!hasApp && i18n) {
+        content += buildI18n({ i18n, loaderContext })
+      }
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
   export default processComponentOption({
