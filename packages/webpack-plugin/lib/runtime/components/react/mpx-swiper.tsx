@@ -754,7 +754,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance,
-          transdir: moveDistance
+          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value
         }
         // 1. 支持滑动中超出一半更新索引的能力：只更新索引并不会影响onFinalize依据当前offset计算的索引
         const { half } = computeHalf(eventData)
@@ -794,10 +794,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (touchfinish.value) return
         touchfinish.value = true
         // 触发过onUpdate正常情况下e[strAbso] - preAbsolutePos.value=0; 未触发过onUpdate的情况下e[strAbso] - preAbsolutePos.value 不为0
-        const moveTrans = e[strAbso] - preAbsolutePos.value
+        const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
-          translation: moveTrans,
-          transdir: moveTrans !== 0 ? moveTrans : e[strAbso] - moveTranstion.value
+          translation: moveDistance,
+          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
