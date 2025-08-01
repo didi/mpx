@@ -1281,6 +1281,20 @@ class MpxWebpackPlugin {
         }
       })
 
+      if (isReact(this.options.mode) && process.env.NODE_ENV !== 'production') {
+        JavascriptModulesPlugin.getCompilationHooks(compilation).renderChunk.tap({
+          name: 'MpxWebpackPlugin',
+          stage: 100
+        }, (source, renderContext) => {
+          const { chunk, runtimeTemplate } = renderContext
+          const globalObject = runtimeTemplate.outputOptions.globalObject
+          const concatSource = new ConcatSource()
+          concatSource.add(`${globalObject}.__mpxClearAsyncChunkCache && ${globalObject}.__mpxClearAsyncChunkCache(${JSON.stringify(chunk.ids)});\n`)
+          concatSource.add(source)
+          return concatSource
+        })
+      }
+
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderModuleContent.tap('MpxWebpackPlugin', (source, module, renderContext) => {
         // 处理dll产生的external模块
         if (module.external && module.userRequest.startsWith('dll-reference ') && !isWeb(mpx.mode) && !isReact(mpx.mode)) {
@@ -1726,6 +1740,19 @@ class MpxWebpackPlugin {
               source.add('// inject pageconfigmap for screen\n' +
                 'var context = (function() { return this })() || Function("return this")();\n')
               source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`
+${globalObject}.__mpxClearAsyncChunkCache = ${globalObject}.__mpxClearAsyncChunkCache || function (ids) {
+  ids = JSON.stringify(ids)
+  var arr = ${globalObject}['${chunkLoadingGlobal}'] || []
+  for (var i = arr.length - 1; i >= 0; i--) {
+    if (JSON.stringify(arr[i][0]) === ids) {
+      arr.splice(i, 1)
+    }
+  }
+};\n`)
+              }
             }
             source.add(originalSource)
             compilation.assets[chunkFile] = source
