@@ -14,6 +14,7 @@ import {
 } from 'react-native-reanimated'
 import type { AnimationCallback, WithTimingConfig, SharedValue, AnimatableValue } from 'react-native-reanimated'
 import { error, hasOwn, collectDataset } from '@mpxjs/utils'
+import { useRunOnJSCallback } from './utils'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
@@ -218,13 +219,19 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       timeStamp: Date.now()
     })
   }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const runOnJSCallbackRef = useRef({
+    withTimingCallback
+  })
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 创建单个animation
   function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
     const animation = typeof callback === 'function'
       ? withTiming(value, { duration, easing }, (finished, current) => {
         callback(finished, current)
         if (transitionend && finished) {
-          runOnJS(withTimingCallback)(finished, current, duration)
+          runOnJS(runOnJSCallback)('withTimingCallback', finished, current, duration)
         }
       })
       : withTiming(value, { duration, easing })
