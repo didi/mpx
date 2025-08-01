@@ -787,13 +787,11 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   const gesture = useMemo(() => {
     return Gesture.Pan()
       .onTouchesDown(() => {
-        'worklet'
-        runOnJS(setStartTimer)()
+        setStartTimer()
       })
       .onTouchesUp(() => {
-        'worklet'
-        runOnJS(setStayTimer)()
-      })
+        setStayTimer()
+      }).runOnJS(true)
   }, [])
 
   if (gestureRef) {
@@ -807,7 +805,6 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
 }
 
 export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<string, AnyFunc>>) {
-  // const callbackMapRef = useRef(callbackMap)
   const invokeCallback = useCallback((key: string, ...args: any) => {
     const callback = callbackMapRef.current[key]
     // eslint-disable-next-line node/no-callback-literal

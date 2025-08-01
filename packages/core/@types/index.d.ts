@@ -123,8 +123,8 @@ interface Context {
   getPageId: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getPageId']
 }
 type ExtendedComponentOptions = {
-  disconnectOnUnmounted: boolean
-  shallowReactivePattern: RegExp
+  disconnectOnUnmounted?: boolean
+  shallowReactivePattern?: RegExp
 } & WechatMiniprogram.Component.ComponentOptions
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
