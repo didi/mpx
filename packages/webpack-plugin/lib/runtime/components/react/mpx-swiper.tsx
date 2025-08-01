@@ -755,7 +755,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance,
-          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value
+          transdir: moveDistance
         }
         // 1. 支持滑动中超出一半更新索引的能力：只更新索引并不会影响onFinalize依据当前offset计算的索引
         const { half } = computeHalf(eventData)
