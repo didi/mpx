@@ -200,16 +200,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     )
   }, [])
 
-  // 节流版本的 change 事件触发
-  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
-    'worklet'
-    const now = Date.now()
-    if (now - lastChangeTime.value >= changeThrottleTime) {
-      lastChangeTime.value = now
-      runOnJS(runOnJSCallback)('handleTriggerChange', { x, y, type })
-    }
-  }, [changeThrottleTime])
-
   useEffect(() => {
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
@@ -482,10 +472,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         }
         if (bindchange) {
           // 使用节流版本减少 runOnJS 调用
-          handleTriggerChangeThrottled({
-            x: offsetX.value,
-            y: offsetY.value
-          })
+          const now = Date.now()
+          if (now - lastChangeTime.value >= changeThrottleTime) {
+            lastChangeTime.value = now
+            runOnJS(runOnJSCallback)('handleTriggerChange', { x, y })
+          }
         }
       })
       .onTouchesUp((e: GestureTouchEvent) => {
