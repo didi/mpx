@@ -77,6 +77,7 @@ const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -202,6 +203,12 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
+    if (options.retryRequireAsync === true) {
+      options.retryRequireAsync = {
+        times: 1,
+        interval: 0
+      }
+    }
     options.optimizeSize = options.optimizeSize || false
     options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
     this.options = options
@@ -614,6 +621,13 @@ class MpxWebpackPlugin {
           return mpx
         }
       })
+
+      compilation.hooks.runtimeRequirementInTree
+        .for(RetryRuntimeGlobal)
+        .tap('MpxWebpackPlugin', (chunk) => {
+          compilation.addRuntimeModule(chunk, new RetryRuntimeModule())
+          return true
+        })
 
       if (isReact(this.options.mode)) {
         compilation.hooks.runtimeRequirementInTree
@@ -1436,6 +1450,10 @@ class MpxWebpackPlugin {
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+                  request = addQuery(request, {
+                    isRequireAsync: true,
+                    retryRequireAsync: JSON.stringify(this.options.retryRequireAsync)
+                  })
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
@@ -1451,7 +1469,8 @@ class MpxWebpackPlugin {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isAsync: true,
                     isRequireAsync: true,
-                    retryRequireAsync: !!this.options.retryRequireAsync
+                    retryRequireAsync: this.options.retryRequireAsync,
+                    requireAsyncRange: expr.range
                   })
 
                   parser.state.current.addPresentationalDependency(dep)
@@ -1606,7 +1625,7 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || toPosix(resourcePath).indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
