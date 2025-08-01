@@ -49,7 +49,7 @@ import { processAppOption, getComponent } from ${stringifyRequest(loaderContext,
 Vue.use(VueRouter)\n`
 
   if (i18n) {
-    output += buildI18n({ i18n, loaderContext })
+    output += buildI18n({ i18n, isMain: true, loaderContext })
   }
 
   output += buildGlobalParams({
