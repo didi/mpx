@@ -12,11 +12,9 @@ const { transSubpackage } = require('../utils/trans-async-sub-rules')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
-const normalize = require('../utils/normalize')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
-const mpxViewPath = normalize.lib('runtime/components/react/dist/mpx-view.jsx')
-const mpxTextPath = normalize.lib('runtime/components/react/dist/mpx-text.jsx')
+const getBuildTagComponent = require('../utils/get-build-tag-component')
 
 module.exports = function (jsonContent, {
   loaderContext,
@@ -140,9 +138,21 @@ module.exports = function (jsonContent, {
   const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
     const componentPlaceholder = jsonObj.componentPlaceholder || {}
     if (componentPlaceholder[name]) return
-    componentPlaceholder[name] = placeholder
     jsonObj.componentPlaceholder = componentPlaceholder
-    if (placeholderEntry && !jsonObj.usingComponents[placeholder]) jsonObj.usingComponents[placeholder] = placeholderEntry
+    if (placeholderEntry) {
+      if (jsonObj.usingComponents[placeholder]) {
+        // TODO 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
+        let i = 1
+        let newPlaceholder = placeholder + i
+        while (jsonObj.usingComponents[newPlaceholder]) {
+          newPlaceholder = placeholder + ++i
+        }
+        placeholder = newPlaceholder
+      }
+      jsonObj.usingComponents[placeholder] = placeholderEntry
+      fillInComponentsMap(placeholder, placeholderEntry, '')
+    }
+    componentPlaceholder[name] = placeholder
   }
 
   const fillInComponentsMap = (name, entry, tarRoot) => {
@@ -162,13 +172,7 @@ module.exports = function (jsonContent, {
 
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      const placeholderMap = mode === 'ali'
-        ? {
-          view: { name: 'mpx-view', resource: mpxViewPath },
-          text: { name: 'mpx-text', resource: mpxTextPath }
-        }
-        : {}
-      placeholder = placeholderMap[placeholder] || { name: placeholder }
+      placeholder = getBuildTagComponent(mode, placeholder) || { name: placeholder }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
@@ -358,7 +362,6 @@ module.exports = function (jsonContent, {
                 processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
                   if (err) return callback(err)
                   fillInComponentPlaceholder(name, placeholder.name, entry)
-                  fillInComponentsMap(placeholder.name, entry, '')
                   callback()
                 })
               } else {

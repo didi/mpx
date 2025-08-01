@@ -15,10 +15,9 @@ const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDe
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
-const normalize = require('../utils/normalize')
-const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
+const getBuildTagComponent = require('../utils/get-build-tag-component')
+const { capitalToHyphen } = require('../utils/string')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -64,23 +63,34 @@ module.exports = function (content) {
 
   const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
     const componentPlaceholder = json.componentPlaceholder || {}
-    if (componentPlaceholder[name]) return
-    componentPlaceholder[name] = placeholder
+    if (componentPlaceholder && componentPlaceholder[name]) return
+
     json.componentPlaceholder = componentPlaceholder
-    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
+    if (placeholderEntry) {
+      if (json.usingComponents[placeholder]) {
+        // TODO 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
+        let i = 1
+        let newPlaceholder = placeholder + i
+        while (json.usingComponents[newPlaceholder]) {
+          newPlaceholder = placeholder + ++i
+        }
+        placeholder = newPlaceholder
+      }
+      json.usingComponents[placeholder] = placeholderEntry
+    }
+    componentPlaceholder[name] = placeholder
   }
+
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      const placeholderMap = mode === 'ali'
-        ? {
-          view: { name: 'mpx-view', resource: mpxViewPath },
-          text: { name: 'mpx-text', resource: mpxTextPath }
-        }
-        : {}
-      placeholder = placeholderMap[placeholder] || { name: placeholder }
+      placeholder = getBuildTagComponent(mode, placeholder) || { name: placeholder }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    // ali 下与 rulesRunner 规则一致，组件名驼峰转连字符
+    if (mode === 'ali') {
+      placeholder.name = capitalToHyphen(placeholder.name)
     }
     return placeholder
   }
