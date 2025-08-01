@@ -147,7 +147,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     style = {},
     autoplay = false,
     circular = false,
-    disableGesture = false
+    disableGesture = false,
+    bindchange
   } = props
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
@@ -430,7 +431,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   function handleSwiperChange (current: number) {
     if (props.current !== currentIndex.value) {
       const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-      props.bindchange && props.bindchange(eventData)
+      bindchange && bindchange(eventData)
     }
   }
 
@@ -472,7 +473,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
-    if (newIndex !== preIndex && props.bindchange) {
+    if (newIndex !== preIndex && bindchange) {
       runOnJS(handleSwiperChange)(newIndex)
     }
   })
