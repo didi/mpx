@@ -146,6 +146,12 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
                 })
               })
             }
+            if (type === 'page' && typeof mpxGlobal.__mpx.config?.rnConfig?.lazyLoadPageErrorHandler === 'function') {
+              mpxGlobal.__mpx.config.rnConfig.lazyLoadPageErrorHandler({
+                subpackage: chunkName,
+                errType: e.type
+              })
+            }
             loadChunkPromise.current = null
             setStatus('error')
           })
