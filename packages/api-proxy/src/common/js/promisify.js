@@ -1,28 +1,14 @@
-import { ENV_OBJ } from './utils'
+import { ENV_OBJ, warn } from './utils'
 
 // 特别指定的不进行Promise封装的方法
 const blackList = [
-  'clearStorage',
-  'hideToast',
-  'hideLoading',
   'drawCanvas',
   'canIUse',
-  'stopRecord',
-  'pauseVoice',
-  'stopVoice',
-  'pauseBackgroundAudio',
-  'stopBackgroundAudio',
-  'showNavigationBarLoading',
-  'hideNavigationBarLoading',
   'getPerformance',
-  'hideKeyboard',
-  'stopPullDownRefresh',
-  'pageScrollTo',
   'reportAnalytics',
   'getMenuButtonBoundingClientRect',
   'reportMonitor',
   'reportEvent',
-  'connectSocket',
   'base64ToArrayBuffer',
   'arrayBufferToBase64',
   'getDeviceInfo',
@@ -33,16 +19,12 @@ const blackList = [
   'postMessageToReferrerPage',
   'postMessageToReferrerMiniProgram',
   'reportPerformance',
-  'getPerformance',
-  'preDownloadSubpackage',
   'router',
   'nextTick',
   'checkIsPictureInPictureActive',
   'worklet',
   'revokeBufferURL',
-  'reportEvent',
   'getExptInfoSync',
-  'reserveChannelsLive',
   'getNFCAdapter',
   'isVKSupport'
 ]
@@ -79,18 +61,25 @@ function promisify (listObj, whiteList, customBlackList) {
     if (typeof listObj[key] !== 'function') {
       return
     }
-
-    result[key] = function (...args) {
-      const obj = args[0] || {}
-      // 不需要转换 or 用户已定义回调，则不处理
-      if (!promisifyFilter(key)) {
+    if (!promisifyFilter(key)) {
+      result[key] = function (...args) {
         return listObj[key].apply(ENV_OBJ, args)
-      } else { // 其他情况进行转换
+      }
+    } else {
+      result[key] = function (...args) {
+        const obj = args[0] || {}
+        const { usePromise = true } = obj
+        if (usePromise === false) {
+          return listObj[key].apply(ENV_OBJ, args)
+        }
         if (!args[0]) args.unshift(obj)
         let returned
         const promise = new Promise((resolve, reject) => {
           const originSuccess = obj.success
           const originFail = obj.fail
+          if (originSuccess || originFail) {
+            warn(`The ${key} method has been promisified, please do not use success or fail callback. If you are certain that you want to handle the callback with options, please set usePromise to true. `)
+          }
           obj.success = function (res) {
             originSuccess && originSuccess.call(this, res)
             resolve(res)
