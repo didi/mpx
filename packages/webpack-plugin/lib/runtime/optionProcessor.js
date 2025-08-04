@@ -379,7 +379,7 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
       }
     }
   } else {
-    const { app, pinia } = createApp({
+    const { app, pinia, router } = createApp({
       App,
       componentsMap,
       Vue,
@@ -391,6 +391,8 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
     if (window.__INITIAL_STATE__ && pinia) {
       pinia.state.value = window.__INITIAL_STATE__
     }
-    app.$mount(el)
+    router.onReady(() => {
+      app.$mount(el)
+    })
   }
 }
