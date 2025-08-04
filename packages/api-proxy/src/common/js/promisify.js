@@ -62,14 +62,11 @@ function promisify (listObj, whiteList, customBlackList) {
       return
     }
     if (!promisifyFilter(key)) {
-      result[key] = function (...args) {
-        return listObj[key].apply(ENV_OBJ, args)
-      }
+      result[key] = listObj[key].bind(ENV_OBJ)
     } else {
       result[key] = function (...args) {
         const obj = args[0] || {}
-        const { usePromise = true } = obj
-        if (usePromise === false) {
+        if (obj.usePromise === false) {
           return listObj[key].apply(ENV_OBJ, args)
         }
         if (!args[0]) args.unshift(obj)
@@ -78,7 +75,7 @@ function promisify (listObj, whiteList, customBlackList) {
           const originSuccess = obj.success
           const originFail = obj.fail
           if (originSuccess || originFail) {
-            warn(`The ${key} method has been promisified, please do not use success or fail callback. If you are certain that you want to handle the callback with options, please set usePromise to true. `)
+            warn(`The [${key}] method has been promisified, please use .then or .catch to handle the result, if you need to handle the result with options.success/fail, please set options.usePromise to false to close the promisify in this call temporarily. `)
           }
           obj.success = function (res) {
             originSuccess && originSuccess.call(this, res)
