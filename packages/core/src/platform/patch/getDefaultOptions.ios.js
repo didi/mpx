@@ -4,7 +4,7 @@ import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
-import MpxProxy from '../../core/proxy'
+import MpxProxy, { getCurrentInstance, setCurrentInstance, unsetCurrentInstance } from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
@@ -33,6 +33,16 @@ function getSystemInfo () {
   }
 }
 
+function callHook (proxy, hookName, ...args) {
+  const cur = getCurrentInstance()
+  setCurrentInstance(proxy)
+
+  proxy.callHook(hookName, ...args)
+
+  if (cur) setCurrentInstance(cur)
+  else unsetCurrentInstance()
+}
+
 function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
     // react update props in child render(async), do not need exec pre render
@@ -40,7 +50,7 @@ function createEffect (proxy, componentsMap) {
     //   proxy.updatePreRender()
     // }
     if (proxy.isMounted()) {
-      proxy.callHook(BEFOREUPDATE)
+      callHook(proxy, BEFOREUPDATE)
       proxy.pendingUpdatedFlag = true
     }
     proxy.stateVersion = Symbol()
@@ -320,7 +330,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         loadParams[key] = encodeURIComponent(props.route.params[key])
       }
     }
-    proxy.callHook(ONLOAD, [loadParams])
+    callHook(proxy, ONLOAD, [loadParams])
   }
 
   Object.assign(proxy, {
@@ -367,7 +377,7 @@ function hasPageHook (mpxProxy, hookNames) {
 }
 
 const triggerPageStatusHook = (mpxProxy, event) => {
-  mpxProxy.callHook(event === 'show' ? ONSHOW : ONHIDE)
+  callHook(mpxProxy, event === 'show' ? ONSHOW : ONHIDE)
   const pageLifetimes = mpxProxy.options.pageLifetimes
   if (pageLifetimes) {
     const instance = mpxProxy.target
@@ -379,7 +389,7 @@ const triggerResizeEvent = (mpxProxy) => {
   const type = mpxProxy.options.__type__
   const systemInfo = getSystemInfo()
   const target = mpxProxy.target
-  mpxProxy.callHook(ONRESIZE, [systemInfo])
+  callHook(mpxProxy, ONRESIZE, [systemInfo])
   if (type === 'page') {
     target.onResize && target.onResize(systemInfo)
   } else {
@@ -612,7 +622,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     const proxy = instance.__mpxProxy
 
-    let hooksResult = proxy.callHook(REACTHOOKSEXEC, [props])
+    let hooksResult = callHook(proxy, REACTHOOKSEXEC, [props])
     if (isObject(hooksResult)) {
       hooksResult = wrapMethodsWithErrorHandling(hooksResult, proxy)
       if (isFirst) {
@@ -645,7 +655,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     useEffect(() => {
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
-        proxy.callHook(UPDATED)
+        callHook(proxy, UPDATED)
       }
     })
 
