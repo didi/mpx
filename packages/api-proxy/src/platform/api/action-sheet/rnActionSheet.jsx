@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     position: 'absolute',
-    zIndex: 1000
+    zIndex: 10000
   },
   maskWrap: {
     left: 0,
