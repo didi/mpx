@@ -59,7 +59,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
-    if (pageCfg.async) {
+    if (pageCfg.async && mpx.supportRequireAsync) {
       const moduleId = mpx.getModuleId(pageCfg.resource)
       const getFallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback'))
       const getLoading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading'))
@@ -88,7 +88,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      if (componentCfg.async) {
+      if (componentCfg.async && mpx.supportRequireAsync) {
         const moduleId = mpx.getModuleId(componentCfg.resource)
         const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
         let getFallback
