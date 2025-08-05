@@ -1,5 +1,4 @@
 import { hasOwn, noop, getEnvObj, getFocusedNavigation, error as errorHandler, warn as warnHandler } from '@mpxjs/utils'
-import { getCurrentInstance } from '@mpxjs/core'
 
 /**
  *
