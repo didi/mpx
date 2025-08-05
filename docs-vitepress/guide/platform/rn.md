@@ -1277,6 +1277,10 @@ API
 #### sticky-header
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
 
+注意事项
+1. sticky-header 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
+2. RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前 sticky 的父组件刷新、scroll-view 内容高度由多变少、修改 scroll-into-view、scroll-top，安卓上都可能会导致闪烁
+
 属性
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
