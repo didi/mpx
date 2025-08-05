@@ -1,28 +1,14 @@
-import { ENV_OBJ } from './utils'
+import { ENV_OBJ, warn } from './utils'
 
 // 特别指定的不进行Promise封装的方法
 const blackList = [
-  'clearStorage',
-  'hideToast',
-  'hideLoading',
   'drawCanvas',
   'canIUse',
-  'stopRecord',
-  'pauseVoice',
-  'stopVoice',
-  'pauseBackgroundAudio',
-  'stopBackgroundAudio',
-  'showNavigationBarLoading',
-  'hideNavigationBarLoading',
   'getPerformance',
-  'hideKeyboard',
-  'stopPullDownRefresh',
-  'pageScrollTo',
   'reportAnalytics',
   'getMenuButtonBoundingClientRect',
   'reportMonitor',
   'reportEvent',
-  'connectSocket',
   'base64ToArrayBuffer',
   'arrayBufferToBase64',
   'getDeviceInfo',
@@ -33,16 +19,12 @@ const blackList = [
   'postMessageToReferrerPage',
   'postMessageToReferrerMiniProgram',
   'reportPerformance',
-  'getPerformance',
-  'preDownloadSubpackage',
   'router',
   'nextTick',
   'checkIsPictureInPictureActive',
   'worklet',
   'revokeBufferURL',
-  'reportEvent',
   'getExptInfoSync',
-  'reserveChannelsLive',
   'getNFCAdapter',
   'isVKSupport'
 ]
@@ -79,18 +61,22 @@ function promisify (listObj, whiteList, customBlackList) {
     if (typeof listObj[key] !== 'function') {
       return
     }
-
-    result[key] = function (...args) {
-      const obj = args[0] || {}
-      // 不需要转换 or 用户已定义回调，则不处理
-      if (!promisifyFilter(key)) {
-        return listObj[key].apply(ENV_OBJ, args)
-      } else { // 其他情况进行转换
+    if (!promisifyFilter(key)) {
+      result[key] = listObj[key].bind(ENV_OBJ)
+    } else {
+      result[key] = function (...args) {
+        const obj = args[0] || {}
+        if (obj.usePromise === false) {
+          return listObj[key].apply(ENV_OBJ, args)
+        }
         if (!args[0]) args.unshift(obj)
         let returned
         const promise = new Promise((resolve, reject) => {
           const originSuccess = obj.success
           const originFail = obj.fail
+          if (originSuccess || originFail) {
+            warn(`The [${key}] method has been promisified, please use .then or .catch to handle the result, if you need to handle the result with options.success/fail, please set options.usePromise to false to close the promisify in this call temporarily. `)
+          }
           obj.success = function (res) {
             originSuccess && originSuccess.call(this, res)
             resolve(res)
