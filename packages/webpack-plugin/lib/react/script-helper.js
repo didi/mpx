@@ -4,14 +4,9 @@ const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const addQuery = require('../utils/add-query')
-const { isBuildInReactTag } = require('../utils/dom-tag-config')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
-}
-
-function getBuiltInComponentRequest (component) {
-  return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
 function getAsyncChunkName (chunkName) {
@@ -103,14 +98,9 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
             }
             getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder))
           } else {
-            const tag = `mpx-${placeholder}`
-            if (isBuildInReactTag(tag)) {
-              getFallback = getComponentGetter(getBuiltInComponent(getBuiltInComponentRequest(tag)))
-            } else {
-              loaderContext.emitError(
-                new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
-              )
-            }
+            loaderContext.emitError(
+              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
+            )
           }
         } else {
           loaderContext.emitError(
