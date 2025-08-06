@@ -1,4 +1,19 @@
-import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement } from 'react'
+import {
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  ReactNode,
+  ReactElement,
+  isValidElement,
+  useContext,
+  useState,
+  Dispatch,
+  SetStateAction,
+  Children,
+  cloneElement,
+  MutableRefObject
+} from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
@@ -728,4 +743,19 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
     isHover,
     gesture
   }
+}
+export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<string, AnyFunc>>) {
+  const invokeCallback = useCallback((key: string, ...args: any) => {
+    const callback = callbackMapRef.current[key]
+    // eslint-disable-next-line node/no-callback-literal
+    if (isFunction(callback)) return callback(...args)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      callbackMapRef.current = {}
+    }
+  }, [])
+
+  return invokeCallback
 }
