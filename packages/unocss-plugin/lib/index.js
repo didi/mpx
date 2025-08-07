@@ -95,12 +95,13 @@ function normalizeOptions (options) {
     root = process.cwd(),
     config,
     configFiles,
-    transformCSS,
+    transformCSS, // false  | true | { applyVariable: ['--at-apply'] }
     transformGroups, // false | true | { separators: [':','-'] }
     webOptions = {}
   } = options
   // 是否兼容为true的写法
   if (transformGroups) transformGroups = transformGroups instanceof Object ? transformGroups : {}
+  if (transformCSS) transformCSS = transformCSS instanceof Object ? transformGroups : {}
   // web配置
   // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
@@ -108,7 +109,7 @@ function normalizeOptions (options) {
     exclude: scan.exclude || [],
     transformers: [
       ...transformGroups ? [transformerVariantGroup(transformGroups)] : [],
-      ...transformCSS ? [transformerDirectives()] : []
+      ...transformCSS ? [transformerDirectives(transformCSS)] : []
     ],
     ...webOptions
   }
@@ -350,12 +351,17 @@ class MpxUnocssPlugin {
           }
           return 'main'
         }
-
+        let checkApplyReg
+        if (this.options.transformCSS) {
+          const checkApplyList = this.options.transformCSS.applyVariable || ['--at-apply', '--uno-apply', '--uno']
+          checkApplyReg = new RegExp(`(${checkApplyList.join('|')})(\s)?\:`)
+        }
         // 处理wxss
         const processStyle = async (file, source) => {
           const content = source.source()
-          if (!content || !cssRequiresTransform(content)) return
-          const output = await transformStyle(content, file, uno)
+          const hasApplyVariable = checkApplyReg && checkApplyReg.test(content)
+          if (!content || !(cssRequiresTransform(content) || hasApplyVariable)) return
+          const output = await transformStyle(content, file, uno, this.options.transformCSS)
           if (!output || output.length <= 0) {
             error(`${file} 解析style错误,检查样式文件输入!`)
             return

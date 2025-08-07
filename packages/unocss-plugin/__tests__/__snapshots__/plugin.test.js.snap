@@ -13,7 +13,7 @@ exports[`test plugin > test-template 2`] = `
 exports[`test plugin > test-template 3`] = `
 "/* layer: default */
 .translate-_bl_-50_p__2c_-50_p__br_{--un-translate-x:-50%;--un-translate-y:-50%;transform:translateX(var(--un-translate-x)) translateY(var(--un-translate-y)) translateZ(var(--un-translate-z)) rotate(var(--un-rotate)) rotateX(var(--un-rotate-x)) rotateY(var(--un-rotate-y)) rotateZ(var(--un-rotate-z)) skewX(var(--un-skew-x)) skewY(var(--un-skew-y)) scaleX(var(--un-scale-x)) scaleY(var(--un-scale-y)) scaleZ(var(--un-scale-z));}
-.bg-_h_fff_s_10{background-color:rgb(255 255 255 / 0.1);}
+.bg-_h_fff_s_10{background-color:rgba(255, 255, 255, 0.1);}
 .text-12px{font-size:12px;}"
 `;
 
@@ -31,7 +31,7 @@ exports[`test plugin > test-template 5`] = `
 exports[`test plugin > test-template 6`] = `
 "/* layer: default */
 .translate-_bl_-50_p__br_{--un-translate-x:-50%;--un-translate-y:-50%;transform:translateX(var(--un-translate-x)) translateY(var(--un-translate-y)) translateZ(var(--un-translate-z)) rotate(var(--un-rotate)) rotateX(var(--un-rotate-x)) rotateY(var(--un-rotate-y)) rotateZ(var(--un-rotate-z)) skewX(var(--un-skew-x)) skewY(var(--un-skew-y)) scaleX(var(--un-scale-x)) scaleY(var(--un-scale-y)) scaleZ(var(--un-scale-z));}
-.bg-_h_fff_s_10{background-color:rgb(255 255 255 / 0.1);}
+.bg-_h_fff_s_10{background-color:rgba(255, 255, 255, 0.1);}
 .text-12px{font-size:12px;}
 .text-16px{font-size:16px;}"
 `;

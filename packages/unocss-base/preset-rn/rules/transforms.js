@@ -24,7 +24,7 @@ const checkVars = [
   '--un-skew-y'
 ]
 
-function normalizeTransformVar(res) {
+function normalizeTransformVar (res) {
   checkVars.forEach(key => {
     if (res[key] !== undefined && res[key] === 0) {
       res[key] = '0deg'
@@ -33,7 +33,7 @@ function normalizeTransformVar(res) {
   return res
 }
 
-function getPreflight(preflightKeys) {
+function getPreflight (preflightKeys) {
   return Object.fromEntries(preflightKeys.map(key => [key, transformBase[key]]))
 }
 
@@ -42,7 +42,7 @@ const removedKeys = [
   'translateZ(var(--un-translate-z))'
 ]
 
-function normalizeTransform(transform) {
+function normalizeTransform (transform) {
   if (!transform) return transform
   return transform
     .split(' ')

@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { getRawSource } from '../lib/source.js'
 import { e as cssEscape } from '@unocss/core'
 import { mpEscape } from '../lib/transform.js'
-import presetMpx from '@mpxjs/unocss-base'
+import presetMpx from '@mpxjs/unocss-base/lib/index'
 // const { presetLegacyCompat } = require('@unocss/preset-legacy-compat')
 
 // import testpage from './123.mpx?resolve'
@@ -46,6 +46,6 @@ describe('test plugin', async () => {
   }
   test('test-template', async () => {
     await testTemplate('<view class="translate-[-50%,-50%] text-12px bg-#fff/10" />')
-    await testTemplate(`<view wx:class="{{['translate-[-50%]',{'text-12px text-16px': false},'bg-#fff/10']}}" />`)
+    await testTemplate('<view wx:class="{{[\'translate-[-50%]\',{\'text-12px text-16px\': false},\'bg-#fff/10\']}}" />')
   })
 })
