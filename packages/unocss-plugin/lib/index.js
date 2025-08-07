@@ -219,8 +219,6 @@ class MpxUnocssPlugin {
     const { config: resolved, sources } = await loadConfig(root, config, configFiles)
     sources.forEach((item) => {
       compilation.fileDependencies.add(item)
-      // fix jiti require cache for watch
-      delete require.cache[item]
     })
 
     const platformPreflights = platformPreflightsMap[mode] || []
