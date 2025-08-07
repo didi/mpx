@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { getRawSource } from '../lib/source.js'
 import { e as cssEscape } from '@unocss/core'
 import { mpEscape } from '../lib/transform.js'
-import presetMpx from '@mpxjs/unocss-base'
+import presetMpx from '@mpxjs/unocss-base/lib/index'
 // const { presetLegacyCompat } = require('@unocss/preset-legacy-compat')
 
 // import testpage from './123.mpx?resolve'

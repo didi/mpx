@@ -71,10 +71,11 @@ function cssRequiresTransform (source) {
 async function transformStyle (
   code,
   id,
-  uno
+  uno,
+  options
 ) {
   const s = new MagicString(code)
-  await transformerDirectives().transform(s, id, { uno })
+  await transformerDirectives(options).transform(s, id, { uno })
   if (s.hasChanged()) {
     code = s.toString()
   }
