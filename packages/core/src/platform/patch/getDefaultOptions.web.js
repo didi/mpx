@@ -39,10 +39,10 @@ function filterOptions (options) {
 function initProxy (context, rawOptions) {
   if (!context.__mpxProxy) {
     context.__mpxProxy = new MpxProxy(rawOptions, context)
-    context.__mpxProxy.callHook(BEFORECREATE)
+    context.__mpxProxy.callHook(BEFORECREATE, undefined, false, false)
   } else if (context.__mpxProxy.isUnmounted()) {
     context.__mpxProxy = new MpxProxy(rawOptions, context, true)
-    context.__mpxProxy.callHook(BEFORECREATE)
+    context.__mpxProxy.callHook(BEFORECREATE, undefined, false, false)
   }
 }
 

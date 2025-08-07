@@ -170,7 +170,7 @@ export default class MpxProxy {
     }
     if (!isWeb) {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
-      this.callHook(BEFORECREATE)
+      this.callHook(BEFORECREATE, undefined, false, false)
       setCurrentInstance(this)
       this.parent = this.resolveParent()
       this.provides = this.parent ? this.parent.provides : Object.create(null)
@@ -496,16 +496,25 @@ export default class MpxProxy {
     }
   }
 
-  callHook (hookName, params, hooksOnly) {
+  callHook (hookName, params, hooksOnly, setContext = true) {
     const hook = this.options[hookName]
     const hooks = this.hooks[hookName] || []
+    const prevCurrentInstance = getCurrentInstance()
     let result
+    if (prevCurrentInstance !== this && setContext) {
+      setCurrentInstance(this)
+    }
     if (isFunction(hook) && !hooksOnly) {
       result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
     }
     hooks.forEach((hook) => {
       result = params ? hook(...params) : hook()
     })
+
+    if (setContext && prevCurrentInstance !== this) {
+      if (prevCurrentInstance) setCurrentInstance(prevCurrentInstance)
+      else unsetCurrentInstance()
+    }
     return result
   }
 
