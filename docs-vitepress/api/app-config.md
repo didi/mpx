@@ -158,7 +158,7 @@ mpx.config.webRouteConfig = {
 ```
 
 ## webConfig
-web 环境下的一些配置，如路由模式，页面切换动画效果等
+web 环境下的一些配置，如路由模式，页面切换动画效果、启用 SSR 构建模式等
 
 - **用法**:
 ```js
@@ -166,6 +166,10 @@ web 环境下的一些配置，如路由模式，页面切换动画效果等
 mpx.config.webConfig.routeConfig = {
   mode: 'history'
 }
+
+// 使用异步分包时，需要手动将 useSSR 为 true，其他场景不需要配置
+mpx.config.webConfig.useSSR = true
+
 // 禁用页面切换动画
 mpx.config.webConfig.disablePageTransition = true
 ```

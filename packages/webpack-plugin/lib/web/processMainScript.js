@@ -71,7 +71,8 @@ export default processAppOption({
   componentsMap: ${shallowStringify(componentsMap)},
   Vue: Vue,
   VueRouter: VueRouter,
-  el: ${JSON.stringify(webConfig.el || '#app')}
+  el: ${JSON.stringify(webConfig.el || '#app')},
+  useSSR: ${JSON.stringify(!!webConfig.useSSR)}
 })\n`
 
   callback(null, {
