@@ -11,8 +11,6 @@ const __dirname = nodePath.dirname(__filename) // 当前文件的目录路径
 
 const PLUGIN_NAME = 'unocss:webpack'
 
-const reLetters = /[a-z]+/gi
-
 function WebpackPlugin (configOrPath, defaults) {
   return {
     apply (compiler) {
@@ -67,8 +65,7 @@ function WebpackPlugin (configOrPath, defaults) {
               },
               error: msg => {
                 compilation.errors.push(msg)
-              },
-              formatValueFn: 'formatValue'
+              }
             })
           }
           const classMap = getLayersClassMap(result.layers.filter(v => v !== 'varUtilities'))
@@ -90,15 +87,6 @@ function WebpackPlugin (configOrPath, defaults) {
               })
               .replace('__unoCssMapPreflights__', () => {
                 return JSON.stringify(preflightsClassMap)
-              })
-              .replace('__unoCssBreakpointsPlaceholder__', () => {
-                const breakpoints = uno.config.theme.breakpoints || {}
-                const entries = Object.entries(breakpoints)
-                  .sort((a, b) => Number.parseInt(a[1].replace(reLetters, '')) - Number.parseInt(b[1].replace(reLetters, '')))
-                return JSON.stringify({
-                  entries,
-                  entriesMap: breakpoints
-                })
               })
             if (replaced) { compilation.assets[file] = new WebpackSources.RawSource(code) }
           }

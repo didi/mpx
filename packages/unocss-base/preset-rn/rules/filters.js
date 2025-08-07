@@ -6,7 +6,7 @@ const unSupport = [
   'backdrop-filter-none'
 ]
 
-const filterRules = filters.map(([rule]) => (raw) => {
+export const blockFilters = filters.map(([rule]) => (raw) => {
   const reg = /^backdrop-/
   let result = ''
   if (isString(rule) && unSupport.includes(raw)) {
@@ -19,5 +19,3 @@ const filterRules = filters.map(([rule]) => (raw) => {
     }
   }
 })
-
-export default filterRules

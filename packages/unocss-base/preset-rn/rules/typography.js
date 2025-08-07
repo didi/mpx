@@ -15,7 +15,7 @@ import {
   fontSmoothings
 } from '@unocss/preset-mini/rules'
 
-export default [
+const blockTypography = [
   ...textIndents,
   ...textStrokes,
   ...tabSizes,
@@ -29,3 +29,5 @@ export default [
   ...fontSmoothings,
   ...fontVariantNumeric
 ]
+
+export { blockTypography }

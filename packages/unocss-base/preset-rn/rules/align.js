@@ -11,14 +11,14 @@ const support = [
   'middle'
 ]
 
-const verticalAlignsRules = verticalAligns.map(([rule]) => (raw) => {
+const blockVerticalAligns = verticalAligns.map(([rule]) => (raw) => {
   const result = raw.match(rule)
   if (result && !support.includes(result[1])) {
     return true
   }
 })
 
-const textAligns = [
+const blockTextAligns = [
   'text-start',
   'text-end',
   'text-align-start',
@@ -26,6 +26,6 @@ const textAligns = [
 ]
 
 export {
-  verticalAlignsRules as verticalAligns,
-  textAligns
+  blockVerticalAligns,
+  blockTextAligns
 }

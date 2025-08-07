@@ -1,1 +1,1 @@
-export { colorScheme } from '@unocss/preset-mini/rules'
+export { colorScheme as blockColorScheme } from '@unocss/preset-mini/rules'

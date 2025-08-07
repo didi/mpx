@@ -60,13 +60,11 @@ module.exports = function (styles, {
             output += `
             let __unoClass
             global.__getUnoClass = function () {
-              const formatValue = global.__formatValue
               if (!__unoClass) {
                 __unoClass = {
                   unoClassMap: __unoCssMapPlaceholder__,
                   unoVarClassMap: __unoVarUtilitiesCssMap__,
-                  unoPreflightsClassMap: __unoCssMapPreflights__,
-                  unoBreakpoints:__unoCssBreakpointsPlaceholder__
+                  unoPreflightsClassMap: __unoCssMapPreflights__
                 }
               }
               return __unoClass

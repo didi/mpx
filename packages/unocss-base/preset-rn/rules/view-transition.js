@@ -1,1 +1,1 @@
-export { viewTransition } from '@unocss/preset-wind3/rules'
+export { viewTransition as blockViewTransition } from '@unocss/preset-wind3/rules'

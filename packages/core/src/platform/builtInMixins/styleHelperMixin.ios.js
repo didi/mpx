@@ -1,5 +1,5 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet, Appearance } from 'react-native'
+import { Dimensions, StyleSheet } from 'react-native'
 
 let { width, height } = Dimensions.get('screen')
 
@@ -132,6 +132,11 @@ function transformStyleObj (styleObj) {
   return transformed
 }
 
+function mergeToLayer (layerMap, name, classObj) {
+  const layer = layerMap[name] || layerMap.normal
+  Object.assign(layer, classObj)
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -139,40 +144,40 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        let result = {}
-        let unoResult = {}
-        const unoVarResult = {}
         const classMap = this.__getClassMap?.() || {}
         const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
-        let hasUnoClass = false
         const appClassMap = global.__getAppClassMap?.() || {}
+        const layerMap = {
+          preflight: {},
+          uno: {},
+          normal: {},
+          important: {}
+        }
+        let needAddUnoPreflight = false
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
-              Object.assign(result, classMap[className])
+              mergeToLayer(layerMap, classMap[className].__layer, classMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              Object.assign(result, appClassMap[className])
+              mergeToLayer(layerMap, appClassMap[className].__layer, appClassMap[className])
             } else if (unoClassMap[className]) {
-              hasUnoClass = true
-              Object.assign(unoResult, unoClassMap[className])
+              const nuoClass = unoClassMap[className]
+              const importantClass = className.endsWith('!')
+              mergeToLayer(layerMap, importantClass ? 'important' : 'uno', nuoClass)
+              needAddUnoPreflight = !!(nuoClass.transform || nuoClass.filter)
             } else if (unoVarClassMap[className]) {
-              Object.assign(unoVarResult, unoVarClassMap[className])
+              mergeToLayer(layerMap, 'important', unoVarClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              Object.assign(result, this.__props[className])
+              mergeToLayer(layerMap, 'normal', this.__props[className])
             }
           })
-          if (hasUnoClass) {
-            // 两个类需要前置默认css变量
-            if (unoResult.transform || unoResult.filter) {
-              unoResult = Object.assign({}, unoPreflightsClassMap, unoResult)
-            }
-            // 合并uno工具变量
-            result = Object.assign({}, unoResult, unoVarResult, result)
-          }
+          if (needAddUnoPreflight) mergeToLayer(layerMap, 'preflight', unoPreflightsClassMap)
         }
+
+        const result = Object.assign({}, layerMap.preflight, layerMap.uno, layerMap.normal, layerMap.important)
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
@@ -191,38 +196,8 @@ export default function styleHelperMixin () {
             overflow: 'hidden'
           })
         }
-        return isEmptyObject(result) ? empty : result
-      },
-      __getDynamicClass (dynamicClass, mediaQueryClass) {
-        return [dynamicClass, this.__getMediaQueryClass(mediaQueryClass)]
-      },
-      __getMediaQueryClass (mediaQueryClass = []) {
-        if (!mediaQueryClass.length) return ''
-        const { width, height } = Dimensions.get('screen')
-        const colorScheme = Appearance.getColorScheme()
-        const { unoBreakpoints } = global.__getUnoClass?.() || {}
-        const { entries = [], entriesMap = {} } = unoBreakpoints
-        return mediaQueryClass.map(([className, querypoints = []]) => {
-          const res = querypoints.every(([prefix = '', point = 0]) => {
-            if (prefix === 'landscape') return width > height
-            if (prefix === 'portrait') return width <= height
-            if (prefix === 'dark') return colorScheme === 'dark'
-            if (prefix === 'light') return colorScheme === 'light'
-            const size = formatValue(entriesMap[point] || point)
-            const index = entries.findIndex(item => item[0] === point)
-            const isGtPrefix = prefix.startsWith('min-')
-            const isLtPrefix = prefix.startsWith('lt-') || prefix.startsWith('<') || prefix.startsWith('max-')
-            const isAtPrefix = prefix.startsWith('at-') || prefix.startsWith('~')
-            if (isGtPrefix) return width > size
-            if (isLtPrefix) return width < size
-            if (isAtPrefix && (index && index < entries.length - 1)) {
-              return width >= size && width < formatValue(entries[index + 1][1])
-            }
-            return width > size
-          })
 
-          return res ? className : ''
-        })
+        return isEmptyObject(result) ? empty : result
       }
     }
   }

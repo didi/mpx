@@ -1,1 +1,1 @@
-export { animations } from '@unocss/preset-wind3/rules'
+export { animations as blockAnimations } from '@unocss/preset-wind3/rules'

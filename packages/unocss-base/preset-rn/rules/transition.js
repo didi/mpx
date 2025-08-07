@@ -1,1 +1,1 @@
-export { transitions } from '@unocss/preset-mini/rules'
+export { transitions as blockTransitions } from '@unocss/preset-mini/rules'

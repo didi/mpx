@@ -1,1 +1,1 @@
-export { svgUtilities } from '@unocss/preset-mini/rules'
+export { svgUtilities as blockSvgUtilities } from '@unocss/preset-mini/rules'

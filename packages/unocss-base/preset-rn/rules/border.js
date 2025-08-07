@@ -1,17 +1,8 @@
 import { borders } from '@unocss/preset-mini/rules'
 
-const unSupport = [
-  's',
-  'e',
-  'bs',
-  'be',
-  'is',
-  'ie',
-  'block',
-  'inline'
-]
+const unSupport = ['s', 'e', 'bs', 'be', 'is', 'ie', 'block', 'inline']
 
-const bordersRules = borders.map(([rule]) => (raw) => {
+const blockBorders = borders.map(([rule]) => raw => {
   const result = raw.match(rule)
   if (raw === 'border-double') {
     return true
@@ -20,4 +11,4 @@ const bordersRules = borders.map(([rule]) => (raw) => {
   }
 })
 
-export default bordersRules
+export { blockBorders }

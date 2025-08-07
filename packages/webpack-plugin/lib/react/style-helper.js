@@ -7,29 +7,26 @@ const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
+function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
+  const classMap = {}
 
-function createFormatValue (formatValueFn) {
-  formatValueFn = formatValueFn || 'global.__formatValue'
-  return function (value) {
+  const root = postcss.parse(content, {
+    from: filename
+  })
+
+  function formatValue (value) {
     let matched
     let needStringify = true
     if ((matched = numberRegExp.exec(value))) {
       value = matched[1]
       needStringify = false
     } else if (unitRegExp.test(value) || hairlineRegExp.test(value)) {
-      value = `${formatValueFn}(${JSON.stringify(value)})`
+      value = `global.__formatValue(${JSON.stringify(value)})`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
   }
-}
 
-function getClassMap ({ content, filename, mode, srcMode, warn, error, formatValueFn }) {
-  const classMap = {}
-  const formatValue = createFormatValue(formatValueFn)
-  const root = postcss.parse(content, {
-    from: filename
-  })
   const rulesRunner = getRulesRunner({
     mode,
     srcMode,
@@ -38,9 +35,14 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
     warn,
     error
   })
-
   root.walkRules(rule => {
     const classMapValue = {}
+    const prev = rule.prev()
+    let layer
+    if (prev && prev.type === 'comment' && prev.text.includes('rn-layer:')) {
+      layer = JSON.stringify(prev.text.split(':')[1].trim())
+    }
+
     rule.walkDecls(({ prop, value }) => {
       if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
@@ -72,9 +74,7 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
         classMapValue[prop] = value
       })
     })
-
     const classMapKeys = []
-
     selectorParser(selectors => {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
@@ -86,11 +86,11 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
         }
       })
     }).processSync(rule.selector)
-
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+          const layerObj = layer ? { __layer: layer } : {}
+          classMap[key] = Object.assign(classMap[key] || {}, classMapValue, layerObj)
         }
       })
     }
@@ -99,7 +99,5 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error, formatVal
 }
 
 module.exports = {
-  getClassMap,
-  unitRegExp,
-  numberRegExp
+  getClassMap
 }
