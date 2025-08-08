@@ -547,6 +547,17 @@ module.exports = function getSpec ({ warn, error }) {
   //   })
   //   return cssMap
   // }
+  const formatBorder = ({ prop, value, selector }, { mode }) => {
+    value = value.trim()
+    if (value === 'none') {
+      return {
+        prop: 'borderWidth',
+        value: 0
+      }
+    } else {
+      return formatAbbreviation({ prop, value, selector }, { mode })
+    }
+  }
 
   return {
     supportedModes: ['ios', 'android', 'harmony'],
@@ -593,6 +604,12 @@ module.exports = function getSpec ({ warn, error }) {
       //   android: formatBoxShadow,
       //   harmony: formatBoxShadow
       // },
+      {
+        test: 'border',
+        ios: formatBorder,
+        android: formatBorder,
+        harmony: formatBorder
+      },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
