@@ -1001,11 +1001,11 @@ movable-view的可移动区域。
 
 - 触感反馈回调方法
 
-通过在全局注册 `mpx.config.rnConfig.pickerVibrate` 方法，在每次滚动选择时会调用该方法。
+通过在全局注册 `mpx.config.rnConfig.onPickerVibrate` 方法，在每次滚动选择时会调用该方法。
 
 | 注册触感方法名           | 类型          | 说明                |
 | ----------------------| --------------| ------------------- |
-| pickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现类似 iOS 端原生表盘的振动触感。    |
+| onPickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现类似 iOS 端原生表盘的振动触感。    |
 
 #### picker-view-column
 
@@ -2597,7 +2597,7 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 
 ```javascript
 // RN 场景下监听异步页面加载失败的全局配置
-mpx.config.rnConfig.lazyLoadPageErrorHandler = function (error) {
+mpx.config.rnConfig.onLazyLoadPageError = function (error) {
   console.log(
     error.subpackage, // 加载失败的分包名
     error.errType // 加载失败的类型：'timeout' | 'fail'
