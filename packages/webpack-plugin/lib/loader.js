@@ -23,6 +23,11 @@ const processMainScript = require('./web/processMainScript')
 const getRulesRunner = require('./platform')
 const { CompressName } = require('./utils/optimize-compress.js')
 
+function containsTagIgnoreComments(template, tag) {
+  const re = new RegExp(`<${tag}(\\s|>|/)`, 'i')
+  return re.test(template)
+}
+
 module.exports = function (content) {
   this.cacheable()
 
@@ -122,7 +127,7 @@ module.exports = function (content) {
       let componentPlaceholder = []
       let componentGenerics = {}
 
-      const hasTemplateTag = typeof parts.template?.content === 'string' ? a : false
+      const hasTemplateTag = typeof parts.template?.content === 'string' ? containsTagIgnoreComments(parts.template.content, 'template') : false
 
       if (parts.json && parts.json.content) {
         const rulesRunnerOptions = {
@@ -144,7 +149,10 @@ module.exports = function (content) {
             for (const name in ret.usingComponents) {
               // Object.keys(mpx.usingComponents): 压缩组件名，禁止与全局组件同名
               // mpx.reservedComponentName 禁止与保留组件名重复(如 text/view/ad 等)
-              usingComponentsNameMap[name] = ctorType === 'app' ? name : compressName._occupiedGenerateName([...Object.keys(mpx.usingComponents), ...mpx.reservedComponentName])
+              if (ctorType === 'app' || hasTemplateTag) {
+                usingComponentsNameMap[name] = name
+              }
+              usingComponentsNameMap[name] = compressName._occupiedGenerateName([...Object.keys(mpx.usingComponents), ...mpx.reservedComponentName])
             }
           }
           if (ret.componentPlaceholder) {
