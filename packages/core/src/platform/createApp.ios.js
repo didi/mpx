@@ -11,6 +11,7 @@ import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
 import { innerNav } from './env/nav'
+import { DimensionsContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -162,6 +163,19 @@ export default function createApp (options) {
     }
   }
 
+  global.__mpxAppDimensionsInfo = reactive({
+    window: ReactNative.Dimensions.get('window'),
+    screen: ReactNative.Dimensions.get('screen')
+  })
+  function useDimensionsInfo (dimensions) {
+    if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
+      dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
+    }
+    global.__mpxAppDimensionsInfo.window = dimensions.window
+    global.__mpxAppDimensionsInfo.screen = dimensions.screen
+  }
+  useDimensionsInfo(global.__mpxAppDimensionsInfo)
+
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
@@ -211,13 +225,15 @@ export default function createApp (options) {
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
-
       let count = 0
-      let lastPageSize = getPageSize()
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const pageSize = getPageSize(window)
-        if (pageSize === lastPageSize) return
-        lastPageSize = pageSize
+      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
+        const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
+        useDimensionsInfo({ window, screen })
+
+        // // 对比 screen 高宽是否存在变化
+        if (getPageSize(screen) === oldScreen) return
+        global.__appClassMapValueCache = {}
+        // // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
           global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
@@ -238,19 +254,28 @@ export default function createApp (options) {
       statusBarBackgroundColor: 'transparent'
     }
 
-    return createElement(SafeAreaProvider,
+    function DimensionsProvider (props) {
+      return createElement(DimensionsContext.Provider, {
+        value: global.__mpxAppDimensionsInfo
+      }, props.children)
+    }
+
+    return createElement(DimensionsProvider,
       null,
-      createElement(NavigationContainer,
-        {
-          onStateChange,
-          onUnhandledAction
-        },
-        createElement(Stack.Navigator,
+      createElement(SafeAreaProvider,
+        null,
+        createElement(NavigationContainer,
           {
-            initialRouteName,
-            screenOptions: navScreenOpts
+            onStateChange,
+            onUnhandledAction
           },
-          ...getPageScreens(initialRouteName, initialParams)
+          createElement(Stack.Navigator,
+            {
+              initialRouteName,
+              screenOptions: navScreenOpts
+            },
+            ...getPageScreens(initialRouteName, initialParams)
+          )
         )
       )
     )

@@ -13,15 +13,16 @@ import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/component
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
-  RouteContext
+  RouteContext,
+  DimensionsContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '../env/nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
-  const windowDimensions = ReactNative.Dimensions.get('window')
-  const screenDimensions = ReactNative.Dimensions.get('screen')
+  const windowDimensions = global.__mpxAppDimensionsInfo.window
+  const screenDimensions = global.__mpxAppDimensionsInfo.screen
   return {
     deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
     size: {
@@ -211,7 +212,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -266,6 +267,12 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     __parentProvides: {
       get () {
         return parentProvides || null
+      },
+      enumerable: false
+    },
+    __dimensionsInfo: {
+      get () {
+        return dimensionsInfo
       },
       enumerable: false
     }
@@ -375,9 +382,15 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
-const triggerResizeEvent = (mpxProxy) => {
-  const type = mpxProxy.options.__type__
+const triggerResizeEvent = (mpxProxy, pageId) => {
   const systemInfo = getSystemInfo()
+  const oldSize = pageSizeMap[pageId]
+  const newSize = systemInfo.size
+
+  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) return
+
+  pageSizeMap[pageId] = newSize
+  const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])
   if (type === 'page') {
@@ -399,8 +412,12 @@ function usePageEffect (mpxProxy, pageId) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
+            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
+            if (newVal === 'show') {
+              triggerResizeEvent(mpxProxy, pageId)
+            }
           } else if (/^resize/.test(newVal)) {
-            triggerResizeEvent(mpxProxy)
+            triggerResizeEvent(mpxProxy, pageId)
           }
         }, { sync: true })
       }
@@ -413,13 +430,14 @@ function usePageEffect (mpxProxy, pageId) {
 
 let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-
+const pageSizeMap = {}
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
+    pageSizeMap[pageId] = getSystemInfo().size
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
     })
@@ -428,6 +446,7 @@ function usePageStatus (navigation, pageId) {
     })
 
     return () => {
+      delete pageSizeMap[pageId]
       focusSubscription()
       blurSubscription()
       del(pageStatusMap, pageId)
@@ -595,6 +614,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
+    const dimensionsInfo = useContext(DimensionsContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
@@ -603,7 +623,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
