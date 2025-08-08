@@ -15,12 +15,14 @@ type InnerRef = MutableRefObject<{
     bubble: ReturnType<typeof setTimeout> | null
     capture: ReturnType<typeof setTimeout> | null
   }
-  mpxPressInfo: {
+  mpxPressInfo: Record<number, {
     detail: {
       x: number
       y: number
     }
-  }
+  }>
+  // 用于跟踪当前活动的触摸点
+  activeTouches: Set<number>
 }>
 
 type PropsRef = MutableRefObject<Props>
@@ -84,12 +86,15 @@ interface ExtendedNativeTouchEvent extends NativeTouchEvent {
   _stoppedEventTypes?: Set<string>
 }
 
+interface GlobalEventState {
+  needPress: Record<number, boolean>
+}
+
 export {
   NativeTouchEvent,
   Props,
   AdditionalProps,
   RemoveProps,
-  UseInnerPropsConfig,
   InnerRef,
   LayoutRef,
   PropsRef,
@@ -98,5 +103,6 @@ export {
   ExtendedNativeTouchEvent,
   EventConfig,
   RawConfig,
-  EventType
+  EventType,
+  GlobalEventState
 }
