@@ -499,6 +499,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function onScrollDragEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
     onScrollDrag(e)
     if (enhanced) {
+      // 安卓上如果触发了默认的下拉刷新，binddragend可能不触发，只会触发 binddragstart
       binddragend &&
         binddragend(
           getCustomEvent('dragend', e, {
