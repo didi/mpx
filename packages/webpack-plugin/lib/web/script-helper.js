@@ -20,11 +20,12 @@ function getAsyncChunkName (chunkName) {
 
 function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig }) {
   const componentsMap = {}
+  const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      if (componentCfg.async) {
+      if (componentCfg.async && mpx.supportRequireAsync) {
         // todo 暂时只处理局部注册的组件作为componentPlaceholder，暂不支持全局组件和原生组件，如使用了支持范围外的组件将不进行placeholder渲染及替换
         if (jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName] && localComponentsMap[jsonConfig.componentPlaceholder[componentName]]) {
           const placeholder = jsonConfig.componentPlaceholder[componentName]
@@ -59,6 +60,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
   let firstPage = ''
   const pagesMap = {}
   const tabBarPagesMap = {}
+  const mpx = loaderContext.getMpx()
   if (tabBar && tabBarMap) {
     // 挂载tabBar组件
     const tabBarRequest = stringifyRequest(loaderContext, addQuery(tabBar.custom ? './custom-tab-bar/index' : tabBarPath, { isComponent: true }))
@@ -68,7 +70,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
       const pageCfg = localPagesMap[pagePath]
       if (pageCfg) {
         const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
-        if (pageCfg.async) {
+        if (pageCfg.async && mpx.supportRequireAsync) {
           tabBarPagesMap[pagePath] = `function(){return import(${getAsyncChunkName(pageCfg.async)}${pageRequest}).then(function(res) {return getComponent(res, {__mpxPageRoute: ${JSON.stringify(pagePath)}})})}`
         } else {
           tabBarPagesMap[pagePath] = `getComponent(require(${pageRequest}), {__mpxPageRoute: ${JSON.stringify(pagePath)}})`
@@ -93,7 +95,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
     if (tabBarMap && tabBarMap[pagePath]) {
       pagesMap[pagePath] = `getComponent(require(${stringifyRequest(loaderContext, tabBarContainerPath)}), {__mpxBuiltIn: true})`
     } else {
-      if (pageCfg.async) {
+      if (pageCfg.async && mpx.supportRequireAsync) {
         pagesMap[pagePath] = `function(){return import(${getAsyncChunkName(pageCfg.async)} ${pageRequest}).then(function(res){return getComponent(res, {__mpxPageRoute: ${JSON.stringify(pagePath)}})})}`
       } else {
         // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
