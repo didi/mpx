@@ -274,7 +274,7 @@ export interface RnConfig {
    *
    * @param state 当前的导航状态对象
    */
-  onStateChange?: (state: Record<string, any>) => void;
+  onStateChange?: (state: Record<string, any>) => void
 
   /**
    * 用于获取初始路由配置的函数。
@@ -286,7 +286,7 @@ export interface RnConfig {
    */
   parseAppProps?: (
     props: Record<string, any>
-  ) => { initialRouteName?: string; initialParams?: any } | void;
+  ) => { initialRouteName?: string; initialParams?: any } | void
 
   /**
    * 页面栈长度为 1（即根页面）且用户尝试退出 App 时触发。
@@ -295,12 +295,12 @@ export interface RnConfig {
    * - `true`：允许退出应用
    * - `false`：阻止退出应用
    */
-  onAppBack?: () => boolean;
+  onAppBack?: () => boolean
 
   /**
    * 是否禁用框架内部的 AppStateChange 监听。
    */
-  disableAppStateListener?: boolean;
+  disableAppStateListener?: boolean
 
   /**
    * 控制首页回退按钮是否展示，并监听点击事件。
@@ -308,7 +308,7 @@ export interface RnConfig {
    * 如果绑定该函数，则首页显示返回按钮，点击后调用该函数作为回调。
    * 如需返回，请在函数内部手动调用 `back()`。
    */
-  onStackTopBack?: () => void;
+  onStackTopBack?: () => void
 
   /**
    * 容器实现的 open-type 能力集合。
@@ -324,16 +324,26 @@ export interface RnConfig {
      * @returns `void`
      */
     onShareAppMessage?: (shareInfo: {
-      title: string;
-      path: string;
-      imageUrl?: string;
-    }) => void;
-  };
+      title: string
+      path: string
+      imageUrl?: string
+    }) => void
+  }
 
   /**
    * 在使用 picker-view-column 时，触发短震动反馈。
    */
-  pickerVibrate?: () => void;
+  onPickerVibrate?: () => void
+
+  /**
+   * 分包页面加载失败时触发
+   * @param subpackage 失败分包名
+   * @param errType 失败类型
+   */
+  onLazyLoadPageError?: (error: {
+    subpackage: string
+    errType: 'timeout' | 'fail'
+  }) => void
 
   /**
    * 自定义屏幕尺寸信息，用于 mpx style 渲染等依赖尺寸的功能。
@@ -343,7 +353,7 @@ export interface RnConfig {
    */
   customDimensions?: <T extends { window: ScaledSize; screen: ScaledSize }>(
     dimensions: T
-  ) => T | void;
+  ) => T | void
 
   /**
    * 异步分包加载配置。
@@ -352,18 +362,18 @@ export interface RnConfig {
     /**
      * 加载超时时长配置，单位为毫秒。
      */
-    timeout: number;
+    timeout: number
 
     /**
      * 异步分包页面加载超时或失败时，自定义兜底页面文件路径。
      */
-    fallback: string;
+    fallback: string
 
     /**
      * 异步分包页面加载时，自定义 loading 页面文件路径。
      */
-    loading: string;
-  };
+    loading: string
+  }
 
   /**
    * 加载并执行异步分包的方法。
@@ -373,14 +383,14 @@ export interface RnConfig {
    * @param params.package 分包名
    * @returns Promise，表示加载完成
    */
-  loadChunkAsync?: (params: { url: string; package: string }) => Promise<any>;
+  loadChunkAsync?: (params: { url: string; package: string }) => Promise<any>
 
   /**
    * 下载多个异步分包的方法（不执行）。
    *
    * @param packages 分包名数组
    */
-  downloadChunkAsync?: (packages: Array<string>) => void;
+  downloadChunkAsync?: (packages: Array<string>) => void
 }
 
 interface MpxConfig {
