@@ -117,10 +117,12 @@ module.exports = function (content) {
 
       const usingComponentsNameMap = {}
       for (const name in mpx.usingComponents) {
-        usingComponentsNameMap[name] = name // compressName._generateName()
+        usingComponentsNameMap[name] = name
       }
       let componentPlaceholder = []
       let componentGenerics = {}
+
+      const hasTemplateTag = typeof parts.template?.content === 'string' ? a : false
 
       if (parts.json && parts.json.content) {
         const rulesRunnerOptions = {
