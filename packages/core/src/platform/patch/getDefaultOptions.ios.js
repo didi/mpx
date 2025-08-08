@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -34,7 +34,7 @@ function getSystemInfo () {
   }
 }
 
-function createEffect (proxy, components) {
+function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
     // react update props in child render(async), do not need exec pre render
     // if (proxy.propsUpdatedFlag) {
@@ -51,10 +51,11 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    const appComponents = global.__getAppComponents?.() || {}
+    const appComponentsMap = global.__appComponentsMap || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
-    return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
+    const genericComponentsMap = global.__mpxGenericsMap?.[generichash] || {}
+    const component = componentsMap[tagName] || genericComponentsMap[tagName] || appComponentsMap[tagName]
+    return component ? component.displayName ? component : component() : getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -123,6 +124,13 @@ const instanceProto = {
   },
   createIntersectionObserver (opt) {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
+  },
+  // 触发页面范围内的所有observer的计算
+  __triggerIntersectionObserver () {
+    const intersectionObservers = this.__intersectionCtx
+    for (const key in this.__intersectionCtx) {
+      intersectionObservers[key].throttleMeasure()
+    }
   },
   __resetInstance () {
     this.__dispatchedSlotSet = new WeakSet()
@@ -204,7 +212,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -300,6 +308,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    setFocusedNavigation(props.navigation)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(props.navigation)
@@ -326,7 +335,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components)
+        createEffect(proxy, componentsMap)
         proxy.stateVersion = Symbol()
       }
       proxy.onStoreChange = onStoreChange
@@ -342,7 +351,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components)
+    createEffect(proxy, componentsMap)
   }
 
   return instance
@@ -590,7 +599,12 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
 }
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
+  const componentsMap = currentInject.componentsMap
+  if (rawOptions.components) {
+    Object.entries(rawOptions.components).forEach(([key, item]) => {
+      componentsMap[key] = () => item
+    })
+  }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
@@ -609,7 +623,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {

@@ -8,6 +8,7 @@ const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
+const { transSubpackage } = require('../utils/trans-async-sub-rules')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
@@ -146,7 +147,8 @@ module.exports = function (jsonContent, {
 
   const fillInComponentsMap = (name, entry, tarRoot) => {
     const { resource, outputPath } = entry
-    const { resourcePath, queryObj } = parseRequest(resource)
+    const { resourcePath } = parseRequest(resource)
+    tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
     componentsMap[resourcePath] = outputPath
     loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
     localComponentsMap[name] = {
@@ -154,7 +156,7 @@ module.exports = function (jsonContent, {
         isComponent: true,
         outputPath
       }),
-      async: queryObj.async || tarRoot
+      async: tarRoot
     }
   }
 
@@ -288,7 +290,7 @@ module.exports = function (jsonContent, {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           if (pageKeySet.has(key)) return callback()
           pageKeySet.add(key)
-          const { resourcePath, queryObj } = parseRequest(resource)
+          const { resourcePath } = parseRequest(resource)
           if (localPagesMap[outputPath]) {
             const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
             if (oldResourcePath !== resourcePath) {
@@ -300,9 +302,11 @@ module.exports = function (jsonContent, {
 
           pagesMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
+          // 通过asyncSubPackagesNameRules对tarRoot进行修改，仅修改tarRoot，不修改outputPath页面路径
+          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
-            async: queryObj.async || tarRoot,
+            async: tarRoot,
             isFirst
           }
           callback()
