@@ -190,9 +190,8 @@ export default function styleHelperMixin () {
         const result = {}
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
-        const dimensionsInfo = global.__mpxAppDimensionsInfo;
         // 使用一下 __dimensionsChangeFlag触发其get，需保证不会被压缩插件移除
-        (() => this.__dimensionsChangeFlag)()
+        ;(() => this.__dimensionsChangeFlag)()
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
