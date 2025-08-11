@@ -177,8 +177,7 @@ function getMediaStyle (media) {
 export default function styleHelperMixin () {
   return {
     watch: {
-      '__dimensionsInfo.screen.width, __dimensionsInfo.screen.height' (newValue, oldValue) {
-        if (newValue[0] === oldValue[0] && newValue[1] === oldValue[1]) return
+      __dimensionsChangeFlag () {
         this.__classMapValueCache = {}
       }
     },
