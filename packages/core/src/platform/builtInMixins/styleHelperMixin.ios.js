@@ -176,7 +176,8 @@ export default function styleHelperMixin () {
     watch: {
       '__dimensionsInfo.screen.width, __dimensionsInfo.screen.height' (newValue, oldValue) {
         if (newValue[0] === oldValue[0] && newValue[1] === oldValue[1]) return
-        this.__classMapValueCache = {}
+        // Todo component class cache clear
+        this.__classMapValueCache?.clear()
       }
     },
     methods: {
@@ -196,18 +197,18 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
               const styleObj = classMap[className] || empty
-              if (styleObj._default) {
+              if (styleObj._media.length) {
                 Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.screen))
               } else {
-                Object.assign(result, styleObj)
+                Object.assign(result, styleObj._default)
               }
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               const styleObj = appClassMap[className] || empty
-              if (styleObj._default) {
+              if (styleObj._media.length) {
                 Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.screen))
               } else {
-                Object.assign(result, styleObj)
+                Object.assign(result, styleObj._default)
               }
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来

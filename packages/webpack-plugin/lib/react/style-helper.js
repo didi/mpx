@@ -119,19 +119,19 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
+          const _default = classMap[key]?._default || {}
+          const _media = classMap[key]?._media || []
           if (isMedia) {
-            const _default = classMap[key]?._default || classMap[key] || {}
-            const _media = classMap[key]?._media || []
             _media.push({
               options,
               value: classMapValue
             })
-            classMap[key] = {
-              _default,
-              _media
-            }
           } else {
-            classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+            Object.assign(_default, classMapValue)
+          }
+          classMap[key] = {
+            _media,
+            _default
           }
         }
       })
