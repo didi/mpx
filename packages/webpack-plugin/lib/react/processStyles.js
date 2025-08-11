@@ -58,14 +58,14 @@ module.exports = function (styles, {
         if (ctorType === 'app') {
           const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
             result += `get ['${key}']() {
-            return _getAppCacheClass('${key}', ${() => shallowStringify(value)});
+            return __getAppCacheClass('${key}', ${() => shallowStringify(value)});
           },`
             return result
           }, '')
           output += `
           let __appClassMap
           global.__appClassMapValueCache = new Map();
-          function _getAppCacheClass(className, getStyleObj) {
+          function __getAppCacheClass(className, getStyleObj) {
             if (!global.__appClassMapValueCache.get(className)) {
               const styleObj = getStyleObj();
               global.__appClassMapValueCache.set(className, styleObj);
@@ -81,14 +81,14 @@ module.exports = function (styles, {
         } else {
           const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
             result += `get ['${key}']() {
-              return _getCacheClass('${key}', ${() => shallowStringify(value)});
+              return __getCacheClass('${key}', ${() => shallowStringify(value)});
           },`
             return result
           }, '')
           output += `
           let __classMap
           let __classMapValueCache = new Map();
-          function _getCacheClass(className, getStyleObj) {
+          function __getCacheClass(className, getStyleObj) {
             if (!__classMapValueCache.get(className)) {
               const styleObj = getStyleObj();
               __classMapValueCache.set(className, styleObj);
