@@ -4,14 +4,13 @@ import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
-import { reactive } from '../observer/reactive'
+import { reactive, set } from '../observer/reactive'
 import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
 import { innerNav } from './env/nav'
-import { DimensionsContext } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -163,10 +162,12 @@ export default function createApp (options) {
     }
   }
 
-  global.__mpxAppDimensionsInfo = reactive({
+  global.__mpxAppDimensionsInfo = {
     window: ReactNative.Dimensions.get('window'),
     screen: ReactNative.Dimensions.get('screen')
-  })
+  }
+  global.__mpxAppDimensionsChangeFlag = -Number.MAX_SAFE_INTEGER // 从能保证精度最小的负值开始，每次屏幕变化则+1
+  global.__mpxPageDimensionsChangeFlagMap = reactive({})
   function useDimensionsInfo (dimensions) {
     if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
       dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
@@ -230,14 +231,17 @@ export default function createApp (options) {
         const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
         useDimensionsInfo({ window, screen })
 
-        // // 对比 screen 高宽是否存在变化
+        // 对比 screen 高宽是否存在变化
         if (getPageSize(screen) === oldScreen) return
-        // Todo clear app class
+
+        // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
+        global.__mpxAppDimensionsChangeFlag++
         global.__appClassMapValueCache?.clear()
-        // // 触发当前栈顶页面 onResize
+        // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
           global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
+          set(global.__mpxPageDimensionsChangeFlagMap, navigation.pageId, global.__mpxAppDimensionsChangeFlag)
         }
       })
       return () => {
@@ -255,28 +259,19 @@ export default function createApp (options) {
       statusBarBackgroundColor: 'transparent'
     }
 
-    function DimensionsProvider (props) {
-      return createElement(DimensionsContext.Provider, {
-        value: global.__mpxAppDimensionsInfo
-      }, props.children)
-    }
-
-    return createElement(DimensionsProvider,
+    return createElement(SafeAreaProvider,
       null,
-      createElement(SafeAreaProvider,
-        null,
-        createElement(NavigationContainer,
+      createElement(NavigationContainer,
+        {
+          onStateChange,
+          onUnhandledAction
+        },
+        createElement(Stack.Navigator,
           {
-            onStateChange,
-            onUnhandledAction
+            initialRouteName,
+            screenOptions: navScreenOpts
           },
-          createElement(Stack.Navigator,
-            {
-              initialRouteName,
-              screenOptions: navScreenOpts
-            },
-            ...getPageScreens(initialRouteName, initialParams)
-          )
+          ...getPageScreens(initialRouteName, initialParams)
         )
       )
     )

@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext } from 'react'
+import { useEffect, useSyncExternalStore, useRef, useMemo, createElement, memo, forwardRef, useImperativeHandle, useContext, Fragment, cloneElement, createContext, useState } from 'react'
 import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
@@ -13,8 +13,7 @@ import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/component
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
-  RouteContext,
-  DimensionsContext
+  RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '../env/nav'
@@ -212,7 +211,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -270,9 +269,9 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       },
       enumerable: false
     },
-    __dimensionsInfo: {
+    __dimensionsChangeFlag: {
       get () {
-        return dimensionsInfo
+        return global.__mpxPageDimensionsChangeFlagMap[pageId]
       },
       enumerable: false
     }
@@ -407,6 +406,7 @@ function usePageEffect (mpxProxy, pageId) {
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
+    global.__mpxPageDimensionsChangeFlagMap[pageId] = global.__mpxAppDimensionsChangeFlag
     if (hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
@@ -415,6 +415,10 @@ function usePageEffect (mpxProxy, pageId) {
             // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
             if (newVal === 'show') {
               triggerResizeEvent(mpxProxy, pageId)
+              // 当前页面的DimensionsChange标记与全局不一致，则需更新当前页面的标记
+              if (global.__mpxPageDimensionsChangeFlagMap[pageId] !== global.__mpxAppDimensionsChangeFlag) {
+                set(global.__mpxPageDimensionsChangeFlagMap, pageId, global.__mpxAppDimensionsChangeFlag)
+              }
             }
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy, pageId)
@@ -424,6 +428,7 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
+      delete global.__mpxPageDimensionsChangeFlagMap[pageId]
     }
   }, [])
 }
@@ -614,7 +619,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const intersectionCtx = useContext(IntersectionObserverContext)
     const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
-    const dimensionsInfo = useContext(DimensionsContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
       relation = useContext(RelationsContext)
@@ -623,7 +627,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides, dimensionsInfo })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
