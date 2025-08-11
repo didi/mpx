@@ -1,8 +1,7 @@
-import Vue from './vue'
+
 import { error, diffAndCloneA, hasOwn, makeMap } from '@mpxjs/utils'
 import { APIs, InstanceAPIs } from './platform/export/api'
-
-import { createI18n } from './platform/builtInMixins/i18nMixin'
+import { init } from './platform/env/index'
 
 export * from './platform/export/index'
 
@@ -29,11 +28,12 @@ export {
   UPDATED,
   BEFOREUNMOUNT,
   UNMOUNTED,
-  SERVERPREFETCH,
   ONLOAD,
   ONSHOW,
   ONHIDE,
-  ONRESIZE
+  ONRESIZE,
+  SERVERPREFETCH,
+  REACTHOOKSEXEC
 } from './core/innerLifecycle'
 
 export {
@@ -43,7 +43,6 @@ export {
   onUpdated,
   onBeforeUnmount,
   onUnmounted,
-  onServerPrefetch,
   onLoad,
   onShow,
   onHide,
@@ -55,10 +54,14 @@ export {
   onAddToFavorites,
   onPageScroll,
   onTabItemTap,
-  onSaveExitState
+  onSaveExitState,
+  onServerPrefetch,
+  onReactHooksExec
 } from './core/proxy'
 
 export { getMixin } from './core/mergeOptions'
+
+export { dynamic } from './dynamic/astCache'
 
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
@@ -112,6 +115,9 @@ function use (plugin, options = {}) {
 
 APIs.use = use
 
+/**
+ * @returns {import('@mpxjs/core').Mpx}
+ */
 function factory () {
   // 作为原型挂载属性的中间层
   function Mpx () {
@@ -119,13 +125,12 @@ function factory () {
 
   Object.assign(Mpx, APIs)
   Object.assign(Mpx.prototype, InstanceAPIs)
-  // 输出web时在mpx上挂载Vue对象
-  if (__mpx_mode__ === 'web') {
-    Mpx.__vue = Vue
-  }
   return Mpx
 }
 
+/**
+ * @type {import('@mpxjs/core').Mpx}
+ */
 const Mpx = factory()
 
 Mpx.config = {
@@ -134,24 +139,24 @@ Mpx.config = {
   ignoreProxyWhiteList: ['id', 'dataset', 'data'],
   observeClassInstance: false,
   errorHandler: null,
+  warnHandler: null,
   proxyEventHandler: null,
   setDataHandler: null,
   forceFlushSync: false,
   webRouteConfig: {},
+  webConfig: {},
   /*
     支持两个属性
     hostWhitelists Array 类型 支持h5域名白名单安全校验
     apiImplementations webview JSSDK接口 例如getlocation
    */
-  webviewConfig: {}
+  webviewConfig: {},
+  /**
+  * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
+  */
+  rnConfig: {}
 }
 
-global.__mpx = Mpx
-
-if (__mpx_mode__ !== 'web') {
-  if (global.i18n) {
-    Mpx.i18n = createI18n(global.i18n)
-  }
-}
+init(Mpx)
 
 export default Mpx

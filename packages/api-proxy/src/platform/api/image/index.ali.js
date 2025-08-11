@@ -1,4 +1,4 @@
-import { ENV_OBJ, changeOpts, handleSuccess } from '../../../common/js'
+import { ENV_OBJ, changeOpts, handleSuccess, envError } from '../../../common/js'
 
 function previewImage (options = {}) {
   const opts = changeOpts(options)
@@ -30,7 +30,13 @@ function compressImage (options = {}) {
   return ENV_OBJ.compressImage(opts)
 }
 
+const getImageInfo = ENV_OBJ.getImageInfo || envError('getImageInfo')
+
+const chooseMedia = envError('chooseMedia')
+
 export {
   previewImage,
-  compressImage
+  compressImage,
+  getImageInfo,
+  chooseMedia
 }

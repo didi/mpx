@@ -1,29 +1,24 @@
-const JSON5 = require('json5')
 const parseComponent = require('./parser')
 const createHelpers = require('./helpers')
 const parseRequest = require('./utils/parse-request')
 const { matchCondition } = require('./utils/match-condition')
 const addQuery = require('./utils/add-query')
 const async = require('async')
-const processJSON = require('./web/processJSON')
-const processScript = require('./web/processScript')
-const processStyles = require('./web/processStyles')
-const processTemplate = require('./web/processTemplate')
-const getJSONContent = require('./utils/get-json-content')
 const normalize = require('./utils/normalize')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
-const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
+const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
-const { MPX_APP_MODULE_ID } = require('./utils/const')
+const { isReact } = require('./utils/env')
+const preProcessJson = require('./utils/pre-process-json')
 const path = require('path')
-const processMainScript = require('./web/processMainScript')
-const getRulesRunner = require('./platform')
-const { CompressName } = require('./utils/optimize-compress.js')
+const processWeb = require('./web')
+const processReact = require('./react')
+const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
-function containsTagIgnoreComments(template, tag) {
+function hasTag (template, tag) {
   const re = new RegExp(`<${tag}(\\s|>|/)`, 'i')
   return re.test(template)
 }
@@ -56,7 +51,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
-  const compressName = new CompressName()
+  const isRuntimeMode = queryObj.isDynamic
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -87,10 +82,16 @@ module.exports = function (content) {
     const appName = getEntryName(this)
     if (appName) this._module.addPresentationalDependency(new AppEntryDependency(resourcePath, appName))
   }
+
+  if (isRuntimeMode) {
+    const { request, outputPath } = genMpxCustomElement(packageName)
+    this._module.addPresentationalDependency(new DynamicEntryDependency([0, 0], request, 'component', outputPath, packageRoot, '', '', { replaceContent: '', postSubpackageEntry: true }))
+  }
+
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = ctorType === 'app' ? MPX_APP_MODULE_ID : '_' + mpx.pathHash(filePath)
+  const moduleId = mpx.getModuleId(resourcePath, ctorType === 'app')
 
   const parts = parseComponent(content, {
     filePath,
@@ -99,166 +100,90 @@ module.exports = function (content) {
     env
   })
 
+  const hasTemplateIsTag = parts.template?.context ? hasTag(parts.template.context, 'template') : false
+  if (mpx.optimizeSize && isProductionLikeMode(this) && hasTemplateIsTag) {
+    // TODO
+  }
+
   const {
     getRequire
   } = createHelpers(loaderContext)
 
-  let output = ''
   const callback = this.async()
 
   async.waterfall([
     (callback) => {
-      getJSONContent(parts.json || {}, null, loaderContext, (err, content) => {
+      preProcessJson({
+        json: parts.json || {},
+        srcMode,
+        emitWarning,
+        emitError,
+        ctorType,
+        resourcePath,
+        loaderContext
+      }, (err, jsonInfo) => {
         if (err) return callback(err)
-        if (parts.json) parts.json.content = content
-        callback()
+        callback(null, jsonInfo)
       })
     },
-    (callback) => {
+    (jsonInfo, callback) => {
+      const {
+        componentPlaceholder,
+        componentGenerics,
+        usingComponentsInfo,
+        usingComponentsNameMap,
+        jsonContent
+      } = jsonInfo
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
 
-      const usingComponentsNameMap = {}
-      for (const name in mpx.usingComponents) {
-        usingComponentsNameMap[name] = name
-      }
-      let componentPlaceholder = []
-      let componentGenerics = {}
-
-      const hasTemplateTag = typeof parts.template?.content === 'string' ? containsTagIgnoreComments(parts.template.content, 'template') : false
-
-      if (parts.json && parts.json.content) {
-        const rulesRunnerOptions = {
-          mode,
-          srcMode,
-          type: 'json',
-          waterfall: true,
-          warn: emitWarning,
-          error: emitError
-        }
-        if (ctorType !== 'app') {
-          rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
-        }
-        const rulesRunner = getRulesRunner(rulesRunnerOptions)
-        try {
-          const ret = JSON5.parse(parts.json.content)
-          if (rulesRunner) rulesRunner(ret)
-          if (ret.usingComponents) {
-            for (const name in ret.usingComponents) {
-              // Object.keys(mpx.usingComponents): 压缩组件名，禁止与全局组件同名
-              // mpx.reservedComponentName 禁止与保留组件名重复(如 text/view/ad 等)
-              if (ctorType === 'app' || hasTemplateTag) {
-                usingComponentsNameMap[name] = name
-              }
-              usingComponentsNameMap[name] = compressName._occupiedGenerateName([...Object.keys(mpx.usingComponents), ...mpx.reservedComponentName])
-            }
-          }
-          if (ret.componentPlaceholder) {
-            componentPlaceholder = componentPlaceholder.concat(Object.values(ret.componentPlaceholder))
-          }
-          if (ret.componentGenerics) {
-            componentGenerics = Object.assign({}, ret.componentGenerics)
-          }
-        } catch (e) {
-          return callback(e)
-        }
-      }
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
-        if (ctorType === 'app' && !queryObj.isApp) {
-          return async.waterfall([
-            (callback) => {
-              processJSON(parts.json, { loaderContext, pagesMap, componentsMap }, callback)
-            },
-            (jsonRes, callback) => {
-              processMainScript(parts.script, {
-                loaderContext,
-                ctorType,
-                srcMode,
-                moduleId,
-                isProduction,
-                jsonConfig: jsonRes.jsonObj,
-                outputPath: queryObj.outputPath || '',
-                localComponentsMap: jsonRes.localComponentsMap,
-                tabBar: jsonRes.jsonObj.tabBar,
-                tabBarMap: jsonRes.tabBarMap,
-                tabBarStr: jsonRes.tabBarStr,
-                localPagesMap: jsonRes.localPagesMap,
-                resource: this.resource
-              }, callback)
-            }
-          ], (err, scriptRes) => {
-            if (err) return callback(err)
-            this.loaderIndex = -1
-            return callback(null, scriptRes.output)
-          })
-        }
-        // 通过RecordVueContentDependency和vueContentCache确保子request不再重复生成vueContent
-        const cacheContent = mpx.vueContentCache.get(filePath)
-        if (cacheContent) return callback(null, cacheContent)
-
-        return async.waterfall([
-          (callback) => {
-            async.parallel([
-              (callback) => {
-                processTemplate(parts.template, {
-                  loaderContext,
-                  hasScoped,
-                  hasComment,
-                  isNative,
-                  srcMode,
-                  moduleId,
-                  ctorType,
-                  usingComponentsNameMap,
-                  componentGenerics
-                }, callback)
-              },
-              (callback) => {
-                processStyles(parts.styles, {
-                  ctorType,
-                  autoScope,
-                  moduleId
-                }, callback)
-              },
-              (callback) => {
-                processJSON(parts.json, {
-                  loaderContext,
-                  pagesMap,
-                  componentsMap
-                }, callback)
-              }
-            ], (err, res) => {
-              callback(err, res)
-            })
-          },
-          ([templateRes, stylesRes, jsonRes], callback) => {
-            output += templateRes.output
-            output += stylesRes.output
-            output += jsonRes.output
-            processScript(parts.script, {
-              loaderContext,
-              ctorType,
-              srcMode,
-              moduleId,
-              isProduction,
-              componentGenerics,
-              jsonConfig: jsonRes.jsonObj,
-              outputPath: queryObj.outputPath || '',
-              builtInComponentsMap: templateRes.builtInComponentsMap,
-              genericsInfo: templateRes.genericsInfo,
-              wxsModuleMap: templateRes.wxsModuleMap,
-              localComponentsMap: jsonRes.localComponentsMap
-            }, callback)
-          }
-        ], (err, scriptRes) => {
-          if (err) return callback(err)
-          output += scriptRes.output
-          this._module.addPresentationalDependency(new RecordVueContentDependency(filePath, output))
-          callback(null, output)
+        return processWeb({
+          parts,
+          jsonContent,
+          loaderContext,
+          pagesMap,
+          componentsMap,
+          queryObj,
+          ctorType,
+          srcMode,
+          moduleId,
+          isProduction,
+          hasScoped,
+          hasComment,
+          isNative,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          componentGenerics,
+          autoScope,
+          callback
         })
       }
+      // 处理mode为react时输出js格式文件
+      if (isReact(mode)) {
+        return processReact({
+          parts,
+          jsonContent,
+          loaderContext,
+          pagesMap,
+          componentsMap,
+          queryObj,
+          ctorType,
+          srcMode,
+          moduleId,
+          isProduction,
+          hasScoped,
+          hasComment,
+          isNative,
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          componentGenerics,
+          autoScope,
+          callback
+        })
+      }
+
       const moduleGraph = this._compilation.moduleGraph
 
       const issuer = moduleGraph.getIssuer(this._module)
@@ -267,6 +192,7 @@ module.exports = function (content) {
         return callback(new Error(`Current ${ctorType} [${this.resourcePath}] is issued by [${issuer.resource}], which is not allowed!`))
       }
 
+      let output = ''
       // 注入模块id及资源路径
       // currentModuleId -> _id
       output += `global._id = ${JSON.stringify(moduleId)}\n`
@@ -300,13 +226,13 @@ module.exports = function (content) {
           ? 'Component'
           : 'App'
       // currentCtor -> _ctor
-      output += `global._ctor = ${ctor}\n`
+      output += `global._c = ${ctor}\n`
       // currentCtorType -> _ctorT
-      output += `global._ctorT = ${JSON.stringify(ctor.replace(/^./, (match) => {
+      output += `global._ct = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
       // currentResourceType -> _crt
-      output += `global._crt = ${JSON.stringify(ctorType)}\n`
+      output += `global._rt = ${JSON.stringify(ctorType)}\n`
 
       // template
       output += '/* template */\n'
@@ -320,8 +246,10 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
+          ctorType,
           moduleId,
           usingComponentsNameMap: JSON.stringify(usingComponentsNameMap),
+          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
@@ -373,7 +301,7 @@ module.exports = function (content) {
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
         // currentSrcMode -> _sm
-        if (scriptSrcMode) output += `global._sm = ${JSON.stringify(scriptSrcMode)}\n`
+        if (scriptSrcMode) output += `global._m = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
           ...script.src

@@ -6,6 +6,18 @@ module.exports = function () {
     web (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-checkbox-group'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-checkbox-group'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-checkbox-group'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-checkbox-group'
     }
   }
 }

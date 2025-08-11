@@ -1,10 +1,11 @@
-import { isRef, isReactive } from '@mpxjs/core'
-import { type, noop } from './base'
+import { type, noop, isObject } from './base'
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
+const extend = Object.assign
+
 function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
+  return isObject(obj) && hasOwnProperty.call(obj, key)
 }
 
 function isPlainObject (value) {
@@ -15,7 +16,7 @@ function isPlainObject (value) {
   const innerProto = Object.getPrototypeOf(proto)
   if (proto === Object.prototype || innerProto === null) return true
   // issue #644
-  const observeClassInstance = global.__mpx?.config.observeClassInstance
+  const observeClassInstance = mpxGlobal.__mpx?.config.observeClassInstance
   if (observeClassInstance) {
     if (Array.isArray(observeClassInstance)) {
       for (let i = 0; i < observeClassInstance.length; i++) {
@@ -113,12 +114,19 @@ function diffAndCloneA (a, b) {
 }
 
 function proxy (target, source, keys, readonly, onConflict) {
+  if (!mpxGlobal.__mpx) {
+    console.warn('[Mpx utils warn]: Can not find "global.__mpx", "proxy" may encounter some potential problems!')
+  }
   keys = keys || Object.keys(source)
   keys.forEach((key) => {
     const descriptor = {
       get () {
         const val = source[key]
-        return !isReactive(source) && isRef(val) ? val.value : val
+        if (mpxGlobal.__mpx) {
+          return !mpxGlobal.__mpx.isReactive(source) && mpxGlobal.__mpx.isRef(val) ? val.value : val
+        } else {
+          return val
+        }
       },
       configurable: true,
       enumerable: true
@@ -126,12 +134,15 @@ function proxy (target, source, keys, readonly, onConflict) {
     descriptor.set = readonly
       ? noop
       : function (val) {
-        // 对reactive对象代理时不需要处理ref解包
-        if (!isReactive(source)) {
-          const oldVal = source[key]
-          if (isRef(oldVal) && !isRef(val)) {
-            oldVal.value = val
-            return
+        if (mpxGlobal.__mpx) {
+          const isRef = mpxGlobal.__mpx.isRef
+          // 对reactive对象代理时不需要处理ref解包
+          if (!mpxGlobal.__mpx.isReactive(source)) {
+            const oldVal = source[key]
+            if (isRef(oldVal) && !isRef(val)) {
+              oldVal.value = val
+              return
+            }
           }
         }
         source[key] = val
@@ -180,6 +191,7 @@ function processUndefined (obj) {
 
 export {
   hasOwn,
+  extend,
   isPlainObject,
   diffAndCloneA,
   proxy,

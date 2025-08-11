@@ -1,32 +1,19 @@
-const hasOwn = require('../utils/has-own')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
 const createHelpers = require('../helpers')
 const tabBarContainerPath = normalize.lib('runtime/components/web/mpx-tab-bar-container.vue')
 const tabBarPath = normalize.lib('runtime/components/web/mpx-tab-bar.vue')
 const addQuery = require('../utils/add-query')
+const parseRequest = require('../utils/parse-request')
+const shallowStringify = require('../utils/shallow-stringify')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
 }
 
-function shallowStringify (obj) {
-  const arr = []
-  for (const key in obj) {
-    if (hasOwn(obj, key)) {
-      let value = obj[key]
-      if (Array.isArray(value)) {
-        value = `[${value.join(',')}]`
-      }
-      arr.push(`'${key}':${value}`)
-    }
-  }
-  return `{${arr.join(',')}}`
-}
-
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
-    return `/* webpackChunkName: "${chunkName}" */`
+    return `/* webpackChunkName: "${chunkName}/index" */`
   }
   return ''
 }
@@ -128,10 +115,17 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
   }
 }
 
-function getRequireScript ({ ctorType, script, loaderContext }) {
+function getRequireScript ({ script, ctorType, loaderContext }) {
   let content = '  /** script content **/\n'
-  const extraOptions = { ctorType, lang: script.lang || 'js' }
   const { getRequire } = createHelpers(loaderContext)
+  const { resourcePath, queryObj } = parseRequest(loaderContext.resource)
+  const extraOptions = {
+    ...script.src
+      ? { ...queryObj, resourcePath }
+      : null,
+    ctorType,
+    lang: script.lang || 'js'
+  }
   content += `  ${getRequire('script', script, extraOptions)}\n`
   return content
 }
@@ -150,15 +144,15 @@ function buildGlobalParams ({
   let content = ''
   if (isMain) {
     content += `
-  global.getApp = function(){}
+  global.getApp = function () {}
   global.getCurrentPages = function () {
     if (!(typeof window !== 'undefined')) {
       console.error('[Mpx runtime error]: Dangerous API! global.getCurrentPages is running in non browser environment, It may cause some problems, please use this method with caution')
     }
     var router = global.__mpxRouter
-    if(!router) return []
+    if (!router) return []
     // @ts-ignore
-    return (router.lastStack || router.stack).map(function(item){
+    return (router.lastStack || router.stack).map(function (item) {
       var page
       var vnode = item.vnode
       if (vnode && vnode.componentInstance) {
@@ -168,7 +162,7 @@ function buildGlobalParams ({
     })
   }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-  global.__mpxGenericsMap = {}
+  global._gm = {}
   global.__mpxOptionsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
@@ -176,31 +170,33 @@ function buildGlobalParams ({
     if (globalTabBar) {
       content += globalTabBar
     }
-  } else if (!hasApp) {
-    content += `
-  global.__mpxGenericsMap = global.__mpxGenericsMap || {}
-  global.__mpxOptionsMap = global.__mpxOptionsMap || {}
-  global.__mpxTransRpxFn = ${webConfig.transRpxFn} \n`
-  }
-  // currentModuleId -> _id
-  content += `  global._id = ${JSON.stringify(moduleId)}\n`
-  // currentSrcMode -> _sm
-  content += `  global._sm = ${JSON.stringify(scriptSrcMode)}\n`
-  // currentInject -> _j
-  content += `  global._j = ${JSON.stringify({ moduleId })}\n`
-  if (!isProduction) {
-    content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+  } else {
+    if (!hasApp) {
+      content += '  global._gm = global._gm || {}\n'
+      content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
+      content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+    }
+    content += `  global._id = ${JSON.stringify(moduleId)}\n`
+    content += `  global._m = ${JSON.stringify(scriptSrcMode)}\n`
+    content += `  global._i = ${JSON.stringify({ moduleId })}\n`
+    if (!isProduction) {
+      content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
+    }
   }
   return content
 }
 
-function buildI18n ({ i18n, loaderContext }) {
+function buildI18n ({ i18n, isMain, loaderContext }) {
   let i18nContent = ''
   const i18nObj = Object.assign({}, i18n)
-  i18nContent += `
-  import VueI18n from 'vue-i18n'
+  if (!isMain) {
+    i18nContent += `import Vue from 'vue'
+    import Mpx from '@mpxjs/core'\n`
+  }
+  i18nContent += `import VueI18n from 'vue-i18n'
   import { createI18n } from 'vue-i18n-bridge'
-  Vue.use(VueI18n , { bridge: true })\n`
+  if (!Mpx.i18n) {
+    Vue.use(VueI18n , { bridge: true })\n`
   const requestObj = {}
   const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
   i18nKeys.forEach((key) => {
@@ -209,15 +205,16 @@ function buildI18n ({ i18n, loaderContext }) {
       delete i18nObj[`${key}Path`]
     }
   })
-  i18nContent += `  var i18nCfg = ${JSON.stringify(i18nObj)}\n`
+  i18nContent += `    var i18nCfg = ${JSON.stringify(i18nObj)}\n`
   Object.keys(requestObj).forEach((key) => {
-    i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
+    i18nContent += `    i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += `
-  i18nCfg.legacy = false
-  var i18n = createI18n(i18nCfg, VueI18n)
-  Vue.use(i18n)
-  Mpx.i18n = i18n\n`
+    i18nCfg.legacy = false
+    var i18n = createI18n(i18nCfg, VueI18n)
+    Vue.use(i18n)
+    Mpx.i18n = i18n
+  }\n`
   return i18nContent
 }
 
@@ -226,8 +223,6 @@ module.exports = {
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
-  shallowStringify,
-  getAsyncChunkName,
   stringifyRequest,
   buildI18n
 }

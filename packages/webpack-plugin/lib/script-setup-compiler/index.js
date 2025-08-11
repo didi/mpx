@@ -1,5 +1,6 @@
 const babylon = require('@babel/parser')
 const MagicString = require('magic-string')
+const { SourceMapConsumer, SourceMapGenerator } = require('source-map')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 const formatCodeFrame = require('@babel/code-frame')
@@ -380,7 +381,9 @@ function compileScriptSetup (
 
     if (node.type === 'ImportDeclaration') {
       // import declarations are moved to top
-      _s.move(start, end, 0)
+      if (start !== 0) {
+        _s.move(start, end, 0)
+      }
       // dedupe imports
       let removed = 0
       const removeSpecifier = (i) => {
@@ -533,7 +536,9 @@ function compileScriptSetup (
         (node.type === 'VariableDeclaration' && node.declare)
       ) {
         recordType(node, declaredTypes)
-        _s.move(node.start, node.end + 1, 0)
+        if (node.start !== 0) {
+          _s.move(node.start, node.end + 1, 0)
+        }
       }
     }
 
@@ -621,7 +626,12 @@ function compileScriptSetup (
   _s.appendRight(endOffset, '})')
 
   return {
-    content: _s.toString()
+    content: _s.toString(),
+    map: _s.generateMap({
+      source: filePath,
+      hires: true,
+      includeContent: true
+    })
   }
 }
 
@@ -1161,14 +1171,30 @@ function getCtor (ctorType) {
   return ctor
 }
 
-module.exports = function (content) {
+module.exports = async function (content, sourceMap) {
   const { queryObj } = parseRequest(this.resource)
   const { ctorType, lang } = queryObj
   const filePath = this.resourcePath
-  const { content: callbackContent } = compileScriptSetup({
+  const callback = this.async()
+  let finalSourceMap = null
+  const {
+    content: callbackContent,
+    map
+  } = compileScriptSetup({
     content,
     lang
   }, ctorType, filePath)
+  finalSourceMap = map
+  if (sourceMap) {
+    const compiledMapConsumer = await new SourceMapConsumer(map)
+    const compiledMapGenerator = SourceMapGenerator.fromSourceMap(compiledMapConsumer)
 
-  this.callback(null, callbackContent)
+    const originalConsumer = await new SourceMapConsumer(sourceMap)
+    compiledMapGenerator.applySourceMap(
+      originalConsumer,
+      filePath // 需要确保与原始映射的source路径一致
+    )
+    finalSourceMap = compiledMapGenerator.toJSON()
+  }
+  callback(null, callbackContent, finalSourceMap)
 }

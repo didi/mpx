@@ -6,10 +6,25 @@ module.exports = function ({ print }) {
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const ttEventLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false, type: 'event' })
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
+  const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
+  const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
+  const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
     web (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-picker-view'
+    },
+    harmony (tag, { el }) {
       el.isBuiltIn = true
       return 'mpx-picker-view'
     },
@@ -25,7 +40,10 @@ module.exports = function ({ print }) {
         ali: aliEventLog,
         swan: baiduEventLog,
         tt: ttEventLog,
-        jd: jdEventLog
+        jd: jdEventLog,
+        ios: iosEventLog,
+        android: androidEventLog,
+        harmony: harmonyEventLog
       }
     ]
   }

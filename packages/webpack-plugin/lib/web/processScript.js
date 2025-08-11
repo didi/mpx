@@ -1,8 +1,15 @@
 const genComponentTag = require('../utils/gen-component-tag')
 const loaderUtils = require('loader-utils')
 const normalize = require('../utils/normalize')
+const shallowStringify = require('../utils/shallow-stringify')
 const optionProcessorPath = normalize.lib('runtime/optionProcessor')
-const { buildComponentsMap, getRequireScript, buildGlobalParams, shallowStringify } = require('./script-helper')
+const {
+  buildComponentsMap,
+  getRequireScript,
+  buildGlobalParams,
+  stringifyRequest,
+  buildI18n
+} = require('./script-helper')
 
 module.exports = function (script, {
   loaderContext,
@@ -18,9 +25,7 @@ module.exports = function (script, {
   wxsModuleMap,
   localComponentsMap
 }, callback) {
-  const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
-
-  const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+  const { projectRoot, appInfo, webConfig, i18n } = loaderContext.getMpx()
 
   let output = '/* script */\n'
 
@@ -40,17 +45,17 @@ module.exports = function (script, {
       return attrs
     },
     content (script) {
-      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(optionProcessorPath)}\n`
+      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
       let hasApp = true
       if (!appInfo.name) {
         hasApp = false
       }
       // 注入wxs模块
-      content += '  const wxsModules = {}\n'
+      content += '  var wxsModules = {}\n'
       if (wxsModuleMap) {
         Object.keys(wxsModuleMap).forEach((module) => {
           const src = loaderUtils.urlToRequest(wxsModuleMap[module], projectRoot)
-          const expression = `require(${stringifyRequest(src)})`
+          const expression = `require(${stringifyRequest(loaderContext, src)})`
           content += `  wxsModules.${module} = ${expression}\n`
         })
       }
@@ -61,19 +66,14 @@ module.exports = function (script, {
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
-        const uselessOptions = new Set([
-          'usingComponents',
-          'style',
-          'singlePage'
-        ])
-        Object.keys(jsonConfig)
-          .filter(key => !uselessOptions.has(key))
-          .forEach(key => {
-            pageConfig[key] = jsonConfig[key]
-          })
+        Object.assign(pageConfig, jsonConfig)
+        delete pageConfig.usingComponents
       }
 
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
+      if (!hasApp && i18n) {
+        content += buildI18n({ i18n, loaderContext })
+      }
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
   export default processComponentOption({

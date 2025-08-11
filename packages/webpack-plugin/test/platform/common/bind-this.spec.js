@@ -4,7 +4,7 @@ const { trimBlankRow } = require('../../../lib/utils/string')
 describe('render function simplify should correct', function () {
   it('should normal delete is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         a;
         if (a) {}
 
@@ -58,7 +58,7 @@ describe('render function simplify should correct', function () {
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   if (_sc("a")) {}
 
   _sc("b");
@@ -79,7 +79,6 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   _sc("obj2");
 
-  String(_sc("obj3"), '123').b.c;
   _i(_sc("obj3"), function () {});
 
   _sc("obj5");
@@ -108,34 +107,44 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should computed delete is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         a.b
         if (a['b']) {}
         c;
         a[c];
         c.d;
         a.b[c.d];
-        e;
-        e[0].name
+
+        e1[0].name;
+        e2["a.b.c"]
+        f1["a.b.c"]["d"]
+        f2["a"]["b.c.d"]
+        g1.a["b.c"].d
+        g2.a["b"].c.d
+        g3.a["b"]["c.d"].e
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   if (_c("a.b")) {}
 
-  _sc("c");
+  _sc("a")[_sc("c")];
+  _c("a.b")[_c("c.d")];
 
-  _sc("a")[""];
-  _c("a.b")[""];
-
-  _sc("e");
+  _c("e1[0].name");
+  _sc("e2")["a.b.c"];
+  _sc("f1")["a.b.c"]["d"];
+  _c("f2.a")["b.c.d"];
+  _c("g1.a")["b.c"].d;
+  _c("g2.a.b.c.d");
+  _c("g3.a.b")["c.d"].e;
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
 
   it('should expression delete is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         // 逻辑运算          
         obj3 || ''
         obj3 && obj3.b
@@ -196,7 +205,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   // 逻辑运算          
   _sc("obj3") || '';
   _sc("obj3") && _c("obj3.b");
@@ -264,7 +273,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should backtrack variable deletion is correct', function () {
     const input = `
-    global.currentInject.render = function (_i, _c, _r, _sc) {
+    global._i.render = function (_i, _c, _r, _sc) {
       a
       {
         c
@@ -285,7 +294,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     `
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   _sc("a");
 
   {
@@ -309,7 +318,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should scope var is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         this._i(list, function (item, index) {
           item;
           index;
@@ -321,7 +330,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     `
     const res = bindThis(input, { needCollect: false, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   this._i(this.list, function (item, index) {
     item.a ? "" : "";
     item.a || item.b;
@@ -332,7 +341,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should propKeys is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         this._p(a);
         this._p(a + b);
         this._p(a && c);
@@ -347,7 +356,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should needCollect config is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         name;
         !name;
         !!name;
@@ -376,11 +385,10 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     `
     const res = bindThis(input, { needCollect: false, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   this.name;
 
-  this.name2;
-  this.name3[""];
+  this.name3[this.name2];
 
   this.name4 && this.name4.length;
   this.name4['length'];
@@ -394,6 +402,70 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
   '123' + "";
   '123' + "" + "";
   "" + '123' + "" + "";
+};`
+    expect(trimBlankRow(res)).toBe(trimBlankRow(output))
+  })
+
+  it('should wxs is correct', function () {
+    const input = `
+      global._i.render = function (_i, _c, _r, _sc) {
+        a;
+        tools.hexToRgba(a);
+
+        b;
+        tools.hexToRgba(b, 1);
+
+        0 ? tools(c) : 1;
+        0 ? tools(c, 1) : 1;
+        c;
+
+        tools(d, tools(e))
+        tools(d, tools(e, 1))
+        d;
+        e;
+        
+        a1;a2;a3;a4;a5;a6;
+        tools(a1) ? a2 || ((a3 || a4) && a5) : a6;
+        a7;a8;a9;a10;
+        (a7 + '') ? a8['a'] : ({name: a9 + a10})
+      }
+    `
+    const res = bindThis(input, {
+      needCollect: true,
+      renderReduce: true,
+      ignoreMap: {
+        _i: true,
+        _c: true,
+        _r: true,
+        tools: '../tools.wxs'
+      }
+    }).code
+    const output = `
+global._i.render = function (_i, _c, _r, _sc) {
+  _sc("a");
+
+  _sc("b");
+
+  0 ? "" : 1;
+  0 ? "" : 1;
+  _sc("c");
+
+  tools(_sc("d"), tools(_sc("e")));
+  tools(_sc("d"), tools(_sc("e"), 1));
+
+  _sc("a2");
+  _sc("a3");
+  _sc("a4");
+  _sc("a5");
+  _sc("a6");
+  tools(_sc("a1")) ? _sc("a2") || (_sc("a3") || _sc("a4")) && _sc("a5") : "";
+
+  _sc("a8");
+  _sc("a9");
+  _sc("a10");
+  _sc("a7") + '' ? "" : {
+    name: "" + ""
+  };
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })

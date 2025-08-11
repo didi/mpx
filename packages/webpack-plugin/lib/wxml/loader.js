@@ -5,6 +5,7 @@ const config = require('../config')
 const createHelpers = require('../helpers')
 const isUrlRequest = require('../utils/is-url-request')
 const parseRequest = require('../utils/parse-request')
+const genDynamicTemplate = require('../runtime-render/gen-dynamic-template')
 
 let count = 0
 
@@ -21,11 +22,19 @@ module.exports = function (content) {
   const { queryObj } = parseRequest(this.resource)
   const hasScoped = false
   const hasComment = false
-  const isNative = true
+  const isNative = false
 
   const mode = mpx.mode
   const localSrcMode = queryObj.mode
   const customAttributes = options.attributes || mpx.attributes || []
+  const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
+  const isDynamic = queryObj.isDynamic
+
+  const exportsString = 'module.exports = '
+
+  if (isDynamic) {
+    return exportsString + JSON.stringify(genDynamicTemplate(packageName)) + ';'
+  }
 
   const { getRequestString } = createHelpers(this)
 
@@ -70,8 +79,6 @@ module.exports = function (content) {
   content.reverse()
   content = content.join('')
   content = JSON.stringify(content)
-
-  const exportsString = 'module.exports = '
 
   return exportsString + content.replace(/__HTMLLINK__\d+__/g, (match) => {
     if (!data[match]) return match

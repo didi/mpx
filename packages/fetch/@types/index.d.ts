@@ -5,11 +5,19 @@ interface CancelTokenClass {
   }
 }
 
-// @ts-ignore
-export interface fetchOption extends WechatMiniprogram.RequestOption {
+interface PreCacheOption<T> {
+  enable: boolean
+  ignorePreParamKeys?: string[]
+  equals?: (selfConfig: any, cacheConfig: any) => boolean
+  cacheInvalidationTime?: number
+  onUpdate?: (response: T) => void
+}
+
+export interface fetchOption<T> extends WechatMiniprogram.RequestOption {
   params?: object
   cancelToken?: InstanceType<CancelTokenClass>['token']
   emulateJSON?: boolean
+  usePre?: PreCacheOption<T>
 }
 
 interface CreateOption {
@@ -18,8 +26,7 @@ interface CreateOption {
   ratio?: number
 }
 
-// @ts-ignore
-type fetchT = <T>(option: fetchOption, priority?: 'normal' | 'low') => Promise<WechatMiniprogram.RequestSuccessCallbackResult<T> & { requestConfig: fetchOption }>
+type fetchT = <T>(option: fetchOption<T>, priority?: 'normal' | 'low') => Promise<WechatMiniprogram.RequestSuccessCallbackResult<T> & { requestConfig: fetchOption<T> }>
 type addLowPriorityWhiteListT = (rules: string | RegExp | Array<string | RegExp>) => void
 type createT = (option?: CreateOption) => xfetch
 

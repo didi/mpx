@@ -1,4 +1,3 @@
-// @ts-ignore
 import type { ComputedRef } from '@mpxjs/core'
 
 type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
@@ -55,11 +54,10 @@ type GetDispatch<A, D> = keyof D extends never ? (<T extends keyof A>(type: T, .
 
 type GetCommit<M, D> = keyof D extends never ? (<T extends keyof M>(type: T, ...payload: M[T] extends (state: any, ...payload: infer P) => any ? P : never) => M[T] extends (state: any, ...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
 
-
 // do not exist in tip
-declare const DEPS_SYMBOL: unique symbol;
-declare const STATE_SYMBOL: unique symbol;
-declare const GETTERS_SYMBOL: unique symbol;
+declare const DEPS_SYMBOL: unique symbol
+declare const STATE_SYMBOL: unique symbol
+declare const GETTERS_SYMBOL: unique symbol
 
 type DepsSymbol = typeof DEPS_SYMBOL
 type StateSymbol = typeof STATE_SYMBOL
@@ -141,21 +139,14 @@ export interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapActionsToInstance<K extends keyof A>(maps: K[], context: compContext): Pick<GetActions<A>, K>
   mapActionsToInstance(depPath: string, maps: string[], context: compContext): void
 }
-type GetComputedSetKeys<T> = {
-  [K in keyof T]: T[K] extends {
-    get(): any,
-    set(val: any): void
-  } ? K : never
-}[keyof T]
 
 export type GetComputedType<T> = {
-  readonly [K in Exclude<keyof T, GetComputedSetKeys<T>>]: T[K] extends () => infer R ? R : T[K]
-} & {
-    [K in GetComputedSetKeys<T>]: T[K] extends {
-      get(): infer R,
-      set(val: any): void
-    } ? R : T[K]
-  }
+  [K in keyof T]: T[K] extends { get: (...args: any[]) => infer R }
+    ? R
+    : T[K] extends (...args: any[]) => infer R
+    ? R
+    : never
+}
 
 interface MutationsAndActionsWithThis {
   [key: string]: (...payload: any[]) => any

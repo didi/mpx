@@ -1,52 +1,8 @@
 /**
- * mpxjs webview bridge v2.9.17
- * (c) 2024 @mpxjs team
+ * mpxjs webview bridge v2.10.3
+ * (c) 2025 @mpxjs team
  * @license Apache
  */
-function _defineProperty(e, r, t) {
-  return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
-    value: t,
-    enumerable: !0,
-    configurable: !0,
-    writable: !0
-  }) : e[r] = t, e;
-}
-function ownKeys(e, r) {
-  var t = Object.keys(e);
-  if (Object.getOwnPropertySymbols) {
-    var o = Object.getOwnPropertySymbols(e);
-    r && (o = o.filter(function (r) {
-      return Object.getOwnPropertyDescriptor(e, r).enumerable;
-    })), t.push.apply(t, o);
-  }
-  return t;
-}
-function _objectSpread2(e) {
-  for (var r = 1; r < arguments.length; r++) {
-    var t = null != arguments[r] ? arguments[r] : {};
-    r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
-      _defineProperty(e, r, t[r]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
-      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
-    });
-  }
-  return e;
-}
-function _toPrimitive(t, r) {
-  if ("object" != typeof t || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r || "default");
-    if ("object" != typeof i) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return ("string" === r ? String : Number)(t);
-}
-function _toPropertyKey(t) {
-  var i = _toPrimitive(t, "string");
-  return "symbol" == typeof i ? i : i + "";
-}
-
 function loadScript(url) {
   var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
     _ref$time = _ref.time,
@@ -88,7 +44,7 @@ function loadScript(url) {
 }
 
 var sdkReady;
-var SDK_URL_MAP = _objectSpread2({
+var SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
   },
@@ -102,7 +58,7 @@ var SDK_URL_MAP = _objectSpread2({
     url: 'https://b.bdstatic.com/searchbox/icms/searchbox/js/swan-2.0.4.js'
   },
   tt: {
-    url: 'https://s3.pstatp.com/toutiao/tmajssdk/jssdk.js'
+    url: 'https://lf3-cdn-tos.bytegoofy.com/obj/goofy/developer/jssdk/jssdk-1.2.1.js'
   }
 }, window.sdkUrlMap);
 function getMpxWebViewId() {
@@ -119,6 +75,30 @@ var env = null;
 var callbackId = 0;
 var clientUid = getMpxWebViewId();
 var callbacks = {};
+var runCallback = function runCallback(msgData) {
+  var callbackId = msgData.callbackId,
+    error = msgData.error,
+    result = msgData.result;
+  if (callbackId !== undefined && callbacks[callbackId]) {
+    if (error) {
+      callbacks[callbackId](error);
+    } else {
+      callbacks[callbackId](null, result);
+    }
+    delete callbacks[callbackId];
+  }
+};
+var eventListener = function eventListener(event) {
+  // 接收web-view的回调
+  var msgData = event.data;
+  try {
+    if (typeof msgData === 'string') {
+      msgData = JSON.parse(msgData);
+    }
+  } catch (e) {}
+  runCallback(msgData);
+};
+
 // 环境判断逻辑
 var systemUA = navigator.userAgent;
 if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
@@ -127,28 +107,17 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
 } else if (systemUA.indexOf('swan/') > -1) {
   env = 'swan';
-} else if (systemUA.indexOf('toutiao') > -1) {
+} else if (systemUA.toLocaleLowerCase().indexOf('toutiao') > -1) {
   env = 'tt';
+} else if (window.ReactNativeWebView) {
+  env = 'rn';
+  window.mpxWebviewMessageCallback = runCallback;
 } else {
   env = 'web';
-  window.addEventListener('message', function (event) {
-    // 接收web-view的回调
-    var _event$data = event.data,
-      callbackId = _event$data.callbackId,
-      error = _event$data.error,
-      result = _event$data.result;
-    if (callbackId !== undefined && callbacks[callbackId]) {
-      if (error) {
-        callbacks[callbackId](error);
-      } else {
-        callbacks[callbackId](null, result);
-      }
-      delete callbacks[callbackId];
-    }
-  }, false);
+  window.addEventListener('message', eventListener, false);
 }
 var initWebviewBridge = function initWebviewBridge() {
-  sdkReady = env !== 'web' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  sdkReady = env !== 'web' && env !== 'rn' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
   getWebviewApi();
 };
 var webviewSdkready = false;
@@ -175,20 +144,15 @@ var webviewBridge = {
     });
   }
 };
-function filterData(data) {
-  if (Object.prototype.toString.call(data) !== '[object Object]') {
-    return data;
-  }
-  var newData = {};
-  for (var item in data) {
-    if (typeof data[item] !== 'function') {
-      newData[item] = data[item];
-    }
-  }
-  return newData;
-}
 function postMessage(type) {
-  var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  for (var _len = arguments.length, extraData = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    extraData[_key - 1] = arguments[_key];
+  }
+  if (type === 'invoke') {
+    type = extraData[0];
+    extraData = extraData.slice(1);
+  }
+  var data = extraData[0] || {};
   if (type !== 'getEnv') {
     var currentCallbackId = ++callbackId;
     callbacks[currentCallbackId] = function (err, res) {
@@ -204,16 +168,26 @@ function postMessage(type) {
     var postParams = {
       type: type,
       callbackId: callbackId,
-      payload: filterData(data)
+      args: extraData
     };
     if (clientUid !== undefined) {
       postParams.clientUid = clientUid;
     }
-    window.parent.postMessage && window.parent.postMessage(postParams, '*');
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage(JSON.stringify(postParams));
+    } else {
+      window.parent.postMessage && window.parent.postMessage(JSON.stringify(postParams), '*');
+    }
   } else {
-    data({
+    var result = {
       webapp: true
-    });
+    };
+    if (window.ReactNativeWebView) {
+      result = {
+        reactNative: true
+      };
+    }
+    data(result);
   }
 }
 var getWebviewApi = function getWebviewApi() {
@@ -239,15 +213,17 @@ var getWebviewApi = function getWebviewApi() {
     wx: ['checkJSApi', 'chooseImage', 'previewImage', 'uploadImage', 'downloadImage', 'getLocalImgData', 'startRecord', 'stopRecord', 'onVoiceRecordEnd', 'playVoice', 'pauseVoice', 'stopVoice', 'onVoicePlayEnd', 'uploadVoice', 'downloadVoice', 'translateVoice', 'getNetworkType', 'openLocation', 'getLocation', 'startSearchBeacons', 'stopSearchBeacons', 'onSearchBeacons', 'scanQRCode', 'chooseCard', 'addCard', 'openCard'],
     my: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'chooseImage', 'previewImage', 'getLocation', 'openLocation', 'alert', 'showLoading', 'hideLoading', 'getNetworkType', 'startShare', 'tradePay', 'postMessage', 'onMessage', 'getEnv'],
     swan: ['makePhoneCall', 'setClipboardData', 'getNetworkType', 'openLocation', 'getLocation', 'chooseLocation', 'chooseImage', 'previewImage', 'openShare', 'navigateToSmartProgram'],
-    web: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLoadError', 'getLocation']
+    web: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLocation', 'invoke'],
+    rn: ['navigateTo', 'navigateBack', 'switchTab', 'reLaunch', 'redirectTo', 'getEnv', 'postMessage', 'getLocation', 'invoke'],
+    tt: []
   };
   var multiApi = multiApiMap[env] || {};
-  var singleApi = singleApiMap[env] || {};
+  var singleApi = singleApiMap[env] || [];
   var multiApiLists = multiApi.api || [];
   multiApiLists.forEach(function (item) {
     webviewBridge[item] = function () {
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        args[_key2] = arguments[_key2];
       }
       runWebviewApiMethod(function () {
         var _window$env$multiApi$;
@@ -257,10 +233,10 @@ var getWebviewApi = function getWebviewApi() {
   });
   singleApi.forEach(function (item) {
     webviewBridge[item] = function () {
-      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        args[_key2] = arguments[_key2];
+      for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        args[_key3] = arguments[_key3];
       }
-      if (env === 'web') {
+      if (env === 'web' || env === 'rn') {
         postMessage.apply(void 0, [item].concat(args));
       } else if (env === 'wx') {
         runWebviewApiMethod(function () {

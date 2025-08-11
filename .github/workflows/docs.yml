@@ -8,16 +8,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: technote-space/get-diff-action@v4
         with:
           PATTERNS: |
-            +(docs|docs-vuepress)/**/*
-            +(docs|docs-vuepress)/.*/**/*
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16'
-
+            +(docs|docs-vitepress)/**/*
+            +(docs|docs-vitepress)/.*/**/*
       # vuepress生成最终文档
       - name: generate docs file
         if: env.GIT_DIFF
@@ -34,6 +30,6 @@ jobs:
           username: ${{ secrets.DOCS_SERVER_USER }}
           key: ${{ secrets.DOCS_SERVER_KEY }}
           command_timeout: "20m"
-          source: "./docs-vuepress/.vuepress/dist/"
+          source: "./docs-vitepress/.vitepress/dist/"
           strip_components: 4
           target: "${{ secrets.DOCS_SERVER_DIR }}"

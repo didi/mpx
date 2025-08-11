@@ -1,4 +1,4 @@
-import { isBrowser, throwSSRWarning } from '../../../../common/js/utils'
+import { isBrowser, throwSSRWarning } from '../../../../common/js'
 const fnMap = new Map()
 
 const oldObserveList = new Set()

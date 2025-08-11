@@ -1,4 +1,5 @@
-import { ENV_OBJ, noop } from '../../../common/js'
+import { ENV_OBJ } from '../../../common/js'
+import { noop } from '@mpxjs/utils'
 
 function createSelectorQuery (options = {}) {
   const selectorQuery = ENV_OBJ.createSelectorQuery(options)

@@ -8,5 +8,8 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 .DS_Store
-docs-vuepress/.vuepress/dist
 elevate/
+docs-vitepress/.vitepress/dist
+docs-vitepress/.vitepress/cache
+dev-dist
+packages/webpack-plugin/lib/runtime/components/react/dist/

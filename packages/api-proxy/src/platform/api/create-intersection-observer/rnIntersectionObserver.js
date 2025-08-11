@@ -1,0 +1,240 @@
+import { isArray, isObject, isString, noop, warn } from '@mpxjs/utils'
+import throttle from 'lodash/throttle'
+import { Dimensions } from 'react-native'
+import { getFocusedNavigation } from '../../../common/js'
+const WindowRefStr = 'window'
+const IgnoreTarget = 'ignore'
+const DefaultMargin = { top: 0, bottom: 0, left: 0, right: 0 }
+let idCount = 0
+
+class RNIntersectionObserver {
+  constructor (component, options, intersectionCtx) {
+    this.id = idCount++
+    this.component = component
+    this.mpxFileResource = component.__mpxProxy?.options?.mpxFileResource || ''
+    this.options = Object.assign({
+      thresholds: [0],
+      initialRatio: 0,
+      observeAll: false,
+      throttleTime: 100
+    }, options || {})
+    this.thresholds = this.options.thresholds.sort((a, b) => a - b)
+    this.initialRatio = this.options.initialRatio
+    this.observeAll = this.options.observeAll
+
+    // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
+    this.component._intersectionObservers = this.component._intersectionObservers || []
+    this.component._intersectionObservers.push(this)
+
+    this.observerRefs = null
+    this.relativeRef = null
+    this.margins = DefaultMargin
+    this.callback = noop
+
+    this.throttleMeasure = this.getThrottleMeasure(this.options.throttleTime)
+
+    // 记录上一次相交的比例
+    this.previousIntersectionRatio = []
+
+     // 添加实例添加到上下文中，滚动组件可以获取到上下文内的实例从而触发滚动
+    if (intersectionCtx && isObject(intersectionCtx)) {
+      this.intersectionCtx = intersectionCtx
+      this.intersectionCtx[this.id] = this
+    }
+    return this
+  }
+
+    // 支持传递ref 或者 selector
+  relativeTo (selector, margins = {}) {
+    let relativeRef
+    if (isString(selector)) {
+      relativeRef = this.component.__selectRef(selector, 'node')
+    }
+    if (isObject(selector)) {
+      relativeRef = selector.nodeRefs?.[0]
+    }
+    if (relativeRef) {
+      this.relativeRef = relativeRef
+      this.margins = Object.assign({}, DefaultMargin, margins)
+    } else {
+      warn(`node ${selector}is not found. The relative node for intersection observer will be ignored`, this.mpxFileResource)
+    }
+    return this
+  }
+
+  relativeToViewport (margins = {}) {
+    this.relativeRef = WindowRefStr
+    this.margins = Object.assign({}, DefaultMargin, margins)
+    return this
+  }
+
+  observe (selector, callback) {
+    if (this.observerRefs) {
+      warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
+      return
+    }
+    let targetRef = null
+    if (this.observeAll) {
+      targetRef = this.component.__selectRef(selector, 'node', true)
+    } else {
+      targetRef = this.component.__selectRef(selector, 'node')
+    }
+    if (!targetRef || targetRef.length === 0) {
+      warn('intersection observer target not found', this.mpxFileResource)
+      return
+    }
+    this.observerRefs = isArray(targetRef) ? targetRef : [targetRef]
+    this.callback = callback
+    this._measureTarget(true)
+  }
+
+  _getWindowRect () {
+    if (this.windowRect) return this.windowRect
+    const navigation = getFocusedNavigation() || {}
+    const screen = Dimensions.get('screen')
+    const navigationLayout = navigation.layout || {
+      top: 0,
+      left: 0,
+      width: screen.width,
+      height: screen.height
+    }
+
+    const windowRect = {
+      top: navigationLayout.top - this.margins.top,
+      left: 0 - this.margins.left,
+      right: navigationLayout.width + this.margins.right,
+      bottom: navigationLayout.top + navigationLayout.height + this.margins.bottom
+    }
+    this.windowRect = windowRect
+    return this.windowRect
+  }
+
+  _getReferenceRect (targetRef) {
+    const navigation = getFocusedNavigation() || {}
+    const layout = navigation.layout || {}
+    const targetRefs = isArray(targetRef) ? targetRef : [targetRef]
+    const targetPromiseQueue = []
+    targetRefs.forEach((targetRefItem) => {
+      if (targetRefItem === WindowRefStr) {
+        targetPromiseQueue.push(this._getWindowRect())
+        return
+      }
+      // 当节点前面存在后面移除的时候可能会存在拿不到target的情况，此处直接忽略留一个占位不用做计算即可
+      // 测试节点移除之后 targetRefItem.getNodeInstance().nodeRef都存在，只是current不存在了
+      if (!targetRefItem || !targetRefItem.getNodeInstance().nodeRef.current) {
+        targetPromiseQueue.push(Promise.resolve(IgnoreTarget))
+        return
+      }
+      const target = targetRefItem.getNodeInstance().nodeRef.current
+      targetPromiseQueue.push(new Promise((resolve) => {
+        target.measureInWindow(
+          (x, y, width, height) => {
+            // 安卓measureInWindow的参考值在android下为statubar的左下角，因此top需要调整一下
+            const boundingClientRect = {
+              left: x,
+              top: y + layout.statusBarHeight || 0,
+              right: x + width,
+              bottom: y + height + layout.statusBarHeight || 0,
+              width: width,
+              height: height
+            }
+            resolve(boundingClientRect)
+          }
+        )
+      }))
+    })
+
+    if (isArray(targetRef)) {
+      return Promise.all(targetPromiseQueue)
+    } else {
+      return targetPromiseQueue[0]
+    }
+  }
+
+  _restrictValueInRange (start = 0, end = 0, value = 0) {
+    return Math.min(Math.max(start, value), end)
+  }
+
+  _getRatioIndex (ratio, thresholds = []) {
+    if (ratio === 0 && thresholds.includes(0)) return -1
+    if (ratio === 1 && thresholds.includes(1)) return thresholds.length
+    let returnIndex = -1
+    thresholds.forEach((item, index) => {
+      if (ratio >= item) {
+       returnIndex = index
+      }
+    })
+    return returnIndex
+  }
+
+  // 计算相交区域
+  _measureIntersection ({ observeRect, relativeRect, observeIndex, isInit }) {
+    const visibleRect = {
+      left: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.left),
+      top: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.top),
+      right: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.right),
+      bottom: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.bottom)
+    }
+
+    const targetArea = (observeRect.bottom - observeRect.top) * (observeRect.right - observeRect.left)
+    const visibleArea = (visibleRect.bottom - visibleRect.top) * (visibleRect.right - visibleRect.left)
+    const intersectionRatio = targetArea ? visibleArea / targetArea : 0
+    const isInsected = isInit ? intersectionRatio > this.initialRatio : !(this._getRatioIndex(intersectionRatio, this.thresholds) === this._getRatioIndex(this.previousIntersectionRatio[observeIndex], this.thresholds))
+    this.previousIntersectionRatio[observeIndex] = intersectionRatio
+    return {
+      intersectionRatio,
+      intersectionRect: {
+        top: visibleRect.top,
+        bottom: relativeRect.bottom,
+        left: visibleRect.left,
+        right: relativeRect.right
+      },
+      isInsected
+    }
+  }
+
+  getThrottleMeasure (throttleTime) {
+    return throttle(() => {
+      this._measureTarget()
+    }, throttleTime)
+  }
+
+  // 计算节点的rect信息
+  _measureTarget (isInit = false) {
+    Promise.all([
+      this._getReferenceRect(this.observerRefs),
+      this._getReferenceRect(this.relativeRef)
+    ]).then(([observeRects, relativeRect]) => {
+      if (relativeRect === IgnoreTarget) return
+      observeRects.forEach((observeRect, index) => {
+        if (observeRect === IgnoreTarget) return
+        const { intersectionRatio, intersectionRect, isInsected } = this._measureIntersection({
+          observeRect,
+          observeIndex: index,
+          relativeRect,
+          isInit
+        })
+        if (isInsected) {
+          this.callback({
+            // index: index,
+            id: this.observerRefs[index].getNodeInstance().props?.current?.id,
+            dataset: this.observerRefs[index].getNodeInstance().props?.current?.dataset || {},
+            intersectionRatio: Math.round(intersectionRatio * 100) / 100,
+            intersectionRect,
+            boundingClientRect: observeRect,
+            relativeRect: relativeRect,
+            time: Date.now()
+          })
+        }
+      })
+    }).catch((e) => {
+      warn('_measureTarget fail', this.mpxFileResource, e)
+    })
+  }
+
+  disconnect () {
+    if (this.intersectionCtx) delete this.intersectionCtx[this.id]
+  }
+}
+
+export default RNIntersectionObserver

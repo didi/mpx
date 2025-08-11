@@ -1,4 +1,5 @@
-import { ENV_OBJ, changeOpts, noop } from '../../../common/js'
+import { ENV_OBJ, changeOpts } from '../../../common/js'
+import { noop } from '@mpxjs/utils'
 
 function showActionSheet (options = {}) {
   const opts = changeOpts(options, {

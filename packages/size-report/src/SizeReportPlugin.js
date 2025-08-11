@@ -64,14 +64,19 @@ class SizeReportPlugin {
 
       // 简化identifier
       function getSuccinctIdentifier (module) {
-        const identifier = module.readableIdentifier(compilation.requestShortener)
+        let identifier = module.readableIdentifier(compilation.requestShortener)
         let query = ''
         const resource = module.resource || (module.rootModule && module.rootModule.resource)
         if (resource) {
           const { queryObj } = parseRequest(resource)
           query = queryObj.packageRoot ? '?packageRoot=' + queryObj.packageRoot : ''
         }
-        return identifier.split(/\?|!/)[0] + query
+        identifier = identifier.split(/\?|!/)[0] + query
+        const match = identifier.match(/\.pnpm\/[^/]+\/(node_modules\/.*)/)
+        if (match) {
+          identifier = match[1]
+        }
+        return identifier
       }
 
       function walkEntry (entryModule, sideEffect) {
@@ -160,10 +165,12 @@ class SizeReportPlugin {
       const moduleEntriesMap = new Map()
 
       function setModuleEntries (module, entryModule, noEntry) {
-        getModuleEntries(module, noEntry).add(entryModule.rootModule || entryModule)
+        entryModule = entryModule.rootModule || entryModule
+        getModuleEntries(module, noEntry).add(entryModule)
       }
 
       function getModuleEntries (module, noEntry) {
+        module = module.rootModule || module
         const entries = moduleEntriesMap.get(module) || []
         const index = noEntry ? 1 : 0
         entries[index] = entries[index] || new Set()
@@ -817,6 +824,45 @@ class SizeReportPlugin {
       }
 
       this.options.callback && this.options.callback(reportData)
+
+      if (this.options.skylineSubpackages) {
+        /**
+         * skyline 分包相关功能检测
+         * 1.检测是否有其他分包异步引用skyline分包
+         * 2.检测skyline分包内页面是否全量开启 renderer = 'skyline'
+         */
+        // 判断 skylineSubpackages 是否为数组
+        if (Array.isArray(this.options.skylineSubpackages)) {
+          // 遍历 skylineSubpackages
+          this.options.skylineSubpackages.forEach((skylineSubpackage) => {
+            const subpackageInfo = mpx.dynamicEntryInfo[skylineSubpackage]
+            if (subpackageInfo && subpackageInfo.entries) {
+              subpackageInfo.entries.forEach((entry) => {
+                if (entry.hasAsync) {
+                  // 报错提示skyline分包不可被其他分包异步引用
+                  compilation.errors.push(new Error(`skylineSubpackages ${skylineSubpackage} can not be required async\n
+                    resource: ${entry.resource}\n
+                    filename: ${entry.filename}
+                  `))
+                }
+                if (entry.entryType === 'page') {
+                  const pageJsonString = compilation.assets[entry.filename + '.json'].source()
+                  const pageJson = JSON.parse(pageJsonString)
+                  if (pageJson.renderer !== 'skyline') {
+                    // 报错提示skyline分包内页面必须开启 renderer = 'skyline'
+                    compilation.errors.push(new Error(`skylineSubpackages ${skylineSubpackage} page ${entry.filename} must set renderer = 'skyline'\n
+                      resource: ${entry.resource}\n
+                      filename: ${entry.filename}
+                    `))
+                  }
+                }
+              })
+            }
+          })
+        } else {
+          logger.warn('skylineSubpackages must be an array')
+        }
+      }
 
       logger.timeEnd('compute size')
     })

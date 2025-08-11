@@ -3,7 +3,7 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
-const { isOriginTag, isBuildInTag } = require('../../../utils/dom-tag-config')
+const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../utils/dom-tag-config')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -84,10 +84,9 @@ module.exports = function getSpec ({ warn, error }) {
     return input
   }
 
-  function fillGlobalComponents (input, { globalComponents }) {
-    if (globalComponents) {
-      Object.assign(globalComponents, input.usingComponents)
-    }
+  function fillGlobalComponents (input, { globalComponents }, meta) {
+    // 通过meta进行globalComponents的透传
+    meta.usingComponents = input.usingComponents
     return input
   }
 
@@ -129,19 +128,41 @@ module.exports = function getSpec ({ warn, error }) {
   /**
    * 将小程序代码中使用的与原生 HTML tag 或 内建组件 同名的组件进行转化，以解决与原生tag命名冲突问题。
    */
-  function fixComponentName (type) {
-    return function (input) {
-      const usingComponents = input[type]
-      if (usingComponents) {
-        Object.keys(usingComponents).forEach(tag => {
-          if (isOriginTag(tag) || isBuildInTag(tag)) {
-            usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
-            delete usingComponents[tag]
+  function fixComponentName (input, { mode }) {
+    const isNeedFixTag = (tag) => {
+      switch (mode) {
+        case 'web': return isOriginTag(tag) || isBuildInWebTag(tag)
+        case 'ios':
+        case 'android':
+        case 'harmony': return isOriginTag(tag) || isBuildInReactTag(tag)
+      }
+    }
+
+    const usingComponents = input.usingComponents
+    const componentPlaceholder = input.componentPlaceholder
+    if (usingComponents) {
+      const transfromKeys = []
+      Object.keys(usingComponents).forEach(tag => {
+        if (isNeedFixTag(tag)) {
+          usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
+          delete usingComponents[tag]
+          transfromKeys.push(tag)
+        }
+      })
+
+      if (transfromKeys.length && componentPlaceholder) {
+        Object.keys(componentPlaceholder).forEach(key => {
+          if (transfromKeys.includes(componentPlaceholder[key])) {
+            componentPlaceholder[key] = `mpx-com-${componentPlaceholder[key]}`
+          }
+          if (transfromKeys.includes(key)) {
+            componentPlaceholder[`mpx-com-${key}`] = componentPlaceholder[key]
+            delete componentPlaceholder[key]
           }
         })
       }
-      return input
     }
+    return input
   }
 
   const componentRules = [
@@ -153,12 +174,7 @@ module.exports = function getSpec ({ warn, error }) {
       test: 'componentPlaceholder',
       ali: aliComponentPlaceholderFallback,
       swan: deletePath(),
-      tt: deletePath(),
       jd: deletePath()
-    },
-    {
-      test: 'usingComponents',
-      web: fixComponentName('usingComponents')
     },
     {
       test: 'usingComponents',
@@ -166,12 +182,14 @@ module.exports = function getSpec ({ warn, error }) {
       swan: componentNameCapitalToHyphen('usingComponents')
     },
     {
-      // todo ali 2.0已支持全局组件，待移除
-      ali: addGlobalComponents,
       swan: addGlobalComponents,
       qq: addGlobalComponents,
       tt: addGlobalComponents,
-      jd: addGlobalComponents
+      jd: addGlobalComponents,
+      web: fixComponentName,
+      ios: fixComponentName,
+      android: fixComponentName,
+      harmony: fixComponentName
     }
   ]
 
@@ -260,12 +278,22 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'jd', 'qa', 'dd', 'web'],
-    normalizeTest,
-    page: [
-      ...windowRules,
-      ...componentRules
+    supportedModes: [
+      'ali',
+      'swan',
+      'qq',
+      'tt',
+      'jd',
+      'qa',
+      'dd',
+      'web',
+      'ios',
+      'android',
+      'harmony'
     ],
+
+    normalizeTest,
+    page: [...windowRules, ...componentRules],
     component: componentRules,
     window: windowRules,
     tabBar: {
@@ -301,7 +329,7 @@ module.exports = function getSpec ({ warn, error }) {
           ali (input) {
             const value = input.list
             delete input.list
-            input.items = value.map(item => {
+            input.items = value.map((item) => {
               return runRules(spec.tabBar.list, item, {
                 mode: 'ali',
                 normalizeTest,
@@ -345,7 +373,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'preloadRule',
-        tt: deletePath(),
         jd: deletePath()
       },
       {
@@ -365,17 +392,11 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        web: fixComponentName('usingComponents')
-      },
-      {
-        test: 'usingComponents',
         ali: componentNameCapitalToHyphen('usingComponents'),
         swan: componentNameCapitalToHyphen('usingComponents')
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: fillGlobalComponents,
         qq: fillGlobalComponents,
         swan: fillGlobalComponents,
         tt: fillGlobalComponents,
@@ -383,8 +404,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'usingComponents',
-        // todo ali 2.0已支持全局组件，待移除
-        ali: deletePath({ noLog: true }),
         qq: deletePath({ noLog: true }),
         swan: deletePath({ noLog: true }),
         tt: deletePath({ noLog: true }),
@@ -435,6 +454,12 @@ module.exports = function getSpec ({ warn, error }) {
         swan: getWindowRule(),
         tt: getWindowRule(),
         jd: getWindowRule()
+      },
+      {
+        web: fixComponentName,
+        ios: fixComponentName,
+        android: fixComponentName,
+        harmony: fixComponentName
       }
     ]
   }

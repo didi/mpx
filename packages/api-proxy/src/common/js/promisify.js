@@ -1,6 +1,4 @@
-import { getEnvObj } from './utils'
-
-const envObj = getEnvObj()
+import { ENV_OBJ } from './utils'
 
 // 特别指定的不进行Promise封装的方法
 const blackList = [
@@ -16,22 +14,37 @@ const blackList = [
   'stopBackgroundAudio',
   'showNavigationBarLoading',
   'hideNavigationBarLoading',
-  'createAnimation',
-  'createAnimationVideo',
-  'createSelectorQuery',
-  'createIntersectionObserver',
   'getPerformance',
   'hideKeyboard',
   'stopPullDownRefresh',
-  'createWorker',
   'pageScrollTo',
   'reportAnalytics',
   'getMenuButtonBoundingClientRect',
   'reportMonitor',
-  'createOffscreenCanvas',
   'reportEvent',
   'connectSocket',
-  'base64ToArrayBuffer'
+  'base64ToArrayBuffer',
+  'arrayBufferToBase64',
+  'getDeviceInfo',
+  'getWindowInfo',
+  'getAppBaseInfo',
+  'getAppAuthorizeSetting',
+  'getApiCategory',
+  'postMessageToReferrerPage',
+  'postMessageToReferrerMiniProgram',
+  'reportPerformance',
+  'getPerformance',
+  'preDownloadSubpackage',
+  'router',
+  'nextTick',
+  'checkIsPictureInPictureActive',
+  'worklet',
+  'revokeBufferURL',
+  'reportEvent',
+  'getExptInfoSync',
+  'reserveChannelsLive',
+  'getNFCAdapter',
+  'isVKSupport'
 ]
 
 function getMapFromList (list) {
@@ -55,7 +68,7 @@ function promisify (listObj, whiteList, customBlackList) {
     } else {
       return !(blackListMap[key] || // 特别指定的方法
         /^get\w*Manager$/.test(key) || // 获取manager的api
-        /^create\w*Context$/.test(key) || // 创建上下文相关api
+        /^create(?!BLEConnection|BLEPeripheralServer)\w*$/.test(key) || // 创建上下文相关api
         /^(on|off)/.test(key) || // 以 on* 或 off开头的方法
         /\w+Sync$/.test(key) // 以Sync结尾的方法
       )
@@ -70,15 +83,23 @@ function promisify (listObj, whiteList, customBlackList) {
     result[key] = function (...args) {
       const obj = args[0] || {}
       // 不需要转换 or 用户已定义回调，则不处理
-      if (!promisifyFilter(key) || obj.success || obj.fail) {
-        return listObj[key].apply(envObj, args)
+      if (!promisifyFilter(key)) {
+        return listObj[key].apply(ENV_OBJ, args)
       } else { // 其他情况进行转换
         if (!args[0]) args.unshift(obj)
         let returned
         const promise = new Promise((resolve, reject) => {
-          obj.success = resolve
-          obj.fail = reject
-          returned = listObj[key].apply(envObj, args)
+          const originSuccess = obj.success
+          const originFail = obj.fail
+          obj.success = function (res) {
+            originSuccess && originSuccess.call(this, res)
+            resolve(res)
+          }
+          obj.fail = function (e) {
+            originFail && originFail.call(this, e)
+            reject(e)
+          }
+          returned = listObj[key].apply(ENV_OBJ, args)
         })
         promise.__returned = returned
         return promise

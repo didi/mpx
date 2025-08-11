@@ -10,14 +10,15 @@ const addQuery = require('../utils/add-query')
 const getJSONContent = require('../utils/get-json-content')
 const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
-const RecordGlobalComponentsDependency = require('../dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
+const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
+const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 const { isProductionLikeMode } = require('../utils/optimize-compress')
 
 module.exports = function (content) {
@@ -49,6 +50,7 @@ module.exports = function (content) {
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
   const fs = this._compiler.inputFileSystem
+  const runtimeCompile = queryObj.isDynamic
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -72,11 +74,11 @@ module.exports = function (content) {
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
       const placeholderMap = mode === 'ali'
-      ? {
-        view: { name: 'mpx-view', resource: mpxViewPath },
-        text: { name: 'mpx-text', resource: mpxTextPath }
-      }
-      : {}
+        ? {
+          view: { name: 'mpx-view', resource: mpxViewPath },
+          text: { name: 'mpx-text', resource: mpxTextPath }
+        }
+        : {}
       placeholder = placeholderMap[placeholder] || { name: placeholder }
     }
     if (!placeholder.name) {
@@ -175,6 +177,17 @@ module.exports = function (content) {
     }
   }
 
+  const dependencyComponentsMap = {}
+
+  if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
+    mpx.collectDynamicSlotDependencies(packageName)
+  }
+
+  if (runtimeCompile) {
+    json.usingComponents = json.usingComponents || {}
+  }
+
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {
@@ -196,8 +209,8 @@ module.exports = function (content) {
     warn: emitWarning,
     error: emitError,
     data: {
-      // polyfill global usingComponents & record globalComponents
-      globalComponents: mpx.usingComponents
+      // polyfill global usingComponents
+      globalComponents: mpx.globalComponents
     }
   }
   if (!isApp) {
@@ -210,24 +223,27 @@ module.exports = function (content) {
     rulesRunner(json)
   }
 
-  if (isApp) {
-    Object.assign(mpx.usingComponents, json.usingComponents)
-    // 在 rulesRunner 运行后保存全局注册组件
-    // todo 其余地方在使用mpx.usingComponents时存在缓存问题，要规避该问题需要在所有使用mpx.usingComponents的loader中添加app resourcePath作为fileDependency，但对于缓存有效率影响巨大
-    // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
-    this._module.addPresentationalDependency(new RecordGlobalComponentsDependency(mpx.usingComponents, this.context))
-  }
-
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
           }
           if (err) return callback(err)
           components[name] = entry
+          if (runtimeCompile) {
+            // 替换组件的 hashName，并删除原有的组件配置
+            const hashName = 'm' + mpx.pathHash(resourcePath)
+            components[hashName] = entry
+            delete components[name]
+            dependencyComponentsMap[name] = {
+              hashName,
+              resourcePath,
+              isDynamic: queryObj.isDynamic
+            }
+          }
           if (tarRoot) {
             if (placeholder) {
               placeholder = normalizePlaceholder(placeholder)
@@ -252,7 +268,21 @@ module.exports = function (content) {
             callback()
           }
         })
-      }, callback)
+      }, (err) => {
+        if (err) return callback(err)
+        const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
+        if (runtimeCompile) {
+          components.element = mpxCustomElementPath
+          components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
+
+          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'json', info: dependencyComponentsMap }))
+        }
+        if (queryObj.mpxCustomElement) {
+          components.element = mpxCustomElementPath
+          Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
+        }
+        callback()
+      })
     } else {
       callback()
     }
@@ -318,7 +348,8 @@ module.exports = function (content) {
             }
             callback()
           })
-        }, () => {
+        }, (err) => {
+          if (err) return callback(err)
           if (tarRoot && subPackagesCfg) {
             if (!subPackagesCfg[tarRoot].pages.length && pagesCache[0]) {
               subPackagesCfg[tarRoot].pages.push(pagesCache[0])
@@ -569,18 +600,38 @@ module.exports = function (content) {
         const srcCustomKey = config[srcMode].tabBar.customKey
         const srcPath = resolveTabBarPath(srcCustomKey)
         const outputPath = resolveTabBarPath(outputCustomKey)
-        const dynamicEntryExtraOptions = {
-          // replace with true for custom-tab-bar
-          replaceContent: 'true'
-        }
-
-        processComponent(`./${srcPath}`, context, { outputPath, extraOptions: dynamicEntryExtraOptions }, (err, entry) => {
+        processComponent(`./${srcPath}`, context, {
+          outputPath,
+          extraOptions: {
+            replaceContent: 'true'
+          }
+        }, (err, entry) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete tabBar[srcCustomKey]
             return callback()
           }
           if (err) return callback(err)
           tabBar[outputCustomKey] = entry // hack for javascript parser call hook.
+          callback()
+        })
+      } else {
+        callback()
+      }
+    }
+
+    const processAppBar = (appBar, context, callback) => {
+      if (appBar) {
+        processComponent('./app-bar/index', context, {
+          outputPath: 'app-bar/index',
+          extraOptions: {
+            replaceContent: 'true'
+          }
+        }, (err, entry) => {
+          if (err === RESOLVE_IGNORED_ERR) {
+            return callback()
+          }
+          if (err) return callback(err)
+          appBar.custom = entry // hack for javascript parser call hook.
           callback()
         })
       } else {
@@ -603,6 +654,7 @@ module.exports = function (content) {
             }
             if (err) return callback(err)
             genericComponents[name] = entry
+            callback()
           })
         }, callback)
       }, callback)
@@ -667,6 +719,9 @@ module.exports = function (content) {
       },
       (callback) => {
         processSubPackages(json.subPackages || json.subpackages, this.context, callback)
+      },
+      (callback) => {
+        processAppBar(json.appBar, this.context, callback)
       }
     ], (err) => {
       if (err) return callback(err)
@@ -677,7 +732,8 @@ module.exports = function (content) {
       for (const root in subPackagesCfg) {
         const subPackageCfg = subPackagesCfg[root]
         // 分包不存在 pages，输出 subPackages 字段会报错
-        if (subPackageCfg.pages.length) {
+        // tt模式下分包异步允许一个分包不存在 pages
+        if (subPackageCfg.pages.length || mode === 'tt') {
           if (!json.subPackages) {
             json.subPackages = []
           }

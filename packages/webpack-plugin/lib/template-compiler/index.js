@@ -3,12 +3,16 @@ const bindThis = require('./bind-this')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
 const loaderUtils = require('loader-utils')
+const { MPX_DISABLE_EXTRACTOR_CACHE } = require('../utils/const')
+const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
+const { createTemplateEngine, createSetupTemplate } = require('@mpxjs/template-engine')
+const { stringify } = require('./dynamic')
 
 module.exports = function (raw) {
   this.cacheable()
-  const { resourcePath, queryObj } = parseRequest(this.resource)
+  const { resourcePath, queryObj, rawResourcePath } = parseRequest(this.resource)
   const mpx = this.getMpx()
-  const root = mpx.projectRoot
+  const projectRoot = mpx.projectRoot
   const mode = mpx.mode
   const env = mpx.env
   const defs = mpx.defs
@@ -19,16 +23,17 @@ module.exports = function (raw) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
-  const componentsMap = mpx.componentsMap[packageName]
-  const pagesMap = mpx.pagesMap
   const wxsContentMap = mpx.wxsContentMap
   const optimizeRenderRules = mpx.optimizeRenderRules
+  const usingComponentsInfo = queryObj.usingComponentsInfo || {}
   const usingComponentsNameMap = queryObj.usingComponentsNameMap ? JSON.parse(queryObj.usingComponentsNameMap) : {}
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
+  const ctorType = queryObj.ctorType
   const hasScoped = queryObj.hasScoped
-  const moduleId = queryObj.moduleId || '_' + mpx.pathHash(resourcePath)
+  const runtimeCompile = queryObj.isDynamic
+  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -37,6 +42,7 @@ module.exports = function (raw) {
       break
     }
   }
+
   const warn = (msg) => {
     this.emitWarning(
       new Error('[template compiler][' + this.resource + ']: ' + msg)
@@ -49,15 +55,15 @@ module.exports = function (raw) {
     )
   }
 
-  const { root: ast, meta } = compiler.parse(raw, {
+  const { root, meta } = compiler.parse(raw, {
     warn,
     error,
+    runtimeCompile,
     usingComponentsNameMap,
     componentPlaceholder,
     hasComment,
     isNative,
-    isComponent: !!componentsMap[resourcePath],
-    isPage: !!pagesMap[resourcePath],
+    ctorType,
     mode,
     env,
     srcMode: localSrcMode || globalSrcMode,
@@ -66,24 +72,25 @@ module.exports = function (raw) {
     externalClasses,
     hasScoped,
     moduleId,
-    // 这里需传递resourcePath和wxsContentMap保持一致
-    filePath: resourcePath,
+    usingComponentsInfo,
+    // 这里需传递rawResourcePath和wxsContentMap保持一致
+    filePath: rawResourcePath,
     i18n,
     optimizeSize,
     checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
-    globalComponents: Object.keys(mpx.usingComponents),
-    forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules),
-    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules)
+    globalComponents: Object.keys(mpx.globalComponents),
+    forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules) || runtimeCompile,
+    hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
+    dynamicTemplateRuleRunner: mpx.dynamicTemplateRuleRunner
   })
 
   if (meta.wxsContentMap) {
     for (const module in meta.wxsContentMap) {
-      wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+      wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
     }
   }
 
-  const result = compiler.serialize(ast)
-
+  let result = runtimeCompile ? '' : compiler.serialize(root)
   if (isNative) {
     return result
   }
@@ -91,16 +98,19 @@ module.exports = function (raw) {
   let resultSource = ''
 
   for (const module in meta.wxsModuleMap) {
-    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], root)
+    const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], projectRoot)
     resultSource += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
   }
-  // currentInject -> _j
-  resultSource += `
-global._j = {
+
+  resultSource += `global._i = {
   moduleId: ${JSON.stringify(moduleId)}
 };\n`
 
-  const rawCode = compiler.genNode(ast)
+  if (runtimeCompile) {
+    resultSource += 'global._i.dynamic = true;\n'
+  }
+
+  const rawCode = runtimeCompile ? '' : compiler.genNode(root)
   if (rawCode) {
     try {
       const ignoreMap = Object.assign({
@@ -118,19 +128,17 @@ global._j = {
           renderReduce: optimizeRenderLevel === 1,
           ignoreMap
         })
-      resultSource += `
-global._j.render = function (_i, _c, _r, _sc) {
+      resultSource += `global._i.render = function (_i, _c, _r, _sc) {
 ${bindResult.code}
 _r(${optimizeRenderLevel === 2 ? 'true' : ''});
 };\n`
       if ((mode === 'tt' || mode === 'swan') && bindResult.propKeys) {
-        resultSource += `global.currentInject.propKeys = ${JSON.stringify(bindResult.propKeys)};\n`
+        resultSource += `global._i.propKeys = ${JSON.stringify(bindResult.propKeys)};\n`
       }
     } catch (e) {
-      error(`
-Invalid render function generated by the template, please check!\n
+      error(`Invalid render function generated by the template, please check!
 Template result:
-${result}\n
+${result}
 Error code:
 ${rawCode}
 Error Detail:
@@ -140,27 +148,42 @@ ${e.stack}`)
   }
 
   if (meta.computed) {
-    resultSource += bindThis.transform(`
-global._j.injectComputed = {
-  ${meta.computed.join(',')}
-};`).code + '\n'
+    resultSource += bindThis.transform(`global._i.injectComputed = {${meta.computed.join(',')}};`).code + '\n'
   }
 
   if (meta.refs) {
-    resultSource += `
-global._j.getRefsData = function () {
-  return ${JSON.stringify(meta.refs)};
-};\n`
+    resultSource += `global._i.getRefsData = function () { return ${JSON.stringify(meta.refs)}; };\n`
   }
 
   if (meta.options) {
-    resultSource += `global._j.injectOptions = ${JSON.stringify(meta.options)};` + '\n'
+    resultSource += `global._i.injectOptions = ${JSON.stringify(meta.options)};\n`
   }
 
   this.emitFile(resourcePath, '', undefined, {
     skipEmit: true,
     extractedResultSource: resultSource
   })
+
+  if (queryObj.mpxCustomElement) {
+    this.cacheable(false)
+    const templateEngine = createTemplateEngine(mpx.mode)
+    result += `${createSetupTemplate()}\n` + templateEngine.buildTemplate(mpx.getPackageInjectedTemplateConfig(packageName))
+  }
+
+  // 运行时编译的组件直接返回基础模板的内容，并产出动态文本内容
+  if (runtimeCompile) {
+    // 包含了运行时组件的template模块必须每次都创建（但并不是每次都需要build），用于收集组件节点信息，传递信息以禁用父级extractor的缓存
+    this.emitFile(MPX_DISABLE_EXTRACTOR_CACHE, '', undefined, { skipEmit: true })
+
+    const templateInfo = {
+      templateAst: stringify(root),
+      ...meta.runtimeInfo
+    }
+
+    // 以 package 为维度存储，meta 上的数据也只是存储了这个组件的 template 上获取的信息，需要在 dependency 里面再次进行合并操作
+    this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'template', info: templateInfo }))
+    // 运行时组件的模版直接返回空，在生成模版静态文件的时候(beforeModuleAssets)再动态注入
+  }
 
   return result
 }

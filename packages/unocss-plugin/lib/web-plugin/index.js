@@ -16,8 +16,17 @@ function WebpackPlugin (configOrPath, defaults) {
       const { uno, filter, transformCache } = ctx
       const entries = new Set()
       const __vfsModules = new Set()
-      const __vfs = new VirtualModulesPlugin()
-      compiler.options.plugins.push(__vfs)
+      let __vfs = null
+      for (const plugin of compiler.options.plugins) {
+        if (plugin instanceof VirtualModulesPlugin) {
+          __vfs = plugin
+          break
+        }
+      }
+      if (!__vfs) {
+        __vfs = new VirtualModulesPlugin()
+        compiler.options.plugins.push(__vfs)
+      }
       compiler.__unoCtx = ctx
       // 添加解析虚拟模块插件 import 'uno.css' 并且注入layer代码
       const resolverPlugin = {
@@ -98,7 +107,7 @@ function WebpackPlugin (configOrPath, defaults) {
           const result = await uno.generate(tokens, { minify: true })
           const files = Object.keys(compilation.assets)
           for (const file of files) {
-            if (file === '*') { return }
+            if (file === '*') return
             let code = compilation.assets[file].source().toString()
             let replaced = false
             code = code.replace(LAYER_PLACEHOLDER_RE, (_, quote, layer) => {

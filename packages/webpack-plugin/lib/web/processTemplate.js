@@ -6,12 +6,13 @@ const { matchCondition } = require('../utils/match-condition')
 
 module.exports = function (template, {
   loaderContext,
-  // hasScoped,
+  hasScoped,
   hasComment,
   isNative,
   srcMode,
   moduleId,
   ctorType,
+  usingComponentsInfo,
   usingComponentsNameMap,
   componentGenerics
 }, callback) {
@@ -25,9 +26,10 @@ module.exports = function (template, {
     externalClasses,
     checkUsingComponents,
     webConfig,
-    autoVirtualHostRules
+    autoVirtualHostRules,
+    forceProxyEventRules
   } = mpx
-  const { resourcePath } = parseRequest(loaderContext.resource)
+  const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
   let wxsModuleMap, genericsInfo
@@ -38,7 +40,7 @@ module.exports = function (template, {
     const idName = (el && el.match(/#(.*)/) && el.match(/#(.*)/)[1]) || 'app'
     template = {
       tag: 'template',
-      content: `<div id="${idName}"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></div>`
+      content: `<div id="${idName}"><transition :name="transitionName"><mpx-keep-alive><router-view></router-view></mpx-keep-alive></transition></div>`
     }
     builtInComponentsMap['mpx-keep-alive'] = {
       resource: addQuery('@mpxjs/webpack-plugin/lib/runtime/components/web/mpx-keep-alive.vue', { isComponent: true })
@@ -60,47 +62,48 @@ module.exports = function (template, {
       }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
-
+        const warn = (msg) => {
+          loaderContext.emitWarning(
+            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+          )
+        }
+        const error = (msg) => {
+          loaderContext.emitError(
+            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+          )
+        }
         const { root, meta } = templateCompiler.parse(template.content, {
-          warn: (msg) => {
-            loaderContext.emitWarning(
-              new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-            )
-          },
-          error: (msg) => {
-            loaderContext.emitError(
-              new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
-            )
-          },
+          warn,
+          error,
+          usingComponentsInfo, // processTemplate中无其他地方使用，直接透传 string 类型
           usingComponentsNameMap,
           hasComment,
           isNative,
-          isComponent: ctorType === 'component',
-          isPage: ctorType === 'page',
+          ctorType,
           mode,
           env,
           srcMode: templateSrcMode,
           defs,
           decodeHTMLText,
           externalClasses,
-          // todo 后续输出web也采用mpx的scoped处理
-          hasScoped: false,
+          hasScoped,
           moduleId,
-          filePath: resourcePath,
+          filePath: rawResourcePath,
           i18n: null,
           checkUsingComponents,
           // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
           globalComponents: [],
           // web模式下实现抽象组件
           componentGenerics,
-          hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules)
+          hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
+          forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules)
         })
         if (meta.wxsModuleMap) {
           wxsModuleMap = meta.wxsModuleMap
         }
         if (meta.wxsContentMap) {
           for (const module in meta.wxsContentMap) {
-            wxsContentMap[`${resourcePath}~${module}`] = meta.wxsContentMap[module]
+            wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
         if (meta.builtInComponentsMap) {
@@ -116,7 +119,7 @@ module.exports = function (template, {
         return templateCompiler.serialize(root)
       }
     })
-    output += '\n\n'
+    output += '\n'
   }
 
   callback(null, {

@@ -1,5 +1,3 @@
-import { set } from '@mpxjs/core'
-
 let curStack
 let targetStacks
 let property
@@ -155,9 +153,16 @@ function getByPath (data, pathStrOrArr, defaultVal, errTip) {
 }
 
 function setByPath (data, pathStrOrArr, value) {
+  if (!mpxGlobal.__mpx) {
+    console.warn('[Mpx utils warn]: Can not find "global.__mpx", "setByPath" may encounter some potential problems!')
+  }
   doGetByPath(data, pathStrOrArr, (current, key, meta) => {
     if (meta.isEnd) {
-      set(current, key, value)
+      if (mpxGlobal.__mpx) {
+        mpxGlobal.__mpx.set(current, key, value)
+      } else {
+        current[key] = value
+      }
     } else if (!current[key]) {
       current[key] = {}
     }

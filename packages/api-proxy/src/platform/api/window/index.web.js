@@ -1,4 +1,4 @@
-import { isBrowser } from '../../../common/js/utils'
+import { isBrowser } from '../../../common/js'
 
 const callbacks = []
 

@@ -8,38 +8,25 @@ function objectKeys (obj) {
       '[': ']',
       '(': ')'
     }
-    var shiftMap = {
-      'n': '\n',
-      'b': '\b',
-      'f': '\f',
-      'r': '\r',
-      't': '\t'
-    }
     if (typeof obj === 'object') {
       var objStr = JSON.stringify(obj)
       if (objStr[0] === '{' && objStr[objStr.length - 1] === '}') {
-        var key = ''
         var inKey = true
         var stack = []
-        var shift = false
+        var keyStart = 0
+        var keyEnd = 0
         for (var i = 1; i < objStr.length - 1; i++) {
           var item = objStr[i]
           var lastItem = objStr[i - 1]
           if (inKey) {
-            if (item === ':' && lastItem === '"') {
-              keys.push(key.slice(1, -1))
-              key = ''
+            if (item === ':' && keyEnd === i - 1) {
+              keys.push(objStr.slice(keyStart + 1, keyEnd))
               inKey = false
             } else {
-              if (shift === false && item === '\\') {
-                shift = true
-                continue
+              if (item === '"' && lastItem !== '\\') {
+                keyStart = keyEnd
+                keyEnd = i
               }
-              if (shift) {
-                item = shiftMap[item] || item
-                shift = false
-              }
-              key += item
             }
           } else {
             if (stackMap[item]) {
@@ -90,10 +77,6 @@ function isArray (arr) {
   }
 }
 
-function isDef (v) {
-  return v !== undefined && v !== null
-}
-
 var escapeMap = {
   '(': '_pl_',
   ')': '_pr_',
@@ -128,7 +111,6 @@ function mpEscape (str) {
   })
 }
 
-
 function stringifyDynamicClass (value) {
   if (isArray(value)) {
     value = stringifyArray(value)
@@ -145,19 +127,19 @@ function stringifyDynamicClass (value) {
 
 function stringifyArray (value) {
   var res = ''
-  var stringified
+  var classString
   for (var i = 0; i < value.length; i++) {
-    if (isDef(stringified = stringifyDynamicClass(value[i])) && stringified !== '') {
+    if ((classString = stringifyDynamicClass(value[i]))) {
       if (res) res += ' '
-      res += stringified
+      res += classString
     }
   }
   return res
 }
 
-var mpxDashReg = genRegExp('(.+)MpxDash$')
-// 转义字符在wxs正则中存在平台兼容性问题，用[$]规避使用转义字符
-var mpxDashReplaceReg = genRegExp('[$]', 'g')
+var mpxEscapeReg = genRegExp('(.+)MpxEscape$')
+var dashEscapeReg = genRegExp('_da_', 'g')
+var spaceEscapeReg = genRegExp('_sp_', 'g')
 
 function stringifyObject (value) {
   var res = ''
@@ -166,8 +148,8 @@ function stringifyObject (value) {
     var key = objKeys[i]
     if (value[key]) {
       if (res) res += ' '
-      if (mpxDashReg.test(key)) {
-        key = mpxDashReg.exec(key)[1].replace(mpxDashReplaceReg, '-')
+      if (mpxEscapeReg.test(key)) {
+        key = mpxEscapeReg.exec(key)[1].replace(dashEscapeReg, '-').replace(spaceEscapeReg, ' ')
       }
       res += key
     }
@@ -241,13 +223,13 @@ function normalizeDynamicStyle (value) {
 }
 
 module.exports = {
-  stringifyClass: function (staticClass, dynamicClass) {
+  c: function (staticClass, dynamicClass) {
     if (typeof staticClass !== 'string') {
       return console.log('Template attr class must be a string!')
     }
     return concat(staticClass, mpEscape(stringifyDynamicClass(dynamicClass)))
   },
-  stringifyStyle: function (staticStyle, dynamicStyle) {
+  s: function (staticStyle, dynamicStyle) {
     var normalizedDynamicStyle = normalizeDynamicStyle(dynamicStyle)
     var parsedStaticStyle = typeof staticStyle === 'string' ? parseStyleText(staticStyle) : {}
     return genStyleText(extend(parsedStaticStyle, normalizedDynamicStyle))

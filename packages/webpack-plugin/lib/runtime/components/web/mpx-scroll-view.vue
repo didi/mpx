@@ -1,4 +1,5 @@
 <script>
+  import { computed } from 'vue'
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
@@ -9,6 +10,7 @@
   BScroll.use(PullDown)
 
   let mutationObserver = null
+  let resizeObserver = null
 
   export default {
     name: 'mpx-scroll-view',
@@ -43,6 +45,7 @@
       enhanced: Boolean,
       refresherEnabled: Boolean,
       refresherTriggered: Boolean,
+      enableSticky: Boolean,
       refresherThreshold: {
         type: Number,
         default: 45
@@ -56,6 +59,12 @@
         default: ''
       }
     },
+    provide () {
+      return {
+        scrollOffset: computed(() => -this.lastY || 0),
+        refreshVersion: computed(() => this.refreshVersion || 0)
+      }
+    },
     data () {
       return {
         isLoading: false,
@@ -67,7 +76,8 @@
         lastContentWidth: 0,
         lastContentHeight: 0,
         lastWrapperWidth: 0,
-        lastWrapperHeight: 0
+        lastWrapperHeight: 0,
+        refreshVersion: 0
       }
     },
     computed: {
@@ -110,7 +120,7 @@
       this.debounceRefresh = debounce(function () {
         this.refresh()
       }, 200, {
-        leading: false,
+        leading: true,
         trailing: true
       })
       this.dispatchScrollTo = throttle(function (direction) {
@@ -221,6 +231,9 @@
             stop: 56
           }
         }
+        if(this.enableSticky) {
+          originBsOptions.useTransition = false
+        }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false })
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
         this.lastX = -this.currentX
@@ -250,7 +263,7 @@
           }
           this.lastX = x
           this.lastY = y
-        }, 30, {
+        }, this.enableSticky ? 0 : 30, {
           leading: true,
           trailing: true
         }))
@@ -357,11 +370,15 @@
         let minTop
         let maxBottom
         childrenArr.forEach(item => {
-          const temp = item.getBoundingClientRect()
-          minLeft = getMinLength(minLeft, temp.left)
-          minTop = getMinLength(minTop, temp.top)
-          maxRight = getMaxLength(maxRight, temp.right)
-          maxBottom = getMaxLength(maxBottom, temp.bottom)
+            const left = item.offsetLeft
+            const top = item.offsetTop
+            const width = item.offsetWidth
+            const height = item.offsetHeight
+    
+            minLeft = getMinLength(minLeft, left)
+            minTop = getMinLength(minTop, top)
+            maxRight = getMaxLength(maxRight, left + width)
+            maxBottom = getMaxLength(maxBottom, top + height)
         })
         const width = maxRight - minLeft || 0
         const height = maxBottom - minTop || 0
@@ -387,6 +404,7 @@
           this.lastContentHeight = scrollContentHeight
           this.lastWrapperWidth = scrollWrapperWidth
           this.lastWrapperHeight = scrollWrapperHeight
+          this.refreshVersion++
           if (this.bs) this.bs.refresh()
         }
       },
@@ -398,6 +416,17 @@
           mutationObserver = new MutationObserver((mutations) => this.mutationObserverHandler(mutations))
           const config = { attributes: true, childList: true, subtree: true }
           mutationObserver.observe(this.$refs.wrapper, config)
+        }
+        if (typeof ResizeObserver !== 'undefined') {
+          let isFirstResize = true
+          resizeObserver = new ResizeObserver(() => {
+            if (isFirstResize) {
+              isFirstResize = false
+              return
+            }
+            this.debounceRefresh()
+          })
+          resizeObserver.observe(this.$refs.wrapper)
         }
       },
        mutationObserverHandler (mutations) {
@@ -428,6 +457,10 @@
           mutationObserver.disconnect()
           mutationObserver = null
         }
+        if (resizeObserver) {
+          resizeObserver.disconnect()
+          resizeObserver = null
+        }
       }
     },
     render (createElement) {
@@ -438,7 +471,8 @@
       }
 
       const innerWrapper = createElement('div', {
-        ref: 'innerWrapper'
+        ref: 'innerWrapper',
+        class: 'mpx-inner-wrapper'
       }, this.$slots.default)
 
       const pullDownContent = this.refresherDefaultStyle !== 'none' ? createElement('div', {

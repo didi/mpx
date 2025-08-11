@@ -1,4 +1,5 @@
 import { nextTick } from '../next-tick'
+import { parseDataset, warn } from '@mpxjs/utils'
 
 let isInit = true
 
@@ -27,14 +28,16 @@ class WebIntersectionObserver {
         if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (this._minThreshold <= entry.intersectionRatio)))) {
           Object.defineProperties(entry, {
             id: {
-              value: entry.target.getAttribute('id') || '',
-              writable: false,
+              get () {
+                return entry.target.id || ''
+              },
               enumerable: true,
               configurable: true
             },
             dataset: {
-              value: entry.target.dataset || {},
-              writable: false,
+              get () {
+                return parseDataset(entry.target.dataset)
+              },
               enumerable: true,
               configurable: true
             },
@@ -63,12 +66,12 @@ class WebIntersectionObserver {
   }
 
   observe (targetSelector, callback) {
-    nextTick(async () => {
-      if (!targetSelector) {
-        const res = { errMsg: 'observe:targetSelector can not be empty' }
-        return Promise.reject(res)
+    nextTick(() => {
+      if (!document.querySelector(targetSelector)) {
+        warn(`Node ${JSON.stringify(targetSelector)} is not found. Intersection observer will not trigger.`)
+        return
       }
-      this._observer = await this.initObserver()
+      this._observer = this.initObserver()
       this._callback = callback
       let targetElement = []
       if (this._options.observeAll) {

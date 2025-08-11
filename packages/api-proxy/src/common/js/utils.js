@@ -1,3 +1,6 @@
+import { hasOwn, noop, getEnvObj, getFocusedNavigation, error as errorHandler, warn as warnHandler } from '@mpxjs/utils'
+import { getCurrentInstance } from '@mpxjs/core'
+
 /**
  *
  * @param {Object} options 原参数
@@ -12,12 +15,6 @@
  *  d: 4 // 增加 d
  * })
  */
-const hasOwnProperty = Object.prototype.hasOwnProperty
-
-function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
-}
-
 function changeOpts (options, updateOrRemoveOpt = {}, extraOpt = {}) {
   let opts = {}
 
@@ -49,50 +46,31 @@ const handleSuccess = (opts, getOptions = noop, thisObj) => {
   }
 }
 
-function getEnvObj () {
-  switch (__mpx_mode__) {
-    case 'wx':
-      return wx
-    case 'ali':
-      return my
-    case 'swan':
-      return swan
-    case 'qq':
-      return qq
-    case 'tt':
-      return tt
-    case 'jd':
-      return jd
-    case 'qa':
-      return qa
-    case 'dd':
-      return dd
-    case 'web':
-      return {}
-  }
-}
-
 function warn (msg) {
-  console.warn && console.warn(`[@mpxjs/api-proxy warn]:\n ${msg}`)
+  warnHandler(msg, '@mpxjs/api-proxy')
 }
 
 function error (msg) {
-  console.error && console.error(`[@mpxjs/api-proxy error]:\n ${msg}`)
+  errorHandler(msg, '@mpxjs/api-proxy')
 }
+
 function envError (method) {
   return () => {
-    console.error && console.error(`[@mpxjs/api-proxy error]:\n ${__mpx_mode__}环境不支持${method}方法`)
+    errorHandler(`\n ${__mpx_mode__}环境不支持${method}方法`, '@mpxjs/api-proxy')
   }
 }
 
-function noop () {
-}
-
-function makeMap (arr) {
-  return arr.reduce((obj, item) => {
-    obj[item] = true
-    return obj
-  }, {})
+function defineUnsupportedProps (resObj, props) {
+  const defineProps = {}
+  props.forEach((item) => {
+    defineProps[item] = {
+      get () {
+        warn(`The ${item} attribute is not supported in ${__mpx_mode__} environment`)
+        return null
+      }
+    }
+  })
+  Object.defineProperties(resObj, defineProps)
 }
 
 const isBrowser = typeof window !== 'undefined'
@@ -101,19 +79,61 @@ function throwSSRWarning (info) {
   console.error(`[Mpx runtime error]: Dangerous API! ${info}, It may cause some problems, please use this method with caution`)
 }
 
+function successHandle (result, success, complete) {
+  typeof success === 'function' && success(result)
+  typeof complete === 'function' && complete(result)
+}
+
+function failHandle (result, fail, complete) {
+  typeof fail === 'function' && fail(result)
+  typeof complete === 'function' && complete(result)
+}
+
+function getCurrentPageId () {
+  const currentInstance = getCurrentInstance()
+  const id = currentInstance?.proxy?.getPageId() || getFocusedNavigation()?.pageId || null
+  return id
+}
+
+function resolvePath (relative, base) {
+  const firstChar = relative.charAt(0)
+  if (firstChar === '/') {
+    return relative
+  }
+  const stack = base.split('/')
+  stack.pop()
+  // resolve relative path
+  const segments = relative.replace(/^\//, '').split('/')
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i]
+    if (segment === '..') {
+      stack.pop()
+    } else if (segment !== '.') {
+      stack.push(segment)
+    }
+  }
+  // ensure leading slash
+  if (stack[0] !== '') {
+    stack.unshift('')
+  }
+  return stack.join('/')
+}
+
 const ENV_OBJ = getEnvObj()
 
 export {
   changeOpts,
   handleSuccess,
-  getEnvObj,
   error,
   envError,
   warn,
-  noop,
-  makeMap,
   isBrowser,
-  hasOwn,
   throwSSRWarning,
-  ENV_OBJ
+  ENV_OBJ,
+  defineUnsupportedProps,
+  successHandle,
+  failHandle,
+  getFocusedNavigation,
+  getCurrentPageId,
+  resolvePath
 }

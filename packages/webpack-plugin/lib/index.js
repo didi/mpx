@@ -17,6 +17,7 @@ const FileSystemInfo = require('webpack/lib/FileSystemInfo')
 const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
 const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
+const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const normalize = require('./utils/normalize')
 const toPosix = require('./utils/to-posix')
 const addQuery = require('./utils/add-query')
@@ -27,22 +28,27 @@ const ExternalsPlugin = require('webpack/lib/ExternalsPlugin')
 const AddModePlugin = require('./resolver/AddModePlugin')
 const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
+const DynamicRuntimePlugin = require('./resolver/DynamicRuntimePlugin')
 const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
 // const RemovedModuleDependency = require('./dependencies/RemovedModuleDependency')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
+const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
 const FlagPluginDependency = require('./dependencies/FlagPluginDependency')
 const RemoveEntryDependency = require('./dependencies/RemoveEntryDependency')
-const RecordVueContentDependency = require('./dependencies/RecordVueContentDependency')
+const RecordLoaderContentDependency = require('./dependencies/RecordLoaderContentDependency')
+const RecordRuntimeInfoDependency = require('./dependencies/RecordRuntimeInfoDependency')
+const RequireExternalDependency = require('./dependencies/RequireExternalDependency')
 const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
+const { transSubpackage } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
@@ -52,17 +58,26 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
+const styleStripConditionalPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
 const jsonPluginCompilerPath = normalize.lib('json-compiler/plugin')
+const mpxGlobalRuntimePath = normalize.lib('runtime/mpxGlobal')
 const extractorPath = normalize.lib('extractor')
 const async = require('async')
 const { parseQuery } = require('loader-utils')
 const stringifyLoadersAndResource = require('./utils/stringify-loaders-resource')
 const emitFile = require('./utils/emit-file')
-const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE } = require('./utils/const')
+const { MPX_PROCESSED_FLAG, MPX_DISABLE_EXTRACTOR_CACHE, MPX_APP_MODULE_ID } = require('./utils/const')
 const isEmptyObject = require('./utils/is-empty-object')
+const DynamicPlugin = require('./resolver/DynamicPlugin')
+const { isReact, isWeb } = require('./utils/env')
+const VirtualModulesPlugin = require('webpack-virtual-modules')
+const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
+const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
+const ExternalModule = require('webpack/lib/ExternalModule')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
 const { generateVariableNameBySource, isProductionLikeMode } = require('./utils/optimize-compress')
 require('./utils/check-core-version-match')
 
@@ -117,14 +132,24 @@ class MpxWebpackPlugin {
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
     }
-    if (options.mode === 'web' && options.srcMode !== 'wx') {
+    if (isWeb(options.mode) && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports mode to be "web" only when srcMode is set to "wx"!')
+    }
+    if (isReact(options.mode) && options.srcMode !== 'wx') {
+      errors.push('MpxWebpackPlugin supports mode to be "ios" | "android" | "harmony" only when srcMode is set to "wx"!')
+    }
+    if (options.dynamicComponentRules && !options.dynamicRuntime) {
+      errors.push('Please make sure you have set dynamicRuntime true in mpx webpack plugin config because you have use the dynamic runtime feature.')
+    }
+    if (options.transSubpackageRules && !isReact(options.mode)) {
+      warnings.push('MpxWebpackPlugin transSubpackageRules option only supports "ios", "android", or "harmony" mode')
     }
     options.externalClasses = options.externalClasses || ['custom-class', 'i-class']
     options.resolveMode = options.resolveMode || 'webpack'
     options.writeMode = options.writeMode || 'changed'
     options.autoScopeRules = options.autoScopeRules || {}
     options.autoVirtualHostRules = options.autoVirtualHostRules || {}
+    options.customTextRules = options.customTextRules || {}
     options.forceDisableProxyCtor = options.forceDisableProxyCtor || false
     options.transMpxRules = options.transMpxRules || {
       include: () => true
@@ -133,7 +158,8 @@ class MpxWebpackPlugin {
     options.defs = Object.assign({}, options.defs, {
       __mpx_mode__: options.mode,
       __mpx_src_mode__: options.srcMode,
-      __mpx_env__: options.env
+      __mpx_env__: options.env,
+      __mpx_dynamic_runtime__: options.dynamicRuntime
     })
     // 批量指定源码mode
     options.modeRules = options.modeRules || {}
@@ -157,20 +183,31 @@ class MpxWebpackPlugin {
     options.subpackageModulesRules = options.subpackageModulesRules || {}
     options.forceMainPackageRules = options.forceMainPackageRules || {}
     options.forceProxyEventRules = options.forceProxyEventRules || {}
+    options.disableRequireAsync = options.disableRequireAsync || false
     options.miniNpmPackages = options.miniNpmPackages || []
+    options.normalNpmPackages = options.normalNpmPackages || []
     options.fileConditionRules = options.fileConditionRules || {
       include: () => true
     }
     options.customOutputPath = options.customOutputPath || null
+    options.customComponentModuleId = options.customComponentModuleId || null
     options.nativeConfig = Object.assign({
       cssLangs: ['css', 'less', 'stylus', 'scss', 'sass']
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
-    options.partialCompile = options.mode !== 'web' && options.partialCompile
+    options.rnConfig = options.rnConfig || {}
+    options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
+    if (options.retryRequireAsync === true) {
+      options.retryRequireAsync = {
+        times: 1,
+        interval: 0
+      }
+    }
     options.optimizeSize = options.optimizeSize || false
+    options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
     // 保留组件名（压缩后组件名不允许出现）
     if (typeof options.reservedComponentName === 'object') {
       options.reservedComponentName = options.reservedComponentName[options.mode]
@@ -294,7 +331,27 @@ class MpxWebpackPlugin {
     // 将entry export标记为used且不可mangle，避免require.async生成的js chunk在生产环境下报错
     new FlagEntryExportAsUsedPlugin(true, 'entry').apply(compiler)
 
-    if (this.options.mode !== 'web') {
+    let __vfs = null
+    if (isWeb(this.options.mode)) {
+      for (const plugin of compiler.options.plugins) {
+        if (plugin instanceof VirtualModulesPlugin) {
+          __vfs = plugin
+          break
+        }
+      }
+      if (!__vfs) {
+        __vfs = new VirtualModulesPlugin()
+        compiler.options.plugins.push(__vfs)
+      }
+    }
+
+    compiler.options.plugins.push(new ProvidePlugin(
+      {
+        mpxGlobal: mpxGlobalRuntimePath
+      }
+    ))
+
+    if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       // 强制设置publicPath为'/'
       if (compiler.options.output.publicPath && compiler.options.output.publicPath !== publicPath) {
         warnings.push(`webpack options: MpxWebpackPlugin accept options.output.publicPath to be ${publicPath} only, custom options.output.publicPath will be ignored!`)
@@ -319,9 +376,23 @@ class MpxWebpackPlugin {
       compiler.options.node.global = true
     }
 
-    const addModePlugin = new AddModePlugin('before-file', this.options.mode, this.options.fileConditionRules, 'file')
+    const addModeOptions = {
+      fileConditionRules: this.options.fileConditionRules
+    }
+    const mode = this.options.mode
+    if (mode === 'web' || mode === 'ios' || mode === 'android' || mode === 'harmony') {
+      // 'web' | 'ios' | 'android' | 'harmony' 下，使用implicitMode强制进行平台转换
+      addModeOptions.implicitMode = true
+    }
+    if (mode === 'android' || mode === 'harmony') {
+      // 'android' | 'harmony' 下，使用 mode = 'ios' 进行兼容兜底
+      addModeOptions.defaultMode = 'ios'
+    }
+    const addModePlugin = new AddModePlugin('before-file', this.options.mode, addModeOptions, 'file')
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
-    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, 'file')
+    const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
+    const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
+
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
@@ -330,11 +401,15 @@ class MpxWebpackPlugin {
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
     }
+    if (this.options.dynamicRuntime) {
+      compiler.options.resolve.plugins.push(new DynamicRuntimePlugin('before-file', 'file'))
+    }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
+    compiler.options.resolve.plugins.push(dynamicPlugin)
 
     const optimization = compiler.options.optimization
-    if (this.options.mode !== 'web') {
+    if (!isWeb(this.options.mode) && !isReact(this.options.mode)) {
       optimization.runtimeChunk = {
         name: (entrypoint) => {
           for (const packageName in mpx.independentSubpackagesMap) {
@@ -408,7 +483,7 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompile) {
+    if (this.options.partialCompileRules) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
         const query = parseQuery(obj.query || '?')
@@ -426,7 +501,7 @@ class MpxWebpackPlugin {
               if (obj.path.startsWith(require.resolve('./runtime/components/wx/default-page.mpx'))) {
                 return callback(null, obj)
               }
-              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompile)) {
+              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompileRules)) {
                 const infix = obj.query ? '&' : '?'
                 obj.query += `${infix}resourcePath=${obj.path}`
                 obj.path = require.resolve('./runtime/components/wx/default-page.mpx')
@@ -474,12 +549,12 @@ class MpxWebpackPlugin {
       }
     }
 
-    const processSubpackagesEntriesMap = (compilation, callback) => {
+    const processSubpackagesEntriesMap = (subPackageEntriesType, compilation, callback) => {
       const mpx = compilation.__mpx__
-      if (mpx && !isEmptyObject(mpx.subpackagesEntriesMap)) {
-        const subpackagesEntriesMap = mpx.subpackagesEntriesMap
-        // 执行分包队列前清空mpx.subpackagesEntriesMap
-        mpx.subpackagesEntriesMap = {}
+      if (mpx && !isEmptyObject(mpx[subPackageEntriesType])) {
+        const subpackagesEntriesMap = mpx[subPackageEntriesType]
+        // 执行分包队列前清空 mpx[subPackageEntriesType]
+        mpx[subPackageEntriesType] = {}
         async.eachOfSeries(subpackagesEntriesMap, (deps, packageRoot, callback) => {
           mpx.currentPackageRoot = packageRoot
           mpx.componentsMap[packageRoot] = mpx.componentsMap[packageRoot] || {}
@@ -495,31 +570,41 @@ class MpxWebpackPlugin {
         }, (err) => {
           if (err) return callback(err)
           // 如果执行完当前队列后产生了新的分包执行队列（一般由异步分包组件造成），则继续执行
-          processSubpackagesEntriesMap(compilation, callback)
+          processSubpackagesEntriesMap(subPackageEntriesType, compilation, callback)
         })
       } else {
         callback()
       }
     }
 
+    const checkDynamicEntryInfo = (compilation) => {
+      for (const packageName in mpx.dynamicEntryInfo) {
+        const entryMap = mpx.dynamicEntryInfo[packageName]
+        if (packageName !== 'main' && !entryMap.hasPage) {
+          // 引用未注册分包的所有资源
+          const resources = entryMap.entries.map(info => info.resource).join(',')
+          compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
+        }
+      }
+    }
     // 构建分包队列，在finishMake钩子当中最先执行，stage传递-1000
     compiler.hooks.finishMake.tapAsync({
       name: 'MpxWebpackPlugin',
       stage: -1000
     }, (compilation, callback) => {
-      processSubpackagesEntriesMap(compilation, (err) => {
-        if (err) return callback(err)
-        const checkDynamicEntryInfo = () => {
-          for (const packageName in mpx.dynamicEntryInfo) {
-            const entryMap = mpx.dynamicEntryInfo[packageName]
-            if (packageName !== 'main' && !entryMap.hasPage) {
-              // 引用未注册分包的所有资源
-              const resources = entryMap.entries.map(info => info.resource).join(',')
-              compilation.errors.push(new Error(`资源${resources}通过分包异步声明为${packageName}分包, 但${packageName}分包未注册或不存在相关页面！`))
-            }
-          }
+      async.series([
+        (callback) => {
+          processSubpackagesEntriesMap('subpackagesEntriesMap', compilation, callback)
+        },
+        (callback) => {
+          processSubpackagesEntriesMap('postSubpackageEntriesMap', compilation, callback)
         }
-        checkDynamicEntryInfo()
+      ], (err) => {
+        if (err) return callback(err)
+        if (mpx.supportRequireAsync && mpx.mode !== 'tt') {
+          // 字节小程序异步分包中不能包含page，忽略该检查
+          checkDynamicEntryInfo(compilation)
+        }
         callback()
       })
     })
@@ -538,6 +623,29 @@ class MpxWebpackPlugin {
           return mpx
         }
       })
+
+      compilation.hooks.runtimeRequirementInTree
+        .for(RetryRuntimeGlobal)
+        .tap('MpxWebpackPlugin', (chunk) => {
+          compilation.addRuntimeModule(chunk, new RetryRuntimeModule())
+          return true
+        })
+
+      if (isReact(this.options.mode)) {
+        compilation.hooks.runtimeRequirementInTree
+          .for(RuntimeGlobals.loadScript)
+          .tap({
+            stage: -1000,
+            name: 'LoadAsyncChunk'
+          }, (chunk, set) => {
+            compilation.addRuntimeModule(
+              chunk,
+              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk && this.options.rnConfig.asyncChunk.timeout)
+            )
+            return true
+          })
+      }
+
       compilation.dependencyFactories.set(ResolveDependency, new NullFactory())
       compilation.dependencyTemplates.set(ResolveDependency, new ResolveDependency.Template())
 
@@ -559,6 +667,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RemoveEntryDependency, new NullFactory())
       compilation.dependencyTemplates.set(RemoveEntryDependency, new RemoveEntryDependency.Template())
 
+      compilation.dependencyFactories.set(RecordPageConfigMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordPageConfigMapDependency, new RecordPageConfigMapDependency.Template())
+
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
 
@@ -577,8 +688,14 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(CommonJsExtractDependency, normalModuleFactory)
       compilation.dependencyTemplates.set(CommonJsExtractDependency, new CommonJsExtractDependency.Template())
 
-      compilation.dependencyFactories.set(RecordVueContentDependency, new NullFactory())
-      compilation.dependencyTemplates.set(RecordVueContentDependency, new RecordVueContentDependency.Template())
+      compilation.dependencyFactories.set(RecordLoaderContentDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordLoaderContentDependency, new RecordLoaderContentDependency.Template())
+
+      compilation.dependencyFactories.set(RecordRuntimeInfoDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordRuntimeInfoDependency, new RecordRuntimeInfoDependency.Template())
+
+      compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
       compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
     })
@@ -591,8 +708,12 @@ class MpxWebpackPlugin {
       if (!compilation.__mpx__) {
         // init mpx
         mpx = compilation.__mpx__ = {
+          // 用于使用webpack-virtual-modules功能，目前仅输出web时下支持使用
+          __vfs,
           // app信息，便于获取appName
           appInfo: {},
+          // pageConfig信息
+          pageConfigsMap: {},
           // pages全局记录，无需区分主包分包
           pagesMap: {},
           // 组件资源记录，依照所属包进行记录
@@ -612,6 +733,7 @@ class MpxWebpackPlugin {
           // 记录独立分包
           independentSubpackagesMap: {},
           subpackagesEntriesMap: {},
+          postSubpackageEntriesMap: {},
           replacePathMap: {},
           exportModules: new Set(),
           // 记录动态添加入口的分包信息
@@ -622,7 +744,10 @@ class MpxWebpackPlugin {
           assetsModulesMap: new Map(),
           // 记录与asset相关联的ast，用于体积分析和esCheck，避免重复parse
           assetsASTsMap: new Map(),
-          usingComponents: {},
+          // 记录RequireExternalDependency相关资源路径
+          externalRequestsMap: new Map(),
+          globalComponents: {},
+          globalComponentsInfo: {},
           // todo es6 map读写性能高于object，之后会逐步替换
           wxsAssetsCache: new Map(),
           addEntryPromiseMap: new Map(),
@@ -637,6 +762,7 @@ class MpxWebpackPlugin {
           projectRoot: this.options.projectRoot,
           autoScopeRules: this.options.autoScopeRules,
           autoVirtualHostRules: this.options.autoVirtualHostRules,
+          customTextRules: this.options.customTextRules,
           transRpxRules: this.options.transRpxRules,
           postcssInlineConfig: this.options.postcssInlineConfig,
           decodeHTMLText: this.options.decodeHTMLText,
@@ -644,7 +770,9 @@ class MpxWebpackPlugin {
           nativeConfig: this.options.nativeConfig,
           // 输出web专用配置
           webConfig: this.options.webConfig,
-          vueContentCache: new Map(),
+          // 输出rn专用配置
+          rnConfig: this.options.rnConfig,
+          loaderContentCache: new Map(),
           tabBarMap: {},
           defs: processDefs(this.options.defs),
           i18n: this.options.i18n,
@@ -656,9 +784,10 @@ class MpxWebpackPlugin {
           useRelativePath: this.options.useRelativePath,
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
-          supportRequireAsync: this.options.mode === 'wx' || this.options.mode === 'web' || this.options.mode === 'ali',
-          partialCompile: this.options.partialCompile,
-          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType }) => {
+          // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || isReact(this.options.mode)),
+          partialCompileRules: this.options.partialCompileRules,
+          collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
               hasPage: false,
               entries: []
@@ -667,10 +796,12 @@ class MpxWebpackPlugin {
             curInfo.entries.push({
               entryType,
               resource,
-              filename
+              filename,
+              hasAsync
             })
           },
           asyncSubpackageRules: this.options.asyncSubpackageRules,
+          transSubpackageRules: this.options.transSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
           optimizeSize: this.options.optimizeSize,
           reservedComponentName: this.options.reservedComponentName,
@@ -684,6 +815,15 @@ class MpxWebpackPlugin {
             const dep = EntryPlugin.createDependency(request, { name })
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
+          },
+          getModuleId: (filePath, isApp = false) => {
+            if (isApp) return MPX_APP_MODULE_ID
+            const customComponentModuleId = this.options.customComponentModuleId
+            if (typeof customComponentModuleId === 'function') {
+              const customModuleId = customComponentModuleId(filePath)
+              if (customModuleId) return customModuleId
+            }
+            return '_' + mpx.pathHash(filePath)
           },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
@@ -704,7 +844,7 @@ class MpxWebpackPlugin {
             const hash = mpx.pathHash(resourcePath)
             const customOutputPath = this.options.customOutputPath
             if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
-            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext).replace(/^\//, '')
+            if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext, resourcePath).replace(/^\//, '')
             if (type === 'component') {
               if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
                 const pathHash = generateVariableNameBySource(resourcePath, 'componentPath')
@@ -849,6 +989,128 @@ class MpxWebpackPlugin {
                 error
               })
             }
+          },
+          // 以包为维度记录不同 package 需要的组件属性等信息，用以最终 mpx-custom-element 相关文件的输出
+          runtimeInfo: {},
+          // 记录运行时组件依赖的运行时组件当中使用的基础组件 slot，最终依据依赖关系注入到运行时组件的 json 配置当中
+          dynamicSlotDependencies: {},
+          // 模板引擎参数，用来检测模板引擎支持渲染的模板
+          dynamicTemplateRuleRunner: this.options.dynamicTemplateRuleRunner,
+          // 依据 package 注入到 mpx-custom-element-*.json 里面的组件路径
+          getPackageInjectedComponentsMap: (packageName = 'main') => {
+            const res = {}
+            const runtimeInfo = mpx.runtimeInfo[packageName] || {}
+            const componentsMap = mpx.componentsMap[packageName] || {}
+            const publicPath = compilation.outputOptions.publicPath || ''
+            for (const componentPath in runtimeInfo) {
+              Object.values(runtimeInfo[componentPath].json).forEach(({ hashName, resourcePath }) => {
+                const outputPath = componentsMap[resourcePath]
+                if (outputPath) {
+                  res[hashName] = publicPath + outputPath
+                }
+              })
+            }
+            return res
+          },
+          // 获取生成基础递归渲染模版的节点配置信息
+          getPackageInjectedTemplateConfig: (packageName = 'main') => {
+            const res = {
+              baseComponents: {
+                block: {}
+              },
+              runtimeComponents: {},
+              normalComponents: {}
+            }
+
+            const runtimeInfo = mpx.runtimeInfo[packageName] || {}
+
+            // 包含了某个分包当中所有的运行时组件
+            for (const resourcePath in runtimeInfo) {
+              const { json, template } = runtimeInfo[resourcePath]
+              const customComponents = template.customComponents || {}
+              const baseComponents = template.baseComponents || {}
+
+              // 合并自定义组件的属性
+              for (const componentName in customComponents) {
+                const extraAttrs = {}
+                const attrsMap = customComponents[componentName]
+                const { hashName, isDynamic } = json[componentName] || {}
+                let componentType = 'normalComponents'
+                if (isDynamic) {
+                  componentType = 'runtimeComponents'
+                  extraAttrs.slots = ''
+                }
+                if (!res[componentType][hashName]) {
+                  res[componentType][hashName] = {}
+                }
+
+                Object.assign(res[componentType][hashName], {
+                  ...attrsMap,
+                  ...extraAttrs
+                })
+              }
+
+              // 合并基础节点的属性
+              for (const componentName in baseComponents) {
+                const attrsMap = baseComponents[componentName]
+                if (!res.baseComponents[componentName]) {
+                  res.baseComponents[componentName] = {}
+                }
+                Object.assign(res.baseComponents[componentName], attrsMap)
+              }
+            }
+
+            return res
+          },
+          injectDynamicSlotDependencies: (usingComponents, resourcePath) => {
+            const dynamicSlotReg = /"mpx_dynamic_slot":\s*""*/
+            const content = mpx.dynamicSlotDependencies[resourcePath] ? JSON.stringify(mpx.dynamicSlotDependencies[resourcePath]).slice(1, -1) : ''
+            const result = usingComponents.replace(dynamicSlotReg, content).replace(/,\s*(\}|\])/g, '$1')
+            return result
+          },
+          changeHashNameForAstNode: (templateAst, componentsMap) => {
+            const nameReg = /"tag":\s*"([^"]*)",?/g
+
+            // 替换 astNode hashName
+            const result = templateAst.replace(nameReg, function (match, tag) {
+              if (componentsMap[tag]) {
+                const { hashName, isDynamic } = componentsMap[tag]
+                let content = `"tag": "${hashName}",`
+                if (isDynamic) {
+                  content += '"dynamic": true,'
+                }
+                return content
+              }
+              return match
+            }).replace(/,\s*(\}|\])/g, '$1')
+
+            return result
+          },
+          collectDynamicSlotDependencies: (packageName = 'main') => {
+            const componentsMap = mpx.componentsMap[packageName] || {}
+            const publicPath = compilation.outputOptions.publicPath || ''
+            const runtimeInfo = mpx.runtimeInfo[packageName]
+
+            for (const resourcePath in runtimeInfo) {
+              const { template, json } = runtimeInfo[resourcePath]
+              const dynamicSlotDependencies = template.dynamicSlotDependencies || []
+
+              dynamicSlotDependencies.forEach((slotDependencies) => {
+                let lastNeedInjectNode = slotDependencies[0]
+                for (let i = 1; i <= slotDependencies.length - 1; i++) {
+                  const componentName = slotDependencies[i]
+                  const { resourcePath, isDynamic } = json[componentName] || {}
+                  if (isDynamic) {
+                    const { resourcePath: path, hashName } = json[lastNeedInjectNode]
+                    mpx.dynamicSlotDependencies[resourcePath] = mpx.dynamicSlotDependencies[resourcePath] || {}
+                    Object.assign(mpx.dynamicSlotDependencies[resourcePath], {
+                      [hashName]: publicPath + componentsMap[path]
+                    })
+                    lastNeedInjectNode = slotDependencies[i]
+                  }
+                }
+              })
+            }
           }
         }
       }
@@ -945,6 +1207,11 @@ class MpxWebpackPlugin {
             return rawCallback(null, module)
           }
         }
+
+        if (isReact(mpx.mode) && module instanceof ExternalModule) {
+          module.hasChunkCondition = () => false // 跳过 EnsureChunkConditionsPlugin 的过滤，避免被输出到包含 entry module 的 chunk 当中
+          module.chunkCondition = () => true // 可以正常被 SplitChunkPlugin 处理
+        }
         return rawAddModule.call(compilation, module, callback)
       }
 
@@ -993,12 +1260,12 @@ class MpxWebpackPlugin {
         // 自动使用分包配置修改splitChunksPlugin配置
         if (splitChunksPlugin) {
           let needInit = false
-          if (mpx.mode === 'web') {
+          if (isWeb(mpx.mode) || isReact(mpx.mode)) {
             // web独立处理splitChunk
-            if (!hasOwn(splitChunksOptions.cacheGroups, 'main')) {
+            if (isWeb(mpx.mode) && !hasOwn(splitChunksOptions.cacheGroups, 'main')) {
               splitChunksOptions.cacheGroups.main = {
                 chunks: 'initial',
-                name: 'bundle',
+                name: 'lib/index', // web 输出 chunk 路径和 rn 输出分包格式拉齐
                 test: /[\\/]node_modules[\\/]/
               }
               needInit = true
@@ -1006,8 +1273,9 @@ class MpxWebpackPlugin {
             if (!hasOwn(splitChunksOptions.cacheGroups, 'async')) {
               splitChunksOptions.cacheGroups.async = {
                 chunks: 'async',
-                name: 'async',
-                minChunks: 2
+                name: 'async-common/index',
+                minChunks: 2,
+                minSize: 1
               }
               needInit = true
             }
@@ -1027,7 +1295,7 @@ class MpxWebpackPlugin {
 
       JavascriptModulesPlugin.getCompilationHooks(compilation).renderModuleContent.tap('MpxWebpackPlugin', (source, module, renderContext) => {
         // 处理dll产生的external模块
-        if (module.external && module.userRequest.startsWith('dll-reference ') && mpx.mode !== 'web') {
+        if (module.external && module.userRequest.startsWith('dll-reference ') && !isWeb(mpx.mode) && !isReact(mpx.mode)) {
           const chunk = renderContext.chunk
           const request = module.request
           let relativePath = toPosix(path.relative(path.dirname(chunk.name), request))
@@ -1106,6 +1374,41 @@ class MpxWebpackPlugin {
         }
       })
 
+      compilation.hooks.processAssets.tap({
+        name: 'MpxWebpackPlugin'
+      }, (assets) => {
+        try {
+          const dynamicAssets = {}
+          for (const packageName in mpx.runtimeInfo) {
+            for (const resourcePath in mpx.runtimeInfo[packageName]) {
+              const { moduleId, template, style, json } = mpx.runtimeInfo[packageName][resourcePath]
+              const templateAst = mpx.changeHashNameForAstNode(template.templateAst, json)
+              dynamicAssets[moduleId] = {
+                template: JSON.parse(templateAst),
+                styles: style.reduce((preV, curV) => {
+                  preV.push(...curV)
+                  return preV
+                }, [])
+              }
+
+              // 注入 dynamic slot dependency
+              const outputPath = mpx.componentsMap[packageName][resourcePath]
+              if (outputPath) {
+                const jsonAsset = outputPath + '.json'
+                const jsonContent = compilation.assets[jsonAsset].source()
+                compilation.assets[jsonAsset] = new RawSource(mpx.injectDynamicSlotDependencies(jsonContent, resourcePath))
+              }
+            }
+          }
+          if (!isEmptyObject(dynamicAssets)) {
+            // 产出 jsonAst 静态产物
+            compilation.assets['dynamic.json'] = new RawSource(JSON.stringify(dynamicAssets))
+          }
+        } catch (error) {
+          compilation.errors.push(error)
+        }
+      })
+
       const normalModuleFactoryParserCallback = (parser) => {
         parser.hooks.call.for('__mpx_resolve_path__').tap('MpxWebpackPlugin', (expr) => {
           if (expr.arguments[0]) {
@@ -1117,6 +1420,15 @@ class MpxWebpackPlugin {
             parser.state.current.addPresentationalDependency(dep)
             return true
           }
+        })
+
+        parser.hooks.call.for('__mpx_require_external__').tap('MpxWebpackPlugin', (expr) => {
+          const args = expr.arguments.map((i) => i.value)
+          args.unshift(expr.range)
+
+          const dep = new RequireExternalDependency(...args)
+          parser.state.current.addPresentationalDependency(dep)
+          return true
         })
 
         parser.hooks.call.for('__mpx_dynamic_entry__').tap('MpxWebpackPlugin', (expr) => {
@@ -1148,10 +1460,15 @@ class MpxWebpackPlugin {
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
-                if (mpx.mode === 'web') {
+                if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                  if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+                  request = addQuery(request, {
+                    isRequireAsync: true,
+                    retryRequireAsync: JSON.stringify(this.options.retryRequireAsync)
+                  })
                   const depBlock = new AsyncDependenciesBlock(
                     {
-                      name: tarRoot
+                      name: tarRoot + '/index'
                     },
                     expr.loc,
                     request
@@ -1162,8 +1479,10 @@ class MpxWebpackPlugin {
                   parser.state.current.addBlock(depBlock)
                 } else {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
+                    isAsync: true,
                     isRequireAsync: true,
-                    retryRequireAsync: !!this.options.retryRequireAsync
+                    retryRequireAsync: this.options.retryRequireAsync,
+                    requireAsyncRange: expr.range
                   })
 
                   parser.state.current.addPresentationalDependency(dep)
@@ -1280,12 +1599,12 @@ class MpxWebpackPlugin {
                 '  code = code.replace(/const { (.*?) } = ctx/g, function (match, $1) {\n' +
                 '    var arr = $1.split(", ")\n' +
                 '    var str = ""\n' +
-                '    var pattern = /(.*):(.*)/\n' +
+                '    var pattern = /(\\w+)(?::\\s*(\\w+))?/\n' +
                 '    for (var i = 0; i < arr.length; i++) {\n' +
                 '      var result = arr[i].match(pattern)\n' +
                 '      var left = result[1]\n' +
-                '      var right = result[2]\n' +
-                '      str += "var" + right + " = ctx." + left\n' +
+                '      var right = result[2] || left\n' +
+                '      str += "var " + right + " = ctx." + left + ";\\n  "\n' +
                 '    }\n' +
                 '    return str\n' +
                 '  })\n' +
@@ -1318,7 +1637,7 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || toPosix(resourcePath).indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
@@ -1353,8 +1672,8 @@ class MpxWebpackPlugin {
             parser.hooks.call.for('App').tap('MpxWebpackPlugin', (expr) => {
               transGlobalObject(expr.callee)
             })
-            if (mpx.mode === 'ali' || mpx.mode === 'web') {
-              // 支付宝和web不支持Behaviors
+            if (mpx.mode === 'ali' || isWeb(mpx.mode) || isReact(mpx.mode)) {
+              // 支付宝、web和react不支持Behaviors
               parser.hooks.call.for('Behavior').tap('MpxWebpackPlugin', (expr) => {
                 transGlobalObject(expr.callee)
               })
@@ -1371,7 +1690,7 @@ class MpxWebpackPlugin {
         name: 'MpxWebpackPlugin',
         stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
       }, () => {
-        if (mpx.mode === 'web') return
+        if (isWeb(mpx.mode)) return
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
@@ -1410,6 +1729,22 @@ class MpxWebpackPlugin {
 
           const originalSource = compilation.assets[chunkFile]
           const source = new ConcatSource()
+
+          if (isReact(mpx.mode)) {
+            // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
+            source.add('/* @refresh reset */\n')
+            // 注入页面的配置，供screen前置设置导航情况
+            if (isRuntime) {
+              source.add('// inject pageconfigmap for screen\n' +
+                'var context = (function() { return this })() || Function("return this")();\n')
+              source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+            }
+            source.add(originalSource)
+            compilation.assets[chunkFile] = source
+            processedChunk.add(chunk)
+            return
+          }
+
           source.add(`\nvar ${globalObject} = {};\n`)
 
           relativeChunks.forEach((relativeChunk, index) => {
@@ -1560,6 +1895,23 @@ try {
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
+
+          if (type === 'styles') {
+            let insertBeforeIndex = -1
+            // 单次遍历收集所有索引
+            loaders.forEach((loader, index) => {
+              const currentLoader = toPosix(loader.loader)
+              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
+                insertBeforeIndex = index
+              }
+            })
+
+            if (insertBeforeIndex !== -1) {
+              loaders.splice(insertBeforeIndex, 0, { loader: styleStripConditionalPath })
+            }
+            loaders.push({ loader: styleStripConditionalPath })
+          }
+
           switch (type) {
             case 'styles':
             case 'template': {
@@ -1609,9 +1961,8 @@ try {
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
-
-        if (mpx.mode === 'web') {
-          const mpxStyleOptions = queryObj.mpxStyleOptions
+        // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
+        if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
@@ -1636,8 +1987,7 @@ try {
             }
             if (loaderIndex > -1) {
               loaders.splice(loaderIndex + 1, 0, {
-                loader: styleCompilerPath,
-                options: (mpxStyleOptions && JSON.parse(mpxStyleOptions)) || {}
+                loader: styleCompilerPath
               })
             }
           }
