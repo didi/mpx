@@ -14,7 +14,7 @@ export function getAsyncSuspense (commonProps) {
   if (commonProps.type === 'component') {
     result = memo(forwardRef(function (props, ref) {
       return createElement(AsyncSuspense,
-        extend(commonProps, {
+        extend({}, commonProps, {
           innerProps: Object.assign({}, props, { ref })
         })
       )
@@ -22,7 +22,7 @@ export function getAsyncSuspense (commonProps) {
   } else {
     result = memo(function (props) {
       return createElement(AsyncSuspense,
-        extend(commonProps, {
+        extend({}, commonProps, {
           innerProps: props
         })
       )
