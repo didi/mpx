@@ -2590,6 +2590,21 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 }
 ```
 
+针对异步分包加载异常的场景：
+
+* 异步组件加载失败：微信小程序提供了 [`wx.onLazyLoadError`](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.onLazyLoadError.html) 的全局 api 来监听异步组件加载失败，这个 api 同样在Mpx转RN场景下生效；
+* 异步页面加载失败：微信小程序未提供相关的监听异常的 api，Mpx转RN提供了一个额外的全局监听函数：
+
+```javascript
+// RN 场景下监听异步页面加载失败的全局配置
+mpx.config.rnConfig.lazyLoadPageErrorHandler = function (error) {
+  console.log(
+    error.subpackage, // 加载失败的分包名
+    error.errType // 加载失败的类型：'timeout' | 'fail'
+  )
+}
+```
+
 此外针对Mpx转RN的场景，还提供了一些异步分包的配置选项：
 
 ```javascript
@@ -2639,3 +2654,77 @@ module.exports = defineConfig({
   })
 </script>
 ```
+
+
+#### 分享
+
+##### mpx.config.rnConfig.openTypeHandler.onShareAppMessage
+
+当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中是分享实现需由容器实现，可在 onShareAppMessage 中完成分享逻辑实现。
+
+其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
+
+`(shareInfo: { title: string, path: string, imageUrl?: string }) => void`
+
+
+
+#### 路由
+
+
+**mpx.config.rnConfig.parseAppProps**
+
+`(props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)`
+
+用于获取初始路由配置的函数，参数为RN根组件接收到的参数
+
++ initialRouteName: 首页路径，例如 pages/index
+
++ initialParams: 首页onLoad参数，例如 \{ a: 1 \}
+
+
+
+
+
+
+**mpx.config.rnConfig.onStateChange**
+
+`(state: Record<string, any>) => void`
+
+当导航状态发生变化时触发，例如页面跳转、返回等。可在此回调中将 ReactNative 路径栈同步到容器中。
+
+
+
+##### mpx.config.rnConfig.onAppBack
+
+`() => boolean`
+
+页面栈长度为 1（即根页面）且用户尝试退出 App 时触发。
+
++ true：允许退出应用
+
++ false：阻止退出应用
+
+
+##### mpx.config.rnConfig.onStackTopBack
+
+控制首页回退按钮是否展示，并监听点击事件。
+
+如果绑定该函数，则首页显示返回按钮，点击后调用该函数作为回调，如果未绑定该函数，则首页不会展示返回按钮。
+
+如需实现点击返回，请在函数内部手动调用 back。
+
+
+
+#### 折叠屏适配
+
+
+##### mpx.config.rnConfig.customDimensions
+
+`(dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void`
+
+在某些情况下，我们可能不希望当前 ReactNative 全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 信息来得到想要的渲染效果。
+
+可在此方法中返回修改后的 dimensions，如果无返回或返回undefined，则以入参作为返回值
+
+
+例如在折叠屏中我们期望只在其中一半屏上展示，可在customDimensions中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。

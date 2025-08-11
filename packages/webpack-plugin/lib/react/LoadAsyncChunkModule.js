@@ -5,7 +5,7 @@ const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
 class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
   constructor (timeout) {
     super('load async chunk')
-    this.timeout = timeout || 5000
+    this.timeout = timeout || 10000
   }
 
   generate () {
@@ -13,25 +13,30 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
     const { runtimeTemplate } = compilation
     const loadScriptFn = RuntimeGlobals.loadScript
     return Template.asString([
-      'var inProgress = {};',
+      'var inProgress = {}',
       `${loadScriptFn} = ${runtimeTemplate.basicFunction(
         'url, done, key, chunkId',
         [
           `var packageName = ${RuntimeGlobals.getChunkScriptFilename}(chunkId) || ''`,
-          'packageName = packageName.split("/")[0]',
+          'packageName = packageName.split(\'/\').slice(0, -1).join(\'/\')',
           'var config = {',
           Template.indent([
             'url: url,',
             'package: packageName'
           ]),
           '}',
-          'if(inProgress[url]) { inProgress[url].push(done); return; }',
-          'inProgress[url] = [done];',
+          'if(inProgress[url]) {',
+          Template.indent([
+            'inProgress[url].push(done)',
+            'return'
+          ]),
+          '}',
+          'inProgress[url] = [done]',
           'var callback = function (type, result) {',
           Template.indent([
             'var event = {',
             Template.indent([
-              'type: type,',
+              'type: type || \'fail\',',
               'target: {',
               Template.indent(['src: url']),
               '}'
@@ -40,7 +45,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           ]),
           Template.indent([
             'var doneFns = inProgress[url]',
-            'clearTimeout(timeoutCallback)',
+            'clearTimeout(timeout)',
             'delete inProgress[url]',
             `doneFns && doneFns.forEach(${runtimeTemplate.returningFunction(
               'fn(event)',
@@ -48,17 +53,18 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
             )})`
           ]),
           '}',
-          `var timeoutCallback = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
-          "var successCallback = callback.bind(null, 'fail');", // 错误类型和 wx 对齐
-          "var failedCallback = callback.bind(null, 'fail')",
+          `var timeout = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
           'var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync',
-          'if (typeof loadChunkAsyncFn !== \'function\') {',
-            Template.indent([
-              'console.error("[Mpx runtime error]: please provide correct loadChunkAsync function")',
-              'return'
-            ]),
-          '}',
-          'loadChunkAsyncFn(config).then(successCallback).catch(failedCallback)'
+          'try {',
+          Template.indent([
+            'loadChunkAsyncFn(config).then(callback).catch(callback)'
+          ]),
+          '} catch (e) {',
+          Template.indent([
+            'console.error(\'[Mpx runtime error]: please provide correct mpx.config.rnConfig.loadChunkAsync implemention!\', e)',
+            'Promise.resolve().then(callback)'
+          ]),
+          '}'
         ]
       )}`
     ])

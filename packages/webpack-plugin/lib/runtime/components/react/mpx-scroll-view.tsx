@@ -34,7 +34,7 @@
 import { ScrollView, RefreshControl, Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Animated as RNAnimated } from 'react-native'
 import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo, createElement } from 'react'
-import Animated, { useAnimatedRef, useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
+import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -211,7 +211,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  const scrollViewRef = useAnimatedRef<ScrollView>()
+  const scrollViewRef = useRef<ScrollView>(null)
   useNodesRef(props, ref, scrollViewRef, {
     style: normalStyle,
     scrollOffset: scrollOptions,
