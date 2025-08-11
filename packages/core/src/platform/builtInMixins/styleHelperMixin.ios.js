@@ -1,15 +1,18 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
 import { StyleSheet } from 'react-native'
 
-function rpx (value, screenInfo) {
+function rpx (value) {
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (750 / 屏幕宽度)
   return value * screenInfo.width / 750
 }
-function vw (value, screenInfo) {
+function vw (value) {
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
   return value * screenInfo.width / 100
 }
-function vh (value, screenInfo) {
+function vh (value) {
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
   return value * screenInfo.height / 100
 }
 
@@ -21,13 +24,13 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value, screenInfo = global.__mpxAppDimensionsInfo.screen) {
+function formatValue (value) {
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
     } else {
-      return unit[matched[2]](+matched[1], screenInfo)
+      return unit[matched[2]](+matched[1])
     }
   }
   if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
@@ -146,17 +149,17 @@ function mergeObjectArray (arr) {
   return res
 }
 
-function transformStyleObj (styleObj, windowInfo) {
+function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop], windowInfo)
+    transformed[prop] = formatValue(styleObj[prop])
   })
   return transformed
 }
 
-function getMediaStyle (media, windowInfo) {
+function getMediaStyle (media) {
   if (!media || !media.length) return {}
-  const { width } = windowInfo
+  const { width } = global.__mpxAppDimensionsInfo.screen
   return media.reduce((styleObj, item) => {
     const { options = {}, value = {} } = item
     const { minWidth, maxWidth } = options
@@ -187,7 +190,9 @@ export default function styleHelperMixin () {
         const result = {}
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
-        const dimensionsInfo = this.__dimensionsInfo
+        const dimensionsInfo = global.__mpxAppDimensionsInfo;
+        // 使用一下 __dimensionsChangeFlag触发其get，需保证不会被压缩插件移除
+        (() => this.__dimensionsChangeFlag)()
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -197,7 +202,7 @@ export default function styleHelperMixin () {
             if (classMap[className]) {
               const styleObj = classMap[className] || empty
               if (styleObj._default) {
-                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.screen))
+                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media))
               } else {
                 Object.assign(result, styleObj)
               }
@@ -205,7 +210,7 @@ export default function styleHelperMixin () {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               const styleObj = appClassMap[className] || empty
               if (styleObj._default) {
-                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media, dimensionsInfo.screen))
+                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media))
               } else {
                 Object.assign(result, styleObj)
               }
@@ -218,7 +223,7 @@ export default function styleHelperMixin () {
 
         if (staticStyle || dynamicStyle) {
           const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj, dimensionsInfo.window))
+          Object.assign(result, transformStyleObj(styleObj))
         }
 
         if (hide) {

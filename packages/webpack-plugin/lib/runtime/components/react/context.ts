@@ -57,11 +57,6 @@ export interface DimensionsValue {
   screen: ScaledSize;
 }
 
-export interface DimensionsContextValue {
-  value: DimensionsValue,
-  setValue(value: DimensionsValue): void
-}
-
 export interface StickyContextValue {
   registerStickyHeader: Function,
   unregisterStickyHeader: Function
@@ -92,7 +87,5 @@ export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | nu
 export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
-
-export const DimensionsContext = createContext<DimensionsContextValue | null>(null)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
