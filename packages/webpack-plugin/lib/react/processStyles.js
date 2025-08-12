@@ -58,7 +58,7 @@ module.exports = function (styles, {
         if (ctorType === 'app') {
           const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
             result += `get ['${key}']() {
-            return __getAppCacheClass('${key}', ${() => shallowStringify(value)});
+            return __getAppCacheClass('${key}', () => (${shallowStringify(value)}));
           },`
             return result
           }, '')
@@ -81,7 +81,7 @@ module.exports = function (styles, {
         } else {
           const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
             result += `get ['${key}']() {
-              return __getCacheClass('${key}', ${() => shallowStringify(value)});
+              return __getCacheClass('${key}', () => (${shallowStringify(value)}));
           },`
             return result
           }, '')
