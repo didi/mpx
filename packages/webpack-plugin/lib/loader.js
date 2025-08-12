@@ -17,6 +17,7 @@ const path = require('path')
 const processWeb = require('./web')
 const processReact = require('./react')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
+const { isProductionLikeMode, CompressName } = require('./utils/optimize-compress')
 
 function hasTag (template, tag) {
   const re = new RegExp(`<${tag}(\\s|>|/)`, 'i')
@@ -52,6 +53,7 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
+  const compressName = new CompressName()
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -100,11 +102,6 @@ module.exports = function (content) {
     env
   })
 
-  const hasTemplateIsTag = parts.template?.context ? hasTag(parts.template.context, 'template') : false
-  if (mpx.optimizeSize && isProductionLikeMode(this) && hasTemplateIsTag) {
-    // TODO
-  }
-
   const {
     getRequire
   } = createHelpers(loaderContext)
@@ -131,13 +128,28 @@ module.exports = function (content) {
         componentPlaceholder,
         componentGenerics,
         usingComponentsInfo,
-        usingComponentsNameMap,
-        jsonContent
+        jsonContent,
+        usingComponents
       } = jsonInfo
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
+
+      // TODO 全局组件，暂不压缩
+      const usingComponentsNameMap = {}
+      const hasTemplateIsTag = parts.template?.context ? hasTag(parts.template.context, 'template') : false
+      const needOptimizeTemplateTag = mpx.optimizeSize && isProductionLikeMode(this) && !hasTemplateIsTag && ctorType !== 'app'
+      for (const componentName in usingComponents) {
+        if (needOptimizeTemplateTag) {
+          usingComponentsNameMap[componentName] = compressName._occupiedGenerateName([
+            ...Object.keys(mpx.globalComponentsInfo),
+            ...mpx.reservedComponentName
+          ])
+        } else {
+          usingComponentsNameMap[componentName] = componentName
+        }
+      }
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {

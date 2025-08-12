@@ -117,7 +117,6 @@ let i18nInjectableComputed = []
 let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
-let usingComponents = []
 let usingComponentsInfo = {}
 let componentGenerics = {}
 
@@ -2269,7 +2268,7 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
-function isComponentNode (el) {
+function isComponentNode (el, options) {
   return options.usingComponentsNameMap[el.tag] || el.tag === 'component' || componentGenerics[el.tag]
 }
 
@@ -2277,12 +2276,12 @@ function getComponentInfo (el) {
   return usingComponentsInfo[el.tag] || {}
 }
 
-function isReactComponent (el) {
-  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
+function isReactComponent (el, options) {
+  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
-  const isComponent = isComponentNode(el)
+  const isComponent = isComponentNode(el, options)
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
@@ -2503,7 +2502,7 @@ function processShow (el, options, root) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
-  if (isComponentNode(el) && getComponentInfo(el).hasVirtualHost) {
+  if (isComponentNode(el, options) && getComponentInfo(el).hasVirtualHost) {
     if (show === '') {
       show = '{{false}}'
     }
@@ -2804,7 +2803,7 @@ function closeElement (el, options, meta) {
         }
       })
     }
-    if (isComponentNode(el) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
+    if (isComponentNode(el, options) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }

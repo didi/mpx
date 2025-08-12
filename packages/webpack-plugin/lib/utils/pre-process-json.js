@@ -8,7 +8,6 @@ const getJSONContent = require('./get-json-content')
 const getRulesRunner = require('../platform')
 const { matchCondition } = require('./match-condition')
 const async = require('async')
-const { CompressName } = require('./optimize-compress.js')
 
 module.exports = function ({
   json,
@@ -22,7 +21,6 @@ module.exports = function ({
   const mpx = loaderContext.getMpx()
   const context = loaderContext.context
   const { mode, pagesMap, autoVirtualHostRules } = mpx
-  const compressName = new CompressName()
   async.waterfall([
     (callback) => {
       getJSONContent(json, null, loaderContext, callback)
@@ -32,7 +30,6 @@ module.exports = function ({
       let componentPlaceholder = []
       let componentGenerics = {}
       const usingComponentsInfo = {}
-      const usingComponentsNameMap = {} // 存储压缩后的组件名
       const usingComponents = {}
       const finalCallback = (err) => {
         if (err) return callback(err)
@@ -42,10 +39,12 @@ module.exports = function ({
           // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
           loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(usingComponents, usingComponentsInfo, context))
         }
+
         callback(null, {
           componentPlaceholder,
           componentGenerics,
           usingComponentsInfo: Object.assign({}, usingComponentsInfo, mpx.globalComponentsInfo),
+          usingComponents,
           jsonContent
         })
       }

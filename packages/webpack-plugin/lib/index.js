@@ -845,12 +845,13 @@ class MpxWebpackPlugin {
             const customOutputPath = this.options.customOutputPath
             if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
             if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext, resourcePath).replace(/^\//, '')
+
             if (type === 'component') {
               if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
                 const pathHash = generateVariableNameBySource(resourcePath, 'componentPath')
                 return path.join('c', pathHash, 'i' + ext)
               } else {
-                return path.join('c', name + hash, 'i' + ext)
+                return path.join('components', name + hash, 'i' + ext)
               }
             }
             if (type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
