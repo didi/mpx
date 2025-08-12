@@ -148,7 +148,7 @@ function handleTouchstart (e: ExtendedNativeTouchEvent, type: EventType, eventCo
   const isSingle = e.nativeEvent.touches.length <= 1
 
   if (isSingle) {
-    // 记录第一个的触摸点
+    // 仅在 touchstart 记录第一个单指触摸点
     globalEventState.identifier = identifier
     globalEventState.needPress = true
     innerRef.current.mpxPressInfo.detail = {
@@ -197,10 +197,7 @@ function handleTouchend (e: ExtendedNativeTouchEvent, type: EventType, eventConf
   innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
 
   // 只有单指触摸结束时才触发 tap
-  if (globalEventState.identifier === identifier) {
-    // 移除结束的触摸点
-    globalEventState.identifier = null
-    if (!eventConfig.tap) return
+  if (eventConfig.tap && globalEventState.identifier === identifier) {
     checkIsNeedPress(e, type, innerRef)
     if (!globalEventState.needPress || (type === 'bubble' && disableTap) || e._stoppedEventTypes?.has('tap')) {
       return
@@ -215,14 +212,8 @@ function handleTouchend (e: ExtendedNativeTouchEvent, type: EventType, eventConf
 
 function handleTouchcancel (e: ExtendedNativeTouchEvent, type: EventType, eventConfig: EventConfig) {
   const { innerRef } = eventConfig
-  const touch = e.nativeEvent.changedTouches[0]
-  const { identifier } = touch
   handleEmitEvent('touchcancel', e, type, eventConfig)
   innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
-  // 移除取消的触摸点
-  if (globalEventState.identifier === identifier) {
-    globalEventState.identifier = null
-  }
 }
 
 function createTouchEventHandler (eventName: string, eventConfig: EventConfig) {
