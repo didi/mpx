@@ -59,7 +59,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
-    if (pageCfg.async && mpx.supportRequireAsync) {
+    if (pageCfg.async && rnConfig.supportSubpackage) {
       const moduleId = mpx.getModuleId(pageCfg.resource)
       const getFallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback'))
       const getLoading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading'))
@@ -81,14 +81,14 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   }
 }
 
-function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig }) {
+function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig, rnConfig }) {
   const componentsMap = {}
   const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      if (componentCfg.async && mpx.supportRequireAsync) {
+      if (componentCfg.async && rnConfig.supportSubpackage) {
         const moduleId = mpx.getModuleId(componentCfg.resource)
         const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
         let getFallback
