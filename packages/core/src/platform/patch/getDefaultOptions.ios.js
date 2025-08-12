@@ -212,6 +212,9 @@ const instanceProto = {
 }
 
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
+  if (type === 'page') {
+    set(global.__mpxPageDimensionsChangeFlagMap, pageId, global.__mpxAppDimensionsChangeFlag)
+  }
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -406,7 +409,6 @@ function usePageEffect (mpxProxy, pageId) {
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
-    global.__mpxPageDimensionsChangeFlagMap[pageId] = global.__mpxAppDimensionsChangeFlag
     if (hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
