@@ -178,7 +178,7 @@ export default function styleHelperMixin () {
   return {
     watch: {
       __dimensionsChangeFlag () {
-        this.__classMapValueCache?.clear()
+        this.$rawOptions.options.__classMapValueCache?.clear()
       }
     },
     methods: {
