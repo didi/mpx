@@ -102,7 +102,8 @@ module.exports = async function loader (content, map, meta) {
           return getRequestString('styles', { src: url }, {
             isStatic: true,
             issuerResource: this.resource,
-            fromImport: true
+            fromImport: true,
+            ...(isRN ? { extract: false } : {})
           })
         }
       })
