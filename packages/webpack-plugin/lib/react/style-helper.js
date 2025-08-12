@@ -3,8 +3,7 @@ const selectorParser = require('postcss-selector-parser')
 const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
-const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
@@ -17,13 +16,19 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
   })
 
   function formatValue (value) {
-    let matched
     let needStringify = true
-    if ((matched = numberRegExp.exec(value))) {
-      value = matched[1]
-      needStringify = false
-    } else if (unitRegExp.test(value) || hairlineRegExp.test(value)) {
-      value = `global.__formatValue(${JSON.stringify(value)})`
+    const matched = unitRegExp.exec(value)
+    if (matched) {
+      if (!matched[2] || matched[2] === 'px') {
+        value = matched[1]
+        needStringify = false
+      } else {
+        value = `global.__${matched[2]}(${+matched[1]})`
+        needStringify = false
+      }
+    }
+    if (hairlineRegExp.test(value)) {
+      value = 'StyleSheet.hairlineWidth'
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value

@@ -38,6 +38,9 @@ function formatValue (value) {
 }
 
 global.__formatValue = formatValue
+global.__rpx = rpx
+global.__vw = vw
+global.__vh = vh
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
