@@ -428,7 +428,7 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
-      delete global.__mpxPageDimensionsChangeFlagMap[pageId]
+      del(global.__mpxPageDimensionsChangeFlagMap, pageId)
     }
   }, [])
 }
