@@ -41,6 +41,7 @@ global.__formatValue = formatValue
 global.__rpx = rpx
 global.__vw = vw
 global.__vh = vh
+global.__hairlineWidth = StyleSheet.hairlineWidth
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
