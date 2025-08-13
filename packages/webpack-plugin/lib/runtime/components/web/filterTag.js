@@ -265,10 +265,22 @@ function spaceTran (str, space) {
 
 export function htmlTranStr (template, space) {
   let html = ''
+  const encodeMap = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+    '"': '&quot;',
+    "'": '&apos;'
+  }
+  const encodeRe = /[<>"'&]/g
+  function encodeText (text) {
+    return String(text).replace(encodeRe, (match) => encodeMap[match])
+  }
   template.forEach(item => {
     const name = item.name
     if (item.type === 'text') {
-      html += isSpace(space) ? spaceTran(item.text, space) : item.text
+      const safeText = encodeText(item.text)
+      html += isSpace(space) ? spaceTran(safeText, space) : safeText
     }
     if (item.type === 'comment') {
       console.warn(`the rich-text nonsupport ${item.type} tag`)
@@ -309,7 +321,7 @@ export function htmlTranStr (template, space) {
               isEffAttr = name === 'bdo'
               break
           }
-          html += isEffAttr ? ` ${key}="${attrs[key]}"` : console.warn(`This ${key} attribute is not supported for ${name} tags contained in rich-text`)
+          html += isEffAttr ? ` ${key}="${encodeText(attrs[key])}"` : console.warn(`This ${key} attribute is not supported for ${name} tags contained in rich-text`)
         }
       }
       html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space) : ''}${isUnaryTag(name) ? ' />' : '</' + name + '>'}`
