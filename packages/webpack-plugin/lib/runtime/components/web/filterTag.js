@@ -88,7 +88,16 @@ function parseHTML (html, options) {
           match.end = index
           handleStartTag(match)
         }
+        continue
       }
+
+      // If we reach here, the `<` at position 0 does not start a valid tag/comment/end tag
+      // Treat it as plain text to avoid infinite loop on stray '<'
+      if (options.chars) {
+        options.chars('<')
+      }
+      advance(1)
+      continue
     }
     let text, rest, next
     if (textEnd >= 0) {
@@ -265,22 +274,10 @@ function spaceTran (str, space) {
 
 export function htmlTranStr (template, space) {
   let html = ''
-  const encodeMap = {
-    '<': '&lt;',
-    '>': '&gt;',
-    '&': '&amp;',
-    '"': '&quot;',
-    "'": '&apos;'
-  }
-  const encodeRe = /[<>"'&]/g
-  function encodeText (text) {
-    return String(text).replace(encodeRe, (match) => encodeMap[match])
-  }
   template.forEach(item => {
     const name = item.name
     if (item.type === 'text') {
-      const safeText = encodeText(item.text)
-      html += isSpace(space) ? spaceTran(safeText, space) : safeText
+      html += isSpace(space) ? spaceTran(item.text, space) : item.text
     }
     if (item.type === 'comment') {
       console.warn(`the rich-text nonsupport ${item.type} tag`)
@@ -321,7 +318,7 @@ export function htmlTranStr (template, space) {
               isEffAttr = name === 'bdo'
               break
           }
-          html += isEffAttr ? ` ${key}="${encodeText(attrs[key])}"` : console.warn(`This ${key} attribute is not supported for ${name} tags contained in rich-text`)
+          html += isEffAttr ? ` ${key}="${attrs[key]}"` : console.warn(`This ${key} attribute is not supported for ${name} tags contained in rich-text`)
         }
       }
       html += `${isUnaryTag(name) ? '' : '>'}${item.children.length ? htmlTranStr(item.children, space) : ''}${isUnaryTag(name) ? ' />' : '</' + name + '>'}`
