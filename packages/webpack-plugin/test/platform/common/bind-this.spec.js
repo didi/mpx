@@ -4,7 +4,7 @@ const { trimBlankRow } = require('../../../lib/utils/string')
 describe('render function simplify should correct', function () {
   it('should normal delete is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         a;
         if (a) {}
 
@@ -58,7 +58,7 @@ describe('render function simplify should correct', function () {
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   if (_sc("a")) {}
 
   _sc("b");
@@ -107,7 +107,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should computed delete is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         a.b
         if (a['b']) {}
         c;
@@ -125,7 +125,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   if (_c("a.b")) {}
 
   _sc("a")[_sc("c")];
@@ -144,7 +144,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should expression delete is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         // 逻辑运算          
         obj3 || ''
         obj3 && obj3.b
@@ -205,7 +205,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   // 逻辑运算          
   _sc("obj3") || '';
   _sc("obj3") && _c("obj3.b");
@@ -273,7 +273,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should backtrack variable deletion is correct', function () {
     const input = `
-    global.currentInject.render = function (_i, _c, _r, _sc) {
+    global._i.render = function (_i, _c, _r, _sc) {
       a
       {
         c
@@ -294,7 +294,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     `
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   _sc("a");
 
   {
@@ -318,7 +318,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should scope var is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         this._i(list, function (item, index) {
           item;
           index;
@@ -330,7 +330,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     `
     const res = bindThis(input, { needCollect: false, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   this._i(this.list, function (item, index) {
     item.a ? "" : "";
     item.a || item.b;
@@ -341,7 +341,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should propKeys is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         this._p(a);
         this._p(a + b);
         this._p(a && c);
@@ -356,7 +356,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should needCollect config is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         name;
         !name;
         !!name;
@@ -385,7 +385,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
     `
     const res = bindThis(input, { needCollect: false, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   this.name;
 
   this.name3[this.name2];
@@ -408,7 +408,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
 
   it('should wxs is correct', function () {
     const input = `
-      global.currentInject.render = function (_i, _c, _r, _sc) {
+      global._i.render = function (_i, _c, _r, _sc) {
         a;
         tools.hexToRgba(a);
 
@@ -441,7 +441,7 @@ global.currentInject.render = function (_i, _c, _r, _sc) {
       }
     }).code
     const output = `
-global.currentInject.render = function (_i, _c, _r, _sc) {
+global._i.render = function (_i, _c, _r, _sc) {
   _sc("a");
 
   _sc("b");

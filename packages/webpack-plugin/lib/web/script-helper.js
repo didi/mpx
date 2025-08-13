@@ -162,7 +162,7 @@ function buildGlobalParams ({
     })
   }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-  global.__mpxGenericsMap = {}
+  global._gm = {}
   global.__mpxOptionsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
   global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
@@ -172,13 +172,13 @@ function buildGlobalParams ({
     }
   } else {
     if (!hasApp) {
-      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+      content += '  global._gm = global._gm || {}\n'
       content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
       content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
     }
-    content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-    content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
-    content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`
+    content += `  global._id = ${JSON.stringify(moduleId)}\n`
+    content += `  global._m = ${JSON.stringify(scriptSrcMode)}\n`
+    content += `  global._i = ${JSON.stringify({ moduleId })}\n`
     if (!isProduction) {
       content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
     }

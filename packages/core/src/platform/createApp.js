@@ -86,7 +86,7 @@ export default function createApp (options, config = {}) {
     global.__mpxOptionsMap[currentInject.moduleId] = defaultOptions
   } else {
     defaultOptions.onAppInit && defaultOptions.onAppInit()
-    const ctor = config.customCtor || global.currentCtor || App
+    const ctor = config.customCtor || global._c || App
     ctor(defaultOptions)
   }
 }
