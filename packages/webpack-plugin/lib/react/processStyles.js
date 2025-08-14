@@ -56,21 +56,52 @@ module.exports = function (styles, {
           error
         })
         if (ctorType === 'app') {
+          const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+            result += `get ['${key}']() {
+            return __getAppCacheClass('${key}', () => (${shallowStringify(value)}));
+          },`
+            return result
+          }, '')
           output += `
           let __appClassMap
+          global.__appClassMapValueCache = new Map();
+          function __getAppCacheClass(className, getStyleObj) {
+            if (!global.__appClassMapValueCache.get(className)) {
+              const styleObj = getStyleObj();
+              global.__appClassMapValueCache.set(className, styleObj);
+            }
+            return global.__appClassMapValueCache.get(className);
+          };
           global.__getAppClassMap = function() {
             if(!__appClassMap) {
-              __appClassMap = ${shallowStringify(classMap)};
+              __appClassMap = {${classMapCode}};
             }
             return __appClassMap;
           };\n`
         } else {
+          const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+            result += `get ['${key}']() {
+              return __getCacheClass('${key}', () => (${shallowStringify(value)}));
+          },`
+            return result
+          }, '')
           output += `
           let __classMap
+          let __classMapValueCache = new Map();
+          function __getCacheClass(className, getStyleObj) {
+            if (!__classMapValueCache.get(className)) {
+              const styleObj = getStyleObj();
+              __classMapValueCache.set(className, styleObj);
+            }
+            return __classMapValueCache.get(className);
+          }
+          global.currentInject.injectOptions = {
+            __classMapValueCache
+          };
           global.currentInject.injectMethods = {
             __getClassMap: function() {
               if(!__classMap) {
-                __classMap = ${shallowStringify(classMap)};
+                __classMap = {${classMapCode}};
               }
               return __classMap;
             }
