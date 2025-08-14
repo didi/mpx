@@ -501,11 +501,19 @@ export default class MpxProxy {
     const hooks = this.hooks[hookName] || []
     let result
     if (isFunction(hook) && !hooksOnly) {
+      const setContext = hookName !== BEFORECREATE
+      if (setContext) {
+        setCurrentInstance(this)
+      }
       result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
+      if (setContext) {
+        unsetCurrentInstance()
+      }
     }
     hooks.forEach((hook) => {
       result = params ? hook(...params) : hook()
     })
+
     return result
   }
 
