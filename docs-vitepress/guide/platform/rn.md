@@ -1279,7 +1279,7 @@ API
 
 注意事项
 1. sticky-header 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
-2. RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前 sticky 还在动画过程中更新组件、scroll-view 内容高度由多变少、修改 scroll-into-view、scroll-top，以上场景安卓上都可能会导致闪烁
+2. RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前 sticky 如果还在动画过程中就触发组件更新（如在bindstickontopchange 回调中立刻更新 state）、scroll-view 内容高度由多变少、通过修改 scroll-into-view、scroll-top 让 scroll-view 滚动，以上场景在安卓上都可能会导致闪烁或抖动
 
 属性
 
