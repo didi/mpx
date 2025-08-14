@@ -35,7 +35,7 @@ module.exports = function (template, {
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
-    const { el, disablePageTransition } = webConfig
+    const { el, disablePageTransition = true } = webConfig
     const idName = (el && el.match(/#(.*)/) && el.match(/#(.*)/)[1]) || 'app'
     template = {
       tag: 'template',

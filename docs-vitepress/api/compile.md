@@ -846,8 +846,8 @@ module.exports = defineConfig({
           },
           // 当 SSR 模式下使用异步分包时
           useSSR: true,
-          // 禁用/开启页面切换动画
-          disablePageTransition: true
+          // 开启页面切换动画
+          disablePageTransition: false
         }
       }
     }
