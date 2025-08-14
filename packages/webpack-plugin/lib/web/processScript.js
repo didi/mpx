@@ -86,7 +86,8 @@ module.exports = function (script, {
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     wxsMixin: getWxsMixin(wxsModules),
-    hasApp: ${hasApp}
+    hasApp: ${hasApp},
+    disablePageTransition: ${JSON.stringify(webConfig.disablePageTransition === undefined ? true : !!webConfig.disablePageTransition)},
   })\n`
       return content
     }
