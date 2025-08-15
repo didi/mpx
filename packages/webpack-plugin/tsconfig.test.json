@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "es2018",
+    "lib": ["es2018", "dom", "dom.iterable"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "jsx": "react-jsx",
+    "types": ["jest", "@testing-library/jest-dom", "react-native"]
+  },
+  "include": [
+    "lib/runtime/components/react/**/*",
+    "test/**/*",
+    "__mocks__/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib/runtime/components/react/dist"
+  ]
+}
