@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
     borderRadius: 10
   }
 })
+
 const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((props, ref): JSX.Element | null => {
   const { src, bindmessage, bindload, binderror } = props
   const mpx = global.__mpx
@@ -126,7 +127,24 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     style: defaultWebViewStyle
   })
 
+  const hostValidate = (url: string) => {
+    const host = url && new URL(url).host
+    const hostWhitelists = mpx.config.rnConfig?.webviewConfig?.hostWhitelists || []
+    if (hostWhitelists.length) {
+      return hostWhitelists.some((item: string) => {
+        return host.endsWith(item)
+      })
+    } else {
+      return true
+    }
+  }
+
   if (!src) {
+    return null
+  }
+
+  if (!hostValidate(src)) {
+    console.error('访问页面域名不符合domainWhiteLists白名单配置，请确认是否正确配置该域名白名单')
     return null
   }
 
@@ -182,6 +200,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     }
   }
   const _message = function (res: WebViewMessageEvent) {
+    if (!hostValidate(res.nativeEvent?.url)) {
+      return
+    }
     let data: MessageData = {}
     let asyncCallback
     const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
@@ -232,7 +253,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         break
       default:
         if (type) {
-          const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
+          const implement = mpx.config.rnConfig.webviewConfig && mpx.config.rnConfig.webviewConfig.apiImplementations && mpx.config.rnConfig.webviewConfig.apiImplementations[type]
           if (isFunction(implement)) {
             asyncCallback = Promise.resolve(implement(...params))
           } else {

@@ -124,7 +124,7 @@ export default {
         case 'postMessage':
           let data = {
             type: 'message',
-            data: params[0]?.data
+            data: params[0]?.data || params[0] // 补充兜底逻辑
           }
           this.$emit(eventMessage, getCustomEvent(eventMessage, data, this))
           asyncCallback = Promise.resolve({
@@ -148,7 +148,7 @@ export default {
           break
         default:
           if (type) {
-            const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
+            const implement = mpx.config.webConfig?.webviewConfig?.apiImplementations?.[type]
             if (isFunction(implement)) {
               asyncCallback = Promise.resolve(implement(...params))
             } else {
@@ -174,7 +174,7 @@ export default {
       })
     },
     hostValidate (host) {
-      const hostWhitelists = mpx.config.webviewConfig && mpx.config.webviewConfig.hostWhitelists || []
+      const hostWhitelists = mpx.config.webConfig?.webviewConfig?.hostWhitelists || []
       if (hostWhitelists.length) {
         return hostWhitelists.some((item) => {
           return host.endsWith(item)
