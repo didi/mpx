@@ -183,7 +183,7 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const isNativeStaticStyle = typeof staticStyle !== 'string'
+        const isNativeStaticStyle = staticStyle && typeof staticStyle !== 'string'
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (o) => result.push(o) : (o) => Object.assign(result, o)
 
