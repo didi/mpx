@@ -12,6 +12,7 @@ const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
+const getBuildTagComponent = require('../utils/get-build-tag-component')
 
 module.exports = function (jsonContent, {
   loaderContext,
@@ -48,6 +49,48 @@ module.exports = function (jsonContent, {
   }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
+
+  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
+    const componentPlaceholder = jsonObj.componentPlaceholder || {}
+    if (componentPlaceholder[name]) return
+    jsonObj.componentPlaceholder = componentPlaceholder
+    if (placeholderEntry) {
+      if (jsonObj.usingComponents[placeholder]) {
+        // TODO 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
+        let i = 1
+        let newPlaceholder = placeholder + i
+        while (jsonObj.usingComponents[newPlaceholder]) {
+          newPlaceholder = placeholder + ++i
+        }
+        placeholder = newPlaceholder
+      }
+      jsonObj.usingComponents[placeholder] = placeholderEntry
+      fillInComponentsMap(placeholder, placeholderEntry, '')
+    }
+    componentPlaceholder[name] = placeholder
+  }
+  const fillInComponentsMap = (name, entry, tarRoot) => {
+    const { resource, outputPath } = entry
+    const { resourcePath, queryObj } = parseRequest(resource)
+    componentsMap[resourcePath] = outputPath
+    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+    localComponentsMap[name] = {
+      resource: addQuery(resource, {
+        isComponent: true,
+        outputPath
+      }),
+      async: queryObj.async || tarRoot
+    }
+  }
+  const normalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      placeholder = getBuildTagComponent(mode, placeholder) || { name: placeholder }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    return placeholder
+  }
 
   const {
     isUrlRequest,
@@ -288,19 +331,34 @@ module.exports = function (jsonContent, {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath } = {}, { tarRoot } = {}) => {
+        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          const { resourcePath, queryObj } = parseRequest(resource)
-          componentsMap[resourcePath] = outputPath
-          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-          localComponentsMap[name] = {
-            resource: addQuery(resource, {
-              isComponent: true,
-              outputPath
-            }),
-            async: queryObj.async || tarRoot
+          fillInComponentsMap(name, entry, tarRoot)
+          const { relativePath } = entry
+
+          if (tarRoot) {
+            if (placeholder) {
+              placeholder = normalizePlaceholder(placeholder)
+              if (placeholder.resource) {
+                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
+                  if (err) return callback(err)
+                  fillInComponentPlaceholder(name, placeholder.name, entry)
+                  callback()
+                })
+              } else {
+                fillInComponentPlaceholder(name, placeholder.name)
+                callback()
+              }
+            } else {
+              if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {
+                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+                emitError(errMsg)
+              }
+              callback()
+            }
+          } else {
+            callback()
           }
-          callback()
         })
       }, callback)
     } else {
