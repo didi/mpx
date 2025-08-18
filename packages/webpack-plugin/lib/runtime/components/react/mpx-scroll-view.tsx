@@ -38,7 +38,7 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
 
@@ -210,6 +210,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   const scrollViewRef = useRef<ScrollView>(null)
+
+  const runOnJSCallbackRef = useRef({
+    setEnableScroll,
+    setScrollBounces,
+    setRefreshing,
+    onRefresh
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+
   useNodesRef(props, ref, scrollViewRef, {
     style: normalStyle,
     scrollOffset: scrollOptions,
@@ -446,44 +455,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function onScrollTouchStart (e: NativeSyntheticEvent<TouchEvent>) {
-    const { bindtouchstart } = props
-    bindtouchstart && bindtouchstart(e)
-    if (enhanced) {
-      binddragstart &&
-        binddragstart(
-          getCustomEvent('dragstart', e, {
-            detail: {
-              scrollLeft: scrollOptions.current.scrollLeft,
-              scrollTop: scrollOptions.current.scrollTop
-            },
-            layoutRef
-          }, props)
-        )
-    }
-  }
   function onScrollTouchMove (e: NativeSyntheticEvent<TouchEvent>) {
     bindtouchmove && bindtouchmove(e)
     if (enhanced) {
       binddragging &&
         binddragging(
           getCustomEvent('dragging', e, {
-            detail: {
-              scrollLeft: scrollOptions.current.scrollLeft || 0,
-              scrollTop: scrollOptions.current.scrollTop || 0
-            },
-            layoutRef
-          }, props)
-        )
-    }
-  }
-
-  function onScrollTouchEnd (e: NativeSyntheticEvent<TouchEvent>) {
-    bindtouchend && bindtouchend(e)
-    if (enhanced) {
-      binddragend &&
-        binddragend(
-          getCustomEvent('dragend', e, {
             detail: {
               scrollLeft: scrollOptions.current.scrollLeft || 0,
               scrollTop: scrollOptions.current.scrollTop || 0
@@ -514,6 +491,35 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     hasCallScrollToLower.current = false
     hasCallScrollToUpper.current = false
     onScrollDrag(e)
+    if (enhanced) {
+      binddragstart &&
+        binddragstart(
+          getCustomEvent('dragstart', e, {
+            detail: {
+              scrollLeft: scrollOptions.current.scrollLeft,
+              scrollTop: scrollOptions.current.scrollTop
+            },
+            layoutRef
+          }, props)
+        )
+    }
+  }
+
+  function onScrollDragEnd (e: NativeSyntheticEvent<NativeScrollEvent>) {
+    onScrollDrag(e)
+    if (enhanced) {
+      // 安卓上如果触发了默认的下拉刷新，binddragend可能不触发，只会触发 binddragstart
+      binddragend &&
+        binddragend(
+          getCustomEvent('dragend', e, {
+            detail: {
+              scrollLeft: scrollOptions.current.scrollLeft || 0,
+              scrollTop: scrollOptions.current.scrollTop || 0
+            },
+            layoutRef
+          }, props)
+        )
+    }
   }
 
   // 处理刷新
@@ -587,7 +593,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'worklet'
     if (enableScrollValue.value !== newValue) {
       enableScrollValue.value = newValue
-      runOnJS(setEnableScroll)(newValue)
+      runOnJS(runOnJSCallback)('setEnableScroll', newValue)
     }
   }
 
@@ -600,7 +606,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'worklet'
     if (bouncesValue.value !== newValue) {
       bouncesValue.value = newValue
-      runOnJS(setScrollBounces)(newValue)
+      runOnJS(runOnJSCallback)('setScrollBounces', newValue)
     }
   }
 
@@ -649,19 +655,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         if ((event.translationY > 0 && translateY.value < refresherThreshold) || event.translationY < 0) {
           translateY.value = withTiming(0)
           updateScrollState(true)
-          runOnJS(setRefreshing)(false)
+          runOnJS(runOnJSCallback)('setRefreshing', false)
         } else {
           translateY.value = withTiming(refresherHeight.value)
         }
       } else if (event.translationY >= refresherHeight.value) {
         // 触发刷新
         translateY.value = withTiming(refresherHeight.value)
-        runOnJS(onRefresh)()
+        runOnJS(runOnJSCallback)('onRefresh')
       } else {
         // 回弹
         translateY.value = withTiming(0)
         updateScrollState(true)
-        runOnJS(setRefreshing)(false)
+        runOnJS(runOnJSCallback)('setRefreshing', false)
       }
     })
     .simultaneousWithExternalGesture(scrollViewRef)
@@ -686,11 +692,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       ref: scrollViewRef,
       onScroll: enableSticky ? scrollHandler : onScroll,
       onContentSizeChange: onContentSizeChange,
-      bindtouchstart: ((enhanced && binddragstart) || bindtouchstart) && onScrollTouchStart,
       bindtouchmove: ((enhanced && binddragging) || bindtouchmove) && onScrollTouchMove,
-      bindtouchend: ((enhanced && binddragend) || bindtouchend) && onScrollTouchEnd,
       onScrollBeginDrag: onScrollDragStart,
-      onScrollEndDrag: onScrollDrag,
+      onScrollEndDrag: onScrollDragEnd,
       onMomentumScrollEnd: onScrollEnd
     },
     (simultaneousHandlers ? { simultaneousHandlers } : {}),
