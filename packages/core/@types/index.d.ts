@@ -121,6 +121,7 @@ interface Context {
   createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver'],
   getPageId: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getPageId']
+  getOpenerEventChannel: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getOpenerEventChannel']
 }
 type ExtendedComponentOptions = {
   disconnectOnUnmounted?: boolean
