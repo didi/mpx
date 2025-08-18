@@ -147,7 +147,7 @@ createComponent({
 在`packages/webpack-plugin/lib/template-compiler.js`模板处理 loader 当中:
 
 ```javascript
-let renderResult = bindThis(`global.currentInject = {
+let renderResult = bindThis(`global._i = {
     moduleId: ${JSON.stringify(options.moduleId)},
     render: function () {
       var __seen = [];
@@ -174,7 +174,7 @@ if(( isActive )){
 mpx 文件当中的 template 模块被初步处理成上面的代码后，可以看到这是一段可执行的 js 代码。那么这段 js 代码到底是用作何处呢？可以看到`compiler.genNode`方法是被包裹至`bindThis`方法当中的。即这段 js 代码还会被`bindThis`方法做进一步的处理。打开 bind-this.js 文件可以看到内部的实现其实就是一个 babel 的 transform plugin。在处理上面这段 js 代码的 AST 的过程中，通过这个插件对 js 代码做进一步的处理。最终这段 js 代码处理后的结果是：
 
 ```javascript
-/* mpx inject */ global.currentInject = {
+/* mpx inject */ global._i = {
   moduleId: "2271575d",
   render: function () {
     var __seen = [];

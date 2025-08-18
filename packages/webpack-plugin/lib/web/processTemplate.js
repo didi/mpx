@@ -13,6 +13,7 @@ module.exports = function (template, {
   moduleId,
   ctorType,
   usingComponentsInfo,
+  usingComponentsNameMap,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -77,6 +78,7 @@ module.exports = function (template, {
           warn,
           error,
           usingComponentsInfo, // processTemplate中无其他地方使用，直接透传 string 类型
+          usingComponentsNameMap,
           hasComment,
           isNative,
           ctorType,
