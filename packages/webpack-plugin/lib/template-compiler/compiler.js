@@ -2726,8 +2726,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processStyleReact(el, options)
     if (!pass) {
-      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)

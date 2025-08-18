@@ -183,7 +183,10 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const result = {}
+        const isNativeStaticStyle = typeof staticStyle !== 'string'
+        let result = isNativeStaticStyle ? [] : {}
+        const mergeResult = isNativeStaticStyle ? (o) => result.push(o) : (o) => Object.assign(result, o)
+
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
 
@@ -192,24 +195,34 @@ export default function styleHelperMixin () {
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
-              Object.assign(result, classMap[className])
+              mergeResult(classMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              Object.assign(result, appClassMap[className])
+              mergeResult(appClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              Object.assign(result, this.__props[className])
+              mergeResult(this.__props[className])
             }
           })
         }
 
         if (staticStyle || dynamicStyle) {
-          const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj))
+          const styleObj = {}
+          if (isNativeStaticStyle) {
+            if (Array.isArray()) {
+              result = result.concat(staticStyle)
+            } else {
+              mergeResult(staticStyle)
+            }
+          } else {
+            Object.assign(styleObj, parseStyleText(staticStyle))
+          }
+          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
+          mergeResult(transformStyleObj(styleObj))
         }
 
         if (hide) {
-          Object.assign(result, {
+          mergeResult({
             // display: 'none'
             // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
             flex: 0,
@@ -220,7 +233,6 @@ export default function styleHelperMixin () {
             overflow: 'hidden'
           })
         }
-
         return isEmptyObject(result) ? empty : result
       }
     }
