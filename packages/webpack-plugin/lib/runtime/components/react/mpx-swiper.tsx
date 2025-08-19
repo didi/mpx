@@ -207,13 +207,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const strVelocity = 'velocity' + dir.toUpperCase() as StrVelocityType
   // 标识手指触摸和抬起, 起点在onBegin
   const touchfinish = useSharedValue(true)
+  // 记录onUpdate时的方向，用于进行onFinalize中的值修正
+  const preUpdateTransDir = useSharedValue(0)
   // 记录上一帧的绝对定位坐标
   const preAbsolutePos = useSharedValue(0)
   // 记录从onBegin 到 onTouchesUp 时移动的距离
   const moveTranstion = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
-
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
   // 判断gesture手势是否需要协同处理、等待手势失败响应
@@ -429,11 +430,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [])
 
-  function handleSwiperChange (current: number, pCurrent: number) {
-    if (pCurrent !== currentIndex.value) {
-      const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-      bindchange && bindchange(eventData)
-    }
+  function handleSwiperChange (current: number) {
+    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+    bindchange && bindchange(eventData)
   }
 
   const runOnJSCallbackRef = useRef({
@@ -482,7 +481,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
-    if (newIndex !== preIndex && bindchange) {
+    if (newIndex !== preIndex && preIndex !== null && preIndex !== undefined && bindchange) {
       runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
     }
   })
@@ -517,9 +516,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }, [children.length])
 
   useEffect(() => {
-    // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
+    // 1. 如果用户在touch的过程中, 外部更新了current以内部为准（小程序表现）
     // 2. 手指滑动过程中更新索引，外部会把current再传入进来，导致offset直接更新，增加判断不同才更新
-    if (propCurrent !== currentIndex.value) {
+    if (propCurrent !== currentIndex.value && touchfinish.value) {
       updateCurrent(propCurrent, step.value)
     }
   }, [propCurrent])
@@ -757,6 +756,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           translation: moveDistance,
           transdir: moveDistance
         }
+        preUpdateTransDir.value = moveDistance
         // 1. 支持滑动中超出一半更新索引的能力：只更新索引并不会影响onFinalize依据当前offset计算的索引
         const { half } = computeHalf(eventData)
         if (childrenLength.value > 1 && half) {
@@ -794,11 +794,17 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         'worklet'
         if (touchfinish.value) return
         touchfinish.value = true
+        /**
+         * 安卓修正
+         * 问题：部分安卓机型onFinalize中拿到的absoluteX 有问题
+         * 案例：比如手指从右向左滑的时候，onUpdate拿到的是241.64346313476562， 而onFinalize中拿到的是241.81817626953125，理论上onFinalize中应该比onUpdate小才对吧
+         * 解决方式：修正
+        */
         // 触发过onUpdate正常情况下e[strAbso] - preAbsolutePos.value=0; 未触发过onUpdate的情况下e[strAbso] - preAbsolutePos.value 不为0
         const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance,
-          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value
+          transdir: Math.abs(moveDistance) > 1 ? moveDistance : preUpdateTransDir.value
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
