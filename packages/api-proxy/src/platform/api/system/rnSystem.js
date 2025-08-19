@@ -9,21 +9,22 @@ const getWindowInfo = function () {
   const navigationInsets = navigation.insets || {}
   const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
   let safeArea = {}
-  const { top = 0, bottom = 0, left = 0, right = 0 } = insets
-  const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - bottom // 解决安卓开启屏幕内三建导航安卓把安全区计算进去后产生的影响
-  const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
-  const layout = navigation.layout || {}
-  const layoutHeight = layout.height || 0
-  const layoutWidth = layout.width || 0
-  const windowHeight = layoutHeight || screenHeight
+  const { top = 0, left = 0, right = 0 } = insets
+  const { bottom = 0 } = initialWindowMetricsInset
+  const screenHeight = __mpx_mode__ === 'ios' ? parseInt(dimensionsScreen.height) : parseInt(dimensionsScreen.height - bottom) // 解决安卓开启屏幕内三建导航安卓把安全区计算进去后产生的影响
+  const screenWidth = __mpx_mode__ === 'ios' ? parseInt(dimensionsScreen.width) : parseInt(dimensionsScreen.width - right)
+  const layout = parseInt(navigation.layout) || {}
+  const layoutHeight = parseInt(layout.height) || 0
+  const layoutWidth = parseInt(layout.width) || 0
+  const windowHeight = parseInt(layoutHeight) || parseInt(screenHeight)
   try {
     safeArea = {
       left,
       right: screenWidth - right,
-      top,
-      bottom: screenHeight - bottom,
-      height: screenHeight - top - bottom,
-      width: screenWidth - left - right
+      top: parseInt(top),
+      bottom: parseInt(screenHeight - bottom),
+      height: parseInt(screenHeight - top - bottom),
+      width: parseInt(screenWidth - left - right)
     }
   } catch (error) {
   }
@@ -33,8 +34,8 @@ const getWindowInfo = function () {
     windowHeight, // 取不到layout的时候有个兜底
     screenWidth: screenWidth,
     screenHeight: screenHeight,
-    screenTop: screenHeight - windowHeight,
-    statusBarHeight: safeArea.top,
+    screenTop: parseInt(screenHeight - windowHeight),
+    statusBarHeight: parseInt(safeArea.top),
     safeArea
   }
   return result
