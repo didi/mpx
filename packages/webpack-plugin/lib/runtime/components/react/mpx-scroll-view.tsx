@@ -33,7 +33,7 @@
  */
 import { ScrollView, RefreshControl, Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { View, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, ViewStyle, Animated as RNAnimated } from 'react-native'
-import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo, createElement } from 'react'
+import { isValidElement, Children, JSX, ReactNode, RefObject, useRef, useState, useEffect, forwardRef, useContext, useMemo, createElement, useCallback } from 'react'
 import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
@@ -154,6 +154,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     __selectRef
   } = props
 
+  const propsRef = useRef<any>({})
+  propsRef.current = (props || {}) as ScrollViewProps
+
   const scrollOffset = useRef(new RNAnimated.Value(0)).current
 
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
@@ -211,12 +214,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const scrollViewRef = useRef<ScrollView>(null)
 
-  const runOnJSCallbackRef = useRef({
-    setEnableScroll,
-    setScrollBounces,
-    setRefreshing,
-    onRefresh
-  })
+  const runOnJSCallbackRef = useRef<any>({})
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
   useNodesRef(props, ref, scrollViewRef, {
@@ -522,26 +520,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  // 处理刷新
-  function onRefresh () {
-    if (hasRefresher && refresherTriggered === undefined) {
-      // 处理使用了自定义刷新组件，又没设置 refresherTriggered 的情况
-      setRefreshing(true)
-      setTimeout(() => {
-        setRefreshing(false)
-        translateY.value = withTiming(0)
-        if (!enableScrollValue.value) {
-          resetScrollState(true)
-        }
-      }, 500)
-    }
-    const { bindrefresherrefresh } = props
-    bindrefresherrefresh &&
-      bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
-      )
-  }
-
   function getRefresherContent (children: ReactNode) {
     let refresherContent = null
     const otherContent: ReactNode[] = []
@@ -609,6 +587,36 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       runOnJS(runOnJSCallback)('setScrollBounces', newValue)
     }
   }
+
+  // 处理刷新
+  const onRefresh = useCallback(() => {
+    if (hasRefresher && refresherTriggered === undefined) {
+      // 处理使用了自定义刷新组件，又没设置 refresherTriggered 的情况
+      setRefreshing(true)
+      setTimeout(() => {
+        setRefreshing(false)
+        translateY.value = withTiming(0)
+        if (!enableScrollValue.value) {
+          resetScrollState(true)
+        }
+      }, 500)
+    }
+    const { bindrefresherrefresh } = propsRef.current
+    bindrefresherrefresh &&
+      bindrefresherrefresh(
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
+      )
+  }, [hasRefresher, refresherTriggered, resetScrollState])
+
+  // 更新 runOnJSCallback 引用
+  useEffect(() => {
+    runOnJSCallbackRef.current = {
+      setEnableScroll,
+      setScrollBounces,
+      setRefreshing,
+      onRefresh
+    }
+  }, [setEnableScroll, setScrollBounces, setRefreshing, onRefresh])
 
   // 处理下拉刷新的手势
   const panGesture = Gesture.Pan()
