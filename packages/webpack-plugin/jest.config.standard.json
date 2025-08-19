@@ -1,0 +1,37 @@
+{
+  "displayName": "React Native Standard Testing",
+  "testEnvironment": "node",
+  "preset": "react-native",
+  "setupFilesAfterEnv": [
+    "<rootDir>/test/setup.standard.js"
+  ],
+  "testMatch": [
+    "<rootDir>/lib/runtime/components/react/**/*.standard.test.{ts,tsx,js,jsx}"
+  ],
+  "moduleFileExtensions": [
+    "ts",
+    "tsx",
+    "js",
+    "jsx",
+    "json",
+    "node"
+  ],
+  "transform": {
+    "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", {
+      "presets": [
+        ["@babel/preset-env", { "targets": { "node": "current" } }],
+        "@babel/preset-typescript",
+        "@babel/preset-react"
+      ]
+    }]
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|react-clone-referenced-element|@react-native-community|rollbar-react-native|@fortawesome|@react-native-picker|react-native-gesture-handler|react-native-reanimated|react-native-svg)/)"
+  ],
+
+  "collectCoverageFrom": [
+    "lib/runtime/components/react/**/*.{ts,tsx}",
+    "!lib/runtime/components/react/**/*.test.{ts,tsx}",
+    "!lib/runtime/components/react/**/*.d.ts"
+  ]
+}

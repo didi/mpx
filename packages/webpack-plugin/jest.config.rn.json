@@ -1,19 +1,15 @@
 {
-  "transform": {
-    "^.+\\.(js|jsx)?$": "babel-jest",
-    "^.+\\.(ts|tsx)?$": "ts-jest"
-  },
+  "preset": "react-native",
   "testEnvironment": "node",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy",
-    "^react-native$": "<rootDir>/__mocks__/react-native-simple.js",
     "^react-native-linear-gradient$": "<rootDir>/__mocks__/react-native-linear-gradient.js",
     "^react-native-gesture-handler$": "<rootDir>/__mocks__/react-native-gesture-handler.js",
     "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js",
     "^react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js"
   },
   "setupFilesAfterEnv": [
-    "<rootDir>/test/setup.js"
+    "<rootDir>/test/setup.rn.js"
   ],
   "testMatch": [
     "<rootDir>/lib/runtime/components/react/**/__tests__/**/*.(js|jsx|ts|tsx)",
@@ -30,6 +26,6 @@
     "!lib/runtime/components/react/types/**"
   ],
   "transformIgnorePatterns": [
-    "node_modules/(?!(@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
+    "node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
   ]
 }

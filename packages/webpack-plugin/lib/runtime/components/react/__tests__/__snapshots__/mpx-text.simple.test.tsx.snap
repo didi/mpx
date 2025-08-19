@@ -1,0 +1,44 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Text Component Tests should handle style props 1`] = `
+<span
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "red",
+      "fontSize": 16,
+      "fontWeight": "bold",
+    }
+  }
+>
+  Styled Text
+</span>
+`;
+
+exports[`Text Component Tests should render nested text 1`] = `
+<span
+  allowFontScaling={false}
+  selectable={false}
+  style={{}}
+>
+  Parent text
+  <span
+    allowFontScaling={false}
+    selectable={false}
+    style={{}}
+  >
+    Child text
+  </span>
+</span>
+`;
+
+exports[`Text Component Tests should render text content 1`] = `
+<span
+  allowFontScaling={false}
+  selectable={false}
+  style={{}}
+>
+  Hello World
+</span>
+`;

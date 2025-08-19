@@ -1,9 +1,8 @@
 {
-  "transform": {
-    "^.+\\.(js|jsx)?$": "babel-jest",
-    "^.+\\.(ts|tsx)?$": "ts-jest"
-  },
   "testEnvironment": "node",
+  "transform": {
+    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
+  },
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy",
     "^react-native$": "<rootDir>/__mocks__/react-native-simple.js",
@@ -13,23 +12,20 @@
     "^react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js"
   },
   "setupFilesAfterEnv": [
-    "<rootDir>/test/setup.js"
+    "<rootDir>/test/setup.simple.js"
   ],
   "testMatch": [
-    "<rootDir>/lib/runtime/components/react/**/__tests__/**/*.(js|jsx|ts|tsx)",
-    "<rootDir>/lib/runtime/components/react/**/*.(test|spec).(js|jsx|ts|tsx)"
+    "<rootDir>/lib/runtime/components/react/**/*simple.test.(js|jsx|ts|tsx)",
+    "<rootDir>/lib/runtime/components/react/**/*enhanced.test.(js|jsx|ts|tsx)"
   ],
   "testPathIgnorePatterns": [
     "/node_modules/",
     "/dist/"
   ],
   "collectCoverageFrom": [
-    "lib/runtime/components/react/**/*.{ts,tsx}",
-    "!lib/runtime/components/react/dist/**",
-    "!lib/runtime/components/react/**/*.d.ts",
-    "!lib/runtime/components/react/types/**"
-  ],
-  "transformIgnorePatterns": [
-    "node_modules/(?!(@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
+    "lib/runtime/components/react/**/*.{js,jsx,ts,tsx}",
+    "!lib/runtime/components/react/**/__tests__/**",
+    "!lib/runtime/components/react/**/*.test.{js,jsx,ts,tsx}",
+    "!lib/runtime/components/react/**/dist/**"
   ]
 }

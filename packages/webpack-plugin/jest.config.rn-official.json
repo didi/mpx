@@ -1,0 +1,30 @@
+{
+  "testEnvironment": "node",
+  "transform": {
+    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
+  },
+  "moduleNameMapper": {
+    "\\.(css|styl)$": "identity-obj-proxy",
+    "^react-native$": "react-native/jest/setup",
+    "^react-native-linear-gradient$": "<rootDir>/__mocks__/react-native-linear-gradient.js",
+    "^react-native-gesture-handler$": "<rootDir>/__mocks__/react-native-gesture-handler.js",
+    "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js",
+    "^react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js"
+  },
+  "setupFilesAfterEnv": [
+    "<rootDir>/test/setup.rn-official.js"
+  ],
+  "testMatch": [
+    "<rootDir>/lib/runtime/components/react/**/*.rn-official.test.(js|jsx|ts|tsx)"
+  ],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/dist/"
+  ],
+  "collectCoverageFrom": [
+    "lib/runtime/components/react/**/*.{js,jsx,ts,tsx}",
+    "!lib/runtime/components/react/**/__tests__/**",
+    "!lib/runtime/components/react/**/*.test.{js,jsx,ts|tsx}",
+    "!lib/runtime/components/react/**/dist/**"
+  ]
+}

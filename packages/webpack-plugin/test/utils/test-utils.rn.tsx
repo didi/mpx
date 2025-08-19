@@ -12,7 +12,7 @@ const mockFormContext = {
   reset: jest.fn()
 }
 
-// Custom render function that includes providers
+// Custom render function using react-test-renderer
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <RouteContext.Provider value={mockRouteContext}>
@@ -23,8 +23,7 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-// Custom render function using react-test-renderer
-const customRender = (ui: ReactElement) => {
+export const renderWithRenderer = (ui: ReactElement) => {
   return renderer.create(
     <AllTheProviders>
       {ui}
@@ -52,14 +51,6 @@ export const createMockLayoutEvent = (width: number, height: number) => ({
   }
 })
 
-// Mock image size function
-export const mockImageGetSize = (width: number, height: number) => {
-  return jest.fn((uri, success, failure) => {
-    success(width, height)
-  })
-}
-
-// Export render function and other utilities
-export { customRender as render }
+// Export commonly used testing utilities
 export { renderer }
 export * from 'react-test-renderer'
