@@ -40,10 +40,13 @@ export default function getRefsMixin () {
                   if (instance) { // mount
                     this.__refs[refKey].push(refVal)
                   } else { // unmount
-                    const index = this.__refs[refKey].findIndex(item => item.refFnId === refFnId)
-                    if (index > -1) {
-                      this.__refs[refKey].splice(index, 1)
-                    }
+                    // asynchronous destruction of ref to avoid accessing ref as undefined in beforeunmount
+                    setTimeout(() => {
+                      const index = this.__refs[refKey].findIndex(item => item.refFnId === refFnId)
+                        if (index > -1) {
+                        this.__refs[refKey].splice(index, 1)
+                      }
+                    })
                   }
                 })
               }
