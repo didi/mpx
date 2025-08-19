@@ -46,7 +46,7 @@ export default function getRefsMixin () {
                         if (index > -1) {
                         this.__refs[refKey].splice(index, 1)
                       }
-                    })
+                    }, 0)
                   }
                 })
               }
