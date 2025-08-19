@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
 import Mpx from '../../index'
 
@@ -176,6 +176,14 @@ function transformStyleObj (styleObj) {
   return transformed
 }
 
+function isNativeStyle (style) {
+  return Array.isArray(style) || (
+    typeof style === 'object' &&
+    // Reanimated 的 animated style 通常会包含 viewDescriptors 或 _animations
+    (hasOwn(style, 'viewDescriptors') || hasOwn(style, '_animations'))
+  )
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -183,7 +191,7 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const isNativeStaticStyle = staticStyle && typeof staticStyle !== 'string'
+        const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (o) => result.push(o) : (o) => Object.assign(result, o)
 
