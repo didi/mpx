@@ -1,7 +1,6 @@
 {
   "transform": {
-    "^.+\\.(js|jsx)?$": "babel-jest",
-    "^.+\\.(ts|tsx)?$": "ts-jest"
+    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
   },
   "testEnvironment": "node",
   "moduleNameMapper": {
@@ -13,11 +12,12 @@
     "^react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js"
   },
   "setupFilesAfterEnv": [
-    "<rootDir>/test/setup.js"
+    "<rootDir>/test/setup.simple.js"
   ],
   "testMatch": [
     "<rootDir>/lib/runtime/components/react/**/__tests__/**/*.(js|jsx|ts|tsx)",
-    "<rootDir>/lib/runtime/components/react/**/*.(test|spec).(js|jsx|ts|tsx)"
+    "<rootDir>/lib/runtime/components/react/**/*.(test|spec).(js|jsx|ts|tsx)",
+    "<rootDir>/test/**/*.(test|spec).(js|jsx|ts|tsx)"
   ],
   "testPathIgnorePatterns": [
     "/node_modules/",

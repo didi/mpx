@@ -79,16 +79,8 @@
   "scripts": {
     "test": "jest",
     "test:react": "jest --testPathPattern=lib/runtime/components/react",
-    "test:react:rn": "jest --config jest.config.rn.json --testPathPattern=lib/runtime/components/react",
-    "test:react:simple": "jest --config jest.config.simple.json --runInBand",
-    "test:react:official": "jest --config jest.config.rn-official.json --runInBand",
-    "test:react:tl": "jest --config jest.config.testing-library.json --runInBand",
-    "test:react:pure": "jest --config jest.config.pure-rn.json --runInBand",
-    "test:react:standard": "jest --config jest.config.standard.json --runInBand",
-    "test:react:minimal": "jest --config jest.config.minimal.json --runInBand",
-    "test:react:enhanced": "jest --config jest.config.simple.json --runInBand --testNamePattern=enhanced",
-    "test:watch": "jest --watch --testPathPattern=lib/runtime/components/react",
-    "test:watch:rn": "jest --config jest.config.rn.json --watch --testPathPattern=lib/runtime/components/react",
+    "test:core": "jest --testPathPattern=test",
+    "test:watch": "jest --watch",
     "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
     "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
   },
