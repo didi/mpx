@@ -57,6 +57,7 @@
     "postcss-modules-values": "^4.0.0",
     "postcss-selector-parser": "^6.0.8",
     "postcss-value-parser": "^4.0.2",
+    "react-test-renderer": "^18.3.1",
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
     "webpack-virtual-modules": "^0.6.0"
@@ -88,13 +89,11 @@
     "@babel/preset-typescript": "^7.27.1",
     "@d11/react-native-fast-image": "^8.6.12",
     "@mpxjs/api-proxy": "^2.10.13",
-    "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^12.9.0",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/jest": "^29.5.0",
     "@types/react": "^18.2.79",
-    "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^24.9.0",
     "jest": "^29.7.0",
     "react": "^18.3.1",
@@ -106,7 +105,6 @@
     "react-native-svg": "^15.8.0",
     "react-native-video": "^6.9.0",
     "react-native-webview": "^13.12.2",
-    "react-test-renderer": "^18.3.1",
     "rimraf": "^6.0.1"
   },
   "engines": {
