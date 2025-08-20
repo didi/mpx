@@ -1,7 +1,7 @@
 /**
  * ✔ percent 进度百分比 0-100
  * ✘ show-info 在进度条右侧显示百分比
- * ✘ border-radius 圆角大小  
+ * ✘ border-radius 圆角大小
  * ✘ font-size 右侧百分比字体大小
  * ✔ stroke-width 进度条线的宽度
  * ✔ color 进度条颜色（请使用activeColor）
@@ -23,7 +23,7 @@ import {
 } from 'react'
 import {
   View,
-  ViewStyle,
+  ViewStyle
 } from 'react-native'
 import Animated, {
   useSharedValue,
@@ -109,7 +109,6 @@ const Progress = forwardRef<
   // 进度变化时的动画效果
   useEffect(() => {
     const targetPercent = Math.max(0, Math.min(100, percent))
-    
     if (active) {
       progressWidth.value = withTiming(
         targetPercent,
@@ -157,8 +156,6 @@ const Progress = forwardRef<
     height: '100%',
     backgroundColor: activeColor
   }
-
-
 
   const innerProps = useInnerProps(
     extendObject({}, props, layoutProps, {
