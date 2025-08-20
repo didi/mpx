@@ -22,7 +22,7 @@ exports[`MpxInput Simple Tests should handle auto-focus 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -54,7 +54,7 @@ exports[`MpxInput Simple Tests should handle custom styles 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#f5f5f5",
       "color": "#333",
       "fontSize": 16,
@@ -89,7 +89,7 @@ exports[`MpxInput Simple Tests should handle disabled state 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -121,7 +121,7 @@ exports[`MpxInput Simple Tests should handle empty value 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -154,7 +154,7 @@ exports[`MpxInput Simple Tests should handle focus events 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -187,7 +187,7 @@ exports[`MpxInput Simple Tests should handle input events 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -220,7 +220,7 @@ exports[`MpxInput Simple Tests should handle maxlength 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -252,7 +252,7 @@ exports[`MpxInput Simple Tests should handle number type 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -285,7 +285,7 @@ exports[`MpxInput Simple Tests should handle numeric value 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -318,7 +318,7 @@ exports[`MpxInput Simple Tests should handle password input 1`] = `
   password={true}
   secureTextEntry={true}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -350,7 +350,7 @@ exports[`MpxInput Simple Tests should handle text type 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -383,7 +383,7 @@ exports[`MpxInput Simple Tests should render with default props 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -416,7 +416,7 @@ exports[`MpxInput Simple Tests should render with placeholder 1`] = `
   placeholder="Enter text here"
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -448,7 +448,7 @@ exports[`MpxInput Simple Tests should render with value prop 1`] = `
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -481,7 +481,7 @@ exports[`MpxInput Simple Tests should update disabled state: disabled state 1`] 
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -514,7 +514,7 @@ exports[`MpxInput Simple Tests should update disabled state: enabled state 1`] =
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -546,7 +546,7 @@ exports[`MpxInput Simple Tests should update value correctly: initial value 1`] 
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }
@@ -578,7 +578,7 @@ exports[`MpxInput Simple Tests should update value correctly: updated value 1`] 
   onTouchStart={[Function]}
   secureTextEntry={false}
   style={
-    {
+    Object {
       "backgroundColor": "#fff",
       "padding": 0,
     }

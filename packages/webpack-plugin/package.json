@@ -77,10 +77,10 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
-    "test": "jest",
-    "test:react": "jest --testPathPattern=lib/runtime/components/react",
-    "test:core": "jest --testPathPattern=test",
-    "test:watch": "jest --watch",
+    "test": "jest --config jest.config.json",
+    "test:react": "jest --config jest.config.json --testPathPattern=lib/runtime/components/react",
+    "test:core": "jest --config jest.config.json --testPathPattern=test",
+    "test:watch": "jest --config jest.config.json --watch",
     "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
     "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
   },
@@ -90,30 +90,23 @@
     "@babel/preset-typescript": "^7.27.1",
     "@d11/react-native-fast-image": "^8.6.12",
     "@mpxjs/api-proxy": "^2.10.13",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react-native": "^11.5.4",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/jest": "^29.5.0",
     "@types/react": "^18.2.79",
     "@types/react-test-renderer": "^18.0.0",
-    "babel-jest": "^29.7.0",
+    "babel-jest": "^24.9.0",
     "react": "^18.2.0",
     "react-native": "^0.74.5",
     "react-native-gesture-handler": "^2.18.1",
-    "react-native-jest": "^0.0.1",
-    "react-native-jest-mocks": "^1.5.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-reanimated": "^3.15.2",
     "react-native-safe-area-context": "^4.12.0",
     "react-native-svg": "^15.8.0",
-    "react-native-testing-library": "^2.2.0",
     "react-native-video": "^6.9.0",
-    "react-native-web": "^0.21.0",
     "react-native-webview": "^13.12.2",
     "react-test-renderer": "^18.2.0",
-    "rimraf": "^6.0.1",
-    "ts-jest": "^29.1.0"
+    "rimraf": "^6.0.1"
   },
   "engines": {
     "node": ">=14.14.0"

@@ -2,7 +2,6 @@
   "transform": {
     "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
   },
-  "testEnvironment": "node",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy",
     "^react-native$": "<rootDir>/__mocks__/react-native-pure.js",
@@ -15,9 +14,7 @@
     "<rootDir>/test/setup.simple.js"
   ],
   "testMatch": [
-    "<rootDir>/lib/runtime/components/react/**/__tests__/**/*.(js|jsx|ts|tsx)",
-    "<rootDir>/lib/runtime/components/react/**/*.(test|spec).(js|jsx|ts|tsx)",
-    "<rootDir>/test/**/*.(test|spec).(js|jsx|ts|tsx)"
+    "<rootDir>/lib/runtime/components/react/**/__tests__/**/*.(js|jsx|ts|tsx)"
   ],
   "testPathIgnorePatterns": [
     "/node_modules/",
@@ -30,6 +27,6 @@
     "!lib/runtime/components/react/types/**"
   ],
   "transformIgnorePatterns": [
-    "node_modules/(?!(@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
+    "node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
   ]
 }

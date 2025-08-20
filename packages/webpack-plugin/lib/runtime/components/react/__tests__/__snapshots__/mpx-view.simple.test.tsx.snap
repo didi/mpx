@@ -3,14 +3,14 @@
 exports[`View Component (Simple react-test-renderer) should handle complex nested structure 1`] = `
 <View
   style={
-    {
+    Object {
       "flex": 1,
     }
   }
 >
   <View
     style={
-      {
+      Object {
         "height": 50,
       }
     }
@@ -19,25 +19,25 @@ exports[`View Component (Simple react-test-renderer) should handle complex neste
   </View>
   <View
     style={
-      {
+      Object {
         "flex": 1,
       }
     }
   >
     <View
-      style={{}}
+      style={Object {}}
     >
       Nested Content 1
     </View>
     <View
-      style={{}}
+      style={Object {}}
     >
       Nested Content 2
     </View>
   </View>
   <View
     style={
-      {
+      Object {
         "height": 50,
       }
     }

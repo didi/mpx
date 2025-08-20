@@ -5,7 +5,7 @@ exports[`Text Component Tests should handle style props 1`] = `
   allowFontScaling={false}
   selectable={false}
   style={
-    {
+    Object {
       "color": "red",
       "fontSize": 16,
       "fontWeight": "bold",
@@ -20,13 +20,13 @@ exports[`Text Component Tests should render nested text 1`] = `
 <Text
   allowFontScaling={false}
   selectable={false}
-  style={{}}
+  style={Object {}}
 >
   Parent text
   <Text
     allowFontScaling={false}
     selectable={false}
-    style={{}}
+    style={Object {}}
   >
     Child text
   </Text>
@@ -37,7 +37,7 @@ exports[`Text Component Tests should render text content 1`] = `
 <Text
   allowFontScaling={false}
   selectable={false}
-  style={{}}
+  style={Object {}}
 >
   Hello World
 </Text>
