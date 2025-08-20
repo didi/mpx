@@ -14,10 +14,10 @@
     "^@d11/react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js"
   },
   "setupFilesAfterEnv": [
-    "<rootDir>/test/setup.modern.js"
+    "<rootDir>/test/runtime/react/setup.js"
   ],
   "testMatch": [
-    "<rootDir>/test/runtime/react/**/*.(js|jsx|ts|tsx)"
+    "<rootDir>/test/runtime/react/**/*.test.(js|jsx|ts|tsx)"
   ],
   "testPathIgnorePatterns": [
     "/node_modules/",
