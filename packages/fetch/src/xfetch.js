@@ -242,8 +242,8 @@ export default class XFetch {
         promise = promise.then(chain.shift(), chain.shift())
       }
 
-      // 如果开启缓存，则将 promise 存入缓存
-      if (config.usePre.enable) {
+      // onlyConsumer=true是一种只消费缓存数据的模式，此模式下不会产生缓存数据
+      if (config.usePre.enable && config.usePre.onlyConsumer !== true) {
         const cacheKey = formatCacheKey(config.url)
         this.cacheRequestData[cacheKey] && (this.cacheRequestData[cacheKey].responsePromise = promise)
       }
