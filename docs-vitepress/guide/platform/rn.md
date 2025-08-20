@@ -183,7 +183,6 @@ RN:
 > 1. 只有父级 view 节点的文本样式可以被子 text 节点继承；
 > 2. view 节点直接包裹文本实际上等同于 view>text>文本，Mpx 框架在编译时若检测到 view 节点直接包裹文本会自动添加一层 text 节点；
 > 3. 多级 text 节点可实现文本样式的继承，比如 text>text>文本 ；
-> 4. 若不想使用 Mpx 内部实现的 view>text>文本 这种文本样式继承，可设置`disable-default-style=true` 来关闭该继承逻辑；
 ### 简写样式属性
 在 Mpx 内对于通过 class 类来定义的样式会按照 RN 的样式规则在编译处理一遍，其中最重要的一部分就是将 RN 不支持简写属性按约定的规则转换成 RN 能支持多属性结构。
 
@@ -682,7 +681,7 @@ Mpx 输出 React Native 支持以下模版指令。
 注意事项
 
 1. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
-2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动
+2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
 3. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 4. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 
@@ -707,7 +706,9 @@ Mpx 输出 React Native 支持以下模版指令。
 | next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
 | scale                   | Boolean  | `false`            | 滑动时是否开启前后元素缩小,默认是缩放0.7倍, 暂不支持自定义 |
 | easing-function         | String  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
-| bindchange              | eventhandle|   无          | current 改变时会触发 change 事件，`event.detail = {current, source}`|
+| simultaneous-handlers              | `Array<object>`|   []          | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
+| wait-for              | `Array<object>`|   []          | RN环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
+| disableGesture              | Boolean|   false       | 禁用 swiper 滑动手势。若开启用户无法通过手势滑动 swiper，只能通过开启 autoPlay 进行自动轮播|
 
 
 
