@@ -1448,10 +1448,7 @@ class MpxWebpackPlugin {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              const supportRequireAsync = isReact(mpx.mode)
-              ? (mpx.supportRequireAsync && this.options.rnConfig.supportSubpackage)
-              : mpx.supportRequireAsync
-              if (supportRequireAsync) {
+              if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
                   request = addQuery(request, {
