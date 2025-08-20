@@ -2,10 +2,6 @@
   "include": [
     "./lib/runtime/components/react"
   ],
-  "exclude": [
-    "./lib/runtime/components/react/__tests__/**/*",
-    "./lib/runtime/components/react/dist"
-  ],
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
