@@ -1,0 +1,70 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MpxText should handle multiple props together 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={true}
+  style={
+    {
+      "fontWeight": "bold",
+    }
+  }
+  testID="complex-text"
+>
+  Complex Text
+</Text>
+`;
+
+exports[`MpxText should handle selectable prop 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={true}
+  style={{}}
+>
+  Selectable Text
+</Text>
+`;
+
+exports[`MpxText should render nested text components 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={{}}
+  testID="parent-text"
+>
+  Parent text
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={{}}
+    testID="child-text"
+  >
+    Child text
+  </Text>
+</Text>
+`;
+
+exports[`MpxText should render text content 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={{}}
+>
+  Hello World
+</Text>
+`;
+
+exports[`MpxText should render with custom styles 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "red",
+      "fontSize": 16,
+    }
+  }
+>
+  Styled Text
+</Text>
+`;

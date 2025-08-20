@@ -1,0 +1,134 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MpxInput should handle custom styles 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="styled"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#f5f5f5",
+      "color": "#333",
+      "fontSize": 16,
+      "padding": 0,
+    }
+  }
+  testID="styled-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="styled"
+/>
+`;
+
+exports[`MpxInput should handle multiple props together 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="complex"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={50}
+  maxlength={50}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  placeholder="Enter text"
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "fontSize": 18,
+      "padding": 0,
+    }
+  }
+  testID="complex-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="complex"
+/>
+`;
+
+exports[`MpxInput should handle password input 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="secret"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={true}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "padding": 0,
+    }
+  }
+  testID="password-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="secret"
+/>
+`;
+
+exports[`MpxInput should render with default props 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue=""
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "padding": 0,
+    }
+  }
+  testID="default-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value=""
+/>
+`;

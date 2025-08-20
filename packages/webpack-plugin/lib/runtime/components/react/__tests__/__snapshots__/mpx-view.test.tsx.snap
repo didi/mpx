@@ -1,0 +1,146 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MpxView should apply custom styles 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#f0f0f0",
+      "flex": 1,
+      "padding": 20,
+    }
+  }
+  testID="styled-view"
+>
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={{}}
+  >
+    Styled Content
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle complex nested structure 1`] = `
+<View
+  style={
+    {
+      "flex": 1,
+    }
+  }
+  testID="complex-structure"
+>
+  <View
+    style={
+      {
+        "height": 50,
+      }
+    }
+    testID="header"
+  >
+    <Text
+      allowFontScaling={false}
+      selectable={false}
+      style={{}}
+    >
+      Header Content
+    </Text>
+  </View>
+  <View
+    style={
+      {
+        "flex": 1,
+      }
+    }
+    testID="body"
+  >
+    <View
+      style={{}}
+      testID="section-1"
+    >
+      <Text
+        allowFontScaling={false}
+        selectable={false}
+        style={{}}
+      >
+        Section 1
+      </Text>
+    </View>
+    <View
+      style={{}}
+      testID="section-2"
+    >
+      <Text
+        allowFontScaling={false}
+        selectable={false}
+        style={{}}
+      >
+        Section 2
+      </Text>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "height": 50,
+      }
+    }
+    testID="footer"
+  >
+    <Text
+      allowFontScaling={false}
+      selectable={false}
+      style={{}}
+    >
+      Footer Content
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`MpxView should handle nested views 1`] = `
+<View
+  style={{}}
+  testID="parent-view"
+>
+  <View
+    style={{}}
+    testID="child-view-1"
+  >
+    <Text
+      allowFontScaling={false}
+      selectable={false}
+      style={{}}
+    >
+      Child 1
+    </Text>
+  </View>
+  <View
+    style={{}}
+    testID="child-view-2"
+  >
+    <Text
+      allowFontScaling={false}
+      selectable={false}
+      style={{}}
+    >
+      Child 2
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`MpxView should render basic view 1`] = `
+<View
+  style={{}}
+  testID="basic-view"
+>
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={{}}
+  >
+    Basic View Content
+  </Text>
+</View>
+`;
