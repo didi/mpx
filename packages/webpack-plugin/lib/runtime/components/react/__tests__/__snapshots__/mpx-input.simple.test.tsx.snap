@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`MpxInput Simple Tests should handle auto-focus 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   auto-focus={true}
@@ -34,7 +34,7 @@ exports[`MpxInput Simple Tests should handle auto-focus 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle custom styles 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -68,7 +68,7 @@ exports[`MpxInput Simple Tests should handle custom styles 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle disabled state 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -101,7 +101,7 @@ exports[`MpxInput Simple Tests should handle disabled state 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle empty value 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -133,7 +133,7 @@ exports[`MpxInput Simple Tests should handle empty value 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle focus events 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -166,7 +166,7 @@ exports[`MpxInput Simple Tests should handle focus events 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle input events 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -199,7 +199,7 @@ exports[`MpxInput Simple Tests should handle input events 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle maxlength 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -232,7 +232,7 @@ exports[`MpxInput Simple Tests should handle maxlength 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle number type 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -265,7 +265,7 @@ exports[`MpxInput Simple Tests should handle number type 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle numeric value 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -297,7 +297,7 @@ exports[`MpxInput Simple Tests should handle numeric value 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle password input 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -330,7 +330,7 @@ exports[`MpxInput Simple Tests should handle password input 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should handle text type 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -363,7 +363,7 @@ exports[`MpxInput Simple Tests should handle text type 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should render with default props 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -395,7 +395,7 @@ exports[`MpxInput Simple Tests should render with default props 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should render with placeholder 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -428,7 +428,7 @@ exports[`MpxInput Simple Tests should render with placeholder 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should render with value prop 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -460,7 +460,7 @@ exports[`MpxInput Simple Tests should render with value prop 1`] = `
 `;
 
 exports[`MpxInput Simple Tests should update disabled state: disabled state 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -493,7 +493,7 @@ exports[`MpxInput Simple Tests should update disabled state: disabled state 1`] 
 `;
 
 exports[`MpxInput Simple Tests should update disabled state: enabled state 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -526,7 +526,7 @@ exports[`MpxInput Simple Tests should update disabled state: enabled state 1`] =
 `;
 
 exports[`MpxInput Simple Tests should update value correctly: initial value 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}
@@ -558,7 +558,7 @@ exports[`MpxInput Simple Tests should update value correctly: initial value 1`] 
 `;
 
 exports[`MpxInput Simple Tests should update value correctly: updated value 1`] = `
-<input
+<TextInput
   adjust-position={true}
   allowFontScaling={false}
   autoFocus={false}

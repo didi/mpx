@@ -57,7 +57,7 @@ describe('View Component (Simple react-test-renderer)', () => {
     const component = renderer.create(
       <View>Simple Test</View>
     )
-    
+
     expect(component).toBeTruthy()
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
@@ -70,10 +70,10 @@ describe('View Component (Simple react-test-renderer)', () => {
         <View>Child 2</View>
       </View>
     )
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
-    
+
     // Basic check that component rendered
     expect(tree).not.toBeNull()
   })
@@ -83,18 +83,18 @@ describe('View Component (Simple react-test-renderer)', () => {
       backgroundColor: 'red',
       padding: 10
     }
-    
+
     const component = renderer.create(
       <View style={testStyle}>Styled View</View>
     )
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
   })
 
   it('should handle empty props', () => {
     const component = renderer.create(<View />)
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
   })
@@ -103,10 +103,10 @@ describe('View Component (Simple react-test-renderer)', () => {
     const component = renderer.create(
       <View>Test Instance</View>
     )
-    
+
     const instance = component.root
     expect(instance).toBeTruthy()
-    
+
     // Test that we can find the component
     try {
       const foundComponents = instance.findAllByType('div')
@@ -133,10 +133,10 @@ describe('View Component (Simple react-test-renderer)', () => {
         </View>
       </View>
     )
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
-    
+
     // Create a snapshot for this test
     expect(tree).toMatchSnapshot()
   })
@@ -145,15 +145,15 @@ describe('View Component (Simple react-test-renderer)', () => {
     const component = renderer.create(
       <View>Initial Content</View>
     )
-    
+
     let tree = component.toJSON()
     expect(tree).toBeTruthy()
-    
+
     // Update the component
     component.update(
       <View>Updated Content</View>
     )
-    
+
     tree = component.toJSON()
     expect(tree).toBeTruthy()
   })

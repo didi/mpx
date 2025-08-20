@@ -5,7 +5,7 @@
   "testEnvironment": "node",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy",
-    "^react-native$": "<rootDir>/__mocks__/react-native-simple.js",
+    "^react-native$": "<rootDir>/__mocks__/react-native-pure.js",
     "^react-native-linear-gradient$": "<rootDir>/__mocks__/react-native-linear-gradient.js",
     "^react-native-gesture-handler$": "<rootDir>/__mocks__/react-native-gesture-handler.js",
     "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js",

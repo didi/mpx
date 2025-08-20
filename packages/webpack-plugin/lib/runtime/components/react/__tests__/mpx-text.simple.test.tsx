@@ -55,7 +55,7 @@ describe('Text Component Tests', () => {
     const component = renderer.create(
       <Text>Hello World</Text>
     )
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
     expect(tree).toMatchSnapshot()
@@ -67,11 +67,11 @@ describe('Text Component Tests', () => {
       color: 'red',
       fontWeight: 'bold'
     }
-    
+
     const component = renderer.create(
       <Text style={textStyle}>Styled Text</Text>
     )
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
     expect(tree).toMatchSnapshot()
@@ -79,7 +79,7 @@ describe('Text Component Tests', () => {
 
   it('should handle empty text', () => {
     const component = renderer.create(<Text />)
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
   })
@@ -91,7 +91,7 @@ describe('Text Component Tests', () => {
         <Text>Child text</Text>
       </Text>
     )
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
     expect(tree).toMatchSnapshot()
@@ -99,7 +99,7 @@ describe('Text Component Tests', () => {
 
   it('should handle multiple props', () => {
     const component = renderer.create(
-      <Text 
+      <Text
         style={{ color: 'blue' }}
         numberOfLines={2}
         selectable={true}
@@ -107,7 +107,7 @@ describe('Text Component Tests', () => {
         Multi-prop text
       </Text>
     )
-    
+
     const tree = component.toJSON()
     expect(tree).toBeTruthy()
   })
@@ -116,15 +116,15 @@ describe('Text Component Tests', () => {
     const component = renderer.create(
       <Text>Initial Text</Text>
     )
-    
+
     let tree = component.toJSON()
     expect(tree).toBeTruthy()
-    
+
     // 更新组件
     component.update(
       <Text style={{ color: 'green' }}>Updated Text</Text>
     )
-    
+
     tree = component.toJSON()
     expect(tree).toBeTruthy()
   })

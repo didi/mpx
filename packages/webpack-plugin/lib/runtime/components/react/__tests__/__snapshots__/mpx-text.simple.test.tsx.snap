@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Text Component Tests should handle style props 1`] = `
-<span
+<Text
   allowFontScaling={false}
   selectable={false}
   style={
@@ -13,32 +13,32 @@ exports[`Text Component Tests should handle style props 1`] = `
   }
 >
   Styled Text
-</span>
+</Text>
 `;
 
 exports[`Text Component Tests should render nested text 1`] = `
-<span
+<Text
   allowFontScaling={false}
   selectable={false}
   style={{}}
 >
   Parent text
-  <span
+  <Text
     allowFontScaling={false}
     selectable={false}
     style={{}}
   >
     Child text
-  </span>
-</span>
+  </Text>
+</Text>
 `;
 
 exports[`Text Component Tests should render text content 1`] = `
-<span
+<Text
   allowFontScaling={false}
   selectable={false}
   style={{}}
 >
   Hello World
-</span>
+</Text>
 `;

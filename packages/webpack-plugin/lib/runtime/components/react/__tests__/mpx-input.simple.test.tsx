@@ -37,10 +37,10 @@ jest.mock('../utils', () => ({
 jest.mock('../getInnerListeners', () => ({
   __esModule: true,
   default: jest.fn((props) => props),
-  getCustomEvent: jest.fn((type, evt, ref, props) => ({ 
-    type, 
-    target: { 
-      value: evt?.nativeEvent?.text || evt?.nativeEvent?.value || '' 
+  getCustomEvent: jest.fn((type, evt, ref, props) => ({
+    type,
+    target: {
+      value: evt?.nativeEvent?.text || evt?.nativeEvent?.value || ''
     },
     detail: {
       value: evt?.nativeEvent?.text || evt?.nativeEvent?.value || '',
@@ -67,7 +67,7 @@ jest.mock('../mpx-portal', () => {
   return {
     __esModule: true,
     default: mockReact.forwardRef((props: any, ref: any) => {
-      return mockReact.createElement('div', { ...props, ref })
+      return mockReact.createElement('View', { ...props, ref })
     })
   }
 })
@@ -198,15 +198,15 @@ describe('MpxInput Simple Tests', () => {
     const component = renderer.create(
       <Input value="initial" adjust-position={true} />
     )
-    
+
     let tree = component.toJSON()
     expect(tree).toMatchSnapshot('initial value')
-    
+
     // 更新组件
     component.update(
       <Input value="updated" adjust-position={true} />
     )
-    
+
     tree = component.toJSON()
     expect(tree).toMatchSnapshot('updated value')
   })
@@ -215,15 +215,15 @@ describe('MpxInput Simple Tests', () => {
     const component = renderer.create(
       <Input value="test" disabled={false} adjust-position={true} />
     )
-    
+
     let tree = component.toJSON()
     expect(tree).toMatchSnapshot('enabled state')
-    
+
     // 更新到禁用状态
     component.update(
       <Input value="test" disabled={true} adjust-position={true} />
     )
-    
+
     tree = component.toJSON()
     expect(tree).toMatchSnapshot('disabled state')
   })

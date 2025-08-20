@@ -1,14 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`View Component (Simple react-test-renderer) should handle complex nested structure 1`] = `
-<div
+<View
   style={
     {
       "flex": 1,
     }
   }
 >
-  <div
+  <View
     style={
       {
         "height": 50,
@@ -16,26 +16,26 @@ exports[`View Component (Simple react-test-renderer) should handle complex neste
     }
   >
     Header Content
-  </div>
-  <div
+  </View>
+  <View
     style={
       {
         "flex": 1,
       }
     }
   >
-    <div
+    <View
       style={{}}
     >
       Nested Content 1
-    </div>
-    <div
+    </View>
+    <View
       style={{}}
     >
       Nested Content 2
-    </div>
-  </div>
-  <div
+    </View>
+  </View>
+  <View
     style={
       {
         "height": 50,
@@ -43,6 +43,6 @@ exports[`View Component (Simple react-test-renderer) should handle complex neste
     }
   >
     Footer Content
-  </div>
-</div>
+  </View>
+</View>
 `;
