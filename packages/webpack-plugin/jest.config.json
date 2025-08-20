@@ -1,16 +1,9 @@
 {
-  "testEnvironment": "node",
-  "testMatch": [
-    "<rootDir>/test/**/*.spec.js"
-  ],
-  "testPathIgnorePatterns": [
-    "/node_modules/",
-    "/dist/"
-  ],
-  "collectCoverageFrom": [
-    "lib/**/*.js",
-    "!lib/runtime/components/react/**",
-    "!lib/**/dist/**",
-    "!lib/**/*.d.ts"
-  ]
+  "transform": {
+    "^.+\\.(js|jsx)?$": "babel-jest"
+  },
+  "testEnvironment": "jsdom",
+  "moduleNameMapper": {
+    "\\.(css|styl)$": "identity-obj-proxy"
+  }
 }
