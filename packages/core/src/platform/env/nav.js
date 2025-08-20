@@ -1,4 +1,4 @@
-import { createElement, useState, useMemo } from 'react'
+import { createElement, useState, useMemo, useLayoutEffect } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ReactNative from 'react-native'
 import Mpx from '../../index'
@@ -79,6 +79,7 @@ const validBarTextStyle = (textStyle) => {
 export function innerNav ({ props, navigation }) {
   const { pageConfig } = props
   const [innerPageConfig, setPageConfig] = useState(pageConfig || {})
+  const [showStatus, setShowStatus] = useState(true)
   navigation.setPageConfig = (config) => {
     const newConfig = Object.assign({}, innerPageConfig, config)
     setPageConfig(newConfig)
@@ -92,7 +93,18 @@ export function innerNav ({ props, navigation }) {
     barStyle: (navigationBarTextStyle === NavColor.White) ? 'light-content' : 'dark-content' // 'default'/'light-content'/'dark-content'
   })
 
-  if (isCustom) return statusBarElement
+  useLayoutEffect(() => {
+    const handler = () => {
+      // 页面显示时，设置状态栏颜色
+      setShowStatus(false)
+    }
+    global.__mpxAppCbs.show.push(handler)
+    return () => {
+      global.__mpxAppCbs.show = global.__mpxAppCbs.show.filter(cb => cb !== handler)
+    }
+  }, [])
+
+  if (isCustom) return showStatus ? statusBarElement : null
   const safeAreaTop = useSafeAreaInsets()?.top || 0
   // 假设是栈导航，获取栈的长度
   const stackLength = navigation.getState()?.routes?.length
@@ -121,7 +133,7 @@ export function innerNav ({ props, navigation }) {
           backgroundColor: innerPageConfig.navigationBarBackgroundColor || '#000000'
         }]
       },
-      statusBarElement,
+      showStatus ? statusBarElement : null,
       createElement(ReactNative.View, {
         style: styles.headerContent,
         height: titleHeight
