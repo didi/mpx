@@ -1,9 +1,9 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
-import Text from '../mpx-text'
+import Text from '../../../lib/runtime/components/react/mpx-text'
 
 // Mock mpx-portal
-jest.mock('../mpx-portal', () => {
+jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   const mockReact = require('react')
   return {
     __esModule: true,

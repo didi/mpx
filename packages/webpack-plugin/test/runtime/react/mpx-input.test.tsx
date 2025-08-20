@@ -1,9 +1,9 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react-native'
-import Input from '../mpx-input'
+import Input from '../../../lib/runtime/components/react/mpx-input'
 
 // Mock mpx-portal
-jest.mock('../mpx-portal', () => {
+jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
   const mockReact = require('react')
   return {
     __esModule: true,

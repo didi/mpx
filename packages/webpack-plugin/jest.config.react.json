@@ -5,19 +5,19 @@
   "testEnvironment": "node",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy",
-    "^react-native$": "<rootDir>/__mocks__/react-native-pure.js",
-    "^react-native-safe-area-context$": "<rootDir>/__mocks__/react-native-safe-area-context.js",
-    "^react-native-linear-gradient$": "<rootDir>/__mocks__/react-native-linear-gradient.js",
-    "^react-native-gesture-handler$": "<rootDir>/__mocks__/react-native-gesture-handler.js",
-    "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js",
-    "^react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js",
-    "^@d11/react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js"
+    "^react-native$": "<rootDir>/test/__mocks__/react-native-pure.js",
+    "^react-native-safe-area-context$": "<rootDir>/test/__mocks__/react-native-safe-area-context.js",
+    "^react-native-linear-gradient$": "<rootDir>/test/__mocks__/react-native-linear-gradient.js",
+    "^react-native-gesture-handler$": "<rootDir>/test/__mocks__/react-native-gesture-handler.js",
+    "^react-native-reanimated$": "<rootDir>/test/__mocks__/react-native-reanimated.js",
+    "^react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js",
+    "^@d11/react-native-fast-image$": "<rootDir>/test/__mocks__/react-native-fast-image.js"
   },
   "setupFilesAfterEnv": [
     "<rootDir>/test/setup.modern.js"
   ],
   "testMatch": [
-    "<rootDir>/lib/runtime/components/react/**/__tests__/**/*.(js|jsx|ts|tsx)"
+    "<rootDir>/test/runtime/react/**/*.(js|jsx|ts|tsx)"
   ],
   "testPathIgnorePatterns": [
     "/node_modules/",
