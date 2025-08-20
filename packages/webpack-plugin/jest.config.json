@@ -1,35 +1,16 @@
 {
-  "transform": {
-    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
-  },
   "testEnvironment": "node",
-  "moduleNameMapper": {
-    "\\.(css|styl)$": "identity-obj-proxy",
-    "^react-native$": "<rootDir>/__mocks__/react-native-pure.js",
-    "^react-native-safe-area-context$": "<rootDir>/__mocks__/react-native-safe-area-context.js",
-    "^react-native-linear-gradient$": "<rootDir>/__mocks__/react-native-linear-gradient.js",
-    "^react-native-gesture-handler$": "<rootDir>/__mocks__/react-native-gesture-handler.js",
-    "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js",
-    "^react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js",
-    "^@d11/react-native-fast-image$": "<rootDir>/__mocks__/react-native-fast-image.js"
-  },
-  "setupFilesAfterEnv": [
-    "<rootDir>/test/setup.modern.js"
-  ],
   "testMatch": [
-    "<rootDir>/lib/runtime/components/react/**/__tests__/**/*.(js|jsx|ts|tsx)"
+    "<rootDir>/test/**/*.spec.js"
   ],
   "testPathIgnorePatterns": [
     "/node_modules/",
     "/dist/"
   ],
   "collectCoverageFrom": [
-    "lib/runtime/components/react/**/*.{ts,tsx}",
-    "!lib/runtime/components/react/dist/**",
-    "!lib/runtime/components/react/**/*.d.ts",
-    "!lib/runtime/components/react/types/**"
-  ],
-  "transformIgnorePatterns": [
-    "node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|@mpxjs)/)"
+    "lib/**/*.js",
+    "!lib/runtime/components/react/**",
+    "!lib/**/dist/**",
+    "!lib/**/*.d.ts"
   ]
 }
