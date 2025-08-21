@@ -9,18 +9,23 @@ const getWindowInfo = function () {
   const navigationInsets = navigation.insets || {}
   const insets = Object.assign({}, initialWindowMetricsInset, navigationInsets)
   let safeArea = {}
-  const { top = 0, bottom = 0, left = 0, right = 0 } = insets
+  const { top = 0, left = 0 } = insets
+  let { bottom = 0, right = 0 } = initialWindowMetricsInset
   const screenHeight = __mpx_mode__ === 'ios' ? dimensionsScreen.height : dimensionsScreen.height - bottom // 解决安卓开启屏幕内三建导航安卓把安全区计算进去后产生的影响
   const screenWidth = __mpx_mode__ === 'ios' ? dimensionsScreen.width : dimensionsScreen.width - right
   const layout = navigation.layout || {}
   const layoutHeight = layout.height || 0
   const layoutWidth = layout.width || 0
   const windowHeight = layoutHeight || screenHeight
+  if (__mpx_mode__ !== 'ios') {
+    bottom = 0
+    right = 0
+  }
   try {
     safeArea = {
       left,
       right: screenWidth - right,
-      top,
+      top: top,
       bottom: screenHeight - bottom,
       height: screenHeight - top - bottom,
       width: screenWidth - left - right
