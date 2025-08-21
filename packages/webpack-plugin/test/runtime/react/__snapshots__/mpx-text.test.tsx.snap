@@ -1,5 +1,98 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`MpxText Edge cases should handle mixed children types 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={{}}
+  testID="mixed-children"
+>
+  String text
+  42
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={{}}
+  >
+    Nested text
+  </Text>
+</Text>
+`;
+
+exports[`MpxText MPX specific features should handle complex style transformations 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "blue",
+      "fontSize": 16,
+      "fontWeight": "bold",
+      "lineHeight": 1.5,
+      "textAlign": "center",
+    }
+  }
+  testID="complex-style-text"
+>
+  Complex Style Text
+</Text>
+`;
+
+exports[`MpxText MPX specific features should handle enable-var prop 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "red",
+      "fontSize": 16,
+    }
+  }
+  testID="var-enabled-text"
+>
+  CSS Var Text
+</Text>
+`;
+
+exports[`MpxText MPX specific features should handle parent size props 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={{}}
+  testID="parent-size-text"
+>
+  Parent Size Text
+</Text>
+`;
+
+exports[`MpxText MPX specific features should handle position fixed style (Portal integration) 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "blue",
+      "left": 0,
+      "top": 0,
+    }
+  }
+  testID="fixed-position-text"
+>
+  Fixed Position Text
+</Text>
+`;
+
+exports[`MpxText MPX specific features should handle user-select prop 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={true}
+  style={{}}
+  testID="user-select-text"
+>
+  User Select Text
+</Text>
+`;
+
 exports[`MpxText should handle multiple props together 1`] = `
 <Text
   allowFontScaling={false}

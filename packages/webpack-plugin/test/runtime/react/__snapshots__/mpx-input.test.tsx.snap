@@ -1,5 +1,112 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`MpxInput MPX specific features should handle confirm-type prop 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="search me"
+  editable={true}
+  enterKeyHint="search"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "padding": 0,
+    }
+  }
+  testID="confirm-type-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="search me"
+/>
+`;
+
+exports[`MpxInput Styles and layout should handle complex style combinations 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="styled input"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#f8f8f8",
+      "borderRadius": 8,
+      "color": "#333333",
+      "fontSize": 16,
+      "fontWeight": "bold",
+      "padding": 0,
+      "paddingHorizontal": 12,
+      "paddingVertical": 8,
+    }
+  }
+  testID="complex-style-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="styled input"
+/>
+`;
+
+exports[`MpxInput Styles and layout should handle position fixed style (Portal integration) 1`] = `
+<View>
+  <TextInput
+    allowFontScaling={false}
+    autoFocus={false}
+    blurOnSubmit={true}
+    defaultValue="Fixed Position Input"
+    editable={true}
+    enterKeyHint="done"
+    keyboardType="default"
+    maxLength={140}
+    multiline={false}
+    onBlur={[Function]}
+    onChange={[Function]}
+    onContentSizeChange={[Function]}
+    onFocus={[Function]}
+    onSelectionChange={[Function]}
+    onTouchEnd={[Function]}
+    onTouchStart={[Function]}
+    secureTextEntry={false}
+    style={
+      {
+        "backgroundColor": "#fff",
+        "left": 50,
+        "padding": 0,
+        "position": "absolute",
+        "top": 100,
+      }
+    }
+    testID="fixed-position-input"
+    textAlignVertical="auto"
+    underlineColorAndroid="rgba(0,0,0,0)"
+    value="Fixed Position Input"
+  />
+</View>
+`;
+
 exports[`MpxInput should handle custom styles 1`] = `
 <TextInput
   allowFontScaling={false}
