@@ -1,0 +1,87 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MpxScrollView should handle scrollbar and paging properties 1`] = `
+<ScrollView
+  alwaysBounceHorizontal={false}
+  alwaysBounceVertical={false}
+  bounces={true}
+  horizontal={false}
+  onContentSizeChange={[Function]}
+  onLayout={[Function]}
+  onMomentumScrollEnd={[Function]}
+  onScroll={[Function]}
+  onScrollBeginDrag={[Function]}
+  onScrollEndDrag={[Function]}
+  onTouchMove={[Function]}
+  pagingEnabled={true}
+  pinchGestureEnabled={false}
+  scrollEnabled={true}
+  scrollEventThrottle={0}
+  scrollsToTop={false}
+  showsHorizontalScrollIndicator={false}
+  showsVerticalScrollIndicator={false}
+  simultaneousHandlers={[]}
+  style={
+    {
+      "flexGrow": 0,
+    }
+  }
+  testID="scrollbar-paging-scroll"
+  waitFor={[]}
+>
+  <View
+    style={{}}
+  >
+    <Text
+      allowFontScaling={false}
+      selectable={false}
+      style={{}}
+    >
+      Paging content
+    </Text>
+  </View>
+</ScrollView>
+`;
+
+exports[`MpxScrollView should render with basic scroll properties 1`] = `
+<ScrollView
+  alwaysBounceHorizontal={false}
+  alwaysBounceVertical={false}
+  bounces={false}
+  horizontal={false}
+  onContentSizeChange={[Function]}
+  onLayout={[Function]}
+  onMomentumScrollEnd={[Function]}
+  onScroll={[Function]}
+  onScrollBeginDrag={[Function]}
+  onScrollEndDrag={[Function]}
+  onTouchMove={[Function]}
+  pinchGestureEnabled={false}
+  scrollEnabled={true}
+  scrollEventThrottle={0}
+  scrollsToTop={false}
+  showsHorizontalScrollIndicator={false}
+  showsVerticalScrollIndicator={true}
+  simultaneousHandlers={[]}
+  style={
+    {
+      "flexGrow": 0,
+      "height": 200,
+    }
+  }
+  testID="basic-scroll"
+  waitFor={[]}
+>
+  <View
+    style={{}}
+  >
+    <Text
+      allowFontScaling={false}
+      selectable={false}
+      style={{}}
+    >
+      Scrollable content
+    </Text>
+  </View>
+</ScrollView>
+`;

@@ -1,3 +1,28 @@
+// Mock Easing before any imports
+jest.doMock('react-native', () => {
+  const RN = jest.requireActual('react-native')
+  return {
+    ...RN,
+    Easing: {
+      linear: jest.fn(),
+      ease: jest.fn(),
+      in: jest.fn(() => jest.fn()),
+      out: jest.fn(() => jest.fn()),
+      inOut: jest.fn(() => jest.fn()),
+      poly: jest.fn(() => jest.fn()),
+      bezier: jest.fn(() => jest.fn()),
+      circle: jest.fn(),
+      sin: jest.fn(),
+      exp: jest.fn(),
+      elastic: jest.fn(() => jest.fn()),
+      back: jest.fn(() => jest.fn()),
+      bounce: jest.fn(),
+      step0: jest.fn(),
+      step1: jest.fn()
+    }
+  }
+})
+
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
 import MpxView from '../../../lib/runtime/components/react/mpx-view'

@@ -1,5 +1,109 @@
 // Modern setup for @testing-library/react-native
 
+// Mock react-native-reanimated first to avoid import issues
+jest.doMock('react-native-reanimated', () => {
+  const RN = jest.requireActual('react-native')
+  const React = jest.requireActual('react')
+  
+  // Create proper Animated components
+  const AnimatedView = React.forwardRef((props, ref) => 
+    React.createElement(RN.View, { ...props, ref })
+  )
+  const AnimatedScrollView = React.forwardRef((props, ref) => 
+    React.createElement(RN.ScrollView, { ...props, ref })
+  )
+  
+  // Create the default export object
+  const AnimatedDefault = {
+    View: AnimatedView,
+    ScrollView: AnimatedScrollView,
+    createAnimatedComponent: jest.fn((Component) => Component),
+  }
+  
+  return {
+    default: AnimatedDefault,
+    useSharedValue: jest.fn((initial) => ({ value: initial })),
+    useAnimatedStyle: jest.fn((styleFactory) => styleFactory()),
+    withTiming: jest.fn((toValue, config, callback) => {
+      if (callback) callback()
+      return toValue
+    }),
+    withSpring: jest.fn((toValue, config, callback) => {
+      if (callback) callback()
+      return toValue
+    }),
+    withDecay: jest.fn((config, callback) => {
+      if (callback) callback()
+      return 0
+    }),
+    makeMutable: jest.fn((initial) => ({ value: initial })),
+    runOnJS: jest.fn((fn) => fn),
+    runOnUI: jest.fn((fn) => fn),
+    cancelAnimation: jest.fn(),
+    withSequence: jest.fn(),
+    withDelay: jest.fn(),
+    Easing: {
+      linear: 'linear',
+      ease: 'ease',
+      quad: 'quad',
+      cubic: 'cubic',
+      poly: jest.fn((exp) => `poly(${exp})`),
+      sin: 'sin',
+      circle: 'circle',
+      exp: 'exp',
+      elastic: 'elastic',
+      back: 'back',
+      bounce: 'bounce',
+      bezier: jest.fn(() => 'bezier'),
+      in: jest.fn((easing) => `in(${easing})`),
+      out: jest.fn((easing) => `out(${easing})`),
+      inOut: jest.fn((easing) => `inOut(${easing})`),
+    },
+    Animated: AnimatedDefault,
+    createAnimatedComponent: jest.fn((component) => component),
+    useAnimatedGestureHandler: jest.fn(),
+    useAnimatedProps: jest.fn(),
+    useDerivedValue: jest.fn(),
+    useAnimatedReaction: jest.fn(),
+    useAnimatedScrollHandler: jest.fn(),
+    interpolate: jest.fn(),
+    Extrapolate: { EXTEND: 'extend', CLAMP: 'clamp', IDENTITY: 'identity' },
+  }
+})
+
+// Mock Easing first to avoid import issues
+jest.doMock('react-native', () => {
+  const RN = jest.requireActual('react-native')
+  const React = jest.requireActual('react')
+  
+  // Mock RefreshControl
+  const MockRefreshControl = React.forwardRef((props, ref) => 
+    React.createElement(RN.View, { ...props, ref, testID: props.testID || 'refresh-control' })
+  )
+  
+  return {
+    ...RN,
+    RefreshControl: MockRefreshControl,
+    Easing: {
+      linear: jest.fn(),
+      ease: jest.fn(),
+      in: jest.fn(() => jest.fn()),
+      out: jest.fn(() => jest.fn()),
+      inOut: jest.fn(() => jest.fn()),
+      poly: jest.fn(() => jest.fn()),
+      bezier: jest.fn(() => jest.fn()),
+      circle: jest.fn(),
+      sin: jest.fn(),
+      exp: jest.fn(),
+      elastic: jest.fn(() => jest.fn()),
+      back: jest.fn(() => jest.fn()),
+      bounce: jest.fn(),
+      step0: jest.fn(),
+      step1: jest.fn()
+    }
+  }
+})
+
 // 定义全局变量
 global.__mpx_mode__ = 'android' // 设置为React Native模式
 global.__DEV__ = false // 设置开发模式标志
@@ -24,111 +128,16 @@ configure({
   // 可以在这里添加全局配置
 })
 
-// Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => {
-  const React = require('react')
-  
-  return {
-    default: {
-      View: (props) => React.createElement('View', props, props.children),
-      Text: (props) => React.createElement('Text', props, props.children),
-      ScrollView: (props) => React.createElement('ScrollView', props, props.children),
-      Value: jest.fn(() => ({
-        setValue: jest.fn(),
-        addListener: jest.fn(),
-        removeListener: jest.fn(),
-        removeAllListeners: jest.fn(),
-        stopAnimation: jest.fn(),
-        resetAnimation: jest.fn(),
-        interpolate: jest.fn(() => ({
-          setValue: jest.fn(),
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-          removeAllListeners: jest.fn(),
-          stopAnimation: jest.fn(),
-          resetAnimation: jest.fn(),
-        })),
-      })),
-      timing: jest.fn(() => ({
-        start: jest.fn(),
-        stop: jest.fn(),
-        reset: jest.fn(),
-      })),
-      spring: jest.fn(() => ({
-        start: jest.fn(),
-        stop: jest.fn(),
-        reset: jest.fn(),
-      })),
-      decay: jest.fn(() => ({
-        start: jest.fn(),
-        stop: jest.fn(),
-        reset: jest.fn(),
-      })),
-      sequence: jest.fn(),
-      parallel: jest.fn(),
-      stagger: jest.fn(),
-      loop: jest.fn(),
-      delay: jest.fn(),
-      createAnimatedComponent: jest.fn((component) => component),
-      Easing: {
-        linear: jest.fn(),
-        ease: jest.fn(),
-        quad: jest.fn(),
-        cubic: jest.fn(),
-        poly: jest.fn((exp) => jest.fn()),
-        sin: jest.fn(),
-        circle: jest.fn(),
-        exp: jest.fn(),
-        elastic: jest.fn(),
-        back: jest.fn(),
-        bounce: jest.fn(),
-        bezier: jest.fn(),
-        in: jest.fn((easing) => easing || jest.fn()),
-        out: jest.fn((easing) => easing || jest.fn()),
-        inOut: jest.fn((easing) => easing || jest.fn()),
-      },
-      call: () => {},
-    },
-    Easing: {
-      linear: jest.fn(),
-      ease: jest.fn(),
-      quad: jest.fn(),
-      cubic: jest.fn(),
-      poly: jest.fn((exp) => jest.fn()),
-      in: jest.fn((easing) => easing || jest.fn()),
-      out: jest.fn((easing) => easing || jest.fn()),
-      inOut: jest.fn((easing) => easing || jest.fn()),
-    },
-    runOnJS: jest.fn((fn) => fn),
-    useSharedValue: jest.fn((initial) => ({ value: initial })),
-    useAnimatedStyle: jest.fn((styleFactory) => styleFactory()),
-    useAnimatedGestureHandler: jest.fn(),
-    useAnimatedProps: jest.fn(),
-    useDerivedValue: jest.fn(),
-    useAnimatedReaction: jest.fn(),
-    useAnimatedScrollHandler: jest.fn(),
-    interpolate: jest.fn(),
-    Extrapolate: { EXTEND: 'extend', CLAMP: 'clamp', IDENTITY: 'identity' },
-    makeMutable: jest.fn((initial) => ({ value: initial })),
-    withTiming: jest.fn((toValue, config, callback) => {
-      if (callback) callback()
-      return toValue
-    }),
-    withSpring: jest.fn((toValue, config, callback) => {
-      if (callback) callback()
-      return toValue
-    }),
-    withDecay: jest.fn((config, callback) => {
-      if (callback) callback()
-      return 0
-    }),
-  }
-})
+
 
 // Mock react-native-gesture-handler
 jest.mock('react-native-gesture-handler', () => {
   const React = require('react')
+  const RN = jest.requireActual('react-native')
   const MockView = (props) => React.createElement('View', props, props.children)
+  const MockScrollView = React.forwardRef((props, ref) => 
+    React.createElement('ScrollView', { ...props, ref })
+  )
   
   const createMockGesture = () => ({
     onTouchesDown: jest.fn(() => createMockGesture()),
@@ -140,14 +149,15 @@ jest.mock('react-native-gesture-handler', () => {
     enabled: jest.fn(() => createMockGesture()),
     shouldCancelWhenOutside: jest.fn(() => createMockGesture()),
     hitSlop: jest.fn(() => createMockGesture()),
-    runOnJS: jest.fn(() => createMockGesture())
+    runOnJS: jest.fn(() => createMockGesture()),
+    simultaneousWithExternalGesture: jest.fn(() => createMockGesture())
   })
   
   return {
     Swipeable: MockView,
     DrawerLayout: MockView,
     State: {},
-    ScrollView: MockView,
+    ScrollView: MockScrollView,
     Slider: MockView,
     Switch: MockView,
     TextInput: MockView,
@@ -194,3 +204,18 @@ Image.getSize = jest.fn((uri, success, error) => {
   // Mock successful image loading with default dimensions
   setTimeout(() => success(100, 100), 0)
 })
+
+// RefreshControl is already mocked in the react-native mock above
+
+
+
+// Mock mpxGlobal for warnings
+global.mpxGlobal = {
+  __mpx: {
+    config: {
+      ignoreWarning: false
+    }
+  }
+}
+
+
