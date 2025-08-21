@@ -1,8 +1,8 @@
 /* eslint-disable space-before-function-paren */
-import { createElement, useState, useMemo, memo } from 'react'
+import { createElement, useState, useMemo, memo, useContext, useLayoutEffect } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar, processColor, TouchableWithoutFeedback, Image, View, StyleSheet, Text } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
+import { useNavShared } from './useNavShared'
 
 function convertToHex(color?: string) {
   try {
@@ -95,19 +95,11 @@ function createMpxNav(options: MpxNavFactorOptions) {
   const { Mpx } = options
   const innerNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
     const [innerPageConfig, setPageConfig] = useState<PageConfig>(pageConfig || {})
-
-    const translateY = useSharedValue(0)
+    const [customNav] = useNavShared()
     const safeAreaTop = useSafeAreaInsets()?.top || 0
 
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ translateY: translateY.value }]
-    }))
-
     navigation.setPageConfig = (config: PageConfig) => {
-      const newConfig = Object.assign({}, innerPageConfig, config)
-      translateY.value =
-        newConfig?.animatedNavStyle?.top ?? withTiming(0, { duration: 100, easing: Easing.in(Easing.bezierFn(0.51, 1.18, 0.97, 0.94)) })
-      setPageConfig(newConfig)
+      setPageConfig(Object.assign({}, innerPageConfig, config))
     }
     const isCustom = innerPageConfig.navigationStyle === 'custom'
     const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
@@ -124,7 +116,13 @@ function createMpxNav(options: MpxNavFactorOptions) {
       barStyle: navigationBarTextStyle === NavColor.White ? 'light-content' : 'dark-content' // 'default'/'light-content'/'dark-content'
     })
 
-    if (isCustom) return statusBarElement
+    if (isCustom)
+      return (
+        <>
+          {statusBarElement}
+          {customNav}
+        </>
+      )
     // 假设是栈导航，获取栈的长度
     const stackLength = navigation.getState()?.routes?.length
     const onStackTopBack = Mpx.config?.rnConfig?.onStackTopBack
@@ -150,28 +148,25 @@ function createMpxNav(options: MpxNavFactorOptions) {
       : null
 
     return (
-      // 不设置 zIndex transform 无法生效
-      <Animated.View style={[{ position: 'relative', zIndex: 10000 }, animatedStyle]}>
-        <View
-          style={[
-            styles.header,
-            {
-              paddingTop: safeAreaTop,
-              backgroundColor: innerPageConfig.navigationBarBackgroundColor || '#000000'
-            }
-          ]}>
-          {statusBarElement}
-          {/* TODO: 确定 height 的有效性 */}
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-expect-error */}
-          <View style={styles.headerContent} height={titleHeight}>
-            {backElement}
-            <Text style={[styles.title, { color: navigationBarTextStyle }]} numberOfLines={1}>
-              {innerPageConfig.navigationBarTitleText?.trim() || ''}
-            </Text>
-          </View>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: safeAreaTop,
+            backgroundColor: innerPageConfig.navigationBarBackgroundColor || '#000000'
+          }
+        ]}>
+        {statusBarElement}
+        {/* TODO: 确定 height 的有效性 */}
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+        {/* @ts-expect-error */}
+        <View style={styles.headerContent} height={titleHeight}>
+          {backElement}
+          <Text style={[styles.title, { color: navigationBarTextStyle }]} numberOfLines={1}>
+            {innerPageConfig.navigationBarTitleText?.trim() || ''}
+          </Text>
         </View>
-      </Animated.View>
+      </View>
     )
 
     // return createElement(

@@ -281,7 +281,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, blurCallbacks: [] }
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition }
     }
   }
 
@@ -298,6 +298,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     if (!keyboardAvoid?.current) {
       setKeyboardAvoidContext()
     }
+
     if (bindfocus && keyboardAvoid?.current) {
       const focusAction = () => {
         bindfocus(
@@ -307,7 +308,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
             {
               detail: {
                 value: tmpValue.current || '',
-                height: keyboardAvoid.current?.keyboardHeight
+                height: keyboardAvoid.current?.keyboardHeight,
               },
               layoutRef
             },
@@ -330,7 +331,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    keyboardAvoid?.current?.blurCallbacks.forEach(fn => fn())
     bindblur && bindblur(
       getCustomEvent(
         'blur',
