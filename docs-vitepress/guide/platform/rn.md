@@ -310,30 +310,71 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 ### 使用RN组件
 在Mpx组件内引用RN组件，采用如下方式
 - **RN组件注册方式**：需在components属性下进行引用注册。
-- **RN组件的属性与事件**：属性与事件参考RN原生支持的属性与事件名，对应赋值方式按照Mpx语法进行双括号包裹，组件使用的值需要通过 REACTHOOKSEXEC方法的返回值的方式进行声明。
-- **RN组件的样式定义**: 组件支持样式属性的透传，通过在RN组件上定义styles即可透传样式
+- **RN组件的属性与事件**：属性与事件参考RN原生支持的属性与事件名，对应赋值方式按照Mpx语法进行双括号包裹，组件使用的值需要通过 onReactHooksExec 的返回值的方式进行声明。
+- **RN组件的样式定义**: 组件支持样式属性的透传，通过在RN组件上定义style即可透传样式
 - **其他功能**: 支持在RN组件内使用slot
-```javascript
+```html
 <template>
     <view>
         <!-- 事件的value需要使用双括号包裹 -->
         <ScrollView onScroll="{{scrollAction}}">
-          <View styles="{{viewStyle}}">
+          <View style="{{viewStyle}}">
             <!-- 可混合编写mpx组件 -->
             <view>我是Mpx组件</view>
             <!-- 支持在RN组件内部定义插槽 -->
             <slot name="myslot"></slot>
-          <View>
+          </View>
+        </ScrollView>
+    </view>
+</template>
+<script setup>
+    import { onReactHooksExec } from '@mpxjs/core'
+    import { ScrollView } from 'react-native-gesture-handler'
+    import { View } from 'react-native'
+
+    onReactHooksExec(() => {
+        return {
+            viewStyle: {
+              width: 200,
+              height: 200
+            }
+        }
+    })
+    defineOptions({
+        // 声明 RN 组件
+        components: {
+            ScrollView,
+            View
+        }
+    })
+</script>
+```
+
+在选项式api中，使用 REACTHOOKSEXEC 替代 onReactHooksExec，例如
+```html
+<template>
+    <view>
+        <!-- 事件的value需要使用双括号包裹 -->
+        <ScrollView onScroll="{{scrollAction}}">
+          <View style="{{viewStyle}}">
+            <!-- 可混合编写mpx组件 -->
+            <view>我是Mpx组件</view>
+            <!-- 支持在RN组件内部定义插槽 -->
+            <slot name="myslot"></slot>
+          </View>
         </ScrollView>
     </view>
 </template>
 <script>
     import { createComponent, REACTHOOKSEXEC } from '@mpxjs/core'
     import { ScrollView } from 'react-native-gesture-handler'
+    import { View } from 'react-native'
     createComponent({
+        // 声明 RN 组件
         components: {
-            ScrollView
-        }
+            ScrollView,
+            View
+        },
         [REACTHOOKSEXEC](){
             return {
               viewStyle: {
@@ -345,6 +386,9 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
     })
 </script>
 ```
+
+
+
 ### 使用React hooks
 Mpx提供了hooks的执行机制，通过在Mpx组件内注册REACTHOOKSEXEC方法，保障RN组件的初始化执行。hooks的返回值支持数据与方法
 - 模板上RN组件/Mpx组件的数据渲染

@@ -357,26 +357,6 @@ export interface RnConfig {
   ) => T | void
 
   /**
-   * 异步分包加载配置。
-   */
-  asyncChunk?: {
-    /**
-     * 加载超时时长配置，单位为毫秒。
-     */
-    timeout: number
-
-    /**
-     * 异步分包页面加载超时或失败时，自定义兜底页面文件路径。
-     */
-    fallback: string
-
-    /**
-     * 异步分包页面加载时，自定义 loading 页面文件路径。
-     */
-    loading: string
-  }
-
-  /**
    * 加载并执行异步分包的方法。
    *
    * @param params 分包下载参数
