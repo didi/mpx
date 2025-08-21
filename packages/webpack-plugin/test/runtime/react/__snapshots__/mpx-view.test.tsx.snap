@@ -1,47 +1,45 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MpxView with MpxInlineText Basic View functionality should handle background image properties 1`] = `
-<View
-  style={
-    {
-      "backgroundColor": "#ff0000",
-    }
-  }
-  testID="background-image-view"
->
-  <Text
-    allowFontScaling={false}
-  >
-    Background Image
-  </Text>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText Basic View functionality should handle complex background properties 1`] = `
+exports[`MpxView should handle background properties 1`] = `
 <View
   enable-fast-image={true}
   style={
     {
-      "backgroundColor": "#f0f0f0",
+      "backgroundColor": "#ff0000",
       "borderRadius": 10,
     }
   }
-  testID="complex-background-view"
+  testID="background-view"
 >
+  <View
+    onLayout={[Function]}
+    style={
+      {
+        "borderRadius": 10,
+        "bottom": 0,
+        "left": 0,
+        "overflow": "hidden",
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
   <Text
     allowFontScaling={false}
   >
-    Complex Background
+    Background content
   </Text>
 </View>
 `;
 
-exports[`MpxView with MpxInlineText Basic View functionality should handle flex layout 1`] = `
+exports[`MpxView should handle flex layout properties 1`] = `
 <View
   style={
     {
       "alignItems": "center",
       "display": "flex",
+      "flex": 1,
       "flexBasis": "auto",
       "flexDirection": "row",
       "flexShrink": 1,
@@ -64,249 +62,51 @@ exports[`MpxView with MpxInlineText Basic View functionality should handle flex 
 </View>
 `;
 
-exports[`MpxView with MpxInlineText Basic View functionality should handle linear gradient background 1`] = `
+exports[`MpxView should handle nested views and complex structure 1`] = `
 <View
-  style={{}}
-  testID="gradient-view"
+  style={
+    {
+      "padding": 5,
+    }
+  }
+  testID="nested-view"
 >
   <View
-    onLayout={[Function]}
     style={
       {
-        "bottom": 0,
-        "left": 0,
-        "overflow": "hidden",
-        "position": "absolute",
-        "right": 0,
-        "top": 0,
+        "margin": 2,
       }
     }
-  />
-  <Text
-    allowFontScaling={false}
-  >
-    Gradient Background
-  </Text>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText Edge cases should handle mixed children types 1`] = `
-<View
-  style={{}}
-  testID="mixed-children-view"
->
-  <Text
-    allowFontScaling={false}
-  >
-    Text Child
-  </Text>
-  42
-  <View
-    style={{}}
   >
     <Text
       allowFontScaling={false}
     >
-      Nested View
+      Nested content
     </Text>
   </View>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText Edge cases should handle null children 1`] = `
-<View
-  style={{}}
-  testID="null-children-view"
->
   <Text
     allowFontScaling={false}
   >
-    Valid Child
+    Sibling content
   </Text>
 </View>
 `;
 
-exports[`MpxView with MpxInlineText Edge cases should handle undefined style 1`] = `
-<View
-  style={{}}
-  testID="undefined-style-view"
->
-  <Text
-    allowFontScaling={false}
-  >
-    Undefined Style
-  </Text>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText should apply custom styles 1`] = `
+exports[`MpxView should render with basic props and styles 1`] = `
 <View
   style={
     {
       "backgroundColor": "#f0f0f0",
-      "flex": 1,
-      "padding": 20,
+      "borderRadius": 5,
+      "padding": 10,
     }
   }
-  testID="styled-view"
->
-  <Text
-    allowFontScaling={false}
-  >
-    Styled Content
-  </Text>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText should handle complex nested structure 1`] = `
-<View
-  style={
-    {
-      "flex": 1,
-    }
-  }
-  testID="complex-structure"
->
-  <View
-    style={
-      {
-        "height": 50,
-      }
-    }
-    testID="header"
-  >
-    <Text
-      allowFontScaling={false}
-    >
-      Header Content
-    </Text>
-  </View>
-  <View
-    style={
-      {
-        "flex": 1,
-      }
-    }
-    testID="body"
-  >
-    <View
-      style={{}}
-      testID="section-1"
-    >
-      <Text
-        allowFontScaling={false}
-      >
-        Section 1
-      </Text>
-    </View>
-    <View
-      style={{}}
-      testID="section-2"
-    >
-      <Text
-        allowFontScaling={false}
-      >
-        Section 2
-      </Text>
-    </View>
-  </View>
-  <View
-    style={
-      {
-        "height": 50,
-      }
-    }
-    testID="footer"
-  >
-    <Text
-      allowFontScaling={false}
-    >
-      Footer Content
-    </Text>
-  </View>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText should handle empty view 1`] = `
-<View
-  style={{}}
-  testID="empty-view"
-/>
-`;
-
-exports[`MpxView with MpxInlineText should handle nested views 1`] = `
-<View
-  style={{}}
-  testID="parent-view"
->
-  <View
-    style={{}}
-    testID="child-view-1"
-  >
-    <Text
-      allowFontScaling={false}
-    >
-      Child 1
-    </Text>
-  </View>
-  <View
-    style={{}}
-    testID="child-view-2"
-  >
-    <Text
-      allowFontScaling={false}
-    >
-      Child 2
-    </Text>
-  </View>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText should handle view with multiple text children 1`] = `
-<View
-  style={{}}
-  testID="multiple-text-view"
->
-  <Text
-    allowFontScaling={false}
-  >
-    First Text
-  </Text>
-  <Text
-    allowFontScaling={false}
-  >
-    Second Text
-  </Text>
-  <Text
-    allowFontScaling={false}
-  >
-    Third Text
-  </Text>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText should handle view with single child 1`] = `
-<View
-  style={{}}
-  testID="single-child-view"
->
-  <Text
-    allowFontScaling={false}
-  >
-    Single Child
-  </Text>
-</View>
-`;
-
-exports[`MpxView with MpxInlineText should render basic view 1`] = `
-<View
-  style={{}}
   testID="basic-view"
 >
   <Text
     allowFontScaling={false}
   >
-    Basic View Content
+    Basic content
   </Text>
 </View>
 `;

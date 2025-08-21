@@ -1,13 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MpxInput MPX specific features should handle confirm-type prop 1`] = `
+exports[`MpxInput should handle MPX specific props 1`] = `
 <TextInput
   allowFontScaling={false}
   autoFocus={false}
   blurOnSubmit={true}
-  defaultValue="search me"
+  cursor-spacing={5}
+  defaultValue=""
   editable={true}
-  enterKeyHint="search"
+  enterKeyHint="send"
   keyboardType="default"
   maxLength={140}
   multiline={false}
@@ -19,92 +20,23 @@ exports[`MpxInput MPX specific features should handle confirm-type prop 1`] = `
   onTouchEnd={[Function]}
   onTouchStart={[Function]}
   secureTextEntry={false}
+  selection={
+    {
+      "end": 5,
+      "start": 0,
+    }
+  }
   style={
     {
       "backgroundColor": "#fff",
       "padding": 0,
     }
   }
-  testID="confirm-type-input"
+  testID="mpx-features-input"
   textAlignVertical="auto"
   underlineColorAndroid="rgba(0,0,0,0)"
-  value="search me"
+  value=""
 />
-`;
-
-exports[`MpxInput Styles and layout should handle complex style combinations 1`] = `
-<TextInput
-  allowFontScaling={false}
-  autoFocus={false}
-  blurOnSubmit={true}
-  defaultValue="styled input"
-  editable={true}
-  enterKeyHint="done"
-  keyboardType="default"
-  maxLength={140}
-  multiline={false}
-  onBlur={[Function]}
-  onChange={[Function]}
-  onContentSizeChange={[Function]}
-  onFocus={[Function]}
-  onSelectionChange={[Function]}
-  onTouchEnd={[Function]}
-  onTouchStart={[Function]}
-  secureTextEntry={false}
-  style={
-    {
-      "backgroundColor": "#f8f8f8",
-      "borderRadius": 8,
-      "color": "#333333",
-      "fontSize": 16,
-      "fontWeight": "bold",
-      "padding": 0,
-      "paddingHorizontal": 12,
-      "paddingVertical": 8,
-    }
-  }
-  testID="complex-style-input"
-  textAlignVertical="auto"
-  underlineColorAndroid="rgba(0,0,0,0)"
-  value="styled input"
-/>
-`;
-
-exports[`MpxInput Styles and layout should handle position fixed style (Portal integration) 1`] = `
-<View>
-  <TextInput
-    allowFontScaling={false}
-    autoFocus={false}
-    blurOnSubmit={true}
-    defaultValue="Fixed Position Input"
-    editable={true}
-    enterKeyHint="done"
-    keyboardType="default"
-    maxLength={140}
-    multiline={false}
-    onBlur={[Function]}
-    onChange={[Function]}
-    onContentSizeChange={[Function]}
-    onFocus={[Function]}
-    onSelectionChange={[Function]}
-    onTouchEnd={[Function]}
-    onTouchStart={[Function]}
-    secureTextEntry={false}
-    style={
-      {
-        "backgroundColor": "#fff",
-        "left": 50,
-        "padding": 0,
-        "position": "absolute",
-        "top": 100,
-      }
-    }
-    testID="fixed-position-input"
-    textAlignVertical="auto"
-    underlineColorAndroid="rgba(0,0,0,0)"
-    value="Fixed Position Input"
-  />
-</View>
 `;
 
 exports[`MpxInput should handle custom styles 1`] = `
@@ -112,7 +44,7 @@ exports[`MpxInput should handle custom styles 1`] = `
   allowFontScaling={false}
   autoFocus={false}
   blurOnSubmit={true}
-  defaultValue="styled"
+  defaultValue=""
   editable={true}
   enterKeyHint="done"
   keyboardType="default"
@@ -128,55 +60,19 @@ exports[`MpxInput should handle custom styles 1`] = `
   secureTextEntry={false}
   style={
     {
-      "backgroundColor": "#f5f5f5",
-      "color": "#333",
-      "fontSize": 16,
-      "padding": 0,
+      "backgroundColor": "#f0f0f0",
+      "borderRadius": 5,
+      "padding": 10,
     }
   }
   testID="styled-input"
   textAlignVertical="auto"
   underlineColorAndroid="rgba(0,0,0,0)"
-  value="styled"
+  value=""
 />
 `;
 
-exports[`MpxInput should handle multiple props together 1`] = `
-<TextInput
-  allowFontScaling={false}
-  autoFocus={false}
-  blurOnSubmit={true}
-  defaultValue="complex"
-  editable={true}
-  enterKeyHint="done"
-  keyboardType="default"
-  maxLength={50}
-  maxlength={50}
-  multiline={false}
-  onBlur={[Function]}
-  onChange={[Function]}
-  onContentSizeChange={[Function]}
-  onFocus={[Function]}
-  onSelectionChange={[Function]}
-  onTouchEnd={[Function]}
-  onTouchStart={[Function]}
-  placeholder="Enter text"
-  secureTextEntry={false}
-  style={
-    {
-      "backgroundColor": "#fff",
-      "fontSize": 18,
-      "padding": 0,
-    }
-  }
-  testID="complex-input"
-  textAlignVertical="auto"
-  underlineColorAndroid="rgba(0,0,0,0)"
-  value="complex"
-/>
-`;
-
-exports[`MpxInput should handle password input 1`] = `
+exports[`MpxInput should handle password and security features 1`] = `
 <TextInput
   allowFontScaling={false}
   autoFocus={false}
@@ -208,12 +104,12 @@ exports[`MpxInput should handle password input 1`] = `
 />
 `;
 
-exports[`MpxInput should render with default props 1`] = `
+exports[`MpxInput should render with basic props 1`] = `
 <TextInput
   allowFontScaling={false}
   autoFocus={false}
   blurOnSubmit={true}
-  defaultValue=""
+  defaultValue="test value"
   editable={true}
   enterKeyHint="done"
   keyboardType="default"
@@ -226,6 +122,7 @@ exports[`MpxInput should render with default props 1`] = `
   onSelectionChange={[Function]}
   onTouchEnd={[Function]}
   onTouchStart={[Function]}
+  placeholder="Enter text"
   secureTextEntry={false}
   style={
     {
@@ -233,9 +130,9 @@ exports[`MpxInput should render with default props 1`] = `
       "padding": 0,
     }
   }
-  testID="default-input"
+  testID="basic-input"
   textAlignVertical="auto"
   underlineColorAndroid="rgba(0,0,0,0)"
-  value=""
+  value="test value"
 />
 `;
