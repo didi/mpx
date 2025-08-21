@@ -5,5 +5,10 @@
   "testEnvironment": "jsdom",
   "moduleNameMapper": {
     "\\.(css|styl)$": "identity-obj-proxy"
-  }
+  },
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/dist/",
+    "test/runtime/react/"
+  ]
 }
