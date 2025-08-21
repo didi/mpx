@@ -258,8 +258,6 @@ mpx.xfetch.fetch({
 
 **更加倾向于请求实时性的预先请求**
 
-**更加倾向于请求实时性的预先请求**
-
 在某些场景下（如耗时较长的页面跳转）我们期望能在提前发起请求作为缓存来加速进入页面的首次渲染，有需要能尽量保证数据的实时性时，可以传入 usePre.onUpdate 回调方法来获取最新的请求内容
 
 usePre.onUpdate 开启后，如果本次请求命中的请求缓存，依然会再次发起请求，fetch 方法返回内容变为 Promise.race([缓存请求, 实时请求])，如果 缓存请求 先完成，则等待 实时请求 完成后，会将 实时请求 的返回内容作为 usePre.onUpdate 的参数进行回调。
@@ -282,3 +280,29 @@ mpx.xfetch.fetch({
 
 > tips: onUpdate 中的 response 也会经过 interceptors.response 处理，所以以上代码可能会触发两次 interceptors.response
 
+**精细的控制缓存**
+
+默认开启 usePre 后，如果命中缓存则会将缓存清空，否则将会覆盖缓存。但有时我们希望本次usePre仅使用/产生缓存，此时可通过 usePre.mode 参数控制缓存的生产/消费模式
+
+usePre.mode: 可选值 'auto','consumer','producer'， 默认为'auto'
+
++ auto: 存在缓存时消费缓存，不存在时生产缓存
++ consumer: 仅消费缓存，不存在缓存时发起网络请求，且不产生新的缓存
++ producer: 仅生产缓存，一定会发起网络请求，并覆盖已有缓存
+
+
+```js
+mpx.xfetch.fetch({
+    url: 'http://xxx.com',
+    method: 'POST',
+    data: {
+        name: 'test'
+    },
+    usePre: {
+        // 是否缓存请求
+        enable: true,
+        // 仅生产缓存，用于提前请求达到加速效果
+        mode: 'producer'
+    }
+})
+```
