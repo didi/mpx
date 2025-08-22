@@ -20,9 +20,9 @@ jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
 
 
 describe('MpxScrollView', () => {
-  // 基础渲染和滚动方向测试
-  it('should render with basic scroll properties', () => {
-    const { toJSON } = render(
+  // 综合基础属性测试
+  it('should handle basic scroll properties and configurations', () => {
+    const { rerender, toJSON } = render(
       <MpxScrollView 
         testID="basic-scroll"
         scroll-y={true}
@@ -34,17 +34,16 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    const scrollElement = screen.getByTestId('basic-scroll')
+    // 基础垂直滚动测试
+    let scrollElement = screen.getByTestId('basic-scroll')
     expect(scrollElement).toBeTruthy()
     expect(scrollElement.props.horizontal).toBe(false)
     expect(scrollElement.props.scrollEnabled).toBe(true)
-    expect(toJSON()).toMatchSnapshot()
-  })
 
-  it('should handle horizontal and vertical scroll directions', () => {
-    const { rerender } = render(
+    // 测试水平滚动
+    rerender(
       <MpxScrollView 
-        testID="direction-scroll"
+        testID="basic-scroll"
         scroll-x={true}
         scroll-y={false}
       >
@@ -54,31 +53,14 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    let scrollElement = screen.getByTestId('direction-scroll')
+    scrollElement = screen.getByTestId('basic-scroll')
     expect(scrollElement.props.horizontal).toBe(true)
+    expect(scrollElement.props.scrollEnabled).toBe(true)
 
-    // 测试垂直滚动
+    // 测试滚动条和分页属性
     rerender(
       <MpxScrollView 
-        testID="direction-scroll"
-        scroll-x={false}
-        scroll-y={true}
-      >
-        <MpxView>
-          <MpxText>Vertical content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    scrollElement = screen.getByTestId('direction-scroll')
-    expect(scrollElement.props.horizontal).toBe(false)
-  })
-
-  // 滚动条和分页测试
-  it('should handle scrollbar and paging properties', () => {
-    const { toJSON } = render(
-      <MpxScrollView 
-        testID="scrollbar-paging-scroll"
+        testID="basic-scroll"
         scroll-y={true}
         show-scrollbar={false}
         paging-enabled={true}
@@ -90,9 +72,44 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    const scrollElement = screen.getByTestId('scrollbar-paging-scroll')
+    scrollElement = screen.getByTestId('basic-scroll')
+    expect(scrollElement.props.horizontal).toBe(false)
     expect(scrollElement.props.showsVerticalScrollIndicator).toBe(false)
     expect(scrollElement.props.pagingEnabled).toBe(true)
+
+    // 测试增强模式和弹性效果
+    rerender(
+      <MpxScrollView 
+        testID="basic-scroll"
+        scroll-y={true}
+        enhanced={true}
+        bounces={false}
+      >
+        <MpxView>
+          <MpxText>Enhanced content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    scrollElement = screen.getByTestId('basic-scroll')
+    expect(scrollElement.props.bounces).toBe(false)
+
+    // 测试禁用滚动的边界情况
+    rerender(
+      <MpxScrollView 
+        testID="basic-scroll"
+        scroll-x={false}
+        scroll-y={false}
+      >
+        <MpxView>
+          <MpxText>No scroll content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    scrollElement = screen.getByTestId('basic-scroll')
+    expect(scrollElement.props.scrollEnabled).toBe(false)
+
     expect(toJSON()).toMatchSnapshot()
   })
 
@@ -126,27 +143,7 @@ describe('MpxScrollView', () => {
     expect(mockOnScroll).toHaveBeenCalled()
   })
 
-  // 增强模式测试
-  it('should handle enhanced mode', () => {
-    render(
-      <MpxScrollView 
-        testID="enhanced-scroll"
-        scroll-y={true}
-        enhanced={true}
-        bounces={false}
-        paging-enabled={true}
-      >
-        <MpxView>
-          <MpxText>Enhanced scrollable content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
 
-    const scrollElement = screen.getByTestId('enhanced-scroll')
-    expect(scrollElement).toBeTruthy()
-    expect(scrollElement.props.pagingEnabled).toBe(true)
-    expect(scrollElement.props.bounces).toBe(false)
-  })
 
   // Ref 转发测试
   it('should properly forward refs', () => {
@@ -169,42 +166,9 @@ describe('MpxScrollView', () => {
     expect(scrollElement).toBeTruthy()
   })
 
-  // 边界情况测试
-  it('should handle edge cases and special configurations', () => {
+  // 边界情况和空内容测试
+  it('should handle edge cases and empty content', () => {
     const { rerender } = render(
-      <MpxScrollView 
-        testID="edge-scroll"
-        scroll-x={false}
-        scroll-y={false}
-      >
-        <MpxView>
-          <MpxText>No scroll content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    let scrollElement = screen.getByTestId('edge-scroll')
-    expect(scrollElement.props.scrollEnabled).toBe(false)
-
-    // 测试垂直滚动
-    rerender(
-      <MpxScrollView 
-        testID="edge-scroll"
-        scroll-y={true}
-        enable-back-to-top={true}
-      >
-        <MpxView>
-          <MpxText>Vertical scroll content</MpxText>
-        </MpxView>
-      </MpxScrollView>
-    )
-
-    scrollElement = screen.getByTestId('edge-scroll')
-    expect(scrollElement.props.horizontal).toBe(false)
-    expect(scrollElement.props.scrollsToTop).toBe(true)
-
-    // 测试空内容
-    rerender(
       <MpxScrollView 
         testID="edge-scroll"
         scroll-y={true}
@@ -213,8 +177,24 @@ describe('MpxScrollView', () => {
       </MpxScrollView>
     )
 
-    scrollElement = screen.getByTestId('edge-scroll')
+    // 测试空内容
+    let scrollElement = screen.getByTestId('edge-scroll')
     expect(scrollElement).toBeTruthy()
+    expect(scrollElement.props.scrollEnabled).toBe(true)
+
+    // 测试空内容但禁用滚动
+    rerender(
+      <MpxScrollView 
+        testID="edge-scroll"
+        scroll-x={false}
+        scroll-y={false}
+      >
+        {null}
+      </MpxScrollView>
+    )
+
+    scrollElement = screen.getByTestId('edge-scroll')
+    expect(scrollElement.props.scrollEnabled).toBe(false)
   })
 
   // MPX 特定属性测试

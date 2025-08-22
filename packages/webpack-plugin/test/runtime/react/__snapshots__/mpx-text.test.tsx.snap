@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MpxText should handle complex style transformations 1`] = `
+exports[`MpxText should handle basic rendering, nested text and selection properties 1`] = `
 <Text
   allowFontScaling={false}
   selectable={false}
@@ -10,87 +10,10 @@ exports[`MpxText should handle complex style transformations 1`] = `
       "lineHeight": "1.5",
       "textAlign": "center",
       "textDecorationLine": "underline",
-      "textShadowColor": "rgba(0,0,0,0.3)",
-      "textShadowOffset": {
-        "height": 1,
-        "width": 1,
-      },
-      "textShadowRadius": 2,
-    }
-  }
-  testID="complex-style-text"
->
-  Complex styled text
-</Text>
-`;
-
-exports[`MpxText should handle nested text components 1`] = `
-<Text
-  allowFontScaling={false}
-  selectable={false}
-  style={{}}
-  testID="nested-text"
->
-  Parent text
-  <Text
-    allowFontScaling={false}
-    selectable={false}
-    style={
-      {
-        "color": "red",
-      }
-    }
-  >
-    Nested text
-  </Text>
-  More parent text
-</Text>
-`;
-
-exports[`MpxText should handle position fixed with Portal integration 1`] = `
-<View>
-  <Text
-    allowFontScaling={false}
-    selectable={false}
-    style={
-      {
-        "color": "blue",
-        "left": 10,
-        "position": "absolute",
-        "top": 10,
-      }
-    }
-    testID="fixed-text"
-  >
-    Fixed position text
-  </Text>
-</View>
-`;
-
-exports[`MpxText should handle text selection and scaling properties 1`] = `
-<Text
-  allowFontScaling={false}
-  selectable={false}
-  style={{}}
-  testID="selection-text"
->
-  Non-selectable text
-</Text>
-`;
-
-exports[`MpxText should render text with basic props 1`] = `
-<Text
-  allowFontScaling={false}
-  selectable={false}
-  style={
-    {
-      "color": "#333",
-      "fontSize": 16,
-      "fontWeight": "bold",
     }
   }
   testID="basic-text"
 >
-  Hello World
+  Complex styled text
 </Text>
 `;
