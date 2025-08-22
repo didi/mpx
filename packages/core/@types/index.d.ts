@@ -126,9 +126,14 @@ interface Context {
 type ExtendedComponentOptions = {
   disconnectOnUnmounted?: boolean
   shallowReactivePattern?: RegExp
+  /**
+   * 是否禁用render函数的useMemo，仅输出RN支持
+   */
+  disableMemo?: boolean
 } & WechatMiniprogram.Component.ComponentOptions
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
+  components: Record<string, React.ComponentType>,
   data?: D
   properties?: P
   computed?: C
@@ -355,26 +360,6 @@ export interface RnConfig {
   customDimensions?: <T extends { window: ScaledSize; screen: ScaledSize }>(
     dimensions: T
   ) => T | void
-
-  /**
-   * 异步分包加载配置。
-   */
-  asyncChunk?: {
-    /**
-     * 加载超时时长配置，单位为毫秒。
-     */
-    timeout: number
-
-    /**
-     * 异步分包页面加载超时或失败时，自定义兜底页面文件路径。
-     */
-    fallback: string
-
-    /**
-     * 异步分包页面加载时，自定义 loading 页面文件路径。
-     */
-    loading: string
-  }
 
   /**
    * 加载并执行异步分包的方法。
