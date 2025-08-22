@@ -126,9 +126,14 @@ interface Context {
 type ExtendedComponentOptions = {
   disconnectOnUnmounted?: boolean
   shallowReactivePattern?: RegExp
+  /**
+   * 是否禁用render函数的useMemo，仅输出RN支持
+   */
+  disableMemo?: boolean
 } & WechatMiniprogram.Component.ComponentOptions
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
+  components: Record<string, React.ComponentType>,
   data?: D
   properties?: P
   computed?: C
