@@ -1859,87 +1859,97 @@ try {
 
       // 应用过rules后，注入mpx相关资源编译loader
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
-        const { queryObj, resourcePath } = parseRequest(createData.request)
+        const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
-
-        const isVue = queryObj.vue && resourcePath?.endsWith('.vue')
-
-        function processLoader() {
-          if (((queryObj.mpx || isVue) && queryObj.mpx !== MPX_PROCESSED_FLAG)) {
-            const type = queryObj.type
-            const extract = queryObj.extract
-
-            if (type === 'styles' || (isVue && type === 'style')) {
-              let insertBeforeIndex = -1
-              // 单次遍历收集所有索引
-              loaders.forEach((loader, index) => {
-                const currentLoader = toPosix(loader.loader)
-                if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
-                  insertBeforeIndex = index
-                }
-              })
-
-              if (insertBeforeIndex !== -1) {
-                  loaders.splice(insertBeforeIndex + 1, 0, { loader: styleStripConditionalPath })
-              }
+        const type = queryObj.type
+        const mpxProcessFlag = queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG
+        const vueProcessFlag = queryObj.vue && queryObj.mpx !== MPX_PROCESSED_FLAG
+        if (mpxProcessFlag || vueProcessFlag) {
+          const extract = queryObj.extract
+          if (type === 'styles' || type === 'style') {
+            const loaderTypes = {
+              'node_modules/stylus-loader': -1,
+              'node_modules/sass-loader': -1,
+              'node_modules/less-loader': -1,
+              'node_modules/css-loader': -1
             }
-
-            if (!isVue) {
-              switch (type) {
-                case 'styles':
-                case 'template': {
-                  let insertBeforeIndex = -1
-                  const info = typeLoaderProcessInfo[type]
-                  loaders.forEach((loader, index) => {
-                    const currentLoader = toPosix(loader.loader)
-                    if (currentLoader.includes(info[0])) {
-                      loader.loader = info[1]
-                      insertBeforeIndex = index
-                    } else if (currentLoader.includes(info[1])) {
-                      insertBeforeIndex = index
-                    }
-                  })
-                  if (insertBeforeIndex > -1) {
-                    loaders.splice(insertBeforeIndex + 1, 0, {
-                      loader: info[2]
-                    })
-                  }
+            loaders.forEach((loader, index) => {
+              const currentLoader = toPosix(loader.loader)
+              for (const key in loaderTypes) {
+                if (currentLoader.includes(key)) {
+                  loaderTypes[key] = index
                   break
                 }
-                case 'json':
-                  if (queryObj.isTheme) {
-                    loaders.unshift({
-                      loader: jsonThemeCompilerPath
-                    })
-                  } else if (queryObj.isPlugin) {
-                    loaders.unshift({
-                      loader: jsonPluginCompilerPath
-                    })
-                  } else {
-                    loaders.unshift({
-                      loader: jsonCompilerPath
-                    })
-                  }
-                  break
-                case 'wxs':
-                  loaders.unshift({
-                    loader: wxsLoaderPath
-                  })
-                  break
               }
-              if (extract) {
-                loaders.unshift({
-                  loader: extractorPath
-                })
+            })
+            const insertStripLoaders = (index) => {
+              if (index !== -1) {
+                loaders.splice(index, 0, { loader: styleStripConditionalPath })
+                loaders.splice(index + 2, 0, { loader: styleStripConditionalPath })
+                return true
               }
+              return false
             }
 
-            createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
+            const priorities = ['node_modules/stylus-loader', 'node_modules/less-loader', 'node_modules/sass-loader', 'node_modules/css-loader']
+            for (const loaderKey of priorities) {
+              if (insertStripLoaders(loaderTypes[loaderKey])) {
+                break
+              }
+            }
           }
+
+          if (mpxProcessFlag) {
+            switch (type) {
+              case 'styles':
+              case 'template': {
+                let insertBeforeIndex = -1
+                const info = typeLoaderProcessInfo[type]
+                loaders.forEach((loader, index) => {
+                  const currentLoader = toPosix(loader.loader)
+                  if (currentLoader.includes(info[0])) {
+                    loader.loader = info[1]
+                    insertBeforeIndex = index
+                  } else if (currentLoader.includes(info[1])) {
+                    insertBeforeIndex = index
+                  }
+                })
+                if (insertBeforeIndex > -1) {
+                  loaders.splice(insertBeforeIndex + 1, 0, {
+                    loader: info[2]
+                  })
+                }
+                break
+              }
+              case 'json':
+                if (queryObj.isTheme) {
+                  loaders.unshift({
+                    loader: jsonThemeCompilerPath
+                  })
+                } else if (queryObj.isPlugin) {
+                  loaders.unshift({
+                    loader: jsonPluginCompilerPath
+                  })
+                } else {
+                  loaders.unshift({
+                    loader: jsonCompilerPath
+                  })
+                }
+                break
+              case 'wxs':
+                loaders.unshift({
+                  loader: wxsLoaderPath
+                })
+                break
+            }
+            if (extract) {
+              loaders.unshift({
+                loader: extractorPath
+              })
+            }
+          }
+          createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
-
-        processLoader()
-
         // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
         if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
