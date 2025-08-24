@@ -46,7 +46,8 @@ import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext,
     const componentsMap = buildComponentsMap({
       localComponentsMap,
       loaderContext,
-      jsonConfig
+      jsonConfig,
+      rnConfig
     })
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp })
     output += getRequireScript({ ctorType, script, loaderContext })
@@ -58,7 +59,8 @@ import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext,
       localComponentsMap,
       builtInComponentsMap,
       loaderContext,
-      jsonConfig
+      jsonConfig,
+      rnConfig
     })
 
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics, hasApp })
