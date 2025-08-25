@@ -2041,6 +2041,8 @@ function processElement (el, root, options, meta) {
     return
   }
 
+  processMpxTagName(el)
+
   if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
     rulesRunner(el)
@@ -2049,8 +2051,6 @@ function processElement (el, root, options, meta) {
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
-
-  processMpxTagName(el)
 
   processInjectWxs(el, meta)
 
