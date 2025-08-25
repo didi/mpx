@@ -1,11 +1,43 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MpxInput should handle MPX selection properties 1`] = `
+exports[`MpxInput should handle input type digit with keyboard StringMatching: input-type-digit 1`] = `
 <TextInput
   allowFontScaling={false}
   autoFocus={false}
   blurOnSubmit={true}
-  defaultValue=""
+  defaultValue="123"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="numeric"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "padding": 0,
+    }
+  }
+  testID="type-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="123"
+/>
+`;
+
+exports[`MpxInput should handle input type idcard with keyboard default: input-type-idcard 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="123"
   editable={true}
   enterKeyHint="done"
   keyboardType="default"
@@ -19,36 +51,29 @@ exports[`MpxInput should handle MPX selection properties 1`] = `
   onTouchEnd={[Function]}
   onTouchStart={[Function]}
   secureTextEntry={false}
-  selection={
-    {
-      "end": 5,
-      "start": 0,
-    }
-  }
   style={
     {
       "backgroundColor": "#fff",
       "padding": 0,
     }
   }
-  testID="selection-input"
+  testID="type-input"
   textAlignVertical="auto"
   underlineColorAndroid="rgba(0,0,0,0)"
-  value=""
+  value="123"
 />
 `;
 
-exports[`MpxInput should handle basic props, input types and constraints 1`] = `
+exports[`MpxInput should handle input type number with keyboard numeric: input-type-number 1`] = `
 <TextInput
   allowFontScaling={false}
   autoFocus={false}
   blurOnSubmit={true}
-  defaultValue="test"
-  editable={false}
+  defaultValue="123"
+  editable={true}
   enterKeyHint="done"
-  keyboardType="default"
-  maxLength={10}
-  maxlength={10}
+  keyboardType="numeric"
+  maxLength={140}
   multiline={false}
   onBlur={[Function]}
   onChange={[Function]}
@@ -64,9 +89,106 @@ exports[`MpxInput should handle basic props, input types and constraints 1`] = `
       "padding": 0,
     }
   }
+  testID="type-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="123"
+/>
+`;
+
+exports[`MpxInput should handle input type text with keyboard default: input-type-text 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="123"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "padding": 0,
+    }
+  }
+  testID="type-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="123"
+/>
+`;
+
+exports[`MpxInput should render in Portal when position is fixed: input-with-portal 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="Portal content"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "padding": 0,
+    }
+  }
+  testID="portal-input"
+  textAlignVertical="auto"
+  underlineColorAndroid="rgba(0,0,0,0)"
+  value="Portal content"
+/>
+`;
+
+exports[`MpxInput should render with basic props 1`] = `
+<TextInput
+  allowFontScaling={false}
+  autoFocus={false}
+  blurOnSubmit={true}
+  defaultValue="test value"
+  editable={true}
+  enterKeyHint="done"
+  keyboardType="default"
+  maxLength={140}
+  multiline={false}
+  onBlur={[Function]}
+  onChange={[Function]}
+  onContentSizeChange={[Function]}
+  onFocus={[Function]}
+  onSelectionChange={[Function]}
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  placeholder="Enter text"
+  secureTextEntry={false}
+  style={
+    {
+      "backgroundColor": "#fff",
+      "padding": 0,
+    }
+  }
   testID="basic-input"
   textAlignVertical="auto"
   underlineColorAndroid="rgba(0,0,0,0)"
-  value="test"
+  value="test value"
 />
 `;

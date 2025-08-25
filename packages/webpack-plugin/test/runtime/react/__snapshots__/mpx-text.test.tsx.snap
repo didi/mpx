@@ -1,5 +1,73 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`MpxText should handle Portal functionality: text-with-portal 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "#333",
+      "fontSize": 16,
+    }
+  }
+  testID="portal-text"
+>
+  Portal text content
+</Text>
+`;
+
+exports[`MpxText should handle Portal with complex styling and content: complex-portal-text 1`] = `
+<View>
+  <Text
+    allowFontScaling={false}
+    selectable={true}
+    style={
+      {
+        "backgroundColor": "rgba(0,0,0,0.8)",
+        "borderRadius": 5,
+        "color": "white",
+        "height": 50,
+        "left": "20%",
+        "padding": 10,
+        "position": "absolute",
+        "textAlign": "center",
+        "top": "10%",
+        "width": 200,
+      }
+    }
+    testID="complex-portal-text"
+  >
+    Complex Portal Text
+    <Text
+      allowFontScaling={false}
+      selectable={false}
+      style={
+        {
+          "color": "yellow",
+          "fontWeight": "bold",
+        }
+      }
+    >
+      Nested Content
+    </Text>
+  </Text>
+</View>
+`;
+
+exports[`MpxText should handle accessibility and interaction properties: accessible-text 1`] = `
+<Text
+  accessibilityLabel="Accessible text content"
+  accessibilityRole="text"
+  accessible={true}
+  allowFontScaling={true}
+  selectable={true}
+  style={{}}
+  testID="accessible-text"
+>
+  Accessible and interactive text
+</Text>
+`;
+
 exports[`MpxText should handle basic rendering, nested text and selection properties 1`] = `
 <Text
   allowFontScaling={false}
@@ -16,4 +84,144 @@ exports[`MpxText should handle basic rendering, nested text and selection proper
 >
   Complex styled text
 </Text>
+`;
+
+exports[`MpxText should handle complex nested text with style inheritance: nested-styled-text 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "#333",
+      "fontSize": 16,
+      "fontWeight": "bold",
+      "lineHeight": 1.5,
+    }
+  }
+  testID="nested-styled-text"
+>
+  Parent text with
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={
+      {
+        "color": "red",
+        "fontStyle": "italic",
+      }
+    }
+  >
+    nested red italic text
+  </Text>
+  and
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={
+      {
+        "fontSize": 18,
+        "textDecorationLine": "underline",
+      }
+    }
+  >
+    underlined larger text
+  </Text>
+  back to parent style
+</Text>
+`;
+
+exports[`MpxText should handle different style conditions that affect Portal usage: position-conditions-test 1`] = `
+<View>
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={
+      {
+        "bottom": 0,
+        "position": "absolute",
+        "right": 0,
+        "zIndex": 999,
+      }
+    }
+    testID="position-test"
+  >
+    Fixed position text
+  </Text>
+</View>
+`;
+
+exports[`MpxText should handle external context properties: context-text 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "color": "#ff0000",
+      "fontSize": 16,
+      "textAlign": "center",
+    }
+  }
+  testID="context-text"
+>
+  Context styled text
+</Text>
+`;
+
+exports[`MpxText should handle parent size context: parent-size-text 1`] = `
+<Text
+  allowFontScaling={false}
+  selectable={false}
+  style={
+    {
+      "fontSize": 18,
+      "width": 150,
+    }
+  }
+  testID="parent-size-text"
+>
+  Parent size context text
+</Text>
+`;
+
+exports[`MpxText should handle useTransformStyle with various configurations: transform-style-text 1`] = `
+<View>
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={
+      {
+        "backgroundColor": "#f0f0f0",
+        "color": "#ff0000",
+        "fontSize": 18,
+        "padding": 8,
+        "position": "absolute",
+        "width": 256,
+      }
+    }
+    testID="transform-style-text"
+  >
+    Transform style text
+  </Text>
+</View>
+`;
+
+exports[`MpxText should render in Portal when position is fixed: fixed-position-text 1`] = `
+<View>
+  <Text
+    allowFontScaling={false}
+    selectable={false}
+    style={
+      {
+        "color": "#333",
+        "fontSize": 16,
+        "left": 50,
+        "position": "absolute",
+        "top": 100,
+      }
+    }
+    testID="fixed-position-text"
+  >
+    Fixed position text
+  </Text>
+</View>
 `;

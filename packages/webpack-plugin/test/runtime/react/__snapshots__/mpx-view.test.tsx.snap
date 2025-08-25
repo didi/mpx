@@ -1,5 +1,54 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`MpxView should handle Portal functionality: view-with-portal 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#f0f0f0",
+      "height": 100,
+      "width": 100,
+    }
+  }
+  testID="portal-view"
+>
+  <Text
+    allowFontScaling={false}
+  >
+    Portal view content
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle background image properties: bg-image-view 1`] = `
+<View
+  style={
+    {
+      "height": 200,
+      "width": 200,
+    }
+  }
+  testID="bg-image-view"
+>
+  <View
+    style={
+      {
+        "bottom": 0,
+        "left": 0,
+        "overflow": "hidden",
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
+  <Text
+    allowFontScaling={false}
+  >
+    Background image content
+  </Text>
+</View>
+`;
+
 exports[`MpxView should handle background properties 1`] = `
 <View
   enable-fast-image={true}
@@ -33,6 +82,170 @@ exports[`MpxView should handle background properties 1`] = `
 </View>
 `;
 
+exports[`MpxView should handle basic animation properties: animated-view 1`] = `
+<View
+  enable-animation={false}
+  style={
+    {
+      "backgroundColor": "#ff0000",
+      "height": 100,
+      "width": 100,
+    }
+  }
+  testID="animated-view"
+>
+  <Text
+    allowFontScaling={false}
+  >
+    Animated content
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle complex background property combinations: complex-bg-view 1`] = `
+<View
+  enable-fast-image={true}
+  style={
+    {
+      "borderRadius": 10,
+      "height": 200,
+      "width": 300,
+    }
+  }
+  testID="complex-bg-view"
+>
+  <View
+    onLayout={[Function]}
+    style={
+      {
+        "borderRadius": 10,
+        "bottom": 0,
+        "left": 0,
+        "overflow": "hidden",
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
+  <Text
+    allowFontScaling={false}
+  >
+    Complex background
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle comprehensive touch and gesture events: gesture-view 1`] = `
+<View
+  onTouchEnd={[Function]}
+  onTouchStart={[Function]}
+  style={
+    {
+      "height": 100,
+      "width": 100,
+    }
+  }
+  testID="gesture-view"
+>
+  <Text
+    allowFontScaling={false}
+  >
+    Gesture area
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle deeply nested complex structures: deep-nested-view 1`] = `
+<View
+  style={
+    {
+      "padding": 10,
+    }
+  }
+  testID="deep-nested-view"
+>
+  <View
+    style={
+      {
+        "backgroundColor": "#ff0000",
+        "margin": 5,
+      }
+    }
+  >
+    <Text
+      allowFontScaling={false}
+    >
+      Level 1
+    </Text>
+    <View
+      style={
+        {
+          "backgroundColor": "#00ff00",
+          "margin": 5,
+        }
+      }
+    >
+      <Text
+        allowFontScaling={false}
+      >
+        Level 2
+      </Text>
+      <View
+        style={
+          {
+            "backgroundColor": "#0000ff",
+            "margin": 5,
+          }
+        }
+      >
+        <Text
+          allowFontScaling={false}
+        >
+          Level 3
+        </Text>
+        <View
+          style={
+            {
+              "backgroundColor": "#ffff00",
+              "margin": 5,
+            }
+          }
+        >
+          <Text
+            allowFontScaling={false}
+          >
+            Level 4
+          </Text>
+        </View>
+      </View>
+    </View>
+  </View>
+</View>
+`;
+
+exports[`MpxView should handle external context properties: context-view 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#007AFF",
+      "borderRadius": 8,
+      "height": 100,
+      "margin": 12,
+      "padding": 16,
+      "width": 200,
+    }
+  }
+  testID="context-view"
+>
+  <Text
+    allowFontScaling={false}
+  >
+    Context styled view
+  </Text>
+</View>
+`;
+
 exports[`MpxView should handle flex layout properties 1`] = `
 <View
   style={
@@ -58,6 +271,60 @@ exports[`MpxView should handle flex layout properties 1`] = `
     allowFontScaling={false}
   >
     Item 2
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle hover states and timing: hover-view 1`] = `
+<View
+  testID="gesture-detector"
+>
+  <View
+    style={
+      {
+        "backgroundColor": "#ff0000",
+        "height": 100,
+        "width": 100,
+      }
+    }
+    testID="hover-view"
+  >
+    <Text
+      allowFontScaling={false}
+    >
+      Hover me
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`MpxView should handle linear gradient backgrounds: gradient-view 1`] = `
+<View
+  style={
+    {
+      "height": 150,
+      "width": 300,
+    }
+  }
+  testID="gradient-view"
+>
+  <View
+    onLayout={[Function]}
+    style={
+      {
+        "bottom": 0,
+        "left": 0,
+        "overflow": "hidden",
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
+  <Text
+    allowFontScaling={false}
+  >
+    Gradient background
   </Text>
 </View>
 `;
@@ -88,6 +355,61 @@ exports[`MpxView should handle nested views and complex structure 1`] = `
     allowFontScaling={false}
   >
     Sibling content
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle parent size context: parent-size-view 1`] = `
+<View
+  style={
+    {
+      "height": 150,
+      "padding": 10,
+      "width": 300,
+    }
+  }
+  testID="parent-size-view"
+>
+  <Text
+    allowFontScaling={false}
+    style={
+      {
+        "fontSize": 24,
+      }
+    }
+  >
+    Parent size context view
+  </Text>
+</View>
+`;
+
+exports[`MpxView should handle performance optimization features: performance-view 1`] = `
+<View
+  enable-fast-image={true}
+  style={
+    {
+      "height": 500,
+      "width": 500,
+    }
+  }
+  testID="performance-view"
+>
+  <View
+    style={
+      {
+        "bottom": 0,
+        "left": 0,
+        "overflow": "hidden",
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
+  <Text
+    allowFontScaling={false}
+  >
+    Performance optimized view
   </Text>
 </View>
 `;

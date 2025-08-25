@@ -79,7 +79,7 @@
   },
   "scripts": {
     "test": "jest",
-    "test:react": "jest --config jest.config.react.json",
+    "test:react": "jest --config jest.config.react.json --coverage",
     "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
     "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
   },
