@@ -1975,8 +1975,13 @@ function processAtMode (el) {
                 el._atModeStatus = 'match'
               }
             } else {
-              // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
-              el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+              if (replacedAttrName === 'mpxTagName') {
+                // mpxTagName 特殊标签，需要做转换保留处理
+                addAttrs(el, [processedAttr])
+              } else {
+                // 如果命中了指定的mode，则先存在el上，等跑完转换后再挂回去
+                el.noTransAttrs ? el.noTransAttrs.push(processedAttr) : el.noTransAttrs = [processedAttr]
+              }
             }
             // 命中mode，命中env，完成匹配，直接退出
             break
@@ -2041,6 +2046,8 @@ function processElement (el, root, options, meta) {
     return
   }
 
+  processMpxTagName(el)
+
   if (rulesRunner && el._atModeStatus !== 'match') {
     currentEl = el
     rulesRunner(el)
@@ -2049,8 +2056,6 @@ function processElement (el, root, options, meta) {
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
-
-  processMpxTagName(el)
 
   processInjectWxs(el, meta)
 
