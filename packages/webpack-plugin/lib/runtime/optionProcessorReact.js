@@ -10,23 +10,26 @@ export function getComponent (component, extendOptions) {
 }
 
 export function getAsyncSuspense (commonProps) {
+  let result
   if (commonProps.type === 'component') {
-    return memo(forwardRef(function (props, ref) {
+    result = memo(forwardRef(function (props, ref) {
       return createElement(AsyncSuspense,
-        extend(commonProps, {
+        extend({}, commonProps, {
           innerProps: Object.assign({}, props, { ref })
         })
       )
     }))
   } else {
-    return function (props) {
+    result = memo(function (props) {
       return createElement(AsyncSuspense,
-        extend(commonProps, {
+        extend({}, commonProps, {
           innerProps: props
         })
       )
-    }
+    })
   }
+  result.displayName = 'AsyncSuspenseHOC'
+  return result
 }
 
 export function getLazyPage (getComponent) {

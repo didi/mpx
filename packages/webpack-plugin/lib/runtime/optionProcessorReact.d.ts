@@ -18,10 +18,9 @@ interface AsyncSuspenseProps {
   type: 'component' | 'page'
   chunkName: string
   moduleId: string
-  innerProps: any
-  loading: ComponentType<unknown>
-  fallback: ComponentType<unknown>
+  getFallback?: () => ComponentType<unknown>
+  getLoading?: () => ComponentType<unknown>
   getChildren: () => Promise<AsyncModule>
 }
 
-export function getAsyncSuspense(props: AsyncSuspenseProps): ReactNode
+export function getAsyncSuspense (props: AsyncSuspenseProps): ReactNode

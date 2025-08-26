@@ -77,6 +77,7 @@ const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
@@ -202,6 +203,12 @@ class MpxWebpackPlugin {
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
+    if (options.retryRequireAsync === true) {
+      options.retryRequireAsync = {
+        times: 1,
+        interval: 0
+      }
+    }
     options.optimizeSize = options.optimizeSize || false
     options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
     this.options = options
@@ -614,6 +621,13 @@ class MpxWebpackPlugin {
           return mpx
         }
       })
+
+      compilation.hooks.runtimeRequirementInTree
+        .for(RetryRuntimeGlobal)
+        .tap('MpxWebpackPlugin', (chunk) => {
+          compilation.addRuntimeModule(chunk, new RetryRuntimeModule())
+          return true
+        })
 
       if (isReact(this.options.mode)) {
         compilation.hooks.runtimeRequirementInTree
@@ -1443,6 +1457,10 @@ class MpxWebpackPlugin {
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+                  request = addQuery(request, {
+                    isRequireAsync: true,
+                    retryRequireAsync: JSON.stringify(this.options.retryRequireAsync)
+                  })
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
@@ -1458,7 +1476,8 @@ class MpxWebpackPlugin {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isAsync: true,
                     isRequireAsync: true,
-                    retryRequireAsync: !!this.options.retryRequireAsync
+                    retryRequireAsync: this.options.retryRequireAsync,
+                    requireAsyncRange: expr.range
                   })
 
                   parser.state.current.addPresentationalDependency(dep)
@@ -1613,7 +1632,7 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || toPosix(resourcePath).indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
@@ -1715,6 +1734,23 @@ class MpxWebpackPlugin {
               source.add('// inject pageconfigmap for screen\n' +
                 'var context = (function() { return this })() || Function("return this")();\n')
               source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`
+${globalObject}.__mpxClearAsyncChunkCache = ${globalObject}.__mpxClearAsyncChunkCache || function (ids) {
+  ids = JSON.stringify(ids)
+  var arr = ${globalObject}['${chunkLoadingGlobal}'] || []
+  for (var i = arr.length - 1; i >= 0; i--) {
+    if (JSON.stringify(arr[i][0]) === ids) {
+      arr.splice(i, 1)
+    }
+  }
+};\n`)
+              }
+            } else {
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`${globalObject}.__mpxClearAsyncChunkCache && ${globalObject}.__mpxClearAsyncChunkCache(${JSON.stringify(chunk.ids)});\n`)
+              }
             }
             source.add(originalSource)
             compilation.assets[chunkFile] = source
@@ -1814,6 +1850,7 @@ try {
 
         compilation.chunkGroups.forEach((chunkGroup) => {
           if (!chunkGroup.isInitial()) {
+            isReact(mpx.mode) && chunkGroup.chunks.forEach((chunk) => processChunk(chunk, false, []))
             return
           }
 
