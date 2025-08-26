@@ -8,9 +8,9 @@
  * ✔ activeColor 已选择的进度条的颜色
  * ✔ backgroundColor 未选择的进度条的颜色
  * ✔ active 进度条从左往右的动画
- * ✘ active-mode backwards: 动画从头播；forwards：动画从上次结束点接着播
- * ✘ duration 进度增加1%所需毫秒数
- * ✘ bindactiveend 动画完成事件
+ * ✔ active-mode backwards: 动画从头播；forwards：动画从上次结束点接着播
+ * ✔ duration 进度增加1%所需毫秒数
+ * ✔ bindactiveend 动画完成事件
  */
 import {
   JSX,
@@ -29,7 +29,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  Easing
+  Easing,
+  runOnJS
 } from 'react-native-reanimated'
 
 import useInnerProps from './getInnerListeners'
@@ -44,6 +45,9 @@ export interface ProgressProps {
   activeColor?: string
   backgroundColor?: string
   active?: boolean
+  'active-mode'?: 'backwards' | 'forwards'
+  duration?: number
+  bindactiveend?: (event: any) => void
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
@@ -64,6 +68,9 @@ const Progress = forwardRef<
     activeColor = color || '#09BB07',
     backgroundColor = '#EBEBEB',
     active = false,
+    'active-mode': activeMode = 'backwards',
+    duration = 30,
+    bindactiveend,
     style = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -77,8 +84,8 @@ const Progress = forwardRef<
   propsRef.current = props
 
   // 进度值状态
-  const [currentPercent, setCurrentPercent] = useState(percent)
-  const progressWidth = useSharedValue(percent)
+  const [lastPercent, setLastPercent] = useState(0)
+  const progressWidth = useSharedValue(0)
 
   const {
     normalStyle,
@@ -106,22 +113,74 @@ const Progress = forwardRef<
     style: normalStyle
   })
 
+  // 进度条动画函数
+  const startProgressAnimation = (targetPercent: number, startPercent: number, animationDuration: number, onFinished?: () => void) => {
+    // 根据 active-mode 设置起始位置
+    progressWidth.value = startPercent
+    progressWidth.value = withTiming(
+      targetPercent,
+      {
+        duration: animationDuration,
+        easing: Easing.linear
+      },
+      (finished) => {
+        if (finished && onFinished) {
+          // 在动画回调中，需要使用runOnJS回到主线程
+          runOnJS(onFinished)()
+        }
+      }
+    )
+  }
+
+  // 创建在主线程执行的事件回调函数
+  const triggerActiveEnd = (percent: number) => {
+    if (bindactiveend) {
+      bindactiveend({
+        type: 'activeend',
+        detail: {
+          percent: percent
+        }
+      })
+    }
+  }
+
   // 进度变化时的动画效果
   useEffect(() => {
     const targetPercent = Math.max(0, Math.min(100, percent))
     if (active) {
-      progressWidth.value = withTiming(
-        targetPercent,
-        {
-          duration: 1000,
-          easing: Easing.linear
-        }
-      )
+      // 根据 active-mode 确定起始位置
+      let startPercent
+      if (activeMode === 'backwards') {
+        startPercent = 0
+      } else {
+        // forwards 模式：使用上次记录的百分比作为起始位置
+        startPercent = lastPercent
+      }
+      
+      // 计算动画持续时间
+      const percentDiff = Math.abs(targetPercent - startPercent)
+      const animationDuration = percentDiff * duration
+      
+      // 创建动画完成回调
+      const onAnimationFinished = () => {
+        triggerActiveEnd(targetPercent)
+      }
+      
+      // 执行动画
+      startProgressAnimation(targetPercent, startPercent, animationDuration, onAnimationFinished)
     } else {
       progressWidth.value = targetPercent
     }
-    setCurrentPercent(targetPercent)
-  }, [percent, active])
+    
+    setLastPercent(targetPercent)
+  }, [percent, active, activeMode, duration, bindactiveend])
+
+  // 初始化时设置进度值
+  useEffect(() => {
+    if (!active) {
+      progressWidth.value = Math.max(0, Math.min(100, percent))
+    }
+  }, [])
 
   // 进度条动画样式
   const animatedProgressStyle = useAnimatedStyle(() => {
@@ -165,7 +224,10 @@ const Progress = forwardRef<
       'color',
       'activeColor',
       'backgroundColor',
-      'active'
+      'active',
+      'active-mode',
+      'duration',
+      'bindactiveend'
     ],
     { layoutRef }
   )
