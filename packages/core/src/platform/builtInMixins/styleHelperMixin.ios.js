@@ -217,7 +217,11 @@ export default function styleHelperMixin () {
         if (staticStyle || dynamicStyle) {
           const styleObj = {}
           if (isNativeStaticStyle) {
-            mergeResult(staticStyle)
+            if (Array.isArray(staticStyle)) {
+              result = result.concat(staticStyle)
+            } else {
+              mergeResult(staticStyle)
+            }
           } else {
             Object.assign(styleObj, parseStyleText(staticStyle))
           }
