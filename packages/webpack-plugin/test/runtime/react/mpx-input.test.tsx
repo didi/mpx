@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, act } from '@testing-library/react-native'
 import MpxInput from '../../../lib/runtime/components/react/mpx-input'
 
 describe('MpxInput', () => {
@@ -130,7 +130,9 @@ describe('MpxInput', () => {
     expect(formField.getValue()).toBe('test user')
 
     // 测试 resetValue 功能
-    formField.resetValue()
+    act(() => {
+      formField.resetValue()
+    })
     expect(typeof formField.resetValue).toBe('function')
 
     unmount()
@@ -323,17 +325,18 @@ describe('MpxInput', () => {
 
   // Portal 渲染测试
   it('should render in Portal when position is fixed', () => {
-    const mockUseLayout = jest.fn(() => ({
-      hasPositionFixed: true,
-      layoutRef: { current: null },
-      layoutProps: {},
-      layoutStyle: {}
+    const mockUseTransformStyle = jest.fn(() => ({
+      hasPositionFixed: true,  // 正确：hasPositionFixed 来自 useTransformStyle
+      hasSelfPercent: false,
+      normalStyle: { position: 'absolute' },
+      setWidth: jest.fn(),
+      setHeight: jest.fn()
     }))
     
     const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
     jest.doMock('../../../lib/runtime/components/react/utils', () => ({
       ...originalModule,
-      useLayout: mockUseLayout
+      useTransformStyle: mockUseTransformStyle
     }))
 
     delete require.cache[require.resolve('../../../lib/runtime/components/react/mpx-input')]
@@ -424,5 +427,41 @@ describe('MpxInput', () => {
     })
 
     expect(noBindinputElement).toBeTruthy()
+  })
+
+  // 精简的分支覆盖率补充测试
+  it('should handle key remaining branches efficiently', () => {
+    // 测试 number 类型 value 和特殊 maxlength
+    const { rerender } = render(
+      <MpxInput 
+        testID="efficient-branch-input"
+        value={12345}
+        type="number"
+        maxlength={-1}
+        enable-var={true}
+      />
+    )
+
+    let inputElement = screen.getByTestId('efficient-branch-input')
+    expect(inputElement.props.value).toBe('12345')
+    expect(inputElement.props.maxLength).toBeUndefined()
+
+    // 测试 multiline 相关分支组合
+    rerender(
+      <MpxInput 
+        testID="efficient-branch-input"
+        multiline={true}
+        confirm-type="return"
+        auto-height={false}
+        enable-var={true}
+      />
+    )
+
+    inputElement = screen.getByTestId('efficient-branch-input')
+    expect(inputElement.props.enterKeyHint).toBeUndefined()
+    expect(inputElement.props.textAlignVertical).toBe('top')
+
+    // 测试 selection 未设置的情况
+    expect(inputElement.props.selection).toBeUndefined()
   })
 })
