@@ -1,7 +1,7 @@
 const normalize = require('./normalize')
 const { isBuildInWebTag, isBuildInReactTag } = require('./dom-tag-config')
 
-module.exports = function getBuildTagComponent (mode, tag) {
+module.exports = function getBuildInTagComponent (mode, tag) {
   const aliBuildTag = ['view', 'text'].reduce((obj, name) => {
     obj[name] = {
       name: `mpx-${name}`,

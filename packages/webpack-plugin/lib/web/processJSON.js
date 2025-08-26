@@ -12,7 +12,7 @@ const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
-const getBuildTagComponent = require('../utils/get-build-tag-component')
+const getBuildInTagComponent = require('../utils/get-build-tag-component')
 
 module.exports = function (jsonContent, {
   loaderContext,
@@ -84,7 +84,7 @@ module.exports = function (jsonContent, {
   }
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      placeholder = getBuildTagComponent(mode, placeholder) || { name: placeholder }
+      placeholder = getBuildInTagComponent(mode, placeholder) || { name: placeholder }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')

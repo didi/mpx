@@ -16,7 +16,7 @@ const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = requir
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
-const getBuildTagComponent = require('../utils/get-build-tag-component')
+const getBuildInTagComponent = require('../utils/get-build-tag-component')
 const { capitalToHyphen } = require('../utils/string')
 
 module.exports = function (content) {
@@ -83,7 +83,7 @@ module.exports = function (content) {
 
   const normalizePlaceholder = (placeholder) => {
     if (typeof placeholder === 'string') {
-      placeholder = getBuildTagComponent(mode, placeholder) || { name: placeholder }
+      placeholder = getBuildInTagComponent(mode, placeholder) || { name: placeholder }
     }
     if (!placeholder.name) {
       emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')

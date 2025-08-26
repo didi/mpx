@@ -3,7 +3,7 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const { capitalToHyphen } = require('../../../utils/string')
 const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../utils/dom-tag-config')
-const getBuildTagComponent = require('../../../utils/get-build-tag-component')
+const getBuildInTagComponent = require('../../../utils/get-build-tag-component')
 
 module.exports = function getSpec ({ warn, error }) {
   function print (mode, path, isError) {
@@ -54,7 +54,7 @@ module.exports = function getSpec ({ warn, error }) {
     const usingComponents = input.usingComponents || {}
     for (const cph in componentPlaceholder) {
       const cur = componentPlaceholder[cph]
-      const comp = getBuildTagComponent(mode, cur)
+      const comp = getBuildInTagComponent(mode, cur)
       if (!comp || usingComponents[cur]) continue
       const { name, resource } = comp
       usingComponents[name] = resource
