@@ -134,14 +134,12 @@ const Progress = forwardRef<
   const strokeWidthNum = typeof strokeWidth === 'number' ? strokeWidth : parseInt(strokeWidth as string, 10) || 6
 
   // 容器样式
-  const containerStyle: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
+  const containerStyle: ViewStyle = extendObject({} as ViewStyle, {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
     width: '100%',
-    minHeight: Math.max(strokeWidthNum, 20),
-    ...normalStyle,
-    ...layoutStyle
-  }
+    minHeight: Math.max(strokeWidthNum, 20)
+  }, normalStyle, layoutStyle)
 
   // 进度条背景样式
   const progressBgStyle: ViewStyle = {
@@ -174,7 +172,7 @@ const Progress = forwardRef<
 
   const progressComponent = createElement(
     View,
-    { ...innerProps, style: containerStyle },
+    extendObject({}, innerProps, { style: containerStyle }),
     // 进度条背景
     createElement(
       View,
