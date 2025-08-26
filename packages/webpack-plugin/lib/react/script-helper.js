@@ -4,14 +4,9 @@ const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const addQuery = require('../utils/add-query')
-const { isBuildInReactTag } = require('../utils/dom-tag-config')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
-}
-
-function getBuiltInComponentRequest (component) {
-  return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
 function getAsyncChunkName (chunkName) {

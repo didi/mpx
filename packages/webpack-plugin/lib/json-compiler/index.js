@@ -12,7 +12,6 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
-const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
@@ -64,7 +63,7 @@ module.exports = function (content) {
 
   const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
     const componentPlaceholder = json.componentPlaceholder || {}
-    if (componentPlaceholder[name]) return
+    if (componentPlaceholder && componentPlaceholder[name]) return
 
     json.componentPlaceholder = componentPlaceholder
     if (placeholderEntry) {
