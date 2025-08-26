@@ -217,11 +217,7 @@ export default function styleHelperMixin () {
         if (staticStyle || dynamicStyle) {
           const styleObj = {}
           if (isNativeStaticStyle) {
-            if (Array.isArray()) {
-              result = result.concat(staticStyle)
-            } else {
-              mergeResult(staticStyle)
-            }
+            mergeResult(staticStyle)
           } else {
             Object.assign(styleObj, parseStyleText(staticStyle))
           }
@@ -241,7 +237,8 @@ export default function styleHelperMixin () {
             overflow: 'hidden'
           })
         }
-        return isEmptyObject(result) ? empty : result
+        const isEmpty = isNativeStaticStyle ? result.length > 0 : isEmptyObject(result)
+        return isEmpty ? empty : result
       }
     }
   }
