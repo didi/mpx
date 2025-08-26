@@ -211,6 +211,18 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const scrollViewRef = useRef<ScrollView>(null)
 
+  const propsRef = useRef(props)
+  const refresherStateRef = useRef({
+    hasRefresher,
+    refresherTriggered
+  })
+
+  propsRef.current = props
+  refresherStateRef.current = {
+    hasRefresher,
+    refresherTriggered
+  }
+
   const runOnJSCallbackRef = useRef({
     setEnableScroll,
     setScrollBounces,
@@ -524,6 +536,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 处理刷新
   function onRefresh () {
+    const { hasRefresher, refresherTriggered } = refresherStateRef.current
     if (hasRefresher && refresherTriggered === undefined) {
       // 处理使用了自定义刷新组件，又没设置 refresherTriggered 的情况
       setRefreshing(true)
@@ -535,10 +548,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }
       }, 500)
     }
-    const { bindrefresherrefresh } = props
+    const { bindrefresherrefresh } = propsRef.current
     bindrefresherrefresh &&
       bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, propsRef.current)
       )
   }
 

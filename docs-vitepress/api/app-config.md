@@ -158,7 +158,7 @@ mpx.config.webRouteConfig = {
 ```
 
 ## webConfig
-web 环境下的一些配置，如路由模式，页面切换动画效果等
+web 环境下的一些配置，如路由模式
 
 - **用法**:
 ```js
@@ -169,3 +169,4 @@ mpx.config.webConfig.routeConfig = {
 // 禁用页面切换动画
 mpx.config.webConfig.disablePageTransition = true
 ```
+此处的 `disablePageTransition` 后续将被废弃，请使用编译阶段的[disablePageTransition](./compile.md#webconfig)进行配置
