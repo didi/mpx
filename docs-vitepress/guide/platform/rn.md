@@ -979,6 +979,34 @@ movable-view的可移动区域。
 | bindlinechange       | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx`    |
 | bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}`                                         |
 
+#### progress
+进度条。
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| percent                 | Number  | `0`           | 百分比进度，范围0-100                                         |
+| stroke-width            | Number\|String | `6`   | 进度条线的宽度，单位px                                        |
+| color                   | String  |               | 进度条颜色（已废弃，请使用 activeColor）                        |
+| activeColor             | String  | `#09BB07`     | 已选择的进度条的颜色                                           |
+| backgroundColor         | String  | `#EBEBEB`     | 未选择的进度条的颜色                                           |
+| active                  | Boolean | `false`       | 进度条从左往右的动画                                           |
+| active-mode             | String  | `backwards`   | 动画播放模式，`backwards`: 从头开始播放；`forwards`: 从上次结束点接着播放 |
+| duration                | Number  | `30`          | 进度增加1%所需毫秒数                                          |
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindactiveend   | 动画完成时触发，`event.detail = { percent }`            |
+
+注意事项
+
+1. 不支持 `show-info` 属性，即不支持在进度条右侧显示百分比
+2. 不支持 `border-radius` 属性自定义圆角大小
+3. 不支持 `font-size` 属性设置右侧百分比字体大小
+
 #### picker-view
 
 嵌入页面的滚动选择器。其中只可放置 [*picker-view-column*](#picker-view-column) 组件，其它节点不会显示
