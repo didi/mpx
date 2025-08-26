@@ -192,7 +192,7 @@ export default function styleHelperMixin () {
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
-        const result = isNativeStaticStyle ? [] : {}
+        let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (o) => result.push(o) : (o) => Object.assign(result, o)
 
         const classMap = this.__getClassMap?.() || {}
