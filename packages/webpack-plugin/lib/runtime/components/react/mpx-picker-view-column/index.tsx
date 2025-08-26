@@ -223,8 +223,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     // 全局注册的振动触感 hook
-    const pickerVibrate = global.__mpx?.config?.rnConfig?.pickerVibrate
-    if (typeof pickerVibrate !== 'function') {
+    const onPickerVibrate = global.__mpx?.config?.rnConfig?.onPickerVibrate
+    if (typeof onPickerVibrate !== 'function') {
       return
     }
     const { y } = e.nativeEvent.contentOffset
@@ -238,7 +238,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             y: currentId * itemRawH
           }
           // vibrateShort({ type: 'selection' })
-          pickerVibrate()
+          onPickerVibrate()
         }
       }
     }
