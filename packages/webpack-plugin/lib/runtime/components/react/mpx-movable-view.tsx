@@ -404,7 +404,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   })
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
-  // 节流版本的 change 事件触发
+  // 节流版本的change事件触发
   const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
     'worklet'
     const now = Date.now()
