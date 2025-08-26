@@ -1016,6 +1016,7 @@ function getModuleCode (
   api,
   replacements,
   options,
+  isRN,
   loaderContext
 ) {
   if (options.modules.exportOnlyLocals === true) {
@@ -1053,7 +1054,13 @@ function getModuleCode (
       )}${printedParam.length > 0 ? `, ${printedParam}` : ''}]);\n`
     } else {
       const printedParam = printParams(media, dedupe, supports, layer)
-      beforeCode += `___CSS_LOADER_EXPORT___.i(${item.importName}${printedParam.length > 0 ? `, ${printedParam}` : ''});\n`
+      const hasParams = printedParam.length > 0
+      if (isRN) {
+        beforeCode += `___CSS_LOADER_EXPORT___.i(${item.importName}${hasParams ? `, ${printedParam}` : ''});\n`
+      } else {
+        const otherParams = hasParams ? printedParam : ''
+        beforeCode += `___CSS_LOADER_EXPORT___.push([module.id, '@import "' + ${item.importName} + '";', ${JSON.stringify(otherParams)} ]);\n`
+      }
     }
   }
 

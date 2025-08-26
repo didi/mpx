@@ -258,7 +258,7 @@ module.exports = async function loader (content, map, meta) {
   let moduleCode
 
   try {
-    moduleCode = getModuleCode(result, api, replacements, options, this)
+    moduleCode = getModuleCode(result, api, replacements, options, isRN, this)
   } catch (error) {
     callback(error)
 
