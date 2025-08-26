@@ -156,22 +156,22 @@ const Progress = forwardRef<
         // forwards 模式：使用上次记录的百分比作为起始位置
         startPercent = lastPercent
       }
-      
+
       // 计算动画持续时间
       const percentDiff = Math.abs(targetPercent - startPercent)
       const animationDuration = percentDiff * duration
-      
+
       // 创建动画完成回调
       const onAnimationFinished = () => {
         triggerActiveEnd(targetPercent)
       }
-      
+
       // 执行动画
       startProgressAnimation(targetPercent, startPercent, animationDuration, onAnimationFinished)
     } else {
       progressWidth.value = targetPercent
     }
-    
+
     setLastPercent(targetPercent)
   }, [percent, active, activeMode, duration, bindactiveend])
 
