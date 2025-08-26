@@ -1884,8 +1884,7 @@ try {
             })
             const insertStripLoaders = (index) => {
               if (index !== -1) {
-                loaders.splice(index, 0, { loader: styleStripConditionalPath })
-                loaders.splice(index + 2, 0, { loader: styleStripConditionalPath })
+                loaders.splice(index + 1, 0, { loader: styleStripConditionalPath })
                 return true
               }
               return false
