@@ -183,7 +183,6 @@ RN:
 > 1. 只有父级 view 节点的文本样式可以被子 text 节点继承；
 > 2. view 节点直接包裹文本实际上等同于 view>text>文本，Mpx 框架在编译时若检测到 view 节点直接包裹文本会自动添加一层 text 节点；
 > 3. 多级 text 节点可实现文本样式的继承，比如 text>text>文本 ；
-> 4. 若不想使用 Mpx 内部实现的 view>text>文本 这种文本样式继承，可设置`disable-default-style=true` 来关闭该继承逻辑；
 ### 简写样式属性
 在 Mpx 内对于通过 class 类来定义的样式会按照 RN 的样式规则在编译处理一遍，其中最重要的一部分就是将 RN 不支持简写属性按约定的规则转换成 RN 能支持多属性结构。
 
@@ -682,7 +681,7 @@ Mpx 输出 React Native 支持以下模版指令。
 注意事项
 
 1. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
-2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动
+2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
 3. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 4. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 
@@ -707,7 +706,9 @@ Mpx 输出 React Native 支持以下模版指令。
 | next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
 | scale                   | Boolean  | `false`            | 滑动时是否开启前后元素缩小,默认是缩放0.7倍, 暂不支持自定义 |
 | easing-function         | String  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
-| bindchange              | eventhandle|   无          | current 改变时会触发 change 事件，`event.detail = {current, source}`|
+| simultaneous-handlers              | `Array<object>`|   []          | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
+| wait-for              | `Array<object>`|   []          | RN环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
+| disableGesture              | Boolean|   false       | 禁用 swiper 滑动手势。若开启用户无法通过手势滑动 swiper，只能通过开启 autoPlay 进行自动轮播|
 
 
 
@@ -979,6 +980,34 @@ movable-view的可移动区域。
 | bindlinechange       | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx`    |
 | bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}`                                         |
 
+#### progress
+进度条。
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| percent                 | Number  | `0`           | 百分比进度，范围0-100                                         |
+| stroke-width            | Number\|String | `6`   | 进度条线的宽度，单位px                                        |
+| color                   | String  |               | 进度条颜色（已废弃，请使用 activeColor）                        |
+| activeColor             | String  | `#09BB07`     | 已选择的进度条的颜色                                           |
+| backgroundColor         | String  | `#EBEBEB`     | 未选择的进度条的颜色                                           |
+| active                  | Boolean | `false`       | 进度条从左往右的动画                                           |
+| active-mode             | String  | `backwards`   | 动画播放模式，`backwards`: 从头开始播放；`forwards`: 从上次结束点接着播放 |
+| duration                | Number  | `30`          | 进度增加1%所需毫秒数                                          |
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindactiveend   | 动画完成时触发，`event.detail = { percent }`            |
+
+注意事项
+
+1. 不支持 `show-info` 属性，即不支持在进度条右侧显示百分比
+2. 不支持 `border-radius` 属性自定义圆角大小
+3. 不支持 `font-size` 属性设置右侧百分比字体大小
+
 #### picker-view
 
 嵌入页面的滚动选择器。其中只可放置 [*picker-view-column*](#picker-view-column) 组件，其它节点不会显示
@@ -1001,11 +1030,11 @@ movable-view的可移动区域。
 
 - 触感反馈回调方法
 
-通过在全局注册 `mpx.config.rnConfig.pickerVibrate` 方法，在每次滚动选择时会调用该方法。
+通过在全局注册 `mpx.config.rnConfig.onPickerVibrate` 方法，在每次滚动选择时会调用该方法。
 
 | 注册触感方法名           | 类型          | 说明                |
 | ----------------------| --------------| ------------------- |
-| pickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现类似 iOS 端原生表盘的振动触感。    |
+| onPickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现类似 iOS 端原生表盘的振动触感。    |
 
 #### picker-view-column
 
@@ -2590,6 +2619,21 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 }
 ```
 
+针对异步分包加载异常的场景：
+
+* 异步组件加载失败：微信小程序提供了 [`wx.onLazyLoadError`](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.onLazyLoadError.html) 的全局 api 来监听异步组件加载失败，这个 api 同样在Mpx转RN场景下生效；
+* 异步页面加载失败：微信小程序未提供相关的监听异常的 api，Mpx转RN提供了一个额外的全局监听函数：
+
+```javascript
+// RN 场景下监听异步页面加载失败的全局配置
+mpx.config.rnConfig.onLazyLoadPageError = function (error) {
+  console.log(
+    error.subpackage, // 加载失败的分包名
+    error.errType // 加载失败的类型：'timeout' | 'fail'
+  )
+}
+```
+
 此外针对Mpx转RN的场景，还提供了一些异步分包的配置选项：
 
 ```javascript
@@ -2639,3 +2683,77 @@ module.exports = defineConfig({
   })
 </script>
 ```
+
+
+#### 分享
+
+##### mpx.config.rnConfig.openTypeHandler.onShareAppMessage
+
+当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中是分享实现需由容器实现，可在 onShareAppMessage 中完成分享逻辑实现。
+
+其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
+
+`(shareInfo: { title: string, path: string, imageUrl?: string }) => void`
+
+
+
+#### 路由
+
+
+**mpx.config.rnConfig.parseAppProps**
+
+`(props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)`
+
+用于获取初始路由配置的函数，参数为RN根组件接收到的参数
+
++ initialRouteName: 首页路径，例如 pages/index
+
++ initialParams: 首页onLoad参数，例如 \{ a: 1 \}
+
+
+
+
+
+
+**mpx.config.rnConfig.onStateChange**
+
+`(state: Record<string, any>) => void`
+
+当导航状态发生变化时触发，例如页面跳转、返回等。可在此回调中将 ReactNative 路径栈同步到容器中。
+
+
+
+##### mpx.config.rnConfig.onAppBack
+
+`() => boolean`
+
+页面栈长度为 1（即根页面）且用户尝试退出 App 时触发。
+
++ true：允许退出应用
+
++ false：阻止退出应用
+
+
+##### mpx.config.rnConfig.onStackTopBack
+
+控制首页回退按钮是否展示，并监听点击事件。
+
+如果绑定该函数，则首页显示返回按钮，点击后调用该函数作为回调，如果未绑定该函数，则首页不会展示返回按钮。
+
+如需实现点击返回，请在函数内部手动调用 back。
+
+
+
+#### 折叠屏适配
+
+
+##### mpx.config.rnConfig.customDimensions
+
+`(dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void`
+
+在某些情况下，我们可能不希望当前 ReactNative 全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 信息来得到想要的渲染效果。
+
+可在此方法中返回修改后的 dimensions，如果无返回或返回undefined，则以入参作为返回值
+
+
+例如在折叠屏中我们期望只在其中一半屏上展示，可在customDimensions中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。

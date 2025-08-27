@@ -1,4 +1,4 @@
-import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/AsyncSuspense'
+import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-async-suspense'
 import { memo, forwardRef, createElement } from 'react'
 import { extend } from './utils'
 
@@ -10,21 +10,30 @@ export function getComponent (component, extendOptions) {
 }
 
 export function getAsyncSuspense (commonProps) {
+  let result
   if (commonProps.type === 'component') {
-    return memo(forwardRef(function (props, ref) {
+    result = memo(forwardRef(function (props, ref) {
       return createElement(AsyncSuspense,
-        extend(commonProps, {
+        extend({}, commonProps, {
           innerProps: Object.assign({}, props, { ref })
         })
       )
     }))
   } else {
-    return function (props) {
+    result = memo(function (props) {
       return createElement(AsyncSuspense,
-        extend(commonProps, {
+        extend({}, commonProps, {
           innerProps: props
         })
       )
-    }
+    })
+  }
+  result.displayName = 'AsyncSuspenseHOC'
+  return result
+}
+
+export function getLazyPage (getComponent) {
+  return function (props) {
+    return createElement(getComponent(), props)
   }
 }
