@@ -90,13 +90,14 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
         if (placeholder) {
           if (localComponentsMap[placeholder]) {
             const placeholderCfg = localComponentsMap[placeholder]
-            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
+            // const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
             if (placeholderCfg.async) {
               loaderContext.emitWarning(
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
-            getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder))
+            // 直接从当前组件的componentsMap中获取
+            getFallback = getComponentGetter(`componentsMap["${placeholder}"]()`)
           } else {
             loaderContext.emitError(
               new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
