@@ -90,7 +90,6 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
         if (placeholder) {
           if (localComponentsMap[placeholder]) {
             const placeholderCfg = localComponentsMap[placeholder]
-            // const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
             if (placeholderCfg.async) {
               loaderContext.emitWarning(
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
