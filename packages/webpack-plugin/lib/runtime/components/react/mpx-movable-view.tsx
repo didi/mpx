@@ -42,24 +42,24 @@ const wechatDecline = (distance: number): number => {
 
 // 基于微信小程序的弹簧阻尼系统实现
 const withWechatSpring = (
-  toValue: number, 
-  dampingParam: number = 20,
+  toValue: number,
+  dampingParam = 20,
   callback?: () => void
 ) => {
   'worklet'
-  
+
   // 微信小程序的弹簧参数计算
   const m = 1 // 质量
   const k = 9 * Math.pow(dampingParam, 2) / 40 // 弹簧系数
   const c = dampingParam // 阻尼系数
-  
+
   // 判别式：r = c² - 4mk
   const discriminant = c * c - 4 * m * k
-  
+
   // 计算动画持续时间和缓动函数
   let duration: number
   let easingFunction: any
-  
+
   if (Math.abs(discriminant) < 0.01) {
     // 临界阻尼 (discriminant ≈ 0)
     // 使用cubic-out模拟临界阻尼的平滑过渡
@@ -74,7 +74,7 @@ const withWechatSpring = (
     // 欠阻尼 (discriminant < 0) - 会产生振荡
     // 计算振荡频率和衰减率
     const dampingRatio = c / (2 * Math.sqrt(m * k)) // 阻尼比
-    
+
     // 根据阻尼比调整动画参数
     if (dampingRatio < 0.7) {
       // 明显振荡
@@ -87,7 +87,7 @@ const withWechatSpring = (
       easingFunction = Easing.bezier(0.25, 0.46, 0.45, 0.94)
     }
   }
-  
+
   return withTiming(toValue, {
     duration,
     easing: easingFunction
@@ -99,31 +99,31 @@ const withWechatDecay = (
   velocity: number,
   currentPosition: number,
   clampRange: [min: number, max: number],
-  frictionValue: number = 2,
+  frictionValue = 2,
   callback?: () => void
 ) => {
   'worklet'
-  
+
   // 微信小程序friction算法: delta = -1.5 * v² / a, 其中 a = -f * v / |v|
   // 如果friction小于等于0，设置为默认值2
   const validFriction = frictionValue <= 0 ? 2 : frictionValue
   const f = 1000 * validFriction
   const acceleration = velocity !== 0 ? -f * velocity / Math.abs(velocity) : 0
   const delta = acceleration !== 0 ? (-1.5 * velocity * velocity) / acceleration : 0
-  
+
   let finalPosition = currentPosition + delta
-  
+
   // 边界限制
   if (finalPosition < clampRange[0]) {
     finalPosition = clampRange[0]
   } else if (finalPosition > clampRange[1]) {
     finalPosition = clampRange[1]
   }
-  
+
   // 计算动画时长
   const distance = Math.abs(finalPosition - currentPosition)
   const duration = Math.min(1500, Math.max(200, distance * 8))
-  
+
   return withTiming(finalPosition, {
     duration,
     easing: Easing.out(Easing.cubic)
