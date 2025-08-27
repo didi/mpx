@@ -1936,7 +1936,18 @@ function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
     const needWrap = isTemplateData && mode !== 'swan'
-    const value = needWrap ? `{${attr.value}}` : attr.value
+    let value = needWrap ? `{${attr.value}}` : attr.value
+
+    // 修复React Native环境下属性值中插值表达式带空格的问题
+    if (isReact(mode) && typeof value === 'string') {
+      // 检查是否为带空格的插值表达式
+      const trimmedValue = value.trim()
+      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+        value = trimmedValue
+      }
+    }
+
     const parsed = parseMustacheWithContext(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
@@ -2726,8 +2737,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processStyleReact(el, options)
     if (!pass) {
-      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)
