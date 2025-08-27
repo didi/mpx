@@ -16,8 +16,6 @@ const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = requir
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
-const getBuildInTagComponent = require('../utils/get-build-tag-component')
-const { capitalToHyphen } = require('../utils/string')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -61,47 +59,14 @@ module.exports = function (content) {
     )
   }
 
-  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
-    const componentPlaceholder = json.componentPlaceholder || {}
-    if (componentPlaceholder && componentPlaceholder[name]) return
-
-    json.componentPlaceholder = componentPlaceholder
-    if (placeholderEntry) {
-      if (json.usingComponents[placeholder]) {
-        // TODO 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
-        let i = 1
-        let newPlaceholder = placeholder + i
-        while (json.usingComponents[newPlaceholder]) {
-          newPlaceholder = placeholder + ++i
-        }
-        placeholder = newPlaceholder
-      }
-      json.usingComponents[placeholder] = placeholderEntry
-    }
-    componentPlaceholder[name] = placeholder
-  }
-
-  const normalizePlaceholder = (placeholder) => {
-    if (typeof placeholder === 'string') {
-      placeholder = getBuildInTagComponent(mode, placeholder) || { name: placeholder }
-    }
-    if (!placeholder.name) {
-      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
-    }
-    // ali 下与 rulesRunner 规则一致，组件名驼峰转连字符
-    if (mode === 'ali') {
-      placeholder.name = capitalToHyphen(placeholder.name)
-    }
-    return placeholder
-  }
-
   const {
     isUrlRequest,
     urlToRequest,
     processPage,
     processDynamicEntry,
     processComponent,
-    processJsExport
+    processJsExport,
+    processAsyncSubpackageRules
   } = createJSONHelper({
     loaderContext: this,
     emitWarning,
@@ -252,29 +217,7 @@ module.exports = function (content) {
               isDynamic: queryObj.isDynamic
             }
           }
-          if (tarRoot) {
-            if (placeholder) {
-              placeholder = normalizePlaceholder(placeholder)
-              if (placeholder.resource) {
-                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
-                  if (err) return callback(err)
-                  fillInComponentPlaceholder(name, placeholder.name, entry)
-                  callback()
-                })
-              } else {
-                fillInComponentPlaceholder(name, placeholder.name)
-                callback()
-              }
-            } else {
-              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
-                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
-                emitError(errMsg)
-              }
-              callback()
-            }
-          } else {
-            callback()
-          }
+          processAsyncSubpackageRules(json, context, { name, tarRoot, placeholder, relativePath }, callback)
         })
       }, (err) => {
         if (err) return callback(err)

@@ -8,8 +8,12 @@ const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 const { matchCondition } = require('../utils/match-condition')
 const { isWeb, isReact } = require('../utils/env')
+const { transSubpackage } = require('../utils/trans-async-sub-rules')
+const getBuildInTagComponent = require('../utils/get-build-tag-component')
+const { capitalToHyphen } = require('../utils/string')
+const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
-module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
+module.exports = function createJSONHelper ({ loaderContext, componentsMap, localComponentsMap, emitWarning, customGetDynamicEntry, emitError }) {
   const mpx = loaderContext.getMpx()
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
@@ -166,12 +170,97 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     })
   }
 
+  const fillInComponentPlaceholder = (jsonObj, componentName, placeholder, placeholderEntry) => {
+    let placeholderComponentName = placeholder.name
+    const componentPlaceholder = jsonObj.componentPlaceholder || {}
+    if (componentPlaceholder[componentName]) return
+    jsonObj.componentPlaceholder = componentPlaceholder
+    const existingComponentEntry = jsonObj.usingComponents[placeholderComponentName]
+    if (placeholderEntry) {
+      if (existingComponentEntry) {
+        // 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
+        let i = 1
+        let newPlaceholder = placeholderComponentName + i
+        while (jsonObj.usingComponents[newPlaceholder]) {
+          newPlaceholder = placeholderComponentName + ++i
+        }
+        placeholderComponentName = newPlaceholder
+      }
+      jsonObj.usingComponents[placeholderComponentName] = placeholderEntry
+      if (isReact(mode) || isWeb(mode)) {
+        fillInComponentsMap(placeholderComponentName, placeholderEntry, '')
+      }
+    }
+    componentPlaceholder[componentName] = placeholderComponentName
+  }
+
+  const fillInComponentsMap = (name, entry, tarRoot) => {
+    const { resource, outputPath } = entry
+    const { resourcePath, queryObj } = parseRequest(resource)
+    if (isReact(mode)) {
+      tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+    } else if (isWeb(mode)) {
+      tarRoot = queryObj.async || tarRoot
+    }
+    componentsMap[resourcePath] = outputPath
+    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+    localComponentsMap[name] = {
+      resource: addQuery(resource, {
+        isComponent: true,
+        outputPath
+      }),
+      async: tarRoot
+    }
+  }
+
+  const getNormalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      placeholder = getBuildInTagComponent(mode, placeholder) || { name: placeholder }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    // ali 下与 rulesRunner 规则一致，组件名驼峰转连字符
+    if (mode === 'ali') {
+      placeholder.name = capitalToHyphen(placeholder.name)
+    }
+    return placeholder
+  }
+
+  const processAsyncSubpackageRules = (jsonObj, context, { name, tarRoot, placeholder, relativePath }, callback) => {
+    if (tarRoot) {
+      if (placeholder) {
+        placeholder = getNormalizePlaceholder(placeholder)
+        if (placeholder.resource) {
+          processComponent(placeholder.resource, context, { relativePath }, (err, entry) => {
+            if (err) return callback(err)
+            fillInComponentPlaceholder(jsonObj, name, placeholder, entry)
+            callback()
+          })
+        } else {
+          fillInComponentPlaceholder(jsonObj, name, placeholder)
+          callback()
+        }
+      } else {
+        if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {
+          const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+          emitError(errMsg)
+        }
+        callback()
+      }
+    } else {
+      callback()
+    }
+  }
+
   return {
     processComponent,
     processDynamicEntry,
     processPage,
     processJsExport,
+    processAsyncSubpackageRules,
     isUrlRequest,
-    urlToRequest
+    urlToRequest,
+    fillInComponentsMap
   }
 }
