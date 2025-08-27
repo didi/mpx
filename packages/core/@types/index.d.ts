@@ -226,7 +226,7 @@ type WxComponentIns<D extends Data = {}, P extends Properties = {}, M extends Me
   Omit<WechatMiniprogram.Component.Instance<D, P, M>, 'selectComponent' | 'selectAllComponents'>
   & ReplaceWxComponentIns
 
-type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
+export type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> & { [K in keyof S]: S[K] extends Ref<infer V> ? V : S[K] } &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
@@ -301,7 +301,7 @@ export interface RnConfig {
    * - `true`：允许退出应用
    * - `false`：阻止退出应用
    */
-  onAppBack?: () => boolean
+  onAppBack?: (delta: number) => boolean
 
   /**
    * 是否禁用框架内部的 AppStateChange 监听。
@@ -384,10 +384,10 @@ interface MpxConfig {
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
-  errorHandler: (msg: String, location: String, e: Error) => any | null
-  warnHandler: (msg: String, location: String, e: Error) => any | null
-  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
-  setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
+  errorHandler: (msg: String, location: String, e: Error) => void
+  warnHandler: (msg: String, location: String, e: Error) => void
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => void
+  setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => void
   forceFlushSync: boolean,
   webRouteConfig: object,
   webConfig: object,
