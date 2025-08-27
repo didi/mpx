@@ -1314,66 +1314,68 @@ API
 
 
 #### 自定义组件
-创建自定义组件在 RN 环境下部分实例方法、属性存在兼容性问题不支持，
-文档此部分会详细列出各方法、属性的支持度。
 
-##### **组件属性**
+Mpx 完全支持自定义组件功能，详细的组件创建、属性配置、生命周期、插槽使用等，更多组件开发的详细指南和高级用法，请参考 [自定义组件基础文档](../basic/component.md)。
 
-| 属性                 | RN | 描述                                                                           |
-|------------|---|------------------------------------------------------------------------------|
-| properties | ✓ | 用于声明组件接收的外部属性，详情可[查看](/guide/basic/component.html#properties)                |
-| data       | ✓ | 组件的内部数据，和 `properties` 一同用于组件的模板渲染，详情可[查看](/guide/basic/component.html#data) |
-| observers  | ✓ | 组件数据字段监听器，详情可[查看](/guide/basic/component.html#observers)                     |
-| methods    | ✓ | 组件方法定义，详情可[查看](/guide/basic/component.html#methods)                          |
-| behaviors  | ✗  | 输出 RN 不支持                                                                    |
-| created    | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#created)                        |
-| attached   | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#attached)                       |
-| ready      | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#ready)                          |
-| detached    | ✓ | 组件生命周期函数-详情可[查看](/guide/basic/component.html#detached)                       |
-| externalClasses  | ✓ | 输出 RN 需要配置[构建配置](/api/compile.html#externalclasses)                          |
-| options    | ✗ | 输出 RN 不支持，一些选项，诸如 multipleSlots、virtualHost、pureDataPattern，这些功能输出 RN 不支持    |
-| lifetimes  | ✓ | 组件生命周期声明对象-详情可[查看](/guide/basic/component.html#lifetimes)                    |
-| pageLifetimes  | ✓ | 组件所在页面的生命周期声明对象-详情可[查看](/guide/basic/component.html#pagelifetimes)                                                           |
+本节重点介绍在 RN 环境下的特殊注意事项和限制。
 
-##### **组件实例属性和方法**
+##### RN 环境支持情况
 
-生成的组件实例可以在组件的方法、生命周期函数中通过 this 访问。组件包含一些通用属性和方法。
+**🏗️ 组件属性配置**
 
-未在本文档中列出的实例属性和方法则在 RN 中不支持。
+| 属性 | 支持状态 | 说明 |
+|------|---------|------|
+| properties | ✅ 完全支持 | 组件外部属性声明 |
+| data | ✅ 完全支持 | 组件内部数据 |
+| computed | ✅ 完全支持 | 计算属性 |
+| watch | ✅ 完全支持 | 数据监听 |
+| observers | ✅ 完全支持 | 数据变化监听器 |
+| methods | ✅ 完全支持 | 组件方法定义 |
+| mixins | ✅ 完全支持 | 混入选项 |
+| externalClasses | ⚠️ 需要配置 | 外部样式类，需配置[构建选项](/api/compile.html#externalclasses) |
+| behaviors | ❌ 不支持 | 小程序 behaviors 机制 |
+| options | ❌ 不支持 | 组件选项（multipleSlots、virtualHost 等）|
+| relations | ❌ 不支持 | 组件关系定义 |
 
-| 属性名  | 类型     | RN 是否支持 | 描述                       |
-|--------|----------|------|--------------------------|
-| is     | String   | ✗     | 输出 RN 暂不支持，未来支持, 组件的文件路径 |
-| id     | String   | ✓     | 节点id                     |
-| dataset| String   | ✓     | 节点dataset                |
+**⏰ 生命周期钩子**
 
+| 生命周期 | 支持状态 | 说明 |
+|---------|---------|------|
+| created | ✅ 完全支持 | 组件实例创建 |
+| attached | ✅ 完全支持 | 组件挂载到页面 |
+| ready | ✅ 完全支持 | 组件布局完成 |
+| detached | ✅ 完全支持 | 组件从页面卸载 |
+| lifetimes | ✅ 完全支持 | 生命周期声明对象 |
+| pageLifetimes | ✅ 完全支持 | 页面生命周期（show、hide、resize）|
 
-| 方法名               | RN是否支持 | 描述                       |
-|---------------------|--|--------------------------|
-| setData             | ✓ | 设置data并执行视图层渲染           |
-| triggerEvent        | ✓ | 触发事件                     |
-| createSelectorQuery| ✓ | 返回一个 SelectorQuery 对象实例，用以查询基础节点位置等属性 |
-| selectComponent     | ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例       |
-| selectAllComponents| ✓ | 在父组件当中获取子组件的实例对象，返回匹配到的全部组件实例对象组成的数组      |
-| $set             | ✓ | 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新       |
-| $watch         | ✓ | 观察 Mpx 实例上的一个表达式或者一个函数计算结果的变化                               |
-| $delete        | ✓ | 删除对象属性，如果该对象是响应式的，那么该方法可以触发观察器更新（视图更新 | watch回调）             |
-| $refs        | ✓ | 一个对象，持有注册过 ref的所有 DOM 元素和组件实例，调用响应的组件方法或者获取视图节点信息。 |
-| $forceUpdate        | ✓ | 用于强制刷新视图，不常用，通常建议使用响应式数据驱动视图更新                            |
-| $nextTick        | ✓ | 在下次 DOM 更新循环结束之后执行延迟回调函数，用于等待 Mpx 完成状态更新和 DOM 更新后再执行某些操作 |
-| $i18n        | ✗ | 输出 RN 暂不支持，国际化功能访问器，用于获取多语言字符串资源                                            |
-| $rawOptions        | ✓ | 访问组件原始选项对象                                      |
+**📦 实例属性和方法**
 
-注意事项：
+| 功能 | 支持状态 | 说明 |
+|------|---------|------|
+| id, dataset | ✅ 完全支持 | 节点基础属性 |
+| setData | ✅ 完全支持 | 数据更新方法 |
+| triggerEvent | ✅ 完全支持 | 事件触发 |
+| selectComponent | ✅ 有限制 | 选择子组件，仅支持 id/class 选择器，需配合 `wx:ref` 使用 |
+| selectAllComponents | ✅ 有限制 | 选择所有子组件，仅支持 id/class 选择器，需配合 `wx:ref` 使用 |
+| $set, $watch, $delete | ✅ 完全支持 | 响应式数据操作 |
+| $refs, $forceUpdate, $nextTick | ✅ 完全支持 | 组件实例方法 |
+| $rawOptions | ✅ 完全支持 | 原始选项访问 |
+| $i18n | ✅ 完全支持 | 国际化访问器 |
+| is | ✅ 完全支持 | 动态组件 |
+| createSelectorQuery | ❌ 不支持 | 节点查询 |
 
-1. `selectComponent`/`selectAllComponents` api 目前支持的选择器仅包括：
-  * id 选择器：`#id`
-  * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
-2. 使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致：
+**🔧 selectComponent / selectAllComponents 使用要点**
+
+在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时
+1. 必须在目标节点上标记 `wx:ref`
+2. 选择器支持范围有限，仅支持以下方式
+- id 选择器 `#id`
+- class 选择器 `.class` 或连续指定 `.a-class.b-class.c-class`
 
 ```javascript
 <template>
-  <view wx:ref class="title">this is view</view>
+  <!-- 必须添加 wx:ref 标记 -->
+  <list wx:ref class="list"></list>
 </template>
 
 <script>
@@ -1381,12 +1383,9 @@ API
 
   createComponent({
     ready() {
-      this.createSelectorQuery()
-        .select('.title')
-        .boundingClientRect(res => {
-          console.log('the rect res is:', res)
-        })
-        .exec()
+      // 获取组件实例
+      const instance = this.selectComponent('.list')
+      console.log('selectComponent', instance)
     }
   })
 </script>
