@@ -25,7 +25,8 @@ export default function getBuiltInMixins ({ type, rawOptions = {} }) {
       styleHelperMixin(),
       refsMixin(),
       i18nMixin(),
-      relationsMixin(type)
+      relationsMixin(type),
+      pageRouteMixin(type)
     ]
   } else if (isWeb) {
     bulitInMixins = [

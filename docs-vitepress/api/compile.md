@@ -465,7 +465,7 @@ module.exports = defineConfig({
 
 **参考**：<a href="https://developers.weixin.qq.com/miniprogram/dev/extended/weui/quickstart.html" target="_blank">weui组件库</a>
 
-### miniNpmPackage
+### miniNpmPackages
 
 `Array<string>`
 
@@ -483,7 +483,29 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        miniNpmPackage: ['@vant/weapp']
+        miniNpmPackages: ['@vant/weapp']
+      }
+    }
+  }
+})
+```
+
+### normalNpmPackages
+`Array<string>`
+
+使用小程序原生 npm 包时，由于微信小程序 npm 包要求根目录下必须有构建文件生成目录，（默认为 miniprogram_dist 目录），此目录可以通过在 package.json 文件中新增一个 miniprogram 字段来指定。
+
+因此大多小程序 npm 包 package.json 中都会存在 miniprogram 字段，Mpx 框架在构建时也会默认读取 miniprogram 拼接到资源路径和输出路径中。
+
+但存在一种场景，例如使用 antd-mini 组件库时，使用纯支付宝场景下的包无需读取 miniprogram 字段进行拼接，但是对应 npm 包又存在 miniprogram 字段，这时需要通过该配置告诉框架不要去读，直接走默认路径。
+
+```js
+// vue.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        normalNpmPackages: ['antd-mini']
       }
     }
   }
@@ -802,8 +824,17 @@ module.exports = defineConfig({
 
 transRpxFn 配置用于自定义输出 web 时对于 rpx 样式单位的转换逻辑，常见的方式有转换为 vw 或转换为 rem
 
+`{useSSR: boolean}`
+
+useSSR 默认值为 `false`，当 SSR 模式下使用异步分包时，需要将 useSSR 设置为 `true`, 其他场景不需要。
+
+`{disablePageTransition: boolean}`
+
+用于配置禁用/开启页面切换动画，默认禁用
+
+
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -812,7 +843,11 @@ module.exports = defineConfig({
           transRpxFn: function (match, $1) {
             if ($1 === '0') return $1
             return `${$1 * +(100 / 750).toFixed(8)}vw`
-          }
+          },
+          // 当 SSR 模式下使用异步分包时
+          useSSR: true,
+          // 开启页面切换动画
+          disablePageTransition: false
         }
       }
     }

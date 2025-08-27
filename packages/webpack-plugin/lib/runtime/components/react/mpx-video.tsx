@@ -74,6 +74,7 @@ import {
 } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
+import Portal from './mpx-portal'
 
 interface VideoProps {
   src: string
@@ -170,7 +171,7 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
 
   propsRef.current = props
 
-  const { normalStyle, hasSelfPercent, setWidth, setHeight } =
+  const { normalStyle, hasSelfPercent, setWidth, setHeight, hasPositionFixed } =
     useTransformStyle(extendObject({}, styles.container, style), {
       enableVar,
       externalVarContext,
@@ -381,9 +382,13 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     ],
     { layoutRef }
   )
-  return createElement(View, { style: extendObject({}, normalStyle, layoutStyle), ref: viewRef },
+  let videoComponent: JSX.Element = createElement(View, { style: extendObject({}, normalStyle, layoutStyle), ref: viewRef },
     createElement(Video, innerProps)
   )
+  if (hasPositionFixed) {
+    videoComponent = createElement(Portal, null, videoComponent)
+  }
+  return videoComponent
 })
 
 export default MpxVideo

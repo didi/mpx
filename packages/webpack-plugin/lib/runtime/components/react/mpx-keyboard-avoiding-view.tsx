@@ -48,7 +48,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
           const { ref, cursorSpacing = 0 } = keyboardAvoid.current
           setTimeout(() => {
             ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-              const aboveOffset = pageY + height - endCoordinates.screenY
+              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
               const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
               const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
               const value = aboveOffset > 0 ? belowValue : aboveValue

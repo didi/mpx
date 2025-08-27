@@ -3,7 +3,7 @@ const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
 const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
-const { isOriginTag, isBuildInTag } = require('../../../utils/dom-tag-config')
+const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../utils/dom-tag-config')
 
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
@@ -128,19 +128,41 @@ module.exports = function getSpec ({ warn, error }) {
   /**
    * 将小程序代码中使用的与原生 HTML tag 或 内建组件 同名的组件进行转化，以解决与原生tag命名冲突问题。
    */
-  function fixComponentName (type) {
-    return function (input) {
-      const usingComponents = input[type]
-      if (usingComponents) {
-        Object.keys(usingComponents).forEach(tag => {
-          if (isOriginTag(tag) || isBuildInTag(tag)) {
-            usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
-            delete usingComponents[tag]
+  function fixComponentName (input, { mode }) {
+    const isNeedFixTag = (tag) => {
+      switch (mode) {
+        case 'web': return isOriginTag(tag) || isBuildInWebTag(tag)
+        case 'ios':
+        case 'android':
+        case 'harmony': return isOriginTag(tag) || isBuildInReactTag(tag)
+      }
+    }
+
+    const usingComponents = input.usingComponents
+    const componentPlaceholder = input.componentPlaceholder
+    if (usingComponents) {
+      const transfromKeys = []
+      Object.keys(usingComponents).forEach(tag => {
+        if (isNeedFixTag(tag)) {
+          usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
+          delete usingComponents[tag]
+          transfromKeys.push(tag)
+        }
+      })
+
+      if (transfromKeys.length && componentPlaceholder) {
+        Object.keys(componentPlaceholder).forEach(key => {
+          if (transfromKeys.includes(componentPlaceholder[key])) {
+            componentPlaceholder[key] = `mpx-com-${componentPlaceholder[key]}`
+          }
+          if (transfromKeys.includes(key)) {
+            componentPlaceholder[`mpx-com-${key}`] = componentPlaceholder[key]
+            delete componentPlaceholder[key]
           }
         })
       }
-      return input
     }
+    return input
   }
 
   const componentRules = [
@@ -156,13 +178,6 @@ module.exports = function getSpec ({ warn, error }) {
     },
     {
       test: 'usingComponents',
-      web: fixComponentName('usingComponents'),
-      ios: fixComponentName('usingComponents'),
-      android: fixComponentName('usingComponents'),
-      harmony: fixComponentName('usingComponents')
-    },
-    {
-      test: 'usingComponents',
       ali: componentNameCapitalToHyphen('usingComponents'),
       swan: componentNameCapitalToHyphen('usingComponents')
     },
@@ -170,7 +185,11 @@ module.exports = function getSpec ({ warn, error }) {
       swan: addGlobalComponents,
       qq: addGlobalComponents,
       tt: addGlobalComponents,
-      jd: addGlobalComponents
+      jd: addGlobalComponents,
+      web: fixComponentName,
+      ios: fixComponentName,
+      android: fixComponentName,
+      harmony: fixComponentName
     }
   ]
 
@@ -354,7 +373,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'preloadRule',
-        tt: deletePath(),
         jd: deletePath()
       },
       {
@@ -371,13 +389,6 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath(true),
         tt: deletePath(),
         jd: deletePath(true)
-      },
-      {
-        test: 'usingComponents',
-        web: fixComponentName('usingComponents'),
-        ios: fixComponentName('usingComponents'),
-        android: fixComponentName('usingComponents'),
-        harmony: fixComponentName('usingComponents')
       },
       {
         test: 'usingComponents',
@@ -443,6 +454,12 @@ module.exports = function getSpec ({ warn, error }) {
         swan: getWindowRule(),
         tt: getWindowRule(),
         jd: getWindowRule()
+      },
+      {
+        web: fixComponentName,
+        ios: fixComponentName,
+        android: fixComponentName,
+        harmony: fixComponentName
       }
     ]
   }

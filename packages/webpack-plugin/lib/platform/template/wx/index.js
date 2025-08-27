@@ -34,12 +34,30 @@ module.exports = function getSpec ({ warn, error }) {
       touchstart: 'touchstart',
       touchmove: 'touchmove',
       touchend: 'touchend',
-      touchcancel: 'touchcancel'
+      touchcancel: 'touchcancel',
+      transitionend: 'transitionend'
     }
     if (eventMap[eventName]) {
       return eventMap[eventName]
     } else {
       error(`React native environment does not support [${eventName}] event!`)
+    }
+  }
+
+  function rnAccessibilityRulesHandle ({ name, value }) {
+    if (name === 'aria-role') {
+      return [
+        {
+          name: 'accessible',
+          value: true
+        },
+        {
+          name: 'accessibilityRole',
+          value: value
+        }
+      ]
+    } else {
+      return { name, value }
     }
   }
 
@@ -433,7 +451,10 @@ module.exports = function getSpec ({ warn, error }) {
         test: /^aria-(role|label)$/,
         ali () {
           warn('Ali environment does not support aria-role|label props!')
-        }
+        },
+        ios: rnAccessibilityRulesHandle,
+        android: rnAccessibilityRulesHandle,
+        harmony: rnAccessibilityRulesHandle
       }
     ],
     event: {

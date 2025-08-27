@@ -1,7 +1,7 @@
-import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback } from 'react'
+import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback, createElement } from 'react'
 import { GestureResponderEvent, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, isHarmony } from '../utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, isHarmony, extendObject } from '../utils'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
@@ -223,8 +223,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     // 全局注册的振动触感 hook
-    const pickerVibrate = global.__mpx?.config?.rnConfig?.pickerVibrate
-    if (typeof pickerVibrate !== 'function') {
+    const onPickerVibrate = global.__mpx?.config?.rnConfig?.onPickerVibrate
+    if (typeof onPickerVibrate !== 'function') {
       return
     }
     const { y } = e.nativeEvent.contentOffset
@@ -238,7 +238,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             y: currentId * itemRawH
           }
           // vibrateShort({ type: 'selection' })
-          pickerVibrate()
+          onPickerVibrate()
         }
       }
     }
@@ -302,33 +302,36 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     })
 
   const renderScollView = () => {
-    return (
-      <PickerViewColumnAnimationContext.Provider value={offsetYShared}>
-        <Reanimated.ScrollView
-          ref={scrollViewRef}
-          bounces={true}
-          horizontal={false}
-          nestedScrollEnabled={true}
-          removeClippedSubviews={false}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          {...layoutProps}
-          onTouchEnd={onClickOnceItem}
-          style={[{ width: '100%' }]}
-          decelerationRate="fast"
-          snapToOffsets={snapToOffsets}
-          onScroll={onScroll}
-          onScrollBeginDrag={onScrollBeginDrag}
-          onScrollEndDrag={onScrollEndDrag}
-          onMomentumScrollBegin={onMomentumScrollBegin}
-          onMomentumScrollEnd={onMomentumScrollEnd}
-          onContentSizeChange={onContentSizeChange}
-          contentContainerStyle={contentContainerStyle}
-        >
-          {renderInnerchild()}
-        </Reanimated.ScrollView>
-      </PickerViewColumnAnimationContext.Provider>
+    const innerProps = extendObject({}, layoutProps, {
+      ref: scrollViewRef,
+      bounces: true,
+      horizontal: false,
+      nestedScrollEnabled: true,
+      removeClippedSubviews: false,
+      showsVerticalScrollIndicator: false,
+      showsHorizontalScrollIndicator: false,
+      scrollEventThrottle: 16,
+      style: styles.scrollView,
+      decelerationRate: 'fast',
+      snapToOffsets: snapToOffsets,
+      onTouchEnd: onClickOnceItem,
+      onScroll,
+      onScrollBeginDrag,
+      onScrollEndDrag,
+      onMomentumScrollBegin,
+      onMomentumScrollEnd,
+      onContentSizeChange,
+      contentContainerStyle
+    }) as React.ComponentProps<typeof Reanimated.ScrollView>
+
+    return createElement(
+      PickerViewColumnAnimationContext.Provider,
+      { value: offsetYShared },
+      createElement(
+        Reanimated.ScrollView,
+        innerProps,
+        renderInnerchild()
+      )
     )
   }
 
@@ -356,7 +359,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 })
 
 const styles = StyleSheet.create({
-  wrapper: { display: 'flex', flex: 1 }
+  wrapper: { display: 'flex', flex: 1 },
+  scrollView: { width: '100%' }
 })
 
 _PickerViewColumn.displayName = 'MpxPickerViewColumn'

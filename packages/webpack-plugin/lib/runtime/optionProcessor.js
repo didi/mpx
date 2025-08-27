@@ -14,7 +14,8 @@ export function processComponentOption (
     componentGenerics,
     genericsInfo,
     wxsMixin,
-    hasApp
+    hasApp,
+    disablePageTransition
   }
 ) {
   // 局部注册页面和组件中依赖的组件
@@ -79,7 +80,7 @@ registered in parent context!`)
         transitionName: ''
       }
     }
-    if (!global.__mpx.config.webConfig.disablePageTransition) {
+    if (!disablePageTransition) {
       option.watch = {
         $route: {
           handler () {
@@ -181,7 +182,6 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
     global.__mpxRouter.lastStack = null
     global.__mpxRouter.needCache = null
     global.__mpxRouter.needRemove = []
-    global.__mpxRouter.eventChannelMap = {}
     global.__mpxRouter.currentActionType = null
     // 处理reLaunch中传递的url并非首页时的replace逻辑
     global.__mpxRouter.beforeEach(function (to, from, next) {
@@ -241,7 +241,6 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
         case 'to':
           stack.push(insertItem)
           global.__mpxRouter.needCache = insertItem
-          if (action.eventChannel) global.__mpxRouter.eventChannelMap[to.path.slice(1)] = action.eventChannel
           break
         case 'back':
           global.__mpxRouter.needRemove = stack.splice(stack.length - action.delta, action.delta)
@@ -354,7 +353,7 @@ function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, t
   return extend({ app }, option)
 }
 
-export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, el }) {
+export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue, VueRouter, tabBarMap, el, useSSR }) {
   if (!isBrowser) {
     return context => {
       const { app, router, pinia = {} } = createApp({
@@ -381,7 +380,7 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
       }
     }
   } else {
-    const { app, pinia } = createApp({
+    const { app, pinia, router } = createApp({
       App,
       componentsMap,
       Vue,
@@ -393,6 +392,14 @@ export function processAppOption ({ firstPage, pagesMap, componentsMap, App, Vue
     if (window.__INITIAL_STATE__ && pinia) {
       pinia.state.value = window.__INITIAL_STATE__
     }
-    app.$mount(el)
+    if (useSSR) {
+      // https://v3.router.vuejs.org/api/#router-onready
+      // ssr 场景如果使用了异步组件，需要在 onReady 回调中挂载，否则 hydrate 可能会报错
+      router.onReady(() => {
+        app.$mount(el)
+      })
+    } else {
+      app.$mount(el)
+    }
   }
 }

@@ -73,11 +73,11 @@ RN原生较多属性不支持百分比，比如font-size、translate等，但是
 ###### font-size
 
 font-size 百分比计算依赖开发者传入的 parent-font-size 属性，框架将根据开发者传入 parent-font-size 的值来计算 font-size 的百分比大小
-> 备注：当 font-size 设置为百分比，未设置 parent-font-size 属性或者 parent-font-size 属性值非数值，会报错提示开发者且框架不计算 font-size 直接返回 
+> 备注：当 font-size 设置为百分比，未设置 parent-font-size 属性或者 parent-font-size 属性值非数值，会报错提示开发者且框架不计算 font-size 直接返回
 
 ###### line-height
 
-和 Web/小程序类似，当设置 line-height: 1.2; line-height: 120%; 这种 number 或百分比值时，实际都是按百分比来计算。line-height 的百分比计算基准是 font-size 的大小，所以在设置 line-height 为 number 或者百分比值时，要保证同时有设置 font-size 大小。 
+和 Web/小程序类似，当设置 line-height: 1.2; line-height: 120%; 这种 number 或百分比值时，实际都是按百分比来计算。line-height 的百分比计算基准是 font-size 的大小，所以在设置 line-height 为 number 或者百分比值时，要保证同时有设置 font-size 大小。
 
 > 备注：设置 line-height 注意区分有无单位，line-height: 12 会按照 line-height: 1200% 来计算处理，line-height: 12px 会按照正常单位计算。
 ##### 根据自身宽高计算百分比
@@ -168,10 +168,10 @@ Mpx 框架抹平了这部分的差异，在使用 Mpx 转 RN 时，我们可以�
 .content {
     text-align: right;
 }
-<!-- 
-小程序&web: 
+<!--
+小程序&web:
 - 文本 1-5 均为字体大小20px，文字居右
-RN: 
+RN:
 - 文本1 字体大小20px
 - 文本2 字体大小20px，文字居右
 - 文本3 字体大小20px，文字居右
@@ -183,7 +183,6 @@ RN:
 > 1. 只有父级 view 节点的文本样式可以被子 text 节点继承；
 > 2. view 节点直接包裹文本实际上等同于 view>text>文本，Mpx 框架在编译时若检测到 view 节点直接包裹文本会自动添加一层 text 节点；
 > 3. 多级 text 节点可实现文本样式的继承，比如 text>text>文本 ；
-> 4. 若不想使用 Mpx 内部实现的 view>text>文本 这种文本样式继承，可设置`disable-default-style=true` 来关闭该继承逻辑；
 ### 简写样式属性
 在 Mpx 内对于通过 class 类来定义的样式会按照 RN 的样式规则在编译处理一遍，其中最重要的一部分就是将 RN 不支持简写属性按约定的规则转换成 RN 能支持多属性结构。
 
@@ -203,7 +202,7 @@ RN:
 - [border-top|border-right|border-bottom|border-left](#border-topborder-rightborder-bottomborder-left)
 
 > **注意事项**
-> 
+>
 > - 考虑到运行时转化的性能开销问题，简写能力只在编译处理时转化，所以 class 类上设置时简写属性会处理转化的，而在 style 属性上使用了对应的简写是不会转化的，若对应的简写属性 RN 不支持，则在 RN style 属性上不能使用，需直接使用多个属性组合来实现。
 > - 简写属性不支持 单个 var() 函数，所以简写属性传入单个 var() 编译时会有错误提示，并且原样返回，这可能会导致 RN 运行时错误。
 > - 若是多个 var() 函数则会按顺序赋给各个属性
@@ -500,7 +499,7 @@ Mpx 输出 React Native 支持以下模版指令。
 
 **mpxTagName**
 
-支持跨平台输出时针对节点标签名进行条件编译，可以配合属性维度条件编译使用, 
+支持跨平台输出时针对节点标签名进行条件编译，可以配合属性维度条件编译使用,
 例如在 iOS 环境下希望将某个 view 标签替换为 cover-view，可以使用该功能：
 
 ```html
@@ -595,12 +594,9 @@ Mpx 输出 React Native 支持以下模版指令。
 
 注意事项
 
-1. 当同一个元素上同时绑定了 catchtap 和 bindtap 事件时，两个事件都会被触发执行。但是是否阻止事件冒泡的行为,会以模板上第一个绑定的事件标识符为准。
-如果第一个绑定的是 catchtap，那么不管后面绑定的是什么,都会阻止事件冒泡。如果第一个绑定的是 bindtap，则不会阻止事件冒泡。
-2. 当同一个元素上绑定了 capture-bind:tap 和 bindtap 事件时，事件的执行时机会根据模板上第一个绑定事件的标识符来决定。如果第一个绑定的是 capture-bind:tap，则事件会在捕获阶段触发，如果第一个绑定的是 bindtap，则事件会在冒泡阶段触发。
-3. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
-4. 由于 tap 事件是由 touchend 事件模拟实现，所以如果子组件绑定了 catchtap，那么父组件的 touchend 事件将不会响应。同理如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
-5. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
+1. 当使用了事件委托想获取 e.target.dataset 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 e.currentTarget 来获取 dataset 等数据。
+2. 由于 tap 事件是由 touchend 事件模拟实现，所以在 RN 环境，如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
+3. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
 
 ### 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
@@ -632,10 +628,12 @@ Mpx 输出 React Native 支持以下模版指令。
 | enable-background		  | Boolean  |     false    |  RN环境特有属性，是否要开启background-image、background-size和background-postion的相关计算或渲染，请根据实际情况开启 |
 | enable-animation | Boolean  | false  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
 | enable-fast-image | Boolean  | false  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 注意事项
 
 1. 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+2. 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 
 
 
@@ -675,15 +673,15 @@ Mpx 输出 React Native 支持以下模版指令。
 | binddragstart| 滑动开始事件，同时开启 enhanced 属性后生效|
 | binddragging| 滑动事件，同时开启 enhanced 属性后生效 |
 | binddragend| 滑动结束事件，同时开启 enhanced 属性后生效 |
-| bindscrolltoupper   | 滚动到顶部/左边触发 | 
-| bindscrolltolower   | 滚动到底部/右边触发 | 
-| bindscroll          | 滚动时触发         | 
-| bindrefresherrefresh| 自定义下拉刷新被触发 |  
+| bindscrolltoupper   | 滚动到顶部/左边触发 |
+| bindscrolltolower   | 滚动到底部/右边触发 |
+| bindscroll          | 滚动时触发         |
+| bindrefresherrefresh| 自定义下拉刷新被触发 |
 
 注意事项
 
 1. 目前不支持自定义下拉刷新节点，使用 slot="refresher" 声明无效，在 React Native 环境中还是会被当作普通节点渲染出来
-2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动
+2. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
 3. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 4. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 
@@ -708,7 +706,9 @@ Mpx 输出 React Native 支持以下模版指令。
 | next-margin             | String  | `0`                 | 后边距，可用于露出后一项的一小部分，接受px |
 | scale                   | Boolean  | `false`            | 滑动时是否开启前后元素缩小,默认是缩放0.7倍, 暂不支持自定义 |
 | easing-function         | String  | `linear`      | 支持 linear、easeInCubic、easeOutCubic、easeInOutCubic|
-| bindchange              | eventhandle|   无          | current 改变时会触发 change 事件，`event.detail = {current, source}`| 
+| simultaneous-handlers              | `Array<object>`|   []          | RN环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
+| wait-for              | `Array<object>`|   []          | RN环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 swiper 组件|
+| disableGesture              | Boolean|   false       | 禁用 swiper 滑动手势。若开启用户无法通过手势滑动 swiper，只能通过开启 autoPlay 进行自动轮播|
 
 
 
@@ -733,7 +733,7 @@ movable-view的可移动区域。
 
 注意事项
 
-1. movable-area不支持设置 scale-area，缩放手势生效区域仅在 movable-view 内
+1. movable-area不支持设置 scale-area
 
 #### movable-view
 可移动的视图容器，在页面中可以拖拽滑动。movable-view 必须在 movable-area 组件中，并且必须是直接子节点，否则不能移动。
@@ -743,7 +743,7 @@ movable-view的可移动区域。
 
 | 属性名 | 类型             | 默认值 | 说明                                                                                                  |
 | ------ | ---------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| direction   | String           |   none     | 目前支持 all、vertical、horizontal、none  | 
+| direction   | String           |   none     | 目前支持 all、vertical、horizontal、none  |
 | inertia   | boolean          |   false     | movable-view是否带有惯性  |
 | out-of-bounds   | boolean          |   false     | 超过可移动区域后，movable-view是否还可以移动  |
 | x   | Number |      | 定义x轴方向的偏移  |
@@ -753,13 +753,13 @@ movable-view的可移动区域。
 | animation  | boolean  |    true    | 是否使用动画	 |
 | simultaneous-handlers  | `Array<object>`  |    []    | 主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | wait-for  |  `Array<object>`  |  []    | 主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
+| disable-event-passthrough | boolean  |  false   | RN 环境特有属性，有时候我们希望movable-view 在水平方向滑动，并且竖直方向的手势也希望被 movable-view 组件消费掉，不被其他组件响应，可以将这个属性设置为true） |
 
 事件
 
 | 事件名               | 说明                                       |
 | -------------------- | ------------------------------------------ |
 | bindchange        | 拖动过程中触发的事件，`event.detail = {x, y, source}` |
-| bindscale         | 缩放过程中触发的事件，`event.detail = {x, y, scale}`    |
 | htouchmove          | 初次手指触摸后移动为横向的移动时触发 |
 | vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
 
@@ -768,6 +768,7 @@ movable-view的可移动区域。
 
 1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 2. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
+3. RN 环境 movable 相关组件暂不支持缩放能力
 
 #### root-portal
 使整个子树从页面中脱离出来，类似于在 CSS 中使用 position: fixed 的效果。主要用于制作弹窗、弹出层等。
@@ -775,7 +776,7 @@ movable-view的可移动区域。
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| enable   | boolean           |   true	     | 是否从页面中脱离出来	
+| enable   | boolean           |   true	     | 是否从页面中脱离出来
 
 注意事项
 
@@ -810,6 +811,7 @@ movable-view的可移动区域。
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | user-select             | boolean  | `false`       | 文本是否可选。 |
+| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 text 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 
 
@@ -942,17 +944,6 @@ movable-view的可移动区域。
 | bindconfirm          | 点击完成按钮时触发，`event.detail = { value }`                                         |
 | bind:selectionchange | 选区改变事件, `event.detail = { selectionStart, selectionEnd }`                      |
 
-方法
-
-可通过 `ref` 方式调用以下组件实例方法
-
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
-
 
 #### textarea
 多行输入框。
@@ -989,16 +980,33 @@ movable-view的可移动区域。
 | bindlinechange       | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx`    |
 | bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}`                                         |
 
-方法
+#### progress
+进度条。
 
-可通过 `ref` 方式调用以下组件实例方法
+属性
 
-| 方法名                | 说明                                 |
-| ---------------------| ----------------------------------- |
-| focus                | 使输入框得到焦点                       |
-| blur                 | 使输入框失去焦点                       |
-| clear                | 清空输入框的内容                       |
-| isFocused            | 返回值表明当前输入框是否获得了焦点        |
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| percent                 | Number  | `0`           | 百分比进度，范围0-100                                         |
+| stroke-width            | Number\|String | `6`   | 进度条线的宽度，单位px                                        |
+| color                   | String  |               | 进度条颜色（已废弃，请使用 activeColor）                        |
+| activeColor             | String  | `#09BB07`     | 已选择的进度条的颜色                                           |
+| backgroundColor         | String  | `#EBEBEB`     | 未选择的进度条的颜色                                           |
+| active                  | Boolean | `false`       | 进度条从左往右的动画                                           |
+| active-mode             | String  | `backwards`   | 动画播放模式，`backwards`: 从头开始播放；`forwards`: 从上次结束点接着播放 |
+| duration                | Number  | `30`          | 进度增加1%所需毫秒数                                          |
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindactiveend   | 动画完成时触发，`event.detail = { percent }`            |
+
+注意事项
+
+1. 不支持 `show-info` 属性，即不支持在进度条右侧显示百分比
+2. 不支持 `border-radius` 属性自定义圆角大小
+3. 不支持 `font-size` 属性设置右侧百分比字体大小
 
 #### picker-view
 
@@ -1022,11 +1030,11 @@ movable-view的可移动区域。
 
 - 触感反馈回调方法
 
-通过在全局注册 `mpx.config.rnConfig.pickerVibrate` 方法，在每次滚动选择时会调用该方法。
+通过在全局注册 `mpx.config.rnConfig.onPickerVibrate` 方法，在每次滚动选择时会调用该方法。
 
 | 注册触感方法名           | 类型          | 说明                |
 | ----------------------| --------------| ------------------- |
-| pickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现类似 iOS 端原生表盘的振动触感。    |
+| onPickerVibrate         | Function      | 注册自定义触感反馈方法。调用时机：在每次滚动选择时会调用该方法。可以在方法内自定义实现类似 iOS 端原生表盘的振动触感。    |
 
 #### picker-view-column
 
@@ -1101,8 +1109,8 @@ movable-view的可移动区域。
 
 ##### fields 有效值：
 | 属性名                  | 说明                     |
-| -----------------------| ------------------------ | 
-| year                   | 选择器粒度为年             | 
+| -----------------------| ------------------------ |
+| year                   | 选择器粒度为年             |
 | month                  | 选择器粒度为月份           |
 | day                   | 选择器粒度为天              |
 
@@ -1117,8 +1125,8 @@ movable-view的可移动区域。
 
 ##### level 有效值：
 | 属性名                  | 说明                     |
-| -----------------------| ------------------------ | 
-| province               | 选省级选择器               | 
+| -----------------------| ------------------------ |
+| province               | 选省级选择器               |
 | city                   | 市级选择器                 |
 | region                 | 区级选择器                 |
 
@@ -1313,7 +1321,7 @@ API
 
 <script>
   import { createComponent } from '@mpxjs/core'
-  
+
   createComponent({
     ready() {
       this.createSelectorQuery()
@@ -1367,7 +1375,7 @@ enum: flex/none
 > - 和 Web/小程序一致，RN 下 Text 节点默认为行内 inline 布局
 ##### 代码示例
 ``` css
-/* 默认 */ 
+/* 默认 */
 display:flex
 /* 隐藏 */
 display:none
@@ -1461,7 +1469,7 @@ enum: auto
 
 number，单位参考[数值类型单位说明](#数值类型单位说明)
 > 备注
-> 
+>
 > 当一个元素同时被设置了 flex-basis (除值为 auto 外) 和 width (或者在 flex-direction: column 情况下设置了height) , flex-basis 具有更高的优先级。
 ##### 代码示例
 ``` css
@@ -1866,7 +1874,7 @@ background-color: red;
 
 ##### 值类型
 string: url / linear-gradient
-> 注意事项 
+> 注意事项
 > - 背景图和背景色仅支持 view 节点
 > - 开发者可通过 enable-background 属性来控制是否开启背景图片和渐变色的支持
 > - 渐变不支持turn、px单位，只支持渐变距离百分比。
@@ -1923,7 +1931,7 @@ enum: no-repeat
 background-repeat: no-repeat;
 
 /* 不支持 */
-background-repeat: repeat; 
+background-repeat: repeat;
 ```
 
 
@@ -2023,7 +2031,7 @@ transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}]
 #### transform-origin
 设置视图变换的原点，默认情况下，变换的原点是中心。
 ##### 值类型
-- 单值时，该值必须是 px、百分比或关键字 left、center、right、top 和 bottom 之一； 
+- 单值时，该值必须是 px、百分比或关键字 left、center、right、top 和 bottom 之一；
 - 双值时，第一个值代表 X 偏移， 必须是 px、百分比或关键字 left、center 和 right 之一， 第二个值代表 Y 偏移，必须是 px、百分比或关键字 top、center 和 bottom 之一；
 - 三值时，前两个值与双值语法相同，第三个值代表 Z 偏移，必须是 px。
 ##### 代码示例
@@ -2039,7 +2047,7 @@ number
 - 0	元素完全透明 (即元素不可见).
 - 任何一个位于 0.0-1.0 之间的 `<number>`	元素半透明 (即元素后面的背景可见).
 - 1	元素完全不透明 (即元素后面的背景不可见).
-> 注意事项：在 RN 上设置节点 opacity: 0; 时该节点不会触发事件响应 
+> 注意事项：在 RN 上设置节点 opacity: 0; 时该节点不会触发事件响应
 ##### 代码示例
 ``` css
 /* 完全不透明 */
@@ -2384,9 +2392,9 @@ app里面的window配置，参考[微信内window配置说明](https://developer
 
 #### 状态管理
 
-##### pinia 
+##### pinia
 跨端输出 RN 支持完整的 pinia 相关能力，详情可点击[查看](/guide/advance/pinia.html)。
-##### store 
+##### store
 跨端输出 RN 支持所有 store 相关能力，详情可点击[查看](/guide/advance/store.html)。
 #### i18n
 Mpx 支持国际化 i18n，相关能力在跨端输出 RN 时也做了完整支持，详情可点击[查看](/guide/advance/i18n.html)。
@@ -2590,3 +2598,162 @@ webviewBridge.invoke('getTime', {
   }
 })
 ```
+
+#### 异步分包
+
+Mpx转RN实现了和微信小程序同等能力的分包异步化功能，基本使用可[参考文档](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
+
+在异步分包的能力实现当中我们借助了RN宿主提供的分包下载执行/分包拉取的 api，因此在你的应用开始使用异步分包的功能之前需要在运行时代码提前部署好RN宿主容器提供的相关 api 以供 Mpx 应用使用：
+
+```javascript
+mpx.config.rnConfig.loadChunkAsync = function (config) {
+  // 分包下载并执行 api
+  return drnLoadChunkAsync(config.package)
+}
+
+mpx.config.rnConfig.downloadChunkAsync = function (packages) {
+  if (packages && packages.length) {
+    // 分包拉取 api
+    drnDownloadChunkAsync(packages)
+  }
+}
+```
+
+针对异步分包加载异常的场景：
+
+* 异步组件加载失败：微信小程序提供了 [`wx.onLazyLoadError`](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.onLazyLoadError.html) 的全局 api 来监听异步组件加载失败，这个 api 同样在Mpx转RN场景下生效；
+* 异步页面加载失败：微信小程序未提供相关的监听异常的 api，Mpx转RN提供了一个额外的全局监听函数：
+
+```javascript
+// RN 场景下监听异步页面加载失败的全局配置
+mpx.config.rnConfig.onLazyLoadPageError = function (error) {
+  console.log(
+    error.subpackage, // 加载失败的分包名
+    error.errType // 加载失败的类型：'timeout' | 'fail'
+  )
+}
+```
+
+此外针对Mpx转RN的场景，还提供了一些异步分包的配置选项：
+
+```javascript
+// mpx.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        ...
+        asyncChunk: {
+          timeout: 5000, // 异步分包加载超时时间设定
+          loading: path.resolve(__dirname, 'src/components/loading.mpx'), // 自定义异步分包 loading 页面
+          fallback: path.resolve(__dirname, 'src/components/fallback.mpx') // 自定义异步分包页面加载失败的兜底页面配置
+        }
+      }
+    }
+  }
+})
+```
+
+注意：
+
+1. 对于异步分包页面加载失败的情况会展示默认兜底页面，用户可以点击兜底页面底部的重试按钮重新加载异步分包页面。那么对于开发者提供的自定义的 fallback 兜底页面，框架会自动会给自定义页面注入一个 `onReload` 方法以供开发者做页面重试的操作，具体见下方示例：
+
+```javascript
+<template>
+  <view>
+    <view>默认异步分包兜底页面</view>
+    <view bindtap="reload">点击重试</view>
+  </view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    props: {
+      onReload: {
+        type: Function
+      }
+    },
+    methods: {
+      reload() {
+        this.onReload() // mpx 框架在渲染当前组件会默认注入 onReload 方法
+      }
+    }
+  })
+</script>
+```
+
+
+#### 分享
+
+##### mpx.config.rnConfig.openTypeHandler.onShareAppMessage
+
+当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中是分享实现需由容器实现，可在 onShareAppMessage 中完成分享逻辑实现。
+
+其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
+
+`(shareInfo: { title: string, path: string, imageUrl?: string }) => void`
+
+
+
+#### 路由
+
+
+**mpx.config.rnConfig.parseAppProps**
+
+`(props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)`
+
+用于获取初始路由配置的函数，参数为RN根组件接收到的参数
+
++ initialRouteName: 首页路径，例如 pages/index
+
++ initialParams: 首页onLoad参数，例如 \{ a: 1 \}
+
+
+
+
+
+
+**mpx.config.rnConfig.onStateChange**
+
+`(state: Record<string, any>) => void`
+
+当导航状态发生变化时触发，例如页面跳转、返回等。可在此回调中将 ReactNative 路径栈同步到容器中。
+
+
+
+##### mpx.config.rnConfig.onAppBack
+
+`() => boolean`
+
+页面栈长度为 1（即根页面）且用户尝试退出 App 时触发。
+
++ true：允许退出应用
+
++ false：阻止退出应用
+
+
+##### mpx.config.rnConfig.onStackTopBack
+
+控制首页回退按钮是否展示，并监听点击事件。
+
+如果绑定该函数，则首页显示返回按钮，点击后调用该函数作为回调，如果未绑定该函数，则首页不会展示返回按钮。
+
+如需实现点击返回，请在函数内部手动调用 back。
+
+
+
+#### 折叠屏适配
+
+
+##### mpx.config.rnConfig.customDimensions
+
+`(dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void`
+
+在某些情况下，我们可能不希望当前 ReactNative 全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 信息来得到想要的渲染效果。
+
+可在此方法中返回修改后的 dimensions，如果无返回或返回undefined，则以入参作为返回值
+
+
+例如在折叠屏中我们期望只在其中一半屏上展示，可在customDimensions中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。

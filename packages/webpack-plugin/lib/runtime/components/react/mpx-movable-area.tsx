@@ -8,6 +8,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps from './getInnerListeners'
 import { MovableAreaContext } from './context'
 import { useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
+import Portal from './mpx-portal'
 
 interface MovableAreaProps {
   style?: Record<string, any>
@@ -30,6 +31,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     normalStyle,
     hasVarDec,
     varContextRef,
+    hasPositionFixed,
     setWidth,
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
@@ -52,7 +54,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       props,
       layoutProps,
       {
-        style: extendObject({ height: contextValue.height, width: contextValue.width, overflow: 'hidden' }, normalStyle, layoutStyle),
+        style: extendObject({ height: contextValue.height, width: contextValue.width }, normalStyle, layoutStyle),
         ref: movableViewRef
       }
     ),
@@ -60,7 +62,7 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     { layoutRef }
   )
 
-  return createElement(MovableAreaContext.Provider, { value: contextValue }, createElement(
+  let movableComponent: JSX.Element = createElement(MovableAreaContext.Provider, { value: contextValue }, createElement(
     View,
     innerProps,
     wrapChildren(
@@ -71,6 +73,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
       }
     )
   ))
+  if (hasPositionFixed) {
+    movableComponent = createElement(Portal, null, movableComponent)
+  }
+  return movableComponent
 })
 
 _MovableArea.displayName = 'MpxMovableArea'

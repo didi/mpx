@@ -42,7 +42,8 @@ import {
   TextStyle,
   Animated,
   Easing,
-  NativeSyntheticEvent
+  NativeSyntheticEvent,
+  useAnimatedValue
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -51,6 +52,7 @@ import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
 import type { ExtendedViewStyle } from './types/common'
+import Portal from './mpx-portal'
 
 export type Type = 'default' | 'primary' | 'warn'
 
@@ -156,7 +158,7 @@ const timer = (data: any, time = 3000) => new Promise((resolve) => {
 })
 
 const Loading = ({ alone = false }: { alone: boolean }): JSX.Element => {
-  const image = useRef(new Animated.Value(0)).current
+  const image = useAnimatedValue(0)
 
   const rotate = image.interpolate({
     inputRange: [0, 1],
@@ -290,6 +292,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   )
 
   const {
+    hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     hasVarDec,
@@ -412,9 +415,15 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
     )
   )
 
-  return enableHover
+  const finalComponent = enableHover
     ? createElement(GestureDetector, { gesture: gesture as PanGesture }, baseButton)
     : baseButton
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+
+  return finalComponent
 })
 
 Button.displayName = 'MpxButton'
