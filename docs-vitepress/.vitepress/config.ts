@@ -48,7 +48,7 @@ const sidebar = {
                 { text: "使用 npm", link: "/guide/advance/npm" },
                 { text: "使用分包", link: "/guide/advance/subpackage" },
                 { text: "分包异步化", link: "/guide/advance/async-subpackage" },
-                { text: "跨平台", link: "/guide/advance/platform" },
+
                 { text: "国际化 i18n", link: "/guide/advance/i18n" },
                 { text: "包体积分析", link: "/guide/advance/size-report" },
                 { text: "图像资源处理", link: "/guide/advance/image-process" },
@@ -75,11 +75,22 @@ const sidebar = {
             ],
         },
         {
-            text: "跨端",
+            text: "跨端基础",
             collapsable: false,
             items: [
-                { text: "跨端输出基础", link: "/guide/platform/basic" },
-                { text: "跨端输出 RN", link: "/guide/platform/rn" },
+                { text: "跨端输出配置", link: "/guide/cross-platform/basic" },
+                { text: "条件编译机制", link: "/guide/cross-platform/conditional" },
+                { text: "平台差异处理", link: "/guide/cross-platform/differences" },
+            ],
+        },
+        {
+            text: "跨端输出RN",
+            collapsable: false,
+            items: [
+                { text: "快速开始", link: "/guide/rn/quick-start" },
+                { text: "基础能力", link: "/guide/rn/basic" },
+                { text: "输出RN进阶", link: "/guide/rn/advanced" },
+                { text: "跨端生态SDK", link: "/guide/rn/ecosystem-sdk" },
             ],
         },
         {
