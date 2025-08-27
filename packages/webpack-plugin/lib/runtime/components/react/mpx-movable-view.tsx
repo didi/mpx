@@ -105,7 +105,9 @@ const withWechatDecay = (
   'worklet'
   
   // 微信小程序friction算法: delta = -1.5 * v² / a, 其中 a = -f * v / |v|
-  const f = 1000 * frictionValue
+  // 如果friction小于等于0，设置为默认值2
+  const validFriction = frictionValue <= 0 ? 2 : frictionValue
+  const f = 1000 * validFriction
   const acceleration = velocity !== 0 ? -f * velocity / Math.abs(velocity) : 0
   const delta = acceleration !== 0 ? (-1.5 * velocity * velocity) / acceleration : 0
   
