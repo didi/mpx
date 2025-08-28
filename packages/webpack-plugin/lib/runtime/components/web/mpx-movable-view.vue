@@ -222,8 +222,7 @@ export default {
           }
           this.refresh()
         })
-        const elementToObserve = document.querySelector('.mpx-movable-scroll-content')
-        elementToObserve && this.resizeObserver.observe(elementToObserve)
+        this.resizeObserver.observe(this.$refs.scrollContent)
       }
     },
     refresh () {

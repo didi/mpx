@@ -42,8 +42,7 @@
               }
             })
           })
-          const elementToObserve = document.querySelector('.mpx-movable-area-container')
-          elementToObserve && this.resizeObserver.observe(elementToObserve)
+          this.resizeObserver.observe(this.$refs.movableArea)
         }
       },
     },
