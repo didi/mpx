@@ -46,7 +46,13 @@
           elementToObserve && this.resizeObserver.observe(elementToObserve)
         }
       },
-    }
+    },
+    beforeDestroy () {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
+      }
+    },
   }
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
