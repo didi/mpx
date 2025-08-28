@@ -151,8 +151,6 @@ createComponent({
 })
 </script>
 ```
-// TODO data 的注意项
-
 
 ### computed
 
