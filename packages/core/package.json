@@ -93,6 +93,10 @@
       "optional": true
     }
   },
+  "devDependencies": {
+    "@types/react": "^18.2.79",
+    "react-native": "^0.74.5"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"

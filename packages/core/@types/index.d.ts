@@ -9,6 +9,7 @@
 
 import type { GetComputedType } from '@mpxjs/store'
 import type { ScaledSize } from 'react-native'
+import type { ComponentType } from 'react'
 export * from '@mpxjs/store'
 
 // utils
@@ -133,7 +134,10 @@ type ExtendedComponentOptions = {
 } & WechatMiniprogram.Component.ComponentOptions
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
-  components: Record<string, React.ComponentType>,
+  /**
+   * ReactNative 原生组件注册
+   */
+  components?: Record<string, ComponentType>,
   data?: D
   properties?: P
   computed?: C
