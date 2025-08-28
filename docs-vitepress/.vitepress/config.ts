@@ -36,6 +36,7 @@ const sidebar = {
                     text: "模版内可选链表达式",
                     link: "/guide/basic/option-chain",
                 },
+                { text: "生命周期", link: "/guide/basic/lifecycle" },
             ],
         },
         {
