@@ -1861,92 +1861,91 @@ try {
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
         const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
-        const type = queryObj.type
-        const mpxProcessFlag = queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG
-        const vueProcessFlag = queryObj.vue && queryObj.mpx !== MPX_PROCESSED_FLAG
-        if (mpxProcessFlag || vueProcessFlag) {
-          const extract = queryObj.extract
-          if (type === 'styles' || type === 'style') {
-            const loaderTypes = {
-              'node_modules/stylus-loader': -1,
-              'node_modules/sass-loader': -1,
-              'node_modules/less-loader': -1,
-              'node_modules/css-loader': -1
-            }
-            loaders.forEach((loader, index) => {
-              const currentLoader = toPosix(loader.loader)
-              for (const key in loaderTypes) {
-                if (currentLoader.includes(key)) {
-                  loaderTypes[key] = index
-                  break
-                }
-              }
-            })
-            const insertStripLoaders = (index) => {
-              if (index !== -1) {
-                loaders.splice(index, 0, { loader: styleStripConditionalPath })
-                loaders.splice(index + 2, 0, { loader: styleStripConditionalPath })
-                return true
-              }
-              return false
-            }
 
-            const priorities = ['node_modules/stylus-loader', 'node_modules/less-loader', 'node_modules/sass-loader', 'node_modules/css-loader']
-            for (const loaderKey of priorities) {
-              if (insertStripLoaders(loaderTypes[loaderKey])) {
-                break
-              }
-            }
+        // 样式 loader 类型检测和条件编译 loader 插入的工具函数
+         const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader']
+         const STRIP_LOADER_PRIORITIES = ['stylus-loader', 'less-loader', 'sass-loader', 'css-loader']
+
+         const detectStyleLoaderTypes = (loaders) => {
+           const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
+
+           loaders.forEach((loader, index) => {
+             const currentLoader = toPosix(loader.loader)
+             for (const [key] of loaderTypes) {
+               if (currentLoader.includes(key)) {
+                 loaderTypes.set(key, index)
+                 break
+               }
+             }
+           })
+
+           return loaderTypes
+         }
+
+         const insertStyleStripLoaders = (loaders, loaderTypes) => {
+           const targetIndex = STRIP_LOADER_PRIORITIES
+             .map(type => loaderTypes.get(`node_modules/${type}`))
+             .find(index => index !== -1)
+
+           if (targetIndex !== undefined) {
+             loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
+           }
+         }
+
+        if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
+          const type = queryObj.type
+          const extract = queryObj.extract
+          if (type === 'styles') {
+            const loaderTypes = detectStyleLoaderTypes(loaders)
+            insertStyleStripLoaders(loaders, loaderTypes)
           }
 
-          if (mpxProcessFlag) {
-            switch (type) {
-              case 'styles':
-              case 'template': {
-                let insertBeforeIndex = -1
-                const info = typeLoaderProcessInfo[type]
-                loaders.forEach((loader, index) => {
-                  const currentLoader = toPosix(loader.loader)
-                  if (currentLoader.includes(info[0])) {
-                    loader.loader = info[1]
-                    insertBeforeIndex = index
-                  } else if (currentLoader.includes(info[1])) {
-                    insertBeforeIndex = index
-                  }
-                })
-                if (insertBeforeIndex > -1) {
-                  loaders.splice(insertBeforeIndex + 1, 0, {
-                    loader: info[2]
-                  })
+          switch (type) {
+            case 'styles':
+            case 'template': {
+              let insertBeforeIndex = -1
+              const info = typeLoaderProcessInfo[type]
+              loaders.forEach((loader, index) => {
+                const currentLoader = toPosix(loader.loader)
+                if (currentLoader.includes(info[0])) {
+                  loader.loader = info[1]
+                  insertBeforeIndex = index
+                } else if (currentLoader.includes(info[1])) {
+                  insertBeforeIndex = index
                 }
-                break
-              }
-              case 'json':
-                if (queryObj.isTheme) {
-                  loaders.unshift({
-                    loader: jsonThemeCompilerPath
-                  })
-                } else if (queryObj.isPlugin) {
-                  loaders.unshift({
-                    loader: jsonPluginCompilerPath
-                  })
-                } else {
-                  loaders.unshift({
-                    loader: jsonCompilerPath
-                  })
-                }
-                break
-              case 'wxs':
-                loaders.unshift({
-                  loader: wxsLoaderPath
-                })
-                break
-            }
-            if (extract) {
-              loaders.unshift({
-                loader: extractorPath
               })
+              if (insertBeforeIndex > -1) {
+                loaders.splice(insertBeforeIndex + 1, 0, {
+                  loader: info[2]
+                })
+              }
+              break
             }
+            case 'json':
+              if (queryObj.isTheme) {
+                loaders.unshift({
+                  loader: jsonThemeCompilerPath
+                })
+              } else if (queryObj.isPlugin) {
+                loaders.unshift({
+                  loader: jsonPluginCompilerPath
+                })
+              } else {
+                loaders.unshift({
+                  loader: jsonCompilerPath
+                })
+              }
+              break
+            case 'wxs':
+              loaders.unshift({
+                loader: wxsLoaderPath
+              })
+              break
+          }
+          if (extract) {
+            loaders.unshift({
+              loader: extractorPath
+            })
           }
           createData.resource = addQuery(createData.resource, { mpx: MPX_PROCESSED_FLAG }, true)
         }
@@ -1957,6 +1956,7 @@ try {
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
+          const loaderTypes = detectStyleLoaderTypes(loaders)
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
@@ -1980,6 +1980,7 @@ try {
               })
             }
           }
+          insertStyleStripLoaders(loaders, loaderTypes)
         }
 
         createData.request = stringifyLoadersAndResource(loaders, createData.resource)
