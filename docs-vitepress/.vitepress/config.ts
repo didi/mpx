@@ -121,7 +121,16 @@ const sidebar = {
             collapsable: false,
             items: [
                 { text: "网络请求", link: "/guide/extend/fetch" },
-                { text: "API 转换", link: "/guide/extend/api-proxy" },
+                {
+                    text: "API 转换",
+                    link: "/guide/extend/api-proxy",
+                    items: [
+                        {
+                            text: "基础",
+                            items: []
+                        }
+                    ]
+                },
                 { text: "数据 Mock", link: "/guide/extend/mock" },
             ],
         },
