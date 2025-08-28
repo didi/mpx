@@ -1,34 +1,34 @@
 import type { ComputedRef } from '@mpxjs/core'
 
-export type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
+type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
 
-export type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
+type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
 
 export interface compContext {
   [key: string]: any
 }
 
-export interface Deps {
+interface Deps {
   [key: string]: Store | StoreWithThis
 }
 
-export type UnboxDepsField<D extends Deps, F> = string extends keyof D ? {} : {
+type UnboxDepsField<D extends Deps, F> = string extends keyof D ? {} : {
   [K in keyof D]: UnboxDepField<D[K], F>
 }
 
-export type getMutation<M> = M extends (state: any, ...payload: infer P) => infer R ? (...payload: P) => R : never
+type getMutation<M> = M extends (state: any, ...payload: infer P) => infer R ? (...payload: P) => R : never
 
-export type getAction<A> = A extends (context: object, ...payload: infer P) => infer R ? (...payload: P) => R : never
+type getAction<A> = A extends (context: object, ...payload: infer P) => infer R ? (...payload: P) => R : never
 
-export type Mutations<S> = {
+type Mutations<S> = {
   [key: string]: (this: void, state: S, ...payload: any[]) => any
 }
 
-export interface Getters<S> {
+interface Getters<S> {
   [key: string]: (this: void, state: S, getters: any, globalState: any) => any
 }
 
-export type Actions<S, G extends Getters<S>> = {
+type Actions<S, G extends Getters<S>> = {
   [key: string]: (this: void, context: {
     rootState: any,
     state: S,
@@ -38,21 +38,21 @@ export type Actions<S, G extends Getters<S>> = {
   }, ...payload: any[]) => any
 }
 
-export type GetGetters<G> = {
+type GetGetters<G> = {
   readonly [K in keyof G]: G[K] extends (state: any, getters: any, globalState: any) => infer R ? R : G[K]
 }
 
-export type GetMutations<M> = {
+type GetMutations<M> = {
   [K in keyof M]: getMutation<M[K]>
 }
 
-export type GetActions<A> = {
+type GetActions<A> = {
   [K in keyof A]: getAction<A[K]>
 }
 
-export type GetDispatch<A, D> = keyof D extends never ? (<T extends keyof A>(type: T, ...payload: A[T] extends (context: any, ...payload: infer P) => any ? P : never) => A[T] extends (context: any, ...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
+type GetDispatch<A, D> = keyof D extends never ? (<T extends keyof A>(type: T, ...payload: A[T] extends (context: any, ...payload: infer P) => any ? P : never) => A[T] extends (context: any, ...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
 
-export type GetCommit<M, D> = keyof D extends never ? (<T extends keyof M>(type: T, ...payload: M[T] extends (state: any, ...payload: infer P) => any ? P : never) => M[T] extends (state: any, ...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
+type GetCommit<M, D> = keyof D extends never ? (<T extends keyof M>(type: T, ...payload: M[T] extends (state: any, ...payload: infer P) => any ? P : never) => M[T] extends (state: any, ...payload: any[]) => infer R ? R : never) : ((type: string, ...payload: any[]) => any)
 
 // do not exist in tip
 declare const DEPS_SYMBOL: unique symbol
@@ -148,11 +148,11 @@ export type GetComputedType<T> = {
     : never
 }
 
-export interface MutationsAndActionsWithThis {
+interface MutationsAndActionsWithThis {
   [key: string]: (...payload: any[]) => any
 }
 
-export type UnionToIntersection<U> = (U extends any
+type UnionToIntersection<U> = (U extends any
   ? (k: U) => void
   : never) extends ((k: infer I) => void)
   ? I
@@ -161,11 +161,11 @@ export type UnionToIntersection<U> = (U extends any
 export interface mapStateFunctionType<S, G> {
   [key: string]: (state: S, getter: G) => any
 }
-export interface DeeperMutationsAndActions {
+interface DeeperMutationsAndActions {
   [key: string]: ((...payload: any[]) => any) | MutationsAndActionsWithThis
 }
 
-export interface DeeperStateAndGetters {
+interface DeeperStateAndGetters {
   [key: string]: any | DeeperStateAndGetters
 }
 
@@ -188,17 +188,17 @@ export interface CompatibleDispatch {
 }
 
 // Store Type Bindings
-export type StringKeyof<T> = Exclude<keyof T, symbol>
+type StringKeyof<T> = Exclude<keyof T, symbol>
 
-export type CombineStringKey<H extends string | number, L extends string | number> = H extends '' ? `${L}` : `${H}.${L}`
+type CombineStringKey<H extends string | number, L extends string | number> = H extends '' ? `${L}` : `${H}.${L}`
 
-export type GetActionsKey<A, P extends string | number = ''> = UnionToIntersection<{
+type GetActionsKey<A, P extends string | number = ''> = UnionToIntersection<{
   [K in StringKeyof<A>]: {
     [RK in CombineStringKey<P, K>]: A[K] extends DeeperMutationsAndActions ? GetActionsKey<A[K], RK> : Record<RK, A[K]>
   }[CombineStringKey<P, K>]
 }[StringKeyof<A>]> // {actA: () => void, storeB.actB: () => void}
 
-export type GetStateAndGettersKey<D extends Deps, DK extends keyof D, T extends StateSymbol | GettersSymbol, P extends string | number = ''> = UnionToIntersection<{
+type GetStateAndGettersKey<D extends Deps, DK extends keyof D, T extends StateSymbol | GettersSymbol, P extends string | number = ''> = UnionToIntersection<{
   [K in StringKeyof<D[DK][T]>]: {
     [RK in CombineStringKey<P, K>]: D[DK][T][K]
   }
@@ -212,7 +212,7 @@ export type GetStateAndGettersKey<D extends Deps, DK extends keyof D, T extends 
 //   }[CombineStringKey<P, K>]
 // }[StringKeyof<S>]> // {stateA: any, storeB.stateB: any}
 
-export type GetAllDepsType<A, D extends Deps, AK extends StateSymbol | GettersSymbol | 'actions' | 'mutations'> = {
+type GetAllDepsType<A, D extends Deps, AK extends StateSymbol | GettersSymbol | 'actions' | 'mutations'> = {
   [K in StringKeyof<A>]: A[K]
 } & UnionToIntersection<{
   [K in StringKeyof<D>]: AK extends 'actions' | 'mutations' ? {
@@ -222,12 +222,12 @@ export type GetAllDepsType<A, D extends Deps, AK extends StateSymbol | GettersSy
     // [P in keyof GetStateAndGettersKey<D[K][AK], K>]: GetStateAndGettersKey<D[K][AK], K>[P]
   } : {}
 }[StringKeyof<D>]>
-export type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = (<T extends keyof GetAllDepsType<A, D, AK>>(type: T, ...payload: GetAllDepsType<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllDepsType<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
+type GetDispatchAndCommitWithThis<A, D extends Deps, AK extends 'actions' | 'mutations'> = (<T extends keyof GetAllDepsType<A, D, AK>>(type: T, ...payload: GetAllDepsType<A, D, AK>[T] extends (...payload: infer P) => any ? P : never) => GetAllDepsType<A, D, AK>[T] extends (...payload: any[]) => infer R ? R : never)
 
 // type GetAllMapKeys<S, D extends Deps, SK extends 'state' | 'getters'> = GetAllDepsType<S, D, SK> & GetStateAndGettersKey<S>
-export type GetAllMapKeys<S, D extends Deps, SK extends StateSymbol | GettersSymbol> = GetAllDepsType<S, D, SK> // 关闭对state、getters本身传入对象的深层次推导，因为过深的递归会导致ts推导直接挂掉
+type GetAllMapKeys<S, D extends Deps, SK extends StateSymbol | GettersSymbol> = GetAllDepsType<S, D, SK> // 关闭对state、getters本身传入对象的深层次推导，因为过深的递归会导致ts推导直接挂掉
 
-export interface StoreOptWithThis<S, G, M, A, D extends Deps> {
+interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   state?: S
   getters?: G & ThisType<{ state: S & UnboxDepsField<D, 'state'>, getters: GetComputedType<G> & UnboxDepsField<D, 'getters'>, rootState: any }>
   mutations?: M & ThisType<{ state: S & UnboxDepsField<D, 'state'> }>
@@ -386,7 +386,7 @@ export interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps =
 
 export type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
 
-export interface StoreOpt<S, G, M, A, D extends Deps> {
+interface StoreOpt<S, G, M, A, D extends Deps> {
   state?: S,
   getters?: G
   mutations?: M,
