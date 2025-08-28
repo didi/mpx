@@ -102,7 +102,8 @@ module.exports = async function loader (content, map, meta) {
           return getRequestString('styles', { src: url }, {
             isStatic: true,
             issuerResource: this.resource,
-            fromImport: true
+            fromImport: true,
+            ...(isRN ? { extract: false } : {})
           })
         }
       })
@@ -257,7 +258,7 @@ module.exports = async function loader (content, map, meta) {
   let moduleCode
 
   try {
-    moduleCode = getModuleCode(result, api, replacements, options, this)
+    moduleCode = getModuleCode(result, api, replacements, options, isRN, this)
   } catch (error) {
     callback(error)
 
