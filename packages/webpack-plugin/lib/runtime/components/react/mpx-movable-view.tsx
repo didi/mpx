@@ -34,13 +34,29 @@ import Animated, {
 } from 'react-native-reanimated'
 import { collectDataset, noop } from '@mpxjs/utils'
 
-// 微信小程序的超出边界衰减函数
-const wechatDecline = (distance: number): number => {
+// 超出边界处理函数，参考微信小程序的超出边界衰减效果
+const applyBoundaryDecline = (
+  newValue: number,
+  range: [min: number, max: number]
+): number => {
   'worklet'
-  return Math.sqrt(Math.abs(distance))
+
+  const decline = (distance: number): number => {
+    'worklet'
+    return Math.sqrt(Math.abs(distance))
+  }
+
+  if (newValue < range[0]) {
+    const overDistance = range[0] - newValue
+    return range[0] - decline(overDistance)
+  } else if (newValue > range[1]) {
+    const overDistance = newValue - range[1]
+    return range[1] + decline(overDistance)
+  }
+  return newValue
 }
 
-// 基于微信小程序的弹簧阻尼系统实现
+// 参考微信小程序的弹簧阻尼系统实现
 const withWechatSpring = (
   toValue: number,
   dampingParam = 20,
@@ -48,7 +64,7 @@ const withWechatSpring = (
 ) => {
   'worklet'
 
-  // 微信小程序的弹簧参数计算
+  // 弹簧参数计算
   const m = 1 // 质量
   const k = 9 * Math.pow(dampingParam, 2) / 40 // 弹簧系数
   const c = dampingParam // 阻尼系数
@@ -94,7 +110,7 @@ const withWechatSpring = (
   }, callback)
 }
 
-// 基于微信小程序friction的惯性动画
+// 参考微信小程序friction的惯性动画
 const withWechatDecay = (
   velocity: number,
   currentPosition: number,
@@ -562,16 +578,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
             offsetX.value = x
           } else {
-            // 参考微信小程序的超出边界衰减效果
-            let finalX = newX
-            if (newX < draggableXRange.value[0]) {
-              const overDistance = draggableXRange.value[0] - newX
-              finalX = draggableXRange.value[0] - wechatDecline(overDistance)
-            } else if (newX > draggableXRange.value[1]) {
-              const overDistance = newX - draggableXRange.value[1]
-              finalX = draggableXRange.value[1] + wechatDecline(overDistance)
-            }
-            offsetX.value = finalX
+            offsetX.value = applyBoundaryDecline(newX, draggableXRange.value)
           }
         }
         if (direction === 'vertical' || direction === 'all') {
@@ -580,16 +587,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY })
             offsetY.value = y
           } else {
-            // 参考微信小程序的超出边界衰减效果
-            let finalY = newY
-            if (newY < draggableYRange.value[0]) {
-              const overDistance = draggableYRange.value[0] - newY
-              finalY = draggableYRange.value[0] - wechatDecline(overDistance)
-            } else if (newY > draggableYRange.value[1]) {
-              const overDistance = newY - draggableYRange.value[1]
-              finalY = draggableYRange.value[1] + wechatDecline(overDistance)
-            }
-            offsetY.value = finalY
+            offsetY.value = applyBoundaryDecline(newY, draggableYRange.value)
           }
         }
         if (bindchange) {
