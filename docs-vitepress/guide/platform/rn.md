@@ -745,6 +745,8 @@ movable-view的可移动区域。
 | out-of-bounds   | boolean          |   `false`     | 超过可移动区域后，movable-view是否还可以移动  |
 | x   | number |      | 定义x轴方向的偏移  |
 | y  | number  |        | 定义y轴方向的偏移 |
+| friction  | Number  |    `2`    | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止。必须大于0，否则会被设置成默认值 |
+| damping  | Number  |    `20`    | 阻尼系数，用于控制x或y改变时的动画和过界回弹的动画，值越大移动越快 |
 | disabled  | boolean  |    `false`   | 是否禁用 |
 | animation  | boolean  |    `true`   | 是否使用动画	 |
 | simultaneous-handlers  | array\<object>  |   `[]`   | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
