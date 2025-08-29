@@ -52,10 +52,14 @@ module.exports = function (jsonContent, {
   const {
     isUrlRequest,
     urlToRequest,
+    fillInComponentsMap,
     processPage,
-    processComponent
+    processComponent,
+    processAsyncSubpackageRules
   } = createJSONHelper({
     loaderContext,
+    componentsMap,
+    localComponentsMap,
     emitWarning,
     emitError,
     customGetDynamicEntry (resource, type, outputPath, packageRoot) {
@@ -288,19 +292,12 @@ module.exports = function (jsonContent, {
   const processComponents = (components, context, callback) => {
     if (components) {
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath } = {}, { tarRoot } = {}) => {
+        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          const { resourcePath, queryObj } = parseRequest(resource)
-          componentsMap[resourcePath] = outputPath
-          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-          localComponentsMap[name] = {
-            resource: addQuery(resource, {
-              isComponent: true,
-              outputPath
-            }),
-            async: queryObj.async || tarRoot
-          }
-          callback()
+          fillInComponentsMap(name, entry, tarRoot)
+          const { relativePath } = entry
+
+          processAsyncSubpackageRules(jsonObj, context, { name, tarRoot, placeholder, relativePath }, callback)
         })
       }, callback)
     } else {

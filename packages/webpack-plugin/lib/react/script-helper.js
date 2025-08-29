@@ -4,14 +4,9 @@ const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const addQuery = require('../utils/add-query')
-const { isBuildInReactTag } = require('../utils/dom-tag-config')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
-}
-
-function getBuiltInComponentRequest (component) {
-  return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
 function getAsyncChunkName (chunkName) {
@@ -95,22 +90,17 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
         if (placeholder) {
           if (localComponentsMap[placeholder]) {
             const placeholderCfg = localComponentsMap[placeholder]
-            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
             if (placeholderCfg.async) {
               loaderContext.emitWarning(
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
-            getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder))
+            // 直接从当前组件的componentsMap中获取
+            getFallback = getComponentGetter(`componentsMap["${placeholder}"]()`)
           } else {
-            const tag = `mpx-${placeholder}`
-            if (isBuildInReactTag(tag)) {
-              getFallback = getComponentGetter(getBuiltInComponent(getBuiltInComponentRequest(tag)))
-            } else {
-              loaderContext.emitError(
-                new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
-              )
-            }
+            loaderContext.emitError(
+              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
+            )
           }
         } else {
           loaderContext.emitError(

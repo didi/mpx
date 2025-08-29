@@ -15,9 +15,6 @@ const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDe
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
-const normalize = require('../utils/normalize')
-const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
@@ -62,36 +59,14 @@ module.exports = function (content) {
     )
   }
 
-  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
-    const componentPlaceholder = json.componentPlaceholder || {}
-    if (componentPlaceholder[name]) return
-    componentPlaceholder[name] = placeholder
-    json.componentPlaceholder = componentPlaceholder
-    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
-  }
-  const normalizePlaceholder = (placeholder) => {
-    if (typeof placeholder === 'string') {
-      const placeholderMap = mode === 'ali'
-        ? {
-          view: { name: 'mpx-view', resource: mpxViewPath },
-          text: { name: 'mpx-text', resource: mpxTextPath }
-        }
-        : {}
-      placeholder = placeholderMap[placeholder] || { name: placeholder }
-    }
-    if (!placeholder.name) {
-      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
-    }
-    return placeholder
-  }
-
   const {
     isUrlRequest,
     urlToRequest,
     processPage,
     processDynamicEntry,
     processComponent,
-    processJsExport
+    processJsExport,
+    processAsyncSubpackageRules
   } = createJSONHelper({
     loaderContext: this,
     emitWarning,
@@ -242,29 +217,7 @@ module.exports = function (content) {
               isDynamic: queryObj.isDynamic
             }
           }
-          if (tarRoot) {
-            if (placeholder) {
-              placeholder = normalizePlaceholder(placeholder)
-              if (placeholder.resource) {
-                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
-                  if (err) return callback(err)
-                  fillInComponentPlaceholder(name, placeholder.name, entry)
-                  callback()
-                })
-              } else {
-                fillInComponentPlaceholder(name, placeholder.name)
-                callback()
-              }
-            } else {
-              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
-                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
-                emitError(errMsg)
-              }
-              callback()
-            }
-          } else {
-            callback()
-          }
+          processAsyncSubpackageRules(json, context, { name, tarRoot, placeholder, relativePath }, callback)
         })
       }, (err) => {
         if (err) return callback(err)
