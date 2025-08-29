@@ -824,8 +824,17 @@ module.exports = defineConfig({
 
 transRpxFn 配置用于自定义输出 web 时对于 rpx 样式单位的转换逻辑，常见的方式有转换为 vw 或转换为 rem
 
+`{useSSR: boolean}`
+
+useSSR 默认值为 `false`，当 SSR 模式下使用异步分包时，需要将 useSSR 设置为 `true`, 其他场景不需要。
+
+`{disablePageTransition: boolean}`
+
+用于配置禁用/开启页面切换动画，默认禁用
+
+
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -834,7 +843,11 @@ module.exports = defineConfig({
           transRpxFn: function (match, $1) {
             if ($1 === '0') return $1
             return `${$1 * +(100 / 750).toFixed(8)}vw`
-          }
+          },
+          // 当 SSR 模式下使用异步分包时
+          useSSR: true,
+          // 开启页面切换动画
+          disablePageTransition: false
         }
       }
     }

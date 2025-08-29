@@ -1,5 +1,4 @@
 import { hasOwn, noop, getEnvObj, getFocusedNavigation, error as errorHandler, warn as warnHandler } from '@mpxjs/utils'
-import { getCurrentInstance } from '@mpxjs/core'
 
 /**
  *
@@ -90,9 +89,32 @@ function failHandle (result, fail, complete) {
 }
 
 function getCurrentPageId () {
-  const currentInstance = getCurrentInstance()
-  const id = currentInstance?.proxy?.getPageId() || getFocusedNavigation()?.pageId || null
+  const id = getFocusedNavigation()?.pageId || null
   return id
+}
+
+function resolvePath (relative, base) {
+  const firstChar = relative.charAt(0)
+  if (firstChar === '/') {
+    return relative
+  }
+  const stack = base.split('/')
+  stack.pop()
+  // resolve relative path
+  const segments = relative.replace(/^\//, '').split('/')
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i]
+    if (segment === '..') {
+      stack.pop()
+    } else if (segment !== '.') {
+      stack.push(segment)
+    }
+  }
+  // ensure leading slash
+  if (stack[0] !== '') {
+    stack.unshift('')
+  }
+  return stack.join('/')
 }
 
 const ENV_OBJ = getEnvObj()
@@ -110,5 +132,6 @@ export {
   successHandle,
   failHandle,
   getFocusedNavigation,
-  getCurrentPageId
+  getCurrentPageId,
+  resolvePath
 }

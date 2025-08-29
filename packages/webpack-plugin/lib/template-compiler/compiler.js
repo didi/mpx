@@ -180,7 +180,7 @@ const i18nModuleName = '_i'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '_s'
 const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionalChainWxsName = '_o'
+const optionalChainWxsName = '_oc' // 改成_oc解决web下_o重名问题
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -581,7 +581,8 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (options.pad) {
+      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
+      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -1332,8 +1333,35 @@ function processEventReact (el, options) {
   // }
 }
 
+function isNeedBind (configs, isProxy) {
+  if (isProxy) return true
+  if (configs.length > 1) return true
+  if (configs.length === 1) return configs[0].hasArgs
+  return false
+}
+
+function processEventBinding (el, configs) {
+  let resultName
+  configs.forEach(({ name }) => {
+    if (name) {
+      // 清空原始事件绑定
+      let has
+      do {
+        has = getAndRemoveAttr(el, name).has
+      } while (has)
+
+      if (!resultName) {
+        // 清除修饰符
+        resultName = name.replace(/\..*/, '')
+      }
+    }
+  })
+  return { resultName }
+}
+
 function processEvent (el, options) {
   const eventConfigMap = {}
+  const finalEventsMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
 
@@ -1345,12 +1373,15 @@ function processEvent (el, options) {
       const extraStr = runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
+        const isCapture = /^capture/.test(prefix)
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            configs: []
+            configs: [],
+            captureConfigs: []
           }
         }
-        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+        const targetConfigs = isCapture ? eventConfigMap[type].captureConfigs : eventConfigMap[type].configs
+        targetConfigs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
           eventConfigMap[type].proxy = true
         }
@@ -1392,40 +1423,21 @@ function processEvent (el, options) {
   }
 
   for (const type in eventConfigMap) {
-    let needBind = false
-    const { configs, proxy } = eventConfigMap[type]
-    delete eventConfigMap[type]
-    if (proxy) {
-      needBind = true
-    } else if (configs.length > 1) {
-      needBind = true
-    } else if (configs.length === 1) {
-      needBind = !!configs[0].hasArgs
-    }
+    const { configs = [], captureConfigs = [], proxy } = eventConfigMap[type]
+
+    let needBubblingBind = isNeedBind(configs, proxy)
+    let needCaptureBind = isNeedBind(captureConfigs, proxy)
 
     const escapedType = dash2hump(type)
     // 排除特殊情况
     if (!isValidIdentifierStr(escapedType)) {
       warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
-      needBind = false
+      needBubblingBind = false
+      needCaptureBind = false
     }
 
-    if (needBind) {
-      let resultName
-      configs.forEach(({ name }) => {
-        if (name) {
-          // 清空原始事件绑定
-          let has
-          do {
-            has = getAndRemoveAttr(el, name).has
-          } while (has)
-
-          if (!resultName) {
-            // 清除修饰符
-            resultName = name.replace(/\..*/, '')
-          }
-        }
-      })
+    if (needBubblingBind) {
+      const { resultName } = processEventBinding(el, configs)
 
       addAttrs(el, [
         {
@@ -1433,16 +1445,35 @@ function processEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[escapedType] = configs.map((item) => {
+      if (!finalEventsMap.bubble) {
+        finalEventsMap.bubble = {}
+      }
+      finalEventsMap.bubble[escapedType] = configs.map((item) => {
+        return item.expStr
+      })
+    }
+
+    if (needCaptureBind) {
+      const { resultName } = processEventBinding(el, captureConfigs)
+      addAttrs(el, [
+        {
+          name: resultName || config[mode].event.getEvent(type),
+          value: '__captureInvoke'
+        }
+      ])
+      if (!finalEventsMap.capture) {
+        finalEventsMap.capture = {}
+      }
+      finalEventsMap.capture[escapedType] = captureConfigs.map((item) => {
         return item.expStr
       })
     }
   }
 
-  if (!isEmptyObject(eventConfigMap)) {
+  if (!isEmptyObject(finalEventsMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${shallowStringify(eventConfigMap, true)}}}`
+      value: `{{${shallowStringify(finalEventsMap, true)}}}`
     }])
   }
 }
@@ -1849,7 +1880,7 @@ function processRefReact (el, meta) {
     }])
   }
 
-  if (el.tag === 'mpx-scroll-view' && el.attrsMap['scroll-into-view']) {
+  if (el.tag === 'mpx-scroll-view') {
     addAttrs(el, [
       {
         name: '__selectRef',
@@ -1935,7 +1966,18 @@ function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
     const needWrap = isTemplateData && mode !== 'swan'
-    const value = needWrap ? `{${attr.value}}` : attr.value
+    let value = needWrap ? `{${attr.value}}` : attr.value
+
+    // 修复React Native环境下属性值中插值表达式带空格的问题
+    if (isReact(mode) && typeof value === 'string') {
+      // 检查是否为带空格的插值表达式
+      const trimmedValue = value.trim()
+      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+        value = trimmedValue
+      }
+    }
+
     const parsed = parseMustacheWithContext(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
@@ -2002,7 +2044,7 @@ function postProcessFor (el) {
 function postProcessForReact (el) {
   if (el.for) {
     if (el.for.key) {
-      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key === '_' ? 'index' : el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
       addAttrs(el, [{
         name: 'key',
         value: el.for.key

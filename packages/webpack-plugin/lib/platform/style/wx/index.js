@@ -285,6 +285,13 @@ module.exports = function getSpec ({ warn, error }) {
 
   // line-height
   const formatLineHeight = ({ prop, value, selector }) => {
+    // line-height 0 直接返回
+    if (+value === 0) {
+      return {
+        prop,
+        value
+      }
+    }
     return verifyValues({ prop, value, selector }) && ({
       prop,
       value: /^\s*(-?(\d+(\.\d+)?|\.\d+))\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
@@ -540,6 +547,17 @@ module.exports = function getSpec ({ warn, error }) {
   //   })
   //   return cssMap
   // }
+  const formatBorder = ({ prop, value, selector }, { mode }) => {
+    value = value.trim()
+    if (value === 'none') {
+      return {
+        prop: 'borderWidth',
+        value: 0
+      }
+    } else {
+      return formatAbbreviation({ prop, value, selector }, { mode })
+    }
+  }
 
   return {
     supportedModes: ['ios', 'android', 'harmony'],
@@ -586,6 +604,12 @@ module.exports = function getSpec ({ warn, error }) {
       //   android: formatBoxShadow,
       //   harmony: formatBoxShadow
       // },
+      {
+        test: 'border',
+        ios: formatBorder,
+        android: formatBorder,
+        harmony: formatBorder
+      },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
