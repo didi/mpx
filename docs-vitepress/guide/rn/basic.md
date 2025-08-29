@@ -1081,9 +1081,8 @@ RN 环境支持 Mpx 除 SSR 外所有生命周期钩子，关于生命周期的�
 1. [配置能力](#配置能力) - App配置、页面配置、导航配置
 2. [状态管理](#状态管理-1) - Pinia、Store、依赖注入
 3. [国际化](#国际化) - i18n多语言支持
-4. [API能力](#api能力) - 环境API、Webview通信
-5. [高级特性](#高级特性) - 异步分包、分享、路由控制
-6. [平台适配](#平台适配) - 折叠屏、导航定制
+4. [API能力](#api能力) - 跨平台API、Webview通信
+5. [rnConfig 相关内容](#rnconfig-相关内容) - 异步分包、分享、路由控制、屏幕适配
 
 
 ## 配置能力
@@ -1421,9 +1420,9 @@ webviewBridge.invoke('uploadFile', {
 
 ## 高级特性
 
+`rnConfig` 是 Mpx 框架专为 React Native 环境提供的配置对象，用于定制 RN 平台特有的行为和功能。通过 `mpx.config.rnConfig` 可以配置异步分包、分享、路由控制、屏幕适配等高级特性。
+  
 ### 异步分包
-
-**支持状态：✅ 完全支持**
 
 Mpx 在 RN 环境下实现了与微信小程序同等的异步分包功能，支持按需加载分包内容。基础使用可参考 [异步分包指南](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
 
@@ -1545,33 +1544,41 @@ createComponent({
 
 其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
 
-`(shareInfo: { title: string, path: string, imageUrl?: string }) => void`
+```typescript
+(shareInfo: { title: string, path: string, imageUrl?: string }) => void
+```
 
 ### 路由
 
 #### mpx.config.rnConfig.parseAppProps
 
-`(props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)`
+```typescript
+(props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)
+```
 
 用于获取初始路由配置的函数，参数为RN根组件接收到的参数
 
-+ initialRouteName: 首页路径，例如 pages/index
-+ initialParams: 首页onLoad参数，例如 \{ a: 1 \}
+- initialRouteName: 首页路径，例如 pages/index
+- initialParams: 首页onLoad参数，例如 \{ a: 1 \}
 
 #### mpx.config.rnConfig.onStateChange
 
-`(state: Record<string, any>) => void`
+```typescript
+(state: Record<string, any>) => void
+```
 
 当导航状态发生变化时触发，例如页面跳转、返回等。可在此回调中将 ReactNative 路径栈同步到容器中。
 
 #### mpx.config.rnConfig.onAppBack
 
-`() => boolean`
+```typescript
+() => boolean
+```
 
 页面栈长度为 1（即根页面）且用户尝试退出 App 时触发。
 
-+ true：允许退出应用
-+ false：阻止退出应用
+- true：允许退出应用
+- false：阻止退出应用
 
 #### mpx.config.rnConfig.onStackTopBack
 
@@ -1585,7 +1592,9 @@ createComponent({
 
 #### mpx.config.rnConfig.customDimensions
 
-`(dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void`
+```typescript
+(dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
+```
 
 在某些情况下，我们可能不希望当前 ReactNative 全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 信息来得到想要的渲染效果。
 
