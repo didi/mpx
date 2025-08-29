@@ -1070,6 +1070,7 @@ createPage({
 3. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
    
 ## 生命周期
+RN 环境支持 Mpx 除 SSR 外所有生命周期钩子，关于生命周期的完整说明和最佳实践，请参考 [**生命周期详细文档**](/guide/basic/lifecycle.html)。
 
 ## 应用能力
 
