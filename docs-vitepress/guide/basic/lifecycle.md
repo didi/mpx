@@ -34,6 +34,7 @@ Mpx 提供了两套生命周期使用方式：
 | ONSHOW | onShow | onShow | onShow |
 | ONHIDE | onHide | onHide | onHide |
 | ONRESIZE | onResize | onResize | onResize |
+| SERVERPREFETCH | serverPrefetch | onServerPrefetch | - |
 
 > **说明**：
 > - 选项式 API 主要使用原生小程序生命周期（如 `attached`、`ready`、`detached`）
@@ -269,12 +270,25 @@ createApp({
 
 ## Setup 语法（组合式 API）
 
-组合式 API 使用统一的 Vue 风格生命周期钩子，所有平台都使用相同的 API。
+组合式 API 使用统一的 Vue 风格生命周期钩子。
 
-> **优势**：组合式 API 的生命周期钩子在所有平台上都保持一致，无需考虑平台差异。
 
-### 组件生命周期
+### 组件/页面通用生命周期
 
+**组件和页面都可用的生命周期钩子：**
+- `onBeforeMount` - 挂载开始之前被调用
+- `onMounted` - 被挂载后调用
+- `onBeforeUpdate` - 数据更新时调用，发生在虚拟 DOM 打补丁之前
+- `onUpdated` - 数据更新导致的重新渲染和打补丁后调用
+- `onBeforeUnmount` - 在卸载实例之前调用
+- `onUnmounted` - 卸载实例后调用
+- `onShow` - 页面显示/切入前台时触发
+- `onHide` - 页面隐藏/切入后台时触发
+- `onResize` - 页面尺寸变化时触发
+
+> **注意**：`setup` 函数本身相当于 `beforeCreate` + `created`，可以直接在其中编写初始化逻辑。
+
+**示例：**
 ```js
 import { 
   createComponent, 
@@ -283,7 +297,10 @@ import {
   onBeforeUpdate,
   onUpdated, 
   onBeforeUnmount,
-  onUnmounted
+  onUnmounted,
+  onShow,
+  onHide,
+  onResize
 } from '@mpxjs/core'
 
 createComponent({
@@ -324,6 +341,19 @@ createComponent({
       console.log('组件已卸载')
     })
     
+    // 页面相关生命周期（组件中监听页面的生命周期）
+    onShow(() => {
+      console.log('页面显示时，组件需要处理的逻辑')
+    })
+    
+    onHide(() => {
+      console.log('页面隐藏时，组件需要处理的逻辑')
+    })
+    
+    onResize((res) => {
+      console.log('页面尺寸变化时，组件需要处理的逻辑', res)
+    })
+    
     return {
       // 暴露给模板的数据和方法
     }
@@ -331,18 +361,17 @@ createComponent({
 })
 ```
 
-### 页面生命周期
+### 页面特有生命周期
 
+**仅页面可用的生命周期钩子：**
+- `onLoad` - 页面加载时触发，接收页面参数
+
+**示例：**
 ```js
 import { 
   createPage,
-  onBeforeMount,
-  onMounted,
-  onUnmounted,
   onLoad,
-  onShow,
-  onHide,
-  onResize
+  // 其他通用生命周期钩子请参考上面的"组件页面通用生命周期"部分
 } from '@mpxjs/core'
 
 createPage({
@@ -353,33 +382,6 @@ createPage({
       // 处理页面参数
     })
     
-    onShow(() => {
-      console.log('页面显示')
-      // 页面显示时的逻辑
-    })
-    
-    onHide(() => {
-      console.log('页面隐藏')
-      // 页面隐藏时的逻辑
-    })
-    
-    onResize((res) => {
-      console.log('页面尺寸变化', res)
-    })
-    
-    // 通用组件生命周期
-    onBeforeMount(() => {
-      console.log('页面即将挂载')
-    })
-    
-    onMounted(() => {
-      console.log('页面挂载完成')
-    })
-    
-    onUnmounted(() => {
-      console.log('页面即将卸载')
-    })
-    
     return {}
   }
 })
@@ -387,117 +389,24 @@ createPage({
 
 ### 应用生命周期
 
-应用实例暂不支持 setup 语法，只能使用选项式 API。
-
-### 组件中监听页面生命周期
-
-组件也可以在 setup 中监听页面生命周期：
-
-```js
-import { 
-  createComponent,
-  onMounted,
-  onShow,
-  onHide
-} from '@mpxjs/core'
-
-createComponent({
-  setup() {
-    // 组件自身生命周期
-    onMounted(() => {
-      console.log('组件挂载完成')
-    })
-    
-    // 监听页面生命周期
-    onShow(() => {
-      console.log('页面显示时，组件需要处理的逻辑')
-    })
-    
-    onHide(() => {
-      console.log('页面隐藏时，组件需要处理的逻辑')
-    })
-    
-    return {}
-  }
-})
-```
-
-### 使用注意事项
-
-1. **同步调用**：生命周期钩子注册函数只能在 `setup()` 期间同步使用
-2. **实例绑定**：它们依赖于内部的全局状态来定位当前活动的实例
-3. **自动清理**：在生命周期钩子内同步创建的侦听器和计算属性会在组件卸载时自动删除
-
-```js
-import { createComponent, onMounted, watch, computed } from '@mpxjs/core'
-
-createComponent({
-  setup() {
-    // ❌ 错误：异步调用
-    setTimeout(() => {
-      onMounted(() => {
-        // 这将会出错，因为没有活动的组件实例
-      })
-    }, 100)
-    
-    // ✅ 正确：同步调用
-    onMounted(() => {
-      // 在生命周期钩子内创建的侦听器会自动清理
-      watch(() => {
-        // 监听逻辑
-      })
-      
-      // 计算属性也会自动清理
-      const result = computed(() => {
-        // 计算逻辑
-      })
-    })
-    
-    return {}
-  }
-})
-```
+**注意：** 应用实例暂不支持 setup 语法，只能使用选项式 API。
 
 ## SSR 生命周期
 
-Mpx 2.9+ 版本提供了专门的 SSR（服务端渲染）生命周期钩子：
+Mpx 2.9+ 版本提供了专门的 [web SSR](/guide/advance/ssr.html)（服务端渲染）生命周期钩子：
 
-**特殊生命周期常量：**
-- `SERVERPREFETCH` - 服务端预取数据（SSR 相关）
-- `REACTHOOKSEXEC` - React Hooks 执行（内部使用）
+### 通用生命周期
 
-### onAppInit
+**[serverPrefetch](/guide/advance/ssr.html#serverprefetch) / [SERVERPREFETCH](/guide/advance/ssr.html#serverprefetch)**
 
-> 仅在 App 中使用，服务端和客户端都会执行
+> 可在应用/页面/组件中使用，仅在服务端执行
 
-用于在应用创建前进行初始化操作，常用于创建全局状态管理实例：
-
-```js
-// app.mpx
-import { createApp } from '@mpxjs/core'
-import { createPinia } from '@mpxjs/pinia'
-
-createApp({
-  onAppInit() {
-    // 每个请求都会创建新的 pinia 实例，避免跨请求状态污染
-    const pinia = createPinia()
-    return {
-      pinia
-    }
-  }
-})
-```
-
-### serverPrefetch
-
-> 可在 App/Page/Component 中使用，仅在服务端执行
-
-用于服务端数据预取，类似于 Vue SSR 的 `serverPrefetch`：
+用于服务端数据预取，支持两种定义方式：
 
 **选项式 API：**
 
 ```js
-import { createPage } from '@mpxjs/core'
+import { createPage, SERVERPREFETCH } from '@mpxjs/core'
 import useStore from '../store/index'
 
 createPage({
@@ -505,29 +414,26 @@ createPage({
     articleList: []
   },
   
+  // 方式1：使用方法名
   serverPrefetch() {
-    // 获取路由参数
-    const query = this.$route.query
     const store = useStore(this.$pinia)
-    
-    // 返回 Promise，预取数据并更新状态
-    return store.fetchArticleList(query.category)
+    return store.fetchArticleList(this.$route.query.category)
       .then(data => {
         this.articleList = data
       })
-  }
+  },
+  
+  // 方式2：使用内置生命周期常量（等价于上面）
+  // [SERVERPREFETCH]() {
+  //   // 与 serverPrefetch 完全等价
+  // }
 })
 ```
 
 **组合式 API：**
 
 ```js
-import { 
-  createPage, 
-  onServerPrefetch, 
-  getCurrentInstance,
-  ref
-} from '@mpxjs/core'
+import { createPage, onServerPrefetch, ref } from '@mpxjs/core'
 import useStore from '../store/index'
 
 createPage({
@@ -536,63 +442,43 @@ createPage({
     const store = useStore()
     
     onServerPrefetch(() => {
-      const instance = getCurrentInstance()
-      const query = instance.proxy.$route.query
-      
-      // 返回 Promise，预取数据
-      return store.fetchArticleList(query.category)
+      return store.fetchArticleList()
         .then(data => {
           articleList.value = data
         })
     })
     
-    return {
-      articleList
-    }
+    return { articleList }
   }
 })
 ```
 
-### onSSRAppCreated
+### 应用生命周期
 
-> 仅在 App 中使用，仅在服务端执行
-
-在应用实例创建后、渲染前执行，用于路由匹配和状态同步：
+**应用级别的 SSR 生命周期钩子：**
+- [`onAppInit`](/guide/advance/ssr.html#onappinit) - 应用初始化（服务端和客户端都执行）
+- [`onSSRAppCreated`](/guide/advance/ssr.html#onssrappcreated) - 应用创建完成（仅服务端执行）
 
 ```js
 // app.mpx
 import { createApp } from '@mpxjs/core'
+import { createPinia } from '@mpxjs/pinia'
 
 createApp({
+  // 应用初始化，创建全局状态管理实例
+  onAppInit() {
+    const pinia = createPinia()
+    return { pinia }
+  },
+  
+  // 应用创建完成，进行路由匹配和状态同步
   onSSRAppCreated({ app, router, pinia, context }) {
-    // 设置路由路径
     return router.push(context.url).then(() => {
-      // 等待路由匹配完成后，同步状态到客户端
-      context.state = {
-        pinia: pinia.state.value
-      }
-      
-      // 返回应用实例
+      context.state = { pinia: pinia.state.value }
       return app
     })
   }
 })
-```
-
-### SSR 生命周期执行顺序
-
-在 SSR 环境下，生命周期的执行顺序如下：
-
-```
-服务端：
-1. onAppInit      - 应用初始化
-2. serverPrefetch - 数据预取
-3. onSSRAppCreated - 应用创建完成
-
-客户端（激活）：
-1. onAppInit      - 应用初始化
-2. created        - 组件创建
-3. mounted        - 组件挂载（激活已有 DOM）
 ```
 
 ## 最佳实践
@@ -602,21 +488,21 @@ createApp({
 #### 选项式 API（原生小程序生命周期）
 
 ```js
-// ✅ 正确：在 attached/onInit 中初始化数据
+// ✅ 正确：在 attached 中初始化数据
 attached() {
   this.fetchUserInfo()
 }
 
-// ✅ 正确：在 ready/didMount 中操作 DOM
+// ✅ 正确：在 ready 中操作 DOM
 ready() {
-  // 微信小程序中操作组件节点
+  // 操作组件节点
   this.createSelectorQuery().select('.chart').boundingClientRect().exec()
 }
 
-// ✅ 正确：在 detached/didUnmount 中清理资源
+// ✅ 正确：在 detached 中清理资源
 detached() {
   clearInterval(this.timer)
-  // 小程序中移除事件监听
+  // 移除事件监听，定时器等
 }
 ```
 
@@ -642,87 +528,15 @@ setup() {
 ### 2. 避免在错误的生命周期中执行操作
 
 ```js
-// ❌ 错误：在 created 中操作 DOM（小程序 created 钩子时组件还未进入节点树）
+// ❌ 错误：在 created 中操作 DOM（created 钩子时组件还未进入节点树）
 created() {
   // 此时无法进行 DOM 操作
   this.selectComponent('.element') // 获取不到
 }
 
-// ✅ 正确：在 ready/didMount 中操作 DOM
+// ✅ 正确：在 ready 中操作 DOM
 ready() {
   // 此时可以安全地操作 DOM
   this.selectComponent('.element')
 }
 ```
-
-### 3. 合理处理异步操作
-
-```js
-import { createComponent, onMounted, onBeforeUnmount } from '@mpxjs/core'
-
-createComponent({
-  setup() {
-    let abortController = null
-    
-    onMounted(async () => {
-      // 创建可取消的请求
-      abortController = new AbortController()
-      
-      try {
-        const data = await fetch('/api/data', {
-          signal: abortController.signal
-        })
-        // 处理数据
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('请求失败', error)
-        }
-      }
-    })
-    
-    onBeforeUnmount(() => {
-      // 组件卸载时取消请求
-      if (abortController) {
-        abortController.abort()
-      }
-    })
-    
-    return {}
-  }
-})
-```
-
-### 4. 正确使用 nextTick
-
-```js
-import { createComponent, nextTick } from '@mpxjs/core'
-
-createComponent({
-  data: {
-    list: []
-  },
-  
-  methods: {
-    async addItem() {
-      this.list.push(newItem)
-      
-      // 等待 DOM 更新完成后再操作
-      await nextTick()
-      
-      // 滚动到新增的元素
-      this.$refs.container.scrollTop = this.$refs.container.scrollHeight
-    }
-  }
-})
-```
-
-## 总结
-
-Mpx 的生命周期系统提供了完善的组件和页面状态管理能力：
-
-- **统一性**：抹平了不同小程序平台的生命周期差异
-- **灵活性**：支持选项式 API 和组合式 API 两种写法
-- **完整性**：覆盖了组件、页面、应用和 SSR 场景
-- **易用性**：与 Vue 生命周期保持一致的设计理念
-
-合理使用生命周期钩子能够帮助开发者更好地管理组件状态，提升应用性能和用户体验。
