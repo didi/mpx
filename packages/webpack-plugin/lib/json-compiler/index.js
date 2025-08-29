@@ -19,6 +19,7 @@ const normalize = require('../utils/normalize')
 const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
 const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
+const { isProductionLikeMode } = require('../utils/optimize-compress')
 
 module.exports = function (content) {
   const nativeCallback = this.async()
@@ -44,6 +45,7 @@ module.exports = function (content) {
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
   const projectRoot = mpx.projectRoot
+  const usingComponentsNameMap = JSON.parse(queryObj.usingComponentsNameMap)
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -284,6 +286,35 @@ module.exports = function (content) {
     } else {
       callback()
     }
+  }
+
+  const processOptimizeSize = (json, callback) => {
+    if (mpx.optimizeSize && isProductionLikeMode(this)) {
+      // placeholder 替换
+      if (json.componentPlaceholder) {
+        const newComponentPlaceholder = {}
+        for (const [name, value] of Object.entries(json.componentPlaceholder)) {
+          const newName = usingComponentsNameMap[name]
+          newComponentPlaceholder[newName] = json.componentPlaceholder[name]
+          delete json.componentPlaceholder[name]
+          if (value in json.usingComponents) {
+            newComponentPlaceholder[newName] = usingComponentsNameMap[value]
+          }
+        }
+        Object.assign(json.componentPlaceholder, newComponentPlaceholder)
+      }
+      // usingComponents 替换
+      if (json.usingComponents) {
+        const newUsingComponents = {}
+        for (const name of Object.keys(json.usingComponents)) {
+          const newName = usingComponentsNameMap[name]
+          newUsingComponents[newName] = json.usingComponents[name]
+          delete json.usingComponents[name]
+        }
+        Object.assign(json.usingComponents, newUsingComponents)
+      }
+    }
+    callback()
   }
 
   if (isApp) {
@@ -658,6 +689,9 @@ module.exports = function (content) {
 
     async.parallel([
       (callback) => {
+        processOptimizeSize(json, callback)
+      },
+      (callback) => {
         // 添加首页标识
         if (json.pages && json.pages[0]) {
           if (typeof json.pages[0] !== 'string') {
@@ -739,6 +773,9 @@ module.exports = function (content) {
       }
     }
     async.parallel([
+      (callback) => {
+        processOptimizeSize(json, callback)
+      },
       (callback) => {
         processComponents(json.usingComponents, this.context, callback)
       },

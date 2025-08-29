@@ -52,7 +52,7 @@ function createEffect (proxy, componentsMap) {
     if (tagName === 'block') return Fragment
     const appComponentsMap = global.__appComponentsMap || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponentsMap = global.__mpxGenericsMap?.[generichash] || {}
+    const genericComponentsMap = global._gm?.[generichash] || {}
     const component = componentsMap[tagName] || genericComponentsMap[tagName] || appComponentsMap[tagName]
     return component ? component.displayName ? component : component() : getByPath(ReactNative, tagName)
   }
@@ -274,7 +274,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   if (type === 'component') {
     Object.defineProperty(instance, '__componentPath', {
       get () {
-        return currentInject.componentPath || ''
+        return currentInject.p || ''
       },
       enumerable: false
     })
@@ -580,7 +580,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
 }
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const componentsMap = currentInject.componentsMap
+  const componentsMap = currentInject.cm
   if (rawOptions.components) {
     Object.entries(rawOptions.components).forEach(([key, item]) => {
       componentsMap[key] = () => item
@@ -722,7 +722,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   }
 
   if (type === 'page') {
-    return PageWrapperHOC(defaultOptions, currentInject.pageConfig)
+    return PageWrapperHOC(defaultOptions, currentInject.pc)
   }
   return defaultOptions
 }

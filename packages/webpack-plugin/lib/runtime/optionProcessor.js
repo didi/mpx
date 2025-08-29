@@ -31,10 +31,10 @@ export function processComponentOption (
 
   if (genericsInfo) {
     const genericHash = genericsInfo.hash
-    global.__mpxGenericsMap[genericHash] = {}
+    global._gm[genericHash] = {}
     Object.keys(genericsInfo.map).forEach((genericValue) => {
       if (componentsMap[genericValue]) {
-        global.__mpxGenericsMap[genericHash][genericValue] = componentsMap[genericValue]
+        global._gm[genericHash][genericValue] = componentsMap[genericValue]
       } else {
         console.warn(`[Mpx runtime warn]: generic value "${genericValue}" must be
 registered in parent context!`)
