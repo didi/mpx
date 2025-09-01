@@ -4,9 +4,9 @@ const semverCoerce = require('semver/functions/coerce')
 // 定义包之间的依赖关系和最低版本要求
 const PACKAGE_DEPENDENCIES = {
   '@mpxjs/webpack-plugin': {
-    '@mpxjs/core': '^2.10.7 || ^2.10.7-beta.1',
-    '@mpxjs/utils': '^2.10.6 || ^2.10.6-beta.1',
-    '@mpxjs/api-proxy': '^2.10.7 || ^2.10.7-beta.1'
+    '@mpxjs/core': '^2.10.15 || ^2.10.15-beta.1',
+    '@mpxjs/utils': '^2.10.13 || ^2.10.13-beta.1',
+    '@mpxjs/api-proxy': '^2.10.15 || ^2.10.15-beta.1'
   }
 }
 
