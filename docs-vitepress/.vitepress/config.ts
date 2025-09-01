@@ -89,7 +89,16 @@ const sidebar = {
             collapsable: false,
             items: [
                 { text: "快速开始", link: "/guide/rn/quick-start" },
-                { text: "基础能力", link: "/guide/rn/basic" },
+                { 
+                    text:"基础能力", 
+                    link: "/guide/rn/basic", 
+                    items: [
+                        { text: "组件", link: "/guide/rn/component" },
+                        { text: "模版语法", link: "/guide/rn/template" },
+                        { text: "跨端样式", link: "/guide/rn/style" },
+                        { text: "应用能力", link: "/guide/rn/application-api" },
+                    ],
+                 },
                 { text: "输出RN进阶", link: "/guide/rn/advanced" },
                 { text: "跨端生态SDK", link: "/guide/rn/ecosystem-sdk" },
             ],
