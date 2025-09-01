@@ -21,6 +21,7 @@
     "@babel/traverse": "^7.16.0",
     "@babel/types": "^7.16.0",
     "@better-scroll/core": "^2.5.1",
+    "@better-scroll/mouse-wheel": "^2.5.1",
     "@better-scroll/movable": "^2.5.1",
     "@better-scroll/observe-dom": "^2.5.1",
     "@better-scroll/pull-down": "^2.5.1",
