@@ -22,7 +22,7 @@ import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -92,7 +92,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const layoutRef = useRef<any>({})
   const changeSource = useRef<any>('')
   const hasLayoutRef = useRef(false)
-
   const propsRef = useRef<any>({})
   propsRef.current = (props || {}) as MovableViewProps
 
@@ -250,16 +249,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     return { x, y }
   }, [])
 
-  // 节流版本的 change 事件触发
-  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
-    'worklet'
-    const now = Date.now()
-    if (now - lastChangeTime.value >= changeThrottleTime) {
-      lastChangeTime.value = now
-      runOnJS(handleTriggerChange)({ x, y, type })
-    }
-  }, [changeThrottleTime])
-
   useEffect(() => {
     runOnUI(() => {
       if (offsetX.value !== x || offsetY.value !== y) {
@@ -281,7 +270,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             : newY
         }
         if (bindchange) {
-          runOnJS(handleTriggerChange)({
+          runOnJS(runOnJSCallback)('handleTriggerChange', {
             x: newX,
             y: newY,
             type: 'setData'
@@ -664,13 +653,31 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
   }
 
+  const runOnJSCallbackRef = useRef({
+    handleTriggerChange,
+    triggerStartOnJS,
+    triggerMoveOnJS,
+    triggerEndOnJS
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+
+  // 节流版本的change事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(runOnJSCallback)('handleTriggerChange', { x, y, type })
+    }
+  }, [changeThrottleTime])
+
   const gesture = useMemo(() => {
     const handleTriggerMove = (e: GestureTouchEvent) => {
       'worklet'
       const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
       const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
       if (hasTouchmove || hasCatchTouchmove) {
-        runOnJS(triggerMoveOnJS)({
+        runOnJS(runOnJSCallback)('triggerMoveOnJS', {
           e,
           touchEvent: touchEvent.value,
           hasTouchmove,
@@ -691,7 +698,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           y: changedTouches.y
         }
         if (bindtouchstart || catchtouchstart) {
-          runOnJS(triggerStartOnJS)({ e })
+          runOnJS(runOnJSCallback)('triggerStartOnJS', { e })
         }
       })
       .onStart(() => {
@@ -745,7 +752,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         isFirstTouch.value = true
         isMoving.value = false
         if (bindtouchend || catchtouchend) {
-          runOnJS(triggerEndOnJS)({ e })
+          runOnJS(runOnJSCallback)('triggerEndOnJS', { e })
         }
       })
       .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
@@ -773,7 +780,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
                 : y
             }
             if (bindchange) {
-              runOnJS(handleTriggerChange)({
+              runOnJS(runOnJSCallback)('handleTriggerChange', {
                 x,
                 y
               })
@@ -790,7 +797,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             }, () => {
               xInertialMotion.value = false
               if (bindchange) {
-                runOnJS(handleTriggerChange)({
+                runOnJS(runOnJSCallback)('handleTriggerChange', {
                   x: offsetX.value,
                   y: offsetY.value
                 })
@@ -806,7 +813,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             }, () => {
               yInertialMotion.value = false
               if (bindchange) {
-                runOnJS(handleTriggerChange)({
+                runOnJS(runOnJSCallback)('handleTriggerChange', {
                   x: offsetX.value,
                   y: offsetY.value
                 })

@@ -18,7 +18,7 @@ const sidebar = {
                 { text: "快速开始", link: "/guide/basic/start" },
                 { text: "介绍", link: "/guide/basic/intro" },
                 { text: "单文件开发", link: "/guide/basic/single-file" },
-                { text: "IDE 高亮配置", link: "/guide/basic/ide" },
+                { text: "IDE 支持", link: "/guide/basic/ide" },
                 { text: "模板语法", link: "/guide/basic/template" },
                 { text: "CSS 处理", link: "/guide/basic/css" },
                 { text: "数据响应", link: "/guide/basic/reactive" },
