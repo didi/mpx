@@ -43,10 +43,10 @@
     computed: {
       count () {
         return store.state.count
-      },
-      ready () {
-        console.log('component ready:', this.list.phone)
       }
+    },
+    ready () {
+      console.log('component ready:', this.list.phone)
     }
   })
 </script>
