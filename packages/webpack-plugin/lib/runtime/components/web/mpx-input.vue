@@ -56,7 +56,19 @@
           if (val !== -1) this.setSelectionRange(undefined, val)
         },
         immediate: true
-      }
+      },
+      focus (val) {
+        if (val) {
+          this.$nextTick(() => {
+            this.$refs.input.focus()
+          })
+        } else {
+          this.$nextTick(() => {
+            this.$refs.input.blur()
+          })
+        }
+      },
+      immediate: true
     },
     render (createElement) {
       const mergeBefore = {
