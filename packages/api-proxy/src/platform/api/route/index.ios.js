@@ -24,7 +24,7 @@ function isLock (navigationHelper, type, options) {
       navigationHelper.lastFailCallback('timeout')
       navigationHelper.lastFailCallback = null
     }
-  }, 350)
+  }, 1000)
   return false
 }
 
