@@ -1863,43 +1863,43 @@ try {
         const loaders = createData.loaders
 
         // 样式 loader 类型检测和条件编译 loader 插入的工具函数
-         const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
-         const STRIP_LOADER_PRIORITIES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
+        const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
+        const STRIP_LOADER_PRIORITIES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
 
-         const detectStyleLoaderTypes = (loaders) => {
-           const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
+        const detectStyleLoaderTypes = (loaders) => {
+          const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
 
-           loaders.forEach((loader, index) => {
-             const currentLoader = toPosix(loader.loader)
-             for (const [key] of loaderTypes) {
-               if (currentLoader.includes(key)) {
-                 loaderTypes.set(key, index)
-                 break
-               }
-             }
-           })
+          loaders.forEach((loader, index) => {
+            const currentLoader = toPosix(loader.loader)
+            for (const [key] of loaderTypes) {
+              if (currentLoader.includes(key)) {
+                loaderTypes.set(key, index)
+                break
+              }
+            }
+          })
 
-           return loaderTypes
-         }
+          return loaderTypes
+        }
 
-         const insertStyleStripLoaders = (loaders, loaderTypes) => {
-           // 检查是否已经存在 stripLoader
-           const hasStripLoader = loaders.some(loader => {
-             const loaderPath = toPosix(loader.loader)
-             return loaderPath.includes('style-compiler/strip-conditional-loader')
-           })
-           if (hasStripLoader) {
-             return
-           }
+        const insertStyleStripLoaders = (loaders, loaderTypes) => {
+          // 检查是否已经存在 stripLoader
+          const hasStripLoader = loaders.some(loader => {
+            const loaderPath = toPosix(loader.loader)
+            return loaderPath.includes('style-compiler/strip-conditional-loader')
+          })
+          if (hasStripLoader) {
+            return
+          }
 
-           const targetIndex = STRIP_LOADER_PRIORITIES
-             .map(type => loaderTypes.get(`node_modules/${type}`))
-             .find(index => index !== -1)
+          const targetIndex = STRIP_LOADER_PRIORITIES
+            .map(type => loaderTypes.get(`node_modules/${type}`))
+            .find(index => index !== -1)
 
-           if (targetIndex !== undefined) {
-             loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
-           }
-         }
+          if (targetIndex !== undefined) {
+            loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
+          }
+        }
 
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
