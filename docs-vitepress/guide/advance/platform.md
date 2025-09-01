@@ -630,7 +630,7 @@ onShow|是
 onHide|是
 onUnload|是
 onError|是
-onServerPrefetch｜是
+onServerPrefetch|是
 created|是
 attached|是
 ready|是

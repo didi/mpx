@@ -88,7 +88,16 @@ function parseHTML (html, options) {
           match.end = index
           handleStartTag(match)
         }
+        continue
       }
+
+      // If we reach here, the `<` at position 0 does not start a valid tag/comment/end tag
+      // Treat it as plain text to avoid infinite loop on stray '<'
+      if (options.chars) {
+        options.chars('<')
+      }
+      advance(1)
+      continue
     }
     let text, rest, next
     if (textEnd >= 0) {
