@@ -1,6 +1,8 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
 import { StyleSheet } from 'react-native'
 
+// TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
+// TODO: 2 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions监听到的width/height尺寸错误，并触发多次问题
 function rpx (value) {
   const screenInfo = global.__mpxAppDimensionsInfo.screen
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
