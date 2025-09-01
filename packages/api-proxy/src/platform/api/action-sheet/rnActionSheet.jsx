@@ -65,8 +65,8 @@ const styles = StyleSheet.create({
   },
   itemTextStyle: {
     fontSize: 18,
-    height: 22,
-    lineHeight: 22
+    paddingTop: 2,
+    paddingBottom: 2
   },
   buttonStyle: {
     paddingTop: 10,
@@ -195,8 +195,8 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
             style={{
               color: '#000000',
               fontSize: 18,
-              lineHeight: 22,
-              height: 22,
+              paddingTop: 2,
+              paddingBottom: 2,
               width: '100%',
               textAlign: 'center'
             }}
