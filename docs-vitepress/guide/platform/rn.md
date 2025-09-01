@@ -756,6 +756,8 @@ movable-view的可移动区域。
 | out-of-bounds   | boolean          |   `false`     | 超过可移动区域后，movable-view是否还可以移动  |
 | x   | number |      | 定义x轴方向的偏移  |
 | y  | number  |        | 定义y轴方向的偏移 |
+| friction  | Number  |    `2`    | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止。必须大于0，否则会被设置成默认值 |
+| damping  | Number  |    `20`    | 阻尼系数，用于控制x或y改变时的动画和过界回弹的动画，值越大移动越快 |
 | disabled  | boolean  |    `false`   | 是否禁用 |
 | animation  | boolean  |    `true`   | 是否使用动画	 |
 | scale  | boolean  |    `false`    | 是否支持双指缩放，默认缩放手势生效区域是在movable-view内	 |
