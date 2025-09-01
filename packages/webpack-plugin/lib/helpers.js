@@ -69,6 +69,8 @@ module.exports = function createHelpers (loaderContext) {
         if (part.useJSONJS) options.useJSONJS = true
       // eslint-disable-next-line no-fallthrough
       case 'styles':
+        options.lang = part.lang
+      // eslint-disable-next-line no-fallthrough
       case 'template':
         options.extract = true
     }
@@ -81,7 +83,7 @@ module.exports = function createHelpers (loaderContext) {
       return loaderUtils.stringifyRequest(loaderContext, addQuery(src, options, true))
     } else {
       const fakeRequest = getFakeRequest(type, part)
-      let request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(rawRequest, { ...options, lang: part.lang }, true)}`
+      let request = `${selectorPath}?mode=${mode}&env=${env}!${addQuery(rawRequest, options, true)}`
       if (part.setup && type === 'script') request = scriptSetupPath + '!' + request
       return loaderUtils.stringifyRequest(loaderContext, `${fakeRequest}!=!${request}`)
     }
