@@ -64,19 +64,25 @@ Mpx 转 RN 支持以下单位，部分单位在特定情况下存在使用限制
 | `%` | ✅ 支持 | 百分比单位参考 [百分比单位说明](#百分比单位说明) |
 | `px` | ✅ 支持 | 绝对像素单位 |
 | `rpx` | ✅ 支持 | 响应式像素，根据屏幕宽度动态计算 |
-| `vh` | ✅ 支持 | 视口高度的 1%，推荐配合自定义导航使用 |
-| `vw` | ✅ 支持 | 视口宽度的 1% |
+| `vh` | ✅ 支持 | 相对于视口的高度 |
+| `vw` | ✅ 支持 | 相对视口的宽度 |
 
-> **关于 vh 单位的说明**
+> **⚠️ vh 单位使用注意**
 >
-> 在使用非自定义导航时，页面初次渲染计算出来的 `vh` 是屏幕高度，后续更新渲染使用实际可视区域高度。推荐使用此单位的页面使用自定义导航。
+> **问题**：使用系统默认导航栏时，`vh` 的计算基准可能会发生变化
+> - 页面首次加载：`100vh = 屏幕总高度`
+> - 状态更新后：`100vh = 屏幕高度 - 导航栏高度`
+>
+> **影响**：可能导致布局在运行时突然变化
+>
+> **建议**：如需使用 `vh` 单位，推荐配合自定义导航栏使用，以确保计算基准始终一致
 ### 百分比单位说明
 
-RN 原生较多属性不支持百分比（如 `font-size`、`translate` 等），但这些属性在编写 Web/小程序代码时使用较多，框架进行了抹平支持。
+RN 原生较多属性不支持百分比，或对百分比的支持存在 bug（如 `font-size`、`translate` 等），但这些属性在编写 Web/小程序代码时使用较多，所以框架进行了抹平支持。
 
 以下属性在 Mpx 输出 RN 时专门进行了百分比单位的适配：
 
-#### 特殊的百分比计算规则
+#### 百分比计算规则
 
 ##### font-size
 
@@ -91,7 +97,7 @@ RN 原生较多属性不支持百分比（如 `font-size`、`translate` 等）�
 > 当 `font-size` 设置为百分比时：
 > - 未设置 `parent-font-size` 属性会报错
 > - `parent-font-size` 属性值非数值会报错
-> - 框架不会计算 `font-size`，直接返回原值
+> - 若出现以上两种情况，框架不会计算 `font-size`，直接返回原值
 
 ##### line-height
 
@@ -124,8 +130,6 @@ RN 原生较多属性不支持百分比（如 `font-size`、`translate` 等）�
 ```
 
 > **⚠️ 注意事项**
->
-> - **版本要求**：RN 0.76+ 版本支持 `translateX`/`translateY` 百分比
 > - **计算基准**：
 >   - `translateX`、`border-radius` 基于节点的 `width` 计算
 >   - `translateY` 基于节点的 `height` 计算
@@ -135,19 +139,9 @@ RN 原生较多属性不支持百分比（如 `font-size`、`translate` 等）�
 
 ##### 根据父节点宽高计算百分比
 
-除上述特殊规则外，`width`、`left`、`right`、`height`、`top`、`bottom`、`margin`、`padding` 等属性设置百分比时的计算基准都是父节点的宽高。
+除上述特殊规则外，`width`、`left`、`right`、`height`、`top`、`bottom`、`margin`、`padding` 等属性设置百分比时的计算基准都是父节点的宽高。RN 原生默认支持这些属性的百分比设置，无需框架额外处理。
 
-RN 原生支持这些属性的百分比设置，无需框架额外处理。
-
-```css
-.parent-based {
-  width: 50%; /* 基于父节点宽度 */
-  height: 80%; /* 基于父节点高度 */
-  margin: 10%; /* 基于父节点宽度 */
-}
-```
-
-**例外情况**：在 `calc()` 函数表达式中使用百分比，如 `width: calc(100% - 10px)`。
+**例外情况**：在 `calc()` 函数表达式中使用百分比，如 `width: calc(100% - 10px)`，这种情况是需要框架额外处理的。
 
 ###### calc() 函数内的百分比使用方式
 
@@ -181,41 +175,6 @@ RN 原生支持这些属性的百分比设置，无需框架额外处理。
 >
 > 更多颜色名称请参考：[React Native 颜色枚举值](https://reactnative.dev/docs/colors#named-colors)
 
-#### 颜色值示例
-
-```css
-/* 预定义颜色名称 */
-color: red;
-color: orange;
-color: tan;
-color: rebeccapurple;
-
-/* 十六进制颜色 */
-color: #090;        /* 3位简写 */
-color: #009900;     /* 6位完整 */
-color: #090a;       /* 4位带透明度 */
-color: #009900aa;   /* 8位带透明度 */
-
-/* RGB/RGBA 函数 */
-color: rgb(34, 12, 64);
-color: rgba(34, 12, 64, 0.6);
-color: rgb(34 12 64 / 0.6);      /* 新语法 */
-color: rgba(34 12 64 / 0.3);     /* 新语法 */
-color: rgb(34 12 64 / 60%);      /* 百分比透明度 */
-
-/* HSL/HSLA 函数 */
-color: hsl(30, 100%, 50%);
-color: hsla(30, 100%, 50%, 0.6);
-color: hsl(30 100% 50% / 0.6);   /* 新语法 */
-color: hsla(30 100% 50% / 60%);  /* 百分比透明度 */
-
-/* HWB 函数 */
-color: hwb(90 10% 10%);
-color: hwb(90 10% 10% / 0.5);
-color: hwb(90deg 10% 10%);       /* 度数单位 */
-color: hwb(1.5708rad 60% 0%);    /* 弧度单位 */
-color: hwb(0.25turn 0% 40% / 50%); /* 圈数单位 */
-```
 
 ## 文本样式继承
 
@@ -232,14 +191,15 @@ Mpx 框架抹平了平台差异：
 - ✅ 可以使用 `view` 节点直接包裹文本
 - ✅ 可以在 `view` 节点上设置文本样式，作用到直接子 `text` 节点
 
-### 继承规则限制
+### 继承规则
 
-受限于 [RN 内 text 的样式继承原则](https://reactnative.dev/docs/text#limited-style-inheritance)：
+受限于 [RN 内 text 的样式继承原则](https://reactnative.dev/docs/text#limited-style-inheritance)，Mpx 的文本样式继承遵循以下规则：
+>
+> 1. **view → text 继承**：只有 `view` 节点下的**直接子** `text` 节点可以继承 `view` 节点上的文本样式
+> 2. **text 嵌套继承**：父级 `text` 节点的样式可以被嵌套的子 `text` 节点继承
+> 3. **自动包裹**：`view` 节点直接包裹文本时，Mpx 编译时会自动添加 `text` 节点包裹文本
 
-- 只有 `view` 节点下的**直接子** `text` 节点可以继承 `view` 节点上的文本样式
-- `text` 节点之间可以相互继承样式
-
-### 示例对比
+### 示例
 
 ```html
 <!-- 示例代码 -->
@@ -270,14 +230,6 @@ Mpx 框架抹平了平台差异：
 | 文本3 | 20px，居右 | 20px，居右 |
 | 文本4 | 20px，居右 | 居右 |
 | 文本5 | 20px，居右 | 样式未生效 |
-
-### 关键知识点
-
-> **💡 重要说明**
->
-> 1. **父子继承**：只有父级 `view` 节点的文本样式可以被子 `text` 节点继承
-> 2. **自动包裹**：`view` 节点直接包裹文本等同于 `view > text > 文本`，Mpx 编译时会自动添加 `text` 节点
-> 3. **多层继承**：多级 `text` 节点可实现文本样式的继承，如 `text > text > 文本`
 ## 简写样式属性
 
 Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译处理，其中最重要的功能是将 RN 不支持的简写属性转换成 RN 支持的多属性结构。
@@ -294,7 +246,7 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 | **边框相关** | `border-radius`、`border-width`、`border-color`、`border` |
 | **方向边框** | `border-top`、`border-right`、`border-bottom`、`border-left` |
 
-### 使用示例
+### 示例
 
 ```css
 /* 简写属性示例 */
@@ -312,12 +264,12 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 }
 ```
 
-### 重要限制
+### 使用限制
 
 > **⚠️ 注意事项**
 >
 > **编译时 vs 运行时**
-> - ✅ **class 类样式**：简写属性会在编译时转换
+> - ✅ **class 类样式**：考虑到运行时转化的性能开销问题，简写属性只会在编译时转换
 > - ❌ **style 属性**：简写属性不会在运行时转换，RN 不支持的简写属性无法使用
 >
 > **CSS 变量限制**
@@ -327,7 +279,7 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 > ```css
 > /* ❌ 错误用法 */
 > .error {
->   margin: var(--spacing);  /* 会报错 */
+>   margin: var(--spacing);  /* 会报错，可能会导致 RN 运行时错误 */
 > }
 > 
 > /* ✅ 正确用法 */
@@ -338,40 +290,23 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 
 ## CSS 函数
 
-在介绍具体的 CSS 函数前，先了解一下自定义属性的概念。
-
-### 自定义属性（CSS 变量）
-
-**自定义属性**（也称作 **CSS 变量** 或 **级联变量**）是带有前缀 `--` 的属性名，用于定义可重复使用的值。
-
-#### 基本用法
-
-```css
-/* 定义自定义属性 */
-:root {
-  --main-color: #3498db;
-  --secondary-color: #2ecc71;
-  --spacing: 16px;
-}
-
-/* 使用自定义属性 */
-.component {
-  color: var(--main-color);
-  background-color: var(--secondary-color);
-  margin: var(--spacing);
-}
-```
-
-#### 重要特性
-
-> **📝 特性说明**
->
-> - **级联继承**：自定义属性受 CSS 级联约束，从父级继承值
-> - **大小写敏感**：自定义属性名区分大小写
-> - **作用域**：可以在任何选择器中定义，具有作用域特性
 ### var() 函数
 
 `var()` 函数可以插入自定义属性（CSS 变量）的值，用来代替属性值。
+
+```css
+/* 定义变量：以 -- 开头 */
+:root {
+  --main-color: #3498db;
+  --spacing: 16px;
+}
+
+/* 使用变量：通过 var() 函数 */
+.component {
+  color: var(--main-color);
+  margin: var(--spacing);
+}
+```
 
 #### 语法
 
@@ -399,15 +334,15 @@ var(<custom-property-name>, <fallback-value>?)
   --header-color: pink;
 }
 
-.component .header {
+.header {
   background-color: var(--header-color, blue);    /* 使用 pink */
 }
 
-.component .content {
+.content {
   background-color: var(--content-color, black);  /* 使用 #b58df1 */
 }
 
-.component .footer {
+.footer {
   background-color: var(--footer-color, black);   /* 使用 black（回退值） */
 }
 </style>
@@ -425,9 +360,8 @@ var(<custom-property-name>, <fallback-value>?)
 
 > **⚠️ 使用限制**
 >
-> - **回退值逗号**：回退值允许包含逗号，如 `var(--foo, red, blue)` 将 `red, blue` 作为完整回退值
+> - **回退值逗号**：回退值允许包含逗号，如 `var(--foo, red, blue)` 会将 `red, blue` 作为完整回退值（在第一个逗号之后到函数结尾前的值都会被认为是回退值）
 > - **使用场景**：`var()` 函数只能作为属性值使用，不能用作属性名或选择器
-> - **嵌套使用**：支持在回退值中嵌套其他 `var()` 函数
 ### calc() 函数
 
 `calc()` 函数允许在声明 CSS 属性值时执行数学计算，使用表达式的结果作为最终值。
@@ -548,21 +482,6 @@ env(<environment-variable>, <fallback-value>?)
 | **作用域** | 全局生效 | 局部作用域 |
 | **用途** | 系统环境适配 | 样式变量管理 |
 
-## 使用原子类
+## 原子类
 
-> **🚧 开发中**
->
 > 原子类功能正在开发中，敬请期待后续版本支持。
-
----
-
-## 总结
-
-通过以上介绍，我们了解了 Mpx 在 React Native 平台上的样式处理机制：
-
-- ✅ **编译时优化**：自动转换和适配样式差异
-- ✅ **运行时支持**：处理动态样式和 CSS 函数
-- ✅ **跨平台一致性**：最大程度保持 Web/小程序的开发体验
-- ✅ **性能考虑**：合理的编译时和运行时处理分工
-
-在实际开发中，建议优先使用平台交集属性，合理利用框架提供的抹平能力，以获得最佳的开发体验和运行性能。
