@@ -1863,8 +1863,8 @@ try {
         const loaders = createData.loaders
 
         // 样式 loader 类型检测和条件编译 loader 插入的工具函数
-         const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader']
-         const STRIP_LOADER_PRIORITIES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader']
+         const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
+         const STRIP_LOADER_PRIORITIES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
 
          const detectStyleLoaderTypes = (loaders) => {
            const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
