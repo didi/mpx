@@ -127,7 +127,84 @@ const sidebar = {
                     items: [
                         {
                             text: "基础",
-                            items: []
+                            items: [
+                               { text: "base64ToArrayBuffer", link: "/guide/extend/API/base/base64ToArrayBuffer" },
+                               { text: "arrayBufferToBase64", link: "/guide/extend/API/base/arrayBufferToBase64" },
+                               {
+                                    text: "小程序",
+                                    items: [
+                                        {
+                                            text: "应用级事件",
+                                            items: [
+                                                { text: "onAppShow", link: "/guide/extend/API/base/app/app-event/onAppShow" },
+                                                { text: "onAppHide", link: "/guide/extend/API/base/app/app-event/onAppHide" },
+                                                { text: "offAppShow", link: "/guide/extend/API/base/app/app-event/offAppShow" },
+                                                { text: "offAppHide", link: "/guide/extend/API/base/app/app-event/offAppHide" },
+                                                { text: "onError", link: "/guide/extend/API/base/app/app-event/onError" },
+                                                { text: "offError", link: "/guide/extend/API/base/app/app-event/offError" },
+                                                { text: "onUnhandledRejection", link: "/guide/extend/API/base/app/app-event/onUnhandledRejection" },
+                                                { text: "offUnhandledRejection", link: "/guide/extend/API/base/app/app-event/offUnhandledRejection" },
+                                                { text: "onLazyLoadError", link: "/guide/extend/API/base/app/app-event/onLazyLoadError" },
+                                                { text: "offLazyLoadError", link: "/guide/extend/API/base/app/app-event/offLazyLoadError" }
+                                            ]
+                                        }
+                                    ]       
+                                }
+                            ]
+                        },
+                        {
+                            text: "界面",
+                            items: [
+                               {
+                                    text: "交互",
+                                    items: [
+                                        { text: "showActionSheet", link: "/guide/extend/API/interface/interactive/showActionSheet" }
+                                    ]
+                                },
+                                {
+                                    text: "动画",
+                                    items: [
+                                        { text: "createAnimation", link: "/guide/extend/API/interface/animation/createAnimation" }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            text: "画布",
+                            items: [
+                                { text: "canvasToTempFilePath", link: "/guide/extend/API/canvas/canvasToTempFilePath" },
+                                { text: "canvasGetImageData", link: "/guide/extend/API/canvas/canvasGetImageData" }
+                            ]
+                        },
+                        {
+                            text: "媒体",
+                            items: [
+                                {
+                                    text: "音频",
+                                    items: [
+                                        { text: "createInnerAudioContext", link: "/guide/extend/API/media/audio/createInnerAudioContext" }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            text: "设备",
+                            items: [
+                                {
+                                    text: "联系人",
+                                    items: [
+                                        { text: "addPhoneContact", link: "/guide/extend/API/device/contacts/addPhoneContact" }
+                                    ]
+                                },
+                                {
+                                    text: "蓝牙-低功耗中心设备",
+                                    items: [
+                                        { text: "closeBLEConnection", link: "/guide/extend/API/device/bluetooth-ble/closeBLEConnection" },
+                                        { text: "createBLEConnection", link: "/guide/extend/API/device/bluetooth-ble/createBLEConnection" },
+                                        { text: "onBLEConnectionStateChange", link: "/guide/extend/API/device/bluetooth-ble/onBLEConnectionStateChange" }
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },

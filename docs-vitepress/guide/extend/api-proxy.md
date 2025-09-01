@@ -2,6 +2,10 @@
 
 > MPX 生态提供的一套跨平台 API 转换机制，能够将不同端之间的 API 进行自动适配与转换，帮助开发者实现一套代码跨端运行。目前已支持微信转支付宝、微信转web、微信转RN
 
+> 在 MPX 框架中，已完成跨端适配的 API 均会在官方文档中提供详细说明。若您在文档中未找到某个 API 的相关介绍，说明该 API 尚未被框架正式适配。
+
+> 对于尚未适配的 API，您可参考对应平台（如微信、支付宝等）的官方文档，直接在业务代码中调用其原生接口。即使未被 MPX 适配，这类 API 仍支持挂载在 Mpx 实例上直接调用，不影响其正常使用。
+
 ## 使用
 
 ```js
@@ -84,33 +88,7 @@ mpx.getSystemInfo({
 ```
 
 ### whiteList 与 blackList
-精细控制 Promise 化行为：
-
-```js
-import mpx from '@mpxjs/core'
-import apiProxy from '@mpxjs/api-proxy'
-
-// 启用 Promise 风格
-mpx.use(apiProxy, {
-  usePromise: true,
-  custom: {
-    ali: { // 支付宝小程序下扩展自定义API
-      myCustomMethod() {
-        console.log('ali')
-      }
-    },
-    ios: { // RN下扩展自定义API
-      myCustomMethod() {
-        console.log('ios')
-      }
-    }
-  }
-})
-
-if (__mpx_mode__ === 'ali' || __mpx_mode__ === 'ios') {
-  mpx.myCustomMethod()
-}
-```
+当微信平台新增了某些 API，而 MPX 框架暂未及时适配时，您可以通过配置 whiteList 或 blackList 来明确指定这些 API 是否应被 Promise 化，从而避免因框架未及时更新而导致的调用异常或兼容性问题。
 
 ### custom
 为特定平台扩展自定义 API：
