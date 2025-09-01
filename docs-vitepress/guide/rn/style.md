@@ -381,11 +381,11 @@ calc(expression)
 | `+`、`-` | **两边必须有空格** | 加法和减法运算 |
 | `*`、`/` | **至少一边是数字** | 乘法和除法运算 |
 
-> **⚠️ 重要提醒**
+> **⚠️ 注意**
 >
 > - **乘法运算**：乘数中至少有一个必须是 `number`
 > - **除法运算**：除数（`/` 右边的数）必须是 `number`
-> - **空格要求**：`+` 和 `-` 运算符两边必须有空格
+> - **空格要求**：`+` 和 `-` 运算符两边必须有空格，* 和 / 这两个运算符前后不需要空格，但考虑到统一性，仍然推荐加上空格
 > - **单位支持**：所有能数值化的单位都支持 `calc()` 函数
 
 #### 使用示例
@@ -465,12 +465,6 @@ env(<environment-variable>, <fallback-value>?)
            env(safe-area-inset-right, 20px) 
            env(safe-area-inset-bottom, 20px) 
            env(safe-area-inset-left, 20px);
-}
-
-/* 与其他值组合 */
-.header {
-  height: calc(60px + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
 }
 ```
 
