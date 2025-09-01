@@ -1883,6 +1883,15 @@ try {
          }
 
          const insertStyleStripLoaders = (loaders, loaderTypes) => {
+           // 检查是否已经存在 stripLoader
+           const hasStripLoader = loaders.some(loader => {
+             const loaderPath = toPosix(loader.loader)
+             return loaderPath.includes('style-compiler/strip-conditional-loader')
+           })
+           if (hasStripLoader) {
+             return
+           }
+
            const targetIndex = STRIP_LOADER_PRIORITIES
              .map(type => loaderTypes.get(`node_modules/${type}`))
              .find(index => index !== -1)
@@ -1957,9 +1966,12 @@ try {
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
           const loaderTypes = detectStyleLoaderTypes(loaders)
+          insertStyleStripLoaders(loaders, loaderTypes)
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
+              // 输出 Web 替换 css-loader 为 Mpx 内置 wxss-loader
+              loader.loader = wxssLoaderPath
               cssLoaderIndex = index
             } else if (currentLoader.includes('node_modules/vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
               vueStyleLoaderIndex = index
@@ -1980,7 +1992,6 @@ try {
               })
             }
           }
-          insertStyleStripLoaders(loaders, loaderTypes)
         }
 
         createData.request = stringifyLoadersAndResource(loaders, createData.resource)
