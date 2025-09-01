@@ -1739,6 +1739,23 @@ class MpxWebpackPlugin {
               source.add('// inject pageconfigmap for screen\n' +
                 'var context = (function() { return this })() || Function("return this")();\n')
               source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`
+${globalObject}.__mpxClearAsyncChunkCache = ${globalObject}.__mpxClearAsyncChunkCache || function (ids) {
+  ids = JSON.stringify(ids)
+  var arr = ${globalObject}['${chunkLoadingGlobal}'] || []
+  for (var i = arr.length - 1; i >= 0; i--) {
+    if (JSON.stringify(arr[i][0]) === ids) {
+      arr.splice(i, 1)
+    }
+  }
+};\n`)
+              }
+            } else {
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`${globalObject}.__mpxClearAsyncChunkCache && ${globalObject}.__mpxClearAsyncChunkCache(${JSON.stringify(chunk.ids)});\n`)
+              }
             }
             source.add(originalSource)
             compilation.assets[chunkFile] = source
@@ -1838,6 +1855,7 @@ try {
 
         compilation.chunkGroups.forEach((chunkGroup) => {
           if (!chunkGroup.isInitial()) {
+            isReact(mpx.mode) && chunkGroup.chunks.forEach((chunk) => processChunk(chunk, false, []))
             return
           }
 
