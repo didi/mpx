@@ -1864,11 +1864,16 @@ try {
 
         // 样式 loader 类型检测和条件编译 loader 插入的工具函数
         const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
-        const STRIP_LOADER_PRIORITIES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
-
-        const detectStyleLoaderTypes = (loaders) => {
+        const injectStyleStripLoader = (loaders) => {
+          // 检查是否已经存在 stripLoader
+          const hasStripLoader = loaders.some(loader => {
+            const loaderPath = toPosix(loader.loader)
+            return loaderPath.includes('style-compiler/strip-conditional-loader')
+          })
+          if (hasStripLoader) {
+            return
+          }
           const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
-
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
             for (const [key] of loaderTypes) {
@@ -1878,21 +1883,7 @@ try {
               }
             }
           })
-
-          return loaderTypes
-        }
-
-        const insertStyleStripLoaders = (loaders, loaderTypes) => {
-          // 检查是否已经存在 stripLoader
-          const hasStripLoader = loaders.some(loader => {
-            const loaderPath = toPosix(loader.loader)
-            return loaderPath.includes('style-compiler/strip-conditional-loader')
-          })
-          if (hasStripLoader) {
-            return
-          }
-
-          const targetIndex = STRIP_LOADER_PRIORITIES
+          const targetIndex = STYLE_LOADER_TYPES
             .map(type => loaderTypes.get(`node_modules/${type}`))
             .find(index => index !== -1)
 
@@ -1900,13 +1891,11 @@ try {
             loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
           }
         }
-
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
           if (type === 'styles') {
-            const loaderTypes = detectStyleLoaderTypes(loaders)
-            insertStyleStripLoaders(loaders, loaderTypes)
+            injectStyleStripLoader(loaders)
           }
 
           switch (type) {
@@ -1965,13 +1954,10 @@ try {
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
-          const loaderTypes = detectStyleLoaderTypes(loaders)
-          insertStyleStripLoaders(loaders, loaderTypes)
+          injectStyleStripLoader(loaders)
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
-              // 输出 Web 替换 css-loader 为 Mpx 内置 wxss-loader
-              loader.loader = wxssLoaderPath
               cssLoaderIndex = index
             } else if (currentLoader.includes('node_modules/vue-loader/lib/loaders/stylePostLoader') && vueStyleLoaderIndex === -1) {
               vueStyleLoaderIndex = index
