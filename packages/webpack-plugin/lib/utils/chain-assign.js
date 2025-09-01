@@ -28,7 +28,7 @@
  * // 第一个处理器
  * // 第二个处理器
  */
-function chainAssign (target, source) {
+module.exports = function chainAssign (target, source) {
   for (const [key, value] of Object.entries(source)) {
     if (target[key]) {
       // 如果已存在同名方法，创建组合函数依次执行
@@ -45,5 +45,3 @@ function chainAssign (target, source) {
     }
   }
 }
-
-module.exports = chainAssign
