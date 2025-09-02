@@ -1,3 +1,31 @@
+# 组件使用与开发
+
+本节提供 Mpx RN 环境下的组件支持说明，详细列出了支持的基础组件及其可用属性、方法，以及自定义组件的相关配置。
+
+### 目录概览
+
+- #### 基础组件
+**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
+
+**媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas)
+
+**表单组件**：[input](#input) · [textarea](#textarea) · [button](#button) · [checkbox](#checkbox) · [checkbox-group](#checkbox-group) · [radio](#radio) · [radio-group](#radio-group) · [switch](#switch) · [picker](#picker) · [picker-view](#picker-view) · [picker-view-column](#picker-view-column) · [form](#form) · [label](#label)
+
+**基础组件**：[text](#text) · [icon](#icon) · [progress](#progress) · [navigator](#navigator) · [rich-text](#rich-text) · [cover-image](#cover-image)
+
+**其他组件**：[web-view](#web-view)
+
+- #### 自定义组件
+[组件属性配置](#组件属性配置) · [生命周期钩子](#生命周期钩子) · [实例属性和方法](#实例属性和方法)
+
+### 使用原则
+
+> **⚠️ 重要说明**
+>
+> - **支持范围**：仅支持文档中明确列出的组件和属性
+> - **平台特性**：某些属性和功能仅在 RN 环境下可用
+> - **性能考量**：按需开启高级功能，避免不必要的性能开销
+
 ## 基础组件
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
 

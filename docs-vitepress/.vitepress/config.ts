@@ -93,8 +93,8 @@ const sidebar = {
                     text:"基础能力", 
                     link: "/guide/rn/basic", 
                     items: [
-                        { text: "组件", link: "/guide/rn/component" },
-                        { text: "模版语法", link: "/guide/rn/template" },
+                        { text: "组件使用与开发", link: "/guide/rn/component" },
+                        { text: "模板语法与生命周期", link: "/guide/rn/template" },
                         { text: "跨端样式", link: "/guide/rn/style" },
                         { text: "应用能力", link: "/guide/rn/application-api" },
                     ],

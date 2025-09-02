@@ -1,6 +1,17 @@
-# 跨端样式定义
+# 跨端样式
 
-## 概述
+本节提供 Mpx RN 环境下的样式开发完整说明，涵盖样式语法、处理机制和属性支持。
+
+### 目录概览
+
+- **样式处理机制**：编译时和运行时的样式转换处理
+- **基础语法**：CSS 选择器、样式单位、色值格式的支持说明
+- **样式继承**：文本样式在 RN 环境下的继承规则和平台差异
+- **增强功能**：简写属性、CSS 函数（`var()`、`calc()`、`env()`）等 Mpx 增强支持
+- **属性参考**：详细的样式属性支持列表和使用说明
+
+
+### 平台差异背景
 
 RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系：
 
@@ -10,6 +21,7 @@ RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系：
 因此，在跨平台开发时：
 1. **优先使用交集属性**：尽量使用两边都支持的样式属性
 2. **框架抹平差异**：Mpx 内部对 RN 样式进行了部分抹平处理
+
 
 ## 样式处理机制
 
@@ -329,22 +341,22 @@ var(<custom-property-name>, <fallback-value>?)
 </template>
 
 <style>
-.component {
-  --content-color: #b58df1;
-  --header-color: pink;
-}
+  .component {
+    --content-color: #b58df1;
+    --header-color: pink;
+  }
 
 .header {
   background-color: var(--header-color, blue);    /* 使用 pink */
-}
+  }
 
 .content {
   background-color: var(--content-color, black);  /* 使用 #b58df1 */
-}
+  }
 
 .footer {
   background-color: var(--footer-color, black);   /* 使用 black（回退值） */
-}
+  }
 </style>
 ```
 
