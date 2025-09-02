@@ -389,9 +389,7 @@ const Slider = forwardRef<
       'activeColor',
       'backgroundColor',
       'block-size',
-      'block-color',
-      'bindchange',
-      'bindchanging'
+      'block-color'
     ],
     { layoutRef }
   )
