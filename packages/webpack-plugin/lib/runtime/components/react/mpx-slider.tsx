@@ -209,9 +209,10 @@ const Slider = forwardRef<
     }
 
     return Gesture.Pan()
+      .enabled(!disabled) // 通过手势启用状态控制是否可拖拽
       .onBegin(() => {
         'worklet'
-        if (disabled || trackWidth === 0) return
+        if (trackWidth === 0) return
         isDragging.value = true
         // 记录拖拽开始时的位置 - 使用当前的动画位置
         startDragPosition.value = thumbPosition.value
@@ -222,7 +223,7 @@ const Slider = forwardRef<
       })
       .onUpdate((event: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
-        if (disabled || trackWidth === 0) return
+        if (trackWidth === 0) return
 
         // 基于拖拽开始位置计算新位置
         const newX = startDragPosition.value + event.translationX
@@ -242,7 +243,6 @@ const Slider = forwardRef<
       })
       .onEnd((event: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
-        if (disabled) return
         isDragging.value = false
 
         // 基于拖拽开始位置计算最终位置
@@ -411,9 +411,13 @@ const Slider = forwardRef<
       createElement(Animated.View, {
         style: animatedProgressStyle
       }),
-      // 滑块容器 - 使用 Animated.View 和 GestureDetector
-      disabled
-        ? createElement(
+      // 滑块容器
+      createElement(
+        GestureDetector,
+        {
+          gesture: panGesture
+        },
+        createElement(
           Animated.View,
           {
             style: [animatedThumbStyle]
@@ -423,22 +427,7 @@ const Slider = forwardRef<
             style: thumbStyle
           })
         )
-        : createElement(
-          GestureDetector,
-          {
-            gesture: panGesture
-          },
-          createElement(
-            Animated.View,
-            {
-              style: [animatedThumbStyle]
-            },
-            // 滑块
-            createElement(View, {
-              style: thumbStyle
-            })
-          )
-        )
+      )
     )
   )
 
