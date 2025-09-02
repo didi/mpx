@@ -103,7 +103,6 @@ const Slider = forwardRef<
 
   // 如果没有提供 value，则使用 min 作为默认值
   const defaultValue = value !== undefined ? value : min
-  
   const nodeRef = useRef(null)
   const trackRef = useRef(null)
   const [currentValue, setCurrentValue] = useState(defaultValue)
@@ -280,7 +279,6 @@ const Slider = forwardRef<
 
   const progressWidth = getThumbPosition(currentValue)
   const thumbPosition = getThumbPosition(currentValue)
-  
   const progressStyle: ViewStyle = {
     height: '100%',
     backgroundColor: activeColor,
