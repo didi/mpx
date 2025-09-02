@@ -10,7 +10,7 @@
  * ✔ backgroundColor 背景条的颜色
  * ✔ block-size 滑块的大小
  * ✔ block-color 滑块的颜色
- * ✘ show-value 是否显示当前 value (不实现)
+ * ✘ show-value 是否显示当前 value
  * ✔ bindchange 完成一次拖动后触发的事件
  * ✔ bindchanging 拖动过程中触发的事件
  */
