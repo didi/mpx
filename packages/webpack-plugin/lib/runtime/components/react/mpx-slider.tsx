@@ -22,20 +22,20 @@ import {
   useState,
   createElement,
   ForwardedRef,
-  useContext
+  useContext,
+  useMemo
 } from 'react'
 import {
   View,
-  ViewStyle,
-  PanResponder,
-  PanResponderGestureState,
-  GestureResponderEvent
+  ViewStyle
 } from 'react-native'
+import { GestureDetector, Gesture, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
+import Animated, { useSharedValue, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
 import { warn } from '@mpxjs/utils'
 
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle, extendObject } from './utils'
+import { useLayout, useTransformStyle, extendObject, useRunOnJSCallback } from './utils'
 import Portal from './mpx-portal'
 import { FormContext, FormFieldValue } from './context'
 
@@ -107,11 +107,34 @@ const Slider = forwardRef<
   const trackRef = useRef(null)
   const [currentValue, setCurrentValue] = useState(defaultValue)
   const [trackWidth, setTrackWidth] = useState(0)
+  
+  const thumbPosition = useSharedValue(0)
+  const isDragging = useSharedValue(false)
+  const startDragPosition = useSharedValue(0) // 记录拖拽开始时的位置
+  const startDragValue = useSharedValue(0) // 记录拖拽开始时的值
 
   const changeHandler = bindchange || catchchange
   const changingHandler = bindchanging || catchchanging
 
   let formValuesMap: Map<string, FormFieldValue> | undefined
+
+  // 使用 useRunOnJSCallback 处理手势回调
+  const runOnJSCallbackRef = useRef({
+    triggerChangeEvent: (newValue: number) => {
+      if (changeHandler) {
+        changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: newValue } }, props))
+      }
+    },
+    triggerChangingEvent: (newValue: number) => {
+      if (changingHandler) {
+        changingHandler(getCustomEvent('changing', {}, { layoutRef, detail: { value: newValue } }, props))
+      }
+    },
+    updateCurrentValue: (newValue: number) => {
+      setCurrentValue(newValue)
+    }
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
   const formContext = useContext(FormContext)
 
@@ -163,20 +186,6 @@ const Slider = forwardRef<
     return min + steps * validStep
   }
 
-  // 触发 change 事件
-  const triggerChangeEvent = (newValue: number) => {
-    if (changeHandler) {
-      changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: newValue } }, props))
-    }
-  }
-
-  // 触发 changing 事件
-  const triggerChangingEvent = (newValue: number) => {
-    if (changingHandler) {
-      changingHandler(getCustomEvent('changing', {}, { layoutRef, detail: { value: newValue } }, props))
-    }
-  }
-
   // 计算滑块位置
   const getThumbPosition = (val: number): number => {
     if (trackWidth === 0) return 0
@@ -185,46 +194,107 @@ const Slider = forwardRef<
     return position
   }
 
-  // PanResponder 手势处理
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => !disabled,
-    onMoveShouldSetPanResponder: () => !disabled,
-    onPanResponderGrant: () => {
-      // 开始拖拽
-    },
-    onPanResponderMove: (event: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-      if (disabled || trackWidth === 0) return
-
-      // 计算新位置
-      const startPosition = getThumbPosition(currentValue)
-      const newX = startPosition + gestureState.dx
-      const clampedX = Math.max(0, Math.min(trackWidth, newX))
-
-      // 计算新值
-      const percentage = clampedX / trackWidth
-      const rawValue = min + percentage * (max - min)
-      const newValue = constrainValue(rawValue)
-
-      setCurrentValue(newValue)
-
-      // 触发 changing 事件
-      if (changingHandler) {
-        triggerChangingEvent(newValue)
-      }
-    },
-    onPanResponderRelease: () => {
-      // 触发 change 事件
-      if (changeHandler) {
-        triggerChangeEvent(currentValue)
-      }
+  // 手势处理
+  const panGesture = useMemo(() => {
+    const getThumbPositionWorklet = (val: number, trackW: number, minVal: number, maxVal: number): number => {
+      'worklet'
+      if (trackW === 0) return 0
+      const percentage = (val - minVal) / (maxVal - minVal)
+      return percentage * trackW
     }
-  })
+
+    const constrainValueWorklet = (val: number, minVal: number, maxVal: number, stepVal: number): number => {
+      'worklet'
+      const constrained = Math.max(minVal, Math.min(maxVal, val))
+      const steps = Math.round((constrained - minVal) / stepVal)
+      return minVal + steps * stepVal
+    }
+
+    return Gesture.Pan()
+      .onBegin(() => {
+        'worklet'
+        if (disabled || trackWidth === 0) return
+        isDragging.value = true
+        // 记录拖拽开始时的位置 - 使用当前的动画位置
+        startDragPosition.value = thumbPosition.value
+        // 根据当前位置反推值
+        const percentage = thumbPosition.value / trackWidth
+        const currentVal = min + percentage * (max - min)
+        startDragValue.value = constrainValueWorklet(currentVal, min, max, validStep)
+      })
+      .onUpdate((event: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        'worklet'
+        if (disabled || trackWidth === 0) return
+
+        // 基于拖拽开始位置计算新位置
+        const newX = startDragPosition.value + event.translationX
+        const clampedX = Math.max(0, Math.min(trackWidth, newX))
+
+        // 计算新值
+        const percentage = clampedX / trackWidth
+        const rawValue = min + percentage * (max - min)
+        const newValue = constrainValueWorklet(rawValue, min, max, validStep)
+
+        // 更新滑块位置 - 使用约束后的值对应的位置
+        const constrainedPosition = getThumbPositionWorklet(newValue, trackWidth, min, max)
+        thumbPosition.value = constrainedPosition
+
+        // 只触发 changing 事件，不更新 currentValue（避免干扰拖拽）
+        runOnJS(runOnJSCallback)('triggerChangingEvent', newValue)
+      })
+      .onEnd((event: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        'worklet'
+        if (disabled) return
+        isDragging.value = false
+        
+        // 基于拖拽开始位置计算最终位置
+        const newX = startDragPosition.value + event.translationX
+        const clampedX = Math.max(0, Math.min(trackWidth, newX))
+        const percentage = clampedX / trackWidth
+        const rawValue = min + percentage * (max - min)
+        const finalValue = constrainValueWorklet(rawValue, min, max, validStep)
+        
+        // 确保滑块位置与最终值匹配
+        const finalPosition = getThumbPositionWorklet(finalValue, trackWidth, min, max)
+        thumbPosition.value = finalPosition
+        
+        // 更新 currentValue 并触发 change 事件
+        runOnJS(runOnJSCallback)('updateCurrentValue', finalValue)
+        runOnJS(runOnJSCallback)('triggerChangeEvent', finalValue)
+      })
+      .runOnJS(true)
+  }, [disabled, trackWidth, min, max, validStep])
 
   // 当 value 属性变化时更新位置
   useEffect(() => {
     const newValue = constrainValue(defaultValue)
     setCurrentValue(newValue)
+    // 同时更新动画位置
+    thumbPosition.value = getThumbPosition(newValue)
   }, [defaultValue, min, max, validStep])
+
+  // 当 trackWidth 变化时更新滑块位置
+  useEffect(() => {
+    // 只在非拖拽状态下更新位置
+    if (!isDragging.value) {
+      thumbPosition.value = getThumbPosition(currentValue)
+    }
+  }, [trackWidth, currentValue])
+
+  // 动画样式
+  const animatedThumbStyle = useAnimatedStyle(() => {
+    const blockSizeNum = Math.max(12, Math.min(28, blockSize))
+    const trackHeight = 4
+    return {
+      position: 'absolute',
+      top: -((blockSizeNum - trackHeight) / 2),
+      left: Math.max(0, Math.min(trackWidth - blockSizeNum, thumbPosition.value - (blockSizeNum / 2))),
+      width: blockSizeNum,
+      height: blockSizeNum,
+      justifyContent: 'center',
+      alignItems: 'center'
+    }
+  })
 
   // 轨道布局回调
   const onTrackLayout = (event: any) => {
@@ -277,24 +347,15 @@ const Slider = forwardRef<
     position: 'relative'
   }
 
-  const progressWidth = getThumbPosition(currentValue)
-  const thumbPosition = getThumbPosition(currentValue)
-  const progressStyle: ViewStyle = {
-    height: '100%',
-    backgroundColor: activeColor,
-    borderRadius: trackHeight / 2,
-    width: Math.max(0, progressWidth)
-  }
-
-  const thumbContainerStyle: ViewStyle = {
-    position: 'absolute',
-    top: -((blockSizeNum - trackHeight) / 2),
-    left: Math.max(0, Math.min(trackWidth - blockSizeNum, thumbPosition - (blockSizeNum / 2))),
-    width: blockSizeNum,
-    height: blockSizeNum,
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
+  // 动画进度条样式
+  const animatedProgressStyle = useAnimatedStyle(() => {
+    return {
+      height: '100%',
+      backgroundColor: activeColor,
+      borderRadius: trackHeight / 2,
+      width: Math.max(0, thumbPosition.value)
+    }
+  })
 
   const thumbStyle: ViewStyle = {
     width: blockSizeNum,
@@ -341,22 +402,38 @@ const Slider = forwardRef<
         onLayout: onTrackLayout,
         ref: trackRef
       },
-      // 进度条
-      createElement(View, {
-        style: progressStyle
+      // 进度条 - 使用动画样式
+      createElement(Animated.View, {
+        style: animatedProgressStyle
       }),
-      // 滑块容器
-      createElement(
-        View,
-        {
-          style: thumbContainerStyle,
-          ...(disabled ? {} : panResponder.panHandlers)
-        },
-        // 滑块
-        createElement(View, {
-          style: thumbStyle
-        })
-      )
+      // 滑块容器 - 使用 Animated.View 和 GestureDetector
+      disabled ? 
+        createElement(
+          Animated.View,
+          {
+            style: [animatedThumbStyle]
+          },
+          // 滑块
+          createElement(View, {
+            style: thumbStyle
+          })
+        ) :
+        createElement(
+          GestureDetector,
+          {
+            gesture: panGesture
+          },
+          createElement(
+            Animated.View,
+            {
+              style: [animatedThumbStyle]
+            },
+            // 滑块
+            createElement(View, {
+              style: thumbStyle
+            })
+          )
+        )
     )
   )
 
