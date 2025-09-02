@@ -266,7 +266,7 @@ const Slider = forwardRef<
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     minHeight: Math.max(blockSizeNum + 8, 40),
-    paddingHorizontal: blockSizeNum / 2
+    paddingHorizontal: 14 // 固定内边距，不受 block-size 影响
   }, normalStyle, layoutStyle)
 
   const trackStyle: ViewStyle = {
@@ -289,7 +289,7 @@ const Slider = forwardRef<
   const thumbContainerStyle: ViewStyle = {
     position: 'absolute',
     top: -((blockSizeNum - trackHeight) / 2),
-    left: thumbPosition - (blockSizeNum / 2),
+    left: Math.max(0, Math.min(trackWidth - blockSizeNum, thumbPosition - (blockSizeNum / 2))),
     width: blockSizeNum,
     height: blockSizeNum,
     justifyContent: 'center',
