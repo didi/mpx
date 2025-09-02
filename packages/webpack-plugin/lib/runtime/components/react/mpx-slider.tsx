@@ -82,10 +82,6 @@ const Slider = forwardRef<
     'block-size': rawBlockSize = 28,
     'block-color': blockColor = '#ffffff',
     name,
-    bindchange,
-    catchchange,
-    bindchanging,
-    catchchanging,
     style = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -113,28 +109,10 @@ const Slider = forwardRef<
   const startDragPosition = useSharedValue(0) // 记录拖拽开始时的位置
   const startDragValue = useSharedValue(0) // 记录拖拽开始时的值
 
-  const changeHandler = bindchange || catchchange
-  const changingHandler = bindchanging || catchchanging
-
   let formValuesMap: Map<string, FormFieldValue> | undefined
 
-  // 使用 useRunOnJSCallback 处理手势回调
-  const runOnJSCallbackRef = useRef({
-    triggerChangeEvent: (newValue: number) => {
-      if (changeHandler) {
-        changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: newValue } }, props))
-      }
-    },
-    triggerChangingEvent: (newValue: number) => {
-      if (changingHandler) {
-        changingHandler(getCustomEvent('changing', {}, { layoutRef, detail: { value: newValue } }, props))
-      }
-    },
-    updateCurrentValue: (newValue: number) => {
-      setCurrentValue(newValue)
-    }
-  })
-  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+  const propsRef = useRef(props)
+  propsRef.current = props
 
   const formContext = useContext(FormContext)
 
@@ -168,6 +146,26 @@ const Slider = forwardRef<
     style: normalStyle
   })
 
+  // 使用 useRunOnJSCallback 处理手势回调
+  const runOnJSCallbackRef = useRef({
+    triggerChangeEvent: (newValue: number) => {
+      setCurrentValue(newValue)
+      const currentProps = propsRef.current
+      const changeHandler = currentProps.bindchange || currentProps.catchchange
+      if (changeHandler) {
+        changeHandler(getCustomEvent('change', {}, { layoutRef, detail: { value: newValue } }, currentProps))
+      }
+    },
+    triggerChangingEvent: (newValue: number) => {
+      const currentProps = propsRef.current
+      const changingHandler = currentProps.bindchanging || currentProps.catchchanging
+      if (changingHandler) {
+        changingHandler(getCustomEvent('changing', {}, { layoutRef, detail: { value: newValue } }, currentProps))
+      }
+    }
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+
   // 限制步长，确保 step 大于 0，并且可被 (max - min) 整除
   const validateStep = (step: number, min: number, max: number): number => {
     if (step <= 0) return 1
@@ -180,17 +178,17 @@ const Slider = forwardRef<
   const validStep = validateStep(step, min, max)
 
   // 将值约束在 min-max 范围内，并按步长对齐
-  const constrainValue = (val: number): number => {
-    const constrained = Math.max(min, Math.min(max, val))
-    const steps = Math.round((constrained - min) / validStep)
-    return min + steps * validStep
+  const constrainValue = (val: number, minVal: number = min, maxVal: number = max, stepVal: number = validStep): number => {
+    const constrained = Math.max(minVal, Math.min(maxVal, val))
+    const steps = Math.round((constrained - minVal) / stepVal)
+    return minVal + steps * stepVal
   }
 
   // 计算滑块位置
-  const getThumbPosition = (val: number): number => {
-    if (trackWidth === 0) return 0
-    const percentage = (val - min) / (max - min)
-    const position = percentage * trackWidth
+  const getThumbPosition = (val: number, trackW: number = trackWidth, minVal: number = min, maxVal: number = max): number => {
+    if (trackW === 0) return 0
+    const percentage = (val - minVal) / (maxVal - minVal)
+    const position = percentage * trackW
     return position
   }
 
@@ -259,11 +257,9 @@ const Slider = forwardRef<
         thumbPosition.value = finalPosition
 
         // 更新 currentValue 并触发 change 事件
-        runOnJS(runOnJSCallback)('updateCurrentValue', finalValue)
         runOnJS(runOnJSCallback)('triggerChangeEvent', finalValue)
       })
-      .runOnJS(true)
-  }, [disabled, trackWidth, min, max, validStep])
+  }, [disabled, trackWidth, min, max, validStep, runOnJSCallback])
 
   // 当 value 属性变化时更新位置
   useEffect(() => {
@@ -304,8 +300,17 @@ const Slider = forwardRef<
 
   // 表单相关处理
   const resetValue = () => {
-    const resetVal = value !== undefined ? value : min
-    setCurrentValue(constrainValue(resetVal))
+    const currentProps = propsRef.current
+    const currentValue = currentProps.value !== undefined ? currentProps.value : currentProps.min || 0
+    const parsedValue = typeof currentValue === 'string' ? parseFloat(currentValue) : currentValue
+    const currentMin = typeof currentProps.min === 'string' ? parseFloat(currentProps.min) : (currentProps.min || 0)
+    const currentMax = typeof currentProps.max === 'string' ? parseFloat(currentProps.max) : (currentProps.max || 100)
+    const currentStep = typeof currentProps.step === 'string' ? parseFloat(currentProps.step) : (currentProps.step || 1)
+    const resetVal = parsedValue !== undefined ? parsedValue : currentMin
+    const validatedStep = validateStep(currentStep, currentMin, currentMax)
+    const constrainedVal = constrainValue(resetVal, currentMin, currentMax, validatedStep)
+    setCurrentValue(constrainedVal)
+    thumbPosition.value = getThumbPosition(constrainedVal, trackWidth, currentMin, currentMax)
   }
 
   const getValue = () => {
