@@ -54,3 +54,31 @@ jobs:
 
       - name: exec unit test
         run: npm t && npm t --prefix test/e2e/miniprogram-project && npm t --prefix test/e2e/plugin-project
+
+  react-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Cache node modules
+        id: cache-react
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules-react
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            packages/webpack-plugin/node_modules
+          key: ${{ runner.os }}-react-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-react-${{ env.cache-name }}-
+            ${{ runner.os }}-react-
+            ${{ runner.os }}-
+
+      - name: install dependencies
+        if: steps.cache-react.outputs.cache-hit != 'true'
+        run: npm i && npm i --prefix packages/webpack-plugin
+
+      - name: exec react test
+        run: npm run test:react --prefix packages/webpack-plugin
