@@ -130,4 +130,24 @@ describe('cross-platform syntax warning', function () {
       expect.stringContaining('Your src mode is "tt", but used "qa:key". Did you mean "tt:key"?')
     )
   })
+
+  it('should not warn for React Native platforms (android/ios/harmony) and noMode', function () {
+    const input = '<view wx:class="{{someClass}}" a:if="{{condition}}">content</view>'
+    
+    // Test android
+    compileTemplate(input, { srcMode: 'android' })
+    expect(warnFn).not.toHaveBeenCalled()
+
+    // Test ios
+    compileTemplate(input, { srcMode: 'ios' })
+    expect(warnFn).not.toHaveBeenCalled()
+
+    // Test harmony
+    compileTemplate(input, { srcMode: 'harmony' })
+    expect(warnFn).not.toHaveBeenCalled()
+
+    // Test noMode
+    compileTemplate(input, { srcMode: 'noMode' })
+    expect(warnFn).not.toHaveBeenCalled()
+  })
 })

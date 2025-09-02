@@ -2719,6 +2719,15 @@ function processCrossPlatformSyntaxWarning (el, options) {
     return
   }
 
+  // 获取当前源模式
+  const currentSrcMode = srcMode
+  
+  // 不需要检测小程序平台语法的模式：React Native 平台和 noMode
+  const excludedModes = ['android', 'ios', 'harmony', 'noMode']
+  if (excludedModes.includes(currentSrcMode)) {
+    return
+  }
+
   // 定义平台与前缀的双向映射关系
   const platformPrefixMap = {
     'wx': 'wx:',
@@ -2731,8 +2740,7 @@ function processCrossPlatformSyntaxWarning (el, options) {
     'qa': 'qa:'
   }
 
-  // 获取当前源模式和对应前缀
-  const currentSrcMode = srcMode
+  // 获取对应前缀
   const currentPrefix = platformPrefixMap[currentSrcMode] || 'wx:'
 
   // 检查每个属性
