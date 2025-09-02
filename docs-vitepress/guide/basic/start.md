@@ -89,6 +89,7 @@ mpx-cli-service build --targets=wx,ali
 | QQ  | qq      |
 | 头条  | tt      |
 | 浏览器 | web     |
+| 快应用 | qa     |
 | 安卓  | android |
 | iOS | ios     |
 | 鸿蒙  | harmony |
