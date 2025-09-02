@@ -643,7 +643,7 @@ flex-direction: row-reverse;  /* 水平反向排列 */
 
 **值类型**：`nowrap` | `wrap` | `wrap-reverse`
 
-> **⚠️ 注意**：当 `flex-wrap: wrap` 时，`align-items: center` 可能不生效
+> **⚠️ 注意**：当 `flex-wrap: wrap` 时，`align-items: center` 不生效
 
 ```css
 flex-wrap: nowrap; /* 不换行（默认） */
@@ -679,12 +679,15 @@ flex-shrink: 1; /* 允许收缩 */
 
 **值类型**：`auto` | `number`，支持[所有数值单位](#数值类型单位)
 
-> **⚠️ 优先级**：`flex-basis` 优先级高于 `width/height`
+> **⚠️ 优先级规则**：
+> - `flex-direction: row` 时，`flex-basis` 覆盖 `width`
+> - `flex-direction: column` 时，`flex-basis` 覆盖 `height`
+> - `flex-basis: auto` 时，使用 `width/height` 值
 
 ```css
-flex-basis: auto; /* 根据内容决定（默认） */
-flex-basis: 100px; /* 固定初始大小 */
-flex-basis: 50%;   /* 百分比大小 */
+flex-basis: auto; /* 使用 width/height 值（默认） */
+flex-basis: 100px; /* 主轴方向固定为 100px */
+flex-basis: 50%;   /* 主轴方向占父容器 50% */
 ```
 
 ### flex
@@ -765,11 +768,13 @@ aspect-ratio: auto;    /* 自动比例 */
 
 **值类型**：`auto` | `number`，支持[所有数值单位](#数值类型单位)
 
+> **💡 Mpx 增强**：RN 原生仅支持单值 `margin`，可设置多值是由框架按简写逻辑在编译时处理的，多值语法仅在 class 类中支持
+
 ```css
-margin: 10px;               /* 四边相同 */
-margin: 10px 20px;          /* 上下 | 左右 */
-margin: 10px 20px 15px;     /* 上 | 左右 | 下 */
-margin: 10px 20px 15px 5px; /* 上 | 右 | 下 | 左 */
+margin: 10px;               /* 四边相同（RN 原生支持） */
+margin: 10px 20px;          /* 上下 | 左右（Mpx 增强） */
+margin: 10px 20px 15px;     /* 上 | 左右 | 下（Mpx 增强） */
+margin: 10px 20px 15px 5px; /* 上 | 右 | 下 | 左（Mpx 增强） */
 ```
 
 ### margin-top / margin-right / margin-bottom / margin-left
@@ -789,11 +794,13 @@ margin-left: auto;   /* 左边距自动 */
 
 **值类型**：`number`，支持[所有数值单位](#数值类型单位)
 
+> **💡 Mpx 增强**：RN 原生仅支持单值 `padding`，可设置多值是由框架按简写逻辑在编译时处理的，多值语法仅在 class 类中支持
+
 ```css
-padding: 10px;               /* 四边相同 */
-padding: 10px 20px;          /* 上下 | 左右 */
-padding: 10px 20px 15px;     /* 上 | 左右 | 下 */
-padding: 10px 20px 15px 5px; /* 上 | 右 | 下 | 左 */
+padding: 10px;               /* 四边相同（RN 原生支持） */
+padding: 10px 20px;          /* 上下 | 左右（Mpx 增强） */
+padding: 10px 20px 15px;     /* 上 | 左右 | 下（Mpx 增强） */
+padding: 10px 20px 15px 5px; /* 上 | 右 | 下 | 左（Mpx 增强） */
 ```
 
 ### padding-top / padding-right / padding-bottom / padding-left
@@ -811,18 +818,22 @@ padding-left: 20px;   /* 左内边距 */
 
 边框的简写属性。
 
-**值类型**：`<border-width>` | `<border-style>` | `<border-color>`
+**值类型**：`<border-width>` `<border-style>` `<border-color>`
+
+> **💡 Mpx 增强**：值按固定顺序分别赋值给 `border-width` `border-style` `border-color`，若值个数不够则后置位属性不设置；和所有简写属性一致，仅支持定义在 class 类上
 
 ```css
-border: 1px solid red;    /* 宽度 | 样式 | 颜色 */
-border: 2px dotted;       /* 宽度 | 样式 */
-border: 1px;              /* 仅宽度 */
+border: 1px solid red;    /* 宽度 样式 颜色 */
+border: 2px dotted;       /* 宽度 样式（颜色不设置） */
+border: 1px;              /* 宽度（样式和颜色不设置） */
 ```
 
 ### border-width
 
 设置边框宽度。
 
+> **💡 Mpx 增强**：RN 原生仅支持设置单值，可设置多值是由框架按简写逻辑在编译时处理的，多值语法仅在 class 类中支持
+> 
 **值类型**：`number`，支持[所有数值单位](#数值类型单位)
 
 ```css
@@ -835,6 +846,8 @@ border-width: 1px 2px 3px 4px;    /* 上 | 右 | 下 | 左 */
 
 设置边框颜色。
 
+> **💡 Mpx 增强**：RN 原生仅支持设置单值，可设置多值是由框架按简写逻辑在编译时处理的，多值语法仅在 class 类中支持
+>
 **值类型**：`color`，参考[色值类型支持](#色值类型支持)
 
 ```css
@@ -849,7 +862,7 @@ border-color: red blue green;   /* 上 | 左右 | 下 */
 
 **值类型**：`solid` | `dotted` | `dashed`
 
-> **⚠️ 限制**：RN 不支持单独设置各边的样式，只能整体设置
+> **⚠️ 注意**：RN 不支持单独设置各边的样式，只能整体设置，所以 RN 上 border-style 不支持简写形式
 
 ```css
 border-style: solid;  /* 实线 */
@@ -860,6 +873,8 @@ border-style: dashed; /* 虚线 */
 ### border-radius
 
 设置圆角半径。
+> **💡 Mpx 增强**：RN 原生仅支持设置单值，可设置多值是由框架按简写逻辑在编译时处理的，多值语法仅在 class 类中支持
+>
 
 **值类型**：`number`，支持[所有数值单位](#数值类型单位)
 
@@ -869,24 +884,39 @@ border-radius: 5px 10px;      /* 对角线 */
 border-radius: 5px 10px 15px 20px; /* 左上 | 右上 | 右下 | 左下 */
 ```
 
+### border-top-left-radius / border-top-right-radius / border-bottom-left-radius / border-bottom-right-radius
+
+设置单个角的圆角大小。
+
+**值类型**：`number`，支持[所有数值单位](#数值类型单位)
+
+```css
+border-top-left-radius: 5px;     /* 左上角 */
+border-top-right-radius: 10px;   /* 右上角 */
+border-bottom-left-radius: 2px;  /* 左下角 */
+border-bottom-right-radius: 8px; /* 右下角 */
+```
+
 ### border-top / border-right / border-bottom / border-left
 
 单边边框的简写属性。
 
-**值类型**：`<border-width>` | `<border-style>` | `<border-color>`
+**值类型**：`<border-width>` `<border-style>` `<border-color>`
+
+> **💡 Mpx 增强**：值按固定顺序分别赋值，若值个数不够则后置位属性不设置；仅支持定义在 class 类上
 
 ```css
-border-top: 1px solid red;    /* 上边框 */
-border-left: 2px dotted blue; /* 左边框 */
+border-top: 1px solid red;    /* 上边框：宽度 样式 颜色 */
+border-left: 2px dotted blue; /* 左边框：宽度 样式 颜色 */
 ```
 
 ### background
 
 背景的简写属性。
 
-**值类型**：`<background-image>` | `<background-color>` | `<background-size>` | `<background-repeat>` | `<background-position>`
+**值类型**：`<background-image>` | `<background-color>` | `<background-size>` | `<background-repeat>` | `<background-position>`，具体每个属性的支持情况详见各属性的介绍文档
 
-> **⚠️ 限制**：仅支持 `view` 元素
+> **⚠️ 注意**：仅 `view` 组件支持
 
 ```css
 background: url("image.jpg") no-repeat center;
@@ -912,10 +942,10 @@ background-color: rgba(255, 0, 0, 0.5);
 
 **值类型**：`url()` | `linear-gradient()`
 
-> **⚠️ 渐变限制**
+> **⚠️ 注意**
 >
-> - 不支持 `turn`、`px` 单位，仅支持百分比
-> - 需要通过 `enable-background` 属性开启支持
+> - 背景图和背景色仅 `view` 组件支持，且需要通过 `enable-background` 属性开启支持
+> - 渐变不支持 `turn`、`px` 单位，仅支持百分比
 
 ```css
 background-image: url("https://example.com/image.jpg");
@@ -926,6 +956,9 @@ background-image: linear-gradient(to right, blue 0%, red 100%);
 ### background-size
 
 设置背景图片大小。
+> **⚠️ 注意**
+> - 仅 `view` 组件支持
+> - 支持一个值，这个值指定图片的宽度，图片的高度隐式的为 auto；支持两个值，第一个值指定图片的宽度，第二个值指定图片的高度；不支持逗号分隔的多个值
 
 **值类型**：`cover` | `contain` | `auto` | `number`
 
@@ -941,15 +974,19 @@ background-size: 50% 25%;  /* 宽度 高度 */
 
 **值类型**：`no-repeat`
 
-> **⚠️ 限制**：RN 仅支持 `no-repeat`
+> **⚠️ 注意**：仅 `view` 组件支持
 
 ```css
 background-repeat: no-repeat;
+
+/* 不支持 */
+background-repeat: repeat;
 ```
 
 ### background-position
 
 设置背景图片位置。
+> **⚠️ 注意**：仅 `view` 组件支持
 
 **值类型**：`center` | `left` | `right` | `top` | `bottom` | `number`
 
@@ -957,24 +994,46 @@ background-repeat: no-repeat;
 background-position: center;      /* 居中 */
 background-position: 10px 20px;   /* x y 坐标 */
 background-position: right 10px bottom 10px; /* 右下角偏移 */
+
+/* 不支持 */
+background-position: 1cm 2cm;
+background-position: 10ch 8em;
+background-position: right 3em bottom 10px;
 ```
 
 ### box-shadow
 
-设置盒阴影。
+设置阴影颜色、阴影偏移量、阴影模糊半径。
 
-**值类型**：`<offset-x> <offset-y> <blur-radius> <color>`
+**值类型**：`<offset-x> <offset-y> <blur-radius> <spread-radius> <color>`
 
-> **⚠️ 平台差异**
+> **💡 Mpx 增强**：RN 旧版本不支持 `box-shadow` 属性，Mpx 按 RN 支持的 `shadowOffset`、`shadowRadius`、`shadowColor` 属性转换
 >
-> - iOS：支持 `shadowOffset`、`shadowRadius`、`shadowColor`
-> - Android：仅支持 `shadowColor`
-> - 与 `overflow: hidden` 同时使用时可能不显示
+> **简写规则**：
+> - 按 `offset-x` `offset-y` `blur-radius` `spread-radius` `color` 顺序赋值
+> - 不支持的属性会被忽略，值校验不合法时跳过该值继续校验下一个
+> - 在设置 box-shadow 有效值的情况下，iOS 下会自动添加 `shadowOpacity: 1` 来展示阴影
+
+**值类型详细说明**：
+- `offset-x` / `offset-y` / `blur-radius`：`number`，支持[所有数值单位](#数值类型单位)
+- `color`：`color`，参考[色值类型支持](#色值类型支持)
 
 ```css
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);    /* x y 模糊 颜色 */
-box-shadow: 2px 2px 8px 1px rgba(0, 0, 0, 0.3); /* 扩散半径会被忽略 */
+/* offset-x | offset-y | blur-radius | color */
+box-shadow: 0 1px 3px rgba(139, 0, 0, 0.32);
+
+/* offset-x | offset-y | blur-radius | spread-radius | color */
+/* spread-radius 不支持，1px 会被忽略 */
+box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
 ```
+
+> **⚠️ 平台差异与限制**
+>
+> - **Android**：仅支持 `shadowColor`，所以框架在 android 模式下不会添加 shadowOffset/shadowRadius
+> - **iOS**：支持 `shadowOffset` / `shadowRadius` / `shadowColor` / `shadowOpacity`
+> - **均不支持**：`spread-radius`（阴影扩散半径）
+> - **布局限制**：与 `overflow: hidden` 同时使用时，RN 无法正常展示阴影，需单独新增节点
+> - **RN 0.76+**：新架构支持原生 `boxShadow` 属性
 
 ### color
 
@@ -992,14 +1051,15 @@ color: rgba(255, 0, 0, 0.8);
 
 ### font-family
 
-设置字体族。
+设置字体。
 
 **值类型**：`string`
 
-> **⚠️ 限制**
+> **⚠️ 注意**
 >
 > - 仅支持设置单一字体
 > - 不支持字体文件引入
+> - 遵循[文本样式继承规则](#文本样式继承)
 
 ```css
 font-family: PingFangSC-Regular;
@@ -1011,12 +1071,15 @@ font-family: PingFangSC-Regular;
 
 **值类型**：`number`，支持[所有数值单位](#数值类型单位)
 
-> **💡 百分比计算**：需要设置 `parent-font-size` 属性
+> **⚠️ 注意**
+>
+> - 遵循[文本样式继承规则](#继承规则)
+> - 百分比计算规则详见[百分比计算规则](#百分比计算规则)
 
 ```css
 font-size: 16px;
 font-size: 1.2rem;
-font-size: 120%; /* 需要 parent-font-size */
+font-size: 120%; /* 需要 parent-font-size 属性 */
 ```
 
 ### font-weight
@@ -1025,7 +1088,11 @@ font-size: 120%; /* 需要 parent-font-size */
 
 **值类型**：`normal` | `bold` | `100` | `200` | `300` | `400` | `500` | `600` | `700` | `800` | `900`
 
-> **⚠️ 注意**：数值类型在 RN 中是字符串，非数值可能导致异常
+> **⚠️ 注意**
+> - 遵循[文本样式继承规则](#继承规则)
+> - 若在自定义字体图标上加 `font-weight`，可能会导致在某些安卓机型上不展示图标或者图标展示异常
+> - 100，200，300，400，500，600，800，900 在 RN 上是字符串类型而非数值类型，非字符串类型可能会导致某些安卓机型异常
+
 
 ```css
 font-weight: normal; /* 400 */
@@ -1050,7 +1117,10 @@ font-style: italic;
 
 **值类型**：`number`，支持[所有数值单位](#数值类型单位)
 
-> **💡 百分比/倍数**：基于 `font-size` 计算
+> **⚠️ 注意**
+>
+> - 遵循[文本样式继承规则](#继承规则)
+> - 百分比计算规则详见[百分比计算规则](#百分比计算规则)
 
 ```css
 line-height: 20px;   /* 固定行高 */
@@ -1062,6 +1132,8 @@ line-height: 150%;   /* 百分比 */
 
 设置文本对齐方式。
 
+> **⚠️ 注意**：遵循[文本样式继承规则](#继承规则)
+
 **值类型**：`left` | `right` | `center` | `justify`
 
 ```css
@@ -1072,11 +1144,13 @@ text-align: justify; /* 两端对齐 */
 
 ### vertical-align
 
-设置行内文本的垂直对齐方式（仅 Android）。
+设置行内文本的垂直对齐方式。
 
 **值类型**：`auto` | `top` | `bottom` | `middle`
 
-> **⚠️ 平台限制**：仅 Android 支持
+> **⚠️ 注意**
+> - 遵循[文本样式继承规则](#继承规则)
+> - 仅 Android 支持
 
 ```css
 vertical-align: middle; /* 垂直居中 */
@@ -1087,9 +1161,14 @@ vertical-align: top;    /* 顶部对齐 */
 
 文本装饰线的简写属性。
 
-**值类型**：`<text-decoration-line>` | `<text-decoration-style>` | `<text-decoration-color>`
+**值类型**：`<text-decoration-line>` `<text-decoration-style>` `<text-decoration-color>`
 
-> **⚠️ 平台差异**：`style` 和 `color` 仅 iOS 支持
+> **⚠️ 注意**
+> - 按 `<text-decoration-line>`、`<text-decoration-style>`、`<text-decoration-color>` 顺序赋值
+> - 赋值过程中，如遇到不支持的属性会忽略该属性；若属性值校验不合法，则忽略该值，继续校验下一个值是否合法，合法则赋值，不合法则继续校验下一个值
+> - RN 原生不支持 `text-decoration` 简写，可使用是由框架编译时处理，所以仅支持定义在 class 类上
+> - android 下仅转换`<text-decoration-line>`，`<text-decoration-style>`/`<text-decoration-color>` 因不支持不会添加
+> - 遵循[文本样式继承规则](#继承规则)
 
 ```css
 text-decoration: underline;           /* 下划线 */
@@ -1101,38 +1180,60 @@ text-decoration: underline dotted red; /* 样式 + 颜色（iOS） */
 
 设置文本大小写转换。
 
+> **⚠️ 注意**： 遵循[文本样式继承规则](#继承规则)
+
 **值类型**：`none` | `uppercase` | `lowercase` | `capitalize`
 
 ```css
 text-transform: uppercase;  /* 大写 */
 text-transform: lowercase;  /* 小写 */
 text-transform: capitalize; /* 首字母大写 */
+
+/** 不支持 **/
+text-transform: full-width;
+text-transform: full-size-kana;
+text-transform: math-auto;
 ```
 
 ### letter-spacing
 
 设置字符间距。
+> **⚠️ 注意**： 遵循[文本样式继承规则](#继承规则)
 
 **值类型**：`number`，支持[所有数值单位](#数值类型单位)
 
 ```css
 letter-spacing: 2px;   /* 字符间距 2px */
-letter-spacing: 0.1em; /* 相对间距 */
+letter-spacing: 2rpx; /* 字符间距 2rpx */
 ```
 
 ### text-shadow
 
-设置文本阴影。
+设置文本阴影偏移量、模糊半径和颜色。
 
 **值类型**：`<offset-x> <offset-y> <blur-radius> <color>`
 
+> **💡 Mpx 增强**：RN 不支持 `text-shadow` 属性，Mpx 按 RN 支持的 `textShadowOffset`、`textShadowRadius`、`textShadowColor` 属性转换
+>
+> **简写规则**：
+> - 按 `offset-x` `offset-y` `blur-radius` `color` 顺序赋值
+> - 不支持的属性会被忽略，值校验不合法时跳过该值继续校验下一个
+> - 遵循[文本样式继承规则](#继承规则)
+
+**值类型详细说明**：
+- `offset-x` / `offset-y` / `blur-radius`：`number`，支持[所有数值单位](#数值类型单位)
+- `color`：`color`，参考[色值类型支持](#色值类型支持)
+
 ```css
-text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* x y 模糊 颜色 */
-text-shadow: 2px 2px #000;                    /* x y 颜色 */
+/* offset-x | offset-y | blur-radius | color */
+text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
+/* offset-x | offset-y | color（省略模糊半径） */
+text-shadow: 2px 2px #000;
 ```
 
 ### font-variant
-
+> **⚠️ 注意**： 遵循[文本样式继承规则](#继承规则)
 设置字体变体。
 
 **值类型**：`small-caps` | `oldstyle-nums` | `lining-nums` | `tabular-nums` | `proportional-nums`
@@ -1168,32 +1269,46 @@ user-select: text; /* 允许选择 */
 
 设置元素变换。
 
-**值类型**：`string` | `array`（仅 RN）
+**值类型**：`string` | `array`
 
 ```css
 /* CSS 字符串格式 */
 transform: translateX(50px) rotate(45deg);
 transform: scale(1.2) skewX(10deg);
 
-/* RN 数组格式 */
+/* RN 数组格式，仅 rn 支持 */
 transform: [{translateX: 50}, {rotate: '45deg'}];
 ```
 
 ### transform-origin
 
-设置变换原点。
+设置视图变换的原点，默认情况下，变换的原点是中心。
 
-**值类型**：`<x-position>` | `<y-position>` | `<z-position>`
+**值类型**：
+- **单值**：该值必须是 `px`、百分比或关键字 `left`、`center`、`right`、`top` 和 `bottom` 之一
+- **双值**：第一个值代表 X 偏移，必须是 `px`、百分比或关键字 `left`、`center` 和 `right` 之一；第二个值代表 Y 偏移，必须是 `px`、百分比或关键字 `top`、`center` 和 `bottom` 之一
+- **三值**：前两个值与双值语法相同，第三个值代表 Z 偏移，必须是 `px`
 
 ```css
-transform-origin: center;          /* 中心点 */
-transform-origin: 50% 50%;         /* 百分比 */
-transform-origin: 10px 20px 30px;  /* 3D 坐标 */
+/* 单值 */
+transform-origin: center;        /* 关键字 */
+transform-origin: 50%;           /* 百分比 */
+transform-origin: 10px;          /* px 值 */
+
+/* 双值 */
+transform-origin: left top;      /* 关键字组合 */
+transform-origin: 50% 50%;       /* 百分比 */
+transform-origin: 10px 20px;     /* px 值 */
+
+/* 三值 */
+transform-origin: 50% 50% 30px;  /* X Y Z 坐标 */
+transform-origin: left top 10px; /* 关键字 + Z 偏移 */
 ```
 
 ### backface-visibility
 
-设置背面可见性（仅支持 view 节点）。
+设置背面可见性。
+> **⚠️ 注意**： 仅 view 组件支持
 
 **值类型**：`visible` | `hidden`
 
@@ -1203,11 +1318,15 @@ backface-visibility: hidden; /* 背面隐藏 */
 
 ### object-fit
 
-设置图像调整方式（仅支持view 节点）
+设置替换元素的内容应该如何适应到其使用高度和宽度确定的框。
+
+> **⚠️ 注意**： 仅 view 组件支持
 
 **值类型**：`cover` | `contain` | `fill` | `scale-down`
 
 ```css
-object-fit: cover;   /* 覆盖填充 */
-object-fit: contain; /* 完整显示 */
+object-fit: fill;       /* 拉伸填满，可能变形 */
+object-fit: contain;    /* 完整显示，保持比例 */
+object-fit: cover;      /* 覆盖填充，保持比例，可能裁剪 */
+object-fit: scale-down; /* 缩小显示 */
 ```
