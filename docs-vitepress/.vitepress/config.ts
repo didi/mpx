@@ -170,6 +170,23 @@ const sidebar = {
                             ]
                         },
                         {
+                            text: "网络",
+                            items: [
+                                { 
+                                    text: "下载",
+                                    items: [
+                                        { text: "downloadFile", link: "/guide/extend/API/network/download/downloadFile" }
+                                    ]
+                                },
+                                { 
+                                    text: "上传",
+                                    items: [
+                                        { text: "uploadFile", link: "/guide/extend/API/network/upload/uploadFile" }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
                             text: "画布",
                             items: [
                                 { text: "canvasToTempFilePath", link: "/guide/extend/API/canvas/canvasToTempFilePath" },
@@ -183,6 +200,43 @@ const sidebar = {
                                     text: "音频",
                                     items: [
                                         { text: "createInnerAudioContext", link: "/guide/extend/API/media/audio/createInnerAudioContext" }
+                                    ]
+                                },
+                                {
+                                    text: "图片",
+                                    items: [
+                                        { text: "previewImage", link: "/guide/extend/API/media/image/previewImage" },
+                                        { text: "compressImage", link: "/guide/extend/API/media/image/compressImage" },
+                                        { text: "getImageInfo", link: "/guide/extend/API/media/image/getImageInfo" }
+                                    ]
+                                },
+                                {
+                                    text: "视频",
+                                    items: [
+                                        { text: "chooseMedia", link: "/guide/extend/API/media/video/chooseMedia" }
+                                    ]
+                                },
+                            ]
+                        },
+                        {
+                            text: "位置",
+                            items: [
+                                { text: "getLocation", link: "/guide/extend/API/location/getLocation" },
+                                { text: "chooseLocation", link: "/guide/extend/API/location/chooseLocation" },
+                                { text: "openLocation", link: "/guide/extend/API/location/openLocation" },
+                                { text: "onLocationChange", link: "/guide/extend/API/location/onLocationChange" },
+                                { text: "offLocationChange", link: "/guide/extend/API/location/offLocationChange" },
+                                { text: "startLocationUpdate", link: "/guide/extend/API/location/startLocationUpdate" },
+                                { text: "stopLocationUpdate", link: "/guide/extend/API/location/stopLocationUpdate" }
+                            ]
+                        },
+                        {
+                            text: "开放接口",
+                            items: [
+                                {
+                                    text: "登录",
+                                    items: [
+                                        { text: "checkSession", link: "/guide/extend/API/open-api/login/checkSession" }
                                     ]
                                 }
                             ]
@@ -203,7 +257,44 @@ const sidebar = {
                                         { text: "createBLEConnection", link: "/guide/extend/API/device/bluetooth-ble/createBLEConnection" },
                                         { text: "onBLEConnectionStateChange", link: "/guide/extend/API/device/bluetooth-ble/onBLEConnectionStateChange" }
                                     ]
+                                },
+                                {
+                                    text: "剪贴板",
+                                    items: [
+                                        { text: "setClipboardData", link: "/guide/extend/API/device/clipboard/setClipboardData" },
+                                        { text: "getClipboardData", link: "/guide/extend/API/device/clipboard/getClipboardData" }
+                                    ]
+                                },
+                                {
+                                    text: "网络",
+                                    items: [
+                                        { text: "getNetworkType", link: "/guide/extend/API/device/network/getNetworkType" },
+                                        { text: "onNetworkStatusChange", link: "/guide/extend/API/device/network/onNetworkStatusChange" },
+                                        { text: "offNetworkStatusChange", link: "/guide/extend/API/device/network/offNetworkStatusChange" }
+                                    ]
+                                },
+                                {
+                                    text: "键盘",
+                                    items: [
+                                        { text: "hideKeyboard", link: "/guide/extend/API/device/keyboard/hideKeyboard" },
+                                        { text: "onKeyboardHeightChange", link: "/guide/extend/API/device/keyboard/onKeyboardHeightChange" },
+                                        { text: "offKeyboardHeightChange", link: "/guide/extend/API/device/keyboard/offKeyboardHeightChange" }
+                                    ]
                                 }
+                            ]
+                        },
+                        {
+                            text: "WXML",
+                            items: [
+                                { text: "createIntersectionObserver", link: "/guide/extend/API/wxml/createIntersectionObserver" },
+                                { text: "createSelectorQuery", link: "/guide/extend/API/wxml/createSelectorQuery" }
+                            ]
+                        },
+                        {
+                            text: "第三方平台",
+                            items: [
+                                { text: "getExtConfig", link: "/guide/extend/API/ext/getExtConfig" },
+                                { text: "getExtConfigSync", link: "/guide/extend/API/ext/getExtConfigSync" }
                             ]
                         }
                     ]
