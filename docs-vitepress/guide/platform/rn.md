@@ -745,6 +745,8 @@ movable-view的可移动区域。
 | out-of-bounds   | boolean          |   `false`     | 超过可移动区域后，movable-view是否还可以移动  |
 | x   | number |      | 定义x轴方向的偏移  |
 | y  | number  |        | 定义y轴方向的偏移 |
+| friction  | Number  |    `2`    | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止。必须大于0，否则会被设置成默认值 |
+| damping  | Number  |    `20`    | 阻尼系数，用于控制x或y改变时的动画和过界回弹的动画，值越大移动越快 |
 | disabled  | boolean  |    `false`   | 是否禁用 |
 | animation  | boolean  |    `true`   | 是否使用动画	 |
 | simultaneous-handlers  | array\<object>  |   `[]`   | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
@@ -2652,11 +2654,11 @@ webviewBridge.invoke('getTime', {
 })
 ```
 
-#### 异步分包
+#### 分包与异步分包
 
-Mpx转RN实现了和微信小程序同等能力的分包异步化功能，基本使用可[参考文档](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
+Mpx转RN实现了和微信小程序同等能力的分包和分包异步化功能，基本使用可[参考文档](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
 
-在异步分包的能力实现当中我们借助了RN宿主提供的分包下载执行/分包拉取的 api，因此在你的应用开始使用异步分包的功能之前需要在运行时代码提前部署好RN宿主容器提供的相关 api 以供 Mpx 应用使用：
+在分包和异步分包的能力实现当中我们借助了RN宿主提供的分包下载执行/分包拉取的 api，因此在你的应用开始使用异步分包的功能之前需要在运行时代码提前部署好RN宿主容器提供的相关 api 以供 Mpx 应用使用：
 
 ```javascript
 mpx.config.rnConfig.loadChunkAsync = function (config) {
@@ -2736,7 +2738,25 @@ module.exports = defineConfig({
   })
 </script>
 ```
+关闭输出 RN 分包与异步分包能力：
 
+在输出 RN 时，框架默认开启了分包与异步分包能力，如果不希望开启，可以在编译配置中通过 `rnConfig.supportSubpackage = false` 关闭：
+
+```javascript
+// mpx.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        ...
+        rnConfig: {
+          supportSubpackage: false
+        }
+      }
+    }
+  }
+})
+```
 
 #### 分享
 
