@@ -3104,12 +3104,7 @@ function genElseif (node) {
     error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
     return
   }
-  const preNode = findPrevNode(node)
-  if (preNode && (preNode.if || preNode.elseif)) {
-    return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
-  } else {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
-  }
+  return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
 }
 
 function genElse (node) {
@@ -3118,12 +3113,7 @@ function genElse (node) {
     error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
     return
   }
-  const preNode = findPrevNode(node)
-  if (preNode && (preNode.if || preNode.elseif)) {
-    return `else{\n${genNode(node)}}\n`
-  } else {
-    error$1(`wx:else invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
-  }
+  return `else{\n${genNode(node)}}\n`
 }
 
 function genExps (node) {
