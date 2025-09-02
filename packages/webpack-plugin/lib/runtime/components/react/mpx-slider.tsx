@@ -108,7 +108,6 @@ const Slider = forwardRef<
   const trackRef = useRef(null)
   const [currentValue, setCurrentValue] = useState(defaultValue)
   const [trackWidth, setTrackWidth] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
 
   const changeHandler = bindchange || catchchange
   const changingHandler = bindchanging || catchchanging
@@ -192,7 +191,7 @@ const Slider = forwardRef<
     onStartShouldSetPanResponder: () => !disabled,
     onMoveShouldSetPanResponder: () => !disabled,
     onPanResponderGrant: () => {
-      setIsDragging(true)
+      // 开始拖拽
     },
     onPanResponderMove: (event: GestureResponderEvent, gestureState: PanResponderGestureState) => {
       if (disabled || trackWidth === 0) return
@@ -215,7 +214,6 @@ const Slider = forwardRef<
       }
     },
     onPanResponderRelease: () => {
-      setIsDragging(false)
       // 触发 change 事件
       if (changeHandler) {
         triggerChangeEvent(currentValue)
