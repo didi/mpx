@@ -119,6 +119,8 @@ const rulesResultMap = new Map()
 let usingComponents = []
 let usingComponentsInfo = {}
 let componentGenerics = {}
+// 跨平台语法检测的配置，在模块加载时初始化一次
+let crossPlatformConfig = null
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -637,6 +639,8 @@ function parse (template, options) {
   processingTemplate = false
   rulesResultMap.clear()
   componentGenerics = options.componentGenerics || {}
+  // 初始化跨平台语法检测配置（每次解析时只初始化一次）
+  crossPlatformConfig = initCrossPlatformConfig()
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
@@ -2713,19 +2717,13 @@ function processNoTransAttrs (el) {
   }
 }
 
-// 检测跨平台语法使用情况并给出警告
-function processCrossPlatformSyntaxWarning (el, options) {
-  if (!el.attrsList || el.attrsList.length === 0) {
-    return
-  }
-
-  // 获取当前源模式
+function initCrossPlatformConfig () {
   const currentSrcMode = srcMode
   
   // 不需要检测小程序平台语法的模式：React Native 平台和 noMode
   const excludedModes = ['android', 'ios', 'harmony', 'noMode']
   if (excludedModes.includes(currentSrcMode)) {
-    return
+    return null // 返回 null 表示不需要检测
   }
 
   // 定义平台与前缀的双向映射关系
@@ -2740,8 +2738,25 @@ function processCrossPlatformSyntaxWarning (el, options) {
     'qa': 'qa:'
   }
 
-  // 获取对应前缀
-  const currentPrefix = platformPrefixMap[currentSrcMode] || 'wx:'
+  return {
+    currentSrcMode,
+    currentPrefix: platformPrefixMap[currentSrcMode] || 'wx:',
+    platformPrefixMap
+  }
+}
+
+// 检测跨平台语法使用情况并给出警告
+function processCrossPlatformSyntaxWarning (el, options) {
+  if (!el.attrsList || el.attrsList.length === 0) {
+    return
+  }
+
+  // 如果配置为空，说明不需要检测
+  if (!crossPlatformConfig) {
+    return
+  }
+
+  const { currentSrcMode, currentPrefix, platformPrefixMap } = crossPlatformConfig
 
   // 检查每个属性
   el.attrsList.forEach(attr => {
