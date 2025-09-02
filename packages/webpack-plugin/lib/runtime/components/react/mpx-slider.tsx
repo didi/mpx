@@ -107,7 +107,7 @@ const Slider = forwardRef<
   const trackRef = useRef(null)
   const [currentValue, setCurrentValue] = useState(defaultValue)
   const [trackWidth, setTrackWidth] = useState(0)
-  
+
   const thumbPosition = useSharedValue(0)
   const isDragging = useSharedValue(false)
   const startDragPosition = useSharedValue(0) // 记录拖拽开始时的位置
@@ -246,18 +246,18 @@ const Slider = forwardRef<
         'worklet'
         if (disabled) return
         isDragging.value = false
-        
+
         // 基于拖拽开始位置计算最终位置
         const newX = startDragPosition.value + event.translationX
         const clampedX = Math.max(0, Math.min(trackWidth, newX))
         const percentage = clampedX / trackWidth
         const rawValue = min + percentage * (max - min)
         const finalValue = constrainValueWorklet(rawValue, min, max, validStep)
-        
+
         // 确保滑块位置与最终值匹配
         const finalPosition = getThumbPositionWorklet(finalValue, trackWidth, min, max)
         thumbPosition.value = finalPosition
-        
+
         // 更新 currentValue 并触发 change 事件
         runOnJS(runOnJSCallback)('updateCurrentValue', finalValue)
         runOnJS(runOnJSCallback)('triggerChangeEvent', finalValue)
@@ -407,8 +407,8 @@ const Slider = forwardRef<
         style: animatedProgressStyle
       }),
       // 滑块容器 - 使用 Animated.View 和 GestureDetector
-      disabled ? 
-        createElement(
+      disabled
+        ? createElement(
           Animated.View,
           {
             style: [animatedThumbStyle]
@@ -417,8 +417,8 @@ const Slider = forwardRef<
           createElement(View, {
             style: thumbStyle
           })
-        ) :
-        createElement(
+        )
+        : createElement(
           GestureDetector,
           {
             gesture: panGesture
