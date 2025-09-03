@@ -36,6 +36,7 @@ const sidebar = {
                     text: "模版内可选链表达式",
                     link: "/guide/basic/option-chain",
                 },
+                { text: "生命周期", link: "/guide/basic/lifecycle" },
             ],
         },
         {
@@ -88,7 +89,16 @@ const sidebar = {
             collapsable: false,
             items: [
                 { text: "快速开始", link: "/guide/rn/quick-start" },
-                { text: "基础能力", link: "/guide/rn/basic" },
+                { 
+                    text:"基础能力", 
+                    link: "/guide/rn/basic", 
+                    items: [
+                        { text: "组件使用与开发", link: "/guide/rn/component" },
+                        { text: "模板语法与生命周期", link: "/guide/rn/template" },
+                        { text: "跨端样式", link: "/guide/rn/style" },
+                        { text: "应用能力", link: "/guide/rn/application-api" },
+                    ],
+                 },
                 { text: "输出RN进阶", link: "/guide/rn/advanced" },
                 { text: "跨端生态SDK", link: "/guide/rn/ecosystem-sdk" },
             ],
