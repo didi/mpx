@@ -829,13 +829,6 @@ class MpxWebpackPlugin {
             if (!moduleId) {
               moduleId = '_' + mpx.pathHash(filePath)
             }
-            mpx.resourceModuleIdMap[moduleId] = filePath
-
-            // 如果提供了 loaderContext，添加 RecordModuleIdMapDependency 确保在 webpack 缓存时也能记录 moduleId 映射关系
-            if (loaderContext && loaderContext._module) {
-              loaderContext._module.addPresentationalDependency(new RecordModuleIdMapDependency(moduleId, filePath))
-            }
-
             return moduleId
           },
           getEntryNode: (module, type) => {
