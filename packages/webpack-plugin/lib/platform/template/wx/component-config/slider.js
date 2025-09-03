@@ -8,6 +8,18 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-slider'
     },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-slider'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-slider'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-slider'
+    },
     props: [
       {
         test: /^color$/,
