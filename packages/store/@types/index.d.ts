@@ -4,7 +4,7 @@ type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
 
 type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
 
-interface compContext {
+export interface compContext {
   [key: string]: any
 }
 
@@ -158,7 +158,7 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
-interface mapStateFunctionType<S, G> {
+export interface mapStateFunctionType<S, G> {
   [key: string]: (state: S, getter: G) => any
 }
 interface DeeperMutationsAndActions {
@@ -242,7 +242,7 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   modules?: Record<string, StoreOptWithThis<{}, {}, {}, {}, {}>>
 }
 
-interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
+export interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   [DEPS_SYMBOL]: D
   [STATE_SYMBOL]: S
@@ -384,7 +384,7 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapActionsToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
 }
 
-type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
+export type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
 
 interface StoreOpt<S, G, M, A, D extends Deps> {
   state?: S,
