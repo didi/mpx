@@ -4,7 +4,7 @@ jest.doMock('react-native', () => {
   const React = jest.requireActual('react')
 
   // Mock RefreshControl
-  const MockRefreshControl = React.forwardRef((props, ref) => 
+  const MockRefreshControl = React.forwardRef((props, ref) =>
     React.createElement(RN.View, { ...props, ref, testID: props.testID || 'refresh-control' })
   )
 
@@ -73,4 +73,3 @@ global.mpxGlobal = {
     }
   }
 }
-

@@ -9,12 +9,12 @@ const GestureDetector = ({ children, gesture, ...props }) => {
 }
 
 // Mock ScrollView from gesture-handler (enhanced ScrollView)
-const ScrollView = React.forwardRef((props, ref) => 
+const ScrollView = React.forwardRef((props, ref) =>
   React.createElement('ScrollView', { ...props, ref })
 )
 
 // Mock RefreshControl from gesture-handler
-const RefreshControl = React.forwardRef((props, ref) => 
+const RefreshControl = React.forwardRef((props, ref) =>
   React.createElement('View', { ...props, ref, testID: 'refresh-control' })
 )
 

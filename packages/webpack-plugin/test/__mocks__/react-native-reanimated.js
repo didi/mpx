@@ -1,17 +1,17 @@
 import React from 'react'
 
-const MockAnimatedView = React.forwardRef((props, ref) => 
+const MockAnimatedView = React.forwardRef((props, ref) =>
   React.createElement('View', { ...props, ref })
 )
 
-const MockAnimatedScrollView = React.forwardRef((props, ref) => 
+const MockAnimatedScrollView = React.forwardRef((props, ref) =>
   React.createElement('ScrollView', { ...props, ref })
 )
 
 const AnimatedDefault = {
   View: MockAnimatedView,
   ScrollView: MockAnimatedScrollView,
-  createAnimatedComponent: jest.fn((Component) => Component),
+  createAnimatedComponent: jest.fn((Component) => Component)
 }
 
 export default AnimatedDefault

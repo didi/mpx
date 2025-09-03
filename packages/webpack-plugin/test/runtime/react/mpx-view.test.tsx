@@ -6,6 +6,7 @@ import MpxInlineText from '../../../lib/runtime/components/react/mpx-inline-text
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReact = require('react')
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return mockReact.forwardRef((props: any, ref: any) => {
@@ -17,7 +18,7 @@ describe('MpxView', () => {
   // 基础渲染和样式测试
   it('should render with basic props and styles', () => {
     const { toJSON } = render(
-      <MpxView 
+      <MpxView
         testID="basic-view"
         style={{
           backgroundColor: '#f0f0f0',
@@ -54,7 +55,7 @@ describe('MpxView', () => {
     const bindtap = jest.fn()
     const bindtouchstart = jest.fn()
     const bindtouchend = jest.fn()
-    
+
     render(
       <MpxView
         testID="touchable-view"
@@ -120,7 +121,7 @@ describe('MpxView', () => {
   // Ref 转发测试
   it('should properly forward refs', () => {
     const ref = React.createRef()
-    
+
     render(
       <MpxView ref={ref} testID="ref-view">
         <MpxInlineText>Ref content</MpxInlineText>
@@ -174,7 +175,7 @@ describe('MpxView', () => {
 
     // 测试零值和负值样式
     rerender(
-      <MpxView 
+      <MpxView
         testID="edge-view"
         style={{
           width: 0,
@@ -221,7 +222,7 @@ describe('MpxView', () => {
         style={{
           width: 300,
           height: 150,
-          backgroundImage: 'linear-gradient(45deg, #ff0000 0%, #00ff00 50%, #0000ff 100%)',
+          backgroundImage: 'linear-gradient(45deg, #ff0000 0%, #00ff00 50%, #0000ff 100%)'
         }}
       >
         <MpxInlineText>Gradient background</MpxInlineText>
@@ -238,7 +239,7 @@ describe('MpxView', () => {
     const { toJSON } = render(
       <MpxView
         testID="animated-view"
-        enable-animation={false}  // 简化测试，不启用复杂动画
+        enable-animation={false} // 简化测试，不启用复杂动画
         style={{
           width: 100,
           height: 100,
@@ -285,7 +286,7 @@ describe('MpxView', () => {
   // 基础 Portal 功能测试
   it('should handle Portal functionality', () => {
     const { toJSON } = render(
-      <MpxView 
+      <MpxView
         testID="portal-view"
         style={{ width: 100, height: 100, backgroundColor: '#f0f0f0' }}
       >
@@ -302,7 +303,7 @@ describe('MpxView', () => {
   it('should handle comprehensive touch and gesture events', () => {
     const mockBindtouchstart = jest.fn()
     const mockBindtouchend = jest.fn()
-    
+
     const { toJSON } = render(
       <MpxView
         testID="gesture-view"
@@ -351,9 +352,9 @@ describe('MpxView', () => {
         parent-width={400}
         parent-height={300}
         style={{
-          width: 300,    // 使用具体数值而不是百分比
-          height: 150,   // 使用具体数值而不是百分比
-          fontSize: 24,  // 使用具体数值而不是相对值
+          width: 300, // 使用具体数值而不是百分比
+          height: 150, // 使用具体数值而不是百分比
+          fontSize: 24, // 使用具体数值而不是相对值
           padding: 10
         }}
       >
@@ -392,7 +393,7 @@ describe('MpxView', () => {
   // 布局变化和尺寸计算测试
   it('should handle layout changes and size calculations', () => {
     const mockOnLayout = jest.fn()
-    
+
     const { rerender } = render(
       <MpxView
         testID="layout-view"
@@ -459,10 +460,10 @@ describe('MpxView', () => {
       <MpxView
         testID="boundary-view"
         style={{
-          width: 0,      // 零宽度
-          height: -1,    // 负高度
-          margin: null,  // null 值
-          padding: undefined, // undefined 值
+          width: 0, // 零宽度
+          height: -1, // 负高度
+          margin: null, // null 值
+          padding: undefined // undefined 值
         }}
       >
         <MpxInlineText>Boundary case</MpxInlineText>

@@ -4,6 +4,7 @@ import MpxText from '../../../lib/runtime/components/react/mpx-text'
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReact = require('react')
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return mockReact.forwardRef((props: any, ref: any) => {
@@ -15,7 +16,7 @@ describe('MpxText', () => {
   // 综合基础功能测试
   it('should handle basic rendering, nested text and selection properties', () => {
     const { rerender, toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="basic-text"
         style={{
           fontSize: 16,
@@ -48,7 +49,7 @@ describe('MpxText', () => {
 
     // 测试文本选择属性
     rerender(
-      <MpxText 
+      <MpxText
         testID="basic-text"
         selectable={true}
         allowFontScaling={false}
@@ -63,7 +64,7 @@ describe('MpxText', () => {
 
     // 测试复杂样式转换
     rerender(
-      <MpxText 
+      <MpxText
         testID="basic-text"
         style={{
           fontSize: '16px',
@@ -84,7 +85,7 @@ describe('MpxText', () => {
   // MPX user-select 属性测试
   it('should handle MPX user-select property', () => {
     const { rerender } = render(
-      <MpxText 
+      <MpxText
         testID="user-select-text"
         user-select="text"
       >
@@ -97,7 +98,7 @@ describe('MpxText', () => {
 
     // 测试显式设置 selectable 为 false
     rerender(
-      <MpxText 
+      <MpxText
         testID="user-select-text"
         selectable={false}
       >
@@ -112,10 +113,10 @@ describe('MpxText', () => {
   // Ref 转发测试
   it('should properly forward refs', () => {
     const ref = React.createRef()
-    
+
     render(
-      <MpxText 
-        ref={ref} 
+      <MpxText
+        ref={ref}
         testID="ref-text"
         selectable={true}
       >
@@ -137,7 +138,7 @@ describe('MpxText', () => {
   // 基础 Portal 功能测试
   it('should handle Portal functionality', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="portal-text"
         style={{ fontSize: 16, color: '#333' }}
       >
@@ -153,7 +154,7 @@ describe('MpxText', () => {
   // 简化的上下文测试
   it('should handle external context properties', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="context-text"
         style={{
           color: '#ff0000',
@@ -173,14 +174,14 @@ describe('MpxText', () => {
   // 父级尺寸上下文测试
   it('should handle parent size context', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="parent-size-text"
         parent-font-size={18}
         parent-width={300}
         parent-height={200}
         style={{
           fontSize: 18, // 使用具体数值而不是相对值
-          width: 150,   // 使用具体数值而不是百分比
+          width: 150 // 使用具体数值而不是百分比
         }}
       >
         Parent size context text
@@ -195,7 +196,7 @@ describe('MpxText', () => {
   // 复杂嵌套和样式继承测试
   it('should handle complex nested text with style inheritance', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="nested-styled-text"
         style={{
           fontSize: 16,
@@ -294,7 +295,7 @@ describe('MpxText', () => {
   // 可访问性和交互测试
   it('should handle accessibility and interaction properties', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="accessible-text"
         accessible={true}
         accessibilityLabel="Accessible text content"
@@ -317,7 +318,7 @@ describe('MpxText', () => {
   // Portal 渲染测试 - 测试 hasPositionFixed 逻辑
   it('should render in Portal when position is fixed', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="fixed-position-text"
         style={{
           position: 'fixed',
@@ -334,7 +335,7 @@ describe('MpxText', () => {
     // 验证组件正常渲染
     const textElement = screen.getByTestId('fixed-position-text')
     expect(textElement).toBeTruthy()
-    
+
     // 验证快照，Portal 会影响渲染结构
     expect(toJSON()).toMatchSnapshot('fixed-position-text')
   })
@@ -343,7 +344,7 @@ describe('MpxText', () => {
   it('should handle different style conditions that affect Portal usage', () => {
     // 测试 position: absolute（不会触发 Portal）
     const { rerender, toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="position-test"
         style={{
           position: 'absolute',
@@ -360,7 +361,7 @@ describe('MpxText', () => {
 
     // 测试 position: relative（不会触发 Portal）
     rerender(
-      <MpxText 
+      <MpxText
         testID="position-test"
         style={{
           position: 'relative',
@@ -376,7 +377,7 @@ describe('MpxText', () => {
 
     // 测试 position: fixed（会触发 Portal）
     rerender(
-      <MpxText 
+      <MpxText
         testID="position-test"
         style={{
           position: 'fixed',
@@ -397,7 +398,7 @@ describe('MpxText', () => {
   // 复杂场景下的 Portal 测试
   it('should handle Portal with complex styling and content', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="complex-portal-text"
         style={{
           position: 'fixed',
@@ -431,7 +432,7 @@ describe('MpxText', () => {
   // 边界情况：样式动态变化影响 Portal
   it('should handle dynamic style changes affecting Portal usage', () => {
     const { rerender } = render(
-      <MpxText 
+      <MpxText
         testID="dynamic-portal-text"
         style={{
           fontSize: 16,
@@ -447,7 +448,7 @@ describe('MpxText', () => {
 
     // 动态改变为 fixed 定位（会触发 Portal）
     rerender(
-      <MpxText 
+      <MpxText
         testID="dynamic-portal-text"
         style={{
           position: 'fixed',
@@ -467,7 +468,7 @@ describe('MpxText', () => {
 
     // 再次改变为普通样式
     rerender(
-      <MpxText 
+      <MpxText
         testID="dynamic-portal-text"
         style={{
           fontSize: 18,
@@ -485,16 +486,16 @@ describe('MpxText', () => {
   // useTransformStyle 相关测试
   it('should handle useTransformStyle with various configurations', () => {
     const { toJSON } = render(
-      <MpxText 
+      <MpxText
         testID="transform-style-text"
-        enable-var={false}  // 简化测试，避免变量上下文问题
+        enable-var={false} // 简化测试，避免变量上下文问题
         parent-font-size={16}
         parent-width={320}
         parent-height={568}
         style={{
-          position: 'fixed',  // 关键：触发 Portal 逻辑
+          position: 'fixed', // 关键：触发 Portal 逻辑
           fontSize: 18,
-          width: 256,         // 320 * 80%
+          width: 256, // 320 * 80%
           color: '#ff0000',
           backgroundColor: '#f0f0f0',
           padding: 8

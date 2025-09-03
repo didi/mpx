@@ -6,14 +6,14 @@ describe('MpxInput', () => {
   // 基础功能测试
   it('should render with basic props', () => {
     const { toJSON } = render(
-      <MpxInput 
+      <MpxInput
         testID="basic-input"
         value="test value"
         placeholder="Enter text"
         enable-var={true}
       />
     )
-    
+
     const inputElement = screen.getByTestId('basic-input')
     expect(inputElement.props.value).toBe('test value')
     expect(inputElement.props.placeholder).toBe('Enter text')
@@ -28,7 +28,7 @@ describe('MpxInput', () => {
     ['digit', expect.stringMatching(/decimal-pad|numeric/)]
   ])('should handle input type %s with keyboard %s', (type, expectedKeyboard) => {
     const { toJSON } = render(
-      <MpxInput 
+      <MpxInput
         testID="type-input"
         type={type as any}
         value="123"
@@ -51,7 +51,7 @@ describe('MpxInput', () => {
     { focus: true, 'auto-focus': true }
   ])('should handle property combinations: %p', (props) => {
     const { rerender } = render(
-      <MpxInput 
+      <MpxInput
         testID="combo-input"
         value="test"
         enable-var={true}
@@ -61,7 +61,7 @@ describe('MpxInput', () => {
 
     const inputElement = screen.getByTestId('combo-input')
     expect(inputElement).toBeTruthy()
-    
+
     // 验证关键属性映射
     if (props.password) expect(inputElement.props.secureTextEntry).toBe(true)
     if (props.disabled) expect(inputElement.props.editable).toBe(false)
@@ -78,7 +78,7 @@ describe('MpxInput', () => {
     const mockBindselectionchange = jest.fn()
 
     render(
-      <MpxInput 
+      <MpxInput
         testID="event-input"
         bindinput={mockBindinput}
         bindfocus={mockBindfocus}
@@ -111,7 +111,9 @@ describe('MpxInput', () => {
   it('should integrate with form context', () => {
     const mockFormValuesMap = new Map()
     const TestFormProvider = ({ children }: { children: any }) => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const React = require('react')
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { FormContext } = require('../../../lib/runtime/components/react/context')
       return React.createElement(FormContext.Provider, {
         value: { formValuesMap: mockFormValuesMap, submit: jest.fn(), reset: jest.fn() }
@@ -147,7 +149,9 @@ describe('MpxInput', () => {
     console.warn = mockWarn
 
     const TestFormProvider = ({ children }: { children: any }) => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const React = require('react')
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { FormContext } = require('../../../lib/runtime/components/react/context')
       return React.createElement(FormContext.Provider, {
         value: { formValuesMap: mockFormValuesMap, submit: jest.fn(), reset: jest.fn() }
@@ -178,7 +182,7 @@ describe('MpxInput', () => {
 
     testCases.forEach(({ value, maxlength, expected, expectedMaxLength }, index) => {
       const { rerender } = render(
-        <MpxInput 
+        <MpxInput
           testID="parse-input"
           value={value as any}
           maxlength={maxlength}
@@ -198,7 +202,7 @@ describe('MpxInput', () => {
   it('should handle selection and cursor positioning', () => {
     // 测试 selection-start 和 selection-end
     const { rerender } = render(
-      <MpxInput 
+      <MpxInput
         testID="selection-input"
         value="hello world"
         selection-start={5}
@@ -213,7 +217,7 @@ describe('MpxInput', () => {
 
     // 测试 cursor 属性
     rerender(
-      <MpxInput 
+      <MpxInput
         testID="selection-input"
         value="hello world"
         cursor={7}
@@ -227,7 +231,7 @@ describe('MpxInput', () => {
 
     // 测试没有 selection 的情况
     rerender(
-      <MpxInput 
+      <MpxInput
         testID="selection-input"
         value="hello world"
         enable-var={true}
@@ -248,7 +252,7 @@ describe('MpxInput', () => {
 
     testCases.forEach((testCase) => {
       const { rerender } = render(
-        <MpxInput 
+        <MpxInput
           testID="multiline-confirm-input"
           value="test"
           enable-var={true}
@@ -266,7 +270,9 @@ describe('MpxInput', () => {
   it('should handle keyboard avoidance and touch events', () => {
     const mockKeyboardAvoidRef = { current: null }
     const TestKeyboardAvoidProvider = ({ children }: { children: any }) => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const React = require('react')
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { KeyboardAvoidContext } = require('../../../lib/runtime/components/react/context')
       return React.createElement(KeyboardAvoidContext.Provider, {
         value: mockKeyboardAvoidRef
@@ -275,7 +281,7 @@ describe('MpxInput', () => {
 
     render(
       <TestKeyboardAvoidProvider>
-        <MpxInput 
+        <MpxInput
           testID="keyboard-input"
           adjust-position={true}
           cursor-spacing={10}
@@ -286,20 +292,20 @@ describe('MpxInput', () => {
     )
 
     const inputElement = screen.getByTestId('keyboard-input')
-    
+
     // 测试触摸事件
     fireEvent(inputElement, 'touchStart')
     fireEvent(inputElement, 'touchEnd', { nativeEvent: {} })
-    
+
     expect(inputElement).toBeTruthy()
   })
 
   // 多行内容尺寸变化测试
   it('should handle multiline content size changes', () => {
     const mockBindlinechange = jest.fn()
-    
+
     render(
-      <MpxInput 
+      <MpxInput
         testID="multiline-size-input"
         multiline={true}
         auto-height={true}
@@ -310,12 +316,12 @@ describe('MpxInput', () => {
     )
 
     const inputElement = screen.getByTestId('multiline-size-input')
-    
+
     // 测试内容尺寸变化
     fireEvent(inputElement, 'contentSizeChange', {
       nativeEvent: { contentSize: { width: 200, height: 60 } }
     })
-    
+
     fireEvent(inputElement, 'contentSizeChange', {
       nativeEvent: { contentSize: { width: 200, height: 120 } }
     })
@@ -326,13 +332,14 @@ describe('MpxInput', () => {
   // Portal 渲染测试
   it('should render in Portal when position is fixed', () => {
     const mockUseTransformStyle = jest.fn(() => ({
-      hasPositionFixed: true,  // 正确：hasPositionFixed 来自 useTransformStyle
+      hasPositionFixed: true, // 正确：hasPositionFixed 来自 useTransformStyle
       hasSelfPercent: false,
       normalStyle: { position: 'absolute' },
       setWidth: jest.fn(),
       setHeight: jest.fn()
     }))
-    
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const originalModule = jest.requireActual('../../../lib/runtime/components/react/utils')
     jest.doMock('../../../lib/runtime/components/react/utils', () => ({
       ...originalModule,
@@ -340,6 +347,7 @@ describe('MpxInput', () => {
     }))
 
     delete require.cache[require.resolve('../../../lib/runtime/components/react/mpx-input')]
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const MockedMpxInput = require('../../../lib/runtime/components/react/mpx-input').default
 
     const { toJSON } = render(
@@ -359,9 +367,9 @@ describe('MpxInput', () => {
     const mockBindinput = jest.fn()
       .mockReturnValueOnce('modified value')
       .mockReturnValueOnce(undefined)
-    
+
     render(
-      <MpxInput 
+      <MpxInput
         testID="onchange-input"
         bindinput={mockBindinput}
         value="original"
@@ -370,12 +378,12 @@ describe('MpxInput', () => {
     )
 
     const inputElement = screen.getByTestId('onchange-input')
-    
+
     // 测试返回字符串的情况
     fireEvent(inputElement, 'change', {
       nativeEvent: { text: 'new text', selection: { start: 8, end: 8 } }
     })
-    
+
     // 测试返回 undefined 的情况
     fireEvent(inputElement, 'change', {
       nativeEvent: { text: 'another text', selection: { start: 12, end: 12 } }
@@ -387,10 +395,10 @@ describe('MpxInput', () => {
   // 补充关键的覆盖率测试
   it('should handle edge cases for better coverage', () => {
     const mockBindinput = jest.fn()
-    
+
     // 测试 tmpValue.current === text 的情况（应该 return early）
     render(
-      <MpxInput 
+      <MpxInput
         testID="edge-input"
         bindinput={mockBindinput}
         value="test"
@@ -399,7 +407,7 @@ describe('MpxInput', () => {
     )
 
     const inputElement = screen.getByTestId('edge-input')
-    
+
     // 触发相同文本的 change 事件
     fireEvent(inputElement, 'change', {
       nativeEvent: { text: 'test', selection: { start: 4, end: 4 } }
@@ -414,7 +422,7 @@ describe('MpxInput', () => {
 
     // 测试没有 bindinput 的情况
     const { rerender } = render(
-      <MpxInput 
+      <MpxInput
         testID="no-bindinput"
         value="test2"
         enable-var={true}
@@ -433,7 +441,7 @@ describe('MpxInput', () => {
   it('should handle key remaining branches efficiently', () => {
     // 测试 number 类型 value 和特殊 maxlength
     const { rerender } = render(
-      <MpxInput 
+      <MpxInput
         testID="efficient-branch-input"
         value={12345}
         type="number"
@@ -448,7 +456,7 @@ describe('MpxInput', () => {
 
     // 测试 multiline 相关分支组合
     rerender(
-      <MpxInput 
+      <MpxInput
         testID="efficient-branch-input"
         multiline={true}
         confirm-type="return"

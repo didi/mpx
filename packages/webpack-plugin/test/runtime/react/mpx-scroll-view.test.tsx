@@ -7,6 +7,7 @@ import MpxText from '../../../lib/runtime/components/react/mpx-text'
 
 // Mock mpx-portal
 jest.mock('../../../lib/runtime/components/react/mpx-portal', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReact = require('react')
   return mockReact.forwardRef((props: any, ref: any) => {
     return mockReact.createElement('View', { ...props, ref })
@@ -19,9 +20,9 @@ describe('MpxScrollView', () => {
     const mockScroll = jest.fn()
     const mockScrollToUpper = jest.fn()
     const mockScrollToLower = jest.fn()
-    
+
     const { rerender } = render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="basic-scroll"
         scroll-y={true}
         upper-threshold={20}
@@ -53,7 +54,7 @@ describe('MpxScrollView', () => {
 
     // 测试水平滚动
     rerender(
-      <MpxScrollView 
+      <MpxScrollView
         testID="basic-scroll"
         scroll-x={true}
         scroll-y={false}
@@ -69,9 +70,9 @@ describe('MpxScrollView', () => {
   // MPX特定属性和警告测试
   it('should handle MPX specific properties and warnings', () => {
     const mockRefresh = jest.fn()
-    
+
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="mpx-props"
         scroll-x={true}
         scroll-y={true} // 触发警告
@@ -92,9 +93,9 @@ describe('MpxScrollView', () => {
   // 下拉刷新功能测试
   it('should handle refresher functionality comprehensively', () => {
     const mockRefresherRefresh = jest.fn()
-    
+
     const { rerender } = render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="refresher-scroll"
         enhanced={true}
         scroll-y={true}
@@ -113,7 +114,7 @@ describe('MpxScrollView', () => {
     )
 
     const scrollElement = screen.getByTestId('refresher-scroll')
-    
+
     // 设置refresher高度
     fireEvent(scrollElement.children[0], 'onLayout', {
       nativeEvent: { layout: { height: 60 } }
@@ -130,7 +131,7 @@ describe('MpxScrollView', () => {
 
     // 测试刷新状态变化
     rerender(
-      <MpxScrollView 
+      <MpxScrollView
         testID="refresher-scroll"
         enhanced={true}
         scroll-y={true}
@@ -153,9 +154,9 @@ describe('MpxScrollView', () => {
   // 增强模式和手势处理测试
   it('should handle enhanced mode and pan gestures', () => {
     const mockRefresherRefresh = jest.fn()
-    
+
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="enhanced-scroll"
         enhanced={true}
         scroll-y={true}
@@ -184,7 +185,7 @@ describe('MpxScrollView', () => {
       { state: 4, translationY: 30, velocityY: 0 }, // ACTIVE - 向下
       { state: 4, translationY: -20, velocityY: 0 }, // ACTIVE - 向上
       { state: 5, translationY: 60, velocityY: 0 }, // END - 触发刷新
-      { state: 5, translationY: 30, velocityY: 0 }, // END - 回弹
+      { state: 5, translationY: 30, velocityY: 0 } // END - 回弹
     ]
 
     gestureStates.forEach(gesture => {
@@ -203,6 +204,7 @@ describe('MpxScrollView', () => {
         nodeRef: {
           current: {
             measureLayout: jest.fn((parent, callback) => {
+              // eslint-disable-next-line node/no-callback-literal
               callback(100, 200)
             })
           }
@@ -211,7 +213,7 @@ describe('MpxScrollView', () => {
     }))
 
     const { rerender } = render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="position-scroll"
         scroll-y={true}
         scroll-top={100}
@@ -230,7 +232,7 @@ describe('MpxScrollView', () => {
 
     // 测试scroll-into-view
     rerender(
-      <MpxScrollView 
+      <MpxScrollView
         testID="position-scroll"
         scroll-y={true}
         scroll-into-view="item2"
@@ -267,10 +269,11 @@ describe('MpxScrollView', () => {
     }))
 
     delete require.cache[require.resolve('../../../lib/runtime/components/react/mpx-scroll-view')]
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const MpxScrollViewWithMock = require('../../../lib/runtime/components/react/mpx-scroll-view').default
 
     render(
-      <MpxScrollViewWithMock 
+      <MpxScrollViewWithMock
         testID="portal-scroll"
         style={{ position: 'fixed' }}
       >
@@ -288,9 +291,9 @@ describe('MpxScrollView', () => {
     const mockScrollToUpper = jest.fn()
     const mockScrollToLower = jest.fn()
     const mockScroll = jest.fn()
-    
+
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="threshold-scroll"
         scroll-y={true}
         upper-threshold={20}
@@ -307,7 +310,7 @@ describe('MpxScrollView', () => {
     )
 
     const scrollElement = screen.getByTestId('threshold-scroll')
-    
+
     // 测试upper threshold (距顶部小于threshold)
     fireEvent.scroll(scrollElement, {
       nativeEvent: {
@@ -334,7 +337,7 @@ describe('MpxScrollView', () => {
   // 交叉观察器测试
   it('should handle intersection observer functionality', () => {
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="intersection-scroll"
         scroll-y={true}
         enable-trigger-intersection-observer={true}
@@ -346,7 +349,7 @@ describe('MpxScrollView', () => {
     )
 
     const scrollElement = screen.getByTestId('intersection-scroll')
-    
+
     fireEvent.scroll(scrollElement, {
       nativeEvent: {
         contentOffset: { x: 0, y: 200 },
@@ -370,7 +373,7 @@ describe('MpxScrollView', () => {
 
     // 测试undefined refresherTriggered的特殊逻辑
     rerender(
-      <MpxScrollView 
+      <MpxScrollView
         testID="edge-scroll"
         enhanced={true}
         refresher-enabled={true}
@@ -387,12 +390,12 @@ describe('MpxScrollView', () => {
     )
 
     const scrollElement = screen.getByTestId('edge-scroll')
-    
+
     // 设置refresher高度并触发手势
     fireEvent(scrollElement.children[0], 'onLayout', {
       nativeEvent: { layout: { height: 60 } }
     })
-    
+
     fireEvent(scrollElement, 'onGestureEvent', {
       nativeEvent: {
         state: 5,
@@ -407,7 +410,7 @@ describe('MpxScrollView', () => {
   // Refs转发测试
   it('should properly forward refs', () => {
     const ref = React.createRef()
-    
+
     render(
       <MpxScrollView ref={ref} testID="ref-scroll">
         <MpxView>
@@ -423,9 +426,9 @@ describe('MpxScrollView', () => {
   // 性能和布局相关测试
   it('should handle layout changes and performance scenarios', () => {
     const mockScroll = jest.fn()
-    
+
     const { rerender } = render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="performance-scroll"
         scroll-y={true}
         bindscroll={mockScroll}
@@ -453,7 +456,7 @@ describe('MpxScrollView', () => {
 
     // 测试动态内容变化
     rerender(
-      <MpxScrollView 
+      <MpxScrollView
         testID="performance-scroll"
         scroll-y={true}
         bindscroll={mockScroll}
@@ -473,9 +476,9 @@ describe('MpxScrollView', () => {
   it('should handle specific uncovered branches', () => {
     const mockRefresherRefresh = jest.fn()
     const mockScroll = jest.fn()
-    
+
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="branch-scroll"
         enhanced={true}
         scroll-y={true}
@@ -523,7 +526,7 @@ describe('MpxScrollView', () => {
     // 测试不同状态以覆盖条件分支 (594-596, 607-609)
     fireEvent(scrollElement, 'onGestureEvent', {
       nativeEvent: {
-        state: 4, // ACTIVE  
+        state: 4, // ACTIVE
         translationY: -30,
         velocityY: -50
       }
@@ -544,7 +547,7 @@ describe('MpxScrollView', () => {
   // 复杂手势和状态管理测试
   it('should handle complex gesture states and transitions', () => {
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="complex-gesture"
         enhanced={true}
         scroll-y={true}
@@ -575,7 +578,7 @@ describe('MpxScrollView', () => {
       { state: 4, translationY: 40, velocityY: 0 }, // isAtTop.value分支
       { state: 5, translationY: 105, velocityY: 0 }, // 超过refresherHeight触发刷新
       { state: 5, translationY: 50, velocityY: 0 }, // 普通回弹
-      { state: 5, translationY: -15, velocityY: -30 }, // 向上滑动隐藏
+      { state: 5, translationY: -15, velocityY: -30 } // 向上滑动隐藏
     ]
 
     complexGestures.forEach(gesture => {
@@ -594,6 +597,7 @@ describe('MpxScrollView', () => {
         nodeRef: {
           current: {
             measureLayout: jest.fn((parent, callback) => {
+              // eslint-disable-next-line node/no-callback-literal
               callback(0, 300) // 模拟元素位置
             })
           }
@@ -602,7 +606,7 @@ describe('MpxScrollView', () => {
     }))
 
     const { rerender } = render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="first-scroll-into-view"
         scroll-y={true}
         scroll-into-view=""
@@ -619,7 +623,7 @@ describe('MpxScrollView', () => {
 
     // 首次设置 scroll-into-view，触发 firstScrollIntoViewChange.current === true 分支
     rerender(
-      <MpxScrollView 
+      <MpxScrollView
         testID="first-scroll-into-view"
         scroll-y={true}
         scroll-into-view="item2"
@@ -646,6 +650,7 @@ describe('MpxScrollView', () => {
         nodeRef: {
           current: {
             measureLayout: jest.fn((parent, callback) => {
+              // eslint-disable-next-line node/no-callback-literal
               callback(150, 250) // 模拟元素位置
             })
           }
@@ -654,7 +659,7 @@ describe('MpxScrollView', () => {
     }))
 
     const { rerender } = render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="scroll-to-test"
         scroll-x={true}
         scroll-y={true}
@@ -671,7 +676,7 @@ describe('MpxScrollView', () => {
 
     // 通过 rerender 设置 scroll-into-view 来触发 handleScrollIntoView
     rerender(
-      <MpxScrollView 
+      <MpxScrollView
         testID="scroll-to-test"
         scroll-x={true}
         scroll-y={true}
@@ -693,11 +698,11 @@ describe('MpxScrollView', () => {
   it('should handle intersection observer updates correctly', () => {
     const mockThrottleMeasure1 = jest.fn()
     const mockThrottleMeasure2 = jest.fn()
-    
+
     // 模拟 IntersectionObserverContext
     const mockIntersectionObservers = {
-      'observer1': { throttleMeasure: mockThrottleMeasure1 },
-      'observer2': { throttleMeasure: mockThrottleMeasure2 }
+      observer1: { throttleMeasure: mockThrottleMeasure1 },
+      observer2: { throttleMeasure: mockThrottleMeasure2 }
     }
 
     // Mock useContext for IntersectionObserverContext
@@ -711,7 +716,7 @@ describe('MpxScrollView', () => {
     })
 
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="intersection-observer"
         scroll-y={true}
         enable-trigger-intersection-observer={true}
@@ -735,16 +740,16 @@ describe('MpxScrollView', () => {
 
     // 恢复原始的 useContext
     React.useContext.mockRestore()
-    
+
     expect(scrollElement).toBeTruthy()
   })
 
   // 测试 scrollHandler listener (485)
   it('should trigger scrollHandler listener correctly', () => {
     const mockScroll = jest.fn()
-    
+
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="scroll-handler-listener"
         scroll-y={true}
         bindscroll={mockScroll}
@@ -772,9 +777,9 @@ describe('MpxScrollView', () => {
   // 测试 onRefresh 函数特殊逻辑 (527-539)
   it('should handle onRefresh with undefined refresherTriggered', async () => {
     const mockRefresherRefresh = jest.fn()
-    
+
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="refresh-undefined"
         enhanced={true}
         scroll-y={true}
@@ -825,7 +830,7 @@ describe('MpxScrollView', () => {
   // 测试状态更新条件分支 (594-596, 607-609)
   it('should handle state update conditions correctly', () => {
     render(
-      <MpxScrollView 
+      <MpxScrollView
         testID="state-update-conditions"
         enhanced={true}
         scroll-y={true}
@@ -841,7 +846,7 @@ describe('MpxScrollView', () => {
     const scrollElement = screen.getByTestId('state-update-conditions')
 
     // 测试不同的手势状态来触发 updateScrollState 和 updateBouncesState
-    
+
     // 1. 触发 enableScrollValue.value !== newValue 分支
     fireEvent(scrollElement, 'onGestureEvent', {
       nativeEvent: {
