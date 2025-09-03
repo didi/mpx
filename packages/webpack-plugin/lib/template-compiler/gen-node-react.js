@@ -9,7 +9,8 @@ function genIfConditions (conditions) {
   if (!conditions.length) return 'null'
   const condition = conditions.shift()
   if (condition.exp) {
-    return `(${condition.exp})?${genNode(condition.block)}:${genIfConditions(conditions)}`
+    // 此处 condition.exp 无需括号包裹，condition.exp本身已经包含括号
+    return `${condition.exp}?${genNode(condition.block)}:${genIfConditions(conditions)}`
   } else {
     return genNode(condition.block)
   }
@@ -30,7 +31,7 @@ function mapAttrName (name) {
   return name
 }
 
-function genNode (node) {
+function genNode (node, isRoot = false) {
   let exp = ''
   if (node) {
     if (node.type === 3) {
@@ -72,18 +73,29 @@ function genNode (node) {
             }
 
             if (!node.unary && node.children.length) {
-              exp += ','
-              exp += node.children.map((child) => {
+              const childNode = node.children.map((child) => {
                 return genNode(child)
               }).filter(fragment => fragment).join(',')
+
+              // child可能为temp-node等无效节点，所以增加判断确保存在childNode再添加逗号
+              if (childNode) {
+                exp += ','
+                exp += childNode
+              }
             }
             exp += ')'
           }
         }
       } else {
-        exp += node.children.map((child) => {
+        const nodes = node.children.map((child) => {
           return genNode(child)
-        }).filter(fragment => fragment).join(',')
+        }).filter(fragment => fragment && fragment !== 'null')
+        if (isRoot && nodes.length > 1) {
+          // 如果存在多个根节点，使用 block 包裹
+          exp = `createElement(getComponent("block"), null, ${nodes.join(',')})`
+        } else {
+          exp += nodes.join(',')
+        }
       }
     }
   }
