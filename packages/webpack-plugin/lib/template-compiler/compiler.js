@@ -2162,10 +2162,7 @@ function postProcessIfReact (el) {
     if (result.success) {
       if (result.result) {
         el._if = true
-        addIfCondition(el, {
-          exp: el.if.exp,
-          block: el
-        })
+        delete el.if
       } else {
         replaceNode(el, getTempNode())._if = false
       }
@@ -2191,6 +2188,7 @@ function postProcessIfReact (el) {
         result = evalExp(el.elseif.exp)
         if (result.success) {
           if (result.result) {
+            delete el.elseif
             el._if = true
             addIfCondition(ifNode, {
               exp: el.elseif.exp,

@@ -9,14 +9,8 @@ function genIfConditions (conditions) {
   if (!conditions.length) return 'null'
   const condition = conditions.shift()
   if (condition.exp) {
-    const node = condition.block
-    if (node._if === true) {
-      return genNode(condition.block)
-    } else if (node._if === false) {
-      return genIfConditions(conditions)
-    } else {
-      return `(${condition.exp})?${genNode(condition.block)}:${genIfConditions(conditions)}`
-    }
+    // 此处 condition.exp 无需括号包裹，condition.exp本身已经包含括号
+    return `${condition.exp}?${genNode(condition.block)}:${genIfConditions(conditions)}`
   } else {
     return genNode(condition.block)
   }
@@ -54,10 +48,7 @@ function genNode (node, isRoot = false) {
         if (node.for && !node.forProcessed) {
           exp += genFor(node)
         } else if (node.if && !node.ifProcessed) {
-          const ifNode = genIf(node)
-          if (ifNode !== 'null') {
-            exp += genIf(node)
-          }
+          exp += genIf(node)
         } else {
           const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
             if (attrName) {
@@ -82,10 +73,15 @@ function genNode (node, isRoot = false) {
             }
 
             if (!node.unary && node.children.length) {
-              exp += ','
-              exp += node.children.map((child) => {
+              const childNode = node.children.map((child) => {
                 return genNode(child)
               }).filter(fragment => fragment).join(',')
+
+              // child可能为temp-node等无效节点，所以增加判断确保存在childNode再添加逗号
+              if (childNode) {
+                exp += ','
+                exp += childNode
+              }
             }
             exp += ')'
           }
