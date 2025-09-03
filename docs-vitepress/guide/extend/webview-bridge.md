@@ -39,7 +39,9 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 ```
 
 ## 支持方法：
-对于web-view组件打开的网页，想要跟宿主环境通信，或者跳转到宿主环境的页面页面，提供了以下能力
+对于web-view组件打开的网页，想要跟宿主环境通信，或者跳转到宿主环境的页面，提供了以下能力
+
+**基础方法**
 
 | 方法名           | 说明                                          | 微信 | 支付宝 | QQ | 头条 | 百度 | web | RN |
 |---------------|---------------------------------------------|------|-------|----|------|------|-----|----|
@@ -50,6 +52,47 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 | redirectTo        | 关闭当前页面，跳转到应用内的某个RN页面                        | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> |
 | config        | 微信小程序中h5调用扩展能力配置方法：用于初始化微信 JS-SDK，使 H5 页面具备调用微信原生能力的权限。                        | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> |
 | invoke        | JSBridge能力调用（仅web和RN支持）                        | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> |
+
+**扩展方法：**
+| 方法/平台      | wx            | qq    | ali    | baidu    | tt    |
+| ------------- |:-----:| :-----:| :-----: |:-----:| -----:|
+| checkJSApi|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| chooseImage|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| previewImage |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|
+| uploadImage |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| downloadImage |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| getLocalImgData |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| startRecord |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| stopRecord |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| onVoiceRecordEnd |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| playVoice |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| pauseVoice |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| stopVoice |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| onVoicePlayEnd |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| uploadVoice |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| downloadVoice |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| translateVoice |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| getNetworkType |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| openLocation |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| getLocation |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| stopSearchBeacons |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| onSearchBeacons |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| scanQRCode |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| chooseCard |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| addCard |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| openCard |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| alert |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| showLoading |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| hideLoading |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| setStorage |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| getStorage |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| removeStorage |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| clearStorage |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| getStorageInfo |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| startShare |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| tradePay |<span style="color: green; font-weight: bold;">✓</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+| onMessage |<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
+
 
 ### webview-bridge示例代码
 ```javascript
@@ -63,11 +106,11 @@ webviewBridge.navigateTo({
 ```
 
 ### invoke示例代码
-在业务场景中，当 H5 需要调用类似微信小程序的能力（如通过 getLocation 获取地理位置）时，需与承载 H5 的「宿主环境」（如原生 App、小程序容器等）进行数据交互。
+在业务场景中，当 H5 需要调用扩展方法中的api能力（如通过 getLocation 获取地理位置）时，需与承载 H5 的「宿主环境」（如原生 App、小程序容器等）进行数据交互。
 
 针对这类需求，Mpx 框架内部已提供「宿主环境能力挂载」机制，同时在 webview-bridge 中支持 invoke 通信方法，可实现 H5 与宿主环境的双向调用。
 
-宿主环境环境中挂载getLocation
+**宿主环境中挂载getLocation**
 ```javascript
 import mpx from '@mpxjs/core'
 ...
@@ -137,7 +180,7 @@ if (__mpx_mode__ === 'ios') {
 }
 ```
 
-h5中调用getLocation
+**h5环境中调用getLocation**
 ```javascript
 import webviewBridge from '@mpxjs/webview-bridge'
 webviewBridge.invoke('getLocation', {
@@ -150,7 +193,6 @@ webviewBridge.invoke('getLocation', {
 })
 ```
 
-> ⚠️ **注意**：
-> 此处内容涉及平台兼容性或重要使用限制，请务必仔细阅读并根据实际平台环境进行适配。
-> - `@mpxjs/webview-bridge`只能在h5环境中引入，不能在小程序等宿主环境使用
-
+::: warning
+`@mpxjs/webview-bridge`只能在h5环境中引入，不能在小程序等宿主环境使用
+:::
