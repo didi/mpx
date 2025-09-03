@@ -57,7 +57,6 @@
     "postcss-modules-values": "^4.0.0",
     "postcss-selector-parser": "^6.0.8",
     "postcss-value-parser": "^4.0.2",
-    "react-test-renderer": "^18.3.1",
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
     "webpack-virtual-modules": "^0.6.0"
@@ -93,7 +92,8 @@
     "@types/babel-types": "^7.0.4",
     "@types/react": "^18.2.0",
     "babel-jest": "^24.9.0",
-    "react": "18.2.0",
+    "react-test-renderer": "^18.2.0",
+    "react": "^18.2.0",
     "react-native": "^0.74.5",
     "react-native-gesture-handler": "^2.18.1",
     "react-native-linear-gradient": "^2.8.3",
