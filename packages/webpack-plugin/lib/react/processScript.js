@@ -1,6 +1,6 @@
 const normalize = require('../utils/normalize')
 const optionProcessorPath = normalize.lib('runtime/optionProcessorReact')
-const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest } = require('./script-helper')
+const { buildPagesMap, buildComponentsMap, getRequireScript, buildGlobalParams, stringifyRequest, buildI18n } = require('./script-helper')
 
 module.exports = function (script, {
   loaderContext,
@@ -13,10 +13,11 @@ module.exports = function (script, {
   builtInComponentsMap,
   localComponentsMap,
   localPagesMap,
+  rnConfig,
   componentGenerics,
   genericsInfo
 }, callback) {
-  const { appInfo } = loaderContext.getMpx()
+  const { appInfo, i18n } = loaderContext.getMpx()
 
   let scriptSrcMode = srcMode
   if (script) {
@@ -34,34 +35,38 @@ module.exports = function (script, {
   let output = '/* script */\n'
   if (ctorType === 'app') {
     output += `
-import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}
+import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext, optionProcessorPath)}
 \n`
     const { pagesMap, firstPage } = buildPagesMap({
       localPagesMap,
       loaderContext,
-      jsonConfig
+      jsonConfig,
+      rnConfig
     })
     const componentsMap = buildComponentsMap({
       localComponentsMap,
       loaderContext,
-      jsonConfig
+      jsonConfig,
+      rnConfig
     })
     output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, pagesMap, firstPage, hasApp })
     output += getRequireScript({ ctorType, script, loaderContext })
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   } else {
-    // RN环境暂不支持异步加载
-    // output += 'import { lazy } from \'react\'\n'
-    output += `import { getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
+    output += `import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
     // 获取组件集合
     const componentsMap = buildComponentsMap({
       localComponentsMap,
       builtInComponentsMap,
       loaderContext,
-      jsonConfig
+      jsonConfig,
+      rnConfig
     })
 
-    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics })
+    output += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, ctorType, jsonConfig, componentsMap, outputPath, genericsInfo, componentGenerics, hasApp })
+    if (!hasApp && i18n) {
+      output += buildI18n({ loaderContext })
+    }
     output += getRequireScript({ ctorType, script, loaderContext })
 
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`

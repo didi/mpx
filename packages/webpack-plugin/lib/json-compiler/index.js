@@ -638,6 +638,7 @@ module.exports = function (content) {
             }
             if (err) return callback(err)
             genericComponents[name] = entry
+            callback()
           })
         }, callback)
       }, callback)
