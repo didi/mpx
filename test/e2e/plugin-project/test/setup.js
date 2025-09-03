@@ -1,3 +1,3 @@
 global.__mpx_mode__ = 'wx'
 
-global.mpxGlobal = global
+global.mpxGlobal = Object.create(global)
