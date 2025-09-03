@@ -121,185 +121,8 @@ const sidebar = {
             collapsable: false,
             items: [
                 { text: "网络请求", link: "/guide/extend/fetch" },
-                {
-                    text: "API 转换",
-                    link: "/guide/extend/api-proxy",
-                    items: [
-                        {
-                            text: "基础",
-                            items: [
-                               { text: "base64ToArrayBuffer", link: "/guide/extend/API/base/base64ToArrayBuffer" },
-                               { text: "arrayBufferToBase64", link: "/guide/extend/API/base/arrayBufferToBase64" },
-                               {
-                                    text: "小程序",
-                                    items: [
-                                        {
-                                            text: "应用级事件",
-                                            items: [
-                                                { text: "onAppShow", link: "/guide/extend/API/base/app/app-event/onAppShow" },
-                                                { text: "onAppHide", link: "/guide/extend/API/base/app/app-event/onAppHide" },
-                                                { text: "offAppShow", link: "/guide/extend/API/base/app/app-event/offAppShow" },
-                                                { text: "offAppHide", link: "/guide/extend/API/base/app/app-event/offAppHide" },
-                                                { text: "onError", link: "/guide/extend/API/base/app/app-event/onError" },
-                                                { text: "offError", link: "/guide/extend/API/base/app/app-event/offError" },
-                                                { text: "onUnhandledRejection", link: "/guide/extend/API/base/app/app-event/onUnhandledRejection" },
-                                                { text: "offUnhandledRejection", link: "/guide/extend/API/base/app/app-event/offUnhandledRejection" },
-                                                { text: "onLazyLoadError", link: "/guide/extend/API/base/app/app-event/onLazyLoadError" },
-                                                { text: "offLazyLoadError", link: "/guide/extend/API/base/app/app-event/offLazyLoadError" }
-                                            ]
-                                        }
-                                    ]       
-                                }
-                            ]
-                        },
-                        {
-                            text: "界面",
-                            items: [
-                               {
-                                    text: "交互",
-                                    items: [
-                                        { text: "showActionSheet", link: "/guide/extend/API/interface/interactive/showActionSheet" }
-                                    ]
-                                },
-                                {
-                                    text: "动画",
-                                    items: [
-                                        { text: "createAnimation", link: "/guide/extend/API/interface/animation/createAnimation" }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            text: "网络",
-                            items: [
-                                { 
-                                    text: "下载",
-                                    items: [
-                                        { text: "downloadFile", link: "/guide/extend/API/network/download/downloadFile" }
-                                    ]
-                                },
-                                { 
-                                    text: "上传",
-                                    items: [
-                                        { text: "uploadFile", link: "/guide/extend/API/network/upload/uploadFile" }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            text: "画布",
-                            items: [
-                                { text: "canvasToTempFilePath", link: "/guide/extend/API/canvas/canvasToTempFilePath" },
-                                { text: "canvasGetImageData", link: "/guide/extend/API/canvas/canvasGetImageData" }
-                            ]
-                        },
-                        {
-                            text: "媒体",
-                            items: [
-                                {
-                                    text: "音频",
-                                    items: [
-                                        { text: "createInnerAudioContext", link: "/guide/extend/API/media/audio/createInnerAudioContext" }
-                                    ]
-                                },
-                                {
-                                    text: "图片",
-                                    items: [
-                                        { text: "previewImage", link: "/guide/extend/API/media/image/previewImage" },
-                                        { text: "compressImage", link: "/guide/extend/API/media/image/compressImage" },
-                                        { text: "getImageInfo", link: "/guide/extend/API/media/image/getImageInfo" }
-                                    ]
-                                },
-                                {
-                                    text: "视频",
-                                    items: [
-                                        { text: "chooseMedia", link: "/guide/extend/API/media/video/chooseMedia" }
-                                    ]
-                                },
-                            ]
-                        },
-                        {
-                            text: "位置",
-                            items: [
-                                { text: "getLocation", link: "/guide/extend/API/location/getLocation" },
-                                { text: "chooseLocation", link: "/guide/extend/API/location/chooseLocation" },
-                                { text: "openLocation", link: "/guide/extend/API/location/openLocation" },
-                                { text: "onLocationChange", link: "/guide/extend/API/location/onLocationChange" },
-                                { text: "offLocationChange", link: "/guide/extend/API/location/offLocationChange" },
-                                { text: "startLocationUpdate", link: "/guide/extend/API/location/startLocationUpdate" },
-                                { text: "stopLocationUpdate", link: "/guide/extend/API/location/stopLocationUpdate" }
-                            ]
-                        },
-                        {
-                            text: "开放接口",
-                            items: [
-                                {
-                                    text: "登录",
-                                    items: [
-                                        { text: "checkSession", link: "/guide/extend/API/open-api/login/checkSession" }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            text: "设备",
-                            items: [
-                                {
-                                    text: "联系人",
-                                    items: [
-                                        { text: "addPhoneContact", link: "/guide/extend/API/device/contacts/addPhoneContact" }
-                                    ]
-                                },
-                                {
-                                    text: "蓝牙-低功耗中心设备",
-                                    items: [
-                                        { text: "closeBLEConnection", link: "/guide/extend/API/device/bluetooth-ble/closeBLEConnection" },
-                                        { text: "createBLEConnection", link: "/guide/extend/API/device/bluetooth-ble/createBLEConnection" },
-                                        { text: "onBLEConnectionStateChange", link: "/guide/extend/API/device/bluetooth-ble/onBLEConnectionStateChange" }
-                                    ]
-                                },
-                                {
-                                    text: "剪贴板",
-                                    items: [
-                                        { text: "setClipboardData", link: "/guide/extend/API/device/clipboard/setClipboardData" },
-                                        { text: "getClipboardData", link: "/guide/extend/API/device/clipboard/getClipboardData" }
-                                    ]
-                                },
-                                {
-                                    text: "网络",
-                                    items: [
-                                        { text: "getNetworkType", link: "/guide/extend/API/device/network/getNetworkType" },
-                                        { text: "onNetworkStatusChange", link: "/guide/extend/API/device/network/onNetworkStatusChange" },
-                                        { text: "offNetworkStatusChange", link: "/guide/extend/API/device/network/offNetworkStatusChange" }
-                                    ]
-                                },
-                                {
-                                    text: "键盘",
-                                    items: [
-                                        { text: "hideKeyboard", link: "/guide/extend/API/device/keyboard/hideKeyboard" },
-                                        { text: "onKeyboardHeightChange", link: "/guide/extend/API/device/keyboard/onKeyboardHeightChange" },
-                                        { text: "offKeyboardHeightChange", link: "/guide/extend/API/device/keyboard/offKeyboardHeightChange" }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            text: "WXML",
-                            items: [
-                                { text: "createIntersectionObserver", link: "/guide/extend/API/wxml/createIntersectionObserver" },
-                                { text: "createSelectorQuery", link: "/guide/extend/API/wxml/createSelectorQuery" }
-                            ]
-                        },
-                        {
-                            text: "第三方平台",
-                            items: [
-                                { text: "getExtConfig", link: "/guide/extend/API/ext/getExtConfig" },
-                                { text: "getExtConfigSync", link: "/guide/extend/API/ext/getExtConfigSync" }
-                            ]
-                        }
-                    ]
-                },
                 { text: "数据 Mock", link: "/guide/extend/mock" },
+                { text: "WebView Bridge", link: "/guide/extend/webview-bridge" }
             ],
         },
         {
@@ -347,6 +170,339 @@ const sidebar = {
             ],
         },
     ],
+    "/api-proxy/": [
+        {
+            text: "API 转换",
+            collapsable: true,
+            link: "/api-proxy/index",
+            items: [
+                {
+                    text: "基础",
+                    items: [
+                        { text: "base64ToArrayBuffer", link: "/api-proxy/base/base64ToArrayBuffer" },
+                        { text: "arrayBufferToBase64", link: "/api-proxy/base/arrayBufferToBase64" },
+                        {
+                            text: "系统",
+                            items: [
+                                { text: "getSystemInfo", link: "/api-proxy/base/system/getSystemInfo" },
+                                { text: "getSystemInfoSync", link: "/api-proxy/base/system/getSystemInfoSync" },
+                                { text: "getWindowInfo", link: "/api-proxy/base/system/getWindowInfo" },
+                                { text: "getDeviceInfo", link: "/api-proxy/base/system/getDeviceInfo" }
+                            ]
+                        },
+                        {
+                            text: "小程序",
+                            items: [
+                                {
+                                    text: "生命周期",
+                                    items: [
+                                        { text: "getEnterOptionsSync", link: "/api-proxy/base/app/life-cycle/getEnterOptionsSync" },
+                                        { text: "getLaunchOptionsSync", link: "/api-proxy/base/app/life-cycle/getLaunchOptionsSync" }
+                                    ]
+                                },
+                                {
+                                    text: "应用级事件",
+                                    items: [
+                                        { text: "onAppShow", link: "/api-proxy/base/app/app-event/onAppShow" },
+                                        { text: "onAppHide", link: "/api-proxy/base/app/app-event/onAppHide" },
+                                        { text: "offAppShow", link: "/api-proxy/base/app/app-event/offAppShow" },
+                                        { text: "offAppHide", link: "/api-proxy/base/app/app-event/offAppHide" },
+                                        { text: "onError", link: "/api-proxy/base/app/app-event/onError" },
+                                        { text: "offError", link: "/api-proxy/base/app/app-event/offError" },
+                                        { text: "onUnhandledRejection", link: "/api-proxy/base/app/app-event/onUnhandledRejection" },
+                                        { text: "offUnhandledRejection", link: "/api-proxy/base/app/app-event/offUnhandledRejection" },
+                                        { text: "onLazyLoadError", link: "/api-proxy/base/app/app-event/onLazyLoadError" },
+                                        { text: "offLazyLoadError", link: "/api-proxy/base/app/app-event/offLazyLoadError" }
+                                    ]
+                                }
+                            ]       
+                        }
+                    ]
+                },
+                {
+                    text: "路由",
+                    items: [
+                        { text: "navigateTo", link: "/api-proxy/route/navigateTo" },
+                        { text: "redirectTo", link: "/api-proxy/route/redirectTo" },
+                        { text: "switchTab", link: "/api-proxy/route/switchTab" },
+                        { text: "reLaunch", link: "/api-proxy/route/reLaunch" },
+                        { text: "navigateBack", link: "/api-proxy/route/navigateBack" }
+                    ]
+                },
+                {
+                    text: "界面",
+                    items: [
+                        {
+                            text: "交互",
+                            items: [
+                                { text: "showActionSheet", link: "/api-proxy/interface/interactive/showActionSheet" },
+                                { text: "showModal", link: "/api-proxy/interface/interactive/showModal" },
+                                { text: "enableAlertBeforeUnload", link: "/api-proxy/interface/interactive/enableAlertBeforeUnload" },
+                                { text: "disableAlertBeforeUnload", link: "/api-proxy/interface/interactive/disableAlertBeforeUnload" },
+                                { text: "showToast", link: "/api-proxy/interface/interactive/showToast" },
+                                { text: "hideToast", link: "/api-proxy/interface/interactive/hideToast" },
+                                { text: "showLoading", link: "/api-proxy/interface/interactive/showLoading" },
+                                { text: "hideLoading", link: "/api-proxy/interface/interactive/hideLoading" }
+                            ]
+                        },
+                        {
+                            text: "导航栏",
+                            items: [
+                                { text: "hideHomeButton", link: "/api-proxy/interface/navigation-bar/hideHomeButton" },
+                                { text: "setNavigationBarTitle", link: "/api-proxy/interface/navigation-bar/setNavigationBarTitle" },
+                                { text: "setNavigationBarColor", link: "/api-proxy/interface/navigation-bar/setNavigationBarColor" }
+                            ]
+                        },
+                        {
+                            text: "Tab Bar",
+                            items: [
+                                { text: "hideTabBar", link: "/api-proxy/interface/tab-bar/hideTabBar" },
+                                { text: "showTabBar", link: "/api-proxy/interface/tab-bar/showTabBar" },
+                                { text: "setTabBarStyle", link: "/api-proxy/interface/tab-bar/setTabBarStyle" },
+                                { text: "setTabBarItem", link: "/api-proxy/interface/tab-bar/setTabBarItem" }
+                            ]
+                        },
+                        {
+                            text: "下拉刷新",
+                            items: [
+                                { text: "stopPullDownRefresh", link: "/api-proxy/interface/pull-down-refresh/stopPullDownRefresh" },
+                                { text: "startPullDownRefresh", link: "/api-proxy/interface/pull-down-refresh/startPullDownRefresh" }
+                            ]
+                        },
+                        {
+                            text: "滚动",
+                            items: [
+                                { text: "pageScrollTo", link: "/api-proxy/interface/scroll/pageScrollTo" }
+                            ]
+                        },
+                        {
+                            text: "动画",
+                            items: [
+                                { text: "createAnimation", link: "/api-proxy/interface/animation/createAnimation" }
+                            ]
+                        },
+                        {
+                            text: "自定义组件",
+                            items: [
+                                { text: "nextTick", link: "/api-proxy/interface/custom-component/nextTick" }
+                            ]
+                        },
+                        {
+                            text: "菜单",
+                            items: [
+                                { text: "getMenuButtonBoundingClientRect", link: "/api-proxy/interface/menu/getMenuButtonBoundingClientRect" }
+                            ]
+                        },
+                        {
+                            text: "窗口",
+                            items: [
+                                { text: "onWindowResize", link: "/api-proxy/interface/window/onWindowResize" },
+                                { text: "offWindowResize", link: "/api-proxy/interface/window/offWindowResize" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    text: "网络",
+                    items: [
+                        { 
+                            text: "发起请求",
+                            items: [
+                                { text: "request", link: "/api-proxy/network/request/request" }
+                            ]
+                        },
+                        { 
+                            text: "下载",
+                            items: [
+                                { text: "downloadFile", link: "/api-proxy/network/download/downloadFile" }
+                            ]
+                        },
+                        { 
+                            text: "上传",
+                            items: [
+                                { text: "uploadFile", link: "/api-proxy/network/upload/uploadFile" }
+                            ]
+                        },
+                        { 
+                            text: "WebSocket",
+                            items: [
+                                { text: "connectSocket", link: "/api-proxy/network/websocket/connectSocket" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    text: "支付",
+                    items: [
+                        { text: "requestPayment", link: "/api-proxy/payment/requestPayment" }
+                    ]
+                },
+                {
+                    text: "数据缓存",
+                    items: [
+                        { text: "setStorage", link: "/api-proxy/storage/setStorage" },
+                        { text: "setStorageSync", link: "/api-proxy/storage/setStorageSync" },
+                        { text: "getStorage", link: "/api-proxy/storage/getStorage" },
+                        { text: "getStorageSync", link: "/api-proxy/storage/getStorageSync" },
+                        { text: "removeStorage", link: "/api-proxy/storage/removeStorage" },
+                        { text: "removeStorageSync", link: "/api-proxy/storage/removeStorageSync" },
+                        { text: "clearStorage", link: "/api-proxy/storage/clearStorage" },
+                        { text: "clearStorageSync", link: "/api-proxy/storage/clearStorageSync" },
+                        { text: "getStorageInfo", link: "/api-proxy/storage/getStorageInfo" },
+                        { text: "getStorageInfoSync", link: "/api-proxy/storage/getStorageInfoSync" }
+                    ]
+                },
+                {
+                    text: "画布",
+                    items: [
+                        { text: "canvasToTempFilePath", link: "/api-proxy/canvas/canvasToTempFilePath" },
+                        { text: "canvasGetImageData", link: "/api-proxy/canvas/canvasGetImageData" }
+                    ]
+                },
+                {
+                    text: "媒体",
+                    items: [
+                        {
+                            text: "音频",
+                            items: [
+                                { text: "createInnerAudioContext", link: "/api-proxy/media/audio/createInnerAudioContext" }
+                            ]
+                        },
+                        {
+                            text: "图片",
+                            items: [
+                                { text: "previewImage", link: "/api-proxy/media/image/previewImage" },
+                                { text: "compressImage", link: "/api-proxy/media/image/compressImage" },
+                                { text: "getImageInfo", link: "/api-proxy/media/image/getImageInfo" }
+                            ]
+                        },
+                        {
+                            text: "视频",
+                            items: [
+                                { text: "chooseMedia", link: "/api-proxy/media/video/chooseMedia" }
+                            ]
+                        },
+                    ]
+                },
+                {
+                    text: "位置",
+                    items: [
+                        { text: "getLocation", link: "/api-proxy/location/getLocation" },
+                        { text: "chooseLocation", link: "/api-proxy/location/chooseLocation" },
+                        { text: "openLocation", link: "/api-proxy/location/openLocation" },
+                        { text: "onLocationChange", link: "/api-proxy/location/onLocationChange" },
+                        { text: "offLocationChange", link: "/api-proxy/location/offLocationChange" },
+                        { text: "startLocationUpdate", link: "/api-proxy/location/startLocationUpdate" },
+                        { text: "stopLocationUpdate", link: "/api-proxy/location/stopLocationUpdate" }
+                    ]
+                },
+                {
+                    text: "开放接口",
+                    items: [
+                        {
+                            text: "登录",
+                            items: [
+                                { text: "login", link: "/api-proxy/open-api/login/login" },
+                                { text: "checkSession", link: "/api-proxy/open-api/login/checkSession" }
+                            ]
+                        },
+                        {
+                            text: "设置",
+                            items: [
+                                { text: "getSetting", link: "/api-proxy/open-api/setting/getSetting" },
+                                { text: "openSetting", link: "/api-proxy/open-api/setting/openSetting" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    text: "设备",
+                    items: [
+                        {
+                            text: "联系人",
+                            items: [
+                                { text: "addPhoneContact", link: "/api-proxy/device/contacts/addPhoneContact" }
+                            ]
+                        },
+                        {
+                            text: "蓝牙-低功耗中心设备",
+                            items: [
+                                { text: "closeBLEConnection", link: "/api-proxy/device/bluetooth-ble/closeBLEConnection" },
+                                { text: "createBLEConnection", link: "/api-proxy/device/bluetooth-ble/createBLEConnection" },
+                                { text: "onBLEConnectionStateChange", link: "/api-proxy/device/bluetooth-ble/onBLEConnectionStateChange" }
+                            ]
+                        },
+                        {
+                            text: "剪贴板",
+                            items: [
+                                { text: "setClipboardData", link: "/api-proxy/device/clipboard/setClipboardData" },
+                                { text: "getClipboardData", link: "/api-proxy/device/clipboard/getClipboardData" }
+                            ]
+                        },
+                        {
+                            text: "网络",
+                            items: [
+                                { text: "getNetworkType", link: "/api-proxy/device/network/getNetworkType" },
+                                { text: "onNetworkStatusChange", link: "/api-proxy/device/network/onNetworkStatusChange" },
+                                { text: "offNetworkStatusChange", link: "/api-proxy/device/network/offNetworkStatusChange" }
+                            ]
+                        },
+                        {
+                            text: "屏幕",
+                            items: [
+                                { text: "getScreenBrightness", link: "/api-proxy/device/screen/getScreenBrightness" },
+                                { text: "setScreenBrightness", link: "/api-proxy/device/screen/setScreenBrightness" },
+                                { text: "setVisualEffectOnCapture", link: "/api-proxy/device/screen/setVisualEffectOnCapture" },
+                                { text: "onUserCaptureScreen", link: "/api-proxy/device/screen/onUserCaptureScreen" },
+                                { text: "offUserCaptureScreen", link: "/api-proxy/device/screen/offUserCaptureScreen" }
+                            ]
+                        },
+                        {
+                            text: "键盘",
+                            items: [
+                                { text: "hideKeyboard", link: "/api-proxy/device/keyboard/hideKeyboard" },
+                                { text: "onKeyboardHeightChange", link: "/api-proxy/device/keyboard/onKeyboardHeightChange" },
+                                { text: "offKeyboardHeightChange", link: "/api-proxy/device/keyboard/offKeyboardHeightChange" }
+                            ]
+                        },
+                        {
+                            text: "电话",
+                            items: [
+                                { text: "makePhoneCall", link: "/api-proxy/device/phone/makePhoneCall" }
+                            ]
+                        },
+                        {
+                            text: "扫码",
+                            items: [
+                                { text: "scanCode", link: "/api-proxy/device/scan/scanCode" }
+                            ]
+                        },
+                        {
+                            text: "震动",
+                            items: [
+                                { text: "vibrateShort", link: "/api-proxy/device/vibrate/vibrateShort" },
+                                { text: "vibrateLong", link: "/api-proxy/device/vibrate/vibrateLong" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    text: "WXML",
+                    items: [
+                        { text: "createIntersectionObserver", link: "/api-proxy/wxml/createIntersectionObserver" },
+                        { text: "createSelectorQuery", link: "/api-proxy/wxml/createSelectorQuery" }
+                    ]
+                },
+                {
+                    text: "第三方平台",
+                    items: [
+                        { text: "getExtConfig", link: "/api-proxy/ext/getExtConfig" },
+                        { text: "getExtConfigSync", link: "/api-proxy/ext/getExtConfigSync" }
+                    ]
+                }
+            ]
+        }
+],
     "/articles/": [
         {
             text: "文章",
@@ -379,7 +535,7 @@ const sidebar = {
                     link: "/articles/2.7-release",
                 },
                 {
-                    text: "Mpx2.8 版本正式发布，使用组合式 API 开发小程序",
+                    text: "Mpx2.8 版本正式发布，使用组合式 api-proxy 开发小程序",
                     link: "/articles/2.8-release",
                 },
                 {
@@ -517,6 +673,7 @@ export default withPwa(
                 //     ],
                 // },
                 { text: "API", activeMatch: "^/api/", link: "/api/" },
+                { text: "api转换", activeMatch: "^/api-proxy/", link: "/api-proxy/" },
                 {
                     text: "文章",
                     activeMatch: "^/articles/",
