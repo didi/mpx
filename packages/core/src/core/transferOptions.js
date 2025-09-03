@@ -5,11 +5,11 @@ import { warn, findItem } from '@mpxjs/utils'
 
 export default function transferOptions (options, type, needConvert = true) {
   let currentInject
-  if (global.currentInject && global.currentInject.moduleId === global.currentModuleId) {
-    currentInject = global.currentInject
+  if (global._i && global._i.moduleId === global._id) {
+    currentInject = global._i
   } else {
     currentInject = {
-      moduleId: global.currentModuleId
+      moduleId: global._id
     }
   }
   // 文件编译路径
@@ -40,7 +40,8 @@ export default function transferOptions (options, type, needConvert = true) {
     options.mixins.push(currentInject.pageEvents)
   }
   // 转换mode
-  options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global.currentSrcMode)
+  // currentSrcMode -> _sm
+  options.mpxConvertMode = options.mpxConvertMode || getConvertMode(global._m)
   const rawOptions = mergeOptions(options, type, needConvert)
 
   if (currentInject && currentInject.propKeys) {

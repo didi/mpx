@@ -78,11 +78,8 @@ const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
+const { generateVariableNameBySource, isProductionLikeMode } = require('./utils/optimize-compress')
 require('./utils/check-core-version-match')
-
-const isProductionLikeMode = options => {
-  return options.mode === 'production' || !options.mode
-}
 
 const isStaticModule = module => {
   if (!module.resource) return false
@@ -212,6 +209,11 @@ class MpxWebpackPlugin {
     }
     options.optimizeSize = options.optimizeSize || false
     options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
+    // 保留组件名（压缩后组件名不允许出现）
+    if (typeof options.reservedComponentName === 'object') {
+      options.reservedComponentName = options.reservedComponentName[options.mode]
+    }
+    options.reservedComponentName = options.reservedComponentName || []
     this.options = options
     // Hack for buildDependencies
     const rawResolveBuildDependencies = FileSystemInfo.prototype.resolveBuildDependencies
@@ -802,6 +804,8 @@ class MpxWebpackPlugin {
           asyncSubpackageRules: this.options.asyncSubpackageRules,
           transSubpackageRules: this.options.transSubpackageRules,
           optimizeRenderRules: this.options.optimizeRenderRules,
+          optimizeSize: this.options.optimizeSize,
+          reservedComponentName: this.options.reservedComponentName,
           pathHash: (resourcePath) => {
             if (this.options.pathHashMode === 'relative' && this.options.projectRoot) {
               return hash(path.relative(this.options.projectRoot, resourcePath))
@@ -842,7 +846,16 @@ class MpxWebpackPlugin {
             const customOutputPath = this.options.customOutputPath
             if (conflictPath) return conflictPath.replace(/(\.[^\\/]+)?$/, match => hash + match)
             if (typeof customOutputPath === 'function') return customOutputPath(type, name, hash, ext, resourcePath).replace(/^\//, '')
-            if (type === 'component' || type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
+
+            if (type === 'component') {
+              if (this.options.optimizeSize && isProductionLikeMode(compiler.options)) {
+                const pathHash = generateVariableNameBySource(resourcePath, 'componentPath')
+                return path.join('c', pathHash, 'i' + ext)
+              } else {
+                return path.join('components', name + hash, 'i' + ext)
+              }
+            }
+            if (type === 'page') return path.join(type + 's', name + hash, 'index' + ext)
             return path.join(type, name + hash + ext)
           },
           extractedFilesCache: new Map(),

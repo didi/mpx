@@ -39,10 +39,12 @@ module.exports = function ({
           // todo 需要考虑一种精准控制缓存的方式，仅在全局组件发生变更时才使相关使用方的缓存失效，例如按需在相关模块上动态添加request query？
           loaderContext._module.addPresentationalDependency(new RecordGlobalComponentsDependency(usingComponents, usingComponentsInfo, context))
         }
+
         callback(null, {
           componentPlaceholder,
           componentGenerics,
           usingComponentsInfo: Object.assign({}, usingComponentsInfo, mpx.globalComponentsInfo),
+          usingComponents,
           jsonContent
         })
       }

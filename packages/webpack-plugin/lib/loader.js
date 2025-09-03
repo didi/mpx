@@ -17,6 +17,12 @@ const path = require('path')
 const processWeb = require('./web')
 const processReact = require('./react')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
+const { isProductionLikeMode, CompressName } = require('./utils/optimize-compress')
+
+function hasTag (template, tag) {
+  const re = new RegExp(`<${tag}(\\s|>|/)`, 'i')
+  return re.test(template)
+}
 
 module.exports = function (content) {
   this.cacheable()
@@ -47,6 +53,7 @@ module.exports = function (content) {
   const srcMode = localSrcMode || globalSrcMode
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
+  const compressName = new CompressName()
 
   const emitWarning = (msg) => {
     this.emitWarning(
@@ -121,12 +128,28 @@ module.exports = function (content) {
         componentPlaceholder,
         componentGenerics,
         usingComponentsInfo,
-        jsonContent
+        jsonContent,
+        usingComponents
       } = jsonInfo
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
       const templateAttrs = parts.template && parts.template.attrs
       const hasComment = templateAttrs && templateAttrs.comments
       const isNative = false
+
+      // TODO 全局组件，暂不压缩
+      const usingComponentsNameMap = {}
+      const hasTemplateIsTag = parts.template?.context ? hasTag(parts.template.context, 'template') : false
+      const needOptimizeTemplateTag = mpx.optimizeSize && isProductionLikeMode(this) && !hasTemplateIsTag && ctorType !== 'app'
+      for (const componentName in usingComponents) {
+        if (needOptimizeTemplateTag) {
+          usingComponentsNameMap[componentName] = compressName._occupiedGenerateName([
+            ...Object.keys(mpx.globalComponentsInfo),
+            ...mpx.reservedComponentName
+          ])
+        } else {
+          usingComponentsNameMap[componentName] = componentName
+        }
+      }
 
       // 处理mode为web时输出vue格式文件
       if (mode === 'web') {
@@ -183,7 +206,8 @@ module.exports = function (content) {
 
       let output = ''
       // 注入模块id及资源路径
-      output += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
+      // currentModuleId -> _id
+      output += `global._id = ${JSON.stringify(moduleId)}\n`
       if (!isProduction) {
         output += `global.currentResource = ${JSON.stringify(filePath)}\n`
       }
@@ -213,12 +237,14 @@ module.exports = function (content) {
         : ctorType === 'component'
           ? 'Component'
           : 'App'
-
-      output += `global.currentCtor = ${ctor}\n`
-      output += `global.currentCtorType = ${JSON.stringify(ctor.replace(/^./, (match) => {
+      // currentCtor -> _ctor
+      output += `global._c = ${ctor}\n`
+      // currentCtorType -> _ctorT
+      output += `global._ct = ${JSON.stringify(ctor.replace(/^./, (match) => {
         return match.toLowerCase()
       }))}\n`
-      output += `global.currentResourceType = ${JSON.stringify(ctorType)}\n`
+      // currentResourceType -> _crt
+      output += `global._rt = ${JSON.stringify(ctorType)}\n`
 
       // template
       output += '/* template */\n'
@@ -234,6 +260,7 @@ module.exports = function (content) {
           isNative,
           ctorType,
           moduleId,
+          usingComponentsNameMap: JSON.stringify(usingComponentsNameMap),
           usingComponentsInfo: JSON.stringify(usingComponentsInfo),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
@@ -271,7 +298,12 @@ module.exports = function (content) {
       output += '/* json */\n'
       // 给予json默认值, 确保生成json request以自动补全json
       const json = parts.json || {}
-      output += getRequire('json', json, json.src && { ...queryObj, resourcePath }) + '\n'
+      output += getRequire('json', json, {
+        ...(json.src
+          ? { ...queryObj, resourcePath }
+          : null),
+        usingComponentsNameMap: JSON.stringify(usingComponentsNameMap)
+      }) + '\n'
 
       // script
       output += '/* script */\n'
@@ -280,7 +312,8 @@ module.exports = function (content) {
       const script = parts.script || {}
       if (script) {
         scriptSrcMode = script.mode || scriptSrcMode
-        if (scriptSrcMode) output += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+        // currentSrcMode -> _sm
+        if (scriptSrcMode) output += `global._m = ${JSON.stringify(scriptSrcMode)}\n`
         // 传递ctorType以补全js内容
         const extraOptions = {
           ...script.src

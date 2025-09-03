@@ -168,39 +168,38 @@ function buildGlobalParams ({
 global.getApp = function () {}
 global.getCurrentPages = function () { return [] }
 global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-global.__mpxGenericsMap = {}
+global._gm = {}
 global.__mpxOptionsMap = {}
 global.__mpxPagesMap = {}
 global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
 global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
 global.__appComponentsMap = ${shallowStringify(componentsMap)}
 global.__preloadRule = ${JSON.stringify(jsonConfig.preloadRule)}
-global.currentInject.pagesMap = ${shallowStringify(pagesMap)}
-global.currentInject.firstPage = ${JSON.stringify(firstPage)}\n`
+global._i.pagesMap = ${shallowStringify(pagesMap)}
+global._i.firstPage = ${JSON.stringify(firstPage)}\n`
   } else {
     if (ctorType === 'page') {
       const pageConfig = Object.assign({}, jsonConfig)
       delete pageConfig.usingComponents
-      content += `global.currentInject.pageConfig = ${JSON.stringify(pageConfig)}\n`
+      content += `global._i.pc = ${JSON.stringify(pageConfig)}\n`
     }
 
     content += `
-var componentsMap = ${shallowStringify(componentsMap)}
-global.currentInject.componentsMap = componentsMap\n`
+var cm = ${shallowStringify(componentsMap)}
+global._i.cm = cm\n`
     if (genericsInfo) {
       if (!hasApp) {
-        content += 'global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+        content += 'global._gm = global._gm || {}\n'
       }
       content += `
-const genericHash = ${JSON.stringify(genericsInfo.hash)}\n
-global.__mpxGenericsMap[genericHash] = componentsMap\n`
+global._gm[${JSON.stringify(genericsInfo.hash)}] = cm\n`
     }
     if (ctorType === 'component') {
-      content += `global.currentInject.componentPath = '/' + ${JSON.stringify(outputPath)}\n`
+      content += `global._i.p = ${JSON.stringify('/' + outputPath)}\n`
     }
   }
-  content += `global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-  content += `global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+  content += `global._id = ${JSON.stringify(moduleId)}\n`
+  content += `global._m = ${JSON.stringify(scriptSrcMode)}\n`
   if (!isProduction) {
     content += `global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`
   }

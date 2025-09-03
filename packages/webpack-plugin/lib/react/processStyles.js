@@ -67,7 +67,7 @@ module.exports = function (styles, {
         } else {
           output += `
           let __classMap
-          global.currentInject.injectMethods = {
+          global._i.injectMethods = {
             __getClassMap: function() {
               if(!__classMap) {
                 __classMap = ${shallowStringify(classMap)};

@@ -12,6 +12,7 @@ const transDynamicClassExpr = require('./trans-dynamic-class-expr')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const makeMap = require('../utils/make-map')
 const { isNonPhrasingTag } = require('../utils/dom-tag-config')
+const { isProductionLikeMode } = require('../utils/optimize-compress')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
@@ -116,7 +117,6 @@ let i18nInjectableComputed = []
 let hasOptionalChaining = false
 let processingTemplate = false
 const rulesResultMap = new Map()
-let usingComponents = []
 let usingComponentsInfo = {}
 let componentGenerics = {}
 
@@ -639,8 +639,10 @@ function parse (template, options) {
   componentGenerics = options.componentGenerics || {}
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
-  usingComponents = Object.keys(options.usingComponentsInfo)
+  // usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
+  options.usingComponentsNameMap = options.usingComponentsNameMap || {}
+  const usingComponents = Object.keys(options.usingComponentsNameMap)
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -828,6 +830,10 @@ function parse (template, options) {
     arr.length && warn$1(`\n ${filePath} \n 组件 ${arr.join(' | ')} 注册了，但是未被对应的模板引用，建议删除！`)
   }
 
+  if (options.optimizeSize && isProductionLikeMode(this)) {
+    processOptimizeSize(root, options)
+  }
+
   return {
     root,
     meta
@@ -999,6 +1005,8 @@ function processComponentIs (el, options) {
     return
   }
 
+  options = options || {}
+  const usingComponents = Object.keys(options.usingComponentsNameMap)
   const range = getAndRemoveAttr(el, 'range').val
   const isInRange = makeMap(range || '')
   el.components = (usingComponents).filter(i => {
@@ -2301,20 +2309,20 @@ function isRealNode (el) {
   return !virtualNodeTagMap[el.tag]
 }
 
-function isComponentNode (el) {
-  return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
+function isComponentNode (el, options) {
+  return options.usingComponentsNameMap[el.tag] || el.tag === 'component' || componentGenerics[el.tag]
 }
 
 function getComponentInfo (el) {
   return usingComponentsInfo[el.tag] || {}
 }
 
-function isReactComponent (el) {
-  return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
+function isReactComponent (el, options) {
+  return !isComponentNode(el, options) && isRealNode(el) && !el.isBuiltIn
 }
 
 function processExternalClasses (el, options) {
-  const isComponent = isComponentNode(el)
+  const isComponent = isComponentNode(el, options)
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
@@ -2535,7 +2543,7 @@ function processShow (el, options, root) {
     show = has ? `{{${parseMustacheWithContext(show).result}&&mpxShow}}` : '{{mpxShow}}'
   }
   if (show === undefined) return
-  if (isComponentNode(el) && getComponentInfo(el).hasVirtualHost) {
+  if (isComponentNode(el, options) && getComponentInfo(el).hasVirtualHost) {
     if (show === '') {
       show = '{{false}}'
     }
@@ -2836,7 +2844,7 @@ function closeElement (el, options, meta) {
         }
       })
     }
-    if (isComponentNode(el) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
+    if (isComponentNode(el, options) && !getComponentInfo(el).hasVirtualHost && mode === 'ali' && el.tag !== 'component') {
       postProcessAliComponentRootView(el, options, meta)
     }
   }
@@ -2916,6 +2924,56 @@ function postProcessComponentIs (el, postProcessChild) {
       replaceNode(el, tempNode, true)
     }
   }
+}
+
+function processOptimizeSize (root, options) {
+  const { usingComponentsNameMap } = options
+  function walkNode (root, callback) {
+    if (!root) return
+    callback(root)
+    if (Array.isArray(root.children) && root.children.length) {
+      for (const node of root.children) {
+        if (!node) continue
+        walkNode(node, callback)
+      }
+    }
+  }
+  // 记录所有原生组件（判断依据：usingComponents中不存在, 但是被使用了的组件）
+  const nativeTags = new Set()
+  walkNode(root, (node) => {
+    if (node.tag && !usingComponentsNameMap[node.tag]) {
+      nativeTags.add(node.tag)
+    }
+    if (Array.isArray(node.attrsList)) {
+      node.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name) && attr.value && !usingComponentsNameMap[attr.value]) {
+          nativeTags.add(attr.value)
+        }
+      })
+    }
+  })
+  // template中的使用到的组件不会经过压缩，如果使用自定义组件会出现问题，如果存在template，发出报错
+  // if (nativeTags.has('template')) error$1('使用template模板无法开启组件名压缩')
+  // 校验压缩后的组件名是否与原生组件冲突
+  for (const name of Object.values(usingComponentsNameMap)) {
+    if (nativeTags.has(name)) {
+      error$1(`压缩后组件与原生组件 <${name}> 冲突，请在 reservedComponentName 配置中添加白名单`)
+    }
+  }
+  walkNode(root, (node) => {
+    // 只有自定义组件才替换（判断依据：在usingComponents中存在的组件）
+    if (node.tag && usingComponentsNameMap[node.tag]) {
+      node.tag = usingComponentsNameMap[node.tag]
+    }
+    if (Array.isArray(node.attrsList)) {
+      node.attrsList.forEach((attr) => {
+        if (genericRE.test(attr.name) && attr.value && usingComponentsNameMap[attr.value]) {
+          attr.value = usingComponentsNameMap[attr.value]
+          node.attrsMap[attr.name] = attr.value
+        }
+      })
+    }
+  })
 }
 
 function stringifyAttr (val) {
