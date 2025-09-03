@@ -37,6 +37,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordModuleIdMapDependency = require('./dependencies/RecordModuleIdMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
@@ -671,6 +672,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
 
+      compilation.dependencyFactories.set(RecordModuleIdMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordModuleIdMapDependency, new RecordModuleIdMapDependency.Template())
+
       compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
 
@@ -814,7 +818,7 @@ class MpxWebpackPlugin {
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
           },
-          getModuleId: (filePath, isApp = false) => {
+          getModuleId: (filePath, isApp = false, loaderContext = null) => {
             if (isApp) return MPX_APP_MODULE_ID
             const { customComponentModuleId } = this.options
             let moduleId
@@ -826,6 +830,12 @@ class MpxWebpackPlugin {
               moduleId = '_' + mpx.pathHash(filePath)
             }
             mpx.resourceModuleIdMap[moduleId] = filePath
+
+            // 如果提供了 loaderContext，添加 RecordModuleIdMapDependency 确保在 webpack 缓存时也能记录 moduleId 映射关系
+            if (loaderContext && loaderContext._module) {
+              loaderContext._module.addDependency(new RecordModuleIdMapDependency(moduleId, filePath))
+            }
+
             return moduleId
           },
           getEntryNode: (module, type) => {

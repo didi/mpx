@@ -23,7 +23,8 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = mpx.getModuleId(filePath)
+  const moduleId = mpx.getModuleId(filePath, false, this)
+
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const mode = mpx.mode
