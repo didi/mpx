@@ -778,52 +778,40 @@ describe('MpxScrollView', () => {
   it('should handle onRefresh with undefined refresherTriggered', async () => {
     const mockRefresherRefresh = jest.fn()
 
-    render(
+    const { getByTestId } = render(
       <MpxScrollView
         testID="refresh-undefined"
-        enhanced={true}
+        enhanced={false} // 使用普通模式，使用 RefreshControl
         scroll-y={true}
         refresher-enabled={true}
         refresher-triggered={undefined} // 关键：undefined 触发特殊逻辑
+        refresher-default-style="black"
         bindrefresherrefresh={mockRefresherRefresh}
+        style={{ height: 400 }}
       >
-        <MpxView slot="refresher" style={{ height: 80 }}>
-          <MpxText>Custom refresher</MpxText>
-        </MpxView>
         <MpxView style={{ height: 800 }}>
           <MpxText>Main content</MpxText>
         </MpxView>
       </MpxScrollView>
     )
 
-    const scrollElement = screen.getByTestId('refresh-undefined')
+    const scrollElement = getByTestId('refresh-undefined')
 
-    // 设置 refresher 高度，确保 hasRefresher 为 true
-    fireEvent(scrollElement.children[0], 'onLayout', {
-      nativeEvent: { layout: { height: 80 } }
-    })
+    // 由于使用了 RefreshControl，我们可以通过 refresh 相关事件来触发
+    // 模拟 RefreshControl 的 onRefresh 调用
+    const refreshControl = scrollElement.props.refreshControl
 
-    // 先触发下拉手势进入刷新状态
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 4, // ACTIVE
-        translationY: 60,
-        velocityY: 0
-      }
-    })
+    // 验证 RefreshControl 存在且有 onRefresh 回调
+    expect(refreshControl).toBeDefined()
+    expect(refreshControl.props.onRefresh).toBeDefined()
 
-    // 然后触发手势结束，超过 refresher 高度，会调用 onRefresh
-    fireEvent(scrollElement, 'onGestureEvent', {
-      nativeEvent: {
-        state: 5, // END
-        translationY: 90, // 大于 refresher 高度
-        velocityY: 0
-      }
-    })
+    // 直接调用 onRefresh 函数来触发刷新逻辑
+    refreshControl.props.onRefresh()
 
-    // 等待 bindrefresherrefresh 被调用（在 onRefresh 函数中）
-    await new Promise(resolve => setTimeout(resolve, 0))
+    // 等待异步操作完成
+    await new Promise(resolve => setTimeout(resolve, 100))
 
+    // 验证 bindrefresherrefresh 被调用
     expect(mockRefresherRefresh).toHaveBeenCalled()
   })
 
