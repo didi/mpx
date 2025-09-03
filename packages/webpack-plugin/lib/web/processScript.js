@@ -26,6 +26,8 @@ module.exports = function (script, {
 }, callback) {
   const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
 
+  const { disablePageTransition = true } = webConfig
+
   let output = '/* script */\n'
 
   let scriptSrcMode = srcMode
@@ -82,7 +84,8 @@ module.exports = function (script, {
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     wxsMixin: getWxsMixin(wxsModules),
-    hasApp: ${hasApp}
+    hasApp: ${hasApp},
+    disablePageTransition: ${JSON.stringify(disablePageTransition)},
   })\n`
       return content
     }

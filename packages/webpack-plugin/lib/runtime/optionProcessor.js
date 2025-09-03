@@ -13,7 +13,8 @@ export function processComponentOption (
     componentGenerics,
     genericsInfo,
     wxsMixin,
-    hasApp
+    hasApp,
+    disablePageTransition
   }
 ) {
   // 局部注册页面和组件中依赖的组件
@@ -78,7 +79,7 @@ registered in parent context!`)
         transitionName: ''
       }
     }
-    if (!global.__mpx.config.webConfig.disablePageTransition) {
+    if (!disablePageTransition) {
       option.watch = {
         $route: {
           handler () {
