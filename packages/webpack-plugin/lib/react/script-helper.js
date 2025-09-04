@@ -21,13 +21,13 @@ function getAsyncChunkName (chunkName) {
   return ''
 }
 
-function getAsyncSuspense (type, moduleId, componentRequest, componentName, chunkName, fallback, loading) {
+function getAsyncSuspense (type, moduleId, componentRequest, componentName, chunkName, getFallback, getLoading) {
   return `getAsyncSuspense({
   type: ${JSON.stringify(type)},
   moduleId: ${JSON.stringify(moduleId)},
   chunkName: ${JSON.stringify(chunkName)},
-  loading: ${loading},
-  fallback: ${fallback},
+  getFallback: ${getFallback},
+  getLoading: ${getLoading},
   getChildren () {
     return import(${getAsyncChunkName(chunkName)}${componentRequest}).then(function (res) {
       return getComponent(res, {displayName: ${JSON.stringify(componentName)}})
@@ -59,11 +59,11 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
-    if (pageCfg.async) {
+    if (pageCfg.async && rnConfig.supportSubpackage) {
       const moduleId = mpx.getModuleId(pageCfg.resource)
-      const fallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback')
-      const loading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading')
-      pagesMap[pagePath] = getComponentGetter(getAsyncSuspense('page', moduleId, pageRequest, 'Page', pageCfg.async, fallback, loading))
+      const getFallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback'))
+      const getLoading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading'))
+      pagesMap[pagePath] = getAsyncSuspense('page', moduleId, pageRequest, 'Page', pageCfg.async, getFallback, getLoading)
     } else {
       // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
       pagesMap[pagePath] = getComponentGetter(getComponent(pageRequest, 'Page'))
@@ -81,17 +81,17 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   }
 }
 
-function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig }) {
+function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig, rnConfig }) {
   const componentsMap = {}
   const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      if (componentCfg.async) {
+      if (componentCfg.async && rnConfig.supportSubpackage) {
         const moduleId = mpx.getModuleId(componentCfg.resource)
         const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
-        let fallback
+        let getFallback
         if (placeholder) {
           if (localComponentsMap[placeholder]) {
             const placeholderCfg = localComponentsMap[placeholder]
@@ -101,11 +101,11 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
-            fallback = getComponent(placeholderRequest, placeholder)
+            getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder))
           } else {
             const tag = `mpx-${placeholder}`
             if (isBuildInReactTag(tag)) {
-              fallback = getBuiltInComponent(getBuiltInComponentRequest(tag))
+              getFallback = getComponentGetter(getBuiltInComponent(getBuiltInComponentRequest(tag)))
             } else {
               loaderContext.emitError(
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
@@ -117,7 +117,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
             new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
           )
         }
-        componentsMap[componentName] = getComponentGetter(getAsyncSuspense('component', moduleId, componentRequest, componentName, componentCfg.async, fallback))
+        componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentName, componentCfg.async, getFallback)
       } else {
         componentsMap[componentName] = getComponentGetter(getComponent(componentRequest, componentName))
       }

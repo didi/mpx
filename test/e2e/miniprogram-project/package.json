@@ -1,6 +1,6 @@
 {
   "name": "mpx-feature-unit-test",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "mpx feature unit test",
   "main": "index.js",
   "scripts": {
@@ -23,9 +23,9 @@
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.9.58",
-    "@mpxjs/core": "^2.9.58",
-    "@mpxjs/utils": "^2.9.58",
+    "@mpxjs/api-proxy": "^2.10.7",
+    "@mpxjs/core": "^2.10.7",
+    "@mpxjs/utils": "^2.10.6",
     "postcss-import": "^16.1.1",
     "postcss-styl": "^0.12.3",
     "semver": "^7.5.4",
@@ -43,8 +43,8 @@
     "@babel/runtime-corejs3": "^7.10.4",
     "@mpxjs/miniprogram-simulate": "1.4.9",
     "@mpxjs/mpx-jest": "0.0.31",
+    "@mpxjs/webpack-plugin": "^2.10.7",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/webpack-plugin": "^2.9.58",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "babel-eslint": "^10.0.1",

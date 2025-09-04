@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -53,8 +53,8 @@ function createEffect (proxy, componentsMap) {
     const appComponentsMap = global.__appComponentsMap || {}
     const generichash = proxy.target.generichash || ''
     const genericComponentsMap = global.__mpxGenericsMap?.[generichash] || {}
-    const componentGetter = componentsMap[tagName] || genericComponentsMap[tagName] || appComponentsMap[tagName]
-    return componentGetter ? componentGetter() : getByPath(ReactNative, tagName)
+    const component = componentsMap[tagName] || genericComponentsMap[tagName] || appComponentsMap[tagName]
+    return component ? component.displayName ? component : component() : getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -301,6 +301,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    setFocusedNavigation(props.navigation)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(props.navigation)
