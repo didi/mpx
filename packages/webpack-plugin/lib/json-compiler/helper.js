@@ -55,6 +55,7 @@ module.exports = function createJSONHelper ({ loaderContext, componentsMap, loca
     }
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
+      const resolveResourcePath = resource
       const { resourcePath, queryObj } = parseRequest(resource)
       let placeholder = ''
       if (queryObj.root) {
@@ -104,6 +105,7 @@ module.exports = function createJSONHelper ({ loaderContext, componentsMap, loca
         tarRoot,
         placeholder,
         resourcePath,
+        resolveResourcePath,
         queryObj
       })
     })
@@ -170,14 +172,13 @@ module.exports = function createJSONHelper ({ loaderContext, componentsMap, loca
     })
   }
 
-  const fillInComponentPlaceholder = (jsonObj, componentName, placeholder, placeholderEntry) => {
+  const fillInComponentPlaceholder = (jsonObj, { name: componentName, placeholder, placeholderEntry, resolveResourcePathMap }, callback) => {
     let placeholderComponentName = placeholder.name
     const componentPlaceholder = jsonObj.componentPlaceholder || {}
     if (componentPlaceholder[componentName]) return
     jsonObj.componentPlaceholder = componentPlaceholder
-    const existingComponentEntry = jsonObj.usingComponents[placeholderComponentName]
     if (placeholderEntry) {
-      if (existingComponentEntry) {
+      if (resolveResourcePathMap.has(placeholderComponentName) && resolveResourcePathMap.get(placeholderComponentName) !== placeholder.resolveResourcePath) {
         // 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
         let i = 1
         let newPlaceholder = placeholderComponentName + i
@@ -187,30 +188,13 @@ module.exports = function createJSONHelper ({ loaderContext, componentsMap, loca
         placeholderComponentName = newPlaceholder
       }
       jsonObj.usingComponents[placeholderComponentName] = placeholderEntry
-      if (isReact(mode) || isWeb(mode)) {
-        fillInComponentsMap(placeholderComponentName, placeholderEntry, '')
-      }
+      resolveResourcePathMap.set(placeholderComponentName, placeholder.resolveResourcePath)
     }
     componentPlaceholder[componentName] = placeholderComponentName
-  }
-
-  const fillInComponentsMap = (name, entry, tarRoot) => {
-    const { resource, outputPath } = entry
-    const { resourcePath, queryObj } = parseRequest(resource)
-    if (isReact(mode)) {
-      tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-    } else if (isWeb(mode)) {
-      tarRoot = queryObj.async || tarRoot
-    }
-    componentsMap[resourcePath] = outputPath
-    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-    localComponentsMap[name] = {
-      resource: addQuery(resource, {
-        isComponent: true,
-        outputPath
-      }),
-      async: tarRoot
-    }
+    callback(null, {
+      name: placeholderComponentName,
+      entry: placeholderEntry
+    })
   }
 
   const getNormalizePlaceholder = (placeholder) => {
@@ -227,19 +211,18 @@ module.exports = function createJSONHelper ({ loaderContext, componentsMap, loca
     return placeholder
   }
 
-  const processAsyncSubpackageRules = (jsonObj, context, { name, tarRoot, placeholder, relativePath }, callback) => {
+  const processAsyncSubpackageRules = (jsonObj, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback) => {
     if (tarRoot) {
       if (placeholder) {
         placeholder = getNormalizePlaceholder(placeholder)
         if (placeholder.resource) {
-          processComponent(placeholder.resource, context, { relativePath }, (err, entry) => {
+          processComponent(placeholder.resource, context, { relativePath }, (err, entry, { resolveResourcePath }) => {
             if (err) return callback(err)
-            fillInComponentPlaceholder(jsonObj, name, placeholder, entry)
-            callback()
+            placeholder.resolveResourcePath = resolveResourcePath
+            fillInComponentPlaceholder(jsonObj, { name, placeholder, placeholderEntry: entry, resolveResourcePathMap }, callback)
           })
         } else {
-          fillInComponentPlaceholder(jsonObj, name, placeholder)
-          callback()
+          fillInComponentPlaceholder(jsonObj, { name, placeholder }, callback)
         }
       } else {
         if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {
@@ -260,7 +243,6 @@ module.exports = function createJSONHelper ({ loaderContext, componentsMap, loca
     processJsExport,
     processAsyncSubpackageRules,
     isUrlRequest,
-    urlToRequest,
-    fillInComponentsMap
+    urlToRequest
   }
 }

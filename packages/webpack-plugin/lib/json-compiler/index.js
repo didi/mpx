@@ -197,8 +197,11 @@ module.exports = function (content) {
 
   const processComponents = (components, context, callback) => {
     if (components) {
+      // 存在所有命中asyncSubpackageRules的组件
+      const asyncComponents = []
+      const resolveResourcePathMap = new Map()
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
+        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {}, resolveResourcePath } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
             delete components[name]
             return callback()
@@ -216,7 +219,9 @@ module.exports = function (content) {
               isDynamic: queryObj.isDynamic
             }
           }
-          processAsyncSubpackageRules(json, context, { name, tarRoot, placeholder, relativePath }, callback)
+          resolveResourcePathMap.set(name, resolveResourcePath)
+          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+          callback()
         })
       }, (err) => {
         if (err) return callback(err)
@@ -231,7 +236,11 @@ module.exports = function (content) {
           components.element = mpxCustomElementPath
           Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
         }
-        callback()
+
+        // 使用async处理所有asyncComponents完成后调用callback
+        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+          processAsyncSubpackageRules(json, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback)
+        }, callback)
       })
     } else {
       callback()

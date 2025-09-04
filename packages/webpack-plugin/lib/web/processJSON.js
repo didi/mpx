@@ -49,10 +49,23 @@ module.exports = function (jsonContent, {
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
+  function fillInComponentsMap (name, entry, tarRoot) {
+    const { resource, outputPath } = entry
+    const { resourcePath } = parseRequest(resource)
+    componentsMap[resourcePath] = outputPath
+    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+    localComponentsMap[name] = {
+      resource: addQuery(resource, {
+        isComponent: true,
+        outputPath
+      }),
+      async: tarRoot
+    }
+  }
+
   const {
     isUrlRequest,
     urlToRequest,
-    fillInComponentsMap,
     processPage,
     processComponent,
     processAsyncSubpackageRules
@@ -291,15 +304,32 @@ module.exports = function (jsonContent, {
 
   const processComponents = (components, context, callback) => {
     if (components) {
+      const asyncComponents = []
+      const resolveResourcePathMap = new Map()
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder } = {}) => {
+        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder, resolveResourcePath } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          fillInComponentsMap(name, entry, tarRoot)
-          const { relativePath } = entry
+          const { relativePath, resource } = entry
+          const { queryObj } = parseRequest(resource)
 
-          processAsyncSubpackageRules(jsonObj, context, { name, tarRoot, placeholder, relativePath }, callback)
+          tarRoot = queryObj.async || tarRoot
+
+          resolveResourcePathMap.set(name, resolveResourcePath)
+          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+
+          fillInComponentsMap(name, entry, tarRoot)
+          callback()
         })
-      }, callback)
+      }, (err) => {
+        if (err) return callback(err)
+        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+          processAsyncSubpackageRules(jsonObj, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, { name, entry }) => {
+            if (err) return callback(err)
+            fillInComponentsMap(name, entry, '')
+            callback()
+          })
+        }, callback)
+      })
     } else {
       callback()
     }
