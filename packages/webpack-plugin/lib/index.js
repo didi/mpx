@@ -1901,24 +1901,41 @@ try {
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
         const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
+
+        // 样式 loader 类型检测和条件编译 loader 插入的工具函数
+        const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
+        const injectStyleStripLoader = (loaders) => {
+          // 检查是否已经存在 stripLoader
+          const hasStripLoader = loaders.some(loader => {
+            const loaderPath = toPosix(loader.loader)
+            return loaderPath.includes('style-compiler/strip-conditional-loader')
+          })
+          if (hasStripLoader) {
+            return
+          }
+          const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
+          loaders.forEach((loader, index) => {
+            const currentLoader = toPosix(loader.loader)
+            for (const [key] of loaderTypes) {
+              if (currentLoader.includes(key)) {
+                loaderTypes.set(key, index)
+                break
+              }
+            }
+          })
+          const targetIndex = STYLE_LOADER_TYPES
+            .map(type => loaderTypes.get(`node_modules/${type}`))
+            .find(index => index !== -1)
+
+          if (targetIndex !== undefined) {
+            loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
+          }
+        }
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
-
           if (type === 'styles') {
-            let insertBeforeIndex = -1
-            // 单次遍历收集所有索引
-            loaders.forEach((loader, index) => {
-              const currentLoader = toPosix(loader.loader)
-              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
-                insertBeforeIndex = index
-              }
-            })
-
-            if (insertBeforeIndex !== -1) {
-              loaders.splice(insertBeforeIndex, 0, { loader: styleStripConditionalPath })
-            }
-            loaders.push({ loader: styleStripConditionalPath })
+            injectStyleStripLoader(loaders)
           }
 
           switch (type) {
@@ -1977,6 +1994,7 @@ try {
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
+          injectStyleStripLoader(loaders)
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
