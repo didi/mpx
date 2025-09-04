@@ -22,8 +22,8 @@ Mpx 提供了两套生命周期使用方式：
 
 | 框架内置生命周期 | 选项式 API 用法 | 组合式 API 钩子 | 微信原生生命周期 |
 |:--------------|:-------------|:-------------|:-------------|
-| BEFORECREATE | created/attached | - (setup 中编写） | attached|
-| CREATED | created/attached  | - (setup 中编写） | attached |
+| BEFORECREATE | - | -  | -|
+| CREATED | created  | - (直接在 setup 中编写） | created |
 | BEFOREMOUNT | 页面：onReady <br>组件：ready | onBeforeMount | 页面：onReady <br>组件：ready |
 | MOUNTED | 页面：onReady <br>组件：ready | onMounted | 页面：onReady <br>组件：ready |
 | BEFOREUPDATE | - | onBeforeUpdate | - |
