@@ -639,6 +639,13 @@ const sidebar: DefaultTheme.Sidebar = {
                             ],
                         },
                         {
+                            text: "用户信息",
+                            collapsed: true,
+                            items: [
+                                { text: "getUserInfo", link: "/api-proxy/open-api/user-info/getUserInfo" }
+                            ],
+                        },
+                        {
                             text: "设置",
                             collapsed: true,
                             items: [
