@@ -171,6 +171,7 @@ export default class XFetch {
     const cacheKey = formatCacheKey(config.url)
     const cacheRequestData = this.cacheRequestData[cacheKey]
     if (cacheRequestData && config.usePre.mode !== 'producer') {
+      delete this.cacheRequestData[cacheKey]
       // 缓存是否过期：大于cacheInvalidationTime（默认为3s）则算过期
       const isNotExpired = Date.now() - cacheRequestData.lastTime <= config.usePre.cacheInvalidationTime
       if (isNotExpired && checkCacheConfig(config, cacheRequestData) && cacheRequestData.responsePromise) {
@@ -178,8 +179,6 @@ export default class XFetch {
           // 添加 isCache 标识该请求来源于缓存
           return extend({ isCache: true }, response)
         })
-      } else {
-        delete this.cacheRequestData[cacheKey]
       }
     }
     const { params, data, method } = config
