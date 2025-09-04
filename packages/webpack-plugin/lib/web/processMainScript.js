@@ -63,12 +63,13 @@ Vue.use(VueRouter)\n`
   output += `var App = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { isApp: true }))}).default\n`
 
   output += `
+var componentsMap = ${shallowStringify(componentsMap)}
 export default processAppOption({
   App: App,
   tabBarMap: ${JSON.stringify(tabBarMap)},
   firstPage: ${JSON.stringify(firstPage)},
   pagesMap: ${shallowStringify(pagesMap)},
-  componentsMap: ${shallowStringify(componentsMap)},
+  componentsMap: componentsMap,
   Vue: Vue,
   VueRouter: VueRouter,
   el: ${JSON.stringify(webConfig.el || '#app')},
