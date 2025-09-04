@@ -78,13 +78,14 @@ module.exports = function (script, {
       }
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
+  // @ts-ignore
+  var componentsMap = ${shallowStringify(componentsMap)}
   export default processComponentOption({
     option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
     ctorType: ${JSON.stringify(ctorType)},
     outputPath: ${JSON.stringify(outputPath)},
     pageConfig: ${JSON.stringify(pageConfig)},
-    // @ts-ignore
-    componentsMap: ${shallowStringify(componentsMap)},
+    componentsMap: componentsMap,
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     wxsMixin: getWxsMixin(wxsModules),
