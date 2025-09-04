@@ -22,15 +22,14 @@ Mpx 提供了两套生命周期使用方式：
 
 | 框架内置生命周期 | 选项式 API 用法 | 组合式 API 钩子 | 微信原生生命周期 |
 |:--------------|:-------------|:-------------|:-------------|
-| BEFORECREATE | - | -  | -|
-| CREATED | created  | - (直接在 setup 中编写） | created |
+| BEFORECREATE | 页面: onLoad <br>组件：attached | - (可直接在 setup 中编写） | 页面: onLoad <br>组件：attached|
+| CREATED | 页面: onLoad <br>组件：attached  | - (可直接在 setup 中编写） | 页面: onLoad <br>组件：attached |
 | BEFOREMOUNT | 页面：onReady <br>组件：ready | onBeforeMount | 页面：onReady <br>组件：ready |
 | MOUNTED | 页面：onReady <br>组件：ready | onMounted | 页面：onReady <br>组件：ready |
 | BEFOREUPDATE | - | onBeforeUpdate | - |
 | UPDATED | - | onUpdated | - |
 | BEFOREUNMOUNT |  页面：onUnload <br> 组件：detached | onBeforeUnmount |  页面：onUnload <br> 组件：detached|
 | UNMOUNTED |  页面：onUnload <br> 组件：detached | onUnmounted |  页面：onUnload <br> 组件：detached|
-| ONLOAD | onLoad | onLoad | onLoad |
 | ONSHOW | onShow | onShow | onShow |
 | ONHIDE | onHide | onHide | onHide |
 | ONRESIZE | onResize | onResize | onResize |
@@ -56,8 +55,8 @@ Mpx 提供了两套生命周期使用方式：
 - `attached` - 组件实例进入页面节点树时执行
 - `ready` - 组件在视图层布局完成后执行
 - `detached` - 组件实例被从页面节点树移除时执行
-- `pageShow` - 组件所在页面显示时执行（等同于 pageLifetimes.show）
-- `pageHide` - 组件所在页面隐藏时执行（等同于 pageLifetimes.hide）
+- `pageLifetimes.show` - 组件所在页面显示时执行
+- `pageLifetimes.hide` - 组件所在页面隐藏时执行
 
 **示例：**
 ```js
@@ -89,14 +88,15 @@ createComponent({
     console.log('组件实例被从页面节点树移除时')
     // 清理定时器、事件监听器等，类似 Vue 的 beforeUnmount
   },
+  pageLifetimes: {
+    // 在组件中监听页面生命周期
+    show() {
+      console.log('组件所在页面被展示时')
+    },
   
-  // 在组件中监听页面生命周期
-  pageShow() {
-    console.log('组件所在页面被展示时')
-  },
-  
-  pageHide() {
-    console.log('组件所在页面被隐藏时')
+    hide() {
+      console.log('组件所在页面被隐藏时')
+    }
   }
 })
 ```
@@ -278,8 +278,8 @@ createApp({
 **组件和页面都可用的生命周期钩子：**
 - `onBeforeMount` - 挂载开始之前被调用
 - `onMounted` - 被挂载后调用
-- `onBeforeUpdate` - 数据更新时调用，发生在虚拟 DOM 打补丁之前
-- `onUpdated` - 数据更新导致的重新渲染和打补丁后调用
+- `onBeforeUpdate` - 数据更新时调用
+- `onUpdated` - 数据更新导致的重新渲染后调用
 - `onBeforeUnmount` - 在卸载实例之前调用
 - `onUnmounted` - 卸载实例后调用
 - `onShow` - 页面显示/切入前台时触发
@@ -522,21 +522,5 @@ setup() {
     // 清理资源
     clearInterval(timer)
   })
-}
-```
-
-### 2. 避免在错误的生命周期中执行操作
-
-```js
-// ❌ 错误：在 created 中操作 DOM（created 钩子时组件还未进入节点树）
-created() {
-  // 此时无法进行 DOM 操作
-  this.selectComponent('.element') // 获取不到
-}
-
-// ✅ 正确：在 ready 中操作 DOM
-ready() {
-  // 此时可以安全地操作 DOM
-  this.selectComponent('.element')
 }
 ```

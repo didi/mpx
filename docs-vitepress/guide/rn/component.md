@@ -58,6 +58,14 @@
 | enable-fast-image | boolean  | `false`  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 | is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
+
+事件
+
+| 事件名           | 说明                |
+| ----------------| ------------------ |
+| bindtransitionend| 动画结束时触发 |
+
+
 注意事项
 
 1. 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
@@ -121,6 +129,7 @@
 | bindscrolltoupper   | 滚动到顶部/左边触发 |
 | bindscrolltolower   | 滚动到底部/右边触发 |
 | bindscroll          | 滚动时触发         |
+| bindscrollend | 滚动结束时触发         |
 | bindrefresherrefresh| 自定义下拉刷新被触发 |
 
 注意事项
@@ -129,6 +138,7 @@
 2. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 3. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 4. scroll-view 组件在滚动过程中，不会触发其自身或子组件的 touchend 事件响应，这是 RN 底层实现导致的问题，手势系统识别当前是 scroll-view 的滚动，就会取消掉 touchend 事件的响应。
+5. 安卓上如果触发了 scroll-view 组件默认的下拉刷新，binddragend可能不触发，只会触发 binddragstart
 
 
 ### swiper
