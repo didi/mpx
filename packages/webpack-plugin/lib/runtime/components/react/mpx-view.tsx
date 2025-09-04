@@ -581,6 +581,8 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
   const [, setLayoutInfoHeight] = useState<number | null>(null)
   const sizeInfo = useRef<Size | null>(null)
   const layoutInfo = useRef<Size | null>(null)
+  const backgroundNodeRef = useRef<View>(null)
+
   useEffect(() => {
     sizeInfo.current = null
     if (type === 'linear') {
@@ -618,7 +620,7 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     // type 添加type 处理无渐变 有渐变的场景
   }, [src, type])
 
-  if (!type) return null
+  if (!type) return { component: null, triggerLayout: null, backgroundNodeRef: null }
 
   const onLayout = (res: LayoutChangeEvent) => {
     const { width, height } = res?.nativeEvent?.layout || {}
@@ -648,14 +650,31 @@ function useWrapImage (imageStyle?: ExtendedViewStyle, innerStyle?: Record<strin
     }
   }
 
+  // 手动触发布局计算的方法
+  const triggerLayout = (layoutData?: { width: number; height: number }) => {
+    if (layoutData) {
+      const mockEvent: LayoutChangeEvent = {
+        nativeEvent: {
+          layout: layoutData
+        }
+      } as LayoutChangeEvent
+      onLayout(mockEvent)
+    }
+  }
+
   const backgroundProps: ViewProps = extendObject({ key: 'backgroundImage' }, needLayout ? { onLayout } : {},
-    { style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) }
+    {
+      ref: backgroundNodeRef,
+      style: extendObject({}, inheritStyle(innerStyle), StyleSheet.absoluteFillObject, { overflow: 'hidden' as const }) 
+    }
   )
 
-  return createElement(View, backgroundProps,
+  const component = createElement(View, backgroundProps,
     show && type === 'linear' && createElement(LinearGradient, extendObject({ useAngle: true }, imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size))),
     show && type === 'image' && renderImage(imageStyleToProps(preImageInfo, sizeInfo.current as Size, layoutInfo.current as Size), enableFastImage)
   )
+
+  return { component, triggerLayout, backgroundNodeRef }
 }
 
 interface WrapChildrenConfig {
@@ -677,11 +696,17 @@ function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, tex
     textProps
   })
 
-  return [
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : null,
-    children
-  ]
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const imageResult = enableBackground ? useWrapImage(backgroundStyle, innerStyle, enableFastImage) : { component: null, triggerLayout: null, backgroundNodeRef: null }
+
+  return {
+    children: [
+      imageResult.component,
+      children
+    ],
+    triggerImageLayout: imageResult.triggerLayout,
+    backgroundNodeRef: imageResult.backgroundNodeRef
+  }
 }
 
 const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, ref): JSX.Element => {
@@ -743,9 +768,32 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
-  const nodeRef = useRef(null)
+  const childrenResult = wrapWithChildren(props, {
+    hasVarDec,
+    enableBackground: enableBackgroundRef.current,
+    textStyle,
+    backgroundStyle,
+    varContext: varContextRef.current,
+    textProps,
+    innerStyle,
+    enableFastImage
+  })
+
+  const nodeRef = useRef<View>(null)
   useNodesRef<View, _ViewProps>(props, ref, nodeRef, {
-    style: normalStyle
+    style: normalStyle,
+    // 新增方法：手动触发背景图片的布局计算
+    triggerBackgroundLayout: (layoutData?: { width: number; height: number }) => {
+      if (layoutData) {
+        childrenResult.triggerImageLayout?.(layoutData)
+      } else {
+        if (childrenResult.backgroundNodeRef?.current) {
+          childrenResult.backgroundNodeRef.current.measure((x: number, y: number, width: number, height: number) => {
+            childrenResult.triggerImageLayout?.({ width, height })
+          })
+        }
+      }
+    }
   })
 
   const {
@@ -790,20 +838,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     }
   )
 
-  const childNode = wrapWithChildren(props, {
-    hasVarDec,
-    enableBackground: enableBackgroundRef.current,
-    textStyle,
-    backgroundStyle,
-    varContext: varContextRef.current,
-    textProps,
-    innerStyle,
-    enableFastImage
-  })
-
   let finalComponent: JSX.Element = enableStyleAnimation
-    ? createElement(Animated.View, innerProps, childNode)
-    : createElement(View, innerProps, childNode)
+    ? createElement(Animated.View, innerProps, childrenResult.children)
+    : createElement(View, innerProps, childrenResult.children)
 
   if (enableHover) {
     finalComponent = createElement(GestureDetector, { gesture: gesture as PanGesture }, finalComponent)
