@@ -22,7 +22,7 @@ function getAsyncSuspense (type, moduleId, componentRequest, componentName, chun
   moduleId: ${JSON.stringify(moduleId)},
   chunkName: ${JSON.stringify(chunkName)},
   getFallback: ${getFallback},
-  getLoading: ${getLoading},
+  ${getLoading ? `getLoading: ${getLoading},` : ''}
   getChildren () {
     return import(${getAsyncChunkName(chunkName)}${componentRequest}).then(function (res) {
       return getComponent(res, {displayName: ${JSON.stringify(componentName)}})

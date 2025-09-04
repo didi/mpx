@@ -8,12 +8,10 @@ const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 const { matchCondition } = require('../utils/match-condition')
 const { isWeb, isReact } = require('../utils/env')
-const { transSubpackage } = require('../utils/trans-async-sub-rules')
 const getBuildInTagComponent = require('../utils/get-build-tag-component')
 const { capitalToHyphen } = require('../utils/string')
-const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
-module.exports = function createJSONHelper ({ loaderContext, componentsMap, localComponentsMap, emitWarning, customGetDynamicEntry, emitError }) {
+module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry, emitError }) {
   const mpx = loaderContext.getMpx()
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
