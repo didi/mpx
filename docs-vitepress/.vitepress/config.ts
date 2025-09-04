@@ -162,8 +162,7 @@ const sidebar: DefaultTheme.Sidebar = {
     ],
     "/api/": [
         {
-            text: "API",
-            collapsed: false,
+            text: "运行时 API",
             items: [
                 { text: "API 参考", link: "/api/" },
                 { text: "全局配置", link: "/api/app-config" },
