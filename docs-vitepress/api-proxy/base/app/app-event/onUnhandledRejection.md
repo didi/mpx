@@ -2,7 +2,7 @@
 
 监听未处理的 Promise 拒绝事件。该事件与 App.onUnhandledRejection 的回调时机与参数一致。
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.onUnhandledRejection.html)
 

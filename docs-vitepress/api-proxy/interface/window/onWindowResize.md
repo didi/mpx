@@ -2,7 +2,7 @@
 
 监听窗口尺寸变化事件
 
-支持情况： 微信、RN、web、harmony
+支持情况： 微信、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/window/wx.onWindowResize.html)
 

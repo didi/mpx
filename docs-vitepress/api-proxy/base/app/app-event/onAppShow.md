@@ -2,7 +2,7 @@
 
 监听小程序切前台事件。该事件与 App.onShow 的回调参数一致。
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.onAppShow.html)
 
@@ -26,7 +26,7 @@
       <th>说明</th>
       <th>最低版本</th>
       <th>支付宝</th>
-      <th>RN/harmony</th>
+      <th>RN</th>
       <th>web</th>
     </tr>
   </thead>
@@ -85,7 +85,7 @@
               <th>类型</th>
               <th>说明</th>
               <th>支付宝</th>
-              <th>RN/harmony</th>
+              <th>RN</th>
               <th>web</th>
             </tr>
           </thead>

@@ -2,7 +2,7 @@
 
 关闭当前页面，返回上一页面或多级页面。
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/route/wx.navigateBack.html)
 

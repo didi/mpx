@@ -2,7 +2,7 @@
 
 发起 HTTPS 网络请求
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html)
 
@@ -20,7 +20,7 @@
       <th>说明</th>
       <th>最低版本</th>
       <th>支付宝</th>
-      <th>RN/harmony</th>
+      <th>RN</th>
       <th>web</th>
     </tr>
   </thead>
@@ -345,7 +345,7 @@
       <th>说明</th>
       <th>最低版本</th>
       <th>支付宝</th>
-      <th>RN/harmony</th>
+      <th>RN</th>
       <th>web</th>
     </tr>
   </thead>
@@ -528,7 +528,7 @@
       <th>说明</th>
       <th>最低版本</th>
       <th>支付宝</th>
-      <th>RN/harmony</th>
+      <th>RN</th>
       <th>web</th>
     </tr>
   </thead>

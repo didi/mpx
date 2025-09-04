@@ -2,14 +2,14 @@
 
 显示模态对话框
 
-支持情况： 微信、支付宝、web、RN、harmony
+支持情况： 微信、支付宝、web、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/interaction/wx.showModal.html)
 
 ### 参数
 **Object object**
 
-| 属性            | 类型     | 默认值   | 必填 | 说明                                         | 最低版本 | 支付宝 | RN/harmony | web |
+| 属性            | 类型     | 默认值   | 必填 | 说明                                         | 最低版本 | 支付宝 | RN | web |
 |-----------------|----------|----------|------|----------------------------------------------|----------|--------|------------|-----|
 | title           | string   |          | 否   | 提示的标题                                   |          | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> |
 | content         | string   |          | 否   | 提示的内容                                   |          | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> |

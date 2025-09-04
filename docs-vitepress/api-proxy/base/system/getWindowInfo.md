@@ -2,7 +2,7 @@
 
 获取窗口信息
 
-支持情况： 微信、支付宝、web、RN、harmony
+支持情况： 微信、支付宝、web、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getWindowInfo.html)
 
@@ -17,7 +17,7 @@
       <th>类型</th>
       <th>说明</th>
       <th>支付宝</th>
-      <th>RN/harmony</th>
+      <th>RN</th>
       <th>web</th>
     </tr>
   </thead>
