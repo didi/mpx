@@ -63,7 +63,7 @@
 
 | 事件名           | 说明                |
 | ----------------| ------------------ |
-| bindtransitionend| 动画结束时触发 |
+| bindtransitionend| 动画结束时触发,`event.detail = { elapsedTime, finished, current }`     |
 
 
 注意事项
