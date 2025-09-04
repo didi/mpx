@@ -321,9 +321,12 @@ module.exports = function (jsonContent, {
       }, (err) => {
         if (err) return callback(err)
         async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
-          processAsyncSubpackageRules(jsonObj, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, { name, entry }) => {
+          processAsyncSubpackageRules(jsonObj, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, placeholder) => {
             if (err) return callback(err)
-            fillInComponentsMap(name, entry, '')
+            if (placeholder) {
+              const { name, entry } = placeholder
+              fillInComponentsMap(name, entry, '')
+            }
             callback()
           })
         }, callback)

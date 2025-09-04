@@ -173,7 +173,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
   const fillInComponentPlaceholder = (jsonObj, { name: componentName, placeholder, placeholderEntry, resolveResourcePathMap }, callback) => {
     let placeholderComponentName = placeholder.name
     const componentPlaceholder = jsonObj.componentPlaceholder || {}
-    if (componentPlaceholder[componentName]) return
+    if (componentPlaceholder[componentName]) {
+      callback()
+      return
+    }
     jsonObj.componentPlaceholder = componentPlaceholder
     if (placeholderEntry) {
       if (resolveResourcePathMap.has(placeholderComponentName) && resolveResourcePathMap.get(placeholderComponentName) !== placeholder.resolveResourcePath) {
