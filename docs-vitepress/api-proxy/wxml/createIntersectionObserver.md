@@ -2,7 +2,7 @@
 
 创建并返回一个 IntersectionObserver 对象实例。在自定义组件或包含自定义组件的页面中，应使用 this.createIntersectionObserver([options]) 来代替。
 
-支持情况： 微信、支付宝、web、RN、harmony
+支持情况： 微信、支付宝、web、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/wxml/wx.createIntersectionObserver.html)
 

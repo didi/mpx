@@ -2,7 +2,7 @@
 
 监听小程序异步组件加载失败事件。
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.onLazyLoadError.html)
 

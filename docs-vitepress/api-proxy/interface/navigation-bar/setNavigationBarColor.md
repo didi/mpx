@@ -2,7 +2,7 @@
 
 设置页面导航条颜色
 
-支持情况：微信、支付宝、RN、web、harmony
+支持情况：微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/navigation-bar/wx.setNavigationBarColor.html)
 
@@ -18,7 +18,7 @@
 			<th>必填</th>
 			<th>说明</th>
 			<th>支付宝</th>
-			<th>RN/harmony</th>
+			<th>RN</th>
 			<th>web</th>
 		</tr>
 	</thead>

@@ -10,7 +10,7 @@
 
 **Object object**
 
-| 属性                | 类型           | 默认值 | 必填 | 说明                                         | 最低版本 | 支付宝 | RN/harmony | web |
+| 属性                | 类型           | 默认值 | 必填 | 说明                                         | 最低版本 | 支付宝 | RN | web |
 | ------------------- | -------------- | ------ | ---- | -------------------------------------------- | -------- | ------ | ---------- | --- |
 | url                 | string         |        | 是   | 开发者服务器 wss 接口地址                    |          | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> |
 | header              | Object         |        | 否   | HTTP Header，Header 中不能设置 Referer        |          | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> |

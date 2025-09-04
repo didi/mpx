@@ -2,7 +2,7 @@
 
 显示 loading 提示框。需主动调用 mpx.hideLoading 才能关闭提示框
 
-支持情况： 微信、支付宝、web、RN、harmony
+支持情况： 微信、支付宝、web、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/interaction/wx.showLoading.html)
 

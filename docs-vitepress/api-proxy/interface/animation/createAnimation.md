@@ -2,7 +2,7 @@
 
 创建一个动画实例 animation。调用实例的方法来描述动画。最后通过动画实例的 export 方法导出动画数据传递给组件的 animation 属性。
 
-支持情况： 微信、支付宝、web、RN、harmony
+支持情况： 微信、支付宝、web、RN
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/animation/wx.createAnimation.html)
 

@@ -2,7 +2,7 @@
 
 关闭当前页面，跳转到应用内的某个页面。但是不允许跳转到 tabbar 页面。
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/route/wx.redirectTo.html)
 

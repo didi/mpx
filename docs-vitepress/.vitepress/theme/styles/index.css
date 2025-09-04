@@ -14,6 +14,7 @@
     --vt-c-brand-light: var(--vt-c-green-light);
     --vt-c-brand-dark: var(--vt-c-green-dark);
     --vp-c-brand-1: var(--vt-c-brand);
+    --vp-c-brand-2: var(--vt-c-brand);
 }
 
 .dark {

@@ -2,7 +2,7 @@
 
 获取本次应用启动时的参数
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/miniapp/api/diffapi/getLaunchOptionsSync.html)
 

@@ -2,7 +2,7 @@
 
 保留当前页面，跳转到应用内的某个页面。
 
-支持情况： 微信、支付宝、RN、web、harmony
+支持情况： 微信、支付宝、RN、web
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/route/wx.navigateTo.html)
 
@@ -10,7 +10,7 @@
 
 **Object object**
 
-| 属性         | 类型     | 默认值 | 必填 | 说明 | 支付宝 | RN/harmony | web |
+| 属性         | 类型     | 默认值 | 必填 | 说明 | 支付宝 | RN | web |
 |--------------|----------|--------|------|------|--------|------------|-----|
 | url          | string   |        | 是   | 需要跳转的应用内非 tabBar 的页面的路径 (代码包路径), 路径后可以带参数。参数与路径之间使用 ? 分隔，参数键与参数值用 = 相连，不同参数用 & 分隔；如 'path?key=value&key2=value2' | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> |
 | events       | Object   |        | 否   | 页面间通信接口，用于监听被打开页面发送到当前页面的数据。基础库 2.7.3 开始支持。 | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> |
