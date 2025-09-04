@@ -288,8 +288,8 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
       if (type === 'linear' && (!layoutWidth || !layoutHeight)) {
-        // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，即使后面再更新为正常宽高，通过设置 % 的方式也会渲染不出来
-        // 所以 hack 手动将 linear 宽高也设置为 0
+        // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
+        // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %
         dimensions = {
           width: 0,
           height: 0
