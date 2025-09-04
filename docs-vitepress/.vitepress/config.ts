@@ -1,4 +1,4 @@
-import { defineConfig, Plugin } from "vitepress"
+import { type DefaultTheme, defineConfig, Plugin } from "vitepress"
 import {
     groupIconMdPlugin,
     groupIconVitePlugin,
@@ -9,11 +9,11 @@ import { withPwa } from "@vite-pwa/vitepress"
 import { transformerTwoslash } from "@shikijs/vitepress-twoslash"
 import { localSearchTranslations } from "./theme/translations"
 
-const sidebar = {
+const sidebar: DefaultTheme.Sidebar = {
     "/guide/": [
         {
             text: "基础",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "快速开始", link: "/guide/basic/start" },
                 { text: "介绍", link: "/guide/basic/intro" },
@@ -41,7 +41,7 @@ const sidebar = {
         },
         {
             text: "进阶",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "状态管理（store）", link: "/guide/advance/store" },
                 { text: "状态管理（pinia）", link: "/guide/advance/pinia" },
@@ -77,7 +77,7 @@ const sidebar = {
         },
         {
             text: "跨端基础",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "跨端输出配置", link: "/guide/cross-platform/basic" },
                 { text: "条件编译机制", link: "/guide/cross-platform/conditional" },
@@ -86,26 +86,26 @@ const sidebar = {
         },
         {
             text: "跨端输出RN",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "快速开始", link: "/guide/rn/quick-start" },
-                { 
-                    text:"基础能力", 
-                    link: "/guide/rn/basic", 
+                {
+                    text: "基础能力",
+                    link: "/guide/rn/basic",
                     items: [
                         { text: "组件使用与开发", link: "/guide/rn/component" },
                         { text: "模板语法与生命周期", link: "/guide/rn/template" },
                         { text: "跨端样式", link: "/guide/rn/style" },
                         { text: "应用能力", link: "/guide/rn/application-api" },
                     ],
-                 },
+                },
                 { text: "输出RN进阶", link: "/guide/rn/advanced" },
                 { text: "跨端生态SDK", link: "/guide/rn/ecosystem-sdk" },
             ],
         },
         {
             text: "组合式 API",
-            collapsable: false,
+            collapsed: false,
             items: [
                 {
                     text: "组合式 API",
@@ -119,7 +119,7 @@ const sidebar = {
         },
         {
             text: "工具",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "使用TypeScript开发小程序", link: "/guide/tool/ts" },
                 { text: "单元测试", link: "/guide/tool/unit-test" },
@@ -128,16 +128,16 @@ const sidebar = {
         },
         {
             text: "拓展",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "网络请求", link: "/guide/extend/fetch" },
                 { text: "数据 Mock", link: "/guide/extend/mock" },
-                { text: "WebView Bridge", link: "/guide/extend/webview-bridge" }
+                { text: "WebView Bridge", link: "/guide/extend/webview-bridge" },
             ],
         },
         {
             text: "理解",
-            collapsable: false,
+            collapsed: false,
             items: [
                 {
                     text: "Mpx运行时增强原理",
@@ -148,7 +148,7 @@ const sidebar = {
         },
         {
             text: "迁移",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "从 2.8 升级至 2.9", link: "/guide/migrate/2.9" },
                 { text: "从 2.7 升级至 2.8", link: "/guide/migrate/2.8" },
@@ -163,7 +163,7 @@ const sidebar = {
     "/api/": [
         {
             text: "API",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "API 参考", link: "/api/" },
                 { text: "全局配置", link: "/api/app-config" },
@@ -182,341 +182,651 @@ const sidebar = {
     ],
     "/api-proxy/": [
         {
-            text: "API 转换",
-            collapsable: true,
+            text: "跨端转换 API",
             link: "/api-proxy/index",
             items: [
                 {
                     text: "基础",
+                    collapsed: true,
                     items: [
-                        { text: "base64ToArrayBuffer", link: "/api-proxy/base/base64ToArrayBuffer" },
-                        { text: "arrayBufferToBase64", link: "/api-proxy/base/arrayBufferToBase64" },
+                        {
+                            text: "base64ToArrayBuffer",
+                            link: "/api-proxy/base/base64ToArrayBuffer",
+                        },
+                        {
+                            text: "arrayBufferToBase64",
+                            link: "/api-proxy/base/arrayBufferToBase64",
+                        },
                         {
                             text: "系统",
+                            collapsed: true,
                             items: [
-                                { text: "getSystemInfo", link: "/api-proxy/base/system/getSystemInfo" },
-                                { text: "getSystemInfoSync", link: "/api-proxy/base/system/getSystemInfoSync" },
-                                { text: "getWindowInfo", link: "/api-proxy/base/system/getWindowInfo" },
-                                { text: "getDeviceInfo", link: "/api-proxy/base/system/getDeviceInfo" }
-                            ]
+                                {
+                                    text: "getSystemInfo",
+                                    link: "/api-proxy/base/system/getSystemInfo",
+                                },
+                                {
+                                    text: "getSystemInfoSync",
+                                    link: "/api-proxy/base/system/getSystemInfoSync",
+                                },
+                                {
+                                    text: "getWindowInfo",
+                                    link: "/api-proxy/base/system/getWindowInfo",
+                                },
+                                {
+                                    text: "getDeviceInfo",
+                                    link: "/api-proxy/base/system/getDeviceInfo",
+                                },
+                            ],
                         },
                         {
                             text: "小程序",
+                            collapsed: true,
                             items: [
                                 {
                                     text: "生命周期",
+                                    collapsed: true,
                                     items: [
-                                        { text: "getEnterOptionsSync", link: "/api-proxy/base/app/life-cycle/getEnterOptionsSync" },
-                                        { text: "getLaunchOptionsSync", link: "/api-proxy/base/app/life-cycle/getLaunchOptionsSync" }
-                                    ]
+                                        {
+                                            text: "getEnterOptionsSync",
+                                            link: "/api-proxy/base/app/life-cycle/getEnterOptionsSync",
+                                        },
+                                        {
+                                            text: "getLaunchOptionsSync",
+                                            link: "/api-proxy/base/app/life-cycle/getLaunchOptionsSync",
+                                        },
+                                    ],
                                 },
                                 {
                                     text: "应用级事件",
+                                    collapsed: true,
                                     items: [
-                                        { text: "onAppShow", link: "/api-proxy/base/app/app-event/onAppShow" },
-                                        { text: "onAppHide", link: "/api-proxy/base/app/app-event/onAppHide" },
-                                        { text: "offAppShow", link: "/api-proxy/base/app/app-event/offAppShow" },
-                                        { text: "offAppHide", link: "/api-proxy/base/app/app-event/offAppHide" },
-                                        { text: "onError", link: "/api-proxy/base/app/app-event/onError" },
-                                        { text: "offError", link: "/api-proxy/base/app/app-event/offError" },
-                                        { text: "onUnhandledRejection", link: "/api-proxy/base/app/app-event/onUnhandledRejection" },
-                                        { text: "offUnhandledRejection", link: "/api-proxy/base/app/app-event/offUnhandledRejection" },
-                                        { text: "onLazyLoadError", link: "/api-proxy/base/app/app-event/onLazyLoadError" },
-                                        { text: "offLazyLoadError", link: "/api-proxy/base/app/app-event/offLazyLoadError" }
-                                    ]
-                                }
-                            ]       
-                        }
-                    ]
+                                        {
+                                            text: "onAppShow",
+                                            link: "/api-proxy/base/app/app-event/onAppShow",
+                                        },
+                                        {
+                                            text: "onAppHide",
+                                            link: "/api-proxy/base/app/app-event/onAppHide",
+                                        },
+                                        {
+                                            text: "offAppShow",
+                                            link: "/api-proxy/base/app/app-event/offAppShow",
+                                        },
+                                        {
+                                            text: "offAppHide",
+                                            link: "/api-proxy/base/app/app-event/offAppHide",
+                                        },
+                                        {
+                                            text: "onError",
+                                            link: "/api-proxy/base/app/app-event/onError",
+                                        },
+                                        {
+                                            text: "offError",
+                                            link: "/api-proxy/base/app/app-event/offError",
+                                        },
+                                        {
+                                            text: "onUnhandledRejection",
+                                            link: "/api-proxy/base/app/app-event/onUnhandledRejection",
+                                        },
+                                        {
+                                            text: "offUnhandledRejection",
+                                            link: "/api-proxy/base/app/app-event/offUnhandledRejection",
+                                        },
+                                        {
+                                            text: "onLazyLoadError",
+                                            link: "/api-proxy/base/app/app-event/onLazyLoadError",
+                                        },
+                                        {
+                                            text: "offLazyLoadError",
+                                            link: "/api-proxy/base/app/app-event/offLazyLoadError",
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
                 },
                 {
                     text: "路由",
+                    collapsed: true,
                     items: [
                         { text: "navigateTo", link: "/api-proxy/route/navigateTo" },
                         { text: "redirectTo", link: "/api-proxy/route/redirectTo" },
                         { text: "switchTab", link: "/api-proxy/route/switchTab" },
                         { text: "reLaunch", link: "/api-proxy/route/reLaunch" },
-                        { text: "navigateBack", link: "/api-proxy/route/navigateBack" }
-                    ]
+                        { text: "navigateBack", link: "/api-proxy/route/navigateBack" },
+                    ],
                 },
                 {
                     text: "界面",
+                    collapsed: true,
                     items: [
                         {
                             text: "交互",
+                            collapsed: true,
                             items: [
-                                { text: "showActionSheet", link: "/api-proxy/interface/interactive/showActionSheet" },
-                                { text: "showModal", link: "/api-proxy/interface/interactive/showModal" },
-                                { text: "enableAlertBeforeUnload", link: "/api-proxy/interface/interactive/enableAlertBeforeUnload" },
-                                { text: "disableAlertBeforeUnload", link: "/api-proxy/interface/interactive/disableAlertBeforeUnload" },
-                                { text: "showToast", link: "/api-proxy/interface/interactive/showToast" },
-                                { text: "hideToast", link: "/api-proxy/interface/interactive/hideToast" },
-                                { text: "showLoading", link: "/api-proxy/interface/interactive/showLoading" },
-                                { text: "hideLoading", link: "/api-proxy/interface/interactive/hideLoading" }
-                            ]
+                                {
+                                    text: "showActionSheet",
+                                    link: "/api-proxy/interface/interactive/showActionSheet",
+                                },
+                                {
+                                    text: "showModal",
+                                    link: "/api-proxy/interface/interactive/showModal",
+                                },
+                                {
+                                    text: "enableAlertBeforeUnload",
+                                    link: "/api-proxy/interface/interactive/enableAlertBeforeUnload",
+                                },
+                                {
+                                    text: "disableAlertBeforeUnload",
+                                    link: "/api-proxy/interface/interactive/disableAlertBeforeUnload",
+                                },
+                                {
+                                    text: "showToast",
+                                    link: "/api-proxy/interface/interactive/showToast",
+                                },
+                                {
+                                    text: "hideToast",
+                                    link: "/api-proxy/interface/interactive/hideToast",
+                                },
+                                {
+                                    text: "showLoading",
+                                    link: "/api-proxy/interface/interactive/showLoading",
+                                },
+                                {
+                                    text: "hideLoading",
+                                    link: "/api-proxy/interface/interactive/hideLoading",
+                                },
+                            ],
                         },
                         {
                             text: "导航栏",
+                            collapsed: true,
                             items: [
-                                { text: "hideHomeButton", link: "/api-proxy/interface/navigation-bar/hideHomeButton" },
-                                { text: "setNavigationBarTitle", link: "/api-proxy/interface/navigation-bar/setNavigationBarTitle" },
-                                { text: "setNavigationBarColor", link: "/api-proxy/interface/navigation-bar/setNavigationBarColor" }
-                            ]
+                                {
+                                    text: "hideHomeButton",
+                                    link: "/api-proxy/interface/navigation-bar/hideHomeButton",
+                                },
+                                {
+                                    text: "setNavigationBarTitle",
+                                    link: "/api-proxy/interface/navigation-bar/setNavigationBarTitle",
+                                },
+                                {
+                                    text: "setNavigationBarColor",
+                                    link: "/api-proxy/interface/navigation-bar/setNavigationBarColor",
+                                },
+                            ],
                         },
                         {
                             text: "Tab Bar",
+                            collapsed: true,
                             items: [
-                                { text: "hideTabBar", link: "/api-proxy/interface/tab-bar/hideTabBar" },
-                                { text: "showTabBar", link: "/api-proxy/interface/tab-bar/showTabBar" },
-                                { text: "setTabBarStyle", link: "/api-proxy/interface/tab-bar/setTabBarStyle" },
-                                { text: "setTabBarItem", link: "/api-proxy/interface/tab-bar/setTabBarItem" }
-                            ]
+                                {
+                                    text: "hideTabBar",
+                                    link: "/api-proxy/interface/tab-bar/hideTabBar",
+                                },
+                                {
+                                    text: "showTabBar",
+                                    link: "/api-proxy/interface/tab-bar/showTabBar",
+                                },
+                                {
+                                    text: "setTabBarStyle",
+                                    link: "/api-proxy/interface/tab-bar/setTabBarStyle",
+                                },
+                                {
+                                    text: "setTabBarItem",
+                                    link: "/api-proxy/interface/tab-bar/setTabBarItem",
+                                },
+                            ],
                         },
                         {
                             text: "下拉刷新",
+                            collapsed: true,
                             items: [
-                                { text: "stopPullDownRefresh", link: "/api-proxy/interface/pull-down-refresh/stopPullDownRefresh" },
-                                { text: "startPullDownRefresh", link: "/api-proxy/interface/pull-down-refresh/startPullDownRefresh" }
-                            ]
+                                {
+                                    text: "stopPullDownRefresh",
+                                    link: "/api-proxy/interface/pull-down-refresh/stopPullDownRefresh",
+                                },
+                                {
+                                    text: "startPullDownRefresh",
+                                    link: "/api-proxy/interface/pull-down-refresh/startPullDownRefresh",
+                                },
+                            ],
                         },
                         {
                             text: "滚动",
+                            collapsed: true,
                             items: [
-                                { text: "pageScrollTo", link: "/api-proxy/interface/scroll/pageScrollTo" }
-                            ]
+                                {
+                                    text: "pageScrollTo",
+                                    link: "/api-proxy/interface/scroll/pageScrollTo",
+                                },
+                            ],
                         },
                         {
                             text: "动画",
+                            collapsed: true,
                             items: [
-                                { text: "createAnimation", link: "/api-proxy/interface/animation/createAnimation" }
-                            ]
+                                {
+                                    text: "createAnimation",
+                                    link: "/api-proxy/interface/animation/createAnimation",
+                                },
+                            ],
                         },
                         {
                             text: "自定义组件",
+                            collapsed: true,
                             items: [
-                                { text: "nextTick", link: "/api-proxy/interface/custom-component/nextTick" }
-                            ]
+                                {
+                                    text: "nextTick",
+                                    link: "/api-proxy/interface/custom-component/nextTick",
+                                },
+                            ],
                         },
                         {
                             text: "菜单",
+                            collapsed: true,
                             items: [
-                                { text: "getMenuButtonBoundingClientRect", link: "/api-proxy/interface/menu/getMenuButtonBoundingClientRect" }
-                            ]
+                                {
+                                    text: "getMenuButtonBoundingClientRect",
+                                    link: "/api-proxy/interface/menu/getMenuButtonBoundingClientRect",
+                                },
+                            ],
                         },
                         {
                             text: "窗口",
+                            collapsed: true,
                             items: [
-                                { text: "onWindowResize", link: "/api-proxy/interface/window/onWindowResize" },
-                                { text: "offWindowResize", link: "/api-proxy/interface/window/offWindowResize" }
-                            ]
-                        }
-                    ]
+                                {
+                                    text: "onWindowResize",
+                                    link: "/api-proxy/interface/window/onWindowResize",
+                                },
+                                {
+                                    text: "offWindowResize",
+                                    link: "/api-proxy/interface/window/offWindowResize",
+                                },
+                            ],
+                        },
+                    ],
                 },
                 {
                     text: "网络",
+                    collapsed: true,
                     items: [
-                        { 
+                        {
                             text: "发起请求",
+                            collapsed: true,
                             items: [
-                                { text: "request", link: "/api-proxy/network/request/request" }
-                            ]
+                                { text: "request", link: "/api-proxy/network/request/request" },
+                            ],
                         },
-                        { 
+                        {
                             text: "下载",
+                            collapsed: true,
                             items: [
-                                { text: "downloadFile", link: "/api-proxy/network/download/downloadFile" }
-                            ]
+                                {
+                                    text: "downloadFile",
+                                    link: "/api-proxy/network/download/downloadFile",
+                                },
+                            ],
                         },
-                        { 
+                        {
                             text: "上传",
+                            collapsed: true,
                             items: [
-                                { text: "uploadFile", link: "/api-proxy/network/upload/uploadFile" }
-                            ]
+                                {
+                                    text: "uploadFile",
+                                    link: "/api-proxy/network/upload/uploadFile",
+                                },
+                            ],
                         },
-                        { 
+                        {
                             text: "WebSocket",
+                            collapsed: true,
                             items: [
-                                { text: "connectSocket", link: "/api-proxy/network/websocket/connectSocket" }
-                            ]
-                        }
-                    ]
+                                {
+                                    text: "connectSocket",
+                                    link: "/api-proxy/network/websocket/connectSocket",
+                                },
+                            ],
+                        },
+                    ],
                 },
                 {
                     text: "支付",
+                    collapsed: true,
                     items: [
-                        { text: "requestPayment", link: "/api-proxy/payment/requestPayment" }
-                    ]
+                        {
+                            text: "requestPayment",
+                            link: "/api-proxy/payment/requestPayment",
+                        },
+                    ],
                 },
                 {
                     text: "数据缓存",
+                    collapsed: true,
                     items: [
                         { text: "setStorage", link: "/api-proxy/storage/setStorage" },
-                        { text: "setStorageSync", link: "/api-proxy/storage/setStorageSync" },
+                        {
+                            text: "setStorageSync",
+                            link: "/api-proxy/storage/setStorageSync",
+                        },
                         { text: "getStorage", link: "/api-proxy/storage/getStorage" },
-                        { text: "getStorageSync", link: "/api-proxy/storage/getStorageSync" },
+                        {
+                            text: "getStorageSync",
+                            link: "/api-proxy/storage/getStorageSync",
+                        },
                         { text: "removeStorage", link: "/api-proxy/storage/removeStorage" },
-                        { text: "removeStorageSync", link: "/api-proxy/storage/removeStorageSync" },
+                        {
+                            text: "removeStorageSync",
+                            link: "/api-proxy/storage/removeStorageSync",
+                        },
                         { text: "clearStorage", link: "/api-proxy/storage/clearStorage" },
-                        { text: "clearStorageSync", link: "/api-proxy/storage/clearStorageSync" },
-                        { text: "getStorageInfo", link: "/api-proxy/storage/getStorageInfo" },
-                        { text: "getStorageInfoSync", link: "/api-proxy/storage/getStorageInfoSync" }
-                    ]
+                        {
+                            text: "clearStorageSync",
+                            link: "/api-proxy/storage/clearStorageSync",
+                        },
+                        {
+                            text: "getStorageInfo",
+                            link: "/api-proxy/storage/getStorageInfo",
+                        },
+                        {
+                            text: "getStorageInfoSync",
+                            link: "/api-proxy/storage/getStorageInfoSync",
+                        },
+                    ],
                 },
                 {
                     text: "画布",
+                    collapsed: true,
                     items: [
-                        { text: "canvasToTempFilePath", link: "/api-proxy/canvas/canvasToTempFilePath" },
-                        { text: "canvasGetImageData", link: "/api-proxy/canvas/canvasGetImageData" }
-                    ]
+                        {
+                            text: "canvasToTempFilePath",
+                            link: "/api-proxy/canvas/canvasToTempFilePath",
+                        },
+                        {
+                            text: "canvasGetImageData",
+                            link: "/api-proxy/canvas/canvasGetImageData",
+                        },
+                    ],
                 },
                 {
                     text: "媒体",
+                    collapsed: true,
                     items: [
                         {
                             text: "音频",
+                            collapsed: true,
                             items: [
-                                { text: "createInnerAudioContext", link: "/api-proxy/media/audio/createInnerAudioContext" }
-                            ]
+                                {
+                                    text: "createInnerAudioContext",
+                                    link: "/api-proxy/media/audio/createInnerAudioContext",
+                                },
+                            ],
                         },
                         {
                             text: "图片",
+                            collapsed: true,
                             items: [
-                                { text: "previewImage", link: "/api-proxy/media/image/previewImage" },
-                                { text: "compressImage", link: "/api-proxy/media/image/compressImage" },
-                                { text: "getImageInfo", link: "/api-proxy/media/image/getImageInfo" }
-                            ]
+                                {
+                                    text: "previewImage",
+                                    link: "/api-proxy/media/image/previewImage",
+                                },
+                                {
+                                    text: "compressImage",
+                                    link: "/api-proxy/media/image/compressImage",
+                                },
+                                {
+                                    text: "getImageInfo",
+                                    link: "/api-proxy/media/image/getImageInfo",
+                                },
+                            ],
                         },
                         {
                             text: "视频",
+                            collapsed: true,
                             items: [
-                                { text: "chooseMedia", link: "/api-proxy/media/video/chooseMedia" }
-                            ]
+                                {
+                                    text: "chooseMedia",
+                                    link: "/api-proxy/media/video/chooseMedia",
+                                },
+                            ],
                         },
-                    ]
+                    ],
                 },
                 {
                     text: "位置",
+                    collapsed: true,
                     items: [
                         { text: "getLocation", link: "/api-proxy/location/getLocation" },
-                        { text: "chooseLocation", link: "/api-proxy/location/chooseLocation" },
+                        {
+                            text: "chooseLocation",
+                            link: "/api-proxy/location/chooseLocation",
+                        },
                         { text: "openLocation", link: "/api-proxy/location/openLocation" },
-                        { text: "onLocationChange", link: "/api-proxy/location/onLocationChange" },
-                        { text: "offLocationChange", link: "/api-proxy/location/offLocationChange" },
-                        { text: "startLocationUpdate", link: "/api-proxy/location/startLocationUpdate" },
-                        { text: "stopLocationUpdate", link: "/api-proxy/location/stopLocationUpdate" }
-                    ]
+                        {
+                            text: "onLocationChange",
+                            link: "/api-proxy/location/onLocationChange",
+                        },
+                        {
+                            text: "offLocationChange",
+                            link: "/api-proxy/location/offLocationChange",
+                        },
+                        {
+                            text: "startLocationUpdate",
+                            link: "/api-proxy/location/startLocationUpdate",
+                        },
+                        {
+                            text: "stopLocationUpdate",
+                            link: "/api-proxy/location/stopLocationUpdate",
+                        },
+                    ],
                 },
                 {
                     text: "开放接口",
+                    collapsed: true,
                     items: [
                         {
                             text: "登录",
+                            collapsed: true,
                             items: [
                                 { text: "login", link: "/api-proxy/open-api/login/login" },
-                                { text: "checkSession", link: "/api-proxy/open-api/login/checkSession" }
-                            ]
+                                {
+                                    text: "checkSession",
+                                    link: "/api-proxy/open-api/login/checkSession",
+                                },
+                            ],
                         },
                         {
                             text: "设置",
+                            collapsed: true,
                             items: [
-                                { text: "getSetting", link: "/api-proxy/open-api/setting/getSetting" },
-                                { text: "openSetting", link: "/api-proxy/open-api/setting/openSetting" }
-                            ]
-                        }
-                    ]
+                                {
+                                    text: "getSetting",
+                                    link: "/api-proxy/open-api/setting/getSetting",
+                                },
+                                {
+                                    text: "openSetting",
+                                    link: "/api-proxy/open-api/setting/openSetting",
+                                },
+                            ],
+                        },
+                    ],
                 },
                 {
                     text: "设备",
+                    collapsed: true,
                     items: [
                         {
                             text: "联系人",
+                            collapsed: true,
                             items: [
-                                { text: "addPhoneContact", link: "/api-proxy/device/contacts/addPhoneContact" }
-                            ]
+                                {
+                                    text: "addPhoneContact",
+                                    link: "/api-proxy/device/contacts/addPhoneContact",
+                                },
+                            ],
                         },
                         {
                             text: "蓝牙-低功耗中心设备",
+                            collapsed: true,
                             items: [
-                                { text: "closeBLEConnection", link: "/api-proxy/device/bluetooth-ble/closeBLEConnection" },
-                                { text: "createBLEConnection", link: "/api-proxy/device/bluetooth-ble/createBLEConnection" },
-                                { text: "onBLEConnectionStateChange", link: "/api-proxy/device/bluetooth-ble/onBLEConnectionStateChange" }
-                            ]
+                                {
+                                    text: "closeBLEConnection",
+                                    link: "/api-proxy/device/bluetooth-ble/closeBLEConnection",
+                                },
+                                {
+                                    text: "createBLEConnection",
+                                    link: "/api-proxy/device/bluetooth-ble/createBLEConnection",
+                                },
+                                {
+                                    text: "onBLEConnectionStateChange",
+                                    link: "/api-proxy/device/bluetooth-ble/onBLEConnectionStateChange",
+                                },
+                            ],
                         },
                         {
                             text: "剪贴板",
+                            collapsed: true,
                             items: [
-                                { text: "setClipboardData", link: "/api-proxy/device/clipboard/setClipboardData" },
-                                { text: "getClipboardData", link: "/api-proxy/device/clipboard/getClipboardData" }
-                            ]
+                                {
+                                    text: "setClipboardData",
+                                    link: "/api-proxy/device/clipboard/setClipboardData",
+                                },
+                                {
+                                    text: "getClipboardData",
+                                    link: "/api-proxy/device/clipboard/getClipboardData",
+                                },
+                            ],
                         },
                         {
                             text: "网络",
+                            collapsed: true,
                             items: [
-                                { text: "getNetworkType", link: "/api-proxy/device/network/getNetworkType" },
-                                { text: "onNetworkStatusChange", link: "/api-proxy/device/network/onNetworkStatusChange" },
-                                { text: "offNetworkStatusChange", link: "/api-proxy/device/network/offNetworkStatusChange" }
-                            ]
+                                {
+                                    text: "getNetworkType",
+                                    link: "/api-proxy/device/network/getNetworkType",
+                                },
+                                {
+                                    text: "onNetworkStatusChange",
+                                    link: "/api-proxy/device/network/onNetworkStatusChange",
+                                },
+                                {
+                                    text: "offNetworkStatusChange",
+                                    link: "/api-proxy/device/network/offNetworkStatusChange",
+                                },
+                            ],
                         },
                         {
                             text: "屏幕",
+                            collapsed: true,
                             items: [
-                                { text: "getScreenBrightness", link: "/api-proxy/device/screen/getScreenBrightness" },
-                                { text: "setScreenBrightness", link: "/api-proxy/device/screen/setScreenBrightness" },
-                                { text: "setVisualEffectOnCapture", link: "/api-proxy/device/screen/setVisualEffectOnCapture" },
-                                { text: "onUserCaptureScreen", link: "/api-proxy/device/screen/onUserCaptureScreen" },
-                                { text: "offUserCaptureScreen", link: "/api-proxy/device/screen/offUserCaptureScreen" }
-                            ]
+                                {
+                                    text: "getScreenBrightness",
+                                    link: "/api-proxy/device/screen/getScreenBrightness",
+                                },
+                                {
+                                    text: "setScreenBrightness",
+                                    link: "/api-proxy/device/screen/setScreenBrightness",
+                                },
+                                {
+                                    text: "setVisualEffectOnCapture",
+                                    link: "/api-proxy/device/screen/setVisualEffectOnCapture",
+                                },
+                                {
+                                    text: "onUserCaptureScreen",
+                                    link: "/api-proxy/device/screen/onUserCaptureScreen",
+                                },
+                                {
+                                    text: "offUserCaptureScreen",
+                                    link: "/api-proxy/device/screen/offUserCaptureScreen",
+                                },
+                            ],
                         },
                         {
                             text: "键盘",
+                            collapsed: true,
                             items: [
-                                { text: "hideKeyboard", link: "/api-proxy/device/keyboard/hideKeyboard" },
-                                { text: "onKeyboardHeightChange", link: "/api-proxy/device/keyboard/onKeyboardHeightChange" },
-                                { text: "offKeyboardHeightChange", link: "/api-proxy/device/keyboard/offKeyboardHeightChange" }
-                            ]
+                                {
+                                    text: "hideKeyboard",
+                                    link: "/api-proxy/device/keyboard/hideKeyboard",
+                                },
+                                {
+                                    text: "onKeyboardHeightChange",
+                                    link: "/api-proxy/device/keyboard/onKeyboardHeightChange",
+                                },
+                                {
+                                    text: "offKeyboardHeightChange",
+                                    link: "/api-proxy/device/keyboard/offKeyboardHeightChange",
+                                },
+                            ],
                         },
                         {
                             text: "电话",
+                            collapsed: true,
                             items: [
-                                { text: "makePhoneCall", link: "/api-proxy/device/phone/makePhoneCall" }
-                            ]
+                                {
+                                    text: "makePhoneCall",
+                                    link: "/api-proxy/device/phone/makePhoneCall",
+                                },
+                            ],
                         },
                         {
                             text: "扫码",
+                            collapsed: true,
                             items: [
-                                { text: "scanCode", link: "/api-proxy/device/scan/scanCode" }
-                            ]
+                                { text: "scanCode", link: "/api-proxy/device/scan/scanCode" },
+                            ],
                         },
                         {
                             text: "震动",
+                            collapsed: true,
                             items: [
-                                { text: "vibrateShort", link: "/api-proxy/device/vibrate/vibrateShort" },
-                                { text: "vibrateLong", link: "/api-proxy/device/vibrate/vibrateLong" }
-                            ]
-                        }
-                    ]
+                                {
+                                    text: "vibrateShort",
+                                    link: "/api-proxy/device/vibrate/vibrateShort",
+                                },
+                                {
+                                    text: "vibrateLong",
+                                    link: "/api-proxy/device/vibrate/vibrateLong",
+                                },
+                            ],
+                        },
+                    ],
                 },
                 {
                     text: "WXML",
+                    collapsed: true,
                     items: [
-                        { text: "createIntersectionObserver", link: "/api-proxy/wxml/createIntersectionObserver" },
-                        { text: "createSelectorQuery", link: "/api-proxy/wxml/createSelectorQuery" }
-                    ]
+                        {
+                            text: "createIntersectionObserver",
+                            link: "/api-proxy/wxml/createIntersectionObserver",
+                        },
+                        {
+                            text: "createSelectorQuery",
+                            link: "/api-proxy/wxml/createSelectorQuery",
+                        },
+                    ],
                 },
                 {
                     text: "第三方平台",
+                    collapsed: true,
                     items: [
                         { text: "getExtConfig", link: "/api-proxy/ext/getExtConfig" },
-                        { text: "getExtConfigSync", link: "/api-proxy/ext/getExtConfigSync" }
-                    ]
-                }
-            ]
-        }
-],
+                        {
+                            text: "getExtConfigSync",
+                            link: "/api-proxy/ext/getExtConfigSync",
+                        },
+                    ],
+                },
+            ],
+        },
+    ],
     "/articles/": [
         {
             text: "文章",
-            collapsable: false,
+            collapsed: false,
             items: [
                 { text: "滴滴开源小程序框架Mpx", link: "/articles/1.0" },
                 {
@@ -664,26 +974,24 @@ export default withPwa(
                 },
             },
             logo: "/favicon.ico",
-            socialLinks: [
-                { icon: "github", link: "https://github.com/didi/mpx" },
-            ],
+            socialLinks: [{ icon: "github", link: "https://github.com/didi/mpx" }],
             nav: [
                 {
                     text: "指南",
                     activeMatch: "^/guide/",
                     link: "/guide/basic/start",
                 },
-                // 未来热门的链接可以用下面的折叠标题
-                // {
-                //     text: "文档",
-                //     activeMatch: "^/guide/(basic/start|platform/basic)/",
-                //     items: [
-                //         { text: "快速开始", link: "/guide/basic/start" },
-                //         { text: "跨端输出", link: "/guide/platform/basic" },
-                //     ],
-                // },
-                { text: "API", activeMatch: "^/api/", link: "/api/" },
-                { text: "api转换", activeMatch: "^/api-proxy/", link: "/api-proxy/" },
+                // API 折叠标题
+                {
+                    text: "API",
+                    activeMatch: "^/(api|api-proxy)/",
+                    items: [
+                        { text: "运行时 API", activeMatch: "^/api/", link: "/api/" },
+                        { text: "跨端转换 API", activeMatch: "^/api-proxy/", link: "/api-proxy/" },
+                    ],
+                },
+                // { text: "API", activeMatch: "^/api/", link: "/api/" },
+                // { text: "跨端转换 API", activeMatch: "^/api-proxy/", link: "/api-proxy/" },
                 {
                     text: "文章",
                     activeMatch: "^/articles/",
