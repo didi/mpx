@@ -71,8 +71,6 @@ module.exports = function (jsonContent, {
     processAsyncSubpackageRules
   } = createJSONHelper({
     loaderContext,
-    componentsMap,
-    localComponentsMap,
     emitWarning,
     emitError,
     customGetDynamicEntry (resource, type, outputPath, packageRoot) {
