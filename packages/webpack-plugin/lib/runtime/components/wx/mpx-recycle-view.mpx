@@ -16,21 +16,20 @@
     scroll-into-view="{{scrollIntoViewId}}"
     scroll-into-view-alignment="{{viewPosition}}"
   >
-    <block wx:if="{{mpxGenericListHeader}}">
+    <block wx:if="{{useListHeader}}">
       <list-header listHeaderData="{{listHeaderData}}"></list-header>
     </block>
     <block wx:for="{{convertedListData}}" wx:key="index">
       <block wx:if="{{enableSticky}}">
         <sticky-section>
           <!-- section header -->
-          <block wx:if="{{item.hasSectionHeader && mpxGenericSectionHeader}}">
+          <block wx:if="{{item.hasSectionHeader}}">
             <sticky-header>
               <section-header itemData="{{item.headerData}}" id="{{item._domId}}"></section-header>
             </sticky-header>
           </block>
 
           <block
-            wx:if="{{mpxGenericRecycleItem}}"
             wx:for="{{item.data}}"
             wx:for-item="subItem"
             wx:key="subIndex"
@@ -43,14 +42,12 @@
       <block wx:else>
         <block wx:if="{{item.itemData && item.itemData.isSectionHeader}}">
           <section-header
-            wx:if="{{mpxGenericSectionHeader}}"
             id="{{item._domId}}"
             itemData="{{item.itemData}}"
           ></section-header>
         </block>
         <block wx:else>
           <recycle-item
-            wx:if="{{mpxGenericRecycleItem}}"
             itemData="{{item.itemData}}"
             id="{{item._domId}}"
           ></recycle-item>
@@ -61,7 +58,7 @@
 </template>
 
 <script>
-  import mpx, { createComponent } from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
 
   createComponent({
     properties: {
@@ -109,9 +106,10 @@
         type: Boolean,
         value: false
       },
-      mpxGenericRecycleItem: String,
-      mpxGenericSectionHeader: String,
-      mpxGenericListHeader: String
+      useListHeader: {
+        type: Boolean,
+        value: true
+      }
     },
     data: {
       convertedListData: [],

@@ -33,6 +33,7 @@ interface RecycleViewProps {
   sectionHeaderHeight?: ItemHeightType;
   listHeaderData?: any;
   listHeaderHeight?: ItemHeightType;
+  useListHeader?: boolean;
   'genericrecycle-item'?: string;
   'genericsection-header'?: string;
   'genericlist-header'?: string;
@@ -74,10 +75,8 @@ const getGeneric = (generichash: string, generickey: string) => {
 
 const getListHeaderComponent = (generichash: string, generickey: string, data: any) => {
   if (!generichash || !generickey) return undefined
-  return () => {
-    const ListHeaderComponent = getGeneric(generichash, generickey)
-    return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
-  }
+  const ListHeaderComponent = getGeneric(generichash, generickey)
+  return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
 }
 
 const getSectionHeaderRenderer = (generichash: string, generickey: string) => {
@@ -111,6 +110,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     sectionHeaderHeight = {},
     listHeaderHeight = {},
     listHeaderData = null,
+    useListHeader = true,
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
     'genericlist-header': genericListHeader,
@@ -407,7 +407,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
           sections: convertedListData,
           renderItem: getItemRenderer(generichash, genericrecycleItem),
           getItemLayout: getItemLayout,
-          ListHeaderComponent: getListHeaderComponent(generichash, genericListHeader, listHeaderData),
+          ListHeaderComponent: useListHeader ? getListHeaderComponent(generichash, genericListHeader, listHeaderData) : null,
           renderSectionHeader: getSectionHeaderRenderer(generichash, genericsectionHeader),
           refreshControl: refresherEnabled
             ? React.createElement(RefreshControl, {
