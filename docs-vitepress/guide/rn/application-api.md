@@ -252,7 +252,7 @@ createComponent({
 
 ### Webview 通信
 
-Mpx 提供 `@mpxjs/webview-bridge` 来实现 H5 页面与 RN 应用的双向通信。具体使用方式参加[webviewBridge](/guide/extend/webview-bridge.html)
+Mpx 提供 `@mpxjs/webview-bridge` 来实现 H5 页面与 RN 应用的双向通信，具体使用方式参考[webview-bridge](/guide/extend/webview-bridge.html)文档。
 
 ## 高级特性
 
@@ -376,7 +376,7 @@ createComponent({
 
 #### mpx.config.rnConfig.openTypeHandler.onShareAppMessage
 
-当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中是分享实现需由容器实现，可在 onShareAppMessage 中完成分享逻辑实现。
+当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中是分享实现需由容器实现，可在 onShareAppMessage 中调用容器提供的能力完成分享逻辑实现。
 
 其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
 
@@ -392,7 +392,7 @@ createComponent({
 (props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)
 ```
 
-用于获取初始路由配置的函数，参数为RN根组件接收到的参数
+用于获取初始路由配置的函数，参数为 RN 根组件接收到的参数
 
 - initialRouteName: 首页路径，例如 pages/index
 - initialParams: 首页onLoad参数，例如 \{ a: 1 \}
@@ -403,7 +403,7 @@ createComponent({
 (state: Record<string, any>) => void
 ```
 
-当导航状态发生变化时触发，例如页面跳转、返回等。可在此回调中将 ReactNative 路径栈同步到容器中。
+当导航状态发生变化时触发，例如页面跳转、返回等。可在此回调中将 RN 路径栈同步到容器中。
 
 #### mpx.config.rnConfig.onAppBack
 
@@ -432,8 +432,8 @@ createComponent({
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
-在某些情况下，我们可能不希望当前 ReactNative 全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 信息来得到想要的渲染效果。
+在某些情况下，我们可能不希望当前应用全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 信息来得到想要的渲染效果。
 
-可在此方法中返回修改后的 dimensions，如果无返回或返回undefined，则以入参作为返回值
+可在此方法中返回修改后的 dimensions，如果无返回或返回 undefined，则以入参作为返回值
 
-例如在折叠屏中我们期望只在其中一半屏上展示，可在customDimensions中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
+例如在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。

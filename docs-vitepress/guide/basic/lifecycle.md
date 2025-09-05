@@ -46,8 +46,6 @@ Mpx 提供了两套生命周期使用方式：
 1. **原生小程序生命周期**：直接使用各平台的原生生命周期名称
 2. **框架内置生命周期常量**：使用统一的框架内置生命周期常量
 
-> **重要**：选项式 API **没有** `mounted`、`beforeUnmount` 等 Vue 风格的生命周期名称，只能使用原生小程序生命周期或框架内置生命周期常量。
-
 ### 组件生命周期
 
 **原生小程序生命周期：**
@@ -101,7 +99,7 @@ createComponent({
 })
 ```
 **组件生命周期常量：**
-- `BEFORECREATE` - 实例初始化之后，数据观测之前
+- `BEFORECREATE` - 实例初始化之后，数据观测初始化之前同步调用
 - `CREATED` - 实例创建完成，数据观测已完成
 - `BEFOREMOUNT` - 挂载开始之前被调用
 - `MOUNTED` - 实例被挂载后调用
@@ -121,12 +119,12 @@ createComponent({
   },
   
   [CREATED]() {
-    console.log('组件创建完成 - 映射到 attached/onInit')
+    console.log('组件创建完成')
     // 初始化数据
   },
   
   [MOUNTED]() {
-    console.log('组件挂载完成 - 映射到 ready/didMount')
+    console.log('组件挂载完成')
     // 启动定时器
     this.timer = setInterval(() => {
       console.log('定时任务执行')
@@ -134,7 +132,7 @@ createComponent({
   },
   
   [BEFOREUNMOUNT]() {
-    console.log('组件即将销毁 - 映射到 detached/didUnmount')
+    console.log('组件即将销毁')
     // 清理定时器
     if (this.timer) {
       clearInterval(this.timer)
