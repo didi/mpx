@@ -1,8 +1,8 @@
 import { View, NativeSyntheticEvent, LayoutChangeEvent } from 'react-native'
 import { GestureDetector, Gesture, PanGesture, GestureStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS, useAnimatedReaction, cancelAnimation, useFrameCallback } from 'react-native-reanimated'
 
-import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
+import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, useCallback, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback } from './utils'
@@ -27,11 +27,21 @@ import Portal from './mpx-portal'
 type EaseType = 'default' | 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'
 type StrAbsoType = 'absoluteX' | 'absoluteY'
 type StrVelocityType = 'velocityX' | 'velocityY'
+type FrameInfo = {
+  // 表示上一帧渲染时的系统时间（以毫秒为单位）
+  timestamp: number,
+  // 自上一帧以来经过的时间（以毫秒为单位）
+  timeSincePreviousFrame: number,
+  // 自回调函数激活以来经过的时间（以毫秒为单位）
+  timeSinceFirstFrame: number
+}
 type EventDataType = {
   // 和上一帧offset值的对比
   translation: number
   // onUpdate时根据上一个判断方向，onFinalize根据transformStart判断
   transdir: number
+  // 当前滑动的速度
+  currentVelocity: number
 }
 
 interface SwiperProps {
@@ -479,6 +489,68 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       pauseLoop()
     }
   }
+  /**
+   * 基于初始速度动态计算合理的动画时长和缓动曲线，让动画既保留 ease-out 的非线性特性，又能通过初始速度影响整体节奏。
+   */
+  function useEaseOutAnimation({ targetPosition = 0, easing = 'quad', velocity = 0 }, onFinish: Function) {
+    const minDuration = 300
+    // 1. 共享状态：存储动画关键数据
+    const elapsedTime = useSharedValue(0); // 已消耗时间ms
+    const totalDuration = useSharedValue(0); // 动态计算的总时长
+    // 计算总位移（目标 - 初始）
+    const totalDistance = targetPosition - offset.value
+    // 速度方向修正（确保速度与位移方向一致）
+    const adjustedVelocity = Math.abs(velocity) * (totalDistance > 0 ? 1 : -1)
+
+    // 计算动态时长：根据速度和距离估算合适的时长
+    const calculateDuration = useCallback(() => {
+      // 基础时长 = 总距离 / 速度（秒转毫秒）
+      const baseDuration = Math.abs(totalDistance / adjustedVelocity) * 1000
+      // 限制在最小和最大时长之间
+      return Math.max(minDuration, Math.min(easeDuration, baseDuration))
+    }, [totalDistance, adjustedVelocity, minDuration, easeDuration])
+
+    // 2. 定义 ease-out 缓动函数
+    const easeOut = (t: number) => {
+      switch (easing) {
+        case 'cubic':
+          // 三次缓动：1 - (1-t)³（减速更平缓）
+          return 1 - Math.pow(1 - t, 3);
+        case 'quad':
+        default:
+          // 二次缓动：1 - (1-t)²（经典ease-out）
+          return 1 - Math.pow(1 - t, 2);
+      }
+    };
+    // 3. 帧回调：每帧更新位移
+    useFrameCallback((frameInfo) => {
+      if (!touchfinish.value || frameInfo.timeSincePreviousFrame === null) return
+
+      // 首次运行时计算总时长
+      if (elapsedTime.value === 0) {
+        totalDuration.value = calculateDuration();
+      }
+
+      // 累加已消耗时间（ms）
+      elapsedTime.value += frameInfo.timeSincePreviousFrame
+
+      // 计算时间进度 t（0~1）：当前时间 / 总时长
+      let t = Math.min(elapsedTime.value / totalDuration.value, 1)
+
+      // 用缓动函数计算位移进度
+      const progress = easeOut(t)
+
+      // 计算当前位移：初始位置 + 总位移 × 进度
+      offset.value = offset.value + totalDistance * progress
+
+      // 动画结束条件：时间进度达到1
+      if (t === 1) {
+        touchfinish.value = true
+        elapsedTime.value = 0
+        onFinish && onFinish()
+      }
+    })
+  }
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
@@ -605,6 +677,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'worklet'
       const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
       if (isCriticalItem) {
+        /*
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
@@ -615,7 +688,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             runOnJS(runOnJSCallback)('resumeLoop')
           }
         })
+        */
+
+        useEaseOutAnimation({ targetPosition: targetOffset, velocity: eventData.currentVelocity }, () => {
+          if (touchfinish.value !== false) {
+            currentIndex.value = selectedIndex
+            offset.value = resetOffset
+            runOnJS(runOnJSCallback)('resumeLoop')
+          }
+        }) 
+
       } else {
+        /*
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
@@ -625,6 +709,13 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             runOnJS(runOnJSCallback)('resumeLoop')
           }
         })
+        */
+        useEaseOutAnimation({ targetPosition: targetOffset, velocity: eventData.currentVelocity }, () => {
+          if (touchfinish.value !== false) {
+            currentIndex.value = selectedIndex
+            runOnJS(runOnJSCallback)('resumeLoop')
+          }
+        }) 
       }
     }
     function handleBack (eventData: EventDataType) {
@@ -638,10 +729,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const curIndex = currentOffset / step.value
       const moveToIndex = (transdir < 0 ? Math.floor(curIndex) : Math.ceil(curIndex)) - patchElmNumShared.value
       const targetOffset = -(moveToIndex + patchElmNumShared.value) * step.value + (circularShared.value ? preMarginShared.value : 0)
+      /*
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
       }, () => {
+        if (touchfinish.value !== false) {
+          currentIndex.value = moveToIndex
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
+      */
+      useEaseOutAnimation({ targetPosition: targetOffset, velocity: eventData.currentVelocity }, () => {
         if (touchfinish.value !== false) {
           currentIndex.value = moveToIndex
           runOnJS(runOnJSCallback)('resumeLoop')
@@ -755,7 +854,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (touchfinish.value || moveDistance === 0) return
         const eventData = {
           translation: moveDistance,
-          transdir: moveDistance
+          transdir: moveDistance,
+          currentVelocity: e[strVelocity]
         }
         // 1. 支持滑动中超出一半更新索引的能力：只更新索引并不会影响onFinalize依据当前offset计算的索引
         const { half } = computeHalf(eventData)
@@ -798,14 +898,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance,
-          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value
+          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value,
+          currentVelocity: e[strVelocity]
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
+          /*
           offset.value = withTiming(0, {
             duration: easeDuration,
             easing: easeMap[easeingFunc]
           })
+          */
+          useEaseOutAnimation({ targetPosition: 0, velocity: eventData.currentVelocity }, () => {})
           return
         }
         // 2.非循环状态不可移动态：最后一个元素 和 第一个元素
