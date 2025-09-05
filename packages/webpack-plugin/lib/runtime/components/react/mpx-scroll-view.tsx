@@ -38,7 +38,7 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
 
@@ -210,6 +210,27 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   const scrollViewRef = useRef<ScrollView>(null)
+
+  const propsRef = useRef(props)
+  const refresherStateRef = useRef({
+    hasRefresher,
+    refresherTriggered
+  })
+
+  propsRef.current = props
+  refresherStateRef.current = {
+    hasRefresher,
+    refresherTriggered
+  }
+
+  const runOnJSCallbackRef = useRef({
+    setEnableScroll,
+    setScrollBounces,
+    setRefreshing,
+    onRefresh
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+
   useNodesRef(props, ref, scrollViewRef, {
     style: normalStyle,
     scrollOffset: scrollOptions,
@@ -518,6 +539,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 处理刷新
   function onRefresh () {
+    const { hasRefresher, refresherTriggered } = refresherStateRef.current
     if (hasRefresher && refresherTriggered === undefined) {
       // 处理使用了自定义刷新组件，又没设置 refresherTriggered 的情况
       setRefreshing(true)
@@ -529,10 +551,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }
       }, 500)
     }
-    const { bindrefresherrefresh } = props
+    const { bindrefresherrefresh } = propsRef.current
     bindrefresherrefresh &&
       bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, propsRef.current)
       )
   }
 
@@ -587,7 +609,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'worklet'
     if (enableScrollValue.value !== newValue) {
       enableScrollValue.value = newValue
-      runOnJS(setEnableScroll)(newValue)
+      runOnJS(runOnJSCallback)('setEnableScroll', newValue)
     }
   }
 
@@ -600,7 +622,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     'worklet'
     if (bouncesValue.value !== newValue) {
       bouncesValue.value = newValue
-      runOnJS(setScrollBounces)(newValue)
+      runOnJS(runOnJSCallback)('setScrollBounces', newValue)
     }
   }
 
@@ -649,19 +671,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         if ((event.translationY > 0 && translateY.value < refresherThreshold) || event.translationY < 0) {
           translateY.value = withTiming(0)
           updateScrollState(true)
-          runOnJS(setRefreshing)(false)
+          runOnJS(runOnJSCallback)('setRefreshing', false)
         } else {
           translateY.value = withTiming(refresherHeight.value)
         }
       } else if (event.translationY >= refresherHeight.value) {
         // 触发刷新
         translateY.value = withTiming(refresherHeight.value)
-        runOnJS(onRefresh)()
+        runOnJS(runOnJSCallback)('onRefresh')
       } else {
         // 回弹
         translateY.value = withTiming(0)
         updateScrollState(true)
-        runOnJS(setRefreshing)(false)
+        runOnJS(runOnJSCallback)('setRefreshing', false)
       }
     })
     .simultaneousWithExternalGesture(scrollViewRef)
