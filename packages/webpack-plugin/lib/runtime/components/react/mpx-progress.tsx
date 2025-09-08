@@ -129,7 +129,7 @@ const Progress = forwardRef<
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
   // 进度条动画函数
-  const startProgressAnimation = (targetPercent: number, startPercent: number, animationDuration: number, onFinished?: () => void) => {
+  const startProgressAnimation = (targetPercent: number, startPercent: number, animationDuration: number) => {
     // 根据 active-mode 设置起始位置
     progressWidth.value = startPercent
     progressWidth.value = withTiming(
@@ -139,9 +139,9 @@ const Progress = forwardRef<
         easing: Easing.linear
       },
       (finished) => {
-        if (finished && onFinished) {
-          // 在动画回调中，需要使用runOnJS回到主线程
-          runOnJS(onFinished)()
+        if (finished) {
+          // 在动画回调中，直接使用runOnJS调用runOnJSCallback
+          runOnJS(runOnJSCallback)('triggerActiveEnd', targetPercent)
         }
       }
     )
@@ -164,13 +164,8 @@ const Progress = forwardRef<
       const percentDiff = Math.abs(targetPercent - startPercent)
       const animationDuration = percentDiff * duration
 
-      // 创建动画完成回调
-      const onAnimationFinished = () => {
-        runOnJSCallback('triggerActiveEnd', targetPercent)
-      }
-
       // 执行动画
-      startProgressAnimation(targetPercent, startPercent, animationDuration, onAnimationFinished)
+      startProgressAnimation(targetPercent, startPercent, animationDuration)
     } else {
       progressWidth.value = targetPercent
     }
