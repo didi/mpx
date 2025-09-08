@@ -35,7 +35,7 @@ import Animated, {
 
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle, extendObject, useRunOnJSCallback } from './utils'
+import { useLayout, useTransformStyle, extendObject } from './utils'
 import Portal from './mpx-portal'
 
 export interface ProgressProps {
@@ -112,21 +112,18 @@ const Progress = forwardRef<
     style: normalStyle
   })
 
-  // 使用 useRunOnJSCallback 处理动画回调
-  const runOnJSCallbackRef = useRef({
-    triggerActiveEnd: (percent: number) => {
-      const currentProps = propsRef.current
-      if (currentProps.bindactiveend) {
-        currentProps.bindactiveend({
-          type: 'activeend',
-          detail: {
-            percent: percent
-          }
-        })
-      }
+  // 直接定义动画完成回调函数，避免作用域链无法释放
+  const triggerActiveEnd = (percent: number) => {
+    const currentProps = propsRef.current
+    if (currentProps.bindactiveend) {
+      currentProps.bindactiveend({
+        type: 'activeend',
+        detail: {
+          percent: percent
+        }
+      })
     }
-  })
-  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+  }
 
   // 进度条动画函数
   const startProgressAnimation = (targetPercent: number, startPercent: number, animationDuration: number, onFinished?: () => void) => {
@@ -140,7 +137,7 @@ const Progress = forwardRef<
       },
       (finished) => {
         if (finished && onFinished) {
-          // 在动画回调中，需要使用runOnJS回到主线程
+          // 直接使用runOnJS调用回调函数，避免作用域链无法释放
           runOnJS(onFinished)()
         }
       }
@@ -166,7 +163,7 @@ const Progress = forwardRef<
 
       // 创建动画完成回调
       const onAnimationFinished = () => {
-        runOnJSCallback('triggerActiveEnd', targetPercent)
+        triggerActiveEnd(targetPercent)
       }
 
       // 执行动画
