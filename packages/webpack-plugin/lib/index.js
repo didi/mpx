@@ -78,7 +78,9 @@ const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
-require('./utils/check-core-version-match')
+const checkVersionCompatibility = require('./utils/check-core-version-match')
+
+checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -199,6 +201,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.rnConfig = options.rnConfig || {}
+    options.rnConfig.supportSubpackage = options.rnConfig.supportSubpackage !== undefined ? options.rnConfig.supportSubpackage : true
     options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
@@ -783,7 +786,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
-          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || isReact(this.options.mode)),
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || (isReact(this.options.mode) && this.options.rnConfig.supportSubpackage)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1726,6 +1729,23 @@ class MpxWebpackPlugin {
               source.add('// inject pageconfigmap for screen\n' +
                 'var context = (function() { return this })() || Function("return this")();\n')
               source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`
+${globalObject}.__mpxClearAsyncChunkCache = ${globalObject}.__mpxClearAsyncChunkCache || function (ids) {
+  ids = JSON.stringify(ids)
+  var arr = ${globalObject}['${chunkLoadingGlobal}'] || []
+  for (var i = arr.length - 1; i >= 0; i--) {
+    if (JSON.stringify(arr[i][0]) === ids) {
+      arr.splice(i, 1)
+    }
+  }
+};\n`)
+              }
+            } else {
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`${globalObject}.__mpxClearAsyncChunkCache && ${globalObject}.__mpxClearAsyncChunkCache(${JSON.stringify(chunk.ids)});\n`)
+              }
             }
             source.add(originalSource)
             compilation.assets[chunkFile] = source
@@ -1825,6 +1845,7 @@ try {
 
         compilation.chunkGroups.forEach((chunkGroup) => {
           if (!chunkGroup.isInitial()) {
+            isReact(mpx.mode) && chunkGroup.chunks.forEach((chunk) => processChunk(chunk, false, []))
             return
           }
 

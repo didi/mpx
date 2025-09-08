@@ -334,7 +334,8 @@ export default class MpxProxy {
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
-          getPageId: this.target.getPageId.bind(this.target)
+          getPageId: this.target.getPageId.bind(this.target),
+          getOpenerEventChannel: this.target.getOpenerEventChannel.bind(this.target)
         }
       ])
       if (!isObject(setupResult)) {
@@ -501,11 +502,19 @@ export default class MpxProxy {
     const hooks = this.hooks[hookName] || []
     let result
     if (isFunction(hook) && !hooksOnly) {
+      const setContext = hookName !== BEFORECREATE
+      if (setContext) {
+        setCurrentInstance(this)
+      }
       result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
+      if (setContext) {
+        unsetCurrentInstance()
+      }
     }
     hooks.forEach((hook) => {
       result = params ? hook(...params) : hook()
     })
+
     return result
   }
 

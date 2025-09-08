@@ -1,5 +1,4 @@
-import { useState, useCallback, forwardRef, ForwardedRef, useImperativeHandle, ReactNode, ReactElement } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { useState, useCallback, forwardRef, ForwardedRef, useImperativeHandle, ReactNode, ReactElement, Fragment } from 'react'
 
 export type State = {
   portals: Array<{
@@ -48,13 +47,10 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
 
   return (
     <>
-      {state.portals.map(({ key, children }, i) => (
-        <View
-          key={key}
-          collapsable={false} // Need collapsable=false here to clip the elevations
-          style={[StyleSheet.absoluteFill, { zIndex: 1000 + i, pointerEvents: 'box-none' }]}>
+      {state.portals.map(({ key, children }) => (
+        <Fragment key={key}>
           {children}
-        </View>
+        </Fragment>
       ))}
     </>
   )
