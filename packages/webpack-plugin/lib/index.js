@@ -37,6 +37,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordModuleIdMapDependency = require('./dependencies/RecordModuleIdMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
@@ -674,6 +675,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
 
+      compilation.dependencyFactories.set(RecordModuleIdMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordModuleIdMapDependency, new RecordModuleIdMapDependency.Template())
+
       compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
 
@@ -721,6 +725,8 @@ class MpxWebpackPlugin {
           componentsMap: {
             main: {}
           },
+          // 资源与moduleId关系记录
+          resourceModuleIdMap: {},
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录
           staticResourcesMap: {
             main: {}
@@ -815,14 +821,18 @@ class MpxWebpackPlugin {
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
           },
-          getModuleId: (filePath, isApp = false) => {
+          getModuleId: (filePath, isApp = false, loaderContext = null) => {
             if (isApp) return MPX_APP_MODULE_ID
-            const customComponentModuleId = this.options.customComponentModuleId
+            const { customComponentModuleId } = this.options
+            let moduleId
+
             if (typeof customComponentModuleId === 'function') {
-              const customModuleId = customComponentModuleId(filePath)
-              if (customModuleId) return customModuleId
+              moduleId = customComponentModuleId(filePath)
             }
-            return '_' + mpx.pathHash(filePath)
+            if (!moduleId) {
+              moduleId = '_' + mpx.pathHash(filePath)
+            }
+            return moduleId
           },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
@@ -1685,11 +1695,12 @@ class MpxWebpackPlugin {
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
+          const resourceModuleIdMap = compilation.__mpx__.resourceModuleIdMap
           const componentsPackageMap = compilation.__mpx__.componentsMap
           const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
             return { ...pre, ...cur }
           }, {})
-          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+          const outputMap = JSON.stringify({ outputPathMap: { ...pagesMap, ...componentsMap }, moduleIdMap: resourceModuleIdMap })
           const filename = this.options.generateBuildMap.filename || 'outputMap.json'
           compilation.assets[filename] = new RawSource(outputMap)
         }

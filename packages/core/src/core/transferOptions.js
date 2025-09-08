@@ -13,7 +13,7 @@ export default function transferOptions (options, type, needConvert = true) {
     }
   }
   // 文件编译路径
-  options.mpxFileResource = global.currentResource
+  options.mpxFileResource = global.currentResource || global.currentModuleId
   // 注入全局写入的mixins，原生模式下不进行注入
   if (!options.__nativeRender__) {
     options = mergeInjectedMixins(options, type)
