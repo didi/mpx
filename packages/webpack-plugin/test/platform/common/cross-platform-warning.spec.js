@@ -123,7 +123,7 @@ describe('cross-platform syntax warning', function () {
 
     warnFn.mockClear()
 
-    // Test qa: prefix  
+    // Test qa: prefix
     const input2 = '<view qa:key="{{item.id}}">content</view>'
     compileTemplate(input2, { srcMode: 'tt' })
     expect(warnFn).toHaveBeenCalledWith(
@@ -133,7 +133,7 @@ describe('cross-platform syntax warning', function () {
 
   it('should not warn for React Native platforms (android/ios/harmony) and noMode', function () {
     const input = '<view wx:class="{{someClass}}" a:if="{{condition}}">content</view>'
-    
+
     // Test android
     compileTemplate(input, { srcMode: 'android' })
     expect(warnFn).not.toHaveBeenCalled()

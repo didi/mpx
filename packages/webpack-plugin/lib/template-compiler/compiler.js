@@ -2719,7 +2719,7 @@ function processNoTransAttrs (el) {
 
 function initCrossPlatformConfig () {
   const currentSrcMode = srcMode
-  
+
   // 不需要检测小程序平台语法的模式：React Native 平台和 noMode
   const excludedModes = ['android', 'ios', 'harmony', 'noMode']
   if (excludedModes.includes(currentSrcMode)) {
@@ -2728,14 +2728,14 @@ function initCrossPlatformConfig () {
 
   // 定义平台与前缀的双向映射关系
   const platformPrefixMap = {
-    'wx': 'wx:',
-    'ali': 'a:',
-    'swan': 's-',
-    'qq': 'qq:',
-    'tt': 'tt:',
-    'dd': 'dd:',
-    'jd': 'jd:',
-    'qa': 'qa:'
+    wx: 'wx:',
+    ali: 'a:',
+    swan: 's-',
+    qq: 'qq:',
+    tt: 'tt:',
+    dd: 'dd:',
+    jd: 'jd:',
+    qa: 'qa:'
   }
 
   return {
@@ -2761,7 +2761,7 @@ function processCrossPlatformSyntaxWarning (el, options) {
   // 检查每个属性
   el.attrsList.forEach(attr => {
     const attrName = attr.name
-    
+
     // 检查是否使用了平台前缀
     for (const [platformName, prefix] of Object.entries(platformPrefixMap)) {
       if (attrName.startsWith(prefix)) {
@@ -2770,7 +2770,7 @@ function processCrossPlatformSyntaxWarning (el, options) {
           // 构建建议的正确属性名
           const suffixPart = attrName.substring(prefix.length)
           const suggestedAttr = currentPrefix + suffixPart
-          
+
           // 发出警告
           warn$1(
             `Your src mode is "${currentSrcMode}", but used "${attrName}". ` +
