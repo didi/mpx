@@ -37,6 +37,14 @@ const getWindowInfo = function () {
     statusBarHeight: safeArea.top,
     safeArea
   }
+  console.log('getWindowInfo', {
+    result,
+    dimensionsScreen,
+    layout: navigation.layout,
+    __mpx_mode__: __mpx_mode__,
+    initialWindowMetrics,
+    navigationInsets
+  })
   return result
 }
 

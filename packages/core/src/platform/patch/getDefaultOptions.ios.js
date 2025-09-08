@@ -16,7 +16,7 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '../env/nav'
+import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/nav'
 
 const ProviderContext = createContext(null)
 function getSystemInfo () {
@@ -482,6 +482,19 @@ function getLayoutData (headerHeight) {
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
   const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+  console.log('getLayoutData', {
+    screenDimensions,
+    windowDimensions,
+    left: 0,
+    top: headerHeight,
+    // 此处必须为windowDimensions.width，在横屏状态下windowDimensions.width才符合预期
+    width: windowDimensions.width,
+    height: screenDimensions.height - headerHeight - bottomVirtualHeight,
+    // ios为0 android为实际statusbar高度
+    statusBarHeight: ReactNative.StatusBar.currentHeight || 0,
+    bottomVirtualHeight: bottomVirtualHeight,
+    isLandscape: isLandscape
+  })
   return {
     left: 0,
     top: headerHeight,
@@ -512,10 +525,12 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
       return null
     }
     const headerHeight = useInnerHeaderHeight(currentPageConfig)
+    console.log('render getLayoutData: ')
     navigation.layout = getLayoutData(headerHeight)
 
     useEffect(() => {
       const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
+        console.log('ReactNative.Dimensions change event')
         navigation.layout = getLayoutData(headerHeight)
       })
       return () => dimensionListener?.remove()
@@ -536,7 +551,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
             },
             contentContainerStyle: {
               flex: 1
-            }
+            },
+            navigation
           },
           element
         )

@@ -38,6 +38,7 @@ const getSystemInfoSync = function () {
     'locationReducedAccuracy',
     'theme'
   ])
+  console.log('getSystemInfoSync', result)
   return result
 }
 
