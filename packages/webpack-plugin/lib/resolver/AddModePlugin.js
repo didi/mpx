@@ -42,7 +42,7 @@ module.exports = class AddModePlugin {
       queryObj.infix = `${queryInfix || ''}.${mode}`
       obj.query = stringifyQuery(queryObj)
 
-      if (modePattern.test(resourcePath)) {
+      if (modePattern.test(path.basename(resourcePath))) {
         // 如果已经确认是mode后缀的文件，添加query与mode后直接返回
         request.query = obj.query
         request.mode = obj.mode
