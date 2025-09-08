@@ -228,7 +228,8 @@ const Progress = forwardRef<
       'backgroundColor',
       'active',
       'active-mode',
-      'duration'
+      'duration',
+      'bindactiveend'
     ],
     { layoutRef }
   )
