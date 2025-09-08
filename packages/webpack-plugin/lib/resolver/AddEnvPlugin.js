@@ -39,6 +39,7 @@ module.exports = class AddEnvPlugin {
       queryObj.infix = `${queryObj.infix || ''}.${env}`
 
       const resourceBasename = path.basename(resourcePath)
+      // 如果 infix 与 resourcePath 无法匹配，则认为未命中env
       if (envPattern.test(resourceBasename) && resourceBasename.includes(queryObj.infix)) {
         request.query = stringifyQuery(queryObj)
         request.env = obj.env
