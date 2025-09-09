@@ -15,12 +15,7 @@
 import { View, Text, TouchableOpacity } from 'react-native'
 import { useRef, useImperativeHandle, forwardRef, ReactNode, JSX, createElement, useCallback } from 'react'
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
-import Animated, {
-  SharedValue,
-  useAnimatedStyle,
-  interpolate,
-  Extrapolation
-} from 'react-native-reanimated'
+import { SharedValue } from 'react-native-reanimated'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject } from './utils'
@@ -86,7 +81,6 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    bindtap,
     bindactiontap,
     bindopen,
     bindclose
@@ -124,6 +118,19 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   const nodeRef = useRef(null)
+  useNodesRef(props, ref, nodeRef)
+
+  const {
+    layoutRef,
+    layoutStyle,
+    layoutProps
+  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
+
+  const innerProps = useInnerProps({
+    ...props,
+    ...layoutProps,
+    style: extendObject({}, innerStyle, layoutStyle)
+  }, [], { layoutRef })
 
   // 注册和注销实例
   const registerInstance = useCallback(() => {
@@ -174,11 +181,6 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     // 点击操作按钮后自动关闭
     swipeableRef.current?.close()
   }, [bindactiontap, actionWidth])
-
-  // 处理内容区域点击
-  const handleContentTap = useCallback(() => {
-    bindtap && bindtap({ detail: {} })
-  }, [bindtap])
 
   // 渲染右侧操作区域
   const renderRightActions = useCallback((
@@ -244,14 +246,6 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     bindclose && bindclose({ detail: {} })
   }, [bindclose])
 
-  const {
-    layoutRef,
-    layoutStyle,
-    layoutProps
-  } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
-
-  const viewStyle = extendObject({}, innerStyle, layoutStyle)
-
   const childrenWithProps = wrapChildren(props, {
     hasVarDec,
     varContext: varContextRef.current,
@@ -267,7 +261,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     onSwipeableOpen: handleSwipeableOpen,
     onSwipeableClose: handleSwipeableClose,
     containerStyle: {
-      ...viewStyle,
+      flex: 1,
       backgroundColor: 'transparent' // 确保容器背景透明
     },
     enabled: !disabled,
@@ -275,25 +269,18 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     overshootRight: false, // 禁止向右过度滑动
     overshootLeft: false, // 禁止向左过度滑动
     enableTrackpadTwoFingerGesture: false, // 禁用触控板手势
-    useNativeAnimations: true, // 使用原生动画提高性能
-    ...layoutProps
+    useNativeAnimations: true // 使用原生动画提高性能
   }
 
   return createElement(
-    ReanimatedSwipeable,
-    swipeableProps,
+    View,
+    {
+      ref: nodeRef,
+      ...innerProps
+    },
     createElement(
-      TouchableOpacity,
-      {
-        style: {
-          flex: 1,
-          backgroundColor: 'transparent' // 确保内容区域背景透明
-        },
-        onPress: handleContentTap,
-        activeOpacity: 1,
-        delayPressIn: 0, // 移除按压延迟
-        delayPressOut: 0 // 移除释放延迟
-      },
+      ReanimatedSwipeable,
+      swipeableProps,
       childrenWithProps
     )
   )
