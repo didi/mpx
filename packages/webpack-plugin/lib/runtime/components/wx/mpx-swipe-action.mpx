@@ -1,0 +1,409 @@
+<template>
+  <view class="mpx-swipe-action">
+    <view 
+      class="swipe-content"
+      bindtouchstart="handleTouchStart"
+      bindtouchmove="handleTouchMove"
+      bindtouchend="handleTouchEnd"
+      style="transform: translateX({{contentX}}px); transition: {{animation ? 'transform 0.3s ease' : 'none'}};"
+    >
+        <!-- 主内容区域 -->
+        <view 
+          class="content-area" 
+          bindtap="handleContentTap"
+        >
+          <slot></slot>
+        </view>
+        
+        <!-- 右侧操作按钮区域 -->
+        <view 
+          class="action-area" 
+          style="width: {{totalActionWidth}}px; right: -{{totalActionWidth}}px;"
+        >
+          <view 
+            wx:for="{{finalActions}}" 
+            wx:key="index"
+            class="action-button"
+            style="width: {{item.width || actionWidth}}px; background-color: {{item.background || item.color || '#ff4757'}}; color: {{item.textColor || '#fff'}}; font-size: {{item.fontSize || 16}}px; font-weight: {{item.fontWeight || '500'}}; {{item.style || ''}}"
+            bindtap="handleActionTap"
+            data-index="{{index}}"
+            data-action="{{item}}"
+          >{{item.text}}
+          </view>
+        </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// 全局状态管理，用于自动关闭其他已打开的组件
+const openedInstances = new Set()
+
+createComponent({
+  properties: {
+    // 单按钮配置（向后兼容）
+    'action-width': {
+      type: Number,
+      value: 80
+    },
+    'action-color': {
+      type: String,
+      value: '#ff4757'
+    },
+    'action-text': {
+      type: String,
+      value: '删除'
+    },
+    'action-text-color': {
+      type: String,
+      value: '#fff'
+    },
+    'action-background': {
+      type: String,
+      value: ''
+    },
+    'action-font-size': {
+      type: Number,
+      value: 16
+    },
+    'action-font-weight': {
+      type: String,
+      value: '500'
+    },
+    'action-style': {
+      type: String,
+      value: ''
+    },
+    // 多按钮配置
+    actions: {
+      type: Array,
+      value: []
+    },
+    'right-threshold': {
+      type: Number,
+      value: 0
+    },
+    friction: {
+      type: Number,
+      value: 2
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    'auto-close': {
+      type: Boolean,
+      value: true
+    }
+  },
+
+  data: {
+    contentX: 0,
+    isOpened: false,
+    animation: true,
+    isDragging: false,
+    startX: 0
+  },
+
+  computed: {
+    // 获取 action-width 属性值
+    actionWidth() {
+      return this['action-width']
+    },
+
+    // 处理多按钮配置，优先使用 actions，否则使用单按钮配置
+    finalActions() {
+      if (this.actions && this.actions.length > 0) {
+        return this.actions
+      }
+      return [{
+        text: this['action-text'],
+        color: this['action-color'],
+        textColor: this['action-text-color'],
+        background: this['action-background'],
+        width: this['action-width'],
+        fontSize: this['action-font-size'],
+        fontWeight: this['action-font-weight'],
+        style: this['action-style']
+      }]
+    },
+
+    totalActionWidth() {
+      return this.finalActions.reduce((sum, action) => {
+        return sum + (action.width || this['action-width'])
+      }, 0)
+    },
+
+    rightThreshold() {
+      // 如果用户自定义了阈值，使用用户设置
+      if (this['right-threshold'] > 0) {
+        return this['right-threshold']
+      }
+      
+      // 多按钮场景需要更低的阈值
+      const buttonCount = this.finalActions.length
+      let ratio = 0.3 // 默认比例
+      
+      if (buttonCount >= 3) {
+        ratio = 0.2  // 3个或更多按钮：20%
+      } else if (buttonCount === 2) {
+        ratio = 0.25 // 2个按钮：25%
+      }
+      
+      return Math.max(this.totalActionWidth * ratio, 40)
+    },
+
+    // 开启阈值（向左滑动超过此值时显示按钮）
+    openThreshold() {
+      return this.rightThreshold
+    },
+
+    // 关闭阈值（向右滑动小于此值时隐藏按钮）  
+    closeThreshold() {
+      // 关闭阈值稍小一些，避免频繁切换
+      return this.rightThreshold * 0.6
+    }
+  },
+
+  attached() {
+    // 确保初始状态为正确的二态位置
+    this.ensureBinaryPosition()
+  },
+
+  ready() {
+    this.ensureBinaryPosition()
+  },
+
+  detached() {
+    // 组件销毁时清理
+    this.unregisterInstance()
+  },
+
+  methods: {
+    // 确保二态位置
+    ensureBinaryPosition() {
+      const targetX = this.isOpened ? -this.totalActionWidth : 0
+      if (this.contentX !== targetX) {
+        this.contentX = targetX
+      }
+    },
+
+    // 处理触摸移动
+    handleTouchMove(e) {
+      if (!this.isDragging) return
+      
+      const currentX = e.touches[0].clientX
+      const deltaX = this.startX - currentX  // 向左滑动为正值
+      
+        // 超过开启阈值且当前关闭：切换到打开状态
+        if (deltaX >= this.openThreshold && !this.isOpened) {
+          this.isOpened = true
+          this.animation = true
+          this.contentX = -this.totalActionWidth
+          
+          this.triggerEvent('open', {
+            actionWidth: this.totalActionWidth,
+            actions: this.finalActions,
+            actionCount: this.finalActions.length
+          })
+          
+          if (this['auto-close']) {
+            this.closeOtherInstances()
+            this.registerInstance()
+          }
+          return
+        }
+        // 小于关闭阈值且当前打开：切换到关闭状态
+        else if (deltaX < this.closeThreshold && this.isOpened) {
+          this.isOpened = false
+          this.animation = true
+          this.contentX = 0
+          
+          this.triggerEvent('close', {})
+          
+          if (this['auto-close']) {
+            this.unregisterInstance()
+          }
+          return
+        }
+      
+      // 强制保持二态位置
+      if (this.isOpened) {
+        this.contentX = -this.totalActionWidth
+      } else {
+        this.contentX = 0
+      }
+    },
+
+    // 处理触摸开始
+    handleTouchStart(e) {
+      this.startX = e.touches[0].clientX
+      this.isDragging = true
+      // 关闭动画，实现即时响应
+      this.animation = false
+    },
+
+    // 处理触摸结束
+    handleTouchEnd(e) {
+      this.isDragging = false
+      // 重新开启动画
+      this.animation = true
+      
+      // 确保最终状态正确
+      if (this.isOpened) {
+        this.contentX = -this.totalActionWidth
+      } else {
+        this.contentX = 0
+      }
+    },
+
+    // 切换到打开状态
+    switchToOpenState(useAnimation = false) {
+      if (useAnimation) {
+        this.animation = true
+      }
+      this.contentX = -this.totalActionWidth
+      this.isOpened = true
+      
+      this.triggerEvent('open', {
+        actionWidth: this.totalActionWidth,
+        actions: this.finalActions,
+        actionCount: this.finalActions.length
+      })
+      
+      // 自动关闭其他实例
+      if (this['auto-close']) {
+        this.closeOtherInstances()
+        this.registerInstance()
+      }
+    },
+
+    // 切换到关闭状态
+    switchToCloseState(useAnimation = false) {
+      if (useAnimation) {
+        this.animation = true
+      }
+      this.contentX = 0
+      this.isOpened = false
+      
+      this.triggerEvent('close', {})
+      
+      if (this['auto-close']) {
+        this.unregisterInstance()
+      }
+    },
+
+
+    // 打开操作区域（编程式调用）
+    openActions() {
+      this.switchToOpenState(true)
+    },
+
+    // 关闭操作区域（编程式调用）
+    closeActions() {
+      this.switchToCloseState(true)
+    },
+
+    // 处理内容区域点击
+    handleContentTap(e) {
+      // 如果已打开，则关闭
+      if (this.isOpened) {
+        this.closeActions()
+      } else {
+        // 透传点击事件
+        this.triggerEvent('tap', e.detail)
+      }
+    },
+
+    // 处理操作按钮点击
+    handleActionTap(e) {
+      const { index, action } = e.currentTarget.dataset
+      
+      this.triggerEvent('actiontap', {
+        actionIndex: index,
+        actionText: action.text,
+        actionWidth: action.width || this['action-width'],
+        action: action
+      })
+      
+      // 点击操作按钮后自动关闭
+      this.closeActions()
+    },
+
+    // 注册实例
+    registerInstance() {
+      if (this['auto-close']) {
+        openedInstances.add(this)
+      }
+    },
+
+    // 注销实例
+    unregisterInstance() {
+      openedInstances.delete(this)
+    },
+
+    // 关闭其他已打开的实例
+    closeOtherInstances() {
+      if (this['auto-close']) {
+        openedInstances.forEach(instance => {
+          if (instance !== this) {
+            instance.closeActions()
+          }
+        })
+      }
+    },
+
+    // 暴露给外部的方法
+    open() {
+      this.openActions()
+    },
+
+    close() {
+      this.closeActions()
+    }
+  }
+})
+</script>
+
+<style>
+.mpx-swipe-action {
+  position: relative;
+  width: 100%;
+}
+
+.content-area {
+  width: 100%; 
+  height: 100%;
+}
+
+.swipe-container {
+  width: 100%;
+}
+
+.swipe-content {
+  width: 100%;
+  height: 100%;
+}
+
+.action-area {
+  display: flex;
+  height: 100%; 
+  position: absolute; 
+  top: 0
+}
+
+.action-button {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>
