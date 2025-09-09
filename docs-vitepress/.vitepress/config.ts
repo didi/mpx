@@ -142,25 +142,25 @@ const sidebar: DefaultTheme.Sidebar = {
         {
             text: "基础",
             items: [
-                { text: "快速开始", link: "/rn/quick-start" },
-                { text: "基础能力", link: "/rn/basic" },
-                { text: "组件使用与开发", link: "/rn/component" },
-                { text: "模板语法与生命周期", link: "/rn/template" },
-                { text: "跨端样式", link: "/rn/style" },
-                { text: "应用能力", link: "/rn/application-api" },
+                { text: "快速开始", link: "/rn/basic/start" },
+                { text: "基础能力", link: "/rn/basic/basic" },
+                { text: "组件使用与开发", link: "/rn/basic/component" },
+                { text: "模板语法与生命周期", link: "/rn/basic/template" },
+                { text: "跨端样式", link: "/rn/basic/style" },
+                { text: "应用能力", link: "/rn/basic/application-api" },
 
             ],
         },
         {
             text: "进阶",
             items: [
-                { text: "混合编写 RN", link: "/rn/hybrid-dev-with-react-native" },
+                { text: "混合编写 RN", link: "/rn/advance/hybrid-with-react-native" },
             ],
         },
         {
             text: "生态",
             items: [
-                { text: "生态 SDK", link: "/rn/ecosystem-sdk" }
+                { text: "生态 SDK", link: "/rn/ecosystem/ecosystem-sdk" }
             ]
         },
 
@@ -993,7 +993,7 @@ export default withPwa(
                         {
                             text: "跨端输出 RN",
                             activeMatch: "^/rn/",
-                            link: "/rn/quick-start"
+                            link: "/rn/basic/start"
                         },
                     ],
                 },
