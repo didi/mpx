@@ -60,9 +60,9 @@
       focus: {
         handler (val) {
           if (val) {
-            this.$nextTick(() => {
+            setTimeout(() => {
               this.$refs.input.focus()
-            })
+            }, 0)
           } else {
             this.$nextTick(() => {
               this.$refs.input.blur()
