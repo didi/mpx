@@ -13,7 +13,6 @@ const sidebar: DefaultTheme.Sidebar = {
     "/guide/": [
         {
             text: "基础",
-            collapsed: false,
             items: [
                 { text: "快速开始", link: "/guide/basic/start" },
                 { text: "介绍", link: "/guide/basic/intro" },
@@ -41,7 +40,6 @@ const sidebar: DefaultTheme.Sidebar = {
         },
         {
             text: "进阶",
-            collapsed: false,
             items: [
                 { text: "状态管理（store）", link: "/guide/advance/store" },
                 { text: "状态管理（pinia）", link: "/guide/advance/pinia" },
@@ -77,7 +75,6 @@ const sidebar: DefaultTheme.Sidebar = {
         },
         {
             text: "跨端基础",
-            collapsed: false,
             items: [
                 { text: "跨端输出配置", link: "/guide/cross-platform/basic" },
                 { text: "条件编译机制", link: "/guide/cross-platform/conditional" },
@@ -85,8 +82,7 @@ const sidebar: DefaultTheme.Sidebar = {
             ],
         },
         {
-            text: "跨端输出RN",
-            collapsed: false,
+            text: "跨端输出 RN",
             items: [
                 { text: "快速开始", link: "/guide/rn/quick-start" },
                 {
@@ -105,7 +101,6 @@ const sidebar: DefaultTheme.Sidebar = {
         },
         {
             text: "组合式 API",
-            collapsed: false,
             items: [
                 {
                     text: "组合式 API",
@@ -119,7 +114,6 @@ const sidebar: DefaultTheme.Sidebar = {
         },
         {
             text: "工具",
-            collapsed: false,
             items: [
                 { text: "使用TypeScript开发小程序", link: "/guide/tool/ts" },
                 { text: "单元测试", link: "/guide/tool/unit-test" },
@@ -128,7 +122,6 @@ const sidebar: DefaultTheme.Sidebar = {
         },
         {
             text: "拓展",
-            collapsed: false,
             items: [
                 { text: "网络请求", link: "/guide/extend/fetch" },
                 { text: "数据 Mock", link: "/guide/extend/mock" },
@@ -137,7 +130,6 @@ const sidebar: DefaultTheme.Sidebar = {
         },
         {
             text: "理解",
-            collapsed: false,
             items: [
                 {
                     text: "Mpx运行时增强原理",
@@ -148,7 +140,6 @@ const sidebar: DefaultTheme.Sidebar = {
         },
         {
             text: "迁移",
-            collapsed: false,
             items: [
                 { text: "从 2.8 升级至 2.9", link: "/guide/migrate/2.9" },
                 { text: "从 2.7 升级至 2.8", link: "/guide/migrate/2.8" },
@@ -832,7 +823,6 @@ const sidebar: DefaultTheme.Sidebar = {
     "/articles/": [
         {
             text: "文章",
-            collapsed: false,
             items: [
                 { text: "滴滴开源小程序框架Mpx", link: "/articles/1.0" },
                 {
@@ -985,7 +975,10 @@ export default withPwa(
                 {
                     text: "指南",
                     activeMatch: "^/guide/",
-                    link: "/guide/basic/start",
+                    items: [
+                        { text: "快速开始", activeMatch: "^/guide/start/", link: "/guide/basic/start" },
+                        { text: "跨端输出 RN", activeMatch: "^/guide/rn/", link: "/guide/rn/quick-start" },
+                    ],
                 },
                 // API 折叠标题
                 {
