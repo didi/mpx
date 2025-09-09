@@ -1,25 +1,32 @@
 /**
- * mpx-swipe-action 左滑删除组件
- *
- * 基于 react-native-gesture-handler 的 ReanimatedSwipeable 实现
- *
- * 功能特性：
- * ✔ 左滑显示操作按钮
- * ✔ 支持自定义操作按钮
- * ✔ 高性能动画效果
- * ✔ 支持阈值设置
- * ✔ 自动关闭其他已打开的组件
- * ✔ 基于成熟的手势处理库
+ * ✔ action-width: 单按钮宽度设置
+ * ✔ action-color: 单按钮颜色
+ * ✔ action-text: 单按钮文本
+ * ✔ action-text-color: 单按钮文本颜色
+ * ✔ action-background: 单按钮背景色
+ * ✔ action-font-size: 单按钮字体大小
+ * ✔ action-font-weight: 单按钮字体粗细
+ * ✔ action-style: 单按钮自定义样式
+ * ✔ actions: 多按钮配置数组
+ * ✔ right-threshold: 右滑阈值
+ * ✔ friction: 滑动摩擦系数
+ * ✔ disabled: 禁用滑动
+ * ✔ auto-close: 自动关闭其他已打开的组件
+ * ✔ bindtap: 内容区域点击事件
+ * ✔ bindactiontap: 操作按钮点击事件
+ * ✔ bindopen: 滑动打开事件
+ * ✔ bindclose: 滑动关闭事件
  */
 
-import { View, Text, TouchableOpacity } from 'react-native'
-import { useRef, useImperativeHandle, forwardRef, ReactNode, JSX, createElement, useCallback } from 'react'
+import { View, Text } from 'react-native'
+import { useRef, useImperativeHandle, forwardRef, ReactNode, JSX, createElement, useCallback, useEffect } from 'react'
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import { SharedValue } from 'react-native-reanimated'
 import useInnerProps from './getInnerListeners'
-import useNodesRef, { HandlerRef } from './useNodesRef'
+import { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject } from './utils'
 import { ExtendedViewStyle } from './types/common'
+import Portal from './mpx-portal'
 
 export interface ActionConfig {
   text: string
@@ -27,6 +34,8 @@ export interface ActionConfig {
   textColor?: string
   background?: string
   width?: number
+  fontSize?: number
+  fontWeight?: 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
   style?: ExtendedViewStyle
 }
 
@@ -39,6 +48,8 @@ export interface SwipeActionProps {
   'action-text'?: string
   'action-text-color'?: string
   'action-background'?: string
+  'action-font-size'?: number
+  'action-font-weight'?: 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
   'action-style'?: ExtendedViewStyle
   // 多按钮配置
   actions?: ActionConfig[]
@@ -60,6 +71,46 @@ export interface SwipeActionProps {
 // 全局状态管理，用于自动关闭其他已打开的组件
 const openedInstances: Set<any> = new Set()
 
+// 操作按钮组件
+const ActionButton = ({ action, index, actionWidth, onTap }: {
+  action: ActionConfig
+  index: number
+  actionWidth: number
+  onTap: (index: number, action: ActionConfig) => void
+}) => {
+  const backgroundColor = action.background || action.color || '#ff4757'
+  const textColor = action.textColor || '#fff'
+  const fontSize = action.fontSize || 16
+  const fontWeight = action.fontWeight || '500'
+
+  const buttonInnerProps = useInnerProps({
+    bindtap: () => onTap(index, action)
+  }, [], {})
+
+  const buttonStyle = {
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    width: actionWidth,
+    backgroundColor,
+    ...action.style
+  }
+
+  return createElement(
+    View,
+    extendObject({
+      key: index,
+      style: buttonStyle
+    }, buttonInnerProps),
+    createElement(Text, {
+      style: {
+        color: textColor,
+        fontSize,
+        fontWeight
+      }
+    }, action.text)
+  )
+}
+
 const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionProps>((swipeActionProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(swipeActionProps)
 
@@ -70,6 +121,8 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     'action-text': actionText = '删除',
     'action-text-color': actionTextColor = '#fff',
     'action-background': actionBackground,
+    'action-font-size': actionFontSize = 16,
+    'action-font-weight': actionFontWeight = '500',
     'action-style': actionStyle = {},
     actions,
     'right-threshold': rightThreshold,
@@ -93,6 +146,8 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     textColor: actionTextColor,
     background: actionBackground,
     width: actionWidth,
+    fontSize: actionFontSize,
+    fontWeight: actionFontWeight,
     style: actionStyle
   }]
 
@@ -118,7 +173,6 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
 
   const nodeRef = useRef(null)
-  useNodesRef(props, ref, nodeRef)
 
   const {
     layoutRef,
@@ -126,36 +180,43 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     layoutProps
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
-  const innerProps = useInnerProps({
-    ...props,
-    ...layoutProps,
-    style: extendObject({}, innerStyle, layoutStyle)
-  }, [], { layoutRef })
+  const innerProps = useInnerProps(extendObject(props, layoutProps, { style: extendObject({}, innerStyle, layoutStyle) }), [], {
+    layoutRef
+  })
 
-  // 注册和注销实例
+  // 注册实例
   const registerInstance = useCallback(() => {
     if (autoClose && swipeableRef.current) {
       openedInstances.add(swipeableRef.current)
-      return () => {
-        if (swipeableRef.current) {
-          openedInstances.delete(swipeableRef.current)
-        }
-      }
     }
   }, [autoClose])
 
+  // 注销实例
+  const unregisterInstance = useCallback(() => {
+    if (swipeableRef.current) {
+      openedInstances.delete(swipeableRef.current)
+    }
+  }, [])
+
+  // 组件卸载时清理
+  useEffect(() => {
+    return () => {
+      unregisterInstance()
+    }
+  }, [unregisterInstance])
+
   // 暴露方法给外部
-  useImperativeHandle(ref, () => ({
-    getNodeInstance: () => ({
-      props: { current: props },
-      nodeRef,
-      instance: {
-        open: () => swipeableRef.current?.openRight(),
-        close: () => swipeableRef.current?.close(),
-        style: normalStyle
-      }
-    })
-  }))
+  useImperativeHandle(ref, () => {
+    return {
+      open: () => swipeableRef.current?.openRight(),
+      close: () => swipeableRef.current?.close(),
+      getNodeInstance: () => ({
+        props: { current: props },
+        nodeRef: nodeRef,
+        instance: swipeableRef.current
+      })
+    }
+  })
 
   // 关闭其他已打开的实例
   const closeOtherInstances = useCallback(() => {
@@ -180,7 +241,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     })
     // 点击操作按钮后自动关闭
     swipeableRef.current?.close()
-  }, [bindactiontap, actionWidth])
+  }, [actionWidth])
 
   // 渲染右侧操作区域
   const renderRightActions = useCallback((
@@ -197,54 +258,42 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
       },
       ...finalActions.map((action, index) => {
         const actionWidth = action.width || 80
-        const backgroundColor = action.background || action.color || '#ff4757'
-        const textColor = action.textColor || '#fff'
-
-        return createElement(
-          TouchableOpacity,
-          {
-            key: index,
-            style: {
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: actionWidth,
-              backgroundColor,
-              ...action.style
-            },
-            onPress: () => handleActionTap(index, action),
-            activeOpacity: 0.7
-          },
-          createElement(Text, {
-            style: {
-              color: textColor,
-              fontSize: 16,
-              fontWeight: '500'
-            }
-          }, action.text)
-        )
+        return createElement(ActionButton, {
+          key: index,
+          action,
+          index,
+          actionWidth,
+          onTap: handleActionTap
+        })
       })
     )
-  }, [totalActionWidth, finalActions, handleActionTap])
+  }, [totalActionWidth, finalActions])
 
   // 处理滑动打开事件
   const handleSwipeableOpen = useCallback((direction: 'left' | 'right') => {
-    if (direction === 'right') {
+    if (autoClose) {
       closeOtherInstances()
-      registerInstance()
-      bindopen && bindopen({
-        detail: {
-          actionWidth: totalActionWidth,
-          actions: finalActions,
-          actionCount: finalActions.length
-        }
-      })
+      // 延迟注册，确保 ref 已经准备好
+      setTimeout(() => {
+        registerInstance()
+      }, 0)
     }
-  }, [bindopen, totalActionWidth, finalActions, closeOtherInstances, registerInstance])
+    bindopen && bindopen({
+      detail: {
+        actionWidth: totalActionWidth,
+        actions: finalActions,
+        actionCount: finalActions.length
+      }
+    })
+  }, [totalActionWidth, finalActions, autoClose])
 
   // 处理滑动关闭事件
   const handleSwipeableClose = useCallback(() => {
+    if (autoClose) {
+      unregisterInstance() // 从全局集合中移除当前实例
+    }
     bindclose && bindclose({ detail: {} })
-  }, [bindclose])
+  }, [autoClose])
 
   const childrenWithProps = wrapChildren(props, {
     hasVarDec,
@@ -261,8 +310,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     onSwipeableOpen: handleSwipeableOpen,
     onSwipeableClose: handleSwipeableClose,
     containerStyle: {
-      flex: 1,
-      backgroundColor: 'transparent' // 确保容器背景透明
+      flex: 1
     },
     enabled: !disabled,
     // 限制滑动范围，防止过度滑动
@@ -272,18 +320,22 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     useNativeAnimations: true // 使用原生动画提高性能
   }
 
-  return createElement(
+  const finalComponent = createElement(
     View,
-    {
-      ref: nodeRef,
-      ...innerProps
-    },
+    extendObject({
+      ref: nodeRef
+    }, innerProps),
     createElement(
       ReanimatedSwipeable,
       swipeableProps,
       childrenWithProps
     )
   )
+
+  if (hasPositionFixed) {
+    return createElement(Portal, null, finalComponent)
+  }
+  return finalComponent
 })
 
 _SwipeAction.displayName = 'MpxSwipeAction'
