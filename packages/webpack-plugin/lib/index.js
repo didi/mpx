@@ -77,7 +77,7 @@ const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
-const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 require('./utils/check-core-version-match')
 
 const isProductionLikeMode = options => {
