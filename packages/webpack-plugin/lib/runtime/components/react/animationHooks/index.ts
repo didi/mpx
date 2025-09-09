@@ -3,8 +3,7 @@ import { useEffect, useRef } from 'react'
 import {
   useSharedValue,
   useAnimatedStyle,
-  cancelAnimation,
-  interpolateColor
+  cancelAnimation
 } from 'react-native-reanimated'
 import {
   Transition,
@@ -23,6 +22,7 @@ import type { ExtendedViewStyle } from '../types/common'
 
 // 动画类型
 const enum AnimationType {
+  // 兜底
   None,
   API,
   CssTransition,
@@ -39,16 +39,18 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   const enableStyleAnimation = enableAnimation || animationType !== AnimationType.None
   const enableAnimationRef = useRef(enableStyleAnimation)
   // console.log(`useAnimationHooks animationType=${animationTypeRef.current} animationType=${enableAnimationRef.current}`)
-  if (animationTypeRef.current !== AnimationType.None && animationTypeRef.current !== animationType) {
-    error('[Mpx runtime error]: animationType should be stable, it is not allowed to switch CSS animation, API animation or CSS animation in the component lifecycle')
-  }
   if (enableAnimationRef.current !== enableStyleAnimation) {
     error('[Mpx runtime error]: animation usage should be stable in the component lifecycle, or you can set [enable-animation] with true.')
   }
-  if (!enableAnimationRef.current || animationTypeRef.current === AnimationType.None || animationTypeRef.current === AnimationType.CssAnimation) {
-    animationTypeRef.current === AnimationType.CssAnimation && error('[Mpx runtime error]: CSS animation is not supported yet')
-    return { enableStyleAnimation: false }
+  if (animationTypeRef.current !== AnimationType.None && animationType !== AnimationType.None && animationTypeRef.current !== animationType) {
+    // 允许 none到API、CssTransition或API、CssTransition到none，不允许 API、CssTransition 互切
+    error('[Mpx runtime error]: animationType should be stable, it is not allowed to switch CSS animation, API animation or CSS animation in the component lifecycle')
   }
+  if (animationTypeRef.current === AnimationType.CssAnimation) {
+    // 暂不支持 CssAnimation 提示
+    error('[Mpx runtime error]: CSS animation is not supported yet')
+  }
+  if (!enableAnimationRef.current) return { enableStyleAnimation: false }
   // style变更标识(首次render不执行)
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animationDeps = useRef(-1)
@@ -84,14 +86,13 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     })
   }
   function withTimingCallback (finished?: boolean, current?: AnimatableValue, duration?: number) {
-    if (!transitionend) return
     const target = {
       id: animation?.id || -1,
       dataset: collectDataset(props),
       offsetLeft: layoutRef?.current?.offsetLeft || 0,
       offsetTop: layoutRef?.current?.offsetTop || 0
     }
-    transitionend({
+    transitionend!({
       type: 'transitionend',
       // elapsedTime 对齐wx 单位s
       detail: { elapsedTime: duration ? duration / 1000 : 0, finished, current },
@@ -110,12 +111,12 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     ? useAnimationAPIHooks({
       animation,
       style: originalStyle,
-      transitionend: withTimingCallback
+      transitionend: transitionend && withTimingCallback
     })
     // eslint-disable-next-line react-hooks/rules-of-hooks
     : useTransitionHooks({
       style: originalStyle,
-      transitionend: withTimingCallback
+      transitionend: transitionend && withTimingCallback
     })
   // 获取动画样式&驱动动画
   function startAnimation () {
