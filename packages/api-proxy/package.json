@@ -46,7 +46,8 @@
     "react-native-device-info": "*",
     "react-native-get-location": "*",
     "react-native-haptic-feedback": "*",
-    "react-native-safe-area-context": "*"
+    "react-native-safe-area-context": "*",
+    "react-native-ble-plx": "*"
   },
   "peerDependenciesMeta": {
     "@react-native-async-storage/async-storage": {
@@ -65,6 +66,9 @@
       "optional": true
     },
     "react-native-haptic-feedback": {
+      "optional": true
+    },
+    "react-native-ble-plx": {
       "optional": true
     }
   }
