@@ -60,16 +60,16 @@
       focus: {
         handler (val) {
           if (val) {
-            setTimeout(() => { // 处理用户如果在blur事件回调里面设置传入focus的值会有执行时差，晚于当前执行，所以改成setTimeout
+            this.$nextTick(() => {
               this.$refs.input.focus()
-            }, 0)
+            })
           } else {
             this.$nextTick(() => {
               this.$refs.input.blur()
             })
           }
         },
-        immediate: true
+        immediate: false // 解决与autofocus的冲突问题
       }
     },
     render (createElement) {
