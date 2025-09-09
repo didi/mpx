@@ -5,7 +5,7 @@
       bindtouchstart="handleTouchStart"
       bindtouchmove="handleTouchMove"
       bindtouchend="handleTouchEnd"
-      style="transform: translateX({{contentX}}px); transition: {{animation ? 'transform 0.3s ease' : 'none'}};"
+      wx:style="transform: translateX({{contentX}}px); transition: {{animation ? 'transform 0.3s ease' : 'none'}};"
     >
         <!-- 主内容区域 -->
         <view 
@@ -18,18 +18,17 @@
         <!-- 右侧操作按钮区域 -->
         <view 
           class="action-area" 
-          style="width: {{totalActionWidth}}px; right: -{{totalActionWidth}}px;"
+          wx:style="width: {{totalActionWidth}}px; right: -{{totalActionWidth}}px;"
         >
           <view 
             wx:for="{{finalActions}}" 
             wx:key="index"
             class="action-button"
-            style="width: {{item.width || actionWidth}}px; background-color: {{item.background || item.color || '#ff4757'}}; color: {{item.textColor || '#fff'}}; font-size: {{item.fontSize || 16}}px; font-weight: {{item.fontWeight || '500'}}; {{item.style || ''}}"
+            wx:style="width: {{item.width || actionWidth}}px; background-color: {{item.background || item.color || '#ff4757'}}; color: {{item.textColor || '#fff'}}; font-size: {{item.fontSize || 16}}px; font-weight: {{item.fontWeight || '500'}}; {{item.style || ''}}"
             bindtap="handleActionTap"
             data-index="{{index}}"
             data-action="{{item}}"
-          >{{item.text}}
-          </view>
+          >111111{{item.text}}</view>
         </view>
     </view>
   </view>
@@ -44,35 +43,35 @@ const openedInstances = new Set()
 createComponent({
   properties: {
     // 单按钮配置（向后兼容）
-    'action-width': {
+    actionWidth: {
       type: Number,
       value: 80
     },
-    'action-color': {
+    actionColor: {
       type: String,
       value: '#ff4757'
     },
-    'action-text': {
+    actionText: {
       type: String,
       value: '删除'
     },
-    'action-text-color': {
+    actionTextColor: {
       type: String,
       value: '#fff'
     },
-    'action-background': {
+    actionBackground: {
       type: String,
       value: ''
     },
-    'action-font-size': {
+    actionFontSize: {
       type: Number,
       value: 16
     },
-    'action-font-weight': {
+    actionFontWeight: {
       type: String,
       value: '500'
     },
-    'action-style': {
+    actionStyle: {
       type: String,
       value: ''
     },
@@ -81,19 +80,15 @@ createComponent({
       type: Array,
       value: []
     },
-    'right-threshold': {
+    rightThreshold: {
       type: Number,
       value: 0
-    },
-    friction: {
-      type: Number,
-      value: 2
     },
     disabled: {
       type: Boolean,
       value: false
     },
-    'auto-close': {
+    autoClose: {
       type: Boolean,
       value: true
     }
@@ -108,56 +103,27 @@ createComponent({
   },
 
   computed: {
-    // 获取 action-width 属性值
-    actionWidth() {
-      return this['action-width']
-    },
-
     // 处理多按钮配置，优先使用 actions，否则使用单按钮配置
     finalActions() {
       if (this.actions && this.actions.length > 0) {
         return this.actions
       }
       return [{
-        text: this['action-text'],
-        color: this['action-color'],
-        textColor: this['action-text-color'],
-        background: this['action-background'],
-        width: this['action-width'],
-        fontSize: this['action-font-size'],
-        fontWeight: this['action-font-weight'],
-        style: this['action-style']
+        text: this.actionText,
+        color: this.actionColor,
+        textColor: this.actionTextColor,
+        background: this.actionBackground,
+        width: this.actionWidth,
+        fontSize: this.actionFontSize,
+        fontWeight: this.actionFontWeight,
+        style: this.actionStyle
       }]
     },
 
     totalActionWidth() {
       return this.finalActions.reduce((sum, action) => {
-        return sum + (action.width || this['action-width'])
+        return sum + (action.width || this.actionWidth)
       }, 0)
-    },
-
-    rightThreshold() {
-      // 如果用户自定义了阈值，使用用户设置
-      if (this['right-threshold'] > 0) {
-        return this['right-threshold']
-      }
-      
-      // 多按钮场景需要更低的阈值
-      const buttonCount = this.finalActions.length
-      let ratio = 0.3 // 默认比例
-      
-      if (buttonCount >= 3) {
-        ratio = 0.2  // 3个或更多按钮：20%
-      } else if (buttonCount === 2) {
-        ratio = 0.25 // 2个按钮：25%
-      }
-      
-      return Math.max(this.totalActionWidth * ratio, 40)
-    },
-
-    // 开启阈值（向左滑动超过此值时显示按钮）
-    openThreshold() {
-      return this.rightThreshold
     },
 
     // 关闭阈值（向右滑动小于此值时隐藏按钮）  
@@ -196,9 +162,8 @@ createComponent({
       
       const currentX = e.touches[0].clientX
       const deltaX = this.startX - currentX  // 向左滑动为正值
-      
         // 超过开启阈值且当前关闭：切换到打开状态
-        if (deltaX >= this.openThreshold && !this.isOpened) {
+        if (deltaX >= this.rightThreshold && !this.isOpened) {
           this.isOpened = true
           this.animation = true
           this.contentX = -this.totalActionWidth
