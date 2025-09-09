@@ -1,5 +1,5 @@
 const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency')
-const { RetryRuntimeGlobal } = require('../retry-runtime-module')
+const { RetryRuntimeGlobal } = require('./RetryRuntimeModule')
 const parseRequest = require('../utils/parse-request')
 
 class ImportDependencyTemplate extends (

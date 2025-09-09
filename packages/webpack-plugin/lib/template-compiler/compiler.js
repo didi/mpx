@@ -1383,7 +1383,11 @@ function processEvent (el, options) {
         const targetConfigs = isCapture ? eventConfigMap[type].captureConfigs : eventConfigMap[type].configs
         targetConfigs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
-          eventConfigMap[type].proxy = true
+          if (isCapture) {
+            eventConfigMap[type].captureProxy = true
+          } else {
+            eventConfigMap[type].proxy = true
+          }
         }
       }
     }
@@ -1423,10 +1427,10 @@ function processEvent (el, options) {
   }
 
   for (const type in eventConfigMap) {
-    const { configs = [], captureConfigs = [], proxy } = eventConfigMap[type]
+    const { configs = [], captureConfigs = [], proxy, captureProxy } = eventConfigMap[type]
 
     let needBubblingBind = isNeedBind(configs, proxy)
-    let needCaptureBind = isNeedBind(captureConfigs, proxy)
+    let needCaptureBind = isNeedBind(captureConfigs, captureProxy)
 
     const escapedType = dash2hump(type)
     // 排除特殊情况
