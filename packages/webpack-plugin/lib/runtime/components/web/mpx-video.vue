@@ -239,7 +239,10 @@
 
         this._player.on('progress', (e) => {
           const eNode = e.target
-          const buffered = (eNode?.buffered?.end(0)) / (eNode?.duration)
+          let buffered = 0
+          if (eNode?.buffered && eNode.buffered.length > 0) {
+            buffered = (eNode.buffered.end(0)) / (eNode?.duration)
+          }
           this.$emit('progress', inheritEvent('progress', e, { buffered: buffered * 100 }))
         })
 
