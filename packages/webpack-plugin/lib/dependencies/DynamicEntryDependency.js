@@ -6,7 +6,7 @@ const toPosix = require('../utils/to-posix')
 const async = require('async')
 const parseRequest = require('../utils/parse-request')
 const hasOwn = require('../utils/has-own')
-const { RetryRuntimeGlobal } = require('../retry-runtime-module')
+const { RetryRuntimeGlobal } = require('./RetryRuntimeModule')
 
 class DynamicEntryDependency extends NullDependency {
   constructor (range, request, entryType, outputPath = '', packageRoot = '', relativePath = '', context = '', extraOptions = {}) {
