@@ -7,13 +7,13 @@
       bindtouchend="handleTouchEnd"
       wx:style="transform: translateX({{contentX}}px); transition: {{animation ? 'transform 0.3s ease' : 'none'}};"
     >
-        <!-- 主内容区域 -->
-        <view 
-          class="content-area" 
-          bindtap="handleContentTap"
-        >
-          <slot></slot>
-        </view>
+          <!-- 主内容区域 -->
+          <view 
+            class="content-area" 
+            bindtap="handleContentTap"
+          >
+            <slot></slot>
+          </view>
         
         <!-- 右侧操作按钮区域 -->
         <view 
@@ -162,43 +162,31 @@ createComponent({
       
       const currentX = e.touches[0].clientX
       const deltaX = this.startX - currentX  // 向左滑动为正值
-        // 超过开启阈值且当前关闭：切换到打开状态
-        if (deltaX >= this.rightThreshold && !this.isOpened) {
-          this.isOpened = true
-          this.animation = true
-          this.contentX = -this.totalActionWidth
-          
-          this.triggerEvent('open', {
-            actionWidth: this.totalActionWidth,
-            actions: this.finalActions,
-            actionCount: this.finalActions.length
-          })
-          
-          if (this['auto-close']) {
-            this.closeOtherInstances()
-            this.registerInstance()
-          }
-          return
-        }
-        // 小于关闭阈值且当前打开：切换到关闭状态
-        else if (deltaX < this.closeThreshold && this.isOpened) {
-          this.isOpened = false
-          this.animation = true
-          this.contentX = 0
-          
-          this.triggerEvent('close', {})
-          
-          if (this['auto-close']) {
-            this.unregisterInstance()
-          }
-          return
-        }
       
-      // 强制保持二态位置
+      // 跟手滑动效果
       if (this.isOpened) {
-        this.contentX = -this.totalActionWidth
+        // 当前是打开状态，允许向右滑动关闭
+        if (deltaX <= 0) {
+          // 向右滑动，从完全打开位置开始
+          const slideBack = Math.abs(deltaX)
+          const maxSlideBack = this.totalActionWidth
+          const actualSlide = Math.min(slideBack, maxSlideBack)
+          this.contentX = -this.totalActionWidth + actualSlide
+        } else {
+          // 向左滑动，保持在完全打开位置
+          this.contentX = -this.totalActionWidth
+        }
       } else {
-        this.contentX = 0
+        // 当前是关闭状态，允许向左滑动打开
+        if (deltaX >= 0) {
+          // 向左滑动，限制最大滑动距离
+          const maxSlide = this.totalActionWidth
+          const actualSlide = Math.min(deltaX, maxSlide)
+          this.contentX = -actualSlide
+        } else {
+          // 向右滑动，保持在关闭位置
+          this.contentX = 0
+        }
       }
     },
 
@@ -216,11 +204,62 @@ createComponent({
       // 重新开启动画
       this.animation = true
       
-      // 确保最终状态正确
+      // 根据当前状态和滑动距离决定最终状态
+      const currentSlideDistance = Math.abs(this.contentX)
+      const threshold = this.rightThreshold || this.totalActionWidth * 0.3
+      
       if (this.isOpened) {
-        this.contentX = -this.totalActionWidth
+        // 当前是打开状态，判断是否要关闭
+        const closedDistance = this.totalActionWidth - currentSlideDistance // 已经关闭的距离
+        const closeThreshold = this.totalActionWidth * 0.2 // 关闭阈值设置为20%
+
+        if (closedDistance >= closeThreshold) {
+          // 向右滑动超过20%，关闭
+          this.snapToClose()
+        } else {
+          // 未超过关闭阈值，保持打开
+          this.snapToOpen()
+        }
       } else {
-        this.contentX = 0
+        // 当前是关闭状态，判断是否要打开
+        if (currentSlideDistance >= threshold) {
+          // 向左滑动超过阈值，打开
+          this.snapToOpen()
+        } else {
+          // 未超过阈值，保持关闭
+          this.snapToClose()
+        }
+      }
+    },
+
+    // 吸附到打开状态
+    snapToOpen() {
+      this.contentX = -this.totalActionWidth
+      if (!this.isOpened) {
+        this.isOpened = true
+        this.triggerEvent('open', {
+          actionWidth: this.totalActionWidth,
+          actions: this.finalActions,
+          actionCount: this.finalActions.length
+        })
+        
+        if (this.autoClose) {
+          this.closeOtherInstances()
+          this.registerInstance()
+        }
+      }
+    },
+
+    // 吸附到关闭状态
+    snapToClose() {
+      this.contentX = 0
+      if (this.isOpened) {
+        this.isOpened = false
+        this.triggerEvent('close', {})
+        
+        if (this.autoClose) {
+          this.unregisterInstance()
+        }
       }
     },
 
@@ -263,12 +302,14 @@ createComponent({
 
     // 打开操作区域（编程式调用）
     openActions() {
-      this.switchToOpenState(true)
+      this.animation = true
+      this.snapToOpen()
     },
 
     // 关闭操作区域（编程式调用）
     closeActions() {
-      this.switchToCloseState(true)
+      this.animation = true
+      this.snapToClose()
     },
 
     // 处理内容区域点击
