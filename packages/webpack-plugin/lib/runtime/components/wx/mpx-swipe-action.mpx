@@ -28,7 +28,7 @@
             bindtap="handleActionTap"
             data-index="{{index}}"
             data-action="{{item}}"
-          >111111{{item.text}}</view>
+          >{{item.text}}</view>
         </view>
     </view>
   </view>
