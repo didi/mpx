@@ -136,7 +136,7 @@ export default function createApp (options) {
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
       })
-    } else if (value === 'hide') {
+    } else if (value === 'hide' || value === 'exit') {
       const reason = appState.hideReason ?? 3
       delete appState.hideReason
       global.__mpxAppCbs.hide.forEach((cb) => {
@@ -225,7 +225,7 @@ export default function createApp (options) {
       })
       return () => {
         appState.hideReason = 0
-        appState.state = 'hide'
+        appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
       }
