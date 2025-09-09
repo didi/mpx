@@ -9,6 +9,11 @@ import { withPwa } from "@vite-pwa/vitepress"
 import { transformerTwoslash } from "@shikijs/vitepress-twoslash"
 import { localSearchTranslations } from "./theme/translations"
 
+const ogUrl = "https://mpxjs.cn/"
+const ogImage = `${ogUrl}logo.png`
+const title = "Mpx 框架"
+const description = "深度性能优化的增强型小程序开发框架"
+
 const sidebar: DefaultTheme.Sidebar = {
     "/guide/": [
         {
@@ -82,24 +87,6 @@ const sidebar: DefaultTheme.Sidebar = {
             ],
         },
         {
-            text: "跨端输出 RN",
-            items: [
-                { text: "快速开始", link: "/guide/rn/quick-start" },
-                {
-                    text: "基础能力",
-                    link: "/guide/rn/basic",
-                    items: [
-                        { text: "组件使用与开发", link: "/guide/rn/component" },
-                        { text: "模板语法与生命周期", link: "/guide/rn/template" },
-                        { text: "跨端样式", link: "/guide/rn/style" },
-                        { text: "应用能力", link: "/guide/rn/application-api" },
-                    ],
-                },
-                { text: "输出RN进阶", link: "/guide/rn/advanced" },
-                { text: "跨端生态SDK", link: "/guide/rn/ecosystem-sdk" },
-            ],
-        },
-        {
             text: "组合式 API",
             items: [
                 {
@@ -150,6 +137,33 @@ const sidebar: DefaultTheme.Sidebar = {
                 },
             ],
         },
+    ],
+    "/rn/": [
+        {
+            text: "基础",
+            items: [
+                { text: "快速开始", link: "/rn/quick-start" },
+                { text: "基础能力", link: "/rn/basic" },
+                { text: "组件使用与开发", link: "/rn/component" },
+                { text: "模板语法与生命周期", link: "/rn/template" },
+                { text: "跨端样式", link: "/rn/style" },
+                { text: "应用能力", link: "/rn/application-api" },
+
+            ],
+        },
+        {
+            text: "进阶",
+            items: [
+                { text: "混合编写 RN", link: "/rn/hybrid-dev-with-react-native" },
+            ],
+        },
+        {
+            text: "生态",
+            items: [
+                { text: "生态 SDK", link: "/rn/ecosystem-sdk" }
+            ]
+        },
+
     ],
     "/api/": [
         {
@@ -875,11 +889,6 @@ const sidebar: DefaultTheme.Sidebar = {
     ],
 }
 
-const ogUrl = "https://mpxjs.cn/"
-const ogImage = `${ogUrl}logo.png`
-const title = "Mpx 框架"
-const description = "深度性能优化的增强型小程序开发框架"
-
 export default withPwa(
     defineConfig({
         base: "/",
@@ -976,11 +985,18 @@ export default withPwa(
                     text: "指南",
                     activeMatch: "^/guide/",
                     items: [
-                        { text: "快速开始", activeMatch: "^/guide/start/", link: "/guide/basic/start" },
-                        { text: "跨端输出 RN", activeMatch: "^/guide/rn/", link: "/guide/rn/quick-start" },
+                        {
+                            text: "快速开始",
+                            activeMatch: "^/guide/start/",
+                            link: "/guide/basic/start"
+                        },
+                        {
+                            text: "跨端输出 RN",
+                            activeMatch: "^/rn/",
+                            link: "/rn/quick-start"
+                        },
                     ],
                 },
-                // API 折叠标题
                 {
                     text: "API",
                     activeMatch: "^/(api|api-proxy)/",
@@ -989,8 +1005,6 @@ export default withPwa(
                         { text: "跨端转换 API", activeMatch: "^/api-proxy/", link: "/api-proxy/" },
                     ],
                 },
-                // { text: "API", activeMatch: "^/api/", link: "/api/" },
-                // { text: "跨端转换 API", activeMatch: "^/api-proxy/", link: "/api-proxy/" },
                 {
                     text: "文章",
                     activeMatch: "^/articles/",
