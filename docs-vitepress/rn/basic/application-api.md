@@ -376,7 +376,7 @@ createComponent({
 
 #### mpx.config.rnConfig.openTypeHandler.onShareAppMessage
 
-当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中是分享实现需由容器实现，可在 onShareAppMessage 中调用容器提供的能力完成分享逻辑实现。
+当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中的分享实现需由容器实现，可在 onShareAppMessage 中调用容器提供的能力完成分享逻辑实现。
 
 其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
 
@@ -395,7 +395,9 @@ createComponent({
 用于获取初始路由配置的函数，参数为 RN 根组件接收到的参数
 
 - initialRouteName: 首页路径，例如 pages/index
-- initialParams: 首页onLoad参数，例如 \{ a: 1 \}
+- initialParams: 将作为 首页onLoad 与 应用onLaunch 的参数，例如 \{ a: 1 \}
+
+在需要将 RN 应用嵌入到现有的 NA 应用中时，NA 可能会向 RN 的根组件传递 props，此时可在 parseAppProps 中接受 props 并进行处理和透传到页面
 
 #### mpx.config.rnConfig.onStateChange
 
@@ -403,7 +405,9 @@ createComponent({
 (state: Record<string, any>) => void
 ```
 
-当导航状态发生变化时触发，例如页面跳转、返回等。可在此回调中将 RN 路径栈同步到容器中。
+当导航状态发生变化时触发，例如页面跳转、返回等。
+
+在需要将 RN 应用嵌入到现有的 NA 应用中时，可能需要将 RN 的路由栈同步到 NA 中以便于进行路径关系，此时可在此回调中将 RN 路径栈同步到容器中。
 
 #### mpx.config.rnConfig.onAppBack
 
@@ -424,6 +428,8 @@ createComponent({
 
 如需实现点击返回，请在函数内部手动调用 back。
 
+在需要将 RN 应用嵌入到现有的 NA 应用中时，可能 RN 应用到首页并不是 NA 应用的首页，此时可能需要 RN 应用首页展示返回按钮
+
 ### 折叠屏适配
 
 #### mpx.config.rnConfig.customDimensions
@@ -432,8 +438,21 @@ createComponent({
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
-在某些情况下，我们可能不希望当前应用全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 信息来得到想要的渲染效果。
+在某些情况下，我们可能不希望当前应用全屏展示，Mpx 内部基于 ScreenWidth 与 ScreenHeight 作为 rpx、vh、vw、媒体查询、onResize等特性的依赖内容，此时可在 `mpx.config.rnConfig.customDimensions` 中自定义 screen 尺寸信息来得到想要的渲染效果。
 
 可在此方法中返回修改后的 dimensions，如果无返回或返回 undefined，则以入参作为返回值
 
-例如在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
+例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
+
+
+### 前后台切换
+
+#### mpx.config.rnConfig.disableAppStateListener
+
+```typescript
+boolean
+```
+
+Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callback)` 作为 Mpx 应用切换切换台的驱动，从而触发对于的钩子（如onhide/onshow）
+
+在需要将 RN 应用嵌入到现有的 NA 应用中时，可能会出现AppState触发时机异常的情况（例如从 RN 页面跳转到 NA 页面时），此时可以将 disableAppStateListener 设置为 true 来禁用框架内部对 AppState 的监听。但需要在合适的时机手动调用 setAppShow() 与 setAppHide() 方法来进行驱动以确保对于的钩子能正常触发。
