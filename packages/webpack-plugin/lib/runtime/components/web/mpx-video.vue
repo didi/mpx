@@ -148,6 +148,11 @@
       },
       controls: function (show) {
         this.$emit('controlstoggle', inheritEvent('controlstoggle', {}, { show }))
+      },
+      objectFit (val) {
+        if (this._player && this._player.video) {
+          this._player.video.style.objectFit = val
+        }
       }
     },
     mounted () {
@@ -188,6 +193,9 @@
         })
         if (this.initialTime) {
           this._player.seek(this.initialTime)
+        }
+        if (this.objectFit) {
+          this._player.video.style.objectFit = this.objectFit
         }
       },
       initStyle () {
