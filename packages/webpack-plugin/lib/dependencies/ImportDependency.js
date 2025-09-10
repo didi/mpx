@@ -9,18 +9,18 @@ class ImportDependency extends ModuleDependency {
    * @param {[number, number]} range expression range
    * @param {string[][]=} referencedExports list of referenced exports
    */
-  constructor(request, range, referencedExports, extraOptions) {
+  constructor (request, range, referencedExports, extraOptions) {
     super(request)
     this.range = range
     this.referencedExports = referencedExports
     this.extraOptions = extraOptions
   }
 
-  get type() {
+  get type () {
     return 'import()'
   }
 
-  get category() {
+  get category () {
     return 'esm'
   }
 
@@ -30,7 +30,7 @@ class ImportDependency extends ModuleDependency {
    * @param {RuntimeSpec} runtime the runtime for which the module is analysed
    * @returns {(string[] | ReferencedExport)[]} referenced exports
    */
-  getReferencedExports(moduleGraph, runtime) {
+  getReferencedExports (moduleGraph, runtime) {
     return this.referencedExports
       ? this.referencedExports.map((e) => ({
           name: e,
@@ -39,14 +39,14 @@ class ImportDependency extends ModuleDependency {
       : Dependency.EXPORTS_OBJECT_REFERENCED
   }
 
-  serialize(context) {
+  serialize (context) {
     context.write(this.range)
     context.write(this.referencedExports)
     context.write(this.extraOptions)
     super.serialize(context)
   }
 
-  deserialize(context) {
+  deserialize (context) {
     this.range = context.read()
     this.referencedExports = context.read()
     this.extraOptions = context.read()
