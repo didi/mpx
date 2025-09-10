@@ -3,16 +3,8 @@
 把当前画布指定区域的内容导出生成指定大小的图片。在 draw() 回调里调用该方法才能保证图片导出成功。
 
 支持情况： 微信、支付宝
-  <thead>
-    <tr>
-      <th>属性</th>
-      <th>类型</th>
-      <th>默认值</th>
-      <th>必填</th>
-      <th>说明</th>
-    </tr>
-  </thead>
-  <tbody>
+
+<thead>
   <tr>
     <th>属性</th>
     <th>类型</th>
@@ -21,6 +13,8 @@
     <th>说明</th>
     <th>最低版本</th>
   </tr>
+</thead>
+<tbody>
   <tr>
     <td>x</td>
     <td>number</td>
@@ -40,9 +34,14 @@
   <tr>
     <td>width</td>
     <td>number</td>
+    <td> </td>
+    <td> </td>
     <td>canvas宽度-x</td>
-  </tbody>
-</table>
+    <td> </td>
+  </tr>
+</tbody>
+<table>
+  <tr>
     <td>指定的画布区域的宽度</td>
     <td>1.2.0</td>
   </tr>
@@ -147,17 +146,17 @@
 </table>
 
 ### object.success 回调函数
+
 ### 参数
+
 **Object res**
 
-| 属性         | 类型   | 说明                       |
-| ------------ | ------ | -------------------------- |
+| 属性         | 类型   | 说明                          |
+| ------------ | ------ | ----------------------------- |
 | tempFilePath | string | 生成文件的临时路径 (本地路径) |
 
-
 **Object this**\
-在自定义组件下，当前组件实例的this，以操作组件内 canvas 组件
-
+在自定义组件下，当前组件实例的 this，以操作组件内 canvas 组件
 
 ### 示例代码
 
@@ -169,9 +168,9 @@ mpx.canvasToTempFilePath({
   height: 50,
   destWidth: 100,
   destHeight: 100,
-  canvasId: 'myCanvas',
+  canvasId: "myCanvas",
   success(res) {
     console.log(res.tempFilePath)
-  }
+  },
 })
 ```

@@ -1,4 +1,4 @@
-import { type DefaultTheme, defineConfig, Plugin } from "vitepress"
+import { type DefaultTheme, defineConfig } from "vitepress"
 import {
     groupIconMdPlugin,
     groupIconVitePlugin,
@@ -1052,7 +1052,7 @@ export default withPwa(
                         description,
                     },
                     ignoreFiles: ["index.md", "api/index.md"],
-                }) as Plugin,
+                }),
                 groupIconVitePlugin({
                     customIcon: {
                         ios: "logos:apple",
@@ -1062,7 +1062,7 @@ export default withPwa(
                             "../assets/images/harmonyOS.svg"
                         ),
                     },
-                }) as Plugin,
+                }),
             ],
         },
         // @ts-ignore

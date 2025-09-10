@@ -199,7 +199,7 @@ import com.mkuczera.RNReactNativeHapticFeedbackPackage;
 
 2. 在 `android/settings.gradle` 中添加：
 
-```gradle
+```
 include ':react-native-haptic-feedback'
 project(':react-native-haptic-feedback').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-haptic-feedback/android')
 ```
