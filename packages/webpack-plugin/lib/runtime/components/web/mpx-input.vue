@@ -57,20 +57,6 @@
         },
         immediate: true
       },
-      focus: {
-        handler (val) {
-          if (val) {
-            this.$nextTick(() => {
-              this.$refs.input.focus()
-            })
-          } else {
-            this.$nextTick(() => {
-              this.$refs.input.blur()
-            })
-          }
-        },
-        immediate: false // 解决与autofocus的冲突问题
-      }
     },
     render (createElement) {
       const mergeBefore = {
