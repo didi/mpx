@@ -14,8 +14,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
-const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
+const ImportDependency = require('./dependencies/ImportDependency')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const normalize = require('./utils/normalize')
@@ -696,7 +695,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
       compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
-      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
+      compilation.dependencyFactories.set(ImportDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -1451,10 +1451,6 @@ class MpxWebpackPlugin {
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-                  request = addQuery(request, {
-                    isRequireAsync: true,
-                    retryRequireAsync: JSON.stringify(this.options.retryRequireAsync)
-                  })
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
@@ -1462,7 +1458,10 @@ class MpxWebpackPlugin {
                     expr.loc,
                     request
                   )
-                  const dep = new ImportDependency(request, expr.range)
+                  const dep = new ImportDependency(request, expr.range, undefined, {
+                    isRequireAsync: true,
+                    retryRequireAsync: this.options.retryRequireAsync
+                  })
                   dep.loc = expr.loc
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
