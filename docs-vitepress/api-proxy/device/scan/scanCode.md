@@ -50,7 +50,7 @@
             </thead>
             <tbody>
               <tr><td>barCode</td><td>一维码</td><td style="color: green; font-weight: bold;">✓</td></tr>
-              <tr><td>qrCode</td><td>二维码</td><td style="color: green; font-weight: bold;">✔</td></tr>
+              <tr><td>qrCode</td><td>二维码</td><td style="color: green; font-weight: bold;">✓</td></tr>
               <tr><td>wxCode</td><td>小程序码</td><td style="color: red; font-weight: bold;">✗</td></tr>
                 <tr><td>barCode</td><td>一维码</td><td style="color: green; font-weight: bold;">✓</td></tr>
                 <tr><td>qrCode</td><td>二维码</td><td style="color: green; font-weight: bold;">✓</td></tr>

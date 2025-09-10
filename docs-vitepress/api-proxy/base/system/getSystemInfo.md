@@ -104,16 +104,7 @@
       </table>
     </td></tr>
     <tr><td>locationReducedAccuracy</td><td>boolean</td><td>`true` 表示模糊定位，`false` 表示精确定位，仅 iOS 支持</td><td></td><td><span style="color: green; font-weight: bold;">✓</span></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
-    <tr><td>theme</td><td>string</td><td>系统当前主题，取值为`light`或`dark`，全局配置`"darkmode":true`时才能获取，否则为 undefined （不支持小游戏）</td><td>2.11.0</td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
-    <tr><td colspan="7"><b>theme 合法值：</b>
-      <table style="width:100%">
-        <thead><tr><th>合法值</th><th>说明</th></tr></thead>
-          <tbody>
-            <tr><td>dark</td><td>深色主题</td></tr>
-            <tr><td>light</td><td>浅色主题</td></tr>
-        </tbody>
-      </table>
-    </td></tr>
+    <tr><td>theme</td><td>string</td><td>系统当前主题，取值为<span style="color:#42b883;">light</span>(浅色主题)或<span style="color:#42b883;">dark</span>（深色主题），全局配置<span style="color:#42b883;">"darkmode":true</span>时才能获取，否则为 undefined （不支持小游戏）</td><td>2.11.0</td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
     <tr><td>host</td><td>Object</td><td>当前小程序运行的宿主环境</td><td>2.12.3</td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
     <tr><td colspan="7"><b>host 结构属性：</b>
       <table style="width:100%">
@@ -124,16 +115,7 @@
         </tbody>
       </table>
     </td></tr>
-    <tr><td>deviceOrientation</td><td>string</td><td>设备方向（注意：IOS客户端横屏游戏获取deviceOrientation可能不准，建议以屏幕宽高为准）</td><td></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: green; font-weight: bold;">✓</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
-    <tr><td colspan="7"><b>deviceOrientation 合法值：</b>
-      <table style="width:100%">
-        <thead><tr><th>合法值</th><th>说明</th></tr></thead>
-          <tbody>
-            <tr><td>portrait</td><td>竖屏</td></tr>
-            <tr><td>landscape</td><td>横屏</td></tr>
-        </tbody>
-      </table>
-    </td></tr>
+    <tr><td>deviceOrientation</td><td>string</td><td>设备方向（注意：IOS客户端横屏游戏获取deviceOrientation可能不准，建议以屏幕宽高为准）值： portrait(竖屏)/landscape(横屏)</td><td></td><td><span style="color: red; font-weight: bold;">✗</span></td><td><span style="color: green; font-weight: bold;">✓</span></td><td><span style="color: red; font-weight: bold;">✗</span></td></tr>
   </tbody>
 </table>
 
