@@ -161,6 +161,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     state.current.viewHeight = height
     // 实际渲染尺寸可能会指定的值不一致，误差低于 0.5 则认为没有变化
     if (Math.abs(viewHeight - height) < 0.5 && Math.abs(viewWidth - width) < 0.5) return
+
     if (state.current.imageWidth && state.current.imageHeight && state.current.ratio) {
       setRatio(state.current.ratio)
       setImageWidth(state.current.imageWidth)
@@ -204,28 +205,20 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         setViewWidth(viewWidth)
         const fixedHeight = getFixedHeight(viewWidth, viewHeight, ratio)
         setViewHeight(fixedHeight)
-        state.current.viewHeight = fixedHeight
         break
       }
       case 'heightFix': {
         setViewHeight(viewHeight)
         const fixedWidth = getFixedWidth(viewWidth, viewHeight, ratio)
         setViewWidth(fixedWidth)
-        state.current.viewWidth = fixedWidth
         break
       }
       default:
+        setViewHeight(viewWidth)
+        setViewWidth(viewHeight)
         break
     }
   }
-
-  const fixedHeight = useMemo(() => {
-    return getFixedHeight(viewWidth, viewHeight, ratio)
-  }, [ratio, viewWidth, viewHeight])
-
-  const fixedWidth = useMemo(() => {
-    return getFixedWidth(viewWidth, viewHeight, ratio)
-  }, [ratio, viewWidth, viewHeight])
 
   const modeStyle: ImageStyle = useMemo(() => {
     if (noMeetCalcRule(isSvg, mode, viewWidth, viewHeight, ratio)) return {}
@@ -261,8 +254,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       case 'heightFix':
         if (isSvg) {
           const scale = ratio >= 1
-            ? imageWidth >= fixedWidth ? fixedWidth / imageWidth : imageWidth / fixedWidth
-            : imageHeight >= fixedHeight ? fixedHeight / imageHeight : imageHeight / fixedHeight
+            ? imageWidth >= viewWidth ? viewWidth / imageWidth : imageWidth / viewWidth
+            : imageHeight >= viewHeight ? viewHeight / imageHeight : imageHeight / viewHeight
           return {
             transform: [{ scale }]
           }
@@ -325,7 +318,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       default:
         return {}
     }
-  }, [isSvg, mode, viewWidth, viewHeight, imageWidth, imageHeight, ratio, fixedWidth, fixedHeight])
+  }, [isSvg, mode, viewWidth, viewHeight, imageWidth, imageHeight, ratio])
 
   const onSvgLoad = (evt: LayoutChangeEvent) => {
     const { width, height } = evt.nativeEvent.layout
@@ -432,8 +425,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           {},
           normalStyle,
           layoutStyle,
-          isHeightFixMode ? { width: fixedWidth } : {},
-          isWidthFixMode ? { height: fixedHeight } : {}
+          isHeightFixMode ? { width: viewWidth } : {},
+          isWidthFixMode ? { height: viewHeight } : {}
         )
       }
     ),
