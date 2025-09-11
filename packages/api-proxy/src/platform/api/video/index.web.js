@@ -48,9 +48,9 @@ export const createVideoContext = (id, context) => {
     __videoNode.oRequestFullScreen && __videoNode.oRequestFullScreen() // 欧朋
     __videoNode.webkitEnterFullscreen && __videoNode.webkitEnterFullscreen() // 苹果
     if (direction === 0) {
-      __videoNode.setAttribute('x5-video-orientation', 'portraint') // portraint 竖屏 landscape 横屏
+      __videoNode.__vue__._player.setAttribute('x5-video-orientation', 'portraint') // portraint 竖屏 landscape 横屏
     } else if (direction === 90 || direction === -90) {
-      __videoNode.setAttribute('x5-video-orientation', 'landscape') // portraint 竖屏 landscape 横屏
+      __videoNode.__vue__._player.setAttribute('x5-video-orientation', 'landscape') // portraint 竖屏 landscape 横屏
     }
   }
 
@@ -63,28 +63,29 @@ export const createVideoContext = (id, context) => {
 
   // 显示状态栏
   __videoContext.showStatusBar = () => {
-    __videoNode.setAttribute('controls', 'controls')
+    __videoNode.__vue__._player.setAttribute('controls', 'controls')
   }
 
   // 隐藏状态栏
   __videoContext.hideStatusBar = () => {
-    __videoNode.removeAttribute('controls')
+    __videoNode.__vue__._player.removeAttribute('controls')
   }
 
   // 暂停
   __videoContext.pause = () => {
-    __videoNode.pause()
+    // __videoNode.pause()
+    __videoNode.__vue__._player.pause()
   }
 
   // 播放
   __videoContext.play = () => {
-    __videoNode.play()
+    __videoNode.__vue__._player.play()
   }
 
   // 停止视频
   __videoContext.stop = () => {
     __videoNode.currentTime = 0
-    __videoNode.pause()
+    __videoNode.__vue__._player.pause()
   }
 
   // 设置倍速播放
@@ -93,12 +94,12 @@ export const createVideoContext = (id, context) => {
       warn(`不支持${number}倍速播放`)
       return
     }
-    __videoNode.playbackRate = number
+    __videoNode.__vue__._player.playbackRate = number
   }
 
   // 跳转到指定位置
   __videoContext.seek = (number) => {
-    __videoNode.currentTime = number
+    __videoNode.__vue__._player.currentTime = number
   }
 
   return __videoContext
