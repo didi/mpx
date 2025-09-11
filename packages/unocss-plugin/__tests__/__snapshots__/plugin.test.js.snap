@@ -1,0 +1,37 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`test plugin > test-template 1`] = `"<view class="translate-_bl_-50_p__2c_-50_p__br_ text-12px bg-_h_fff_s_10" />"`;
+
+exports[`test plugin > test-template 2`] = `
+[
+  "translate-[-50%,-50%]",
+  "text-12px",
+  "bg-#fff/10",
+]
+`;
+
+exports[`test plugin > test-template 3`] = `
+"/* layer: default */
+.translate-_bl_-50_p__2c_-50_p__br_{--un-translate-x:-50%;--un-translate-y:-50%;transform:translateX(var(--un-translate-x)) translateY(var(--un-translate-y)) translateZ(var(--un-translate-z)) rotate(var(--un-rotate)) rotateX(var(--un-rotate-x)) rotateY(var(--un-rotate-y)) rotateZ(var(--un-rotate-z)) skewX(var(--un-skew-x)) skewY(var(--un-skew-y)) scaleX(var(--un-scale-x)) scaleY(var(--un-scale-y)) scaleZ(var(--un-scale-z));}
+.bg-_h_fff_s_10{background-color:rgb(255 255 255 / 0.1);}
+.text-12px{font-size:12px;}"
+`;
+
+exports[`test plugin > test-template 4`] = `"<view wx:class="{{(['translate-_bl_-50_p__br_',{'text-12px text-16px': false},'bg-_h_fff_s_10'])}}" />"`;
+
+exports[`test plugin > test-template 5`] = `
+[
+  "translate-[-50%]",
+  "text-12px",
+  "text-16px",
+  "bg-#fff/10",
+]
+`;
+
+exports[`test plugin > test-template 6`] = `
+"/* layer: default */
+.translate-_bl_-50_p__br_{--un-translate-x:-50%;--un-translate-y:-50%;transform:translateX(var(--un-translate-x)) translateY(var(--un-translate-y)) translateZ(var(--un-translate-z)) rotate(var(--un-rotate)) rotateX(var(--un-rotate-x)) rotateY(var(--un-rotate-y)) rotateZ(var(--un-rotate-z)) skewX(var(--un-skew-x)) skewY(var(--un-skew-y)) scaleX(var(--un-scale-x)) scaleY(var(--un-scale-y)) scaleZ(var(--un-scale-z));}
+.bg-_h_fff_s_10{background-color:rgb(255 255 255 / 0.1);}
+.text-12px{font-size:12px;}
+.text-16px{font-size:16px;}"
+`;
