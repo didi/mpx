@@ -167,7 +167,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       setImageWidth(state.current.imageWidth)
       setImageHeight(state.current.imageHeight)
       setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio!)
-      // state.current = {}
       setLoaded(true)
     }
   }
@@ -403,7 +402,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
             setImageHeight(height)
             setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio!)
 
-            // state.current = {}
             setLoaded(true)
           }
         },
