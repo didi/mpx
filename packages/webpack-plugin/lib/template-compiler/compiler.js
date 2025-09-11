@@ -176,11 +176,11 @@ const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
-const i18nModuleName = '_i'
+const i18nModuleName = '_i_'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
-const stringifyModuleName = '_s'
+const stringifyModuleName = '_s_'
 const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionalChainWxsName = '_oc' // 改成_oc解决web下_o重名问题
+const optionalChainWxsName = '_oc_' // 改成_oc解决web下_o重名问题
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -1333,8 +1333,35 @@ function processEventReact (el, options) {
   // }
 }
 
+function isNeedBind (configs, isProxy) {
+  if (isProxy) return true
+  if (configs.length > 1) return true
+  if (configs.length === 1) return configs[0].hasArgs
+  return false
+}
+
+function processEventBinding (el, configs) {
+  let resultName
+  configs.forEach(({ name }) => {
+    if (name) {
+      // 清空原始事件绑定
+      let has
+      do {
+        has = getAndRemoveAttr(el, name).has
+      } while (has)
+
+      if (!resultName) {
+        // 清除修饰符
+        resultName = name.replace(/\..*/, '')
+      }
+    }
+  })
+  return { resultName }
+}
+
 function processEvent (el, options) {
   const eventConfigMap = {}
+  const finalEventsMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
 
@@ -1346,14 +1373,21 @@ function processEvent (el, options) {
       const extraStr = runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
+        const isCapture = /^capture/.test(prefix)
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            configs: []
+            configs: [],
+            captureConfigs: []
           }
         }
-        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+        const targetConfigs = isCapture ? eventConfigMap[type].captureConfigs : eventConfigMap[type].configs
+        targetConfigs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
-          eventConfigMap[type].proxy = true
+          if (isCapture) {
+            eventConfigMap[type].captureProxy = true
+          } else {
+            eventConfigMap[type].proxy = true
+          }
         }
       }
     }
@@ -1393,40 +1427,21 @@ function processEvent (el, options) {
   }
 
   for (const type in eventConfigMap) {
-    let needBind = false
-    const { configs, proxy } = eventConfigMap[type]
-    delete eventConfigMap[type]
-    if (proxy) {
-      needBind = true
-    } else if (configs.length > 1) {
-      needBind = true
-    } else if (configs.length === 1) {
-      needBind = !!configs[0].hasArgs
-    }
+    const { configs = [], captureConfigs = [], proxy, captureProxy } = eventConfigMap[type]
+
+    let needBubblingBind = isNeedBind(configs, proxy)
+    let needCaptureBind = isNeedBind(captureConfigs, captureProxy)
 
     const escapedType = dash2hump(type)
     // 排除特殊情况
     if (!isValidIdentifierStr(escapedType)) {
       warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
-      needBind = false
+      needBubblingBind = false
+      needCaptureBind = false
     }
 
-    if (needBind) {
-      let resultName
-      configs.forEach(({ name }) => {
-        if (name) {
-          // 清空原始事件绑定
-          let has
-          do {
-            has = getAndRemoveAttr(el, name).has
-          } while (has)
-
-          if (!resultName) {
-            // 清除修饰符
-            resultName = name.replace(/\..*/, '')
-          }
-        }
-      })
+    if (needBubblingBind) {
+      const { resultName } = processEventBinding(el, configs)
 
       addAttrs(el, [
         {
@@ -1434,16 +1449,35 @@ function processEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[escapedType] = configs.map((item) => {
+      if (!finalEventsMap.bubble) {
+        finalEventsMap.bubble = {}
+      }
+      finalEventsMap.bubble[escapedType] = configs.map((item) => {
+        return item.expStr
+      })
+    }
+
+    if (needCaptureBind) {
+      const { resultName } = processEventBinding(el, captureConfigs)
+      addAttrs(el, [
+        {
+          name: resultName || config[mode].event.getEvent(type),
+          value: '__captureInvoke'
+        }
+      ])
+      if (!finalEventsMap.capture) {
+        finalEventsMap.capture = {}
+      }
+      finalEventsMap.capture[escapedType] = captureConfigs.map((item) => {
         return item.expStr
       })
     }
   }
 
-  if (!isEmptyObject(eventConfigMap)) {
+  if (!isEmptyObject(finalEventsMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${shallowStringify(eventConfigMap, true)}}}`
+      value: `{{${shallowStringify(finalEventsMap, true)}}}`
     }])
   }
 }
