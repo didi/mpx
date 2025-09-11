@@ -14,8 +14,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
-const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
+const ImportDependency = require('./dependencies/ImportDependency')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const normalize = require('./utils/normalize')
@@ -77,8 +76,10 @@ const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
-const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
-require('./utils/check-core-version-match')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
+const checkVersionCompatibility = require('./utils/check-core-version-match')
+
+checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -199,6 +200,7 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.rnConfig = options.rnConfig || {}
+    options.rnConfig.supportSubpackage = options.rnConfig.supportSubpackage !== undefined ? options.rnConfig.supportSubpackage : true
     options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
@@ -695,7 +697,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
       compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
-      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
+      compilation.dependencyFactories.set(ImportDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -783,7 +786,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
-          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || isReact(this.options.mode)),
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || (isReact(this.options.mode) && this.options.rnConfig.supportSubpackage)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1450,10 +1453,6 @@ class MpxWebpackPlugin {
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-                  request = addQuery(request, {
-                    isRequireAsync: true,
-                    retryRequireAsync: JSON.stringify(this.options.retryRequireAsync)
-                  })
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
@@ -1461,7 +1460,10 @@ class MpxWebpackPlugin {
                     expr.loc,
                     request
                   )
-                  const dep = new ImportDependency(request, expr.range)
+                  const dep = new ImportDependency(request, expr.range, undefined, {
+                    isRequireAsync: true,
+                    retryRequireAsync: this.options.retryRequireAsync
+                  })
                   dep.loc = expr.loc
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)

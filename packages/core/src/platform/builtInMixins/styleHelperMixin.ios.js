@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
 import { StyleSheet } from 'react-native'
 
 // TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
@@ -163,6 +163,14 @@ function transformStyleObj (styleObj) {
   return transformed
 }
 
+function isNativeStyle (style) {
+  return Array.isArray(style) || (
+    typeof style === 'object' &&
+    // Reanimated 的 animated style 通常会包含 viewDescriptors 或 _animations
+    (hasOwn(style, 'viewDescriptors') || hasOwn(style, '_animations'))
+  )
+}
+
 function getMediaStyle (media) {
   if (!media || !media.length) return {}
   const { width } = global.__mpxAppDimensionsInfo.screen
@@ -192,7 +200,10 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const result = {}
+        const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
+        let result = isNativeStaticStyle ? [] : {}
+        const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
+
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
         // 使用一下 __dimensionsChangeFlag触发其get，需保证不会被压缩插件移除
@@ -206,32 +217,42 @@ export default function styleHelperMixin () {
             if (classMap[className]) {
               const styleObj = classMap[className] || empty
               if (styleObj._media.length) {
-                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media))
+                mergeResult(styleObj._default, getMediaStyle(styleObj._media))
               } else {
-                Object.assign(result, styleObj._default)
+                mergeResult(styleObj._default)
               }
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
               const styleObj = appClassMap[className] || empty
               if (styleObj._media.length) {
-                Object.assign(result, styleObj._default, getMediaStyle(styleObj._media))
+                mergeResult(styleObj._default, getMediaStyle(styleObj._media))
               } else {
-                Object.assign(result, styleObj._default)
+                mergeResult(styleObj._default)
               }
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              Object.assign(result, this.__props[className])
+              mergeResult(this.__props[className])
             }
           })
         }
 
         if (staticStyle || dynamicStyle) {
-          const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj))
+          const styleObj = {}
+          if (isNativeStaticStyle) {
+            if (Array.isArray(staticStyle)) {
+              result = result.concat(staticStyle)
+            } else {
+              mergeResult(staticStyle)
+            }
+          } else {
+            Object.assign(styleObj, parseStyleText(staticStyle))
+          }
+          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
+          mergeResult(transformStyleObj(styleObj))
         }
 
         if (hide) {
-          Object.assign(result, {
+          mergeResult({
             // display: 'none'
             // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
             flex: 0,
@@ -242,8 +263,8 @@ export default function styleHelperMixin () {
             overflow: 'hidden'
           })
         }
-
-        return isEmptyObject(result) ? empty : result
+        const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+        return isEmpty ? empty : result
       }
     }
   }
