@@ -223,7 +223,7 @@ export default function styleHelperMixin () {
               mergeResult(staticStyle)
             }
           } else {
-            Object.assign(styleObj, parseStyleText(staticStyle))
+            Object.assign(styleObj, normalizeDynamicStyle(staticStyle))
           }
           Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
           mergeResult(transformStyleObj(styleObj))
