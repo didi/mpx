@@ -1,0 +1,548 @@
+<template>
+  <wxs module="swipeHandler">
+var openedInstances = {}
+var currentInstanceId = ''
+
+// 生成唯一ID
+function generateId() {
+  return 'swipe_' + Date.now() + '_' + Math.floor(Math.random() * 1000000)
+}
+
+// 更新 transform 样式
+function updateTransform(instance, x, animation) {
+  if (!instance) {
+    console.log('WXS: instance is null')
+    return
+  }
+  
+  var transform = 'translateX(' + x + 'px)'
+  var transition = animation ? 'transform 0.3s ease' : 'none'
+  
+  console.log('WXS updateTransform:', x, animation, transform)
+  
+  // 根据官方文档，使用 setStyle 设置样式
+  instance.setStyle({
+    'transform': transform,
+    'transition': transition
+  })
+}
+
+// 触摸开始
+function touchStart(event, instance) {
+  var touch = event.touches[0]
+  var dataset = event.currentTarget.dataset
+  
+  // 安全检查
+  if (!instance) {
+    console.log('WXS Error: instance is undefined')
+    return false
+  }
+  
+  // 生成实例ID
+  if (!currentInstanceId) {
+    currentInstanceId = generateId()
+  }
+  
+  // 存储初始状态
+  console.log('WXS touchStart - dataset:', JSON.stringify(dataset))
+  
+  var state = {
+    startX: touch.clientX,
+    isDragging: true,
+    isOpened: dataset.isOpened === 'true' || false,
+    contentX: parseInt(dataset.contentX) || 0,
+    totalActionWidth: parseInt(dataset.totalActionWidth) || 0,
+    rightThreshold: parseInt(dataset.rightThreshold) || 0,
+    autoClose: dataset.autoClose === 'true'
+  }
+  
+  openedInstances[currentInstanceId] = state
+  
+  // 关闭动画，开始跟手拖拽
+  console.log('WXS touchStart: isOpened=' + state.isOpened + ', contentX=' + state.contentX + ', startX=' + state.startX)
+  updateTransform(instance, state.contentX, false)
+  
+  return false
+}
+
+// 触摸移动
+function touchMove(event, instance) {
+  if (!currentInstanceId || !openedInstances[currentInstanceId]) {
+    return false
+  }
+  
+  var state = openedInstances[currentInstanceId]
+  if (!state.isDragging) return false
+  
+  var touch = event.touches[0]
+  var currentX = touch.clientX
+  var deltaX = state.startX - currentX  // 向左滑动为正值
+  
+  var newContentX = 0
+  
+  // 计算相对于初始位置的滑动距离
+  var initialX = state.isOpened ? -state.totalActionWidth : 0
+  var dragDistance = currentX - state.startX  // 实际拖拽距离
+  var newContentX = initialX + dragDistance
+  
+  // 限制滑动范围
+  if (newContentX > 0) {
+    // 不能向右滑动超过关闭位置
+    newContentX = 0
+  } else if (newContentX < -state.totalActionWidth) {
+    // 不能向左滑动超过完全打开位置
+    newContentX = -state.totalActionWidth
+  }
+  
+  console.log('WXS touchMove: startX=' + state.startX + ', currentX=' + currentX + ', dragDistance=' + dragDistance + ', newContentX=' + newContentX)
+  
+  // 更新位置
+  state.contentX = newContentX
+  updateTransform(instance, newContentX, false)
+  
+  return false
+}
+
+// 触摸结束
+function touchEnd(event, instance) {
+  if (!currentInstanceId || !openedInstances[currentInstanceId]) {
+    return false
+  }
+  
+  var state = openedInstances[currentInstanceId]
+  if (!state.isDragging) return false
+  
+  state.isDragging = false
+  
+  // 根据当前位置决定最终状态
+  var threshold = state.rightThreshold || state.totalActionWidth * 0.3
+  var targetX = 0
+  var willOpen = false
+  
+  // 简化判断逻辑：基于当前位置距离两个状态的远近
+  var distanceToClose = Math.abs(state.contentX - 0)  // 距离关闭状态的距离
+  var distanceToOpen = Math.abs(state.contentX - (-state.totalActionWidth))  // 距离打开状态的距离
+  
+  if (distanceToClose < distanceToOpen) {
+    // 更接近关闭状态
+    targetX = 0
+    willOpen = false
+  } else {
+    // 更接近打开状态
+    targetX = -state.totalActionWidth
+    willOpen = true
+  }
+  
+  console.log('WXS touchEnd: contentX=' + state.contentX + ', distanceToClose=' + distanceToClose + ', distanceToOpen=' + distanceToOpen)
+  
+  // 更新最终位置并启用动画
+  state.contentX = targetX
+  state.isOpened = willOpen
+  console.log('WXS touchEnd: animating to', targetX, 'willOpen:', willOpen)
+  updateTransform(instance, targetX, true)  // 启用动画
+  
+  // 通知组件状态变化
+  var dataset = event.currentTarget.dataset
+  var originalState = dataset.isOpened === 'true'
+  if (willOpen !== originalState) {
+    instance.callMethod('onSwipeStateChange', {
+      isOpened: willOpen,
+      actionWidth: state.totalActionWidth
+    })
+  }
+  
+  return false
+}
+
+// 验证模块加载
+console.log('WXS swipeHandler module loaded')
+
+module.exports = {
+  touchStart: touchStart,
+  touchMove: touchMove,
+  touchEnd: touchEnd
+}
+  </wxs>
+
+  <view class="mpx-swipe-action">
+    <!-- 主内容区域 -->
+    <view 
+      id="swipe-content"
+      class="swipe-content"
+      bindtouchstart="{{swipeHandler.touchStart}}"
+      bindtouchmove="{{swipeHandler.touchMove}}"
+      bindtouchend="{{swipeHandler.touchEnd}}"
+      data-total-action-width="{{totalActionWidth}}"
+      data-right-threshold="{{rightThreshold}}"
+      data-auto-close="{{autoClose}}"
+      data-is-opened="{{isOpened}}"
+      data-content-x="{{contentX}}"
+    >
+      <view 
+        class="content-area" 
+        bindtap="handleContentTap"
+      >
+        <slot></slot>
+      </view>
+          <!-- 右侧操作按钮区域 -->
+    <view 
+      class="action-area" 
+      wx:style="width: {{totalActionWidth}}px;"
+    >
+      <view 
+        wx:for="{{finalActions}}" 
+        wx:key="index"
+        class="action-button"
+        wx:style="width: {{item.width || actionWidth}}px; background-color: {{item.background || item.color || '#ff4757'}}; color: {{item.textColor || '#fff'}}; font-size: {{item.fontSize || 16}}px; font-weight: {{item.fontWeight || '500'}}; {{item.style || ''}}"
+        bindtap="handleActionTap"
+        data-index="{{index}}"
+        data-action="{{item}}"
+      >{{item.text}}</view>
+    </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// 全局状态管理，用于自动关闭其他已打开的组件
+const openedInstances = new Set()
+
+createComponent({
+  properties: {
+    // 单按钮配置（向后兼容）
+    actionWidth: {
+      type: Number,
+      value: 80
+    },
+    actionColor: {
+      type: String,
+      value: '#ff4757'
+    },
+    actionText: {
+      type: String,
+      value: '删除'
+    },
+    actionTextColor: {
+      type: String,
+      value: '#fff'
+    },
+    actionBackground: {
+      type: String,
+      value: ''
+    },
+    actionFontSize: {
+      type: Number,
+      value: 16
+    },
+    actionFontWeight: {
+      type: String,
+      value: '500'
+    },
+    actionStyle: {
+      type: String,
+      value: ''
+    },
+    // 多按钮配置
+    actions: {
+      type: Array,
+      value: []
+    },
+    rightThreshold: {
+      type: Number,
+      value: 0
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    autoClose: {
+      type: Boolean,
+      value: true
+    }
+  },
+
+  data: {
+    contentX: 0,
+    isOpened: false
+  },
+
+  computed: {
+    // 处理多按钮配置，优先使用 actions，否则使用单按钮配置
+    finalActions() {
+      if (this.actions && this.actions.length > 0) {
+        return this.actions
+      }
+      return [{
+        text: this.actionText,
+        color: this.actionColor,
+        textColor: this.actionTextColor,
+        background: this.actionBackground,
+        width: this.actionWidth,
+        fontSize: this.actionFontSize,
+        fontWeight: this.actionFontWeight,
+        style: this.actionStyle
+      }]
+    },
+
+    totalActionWidth() {
+      return this.finalActions.reduce((sum, action) => {
+        return sum + (action.width || this.actionWidth)
+      }, 0)
+    },
+
+    // 关闭阈值（向右滑动小于此值时隐藏按钮）  
+    closeThreshold() {
+      // 关闭阈值稍小一些，避免频繁切换
+      return this.rightThreshold * 0.6
+    }
+  },
+
+  attached() {
+    // 确保初始状态
+    this.initializeComponent()
+  },
+
+  ready() {
+    this.initializeComponent()
+  },
+
+  detached() {
+    // 组件销毁时清理
+    this.unregisterInstance()
+  },
+
+  methods: {
+    // 初始化组件
+    initializeComponent() {
+      const targetX = this.isOpened ? -this.totalActionWidth : 0
+      this.contentX = targetX
+      this.updateElementTransform(targetX, false)
+    },
+
+    // WXS 状态变化回调
+    onSwipeStateChange(detail) {
+      const { isOpened, actionWidth } = detail
+      const wasOpened = this.isOpened
+      
+      this.isOpened = isOpened
+      this.contentX = isOpened ? -actionWidth : 0
+      
+      // 触发相应事件
+      if (isOpened && !wasOpened) {
+        this.triggerEvent('open', {
+          actionWidth: this.totalActionWidth,
+          actions: this.finalActions,
+          actionCount: this.finalActions.length
+        })
+        
+        if (this.autoClose) {
+          this.closeOtherInstances()
+          this.registerInstance()
+        }
+      } else if (!isOpened && wasOpened) {
+        this.triggerEvent('close', {})
+        
+        if (this.autoClose) {
+          this.unregisterInstance()
+        }
+      }
+    },
+
+    // 直接设置样式的辅助方法
+    updateElementTransform(targetX, useAnimation = true) {
+      const element = this.selectComponent('#swipe-content')
+      if (element) {
+        const transform = `translateX(${targetX}px)`
+        const transition = useAnimation ? 'transform 0.3s ease' : 'none'
+        element.setStyle({
+          'transform': transform,
+          'transition': transition
+        })
+      }
+    },
+
+    // 吸附到打开状态
+    snapToOpen() {
+      this.contentX = -this.totalActionWidth
+      this.updateElementTransform(this.contentX, true)
+      
+      if (!this.isOpened) {
+        this.isOpened = true
+        this.triggerEvent('open', {
+          actionWidth: this.totalActionWidth,
+          actions: this.finalActions,
+          actionCount: this.finalActions.length
+        })
+        
+        if (this.autoClose) {
+          this.closeOtherInstances()
+          this.registerInstance()
+        }
+      }
+    },
+
+    // 吸附到关闭状态
+    snapToClose() {
+      this.contentX = 0
+      this.updateElementTransform(this.contentX, true)
+      
+      if (this.isOpened) {
+        this.isOpened = false
+        this.triggerEvent('close', {})
+        
+        if (this.autoClose) {
+          this.unregisterInstance()
+        }
+      }
+    },
+
+    // 切换到打开状态
+    switchToOpenState(useAnimation = false) {
+      this.contentX = -this.totalActionWidth
+      this.updateElementTransform(this.contentX, useAnimation)
+      this.isOpened = true
+      
+      this.triggerEvent('open', {
+        actionWidth: this.totalActionWidth,
+        actions: this.finalActions,
+        actionCount: this.finalActions.length
+      })
+      
+      // 自动关闭其他实例
+      if (this.autoClose) {
+        this.closeOtherInstances()
+        this.registerInstance()
+      }
+    },
+
+    // 切换到关闭状态
+    switchToCloseState(useAnimation = false) {
+      this.contentX = 0
+      this.updateElementTransform(this.contentX, useAnimation)
+      this.isOpened = false
+      
+      this.triggerEvent('close', {})
+      
+      if (this.autoClose) {
+        this.unregisterInstance()
+      }
+    },
+
+    // 打开操作区域（编程式调用）
+    openActions() {
+      this.snapToOpen()
+    },
+
+    // 关闭操作区域（编程式调用）
+    closeActions() {
+      this.snapToClose()
+    },
+
+    // 处理内容区域点击
+    handleContentTap(e) {
+      // 如果已打开，则关闭
+      if (this.isOpened) {
+        this.closeActions()
+      } else {
+        // 透传点击事件
+        this.triggerEvent('tap', e.detail)
+      }
+    },
+
+    // 处理操作按钮点击
+    handleActionTap(e) {
+      const { index, action } = e.currentTarget.dataset
+      
+      this.triggerEvent('actiontap', {
+        actionIndex: index,
+        actionText: action.text,
+        actionWidth: action.width || this['action-width'],
+        action: action
+      })
+      
+      // 点击操作按钮后自动关闭
+      this.closeActions()
+    },
+
+    // 注册实例
+    registerInstance() {
+      if (this['auto-close']) {
+        openedInstances.add(this)
+      }
+    },
+
+    // 注销实例
+    unregisterInstance() {
+      openedInstances.delete(this)
+    },
+
+    // 关闭其他已打开的实例
+    closeOtherInstances() {
+      if (this['auto-close']) {
+        openedInstances.forEach(instance => {
+          if (instance !== this) {
+            instance.closeActions()
+          }
+        })
+      }
+    },
+
+    // 暴露给外部的方法
+    open() {
+      this.openActions()
+    },
+
+    close() {
+      this.closeActions()
+    }
+  }
+})
+</script>
+
+<style>
+.mpx-swipe-action {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.content-area {
+  width: 100%; 
+  height: 100%;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.swipe-container {
+  width: 100%;
+}
+
+.swipe-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.action-area {
+  display: flex;
+  height: 100%; 
+  flex-shrink: 0;
+}
+
+.action-button {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>
