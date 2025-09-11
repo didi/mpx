@@ -416,10 +416,10 @@ function usePageEffect (mpxProxy, pageId) {
             triggerPageStatusHook(mpxProxy, newVal)
             // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
             if (newVal === 'show') {
-              triggerResizeEvent(mpxProxy, pageId)
               // 当前页面的DimensionsChange标记与全局不一致，则需更新当前页面的标记
               if (global.__mpxPageDimensionsChangeFlagMap[pageId] !== global.__mpxAppDimensionsChangeFlag) {
                 set(global.__mpxPageDimensionsChangeFlagMap, pageId, global.__mpxAppDimensionsChangeFlag)
+                triggerResizeEvent(mpxProxy, pageId)
               }
             }
           } else if (/^resize/.test(newVal)) {
