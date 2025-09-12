@@ -4,7 +4,7 @@ import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
-import { reactive } from '../observer/reactive'
+import { reactive, set } from '../observer/reactive'
 import { watch } from '../observer/watch'
 import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
@@ -159,6 +159,21 @@ export default function createApp (options) {
     }
   }
 
+  global.__mpxAppDimensionsInfo = {
+    window: ReactNative.Dimensions.get('window'),
+    screen: ReactNative.Dimensions.get('screen')
+  }
+  global.__mpxAppDimensionsChangeFlag = -Number.MAX_SAFE_INTEGER // 从能保证精度最小的负值开始，每次屏幕变化则+1
+  global.__mpxPageDimensionsChangeFlagMap = reactive({})
+  function useDimensionsInfo (dimensions) {
+    if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
+      dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
+    }
+    global.__mpxAppDimensionsInfo.window = dimensions.window
+    global.__mpxAppDimensionsInfo.screen = dimensions.screen
+  }
+  useDimensionsInfo(global.__mpxAppDimensionsInfo)
+
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
@@ -208,16 +223,22 @@ export default function createApp (options) {
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
-
       let count = 0
-      let lastPageSize = getPageSize()
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const pageSize = getPageSize(window)
-        if (pageSize === lastPageSize) return
-        lastPageSize = pageSize
+      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
+        const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
+        useDimensionsInfo({ window, screen })
+
+        // 对比 screen 高宽是否存在变化
+        if (getPageSize(screen) === oldScreen) return
+
+        // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
+        global.__mpxAppDimensionsChangeFlag++
+        global.__appClassMapValueCache?.clear()
+        // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
           global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
+          set(global.__mpxPageDimensionsChangeFlagMap, navigation.pageId, global.__mpxAppDimensionsChangeFlag)
         }
       })
       return () => {
