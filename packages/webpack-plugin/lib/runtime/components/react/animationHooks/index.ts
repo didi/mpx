@@ -68,19 +68,27 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // 设置 lastShareValRef & shareValMap
-  function updateStyleVal () {
+  function updateStyleVal (isDeps = false) {
     Object.entries(originalStyle).forEach(([key, value]) => {
       if (key === Transform) {
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
-            lastStyleRef.current[key] = value
-            shareValMap[key].value = value
+            if (!isDeps) {
+              lastStyleRef.current[key] = value
+              shareValMap[key].value = value
+            } else {
+              animationDeps.current += 1
+            }
           }
         })
       } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
-          lastStyleRef.current[key] = value
-          shareValMap[key].value = value
+          if (!isDeps) {
+            lastStyleRef.current[key] = value
+            shareValMap[key].value = value
+          } else {
+            animationDeps.current += 1
+          }
         }
       }
     })
@@ -130,14 +138,9 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   // ** style 更新
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (animationTypeRef.current === AnimationType.API) {
-      // 仅 animation api style 更新同步更新 shareVal
-      updateStyleVal()
-    } else {
-      // css 动画依赖为 style 变更
-      // css transition 为 style 变更驱动，但首次不计入
-      animationDeps.current += 1
-    }
+    // animation api style 更新同步更新 shareVal（默认）
+    // css transition 更新 animationDeps
+    updateStyleVal(animationTypeRef.current === AnimationType.CssTransition)
   }, [originalStyle])
   // ** 获取动画样式prop & 驱动动画
   // eslint-disable-next-line react-hooks/rules-of-hooks
