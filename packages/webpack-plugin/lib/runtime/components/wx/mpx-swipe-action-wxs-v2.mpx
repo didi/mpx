@@ -9,6 +9,20 @@ var state = {
   actionWidth: 0
 }
 
+// 设置样式的辅助函数
+function setTransform(ownerInstance, x, useAnimation) {
+  if (!ownerInstance) return
+  
+  var transform = 'translateX(' + x + 'px)'
+  var transition = useAnimation ? 'transform 0.3s ease' : 'none'
+  
+  console.log('WXS setTransform:', x, useAnimation, transform, transition)
+  ownerInstance.setStyle({
+    'transform': transform,
+    'transition': transition
+  })
+}
+
 // 触摸开始
 function touchStart(event, ownerInstance) {
   console.log('WXS: touchStart')
@@ -22,21 +36,16 @@ function touchStart(event, ownerInstance) {
   
   // 初始化状态
   state.startX = touch.clientX
-  state.currentX = 0
   state.isDragging = true
-  state.isOpened = dataset.opened === 'true'
+  state.isOpened = dataset.opened === true
   state.actionWidth = parseInt(dataset.actionWidth) || 80
   
-  console.log('WXS: touchStart - startX:', state.startX, 'isOpened:', state.isOpened, 'actionWidth:', state.actionWidth)
+  // 初始化 currentX 为当前实际位置
+  state.currentX = state.isOpened ? -state.actionWidth : 0
   
-  // 调用组件方法更新样式
-  if (ownerInstance && ownerInstance.callMethod) {
-    ownerInstance.callMethod('updateTransform', {
-      x: state.isOpened ? -state.actionWidth : 0,
-      animation: false
-    })
-  }
-  
+  // 直接设置样式
+  var instance = ownerInstance.selectComponent('.swipe-content')
+  setTransform(instance, state.currentX, false)
   return true
 }
 
@@ -50,31 +59,40 @@ function touchMove(event, ownerInstance) {
     return false
   }
   
-  var touch = event.touches[0]
-  var dragX = touch.clientX - state.startX
+  var currentX = event.touches[0].clientX
+  var deltaX = state.startX - currentX  // 向左滑动为正值
   
-  // 计算新位置
-  var initialX = state.isOpened ? -state.actionWidth : 0
-  var newX = initialX + dragX
-  
-  // 限制范围
-  if (newX > 0) {
-    newX = 0
-  } else if (newX < -state.actionWidth) {
-    newX = -state.actionWidth
+  // 跟手滑动效果
+  if (state.isOpened) {
+    // 当前是打开状态，允许向右滑动关闭
+    if (deltaX <= 0) {
+      // 向右滑动，从完全打开位置开始
+      var slideBack = Math.abs(deltaX)
+      var maxSlideBack = state.actionWidth
+      var actualSlide = Math.min(slideBack, maxSlideBack)
+      state.currentX = -state.actionWidth + actualSlide
+    } else {
+      // 向左滑动，保持在完全打开位置
+      state.currentX = -state.actionWidth
+    }
+  } else {
+    // 当前是关闭状态，允许向左滑动打开
+    if (deltaX >= 0) {
+      // 向左滑动，限制最大滑动距离
+      var maxSlide = state.actionWidth
+      var actualSlide = Math.min(deltaX, maxSlide)
+      state.currentX = -actualSlide
+    } else {
+      // 向右滑动，保持在关闭位置
+      state.currentX = 0
+    }
   }
   
-  state.currentX = newX
+  console.log('WXS: touchMove - deltaX:', deltaX, 'isOpened:', state.isOpened, 'currentX:', state.currentX)
   
-  console.log('WXS: touchMove - dragX:', dragX, 'newX:', newX)
-  
-  // 调用组件方法更新样式
-  if (ownerInstance && ownerInstance.callMethod) {
-    ownerInstance.callMethod('updateTransform', {
-      x: newX,
-      animation: false
-    })
-  }
+  // 直接设置样式
+  var instance = ownerInstance.selectComponent('.swipe-content')
+  setTransform(instance, state.currentX, false)
   
   return true
 }
@@ -87,32 +105,55 @@ function touchEnd(event, ownerInstance) {
   
   state.isDragging = false
   
-  // 判断最终状态
-  var threshold = state.actionWidth * 0.5
+  // 根据当前状态和滑动距离决定最终状态
+  var currentSlideDistance = Math.abs(state.currentX)
+  var threshold = state.actionWidth * 0.3  // 默认阈值设为30%
   var targetX = 0
   var willOpen = false
   
-  if (Math.abs(state.currentX) >= threshold) {
-    targetX = -state.actionWidth
-    willOpen = true
+  if (state.isOpened) {
+    // 当前是打开状态，判断是否要关闭
+    var closedDistance = state.actionWidth - currentSlideDistance  // 已经关闭的距离
+    var closeThreshold = state.actionWidth * 0.2  // 关闭阈值设置为20%
+    
+    if (closedDistance >= closeThreshold) {
+      // 向右滑动超过20%，关闭
+      targetX = 0
+      willOpen = false
+    } else {
+      // 未超过关闭阈值，保持打开
+      targetX = -state.actionWidth
+      willOpen = true
+    }
   } else {
-    targetX = 0
-    willOpen = false
+    // 当前是关闭状态，判断是否要打开
+    if (currentSlideDistance >= threshold) {
+      // 向左滑动超过阈值，打开
+      targetX = -state.actionWidth
+      willOpen = true
+    } else {
+      // 未超过阈值，保持关闭
+      targetX = 0
+      willOpen = false
+    }
   }
   
-  console.log('WXS: touchEnd - currentX:', state.currentX, 'threshold:', threshold, 'willOpen:', willOpen)
+  console.log('WXS: touchEnd - currentX:', state.currentX, 'currentSlideDistance:', currentSlideDistance, 'threshold:', threshold, 'targetX:', targetX, 'willOpen:', willOpen, 'wasOpened:', state.isOpened)
   
   // 更新状态
   state.isOpened = willOpen
   state.currentX = targetX
   
-  // 调用组件方法更新样式和状态
+  // 直接设置样式，重新开启动画
+  var instance = ownerInstance.selectComponent('.swipe-content')
+  if (instance) {
+    setTransform(instance, targetX, true)
+  } else {
+    setTransform(ownerInstance, targetX, true)
+  }
+  
+  // 调用状态更新方法
   if (ownerInstance && ownerInstance.callMethod) {
-    ownerInstance.callMethod('updateTransform', {
-      x: targetX,
-      animation: true
-    })
-    
     ownerInstance.callMethod('updateOpenState', {
       isOpened: willOpen
     })
@@ -278,19 +319,6 @@ createComponent({
       })
     },
 
-    // WXS 调用的更新 transform 方法
-    updateTransform(detail) {
-      const { x, animation } = detail
-      const transition = animation ? 'transform 0.3s ease' : 'none'
-      const transform = `translateX(${x}px)`
-      
-      console.log('JS: updateTransform', x, animation)
-      
-      this.setData({
-        contentStyle: `transform: ${transform}; transition: ${transition};`
-      })
-    },
-
     // WXS 调用的更新打开状态方法
     updateOpenState(detail) {
       const { isOpened } = detail
@@ -323,15 +351,21 @@ createComponent({
       }
     },
 
-    // 吸附到打开状态
+    // 吸附到打开状态 - 统一使用 contentStyle
     snapToOpen() {
-      this.updateTransform({ x: -this.totalActionWidth, animation: true })
+      this.setData({
+        isOpened: true,
+        contentStyle: `transform: translateX(-${this.totalActionWidth}px); transition: transform 0.3s ease;`
+      })
       this.updateOpenState({ isOpened: true })
     },
 
-    // 吸附到关闭状态
+    // 吸附到关闭状态 - 统一使用 contentStyle  
     snapToClose() {
-      this.updateTransform({ x: 0, animation: true })
+      this.setData({
+        isOpened: false,
+        contentStyle: 'transform: translateX(0px); transition: transform 0.3s ease;'
+      })
       this.updateOpenState({ isOpened: false })
     },
 
@@ -347,8 +381,10 @@ createComponent({
 
     // 处理内容区域点击
     handleContentTap(e) {
+      console.log('JS: handleContentTap - isOpened:', this.isOpened)
       // 如果已打开，则关闭
       if (this.isOpened) {
+        console.log('JS: Closing actions via click')
         this.closeActions()
       } else {
         // 透传点击事件

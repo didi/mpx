@@ -1,0 +1,353 @@
+<template>
+  <view class="mpx-swipe-action-movable">
+    <movable-area class="movable-area">
+      <movable-view 
+        class="movable-view"
+        direction="horizontal"
+        x="{{contentX}}"
+        bindchange="handleMovableChange"
+        bindtouchstart="handleTouchStart"
+        bindtouchend="handleMovableEnd"
+        out-of-bounds="{{false}}"
+        inertia="{{false}}"
+        damping="{{60}}"
+        friction="{{2}}"
+        scale="{{false}}"
+        animation="{{true}}"
+        wx:style="width: calc(100% + {{totalActionWidth}}px);"
+      >
+      <!-- web环境需要包一层外层容器设置 flex 样式 -->
+      <view class="content-container" wx:ref="contentContainer">
+        <!-- 主内容区域 -->
+        <view class="content-area" bindtap="handleContentTap"  wx:style="width: calc(100% - {{totalActionWidth}}px);">
+          <slot></slot>
+        </view>
+        
+        <!-- 右侧操作按钮区域 -->
+        <view 
+          class="action-area" 
+          wx:style="width: {{totalActionWidth}}px;"
+        >
+          <view 
+            wx:for="{{finalActions}}" 
+            wx:key="index"
+            class="action-button"
+            wx:style="width: {{item.width || actionWidth}}px; background-color: {{item.background || item.color || '#ff4757'}}; color: {{item.textColor || '#fff'}}; font-size: {{item.fontSize || 16}}px; font-weight: {{item.fontWeight || '500'}}; {{item.style || ''}}"
+            bindtap="handleActionTap"
+            data-index="{{index}}"
+            data-action="{{item}}"
+          >{{item.text}}</view>
+        </view>
+      </view>
+       
+      </movable-view>
+    </movable-area>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+// 全局状态管理，用于自动关闭其他已打开的组件
+const openedInstances = new Set()
+
+createComponent({
+  properties: {
+    // 单按钮配置（向后兼容）
+    actionWidth: {
+      type: Number,
+      value: 80
+    },
+    actionColor: {
+      type: String,
+      value: '#ff4757'
+    },
+    actionText: {
+      type: String,
+      value: '删除'
+    },
+    actionTextColor: {
+      type: String,
+      value: '#fff'
+    },
+    actionBackground: {
+      type: String,
+      value: ''
+    },
+    actionFontSize: {
+      type: Number,
+      value: 16
+    },
+    actionFontWeight: {
+      type: String,
+      value: '500'
+    },
+    actionStyle: {
+      type: String,
+      value: ''
+    },
+    // 多按钮配置
+    actions: {
+      type: Array,
+      value: []
+    },
+    // 关闭阈值 (0-1之间的比例，或具体像素值)
+    closeThreshold: {
+      type: Number,
+      value: 0.3
+    },
+    // 右滑阈值
+    rightThreshold: {
+      type: Number,
+      value: 0
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    autoClose: {
+      type: Boolean,
+      value: true
+    }
+  },
+
+  data: {
+    isOpened: false,
+    contentX: 0,
+    currentX: 0
+  },
+
+  computed: {
+    // 处理多按钮配置，优先使用 actions，否则使用单按钮配置
+    finalActions() {
+      if (this.actions && this.actions.length > 0) {
+        return this.actions
+      }
+      return [{
+        text: this.actionText,
+        color: this.actionColor,
+        textColor: this.actionTextColor,
+        background: this.actionBackground,
+        width: this.actionWidth,
+        fontSize: this.actionFontSize,
+        fontWeight: this.actionFontWeight,
+        style: this.actionStyle
+      }]
+    },
+
+    totalActionWidth() {
+      return this.finalActions.reduce((sum, action) => {
+        return sum + (action.width || this.actionWidth)
+      }, 0)
+    },
+
+    // 计算实际的关闭阈值
+    actualCloseThreshold() {
+      if (this.closeThreshold <= 1) {
+        // 比例值
+        return this.totalActionWidth * this.closeThreshold
+      } else {
+        // 像素值
+        return this.closeThreshold
+      }
+    }
+  },
+  detached() {
+    // 组件销毁时清理
+    this.unregisterInstance()
+  },
+
+  methods: {
+    // movable-view 位置变化
+    handleMovableChange(e) {
+      const { x } = e.detail
+      this.currentX = x
+    },
+
+    handleTouchStart () {
+      this.contentX = this.currentX
+    },
+    // movable-view 触摸结束
+    handleMovableEnd(e) {
+      this.contentX = this.currentX
+      const currentSlideDistance = Math.abs(this.currentX)
+      
+      if (this.isOpened) {
+        // 当前是打开状态，判断是否要关闭
+        const closedDistance = this.totalActionWidth - currentSlideDistance
+        const closeThreshold = this.totalActionWidth * 0.2  // 关闭阈值20%
+        
+        if (closedDistance >= closeThreshold) {
+          // 向右滑动超过20%，关闭
+          this.snapToClose()
+        } else {
+          // 未超过关闭阈值，保持打开
+          this.snapToOpen()
+        }
+      } else {
+        // 当前是关闭状态，判断是否要打开
+        if (currentSlideDistance >= this.actualCloseThreshold) {
+          // 向左滑动超过阈值，打开
+          this.snapToOpen()
+        } else {
+          // 未超过阈值，保持关闭
+          this.snapToClose()
+        }
+      }
+    },
+
+    // 吸附到打开状态
+    snapToOpen() {
+      this.contentX = -this.totalActionWidth
+
+      if (!this.isOpened) {
+        this.isOpened = true
+        
+        this.triggerEvent('open', {
+          actionWidth: this.totalActionWidth,
+          actions: this.finalActions,
+          actionCount: this.finalActions.length
+        })
+        
+        if (this.autoClose) {
+          this.closeOtherInstances()
+          this.registerInstance()
+        }
+      }
+    },
+
+    // 吸附到关闭状态
+    snapToClose() {
+      setTimeout(() => {
+        // 如果在同一个tick里面更新 contentX 无效
+        this.contentX = 0
+      
+        if (this.isOpened) {
+          this.isOpened = false
+        
+          this.triggerEvent('close', {})
+        
+          if (this.autoClose) {
+            this.unregisterInstance()
+          }
+        }
+      })
+    },
+
+    // 打开操作区域（编程式调用）
+    openActions() {
+      this.snapToOpen()
+    },
+
+    // 关闭操作区域（编程式调用）
+    closeActions() {
+      this.snapToClose()
+    },
+
+    // 处理内容区域点击
+    handleContentTap(e) {
+      console.log('Content tap - isOpened:', this.isOpened)
+      // 如果已打开，则关闭
+      if (this.isOpened) {
+        this.closeActions()
+      } else {
+        // 透传点击事件
+        this.triggerEvent('tap', e.detail)
+      }
+    },
+
+    // 处理操作按钮点击
+    handleActionTap(e) {
+      const { index, action } = e.currentTarget.dataset
+      
+      this.triggerEvent('actiontap', {
+        actionIndex: index,
+        actionText: action.text,
+        actionWidth: action.width || this.actionWidth,
+        action: action
+      })
+      
+      // 点击操作按钮后自动关闭
+      this.closeActions()
+    },
+
+    // 注册实例
+    registerInstance() {
+      if (this.autoClose) {
+        openedInstances.add(this)
+      }
+    },
+
+    // 注销实例
+    unregisterInstance() {
+      openedInstances.delete(this)
+    },
+
+    // 关闭其他已打开的实例
+    closeOtherInstances() {
+      if (this.autoClose) {
+        openedInstances.forEach(instance => {
+          if (instance !== this) {
+            instance.closeActions()
+          }
+        })
+      }
+    },
+
+    // 暴露给外部的方法
+    open() {
+      this.openActions()
+    },
+
+    close() {
+      this.closeActions()
+    }
+  }
+})
+</script>
+
+<style>
+.mpx-swipe-action-movable {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.movable-area {
+  width: 100%;
+  height: 100%;
+}
+
+.movable-view {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  position: relative;
+}
+
+.content-container {
+  display: flex;
+  width: 100%
+}
+.content-area {
+  width: 100%;
+}
+
+.action-area {
+  display: flex;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>
