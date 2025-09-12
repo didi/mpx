@@ -2524,6 +2524,23 @@ function getVirtualHostRoot (options, meta) {
     if (isWeb(mode) && ctorType === 'page') {
       return createASTElement('page')
     }
+    if (isReact(mode) && ctorType === 'page') {
+      const rootView = createASTElement('view', [
+        {
+          name: 'wx:style',
+          value: {
+            flex: 1,
+            overflow: 'hidden'
+          }
+        },
+        {
+          name: 'class',
+          value: '_tag-page'
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
+    }
   }
   return getTempNode()
 }
