@@ -119,6 +119,8 @@ const rulesResultMap = new Map()
 let usingComponents = []
 let usingComponentsInfo = {}
 let componentGenerics = {}
+// 跨平台语法检测的配置，在模块加载时初始化一次
+let crossPlatformConfig = null
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -637,6 +639,8 @@ function parse (template, options) {
   processingTemplate = false
   rulesResultMap.clear()
   componentGenerics = options.componentGenerics || {}
+  // 初始化跨平台语法检测配置（每次解析时只初始化一次）
+  crossPlatformConfig = initCrossPlatformConfig()
 
   if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
@@ -2717,6 +2721,72 @@ function processNoTransAttrs (el) {
   }
 }
 
+function initCrossPlatformConfig () {
+  const currentSrcMode = srcMode
+
+  // 不需要检测小程序平台语法的模式：React Native 平台和 noMode
+  const excludedModes = ['android', 'ios', 'harmony', 'noMode']
+  if (excludedModes.includes(currentSrcMode)) {
+    return null // 返回 null 表示不需要检测
+  }
+
+  // 定义平台与前缀的双向映射关系
+  const platformPrefixMap = {
+    wx: 'wx:',
+    ali: 'a:',
+    swan: 's-',
+    qq: 'qq:',
+    tt: 'tt:',
+    dd: 'dd:',
+    jd: 'jd:',
+    qa: 'qa:'
+  }
+
+  return {
+    currentSrcMode,
+    currentPrefix: platformPrefixMap[currentSrcMode] || 'wx:',
+    platformPrefixMap
+  }
+}
+
+// 检测跨平台语法使用情况并给出警告
+function processCrossPlatformSyntaxWarning (el, options) {
+  if (!el.attrsList || el.attrsList.length === 0) {
+    return
+  }
+
+  // 如果配置为空，说明不需要检测
+  if (!crossPlatformConfig) {
+    return
+  }
+
+  const { currentSrcMode, currentPrefix, platformPrefixMap } = crossPlatformConfig
+
+  // 检查每个属性
+  el.attrsList.forEach(attr => {
+    const attrName = attr.name
+
+    // 检查是否使用了平台前缀
+    for (const [platformName, prefix] of Object.entries(platformPrefixMap)) {
+      if (attrName.startsWith(prefix)) {
+        // 如果使用的平台前缀与当前srcMode不匹配
+        if (platformName !== currentSrcMode) {
+          // 构建建议的正确属性名
+          const suffixPart = attrName.substring(prefix.length)
+          const suggestedAttr = currentPrefix + suffixPart
+
+          // 发出警告
+          warn$1(
+            `Your src mode is "${currentSrcMode}", but used "${attrName}". ` +
+            `Did you mean "${suggestedAttr}"?`
+          )
+        }
+        break
+      }
+    }
+  })
+}
+
 function processMpxTagName (el) {
   const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
   if (mpxTagName) {
@@ -2730,6 +2800,9 @@ function processElement (el, root, options, meta) {
   if (el._matchStatus === statusEnum.MISMATCH) {
     return
   }
+
+  // 检测跨平台语法使用情况并给出警告
+  processCrossPlatformSyntaxWarning(el, options)
 
   processMpxTagName(el)
 
