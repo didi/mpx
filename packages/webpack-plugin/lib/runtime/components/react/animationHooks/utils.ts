@@ -5,6 +5,7 @@ import {
 } from 'react-native-reanimated'
 import type { AnimatableValue, WithTimingConfig, AnimationCallback, EasingFunction } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
+import type { _ViewProps } from '../mpx-view'
 
 export type TimingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-in-out'| 'ease-out'
 
@@ -42,10 +43,12 @@ export type InterpolateOutput = {
   [propName: string]: string[]
 }
 
+export type AnimationHooksPropsType = _ViewProps & { transitionend?: CustomAnimationCallback }
+
 // ms s 单位匹配
 export const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)?\s*$/
-export const CubicBezierExp = /cubic-bezier\(["']?(.*?)["']?\)/
-export const PercentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
+export const cubicBezierExp = /cubic-bezier\(["']?(.*?)["']?\)/
+export const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 // export const PropNameColorExp = /^c|Color$/
 // export const NumberExp = /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/
 // export const ColorExp = /^(color|(.+Color))$/
@@ -86,8 +89,8 @@ export const TransformInitial: ExtendedViewStyle = {
   translateY: 0
   // translateZ: 0,
 }
-// 动画默认初始值
-export const InitialValue: ExtendedViewStyle = Object.assign({
+// animation api 动画默认初始值
+export const animationAPIInitialValue: ExtendedViewStyle = Object.assign({
   opacity: 1,
   backgroundColor: 'transparent',
   width: 0,
@@ -98,7 +101,8 @@ export const InitialValue: ExtendedViewStyle = Object.assign({
   left: 0,
   transformOrigin: ['50%', '50%', 0]
 }, TransformInitial)
-export const SupportedProperty = Object.assign({
+// transition property
+export const transitionSupportedProperty = Object.assign({
   color: 'transparent',
   borderColor: 'transparent',
   borderBottomColor: 'transparent',
@@ -135,9 +139,9 @@ export const SupportedProperty = Object.assign({
   paddingVertical: 0,
   fontSize: 0, // Todo
   letterSpacing: 0 // Todo
-}, InitialValue)
+}, animationAPIInitialValue)
 
-// export type PropertyType = keyof SupportedProperty
+// export type PropertyType = keyof transitionSupportedProperty
 // transform
 export const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
 // transform 数组转对象
@@ -150,14 +154,14 @@ export function getTransformObj (transforms: { [propName: string]: string | numb
 // 获取样式初始值（prop style or 默认值）
 export function getInitialVal (style: ExtendedViewStyle, key: string) {
   if (isTransform(key) && Array.isArray(style.transform)) {
-    let initialVal = SupportedProperty[key]
+    let initialVal = transitionSupportedProperty[key]
     // 仅支持 { transform: [{rotateX: '45deg'}, {rotateZ: '0.785398rad'}] } 格式的初始样式
     style.transform.forEach(item => {
       if (item[key] !== undefined) initialVal = item[key]
     })
     return initialVal
   }
-  return style[key] === undefined ? SupportedProperty[key] : style[key]
+  return style[key] === undefined ? transitionSupportedProperty[key] : style[key]
 }
 // animated key transform 格式化
 export function formatAnimatedKeys (keys: string[]) {

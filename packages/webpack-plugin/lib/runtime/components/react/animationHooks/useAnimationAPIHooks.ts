@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
+import { error } from '@mpxjs/utils'
 import {
   Easing,
   withSequence,
@@ -8,22 +9,33 @@ import {
 import {
   EasingKey,
   TransformOrigin,
-  InitialValue,
+  animationAPIInitialValue,
+  percentExp,
   isTransform,
   getInitialVal,
   getAnimation
 } from './utils'
+import { useRunOnJSCallback } from '../utils'
 import type { AnimationCallback, SharedValue, AnimatableValue } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
-import type { _ViewProps } from '../mpx-view'
-import type { CustomAnimationCallback, InterpolateOutput } from './utils'
+import type { AnimationHooksPropsType } from './utils'
 
-export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transitionend?: CustomAnimationCallback }) {
+export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useAnimationAPIHooks, props=`, props)
   const { style: originalStyle = {}, animation, transitionend } = props
+  const propsRef = useRef<AnimationHooksPropsType>({})
+  propsRef.current = props
+  const transitionendRunJS = (duration: number, finished?: boolean, current?: AnimatableValue) => {
+    const { transitionend } = propsRef.current
+    transitionend && transitionend(finished, current, duration)
+  }
+  const runOnJSCallbackRef = useRef({
+    transitionendRunJS
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // ** 全量 style prop sharedValue
   const shareValMap = useMemo(() => {
-    return Object.keys(InitialValue).reduce((valMap, key) => {
+    return Object.keys(animationAPIInitialValue).reduce((valMap, key) => {
       const defaultVal = getInitialVal(originalStyle, key)
       valMap[key] = makeMutable(defaultVal)
       return valMap
@@ -46,7 +58,7 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
             const transformOrigin = actions[index + 1].animatedOption?.transformOrigin
             transformOrigin && (shareValMap[TransformOrigin].value = transformOrigin)
           }
-          transitionend && runOnJS(transitionend)(finished, current, duration)
+          transitionend && runOnJS(runOnJSCallback)('transitionendRunJS', duration, finished, current)
         }
       }
       if (index === 0) {
@@ -58,11 +70,21 @@ export default function useAnimationAPIHooks<T, P> (props: _ViewProps & { transi
         const ruleV = isTransform(key) ? transform.get(key) : rules.get(key)
         // color 设置为 1
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
-        const toVal = ruleV !== undefined
+        let toVal = ruleV !== undefined
           ? ruleV
           : index > 0
             ? lastValueMap[key]
             : shareValMap[key].value
+        if (percentExp.test(`${toVal}`) && typeof +shareValMap[key].value === 'number') {
+          shareValMap[key].value = `${shareValMap[key].value as number * 100}%`
+        } else if (percentExp.test(shareValMap[key].value as string) && typeof +toVal === 'number') {
+          // 初始值为百分比则格式化toVal为百分比
+          toVal = `${toVal as number * 100}%`
+        } else if (typeof toVal !== typeof shareValMap[key].value) {
+          // transition动画起始值和终态值类型不一致报错提示一下
+          error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`);
+        }
+        // Todo 对齐wx
         const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
         needSetCallback = false
         if (!sequence[key]) {

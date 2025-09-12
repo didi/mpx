@@ -1,5 +1,5 @@
 import { hasOwn, dash2hump, error } from '@mpxjs/utils'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import {
   Easing,
   makeMutable,
@@ -9,23 +9,22 @@ import {
 import {
   EasingKey,
   Transform,
-  SupportedProperty,
+  transitionSupportedProperty,
   TransformInitial,
-  CubicBezierExp,
+  cubicBezierExp,
   secondRegExp,
   Transition,
-  PercentExp,
+  percentExp,
   getTransformObj,
   getUnit,
   getInitialVal,
   getAnimation,
   isTransform
 } from './utils'
-import { parseValues } from '../utils'
+import { parseValues, useRunOnJSCallback } from '../utils'
 import type { SharedValue, AnimatableValue, EasingFunction } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
-import type { _ViewProps } from '../mpx-view'
-import type { CustomAnimationCallback, TransitionMap, TimingFunction, InterpolateOutput } from './utils'
+import type { AnimationHooksPropsType, TransitionMap, TimingFunction } from './utils'
 
 type AnimationDataType = {
   property?: string
@@ -46,7 +45,7 @@ const timingFunctionExp = /^(step-start|step-end|steps)/
 // cubic-bezier 参数解析
 function getBezierParams (str: string) {
   // ease 0.25, 0.1, 0.25, 1.0
-  return str.match(CubicBezierExp)?.[1]?.split(',').map(item => +item)
+  return str.match(cubicBezierExp)?.[1]?.split(',').map(item => +item)
 }
 // 解析 transition-prop
 function parseTransitionSingleProp (vals: string[], property: string) {
@@ -73,7 +72,7 @@ function parseTransitionSingleProp (vals: string[], property: string) {
       return undefined
     }
     // timingFunction
-    if (Object.keys(EasingKey).includes(val) || CubicBezierExp.test(val)) {
+    if (Object.keys(EasingKey).includes(val) || cubicBezierExp.test(val)) {
       const bezierParams = getBezierParams(val)
       return {
         easing: bezierParams?.length ? Easing.bezier(bezierParams[0], bezierParams[1], bezierParams[2], bezierParams[3]) : EasingKey[val as TimingFunction] || Easing.inOut(Easing.ease)
@@ -140,9 +139,9 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   })
   // console.log(`parseTransitionStyle transitionData=`, transitionData)
   const transitionMap = transitionData.reduce((acc, cur) => {
-    // hasOwn(SupportedProperty, dash2hump(val)) || val === Transform
+    // hasOwn(transitionSupportedProperty, dash2hump(val)) || val === Transform
     const { property = '', duration = 0, delay = 0, easing = Easing.inOut(Easing.ease) } = cur
-    if ((hasOwn(SupportedProperty, dash2hump(property)) || property === Transform) && duration > 0) {
+    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === Transform) && duration > 0) {
       acc[property] = {
         duration,
         delay,
@@ -154,9 +153,19 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   // console.log(`parseTransitionStyle transitionMap=`, transitionMap)
   return transitionMap
 }
-export default function useTransitionHooks<T, P> (props: _ViewProps & { transitionend?: CustomAnimationCallback }) {
+export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
+  const propsRef = useRef<AnimationHooksPropsType>({})
+  propsRef.current = props
+  const transitionendRunJS = (duration: number, finished?: boolean, current?: AnimatableValue) => {
+    const { transitionend } = propsRef.current
+    transitionend && transitionend(finished, current, duration)
+  }
+  const runOnJSCallbackRef = useRef({
+    transitionendRunJS
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // ** 从 style 中获取动画数据
   const transitionMap = useMemo(() => {
     return parseTransitionStyle(originalStyle)
@@ -171,7 +180,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
           // console.log(`shareValMap property=${key} defaultVal=${defaultVal}`)
           valMap[key] = makeMutable(defaultVal)
         })
-      } else if (hasOwn(SupportedProperty, property)) {
+      } else if (hasOwn(transitionSupportedProperty, property)) {
         const defaultVal = getInitialVal(originalStyle, property)
         // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
         valMap[property] = makeMutable(defaultVal)
@@ -183,7 +192,7 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
     // duration 不同需要再次执行回调，这里记录一下上次propName动画的duration
-    let lastDuration = -1
+    const callbackMap = new Map()
     animatedKeys.forEach(key => {
       // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
       let ruleV = originalStyle[key]
@@ -191,28 +200,34 @@ export default function useTransitionHooks<T, P> (props: _ViewProps & { transiti
         const transform = getTransformObj(originalStyle.transform!)
         ruleV = transform[key]
       }
-      const toVal = ruleV !== undefined
+      let toVal = ruleV !== undefined
         ? ruleV
-        : SupportedProperty[key]
-      // 获取到的toVal为百分比且初始值为0时，需更新初始值为0%
-      if (PercentExp.test(toVal) && shareValMap[key].value === 0) {
-        shareValMap[key].value = '0%'
+        : transitionSupportedProperty[key]
+      // 获取到的toVal为百分比格式化shareValMap为百分比
+      if (percentExp.test(`${toVal}`) && typeof +shareValMap[key].value === 'number') {
+        shareValMap[key].value = `${shareValMap[key].value as number * 100}%`
+      } else if (percentExp.test(shareValMap[key].value as string) && typeof +toVal === 'number') {
+        // 初始值为百分比则格式化toVal为百分比
+        toVal = `${toVal * 100}%`
       } else if (typeof toVal !== typeof shareValMap[key].value) {
         // transition动画起始值和终态值类型不一致报错提示一下
-        error(`[Mpx runtime error]: Value types of property ${key} must be consistent in CSS transition animation`)
+        error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`);
       }
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]
       // console.log('animationOptions=', { delay, duration, easing })
-      const callback = transitionend && ((finished?: boolean, current?: AnimatableValue) => {
-        'worklet'
-        // 动画结束后设置下一次transformOrigin
-        if (finished && transitionend) {
-          runOnJS(transitionend)(finished, current, duration)
+      let callback
+      if (transitionend) {
+        callback = (finished?: boolean, current?: AnimatableValue) => {
+          'worklet'
+          // 动画结束后设置下一次transformOrigin
+          if (finished) {
+            runOnJS(runOnJSCallback)('transitionendRunJS', duration, finished, current)
+          }
         }
-      })
-      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, lastDuration !== duration ? callback : undefined)
-      lastDuration = duration
+      }
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, !callbackMap.get(duration) && callback ? callback : undefined)
+      callbackMap.set(duration, true)
       shareValMap[key].value = animation
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })
