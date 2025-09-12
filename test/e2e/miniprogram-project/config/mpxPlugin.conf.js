@@ -90,6 +90,16 @@ module.exports = {
     }
     // 输出示例： pages/testax34dde3/index.js
     return path.join(type + 's', name + hash, 'index' + ext)
-  }
+  },
 
+  asyncSubpackageRules: [
+    {
+      include: path.resolve('./src/subpackage/test/components/asyncComp.mpx'),
+      root: 'test',
+      placeholder: {
+        name: 'placeholder-view',
+        resource: path.resolve('./src/components/placeholder-view.mpx')
+      }
+    }
+  ]
 }

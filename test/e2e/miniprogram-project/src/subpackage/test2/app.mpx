@@ -1,7 +1,10 @@
 <script name="json">
 module.exports = {
   pages: [
-    './pages/index'
+    './pages/index',
+    './pages/testAsyncSubpackageRules1',
+    './pages/testAsyncSubpackageRules2',
+    './pages/testAsyncSubpackageRules3'
   ]
 }
 </script>
