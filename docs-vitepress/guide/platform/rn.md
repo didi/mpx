@@ -1268,6 +1268,37 @@ level 有效值：
 | ----------------| --------------------------------------------------- |
 | bindchange       |  点击导致 checked 改变时会触发 change 事件，`event.detail = { value }`   |
 
+#### slider
+滑动选择器。
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| min                     | number  | `0`           | 最小值                                                     |
+| max                     | number  | `100`         | 最大值                                                     |
+| step                    | number  | `1`           | 步长，取值必须大于 0，并且可被(max - min)整除                 |
+| disabled                | boolean | `false`       | 是否禁用                                                   |
+| value                   | number  | `0`           | 当前取值                                                   |
+| color                   | color   | `#e9e9e9`     | 背景条的颜色（已废弃，请使用 backgroundColor）               |
+| selected-color          | color   | `#1aad19`     | 已选择的颜色（已废弃，请使用 activeColor）                   |
+| activeColor             | color   | `#1aad19`     | 已选择的颜色                                               |
+| backgroundColor         | color   | `#e9e9e9`     | 背景条的颜色                                               |
+| block-size              | number  | `28`          | 滑块的大小，取值范围为 12 - 28                              |
+| block-color             | color   | `#ffffff`     | 滑块的颜色                                                 |
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindchange      | 完成一次拖动后触发的事件，`event.detail = {value}`     |
+| bindchanging    | 拖动过程中触发的事件，`event.detail = {value}`         |
+
+注意事项
+
+1. 不支持 `show-value` 属性，即不支持在滑块旁显示当前数值
+2. 当设置了 `step` 时，最终值会按步长进行对齐
+
 #### navigator
 页面链接。
 

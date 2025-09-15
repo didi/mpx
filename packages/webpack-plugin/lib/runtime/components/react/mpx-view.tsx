@@ -287,16 +287,13 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      if (type === 'linear') {
-        const dimensionWidth = calcPercent(width as NumberVal, layoutWidth) || 0
-        const dimensionHeight = calcPercent(height as NumberVal, layoutHeight) || 0
-        // ios 上 linear 组件只要重新触发渲染，在渲染过程中 width 或者 height 被设置为 0，即使后面再更新为正常宽高，也会渲染不出来
-        if (dimensionWidth && dimensionHeight) {
-          dimensions = {
-            width: dimensionWidth,
-            height: dimensionHeight
-          } as { width: NumberVal, height: NumberVal }
-        }
+      if (type === 'linear' && (!layoutWidth || !layoutHeight)) {
+        // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
+        // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %。
+        dimensions = {
+          width: 0,
+          height: 0
+        } as { width: NumberVal, height: NumberVal }
       } else {
         dimensions = {
           width: isPercent(width) ? width : +width,
