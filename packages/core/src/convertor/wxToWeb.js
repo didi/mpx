@@ -14,7 +14,7 @@ import { implemented } from '../core/implement'
 const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage']
 
 function convertErrorDesc (key) {
-  error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource)
+  error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource || global.currentModuleId)
 }
 
 function notSupportTip (options) {
