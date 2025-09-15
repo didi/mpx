@@ -818,18 +818,14 @@ class MpxWebpackPlugin {
             compilation.addEntry(compiler.context, dep, { name }, callback)
             return dep
           },
-          getModuleId: (filePath, isApp = false, loaderContext = null) => {
+          getModuleId: (filePath, isApp = false) => {
             if (isApp) return MPX_APP_MODULE_ID
-            const { customComponentModuleId } = this.options
-            let moduleId
-
+            const customComponentModuleId = this.options.customComponentModuleId
             if (typeof customComponentModuleId === 'function') {
-              moduleId = customComponentModuleId(filePath)
+              const customModuleId = customComponentModuleId(filePath)
+              if (customModuleId) return customModuleId
             }
-            if (!moduleId) {
-              moduleId = '_' + mpx.pathHash(filePath)
-            }
-            return moduleId
+            return '_' + mpx.pathHash(filePath)
           },
           getEntryNode: (module, type) => {
             const entryNodeModulesMap = mpx.entryNodeModulesMap
