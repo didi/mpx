@@ -10,7 +10,8 @@ import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
-import { innerNav } from './env/nav'
+import createMpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/nav'
+import { NavSharedProvider } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav-container'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -31,6 +32,15 @@ function filterOptions (options, appData) {
     }
   })
   return newOptions
+}
+
+let CachedMpxNav = null
+
+function getMpxNav() {
+  // Mpx toplevel 执行时获取不到
+  return (CachedMpxNav ??= createMpxNav({
+    Mpx
+  }))
 }
 
 export default function createApp (options) {
@@ -66,7 +76,7 @@ export default function createApp (options) {
               flex: 1
             }
           },
-          createElement(innerNav, {
+          createElement(getMpxNav(), {
             pageConfig: pageConfig,
             navigation
           }),
@@ -245,13 +255,13 @@ export default function createApp (options) {
           onStateChange,
           onUnhandledAction
         },
-        createElement(Stack.Navigator,
+        createElement(NavSharedProvider, null, createElement(Stack.Navigator,
           {
             initialRouteName,
             screenOptions: navScreenOpts
           },
           ...getPageScreens(initialRouteName, initialParams)
-        )
+        ))
       )
     )
   })
