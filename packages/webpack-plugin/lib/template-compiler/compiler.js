@@ -176,11 +176,11 @@ const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
-const i18nModuleName = '_i'
+const i18nModuleName = '_i_'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
-const stringifyModuleName = '_s'
+const stringifyModuleName = '_s_'
 const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionalChainWxsName = '_oc' // 改成_oc解决web下_o重名问题
+const optionalChainWxsName = '_oc_' // 改成_oc解决web下_o重名问题
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -1383,7 +1383,11 @@ function processEvent (el, options) {
         const targetConfigs = isCapture ? eventConfigMap[type].captureConfigs : eventConfigMap[type].configs
         targetConfigs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
-          eventConfigMap[type].proxy = true
+          if (isCapture) {
+            eventConfigMap[type].captureProxy = true
+          } else {
+            eventConfigMap[type].proxy = true
+          }
         }
       }
     }
@@ -1423,10 +1427,10 @@ function processEvent (el, options) {
   }
 
   for (const type in eventConfigMap) {
-    const { configs = [], captureConfigs = [], proxy } = eventConfigMap[type]
+    const { configs = [], captureConfigs = [], proxy, captureProxy } = eventConfigMap[type]
 
     let needBubblingBind = isNeedBind(configs, proxy)
-    let needCaptureBind = isNeedBind(captureConfigs, proxy)
+    let needCaptureBind = isNeedBind(captureConfigs, captureProxy)
 
     const escapedType = dash2hump(type)
     // 排除特殊情况

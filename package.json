@@ -3,7 +3,7 @@
   "description": "mpx monorepo",
   "private": true,
   "scripts": {
-    "tsc:build": "npm run build -w @mpxjs/webpack-plugin",
+    "build:tsc": "npm run build -w @mpxjs/webpack-plugin",
     "lint": "eslint --ext .js,.ts,.tsx,.jsx packages/",
     "fix": "eslint --fix --ext .js,.ts,.tsx,.jsx packages/",
     "test": "jest",

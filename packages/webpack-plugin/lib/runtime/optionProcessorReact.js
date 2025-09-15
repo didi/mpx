@@ -5,7 +5,9 @@ import { extend } from './utils'
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   // eslint-disable-next-line
-  if (extendOptions) Object.assign(component, extendOptions)
+  if (extendOptions && !component.__mpxExtended) {
+    extend(component, extendOptions, { __mpxExtended: true })
+  }
   return component
 }
 
@@ -15,7 +17,7 @@ export function getAsyncSuspense (commonProps) {
     result = memo(forwardRef(function (props, ref) {
       return createElement(AsyncSuspense,
         extend({}, commonProps, {
-          innerProps: Object.assign({}, props, { ref })
+          innerProps: extend({}, props, { ref })
         })
       )
     }))
