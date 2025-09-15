@@ -62,8 +62,8 @@ export interface ImageProps {
 }
 
 interface ImageState {
-  viewWidth?: number
-  viewHeight?: number
+  viewWidth: number
+  viewHeight: number
   imageWidth?: number
   imageHeight?: number
   ratio?: number
@@ -95,7 +95,17 @@ const ModeMap = new Map<Mode, ImageResizeMode | undefined>([
 
 const isNumber = (value: DimensionValue): value is number => typeof value === 'number'
 
-const relativeCenteredSize = (viewSize: number, imageSize: number) => (viewSize - imageSize) / 2
+const relativeCenteredSize = (viewSize: number, imageSize: number) => {
+  return (viewSize - imageSize) / 2
+}
+
+function getFitScale (width1: number, height1: number, width2: number, height2: number) {
+  return Math.min(width2 / width1, height2 / height1)
+}
+
+function getFillScale (width1: number, height1: number, width2: number, height2: number) {
+  return Math.max(width2 / width1, height2 / height1)
+}
 
 function noMeetCalcRule (isSvg: boolean, mode: Mode, viewWidth: number, viewHeight: number, ratio: number) {
   const isMeetSize = viewWidth && viewHeight && ratio
@@ -142,8 +152,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     { overflow: 'hidden' }
   )
 
-  const state = useRef<ImageState>({})
-
   const nodeRef = useRef(null)
   useNodesRef(props, ref, nodeRef, {
     defaultStyle
@@ -160,8 +168,12 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     state.current.viewWidth = width
     state.current.viewHeight = height
     // 实际渲染尺寸可能会指定的值不一致，误差低于 0.5 则认为没有变化
-    if (Math.abs(viewHeight - height) < 0.5 && Math.abs(viewWidth - width) < 0.5) return
-
+    if (Math.abs(viewHeight - height) < 0.5 && Math.abs(viewWidth - width) < 0.5) {
+      if (state.current.imageWidth && state.current.imageHeight && state.current.ratio) {
+        if (!loaded) setLoaded(true)
+      }
+      return
+    }
     if (state.current.imageWidth && state.current.imageHeight && state.current.ratio) {
       setRatio(state.current.ratio)
       setImageWidth(state.current.imageWidth)
@@ -197,6 +209,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const [ratio, setRatio] = useState(0)
   const [loaded, setLoaded] = useState(!isLayoutMode)
 
+  const state = useRef<ImageState>({
+    viewWidth,
+    viewHeight
+  })
+
+  console.log(`==========render Image viewWidth:${viewWidth} viewHeight:${viewHeight} imageWidth:${imageWidth} imageHeight:${imageHeight} ratio:${ratio} loaded:${loaded}`)
+
   function setViewSize (viewWidth: number, viewHeight: number, ratio: number) {
     // 在特定模式下可预测 view 的变化，在onLayout触发时能以此避免重复render
     switch (mode) {
@@ -213,8 +232,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         break
       }
       default:
-        setViewHeight(viewWidth)
-        setViewWidth(viewHeight)
+        setViewHeight(viewHeight)
+        setViewWidth(viewWidth)
         break
     }
   }
@@ -223,28 +242,37 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     if (noMeetCalcRule(isSvg, mode, viewWidth, viewHeight, ratio)) return {}
     switch (mode) {
       case 'scaleToFill':
-      case 'aspectFit':
         if (isSvg) {
-          const scale = ratio <= 1
-            ? imageWidth >= viewWidth ? viewWidth / imageWidth : imageWidth / viewWidth
-            : imageHeight >= viewHeight ? viewHeight / imageHeight : imageHeight / viewHeight
+          const scale = getFitScale(imageWidth, imageHeight, viewWidth, viewHeight)
           return {
             transform: [
-              { scale },
-              ratio <= 1 ? { translateY: -(imageHeight * scale - viewHeight) / 2 / scale } : { translateX: -(imageWidth * scale - viewWidth) / 2 / scale }
+              { translateY: relativeCenteredSize(viewHeight, imageHeight * scale) },
+              { translateX: relativeCenteredSize(viewWidth, imageWidth * scale) },
+              { scale }
+            ]
+          }
+        }
+        return {}
+      case 'aspectFit':
+        if (isSvg) {
+          const scale = getFitScale(imageWidth, imageHeight, viewWidth, viewHeight)
+          return {
+            transform: [
+              { translateY: relativeCenteredSize(viewHeight, imageHeight * scale) },
+              { translateX: relativeCenteredSize(viewWidth, imageWidth * scale) },
+              { scale }
             ]
           }
         }
         return {}
       case 'aspectFill':
         if (isSvg) {
-          const scale = ratio >= 1
-            ? imageWidth >= viewWidth ? viewWidth / imageWidth : imageWidth / viewWidth
-            : imageHeight >= viewHeight ? viewHeight / imageHeight : imageHeight / viewHeight
+          const scale = getFillScale(imageWidth, imageHeight, viewWidth, viewHeight)
           return {
             transform: [
-              { scale },
-              ratio >= 1 ? { translateY: -(imageHeight * scale - viewHeight) / 2 / scale } : { translateX: -(imageWidth * scale - viewWidth) / 2 / scale }
+              { translateY: relativeCenteredSize(viewHeight, imageHeight * scale) },
+              { translateX: relativeCenteredSize(viewWidth, imageWidth * scale) },
+              { scale }
             ]
           }
         }
@@ -252,9 +280,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
       case 'widthFix':
       case 'heightFix':
         if (isSvg) {
-          const scale = ratio >= 1
-            ? imageWidth >= viewWidth ? viewWidth / imageWidth : imageWidth / viewWidth
-            : imageHeight >= viewHeight ? viewHeight / imageHeight : imageHeight / viewHeight
+          const scale = getFitScale(imageWidth, imageHeight, viewWidth, viewHeight)
           return {
             transform: [{ scale }]
           }
@@ -321,9 +347,21 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const onSvgLoad = (evt: LayoutChangeEvent) => {
     const { width, height } = evt.nativeEvent.layout
-    setRatio(!width ? 0 : height / width)
-    setImageWidth(width)
+    state.current.imageHeight = height
     setImageHeight(height)
+    state.current.ratio = !width ? 0 : height / width
+
+    if (isWidthFixMode
+      ? state.current.viewWidth
+      : isHeightFixMode
+        ? state.current.viewHeight
+        : state.current.viewWidth && state.current.viewHeight) {
+      setRatio(state.current.ratio)
+      setImageWidth(width)
+      setImageHeight(height)
+      setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio)
+      setLoaded(true)
+    }
 
     bindload && bindload(
       getCustomEvent(
