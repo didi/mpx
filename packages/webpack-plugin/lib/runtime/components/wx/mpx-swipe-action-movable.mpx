@@ -1,5 +1,5 @@
 <template>
-  <view class="mpx-swipe-action-movable">
+  <view class="mpx-swipe-action-movable" wx:style="{{ containerStyle }}">
     <movable-area class="movable-area">
       <movable-view 
         class="movable-view"
@@ -11,7 +11,7 @@
         out-of-bounds="{{false}}"
         inertia="{{false}}"
         damping="{{60}}"
-        friction="{{2}}"
+        friction="{{20}}"
         scale="{{false}}"
         animation="{{true}}"
         wx:style="width: calc(100% + {{totalActionWidth}}px);"
@@ -108,6 +108,9 @@ createComponent({
     autoClose: {
       type: Boolean,
       value: true
+    },
+    height: {
+      type: Number
     }
   },
 
@@ -150,6 +153,9 @@ createComponent({
         // 像素值
         return this.closeThreshold
       }
+    },
+    containerStyle () {
+      return `height: ${this.height}px`
     }
   },
   detached() {
@@ -343,6 +349,11 @@ createComponent({
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+}
+
+.mpx-swipe-action-movable .mpx-movable-scroll-content .mpx-movable-scroll-item {
+  display: flex;
+  flex: 1
 }
 </style>
 
