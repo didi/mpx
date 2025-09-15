@@ -942,7 +942,7 @@ border-top: 1px solid red;    /* 上边框：宽度 样式 颜色 */
 border-left: 2px dotted blue; /* 左边框：宽度 样式 颜色 */
 ```
 
-### background
+### background<badge type="tip" text="<view>" />
 
 背景的简写属性。
 
