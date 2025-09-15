@@ -20,9 +20,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
   // fix: 某些特殊机型下隐藏键盘可能会先触发一次 keyboardWillShow，
   // 比如机型 iPhone 11 Pro，可能会导致显隐动画冲突
-  // 因此增加状态标记 + clearTimeout + cancelAnimation 来优化
+  // 因此增加状态标记 + cancelAnimation 来优化
   const isShow = useRef<boolean>(false)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -offset.value }],
@@ -35,7 +34,6 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     }
 
     isShow.current = false
-    timerRef.current && clearTimeout(timerRef.current)
 
     if (keyboardAvoid?.current) {
       keyboardAvoid.current = null
@@ -63,12 +61,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
           }
 
           isShow.current = true
-          timerRef.current && clearTimeout(timerRef.current)
 
           const { endCoordinates } = evt
           const { ref, cursorSpacing = 0 } = keyboardAvoid.current
 
-          timerRef.current = setTimeout(() => {
+          setTimeout(() => {
             ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
               const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
               const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
@@ -119,7 +116,6 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
     return () => {
       subscriptions.forEach(subscription => subscription.remove())
-      timerRef.current && clearTimeout(timerRef.current)
     }
   }, [keyboardAvoid])
 
