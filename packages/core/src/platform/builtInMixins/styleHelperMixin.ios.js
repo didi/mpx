@@ -1,6 +1,6 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
 import { StyleSheet, Dimensions } from 'react-native'
-import { reactive } from '../../observer/reactive'
+import { reactive, set } from '../../observer/reactive'
 import Mpx from '../../index'
 
 global.__mpxAppDimensionsInfo = {
@@ -28,15 +28,23 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
   const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
   useDimensionsInfo({ window, screen })
 
+  if (getPageSize(screen) === oldScreen) console.log('Dimensions change, but screen size not changed', getPageSize(screen), oldScreen)
   // 对比 screen 高宽是否存在变化
   if (getPageSize(screen) === oldScreen) return
+
+  console.log('clear __classMapValueCache')
+  global.__classMapValueCache?.clear()
 
   // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
   global.__mpxSizeCount++
 
   const navigation = getFocusedNavigation()
-  if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-    global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
+
+  if (navigation) {
+    set(global.__mpxPageSizeCountMap, navigation.pageId, global.__mpxSizeCount)
+    if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+      global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
+    }
   }
 })
 
@@ -65,9 +73,14 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value) {
-  // TODO formatValue 执行参数过高，再此判断 dimensionsInfoInitialized 成本过高
+function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  if (unitType === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
+  }
+  if (unitType && typeof unit[unitType] === 'function') {
+    return unit[unitType](+value)
+  }
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
@@ -81,10 +94,6 @@ function formatValue (value) {
 }
 
 global.__formatValue = formatValue
-global.__rpx = rpx
-global.__vw = vw
-global.__vh = vh
-global.__hairlineWidth = StyleSheet.hairlineWidth
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
@@ -236,6 +245,7 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        console.log('__getStyle ', JSON.stringify(global.__mpxAppDimensionsInfo.screen))
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)

@@ -549,7 +549,6 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
 
     useEffect(() => {
       const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
-        console.log('Dimensions change event getDefaultOptions', { window, screen })
         navigation.layout = getLayoutData(headerHeight)
       })
       return () => dimensionListener?.remove()
