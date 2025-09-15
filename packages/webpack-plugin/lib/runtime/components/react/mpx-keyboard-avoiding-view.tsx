@@ -77,7 +77,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
       keyboardAvoid.current.keyboardHeight = endCoordinates.height
       onKeyboardShow?.()
       if (adjustPosition) {
-        setTimeout(() => {
+        timerRef.current = setTimeout(() => {
           ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
             const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
             const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
