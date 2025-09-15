@@ -213,7 +213,7 @@ const instanceProto = {
 
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
   if (type === 'page') {
-    set(global.__mpxPageDimensionsChangeFlagMap, pageId, global.__mpxAppDimensionsChangeFlag)
+    set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
   }
   const instance = Object.create(instanceProto, {
     dataset: {
@@ -272,9 +272,9 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       },
       enumerable: false
     },
-    __dimensionsChangeFlag: {
+    __getSizeCount: {
       get () {
-        return global.__mpxPageDimensionsChangeFlagMap[pageId]
+        return () => global.__mpxPageSizeCountMap[pageId]
       },
       enumerable: false
     }
@@ -384,14 +384,21 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
-const triggerResizeEvent = (mpxProxy, pageId) => {
+const triggerResizeEvent = (mpxProxy, sizeRef) => {
+  const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
-  const oldSize = pageSizeMap[pageId]
   const newSize = systemInfo.size
 
-  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) return
+  console.log('triggerResizeEvent1')
 
-  pageSizeMap[pageId] = newSize
+  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
+    return
+  }
+
+  Object.assign(sizeRef.current, systemInfo)
+
+  console.log('triggerResizeEvent2')
+
   const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])
@@ -404,6 +411,8 @@ const triggerResizeEvent = (mpxProxy, pageId) => {
 }
 
 function usePageEffect (mpxProxy, pageId) {
+  const sizeRef = useRef(getSystemInfo())
+
   useEffect(() => {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
@@ -412,39 +421,38 @@ function usePageEffect (mpxProxy, pageId) {
     if (hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
+          console.log('usePageEffect', newVal, global.__mpxPageSizeCountMap[pageId], global.__mpxSizeCount)
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
+            // 仅在尺寸确实变化时才触发resize事件
+            triggerResizeEvent(mpxProxy, sizeRef)
+
             // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
-            if (newVal === 'show') {
-              // 当前页面的DimensionsChange标记与全局不一致，则需更新当前页面的标记
-              if (global.__mpxPageDimensionsChangeFlagMap[pageId] !== global.__mpxAppDimensionsChangeFlag) {
-                set(global.__mpxPageDimensionsChangeFlagMap, pageId, global.__mpxAppDimensionsChangeFlag)
-                triggerResizeEvent(mpxProxy, pageId)
-              }
+            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
+              set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
             }
           } else if (/^resize/.test(newVal)) {
-            triggerResizeEvent(mpxProxy, pageId)
+            triggerResizeEvent(mpxProxy, sizeRef)
           }
         }, { sync: true })
       }
     }
     return () => {
       unWatch && unWatch()
-      del(global.__mpxPageDimensionsChangeFlagMap, pageId)
+      del(global.__mpxPageSizeCountMap, pageId)
     }
   }, [])
 }
 
 let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-const pageSizeMap = {}
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
-    pageSizeMap[pageId] = getSystemInfo().size
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
     })
@@ -453,7 +461,6 @@ function usePageStatus (navigation, pageId) {
     })
 
     return () => {
-      delete pageSizeMap[pageId]
       focusSubscription()
       blurSubscription()
       del(pageStatusMap, pageId)
@@ -541,7 +548,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.layout = getLayoutData(headerHeight)
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
+      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
+        console.log('Dimensions change event getDefaultOptions', { window, screen })
         navigation.layout = getLayoutData(headerHeight)
       })
       return () => dimensionListener?.remove()

@@ -1,5 +1,44 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
-import { StyleSheet } from 'react-native'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import { StyleSheet, Dimensions } from 'react-native'
+import { reactive } from '../../observer/reactive'
+import Mpx from '../../index'
+
+global.__mpxAppDimensionsInfo = {
+  window: Dimensions.get('window'),
+  screen: Dimensions.get('screen')
+}
+global.__mpxSizeCount = 0
+global.__mpxPageSizeCountMap = reactive({})
+
+let dimensionsInfoInitialized = false
+function useDimensionsInfo (dimensions) {
+  dimensionsInfoInitialized = true
+  if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
+    dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
+  }
+  global.__mpxAppDimensionsInfo.window = dimensions.window
+  global.__mpxAppDimensionsInfo.screen = dimensions.screen
+}
+
+function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
+  return window.width + 'x' + window.height
+}
+
+Dimensions.addEventListener('change', ({ window, screen }) => {
+  const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
+  useDimensionsInfo({ window, screen })
+
+  // 对比 screen 高宽是否存在变化
+  if (getPageSize(screen) === oldScreen) return
+
+  // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
+  global.__mpxSizeCount++
+
+  const navigation = getFocusedNavigation()
+  if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+    global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
+  }
+})
 
 // TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
 // TODO: 2 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions监听到的width/height尺寸错误，并触发多次问题
@@ -27,6 +66,8 @@ const unit = {
 const empty = {}
 
 function formatValue (value) {
+  // TODO formatValue 执行参数过高，再此判断 dimensionsInfoInitialized 成本过高
+  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
@@ -190,11 +231,6 @@ function getMediaStyle (media) {
 
 export default function styleHelperMixin () {
   return {
-    watch: {
-      __dimensionsChangeFlag () {
-        this.$rawOptions.options?.__classMapValueCache?.clear()
-      }
-    },
     methods: {
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -206,8 +242,8 @@ export default function styleHelperMixin () {
 
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
-        // 使用一下 __dimensionsChangeFlag触发其get，需保证不会被压缩插件移除
-        ;(() => this.__dimensionsChangeFlag)()
+        // 使用一下 __getSizeCount 触发其 get
+        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape

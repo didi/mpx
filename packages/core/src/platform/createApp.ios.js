@@ -14,10 +14,6 @@ import { innerNav } from './env/nav'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
-function getPageSize (window = ReactNative.Dimensions.get('window')) {
-  return window.width + 'x' + window.height
-}
-
 function filterOptions (options, appData) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
@@ -159,21 +155,6 @@ export default function createApp (options) {
     }
   }
 
-  global.__mpxAppDimensionsInfo = {
-    window: ReactNative.Dimensions.get('window'),
-    screen: ReactNative.Dimensions.get('screen')
-  }
-  global.__mpxAppDimensionsChangeFlag = -Number.MAX_SAFE_INTEGER // 从能保证精度最小的负值开始，每次屏幕变化则+1
-  global.__mpxPageDimensionsChangeFlagMap = reactive({})
-  function useDimensionsInfo (dimensions) {
-    if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
-      dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
-    }
-    global.__mpxAppDimensionsInfo.window = dimensions.window
-    global.__mpxAppDimensionsInfo.screen = dimensions.screen
-  }
-  useDimensionsInfo(global.__mpxAppDimensionsInfo)
-
   global.__mpxAppLaunched = false
   global.__mpxOptionsMap[currentInject.moduleId] = memo((props) => {
     const firstRef = useRef(true)
@@ -223,28 +204,9 @@ export default function createApp (options) {
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
-      let count = 0
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
-        const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
-        useDimensionsInfo({ window, screen })
-
-        // 对比 screen 高宽是否存在变化
-        if (getPageSize(screen) === oldScreen) return
-
-        // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
-        global.__mpxAppDimensionsChangeFlag++
-        global.__appClassMapValueCache?.clear()
-        // 触发当前栈顶页面 onResize
-        const navigation = getFocusedNavigation()
-        if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-          global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
-          set(global.__mpxPageDimensionsChangeFlagMap, navigation.pageId, global.__mpxAppDimensionsChangeFlag)
-        }
-      })
       return () => {
         appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
-        resizeSubScription && resizeSubScription.remove()
       }
     }, [])
 
