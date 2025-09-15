@@ -21,7 +21,7 @@ function getAsyncSuspense (type, moduleId, componentRequest, componentName, chun
   type: ${JSON.stringify(type)},
   moduleId: ${JSON.stringify(moduleId)},
   chunkName: ${JSON.stringify(chunkName)},
-  getFallback: ${getFallback},
+  ${getFallback ? `getFallback: ${getFallback},` : ''}
   ${getLoading ? `getLoading: ${getLoading},` : ''}
   getChildren () {
     return import(${getAsyncChunkName(chunkName)}${componentRequest}).then(function (res) {
