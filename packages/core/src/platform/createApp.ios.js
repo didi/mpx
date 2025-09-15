@@ -233,7 +233,7 @@ export default function createApp (options) {
 
         // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
         global.__mpxAppDimensionsChangeFlag++
-        global.__appClassMapValueCache?.clear()
+        global.__classMapValueCache?.clear()
         // 触发当前栈顶页面 onResize
         const navigation = getFocusedNavigation()
         if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {

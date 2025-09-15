@@ -192,11 +192,6 @@ function getMediaStyle (media) {
 
 export default function styleHelperMixin () {
   return {
-    watch: {
-      __dimensionsChangeFlag () {
-        this.$rawOptions.options?.__classMapValueCache?.clear()
-      }
-    },
     methods: {
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
