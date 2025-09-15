@@ -4,6 +4,7 @@ const t = require('@babel/types')
 const generate = require('@babel/generator').default
 const parseRequest = require('../utils/parse-request')
 const isEmptyObject = require('../utils/is-empty-object')
+const chainAssign = require('../utils/chain-assign')
 const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function (content) {
@@ -30,8 +31,7 @@ module.exports = function (content) {
         '  __mpx_args__[i] = arguments[i];\n' +
         '}'
       ).program.body
-      // todo Object.assign可能会覆盖，未来存在非预期的覆盖case时需要改进处理
-      Object.assign(visitor, {
+      chainAssign(visitor, {
         Identifier (path) {
           if (path.node.name === 'arguments') {
             path.node.name = '__mpx_args__'
@@ -66,7 +66,7 @@ module.exports = function (content) {
     }
 
     if (mode !== 'wx') {
-      Object.assign(visitor, {
+      chainAssign(visitor, {
         CallExpression (path) {
           const callee = path.node.callee
           if (t.isIdentifier(callee) && callee.name === 'getRegExp') {
@@ -81,7 +81,7 @@ module.exports = function (content) {
   }
 
   if (mode === 'dd') {
-    Object.assign(visitor, {
+    chainAssign(visitor, {
       MemberExpression (path) {
         const property = path.node.property
         if (
@@ -96,7 +96,7 @@ module.exports = function (content) {
   }
 
   if (!module.wxs) {
-    Object.assign(visitor, {
+    chainAssign(visitor, {
       MemberExpression (path) {
         const property = path.node.property
         if (
