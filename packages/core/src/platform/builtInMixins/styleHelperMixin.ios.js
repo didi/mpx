@@ -26,7 +26,13 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value) {
+function formatValue (value, unitType) {
+  if (unitType === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
+  }
+  if (unitType && typeof unit[unitType] === 'function') {
+    return unit[unitType](+value)
+  }
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
@@ -40,10 +46,6 @@ function formatValue (value) {
 }
 
 global.__formatValue = formatValue
-global.__rpx = rpx
-global.__vw = vw
-global.__vh = vh
-global.__hairlineWidth = StyleSheet.hairlineWidth
 
 const escapeReg = /[()[\]{}#!.:,%'"+$]/g
 const escapeMap = {
