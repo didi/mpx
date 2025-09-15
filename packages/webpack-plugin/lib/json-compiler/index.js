@@ -65,7 +65,7 @@ module.exports = function (content) {
     processDynamicEntry,
     processComponent,
     processJsExport,
-    processAsyncSubpackageRules
+    processPlaceholder
   } = createJSONHelper({
     loaderContext: this,
     emitWarning,
@@ -197,51 +197,56 @@ module.exports = function (content) {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      // 存在所有命中asyncSubpackageRules的组件
-      const asyncComponents = []
-      const resolveResourcePathMap = new Map()
-      async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {}, resolveResourcePath } = {}) => {
-          if (err === RESOLVE_IGNORED_ERR) {
-            delete components[name]
-            return callback()
-          }
-          if (err) return callback(err)
-          components[name] = entry
-          if (runtimeCompile) {
-            // 替换组件的 hashName，并删除原有的组件配置
-            const hashName = 'm' + mpx.pathHash(resourcePath)
-            components[hashName] = entry
-            delete components[name]
-            dependencyComponentsMap[name] = {
-              hashName,
-              resourcePath,
-              isDynamic: queryObj.isDynamic
+      async.waterfall([
+        (callback) => {
+          // 存在所有命中asyncSubpackageRules的组件
+          const asyncComponents = []
+          const resolveResourcePathMap = new Map()
+          async.eachOf(components, (component, name, callback) => {
+            processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
+              if (err === RESOLVE_IGNORED_ERR) {
+                delete components[name]
+                return callback()
+              }
+              if (err) return callback(err)
+              components[name] = entry
+              if (runtimeCompile) {
+                // 替换组件的 hashName，并删除原有的组件配置
+                const hashName = 'm' + mpx.pathHash(resourcePath)
+                components[hashName] = entry
+                delete components[name]
+                dependencyComponentsMap[name] = {
+                  hashName,
+                  resourcePath,
+                  isDynamic: queryObj.isDynamic
+                }
+              }
+              resolveResourcePathMap.set(name, resourcePath)
+              if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+              callback()
+            })
+          }, (err) => {
+            if (err) return callback(err)
+            const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
+            if (runtimeCompile) {
+              components.element = mpxCustomElementPath
+              components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
+
+              this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'json', info: dependencyComponentsMap }))
             }
-          }
-          resolveResourcePathMap.set(name, resolveResourcePath)
-          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
-          callback()
-        })
-      }, (err) => {
-        if (err) return callback(err)
-        const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
-        if (runtimeCompile) {
-          components.element = mpxCustomElementPath
-          components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
-
-          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'json', info: dependencyComponentsMap }))
+            if (queryObj.mpxCustomElement) {
+              components.element = mpxCustomElementPath
+              Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
+            }
+            callback(null, { asyncComponents, resolveResourcePathMap })
+          })
+        },
+        ({ asyncComponents, resolveResourcePathMap }, callback) => {
+          async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+            processPlaceholder({ jsonObj: json, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback)
+          }, callback)
         }
-        if (queryObj.mpxCustomElement) {
-          components.element = mpxCustomElementPath
-          Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
-        }
-
-        // 使用async处理所有asyncComponents完成后调用callback
-        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
-          processAsyncSubpackageRules(json, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback)
-        }, callback)
-      })
+      ], callback)
     } else {
       callback()
     }

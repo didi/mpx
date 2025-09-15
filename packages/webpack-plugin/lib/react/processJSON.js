@@ -70,7 +70,7 @@ module.exports = function (jsonContent, {
     urlToRequest,
     processPage,
     processComponent,
-    processAsyncSubpackageRules
+    processPlaceholder
   } = createJSONHelper({
     loaderContext,
     emitWarning,
@@ -318,34 +318,38 @@ module.exports = function (jsonContent, {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      const asyncComponents = []
-      const resolveResourcePathMap = new Map()
-      async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder, resolveResourcePath } = {}) => {
-          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          const { relativePath } = entry
+      async.waterfall([
+        (callback) => {
+          const asyncComponents = []
+          const resolveResourcePathMap = new Map()
+          async.eachOf(components, (component, name, callback) => {
+            processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder, resourcePath } = {}) => {
+              if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+              const { relativePath } = entry
 
-          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+              tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
 
-          resolveResourcePathMap.set(name, resolveResourcePath)
-          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+              resolveResourcePathMap.set(name, resourcePath)
+              if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
 
-          fillInComponentsMap(name, entry, tarRoot)
-          callback()
-        })
-      }, (err) => {
-        if (err) return callback(err)
-        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
-          processAsyncSubpackageRules(jsonObj, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, placeholder) => {
-            if (err) return callback(err)
-            if (placeholder) {
-              const { name, entry } = placeholder
-              fillInComponentsMap(name, entry, '')
-            }
-            callback()
-          })
-        }, callback)
-      })
+              fillInComponentsMap(name, entry, tarRoot)
+              callback()
+            })
+          }, () => callback(null, { asyncComponents, resolveResourcePathMap }))
+        },
+        ({ asyncComponents, resolveResourcePathMap }, callback) => {
+          async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+            processPlaceholder({ jsonObj, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, placeholder) => {
+              if (err) return callback(err)
+              if (placeholder) {
+                const { name, entry } = placeholder
+                fillInComponentsMap(name, entry, '')
+              }
+              callback()
+            })
+          }, callback)
+        }
+      ], callback)
     } else {
       callback()
     }

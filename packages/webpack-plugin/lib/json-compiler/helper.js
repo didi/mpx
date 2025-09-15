@@ -53,7 +53,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     }
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
-      const resolveResourcePath = resource
       const { resourcePath, queryObj } = parseRequest(resource)
       let placeholder = ''
       if (queryObj.root) {
@@ -103,7 +102,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         tarRoot,
         placeholder,
         resourcePath,
-        resolveResourcePath,
         queryObj
       })
     })
@@ -170,7 +168,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     })
   }
 
-  const fillInComponentPlaceholder = (jsonObj, { name: componentName, placeholder, placeholderEntry, resolveResourcePathMap }, callback) => {
+  const fillInComponentPlaceholder = ({ jsonObj, name: componentName, placeholder, placeholderEntry, resolveResourcePathMap }, callback) => {
     let placeholderComponentName = placeholder.name
     const componentPlaceholder = jsonObj.componentPlaceholder || {}
     if (componentPlaceholder[componentName]) {
@@ -179,7 +177,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     }
     jsonObj.componentPlaceholder = componentPlaceholder
     if (placeholderEntry) {
-      if (resolveResourcePathMap.has(placeholderComponentName) && resolveResourcePathMap.get(placeholderComponentName) !== placeholder.resolveResourcePath) {
+      if (resolveResourcePathMap.has(placeholderComponentName) && resolveResourcePathMap.get(placeholderComponentName) !== placeholder.resourcePath) {
         // 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
         let i = 1
         let newPlaceholder = placeholderComponentName + i
@@ -189,7 +187,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         placeholderComponentName = newPlaceholder
       }
       jsonObj.usingComponents[placeholderComponentName] = placeholderEntry
-      resolveResourcePathMap.set(placeholderComponentName, placeholder.resolveResourcePath)
+      resolveResourcePathMap.set(placeholderComponentName, placeholder.resourcePath)
     }
     componentPlaceholder[componentName] = placeholderComponentName
     callback(null, {
@@ -212,18 +210,18 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     return placeholder
   }
 
-  const processAsyncSubpackageRules = (jsonObj, context, { name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback) => {
+  const processPlaceholder = ({ jsonObj, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback) => {
     if (tarRoot) {
       if (placeholder) {
         placeholder = getNormalizePlaceholder(placeholder)
         if (placeholder.resource) {
-          processComponent(placeholder.resource, context, { relativePath }, (err, entry, { resolveResourcePath }) => {
+          processComponent(placeholder.resource, context, { relativePath }, (err, entry, { resourcePath }) => {
             if (err) return callback(err)
-            placeholder.resolveResourcePath = resolveResourcePath
-            fillInComponentPlaceholder(jsonObj, { name, placeholder, placeholderEntry: entry, resolveResourcePathMap }, callback)
+            placeholder.resourcePath = resourcePath
+            fillInComponentPlaceholder({ jsonObj, name, placeholder, placeholderEntry: entry, resolveResourcePathMap }, callback)
           })
         } else {
-          fillInComponentPlaceholder(jsonObj, { name, placeholder }, callback)
+          fillInComponentPlaceholder({ jsonObj, name, placeholder }, callback)
         }
       } else {
         if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {
@@ -242,7 +240,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     processDynamicEntry,
     processPage,
     processJsExport,
-    processAsyncSubpackageRules,
+    processPlaceholder,
     isUrlRequest,
     urlToRequest
   }

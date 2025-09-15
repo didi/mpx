@@ -35,7 +35,8 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
-            componentsMap[componentName] = `function(){return {component: import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)}), loading: componentsMap['${placeholder}']}}`
+            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
+            componentsMap[componentName] = `function(){return {component: import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)}), loading: getComponent(require(${placeholderRequest}))}}`
           } else {
             loaderContext.emitError(
               new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)

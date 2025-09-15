@@ -44,7 +44,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
   // 将 placeholder 中使用的内建组件转化为 mpx-xxx, 并在 usingComponents 填充
-  function fixBuildComponentPlaceholder (input, { mode }) {
+  function fixComponentPlaceholder (input, { mode }) {
     if (!input.componentPlaceholder) return input
     if (mode === 'ali') {
       // 处理 驼峰转连字符
@@ -186,11 +186,11 @@ module.exports = function getSpec ({ warn, error }) {
       harmony: fixComponentName
     },
     {
-      ali: fixBuildComponentPlaceholder,
-      web: fixBuildComponentPlaceholder,
-      ios: fixBuildComponentPlaceholder,
-      android: fixBuildComponentPlaceholder,
-      harmony: fixBuildComponentPlaceholder
+      ali: fixComponentPlaceholder,
+      web: fixComponentPlaceholder,
+      ios: fixComponentPlaceholder,
+      android: fixComponentPlaceholder,
+      harmony: fixComponentPlaceholder
     }
   ]
 

@@ -95,8 +95,8 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
-            // 直接从当前组件的componentsMap中获取
-            getFallback = getComponentGetter(`componentsMap["${placeholder}"]()`)
+            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
+            getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder))
           } else {
             loaderContext.emitError(
               new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
