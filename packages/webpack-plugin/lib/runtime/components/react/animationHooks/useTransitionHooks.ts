@@ -211,7 +211,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         toVal = `${toVal * 100}%`
       } else if (typeof toVal !== typeof shareValMap[key].value) {
         // transition动画起始值和终态值类型不一致报错提示一下
-        error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`);
+        error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? Transform : key]

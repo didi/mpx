@@ -82,7 +82,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
           toVal = `${toVal as number * 100}%`
         } else if (typeof toVal !== typeof shareValMap[key].value) {
           // transition动画起始值和终态值类型不一致报错提示一下
-          error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`);
+          error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
         }
         // Todo 对齐wx
         const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
