@@ -49,7 +49,7 @@ npm install @mpxjs/webpack-plugin @mpxjs/core @mpxjs/api-proxy-rn
 
 在现有的小程序项目中添加 React Native 编译配置：
 
-```javascript
+```js
 // vue.config.js
 module.exports = {
   pluginOptions: {
@@ -885,7 +885,7 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 - id 选择器 `#id`
 - class 选择器 `.class` 或连续指定 `.a-class.b-class.c-class`
 
-```javascript
+```js
 <template>
   <!-- 必须添加 wx:ref 标记 -->
   <list wx:ref class="list"></list>
@@ -1135,7 +1135,7 @@ Window 配置控制应用导航栏外观，参考 [微信 window 配置](https:/
 
 Mpx 在 RN 环境下完整支持 Pinia 状态管理方案，提供响应式状态管理能力。
 
-```javascript
+```js
 // 示例：使用 Pinia Store
 import { defineStore } from 'pinia'
 
@@ -1192,7 +1192,7 @@ Mpx 的 i18n 国际化功能在 RN 环境下保持完整支持。
 
 **步骤1：引入 @mpxjs/api-proxy**
 
-```javascript
+```js
 import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
@@ -1203,7 +1203,7 @@ mpx.use(apiProxy, { usePromise: true })
 
 使用 mpx-cli 创建的项目已默认配置，无需手动设置。如需自定义，参考：
 
-```javascript
+```js
 // vue.config.js
 externals: {
   '@react-native-async-storage/async-storage': '@react-native-async-storage/async-storage',
@@ -1282,7 +1282,7 @@ project(':react-native-haptic-feedback').projectDir = new File(rootProject.proje
 
 在 `babel.config.js` 中添加插件，参考 [官方文档](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/)：
 
-```javascript
+```js
 module.exports = {
   presets: ['...'],
   plugins: [
@@ -1300,7 +1300,7 @@ module.exports = {
 
 **上下文指定：** RN 环境下必须手动调用 `.in(this)` 指定组件上下文
 
-```javascript
+```js
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
@@ -1340,7 +1340,7 @@ Mpx 提供 `@mpxjs/webview-bridge` 来实现 H5 页面与 RN 应用的双向通�
 
 **使用示例：**
 
-```javascript
+```js
 import webviewBridge from '@mpxjs/webview-bridge'
 
 // 页面跳转
@@ -1362,7 +1362,7 @@ webviewBridge.navigateTo({
 
 **1. RN 端注册方法**
 
-```javascript
+```js
 import mpx from '@mpxjs/core'
 
 mpx.config.webviewConfig = {
@@ -1393,7 +1393,7 @@ mpx.config.webviewConfig = {
 
 **2. H5 端调用方法**
 
-```javascript
+```js
 import webviewBridge from '@mpxjs/webview-bridge'
 
 // 调用同步方法
@@ -1428,7 +1428,7 @@ Mpx 在 RN 环境下实现了与微信小程序同等的异步分包功能，支
 
 在异步分包的能力实现当中我们借助了 RN 容器提供的分包下载执行/分包拉取的 api，因此在你的应用开始使用异步分包的功能之前需要在运行时代码提前部署好 RN 容器提供的相关 api 以供 Mpx 应用使用：
 
-```javascript
+```js
 import mpx from '@mpxjs/core'
 
 // 配置分包加载器
@@ -1449,7 +1449,7 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 
 在 `mpx.config.js` 中配置异步分包选项：
 
-```javascript
+```js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1471,7 +1471,7 @@ module.exports = defineConfig({
 
 
 
-```javascript
+```js
 mpx.onLazyLoadError((error) => {
   console.error('异步组件加载失败:', error)
 })
@@ -1480,7 +1480,7 @@ mpx.onLazyLoadError((error) => {
 **页面加载失败监听**：微信小程序未提供相关的监听异常的 api，Mpx 转 RN 提供了一个额外的全局监听函数
 
 
-```javascript
+```js
 // RN 环境特有
 mpx.config.rnConfig.onLazyLoadPageError = (error) => {
   console.error('异步页面加载失败:', {
@@ -1544,7 +1544,7 @@ createComponent({
 
 其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
 
-```typescript
+```ts
 (shareInfo: { title: string, path: string, imageUrl?: string }) => void
 ```
 
@@ -1552,7 +1552,7 @@ createComponent({
 
 #### mpx.config.rnConfig.parseAppProps
 
-```typescript
+```ts
 (props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)
 ```
 
@@ -1563,7 +1563,7 @@ createComponent({
 
 #### mpx.config.rnConfig.onStateChange
 
-```typescript
+```ts
 (state: Record<string, any>) => void
 ```
 
@@ -1571,7 +1571,7 @@ createComponent({
 
 #### mpx.config.rnConfig.onAppBack
 
-```typescript
+```ts
 () => boolean
 ```
 
@@ -1592,7 +1592,7 @@ createComponent({
 
 #### mpx.config.rnConfig.customDimensions
 
-```typescript
+```ts
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
@@ -1608,7 +1608,7 @@ createComponent({
 
 ### 网络请求
 
-```javascript
+```js
 // 使用统一的网络请求 API
 import { request } from '@mpxjs/api-proxy-rn'
 
@@ -1642,7 +1642,7 @@ uploadFile({
 
 ### 存储 API
 
-```javascript
+```js
 // 使用统一的存储 API
 import { 
   setStorageSync, 
@@ -1670,7 +1670,7 @@ clearStorageSync()
 
 ### 系统信息
 
-```javascript
+```js
 // 获取系统信息
 import { getSystemInfoSync } from '@mpxjs/api-proxy-rn'
 
@@ -1686,7 +1686,7 @@ console.log('系统信息', {
 
 ### 导航 API
 
-```javascript
+```js
 // 页面导航
 import { 
   navigateTo, 
@@ -1724,7 +1724,7 @@ reLaunch({
 
 ### 设备 API
 
-```javascript
+```js
 // 震动
 import { vibrateShort, vibrateLong } from '@mpxjs/api-proxy-rn'
 
@@ -1795,7 +1795,7 @@ Mpx 会自动将小程序样式转换为 React Native 样式：
 </style>
 ```
 
-```javascript
+```js
 // 转换后的 React Native 样式
 const styles = StyleSheet.create({
   container: {
@@ -2229,7 +2229,7 @@ npm run android -- --variant=release
 
 ### 性能监控
 
-```javascript
+```js
 // 性能监控
 import { Performance } from 'react-native'
 
@@ -2274,7 +2274,7 @@ cd android
 
 ### 自动化打包
 
-```javascript
+```js
 // package.json
 {
   "scripts": {

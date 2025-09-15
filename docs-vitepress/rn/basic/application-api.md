@@ -61,7 +61,7 @@ Window 配置控制应用导航栏外观，参考 [微信 window 配置](https:/
 
 Mpx 在 RN 环境下完整支持 Pinia 状态管理方案，提供响应式状态管理能力。
 
-```javascript
+```js
 // 示例：使用 Pinia Store
 import { defineStore } from 'pinia'
 
@@ -118,7 +118,7 @@ Mpx 的 i18n 国际化功能在 RN 环境下保持完整支持。
 
 **步骤1：引入 @mpxjs/api-proxy**
 
-```javascript
+```js
 import mpx from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
 
@@ -129,7 +129,7 @@ mpx.use(apiProxy, { usePromise: true })
 
 使用 mpx-cli 创建的项目已默认配置，无需手动设置。如需自定义，参考：
 
-```javascript
+```js
 // vue.config.js
 externals: {
   '@react-native-async-storage/async-storage': '@react-native-async-storage/async-storage',
@@ -208,7 +208,7 @@ project(':react-native-haptic-feedback').projectDir = new File(rootProject.proje
 
 在 `babel.config.js` 中添加插件，参考 [官方文档](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/)：
 
-```javascript
+```js
 module.exports = {
   presets: ['...'],
   plugins: [
@@ -226,7 +226,7 @@ module.exports = {
 
 **上下文指定：** RN 环境下必须手动调用 `.in(this)` 指定组件上下文
 
-```javascript
+```js
 import { createComponent } from '@mpxjs/core'
 
 createComponent({
@@ -264,7 +264,7 @@ Mpx 在 RN 环境下实现了与微信小程序同等的异步分包功能，支
 
 在异步分包的能力实现当中我们借助了 RN 容器提供的分包下载执行/分包拉取的 api，因此在你的应用开始使用异步分包的功能之前需要在运行时代码提前部署好 RN 容器提供的相关 api 以供 Mpx 应用使用：
 
-```javascript
+```js
 import mpx from '@mpxjs/core'
 
 // 配置分包加载器
@@ -285,7 +285,7 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 
 在 `mpx.config.js` 中配置异步分包选项：
 
-```javascript
+```js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -307,7 +307,7 @@ module.exports = defineConfig({
 
 
 
-```javascript
+```js
 mpx.onLazyLoadError((error) => {
   console.error('异步组件加载失败:', error)
 })
@@ -316,7 +316,7 @@ mpx.onLazyLoadError((error) => {
 **页面加载失败监听**：微信小程序未提供相关的监听异常的 api，Mpx 转 RN 提供了一个额外的全局监听函数
 
 
-```javascript
+```js
 // RN 环境特有
 mpx.config.rnConfig.onLazyLoadPageError = (error) => {
   console.error('异步页面加载失败:', {
@@ -380,7 +380,7 @@ createComponent({
 
 其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
 
-```typescript
+```ts
 (shareInfo: { title: string, path: string, imageUrl?: string }) => void
 ```
 
@@ -388,7 +388,7 @@ createComponent({
 
 #### mpx.config.rnConfig.parseAppProps
 
-```typescript
+```ts
 (props: Record<string, any>) => ({ initialRouteName: string, initialParams: Record<string, any> }| void)
 ```
 
@@ -401,7 +401,7 @@ createComponent({
 
 #### mpx.config.rnConfig.onStateChange
 
-```typescript
+```ts
 (state: Record<string, any>) => void
 ```
 
@@ -411,7 +411,7 @@ createComponent({
 
 #### mpx.config.rnConfig.onAppBack
 
-```typescript
+```ts
 () => boolean
 ```
 
@@ -434,7 +434,7 @@ createComponent({
 
 #### mpx.config.rnConfig.customDimensions
 
-```typescript
+```ts
 (dimensions: { window: ScaledSize; screen: ScaledSize }) => { window: ScaledSize; screen: ScaledSize } | void
 ```
 
@@ -449,7 +449,7 @@ createComponent({
 
 #### mpx.config.rnConfig.disableAppStateListener
 
-```typescript
+```ts
 boolean
 ```
 
