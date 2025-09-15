@@ -28,7 +28,6 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
       }
     }
     if (hairlineRegExp.test(value)) {
-      value = 'global.__hairlineWidth'
       value = `global.__formatValue(${JSON.stringify(value)}, 'hairlineWidth')`
       needStringify = false
     }
