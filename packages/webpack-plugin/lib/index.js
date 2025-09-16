@@ -1989,12 +1989,12 @@ try {
         }
         // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
         if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
+          injectStyleStripLoader(loaders)
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
           let vueStyleLoaderIndex = -1
           let mpxStyleLoaderIndex = -1
-          injectStyleStripLoader(loaders)
           loaders.forEach((loader, index) => {
             const currentLoader = toPosix(loader.loader)
             if (currentLoader.includes('node_modules/css-loader') && cssLoaderIndex === -1) {
