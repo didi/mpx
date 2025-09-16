@@ -63,7 +63,7 @@ interface ScrollPositionParams {
 
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
-  const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
+  const GenericComponent = global.__mpxGenericsMap[generichash][generickey]()
   if (!GenericComponent) return null
 
   return forwardRef((props: any, ref: any) => {
@@ -181,20 +181,16 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
 
   const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
     if (scrollViewRef.current) {
-      if (enableSticky) {
-        // 通过索引映射表快速定位位置
-        const position = indexMap.current[index]
-        const [sectionIndex, itemIndex] = (position as string).split('_')
-        scrollViewRef.current.scrollToLocation?.({
-          itemIndex: itemIndex === 'header' ? 0 : Number(itemIndex) + 1,
-          sectionIndex: Number(sectionIndex) || 0,
-          animated,
-          viewOffset,
-          viewPosition
-        })
-      } else {
-        scrollViewRef.current.scrollToIndex?.({ index, animated, viewOffset, viewPosition })
-      }
+      // 通过索引映射表快速定位位置
+      const position = indexMap.current[index]
+      const [sectionIndex, itemIndex] = (position as string).split('_')
+      scrollViewRef.current.scrollToLocation?.({
+        itemIndex: itemIndex === 'header' ? 0 : Number(itemIndex) + 1,
+        sectionIndex: Number(sectionIndex) || 0,
+        animated,
+        viewOffset,
+        viewPosition
+      })
     }
   }
 
@@ -203,15 +199,10 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       return 0
     }
     if ((itemHeight as ItemHeightType).getter) {
-      if (enableSticky) {
-        const item = convertedListData[sectionIndex].data[rowIndex]
-        // 使用getOriginalIndex获取原始索引
-        const originalIndex = getOriginalIndex(sectionIndex, rowIndex)
-        return (itemHeight as ItemHeightType).getter?.(item, originalIndex) || 0
-      } else {
-        const item = convertedListData[rowIndex]
-        return (itemHeight as ItemHeightType).getter?.(item, rowIndex) || 0
-      }
+      const item = convertedListData[sectionIndex].data[rowIndex]
+      // 使用getOriginalIndex获取原始索引
+      const originalIndex = getOriginalIndex(sectionIndex, rowIndex)
+      return (itemHeight as ItemHeightType).getter?.(item, originalIndex) || 0
     } else {
       return (itemHeight as ItemHeightType).value || 0
     }
@@ -231,128 +222,112 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   }
 
   const convertedListData = useMemo(() => {
-    if (enableSticky) {
-      const sections: Section[] = []
-      let currentSection: Section | null = null
-      // 清空之前的索引映射
-      indexMap.current = {}
-      // 清空反向索引映射
-      reverseIndexMap.current = {}
-      listData.forEach((item: ListItem, index: number) => {
-        if (item.isSectionHeader) {
+    const sections: Section[] = []
+    let currentSection: Section | null = null
+    // 清空之前的索引映射
+    indexMap.current = {}
+    // 清空反向索引映射
+    reverseIndexMap.current = {}
+    listData.forEach((item: ListItem, index: number) => {
+      if (item.isSectionHeader) {
         // 如果已经存在一个 section，先把它添加到 sections 中
-          if (currentSection) {
-            sections.push(currentSection)
-          }
-          // 创建新的 section
-          currentSection = {
-            headerData: item,
-            data: [],
-            hasSectionHeader: true,
-            _originalItemIndex: index
-          }
-          // 为 section header 添加索引映射
-          const sectionIndex = sections.length
-          indexMap.current[index] = `${sectionIndex}_header`
-          // 添加反向索引映射
-          reverseIndexMap.current[`${sectionIndex}_header`] = index
-        } else {
-        // 如果没有当前 section，创建一个默认的
-          if (!currentSection) {
-            // 创建默认section (无header的section)
-            currentSection = {
-              headerData: null,
-              data: [],
-              hasSectionHeader: false,
-              _originalItemIndex: -1
-            }
-          }
-          // 将 item 添加到当前 section 的 data 中
-          const itemIndex = currentSection.data.length
-          currentSection.data.push(extendObject({}, item, {
-            _originalItemIndex: index
-          }))
-          let sectionIndex
-          // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
-          if (!currentSection.hasSectionHeader && sections.length === 0) {
-            // 在默认section中(第一个且无header)
-            sectionIndex = 0
-            indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-          } else {
-            // 在普通section中
-            sectionIndex = sections.length
-            indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-          }
-          // 添加反向索引映射
-          reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
+        if (currentSection) {
+          sections.push(currentSection)
         }
-      })
-      // 添加最后一个 section
-      if (currentSection) {
-        sections.push(currentSection)
+        // 创建新的 section
+        currentSection = {
+          headerData: item,
+          data: [],
+          hasSectionHeader: true,
+          _originalItemIndex: index
+        }
+        // 为 section header 添加索引映射
+        const sectionIndex = sections.length
+        indexMap.current[index] = `${sectionIndex}_header`
+        // 添加反向索引映射
+        reverseIndexMap.current[`${sectionIndex}_header`] = index
+      } else {
+        // 如果没有当前 section，创建一个默认的
+        if (!currentSection) {
+          // 创建默认section (无header的section)
+          currentSection = {
+            headerData: null,
+            data: [],
+            hasSectionHeader: false,
+            _originalItemIndex: -1
+          }
+        }
+        // 将 item 添加到当前 section 的 data 中
+        const itemIndex = currentSection.data.length
+        currentSection.data.push(extendObject({}, item, {
+          _originalItemIndex: index
+        }))
+        let sectionIndex
+        // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
+        if (!currentSection.hasSectionHeader && sections.length === 0) {
+          // 在默认section中(第一个且无header)
+          sectionIndex = 0
+          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
+        } else {
+          // 在普通section中
+          sectionIndex = sections.length
+          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
+        }
+        // 添加反向索引映射
+        reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
       }
-      return sections
-    } else {
-      return listData
+    })
+    // 添加最后一个 section
+    if (currentSection) {
+      sections.push(currentSection)
     }
+    return sections
   }, [listData])
 
   const { getItemLayout } = useMemo(() => {
     const layouts: Array<{ length: number, offset: number, index: number }> = []
     let offset = 0
 
-    if (generichash && genericListHeader) {
+    if (useListHeader) {
       // 计算列表头部的高度
       offset += listHeaderHeight.getter?.() || listHeaderHeight.value || 0
     }
 
-    if (enableSticky) {
-      // 遍历所有 sections
-      convertedListData.forEach((section: Section, sectionIndex: number) => {
+    // 遍历所有 sections
+    convertedListData.forEach((section: Section, sectionIndex: number) => {
       // 添加 section header 的位置信息
-        const headerHeight = getSectionHeaderHeight({ sectionIndex })
-        layouts.push({
-          length: headerHeight,
-          offset,
-          index: layouts.length
-        })
-        offset += headerHeight
-
-        // 添加该 section 中所有 items 的位置信息
-        section.data.forEach((item: ListItem, itemIndex: number) => {
-          const contenteight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
-          layouts.push({
-            length: contenteight,
-            offset,
-            index: layouts.length
-          })
-          offset += contenteight
-        })
-
-        // 添加该 section 尾部位置信息
-        // 因为即使 sectionList 没传 renderSectionFooter，getItemLayout 中的 index 的计算也会包含尾部节点
-        layouts.push({
-          length: 0,
-          offset,
-          index: layouts.length
-        })
+      const headerHeight = getSectionHeaderHeight({ sectionIndex })
+      layouts.push({
+        length: headerHeight,
+        offset,
+        index: layouts.length
       })
-    } else {
-      convertedListData.forEach((item: ListItem, index: number) => {
-        const itemHeightValue = getItemHeight({ sectionIndex: 0, rowIndex: index })
+      offset += headerHeight
+
+      // 添加该 section 中所有 items 的位置信息
+      section.data.forEach((item: ListItem, itemIndex: number) => {
+        const contenteight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
         layouts.push({
-          length: itemHeightValue,
+          length: contenteight,
           offset,
           index: layouts.length
         })
-        offset += itemHeightValue
+        offset += contenteight
       })
-    }
+
+      // 添加该 section 尾部位置信息
+      // 因为即使 sectionList 没传 renderSectionFooter，getItemLayout 中的 index 的计算也会包含尾部节点
+      layouts.push({
+        length: 0,
+        offset,
+        index: layouts.length
+      })
+    })
     return {
       itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
-  }, [convertedListData])
+  }, [convertedListData, useListHeader])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -398,46 +373,26 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     'bindrefresherrefresh'
   ], { layoutRef })
 
-  return enableSticky
-    ? createElement(
-      SectionList,
-      extendObject(
-        {
-          style: [{ height, width }, style, layoutStyle],
-          sections: convertedListData,
-          renderItem: getItemRenderer(generichash, genericrecycleItem),
-          getItemLayout: getItemLayout,
-          ListHeaderComponent: useListHeader ? getListHeaderComponent(generichash, genericListHeader, listHeaderData) : null,
-          renderSectionHeader: getSectionHeaderRenderer(generichash, genericsectionHeader),
-          refreshControl: refresherEnabled
-            ? React.createElement(RefreshControl, {
-              onRefresh: onRefresh,
-              refreshing: refreshing
-            })
-            : undefined
-        },
-        innerProps
-      )
+  return createElement(
+    SectionList,
+    extendObject(
+      {
+        style: [{ height, width }, style, layoutStyle],
+        sections: convertedListData,
+        renderItem: getItemRenderer(generichash, genericrecycleItem),
+        getItemLayout: getItemLayout,
+        ListHeaderComponent: useListHeader ? getListHeaderComponent(generichash, genericListHeader, listHeaderData) : null,
+        renderSectionHeader: getSectionHeaderRenderer(generichash, genericsectionHeader),
+        refreshControl: refresherEnabled
+          ? React.createElement(RefreshControl, {
+            onRefresh: onRefresh,
+            refreshing: refreshing
+          })
+          : undefined
+      },
+      innerProps
     )
-    : createElement(
-      FlatList,
-      extendObject(
-        {
-          style: [{ height, width }, style, layoutStyle],
-          data: convertedListData,
-          renderItem: getItemRenderer(generichash, genericrecycleItem),
-          getItemLayout: getItemLayout,
-          ListHeaderComponent: getListHeaderComponent(generichash, genericListHeader, listHeaderData),
-          refreshControl: refresherEnabled
-            ? React.createElement(RefreshControl, {
-              onRefresh: onRefresh,
-              refreshing: refreshing
-            })
-            : undefined
-        },
-        innerProps
-      )
-    )
+  )
 })
 
 export default RecycleView
