@@ -21,7 +21,7 @@ import type { _ViewProps } from '../mpx-view'
 import type { ExtendedViewStyle } from '../types/common'
 
 // 动画类型
-const enum AnimationType {
+export const enum AnimationType {
   // 兜底
   None,
   API,
@@ -29,28 +29,34 @@ const enum AnimationType {
   CssAnimation
 }
 
-export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
+export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean | AnimationType, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
   const { style: originalStyle = {}, enableAnimation, animation, transitionend, layoutRef } = props
-  // 记录动画类型
-  // Todo 优先级 API > css transition > css animation
+  // 记录动画类型 优先级 css transition > css animation > API
+  let animationType = AnimationType.None
   const propNames = Object.keys(originalStyle)
-  const animationType = animation ? AnimationType.API : propNames.find(item => item.includes(Transition)) ? AnimationType.CssTransition : propNames.find(item => item.includes('animation')) ? AnimationType.CssAnimation : AnimationType.None
-  const animationTypeRef = useRef(animationType)
-  const enableStyleAnimation = enableAnimation || animationType !== AnimationType.None
-  const enableAnimationRef = useRef(enableStyleAnimation)
-  // console.log(`useAnimationHooks animationType=${animationTypeRef.current} animationType=${enableAnimationRef.current}`)
-  if (enableAnimationRef.current !== enableStyleAnimation) {
-    error('[Mpx runtime error]: animation usage should be stable in the component lifecycle, or you can set [enable-animation] with true.')
+  if (propNames.find(item => item.includes(Transition))) {
+    animationType = AnimationType.CssTransition
   }
-  if (animationTypeRef.current !== AnimationType.None && animationType !== AnimationType.None && animationTypeRef.current !== animationType) {
+  if (propNames.find(item => item.includes('animation'))) {
+    animationType = AnimationType.CssAnimation
+  }
+  if (!!animation || enableAnimation === true) {
+    animationType = AnimationType.API
+  }
+  if (enableAnimation === AnimationType.API || enableAnimation === AnimationType.CssTransition || enableAnimation === AnimationType.CssAnimation) {
+    animationType = enableAnimation
+  }
+  const animationTypeRef = useRef(animationType)
+  if (animationType && animationTypeRef.current !== animationType) {
     // 允许 none到API、CssTransition或API、CssTransition到none，不允许 API、CssTransition 互切
-    error('[Mpx runtime error]: animationType should be stable, it is not allowed to switch CSS animation, API animation or CSS animation in the component lifecycle')
+    error('[Mpx runtime error]: The animation type should be stable in the component lifecycle, or you can set animation type with [enable-animation].')
   }
   if (animationTypeRef.current === AnimationType.CssAnimation) {
     // 暂不支持 CssAnimation 提示
     error('[Mpx runtime error]: CSS animation is not supported yet')
+    return { enableStyleAnimation: false }
   }
-  if (!enableAnimationRef.current) return { enableStyleAnimation: false }
+  if (!animationTypeRef.current) return { enableStyleAnimation: false }
   // style变更标识(首次render不执行)
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const animationDeps = useRef(-1)
@@ -180,7 +186,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   })
 
   return {
-    enableStyleAnimation: enableAnimationRef.current,
+    enableStyleAnimation: !!animationTypeRef.current,
     animationStyle
   }
 }

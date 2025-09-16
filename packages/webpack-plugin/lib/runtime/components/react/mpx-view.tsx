@@ -8,7 +8,7 @@ import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleShee
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
-import useAnimationHooks from './animationHooks/index'
+import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
@@ -32,7 +32,7 @@ export interface _ViewProps extends ViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'enable-animation'?: boolean
+  'enable-animation'?: boolean | AnimationType
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
