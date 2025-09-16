@@ -53,44 +53,41 @@ export default function createApp (options) {
   defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
   defaultOptions.onAppInit && defaultOptions.onAppInit()
 
-  const pages = currentInject.getPages() || {}
+  const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const withHeader = (wrappedComponent, { pageConfig = {} }) => {
-      return ({ navigation, ...props }) => {
-        return createElement(GestureHandlerRootView,
-        {
-          style: {
-            flex: 1
-          }
-        },
-        createElement(innerNav, {
-          pageConfig: pageConfig,
-          navigation
-        }),
-        createElement(wrappedComponent, { navigation, ...props })
-      )
-    }
-  }
   const getPageScreens = (initialRouteName, initialParams) => {
-    return Object.entries(pages).map(([key, item]) => {
-      // const options = {
-      //   // __mpxPageStatusMap 为编译注入的全局变量
-      //   headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
-      // }
+    return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
+      const headerLayout = ({ navigation, children }) => {
+        return createElement(GestureHandlerRootView,
+          {
+            style: {
+              flex: 1
+            }
+          },
+          createElement(innerNav, {
+            pageConfig: pageConfig,
+            navigation
+          }),
+          children
+        )
+      }
+      const getComponent = () => {
+        return item.displayName ? item : item()
+      }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
-          component: withHeader(item, { pageConfig }),
-          initialParams
-          // options
+          getComponent,
+          initialParams,
+          layout: headerLayout
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: withHeader(item, { pageConfig })
-        // options
+        getComponent,
+        layout: headerLayout
       })
     })
   }
@@ -111,7 +108,7 @@ export default function createApp (options) {
     }
   }
   const appState = reactive({ state: '' })
-  // TODO hideReason 暂未完全模拟
+  // TODO reason 目前支持模拟 0/3
   // 0用户退出小程序
   // 1进入其他小程序
   // 2打开原生功能页
@@ -139,12 +136,10 @@ export default function createApp (options) {
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
       })
-    } else if (value === 'hide') {
-      const reason = appState.hideReason ?? 3
-      delete appState.hideReason
-      global.__mpxAppCbs.hide.forEach((cb) => {
+    } else if (value === 'hide' || value === 'exit') {
+       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
-          reason
+          reason: value === 'exit' ? 0 : 3
         })
       })
     }
@@ -157,7 +152,6 @@ export default function createApp (options) {
         global.__mpxPageStatusMap[navigation.pageId] = 'show'
       }
     } else if (currentState === 'inactive' || currentState === 'background') {
-      appState.hideReason = 3
       appState.state = 'hide'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'hide'
@@ -227,8 +221,7 @@ export default function createApp (options) {
         }
       })
       return () => {
-        appState.hideReason = 0
-        appState.state = 'hide'
+        appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
       }
@@ -239,7 +232,7 @@ export default function createApp (options) {
       headerShown: false,
       statusBarTranslucent: true,
       statusBarBackgroundColor: 'transparent'
-   }
+    }
 
     return createElement(SafeAreaProvider,
       null,

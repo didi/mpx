@@ -84,12 +84,16 @@ interface ExtendedNativeTouchEvent extends NativeTouchEvent {
   _stoppedEventTypes?: Set<string>
 }
 
+interface GlobalEventState {
+  needPress: boolean
+  identifier: null | number
+}
+
 export {
   NativeTouchEvent,
   Props,
   AdditionalProps,
   RemoveProps,
-  UseInnerPropsConfig,
   InnerRef,
   LayoutRef,
   PropsRef,
@@ -98,5 +102,6 @@ export {
   ExtendedNativeTouchEvent,
   EventConfig,
   RawConfig,
-  EventType
+  EventType,
+  GlobalEventState
 }

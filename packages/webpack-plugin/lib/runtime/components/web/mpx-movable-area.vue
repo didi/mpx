@@ -1,21 +1,23 @@
 <template>
-    <div class="mpx-movable-area-container" ref="movableArea">
-        <div class="mpx-movable-scroll-wrapper" ref="scroll">
-            <slot></slot>
-        </div>
+  <div class="mpx-movable-area-container" ref="movableArea">
+    <div class="mpx-movable-scroll-wrapper" ref="scroll">
+      <slot></slot>
     </div>
+  </div>
 </template>
 
 <script type="text/ecmascript-6">
   export default {
-    data () {
-      return {}
+    data() {
+      return {
+        isInited: false,
+      }
     },
-    mounted () {
+    mounted() {
       this.computedStyle()
-    },
-    beforeDestroy () {
-
+      if (!this.closeResizeObserver) {
+        this.createResizeObserver()
+      }
     },
     methods: {
       computedStyle() {
@@ -26,17 +28,39 @@
         if (!style.height) {
           this.$refs.movableArea.style.height = '10px'
         }
+      },
+      createResizeObserver() {
+        if (typeof ResizeObserver !== 'undefined') {
+          this.resizeObserver = new ResizeObserver(entries => {
+            if (!this.isInited) {
+              this.isInited = true
+              return
+            }
+            this.$children.forEach(child => {
+              if (child && child.refresh) {
+                child.refresh()
+              }
+            })
+          })
+          this.resizeObserver.observe(this.$refs.movableArea)
+        }
+      },
+    },
+    beforeDestroy () {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect()
+        this.resizeObserver = null
       }
-    }
+    },
   }
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
-    .mpx-movable-area-container
-        position: absolute
-        .mpx-movable-scroll-wrapper
-            position: absolute
-            top: 0
-            left: 0
-            bottom: 0
-            right: 0
+  .mpx-movable-area-container
+      position: relative
+      .mpx-movable-scroll-wrapper
+          position: absolute
+          top: 0
+          left: 0
+          bottom: 0
+          right: 0
 </style>

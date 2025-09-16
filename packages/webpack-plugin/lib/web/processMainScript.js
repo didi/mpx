@@ -49,7 +49,7 @@ import { processAppOption, getComponent } from ${stringifyRequest(loaderContext,
 Vue.use(VueRouter)\n`
 
   if (i18n) {
-    output += buildI18n({ i18n, loaderContext })
+    output += buildI18n({ i18n, isMain: true, loaderContext })
   }
 
   output += buildGlobalParams({
@@ -71,7 +71,8 @@ export default processAppOption({
   componentsMap: ${shallowStringify(componentsMap)},
   Vue: Vue,
   VueRouter: VueRouter,
-  el: ${JSON.stringify(webConfig.el || '#app')}
+  el: ${JSON.stringify(webConfig.el || '#app')},
+  useSSR: ${JSON.stringify(!!webConfig.useSSR)}
 })\n`
 
   callback(null, {
