@@ -1592,7 +1592,7 @@ function parseOptionalChaining (str) {
     }
     if (grammarMap.checkState() && haveNotGetValue) {
       // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-      throw new Error('[Mpx template error]: [optionChain] option value illegal!!!')
+      throw new Error('[Mpx template error]: optionChain option value illegal!!!')
     }
     haveNotGetValue = true
     let keyValue = ''
@@ -1642,7 +1642,7 @@ function parseOptionalChaining (str) {
     }
     if (grammarMap.checkState() && haveNotGetValue) {
       // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-      throw new Error('[Mpx template error]: [optionChain] option key illegal!!!')
+      throw new Error('[Mpx template error]: optionChain option key illegal!!!')
     }
     if (keyValue) {
       chainKey += `,'${keyValue}'`

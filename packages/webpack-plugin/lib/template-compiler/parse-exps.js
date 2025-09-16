@@ -23,7 +23,7 @@ const NODE_TYPE = {
 }
 
 const error = function (msg) {
-  throw new Error(`[Mpx template error]: [Mpx dynamic expression parser error]: ${msg}`)
+  throw new Error(`[Mpx template error]: ${msg}`)
 }
 
 walk.full = function full (node, baseVisitor, state, override) {
