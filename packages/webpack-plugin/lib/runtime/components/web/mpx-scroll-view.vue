@@ -4,10 +4,12 @@
   import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
+  import MouseWheel from '@better-scroll/mouse-wheel'
   import throttle from 'lodash/throttle'
   import debounce from 'lodash/debounce'
 
   BScroll.use(PullDown)
+  BScroll.use(MouseWheel)
 
   let mutationObserver = null
   let resizeObserver = null
@@ -222,7 +224,11 @@
           bounce: false,
           stopPropagation: true,
           bindToWrapper: true,
-          eventPassthrough: (this.scrollX && 'vertical') || (this.scrollY && 'horizontal') || ''
+          eventPassthrough: (this.scrollX && 'vertical') || (this.scrollY && 'horizontal') || '',
+          mouseWheel: {
+            speed: 20,
+            easeTime: 300
+          }
         }
         if (this.refresherEnabled) {
           originBsOptions.bounce = true

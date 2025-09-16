@@ -148,6 +148,11 @@
       },
       controls: function (show) {
         this.$emit('controlstoggle', inheritEvent('controlstoggle', {}, { show }))
+      },
+      objectFit (val) {
+        if (this._player && this._player.video) {
+          this._player.video.style.objectFit = val
+        }
       }
     },
     mounted () {
@@ -188,6 +193,9 @@
         })
         if (this.initialTime) {
           this._player.seek(this.initialTime)
+        }
+        if (this.objectFit) {
+          this._player.video.style.objectFit = this.objectFit
         }
       },
       initStyle () {
@@ -239,7 +247,10 @@
 
         this._player.on('progress', (e) => {
           const eNode = e.target
-          const buffered = (eNode?.buffered?.end(0)) / (eNode?.duration)
+          let buffered = 0
+          if (eNode?.buffered && eNode.buffered.length > 0) {
+            buffered = (eNode.buffered.end(0)) / (eNode?.duration)
+          }
           this.$emit('progress', inheritEvent('progress', e, { buffered: buffered * 100 }))
         })
 
