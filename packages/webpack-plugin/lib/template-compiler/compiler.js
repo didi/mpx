@@ -3128,19 +3128,11 @@ function genIf (node) {
 
 function genElseif (node) {
   node.elseifProcessed = true
-  if (node.for) {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the elif-directive to it`)
-    return
-  }
   return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
 }
 
 function genElse (node) {
   node.elseProcessed = true
-  if (node.for) {
-    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the else-directive to it`)
-    return
-  }
   return `else{\n${genNode(node)}}\n`
 }
 
