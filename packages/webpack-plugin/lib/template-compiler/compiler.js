@@ -2091,52 +2091,64 @@ function postProcessIf (el) {
       }]
     }
   } else if (el.elseif) {
-    prevNode = findPrevNode(el)
-    if (prevNode && prevNode._if !== undefined) {
-      if (prevNode._if === true) {
-        removeNode(el)
-      } else if (prevNode._if === false) {
-        // 当做if处理
-        el.if = el.elseif
-        delete el.elseif
-        postProcessIf(el)
-      } else {
-        result = evalExp(el.elseif.exp)
-        if (result.success) {
-          if (result.result) {
-            // 当做else处理
-            delete el.elseif
-            el._if = el.else = true
-            postProcessIf(el)
-          } else {
-            removeNode(el)
-          }
-        } else {
-          el._if = null
-          attrs = [{
-            name: config[mode].directive.elseif,
-            value: el.elseif.raw
-          }]
-        }
-      }
-    } else {
-      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+    if (el.for) {
+      error$1(`wx:elif (wx:elif="${el.elseif.raw}") invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the elif-directive to it`)
+      return
     }
-  } else if (el.else) {
+
     prevNode = findPrevNode(el)
-    if (prevNode && prevNode._if !== undefined) {
-      if (prevNode._if === true) {
-        removeNode(el)
-      } else if (prevNode._if === false) {
-        delete el.else
+    if (!prevNode || prevNode._if === undefined) {
+      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      // 当做if处理
+      el.if = el.elseif
+      delete el.elseif
+      postProcessIf(el)
+    } else {
+      result = evalExp(el.elseif.exp)
+      if (result.success) {
+        if (result.result) {
+          // 当做else处理
+          delete el.elseif
+          el._if = el.else = true
+          postProcessIf(el)
+        } else {
+          removeNode(el)
+        }
       } else {
+        el._if = null
         attrs = [{
-          name: config[mode].directive.else,
-          value: undefined
+          name: config[mode].directive.elseif,
+          value: el.elseif.raw
         }]
       }
-    } else {
+    }
+  } else if (el.else) {
+    if (el.for) {
+      error$1(`wx:else invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the else-directive to it`)
+      return
+    }
+
+    prevNode = findPrevNode(el)
+    if (!prevNode || prevNode._if === undefined) {
       error$1(`wx:else used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      delete el.else
+    } else {
+      attrs = [{
+        name: config[mode].directive.else,
+        value: undefined
+      }]
     }
   }
   if (attrs) {
@@ -2178,59 +2190,73 @@ function postProcessIfReact (el) {
       })
     }
   } else if (el.elseif) {
+    if (el.for) {
+      error$1(`wx:elif (wx:elif="${el.elseif.raw}") invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the elif-directive to it`)
+      return
+    }
+
     ifNode = findPrevNode(el)
     ifConditions = getIfConditions(ifNode)
     prevNode = ifConditions.length > 0 ? ifConditions[ifConditions.length - 1].block : ifNode
-    if (prevNode && prevNode._if !== undefined) {
-      if (prevNode._if === true) {
-        removeNode(el)
-      } else if (prevNode._if === false) {
-        el.if = el.elseif
-        delete el.elseif
-        postProcessIfReact(el)
-      } else {
-        result = evalExp(el.elseif.exp)
-        if (result.success) {
-          if (result.result) {
-            delete el.elseif
-            el._if = true
-            addIfCondition(ifNode, {
-              exp: el.elseif.exp,
-              block: el
-            })
-            removeNode(el, true)
-          } else {
-            removeNode(el)
-          }
-        } else {
-          el._if = null
+
+    if (!prevNode || prevNode._if === undefined) {
+      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      el.if = el.elseif
+      delete el.elseif
+      postProcessIfReact(el)
+    } else {
+      result = evalExp(el.elseif.exp)
+      if (result.success) {
+        if (result.result) {
+          delete el.elseif
+          el._if = true
           addIfCondition(ifNode, {
             exp: el.elseif.exp,
             block: el
           })
           removeNode(el, true)
+        } else {
+          removeNode(el)
         }
-      }
-    } else {
-      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
-    }
-  } else if (el.else) {
-    ifNode = findPrevNode(el)
-    ifConditions = getIfConditions(ifNode)
-    prevNode = ifConditions.length > 0 ? ifConditions[ifConditions.length - 1].block : ifNode
-    if (prevNode && prevNode._if !== undefined) {
-      if (prevNode._if === true) {
-        removeNode(el)
-      } else if (prevNode._if === false) {
-        delete el.else
       } else {
+        el._if = null
         addIfCondition(ifNode, {
+          exp: el.elseif.exp,
           block: el
         })
         removeNode(el, true)
       }
-    } else {
+    }
+  } else if (el.else) {
+    if (el.for) {
+      error$1(`wx:else invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the else-directive to it`)
+      return
+    }
+
+    ifNode = findPrevNode(el)
+    ifConditions = getIfConditions(ifNode)
+    prevNode = ifConditions.length > 0 ? ifConditions[ifConditions.length - 1].block : ifNode
+
+    if (!prevNode || prevNode._if === undefined) {
       error$1(`wx:else used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      delete el.else
+    } else {
+      addIfCondition(ifNode, {
+        block: el
+      })
+      removeNode(el, true)
     }
   }
 }
@@ -3103,7 +3129,7 @@ function genIf (node) {
 function genElseif (node) {
   node.elseifProcessed = true
   if (node.for) {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the elif-directive to it`)
     return
   }
   return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
@@ -3112,7 +3138,7 @@ function genElseif (node) {
 function genElse (node) {
   node.elseProcessed = true
   if (node.for) {
-    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
+    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the else-directive to it`)
     return
   }
   return `else{\n${genNode(node)}}\n`
