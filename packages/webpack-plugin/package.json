@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.15",
+  "version": "2.10.16",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -29,7 +29,7 @@
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/utils": "^2.10.13",
+    "@mpxjs/utils": "^2.10.16",
     "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
@@ -88,7 +88,7 @@
   },
   "devDependencies": {
     "@d11/react-native-fast-image": "^8.6.12",
-    "@mpxjs/api-proxy": "^2.10.15",
+    "@mpxjs/api-proxy": "^2.10.16",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^8.1.0",
