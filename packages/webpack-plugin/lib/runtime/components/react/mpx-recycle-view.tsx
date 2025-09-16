@@ -63,7 +63,7 @@ interface ScrollPositionParams {
 
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
-  const GenericComponent = global.__mpxGenericsMap[generichash][generickey]()
+  const GenericComponent = global.__mpxGenericsMap?.[generichash]?.[generickey]?.()
   if (!GenericComponent) return null
 
   return forwardRef((props: any, ref: any) => {

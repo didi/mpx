@@ -7,11 +7,15 @@ module.exports = {
   MPX_ROOT_VIEW: 'mpx-root-view', // 根节点类名
   MPX_APP_MODULE_ID: 'mpx-app-scope', // app文件moduleId
   PARENT_MODULE_ID: '__pid',
-  EXTEND_COMPONENTS_LIST: {
-    wx: ['recycle-view'],
-    web: ['recycle-view'],
-    ios: ['recycle-view'],
-    android: ['recycle-view'],
-    harmony: ['recycle-view']
-  } // 扩展组件列表
+  // 扩展组件的平台配置：声明哪些组件在哪些平台有专用实现，哪些使用公共组件
+  EXTEND_COMPONENT_CONFIG: {
+    'recycle-view': {
+      wx: 'runtime/components/wx/mpx-recycle-view.mpx',
+      ali: 'runtime/components/ali/mpx-recycle-view.mpx',
+      web: 'runtime/components/web/mpx-recycle-view.vue',
+      ios: 'runtime/components/react/dist/mpx-recycle-view.jsx',
+      android: 'runtime/components/react/dist/mpx-recycle-view.jsx',
+      harmony: 'runtime/components/react/dist/mpx-recycle-view.jsx'
+    }
+  }
 }

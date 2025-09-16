@@ -11,7 +11,8 @@ const resolve = require('../utils/resolve')
 const { transSubpackage } = require('../utils/trans-async-sub-rules')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
-const { RESOLVE_IGNORED_ERR, EXTEND_COMPONENTS_LIST } = require('../utils/const')
+const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const { processExtendComponents } = require('../utils/process-extend-components')
 const normalize = require('../utils/normalize')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
@@ -36,10 +37,17 @@ module.exports = function (jsonContent, {
     srcMode,
     env,
     projectRoot,
-    useExtendComponents = {}
+    useExtendComponents = {},
+    appInfo
   } = mpx
 
   const context = loaderContext.context
+
+  let hasApp = true
+
+  if (!appInfo.name) {
+    hasApp = false
+  }
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -106,15 +114,13 @@ module.exports = function (jsonContent, {
 
     if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
-    } else {
+    }
+    if (!hasApp || ctorType === 'app') {
       if (useExtendComponents[mode]) {
-        const extendComponents = {}
-        useExtendComponents[mode].forEach((name) => {
-          if (EXTEND_COMPONENTS_LIST[mode]?.includes(name)) {
-            extendComponents[name] = normalize.lib(`runtime/components/react/dist/mpx-${name}.jsx`)
-          } else {
-            emitWarning(`extend component ${name} is not supported in ${mode} environment!`)
-          }
+        const extendComponents = processExtendComponents({
+          useExtendComponents,
+          mode,
+          emitWarning
         })
         jsonObj.usingComponents = Object.assign({}, extendComponents, jsonObj.usingComponents)
       }
