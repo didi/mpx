@@ -60,9 +60,10 @@ interface ScrollPositionParams {
   viewPosition?: number;
 }
 
+
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
-  const GenericComponent = global.__mpxGenericsMap[generichash](generickey)
+  const GenericComponent = global.__mpxGenericsMap[generichash][generickey]()
   if (!GenericComponent) return null
 
   return forwardRef((props: any, ref: any) => {
@@ -74,10 +75,8 @@ const getGeneric = (generichash: string, generickey: string) => {
 
 const getListHeaderComponent = (generichash: string, generickey: string, data: any) => {
   if (!generichash || !generickey) return undefined
-  return () => {
-    const ListHeaderComponent = getGeneric(generichash, generickey)
-    return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
-  }
+  const ListHeaderComponent = getGeneric(generichash, generickey)
+  return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
 }
 
 const getSectionHeaderRenderer = (generichash: string, generickey: string) => {
