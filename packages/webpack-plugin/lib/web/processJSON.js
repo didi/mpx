@@ -37,13 +37,13 @@ module.exports = function (jsonContent, {
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
-      new Error('[json processor][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     loaderContext.emitError(
-      new Error('[json compiler][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
@@ -255,7 +255,7 @@ module.exports = function (jsonContent, {
             if (oldResourcePath !== resourcePath) {
               const oldOutputPath = outputPath
               outputPath = mpx.getOutputPath(resourcePath, 'page', { conflictPath: outputPath })
-              emitWarning(new Error(`Current page [${resourcePath}] is registered with a conflict outputPath [${oldOutputPath}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`))
+              emitWarning(`Current page [${resourcePath}] is registered with a conflict outputPath [${oldOutputPath}] which is already existed in system, will be renamed with [${outputPath}], use ?resolve to get the real outputPath!`)
             }
           }
 

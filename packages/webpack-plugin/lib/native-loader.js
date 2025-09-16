@@ -8,6 +8,7 @@ const { JSON_JS_EXT } = require('./utils/const')
 const getEntryName = require('./utils/get-entry-name')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordModuleIdMapDependency = require('./dependencies/RecordModuleIdMapDependency')
 const preProcessJson = require('./utils/pre-process-json')
 
 // todo native-loader考虑与mpx-loader或加强复用，原生组件约等于4个区块都为src的.mpx文件
@@ -23,7 +24,9 @@ module.exports = function (content) {
   const loaderContext = this
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
-  const moduleId = mpx.getModuleId(filePath)
+  const moduleId = mpx.getModuleId(filePath, false, this)
+  this._module.addPresentationalDependency(new RecordModuleIdMapDependency(moduleId, filePath))
+
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const packageRoot = queryObj.packageRoot || mpx.currentPackageRoot
   const mode = mpx.mode
@@ -104,13 +107,13 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][native-loader][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][native-loader][' + this.resource + ']: ' + msg)
     )
   }
   let ctorType = pagesMap[resourcePath]

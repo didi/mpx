@@ -237,7 +237,7 @@ export default function styleHelperMixin () {
             overflow: 'hidden'
           })
         }
-        const isEmpty = isNativeStaticStyle ? result.length > 0 : isEmptyObject(result)
+        const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
         return isEmpty ? empty : result
       }
     }

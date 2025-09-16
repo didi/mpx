@@ -108,7 +108,7 @@ export default function createApp (options) {
     }
   }
   const appState = reactive({ state: '' })
-  // TODO hideReason 暂未完全模拟
+  // TODO reason 目前支持模拟 0/3
   // 0用户退出小程序
   // 1进入其他小程序
   // 2打开原生功能页
@@ -136,12 +136,10 @@ export default function createApp (options) {
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
       })
-    } else if (value === 'hide') {
-      const reason = appState.hideReason ?? 3
-      delete appState.hideReason
-      global.__mpxAppCbs.hide.forEach((cb) => {
+    } else if (value === 'hide' || value === 'exit') {
+       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
-          reason
+          reason: value === 'exit' ? 0 : 3
         })
       })
     }
@@ -154,7 +152,6 @@ export default function createApp (options) {
         global.__mpxPageStatusMap[navigation.pageId] = 'show'
       }
     } else if (currentState === 'inactive' || currentState === 'background') {
-      appState.hideReason = 3
       appState.state = 'hide'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'hide'
@@ -224,8 +221,7 @@ export default function createApp (options) {
         }
       })
       return () => {
-        appState.hideReason = 0
-        appState.state = 'hide'
+        appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
         resizeSubScription && resizeSubScription.remove()
       }
