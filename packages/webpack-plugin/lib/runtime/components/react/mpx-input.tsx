@@ -102,6 +102,13 @@ export interface InputProps {
   'parent-width'?: number
   'parent-height'?: number
   'adjust-position': boolean,
+  /**
+   * @default true
+   * @platform android
+   *
+   * adnroid 是否开启原生键盘遮挡
+   */
+  'enable-native-keyboard-avoiding'?: boolean,
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -150,6 +157,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
+    'enable-native-keyboard-avoiding': enableNativeKeyboardAvoiding = true,
     bindinput,
     bindfocus,
     bindblur,
@@ -281,7 +289,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition }
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, enableNativeKeyboardAvoiding }
     }
   }
 
