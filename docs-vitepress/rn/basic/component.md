@@ -800,7 +800,7 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 - id 选择器 `#id`
 - class 选择器 `.class` 或连续指定 `.a-class.b-class.c-class`
 
-```javascript
+```html
 <template>
   <!-- 必须添加 wx:ref 标记 -->
   <list wx:ref class="list"></list>
