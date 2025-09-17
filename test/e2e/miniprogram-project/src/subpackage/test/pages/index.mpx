@@ -20,6 +20,6 @@ createPage({
 <script type="application/json">
 {
   "usingComponents": {
-  }
+  },
 }
 </script>

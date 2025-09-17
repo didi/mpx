@@ -1,0 +1,26 @@
+<template>
+  <view>
+    <asyncComp></asyncComp>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({})
+</script>
+
+
+<script type="application/json">
+{
+  "usingComponents": {
+    // 生成的 usingComponents 不应覆盖 placeholder-view
+    "asyncComp": "../../test/components/asyncComp.mpx",
+    "asyncComp1": "../../test/components/asyncComp.mpx",
+    "placeholder-view": "../../../components/list.mpx"
+  },
+  "componentPlaceholder": {
+    "asyncComp1": "button"
+  }
+}
+</script>
