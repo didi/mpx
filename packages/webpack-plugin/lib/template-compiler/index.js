@@ -43,13 +43,13 @@ module.exports = function (raw) {
 
   const warn = (msg) => {
     this.emitWarning(
-      new Error('[template compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const error = (msg) => {
     this.emitError(
-      new Error('[template compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template error][' + this.resource + ']: ' + msg)
     )
   }
 
