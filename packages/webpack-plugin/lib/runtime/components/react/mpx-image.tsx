@@ -99,6 +99,7 @@ const relativeCenteredSize = (viewSize: number, imageSize: number) => {
   return (viewSize - imageSize) / 2
 }
 
+// 获取能完全显示图片的缩放比例：长宽方向的缩放比例最小值即为能完全展示的比例
 function getFitScale (width1: number, height1: number, width2: number, height2: number) {
   return Math.min(width2 / width1, height2 / height1)
 }
@@ -241,18 +242,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const modeStyle: ImageStyle = useMemo(() => {
     if (noMeetCalcRule(isSvg, mode, viewWidth, viewHeight, ratio)) return {}
     switch (mode) {
-      case 'scaleToFill':
-        if (isSvg) {
-          const scale = getFitScale(imageWidth, imageHeight, viewWidth, viewHeight)
-          return {
-            transform: [
-              { translateY: relativeCenteredSize(viewHeight, imageHeight * scale) },
-              { translateX: relativeCenteredSize(viewWidth, imageWidth * scale) },
-              { scale }
-            ]
-          }
-        }
-        return {}
+      case 'scaleToFill': // wx 中 svg 图片的 scaleToFill 模式效果与 aspectFit 一致，不会就行图片缩放，此处保持一致
       case 'aspectFit':
         if (isSvg) {
           const scale = getFitScale(imageWidth, imageHeight, viewWidth, viewHeight)
