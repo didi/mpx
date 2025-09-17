@@ -1,18 +1,18 @@
 <template>
-  <view class="list-item">
-    <view class="item-content">recycle-item-default</view>
+  <view class="mpx-recycle-item-default">
+    <view class="mpx-default-content">recycle-item-default</view>
   </view>
 </template>
 
 <style lang="stylus" scoped>
-.list-item
+.mpx-recycle-item-default
   margin 4px 16px
   padding 16px
   background #fff
   border-radius 8px
   box-shadow 0 2px 4px rgba(0,0,0,0.1)
 
-.item-content
+.mpx-default-content
   display flex
   flex-direction column
   font-size 14px
