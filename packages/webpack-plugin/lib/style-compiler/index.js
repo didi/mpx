@@ -56,7 +56,7 @@ module.exports = function (css, map) {
     }
 
     if (isReact(mode)) {
-      plugins.push(transSpecial({ id }))
+      plugins.push(transSpecial({ id, isSupportedPage: true }))
     }
 
     // plugins.push(pluginCondStrip({

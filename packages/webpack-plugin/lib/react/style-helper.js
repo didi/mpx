@@ -1,5 +1,6 @@
 const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
+const { MPX_TAG_PAGE_SELECTOR } = require('../utils/const')
 const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
@@ -7,7 +8,7 @@ const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
+function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error }) {
   const classMap = {}
 
   const root = postcss.parse(content, {
@@ -76,8 +77,6 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
           classMapKeys.push(selector.nodes[0].value)
-        } else if (selector.nodes.length === 1 && selector.nodes[0].type === 'tag' && selector.nodes[0].value === 'page') {
-          classMapKeys.push(`_${selector.nodes[0].type}-${selector.nodes[0].value}`)
         } else {
           error('Only single class selector is supported in react native mode temporarily.')
         }
@@ -87,11 +86,16 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+          classMap[key] = Object.assign(classMap[key] || {}, key === MPX_TAG_PAGE_SELECTOR ? { flex: 1 } : {}, classMapValue)
         }
       })
     }
   })
+  if (ctorType === 'page' && !classMap[MPX_TAG_PAGE_SELECTOR]) {
+    classMap[MPX_TAG_PAGE_SELECTOR] = {
+      flex: 1
+    }
+  }
   return classMap
 }
 

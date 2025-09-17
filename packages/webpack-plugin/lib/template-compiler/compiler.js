@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -2527,15 +2527,8 @@ function getVirtualHostRoot (options, meta) {
     if (isReact(mode) && ctorType === 'page') {
       const rootView = createASTElement('view', [
         {
-          name: 'wx:style',
-          value: {
-            flex: 1,
-            overflow: 'hidden'
-          }
-        },
-        {
           name: 'class',
-          value: '_tag-page'
+          value: MPX_TAG_PAGE_SELECTOR
         }
       ])
       processElement(rootView, rootView, options, meta)
