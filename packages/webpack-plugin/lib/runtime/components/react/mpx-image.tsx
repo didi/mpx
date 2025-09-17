@@ -215,8 +215,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     viewHeight
   })
 
-  console.log(`==========render Image viewWidth:${viewWidth} viewHeight:${viewHeight} imageWidth:${imageWidth} imageHeight:${imageHeight} ratio:${ratio} loaded:${loaded}`)
-
   function setViewSize (viewWidth: number, viewHeight: number, ratio: number) {
     // 在特定模式下可预测 view 的变化，在onLayout触发时能以此避免重复render
     switch (mode) {
