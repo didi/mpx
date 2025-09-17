@@ -303,6 +303,110 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 ### 使用原子类
 后续支持。
 
+## 跨端动画
+### createAnimation 动画API
+创建一个动画实例 animation，调用实例的方法来描述动画，最后通过动画实例的 export 方法导出动画数据传递给组件的 animation 属性。
+详情参考以下动画部分微信小程序文档，以下仅描述支持能力有差异部分：
+#### [wx.createAnimation](https://developers.weixin.qq.com/miniprogram/dev/api/ui/animation/wx.createAnimation.html)
+- 参数 timingFunction 不支持 step-start 和 step-end
+#### [动画实例 animation](https://developers.weixin.qq.com/miniprogram/dev/api/ui/animation/Animation.html)
+- translateZ() 不支持
+- translate3d() 不支持
+- rotate3d() 不支持
+- rotateZ() 不支持
+- scaleZ() 不支持
+- scale3d() 不支持
+- animation.matrix() 不支持
+- animation.matrix3d() 不支持
+### CSS transition
+CSS transition 动画至少需要设置动画时长和动画属性，可通过单独属性 transition-property 和 transition-property 设置，也可以通过 transition 缩写设置
+>重要提示：transition 支持设置百分比，如 ```marginTop: 1%;marginTop: 100%;```；要注意的是起始值和结束值需设置为同一类型，同为px或者同为百分比， 支持 ```marginTop: 10px;marginTop: 100px; ```，**不支持 ```marginTop: 10px; marginTop: 100%;```**
+
+#### [transition](https://developer.mozilla.org/en-US/docs/Web/CSS/transition)
+```css
+/**** 支持 */
+/* property name | duration */
+transition: margin-right 4s;
+/* property name | duration | delay */
+transition: margin-right 4s 1s;
+/* property name | duration | easing function */
+transition: margin-right 4s ease-in-out;
+/* property name | duration | easing function | delay */
+transition: margin-right 4s ease-in-out 1s;
+
+/* Apply to 2 properties */
+transition: margin-right 4s, color 1s;
+```
+```css
+/**** 需配合 transition-property 使用*/
+/* transition 未定义 property 时需配合 transition-property 使用，否则仅设置duration、timingFunciton等参数实际动画不生效 */
+transition: 200ms linear 50ms;
+transition: 2s, 1s;
+```
+```css
+/**** 不支持：property 不支持设置为 all  */
+transition: all 0.5s ease-out
+```
+#### [transition-property](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-property)
+不支持设置为 all，不支持自定义
+> 支持的 property 合集有：
+> rotateX rotateY rotateZ scaleX scaleY skewX skewY translateX translateY opacity backgroundColor width height top right bottom left color borderColor borderBottomColor borderLeftColor borderRightColor borderTopColor borderTopLeftRadius borderTopRightRadius borderBottomLeftRadius borderBottomRightRadius borderRadius borderBottomWidth borderLeftWidth borderRightWidth borderTopWidth borderWidth margin marginBottom marginLeft marginRight marginTop maxHeight maxWidth minHeight minWidth padding paddingBottom paddingLeft paddingRight paddingTop
+```css
+/**** 支持 */
+transition-property: height;
+transition-property: height, color;
+```
+```css
+/**** 不支持 */
+transition-property: all;
+/* <custom-ident> values */
+transition-property: test_05;
+transition-property: -specific;
+transition-property: sliding-vertically;
+transition-property: test1, animation4;
+transition-property:
+  all,
+  -moz-specific,
+  sliding;
+transition-property: inherit;
+transition-property: initial;
+transition-property: revert;
+transition-property: revert-layer;
+transition-property: unset;
+```
+#### [transition-duration](https://developer.mozilla.org/zh-CN/docs/Web/CSS/transition-duration)
+```css
+/**** 支持 */
+transition-duration: 6s;
+transition-duration: 120ms;
+transition-duration: 1s, 15s;
+transition-duration: 10s, 30s, 230ms;
+```
+#### [transition-delay](https://developer.mozilla.org/zh-CN/docs/Web/CSS/transition-delay)
+```css
+/**** 支持 */
+transition-delay: 3s;
+transition-delay: 2s, 4ms;
+```
+#### [transition-behavior](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-behavior)
+不支持
+#### [transition-timing-function](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function)
+仅支持 ease、ease-in、ease-out、ease-in-out、linear、cubic-bezier()，不支持 step-start、step-end、steps()
+
+
+### CSS animation
+暂不支持
+### 动画监听事件
+#### transitionend
+- CSS transition 结束或 wx.createAnimation 结束一个阶段时触发
+- 不属于冒泡事件，需要绑定在真正发生了动画的节点上才会生效
+#### animationstart
+暂不支持
+#### animationiteration
+暂不支持
+#### animationend
+暂不支持
+
 ## 混合编写RN代码
 在编写Mpx组件时，在特定情况下（处于性能考虑等因素），可能会涉及到混合开发(在Mpx项目内编写RN组件)
 
