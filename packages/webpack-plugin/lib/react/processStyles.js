@@ -11,7 +11,19 @@ module.exports = function (styles, {
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
   let content = ''
-  let output = '/* styles */\n'
+  let output = ''
+  if (ctorType === 'app') {
+    output += `
+          /* styles */
+          global.__classMapValueCache = new Map();
+          global.__getCacheClass = function(className, getStyleObj) {
+            if (!global.__classMapValueCache.get(className)) {
+              const styleObj = getStyleObj();
+              global.__classMapValueCache.set(className, styleObj);
+            }
+            return global.__classMapValueCache.get(className);
+          };\n`
+  }
   if (styles.length) {
     const warn = (msg) => {
       loaderContext.emitWarning(
@@ -55,22 +67,29 @@ module.exports = function (styles, {
           warn,
           error
         })
+        const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+          result += `get ['${key}']() {
+            return global.__getCacheClass('${key}', () => (${shallowStringify(value)}));
+          },`
+          return result
+        }, '')
         if (ctorType === 'app') {
           output += `
           let __appClassMap
           global.__getAppClassMap = function() {
             if(!__appClassMap) {
-              __appClassMap = ${shallowStringify(classMap)};
+              __appClassMap = {${classMapCode}};
             }
             return __appClassMap;
           };\n`
         } else {
           output += `
+          /* styles */
           let __classMap
           global.currentInject.injectMethods = {
             __getClassMap: function() {
               if(!__classMap) {
-                __classMap = ${shallowStringify(classMap)};
+                __classMap = {${classMapCode}};
               }
               return __classMap;
             }
@@ -85,7 +104,7 @@ module.exports = function (styles, {
     })
   } else {
     callback(null, {
-      output: ''
+      output
     })
   }
 }
