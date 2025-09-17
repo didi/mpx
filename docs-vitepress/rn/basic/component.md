@@ -53,11 +53,10 @@
 | hover-start-time   | number  |     `50`    | 按住后多久出现点击态，单位毫秒|
 | hover-stay-time	  | number  |     `400`    | 手指松开后点击态保留时间，单位毫秒	 |
 | animation | object  |   | 传递动画的实例， 可配合mpx.createAnimation方法一起使用|
-| enable-background		  | boolean  |     `false `   |  RN环境特有属性，是否要开启background-image、background-size和background-postion的相关计算或渲染，请根据实际情况开启 |
+| enable-background		  | boolean  |     `false `   |  RN环境特有属性，是否要开启background-image、background-size和background-position的相关计算或渲染，请根据实际情况开启 |
 | enable-animation | boolean  | `false`  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
 | enable-fast-image | boolean  | `false`  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
 | is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
-
 
 事件
 
@@ -66,10 +65,10 @@
 | bindtransitionend| 动画结束时触发,`event.detail = { elapsedTime, finished, current }`     |
 
 
-注意事项
-
-1. 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
-2. 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
+> [!tip] 注意
+> - 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+> - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
+> - background-image、background-size、background-position 等背景图相关 css 属性，仅 view 组件支持
 
 ### text
 文本。
@@ -83,10 +82,9 @@
 
 
 
-注意事项
-
-1. 未包裹 text 标签的文本，会自动包裹 text 标签。
-2. text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
+> [!tip] 注意
+> - 未包裹 text 标签的文本，会自动包裹 text 标签。
+> - text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
 ### scroll-view
 可滚动视图区域。
@@ -132,13 +130,13 @@
 | bindscrollend | 滚动结束时触发         |
 | bindrefresherrefresh| 自定义下拉刷新被触发 |
 
-注意事项
-
-1. 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
-2. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
-3. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
-4. scroll-view 组件在滚动过程中，不会触发其自身或子组件的 touchend 事件响应，这是 RN 底层实现导致的问题，手势系统识别当前是 scroll-view 的滚动，就会取消掉 touchend 事件的响应。
-5. 安卓上如果触发了 scroll-view 组件默认的下拉刷新，binddragend可能不触发，只会触发 binddragstart
+> [!tip] 注意
+>
+> - 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
+> - simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
+> - wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
+> - scroll-view 组件在滚动过程中，不会触发其自身或子组件的 touchend 事件响应，这是 RN 底层实现导致的问题，手势系统识别当前是 scroll-view 的滚动，就会取消掉 touchend 事件的响应。
+> - 安卓上如果触发了 scroll-view 组件默认的下拉刷新，binddragend可能不触发，只会触发 binddragstart
 
 
 ### swiper
@@ -214,11 +212,11 @@ movable-view的可移动区域。
 | vtouchmove    | 初次手指触摸后移动为纵向的移动时触发                      |
 
 
-注意事项
-
-1. simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
-2. wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
-3. RN 环境 movable 相关组件暂不支持缩放能力
+> [!tip] 注意
+>
+> - simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
+> - wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
+> - RN 环境 movable 相关组件暂不支持缩放能力
 
 ### image
 图片。
@@ -238,10 +236,10 @@ movable-view的可移动区域。
 | binderror       | 当错误发生时触发，`event.detail = { errMsg }`            |
 | bindload        | 当图片载入完毕时触发，`event.detail = { height, width }`  |
 
-注意事项
-
-1. image 组件默认宽度320px、高度240px
-2. image 组件进行缩放时，计算出来的宽高可能带有小数，在不同 webview 内核下渲染可能会被抹去小数部分
+> [!tip] 注意
+>
+> - image 组件默认宽度320px、高度240px
+> - image 组件进行缩放时，计算出来的宽高可能带有小数，在不同 webview 内核下渲染可能会被抹去小数部分
 
 ### icon
 图标组件
@@ -273,16 +271,17 @@ movable-view的可移动区域。
 | hover-start-time        | number  |  `20`         | 按住后多久出现点击态，单位毫秒                                  |
 | hover-stay-time         | number  |  `70`         | 手指松开后点击态保留时间，单位毫秒                               |
 
-注意事项
-1. openType 需要在 `mpx.config.rnConfig` 中注册对应能力如 ` onShareAppMessage`，`onUserInfo` 来配合使用。
+> [!tip] 注意
+>
+> - openType 需要在 `mpx.config.rnConfig` 中注册对应能力如 ` onShareAppMessage`，`onUserInfo` 来配合使用。
    
 ### label
 用来改进表单组件的可用性
 
 
-注意事项
-
-1. 当前不支持使用 for 属性找到对应 id，仅支持将控件放在该标签内，目前可以绑定的空间有：checkbox、radio、switch。
+> [!tip] 注意
+>
+> - 当前不支持使用 for 属性找到对应 id，仅支持将控件放在该标签内，目前可以绑定的空间有：checkbox、radio、switch。
 
 ### checkbox
 多选项目
@@ -439,11 +438,11 @@ movable-view的可移动区域。
 | ----------------| --------------------------------------------------- |
 | bindactiveend   | 动画完成时触发，`event.detail = { percent }`            |
 
-注意事项
-
-1. 不支持 `show-info` 属性，即不支持在进度条右侧显示百分比
-2. 不支持 `border-radius` 属性自定义圆角大小
-3. 不支持 `font-size` 属性设置右侧百分比字体大小
+> [!tip] 注意
+>
+> - 不支持 `show-info` 属性，即不支持在进度条右侧显示百分比
+> - 不支持 `border-radius` 属性自定义圆角大小
+> - 不支持 `font-size` 属性设置右侧百分比字体大小
 
 ### picker-view
 
@@ -626,12 +625,12 @@ API
 | getContext	      | 该方法返回 Canvas 的绘图上下文。仅支持在 2D Canvas 中使用	|
 | toDataURL	      | 返回一个包含图片展示的 data URI	|
 
-注意事项
-
-1. canvas 组件目前仅支持 2D 类型，不支持 webgl
-2. 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 [HTML Canvas 2D Context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) 定义的属性、方法
-3. canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
-4. 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
+> [!tip] 注意
+>
+> - canvas 组件目前仅支持 2D 类型，不支持 webgl
+> - 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 [HTML Canvas 2D Context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) 定义的属性、方法
+> - canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
+> - 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
 
 ### video
 视频
@@ -668,9 +667,10 @@ API
 | bindcontrolstoggle       |  切换 controls 显示隐藏时触发。`event.detail = {show}`	   |
 | bindseekcomplete       |  seek 完成时触发    |
 
-注意事项
-1. 手动拖拽进度条场景，bindseekcomplete 事件，android 可以触发，ios 不支持
-2. video 组件基于第三方库 `react-native-video` 来实现，需要容器中安装此依赖包
+> [!tip] 注意
+>
+> - 手动拖拽进度条场景，bindseekcomplete 事件，android 可以触发，ios 不支持
+> - video 组件基于第三方库 `react-native-video` 来实现，需要容器中安装此依赖包
 
 
 ### web-view
@@ -692,9 +692,9 @@ API
 | binderror	     |  网页加载失败的时候触发此事件
 
 
-注意事项
-
-1. 被打开的 H5 页面需使用`@mpxjs/webview-bridge@2.9.68` 及以上版本与 RN 容器进行通信，具体通信方式参见[Webview API](#webview-api)
+> [!tip] 注意
+>
+> - 被打开的 H5 页面需使用`@mpxjs/webview-bridge@2.9.68` 及以上版本与 RN 容器进行通信，具体通信方式参见[Webview API](#webview-api)
 
 ### root-portal
 使整个子树从页面中脱离出来，类似于在 CSS 中使用 position: fixed 的效果。主要用于制作弹窗、弹出层等。
@@ -704,15 +704,16 @@ API
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | enable   | boolean           |   `true`	     | 是否从页面中脱离出来
 
-注意事项
-
-1. style 样式不支持中使用百分比计算、css variable
+> [!tip] 注意
+>
+> - style 样式不支持中使用百分比计算、css variable
    
 ### sticky-section
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
 
-注意事项
-1. sticky-section 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
+> [!tip] 注意
+>
+> - sticky-section 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
 
 ### sticky-header
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
@@ -730,9 +731,10 @@ API
 | ----------------| --------------------------------------------------- |
 | bindstickontopchange      |  吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false   |
 
-注意事项
-1. sticky-header 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
-2. RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前如果 sticky 还在动画过程中就触发组件更新（如在bindstickontopchange 回调中立刻更新 state）、scroll-view 内容高度由多变少、通过修改 scroll-into-view、scroll-top 让 scroll-view 滚动，以上场景在安卓上都可能会导致闪烁或抖动
+> [!tip] 注意
+>
+> - sticky-header 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
+> - RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前如果 sticky 还在动画过程中就触发组件更新（如在bindstickontopchange 回调中立刻更新 state）、scroll-view 内容高度由多变少、通过修改 scroll-into-view、scroll-top 让 scroll-view 滚动，以上场景在安卓上都可能会导致闪烁或抖动
 
 ### cover-view
 视图容器。
