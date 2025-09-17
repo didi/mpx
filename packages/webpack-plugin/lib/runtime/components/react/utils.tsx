@@ -288,7 +288,7 @@ function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
   }
 }
 // 多value解析
-function parseValues (str: string, char = ' ') {
+export function parseValues (str: string, char = ' ') {
   let stack = 0
   let temp = ''
   const result = []
@@ -299,11 +299,11 @@ function parseValues (str: string, char = ' ') {
       stack--
     }
     // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
+    if (stack !== 0 || str[i] !== char) {
       temp += str[i]
     }
     if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp)
+      result.push(temp.trim())
       temp = ''
     }
   }
@@ -312,6 +312,8 @@ function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
+  // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+  values.sort()
   const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
