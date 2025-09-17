@@ -318,7 +318,7 @@ module.exports = function getSpec ({ warn, error }) {
         if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value)) {
           return { prop, value }
         } else {
-          error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
+          value !== 'none' && error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
           return false
         }
       }
@@ -356,7 +356,7 @@ module.exports = function getSpec ({ warn, error }) {
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
         if (cssVariableExp.test(value)) {
-          value !== 'none' && error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
+          error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
         }
         const bgMap = []
