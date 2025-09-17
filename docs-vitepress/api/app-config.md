@@ -132,7 +132,7 @@ mpx.config.forceFlushSync = true
 ```js
 mpx.config.errorHandler = function (errmsg, location, error) {
   // errmsg: 框架内部运行报错的报错归类信息，例如当执行一个watch方法报错时，会是 "Unhandled error occurs during execution of watch callback!"
-  // location: 具体报错的代码路径，可选项，不一定存在
+  // location: 具体报错的代码路径，可选项，不一定存在。在 production 模式下会变为页面/组件的 hash id
   // error: 具体的错误堆栈，可选项，不一定存在
   // handle error
 }
@@ -145,6 +145,14 @@ Mpx 框架运行时报错捕获感知处理函数。
 * Mpx 框架的运行时的检测报错，例如存在目标平台不支持的属性，入参出参类型错误等；
 
 同时被捕获的错误会通过 console.error 输出。
+
+**注意**：在 production 模式下，`location` 参数会变为页面/组件的 hash id。如需查找 hash id 与实际文件路径（resourcePath）的对应关系，可以通过以下方式：
+
+1. 在构建配置中开启 `generateBuildMap` 选项
+2. 构建完成后，在输出目录中查看生成的 `outputMap.json` 文件
+3. 在该文件的 `moduleIdMap` 字段中查找 hash id 与 resourcePath 的映射关系
+
+这样可以帮助开发者在生产环境中快速定位错误发生的具体文件位置。
 
 ## webRouteConfig
 Mpx 通过 config 暴露出 webRouteConfig 配置项，在 web 环境可以对路由进行配置。
