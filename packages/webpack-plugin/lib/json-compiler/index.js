@@ -52,13 +52,13 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
