@@ -155,7 +155,6 @@ const sidebar: DefaultTheme.Sidebar = {
       text: "基础",
       items: [
         { text: "快速开始", link: "/rn/basic/start" },
-        { text: "基础能力", link: "/rn/basic/basic" },
         { text: "组件使用与开发", link: "/rn/basic/component" },
         { text: "模板语法与生命周期", link: "/rn/basic/template" },
         { text: "跨端样式", link: "/rn/basic/style" },
