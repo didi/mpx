@@ -356,7 +356,7 @@ module.exports = function getSpec ({ warn, error }) {
       case bgPropMap.all: {
         // background: 仅支持 background-image & background-color & background-repeat
         if (cssVariableExp.test(value)) {
-          error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
+          value !== 'none' && error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
         }
         const bgMap = []
