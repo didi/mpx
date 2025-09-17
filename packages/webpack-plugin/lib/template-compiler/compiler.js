@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, EXTEND_COMPONENTS_LIST } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, EXTEND_COMPONENT_CONFIG } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -726,20 +726,13 @@ function parse (template, options) {
 
       tagNames.add(element.tag)
 
-      const genericAttrs = []
       // 统计通过抽象节点方式使用的组件
       element.attrsList.forEach((attr) => {
         if (genericRE.test(attr.name)) {
           tagNames.add(attr.value)
-          if (mode === 'wx') {
-            genericAttrs.push({
-              name: attr.name.replace('generic:', 'mpx-generic-'),
-              value: attr.value
-            })
-          }
         }
       })
-      element.attrsList = element.attrsList.concat(genericAttrs)
+
       if (!unary) {
         currentParent = element
         stack.push(element)
@@ -2314,7 +2307,7 @@ function isComponentNode (el) {
 }
 
 function isExtendComponentNode (el) {
-  return EXTEND_COMPONENTS_LIST[mode]?.includes(el.tag)
+  return EXTEND_COMPONENT_CONFIG[el.tag]?.[mode]
 }
 
 function getComponentInfo (el) {

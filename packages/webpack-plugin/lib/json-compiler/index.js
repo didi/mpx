@@ -12,7 +12,8 @@ const createHelpers = require('../helpers')
 const createJSONHelper = require('./helper')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
-const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT, EXTEND_COMPONENTS_LIST } = require('../utils/const')
+const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
+const { processExtendComponents } = require('../utils/process-extend-components')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const normalize = require('../utils/normalize')
@@ -101,11 +102,15 @@ module.exports = function (content) {
   const { getRequestString } = createHelpers(this)
 
   let currentName
-
+  let hasApp = true
   if (isApp) {
     currentName = appInfo.name
   } else {
     currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
+  }
+
+  if (!appInfo.name) {
+    hasApp = false
   }
 
   const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
@@ -188,14 +193,11 @@ module.exports = function (content) {
 
   if (mode === 'wx' || mode === 'ali') {
     const { useExtendComponents = {} } = mpx
-    if (isApp && useExtendComponents[mode]) {
-      const extendComponents = {}
-      useExtendComponents[mode].forEach((name) => {
-        if (EXTEND_COMPONENTS_LIST[mode]?.includes(name)) {
-          extendComponents[name] = normalize.lib(`runtime/components/${mode}/mpx-${name}.mpx`)
-        } else {
-          emitWarning(`extend component ${name} is not supported in ${mode} environment!`)
-        }
+    if ((isApp || !hasApp) && useExtendComponents[mode]) {
+      const extendComponents = processExtendComponents({
+        useExtendComponents,
+        mode,
+        emitWarning
       })
       json.usingComponents = Object.assign({}, extendComponents, json.usingComponents)
     }
