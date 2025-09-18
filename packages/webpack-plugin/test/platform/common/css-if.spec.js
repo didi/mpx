@@ -193,6 +193,6 @@ body {}
 .mobile { display: block; }
 `
     // 预期这种情况下应该抛出异常或给出警告
-    expect(() => cssIfLoader.call(context, inputCSS)).toThrow(new Error('elif without a preceding if'))
+    expect(() => cssIfLoader.call(context, inputCSS)).toThrow(new Error('[Mpx style error]: elif without a preceding if'))
   })
 })
