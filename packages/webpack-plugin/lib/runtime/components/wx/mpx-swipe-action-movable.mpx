@@ -14,6 +14,7 @@
         friction="{{20}}"
         scale="{{false}}"
         animation="{{true}}"
+        disabled="{{disabled || hasOtherOpened}}"
         wx:style="width: calc(100% + {{totalActionWidth}}px);"
       >
       <!-- web环境需要包一层外层容器设置 flex 样式 -->
@@ -117,7 +118,8 @@ createComponent({
   data: {
     isOpened: false,
     contentX: 0,
-    currentX: 0
+    currentX: 0,
+    hasOtherOpened: false
   },
 
   computed: {
@@ -171,10 +173,20 @@ createComponent({
     },
 
     handleTouchStart () {
+      // 检查一下是否有其他的 instance 是开着的
+      if (this.hasOtherInstancesOpened()) {
+        this.closeOtherInstances().then(() => {
+          this.updateAllInstancesState()
+        })
+        return
+      }
       this.contentX = this.currentX
     },
     // movable-view 触摸结束
     handleMovableEnd(e) {
+      if (this.hasOtherInstancesOpened()) {
+        return
+      }
       this.contentX = this.currentX
       const currentSlideDistance = Math.abs(this.currentX)
       
@@ -182,7 +194,6 @@ createComponent({
         // 当前是打开状态，判断是否要关闭
         const closedDistance = this.totalActionWidth - currentSlideDistance
         const closeThreshold = this.totalActionWidth * 0.2  // 关闭阈值20%
-        
         if (closedDistance >= closeThreshold) {
           // 向右滑动超过20%，关闭
           this.snapToClose()
@@ -204,8 +215,8 @@ createComponent({
 
     // 吸附到打开状态
     snapToOpen() {
+      setTimeout(() => {
       this.contentX = -this.totalActionWidth
-
       if (!this.isOpened) {
         this.isOpened = true
         
@@ -216,43 +227,67 @@ createComponent({
         })
         
         if (this.autoClose) {
-          this.closeOtherInstances()
           this.registerInstance()
+          this.updateAllInstancesState()
         }
       }
+    })
     },
 
     // 吸附到关闭状态
     snapToClose() {
-      setTimeout(() => {
-        // 如果在同一个tick里面更新 contentX 无效
-        this.contentX = 0
-      
-        if (this.isOpened) {
-          this.isOpened = false
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          // 如果在同一个tick里面更新 contentX 无效
+          this.contentX = 0
         
-          this.triggerEvent('close', {})
-        
-          if (this.autoClose) {
-            this.unregisterInstance()
+          if (this.isOpened) {
+            this.isOpened = false
+          
+            this.triggerEvent('close', {})
+          
+            if (this.autoClose) {
+              this.unregisterInstance()
+              this.updateAllInstancesState()
+            }
           }
-        }
+          
+          setTimeout(() => {
+            resolve()
+          }, 1000)
+        })
       })
     },
 
     // 打开操作区域（编程式调用）
     openActions() {
-      this.snapToOpen()
+      if (this.autoClose) {
+        // 先关闭其他实例，再打开当前实例
+        return this.closeOtherInstances().then(() => {
+          this.snapToOpen()
+        })
+      } else {
+        this.snapToOpen()
+      }
     },
 
     // 关闭操作区域（编程式调用）
     closeActions() {
-      this.snapToClose()
+      return this.snapToClose()
     },
 
     // 处理内容区域点击
     handleContentTap(e) {
       console.log('Content tap - isOpened:', this.isOpened)
+      
+      // 如果有其他实例打开，先关闭它们
+      if (this.hasOtherInstancesOpened()) {
+        this.closeOtherInstances().then(() => {
+          this.updateAllInstancesState()
+        })
+        return
+      }
+      
       // 如果已打开，则关闭
       if (this.isOpened) {
         this.closeActions()
@@ -289,15 +324,38 @@ createComponent({
       openedInstances.delete(this)
     },
 
+    // 检查是否有其他实例打开
+    hasOtherInstancesOpened() {
+      if (!this.autoClose) return false
+      for (let instance of openedInstances) {
+        if (instance !== this && instance.isOpened) {
+          return true
+        }
+      }
+      return false
+    },
+
+    // 更新所有实例的 hasOtherOpened 状态
+    updateAllInstancesState() {
+      if (this.autoClose) {
+        openedInstances.forEach(instance => {
+          instance.hasOtherOpened = instance.hasOtherInstancesOpened()
+        })
+      }
+    },
+
     // 关闭其他已打开的实例
     closeOtherInstances() {
       if (this.autoClose) {
+        const promises = []
         openedInstances.forEach(instance => {
-          if (instance !== this) {
-            instance.closeActions()
+          if (instance !== this && instance.isOpened) {
+            promises.push(instance.closeActions())
           }
         })
+        return Promise.all(promises)
       }
+      return Promise.resolve()
     },
 
     // 暴露给外部的方法
