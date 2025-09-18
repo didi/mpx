@@ -2,11 +2,17 @@ import { BleManager } from 'react-native-ble-plx'
 import { noop } from '@mpxjs/utils'
 import { Platform, PermissionsAndroid } from 'react-native'
 import { base64ToArrayBuffer } from '../base/index'
-import { envError } from '../../../common/js'
-
+global.__mpx_mode__ = 'android'
 let manager
 let deviceFoundCallbacks = []
+let onStateChangeCallbacks = []
 let discovering = false
+let stateSubscription = null
+let getDevices = [] // 记录已扫描的设备列表
+let characteristicSubscriptions = {}
+let characteristicCallbacks = []
+let createBLEConnectionIsReady = false
+const BLEDeviceCharacteristics = {} // 记录已连接设备的特征值
 
 const requestBluetoothPermission = async () => {
   if (__mpx_mode__ === 'ios') {
@@ -125,7 +131,7 @@ function openBluetoothAdapter (options = {}) {
         return
       }
       checkState()
-    }).catch(() => {
+    }).catch((error) => {
       checkState()
     })
   })
@@ -179,23 +185,24 @@ function startBluetoothDevicesDiscovery (options = {}) {
     scanMode: scanMode[powerLevel],
     allowDuplicates: allowDuplicatesKey
   }, (error, sannnedDevice) => {
-    if (error) {
-      return
-    }
     discovering = true
     if (sannnedDevice) {
       deviceFoundCallbacks.forEach((callback) => {
+        const device = {
+          name: sannnedDevice.name || '',
+          id: sannnedDevice.id,
+          RSSI: sannnedDevice.rssi || 0,
+          advertisData: base64ToArrayBuffer(sannnedDevice.manufacturerData || ''),
+          advertisServiceUUIDs: sannnedDevice.serviceUUIDs || [],
+          localName: sannnedDevice.localName || '',
+          serviceData: sannnedDevice.serviceData,
+          connectable: sannnedDevice.isConnectable
+        }
+        if (getDevices.indexOf(device) === -1) {
+          getDevices.push(device) // 记录扫描到的设备
+        }
         const result = {
-          devices: [{
-            name: sannnedDevice.name || '',
-            id: sannnedDevice.id,
-            RSSI: sannnedDevice.rssi || 0,
-            advertisData: base64ToArrayBuffer(sannnedDevice.manufacturerData || ''),
-            advertisServiceUUIDs: sannnedDevice.serviceUUIDs || [],
-            localName: sannnedDevice.localName || '',
-            serviceData: sannnedDevice.serviceData,
-            connectable: sannnedDevice.isConnectable
-          }]
+          devices: [device]
         }
         callback(result)
       })
@@ -245,11 +252,13 @@ function stopBluetoothDevicesDiscovery (options = {}) {
   })
 }
 
-function onBluetoothDeviceFound (callback) {
-  deviceFoundCallbacks.push(callback)
+function onBluetoothDeviceFound(callback) {
+  if (deviceFoundCallbacks.indexOf(callback) === -1) {
+    deviceFoundCallbacks.push(callback)
+  }
 }
 
-function offBluetoothDeviceFound (callback) {
+function offBluetoothDeviceFound(callback) {
   const index = deviceFoundCallbacks.indexOf(callback)
   if (index > -1) {
     deviceFoundCallbacks.splice(index, 1)
@@ -260,7 +269,7 @@ function getConnectedBluetoothDevices (options = {}) {
   if (!manager) {
     return
   }
-  const { services = [], success = noop, fail = noop, complete = noop } = options
+  const { services = [],success = noop, fail = noop, complete = noop } = options
   manager.connectedDevices(services).then((devices) => {
     const connectedDevices = devices.map(device => ({
       deviceId: device.id,
@@ -281,7 +290,7 @@ function getConnectedBluetoothDevices (options = {}) {
   })
 }
 
-function getBluetoothAdapterState (options = {}) {
+function getBluetoothAdapterState(options = {}) {
   if (!manager) {
     return
   }
@@ -303,16 +312,301 @@ function getBluetoothAdapterState (options = {}) {
   })
 }
 
-const closeBLEConnection = envError('closeBLEConnection')
+function onBluetoothAdapterStateChange(callback) {
+  if (!manager) {
+    return
+  }
+  if (!stateSubscription) {
+    manager.onStateChange((newState) => {
+      onStateChangeCallbacks.forEach((callback) => {
+        callback({
+          available: newState === 'PoweredOn',
+          discovering
+        })
+      })
+    }, true)
+  }
+  if (onStateChangeCallbacks.indexOf(callback) === -1) {
+    onStateChangeCallbacks.push(callback)
+  }
+}
 
-const createBLEConnection = envError('createBLEConnection')
+function offBluetoothAdapterStateChange(callback) {
+  const index = deviceFoundCallbacks.indexOf(callback)
+  if (index > -1) {
+    deviceFoundCallbacks.splice(index, 1)
+  }
+  if (deviceFoundCallbacks.length === 0 && stateSubscription) {
+    stateSubscription.remove()
+    stateSubscription = null
+  }
+}
 
-const onBLEConnectionStateChange = envError('onBLEConnectionStateChange')
+function getBluetoothDevices(options = {}) {
+  if (!manager) {
+    return
+  }
+  const { success = noop, complete = noop } = options
+  const result = {
+    errMsg: 'getBluetoothDevices:ok',
+    devices: getDevices // 返回已扫描的设备列表
+  }
+  success(result)
+  complete(result)
+}
+
+function writeBLECharacteristicValue (options = {}) {
+  if (!manager) {
+    return
+  }
+  const { deviceId, serviceId, characteristicId, value, success = noop, fail = noop, complete = noop } = options  // todo 验证一下为空的情况
+  manager.writeCharacteristicWithResponseForDevice(
+    deviceId,
+    serviceId,
+    characteristicId,
+    value
+  ).then(() => {
+    const result = {
+      errMsg: 'writeBLECharacteristicValue:ok'
+    }
+    success(result)
+    complete(result)
+  }).catch((error) => {
+    const result = {
+      errMsg: 'writeBLECharacteristicValue:fail ' + (error?.message || '')
+    }
+    fail(result)
+    complete(result)
+  })
+}
+
+function readBLECharacteristicValue (options = {}) {
+  if (!manager) {
+    return
+  }
+  const { deviceId, serviceId, characteristicId, success = noop, fail = noop, complete = noop } = options  // todo 验证一下为空的情况
+  manager.readCharacteristicForDevice(
+    deviceId,
+    serviceId,
+    characteristicId
+  ).then((characteristic) => {
+    const result = {
+      errMsg: 'readBLECharacteristicValue:ok',
+      value: characteristic.value
+    }
+    success(result)
+    complete(result)
+  }).catch((error) => {
+    const result = {
+      errMsg: 'readBLECharacteristicValue:fail ' + (error?.message || '')
+    }
+    fail(result)
+    complete(result)
+  })
+}
+
+function notifyBLECharacteristicValueChange (options = {}) {
+  if (!manager) {
+    return
+  }
+  const { deviceId, serviceId, characteristicId, state = true, success = noop, fail = noop, complete = noop } = options  // todo 验证一下为空的情况
+  const key = `${deviceId}-${serviceId}-${characteristicId}`
+  if (state) {
+    if (characteristicSubscriptions[key]) {
+      const result = {
+        errMsg: 'notifyBLECharacteristicValueChange:ok'
+      }
+      success(result)
+      complete(result)
+      return
+    }
+    characteristicSubscriptions[key] = manager.monitorCharacteristicForDevice(
+      deviceId,
+      serviceId,
+      characteristicId,
+      (error, characteristic) => {
+        if (characteristic && characteristic.value) {
+          const res = {
+            deviceId,
+            serviceId,
+            characteristicId,
+            value: base64ToArrayBuffer(characteristic.value)
+          }
+          if (characteristicCallbacks.length > 0) {
+            characteristicCallbacks.forEach((callback) => {
+              callback(res)
+            })
+          }
+        }
+      }
+    ).then(() => {
+      const result = {
+        errMsg: 'notifyBLECharacteristicValueChange:ok'
+      }
+      success(result)
+      complete(result)
+    }).catch((error) => {
+      const result = {
+        errMsg: 'notifyBLECharacteristicValueChange:fail ' + (error?.message || '')
+      }
+      fail(result)
+      complete(result)
+    })
+  } else {
+    if (characteristicSubscriptions[key]) {
+      characteristicSubscriptions[key].remove()
+      delete characteristicSubscriptions[key]
+      const result = {
+        errMsg: 'notifyBLECharacteristicValueChange:ok'
+      }
+      success(result)
+      complete(result)
+    } else {
+      const result = {
+        errMsg: 'notifyBLECharacteristicValueChange:ok'
+      }
+      success(result)
+      complete(result)
+    }
+  }
+}
+
+function onBLECharacteristicValueChange (callback) {
+  if (characteristicCallbacks.indexOf(callback) === -1) {
+    characteristicCallbacks.push(callback)
+  }
+}
+
+function offBLECharacteristicValueChange (callback) {
+  const index = characteristicCallbacks.indexOf(callback)
+  if (index > -1) {
+    characteristicCallbacks.splice(index, 1)
+  }
+}
+
+function setBLEMTU (options = {}) {
+  if (!createBLEConnectionIsReady) { // 需要验证是否需要前置openBluetoothAdapter
+    return
+  }
+  const { deviceId, mtu, success = noop, fail = noop, complete = noop } = options  // todo 验证一下为空的情况
+  manager.requestMTUForDevice(deviceId, mtu).then((device) => {
+    const result = {
+      errMsg: 'setBLEMTU:ok',
+      mtu: device.mtu
+    }
+    success(result)
+    complete(result)
+  }).catch((error) => {
+    const result = {
+      errMsg: 'setBLEMTU:fail ' + (error?.message || '')
+    }
+    fail(result)
+    complete(result)
+  })
+}
+
+function getBLEDeviceRSSI (options = {}) {
+  const { deviceId, success = noop, fail = noop, complete = noop } = options
+  manager.readRSSIForDevice(deviceId).then((rssi) => {
+    const result = {
+      errMsg: 'getBLEDeviceRSSI:ok',
+      RSSI: rssi
+    }
+    success(result)
+    complete(result)
+  }).catch((error) => {
+    const result = {
+      errMsg: 'getBLEDeviceRSSI:fail ' + (error?.message || '')
+    }
+    fail(result)
+    complete(result)
+  })
+}
+
+function getBLEDeviceServices (options = {}) {
+  if (!createBLEConnectionIsReady) { // 需要验证是否需要前置openBluetoothAdapter
+    return
+  }
+  const { deviceId, success = noop, fail = noop, complete = noop } = options  // todo 验证一下为空的情况
+  manager.servicesForDevice(deviceId).then((services) => {
+    const result = {
+      errMsg: 'getBLEDeviceServices:ok',
+      services: services.map(service => ({
+        uuid: service.uuid,
+        isPrimary: service.isPrimary
+      }))
+    }
+
+    // 获取
+    services.forEach(service => {
+      BLEDeviceCharacteristics[`${deviceId}-${service.uuid}`] = {
+        uuid: service.uuid,
+        properties: '' // 先置空，等获取特征值后再赋值
+      }
+    })
+    success(result)
+    complete(result)
+  }).catch((error) => {
+    const result = {
+      errMsg: 'getBLEDeviceServices:fail ' + (error?.message || '')
+    }
+    fail(result)
+    complete(result)
+  })
+}
+
+function getBLEDeviceCharacteristics (options = {}) {
+  if (!createBLEConnectionIsReady) { // 需要验证是否需要前置openBluetoothAdapter
+    return
+  }
+  const { deviceId, serviceId, success = noop, complete = noop } = options  // todo 验证一下为空的情况
+  const result = {
+    errMsg: 'getBLEDeviceCharacteristics:ok',
+    characteristics: BLEDeviceCharacteristics[`${deviceId}-${serviceId}`] || []
+  }
+  success(result)
+  complete(result)
+}
+
+function createBLEConnection (options = {}) {
+  const { deviceId, timeout, success = noop, fail = noop, complete = noop } = options
+  const connectionOptions = {}
+  if (timeout) {
+    connectionOptions.timeout = timeout
+  }
+  manager.connectToDevice(deviceId, connectionOptions).then((device) => {
+    const result = {
+      errMsg: 'createBLEConnection:ok'
+    }
+    success(result)
+    complete(result)
+  }).catch((error) => {
+    const result = {
+      errMsg: 'createBLEConnection:fail ' + (error?.message || '')
+    }
+    fail(result)
+    complete(result)
+  })
+}
+
+function closeBLEConnection (options = {}) {
+  const { deviceId, success = noop, fail = noop, complete = noop } = options
+  manager.cancelDeviceConnection(deviceId).then(() => {
+    const result = {
+      errMsg: 'closeBLEConnection:ok'
+    }
+    success(result)
+    complete(result)
+  }).catch((error) => {
+    const result = {
+      errMsg: 'closeBLEConnection:fail ' + (error?.message || '')
+    }
+    fail(result)
+    complete(result)
+  })
+}
 
 export {
-  closeBLEConnection,
-  createBLEConnection,
-  onBLEConnectionStateChange,
   openBluetoothAdapter,
   closeBluetoothAdapter,
   startBluetoothDevicesDiscovery,
@@ -320,5 +614,19 @@ export {
   onBluetoothDeviceFound,
   offBluetoothDeviceFound,
   getConnectedBluetoothDevices,
-  getBluetoothAdapterState
+  getBluetoothAdapterState,
+  onBluetoothAdapterStateChange,
+  offBluetoothAdapterStateChange,
+  getBluetoothDevices,
+  writeBLECharacteristicValue,
+  readBLECharacteristicValue,
+  notifyBLECharacteristicValueChange,
+  onBLECharacteristicValueChange,
+  offBLECharacteristicValueChange,
+  setBLEMTU,
+  getBLEDeviceRSSI,
+  getBLEDeviceServices,
+  getBLEDeviceCharacteristics,
+  createBLEConnection,
+  closeBLEConnection
 }

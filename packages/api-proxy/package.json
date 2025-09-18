@@ -47,7 +47,8 @@
     "react-native-get-location": "*",
     "react-native-haptic-feedback": "*",
     "react-native-safe-area-context": "*",
-    "react-native-ble-plx": "*"
+    "react-native-ble-plx": "*",
+    "react-native-wifi-reborn": "*"
   },
   "peerDependenciesMeta": {
     "@react-native-async-storage/async-storage": {
@@ -69,6 +70,9 @@
       "optional": true
     },
     "react-native-ble-plx": {
+      "optional": true
+    },
+    "react-native-wifi-reborn": {
       "optional": true
     }
   }

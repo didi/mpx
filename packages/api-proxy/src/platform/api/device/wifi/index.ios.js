@@ -19,6 +19,7 @@ async function requestWifiPermission() {
     return false
   }
 }
+
 function startWifi (options = {}) {
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
@@ -199,6 +200,7 @@ function getConnectedWifi (options = {}) {
       success(result)
       complete(result)
     }).catch((error) => {
+      console.log(error, '--error')
       const result = {
         errMsg: 'getConnectedWifi:fail'
       }

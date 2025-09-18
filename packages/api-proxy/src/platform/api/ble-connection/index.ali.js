@@ -28,6 +28,30 @@ const getConnectedBluetoothDevices = ENV_OBJ.getConnectedBluetoothDevices || env
 
 const getBluetoothAdapterState = ENV_OBJ.getBluetoothAdapterState || envError('getBluetoothAdapterState')
 
+const onBluetoothAdapterStateChange = ENV_OBJ.onBluetoothAdapterStateChange || envError('onBluetoothAdapterStateChange')
+
+const offBluetoothAdapterStateChange = ENV_OBJ.offBluetoothAdapterStateChange || envError('offBluetoothAdapterStateChange')
+
+const getBluetoothDevices = ENV_OBJ.getBluetoothDevices || envError('getBluetoothDevices')
+
+const writeBLECharacteristicValue = ENV_OBJ.writeBLECharacteristicValue || envError('writeBLECharacteristicValue')
+
+const readBLECharacteristicValue = ENV_OBJ.readBLECharacteristicValue || envError('readBLECharacteristicValue')
+
+const notifyBLECharacteristicValueChange = ENV_OBJ.notifyBLECharacteristicValueChange || envError('notifyBLECharacteristicValueChange')
+
+const onBLECharacteristicValueChange = ENV_OBJ.onBLECharacteristicValueChange || envError('onBLECharacteristicValueChange')
+
+const offBLECharacteristicValueChange = ENV_OBJ.offBLECharacteristicValueChange || envError('offBLECharacteristicValueChange')
+
+const setBLEMTU = ENV_OBJ.setBLEMTU || envError('setBLEMTU')
+
+const getBLEDeviceRSSI = ENV_OBJ.getBLEDeviceRSSI || envError('getBLEDeviceRSSI')
+
+const getBLEDeviceServices = ENV_OBJ.getBLEDeviceServices || envError('getBLEDeviceServices')
+
+const getBLEDeviceCharacteristics = ENV_OBJ.getBLEDeviceCharacteristics || envError('getBLEDeviceCharacteristics')
+
 export {
   closeBLEConnection,
   createBLEConnection,
@@ -39,5 +63,17 @@ export {
   onBluetoothDeviceFound,
   offBluetoothDeviceFound,
   getConnectedBluetoothDevices,
-  getBluetoothAdapterState
+  getBluetoothAdapterState,
+  onBluetoothAdapterStateChange,
+  offBluetoothAdapterStateChange,
+  getBluetoothDevices,
+  writeBLECharacteristicValue,
+  readBLECharacteristicValue,
+  notifyBLECharacteristicValueChange,
+  onBLECharacteristicValueChange,
+  offBLECharacteristicValueChange,
+  setBLEMTU,
+  getBLEDeviceRSSI,
+  getBLEDeviceServices,
+  getBLEDeviceCharacteristics
 }
