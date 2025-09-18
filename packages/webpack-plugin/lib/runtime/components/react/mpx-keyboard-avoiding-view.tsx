@@ -2,7 +2,7 @@ import React, { ReactNode, useContext, useEffect, useRef } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle, NativeSyntheticEvent, NativeTouchEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation } from 'react-native-reanimated'
 import { KeyboardAvoidContext } from './context'
-import { isIOS } from './utils'
+import { isAndroid, isIOS } from './utils'
 
 type KeyboardAvoidViewProps = {
   children?: ReactNode
@@ -67,18 +67,30 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
       isShow.current = true
 
       const { endCoordinates } = evt
-      const { ref, cursorSpacing = 0, adjustPosition, onKeyboardShow } = keyboardAvoid.current
+      const { ref, cursorSpacing = 0, adjustPosition, onKeyboardShow, enableNativeKeyboardAvoiding } = keyboardAvoid.current
       keyboardAvoid.current.keyboardHeight = endCoordinates.height
       onKeyboardShow?.()
       if (adjustPosition) {
         setTimeout(() => {
           ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
-            const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
-            const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
-            const value = aboveOffset > 0 ? belowValue : aboveValue
+            function calculateOffset() {
+              // enableNativeKeyboardAvoding 默认开启
+              if (enableNativeKeyboardAvoiding && isAndroid) {
+                const aboveOffset = pageY + height - endCoordinates.screenY
+                const belowOffset = endCoordinates.height - aboveOffset
+                const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
+                const belowValue = Math.min(belowOffset, cursorSpacing)
+                return aboveOffset > 0 ? belowValue : aboveValue
+              }
+
+              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
+              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
+              const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
+              return aboveOffset > 0 ? belowValue : aboveValue
+            }
+
             cancelAnimation(offset)
-            offset.value = withTiming(value, { duration, easing }, finished => {
+            offset.value = withTiming(calculateOffset(), { duration, easing }, finished => {
               if (finished) {
                 // Set flexBasic after animation to trigger re-layout and reset layout information
                 basic.value = '99.99%'
