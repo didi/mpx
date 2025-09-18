@@ -315,7 +315,7 @@ module.exports = function getSpec ({ warn, error }) {
     switch (prop) {
       case bgPropMap.image: {
         // background-image 支持背景图/渐变/css var
-        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value)) {
+        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value) || value === 'none') {
           return { prop, value }
         } else {
           error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
