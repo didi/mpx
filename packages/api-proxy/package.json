@@ -47,7 +47,7 @@
     "react-native-get-location": "*",
     "react-native-haptic-feedback": "*",
     "react-native-safe-area-context": "*",
-    "react-native-ble-plx": "*",
+    "react-native-ble-manager": "*",
     "react-native-wifi-reborn": "*"
   },
   "peerDependenciesMeta": {
@@ -69,7 +69,7 @@
     "react-native-haptic-feedback": {
       "optional": true
     },
-    "react-native-ble-plx": {
+    "react-native-ble-manager": {
       "optional": true
     },
     "react-native-wifi-reborn": {
