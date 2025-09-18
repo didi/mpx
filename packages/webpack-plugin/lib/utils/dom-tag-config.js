@@ -78,7 +78,7 @@ const isBuildInWebTag = makeMap(
   'mpx-swiper,mpx-view,mpx-checkbox-group,mpx-movable-area,mpx-radio-group,' +
   'mpx-switch,mpx-web-view,mpx-checkbox,mpx-movable-view,mpx-radio,' +
   'mpx-tab-bar-container,mpx-form,mpx-navigator,mpx-rich-text,mpx-tab-bar,' +
-  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text'
+  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text,mpx-nav-container'
 )
 
 /**
@@ -91,7 +91,7 @@ const isBuildInReactTag = makeMap(
   'mpx-movable-area,mpx-label,mpx-keyboard-avoiding-view,mpx-input,mpx-inline-text,' +
   'mpx-image,mpx-form,mpx-checkbox,mpx-checkbox-group,mpx-button,' +
   'mpx-rich-text,mpx-portal,mpx-popup,mpx-picker-view-column,mpx-picker-view,mpx-picker,' +
-  'mpx-icon,mpx-canvas'
+  'mpx-icon,mpx-canvas,mpx-nav-container'
 )
 
 const isSpace = makeMap('ensp,emsp,nbsp')

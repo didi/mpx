@@ -44,6 +44,7 @@ const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
+const navContainer = require('./nav-container')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -129,6 +130,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     component(),
     rootPortal({ print }),
     stickyHeader({ print }),
-    stickySection({ print })
+    stickySection({ print }),
+    navContainer({ print })
   ]
 }

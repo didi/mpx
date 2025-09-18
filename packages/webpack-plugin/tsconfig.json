@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "strictNullChecks": true,
     "moduleResolution": "node",
+    "declaration": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
     "lib": [
