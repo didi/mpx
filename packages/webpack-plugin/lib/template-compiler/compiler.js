@@ -16,6 +16,7 @@ const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb } = require('../utils/env')
+const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -1000,12 +1001,31 @@ function processComponentIs (el, options) {
   }
 
   const range = getAndRemoveAttr(el, 'range').val
-  const isInRange = makeMap(range || '')
-  el.components = (usingComponents).filter(i => {
-    if (!range) return true
-    return isInRange(i)
+
+  // Map<CurrentName, SourceName>
+  const rangeMap = new Map()
+  if (range) {
+    range
+      .split(',')
+      .forEach(i => {
+        i = i.trim()
+        if (i) rangeMap.set(['ali', 'swan'].includes(mode) ? capitalToHyphen(i) : i, i)
+      })
+  }
+
+  // Map<CurrentName, SourceName>
+  el.componentMap = new Map()
+  usingComponents.forEach((name) => {
+    if (rangeMap.size === 0) {
+      el.componentMap.set(name, name)
+    } else {
+      if (rangeMap.has(name)) {
+        el.componentMap.set(name, rangeMap.get(name))
+      }
+    }
   })
-  if (!el.components.length) {
+
+  if (el.componentMap.size === 0) {
     warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
   }
 
@@ -2989,7 +3009,7 @@ function cloneAttrsList (attrsList) {
 }
 
 function postProcessComponentIs (el, postProcessChild) {
-  if (el.is && el.components) {
+  if (el.is && el.componentMap && el.componentMap.size > 0) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
       tempNode = createASTElement('block')
@@ -2999,11 +3019,12 @@ function postProcessComponentIs (el, postProcessChild) {
     replaceNode(el, tempNode, true)
     postMoveBaseDirective(tempNode, el)
 
-    el.components.forEach(function (component) {
-      const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
+    // Map<CurrentName, SourceName>
+    el.componentMap.forEach((source, name) => {
+      const newChild = createASTElement(name, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
-        raw: `{{${el.is} === ${stringify(component)}}}`,
-        exp: `${el.is} === ${stringify(component)}`
+        raw: `{{${el.is} === ${stringify(source)}}}`,
+        exp: `${el.is} === ${stringify(source)}`
       }
       el.children.forEach((child) => {
         addChild(newChild, cloneNode(child))
