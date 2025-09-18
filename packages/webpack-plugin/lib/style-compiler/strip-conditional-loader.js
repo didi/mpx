@@ -59,7 +59,7 @@ function parse(cssString) {
       currentChildren = node.children
     } else if (token.type === 'elif') {
       if (nodeStack.length === 0) {
-        throw new Error('elif without a preceding if')
+        throw new Error('[Mpx style error]: elif without a preceding if')
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('ElseIf', token.condition)
@@ -67,7 +67,7 @@ function parse(cssString) {
       currentChildren = node.children
     } else if (token.type === 'else') {
       if (nodeStack.length === 0) {
-        throw new Error('else without a preceding if')
+        throw new Error('[Mpx style error]: else without a preceding if')
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('Else')
@@ -90,7 +90,7 @@ function evaluateCondition(condition, defs) {
     const func = new Function(...keys, `return (${condition});`)
     return func(...values)
   } catch (e) {
-    console.error(`Error evaluating condition: ${condition}`, e)
+    console.error(`[Mpx style error]:Error evaluating condition: ${condition}`, e)
     return false
   }
 }

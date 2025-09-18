@@ -107,13 +107,13 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][native-loader][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[native-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][native-loader][' + this.resource + ']: ' + msg)
     )
   }
   let ctorType = pagesMap[resourcePath]

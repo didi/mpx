@@ -13,5 +13,5 @@
 ## Result
 
 ```css
-Error: elif without a preceding if
+Error: [Mpx style error]: elif without a preceding if
 ```
