@@ -167,10 +167,10 @@ const sidebar: DefaultTheme.Sidebar = {
         { text: "混合编写 RN", link: "/rn/advance/hybrid-with-react-native" },
       ],
     },
-    {
-      text: "生态",
-      items: [{ text: "生态 SDK", link: "/rn/ecosystem/ecosystem-sdk" }],
-    },
+    // {
+    //   text: "生态",
+    //   items: [{ text: "生态 SDK", link: "/rn/ecosystem/ecosystem-sdk" }],
+    // },
   ],
   "/api/": [
     {
