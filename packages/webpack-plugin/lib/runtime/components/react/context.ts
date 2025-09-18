@@ -6,9 +6,14 @@ export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
-export type KeyboardAvoidContextValue = MutableRefObject<
-  { cursorSpacing: number, ref: MutableRefObject<any> } | null
->
+export type KeyboardAvoidContextValue = MutableRefObject<{
+  cursorSpacing: number
+  ref: MutableRefObject<any>
+  adjustPosition: boolean
+  keyboardHeight?: number
+  onKeyboardShow?: () => void
+  enableNativeKeyboardAvoiding?: boolean
+} | null>
 
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
@@ -37,13 +42,13 @@ export interface IntersectionObserver {
 }
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number | null, id?: number| null) => number| undefined
+  mount: (children: React.ReactNode, key?: number | null, id?: number | null) => number | undefined
   update: (key: number, children: React.ReactNode) => void
   unmount: (key: number) => void
 }
 
 export interface ScrollViewContextValue {
-  gestureRef: React.RefObject<any> | null,
+  gestureRef: React.RefObject<any> | null
   scrollOffset: Animated.Value
 }
 
@@ -53,8 +58,13 @@ export interface RouteContextValue {
 }
 
 export interface StickyContextValue {
-  registerStickyHeader: Function,
+  registerStickyHeader: Function
   unregisterStickyHeader: Function
+}
+
+export interface NavSharedValue {
+  customNav?: React.ReactNode
+  setCustomNav: (value: React.ReactNode) => void
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -84,3 +94,5 @@ export const ScrollViewContext = createContext<ScrollViewContextValue>({ gesture
 export const PortalContext = createContext<PortalContextValue>(null as any)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
+
+export const NavSharedContext = createContext<NavSharedValue>(null as any)

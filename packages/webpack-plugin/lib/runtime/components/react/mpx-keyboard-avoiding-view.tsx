@@ -2,7 +2,7 @@ import React, { ReactNode, useContext, useEffect, useRef } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle, NativeSyntheticEvent, NativeTouchEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation } from 'react-native-reanimated'
 import { KeyboardAvoidContext } from './context'
-import { isIOS } from './utils'
+import { isAndroid, isIOS } from './utils'
 
 type KeyboardAvoidViewProps = {
   children?: ReactNode
@@ -25,7 +25,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -offset.value }],
+    // translate/position top可能会导致地步渲染区域缺失
+    marginTop: -offset.value,
     flexBasis: basic.value as DimensionValue
   }))
 
@@ -38,6 +39,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     timerRef.current && clearTimeout(timerRef.current)
 
     if (keyboardAvoid?.current) {
+      const inputRef = keyboardAvoid.current.ref?.current
+      if (inputRef && inputRef.isFocused()) {
+        // 修复 Android 点击键盘收起按钮时当前 input 没触发失焦的问题
+        inputRef.blur()
+      }
       keyboardAvoid.current = null
     }
 
@@ -55,64 +61,62 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   useEffect(() => {
     let subscriptions: EmitterSubscription[] = []
 
-    if (isIOS) {
-      subscriptions = [
-        Keyboard.addListener('keyboardWillShow', (evt: any) => {
-          if (!keyboardAvoid?.current || isShow.current) {
-            return
-          }
+    function keybaordAvoding(evt: any, ios = false) {
+      if (!keyboardAvoid?.current || isShow.current) {
+        return
+      }
 
-          isShow.current = true
-          timerRef.current && clearTimeout(timerRef.current)
+      isShow.current = true
 
-          const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
+      if (ios) {
+        timerRef.current && clearTimeout(timerRef.current)
+      }
 
-          timerRef.current = setTimeout(() => {
-            ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+      const { endCoordinates } = evt
+      const { ref, cursorSpacing = 0, adjustPosition, onKeyboardShow, enableNativeKeyboardAvoiding } = keyboardAvoid.current
+      keyboardAvoid.current.keyboardHeight = endCoordinates.height
+      onKeyboardShow?.()
+      if (adjustPosition) {
+        timerRef.current = setTimeout(() => {
+          ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+            function calculateOffset() {
+              // enableNativeKeyboardAvoding 默认开启
+              if (enableNativeKeyboardAvoiding && isAndroid) {
+                const aboveOffset = pageY + height - endCoordinates.screenY
+                const belowOffset = endCoordinates.height - aboveOffset
+                const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
+                const belowValue = Math.min(belowOffset, cursorSpacing)
+                return aboveOffset > 0 ? belowValue : aboveValue
+              }
+
               const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
               const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
               const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
-              const value = aboveOffset > 0 ? belowValue : aboveValue
-              cancelAnimation(offset)
-              offset.value = withTiming(value, { duration, easing }, (finished) => {
-                if (finished) {
-                  // Set flexBasic after animation to trigger re-layout and reset layout information
-                  basic.value = '99.99%'
-                }
-              })
-            })
-          })
-        }),
-        Keyboard.addListener('keyboardWillHide', resetKeyboard)
-      ]
-    } else {
-      subscriptions = [
-        Keyboard.addListener('keyboardDidShow', (evt: any) => {
-          if (!keyboardAvoid?.current || isShow.current) {
-            return
-          }
+              return aboveOffset > 0 ? belowValue : aboveValue
+            }
 
-          isShow.current = true
-
-          const { endCoordinates } = evt
-          const { ref, cursorSpacing = 0 } = keyboardAvoid.current
-
-          ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            const aboveOffset = pageY + height - endCoordinates.screenY
-            const belowOffset = endCoordinates.height - aboveOffset
-            const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
-            const belowValue = Math.min(belowOffset, cursorSpacing)
-            const value = aboveOffset > 0 ? belowValue : aboveValue
             cancelAnimation(offset)
-            offset.value = withTiming(value, { duration, easing }, (finished) => {
+            offset.value = withTiming(calculateOffset(), { duration, easing }, finished => {
               if (finished) {
                 // Set flexBasic after animation to trigger re-layout and reset layout information
                 basic.value = '99.99%'
               }
             })
           })
+        })
+      }
+    }
+
+    if (isIOS) {
+      subscriptions = [
+        Keyboard.addListener('keyboardWillShow', (evt: any) => {
+          keybaordAvoding(evt, true)
         }),
+        Keyboard.addListener('keyboardWillHide', resetKeyboard)
+      ]
+    } else {
+      subscriptions = [
+        Keyboard.addListener('keyboardDidShow', keybaordAvoding),
         Keyboard.addListener('keyboardDidHide', resetKeyboard)
       ]
     }
@@ -124,15 +128,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   }, [keyboardAvoid])
 
   return (
-    <View style={style} onTouchEnd={onTouchEnd}>
-      <Animated.View
-        style={[
-          contentContainerStyle,
-          animatedStyle
-        ]}
-      >
-        {children}
-      </Animated.View>
+    <View style={style} onTouchEnd={onTouchEnd} onTouchMove={onTouchEnd}>
+      <Animated.View style={[contentContainerStyle, animatedStyle]}>{children}</Animated.View>
     </View>
   )
 }
