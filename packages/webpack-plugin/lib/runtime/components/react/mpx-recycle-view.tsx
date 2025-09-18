@@ -44,7 +44,7 @@ interface RecycleViewProps {
   'parent-height'?: number;
   'enable-sticky'?: boolean;
   'enable-back-to-top'?: boolean;
-  'lower-threshold'?: number;
+  'end-reached-threshold'?: number;
   'refresher-enabled'?: boolean;
   'show-scrollbar'?: boolean;
   'refresher-triggered'?: boolean;
@@ -121,7 +121,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     'parent-height': parentHeight,
     'enable-sticky': enableSticky = false,
     'enable-back-to-top': enableBackToTop = false,
-    'lower-threshold': lowerThreshold = 50,
+    'end-reached-threshold': onEndReachedThreshold = 0.1,
     'refresher-enabled': refresherEnabled,
     'show-scrollbar': showScrollbar = true,
     'refresher-triggered': refresherTriggered
@@ -336,7 +336,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
       showsHorizontalScrollIndicator: showScrollbar,
-      onEndReachedThreshold: lowerThreshold,
+      onEndReachedThreshold,
       ref: scrollViewRef,
       bounces: false,
       stickySectionHeadersEnabled: enableSticky,
