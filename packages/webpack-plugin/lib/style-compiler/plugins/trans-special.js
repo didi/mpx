@@ -2,7 +2,7 @@ const selectorParser = require('postcss-selector-parser')
 const { MPX_TAG_PAGE_SELECTOR } = require('../../utils/const')
 // trans-special
 
-module.exports = ({ id, isSupportedPage = false }) => {
+module.exports = ({ id, transPage = false }) => {
   return {
     postcssPlugin: 'trans-special',
     Once: (root) => {
@@ -11,10 +11,17 @@ module.exports = ({ id, isSupportedPage = false }) => {
         node.selector = selectorParser(selectors => {
           selectors.each(selector => {
             selector.each(n => {
-              if (/^:host$/.test(n.value) || (isSupportedPage && /^page$/.test(n.value))) {
+              if (/^:host$/.test(n.value)) {
+                const compoundSelectors = n.nodes
+                n.replaceWith(selectorParser.className({
+                  value: `host-${id}`
+                }))
+                selector.insertAfter(n, compoundSelectors)
+              }
+              if (transPage && /^page$/.test(n.value)) {
                 const compoundSelectors = n.nodes || []
                 n.replaceWith(selectorParser.className({
-                  value: /^page$/.test(n.value) ? MPX_TAG_PAGE_SELECTOR : `host-${id}`
+                  value: MPX_TAG_PAGE_SELECTOR
                 }))
                 selector.insertAfter(n, compoundSelectors)
               }
