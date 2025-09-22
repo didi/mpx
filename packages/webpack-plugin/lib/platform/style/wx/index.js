@@ -359,6 +359,13 @@ module.exports = function getSpec ({ warn, error }) {
           error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
         }
+        // background: none
+        if (value === 'none') {
+          return [
+            { prop: bgPropMap.image, value },
+            { prop: bgPropMap.color, value: 'transparent' }
+          ]
+        }
         const bgMap = []
         const values = parseValues(value)
         values.forEach(item => {
