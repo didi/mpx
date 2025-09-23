@@ -147,7 +147,7 @@ createComponent({
     },
 
     movableDisabled () {
-      if (this.disabled || this.hasOtherOpened) {
+      if (this.disabled || (this.autoClose && this.hasOtherOpened)) {
         return true
       }
 
