@@ -1,20 +1,22 @@
 <template>
-  <view class="mpx-swipe-action-movable" wx:style="{{ containerStyle }}">
+  <view class="mpx-swipe-action-movable" wx:style="{{ containerStyle }}"    
+    bindtouchstart="handleTouchStart"
+    bindtouchmove="handleTouchMove"
+    bindtouchend="handleMovableEnd"
+    bindtouchcancel="handleTouchCancel">
     <movable-area class="movable-area">
       <movable-view 
         class="movable-view"
         direction="horizontal"
         x="{{contentX}}"
         bindchange="handleMovableChange"
-        bindtouchstart="handleTouchStart"
-        bindtouchend="handleMovableEnd"
         out-of-bounds="{{false}}"
         inertia="{{false}}"
         damping="{{60}}"
         friction="{{20}}"
         scale="{{false}}"
         animation="{{true}}"
-        disabled="{{disabled || hasOtherOpened}}"
+        disabled="{{movableDisabled}}"
         wx:style="width: calc(100% + {{totalActionWidth}}px);"
       >
       <!-- web环境需要包一层外层容器设置 flex 样式 -->
@@ -119,7 +121,11 @@ createComponent({
     isOpened: false,
     contentX: 0,
     currentX: 0,
-    hasOtherOpened: false
+    hasOtherOpened: false,
+    touchStartX: 0,
+    touchStartY: 0,
+    gestureDirection: 'idle',
+    isWebMode: __mpx_mode__ === 'web'
   },
 
   computed: {
@@ -138,6 +144,23 @@ createComponent({
         fontWeight: this.actionFontWeight,
         style: this.actionStyle
       }]
+    },
+
+    movableDisabled () {
+      if (this.disabled || this.hasOtherOpened) {
+        return true
+      }
+
+      if (this.gestureDirection === 'vertical') {
+        return true
+      }
+
+      // web 环境 disable 不能在拖拽过程中实施解锁
+      if (!this.isWebMode && this.gestureDirection === 'pending') {
+        return true
+      }
+
+      return false
     },
 
     totalActionWidth() {
@@ -172,9 +195,18 @@ createComponent({
       this.currentX = x
     },
 
-    handleTouchStart () {
+    handleTouchStart (e) {
+      // 记录触摸开始位置，强制重置状态
+      const touch = e.touches[0] || e.changedTouches[0]
+      this.touchStartX = touch.clientX
+      this.touchStartY = touch.clientY
+      
+      // 默认进入待判定阶段
+      this.gestureDirection = 'pending'
+      
       // 检查一下是否有其他的 instance 是开着的
       if (this.hasOtherInstancesOpened()) {
+        this.gestureDirection = 'idle'
         this.closeOtherInstances().then(() => {
           this.updateAllInstancesState()
         })
@@ -182,11 +214,47 @@ createComponent({
       }
       this.contentX = this.currentX
     },
+
+    handleTouchMove (e) {
+      const touch = e.touches[0] || e.changedTouches[0]
+
+      // 已经判定为纵向时，直接阻止后续处理
+      if (this.gestureDirection === 'vertical') {
+        return
+      }
+
+      if (touch) {
+        const deltaX = Math.abs(touch.clientX - this.touchStartX)
+        const deltaY = Math.abs(touch.clientY - this.touchStartY)
+        const horizontalThreshold = 5
+        const directionBias = 1.2
+
+        if (this.gestureDirection !== 'horizontal') {
+          if (deltaY >= horizontalThreshold && deltaY > deltaX * directionBias) {
+            this.gestureDirection = 'vertical'
+            return
+          }
+
+          if (deltaX >= horizontalThreshold && deltaX > deltaY * directionBias) {
+            this.gestureDirection = 'horizontal'
+          }
+        }
+      }
+    },
+
     // movable-view 触摸结束
     handleMovableEnd(e) {
       if (this.hasOtherInstancesOpened()) {
+        this.gestureDirection = 'idle'
         return
       }
+
+      // 如果在 touchmove 中已经判断为竖直滑动，不响应
+      if (this.gestureDirection === 'vertical') {
+        this.gestureDirection = 'idle'
+        return
+      }
+
       this.contentX = this.currentX
       const currentSlideDistance = Math.abs(this.currentX)
       
@@ -194,6 +262,9 @@ createComponent({
         // 当前是打开状态，判断是否要关闭
         const closedDistance = this.totalActionWidth - currentSlideDistance
         const closeThreshold = this.totalActionWidth * 0.2  // 关闭阈值20%
+
+        //  web 环境 touchend 和 tap 事件关闭侧滑冲突，所以添加 closedDistance === 0 的判断
+        if (this.isWebMode && closedDistance === 0) return
         if (closedDistance >= closeThreshold) {
           // 向右滑动超过20%，关闭
           this.snapToClose()
@@ -211,6 +282,14 @@ createComponent({
           this.snapToClose()
         }
       }
+      
+      // 触摸结束后重置阻止状态，为下次触摸做准备
+      this.gestureDirection = 'idle'
+    },
+
+    handleTouchCancel() {
+      // 触摸取消时也要重置阻止状态
+      this.gestureDirection = 'idle'
     },
 
     // 吸附到打开状态
@@ -240,21 +319,21 @@ createComponent({
         setTimeout(() => {
           // 如果在同一个tick里面更新 contentX 无效
           this.contentX = 0
-        
+
           if (this.isOpened) {
             this.isOpened = false
-          
+
             this.triggerEvent('close', {})
-          
+
             if (this.autoClose) {
               this.unregisterInstance()
               this.updateAllInstancesState()
             }
           }
-          
+
           setTimeout(() => {
             resolve()
-          }, 1000)
+          }, 350)
         })
       })
     },
@@ -278,7 +357,6 @@ createComponent({
 
     // 处理内容区域点击
     handleContentTap(e) {
-      console.log('Content tap - isOpened:', this.isOpened)
       
       // 如果有其他实例打开，先关闭它们
       if (this.hasOtherInstancesOpened()) {
@@ -287,7 +365,7 @@ createComponent({
         })
         return
       }
-      
+
       // 如果已打开，则关闭
       if (this.isOpened) {
         this.closeActions()
