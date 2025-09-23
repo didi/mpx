@@ -759,9 +759,8 @@ function parse (template, options) {
       if (!currentParent) genTempRoot()
 
       const children = currentParent.children
-      if (currentParent.tag !== 'text') {
-        text = text.trim()
-      } else {
+
+      if (!currentParent.tag !== 'text' || currentParent.tag !== 'mpx-text' || currentParent.tag !== 'Text' || currentParent.tag !== 'mpx-simple-text' || !(usingComponentsInfo[currentParent.tag]?.isCustomText)) {
         text = text.trim() ? text : ''
       }
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
@@ -2280,7 +2279,7 @@ function processText (el, options, meta) {
 function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'mpx-simple-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
+  if (parentTag !== 'mpx-text' && parentTag !== 'mpx-simple-text' && parentTag !== 'Text' && parentTag !== 'wxs' && usingComponents[el.tag]?.isCustomText) {
     const wrapper = createASTElement('mpx-inline-text')
     wrapper.isBuiltIn = true
     const inheritAttrs = []

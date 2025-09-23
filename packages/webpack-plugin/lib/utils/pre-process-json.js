@@ -20,7 +20,7 @@ module.exports = function ({
 }, callback) {
   const mpx = loaderContext.getMpx()
   const context = loaderContext.context
-  const { mode, pagesMap, autoVirtualHostRules } = mpx
+  const { mode, pagesMap, autoVirtualHostRules, customTextRules } = mpx
   async.waterfall([
     (callback) => {
       getJSONContent(json, null, loaderContext, callback)
@@ -97,9 +97,11 @@ module.exports = function ({
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, ctorType === 'app')
               const hasVirtualHost = matchCondition(rawResourcePath, autoVirtualHostRules)
+              const isCustomText = matchCondition(rawResourcePath, customTextRules)
               setUsingComponentInfo(name, {
                 mid: moduleId,
-                hasVirtualHost
+                hasVirtualHost,
+                isCustomText
               })
               callback()
             })
