@@ -97,11 +97,9 @@ module.exports = function ({
               const { rawResourcePath } = parseRequest(resource)
               const moduleId = mpx.getModuleId(rawResourcePath, ctorType === 'app')
               const hasVirtualHost = matchCondition(rawResourcePath, autoVirtualHostRules)
-              const isCustomText = matchCondition(rawResourcePath, customTextRules)
               setUsingComponentInfo(name, {
                 mid: moduleId,
-                hasVirtualHost,
-                isCustomText
+                hasVirtualHost
               })
               callback()
             })

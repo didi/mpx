@@ -745,7 +745,7 @@ function parse (template, options) {
       const element = stack[stack.length - 1]
       if (element) {
         const lastNode = element.children[element.children.length - 1]
-        const isTextLikeElement = element.tag === 'text' || element.tag === 'mpx-text' || element.tag === 'Text' || element.tag === 'mpx-simple-text' || usingComponentsInfo[element.tag]?.isCustomText
+        const isTextLikeElement = element.tag === 'text' || element.tag === 'mpx-text' || element.tag === 'Text' || element.tag === 'mpx-simple-text'
         if (!isTextLikeElement && lastNode && lastNode.type === 3 && lastNode.text === ' ') {
           element.children.pop()
         }
@@ -761,7 +761,7 @@ function parse (template, options) {
 
       const children = currentParent.children
 
-      const isTextLikeParent = currentParent && (currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text' || usingComponentsInfo[currentParent.tag]?.isCustomText)
+      const isTextLikeParent = currentParent && (currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text')
 
       if (!isTextLikeParent) {
         text = text.trim() ? text : ''
@@ -2282,7 +2282,7 @@ function processText (el, options, meta) {
 function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
-  if (parentTag !== 'mpx-text' && parentTag !== 'mpx-simple-text' && parentTag !== 'Text' && parentTag !== 'wxs' && !usingComponents[el.tag]?.isCustomText) {
+  if (parentTag !== 'mpx-text' && parentTag !== 'mpx-simple-text' && parentTag !== 'Text' && parentTag !== 'wxs') {
     const wrapper = createASTElement('mpx-inline-text')
     wrapper.isBuiltIn = true
     const inheritAttrs = []
