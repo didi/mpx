@@ -20,7 +20,7 @@ module.exports = function ({
 }, callback) {
   const mpx = loaderContext.getMpx()
   const context = loaderContext.context
-  const { mode, pagesMap, autoVirtualHostRules, customTextRules } = mpx
+  const { mode, pagesMap, autoVirtualHostRules } = mpx
   async.waterfall([
     (callback) => {
       getJSONContent(json, null, loaderContext, callback)
