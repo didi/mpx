@@ -1,7 +1,8 @@
 import BleManager from 'react-native-ble-manager'
 import { noop } from '@mpxjs/utils'
+import mpx from '@mpxjs/core'
 import { Platform, PermissionsAndroid } from 'react-native'
-import { base64ToArrayBuffer, arrayBufferToBase64 } from '../base/index'
+import { base64ToArrayBuffer } from '../base/index'
 
 // BleManager 相关
 
@@ -14,11 +15,12 @@ let getDevices = [] // 记录已扫描的设备列表
 let deviceFoundCallbacks = []
 let onStateChangeCallbacks = []
 let characteristicCallbacks = []
+let onBLEConnectionStateCallbacks = []
 let characteristicSubscriptions = {}
 let connectedDevices = new Set()
-let createBLEConnectionIsReady = false
 let createBLEConnectionTimeout = null
 const BLEDeviceCharacteristics = {} // 记录已连接设备的特征值
+const connectedDeviceId = []
 
 // 请求蓝牙权限
 const requestBluetoothPermission = async () => {
@@ -51,7 +53,7 @@ const removeBluetoothDevicesDiscovery = function () {
   }
 }
 const removeUpdateStateSubscription = function () {
-  if (updateStateSubscription) {
+  if (updateStateSubscription && onStateChangeCallbacks.length === 0 && onBLEConnectionStateCallbacks.length === 0) {
     updateStateSubscription.remove()
     updateStateSubscription = null
   }
@@ -64,11 +66,13 @@ const commonFailHandler = function (errMsg, fail, complete) {
     complete(result)
   }
 function openBluetoothAdapter (options = {}) {
-  console.log(BleManager, '---BleManager---')
   const { success = noop, fail = noop, complete = noop } = options
-  
+  let bluetoothPermission = requestBluetoothPermission
+  if (__mpx_env__ === 'android' && mpx.rnConfig?.bluetoothPermission) { // 安卓需要验证权限，开放给用户可以自定义验证权限的方法
+    bluetoothPermission = mpx.rnConfig.bluetoothPermission
+  }
   // 先请求权限，再初始化蓝牙管理器
-  requestBluetoothPermission().then((hasPermissions) => {
+  bluetoothPermission().then((hasPermissions) => {
     if (!hasPermissions) {
       commonFailHandler('openBluetoothAdapter:fail no permission', fail, complete)
       return
@@ -80,7 +84,6 @@ function openBluetoothAdapter (options = {}) {
     }
     
     BleManager.start({ showAlert: false }).then(() => {
-      console.log('BleManager.start 成功，开始初始化事件监听器')
       
       bleManagerInitialized = true
       
@@ -104,7 +107,7 @@ function openBluetoothAdapter (options = {}) {
     }).catch((error) => {
       commonFailHandler('openBluetoothAdapter:fail ' + (error?.message || ''), fail, complete)
     })
-  }).catch((err) => {
+  }).catch(() => {
     commonFailHandler('openBluetoothAdapter:fail no permission', fail, complete)
   })
 }
@@ -129,26 +132,20 @@ function closeBluetoothAdapter (options = {}) {
     if (createBLEConnectionTimeout) { // 清除掉正在连接的蓝牙设备
       clearTimeout(createBLEConnectionTimeout)
     }
-
-    removeBluetoothDevicesDiscovery()
-
+    
     removeUpdateStateSubscription()
-    
-    // 断开所有连接
-    // connectedDevices.forEach(deviceId => {
-    //   BleManager.disconnect(deviceId).catch(() => {})
-    // })
-    
     // 清理状态
     bleManagerInitialized = false
-    // createBLEConnectionIsReady = false  需要确认一下
     discovering = false
     getDevices = []
     connectedDevices.clear()
     deviceFoundCallbacks.length = 0
     onStateChangeCallbacks.length = 0
     characteristicCallbacks.length = 0
-    
+    onBLEConnectionStateCallbacks.length = 0
+
+    removeBluetoothDevicesDiscovery()
+
     // 清理订阅
     Object.keys(characteristicSubscriptions).forEach(key => {
       if (characteristicSubscriptions[key]) {
@@ -185,9 +182,6 @@ function startBluetoothDevicesDiscovery (options = {}) {
     return
   }
   DiscoverPeripheralSubscription = BleManager.onDiscoverPeripheral((device) => {
-    if (device.name) {
-      console.log(device, '--------------------------')
-    }
     const advertising = device.advertising || {}
     const advertisData = advertising.manufacturerData?.data || null
     const deviceInfo = {
@@ -315,18 +309,30 @@ function getBluetoothAdapterState(options = {}) {
     commonFailHandler('getBluetoothAdapterState:fail ' + (error?.message || ''), fail, complete)
   })
 }
-
-function onBluetoothAdapterStateChange(callback) {
-  if (onStateChangeCallbacks.length === 0) {
-    updateStateSubscription = BleManager.onDidUpdateState((state) => {
-      console.log(state, '---state---')
-      onStateChangeCallbacks.forEach(cb => {
-        cb({
-          available: state.state === 'on',
-          discovering: state.state === 'on' ? discovering : false
-        })
+function onDidUpdateState() {
+  updateStateSubscription = BleManager.onDidUpdateState((state) => {
+    onStateChangeCallbacks.forEach(cb => {
+      cb({
+        available: state.state === 'on',
+        discovering: state.state === 'on' ? discovering : false
       })
     })
+    if (onBLEConnectionStateCallbacks.length && connectedDeviceId.length && state.state !== 'on') {
+      connectedDeviceId.forEach((id) => {
+        onBLEConnectionStateCallbacks.forEach(cb => {
+          cb({
+            deviceId: id,
+            connected: false
+          })
+        })
+      })
+    }
+  })
+}
+
+function onBluetoothAdapterStateChange(callback) {
+  if (!updateStateSubscription) {
+    onDidUpdateState()
   }
   if (onStateChangeCallbacks.indexOf(callback) === -1) {
     onStateChangeCallbacks.push(callback)
@@ -377,7 +383,6 @@ function writeBLECharacteristicValue (options = {}) {
 
   // 将ArrayBuffer转换为byte array
   const bytes = Array.from(new Uint8Array(value))
-  
   BleManager.write(deviceId, serviceId, characteristicId, bytes).then(() => {
     const result = {
       errMsg: 'writeBLECharacteristicValue:ok'
@@ -579,7 +584,6 @@ function getBLEDeviceRSSI (options = {}) {
     success(result)
     complete(result)
   }).catch((error) => {
-    console.log('wwwww', error)
     const errmsg = typeof error === 'string' ? error : (error?.message || '')
     const result = {
       errMsg: 'getBLEDeviceRSSI:fail ' + errmsg
@@ -609,7 +613,6 @@ function getBLEDeviceServices (options = {}) {
     complete(result)
     return
   }
-
   BleManager.retrieveServices(deviceId).then((peripheralInfo) => {
     const services = peripheralInfo.services.map(service => ({
       uuid: service.uuid,
@@ -640,7 +643,7 @@ function getBLEDeviceCharacteristics (options = {}) {
   
   if (!bleManagerInitialized) {
     const result = {
-      errMsg: 'getBLEDeviceCharacteristics:fail bluetooth adapter not opened'
+      errMsg: 'getBLEDeviceCharacteristics:fail 请先调用 wx.openBluetoothAdapter 接口进行初始化操作'
     }
     fail(result)
     complete(result)
@@ -665,9 +668,9 @@ function getBLEDeviceCharacteristics (options = {}) {
     complete(result)
     return
   }
-
-  const service = peripheralInfo.services.find(s => s.uuid.toLowerCase() === serviceId.toLowerCase())
-  if (!service) {
+  const characteristicsList = peripheralInfo.characteristics || []
+  const service = characteristicsList.find(c => c.service.toLowerCase() === serviceId.toLowerCase())
+  if (!service && !characteristicsList.length) {
     const result = {
       errMsg: 'getBLEDeviceCharacteristics:fail service not found'
     }
@@ -676,14 +679,14 @@ function getBLEDeviceCharacteristics (options = {}) {
     return
   }
 
-  const characteristics = service.characteristics.map(char => ({
+  const characteristics = characteristicsList.map(char => ({
     uuid: char.uuid,
     properties: char.properties
   }))
 
   const result = {
     errMsg: 'getBLEDeviceCharacteristics:ok',
-    characteristics: characteristics
+    characteristics
   }
   success(result)
   complete(result)
@@ -707,6 +710,16 @@ function createBLEConnection (options = {}) {
   }
 
   BleManager.connect(deviceId).then(() => {
+    if (connectedDeviceId.indexOf(deviceId) !== -1) {
+      connectedDeviceId.push(deviceId) // 记录一下已连接的设备id
+    }
+    clearTimeout(createBLEConnectionTimeout)
+    onBLEConnectionStateCallbacks.forEach(cb => {
+      cb({
+        deviceId,
+        connected: true
+      })
+    })
     connectedDevices.add(deviceId)
     const result = {
       errMsg: 'createBLEConnection:ok'
@@ -714,6 +727,7 @@ function createBLEConnection (options = {}) {
     success(result)
     complete(result)
   }).catch((error) => {
+    clearTimeout(createBLEConnectionTimeout)
     const result = {
       errMsg: 'createBLEConnection:fail ' + (error?.message || '')
     }
@@ -745,6 +759,16 @@ function closeBLEConnection (options = {}) {
   }
 
   BleManager.disconnect(deviceId).then(() => {
+    const index = connectedDeviceId.indexOf(deviceId)
+    if (index !== -1) {
+      connectedDeviceId.splice(index, 1) // 记录一下已连接的设备id
+    }
+    onBLEConnectionStateCallbacks.forEach(cb => {
+      cb({
+        deviceId,
+        connected: false
+      })
+    })
     connectedDevices.delete(deviceId)
     const result = {
       errMsg: 'closeBLEConnection:ok'
@@ -758,6 +782,25 @@ function closeBLEConnection (options = {}) {
     fail(result)
     complete(result)
   })
+}
+
+function onBLEConnectionStateChange(callback) {
+  if (!updateStateSubscription) {
+    onDidUpdateState()
+  }
+  if (onBLEConnectionStateCallbacks.indexOf(callback) === -1) {
+    onBLEConnectionStateCallbacks.push(callback)
+  }
+}
+
+function offBLEConnectionStateChange(callback) {
+  const index = onBLEConnectionStateCallbacks.indexOf(callback)
+  if (index !== -1) {
+    onBLEConnectionStateCallbacks.splice(index, 1)
+  }
+  if (onBLEConnectionStateCallbacks.length === 0) {
+    removeUpdateStateSubscription()
+  }
 }
 
 export {
@@ -782,5 +825,7 @@ export {
   getBLEDeviceServices,
   getBLEDeviceCharacteristics,
   createBLEConnection,
-  closeBLEConnection
+  closeBLEConnection,
+  onBLEConnectionStateChange,
+  offBLEConnectionStateChange
 }

@@ -6,6 +6,8 @@ const createBLEConnection = ENV_OBJ.createBLEConnection || envError('createBLECo
 
 const onBLEConnectionStateChange = ENV_OBJ.onBLEConnectionStateChange || envError('onBLEConnectionStateChange')
 
+const offBLEConnectionStateChange = ENV_OBJ.offBLEConnectionStateChange || envError('offBLEConnectionStateChange')
+
 const openBluetoothAdapter = ENV_OBJ.openBluetoothAdapter || envError('openBluetoothAdapter')
 
 const closeBluetoothAdapter = ENV_OBJ.closeBluetoothAdapter || envError('closeBluetoothAdapter')
@@ -50,6 +52,7 @@ export {
   closeBLEConnection,
   createBLEConnection,
   onBLEConnectionStateChange,
+  offBLEConnectionStateChange,
   openBluetoothAdapter,
   closeBluetoothAdapter,
   startBluetoothDevicesDiscovery,

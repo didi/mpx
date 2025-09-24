@@ -31,7 +31,11 @@ function startWifi (options = {}) {
     return
   }
   startWifiReady = true
-  requestWifiPermission().then(async () => {
+  let wifiPermission = requestWifiPermission
+  if (mpx.rnConfig?.wifiPermission) {
+    wifiPermission = mpx.rnConfig.wifiPermission
+  }
+  wifiPermission().then(async () => {
     let enabled
     try {
       enabled = await WifiManager.isEnabled()
@@ -49,6 +53,13 @@ function startWifi (options = {}) {
       success(result)
       complete(result)
     }
+  }).catch((err) => {
+    const result = {
+      errMsg: 'startWifi:fail ' + (typeof err === 'string' ? err : ''),
+      errCode: 12001
+    }
+    fail(result)
+    complete(result)
   })
 }
 
@@ -140,7 +151,7 @@ function getConnectedWifi (options = {}) {
     
   if (!startWifiReady) {
     const result = {
-      errMsg: 'getConnectedWifi:fail not init',
+      errMsg: 'startWifi:fail not init startWifi',
       errCode: 12000
     }
     fail(result)
@@ -199,8 +210,7 @@ function getConnectedWifi (options = {}) {
       }
       success(result)
       complete(result)
-    }).catch((error) => {
-      console.log(error, '--error')
+    }).catch(() => {
       const result = {
         errMsg: 'getConnectedWifi:fail'
       }

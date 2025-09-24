@@ -12,6 +12,10 @@ function onBLEConnectionStateChange (callback) {
   return ENV_OBJ.onBLEConnectionStateChanged(callback)
 }
 
+function offBLEConnectionStateChange (callback) {
+  return ENV_OBJ.offBLEConnectionStateChanged(callback)
+}
+
 const openBluetoothAdapter = ENV_OBJ.openBluetoothAdapter || envError('openBluetoothAdapter')
 
 const closeBluetoothAdapter = ENV_OBJ.closeBluetoothAdapter || envError('closeBluetoothAdapter')
@@ -56,6 +60,7 @@ export {
   closeBLEConnection,
   createBLEConnection,
   onBLEConnectionStateChange,
+  offBLEConnectionStateChange,
   openBluetoothAdapter,
   closeBluetoothAdapter,
   startBluetoothDevicesDiscovery,
