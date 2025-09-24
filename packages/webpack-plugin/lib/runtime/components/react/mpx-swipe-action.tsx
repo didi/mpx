@@ -128,7 +128,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     'right-threshold': rightThreshold,
     friction = 1,
     disabled = false,
-    'auto-close': autoClose = true,
+    'auto-close': autoClose = false,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
@@ -269,15 +269,15 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     )
   }, [totalActionWidth, finalActions])
 
+  const onSwipeableWillOpen = useCallback(() => {
+    if (autoClose) {
+      registerInstance()
+      closeOtherInstances()
+    }
+  }, [autoClose])
+
   // 处理滑动打开事件
   const handleSwipeableOpen = useCallback((direction: 'left' | 'right') => {
-    if (autoClose) {
-      closeOtherInstances()
-      // 延迟注册，确保 ref 已经准备好
-      setTimeout(() => {
-        registerInstance()
-      }, 0)
-    }
     bindopen && bindopen({
       detail: {
         actionWidth: totalActionWidth,
@@ -285,7 +285,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
         actionCount: finalActions.length
       }
     })
-  }, [totalActionWidth, finalActions, autoClose])
+  }, [totalActionWidth, finalActions])
 
   // 处理滑动关闭事件
   const handleSwipeableClose = useCallback(() => {
@@ -307,6 +307,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     renderRightActions,
     rightThreshold: rightThreshold || totalActionWidth / 2,
     friction,
+    onSwipeableWillOpen: onSwipeableWillOpen,
     onSwipeableOpen: handleSwipeableOpen,
     onSwipeableClose: handleSwipeableClose,
     containerStyle: {
