@@ -29,7 +29,7 @@ export function warn (msg, location, e) {
 
 export function error (msg, location, e) {
   const errorHandler = mpxGlobal.__mpx?.config.errorHandler
-  if (isDev && !e) {
+  if (!e) {
     e = new Error(msg)
   }
   if (isFunction(errorHandler)) {
