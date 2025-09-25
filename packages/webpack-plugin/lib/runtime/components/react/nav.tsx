@@ -84,89 +84,80 @@ export interface MpxNavProps {
   navigation: any
 }
 
-export interface MpxNavFactorOptions {
-  Mpx: any
-}
-
 const BACK_ICON =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABICAYAAACqT5alAAAA2UlEQVR4nO3bMQrCUBRE0Yla6AYEN2nnBrTL+izcitW3MRDkEUWSvPzJvfCqgMwhZbAppWhNbbIHzB1g9wATERFRVyvpkj1irlpJ5X326D7WHh1hbdFD2CLpLmmftm7kfsEe09aNHFiBrT+wAlt/YAW2/sAKbP2BFdj6Ayuwy+ufz6XPL893krZ//O6iu2n4LT8kndLWTRTo4EC7BDo40C6BDg60S6CDA+0S6OBAuwQ6uNWiD2nrJmoIfU7cNWkR2hbb1UfbY7uuWhGWiIg+a/iHuHmA3QPs3gu4JW9Gan+OJAAAAABJRU5ErkJggg=='
 
-function createMpxNav(options: MpxNavFactorOptions) {
-  const { Mpx } = options
-  const innerNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
-    const [innerPageConfig, setPageConfig] = useState<PageConfig>(pageConfig || {})
-    const [customNav] = useNavShared()
-    const safeAreaTop = useSafeAreaInsets()?.top || 0
+const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
+  const [innerPageConfig, setPageConfig] = useState<PageConfig>(pageConfig || {})
+  const [customNav] = useNavShared()
+  const safeAreaTop = useSafeAreaInsets()?.top || 0
 
-    navigation.setPageConfig = (config: PageConfig) => {
-      setPageConfig(Object.assign({}, innerPageConfig, config))
-    }
-    const isCustom = innerPageConfig.navigationStyle === 'custom'
-    const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
-    // 状态栏的颜色
-    const statusBarElement = (
-      <StatusBar
-        translucent
-        backgroundColor='transparent'
-        barStyle={navigationBarTextStyle === NavColor.White ? 'light-content' : 'dark-content'}></StatusBar>
-    )
+  navigation.setPageConfig = (config: PageConfig) => {
+    setPageConfig(Object.assign({}, innerPageConfig, config))
+  }
+  const isCustom = innerPageConfig.navigationStyle === 'custom'
+  const navigationBarTextStyle = useMemo(() => validBarTextStyle(innerPageConfig.navigationBarTextStyle), [innerPageConfig.navigationBarTextStyle])
+  // 状态栏的颜色
+  const statusBarElement = (
+    <StatusBar
+      translucent
+      backgroundColor='transparent'
+      barStyle={navigationBarTextStyle === NavColor.White ? 'light-content' : 'dark-content'}></StatusBar>
+  )
 
-    if (isCustom)
-      return (
-        <>
-          {statusBarElement}
-          {customNav}
-        </>
-      )
-    // 假设是栈导航，获取栈的长度
-    const stackLength = navigation.getState()?.routes?.length
-    const onStackTopBack = Mpx.config?.rnConfig?.onStackTopBack
-    const isHandleStackTopBack = typeof onStackTopBack === 'function'
-
-    // 回退按钮与图标
-    // prettier-ignore
-    const backElement = stackLength > 1 || isHandleStackTopBack
-      ? (
-        <TouchableWithoutFeedback
-          onPress={() => {
-            if (stackLength <= 1 && isHandleStackTopBack) {
-              onStackTopBack()
-              return
-            }
-            navigation.goBack()
-          }}>
-          <View style={[styles.backButton]}>
-            <Image style={[styles.backButtonImage, { tintColor: navigationBarTextStyle }]} source={{ uri: BACK_ICON }}></Image>
-          </View>
-        </TouchableWithoutFeedback>
-        )
-      : null
-
+  if (isCustom)
     return (
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: safeAreaTop,
-            backgroundColor: innerPageConfig.navigationBarBackgroundColor || '#000000'
-          }
-        ]}>
+      <>
         {statusBarElement}
-        {/* TODO: 确定 height 的有效性 */}
-        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-        {/* @ts-expect-error */}
-        <View style={styles.headerContent} height={titleHeight}>
-          {backElement}
-          <Text style={[styles.title, { color: navigationBarTextStyle }]} numberOfLines={1}>
-            {innerPageConfig.navigationBarTitleText?.trim() || ''}
-          </Text>
-        </View>
-      </View>
+        {customNav}
+      </>
     )
-  })
+  // 假设是栈导航，获取栈的长度
+  const stackLength = navigation.getState()?.routes?.length
+  const onStackTopBack = mpxGlobal?.__mpx?.config?.rnConfig?.onStackTopBack
+  const isHandleStackTopBack = typeof onStackTopBack === 'function'
 
-  innerNav.displayName = 'MpxNav'
-  return innerNav
-}
+  // 回退按钮与图标
+  // prettier-ignore
+  const backElement = stackLength > 1 || isHandleStackTopBack
+    ? (
+      <TouchableWithoutFeedback
+        onPress={() => {
+          if (stackLength <= 1 && isHandleStackTopBack) {
+            onStackTopBack()
+            return
+          }
+          navigation.goBack()
+        }}>
+        <View style={[styles.backButton]}>
+          <Image style={[styles.backButtonImage, { tintColor: navigationBarTextStyle }]} source={{ uri: BACK_ICON }}></Image>
+        </View>
+      </TouchableWithoutFeedback>
+      )
+    : null
 
-export default createMpxNav
+  return (
+    <View
+      style={[
+        styles.header,
+        {
+          paddingTop: safeAreaTop,
+          backgroundColor: innerPageConfig.navigationBarBackgroundColor || '#000000'
+        }
+      ]}>
+      {statusBarElement}
+      {/* TODO: 确定 height 的有效性 */}
+      {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+      {/* @ts-expect-error */}
+      <View style={styles.headerContent} height={titleHeight}>
+        {backElement}
+        <Text style={[styles.title, { color: navigationBarTextStyle }]} numberOfLines={1}>
+          {innerPageConfig.navigationBarTitleText?.trim() || ''}
+        </Text>
+      </View>
+    </View>
+  )
+})
+
+MpxNav.displayName = 'MpxNav'
+export default MpxNav
