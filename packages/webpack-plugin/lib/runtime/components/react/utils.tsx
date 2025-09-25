@@ -232,7 +232,13 @@ function resolveVar (input: string, varContext: Record<string, any>) {
 function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>, visitOther: (arg: VisitorArg) => void) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
-      target[key] = resolveVar(value, varContext)
+      const resolved = resolveVar(value, varContext)
+      if (resolved === '') {
+        delete target[key]
+        error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
+        return
+      }
+      target[key] = resolved
       visitOther({ target, key, value: target[key], keyPath: varKeyPath })
     })
   })
