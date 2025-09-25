@@ -89,7 +89,7 @@
       <td>是否处于弱网环境</td>
       <td>3.5.3</td>
       <td><span style="color: red; font-weight: bold;">✗</span></td>
-      <td><span style="color: green; font-weight: bold;">✓</span></td>
+      <td><span style="color: red; font-weight: bold;">✗</span></td>
       <td><span style="color: red; font-weight: bold;">✗</span></td>
     </tr>
   </tbody>
