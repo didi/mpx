@@ -645,70 +645,41 @@ const SwiperWrapper = forwardRef((props, ref) => {
 
         function handleInertialSlide(eventData, velocity) {
             'worklet';
-            // 限制最大速度，避免滑动过快
             const clampedVelocity = Math.sign(velocity) * Math.min(Math.abs(velocity), 900);
             console.log('clampedVelocity____', clampedVelocity);
-            // 计算滑动边界r
-            let minOffset = 0;
-            let maxOffset = 0;
 
-            minOffset = -(childrenLength.value - 1) * step.value;
-            maxOffset = 0;
-
-            // 计算最终应该停留的位置（考虑patchElmNumShared的偏移）
-            const snapPoints = [];
-            for (let i = 0; i < childrenLength.value; i++) {
-                snapPoints.push(-(i + patchElmNumShared.value) * step.value);
-            }
-            
-            // 获取当前实际索引（考虑patchElmNumShared的偏移）
-            const currentRealIndex = Math.round(Math.abs(offset.value) / step.value) - patchElmNumShared.value;
+            // 修复：正确计算当前索引（关键！不要用 Math.abs）
+            const currentRealIndex = Math.round((-offset.value) / step.value) - patchElmNumShared.value;
             const direction = Math.sign(clampedVelocity);
             let predictedIndex;
-            
-            // 无论滑动速度多快，每次只滑动一张卡片
-            if (direction > 0) { // 向右滑动，索引减小
+
+            if (direction > 0) {
                 predictedIndex = currentRealIndex - 1;
-            } else { // 向左滑动，索引增加
+            } else {
                 predictedIndex = currentRealIndex + 1;
             }
-            
-            // 确保索引在有效范围内
+
             predictedIndex = Math.max(0, Math.min(predictedIndex, childrenLength.value - 1));
-            
             console.log('当前索引:', currentRealIndex, '预测索引:', predictedIndex);
-            
-            // 计算目标偏移量 - 确保精确定位到卡片位置
+
             const targetOffset = -(predictedIndex + patchElmNumShared.value) * step.value;
-            
             console.log('目标索引:', predictedIndex, '目标偏移量:', targetOffset);
-            
-            // 使用withTiming直接滑动到目标位置，根据速度动态计算动画时长
-            const distance = Math.abs(targetOffset - offset.value);
-            
-            // 限制速度因子在合理范围内，确保动画不会太快
-            // 速度越快，动画时长越短，但有最小限制
-            const velocityFactor = Math.min(Math.abs(clampedVelocity) / 1000, 1.2); // 速度因子，最大1.2
-            const baseDuration = 300; // 基础动画时长
-            const minDuration = 250; // 最小动画时长
-            const duration = Math.max(baseDuration / velocityFactor, minDuration); // 确保动画时长不会太短
-            
+
+            const velocityFactor = Math.min(Math.abs(clampedVelocity) / 1000, 1.2);
+            const baseDuration = 300;
+            const minDuration = 250;
+            const duration = Math.max(baseDuration / velocityFactor, minDuration);
+
             offset.value = withTiming(targetOffset, {
                 duration: duration,
-                easing: Easing.bezier(0.25, 0.1, 0.25, 1) // 使用标准的缓动曲线
+                easing: Easing.bezier(0.25, 0.1, 0.25, 1)
             }, (finished) => {
                 'worklet';
                 if (finished) {
-                    // 动画结束后，直接更新索引为预测的索引
-                    // 由于我们已经精确滑动到了目标位置，不需要再调整位置
-                    
-                    // 更新当前索引
                     currentIndex.value = predictedIndex;
-                    
-                    // 恢复循环
                     runOnJS(runOnJSCallback)('resumeLoop');
                 }
-            })
+            });
         }
 
         const gesturePan = Gesture.Pan()
