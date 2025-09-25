@@ -392,6 +392,13 @@ export interface RnConfig {
    * @param packages 分包名数组
    */
   downloadChunkAsync?: (packages: Array<string>) => void
+
+  /**
+   * bundle 中是否关闭 android 键盘避让功能，如果关闭需要将该配置设置为 false，使用 mpx 内置的键盘避让逻辑
+   * @platform android
+   * @default true
+   */
+  enableNativeKeyboardAvoiding?: boolean
 }
 
 interface MpxConfig {
