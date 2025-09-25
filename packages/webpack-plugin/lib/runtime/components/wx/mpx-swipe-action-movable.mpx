@@ -1,45 +1,25 @@
 <template>
-  <view class="mpx-swipe-action-movable" wx:style="{{ containerStyle }}"    
-    bindtouchstart="handleTouchStart"
-    bindtouchmove="handleTouchMove"
-    bindtouchend="handleMovableEnd"
-    bindtouchcancel="handleTouchCancel">
+  <view class="mpx-swipe-action-movable" wx:style="{{ containerStyle }}" bindtouchstart="handleTouchStart"
+    bindtouchmove="handleTouchMove" bindtouchend="handleMovableEnd" bindtouchcancel="handleTouchCancel">
     <movable-area class="movable-area">
-      <movable-view 
-        class="movable-view"
-        direction="horizontal"
-        x="{{contentX}}"
-        bindchange="handleMovableChange"
-        out-of-bounds="{{false}}"
-        inertia="{{false}}"
-        friction="{{friction}}"
-        disabled="{{movableDisabled}}"
-        wx:style="width: calc(100% + {{totalActionWidth}}px);"
-      >
-      <!-- web环境需要包一层外层容器设置 flex 样式 -->
-      <view class="content-container" wx:ref="contentContainer">
-        <!-- 主内容区域 -->
-        <view class="content-area" bindtap="handleContentTap"  wx:style="width: calc(100% - {{totalActionWidth}}px);">
-          <slot></slot>
+      <movable-view class="movable-view" direction="horizontal" x="{{ contentX }}" bindchange="handleMovableChange"
+        out-of-bounds="{{ false }}" inertia="{{ false }}" damping="{{ 40 }}" friction="{{ friction }}" disabled="{{ movableDisabled }}"
+        wx:style="width: calc(100% + {{totalActionWidth}}px);">
+        <!-- web环境需要包一层外层容器设置 flex 样式 -->
+        <view class="content-container" wx:ref="contentContainer">
+          <!-- 主内容区域 -->
+          <view class="content-area" bindtap="handleContentTap" wx:style="width: calc(100% - {{totalActionWidth}}px);">
+            <slot></slot>
+          </view>
+
+          <!-- 右侧操作按钮区域 -->
+          <view class="action-area" wx:style="width: {{totalActionWidth}}px;">
+            <view wx:for="{{ finalActions }}" wx:key="index" class="action-button"
+              wx:style="width: {{item.width || actionWidth}}px; background-color: {{item.background || item.color || '#ff4757'}}; color: {{item.textColor || '#fff'}}; font-size: {{item.fontSize || 16}}px; font-weight: {{item.fontWeight || '500'}}; {{item.style || ''}}"
+              bindtap="handleActionTap" data-index="{{ index }}" data-action="{{ item }}">{{ item.text }}</view>
+          </view>
         </view>
-        
-        <!-- 右侧操作按钮区域 -->
-        <view 
-          class="action-area" 
-          wx:style="width: {{totalActionWidth}}px;"
-        >
-          <view 
-            wx:for="{{finalActions}}" 
-            wx:key="index"
-            class="action-button"
-            wx:style="width: {{item.width || actionWidth}}px; background-color: {{item.background || item.color || '#ff4757'}}; color: {{item.textColor || '#fff'}}; font-size: {{item.fontSize || 16}}px; font-weight: {{item.fontWeight || '500'}}; {{item.style || ''}}"
-            bindtap="handleActionTap"
-            data-index="{{index}}"
-            data-action="{{item}}"
-          >{{item.text}}</view>
-        </view>
-      </view>
-       
+
       </movable-view>
     </movable-area>
   </view>
@@ -128,7 +108,6 @@ createComponent({
     gestureDirection: 'idle',
     isWebMode: __mpx_mode__ === 'web'
   },
-
   computed: {
     // 处理多按钮配置，优先使用 actions，否则使用单按钮配置
     finalActions() {
@@ -147,7 +126,7 @@ createComponent({
       }]
     },
 
-    movableDisabled () {
+    movableDisabled() {
       if (this.disabled || (this.autoClose && this.hasOtherOpened)) {
         return true
       }
@@ -180,13 +159,13 @@ createComponent({
         return this.closeThreshold
       }
     },
-    containerStyle () {
+    containerStyle() {
       return `height: ${this.height}px`
     }
   },
   detached() {
     // 组件销毁时清理
-    this.unregisterInstance()
+    this.unregisterOpenInstance()
   },
 
   methods: {
@@ -196,27 +175,25 @@ createComponent({
       this.currentX = x
     },
 
-    handleTouchStart (e) {
+    handleTouchStart(e) {
       // 记录触摸开始位置，强制重置状态
       const touch = e.touches[0] || e.changedTouches[0]
       this.touchStartX = touch.clientX
       this.touchStartY = touch.clientY
-      
+
       // 默认进入待判定阶段
       this.gestureDirection = 'pending'
-      
+
       // 检查一下是否有其他的 instance 是开着的
       if (this.hasOtherInstancesOpened()) {
         this.gestureDirection = 'idle'
-        this.closeOtherInstances().then(() => {
-          this.updateAllInstancesState()
-        })
+        this.handleOtherInstanceClosed()
         return
       }
       this.contentX = this.currentX
     },
 
-    handleTouchMove (e) {
+    handleTouchMove(e) {
       const touch = e.touches[0] || e.changedTouches[0]
 
       // 已经判定为纵向时，直接阻止后续处理
@@ -258,7 +235,7 @@ createComponent({
 
       this.contentX = this.currentX
       const currentSlideDistance = Math.abs(this.currentX)
-      
+
       if (this.isOpened) {
         // 当前是打开状态，判断是否要关闭
         const closedDistance = this.totalActionWidth - currentSlideDistance
@@ -283,7 +260,7 @@ createComponent({
           this.snapToClose()
         }
       }
-      
+
       // 触摸结束后重置阻止状态，为下次触摸做准备
       this.gestureDirection = 'idle'
     },
@@ -296,22 +273,22 @@ createComponent({
     // 吸附到打开状态
     snapToOpen() {
       setTimeout(() => {
-      this.contentX = -this.totalActionWidth
-      if (!this.isOpened) {
-        this.isOpened = true
-        
-        this.triggerEvent('open', {
-          actionWidth: this.totalActionWidth,
-          actions: this.finalActions,
-          actionCount: this.finalActions.length
-        })
-        
-        if (this.autoClose) {
-          this.registerInstance()
-          this.updateAllInstancesState()
+        this.contentX = -this.totalActionWidth
+        if (!this.isOpened) {
+          this.isOpened = true
+
+          this.triggerEvent('open', {
+            actionWidth: this.totalActionWidth,
+            actions: this.finalActions,
+            actionCount: this.finalActions.length
+          })
+
+          if (this.autoClose) {
+            this.registerInstance()
+            this.updateOpenInstancesState()
+          }
         }
-      }
-    })
+      })
     },
 
     // 吸附到关闭状态
@@ -327,8 +304,8 @@ createComponent({
             this.triggerEvent('close', {})
 
             if (this.autoClose) {
-              this.unregisterInstance()
-              this.updateAllInstancesState()
+              this.updateOpenInstancesState()
+              this.unregisterOpenInstance()
             }
           }
 
@@ -339,37 +316,17 @@ createComponent({
       })
     },
 
-    // 打开操作区域（编程式调用）
-    openActions() {
-      if (this.autoClose) {
-        // 先关闭其他实例，再打开当前实例
-        return this.closeOtherInstances().then(() => {
-          this.snapToOpen()
-        })
-      } else {
-        this.snapToOpen()
-      }
-    },
-
-    // 关闭操作区域（编程式调用）
-    closeActions() {
-      return this.snapToClose()
-    },
-
     // 处理内容区域点击
     handleContentTap(e) {
-      
       // 如果有其他实例打开，先关闭它们
       if (this.hasOtherInstancesOpened()) {
-        this.closeOtherInstances().then(() => {
-          this.updateAllInstancesState()
-        })
+        this.handleOtherInstanceClosed()
         return
       }
 
       // 如果已打开，则关闭
       if (this.isOpened) {
-        this.closeActions()
+        this.snapToClose()
       } else {
         // 透传点击事件
         this.triggerEvent('tap', e.detail)
@@ -379,16 +336,16 @@ createComponent({
     // 处理操作按钮点击
     handleActionTap(e) {
       const { index, action } = e.currentTarget.dataset
-      
+
       this.triggerEvent('actiontap', {
         actionIndex: index,
         actionText: action.text,
         actionWidth: action.width || this.actionWidth,
         action: action
       })
-      
+
       // 点击操作按钮后自动关闭
-      this.closeActions()
+      this.snapToClose()
     },
 
     // 注册实例
@@ -398,11 +355,9 @@ createComponent({
       }
     },
 
-    // 注销实例
-    unregisterInstance() {
+    unregisterOpenInstance() {
       openedInstances.delete(this)
     },
-
     // 检查是否有其他实例打开
     hasOtherInstancesOpened() {
       if (!this.autoClose) return false
@@ -414,8 +369,17 @@ createComponent({
       return false
     },
 
-    // 更新所有实例的 hasOtherOpened 状态
-    updateAllInstancesState() {
+    handleOtherInstanceClosed() {
+       const savedOpenInstances = new Set(openedInstances)
+          this.closeOtherInstances().then(() => {
+            // 如果同时 open 多个实例，snapToClose 中状态更新可能不准，需要在全部关闭后统一设置一次hasOtherOpened
+            savedOpenInstances.forEach(instance => {
+              instance.hasOtherOpened = false
+            })
+          })
+    },
+    // 更新所有打开实例的 hasOtherOpened 状态
+    updateOpenInstancesState() {
       if (this.autoClose) {
         openedInstances.forEach(instance => {
           instance.hasOtherOpened = instance.hasOtherInstancesOpened()
@@ -429,7 +393,7 @@ createComponent({
         const promises = []
         openedInstances.forEach(instance => {
           if (instance !== this && instance.isOpened) {
-            promises.push(instance.closeActions())
+            promises.push(instance.snapToClose())
           }
         })
         return Promise.all(promises)
@@ -439,11 +403,19 @@ createComponent({
 
     // 暴露给外部的方法
     open() {
-      this.openActions()
+      if (this.autoClose) {
+        // 先关闭其他实例，再打开当前实例
+        this.snapToOpen()
+        setTimeout(() => {
+          this.handleOtherInstanceClosed()
+        })
+      } else {
+        this.snapToOpen()
+      }
     },
 
     close() {
-      this.closeActions()
+      this.snapToClose()
     }
   }
 })
@@ -473,6 +445,7 @@ createComponent({
   display: flex;
   width: 100%
 }
+
 .content-area {
   width: 100%;
 }
