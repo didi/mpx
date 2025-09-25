@@ -19,9 +19,8 @@
  */
 
 import { View, Text } from 'react-native'
-import { useRef, useImperativeHandle, forwardRef, ReactNode, JSX, createElement, useCallback, useEffect } from 'react'
+import { useRef, useImperativeHandle, forwardRef, ReactNode, JSX, createElement, useEffect } from 'react'
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
-import { SharedValue } from 'react-native-reanimated'
 import useInnerProps from './getInnerListeners'
 import { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject } from './utils'
@@ -87,13 +86,12 @@ const ActionButton = ({ action, index, actionWidth, onTap }: {
     bindtap: () => onTap(index, action)
   }, [], {})
 
-  const buttonStyle = {
+  const buttonStyle = extendObject({
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     width: actionWidth,
     backgroundColor,
-    ...action.style
-  }
+  }, action.style)
 
   return createElement(
     View,
@@ -128,7 +126,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     'right-threshold': rightThreshold,
     friction = 1,
     disabled = false,
-    'auto-close': autoClose = true,
+    'auto-close': autoClose = false,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
@@ -185,18 +183,18 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
   })
 
   // 注册实例
-  const registerInstance = useCallback(() => {
+  function registerInstance () {
     if (autoClose && swipeableRef.current) {
       openedInstances.add(swipeableRef.current)
     }
-  }, [autoClose])
+  }
 
   // 注销实例
-  const unregisterInstance = useCallback(() => {
+  function unregisterInstance () {
     if (swipeableRef.current) {
       openedInstances.delete(swipeableRef.current)
     }
-  }, [])
+  }
 
   // 组件卸载时清理
   useEffect(() => {
@@ -208,7 +206,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
   // 暴露方法给外部
   useImperativeHandle(ref, () => {
     return {
-      open: () => swipeableRef.current?.openRight(),
+      open: handleOpen,
       close: () => swipeableRef.current?.close(),
       getNodeInstance: () => ({
         props: { current: props },
@@ -218,8 +216,18 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     }
   })
 
+  function handleOpen () {
+    if (swipeableRef.current) {
+      if (autoClose) {
+        registerInstance()
+        closeOtherInstances()
+      }
+      swipeableRef.current?.openRight()
+    }
+  }
+
   // 关闭其他已打开的实例
-  const closeOtherInstances = useCallback(() => {
+  function closeOtherInstances () {
     if (autoClose) {
       openedInstances.forEach(instance => {
         if (instance !== swipeableRef.current) {
@@ -227,10 +235,10 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
         }
       })
     }
-  }, [autoClose])
+  }
 
   // 处理操作按钮点击
-  const handleActionTap = useCallback((actionIndex: number, action: ActionConfig) => {
+  function handleActionTap (actionIndex: number, action: ActionConfig) {
     bindactiontap && bindactiontap({
       detail: {
         actionIndex,
@@ -241,13 +249,10 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     })
     // 点击操作按钮后自动关闭
     swipeableRef.current?.close()
-  }, [actionWidth])
+  }
 
   // 渲染右侧操作区域
-  const renderRightActions = useCallback((
-    progress: SharedValue<number>,
-    translation: SharedValue<number>
-  ) => {
+  function renderRightActions () {
     return createElement(
       View,
       {
@@ -267,17 +272,22 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
         })
       })
     )
-  }, [totalActionWidth, finalActions])
+  }
+
+  function onSwipeableWillOpen () {
+    if (autoClose) {
+      registerInstance()
+    }
+  }
+
+  function handleTouchStart () {
+     if (autoClose) {
+      closeOtherInstances()
+    }
+  }
 
   // 处理滑动打开事件
-  const handleSwipeableOpen = useCallback((direction: 'left' | 'right') => {
-    if (autoClose) {
-      closeOtherInstances()
-      // 延迟注册，确保 ref 已经准备好
-      setTimeout(() => {
-        registerInstance()
-      }, 0)
-    }
+  function handleSwipeableOpen () {
     bindopen && bindopen({
       detail: {
         actionWidth: totalActionWidth,
@@ -285,15 +295,15 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
         actionCount: finalActions.length
       }
     })
-  }, [totalActionWidth, finalActions, autoClose])
+  }
 
   // 处理滑动关闭事件
-  const handleSwipeableClose = useCallback(() => {
+  function handleSwipeableClose () {
     if (autoClose) {
       unregisterInstance() // 从全局集合中移除当前实例
     }
     bindclose && bindclose({ detail: {} })
-  }, [autoClose])
+  }
 
   const childrenWithProps = wrapChildren(props, {
     hasVarDec,
@@ -307,8 +317,10 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
     renderRightActions,
     rightThreshold: rightThreshold || totalActionWidth / 2,
     friction,
+    onSwipeableWillOpen: onSwipeableWillOpen,
     onSwipeableOpen: handleSwipeableOpen,
     onSwipeableClose: handleSwipeableClose,
+    onTouchStart: handleTouchStart,
     containerStyle: {
       flex: 1
     },
