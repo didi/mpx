@@ -12,10 +12,7 @@
         bindchange="handleMovableChange"
         out-of-bounds="{{false}}"
         inertia="{{false}}"
-        damping="{{60}}"
-        friction="{{20}}"
-        scale="{{false}}"
-        animation="{{true}}"
+        friction="{{friction}}"
         disabled="{{movableDisabled}}"
         wx:style="width: calc(100% + {{totalActionWidth}}px);"
       >
@@ -107,6 +104,10 @@ createComponent({
     disabled: {
       type: Boolean,
       value: false
+    },
+    friction: {
+      type: Number,
+      value: 2
     },
     autoClose: {
       type: Boolean,
