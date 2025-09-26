@@ -160,7 +160,7 @@ const decodeMap = {
   '&quot;': '"',
   '&amp;': '&',
   '&#39;': '\'',
-  '&nbsp;': ''
+  '&nbsp;': ' '
 }
 const encodedRe = /&(?:lt|gt|quot|amp|#39|nbsp);/g
 
@@ -170,6 +170,24 @@ function decode (value) {
       return decodeMap[match]
     })
   }
+}
+
+const encodeMap = {
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  '&': '&amp;',
+  "'": '&#39;'
+}
+const encodeRe = /[<>"'&]/g
+
+function encode (value) {
+  if (value != null) {
+    return String(value).replace(encodeRe, function (match) {
+      return encodeMap[match]
+    })
+  }
+  return value
 }
 
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(tm)', 't', 'tc', 'te', 'tm']
@@ -770,8 +788,6 @@ function parse (template, options) {
         text = text.trim() ? text : ''
       }
 
-      text = decode(text)
-
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
         text = he.decode(text)
       }
@@ -780,7 +796,7 @@ function parse (template, options) {
         const el = {
           type: 3,
           // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
-          text: decodeInMustache(text),
+          text: decode(text),
           parent: currentParent
         }
         children.push(el)
@@ -3055,7 +3071,7 @@ function serialize (root) {
         if (node.isComment) {
           result += '<!--' + node.text + '-->'
         } else {
-          result += node.text
+          result += encode(node.text)
         }
       }
 
