@@ -18,3 +18,22 @@ export type ExtendedFunctionComponent = FunctionComponent & {
 }
 
 export type AnyFunc = (...args: ReadonlyArray<any>) => any
+
+declare global {
+  interface PageConfig {
+    /**
+     * 是否自定义导航栏
+     */
+    navigationStyle?: 'custom'
+    /**
+     * 标题栏样式
+     */
+    navigationBarTextStyle?: 'white' | 'black' | '#ffffff' | '#000000'
+    /**
+     * 页面标题
+     */
+    navigationBarTitleText?: string
+
+    [key: string]: any
+  }
+}
