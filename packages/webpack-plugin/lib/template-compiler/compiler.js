@@ -159,9 +159,10 @@ const decodeMap = {
   '&gt;': '>',
   '&quot;': '"',
   '&amp;': '&',
-  '&#39;': '\''
+  '&#39;': '\'',
+  '&nbsp;': ''
 }
-const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
+const encodedRe = /&(?:lt|gt|quot|amp|#39|nbsp);/g
 
 function decode (value) {
   if (value != null) {
@@ -768,6 +769,9 @@ function parse (template, options) {
       } else {
         text = text.trim() ? text : ''
       }
+
+      text = decode(text)
+
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
         text = he.decode(text)
       }
