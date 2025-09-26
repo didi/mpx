@@ -2,15 +2,41 @@
 /**
  * ✔ selectable
  * ✘ space
- * ✘ decode
+ * ✔ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX, createElement } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement, Children } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, wrapChildren, extendObject } from './utils'
 
+const decodeMap = {
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&amp;': '&',
+  '&#39;': '\'',
+  '&nbsp;': ' '
+}
+
+const encodedRe = /&(?:lt|gt|quot|amp|#39|nbsp);/g
+function decode (value: string) {
+  if (value != null) {
+    return value.replace(encodedRe, function (match) {
+      return decodeMap[match as keyof typeof decodeMap]
+    })
+  }
+}
+
+function getDecodedChildren (children: ReactNode) {
+  return Children.map(children, (child) => {
+    if (typeof child === 'string') {
+      return decode(child)
+    }
+    return child
+  })
+}
 interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
@@ -21,6 +47,7 @@ interface _TextProps extends TextProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  decode?: boolean
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
@@ -33,7 +60,8 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight
+    'parent-height': parentHeight,
+    decode
   } = props
 
   const {
@@ -66,12 +94,17 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       }
     ),
     [
-      'user-select'
+      'user-select',
+      'decode'
     ]
   )
 
+  const children = decode ? getDecodedChildren(props.children) : props.children
+
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
-    props,
+    extendObject({}, props, {
+      children
+    }),
     {
       hasVarDec,
       varContext: varContextRef.current
