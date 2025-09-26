@@ -178,7 +178,7 @@ class MpxWebpackPlugin {
     options.postcssInlineConfig = options.postcssInlineConfig || {}
     options.transRpxRules = options.transRpxRules || null
     options.auditResource = options.auditResource || false
-    options.decodeHTMLText = options.decodeHTMLText || true
+    options.decodeHTMLText = options.decodeHTMLText || false
     options.i18n = options.i18n || null
     options.checkUsingComponentsRules = options.checkUsingComponentsRules || (options.checkUsingComponents ? { include: () => true } : { exclude: () => true })
     options.reportSize = options.reportSize || null

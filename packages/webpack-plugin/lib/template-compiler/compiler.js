@@ -159,10 +159,9 @@ const decodeMap = {
   '&gt;': '>',
   '&quot;': '"',
   '&amp;': '&',
-  '&#39;': '\'',
-  '&nbsp;': ' '
+  '&#39;': '\''
 }
-const encodedRe = /&(?:lt|gt|quot|amp|#39|nbsp);/g
+const encodedRe = /&(?:lt|gt|quot|amp|#39);/g
 
 function decode (value) {
   if (value != null) {
@@ -170,24 +169,6 @@ function decode (value) {
       return decodeMap[match]
     })
   }
-}
-
-const encodeMap = {
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  '&': '&amp;',
-  "'": '&#39;'
-}
-const encodeRe = /[<>"'&]/g
-
-function encode (value) {
-  if (value != null) {
-    return String(value).replace(encodeRe, function (match) {
-      return encodeMap[match]
-    })
-  }
-  return value
 }
 
 const i18nFuncNames = ['\\$(t)', '\\$(tc)', '\\$(te)', '\\$(tm)', 't', 'tc', 'te', 'tm']
@@ -764,8 +745,7 @@ function parse (template, options) {
       const element = stack[stack.length - 1]
       if (element) {
         const lastNode = element.children[element.children.length - 1]
-        const isTextLikeElement = element.tag === 'text' || element.tag === 'mpx-text' || element.tag === 'Text' || element.tag === 'mpx-simple-text'
-        if (!isTextLikeElement && lastNode && lastNode.type === 3 && lastNode.text === ' ') {
+        if (lastNode && lastNode.type === 3 && lastNode.text === ' ') {
           element.children.pop()
         }
         // pop stack
@@ -787,7 +767,6 @@ function parse (template, options) {
       } else {
         text = text.trim() ? text : ''
       }
-
       if ((!config[mode].wxs || currentParent.tag !== config[mode].wxs.tag) && options.decodeHTMLText) {
         text = he.decode(text)
       }
@@ -796,7 +775,7 @@ function parse (template, options) {
         const el = {
           type: 3,
           // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
-          text: decode(text),
+          text: decodeInMustache(text),
           parent: currentParent
         }
         children.push(el)
@@ -3071,7 +3050,7 @@ function serialize (root) {
         if (node.isComment) {
           result += '<!--' + node.text + '-->'
         } else {
-          result += encode(node.text)
+          result += node.text
         }
       }
 
