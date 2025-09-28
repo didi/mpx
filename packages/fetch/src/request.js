@@ -1,9 +1,7 @@
 /* eslint-disable no-undef */
-import { buildUrl, serialize, transformRes } from './util'
+import { buildUrl, serialize, transformRes, isObject } from './util'
 import { request as requestApi } from '@mpxjs/api-proxy/src/platform/api/request'
 import JSONBig from 'json-bigint'
-
-const isObject = (thing) => thing !== null && typeof thing === 'object'
 
 export default function request (config) {
   return new Promise((resolve, reject) => {
