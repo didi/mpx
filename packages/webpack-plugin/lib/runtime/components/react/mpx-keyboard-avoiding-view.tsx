@@ -25,7 +25,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const animatedStyle = useAnimatedStyle(() => ({
-    // translate/position top可能会导致地步渲染区域缺失
+    // translate/position top可能会导致底部渲染区域缺失
     marginTop: -offset.value,
     flexBasis: basic.value as DimensionValue
   }))
@@ -73,26 +73,27 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
       }
 
       const { endCoordinates } = evt
-      const { ref, cursorSpacing = 0, adjustPosition, onKeyboardShow, enableNativeKeyboardAvoiding } = keyboardAvoid.current
+      const { ref, cursorSpacing = 0, adjustPosition, onKeyboardShow } = keyboardAvoid.current
       keyboardAvoid.current.keyboardHeight = endCoordinates.height
       onKeyboardShow?.()
       if (adjustPosition) {
-        timerRef.current = setTimeout(() => {
+        // 默认沿用旧版本逻辑，在 android 原生关闭键盘避让的情况下应该将该配置设置为 false，走 mpx 的键盘避让逻辑，否则bundle内的所有input都会无法避让键盘
+        const enableNativeKeyboardAvoiding = mpxGlobal?.__mpx?.config?.rnConfig?.enableNativeKeyboardAvoiding ?? true
+        const callback = () => {
           ref?.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
             function calculateOffset() {
               // enableNativeKeyboardAvoding 默认开启
               if (enableNativeKeyboardAvoiding && isAndroid) {
-                const aboveOffset = pageY + height - endCoordinates.screenY
-                const belowOffset = endCoordinates.height - aboveOffset
-                const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
-                const belowValue = Math.min(belowOffset, cursorSpacing)
-                return aboveOffset > 0 ? belowValue : aboveValue
+                const aboveOffset = offset.value + pageY + height - endCoordinates.screenY;
+                const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing;
+                const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing);
+                return aboveOffset > 0 ? belowValue : aboveValue;
               }
 
-              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
-              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
-              const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
-              return aboveOffset > 0 ? belowValue : aboveValue
+              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY;
+              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing;
+              const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing);
+              return aboveOffset > 0 ? belowValue : aboveValue;
             }
 
             cancelAnimation(offset)
@@ -103,7 +104,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
               }
             })
           })
-        })
+        };
+        (isIOS ? () => (timerRef.current = setTimeout(callback)) : callback)();
       }
     }
 
