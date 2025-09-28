@@ -11,22 +11,17 @@ export default function request (config) {
     const bodySerializer = config.bodySerializer || paramsSerializer
     let useBigInt
 
-    if (config.useBigInt && !config.dataType) {
-      if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony' || __mpx_mode__ === 'wx') {
-        useBigInt = true
-        config.dataType = 'string'
-      } else if (__mpx_mode__ === 'web') {
-        if (!config.transformRes) {
-          config.transformRes = [function (res) {
-            if (typeof res?.data === 'string') {
-              try {
-                res.data = JSONBig.parse(res.data)
-              } catch (e) {
-                console.error('Error parsing BigInt JSON:', e)
-              }
-            }
-            return res
-          }]
+    if (config.useBigInt) {
+      // 统一在所有平台启用 BigInt 支持：将响应以字符串/文本返回，后续统一用 JSONBig 解析
+      useBigInt = true
+      if (!config.dataType) {
+        // 支付宝小程序需要使用 text，其它平台保持 string
+        config.dataType = (__mpx_mode__ === 'ali' ? 'text' : 'string')
+      }
+      // Web 平台使用 axios：为保证不被 axios/适配层提前 JSON.parse，强制返回纯文本
+      if (__mpx_mode__ === 'web') {
+        if (!config.responseType || config.responseType === 'json') {
+          config.responseType = 'text'
         }
       }
     }
