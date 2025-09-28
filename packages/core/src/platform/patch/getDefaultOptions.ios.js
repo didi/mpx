@@ -13,12 +13,12 @@ import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/component
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
+  ProviderContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '../env/nav'
 
-const ProviderContext = createContext(null)
 function getSystemInfo () {
   const windowDimensions = ReactNative.Dimensions.get('window')
   const screenDimensions = ReactNative.Dimensions.get('screen')
