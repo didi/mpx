@@ -215,17 +215,20 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   const parsed = parseFunc(input, 'var')
   const replaced = new ReplaceSource(input)
 
-  parsed.forEach(({ start, end, args }) => {
+  for (const { start, end, args } of parsed) {
     const varName = args[0]
-    const fallback = args[1] || ''
+    const fallback = args[1]
     let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
+    if (varValue === undefined) return
     if (varUseRegExp.test(varValue)) {
-      varValue = '' + resolveVar(varValue, varContext)
+      varValue = resolveVar(varValue, varContext)
+      if (varValue === undefined) return
     } else {
-      varValue = '' + global.__formatValue(varValue)
+      varValue = global.__formatValue(varValue)
     }
     replaced.replace(start, end - 1, varValue)
-  })
+  }
+
   return global.__formatValue(replaced.source())
 }
 
@@ -233,7 +236,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
       const resolved = resolveVar(value, varContext)
-      if (resolved === '') {
+      if (resolved === undefined) {
         delete target[key]
         error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
         return
