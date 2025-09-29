@@ -1,9 +1,9 @@
-
 import { useRef, forwardRef, createElement, ReactNode, useCallback, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
 import { StickyContext } from './context'
+
 import useInnerProps from './getInnerListeners'
 
 interface StickySectionProps {
