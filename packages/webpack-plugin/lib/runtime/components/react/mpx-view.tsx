@@ -143,7 +143,7 @@ const isPercent = (val: string | number | undefined): val is string => typeof va
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
 const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
-  const { sizeList, backgroundPosition, linearInfo } = preImageInfo
+  const { sizeList, backgroundPosition, linearInfo, type } = preImageInfo
   const [width, height] = sizeList
   const bp = backgroundPosition
 
@@ -153,7 +153,8 @@ const isNeedLayout = (preImageInfo: PreImageInfo): boolean => {
     (isPercent(width) && height === 'auto') ||
     isPercent(bp[1]) ||
     isPercent(bp[3]) ||
-    isDiagonalAngle(linearInfo)
+    isDiagonalAngle(linearInfo) ||
+    (type === 'linear' && (isPercent(height) || isPercent(width)))
 }
 
 const checkNeedLayout = (preImageInfo: PreImageInfo) => {
@@ -246,7 +247,7 @@ function backgroundPosition (imageProps: ImageProps, preImageInfo: PreImageInfo,
 
 // background-size 转换
 function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, imageSize: Size, layoutInfo: Size) {
-  const sizeList = preImageInfo.sizeList
+  const { sizeList, type } = preImageInfo
   if (!sizeList) return
   const { width: layoutWidth, height: layoutHeight } = layoutInfo || {}
   const { width: imageSizeWidth, height: imageSizeHeight } = imageSize || {}
@@ -286,10 +287,19 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      dimensions = {
-        width: isPercent(width) ? width : +width,
-        height: isPercent(height) ? height : +height
-      } as { width: NumberVal, height: NumberVal }
+      if (type === 'linear' && (!layoutWidth || !layoutHeight)) {
+        // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
+        // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %。
+        dimensions = {
+          width: 0,
+          height: 0
+        } as { width: NumberVal, height: NumberVal }
+      } else {
+        dimensions = {
+          width: isPercent(width) ? width : +width,
+          height: isPercent(height) ? height : +height
+        } as { width: NumberVal, height: NumberVal }
+      }
     }
   }
 

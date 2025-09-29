@@ -1,12 +1,15 @@
 <script>
+  import { computed } from 'vue'
   import getInnerListeners, { getCustomEvent } from './getInnerListeners'
   import { processSize } from '../../utils'
   import BScroll from '@better-scroll/core'
   import PullDown from '@better-scroll/pull-down'
+  import MouseWheel from '@better-scroll/mouse-wheel'
   import throttle from 'lodash/throttle'
   import debounce from 'lodash/debounce'
 
   BScroll.use(PullDown)
+  BScroll.use(MouseWheel)
 
   let mutationObserver = null
   let resizeObserver = null
@@ -44,6 +47,7 @@
       enhanced: Boolean,
       refresherEnabled: Boolean,
       refresherTriggered: Boolean,
+      enableSticky: Boolean,
       refresherThreshold: {
         type: Number,
         default: 45
@@ -57,6 +61,12 @@
         default: ''
       }
     },
+    provide () {
+      return {
+        scrollOffset: computed(() => -this.lastY || 0),
+        refreshVersion: computed(() => this.refreshVersion || 0)
+      }
+    },
     data () {
       return {
         isLoading: false,
@@ -68,7 +78,8 @@
         lastContentWidth: 0,
         lastContentHeight: 0,
         lastWrapperWidth: 0,
-        lastWrapperHeight: 0
+        lastWrapperHeight: 0,
+        refreshVersion: 0
       }
     },
     computed: {
@@ -213,7 +224,11 @@
           bounce: false,
           stopPropagation: true,
           bindToWrapper: true,
-          eventPassthrough: (this.scrollX && 'vertical') || (this.scrollY && 'horizontal') || ''
+          eventPassthrough: (this.scrollX && 'vertical') || (this.scrollY && 'horizontal') || '',
+          mouseWheel: {
+            speed: 20,
+            easeTime: 300
+          }
         }
         if (this.refresherEnabled) {
           originBsOptions.bounce = true
@@ -221,6 +236,9 @@
             threshold: this.refresherThreshold,
             stop: 56
           }
+        }
+        if(this.enableSticky) {
+          originBsOptions.useTransition = false
         }
         const bsOptions = Object.assign({}, originBsOptions, this.scrollOptions, { observeDOM: false })
         this.bs = new BScroll(this.$refs.wrapper, bsOptions)
@@ -251,7 +269,7 @@
           }
           this.lastX = x
           this.lastY = y
-        }, 30, {
+        }, this.enableSticky ? 0 : 30, {
           leading: true,
           trailing: true
         }))
@@ -392,6 +410,7 @@
           this.lastContentHeight = scrollContentHeight
           this.lastWrapperWidth = scrollWrapperWidth
           this.lastWrapperHeight = scrollWrapperHeight
+          this.refreshVersion++
           if (this.bs) this.bs.refresh()
         }
       },
@@ -458,7 +477,8 @@
       }
 
       const innerWrapper = createElement('div', {
-        ref: 'innerWrapper'
+        ref: 'innerWrapper',
+        class: 'mpx-inner-wrapper'
       }, this.$slots.default)
 
       const pullDownContent = this.refresherDefaultStyle !== 'none' ? createElement('div', {

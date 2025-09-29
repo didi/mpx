@@ -4,7 +4,8 @@ import {
   dash2hump,
   collectDataset,
   hump2dash,
-  isArray
+  isArray,
+  getFocusedNavigation
 } from '@mpxjs/utils'
 
 const flushRefFns = (nodeInstances, fns, single) => {
@@ -40,8 +41,11 @@ const wrapFn = (fn) => {
 const getMeasureProps = (measureProps = []) => {
   return wrapFn((nodeInstance, resolve) => {
     const nodeRef = nodeInstance.nodeRef.current
+    const navigation = getFocusedNavigation() || {}
     setTimeout(() => {
       nodeRef.measure(function (x, y, width, height, pageX, pageY) {
+        const layout = navigation.layout || {}
+        pageY = pageY - (layout.top || 0)
         const rectAndSize = {
           width,
           height,

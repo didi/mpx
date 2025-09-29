@@ -4,8 +4,8 @@
  * ✔ out-of-bounds
  * ✔ x
  * ✔ y
- * ✘ damping
- * ✘ friction
+ * ✔ damping
+ * ✔ friction
  * ✔ disabled
  * ✘ scale
  * ✘ scale-min
@@ -22,18 +22,129 @@ import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withDecay,
   runOnJS,
   runOnUI,
-  useAnimatedReaction,
-  withSpring
+  withTiming,
+  Easing
 } from 'react-native-reanimated'
 import { collectDataset, noop } from '@mpxjs/utils'
+
+// 超出边界处理函数，参考微信小程序的超出边界衰减效果
+const applyBoundaryDecline = (
+  newValue: number,
+  range: [min: number, max: number]
+): number => {
+  'worklet'
+
+  const decline = (distance: number): number => {
+    'worklet'
+    return Math.sqrt(Math.abs(distance))
+  }
+
+  if (newValue < range[0]) {
+    const overDistance = range[0] - newValue
+    return range[0] - decline(overDistance)
+  } else if (newValue > range[1]) {
+    const overDistance = newValue - range[1]
+    return range[1] + decline(overDistance)
+  }
+  return newValue
+}
+
+// 参考微信小程序的弹簧阻尼系统实现
+const withWechatSpring = (
+  toValue: number,
+  dampingParam = 20,
+  callback?: () => void
+) => {
+  'worklet'
+
+  // 弹簧参数计算
+  const m = 1 // 质量
+  const k = 9 * Math.pow(dampingParam, 2) / 40 // 弹簧系数
+  const c = dampingParam // 阻尼系数
+
+  // 判别式：r = c² - 4mk
+  const discriminant = c * c - 4 * m * k
+
+  // 计算动画持续时间和缓动函数
+  let duration: number
+  let easingFunction: any
+
+  if (Math.abs(discriminant) < 0.01) {
+    // 临界阻尼 (discriminant ≈ 0)
+    // 使用cubic-out模拟临界阻尼的平滑过渡
+    duration = Math.max(350, Math.min(800, 2000 / dampingParam))
+    easingFunction = Easing.out(Easing.cubic)
+  } else if (discriminant > 0) {
+    // 过阻尼 (discriminant > 0)
+    // 使用指数缓动模拟过阻尼的缓慢收敛
+    duration = Math.max(450, Math.min(1000, 2500 / dampingParam))
+    easingFunction = Easing.out(Easing.exp)
+  } else {
+    // 欠阻尼 (discriminant < 0) - 会产生振荡
+    // 计算振荡频率和衰减率
+    const dampingRatio = c / (2 * Math.sqrt(m * k)) // 阻尼比
+
+    // 根据阻尼比调整动画参数
+    if (dampingRatio < 0.7) {
+      // 明显振荡
+      duration = Math.max(600, Math.min(1200, 3000 / dampingParam))
+      // 创建带振荡的贝塞尔曲线
+      easingFunction = Easing.bezier(0.175, 0.885, 0.32, 1.275)
+    } else {
+      // 轻微振荡
+      duration = Math.max(400, Math.min(800, 2000 / dampingParam))
+      easingFunction = Easing.bezier(0.25, 0.46, 0.45, 0.94)
+    }
+  }
+
+  return withTiming(toValue, {
+    duration,
+    easing: easingFunction
+  }, callback)
+}
+
+// 参考微信小程序friction的惯性动画
+const withWechatDecay = (
+  velocity: number,
+  currentPosition: number,
+  clampRange: [min: number, max: number],
+  frictionValue = 2,
+  callback?: () => void
+) => {
+  'worklet'
+
+  // 微信小程序friction算法: delta = -1.5 * v² / a, 其中 a = -f * v / |v|
+  // 如果friction小于等于0，设置为默认值2
+  const validFriction = frictionValue <= 0 ? 2 : frictionValue
+  const f = 1000 * validFriction
+  const acceleration = velocity !== 0 ? -f * velocity / Math.abs(velocity) : 0
+  const delta = acceleration !== 0 ? (-1.5 * velocity * velocity) / acceleration : 0
+
+  let finalPosition = currentPosition + delta
+
+  // 边界限制
+  if (finalPosition < clampRange[0]) {
+    finalPosition = clampRange[0]
+  } else if (finalPosition > clampRange[1]) {
+    finalPosition = clampRange[1]
+  }
+
+  // 计算动画时长
+  const distance = Math.abs(finalPosition - currentPosition)
+  const duration = Math.min(1500, Math.max(200, distance * 8))
+
+  return withTiming(finalPosition, {
+    duration,
+    easing: Easing.out(Easing.cubic)
+  }, callback)
+}
 
 interface MovableViewProps {
   children: ReactNode
@@ -43,7 +154,10 @@ interface MovableViewProps {
   y?: number
   disabled?: boolean
   animation?: boolean
+  damping?: number
+  friction?: number
   id?: string
+  changeThrottleTime?:number
   bindchange?: (event: unknown) => void
   bindtouchstart?: (event: GestureTouchEvent) => void
   catchtouchstart?: (event: GestureTouchEvent) => void
@@ -69,6 +183,7 @@ interface MovableViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'disable-event-passthrough'?: boolean
 }
 
 const styles = StyleSheet.create({
@@ -85,7 +200,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const layoutRef = useRef<any>({})
   const changeSource = useRef<any>('')
   const hasLayoutRef = useRef(false)
-
   const propsRef = useRef<any>({})
   propsRef.current = (props || {}) as MovableViewProps
 
@@ -95,6 +209,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     inertia = false,
     disabled = false,
     animation = true,
+    damping = 20,
+    friction = 2,
     'out-of-bounds': outOfBounds = false,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -102,9 +218,11 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     direction = 'none',
+    'disable-event-passthrough': disableEventPassthrough = false,
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
+    changeThrottleTime = 60,
     bindtouchstart,
     catchtouchstart,
     bindhtouchmove,
@@ -114,7 +232,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     catchvtouchmove,
     catchtouchmove,
     bindtouchend,
-    catchtouchend
+    catchtouchend,
+    bindchange
   } = props
 
   const {
@@ -140,6 +259,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     x: 0,
     y: 0
   })
+
   const draggableXRange = useSharedValue<[min: number, max: number]>([0, 0])
   const draggableYRange = useSharedValue<[min: number, max: number]>([0, 0])
   const isMoving = useSharedValue(false)
@@ -148,6 +268,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const isFirstTouch = useSharedValue(true)
   const touchEvent = useSharedValue<string>('')
   const initialViewPosition = useSharedValue({ x: x || 0, y: y || 0 })
+  const lastChangeTime = useSharedValue(0)
 
   const MovableAreaLayout = useContext(MovableAreaContext)
 
@@ -201,22 +322,16 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         const { x: newX, y: newY } = checkBoundaryPosition({ positionX: Number(x), positionY: Number(y) })
         if (direction === 'horizontal' || direction === 'all') {
           offsetX.value = animation
-            ? withSpring(newX, {
-              duration: 1500,
-              dampingRatio: 0.8
-            })
+            ? withWechatSpring(newX, damping)
             : newX
         }
         if (direction === 'vertical' || direction === 'all') {
           offsetY.value = animation
-            ? withSpring(newY, {
-              duration: 1500,
-              dampingRatio: 0.8
-            })
+            ? withWechatSpring(newY, damping)
             : newY
         }
-        if (propsRef.current.bindchange) {
-          runOnJS(handleTriggerChange)({
+        if (bindchange) {
+          runOnJS(runOnJSCallback)('handleTriggerChange', {
             x: newX,
             y: newY,
             type: 'setData'
@@ -325,7 +440,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       setHeight(height || 0)
     }
     nodeRef.current?.measure((x: number, y: number, width: number, height: number) => {
-      const { y: navigationY = 0 } = navigation?.layout || {}
+      const { top: navigationY = 0 } = navigation?.layout || {}
       layoutRef.current = { x, y: y - navigationY, width, height, offsetLeft: 0, offsetTop: 0 }
       resetBoundaryAndCheck({ width, height })
     })
@@ -333,7 +448,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const extendEvent = useCallback((e: any, type: 'start' | 'move' | 'end') => {
-    const { y: navigationY = 0 } = navigation?.layout || {}
+    const { top: navigationY = 0 } = navigation?.layout || {}
     const touchArr = [e.changedTouches, e.allTouches]
     touchArr.forEach(touches => {
       touches && touches.forEach((item: { absoluteX: number; absoluteY: number; pageX: number; pageY: number; clientX: number; clientY: number }) => {
@@ -356,12 +471,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const triggerStartOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchstart, catchtouchstart } = propsRef.current
     extendEvent(e, 'start')
     bindtouchstart && bindtouchstart(e)
     catchtouchstart && catchtouchstart(e)
   }
 
   const triggerMoveOnJS = ({ e, hasTouchmove, hasCatchTouchmove, touchEvent }: { e: GestureTouchEvent; hasTouchmove: boolean; hasCatchTouchmove: boolean; touchEvent: string }) => {
+    const { bindhtouchmove, bindvtouchmove, bindtouchmove, catchhtouchmove, catchvtouchmove, catchtouchmove } = propsRef.current
     extendEvent(e, 'move')
     if (hasTouchmove) {
       if (touchEvent === 'htouchmove') {
@@ -383,10 +500,29 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }
 
   const triggerEndOnJS = ({ e }: { e: GestureTouchEvent }) => {
+    const { bindtouchend, catchtouchend } = propsRef.current
     extendEvent(e, 'end')
     bindtouchend && bindtouchend(e)
     catchtouchend && catchtouchend(e)
   }
+
+  const runOnJSCallbackRef = useRef({
+    handleTriggerChange,
+    triggerStartOnJS,
+    triggerMoveOnJS,
+    triggerEndOnJS
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+
+  // 节流版本的change事件触发
+  const handleTriggerChangeThrottled = useCallback(({ x, y, type }: { x: number; y: number; type?: string }) => {
+    'worklet'
+    const now = Date.now()
+    if (now - lastChangeTime.value >= changeThrottleTime) {
+      lastChangeTime.value = now
+      runOnJS(runOnJSCallback)('handleTriggerChange', { x, y, type })
+    }
+  }, [changeThrottleTime])
 
   const gesture = useMemo(() => {
     const handleTriggerMove = (e: GestureTouchEvent) => {
@@ -394,7 +530,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       const hasTouchmove = !!bindhtouchmove || !!bindvtouchmove || !!bindtouchmove
       const hasCatchTouchmove = !!catchhtouchmove || !!catchvtouchmove || !!catchtouchmove
       if (hasTouchmove || hasCatchTouchmove) {
-        runOnJS(triggerMoveOnJS)({
+        runOnJS(runOnJSCallback)('triggerMoveOnJS', {
           e,
           touchEvent: touchEvent.value,
           hasTouchmove,
@@ -413,7 +549,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           y: changedTouches.y
         }
         if (bindtouchstart || catchtouchstart) {
-          runOnJS(triggerStartOnJS)({ e })
+          runOnJS(runOnJSCallback)('triggerStartOnJS', { e })
         }
       })
       .onStart(() => {
@@ -442,7 +578,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             const { x } = checkBoundaryPosition({ positionX: newX, positionY: offsetY.value })
             offsetX.value = x
           } else {
-            offsetX.value = newX
+            offsetX.value = applyBoundaryDecline(newX, draggableXRange.value)
           }
         }
         if (direction === 'vertical' || direction === 'all') {
@@ -451,11 +587,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             const { y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: newY })
             offsetY.value = y
           } else {
-            offsetY.value = newY
+            offsetY.value = applyBoundaryDecline(newY, draggableYRange.value)
           }
         }
-        if (propsRef.current.bindchange) {
-          runOnJS(handleTriggerChange)({
+        if (bindchange) {
+          // 使用节流版本减少 runOnJS 调用
+          handleTriggerChangeThrottled({
             x: offsetX.value,
             y: offsetY.value
           })
@@ -466,7 +603,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         isFirstTouch.value = true
         isMoving.value = false
         if (bindtouchend || catchtouchend) {
-          runOnJS(triggerEndOnJS)({ e })
+          runOnJS(runOnJSCallback)('triggerEndOnJS', { e })
         }
       })
       .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
@@ -479,69 +616,69 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           if (x !== offsetX.value || y !== offsetY.value) {
             if (x !== offsetX.value) {
               offsetX.value = animation
-                ? withSpring(x, {
-                  duration: 1500,
-                  dampingRatio: 0.8
-                })
+                ? withWechatSpring(x, damping)
                 : x
             }
             if (y !== offsetY.value) {
               offsetY.value = animation
-                ? withSpring(y, {
-                  duration: 1500,
-                  dampingRatio: 0.8
-                })
+                ? withWechatSpring(y, damping)
                 : y
             }
-            if (propsRef.current.bindchange) {
-              runOnJS(handleTriggerChange)({
+            if (bindchange) {
+              runOnJS(runOnJSCallback)('handleTriggerChange', {
                 x,
                 y
               })
             }
           }
-          return
-        }
-        // 惯性处理
-        if (direction === 'horizontal' || direction === 'all') {
-          xInertialMotion.value = true
-          offsetX.value = withDecay({
-            velocity: e.velocityX / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableXRange.value
-          }, () => {
-            xInertialMotion.value = false
-            if (propsRef.current.bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
-        }
-        if (direction === 'vertical' || direction === 'all') {
-          yInertialMotion.value = true
-          offsetY.value = withDecay({
-            velocity: e.velocityY / 10,
-            rubberBandEffect: outOfBounds,
-            clamp: draggableYRange.value
-          }, () => {
-            yInertialMotion.value = false
-            if (propsRef.current.bindchange) {
-              runOnJS(handleTriggerChange)({
-                x: offsetX.value,
-                y: offsetY.value
-              })
-            }
-          })
+        } else if (inertia) {
+          // 惯性处理 - 使用微信小程序friction算法
+          if (direction === 'horizontal' || direction === 'all') {
+            xInertialMotion.value = true
+            offsetX.value = withWechatDecay(
+              e.velocityX / 10,
+              offsetX.value,
+              draggableXRange.value,
+              friction,
+              () => {
+                xInertialMotion.value = false
+                if (bindchange) {
+                  runOnJS(runOnJSCallback)('handleTriggerChange', {
+                    x: offsetX.value,
+                    y: offsetY.value
+                  })
+                }
+              }
+            )
+          }
+          if (direction === 'vertical' || direction === 'all') {
+            yInertialMotion.value = true
+            offsetY.value = withWechatDecay(
+              e.velocityY / 10,
+              offsetY.value,
+              draggableYRange.value,
+              friction,
+              () => {
+                yInertialMotion.value = false
+                if (bindchange) {
+                  runOnJS(runOnJSCallback)('handleTriggerChange', {
+                    x: offsetX.value,
+                    y: offsetY.value
+                  })
+                }
+              }
+            )
+          }
         }
       })
       .withRef(movableGestureRef)
 
-    if (direction === 'horizontal') {
-      gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
-    } else if (direction === 'vertical') {
-      gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
+    if (!disableEventPassthrough) {
+      if (direction === 'horizontal') {
+        gesturePan.activeOffsetX([-5, 5]).failOffsetY([-5, 5])
+      } else if (direction === 'vertical') {
+        gesturePan.activeOffsetY([-5, 5]).failOffsetX([-5, 5])
+      }
     }
 
     if (simultaneousHandlers && simultaneousHandlers.length) {

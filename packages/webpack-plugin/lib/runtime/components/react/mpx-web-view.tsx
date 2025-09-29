@@ -1,6 +1,7 @@
-import { forwardRef, useRef, useContext, useMemo, useState, useCallback, useEffect } from 'react'
+import { forwardRef, useRef, useContext, useMemo, useState } from 'react'
 import { warn, isFunction } from '@mpxjs/utils'
 import Portal from './mpx-portal/index'
+import { usePreventRemove, PreventRemoveEvent } from '@react-navigation/native'
 import { getCustomEvent } from './getInnerListeners'
 import { promisify, redirectTo, navigateTo, navigateBack, reLaunch, switchTab } from '@mpxjs/api-proxy'
 import { WebView } from 'react-native-webview'
@@ -100,8 +101,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   const webViewRef = useRef<WebView>(null)
   const fristLoaded = useRef<boolean>(false)
   const isLoadError = useRef<boolean>(false)
+  const isNavigateBack = useRef<boolean>(false)
   const statusCode = useRef<string|number>('')
-  const [isLoaded, setIsLoaded] = useState<boolean>(true)
   const defaultWebViewStyle = {
     position: 'absolute' as const,
     left: 0,
@@ -109,36 +110,41 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     top: 0,
     bottom: 0
   }
-  const canGoBack = useRef<boolean>(false)
-  const isNavigateBack = useRef<boolean>(false)
-
-  const beforeRemoveHandle = (e: Event) => {
-    if (canGoBack.current && !isNavigateBack.current) {
-      webViewRef.current?.goBack()
-      e.preventDefault()
-    }
-    isNavigateBack.current = false
-  }
 
   const navigation = useNavigation()
-
-  useEffect(() => {
-    let beforeRemoveSubscription:any
-    if (__mpx_mode__ !== 'ios') {
-      beforeRemoveSubscription = navigation?.addListener?.('beforeRemove', beforeRemoveHandle)
+  const [isIntercept, setIsIntercept] = useState<boolean>(false)
+  usePreventRemove(isIntercept, (event: PreventRemoveEvent) => {
+    const { data } = event
+    if (isNavigateBack.current) {
+      navigation?.dispatch(data.action)
+    } else {
+      webViewRef.current?.goBack()
     }
-    return () => {
-      if (isFunction(beforeRemoveSubscription)) {
-        beforeRemoveSubscription()
-      }
-    }
-  }, [])
+    isNavigateBack.current = false
+  })
 
   useNodesRef<WebView, WebViewProps>(props, ref, webViewRef, {
     style: defaultWebViewStyle
   })
 
+  const hostValidate = (url: string) => {
+    const host = url && new URL(url).host
+    const hostWhitelists = mpx.config.rnConfig?.webviewConfig?.hostWhitelists || []
+    if (hostWhitelists.length) {
+      return hostWhitelists.some((item: string) => {
+        return host.endsWith(item)
+      })
+    } else {
+      return true
+    }
+  }
+
   if (!src) {
+    return null
+  }
+
+  if (!hostValidate(src)) {
+    console.error('访问页面域名不符合domainWhiteLists白名单配置，请确认是否正确配置该域名白名单')
     return null
   }
 
@@ -183,17 +189,20 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
   const _changeUrl = function (navState: WebViewNavigation) {
     if (navState.navigationType) { // navigationType这个事件在页面开始加载时和页面加载完成时都会被触发所以判断这个避免其他无效触发执行该逻辑
-      canGoBack.current = navState.canGoBack
       currentPage.__webViewUrl = navState.url
+      setIsIntercept(navState.canGoBack)
     }
   }
 
   const _onLoadProgress = function (event: WebViewProgressEvent) {
     if (__mpx_mode__ !== 'ios') {
-      canGoBack.current = event.nativeEvent.canGoBack
+      setIsIntercept(event.nativeEvent.canGoBack)
     }
   }
   const _message = function (res: WebViewMessageEvent) {
+    if (!hostValidate(res.nativeEvent?.url)) {
+      return
+    }
     let data: MessageData = {}
     let asyncCallback
     const navObj = promisify({ redirectTo, navigateTo, navigateBack, reLaunch, switchTab })
@@ -212,7 +221,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         { // case下不允许直接声明，包个块解决该问题
           const title = postData._documentTitle?.trim()
           if (title !== undefined) {
-            navigation && navigation.setOptions({ title })
+            navigation && navigation.setPageConfig({ navigationBarTitleText: title })
           }
         }
         break
@@ -244,7 +253,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         break
       default:
         if (type) {
-          const implement = mpx.config.webviewConfig.apiImplementations && mpx.config.webviewConfig.apiImplementations[type]
+          const implement = mpx.config.rnConfig.webviewConfig && mpx.config.rnConfig.webviewConfig.apiImplementations && mpx.config.rnConfig.webviewConfig.apiImplementations[type]
           if (isFunction(implement)) {
             asyncCallback = Promise.resolve(implement(...params))
           } else {
@@ -279,7 +288,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
   }
   const onLoadEndHandle = function (res: WebViewEvent) {
     fristLoaded.current = true
-    setIsLoaded(true)
     const src = res.nativeEvent?.url
     if (isLoadError.current) {
       isLoadError.current = false
@@ -325,11 +333,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
       setPageLoadErr(true)
     }
   }
-  const onLoadStart = function () {
-    if (!fristLoaded.current) {
-      setIsLoaded(false)
-    }
-  }
 
   return (
       <Portal>
@@ -342,7 +345,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             )
           : (<WebView
             style={ defaultWebViewStyle }
-            pointerEvents={ isLoaded ? 'auto' : 'none' }
             source={{ uri: src }}
             ref={webViewRef}
             javaScriptEnabled={true}
@@ -353,7 +355,6 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onLoadEnd={onLoadEnd}
             onHttpError={onHttpError}
             onError={onError}
-            onLoadStart={onLoadStart}
             allowsBackForwardNavigationGestures={true}
       ></WebView>)}
       </Portal>

@@ -31,7 +31,7 @@ module.exports = function (raw) {
   const ctorType = queryObj.ctorType
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
-  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath)
+  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath, false, queryObj.moduleId ? null : this)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -43,13 +43,13 @@ module.exports = function (raw) {
 
   const warn = (msg) => {
     this.emitWarning(
-      new Error('[template compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const error = (msg) => {
     this.emitError(
-      new Error('[template compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template error][' + this.resource + ']: ' + msg)
     )
   }
 
