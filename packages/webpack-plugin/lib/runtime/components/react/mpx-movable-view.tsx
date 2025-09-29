@@ -36,12 +36,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import { collectDataset, noop } from '@mpxjs/utils'
 
-const debugLog = (...args: any[]): void => {
-  'worklet'
-  if (!__DEV__) return
-  console.log('[mpx-movable-view]', ...args)
-}
-
 // 超出边界处理函数，参考微信小程序的超出边界衰减效果
 const applyBoundaryDecline = (
   newValue: number,
@@ -474,18 +468,14 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
     // 修复边界处理逻辑：当内容大小小于等于容器时，应该贴边而不是居中
     if (MovableAreaLayout.width + boundaryEpsilon >= scaledWidth) {
-      debugLog('boundary处理: 内容 <= 容器', { scaledWidth, containerWidth: MovableAreaLayout.width, targetOffsetX, xMin, xMax })
       // 内容小于等于容器：保持在边界内，但不强制居中
       if (nextOffsetX < xMin) {
         nextOffsetX = xMin // 贴左边
-        debugLog('boundary处理: 贴左边', { oldValue: targetOffsetX, newValue: nextOffsetX })
       } else if (nextOffsetX > xMax) {
         nextOffsetX = xMax // 贴右边或保持在合理范围内
-        debugLog('boundary处理: 贴右边', { oldValue: targetOffsetX, newValue: nextOffsetX })
       }
       // 如果在范围内，保持当前位置
     } else {
-      debugLog('boundary处理: 内容 > 容器', { scaledWidth, containerWidth: MovableAreaLayout.width, targetOffsetX, xMin, xMax, xRangeSize: Math.abs(xRange[0] - xRange[1]) })
       // 内容大于容器：确保容器区域始终被覆盖
       if (Math.abs(xRange[0] - xRange[1]) <= boundaryEpsilon) {
         // 边界范围很小时，使用平滑处理避免跳跃
@@ -493,12 +483,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         const centerPos = (xMin + xMax) / 2
         const maxDrift = 5
         nextOffsetX = Math.max(centerPos - maxDrift, Math.min(centerPos + maxDrift, currentOffset))
-        debugLog('boundary处理: 平滑处理', { oldValue: targetOffsetX, newValue: nextOffsetX, centerPos, maxDrift })
       } else {
         // 正常边界限制
         const oldValue = nextOffsetX
         nextOffsetX = Math.max(xMin, Math.min(xMax, nextOffsetX))
-        debugLog('boundary处理: 正常限制', { oldValue, newValue: nextOffsetX, xMin, xMax })
       }
     }
 
@@ -523,27 +511,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         nextOffsetY = Math.max(yMin, Math.min(yMax, nextOffsetY))
       }
     }
-
-    debugLog('calcScaleBoundary', {
-      targetOffsetX,
-      targetOffsetY,
-      newScale,
-      width,
-      height,
-      scaledWidth,
-      scaledHeight,
-      maxOffsetX,
-      maxOffsetY,
-      xMin,
-      xMax,
-      yMin,
-      yMax,
-      xRange,
-      yRange,
-      MovableAreaLayoutWidth: MovableAreaLayout.width,
-      MovableAreaLayoutHeight: MovableAreaLayout.height,
-      result: { x: nextOffsetX, y: nextOffsetY }
-    })
 
     return { x: nextOffsetX, y: nextOffsetY }
   }, [MovableAreaLayout.height, MovableAreaLayout.width, style.position, style.top, style.left])
@@ -627,12 +594,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
     if (width === 0 || height === 0) {
       currentScale.value = clampedScale
-      debugLog('handleScaleUpdate no-dimension', {
-        targetScale,
-        clampedScale,
-        offsetX: offsetX.value,
-        offsetY: offsetY.value
-      })
       if (bindscale) {
         runOnJS(handleTriggerScale)({
           x: offsetX.value,
@@ -647,31 +608,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     let nextOffsetY = offsetY.value
     const prevScale = currentScale.value || 1
 
-    debugLog('handleScaleUpdate input', {
-      targetScale,
-      clampedScale,
-      offsetX: offsetX.value,
-      offsetY: offsetY.value,
-      width,
-      height,
-      anchor: options.anchor,
-      keepCenter: options.keepCenter
-    })
-
     if (options.anchor) {
       const anchor = options.anchor
       const screenX = anchor.anchorScreenX ?? (anchor.baseOffsetX + anchor.anchorX * anchor.baseScale)
       const screenY = anchor.anchorScreenY ?? (anchor.baseOffsetY + anchor.anchorY * anchor.baseScale)
       nextOffsetX = screenX - anchor.anchorX * clampedScale
       nextOffsetY = screenY - anchor.anchorY * clampedScale
-      debugLog('handleScaleUpdate anchor计算', {
-        anchor,
-        screenX,
-        screenY,
-        clampedScale,
-        nextOffsetX,
-        nextOffsetY
-      })
     } else if (options.keepCenter) {
       const centerX = offsetX.value + (width * prevScale) / 2
       const centerY = offsetY.value + (height * prevScale) / 2
@@ -694,12 +636,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     offsetX.value = clampedOffsetX
     offsetY.value = clampedOffsetY
     currentScale.value = clampedScale
-
-    debugLog('handleScaleUpdate output', {
-      clampedOffsetX,
-      clampedOffsetY,
-      clampedScale
-    })
 
     if (bindscale) {
       runOnJS(handleTriggerScale)({
@@ -810,15 +746,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const positionX = offsetX.value
     const positionY = offsetY.value
     const { x: newX, y: newY } = checkBoundaryPosition({ positionX, positionY })
-    debugLog('resetBoundaryAndCheck', {
-      positionX,
-      positionY,
-      newX,
-      newY,
-      draggableXRange: draggableXRange.value,
-      draggableYRange: draggableYRange.value,
-      changed: positionX !== newX || positionY !== newY
-    })
+
     if (positionX !== newX) {
       offsetX.value = newX
     }
@@ -957,11 +885,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: changedTouches.x,
           y: changedTouches.y
         }
-        debugLog('pan onTouchesDown', {
-          changedTouches,
-          offsetX: offsetX.value,
-          offsetY: offsetY.value
-        })
+
         if (bindtouchstart || catchtouchstart) {
           runOnJS(runOnJSCallback)('triggerStartOnJS', { e })
         }
@@ -972,11 +896,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           x: offsetX.value,
           y: offsetY.value
         }
-        debugLog('pan onStart', {
-          initialViewPosition: initialViewPosition.value,
-          draggableXRange: draggableXRange.value,
-          draggableYRange: draggableYRange.value
-        })
       })
       .onTouchesMove((e: GestureTouchEvent) => {
         'worklet'
@@ -1009,12 +928,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             offsetY.value = applyBoundaryDecline(newY, draggableYRange.value)
           }
         }
-        debugLog('pan onUpdate', {
-          translationX: e.translationX,
-          translationY: e.translationY,
-          offsetX: offsetX.value,
-          offsetY: offsetY.value
-        })
         if (bindchange) {
           // 使用节流版本减少 runOnJS 调用
           handleTriggerChangeThrottled({
@@ -1035,12 +948,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         'worklet'
         isMoving.value = false
         if (disabled) return
-        debugLog('pan onEnd', {
-          offsetX: offsetX.value,
-          offsetY: offsetY.value,
-          velocityX: e.velocityX,
-          velocityY: e.velocityY
-        })
         // 处理没有惯性且超出边界的回弹
         if (!inertia && outOfBounds) {
           const { x, y } = checkBoundaryPosition({ positionX: offsetX.value, positionY: offsetY.value })
@@ -1138,17 +1045,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           const hasValidPage = Number.isFinite(pageX) && Number.isFinite(pageY)
           const hasLayoutMetrics = hasValidPage && layoutWidth > 0 && layoutHeight > 0
 
-          debugLog('pinch onStart', {
-            layoutWidth,
-            layoutHeight,
-            baseScale,
-            baseOffsetX,
-            baseOffsetY,
-            pageX,
-            pageY,
-            hasLayoutMetrics
-          })
-
           if (!hasLayoutMetrics) {
             pinchOrigin.value = {
               anchorX: contentWidth / 2,
@@ -1192,13 +1088,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             active: true,
             fallbackToCenter: false
           }
-
-          debugLog('pinch onStart resolved', {
-            anchorX,
-            anchorY,
-            localScreenX,
-            localScreenY
-          })
         })
         .onUpdate((e: any) => {
           'worklet'
@@ -1261,15 +1150,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             anchorScreenX: offsetX.value + anchorState.anchorX * resolvedScale,
             anchorScreenY: offsetY.value + anchorState.anchorY * resolvedScale
           }
-
-          debugLog('pinch onUpdate', {
-            scaleFactor,
-            targetScale,
-            anchorState,
-            resolvedScale,
-            offsetX: offsetX.value,
-            offsetY: offsetY.value
-          })
         })
         .onEnd(() => {
           'worklet'
@@ -1303,14 +1183,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
 
           handleRestBoundaryAndCheck()
-
-          debugLog('pinch onEnd', {
-            finalScale,
-            offsetX: offsetX.value,
-            offsetY: offsetY.value,
-            draggableXRange: draggableXRange.value,
-            draggableYRange: draggableYRange.value
-          })
         })
 
       // 根据手指数量自动区分手势：一指移动，两指缩放
