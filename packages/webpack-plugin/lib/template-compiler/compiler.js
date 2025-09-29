@@ -643,6 +643,8 @@ function parse (template, options) {
   usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
 
+  if (typeof options.originalUsingComponents === 'string') options.originalUsingComponents = JSON.parse(options.originalUsingComponents)
+
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
@@ -1003,15 +1005,18 @@ function processComponentIs (el, options) {
   const range = getAndRemoveAttr(el, 'range').val
 
   // Map<CurrentName, SourceName>
-  const rangeMap = new Map()
+  let ranges
   if (range) {
-    range
-      .split(',')
-      .forEach(i => {
-        i = i.trim()
-        if (i) rangeMap.set(['ali', 'swan'].includes(mode) ? capitalToHyphen(i) : i, i)
-      })
+    ranges = range.split(',').map(i => i.trim()).filter(i => i)
+  } else {
+    // 根据原始用户写的usingComponents字段生成ranges
+    ranges = Object.keys(options.originalUsingComponents || {})
   }
+
+  const rangeMap = new Map()
+  ranges.forEach(name => {
+    rangeMap.set(['ali', 'swan'].includes(mode) ? capitalToHyphen(name) : name, name)
+  })
 
   // Map<CurrentName, SourceName>
   el.componentMap = new Map()
