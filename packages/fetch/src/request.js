@@ -31,7 +31,7 @@ export default function request (config) {
     const contentType = header['content-type'] || header['Content-Type'] || 'application/json'
     if (/^POST|PUT$/i.test(config.method) && /application\/x-www-form-urlencoded/i.test(contentType) && typeof config.data === 'object') {
       config.data = bodySerializer(config.data)
-    } else if (/^POST|PUT$/i.test(config.method) && isObject(config.data) && contentType.indexOf('application/json') > -1) {
+    } else if (/^POST|PUT$/i.test(config.method) && isObject(config.data) && /application\/json/i.test(contentType)) {
       config.data = JSONBig.stringify(config.data)
     }
 
