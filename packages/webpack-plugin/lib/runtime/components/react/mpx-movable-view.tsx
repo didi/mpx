@@ -31,8 +31,7 @@ import Animated, {
   runOnUI,
   withTiming,
   Easing,
-  useAnimatedRef,
-  measure
+  useAnimatedRef
 } from 'react-native-reanimated'
 import { collectDataset, noop } from '@mpxjs/utils'
 
@@ -298,11 +297,6 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const waitForHandlers = flatGesture(waitFor)
 
   const nodeRef = useRef<View>(null)
-  const animatedRef = useAnimatedRef<View>()
-  const combinedRef = useCallback((value: View | null) => {
-    (nodeRef as any).current = value
-    ;(animatedRef as any).current = value
-  }, [])
 
   useNodesRef(props, ref, nodeRef, {
     style: normalStyle,
@@ -535,25 +529,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             currentScale.value = clampedScale
             handleRestBoundaryAndCheck()
           }
-        } else {
-          if (animation) {
-            currentScale.value = withTiming(clampedScale, {
-              duration: 1000
-            }, () => {
-              handleRestBoundaryAndCheck()
+          if (bindscale) {
+            runOnJS(runOnJSCallback)('handleTriggerScale', {
+              x: targetX,
+              y: targetY,
+              scale: clampedScale
             })
-          } else {
-            currentScale.value = clampedScale
-            handleRestBoundaryAndCheck()
           }
-        }
-
-        if (bindscale) {
-          runOnJS(runOnJSCallback)('handleTriggerScale', {
-            x: offsetX.value,
-            y: offsetY.value,
-            scale: clampedScale
-          })
         }
       }
     })()
@@ -649,7 +631,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         MovableAreaLayout.unregisterMovableView?.(viewId)
       }
     }
-  }, [MovableAreaLayout.scaleArea, viewId, scale])
+  }, [MovableAreaLayout.scaleArea, viewId, scale, handleScaleUpdate])
 
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
     const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
@@ -1005,10 +987,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         })
         .onUpdate((e: any) => {
           'worklet'
-          const origin = pinchOrigin.value
-          const baseScale = origin.baseScale || 1
-          const scaleFactor = e?.scale
-          const targetScale = baseScale * (scaleFactor || 1)
+          const baseScale = pinchOrigin.value.baseScale || 1
+          const targetScale = baseScale * (e?.scale || 1)
           handleScaleUpdate(targetScale)
         })
         .onEnd(() => {
@@ -1041,7 +1021,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
 
     return gesturePan
-  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current, MovableAreaLayout.scaleArea])
+  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current, handleScaleUpdate, MovableAreaLayout.scaleArea])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
@@ -1093,7 +1073,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       {},
       filterProps,
       {
-        ref: combinedRef,
+        ref: nodeRef,
         onLayout: onLayout,
         style: [{ transformOrigin: 'top left' }, innerStyle, animatedStyles, layoutStyle]
       },
