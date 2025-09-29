@@ -51,13 +51,13 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 

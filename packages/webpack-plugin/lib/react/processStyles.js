@@ -15,12 +15,12 @@ module.exports = function (styles, {
   if (styles.length) {
     const warn = (msg) => {
       loaderContext.emitWarning(
-        new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style warning][' + loaderContext.resource + ']: ' + msg)
       )
     }
     const error = (msg) => {
       loaderContext.emitError(
-        new Error('[style compiler][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style error][' + loaderContext.resource + ']: ' + msg)
       )
     }
     const { mode, srcMode } = loaderContext.getMpx()
