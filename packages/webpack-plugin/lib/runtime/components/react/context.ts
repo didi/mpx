@@ -51,13 +51,23 @@ export interface RouteContextValue {
   pageId: number
   navigation: Record<string, any>
 }
+export interface MovableAreaContextValue {
+  width: number
+  height: number
+  scaleArea: boolean
+  onAreaScale?: (scaleInfo: { scale: number }) => void
+  registerMovableView?: (id: string, callbacks: {
+    onScale: (scaleInfo: { scale: number }) => void
+    onScaleEnd?: () => void
+  }) => void
+  unregisterMovableView?: (id: string) => void
+}
 
+export const MovableAreaContext = createContext<MovableAreaContextValue>({ width: 0, height: 0, scaleArea: false })
 export interface StickyContextValue {
   registerStickyHeader: Function,
   unregisterStickyHeader: Function
 }
-
-export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
 
