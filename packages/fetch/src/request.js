@@ -7,11 +7,9 @@ export default function request (config) {
   return new Promise((resolve, reject) => {
     const paramsSerializer = config.paramsSerializer || serialize
     const bodySerializer = config.bodySerializer || paramsSerializer
-    let useBigInt
 
     if (config.useBigInt) {
       // 统一在所有平台启用 BigInt 支持：将响应以字符串/文本返回，后续统一用 JSONBig 解析
-      useBigInt = true
       if (!config.dataType) {
         // 支付宝小程序需要使用 text，其它平台保持 string
         config.dataType = (__mpx_mode__ === 'ali' ? 'text' : 'string')
@@ -23,9 +21,6 @@ export default function request (config) {
         }
       }
     }
-    if (config.useBigInt) {
-      delete config.useBigInt
-    }
     if (config.params) {
       config.url = buildUrl(config.url, config.params, paramsSerializer)
       // 这个参数保留的话，若其value是响应式数据，在Android支付宝小程序中可能有问题
@@ -33,10 +28,10 @@ export default function request (config) {
     }
 
     const header = config.header || {}
-    const contentType = header['content-type'] || header['Content-Type']
+    const contentType = header['content-type'] || header['Content-Type'] || 'application/json'
     if (/^POST|PUT$/i.test(config.method) && /application\/x-www-form-urlencoded/i.test(contentType) && typeof config.data === 'object') {
       config.data = bodySerializer(config.data)
-    } else if (/^POST|PUT$/i.test(config.method) && isObject(config.data) && (!contentType || contentType.indexOf('application/json') > -1)) {
+    } else if (/^POST|PUT$/i.test(config.method) && isObject(config.data) && contentType.indexOf('application/json') > -1) {
       config.data = JSONBig.stringify(config.data)
     }
 
@@ -57,7 +52,7 @@ export default function request (config) {
     config.success = function (res) {
       res = Object.assign({ requestConfig: config }, transformRes(res))
 
-      if (useBigInt && typeof res.data === 'string') {
+      if (config.useBigInt && typeof res.data === 'string') {
         try {
           // 使用json-bigint库解析包含BigInt的JSON字符串
           res.data = JSONBig.parse(res.data)
