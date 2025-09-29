@@ -270,17 +270,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const currentScale = useSharedValue(1)
   const layoutValue = useSharedValue<any>({})
   const pinchOrigin = useSharedValue({
-    anchorX: 0,
-    anchorY: 0,
-    anchorScreenX: 0,
-    anchorScreenY: 0,
-    baseScale: 1,
-    baseOffsetX: 0,
-    baseOffsetY: 0,
-    basePageX: 0,
-    basePageY: 0,
-    active: false,
-    fallbackToCenter: false
+    baseScale: 1
   })
   const areaScaleState = useSharedValue({
     baseScale: 1,
@@ -428,13 +418,12 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     height: number
   }) => {
     'worklet'
-    const boundaryEpsilon = 1e-3
     const top = (style.position === 'absolute' && style.top) || 0
     const left = (style.position === 'absolute' && style.left) || 0
     const scaledWidth = width * newScale
     const scaledHeight = height * newScale
 
-    const safeValue = (value: number) => Math.abs(value) <= boundaryEpsilon ? 0 : value
+    const safeValue = (value: number) => Math.abs(value) <= 0 ? 0 : value
 
     // 计算新缩放值下的边界限制
     const maxOffsetY = safeValue(MovableAreaLayout.height - scaledHeight - top)
@@ -442,7 +431,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
     let xMin, xMax, yMin, yMax
 
-    if (MovableAreaLayout.width + boundaryEpsilon < scaledWidth) {
+    if (MovableAreaLayout.width < scaledWidth) {
       xMin = maxOffsetX
       xMax = -left
     } else {
@@ -451,7 +440,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       xMax = Math.max(-left, maxOffsetX)
     }
 
-    if (MovableAreaLayout.height + boundaryEpsilon < scaledHeight) {
+    if (MovableAreaLayout.height < scaledHeight) {
       yMin = maxOffsetY
       yMax = -top
     } else {
@@ -466,8 +455,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     const xRange: [number, number] = [xMin, xMax]
     const yRange: [number, number] = [yMin, yMax]
 
-    // 修复边界处理逻辑：当内容大小小于等于容器时，应该贴边而不是居中
-    if (MovableAreaLayout.width + boundaryEpsilon >= scaledWidth) {
+    // 修复边界处理逻辑：当内容大小小于等于容器时，应该贴边
+    if (MovableAreaLayout.width >= scaledWidth) {
       // 内容小于等于容器：保持在边界内，但不强制居中
       if (nextOffsetX < xMin) {
         nextOffsetX = xMin // 贴左边
@@ -477,7 +466,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       // 如果在范围内，保持当前位置
     } else {
       // 内容大于容器：确保容器区域始终被覆盖
-      if (Math.abs(xRange[0] - xRange[1]) <= boundaryEpsilon) {
+      if (Math.abs(xRange[0] - xRange[1]) <= 0) {
         // 边界范围很小时，使用平滑处理避免跳跃
         const currentOffset = targetOffsetX
         const centerPos = (xMin + xMax) / 2
@@ -485,22 +474,20 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         nextOffsetX = Math.max(centerPos - maxDrift, Math.min(centerPos + maxDrift, currentOffset))
       } else {
         // 正常边界限制
-        const oldValue = nextOffsetX
         nextOffsetX = Math.max(xMin, Math.min(xMax, nextOffsetX))
       }
     }
 
-    if (MovableAreaLayout.height + boundaryEpsilon >= scaledHeight) {
-      // 内容小于等于容器：保持在边界内，但不强制居中
+    if (MovableAreaLayout.height >= scaledHeight) {
+      // 内容小于等于容器：保持在边界内
       if (nextOffsetY < yMin) {
         nextOffsetY = yMin // 贴上边
       } else if (nextOffsetY > yMax) {
         nextOffsetY = yMax // 贴下边或保持在合理范围内
       }
-      // 如果在范围内，保持当前位置
     } else {
       // 内容大于容器：确保容器区域始终被覆盖
-      if (Math.abs(yRange[0] - yRange[1]) <= boundaryEpsilon) {
+      if (Math.abs(yRange[0] - yRange[1]) <= 0) {
         // 边界范围很小时，使用平滑处理避免跳跃
         const currentOffset = targetOffsetY
         const centerPos = (yMin + yMax) / 2
@@ -577,15 +564,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [MovableAreaLayout.height, MovableAreaLayout.width])
 
   // 提取通用的缩放处理函数
-  const handleScaleUpdate = useCallback((targetScale: number, options: { anchor?: {
-    anchorX: number
-    anchorY: number
-    anchorScreenX: number
-    anchorScreenY: number
-    baseScale: number
-    baseOffsetX: number
-    baseOffsetY: number
-  }; keepCenter?: boolean } = {}) => {
+  const handleScaleUpdate = useCallback((targetScale: number) => {
     'worklet'
     if (disabled) return
 
@@ -608,22 +587,10 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     let nextOffsetY = offsetY.value
     const prevScale = currentScale.value || 1
 
-    if (options.anchor) {
-      const anchor = options.anchor
-      const screenX = anchor.anchorScreenX ?? (anchor.baseOffsetX + anchor.anchorX * anchor.baseScale)
-      const screenY = anchor.anchorScreenY ?? (anchor.baseOffsetY + anchor.anchorY * anchor.baseScale)
-      nextOffsetX = screenX - anchor.anchorX * clampedScale
-      nextOffsetY = screenY - anchor.anchorY * clampedScale
-    } else if (options.keepCenter) {
-      const centerX = offsetX.value + (width * prevScale) / 2
-      const centerY = offsetY.value + (height * prevScale) / 2
-      nextOffsetX = centerX - (width * clampedScale) / 2
-      nextOffsetY = centerY - (height * clampedScale) / 2
-    } else {
-      // 默认保持当前左上角，避免额外补偿
-      nextOffsetX = offsetX.value
-      nextOffsetY = offsetY.value
-    }
+    const centerX = offsetX.value + (width * prevScale) / 2
+    const centerY = offsetY.value + (height * prevScale) / 2
+    nextOffsetX = centerX - (width * clampedScale) / 2
+    nextOffsetY = centerY - (height * clampedScale) / 2
 
     const { x: clampedOffsetX, y: clampedOffsetY } = calculateScaleBoundaryPosition({
       targetOffsetX: nextOffsetX,
@@ -661,7 +628,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           }
         }
         const targetScale = areaScaleState.value.baseScale * (scaleInfo.scale || 1)
-        handleScaleUpdate(targetScale, { keepCenter: true })
+        handleScaleUpdate(targetScale)
       }
 
       const handleAreaScaleEnd = () => {
@@ -682,7 +649,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         MovableAreaLayout.unregisterMovableView?.(viewId)
       }
     }
-  }, [MovableAreaLayout.scaleArea, viewId, scale, handleScaleUpdate])
+  }, [MovableAreaLayout.scaleArea, viewId, scale])
 
   const getTouchSource = useCallback((offsetX: number, offsetY: number) => {
     const hasOverBoundary = offsetX < draggableXRange.value[0] || offsetX > draggableXRange.value[1] ||
@@ -1032,61 +999,8 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       const gesturePinch = Gesture.Pinch()
         .onStart((e: any) => {
           'worklet'
-          const layout = measure(animatedRef)
-          const baseScale = currentScale.value || 1
-          const baseOffsetX = offsetX.value
-          const baseOffsetY = offsetY.value
-          const contentWidth = layoutValue.value.width || 0
-          const contentHeight = layoutValue.value.height || 0
-          const layoutWidth = layout?.width ?? contentWidth * baseScale
-          const layoutHeight = layout?.height ?? contentHeight * baseScale
-          const pageX = layout?.pageX
-          const pageY = layout?.pageY
-          const hasValidPage = Number.isFinite(pageX) && Number.isFinite(pageY)
-          const hasLayoutMetrics = hasValidPage && layoutWidth > 0 && layoutHeight > 0
-
-          if (!hasLayoutMetrics) {
-            pinchOrigin.value = {
-              anchorX: contentWidth / 2,
-              anchorY: contentHeight / 2,
-              anchorScreenX: baseOffsetX + (contentWidth * baseScale) / 2,
-              anchorScreenY: baseOffsetY + (contentHeight * baseScale) / 2,
-              baseScale,
-              baseOffsetX,
-              baseOffsetY,
-              basePageX: Number(pageX) || 0,
-              basePageY: Number(pageY) || 0,
-              active: false,
-              fallbackToCenter: true
-            }
-            return
-          }
-
-          const fallbackFocalX = (pageX as number) + layoutWidth / 2
-          const fallbackFocalY = (pageY as number) + layoutHeight / 2
-          const focalX = typeof e.focalX === 'number' ? e.focalX : fallbackFocalX
-          const focalY = typeof e.focalY === 'number' ? e.focalY : fallbackFocalY
-
-          const localScreenX = focalX - (pageX as number)
-          const localScreenY = focalY - (pageY as number)
-          const scaleSafe = baseScale || 1
-          const rawAnchorX = (localScreenX - baseOffsetX) / scaleSafe
-          const rawAnchorY = (localScreenY - baseOffsetY) / scaleSafe
-          const anchorX = isFinite(rawAnchorX) ? rawAnchorX : 0
-          const anchorY = isFinite(rawAnchorY) ? rawAnchorY : 0
-
           pinchOrigin.value = {
-            anchorX,
-            anchorY,
-            anchorScreenX: localScreenX,
-            anchorScreenY: localScreenY,
-            baseScale,
-            baseOffsetX,
-            baseOffsetY,
-            basePageX: pageX as number,
-            basePageY: pageY as number,
-            active: true,
-            fallbackToCenter: false
+            baseScale: currentScale.value || 1
           }
         })
         .onUpdate((e: any) => {
@@ -1095,65 +1009,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
           const baseScale = origin.baseScale || 1
           const scaleFactor = e?.scale
           const targetScale = baseScale * (scaleFactor || 1)
-
-          if (!origin.active) {
-            handleScaleUpdate(targetScale, origin.fallbackToCenter ? { keepCenter: true } : {})
-            return
-          }
-
-          const layout = measure(animatedRef)
-          const hasLayoutPageX = typeof layout?.pageX === 'number' && isFinite(layout.pageX)
-          const hasLayoutPageY = typeof layout?.pageY === 'number' && isFinite(layout.pageY)
-          const pageX = hasLayoutPageX ? (layout?.pageX as number) : origin.basePageX
-          const pageY = hasLayoutPageY ? (layout?.pageY as number) : origin.basePageY
-
-          let anchorScreenX = origin.anchorScreenX
-          let anchorScreenY = origin.anchorScreenY
-          let anchorX = origin.anchorX
-          let anchorY = origin.anchorY
-
-          if (typeof e.focalX === 'number' && typeof e.focalY === 'number' && isFinite(pageX) && isFinite(pageY)) {
-            anchorScreenX = e.focalX - pageX
-            anchorScreenY = e.focalY - pageY
-            // 修复anchor计算：使用稳定的基础值而非实时的offsetX.value
-            const rawAnchorX = (anchorScreenX - origin.baseOffsetX) / origin.baseScale
-            const rawAnchorY = (anchorScreenY - origin.baseOffsetY) / origin.baseScale
-            if (isFinite(rawAnchorX)) {
-              anchorX = rawAnchorX
-            }
-            if (isFinite(rawAnchorY)) {
-              anchorY = rawAnchorY
-            }
-          }
-
-          const anchorState = {
-            ...origin,
-            anchorScreenX,
-            anchorScreenY,
-            anchorX,
-            anchorY,
-            baseOffsetX: offsetX.value,
-            baseOffsetY: offsetY.value,
-            basePageX: pageX,
-            basePageY: pageY
-          }
-
-          handleScaleUpdate(targetScale, {
-            anchor: anchorState
-          })
-
-          const resolvedScale = currentScale.value || 1
-          pinchOrigin.value = {
-            ...anchorState,
-            baseOffsetX: offsetX.value,
-            baseOffsetY: offsetY.value,
-            anchorScreenX: offsetX.value + anchorState.anchorX * resolvedScale,
-            anchorScreenY: offsetY.value + anchorState.anchorY * resolvedScale
-          }
+          handleScaleUpdate(targetScale)
         })
         .onEnd(() => {
           'worklet'
           if (disabled) return
+
+          // 确保缩放值在有效范围内
           const finalScale = Math.max(scaleMin, Math.min(scaleMax, currentScale.value))
           if (finalScale !== currentScale.value) {
             currentScale.value = finalScale
@@ -1166,20 +1028,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
             }
           }
 
-          const origin = pinchOrigin.value
-          const nextScale = currentScale.value || 1
+          // 更新 pinchOrigin 的基础信息
           pinchOrigin.value = {
-            anchorX: origin.anchorX,
-            anchorY: origin.anchorY,
-            anchorScreenX: offsetX.value + origin.anchorX * nextScale,
-            anchorScreenY: offsetY.value + origin.anchorY * nextScale,
-            baseScale: nextScale,
-            baseOffsetX: offsetX.value,
-            baseOffsetY: offsetY.value,
-            basePageX: origin.basePageX,
-            basePageY: origin.basePageY,
-            active: false,
-            fallbackToCenter: false
+            baseScale: currentScale.value || 1
           }
 
           handleRestBoundaryAndCheck()
@@ -1190,7 +1041,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     }
 
     return gesturePan
-  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current, handleScaleUpdate, MovableAreaLayout.scaleArea])
+  }, [disabled, direction, inertia, outOfBounds, scale, scaleMin, scaleMax, animation, gestureSwitch.current, MovableAreaLayout.scaleArea])
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
