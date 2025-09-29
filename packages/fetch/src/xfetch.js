@@ -27,6 +27,7 @@ export default class XFetch {
       request: new InterceptorManager(),
       response: new InterceptorManager()
     }
+    this.useBigInt = (options && options.useBigInt) || false
   }
 
   static normalizeConfig (config) {
@@ -230,6 +231,10 @@ export default class XFetch {
         console.log('xfetch参数校验错误', e)
       }
       config = this.checkProxy(config) // proxy
+
+      if (this.useBigInt) {
+        config.useBigInt = this.useBigInt
+      }
 
       let promise = this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
       // 后置拦截器
