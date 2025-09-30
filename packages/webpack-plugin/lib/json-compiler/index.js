@@ -15,9 +15,6 @@ const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDe
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
-const normalize = require('../utils/normalize')
-const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
@@ -43,7 +40,6 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
-  const projectRoot = mpx.projectRoot
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -62,36 +58,14 @@ module.exports = function (content) {
     )
   }
 
-  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
-    const componentPlaceholder = json.componentPlaceholder || {}
-    if (componentPlaceholder[name]) return
-    componentPlaceholder[name] = placeholder
-    json.componentPlaceholder = componentPlaceholder
-    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
-  }
-  const normalizePlaceholder = (placeholder) => {
-    if (typeof placeholder === 'string') {
-      const placeholderMap = mode === 'ali'
-        ? {
-          view: { name: 'mpx-view', resource: mpxViewPath },
-          text: { name: 'mpx-text', resource: mpxTextPath }
-        }
-        : {}
-      placeholder = placeholderMap[placeholder] || { name: placeholder }
-    }
-    if (!placeholder.name) {
-      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
-    }
-    return placeholder
-  }
-
   const {
     isUrlRequest,
     urlToRequest,
     processPage,
     processDynamicEntry,
     processComponent,
-    processJsExport
+    processJsExport,
+    processPlaceholder
   } = createJSONHelper({
     loaderContext: this,
     emitWarning,
@@ -223,64 +197,56 @@ module.exports = function (content) {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
-          if (err === RESOLVE_IGNORED_ERR) {
-            delete components[name]
-            return callback()
-          }
-          if (err) return callback(err)
-          components[name] = entry
-          if (runtimeCompile) {
-            // 替换组件的 hashName，并删除原有的组件配置
-            const hashName = 'm' + mpx.pathHash(resourcePath)
-            components[hashName] = entry
-            delete components[name]
-            dependencyComponentsMap[name] = {
-              hashName,
-              resourcePath,
-              isDynamic: queryObj.isDynamic
-            }
-          }
-          if (tarRoot) {
-            if (placeholder) {
-              placeholder = normalizePlaceholder(placeholder)
-              if (placeholder.resource) {
-                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
-                  if (err) return callback(err)
-                  fillInComponentPlaceholder(name, placeholder.name, entry)
-                  callback()
-                })
-              } else {
-                fillInComponentPlaceholder(name, placeholder.name)
-                callback()
+      async.waterfall([
+        (callback) => {
+          // 存在所有命中asyncSubpackageRules的组件
+          const asyncComponents = []
+          const resolveResourcePathMap = new Map()
+          async.eachOf(components, (component, name, callback) => {
+            processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
+              if (err === RESOLVE_IGNORED_ERR) {
+                delete components[name]
+                return callback()
               }
-            } else {
-              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
-                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
-                emitError(errMsg)
+              if (err) return callback(err)
+              components[name] = entry
+              if (runtimeCompile) {
+                // 替换组件的 hashName，并删除原有的组件配置
+                const hashName = 'm' + mpx.pathHash(resourcePath)
+                components[hashName] = entry
+                delete components[name]
+                dependencyComponentsMap[name] = {
+                  hashName,
+                  resourcePath,
+                  isDynamic: queryObj.isDynamic
+                }
               }
+              resolveResourcePathMap.set(name, resourcePath)
+              if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
               callback()
-            }
-          } else {
-            callback()
-          }
-        })
-      }, (err) => {
-        if (err) return callback(err)
-        const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
-        if (runtimeCompile) {
-          components.element = mpxCustomElementPath
-          components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
+            })
+          }, (err) => {
+            if (err) return callback(err)
+            const mpxCustomElementPath = resolveMpxCustomElementPath(packageName)
+            if (runtimeCompile) {
+              components.element = mpxCustomElementPath
+              components.mpx_dynamic_slot = '' // 运行时组件打标记，在 processAssets 统一替换
 
-          this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'json', info: dependencyComponentsMap }))
+              this._module.addPresentationalDependency(new RecordRuntimeInfoDependency(packageName, resourcePath, { type: 'json', info: dependencyComponentsMap }))
+            }
+            if (queryObj.mpxCustomElement) {
+              components.element = mpxCustomElementPath
+              Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
+            }
+            callback(null, { asyncComponents, resolveResourcePathMap })
+          })
+        },
+        ({ asyncComponents, resolveResourcePathMap }, callback) => {
+          async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+            processPlaceholder({ jsonObj: json, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback)
+          }, callback)
         }
-        if (queryObj.mpxCustomElement) {
-          components.element = mpxCustomElementPath
-          Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
-        }
-        callback()
-      })
+      ], callback)
     } else {
       callback()
     }
