@@ -11,3 +11,6 @@ declare module '*?resolve' {
   const resourcePath: string
   export default resourcePath
 }
+
+declare let setAppShow: () => void
+declare let setAppHide: () => void
