@@ -14,8 +14,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
-const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
+const ImportDependency = require('./dependencies/ImportDependency')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const normalize = require('./utils/normalize')
@@ -37,6 +36,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordModuleIdMapDependency = require('./dependencies/RecordModuleIdMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
@@ -77,7 +77,10 @@ const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
-require('./utils/check-core-version-match')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
+const checkVersionCompatibility = require('./utils/check-core-version-match')
+
+checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
@@ -198,10 +201,17 @@ class MpxWebpackPlugin {
     }, options.nativeConfig)
     options.webConfig = options.webConfig || {}
     options.rnConfig = options.rnConfig || {}
+    options.rnConfig.supportSubpackage = options.rnConfig.supportSubpackage !== undefined ? options.rnConfig.supportSubpackage : true
     options.partialCompileRules = options.partialCompileRules || null
     options.asyncSubpackageRules = options.asyncSubpackageRules || []
     options.optimizeRenderRules = options.optimizeRenderRules ? (Array.isArray(options.optimizeRenderRules) ? options.optimizeRenderRules : [options.optimizeRenderRules]) : []
     options.retryRequireAsync = options.retryRequireAsync || false
+    if (options.retryRequireAsync === true) {
+      options.retryRequireAsync = {
+        times: 1,
+        interval: 0
+      }
+    }
     options.optimizeSize = options.optimizeSize || false
     options.dynamicComponentRules = options.dynamicComponentRules || {}// 运行时组件配置
     this.options = options
@@ -615,6 +625,13 @@ class MpxWebpackPlugin {
         }
       })
 
+      compilation.hooks.runtimeRequirementInTree
+        .for(RetryRuntimeGlobal)
+        .tap('MpxWebpackPlugin', (chunk) => {
+          compilation.addRuntimeModule(chunk, new RetryRuntimeModule())
+          return true
+        })
+
       if (isReact(this.options.mode)) {
         compilation.hooks.runtimeRequirementInTree
           .for(RuntimeGlobals.loadScript)
@@ -657,6 +674,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
 
+      compilation.dependencyFactories.set(RecordModuleIdMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordModuleIdMapDependency, new RecordModuleIdMapDependency.Template())
+
       compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
 
@@ -681,7 +701,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
       compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
-      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
+      compilation.dependencyFactories.set(ImportDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -704,6 +725,8 @@ class MpxWebpackPlugin {
           componentsMap: {
             main: {}
           },
+          // 资源与moduleId关系记录
+          resourceModuleIdMap: {},
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录
           staticResourcesMap: {
             main: {}
@@ -769,7 +792,7 @@ class MpxWebpackPlugin {
           removedChunks: [],
           forceProxyEventRules: this.options.forceProxyEventRules,
           // 若配置disableRequireAsync=true, 则全平台构建不支持异步分包
-          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || isReact(this.options.mode)),
+          supportRequireAsync: !this.options.disableRequireAsync && (this.options.mode === 'wx' || this.options.mode === 'ali' || this.options.mode === 'tt' || isWeb(this.options.mode) || (isReact(this.options.mode) && this.options.rnConfig.supportSubpackage)),
           partialCompileRules: this.options.partialCompileRules,
           collectDynamicEntryInfo: ({ resource, packageName, filename, entryType, hasAsync }) => {
             const curInfo = mpx.dynamicEntryInfo[packageName] = mpx.dynamicEntryInfo[packageName] || {
@@ -1443,7 +1466,10 @@ class MpxWebpackPlugin {
                     expr.loc,
                     request
                   )
-                  const dep = new ImportDependency(request, expr.range)
+                  const dep = new ImportDependency(request, expr.range, undefined, {
+                    isRequireAsync: true,
+                    retryRequireAsync: this.options.retryRequireAsync
+                  })
                   dep.loc = expr.loc
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
@@ -1451,7 +1477,8 @@ class MpxWebpackPlugin {
                   const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
                     isAsync: true,
                     isRequireAsync: true,
-                    retryRequireAsync: !!this.options.retryRequireAsync
+                    retryRequireAsync: this.options.retryRequireAsync,
+                    requireAsyncRange: expr.range
                   })
 
                   parser.state.current.addPresentationalDependency(dep)
@@ -1606,7 +1633,7 @@ class MpxWebpackPlugin {
               target = expr.object
             }
 
-            if (!matchCondition(resourcePath, this.options.transMpxRules) || resourcePath.indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
+            if (!matchCondition(resourcePath, this.options.transMpxRules) || toPosix(resourcePath).indexOf('node_modules/@mpxjs') !== -1 || !target || mode === srcMode) return
 
             const type = target.name
             const name = type === 'wx' ? 'mpx' : 'createFactory'
@@ -1663,11 +1690,12 @@ class MpxWebpackPlugin {
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
+          const resourceModuleIdMap = compilation.__mpx__.resourceModuleIdMap
           const componentsPackageMap = compilation.__mpx__.componentsMap
           const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
             return { ...pre, ...cur }
           }, {})
-          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+          const outputMap = JSON.stringify({ outputPathMap: { ...pagesMap, ...componentsMap }, moduleIdMap: resourceModuleIdMap })
           const filename = this.options.generateBuildMap.filename || 'outputMap.json'
           compilation.assets[filename] = new RawSource(outputMap)
         }
@@ -1707,6 +1735,23 @@ class MpxWebpackPlugin {
               source.add('// inject pageconfigmap for screen\n' +
                 'var context = (function() { return this })() || Function("return this")();\n')
               source.add(`context.__mpxPageConfigsMap = ${JSON.stringify(mpx.pageConfigsMap)};\n`)
+
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`
+${globalObject}.__mpxClearAsyncChunkCache = ${globalObject}.__mpxClearAsyncChunkCache || function (ids) {
+  ids = JSON.stringify(ids)
+  var arr = ${globalObject}['${chunkLoadingGlobal}'] || []
+  for (var i = arr.length - 1; i >= 0; i--) {
+    if (JSON.stringify(arr[i][0]) === ids) {
+      arr.splice(i, 1)
+    }
+  }
+};\n`)
+              }
+            } else {
+              if (process.env.NODE_ENV !== 'production') {
+                source.add(`${globalObject}.__mpxClearAsyncChunkCache && ${globalObject}.__mpxClearAsyncChunkCache(${JSON.stringify(chunk.ids)});\n`)
+              }
             }
             source.add(originalSource)
             compilation.assets[chunkFile] = source
@@ -1806,6 +1851,7 @@ try {
 
         compilation.chunkGroups.forEach((chunkGroup) => {
           if (!chunkGroup.isInitial()) {
+            isReact(mpx.mode) && chunkGroup.chunks.forEach((chunk) => processChunk(chunk, false, []))
             return
           }
 

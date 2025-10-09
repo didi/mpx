@@ -215,24 +215,33 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   const parsed = parseFunc(input, 'var')
   const replaced = new ReplaceSource(input)
 
-  parsed.forEach(({ start, end, args }) => {
+  for (const { start, end, args } of parsed) {
     const varName = args[0]
-    const fallback = args[1] || ''
+    const fallback = args[1]
     let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
+    if (varValue === undefined) return
     if (varUseRegExp.test(varValue)) {
-      varValue = '' + resolveVar(varValue, varContext)
+      varValue = resolveVar(varValue, varContext)
+      if (varValue === undefined) return
     } else {
-      varValue = '' + global.__formatValue(varValue)
+      varValue = global.__formatValue(varValue)
     }
     replaced.replace(start, end - 1, varValue)
-  })
+  }
+
   return global.__formatValue(replaced.source())
 }
 
 function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>, visitOther: (arg: VisitorArg) => void) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
-      target[key] = resolveVar(value, varContext)
+      const resolved = resolveVar(value, varContext)
+      if (resolved === undefined) {
+        delete target[key]
+        error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
+        return
+      }
+      target[key] = resolved
       visitOther({ target, key, value: target[key], keyPath: varKeyPath })
     })
   })
@@ -787,13 +796,11 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   const gesture = useMemo(() => {
     return Gesture.Pan()
       .onTouchesDown(() => {
-        'worklet'
-        runOnJS(setStartTimer)()
+        setStartTimer()
       })
       .onTouchesUp(() => {
-        'worklet'
-        runOnJS(setStayTimer)()
-      })
+        setStayTimer()
+      }).runOnJS(true)
   }, [])
 
   if (gestureRef) {
@@ -806,8 +813,8 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   }
 }
 
-export function useRunOnJSCallback<T extends Record<string, AnyFunc>> (callbackMapRef: MutableRefObject<T>) {
-  const invokeCallback = useCallback(<K extends keyof T>(key: K, ...args: Parameters<T[K]>) => {
+export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<string, AnyFunc>>) {
+  const invokeCallback = useCallback((key: string, ...args: any) => {
     const callback = callbackMapRef.current[key]
     // eslint-disable-next-line node/no-callback-literal
     if (isFunction(callback)) return callback(...args)
@@ -815,7 +822,7 @@ export function useRunOnJSCallback<T extends Record<string, AnyFunc>> (callbackM
 
   useEffect(() => {
     return () => {
-      callbackMapRef.current = {} as T
+      callbackMapRef.current = {}
     }
   }, [])
 

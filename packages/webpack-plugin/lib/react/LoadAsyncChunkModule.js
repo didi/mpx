@@ -5,7 +5,7 @@ const HelperRuntimeModule = require('webpack/lib/runtime/HelperRuntimeModule')
 class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
   constructor (timeout) {
     super('load async chunk')
-    this.timeout = timeout || 5000
+    this.timeout = timeout || 10000
   }
 
   generate () {

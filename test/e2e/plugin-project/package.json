@@ -1,6 +1,6 @@
 {
   "name": "mpx-webpack5-plugin-project",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A mpx project",
   "main": "index.js",
   "scripts": {
@@ -23,8 +23,8 @@
   "author": "xuegan <xuegan@didiglobal.com>",
   "license": "ISC",
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.9.58",
-    "@mpxjs/core": "^2.9.58",
+    "@mpxjs/api-proxy": "^2.10.7",
+    "@mpxjs/core": "^2.10.7",
     "@mpxjs/store": "^2.9.58",
     "semver": "^7.5.4",
     "vue": "^2.6.10",
@@ -44,7 +44,7 @@
     "@mpxjs/miniprogram-simulate": "^1.4.17",
     "@mpxjs/mpx-jest": "^0.0.31",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/webpack-plugin": "^2.9.58",
+    "@mpxjs/webpack-plugin": "^2.10.7",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "autoprefixer": "^6.3.1",

@@ -18,7 +18,6 @@ export function init (Mpx) {
     Mpx.i18n = createI18n(global.i18n)
   }
   initGlobalErrorHandling()
-  initGlobalLazyLoadHandling()
 }
 
 function initGlobalErrorHandling () {
@@ -63,15 +62,5 @@ function initGlobalErrorHandling () {
     global.HermesInternal.enablePromiseRejectionTracker?.(rejectionTrackingOptions)
   } else {
     require('promise/setimmediate/rejection-tracking').enable(rejectionTrackingOptions)
-  }
-}
-
-function initGlobalLazyLoadHandling () {
-  global.onLazyLoadError = function (error) {
-    if (global.__mpxAppCbs?.lazyLoad?.length) {
-      global.__mpxAppCbs.lazyLoad.forEach((cb) => {
-        cb(error)
-      })
-    }
   }
 }

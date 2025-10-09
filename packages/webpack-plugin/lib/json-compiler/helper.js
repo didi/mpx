@@ -158,7 +158,7 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
       const { resourcePath } = parseRequest(resource)
       const relative = path.relative(context, resourcePath)
       if (/^\./.test(relative)) {
-        return callback(new Error(`The js export path ${resourcePath} must be in the context ${context}!`))
+        return callback(new Error(`[Mpx json error]:The js export path ${resourcePath} must be in the context ${context}!`))
       }
       const outputPath = /^(.*?)(\.[^.]*)?$/.exec(relative)[1]
       const entry = getDynamicEntry(resource, 'export', outputPath, tarRoot, publicPath + tarRoot)
