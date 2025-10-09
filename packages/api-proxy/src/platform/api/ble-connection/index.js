@@ -49,8 +49,6 @@ const getBLEDeviceServices = ENV_OBJ.getBLEDeviceServices || envError('getBLEDev
 const getBLEDeviceCharacteristics = ENV_OBJ.getBLEDeviceCharacteristics || envError('getBLEDeviceCharacteristics')
 
 export {
-  closeBLEConnection,
-  createBLEConnection,
   onBLEConnectionStateChange,
   offBLEConnectionStateChange,
   openBluetoothAdapter,
