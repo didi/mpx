@@ -28,11 +28,9 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
   const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
   useDimensionsInfo({ window, screen })
 
-  if (getPageSize(screen) === oldScreen) console.log('Dimensions change, but screen size not changed', getPageSize(screen), oldScreen)
   // 对比 screen 高宽是否存在变化
   if (getPageSize(screen) === oldScreen) return
 
-  console.log('clear __classMapValueCache')
   global.__classMapValueCache?.clear()
 
   // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
@@ -41,7 +39,7 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
   const navigation = getFocusedNavigation()
 
   if (navigation) {
-    set(global.__mpxPageSizeCountMap, navigation.pageId, global.__mpxSizeCount)
+    global.__mpxPageSizeCountMap[navigation.pageId] = global.__mpxSizeCount
     if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
       global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
     }
@@ -241,11 +239,13 @@ function getMediaStyle (media) {
 export default function styleHelperMixin () {
   return {
     methods: {
+      __getSizeCount () {
+        return global.__mpxPageSizeCountMap[this.__pageId]
+      },
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        console.log('__getStyle ', JSON.stringify(global.__mpxAppDimensionsInfo.screen))
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)

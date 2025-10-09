@@ -74,6 +74,35 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     error
   })
 
+  // 目前所有 AtRule 只支持 @media，其他全部给出错误提示
+  root.walkAtRules(rule => {
+    if (rule.name !== 'media') {
+      // error(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`)
+      // 根据 rule 中的sourcemap信息，输出具体的报错代码行列，以及前后2行代码, 并使用颜色高亮显示
+      const { source } = rule
+      if (source && source.start) {
+        const { line, column } = source.start
+        const lines = content.split('\n')
+        const startLine = Math.max(0, line - 3)
+        const endLine = Math.min(lines.length, line + 2)
+        const errorLines = lines.slice(startLine, endLine)
+        // const pointerLine = ' '.repeat(column - 1) + '^'
+        error(`Only @media rule is supported in react native mode temporarily, but got @${rule.name} at ${line}:${column}\n` +
+          errorLines.map((l, i) => {
+            const currentLine = startLine + i + 1
+            if (currentLine === line) {
+              return `\x1b[31m> ${currentLine} | ${l}\x1b[0m`
+            } else {
+              // 正常代码用绿色显示
+              return `\x1b[32m  ${currentLine} | ${l}\x1b[0m`
+            }
+          }).join('\n'))
+      } else {
+        error(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`)
+      }
+    }
+  })
+
   root.walkRules(rule => {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {

@@ -212,9 +212,6 @@ const instanceProto = {
 }
 
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
-  if (type === 'page') {
-    set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
-  }
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -271,12 +268,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
         return parentProvides || null
       },
       enumerable: false
-    },
-    __getSizeCount: {
-      get () {
-        return () => global.__mpxPageSizeCountMap[pageId]
-      },
-      enumerable: false
     }
   })
 
@@ -311,6 +302,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     setFocusedNavigation(props.navigation)
+    set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(props.navigation)
@@ -389,15 +381,11 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   const systemInfo = getSystemInfo()
   const newSize = systemInfo.size
 
-  console.log('triggerResizeEvent1')
-
   if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
     return
   }
 
   Object.assign(sizeRef.current, systemInfo)
-
-  console.log('triggerResizeEvent2')
 
   const type = mpxProxy.options.__type__
   const target = mpxProxy.target
@@ -421,7 +409,6 @@ function usePageEffect (mpxProxy, pageId) {
     if (hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
-          console.log('usePageEffect', newVal, global.__mpxPageSizeCountMap[pageId], global.__mpxSizeCount)
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
             // 仅在尺寸确实变化时才触发resize事件
@@ -430,7 +417,7 @@ function usePageEffect (mpxProxy, pageId) {
             // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
             if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
               // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
-              set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
             }
           } else if (/^resize/.test(newVal)) {
             triggerResizeEvent(mpxProxy, sizeRef)
