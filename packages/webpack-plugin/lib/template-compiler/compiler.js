@@ -639,11 +639,8 @@ function parse (template, options) {
   rulesResultMap.clear()
   componentGenerics = options.componentGenerics || {}
 
-  if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
-
-  if (typeof options.originalUsingComponents === 'string') options.originalUsingComponents = JSON.parse(options.originalUsingComponents)
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -1010,7 +1007,7 @@ function processComponentIs (el, options) {
     ranges = range.split(',').map(i => i.trim()).filter(i => i)
   } else {
     // 根据原始用户写的usingComponents字段生成ranges
-    ranges = Object.keys(options.originalUsingComponents || {})
+    ranges = options.originalUsingComponents
   }
 
   const rangeMap = new Map()

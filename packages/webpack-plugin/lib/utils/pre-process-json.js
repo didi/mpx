@@ -31,7 +31,7 @@ module.exports = function ({
       let componentGenerics = {}
       const usingComponentsInfo = {}
       const usingComponents = {}
-      const originalUsingComponents = {}
+      let originalUsingComponents
       const finalCallback = (err) => {
         if (err) return callback(err)
         if (ctorType === 'app') {
@@ -64,7 +64,7 @@ module.exports = function ({
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
         }
 
-        Object.assign(originalUsingComponents, ret.usingComponents)
+        originalUsingComponents = ret.usingComponents ? Object.keys(ret.usingComponents) : []
 
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
         try {
