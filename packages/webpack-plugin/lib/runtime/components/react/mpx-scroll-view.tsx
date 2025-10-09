@@ -159,9 +159,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
 
-  const snapScrollTop = useRef(0)
-  const snapScrollLeft = useRef(0)
-
   const [refreshing, setRefreshing] = useState(false)
 
   const [enableScroll, setEnableScroll] = useState(true)
@@ -268,16 +265,12 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     warn('scroll-x and scroll-y cannot be set to true at the same time, Mpx will use the value of scroll-y as the criterion')
   }
   useEffect(() => {
-    if (
-      snapScrollTop.current !== scrollTop || snapScrollLeft.current !== scrollLeft
-    ) {
-      initialTimeout.current = setTimeout(() => {
-        scrollToOffset(scrollLeft, scrollTop)
-      }, 0)
+    initialTimeout.current = setTimeout(() => {
+      scrollToOffset(scrollLeft, scrollTop)
+    }, 0)
 
-      return () => {
-        initialTimeout.current && clearTimeout(initialTimeout.current)
-      }
+    return () => {
+      initialTimeout.current && clearTimeout(initialTimeout.current)
     }
   }, [scrollTop, scrollLeft])
 
@@ -481,10 +474,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   function scrollToOffset (x = 0, y = 0, animated = scrollWithAnimation) {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x, y, animated })
-      scrollOptions.current.scrollLeft = x
-      scrollOptions.current.scrollTop = y
-      snapScrollLeft.current = x
-      snapScrollTop.current = y
     }
   }
 

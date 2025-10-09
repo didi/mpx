@@ -7,7 +7,7 @@ import { implemented } from '../core/implement'
 const unsupported = ['moved', 'definitionFilter']
 
 function convertErrorDesc (key) {
-  error(`Options.${key} is not supported in runtime conversion from wx to ali.`, global.currentResource)
+  error(`Options.${key} is not supported in runtime conversion from wx to ali.`, global.currentResource || global.currentModuleId)
 }
 
 function notSupportTip (options) {

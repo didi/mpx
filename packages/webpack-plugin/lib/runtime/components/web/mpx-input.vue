@@ -57,20 +57,6 @@
         },
         immediate: true
       },
-      focus: {
-        handler (val) {
-          if (val) {
-            this.$nextTick(() => {
-              this.$refs.input.focus()
-            })
-          } else {
-            this.$nextTick(() => {
-              this.$refs.input.blur()
-            })
-          }
-        },
-        immediate: true
-      }
     },
     render (createElement) {
       const mergeBefore = {

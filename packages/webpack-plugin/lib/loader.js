@@ -10,6 +10,7 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
+const RecordModuleIdMapDependency = require('./dependencies/RecordModuleIdMapDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { isReact } = require('./utils/env')
 const preProcessJson = require('./utils/pre-process-json')
@@ -50,13 +51,13 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
@@ -87,6 +88,7 @@ module.exports = function (content) {
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
   const moduleId = mpx.getModuleId(resourcePath, ctorType === 'app')
+  this._module.addPresentationalDependency(new RecordModuleIdMapDependency(moduleId, resourcePath))
 
   const parts = parseComponent(content, {
     filePath,

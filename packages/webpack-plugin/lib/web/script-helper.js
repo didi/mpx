@@ -32,7 +32,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
           const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
           if (placeholderCfg.async) {
             loaderContext.emitWarning(
-              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
+              new Error(`[Mpx json error][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
             )
           }
           componentsMap[componentName] = `function(){return {component: import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)}), loading: getComponent(require(${placeholderRequest}))}}`
@@ -75,7 +75,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
         }
       } else {
         loaderContext.emitWarning(
-          new Error(`[json processor][${loaderContext.resource}]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
+          new Error(`[Mpx json error][${loaderContext.resource}]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
         )
       }
     })
