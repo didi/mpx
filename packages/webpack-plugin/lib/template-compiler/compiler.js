@@ -16,6 +16,7 @@ const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb, isNoMode } = require('../utils/env')
+const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -642,7 +643,6 @@ function parse (template, options) {
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
 
-  if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
 
@@ -1007,12 +1007,34 @@ function processComponentIs (el, options) {
   }
 
   const range = getAndRemoveAttr(el, 'range').val
-  const isInRange = makeMap(range || '')
-  el.components = (usingComponents).filter(i => {
-    if (!range) return true
-    return isInRange(i)
+
+  // Map<CurrentName, SourceName>
+  let ranges
+  if (range) {
+    ranges = range.split(',').map(i => i.trim()).filter(i => i)
+  } else {
+    // 根据原始用户写的usingComponents字段生成ranges
+    ranges = options.originalUsingComponents
+  }
+
+  const rangeMap = new Map()
+  ranges.forEach(name => {
+    rangeMap.set(['ali', 'swan'].includes(mode) ? capitalToHyphen(name) : name, name)
   })
-  if (!el.components.length) {
+
+  // Map<CurrentName, SourceName>
+  el.componentMap = new Map()
+  usingComponents.forEach((name) => {
+    if (rangeMap.size === 0) {
+      el.componentMap.set(name, name)
+    } else {
+      if (rangeMap.has(name)) {
+        el.componentMap.set(name, rangeMap.get(name))
+      }
+    }
+  })
+
+  if (el.componentMap.size === 0) {
     warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
   }
 
@@ -3081,7 +3103,7 @@ function cloneAttrsList (attrsList) {
 }
 
 function postProcessComponentIs (el, postProcessChild) {
-  if (el.is && el.components) {
+  if (el.is && el.componentMap && el.componentMap.size > 0) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
       tempNode = createASTElement('block')
@@ -3091,11 +3113,12 @@ function postProcessComponentIs (el, postProcessChild) {
     replaceNode(el, tempNode, true)
     postMoveBaseDirective(tempNode, el)
 
-    el.components.forEach(function (component) {
-      const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
+    // Map<CurrentName, SourceName>
+    el.componentMap.forEach((source, name) => {
+      const newChild = createASTElement(name, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
-        raw: `{{${el.is} === ${stringify(component)}}}`,
-        exp: `${el.is} === ${stringify(component)}`
+        raw: `{{${el.is} === ${stringify(source)}}}`,
+        exp: `${el.is} === ${stringify(source)}`
       }
       el.children.forEach((child) => {
         addChild(newChild, cloneNode(child))
