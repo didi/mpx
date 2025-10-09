@@ -226,7 +226,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
         }
         break
       case 'postMessage':
-        bindmessage && bindmessage(getCustomEvent('messsage', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
+        bindmessage && bindmessage(getCustomEvent('message', {}, { // RN组件销毁顺序与小程序不一致，所以改成和支付宝消息一致
           detail: {
             data: params[0]?.data
           }

@@ -15,6 +15,18 @@ module.exports = function ({ print }) {
   const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
   return {
     test: TAG_NAME,
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
     props: [
       {
         test: 'mode',
