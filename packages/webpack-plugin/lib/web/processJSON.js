@@ -302,41 +302,35 @@ module.exports = function (jsonContent, {
 
   const processComponents = (components, context, callback) => {
     if (components) {
-      async.waterfall([
-        (callback) => {
-          const asyncComponents = []
-          const resolveResourcePathMap = new Map()
-          async.eachOf(components, (component, name, callback) => {
-            processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder, resourcePath } = {}) => {
-              if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-              const { relativePath, resource } = entry
-              const { queryObj } = parseRequest(resource)
+      const asyncComponents = []
+      const resolveResourcePathMap = new Map()
+      async.eachOf(components, (component, name, callback) => {
+        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder, resourcePath } = {}) => {
+          if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
+          const { relativePath, resource } = entry
+          const { queryObj } = parseRequest(resource)
 
-              tarRoot = queryObj.async || tarRoot
+          tarRoot = queryObj.async || tarRoot
 
-              resolveResourcePathMap.set(name, resourcePath)
-              if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+          resolveResourcePathMap.set(name, resourcePath)
+          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
 
-              fillInComponentsMap(name, entry, tarRoot)
-              callback()
-            })
-          }, () => {
-            callback(null, { asyncComponents, resolveResourcePathMap })
+          fillInComponentsMap(name, entry, tarRoot)
+          callback()
+        })
+      }, (err) => {
+        if (err) return callback(err)
+        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+          processPlaceholder({ jsonObj, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, placeholder) => {
+            if (err) return callback(err)
+            if (placeholder) {
+              const { name, entry } = placeholder
+              fillInComponentsMap(name, entry, '')
+            }
+            callback()
           })
-        },
-        ({ asyncComponents, resolveResourcePathMap }, callback) => {
-          async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
-            processPlaceholder({ jsonObj, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, placeholder) => {
-              if (err) return callback(err)
-              if (placeholder) {
-                const { name, entry } = placeholder
-                fillInComponentsMap(name, entry, '')
-              }
-              callback()
-            })
-          }, callback)
-        }
-      ], callback)
+        }, callback)
+      })
     } else {
       callback()
     }
