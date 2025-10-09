@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { LayoutChangeEvent } from 'react-native'
 import Reanimated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 import { extendObject } from '../utils'
@@ -28,7 +28,7 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
 }) => {
   const textStyleFromAncestor = usePickerViewStyleContext()
   const offsetYShared = usePickerViewColumnAnimationContext()
-  const facesShared = createFaces(itemHeight, visibleCount)
+  const facesShared = useMemo(() => createFaces(itemHeight, visibleCount), [itemHeight, visibleCount])
 
   const animatedStyles = useAnimatedStyle(() => {
     const inputRange = facesShared.map((f) => itemHeight * (index + f.index))
