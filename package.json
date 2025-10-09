@@ -43,8 +43,5 @@
   "workspaces": [
     "packages/*",
     "docs-vitepress"
-  ],
-  "overrides": {
-    "get-intrinsic": "1.3.1"
-  }
+  ]
 }
