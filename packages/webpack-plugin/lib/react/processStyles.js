@@ -52,6 +52,7 @@ module.exports = function (styles, {
           filename: loaderContext.resourcePath,
           mode,
           srcMode,
+          ctorType,
           warn,
           error
         })
