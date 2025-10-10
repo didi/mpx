@@ -13,7 +13,7 @@ global.__mpxPageSizeCountMap = reactive({})
 global.__classCaches = []
 global.__getCacheClass = function (classMapValueCache, className, getStyleObj) {
   if (!classMapValueCache.get(className)) {
-    const styleObj = getStyleObj?.()
+    const styleObj = getStyleObj?.() || {}
     classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
