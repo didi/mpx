@@ -64,26 +64,26 @@ module.exports = function (styles, {
         }, '')
         if (ctorType === 'app') {
           output += `
-          const __classMapCache = new Map()
-          global.__classCaches.push(__classMapCache)
+          const __classCache = new Map()
+          global.__classCaches.push(__classCache)
           let __appClassMap
           global.__getAppClassStyle = function(className) {
             if(!__appClassMap) {
               __appClassMap = {${classMapCode}};
             }
-            return global.__GCC(className, __appClassMap, __classMapCache);
+            return global.__GCC(className, __appClassMap, __classCache);
           };\n`
         } else {
           output += `
-          const __classMapCache = new Map()
-          global.__classCaches.push(__classMapCache)
+          const __classCache = new Map()
+          global.__classCaches.push(__classCache)
           let __classMap
           global.currentInject.injectMethods = {
             __getClassStyle: function(className) {
               if(!__classMap) {
                 __classMap = {${classMapCode}};
               }
-              return global.__GCC(className, __classMap, __classMapCache);
+              return global.__GCC(className, __classMap, __classCache);
             }
           };\n`
         }
