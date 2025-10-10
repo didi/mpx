@@ -69,6 +69,8 @@ module.exports = function createHelpers (loaderContext) {
         if (part.useJSONJS) options.useJSONJS = true
       // eslint-disable-next-line no-fallthrough
       case 'styles':
+        options.lang = part.lang
+      // eslint-disable-next-line no-fallthrough
       case 'template':
         options.extract = true
     }
