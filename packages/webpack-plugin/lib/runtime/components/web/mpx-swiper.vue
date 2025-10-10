@@ -256,8 +256,7 @@
             }
             this.initBs()
           })
-          const elementToObserve = document.querySelector('.mpx-swiper');
-          this.resizeObserver.observe(elementToObserve);
+          this.resizeObserver.observe(this.$refs.wrapper);
         }
       },
       refresh () {

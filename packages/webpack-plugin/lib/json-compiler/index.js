@@ -15,9 +15,6 @@ const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDe
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
-const normalize = require('../utils/normalize')
-const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
 
 module.exports = function (content) {
@@ -43,7 +40,6 @@ module.exports = function (content) {
   const globalSrcMode = mpx.srcMode
   const localSrcMode = queryObj.mode
   const srcMode = localSrcMode || globalSrcMode
-  const projectRoot = mpx.projectRoot
 
   const isApp = !(pagesMap[resourcePath] || componentsMap[resourcePath])
   const publicPath = this._compilation.outputOptions.publicPath || ''
@@ -52,37 +48,14 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[json compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
-  }
-
-  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
-    const componentPlaceholder = json.componentPlaceholder || {}
-    if (componentPlaceholder[name]) return
-    componentPlaceholder[name] = placeholder
-    json.componentPlaceholder = componentPlaceholder
-    if (placeholderEntry && !json.usingComponents[placeholder]) json.usingComponents[placeholder] = placeholderEntry
-  }
-  const normalizePlaceholder = (placeholder) => {
-    if (typeof placeholder === 'string') {
-      const placeholderMap = mode === 'ali'
-        ? {
-          view: { name: 'mpx-view', resource: mpxViewPath },
-          text: { name: 'mpx-text', resource: mpxTextPath }
-        }
-        : {}
-      placeholder = placeholderMap[placeholder] || { name: placeholder }
-    }
-    if (!placeholder.name) {
-      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
-    }
-    return placeholder
   }
 
   const {
@@ -91,7 +64,8 @@ module.exports = function (content) {
     processPage,
     processDynamicEntry,
     processComponent,
-    processJsExport
+    processJsExport,
+    processPlaceholder
   } = createJSONHelper({
     loaderContext: this,
     emitWarning,
@@ -223,6 +197,9 @@ module.exports = function (content) {
 
   const processComponents = (components, context, callback) => {
     if (components) {
+      // 存在所有命中asyncSubpackageRules的组件
+      const asyncComponents = []
+      const resolveResourcePathMap = new Map()
       async.eachOf(components, (component, name, callback) => {
         processComponent(component, context, { relativePath }, (err, entry, { tarRoot, placeholder, resourcePath, queryObj = {} } = {}) => {
           if (err === RESOLVE_IGNORED_ERR) {
@@ -242,29 +219,9 @@ module.exports = function (content) {
               isDynamic: queryObj.isDynamic
             }
           }
-          if (tarRoot) {
-            if (placeholder) {
-              placeholder = normalizePlaceholder(placeholder)
-              if (placeholder.resource) {
-                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
-                  if (err) return callback(err)
-                  fillInComponentPlaceholder(name, placeholder.name, entry)
-                  callback()
-                })
-              } else {
-                fillInComponentPlaceholder(name, placeholder.name)
-                callback()
-              }
-            } else {
-              if (!json.componentPlaceholder || !json.componentPlaceholder[name]) {
-                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
-                emitError(errMsg)
-              }
-              callback()
-            }
-          } else {
-            callback()
-          }
+          resolveResourcePathMap.set(name, resourcePath)
+          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+          callback()
         })
       }, (err) => {
         if (err) return callback(err)
@@ -279,7 +236,10 @@ module.exports = function (content) {
           components.element = mpxCustomElementPath
           Object.assign(components, mpx.getPackageInjectedComponentsMap(packageName))
         }
-        callback()
+        // 使用async处理所有asyncComponents完成后调用callback
+        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+          processPlaceholder({ jsonObj: json, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback)
+        }, callback)
       })
     } else {
       callback()

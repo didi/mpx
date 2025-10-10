@@ -29,7 +29,7 @@ module.exports = function loadPostcssConfig (loaderContext, inlineConfig = {}) {
       if (err.message.indexOf('No PostCSS Config found') >= 0) {
         return
       }
-      loaderContext.emitWarning(`Error loading PostCSS config: ${err.message}`)
+      loaderContext.emitWarning(`[Mpx style warning]: Error loading PostCSS config: ${err.message}`)
     })
   }
 

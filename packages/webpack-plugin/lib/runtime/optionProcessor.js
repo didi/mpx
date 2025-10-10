@@ -108,7 +108,9 @@ registered in parent context!`)
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   // eslint-disable-next-line
-  if (extendOptions) extend(component, extendOptions)
+  if (extendOptions && !component.__mpxExtended) {
+    extend(component, extendOptions, { __mpxExtended: true })
+  }
   return component
 }
 

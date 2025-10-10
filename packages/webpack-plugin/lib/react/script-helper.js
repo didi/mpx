@@ -4,14 +4,9 @@ const parseRequest = require('../utils/parse-request')
 const shallowStringify = require('../utils/shallow-stringify')
 const normalize = require('../utils/normalize')
 const addQuery = require('../utils/add-query')
-const { isBuildInReactTag } = require('../utils/dom-tag-config')
 
 function stringifyRequest (loaderContext, request) {
   return loaderUtils.stringifyRequest(loaderContext, request)
-}
-
-function getBuiltInComponentRequest (component) {
-  return JSON.stringify(addQuery(`@mpxjs/webpack-plugin/lib/runtime/components/react/dist/${component}`, { isComponent: true }))
 }
 
 function getAsyncChunkName (chunkName) {
@@ -26,8 +21,8 @@ function getAsyncSuspense (type, moduleId, componentRequest, componentName, chun
   type: ${JSON.stringify(type)},
   moduleId: ${JSON.stringify(moduleId)},
   chunkName: ${JSON.stringify(chunkName)},
-  getFallback: ${getFallback},
-  getLoading: ${getLoading},
+  ${getFallback ? `getFallback: ${getFallback},` : ''}
+  ${getLoading ? `getLoading: ${getLoading},` : ''}
   getChildren () {
     return import(${getAsyncChunkName(chunkName)}${componentRequest}).then(function (res) {
       return getComponent(res, {displayName: ${JSON.stringify(componentName)}})
@@ -59,7 +54,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   Object.keys(localPagesMap).forEach((pagePath) => {
     const pageCfg = localPagesMap[pagePath]
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
-    if (pageCfg.async) {
+    if (pageCfg.async && rnConfig.supportSubpackage) {
       const moduleId = mpx.getModuleId(pageCfg.resource)
       const getFallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback'))
       const getLoading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading'))
@@ -81,36 +76,31 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   }
 }
 
-function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig }) {
+function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig, rnConfig }) {
   const componentsMap = {}
   const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      if (componentCfg.async) {
+      if (componentCfg.async && rnConfig.supportSubpackage) {
         const moduleId = mpx.getModuleId(componentCfg.resource)
         const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
         let getFallback
         if (placeholder) {
           if (localComponentsMap[placeholder]) {
             const placeholderCfg = localComponentsMap[placeholder]
-            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
             if (placeholderCfg.async) {
               loaderContext.emitWarning(
                 new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
               )
             }
+            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
             getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder))
           } else {
-            const tag = `mpx-${placeholder}`
-            if (isBuildInReactTag(tag)) {
-              getFallback = getComponentGetter(getBuiltInComponent(getBuiltInComponentRequest(tag)))
-            } else {
-              loaderContext.emitError(
-                new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component, please check!`)
-              )
-            }
+            loaderContext.emitError(
+              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
+            )
           }
         } else {
           loaderContext.emitError(

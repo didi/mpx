@@ -20,7 +20,7 @@ jobs:
     - run: |
         npm i
         echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" >> $HOME/.npmrc 2> /dev/null
-        npm run tsc:build
+        npm run build:tsc
         npm run lerna:publish
       env:
         NODE_AUTH_TOKEN: ${{secrets.npm_token}}
