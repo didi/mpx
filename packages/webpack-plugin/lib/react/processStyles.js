@@ -74,7 +74,6 @@ module.exports = function (styles, {
           };\n`
         } else {
           output += `
-          /* styles */
           const __classMapCache = new Map()
           global.__classCaches.push(__classMapCache)
           let __classMap
