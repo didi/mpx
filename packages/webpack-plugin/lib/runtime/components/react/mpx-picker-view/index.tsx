@@ -33,7 +33,7 @@ interface PickerViewProps {
   style?: {
     [key: string]: any
   }
-  wheelAnimationEnabled?: boolean
+  'enable-wheel-animation'?: boolean
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
   'enable-var'?: boolean
@@ -70,7 +70,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     value = [],
     bindchange,
     style,
-    wheelAnimationEnabled = true,
+    'enable-wheel-animation': enableWheelAnimation = true,
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
@@ -179,7 +179,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         initialIndex,
         pickerIndicatorStyle,
         pickerMaskStyle,
-        wheelAnimationEnabled
+        enableWheelAnimation
       }
     )
     const realElement = React.cloneElement(child, wrappedProps)

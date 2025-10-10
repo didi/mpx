@@ -26,7 +26,7 @@ interface ColumnProps {
   }
   pickerMaskStyle: Record<string, any>
   pickerIndicatorStyle: Record<string, any>
-  wheelAnimationEnabled?: boolean
+  enableWheelAnimation?: boolean
 }
 
 const visibleCount = 5
@@ -41,7 +41,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     wrapperStyle,
     pickerMaskStyle,
     pickerIndicatorStyle,
-    wheelAnimationEnabled = true,
+    enableWheelAnimation = true,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
@@ -290,7 +290,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {
-      return wheelAnimationEnabled
+      return enableWheelAnimation
         ? (<MpxPickerViewColumnItem
           key={index}
           item={item}
