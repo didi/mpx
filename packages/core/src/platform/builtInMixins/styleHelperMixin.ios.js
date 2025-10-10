@@ -1,6 +1,6 @@
 import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
 import { StyleSheet, Dimensions } from 'react-native'
-import { reactive, set } from '../../observer/reactive'
+import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
 
 global.__mpxAppDimensionsInfo = {
@@ -9,6 +9,15 @@ global.__mpxAppDimensionsInfo = {
 }
 global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
+
+global.__classCaches = []
+global.__getCacheClass = function (classMapValueCache, className, getStyleObj) {
+  if (!classMapValueCache.get(className)) {
+    const styleObj = getStyleObj?.()
+    classMapValueCache.set(className, styleObj)
+  }
+  return classMapValueCache.get(className)
+}
 
 let dimensionsInfoInitialized = false
 function useDimensionsInfo (dimensions) {
@@ -31,7 +40,7 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
   // 对比 screen 高宽是否存在变化
   if (getPageSize(screen) === oldScreen) return
 
-  global.__classMapValueCache?.clear()
+  global.__classCaches?.forEach(cache => cache?.clear())
 
   // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
   global.__mpxSizeCount++

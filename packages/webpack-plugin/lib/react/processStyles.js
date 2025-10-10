@@ -11,19 +11,7 @@ module.exports = function (styles, {
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
   let content = ''
-  let output = ''
-  if (ctorType === 'app') {
-    output += `
-          /* styles */
-          global.__classMapValueCache = new Map();
-          global.__getCacheClass = function(className, getStyleObj) {
-            if (!global.__classMapValueCache.get(className)) {
-              const styleObj = getStyleObj();
-              global.__classMapValueCache.set(className, styleObj);
-            }
-            return global.__classMapValueCache.get(className);
-          };\n`
-  }
+  let output = '/* styles */\n'
   if (styles.length) {
     const warn = (msg) => {
       loaderContext.emitWarning(
@@ -69,12 +57,14 @@ module.exports = function (styles, {
         })
         const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
           result += `get ['${key}']() {
-            return global.__getCacheClass('${key}', () => (${shallowStringify(value)}));
+            return global.__getCacheClass(__classMapCache, '${key}', () => (${shallowStringify(value)}));
           },`
           return result
         }, '')
         if (ctorType === 'app') {
           output += `
+          const __classMapCache = new Map()
+          global.__classCaches.push(__classMapCache)
           let __appClassMap
           global.__getAppClassMap = function() {
             if(!__appClassMap) {
@@ -85,6 +75,8 @@ module.exports = function (styles, {
         } else {
           output += `
           /* styles */
+          const __classMapCache = new Map()
+          global.__classCaches.push(__classMapCache)
           let __classMap
           global.currentInject.injectMethods = {
             __getClassMap: function() {
@@ -104,7 +96,7 @@ module.exports = function (styles, {
     })
   } else {
     callback(null, {
-      output
+      output: ''
     })
   }
 }
