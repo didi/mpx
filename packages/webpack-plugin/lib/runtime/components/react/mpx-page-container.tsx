@@ -356,7 +356,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     const contentView = (
       <Animated.View style={[
         styles.container,
-        getRoundStyle(position),
+        round ? getRoundStyle(position) : undefined,
         positionStyle[position],
         customStyle,
         contentAnimatedStyle
