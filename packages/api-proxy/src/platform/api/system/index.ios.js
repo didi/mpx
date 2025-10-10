@@ -11,7 +11,7 @@ const getSystemInfoSync = function () {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName().toLowerCase(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
     fontSizeSetting: PixelRatio.getFontScale()
   }
@@ -68,7 +68,7 @@ const getDeviceInfo = function () {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName().toLowerCase(),
     memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
   })
   return deviceInfo
