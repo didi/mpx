@@ -15,7 +15,7 @@ const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
-const { isReact, isWeb } = require('../utils/env')
+const { isReact, isWeb, isNoMode } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
@@ -120,6 +120,8 @@ const rulesResultMap = new Map()
 let usingComponents = []
 let usingComponentsInfo = {}
 let componentGenerics = {}
+// 跨平台语法检测的配置，在模块加载时初始化一次
+let crossPlatformConfig = null
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -638,6 +640,8 @@ function parse (template, options) {
   processingTemplate = false
   rulesResultMap.clear()
   componentGenerics = options.componentGenerics || {}
+  // 初始化跨平台语法检测配置（每次解析时只初始化一次）
+  crossPlatformConfig = initCrossPlatformConfig()
 
   usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
@@ -2851,6 +2855,78 @@ function processNoTransAttrs (el) {
   }
 }
 
+function initCrossPlatformConfig () {
+  // 定义平台与前缀的双向映射关系
+  const platformPrefixMap = {
+    wx: 'wx:',
+    ali: 'a:',
+    swan: 's-',
+    qq: 'qq:',
+    tt: 'tt:',
+    dd: 'dd:',
+    jd: 'jd:',
+    qa: 'qa:',
+    web: 'v-'
+  }
+
+  if (isNoMode(mode)) {
+    return null
+  }
+
+  return {
+    currentPrefix: platformPrefixMap[mode] || 'wx:',
+    platformPrefixMap
+  }
+}
+
+// 检测跨平台语法使用情况并给出警告
+function processCrossPlatformSyntaxWarning (el) {
+  // 使用转换后的属性列表进行检查
+  if (!el.attrsList || el.attrsList.length === 0) {
+    return
+  }
+
+  // 如果配置为空，说明不需要检测
+  if (!crossPlatformConfig) {
+    return
+  }
+
+  const { currentPrefix, platformPrefixMap } = crossPlatformConfig
+
+  // 检查转换后的属性列表
+  el.attrsList.forEach(attr => {
+    const attrName = attr.name
+
+    // 检查是否使用了平台前缀
+    for (const [platformName, prefix] of Object.entries(platformPrefixMap)) {
+      if (attrName.startsWith(prefix)) {
+        if (isReact(mode)) {
+          // React Native 平台：只允许使用 wx: 前缀，其他前缀报错
+          if (prefix !== 'wx:') {
+            error$1(
+              `React Native mode "${mode}" does not support "${prefix}" prefix. ` +
+              `Use "wx:" prefix instead. Found: "${attrName}"`
+            )
+          }
+        } else {
+          // 小程序平台：检测跨平台语法使用
+          if (platformName !== mode) {
+            // 构建建议的正确属性名
+            const suffixPart = attrName.substring(prefix.length)
+            const suggestedAttr = currentPrefix + suffixPart
+
+            warn$1(
+              `Your target mode is "${mode}", but used "${attrName}". ` +
+              `Did you mean "${suggestedAttr}"?`
+            )
+          }
+        }
+        break
+      }
+    }
+  })
+}
+
 function processMpxTagName (el) {
   const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
   if (mpxTagName) {
@@ -2879,6 +2955,9 @@ function processElement (el, root, options, meta) {
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
+
+  // 检测跨平台语法使用情况并给出警告
+  processCrossPlatformSyntaxWarning(el)
 
   processInjectWxs(el, meta, options)
 
