@@ -77,7 +77,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
   // 目前所有 AtRule 只支持 @media，其他全部给出错误提示
   root.walkAtRules(rule => {
     if (rule.name !== 'media') {
-      error(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`)
+      warn(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`)
     }
   })
 
