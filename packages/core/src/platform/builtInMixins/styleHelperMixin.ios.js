@@ -11,9 +11,9 @@ global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
 
 global.__classCaches = []
-global.__getCacheClass = function (classMapValueCache, className, getStyleObj) {
+global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.get(className)) {
-    const styleObj = getStyleObj?.() || {}
+    const styleObj = classMap[className]?.() || {}
     classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
@@ -258,9 +258,6 @@ export default function styleHelperMixin () {
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
-
-        const classMap = this.__getClassMap?.() || {}
-        const appClassMap = global.__getAppClassMap?.() || {}
         // 使用一下 __getSizeCount 触发其 get
         this.__getSizeCount()
 
@@ -269,17 +266,11 @@ export default function styleHelperMixin () {
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
 
           classString.split(/\s+/).forEach((className) => {
-            if (classMap[className]) {
-              const styleObj = classMap[className] || empty
-              if (styleObj._media.length) {
-                mergeResult(styleObj._default, getMediaStyle(styleObj._media))
-              } else {
-                mergeResult(styleObj._default)
-              }
-            } else if (appClassMap[className]) {
-              // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              const styleObj = appClassMap[className] || empty
-              if (styleObj._media.length) {
+            const _thisStyle = this.__getClassStyle?.(className)
+            const appStyle = global.__getAppClassStyle?.(className)
+            if (_thisStyle || appStyle) {
+              const styleObj = _thisStyle || appStyle || empty
+              if (styleObj._media?.length) {
                 mergeResult(styleObj._default, getMediaStyle(styleObj._media))
               } else {
                 mergeResult(styleObj._default)

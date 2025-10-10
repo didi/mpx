@@ -2,6 +2,7 @@ const createHelpers = require('../helpers')
 const async = require('async')
 const getClassMap = require('./style-helper').getClassMap
 const shallowStringify = require('../utils/shallow-stringify')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 module.exports = function (styles, {
   loaderContext,
@@ -57,9 +58,8 @@ module.exports = function (styles, {
           error
         })
         const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
-          result += `get ['${key}']() {
-            return global.__getCacheClass(__classMapCache, '${key}', () => (${shallowStringify(value)}));
-          },`
+          result !== '' && (result += ',')
+          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: () => (${shallowStringify(value)})`
           return result
         }, '')
         if (ctorType === 'app') {
@@ -67,11 +67,11 @@ module.exports = function (styles, {
           const __classMapCache = new Map()
           global.__classCaches.push(__classMapCache)
           let __appClassMap
-          global.__getAppClassMap = function() {
+          global.__getAppClassStyle = function(className) {
             if(!__appClassMap) {
               __appClassMap = {${classMapCode}};
             }
-            return __appClassMap;
+            return global.__GCC(className, __appClassMap, __classMapCache);
           };\n`
         } else {
           output += `
@@ -79,11 +79,11 @@ module.exports = function (styles, {
           global.__classCaches.push(__classMapCache)
           let __classMap
           global.currentInject.injectMethods = {
-            __getClassMap: function() {
+            __getClassStyle: function(className) {
               if(!__classMap) {
                 __classMap = {${classMapCode}};
               }
-              return __classMap;
+              return global.__GCC(className, __classMap, __classMapCache);
             }
           };\n`
         }
