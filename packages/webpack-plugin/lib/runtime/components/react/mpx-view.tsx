@@ -501,7 +501,7 @@ function parseBgImage (text: string): {
   type?: 'image' | 'linear'
   src?: string
 } {
-  if (!text) return {}
+  if (!text || text === 'none') return {}
 
   const src = parseUrl(text)
   if (src) return { src, type: 'image' }
@@ -737,7 +737,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
 
-  enableBackground = enableBackground || (!!backgroundStyle && backgroundStyle.backgroundImage !== 'none')
+  enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
     error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
