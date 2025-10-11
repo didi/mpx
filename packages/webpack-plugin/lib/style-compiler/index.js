@@ -52,7 +52,7 @@ module.exports = function (css, map) {
       if (queryObj.scoped || mpxStyleOptions.scoped) {
         plugins.push(scopeId({ id, mode }))
       }
-      plugins.push(transSpecial({ id }))
+      plugins.push(transSpecial({ id, transPage: mode === 'web' }))
     }
 
     if (isReact(mode)) {
