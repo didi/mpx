@@ -29,7 +29,16 @@
     components,
     data () {
       return {
-        currentIndex: 0 // 当前被选中的tabbar
+        currentIndex: 0, // 当前被选中的tabbar
+        // 必须是对象，因为 provide/inject 只传递引用
+        // 当修改 .value 时，inject 端的 computed 会响应式更新
+        pageIdState: { value: undefined }
+      }
+    },
+    provide () {
+      // 向 custom-tab-bar 提供当前激活页面的 pageId
+      return {
+        __tabContainerPageId: this.pageIdState
       }
     },
     computed: {
@@ -46,6 +55,18 @@
       $route: {
         handler (to) {
           this.setCurrentIndex(to.path)
+        },
+        immediate: true
+      },
+      currentComponent: {
+        handler () {
+          // 当切换到新页面时，更新 pageIdState.value
+          this.$nextTick(() => {
+            const pageInstance = this.$refs.tabBarPage
+            if (pageInstance && pageInstance.__pageId !== undefined) {
+              this.pageIdState.value = pageInstance.__pageId
+            }
+          })
         },
         immediate: true
       }
