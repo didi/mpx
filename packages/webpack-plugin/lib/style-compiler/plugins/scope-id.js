@@ -3,7 +3,7 @@ const selectorParser = require('postcss-selector-parser')
 function isSpaceCombinator (node) {
   return node.type === 'combinator' && /^\s+$/.test(node.value)
 }
-module.exports = ({ id }) => {
+module.exports = ({ id, mode }) => {
   return {
     postcssPlugin: 'scope-id',
     Once: (root) => {
@@ -72,8 +72,8 @@ module.exports = ({ id }) => {
                 node = n
               }
             })
-            // 对于page selector不添加scope id
-            if (node && node.type === 'tag' && node.value === 'page') return
+            // ali 环境对于 page selector不添加scope id
+            if (mode === 'ali' && node && node.type === 'tag' && node.value === 'page') return
             selector.insertAfter(node, selectorParser.className({
               value: id
             }))

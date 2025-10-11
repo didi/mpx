@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mpx-tab-bar-container">
     <mpx-tab-bar v-show="showTabbar" ref="tabBar" :currentIndex="currentIndex" @change="itemChange"></mpx-tab-bar>
     <keep-alive>
       <component ref="tabBarPage" :is="currentComponent"></component>
@@ -74,4 +74,9 @@
     }
   }
 </script>
-
+<style lang="stylus">
+  .mpx-tab-bar-container {
+    width: 100%;
+    height: 100%;
+  }
+</style>
