@@ -1,17 +1,18 @@
 import WifiManager from 'react-native-wifi-reborn'
 import { PermissionsAndroid } from 'react-native'
 import { noop } from '@mpxjs/utils'
+import mpx from '@mpxjs/core'
 let startWifiReady = false
-let wifiListListeners = []
+const wifiListListeners = []
 
-async function requestWifiPermission() {
-  const granted = await PermissionsAndroid.request( PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
+async function requestWifiPermission () {
+  const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
     title: 'Location permission is required for WiFi connections',
     message:
       'This app needs location permission as this is required  ' +
       'to scan for wifi networks.',
     buttonNegative: 'DENY',
-    buttonPositive: 'ALLOW',
+    buttonPositive: 'ALLOW'
   })
   if (granted === PermissionsAndroid.RESULTS.GRANTED) {
     return true
@@ -112,7 +113,7 @@ function getWifiList (options = {}) {
       wifiListListeners.forEach(callback => {
         callback({ wifiList: result })
       })
-    }    
+    }
     const result = {
       errMsg: 'getWifiList:success',
       errno: 0,
@@ -148,7 +149,7 @@ function offGetWifiList (callback) {
 
 function getConnectedWifi (options = {}) {
   const { partialInfo = false, success = noop, fail = noop, complete = noop } = options
-    
+
   if (!startWifiReady) {
     const result = {
       errMsg: 'startWifi:fail not init startWifi',
@@ -196,14 +197,14 @@ function getConnectedWifi (options = {}) {
         complete(result)
         return
       }
-      
+
       const wifi = {
         SSID: ssid,
         BSSID: bssid,
         signalStrength: signalStrength,
         frequency: frequency
       }
-      
+
       const result = {
         wifi: wifi,
         errMsg: 'getConnectedWifi:ok'
