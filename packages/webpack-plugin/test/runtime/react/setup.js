@@ -32,7 +32,7 @@ jest.doMock('react-native', () => {
 })
 
 // 定义全局变量
-global.__mpx_mode__ = 'android' // 设置为React Native模式
+global.__mpx_mode__ = 'ios' // 设置为React Native模式
 global.__DEV__ = false // 设置开发模式标志
 
 // Mock MPX 运行时全局函数

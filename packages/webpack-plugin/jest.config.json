@@ -10,5 +10,6 @@
     "/node_modules/",
     "/dist/",
     "test/runtime/react/"
-  ]
+  ],
+  "testTimeout": 10000
 }

@@ -27,6 +27,8 @@ module.exports = function (script, {
 }, callback) {
   const { projectRoot, appInfo, webConfig, i18n } = loaderContext.getMpx()
 
+  const { disablePageTransition = true } = webConfig
+
   let output = '/* script */\n'
 
   let scriptSrcMode = srcMode
@@ -76,17 +78,18 @@ module.exports = function (script, {
       }
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
+  // @ts-ignore
   export default processComponentOption({
     option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
     ctorType: ${JSON.stringify(ctorType)},
     outputPath: ${JSON.stringify(outputPath)},
     pageConfig: ${JSON.stringify(pageConfig)},
-    // @ts-ignore
     componentsMap: ${shallowStringify(componentsMap)},
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     wxsMixin: getWxsMixin(wxsModules),
-    hasApp: ${hasApp}
+    hasApp: ${hasApp},
+    disablePageTransition: ${JSON.stringify(disablePageTransition)},
   })\n`
       return content
     }

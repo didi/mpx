@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm i && npm run tsc:build
+      - run: npm i && npm run build:tsc
 
   lint:
     runs-on: ubuntu-latest

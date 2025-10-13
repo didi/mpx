@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn } from '@mpxjs/utils'
 import { Dimensions, StyleSheet } from 'react-native'
 import Mpx from '../../index'
 
@@ -7,10 +7,6 @@ const rawDimensions = {
   window: Dimensions.get('window')
 }
 let width, height
-
-// TODO 临时适配折叠屏场景适配
-// const isLargeFoldableLike = (__mpx_mode__ === 'android') && (height / width < 1.5) && (width > 600)
-// if (isLargeFoldableLike) width = width / 2
 
 function customDimensions (dimensions) {
   if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
@@ -176,6 +172,14 @@ function transformStyleObj (styleObj) {
   return transformed
 }
 
+function isNativeStyle (style) {
+  return Array.isArray(style) || (
+    typeof style === 'object' &&
+    // Reanimated 的 animated style 通常会包含 viewDescriptors 或 _animations
+    (hasOwn(style, 'viewDescriptors') || hasOwn(style, '_animations'))
+  )
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -183,7 +187,10 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const result = {}
+        const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
+        let result = isNativeStaticStyle ? [] : {}
+        const mergeResult = isNativeStaticStyle ? (o) => result.push(o) : (o) => Object.assign(result, o)
+
         const classMap = this.__getClassMap?.() || {}
         const appClassMap = global.__getAppClassMap?.() || {}
 
@@ -192,36 +199,52 @@ export default function styleHelperMixin () {
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
           classString.split(/\s+/).forEach((className) => {
             if (classMap[className]) {
-              Object.assign(result, classMap[className])
+              mergeResult(classMap[className])
             } else if (appClassMap[className]) {
               // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              Object.assign(result, appClassMap[className])
+              mergeResult(appClassMap[className])
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              Object.assign(result, this.__props[className])
+              mergeResult(this.__props[className])
             }
           })
         }
 
         if (staticStyle || dynamicStyle) {
-          const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj))
+          const styleObj = {}
+          if (isNativeStaticStyle) {
+            if (Array.isArray(staticStyle)) {
+              result = result.concat(staticStyle)
+            } else {
+              mergeResult(staticStyle)
+            }
+          } else {
+            Object.assign(styleObj, parseStyleText(staticStyle))
+          }
+          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
+          mergeResult(transformStyleObj(styleObj))
         }
 
         if (hide) {
-          Object.assign(result, {
+          mergeResult({
             // display: 'none'
             // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
             flex: 0,
             height: 0,
             width: 0,
-            padding: 0,
-            margin: 0,
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            marginTop: 0,
+            marginRight: 0,
+            marginBottom: 0,
+            marginLeft: 0,
             overflow: 'hidden'
           })
         }
-
-        return isEmptyObject(result) ? empty : result
+        const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+        return isEmpty ? empty : result
       }
     }
   }

@@ -9,6 +9,7 @@
 
 import type { GetComputedType } from '@mpxjs/store'
 import type { ScaledSize } from 'react-native'
+import type { ComponentType } from 'react'
 export * from '@mpxjs/store'
 
 // utils
@@ -121,13 +122,22 @@ interface Context {
   createSelectorQuery: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createSelectorQuery']
   createIntersectionObserver: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['createIntersectionObserver'],
   getPageId: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getPageId']
+  getOpenerEventChannel: WechatMiniprogram.Component.InstanceMethods<Record<string, any>>['getOpenerEventChannel']
 }
 type ExtendedComponentOptions = {
   disconnectOnUnmounted?: boolean
   shallowReactivePattern?: RegExp
+  /**
+   * 是否禁用render函数的useMemo，仅输出RN支持
+   */
+  disableMemo?: boolean
 } & WechatMiniprogram.Component.ComponentOptions
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
+  /**
+   * ReactNative 原生组件注册
+   */
+  components?: Record<string, ComponentType>,
   data?: D
   properties?: P
   computed?: C
@@ -220,7 +230,7 @@ type WxComponentIns<D extends Data = {}, P extends Properties = {}, M extends Me
   Omit<WechatMiniprogram.Component.Instance<D, P, M>, 'selectComponent' | 'selectAllComponents'>
   & ReplaceWxComponentIns
 
-type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
+export type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> & { [K in keyof S]: S[K] extends Ref<infer V> ? V : S[K] } &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
@@ -295,7 +305,7 @@ export interface RnConfig {
    * - `true`：允许退出应用
    * - `false`：阻止退出应用
    */
-  onAppBack?: () => boolean
+  onAppBack?: (delta: number) => boolean
 
   /**
    * 是否禁用框架内部的 AppStateChange 监听。
@@ -356,26 +366,6 @@ export interface RnConfig {
   ) => T | void
 
   /**
-   * 异步分包加载配置。
-   */
-  asyncChunk?: {
-    /**
-     * 加载超时时长配置，单位为毫秒。
-     */
-    timeout: number
-
-    /**
-     * 异步分包页面加载超时或失败时，自定义兜底页面文件路径。
-     */
-    fallback: string
-
-    /**
-     * 异步分包页面加载时，自定义 loading 页面文件路径。
-     */
-    loading: string
-  }
-
-  /**
    * 加载并执行异步分包的方法。
    *
    * @param params 分包下载参数
@@ -398,10 +388,10 @@ interface MpxConfig {
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
-  errorHandler: (msg: String, location: String, e: Error) => any | null
-  warnHandler: (msg: String, location: String, e: Error) => any | null
-  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
-  setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
+  errorHandler: (msg: String, location: String, e: Error) => void
+  warnHandler: (msg: String, location: String, e: Error) => void
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => void
+  setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => void
   forceFlushSync: boolean,
   webRouteConfig: object,
   webConfig: object,
@@ -412,7 +402,7 @@ interface MpxConfig {
   */
   webviewConfig: WebviewConfig,
   /** react-native 相关配置，用于挂载事件等，如 onShareAppMessage */
-  rnConfig?: RnConfig,
+  rnConfig: RnConfig,
 }
 
 type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'

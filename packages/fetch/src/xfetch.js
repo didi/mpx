@@ -27,6 +27,7 @@ export default class XFetch {
       request: new InterceptorManager(),
       response: new InterceptorManager()
     }
+    this.useBigInt = (options && options.useBigInt) || false
   }
 
   static normalizeConfig (config) {
@@ -170,7 +171,8 @@ export default class XFetch {
     if (!config.usePre.enable) return false
     const cacheKey = formatCacheKey(config.url)
     const cacheRequestData = this.cacheRequestData[cacheKey]
-    if (cacheRequestData) {
+    if (cacheRequestData && config.usePre.mode !== 'producer') {
+      delete this.cacheRequestData[cacheKey]
       // 缓存是否过期：大于cacheInvalidationTime（默认为3s）则算过期
       const isNotExpired = Date.now() - cacheRequestData.lastTime <= config.usePre.cacheInvalidationTime
       if (isNotExpired && checkCacheConfig(config, cacheRequestData) && cacheRequestData.responsePromise) {
@@ -178,8 +180,6 @@ export default class XFetch {
           // 添加 isCache 标识该请求来源于缓存
           return extend({ isCache: true }, response)
         })
-      } else {
-        delete this.cacheRequestData[cacheKey]
       }
     }
     const { params, data, method } = config
@@ -232,6 +232,10 @@ export default class XFetch {
       }
       config = this.checkProxy(config) // proxy
 
+      if (this.useBigInt) {
+        config.useBigInt = this.useBigInt
+      }
+
       let promise = this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
       // 后置拦截器
       const chain = []
@@ -242,8 +246,8 @@ export default class XFetch {
         promise = promise.then(chain.shift(), chain.shift())
       }
 
-      // 如果开启缓存，则将 promise 存入缓存
-      if (config.usePre.enable) {
+      // onlyConsumer=true是一种只消费缓存数据的模式，此模式下不会产生缓存数据
+      if (config.usePre.enable && config.usePre.mode !== 'consumer') {
         const cacheKey = formatCacheKey(config.url)
         this.cacheRequestData[cacheKey] && (this.cacheRequestData[cacheKey].responsePromise = promise)
       }

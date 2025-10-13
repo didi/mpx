@@ -1,7 +1,7 @@
 const Template = require('webpack/lib/Template')
 const RuntimeModule = require('webpack/lib/RuntimeModule')
 
-const RetryRuntimeGlobal = '__webpack_require__.__retry'
+const RetryRuntimeGlobal = '__webpack_require__.mpxR'
 
 class RetryRuntimeModule extends RuntimeModule {
   constructor () {
