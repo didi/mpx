@@ -1,5 +1,6 @@
 const postcss = require('postcss')
 const selectorParser = require('postcss-selector-parser')
+const { MPX_TAG_PAGE_SELECTOR } = require('../utils/const')
 const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
@@ -7,8 +8,8 @@ const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
-  const classMap = {}
+function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error }) {
+  const classMap = ctorType === 'page' ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1 } } : {}
 
   const root = postcss.parse(content, {
     from: filename
@@ -34,6 +35,13 @@ function getClassMap ({ content, filename, mode, srcMode, warn, error }) {
     testKey: 'prop',
     warn,
     error
+  })
+
+  // 目前所有 AtRule 只支持 @media，其他全部给出错误提示
+  root.walkAtRules(rule => {
+    if (rule.name !== 'media') {
+      warn(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`)
+    }
   })
 
   root.walkRules(rule => {

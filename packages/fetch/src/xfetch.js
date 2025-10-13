@@ -27,6 +27,7 @@ export default class XFetch {
       request: new InterceptorManager(),
       response: new InterceptorManager()
     }
+    this.useBigInt = (options && options.useBigInt) || false
   }
 
   static normalizeConfig (config) {
@@ -171,6 +172,7 @@ export default class XFetch {
     const cacheKey = formatCacheKey(config.url)
     const cacheRequestData = this.cacheRequestData[cacheKey]
     if (cacheRequestData && config.usePre.mode !== 'producer') {
+      delete this.cacheRequestData[cacheKey]
       // 缓存是否过期：大于cacheInvalidationTime（默认为3s）则算过期
       const isNotExpired = Date.now() - cacheRequestData.lastTime <= config.usePre.cacheInvalidationTime
       if (isNotExpired && checkCacheConfig(config, cacheRequestData) && cacheRequestData.responsePromise) {
@@ -178,8 +180,6 @@ export default class XFetch {
           // 添加 isCache 标识该请求来源于缓存
           return extend({ isCache: true }, response)
         })
-      } else {
-        delete this.cacheRequestData[cacheKey]
       }
     }
     const { params, data, method } = config
@@ -231,6 +231,10 @@ export default class XFetch {
         console.log('xfetch参数校验错误', e)
       }
       config = this.checkProxy(config) // proxy
+
+      if (this.useBigInt) {
+        config.useBigInt = this.useBigInt
+      }
 
       let promise = this.queue ? this.queue.request(config, priority) : this.requestAdapter(config)
       // 后置拦截器

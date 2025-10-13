@@ -7,12 +7,12 @@
     "lint": "eslint --ext .js,.ts,.tsx,.jsx packages/",
     "fix": "eslint --fix --ext .js,.ts,.tsx,.jsx packages/",
     "lint:js": "eslint --ext .js packages/",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "release": "npm run lint && npm run test && npx lerna version",
     "docs:dev": "vitepress dev docs-vitepress",
     "docs:build": "vitepress build docs-vitepress",
     "docs:preview": "vitepress preview docs-vitepress",
-    "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
+    "build:tsc": "npm --workspace=./packages/webpack-plugin run build"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
