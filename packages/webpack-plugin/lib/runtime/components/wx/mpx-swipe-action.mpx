@@ -135,7 +135,7 @@ createComponent({
         return true
       }
 
-      // web 环境 disable 不能在拖拽过程中实施解锁
+      // tips: web 环境 disable 不能在拖拽过程中实时解锁
       if (!this.isWebMode && this.gestureDirection === 'pending') {
         return true
       }
