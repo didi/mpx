@@ -90,7 +90,7 @@ const ActionButton = ({ action, index, actionWidth, onTap }: {
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     width: actionWidth,
-    backgroundColor,
+    backgroundColor
   }, action.style)
 
   return createElement(
@@ -281,7 +281,7 @@ const _SwipeAction = forwardRef<HandlerRef<View, SwipeActionProps>, SwipeActionP
   }
 
   function handleTouchStart () {
-     if (autoClose) {
+    if (autoClose) {
       closeOtherInstances()
     }
   }
