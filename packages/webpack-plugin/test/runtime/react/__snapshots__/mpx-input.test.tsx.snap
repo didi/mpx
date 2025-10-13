@@ -8,7 +8,7 @@ exports[`MpxInput should handle input type digit with keyboard StringMatching: i
   defaultValue="123"
   editable={true}
   enterKeyHint="done"
-  keyboardType="numeric"
+  keyboardType="decimal-pad"
   maxLength={140}
   multiline={false}
   onBlur={[Function]}
