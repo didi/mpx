@@ -1,0 +1,22 @@
+<template>
+  <view>
+    <asyncComp></asyncComp>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({})
+</script>
+
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "asyncComp": "../../test/components/asyncComp.mpx",
+    // 应该复用 placeholder-view
+    "placeholder-view": "../../../components/placeholder-view.mpx"
+  }
+}
+</script>
