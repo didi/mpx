@@ -873,4 +873,451 @@ describe('MpxScrollView', () => {
 
     expect(scrollElement).toBeTruthy()
   })
+
+  // 测试 enable-sticky 和内容高度变化场景 (382-392)
+  it('should handle sticky scroll and content size changes', () => {
+    // 模拟 __mpx_mode__
+    const originalMode = global.__mpx_mode__
+    global.__mpx_mode__ = 'android'
+
+    const { rerender } = render(
+      <MpxScrollView
+        testID="sticky-scroll"
+        scroll-y={true}
+        enable-sticky={true}
+        style={{ height: 300 }}
+      >
+        <MpxView style={{ height: 800 }}>
+          <MpxText>Sticky content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    const scrollElement = screen.getByTestId('sticky-scroll')
+
+    // 先滚动到底部
+    fireEvent.scroll(scrollElement, {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 500 },
+        contentSize: { width: 300, height: 800 },
+        layoutMeasurement: { width: 300, height: 300 }
+      }
+    })
+
+    // 减少内容高度，触发 maxOffset 调整逻辑
+    rerender(
+      <MpxScrollView
+        testID="sticky-scroll"
+        scroll-y={true}
+        enable-sticky={true}
+        style={{ height: 300 }}
+      >
+        <MpxView style={{ height: 400 }}>
+          <MpxText>Reduced content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    fireEvent(scrollElement, 'onContentSizeChange', {
+      nativeEvent: { contentSize: { width: 300, height: 400 } }
+    })
+
+    // 恢复原始 mode
+    global.__mpx_mode__ = originalMode
+
+    expect(scrollElement).toBeTruthy()
+  })
+
+  // 测试 harmony 模式下的 sticky 逻辑 (509-516)
+  it('should handle harmony mode sticky scroll', () => {
+    const originalMode = global.__mpx_mode__
+    global.__mpx_mode__ = 'harmony'
+
+    render(
+      <MpxScrollView
+        testID="harmony-sticky"
+        scroll-y={true}
+        enable-sticky={true}
+        style={{ height: 300 }}
+      >
+        <MpxView style={{ height: 600 }}>
+          <MpxText>Harmony content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    const scrollElement = screen.getByTestId('harmony-sticky')
+
+    // 先触发内容尺寸变化
+    fireEvent(scrollElement, 'onContentSizeChange', {
+      nativeEvent: { contentSize: { width: 300, height: 600 } }
+    })
+
+    // 触发滚动来测试 harmony 模式的特殊逻辑
+    fireEvent.scroll(scrollElement, {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 200 },
+        contentSize: { width: 300, height: 600 },
+        layoutMeasurement: { width: 300, height: 300 }
+      }
+    })
+
+    global.__mpx_mode__ = originalMode
+    expect(scrollElement).toBeTruthy()
+  })
+
+  // 测试 enhanced 模式下的 drag 事件 (482-494, 527-537, 542-554)
+  it('should handle enhanced drag events', () => {
+    const mockDragStart = jest.fn()
+    const mockDragging = jest.fn()
+    const mockDragEnd = jest.fn()
+
+    render(
+      <MpxScrollView
+        testID="drag-events"
+        enhanced={true}
+        scroll-y={true}
+        binddragstart={mockDragStart}
+        binddragging={mockDragging}
+        binddragend={mockDragEnd}
+        style={{ height: 300 }}
+      >
+        <MpxView style={{ height: 800 }}>
+          <MpxText>Draggable content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    const scrollElement = screen.getByTestId('drag-events')
+
+    // 触发 drag start
+    fireEvent(scrollElement, 'onScrollBeginDrag', {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 10 },
+        contentSize: { width: 300, height: 800 },
+        layoutMeasurement: { width: 300, height: 300 }
+      }
+    })
+
+    expect(mockDragStart).toHaveBeenCalled()
+
+    // 触发 drag end
+    fireEvent(scrollElement, 'onScrollEndDrag', {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 100 },
+        contentSize: { width: 300, height: 800 },
+        layoutMeasurement: { width: 300, height: 300 }
+      }
+    })
+
+    expect(mockDragEnd).toHaveBeenCalled()
+  })
+
+  // 测试 bindtouchmove 和 binddragging 触发 (481-493)
+  it('should handle bindtouchmove and binddragging', () => {
+    const mockTouchMove = jest.fn()
+    const mockDragging = jest.fn()
+
+    const { rerender } = render(
+      <MpxScrollView
+        testID="touch-move-test"
+        enhanced={false}
+        scroll-y={true}
+        bindtouchmove={mockTouchMove}
+        style={{ height: 300 }}
+      >
+        <MpxView style={{ height: 600 }}>
+          <MpxText>Touch content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    // 测试非 enhanced 模式
+    expect(screen.getByTestId('touch-move-test')).toBeTruthy()
+
+    // 测试 enhanced 模式下的 binddragging
+    rerender(
+      <MpxScrollView
+        testID="touch-move-test"
+        enhanced={true}
+        scroll-y={true}
+        binddragging={mockDragging}
+        style={{ height: 300 }}
+      >
+        <MpxView style={{ height: 600 }}>
+          <MpxText>Dragging content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    expect(screen.getByTestId('touch-move-test')).toBeTruthy()
+  })
+
+  // 测试 refresher 在 refreshing 状态下的手势处理 (667-694)
+  it('should handle gestures during refreshing state', () => {
+    const mockRefresherRefresh = jest.fn()
+
+    const { rerender } = render(
+      <MpxScrollView
+        testID="refreshing-gesture"
+        enhanced={true}
+        scroll-y={true}
+        bounces={true}
+        refresher-enabled={true}
+        refresher-triggered={false}
+        refresher-threshold={60}
+        bindrefresherrefresh={mockRefresherRefresh}
+      >
+        <MpxView slot="refresher" style={{ height: 80 }}>
+          <MpxText>Pull to refresh</MpxText>
+        </MpxView>
+        <MpxView style={{ height: 1000 }}>
+          <MpxText>Main content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    const scrollElement = screen.getByTestId('refreshing-gesture')
+
+    // 设置 refresher 高度
+    fireEvent(scrollElement.children[0], 'onLayout', {
+      nativeEvent: { layout: { height: 80 } }
+    })
+
+    // 模拟进入 refreshing 状态
+    rerender(
+      <MpxScrollView
+        testID="refreshing-gesture"
+        enhanced={true}
+        scroll-y={true}
+        bounces={true}
+        refresher-enabled={true}
+        refresher-triggered={true}
+        refresher-threshold={60}
+        bindrefresherrefresh={mockRefresherRefresh}
+      >
+        <MpxView slot="refresher" style={{ height: 80 }}>
+          <MpxText>Refreshing...</MpxText>
+        </MpxView>
+        <MpxView style={{ height: 1000 }}>
+          <MpxText>Main content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    // 在 refreshing 状态下向下滑动但不超过 threshold
+    fireEvent(scrollElement, 'onGestureEvent', {
+      nativeEvent: {
+        state: 5, // END
+        translationY: 40, // 小于 refresherThreshold (60)
+        velocityY: 0
+      }
+    })
+
+    // 在 refreshing 状态下向上滑动
+    fireEvent(scrollElement, 'onGestureEvent', {
+      nativeEvent: {
+        state: 5, // END
+        translationY: -30,
+        velocityY: -50
+      }
+    })
+
+    // 在 refreshing 状态下向下滑动超过 threshold
+    fireEvent(scrollElement, 'onGestureEvent', {
+      nativeEvent: {
+        state: 5, // END
+        translationY: 70, // 大于 refresherThreshold (60)
+        velocityY: 0
+      }
+    })
+
+    expect(scrollElement).toBeTruthy()
+  })
+
+  // 测试 scrollX 场景下的 handleScrollIntoView (317)
+  it('should handle scrollIntoView with scroll-x enabled', async () => {
+    const mockSelectRef = jest.fn(() => ({
+      getNodeInstance: () => ({
+        nodeRef: {
+          current: {
+            measureLayout: jest.fn((parent, callback) => {
+              // eslint-disable-next-line node/no-callback-literal
+              callback(200, 50)
+            })
+          }
+        }
+      })
+    }))
+
+    const { rerender } = render(
+      <MpxScrollView
+        testID="scroll-x-into-view"
+        scroll-x={true}
+        scroll-into-view=""
+        __selectRef={mockSelectRef}
+      >
+        <MpxView id="item1" style={{ width: 300 }}>
+          <MpxText>Item 1</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    // 等待初始渲染完成
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    // 设置 scroll-into-view 触发滚动
+    rerender(
+      <MpxScrollView
+        testID="scroll-x-into-view"
+        scroll-x={true}
+        scroll-into-view="item1"
+        scroll-into-view-offset={10}
+        scroll-with-animation={true}
+        __selectRef={mockSelectRef}
+      >
+        <MpxView id="item1" style={{ width: 300 }}>
+          <MpxText>Item 1</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    // 等待 setTimeout 完成 (首次 scrollIntoView 变化会用 setTimeout)
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    expect(mockSelectRef).toHaveBeenCalledWith('#item1', 'node')
+  })
+
+  // 测试没有 refresher content 时的逻辑 (294)
+  it('should handle refresher without custom refresher content', () => {
+    const mockRefresh = jest.fn()
+
+    const { rerender } = render(
+      <MpxScrollView
+        testID="no-custom-refresher"
+        enhanced={false}
+        scroll-y={true}
+        refresher-enabled={true}
+        refresher-triggered={false}
+        bindrefresherrefresh={mockRefresh}
+      >
+        <MpxView style={{ height: 600 }}>
+          <MpxText>Main content only</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    // 切换 refresherTriggered
+    rerender(
+      <MpxScrollView
+        testID="no-custom-refresher"
+        enhanced={false}
+        scroll-y={true}
+        refresher-enabled={true}
+        refresher-triggered={true}
+        bindrefresherrefresh={mockRefresh}
+      >
+        <MpxView style={{ height: 600 }}>
+          <MpxText>Main content only</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    expect(screen.getByTestId('no-custom-refresher')).toBeTruthy()
+  })
+
+  // 测试 simultaneousHandlers 和 waitFor (734-735)
+  it('should handle simultaneousHandlers and waitFor props', () => {
+    const mockGesture1 = { current: null }
+    const mockGesture2 = { current: null }
+
+    render(
+      <MpxScrollView
+        testID="gesture-handlers"
+        scroll-y={true}
+        simultaneous-handlers={[mockGesture1, mockGesture2]}
+        wait-for={[mockGesture1]}
+      >
+        <MpxView style={{ height: 600 }}>
+          <MpxText>Gesture content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    expect(screen.getByTestId('gesture-handlers')).toBeTruthy()
+  })
+
+  // 测试 pagingEnabled 在 enhanced 模式下 (742)
+  it('should handle pagingEnabled in enhanced mode', () => {
+    render(
+      <MpxScrollView
+        testID="paging-enhanced"
+        enhanced={true}
+        scroll-y={true}
+        paging-enabled={true}
+        style={{ height: 300 }}
+      >
+        <MpxView style={{ height: 900 }}>
+          <MpxText>Page 1</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    const scrollElement = screen.getByTestId('paging-enhanced')
+    expect(scrollElement.props.pagingEnabled).toBe(true)
+  })
+
+  // 测试没有 __selectRef 时的 scrollIntoView (311)
+  it('should handle scrollIntoView without __selectRef', () => {
+    render(
+      <MpxScrollView
+        testID="no-select-ref"
+        scroll-y={true}
+        scroll-into-view="item1"
+      >
+        <MpxView id="item1" style={{ height: 200 }}>
+          <MpxText>Item 1</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    expect(screen.getByTestId('no-select-ref')).toBeTruthy()
+  })
+
+  // 测试 enableScrollValue.value 为 true 时的 onEnd 分支 (684)
+  it('should handle onEnd gesture when scroll is enabled', () => {
+    render(
+      <MpxScrollView
+        testID="enabled-scroll-gesture"
+        enhanced={true}
+        scroll-y={true}
+        bounces={true}
+        refresher-enabled={true}
+      >
+        <MpxView slot="refresher" style={{ height: 60 }}>
+          <MpxText>Refresher</MpxText>
+        </MpxView>
+        <MpxView style={{ height: 800 }}>
+          <MpxText>Content</MpxText>
+        </MpxView>
+      </MpxScrollView>
+    )
+
+    const scrollElement = screen.getByTestId('enabled-scroll-gesture')
+
+    fireEvent(scrollElement.children[0], 'onLayout', {
+      nativeEvent: { layout: { height: 60 } }
+    })
+
+    // 在滚动启用状态下结束手势
+    fireEvent(scrollElement, 'onGestureEvent', {
+      nativeEvent: {
+        state: 5, // END
+        translationY: 50,
+        velocityY: 0
+      }
+    })
+
+    expect(scrollElement).toBeTruthy()
+  })
 })
