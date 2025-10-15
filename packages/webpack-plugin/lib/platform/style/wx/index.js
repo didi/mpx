@@ -294,7 +294,7 @@ module.exports = function getSpec ({ warn, error }) {
     switch (prop) {
       case bgPropMap.image: {
         // background-image 支持背景图/渐变/css var
-        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value)) {
+        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value) || value === 'none') {
           return { prop, value }
         } else {
           error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
@@ -337,6 +337,13 @@ module.exports = function getSpec ({ warn, error }) {
         if (cssVariableExp.test(value)) {
           error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
+        }
+        // background: none
+        if (value === 'none') {
+          return [
+            { prop: bgPropMap.image, value },
+            { prop: bgPropMap.color, value: 'transparent' }
+          ]
         }
         const bgMap = []
         const values = parseValues(value)
