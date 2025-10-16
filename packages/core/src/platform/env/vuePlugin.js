@@ -130,6 +130,5 @@ export default function install (Vue) {
   Vue.prototype.getPageId = function () {
     return this.__pageId
   }
-
   hackEffectScope()
 }

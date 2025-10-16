@@ -15,7 +15,6 @@ export default function pageIdMixin (mixinType) {
       }
     })
   }
-
   if (mixinType === 'component') {
     Object.assign(mixin, {
       inject: ['__pageId']
