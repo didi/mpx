@@ -12,6 +12,7 @@
     "strictNullChecks": true,
     "moduleResolution": "node",
     "declaration": true,
+    "declarationMap": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
     "lib": [

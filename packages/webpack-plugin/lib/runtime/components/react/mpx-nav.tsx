@@ -1,8 +1,8 @@
 /* eslint-disable space-before-function-paren */
-import { createElement, useState, useMemo, memo, useContext, useLayoutEffect } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar, processColor, TouchableWithoutFeedback, Image, View, StyleSheet, Text } from 'react-native'
-import { useNavShared } from './useNavShared'
+import { useNavPortalManagerSource } from './nav/hooks'
 
 function convertToHex(color?: string) {
   try {
@@ -88,9 +88,11 @@ const BACK_ICON =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAABICAYAAACqT5alAAAA2UlEQVR4nO3bMQrCUBRE0Yla6AYEN2nnBrTL+izcitW3MRDkEUWSvPzJvfCqgMwhZbAppWhNbbIHzB1g9wATERFRVyvpkj1irlpJ5X326D7WHh1hbdFD2CLpLmmftm7kfsEe09aNHFiBrT+wAlt/YAW2/sAKbP2BFdj6Ayuwy+ufz6XPL893krZ//O6iu2n4LT8kndLWTRTo4EC7BDo40C6BDg60S6CDA+0S6OBAuwQ6uNWiD2nrJmoIfU7cNWkR2hbb1UfbY7uuWhGWiIg+a/iHuHmA3QPs3gu4JW9Gan+OJAAAAABJRU5ErkJggg=='
 
 const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
+  const { portals } = useNavPortalManagerSource()
   const [innerPageConfig, setPageConfig] = useState<PageConfig>(pageConfig || {})
-  const [customNav] = useNavShared()
   const safeAreaTop = useSafeAreaInsets()?.top || 0
+
+  const customNav = useMemo(() => <>{portals.map(item => item.children)}</>, [portals])
 
   navigation.setPageConfig = (config: PageConfig) => {
     setPageConfig(Object.assign({}, innerPageConfig, config))

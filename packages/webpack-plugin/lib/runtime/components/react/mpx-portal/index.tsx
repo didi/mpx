@@ -3,16 +3,24 @@ import { PortalContext, RouteContext, VarContext } from '../context'
 import PortalHost, { portal } from './portal-host'
 
 export type PortalProps = {
-  children?: ReactNode
+  children?: ReactNode,
+  RouteContext?: typeof RouteContext,
+  VarContext?: typeof VarContext
+  PortalContext?: typeof PortalContext
 }
 
-const Portal = ({ children }:PortalProps): null => {
-  const manager = useContext(PortalContext)
+const Portal = ({
+    children,
+    PortalContext: ScopePortalContext = PortalContext,
+    RouteContext: ScopeRouteContext = RouteContext,
+    VarContext: ScopeVarContext = VarContext,
+}: PortalProps): null => {
+  const manager = useContext(ScopePortalContext)
   const keyRef = useRef<any>(null)
-  const { pageId } = useContext(RouteContext) || {}
-  const varContext = useContext(VarContext)
+  const { pageId } = useContext(ScopeRouteContext) || {}
+  const varContext = useContext(ScopeVarContext)
   if (varContext) {
-    children = (<VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>)
+    children = (<ScopeVarContext.Provider value={varContext} key='varContextWrap'>{children}</ScopeVarContext.Provider>)
   }
   useEffect(() => {
     manager.update(keyRef.current, children)

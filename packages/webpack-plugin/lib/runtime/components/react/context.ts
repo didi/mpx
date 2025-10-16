@@ -1,4 +1,4 @@
-import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
+import { createContext, Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react'
 import { NativeSyntheticEvent, Animated } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
@@ -66,6 +66,12 @@ export interface NavSharedValue {
   setCustomNav: (value: React.ReactNode) => void
 }
 
+export interface PortalManagerContextValue {
+  mount: (key: number, children: React.ReactNode) => void
+  update: (key: number, children: React.ReactNode) => void
+  unmount: (key: number) => void
+}
+
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -91,7 +97,11 @@ export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | nu
 export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
+export const PortalManagerProxyContext = createContext<MutableRefObject<PortalManagerContextValue | null>>(null as any)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
 
-export const NavSharedContext = createContext<NavSharedValue>(null as any)
+/**
+ * 用于占位，避免 useContext 时传入 undefined 导致报错，不用提供 Provider
+ */
+export const NoopContext = createContext<any>(null)
