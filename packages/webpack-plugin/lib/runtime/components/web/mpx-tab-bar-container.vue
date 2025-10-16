@@ -31,7 +31,7 @@
     data () {
       return {
         currentIndex: 0, // 当前被选中的tabbar
-        pageId: undefined
+        pageId: null
       }
     },
      provide () {
