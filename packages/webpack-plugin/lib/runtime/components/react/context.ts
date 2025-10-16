@@ -105,3 +105,5 @@ export const StickyContext = createContext<StickyContextValue>({ registerStickyH
  * 用于占位，避免 useContext 时传入 undefined 导致报错，不用提供 Provider
  */
 export const NoopContext = createContext<any>(null)
+
+export const ProviderContext = createContext(null)

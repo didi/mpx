@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react'
 import { PortalManagerContextValue, PortalManagerProxyContext, RouteContextValue } from '../context'
-import { NavPortalContext, NavRouteContext, NavVarContext } from './context'
+import { NavPortalContext, NavRouteContext } from './context'
 import PortalHost from '../mpx-portal/portal-host'
 import Portal from '../mpx-portal'
 
@@ -30,7 +30,7 @@ export function NavPortalHostProvider({
 
 export function NavPortal({ children }: { children?: React.ReactNode }) {
   return (
-    <Portal RouteContext={NavRouteContext} VarContext={NavVarContext} PortalContext={NavPortalContext}>
+    <Portal RouteContext={NavRouteContext} PortalContext={NavPortalContext}>
       {children}
     </Portal>
   )

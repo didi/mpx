@@ -32,13 +32,6 @@ const {
 } = require('./utils')
 const createHelpers = require('../helpers')
 
-const RN_PRESET_OPTIMISATION = {
-  reduceInitial: false,
-  normalizeWhitespace: false,
-  minifyFontValues: false,
-  convertValues: false
-}
-
 module.exports = async function loader (content, map, meta) {
   const rawOptions = this.getOptions(schema)
   const plugins = []
@@ -157,12 +150,11 @@ module.exports = async function loader (content, map, meta) {
     )
   }
 
-  if (this.minimize) {
+  if (this.minimize && !isRN) {
     const cssnano = require('cssnano')
     const minimizeOptions = rawOptions.minimize || {}
     const presetOptimisation = Object.assign(
       {},
-      isRN ? RN_PRESET_OPTIMISATION : {},
       minimizeOptions.optimisation
     )
     let cssnanoConfig = {
