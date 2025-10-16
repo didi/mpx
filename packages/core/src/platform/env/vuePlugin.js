@@ -128,7 +128,8 @@ export default function install (Vue) {
   }
 
   Vue.prototype.getPageId = function () {
-    return this.__tabContainerPageId ? this.__tabContainerPageId.value : this.__pageId
+    return this.__pageId
   }
+
   hackEffectScope()
 }
