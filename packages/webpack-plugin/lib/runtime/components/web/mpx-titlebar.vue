@@ -77,10 +77,7 @@ export default {
     contentStyle () {
       // use calc to combine innerHeight and safe-area inset
       return {
-        paddingTop: this.hidden ? '0px' : `calc(${this.innerHeight} + env(safe-area-inset-top, 0px))`,
-        // create its own layer to avoid overlapping issues
-        transform: 'translateZ(0)',
-        willChange: 'transform'
+        paddingTop: this.hidden ? '0px' : `calc(${this.innerHeight} + env(safe-area-inset-top, 0px))`
       }
     }
   },
@@ -150,7 +147,9 @@ export default {
       ]),
 
       // page content wrapper: default slot is page content
-      h('div', { class: 'mpx-titlebar__content', style: this.contentStyle }, this.$slots.default || [])
+      h('div', { class: 'mpx-titlebar__content', style: this.contentStyle }, [
+        h('div', { class: 'mpx-titlebar__scroll' }, this.$slots.default || [])
+      ])
     ])
   }
 }
@@ -220,15 +219,20 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000; /* ensure above page content */
+  z-index: 1000;
 }
 
 .mpx-titlebar__content {
-  position: relative;
-  width: 100%;
-  min-height: 100%;
   box-sizing: border-box;
-  background: transparent;
+  width: 100vw;
+  height: 100vh;
+  transform: translateZ(0);
+}
+
+.mpx-titlebar__scroll {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
 
 /* SVG icon sizing and inherit color */
