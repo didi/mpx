@@ -2729,7 +2729,7 @@ function getVirtualHostRoot (options, meta) {
       }
     }
     if (isWeb(mode) && ctorType === 'page') {
-      const rootView = createASTElement('titlebar', [
+      const rootView = createASTElement('mpx-titlebar', [
         {
           name: 'pageConfig',
           value: '{{ this.$options.__mpxPageConfig }}'

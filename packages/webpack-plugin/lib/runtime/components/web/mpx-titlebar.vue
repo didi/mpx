@@ -38,7 +38,6 @@ export default {
     },
     // 是否隐藏（navigationStyle 为 'custom' 时也应隐藏）
     hidden () {
-      console.log('hidden', mpx.config?.webConfig?.enableTitleBar !== true || this.navigationStyle === 'custom', mpx.config?.webConfig?.enableTitleBar, this.navigationStyle)
       return mpx.config?.webConfig?.enableTitleBar !== true || this.navigationStyle === 'custom'
     },
     // 是否展示返回按钮：根据浏览器历史判断（不依赖额外 page 配置）
@@ -95,7 +94,7 @@ export default {
     }
   },
   render (h) {
-    console.log('render mpx-titlebar', this.cfg, this.windowConfig, this.pageConfig)
+    console.log('render mpx-titlebar', this.cfg, 'windowConfig', this.windowConfig, 'pageConfig', this.pageConfig)
     const leftChildren = []
 
     // default back button (SVG) — no left slot support
