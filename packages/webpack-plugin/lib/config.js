@@ -594,14 +594,20 @@ module.exports = {
         return ` {${arr.join(',')}} `
       }
     },
-    wxs: {},
+    wxs: {
+      tag: 'ks',
+      module: 'module',
+      src: 'src',
+      ext: '.ks',
+      templatePrefix: 'module.exports = \n'
+    },
     directive: {
       if: 'ks:if',
       elseif: 'ks:elif',
       else: 'ks:else',
       for: 'ks:for',
-      dynamicClass: 'class',
-      dynamicStyle: 'style',
+      dynamicClass: 'ks:class',
+      dynamicStyle: 'ks:style',
       ref: 'ks:ref',
       show: 'ks:show',
       model: 'ks:model',

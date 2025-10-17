@@ -174,15 +174,16 @@ function dash2hump (value) {
 function parseStyleText (cssText) {
   var res = {}
   var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
-  var propertyDelimiter = genRegExp(':(.+)')
   var arr = cssText.split(listDelimiter)
   for (var i = 0; i < arr.length; i++) {
     var item = arr[i]
     if (item) {
-      var tmp = item.split(propertyDelimiter)
-      if (tmp.length > 1) {
-        var k = dash2hump(tmp[0].trim())
-        res[k] = tmp[1].trim()
+      // 在 ks 环境中，正则 split 对捕获组的支持有问题
+      var colonIndex = item.indexOf(':')
+      if (colonIndex > 0) {
+        var k = dash2hump(item.substring(0, colonIndex).trim())
+        var v = item.substring(colonIndex + 1).trim()
+        res[k] = v
       }
     }
   }

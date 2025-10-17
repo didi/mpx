@@ -1969,7 +1969,6 @@ function addWxsContent (meta, module, content) {
 }
 
 function postProcessWxs (el, meta) {
-  if (mode === 'ks') return
   if (el.tag === config[mode].wxs.tag) {
     const module = el.attrsMap[config[mode].wxs.module]
     if (module) {
@@ -2368,7 +2367,6 @@ function injectWxs (meta, module, src) {
 }
 
 function processClass (el, meta) {
-  if (mode === 'ks') return
   const type = 'class'
   const needEx = el.tag.startsWith('th-')
   const targetType = needEx ? 'ex-' + type : type
@@ -2406,7 +2404,6 @@ function processClass (el, meta) {
 }
 
 function processStyle (el, meta) {
-  if (mode === 'ks') return
   const type = 'style'
   const targetType = el.tag.startsWith('th-') ? 'ex-' + type : type
   const dynamicStyle = getAndRemoveAttr(el, config[mode].directive.dynamicStyle).val
