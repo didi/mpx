@@ -692,6 +692,13 @@ function parse (template, options) {
     // 使用临时节点作为root，处理multi root的情况
     root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
+
+    // if (mode === 'web' && ctorType === 'page') {
+    //   // web下需要添加titlebar, 并将页面内容放到content中
+    //   const { content } = getWebTitleBarContainer(root, options, meta)
+    //   stack.push(content)
+    //   currentParent = content
+    // }
   }
 
   parseHTML(template, {
@@ -2614,6 +2621,78 @@ function postProcessAliComponentRootView (el, options, meta) {
   }
 }
 
+function getWebTitleBarContainer(root, options, meta) {
+  // titlebar 容器（替代 .wx-titlebar）
+  const titlebarStyle = 'position:fixed;top:0;left:0;right:0;width:100%;box-sizing:border-box;z-index:99999;background-color:#ffffff;height:calc(44px + env(safe-area-inset-top, 0px));padding-top:env(safe-area-inset-top, 0px);display:flex;align-items:center;justify-content:center;user-select:none;'
+  const titlebar = createASTElement('view', [
+    { name: 'style', value: titlebarStyle },
+    { name: 'wx:if', value: '{{($options?.__mpxPageConfig?.navigationStyle || global?.__mpxPageConfig?.navigationStyle) !== "custom"}}' }
+  ])
+
+  // 左侧返回按钮容器（替代 .wx-titlebar__left）
+  const leftStyle = 'position:absolute;left:12px;top:env(safe-area-inset-top, 0px);height:44px;display:flex;align-items:center;cursor:pointer;opacity:0.9;transition:opacity 0.15s;'
+  const left = createASTElement('view', [
+    { name: 'style', value: leftStyle },
+    { name: '@tap', value: '() => this.$router.back()' }
+  ])
+
+  // svg 图标（替代 .wx-titlebar__back-icon）
+  const svg = createASTElement('svg', [
+    { name: 'style', value: 'width:18px;height:18px;fill:#000;' },
+    { name: 'viewBox', value: '0 0 1024 1024' }
+  ])
+
+  const path = createASTElement('path', [
+    { name: 'd', value: 'M621.6 170.4L408.8 384l212.8 213.6-59.2 59.2L290.4 384 562.4 111.2z' }
+  ])
+
+  // 标题（替代 .wx-titlebar__title）
+  const titleStyle = 'font-size:17px;font-weight:500;color:#111;line-height:44px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%;text-align:center;'
+  const title = createASTElement('view', [
+    { name: 'style', value: titleStyle }
+  ])
+
+  const text = {
+    type: 3,
+    // 支付宝小程序模板解析中未对Mustache进行特殊处理，无论是否decode都会解析失败，无解，只能支付宝侧进行修复
+    text: '{{$options.__mpxPageConfig.navigationBarTitleText}}'
+  }
+
+  // 页面内容容器（替代 .page-content），并保留原始内部 transform
+  const contentStyle = 'transform: translateX(0);margin-top:calc(44px + env(safe-area-inset-top, 0px));padding:16px;'
+  const content = createASTElement('view', [
+    { name: 'style', value: contentStyle }
+  ])
+
+  // 组装节点树
+  addChild(svg, path)
+  addChild(left, svg)
+
+  addChild(title, text)
+
+  addChild(titlebar, left)
+  addChild(titlebar, title)
+
+  addChild(root, titlebar)
+  addChild(root, content)
+
+  // processElement(root, root, options, meta)
+  processElement(titlebar, root, options, meta)
+  closeElement(titlebar, options, meta)
+  processElement(left, root, options, meta)
+  // closeElement(left, options, meta)
+  processElement(svg, root, options, meta)
+  processElement(path, root, options, meta)
+  processElement(title, root, options, meta)
+  processElement(content, root, options, meta)
+  processText(text, options, meta)
+
+  return {
+    content,
+    titlebar
+  }
+}
+
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (srcMode === 'wx') {
@@ -2650,7 +2729,14 @@ function getVirtualHostRoot (options, meta) {
       }
     }
     if (isWeb(mode) && ctorType === 'page') {
-      return createASTElement('page')
+      const rootView = createASTElement('titlebar', [
+        {
+          name: 'pageConfig',
+          value: '{{ this.$options.__mpxPageConfig }}'
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
     }
     if (isReact(mode) && ctorType === 'page') {
       const rootView = createASTElement('view', [

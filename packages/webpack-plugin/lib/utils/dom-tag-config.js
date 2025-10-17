@@ -65,7 +65,7 @@ const isNativeMiniTag = makeMap(
   'sticky-section,functional-page-navigator,navigator,audio,camera,' +
   'channel-live,channel-video,image,live-player,live-pusher,video,' +
   'voip-room,map,canvas,web-view,ad,ad-custom,official-account,' +
-  'open-data,native-component,aria-component,page-meta'
+  'open-data,native-component,aria-component,page-meta,titlebar'
 )
 
 /**
@@ -78,7 +78,7 @@ const isBuildInWebTag = makeMap(
   'mpx-swiper,mpx-view,mpx-checkbox-group,mpx-movable-area,mpx-radio-group,' +
   'mpx-switch,mpx-web-view,mpx-checkbox,mpx-movable-view,mpx-radio,' +
   'mpx-tab-bar-container,mpx-form,mpx-navigator,mpx-rich-text,mpx-tab-bar,' +
-  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text'
+  'mpx-icon,mpx-picker-view-column,mpx-scroll-view,mpx-text,mpx-titlebar'
 )
 
 /**
