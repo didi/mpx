@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation, noop } from '@mpxjs/utils'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
@@ -257,7 +257,18 @@ export default function styleHelperMixin () {
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
-        const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
+        const mergeResult = isNativeStaticStyle
+          ? (...args) => result.push(...args)
+          : (...args) => {
+              return args.reduce((result, arg) => {
+                if (arg._media?.length) {
+                  Object.assign(result, arg._default, getMediaStyle(arg._media))
+                } else {
+                  Object.assign(result, arg._default)
+                }
+                return result
+              }, result)
+            }
         // 使用一下 __getSizeCount 触发其 get
         this.__getSizeCount()
 
@@ -266,15 +277,12 @@ export default function styleHelperMixin () {
           const classString = mpEscape(concat(staticClass, stringifyDynamicClass(dynamicClass)))
 
           classString.split(/\s+/).forEach((className) => {
-            const _thisStyle = this.__getClassStyle?.(className)
-            const appStyle = global.__getAppClassStyle?.(className)
-            if (_thisStyle || appStyle) {
-              const styleObj = _thisStyle || appStyle || empty
-              if (styleObj._media?.length) {
-                mergeResult(styleObj._default, getMediaStyle(styleObj._media))
-              } else {
-                mergeResult(styleObj._default)
-              }
+            let localStyle, appStyle
+            const getAppClassStyle = global.__getAppClassStyle || noop
+            if (localStyle = this.__getClassStyle(className)) {
+              mergeResult(localStyle || empty)
+            } else if (appStyle = getAppClassStyle(className)) {
+              mergeResult(appStyle || empty)
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               mergeResult(this.__props[className])
