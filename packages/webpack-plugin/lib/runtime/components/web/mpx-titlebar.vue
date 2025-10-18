@@ -72,14 +72,6 @@ export default {
         height: this.innerHeight
       }
     }
-    ,
-    // content wrapper style: padding-top to avoid being covered by fixed titlebar
-    contentStyle () {
-      // use calc to combine innerHeight and safe-area inset
-      return {
-        paddingTop: this.hidden ? '0px' : `calc(${this.innerHeight} + env(safe-area-inset-top, 0px))`
-      }
-    }
   },
   methods: {
     // 左侧点击：派发事件并在可回退时回退
@@ -131,7 +123,8 @@ export default {
     ]
 
   // top-level wrapper: contains fixed titlebar and page content wrapper
-  return h('page', { class: 'mpx-titlebar-wrapper' }, [
+  return h('page', { }, [
+    h('div', { class: 'mpx-titlebar-wrapper' }, [
       // fixed titlebar
       h('div', {
         class: ['mpx-titlebar', { 'mpx-titlebar--hidden': this.hidden }],
@@ -147,10 +140,12 @@ export default {
       ]),
 
       // page content wrapper: default slot is page content
-      h('div', { class: 'mpx-titlebar__content', style: this.contentStyle }, [
+      h('div', { class: 'mpx-titlebar__content' }, [
         h('div', { class: 'mpx-titlebar__scroll' }, this.$slots.default || [])
       ])
     ])
+  ])
+   
   }
 }
 </script>
@@ -210,22 +205,19 @@ export default {
 /* wrapper and content layout */
 .mpx-titlebar-wrapper {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .mpx-titlebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+  flex-shrink: 0;
 }
 
 .mpx-titlebar__content {
-  box-sizing: border-box;
-  width: 100vw;
-  height: 100vh;
+  flex: 1;
+  overflow: hidden;
   transform: translateZ(0);
 }
 
