@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -15,7 +15,8 @@ const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
-const { isReact, isWeb } = require('../utils/env')
+const { isReact, isWeb, isNoMode } = require('../utils/env')
+const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -119,6 +120,8 @@ const rulesResultMap = new Map()
 let usingComponents = []
 let usingComponentsInfo = {}
 let componentGenerics = {}
+// 跨平台语法检测的配置，在模块加载时初始化一次
+let crossPlatformConfig = null
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -637,8 +640,9 @@ function parse (template, options) {
   processingTemplate = false
   rulesResultMap.clear()
   componentGenerics = options.componentGenerics || {}
+  // 初始化跨平台语法检测配置（每次解析时只初始化一次）
+  crossPlatformConfig = initCrossPlatformConfig()
 
-  if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
 
@@ -759,7 +763,10 @@ function parse (template, options) {
       if (!currentParent) genTempRoot()
 
       const children = currentParent.children
-      if (currentParent.tag !== 'text') {
+
+      const isTextLikeParent = currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text'
+
+      if (!isTextLikeParent) {
         text = text.trim()
       } else {
         text = text.trim() ? text : ''
@@ -1000,12 +1007,34 @@ function processComponentIs (el, options) {
   }
 
   const range = getAndRemoveAttr(el, 'range').val
-  const isInRange = makeMap(range || '')
-  el.components = (usingComponents).filter(i => {
-    if (!range) return true
-    return isInRange(i)
+
+  // Map<CurrentName, SourceName>
+  let ranges
+  if (range) {
+    ranges = range.split(',').map(i => i.trim()).filter(i => i)
+  } else {
+    // 根据原始用户写的usingComponents字段生成ranges
+    ranges = options.originalUsingComponents
+  }
+
+  const rangeMap = new Map()
+  ranges.forEach(name => {
+    rangeMap.set(['ali', 'swan'].includes(mode) ? capitalToHyphen(name) : name, name)
   })
-  if (!el.components.length) {
+
+  // Map<CurrentName, SourceName>
+  el.componentMap = new Map()
+  usingComponents.forEach((name) => {
+    if (rangeMap.size === 0) {
+      el.componentMap.set(name, name)
+    } else {
+      if (rangeMap.has(name)) {
+        el.componentMap.set(name, rangeMap.get(name))
+      }
+    }
+  })
+
+  if (el.componentMap.size === 0) {
     warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
   }
 
@@ -2623,6 +2652,16 @@ function getVirtualHostRoot (options, meta) {
     if (isWeb(mode) && ctorType === 'page') {
       return createASTElement('page')
     }
+    if (isReact(mode) && ctorType === 'page') {
+      const rootView = createASTElement('view', [
+        {
+          name: 'class',
+          value: MPX_TAG_PAGE_SELECTOR
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
+    }
   }
   return getTempNode()
 }
@@ -2816,6 +2855,78 @@ function processNoTransAttrs (el) {
   }
 }
 
+function initCrossPlatformConfig () {
+  // 定义平台与前缀的双向映射关系
+  const platformPrefixMap = {
+    wx: 'wx:',
+    ali: 'a:',
+    swan: 's-',
+    qq: 'qq:',
+    tt: 'tt:',
+    dd: 'dd:',
+    jd: 'jd:',
+    qa: 'qa:',
+    web: 'v-'
+  }
+
+  if (isNoMode(mode)) {
+    return null
+  }
+
+  return {
+    currentPrefix: platformPrefixMap[mode] || 'wx:',
+    platformPrefixMap
+  }
+}
+
+// 检测跨平台语法使用情况并给出警告
+function processCrossPlatformSyntaxWarning (el) {
+  // 使用转换后的属性列表进行检查
+  if (!el.attrsList || el.attrsList.length === 0) {
+    return
+  }
+
+  // 如果配置为空，说明不需要检测
+  if (!crossPlatformConfig) {
+    return
+  }
+
+  const { currentPrefix, platformPrefixMap } = crossPlatformConfig
+
+  // 检查转换后的属性列表
+  el.attrsList.forEach(attr => {
+    const attrName = attr.name
+
+    // 检查是否使用了平台前缀
+    for (const [platformName, prefix] of Object.entries(platformPrefixMap)) {
+      if (attrName.startsWith(prefix)) {
+        if (isReact(mode)) {
+          // React Native 平台：只允许使用 wx: 前缀，其他前缀报错
+          if (prefix !== 'wx:') {
+            error$1(
+              `React Native mode "${mode}" does not support "${prefix}" prefix. ` +
+              `Use "wx:" prefix instead. Found: "${attrName}"`
+            )
+          }
+        } else {
+          // 小程序平台：检测跨平台语法使用
+          if (platformName !== mode) {
+            // 构建建议的正确属性名
+            const suffixPart = attrName.substring(prefix.length)
+            const suggestedAttr = currentPrefix + suffixPart
+
+            warn$1(
+              `Your target mode is "${mode}", but used "${attrName}". ` +
+              `Did you mean "${suggestedAttr}"?`
+            )
+          }
+        }
+        break
+      }
+    }
+  })
+}
+
 function processMpxTagName (el) {
   const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
   if (mpxTagName) {
@@ -2844,6 +2955,9 @@ function processElement (el, root, options, meta) {
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
+
+  // 检测跨平台语法使用情况并给出警告
+  processCrossPlatformSyntaxWarning(el)
 
   processInjectWxs(el, meta, options)
 
@@ -2989,7 +3103,7 @@ function cloneAttrsList (attrsList) {
 }
 
 function postProcessComponentIs (el, postProcessChild) {
-  if (el.is && el.components) {
+  if (el.is && el.componentMap && el.componentMap.size > 0) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
       tempNode = createASTElement('block')
@@ -2999,11 +3113,12 @@ function postProcessComponentIs (el, postProcessChild) {
     replaceNode(el, tempNode, true)
     postMoveBaseDirective(tempNode, el)
 
-    el.components.forEach(function (component) {
-      const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
+    // Map<CurrentName, SourceName>
+    el.componentMap.forEach((source, name) => {
+      const newChild = createASTElement(name, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
-        raw: `{{${el.is} === ${stringify(component)}}}`,
-        exp: `${el.is} === ${stringify(component)}`
+        raw: `{{${el.is} === ${stringify(source)}}}`,
+        exp: `${el.is} === ${stringify(source)}`
       }
       el.children.forEach((child) => {
         addChild(newChild, cloneNode(child))
