@@ -45,6 +45,7 @@ const rootPortal = require('./root-portal')
 const pageContainer = require('./page-container')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
+const navContainer = require('./nav-container')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -131,6 +132,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     rootPortal({ print }),
     pageContainer({ print }),
     stickyHeader({ print }),
-    stickySection({ print })
+    stickySection({ print }),
+    navContainer({ print })
   ]
 }
