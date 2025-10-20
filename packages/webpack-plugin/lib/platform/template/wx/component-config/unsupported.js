@@ -7,7 +7,7 @@ const QQ_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'official-acco
 // 头条小程序不支持的标签集合
 const TT_UNSUPPORTED_TAG_NAME_ARR = ['movable-view', 'cover-image', 'cover-view', 'movable-area', 'open-data', 'official-account', 'editor', 'functional-page-navigator', 'audio', 'live-pusher']
 // 快手小程序不支持的标签集合
-const KS_UNSUPPORTED_TAG_NAME_ARR = ['match-media', 'page-container', 'root-portal', 'selection', 'functional-page-navigator', 'official-account', 'editor', 'editor-portal', 'keyboard-accessory']
+const KS_UNSUPPORTED_TAG_NAME_ARR = ['match-media', 'page-container', 'root-portal', 'selection', 'functional-page-navigator', 'editor', 'editor-portal', 'keyboard-accessory', 'live-player', 'live-pusher', 'voip-room', 'channel-live', 'channel-video', 'ad-custom', 'official-account', 'official-account-publisher', 'open-data', 'store-coupon', 'store-gift', 'store-home', 'store-product']
 // 京东小程序不支持的标签集合
 const JD_UNSUPPORTED_TAG_NAME_ARR = ['functional-page-navigator', 'live-pusher', 'live-player', 'rich-text', 'audio', 'video', 'camera']
 // 快应用不支持的标签集合
