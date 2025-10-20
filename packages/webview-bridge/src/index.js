@@ -1,5 +1,6 @@
 import loadScript from './loadscript'
 let sdkReady
+let loadErrorCallback
 const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -75,7 +76,9 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
 }
 
 const initWebviewBridge = () => {
-  sdkReady = (env !== 'web' && env !== 'rn') ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
+  sdkReady = (env !== 'web' && env !== 'rn') ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url).catch((err) => {
+    loadErrorCallback(err?.message)
+  }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve()
   getWebviewApi()
 }
 
@@ -102,6 +105,9 @@ const webviewBridge = {
         window.wx.config(config)
       }
     })
+  },
+  loadJSSDKError (callback) {
+    loadErrorCallback = callback
   }
 }
 
