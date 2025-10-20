@@ -10,6 +10,7 @@ module.exports = function ({ print }) {
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -76,7 +77,8 @@ module.exports = function ({ print }) {
         ali: aliEventLog,
         swan: baiduEventLog,
         tt: ttEventLog,
-        jd: jdEventLog
+        jd: jdEventLog,
+        ks: ksEventLog
       }
     ]
   }
