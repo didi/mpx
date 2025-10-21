@@ -78,10 +78,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
             function calculateOffset() {
               // enableNativeKeyboardAvoding 默认开启
               if (enableNativeKeyboardAvoiding && isAndroid) {
-                const aboveOffset = offset.value + pageY + height - endCoordinates.screenY;
-                const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing;
-                const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing);
-                return aboveOffset > 0 ? belowValue : aboveValue;
+                const aboveOffset = pageY + height - endCoordinates.screenY
+                const belowOffset = endCoordinates.height - aboveOffset
+                const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
+                const belowValue = Math.min(belowOffset, cursorSpacing)
+                return aboveOffset > 0 ? belowValue : aboveValue
               }
 
               const aboveOffset = offset.value + pageY + height - endCoordinates.screenY;
