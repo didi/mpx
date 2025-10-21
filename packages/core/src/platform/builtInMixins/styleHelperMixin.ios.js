@@ -8,10 +8,6 @@ const rawDimensions = {
 }
 let width, height
 
-// TODO 临时适配折叠屏场景适配
-// const isLargeFoldableLike = (__mpx_mode__ === 'android') && (height / width < 1.5) && (width > 600)
-// if (isLargeFoldableLike) width = width / 2
-
 function customDimensions (dimensions) {
   if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
     dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
@@ -236,12 +232,18 @@ export default function styleHelperMixin () {
             flex: 0,
             height: 0,
             width: 0,
-            padding: 0,
-            margin: 0,
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            marginTop: 0,
+            marginRight: 0,
+            marginBottom: 0,
+            marginLeft: 0,
             overflow: 'hidden'
           })
         }
-        const isEmpty = isNativeStaticStyle ? result.length > 0 : isEmptyObject(result)
+        const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
         return isEmpty ? empty : result
       }
     }

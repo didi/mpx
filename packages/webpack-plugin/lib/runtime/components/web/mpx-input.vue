@@ -56,7 +56,7 @@
           if (val !== -1) this.setSelectionRange(undefined, val)
         },
         immediate: true
-      }
+      },
     },
     render (createElement) {
       const mergeBefore = {

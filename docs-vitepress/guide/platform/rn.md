@@ -40,7 +40,7 @@ Mpx 框架在样式处理部分的具体工作主要分为两大类有：
 - 100% 计算
 - css func 处理，包括 env()、calc()、var()
 ### CSS选择器
-RN 环境下仅支持单个**类选择器**，不支持类名组合选择器，不过逗号组合的选择器本质上还是单类选择器，是可以支持的。
+RN 环境下仅支持**单类选择器**、**page选择器**、**:host选择器**，不支持类名组合选择器，不过逗号组合的选择器本质上还是单类选择器，是可以支持的。
 ``` css
 /* 支持 */
 .classname {
@@ -48,6 +48,12 @@ RN 环境下仅支持单个**类选择器**，不支持类名组合选择器，�
 }
 .classA, .classB {
   color: red
+}
+page {
+   color: red
+}
+:host {
+   color: red
 }
 /* 不支持 */
 view, text {
@@ -309,30 +315,71 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 ### 使用RN组件
 在Mpx组件内引用RN组件，采用如下方式
 - **RN组件注册方式**：需在components属性下进行引用注册。
-- **RN组件的属性与事件**：属性与事件参考RN原生支持的属性与事件名，对应赋值方式按照Mpx语法进行双括号包裹，组件使用的值需要通过 REACTHOOKSEXEC方法的返回值的方式进行声明。
-- **RN组件的样式定义**: 组件支持样式属性的透传，通过在RN组件上定义styles即可透传样式
+- **RN组件的属性与事件**：属性与事件参考RN原生支持的属性与事件名，对应赋值方式按照Mpx语法进行双括号包裹，组件使用的值需要通过 onReactHooksExec 的返回值的方式进行声明。
+- **RN组件的样式定义**: 组件支持样式属性的透传，通过在RN组件上定义style即可透传样式
 - **其他功能**: 支持在RN组件内使用slot
-```javascript
+```html
 <template>
     <view>
         <!-- 事件的value需要使用双括号包裹 -->
         <ScrollView onScroll="{{scrollAction}}">
-          <View styles="{{viewStyle}}">
+          <View style="{{viewStyle}}">
             <!-- 可混合编写mpx组件 -->
             <view>我是Mpx组件</view>
             <!-- 支持在RN组件内部定义插槽 -->
             <slot name="myslot"></slot>
-          <View>
+          </View>
+        </ScrollView>
+    </view>
+</template>
+<script setup>
+    import { onReactHooksExec } from '@mpxjs/core'
+    import { ScrollView } from 'react-native-gesture-handler'
+    import { View } from 'react-native'
+
+    onReactHooksExec(() => {
+        return {
+            viewStyle: {
+              width: 200,
+              height: 200
+            }
+        }
+    })
+    defineOptions({
+        // 声明 RN 组件
+        components: {
+            ScrollView,
+            View
+        }
+    })
+</script>
+```
+
+在选项式api中，使用 REACTHOOKSEXEC 替代 onReactHooksExec，例如
+```html
+<template>
+    <view>
+        <!-- 事件的value需要使用双括号包裹 -->
+        <ScrollView onScroll="{{scrollAction}}">
+          <View style="{{viewStyle}}">
+            <!-- 可混合编写mpx组件 -->
+            <view>我是Mpx组件</view>
+            <!-- 支持在RN组件内部定义插槽 -->
+            <slot name="myslot"></slot>
+          </View>
         </ScrollView>
     </view>
 </template>
 <script>
     import { createComponent, REACTHOOKSEXEC } from '@mpxjs/core'
     import { ScrollView } from 'react-native-gesture-handler'
+    import { View } from 'react-native'
     createComponent({
+        // 声明 RN 组件
         components: {
-            ScrollView
-        }
+            ScrollView,
+            View
+        },
         [REACTHOOKSEXEC](){
             return {
               viewStyle: {
@@ -344,6 +391,9 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
     })
 </script>
 ```
+
+
+
 ### 使用React hooks
 Mpx提供了hooks的执行机制，通过在Mpx组件内注册REACTHOOKSEXEC方法，保障RN组件的初始化执行。hooks的返回值支持数据与方法
 - 模板上RN组件/Mpx组件的数据渲染
@@ -745,6 +795,8 @@ movable-view的可移动区域。
 | out-of-bounds   | boolean          |   `false`     | 超过可移动区域后，movable-view是否还可以移动  |
 | x   | number |      | 定义x轴方向的偏移  |
 | y  | number  |        | 定义y轴方向的偏移 |
+| friction  | Number  |    `2`    | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止。必须大于0，否则会被设置成默认值 |
+| damping  | Number  |    `20`    | 阻尼系数，用于控制x或y改变时的动画和过界回弹的动画，值越大移动越快 |
 | disabled  | boolean  |    `false`   | 是否禁用 |
 | animation  | boolean  |    `true`   | 是否使用动画	 |
 | simultaneous-handlers  | array\<object>  |   `[]`   | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
@@ -1161,6 +1213,37 @@ level 有效值：
 | 事件名           | 说明                                                 |
 | ----------------| --------------------------------------------------- |
 | bindchange       |  点击导致 checked 改变时会触发 change 事件，`event.detail = { value }`   |
+
+#### slider
+滑动选择器。
+
+属性
+
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| min                     | number  | `0`           | 最小值                                                     |
+| max                     | number  | `100`         | 最大值                                                     |
+| step                    | number  | `1`           | 步长，取值必须大于 0，并且可被(max - min)整除                 |
+| disabled                | boolean | `false`       | 是否禁用                                                   |
+| value                   | number  | `0`           | 当前取值                                                   |
+| color                   | color   | `#e9e9e9`     | 背景条的颜色（已废弃，请使用 backgroundColor）               |
+| selected-color          | color   | `#1aad19`     | 已选择的颜色（已废弃，请使用 activeColor）                   |
+| activeColor             | color   | `#1aad19`     | 已选择的颜色                                               |
+| backgroundColor         | color   | `#e9e9e9`     | 背景条的颜色                                               |
+| block-size              | number  | `28`          | 滑块的大小，取值范围为 12 - 28                              |
+| block-color             | color   | `#ffffff`     | 滑块的颜色                                                 |
+
+事件
+
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindchange      | 完成一次拖动后触发的事件，`event.detail = {value}`     |
+| bindchanging    | 拖动过程中触发的事件，`event.detail = {value}`         |
+
+注意事项
+
+1. 不支持 `show-value` 属性，即不支持在滑块旁显示当前数值
+2. 当设置了 `step` 时，最终值会按步长进行对齐
 
 #### navigator
 页面链接。
@@ -2652,11 +2735,11 @@ webviewBridge.invoke('getTime', {
 })
 ```
 
-#### 异步分包
+#### 分包与异步分包
 
-Mpx转RN实现了和微信小程序同等能力的分包异步化功能，基本使用可[参考文档](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
+Mpx转RN实现了和微信小程序同等能力的分包和分包异步化功能，基本使用可[参考文档](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
 
-在异步分包的能力实现当中我们借助了RN宿主提供的分包下载执行/分包拉取的 api，因此在你的应用开始使用异步分包的功能之前需要在运行时代码提前部署好RN宿主容器提供的相关 api 以供 Mpx 应用使用：
+在分包和异步分包的能力实现当中我们借助了RN宿主提供的分包下载执行/分包拉取的 api，因此在你的应用开始使用异步分包的功能之前需要在运行时代码提前部署好RN宿主容器提供的相关 api 以供 Mpx 应用使用：
 
 ```javascript
 mpx.config.rnConfig.loadChunkAsync = function (config) {
@@ -2736,7 +2819,25 @@ module.exports = defineConfig({
   })
 </script>
 ```
+关闭输出 RN 分包与异步分包能力：
 
+在输出 RN 时，框架默认开启了分包与异步分包能力，如果不希望开启，可以在编译配置中通过 `rnConfig.supportSubpackage = false` 关闭：
+
+```javascript
+// mpx.config.js
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        ...
+        rnConfig: {
+          supportSubpackage: false
+        }
+      }
+    }
+  }
+})
+```
 
 #### 分享
 
