@@ -21,6 +21,7 @@ module.exports = function ({
   hasComment,
   isNative,
   usingComponentsInfo,
+  originalUsingComponents,
   componentGenerics,
   autoScope,
   callback
@@ -70,6 +71,7 @@ module.exports = function ({
             moduleId,
             ctorType,
             usingComponentsInfo,
+            originalUsingComponents,
             componentGenerics
           }, callback)
         },

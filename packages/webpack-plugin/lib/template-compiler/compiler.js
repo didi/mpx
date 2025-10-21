@@ -1006,17 +1006,6 @@ function processComponentIs (el, options) {
     return
   }
 
-  const is = getAndRemoveAttr(el, 'is').val
-  if (is) {
-    el.is = parseMustacheWithContext(is).result
-  } else {
-    warn$1('<component> tag should have attrs[is].')
-  }
-  // RN & web 下无需进行 componentMap 处理，直接返回
-  if (isReact(mode) || isWeb(mode)) {
-    return
-  }
-
   const range = getAndRemoveAttr(el, 'range').val
 
   // Map<CurrentName, SourceName>
@@ -1047,6 +1036,13 @@ function processComponentIs (el, options) {
 
   if (el.componentMap.size === 0) {
     warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
+  }
+
+  const is = getAndRemoveAttr(el, 'is').val
+  if (is) {
+    el.is = parseMustacheWithContext(is).result
+  } else {
+    warn$1('<component> tag should have attrs[is].')
   }
 }
 
