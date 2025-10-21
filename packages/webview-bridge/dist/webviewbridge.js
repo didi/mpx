@@ -128,7 +128,7 @@
     sdkReady["catch"](function (err) {
       loadErrorCallbacks.forEach(function (callback) {
         if (typeof callback === 'function') {
-          callback((err === null || err === void 0 ? void 0 : err.message) || err);
+          callback(err && err.message || err);
         }
       });
     });

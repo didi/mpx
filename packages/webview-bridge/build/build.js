@@ -42,11 +42,10 @@ function buildEntry ({ input, output }) {
             pure_funcs: ['makeMap']
           }
         }).code
-        const safeMinified = minified || code
         if (fileName) {
-          write(fileName, safeMinified, true)
+          write(fileName, minified, true)
         }
-        return write(file, safeMinified, true)
+        return write(file, minified, true)
       } else {
         return write(file, code)
       }

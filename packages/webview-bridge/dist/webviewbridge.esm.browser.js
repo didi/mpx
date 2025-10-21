@@ -124,7 +124,7 @@ const initWebviewBridge = () => {
   sdkReady.catch((err) => {
     loadErrorCallbacks.forEach((callback) => {
       if (typeof callback === 'function') {
-        callback(err?.message || err);
+        callback(err && err.message || err);
       }
     });
   });
