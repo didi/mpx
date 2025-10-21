@@ -15,7 +15,7 @@ const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
-const { isReact, isWeb, isNoMode } = require('../utils/env')
+const { isReact, isWeb, isNoMode, isMiniProgram } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
@@ -2529,6 +2529,29 @@ function processScoped (el) {
   }
 }
 
+function processTextOverflow (el) {
+  // 处理 text 组件的 overflow 属性
+  if (el.tag === 'text' || el.tag === 'mpx-text' || el.tag === 'mpx-simple-text' || el.tag === 'mpx-view') {
+    const overflowAttr = getAndRemoveAttr(el, 'overflowLine')
+    if (overflowAttr.has && overflowAttr.val) {
+      if (!el.attrsMap['numberOfLines'] && isReact(mode)) {
+        addAttrs(el, [{
+          name: 'numberOfLines',
+          value: overflowAttr.val
+        }])
+      }
+      // 检查是否已经有 max-length 属性
+      if (!el.attrsMap['max-length'] && !isMiniProgram(mode)) {
+        // 添加 max-length 属性
+        addAttrs(el, [{
+          name: 'max-length',
+          value: overflowAttr.val
+        }])
+      }
+    }
+  }
+}
+
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
 function processBuiltInComponents (el, meta) {
@@ -2952,6 +2975,9 @@ function processElement (el, root, options, meta) {
     rulesRunner(el)
   }
 
+  // 处理 text 组件的 overflow 属性
+  processTextOverflow(el)
+
   processNoTransAttrs(el)
 
   processDuplicateAttrsList(el)
@@ -3037,11 +3063,57 @@ function closeElement (el, options, meta) {
     return
   }
   if (isReact(mode)) {
+    processForTextSpace(el)
     postProcessForReact(el)
     postProcessIfReact(el)
     return
   }
 
+  function processForTextSpace (el) {
+  // 处理 text 组件的 extendSpace 属性
+    if ((el.tag === 'text' || el.tag === 'mpx-text' || el.tag === 'mpx-simple-text' || el.tag === 'mpx-view') && el.attrsMap && el.attrsMap.extendSpace) {
+      // 获取 space-font-size 属性值
+      const spaceFontSize = el.attrsMap['space-font-size']
+      getAndRemoveAttr(el, 'extendSpace')
+
+      // 创建属性数组
+      const newTextAttrs = [{
+        name: 'decode',
+        value: '{{true}}'
+      }]
+
+      if (spaceFontSize) {
+        getAndRemoveAttr(el, 'space-font-size')
+        // 如果设置了 space-font-size，添加 style 属性
+        newTextAttrs.push({
+          name: 'style',
+          value: `font-size: ${spaceFontSize}`
+        })
+      }
+
+      // 创建新的 text 元素节点作为当前元素的子节点
+      const newTextElement = createASTElement('text', newTextAttrs, el)
+
+      // 为新 text 元素添加文本子节点
+      newTextElement.children = [{
+        type: 3,
+          text: '&nbsp;',
+          parent: newTextElement
+        }
+      ]
+
+      // 初始化当前元素的 children 数组（如果不存在）
+      if (!el.children) {
+        el.children = []
+      }
+
+      // 将新 text 元素添加到当前元素的子节点列表末尾
+      el.children.push(newTextElement)
+
+      // 处理新创建的元素
+      processElement(newTextElement, null, options, meta)
+    }
+  }
   const isTemplate = postProcessTemplate(el) || processingTemplate
   if (!isTemplate) {
     if (!isNative) {
