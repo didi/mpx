@@ -8,7 +8,9 @@ module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
   const mpx = this.getMpx()
-  const isRN = ['ios', 'android', 'harmony'].includes(mpx.mode)
+
+  const { mode } = mpx
+  const isRN = ['ios', 'android', 'harmony'].includes(mode)
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -48,6 +50,12 @@ module.exports = function loader (content, prevOptions) {
         : `${options.publicPath}/`}${url}`
     }
     publicPath = JSON.stringify(publicPath)
+  } else {
+    // 快手小程序要求资源路径不能以 / 开头
+    if (mode === 'ks' && url.startsWith('/')) {
+      url = url.slice(1)
+    }
+    publicPath = JSON.stringify(url)
   }
 
   this.emitFile(outputPath, content)
