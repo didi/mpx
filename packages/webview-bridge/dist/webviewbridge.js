@@ -50,7 +50,7 @@
   }
 
   var sdkReady;
-  var loadErrorCallback;
+  var loadErrorCallbacks = [];
   var SDK_URL_MAP = Object.assign({
     wx: {
       url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -124,9 +124,14 @@
     window.addEventListener('message', eventListener, false);
   }
   var initWebviewBridge = function initWebviewBridge() {
-    sdkReady = env !== 'web' && env !== 'rn' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url)["catch"](function (err) {
-      loadErrorCallback(err === null || err === void 0 ? void 0 : err.message);
-    }) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+    sdkReady = env !== 'web' && env !== 'rn' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+    sdkReady["catch"](function (err) {
+      loadErrorCallbacks.forEach(function (callback) {
+        if (typeof callback === 'function') {
+          callback((err === null || err === void 0 ? void 0 : err.message) || err);
+        }
+      });
+    });
     getWebviewApi();
   };
   var webviewSdkready = false;
@@ -152,8 +157,16 @@
         }
       });
     },
-    loadJSSDKError: function loadJSSDKError(callback) {
-      loadErrorCallback = callback;
+    onLoadScriptError: function onLoadScriptError(callback) {
+      if (loadErrorCallbacks.indexOf(callback) === -1) {
+        loadErrorCallbacks.push(callback);
+      }
+    },
+    offLoadScriptError: function offLoadScriptError(callback) {
+      var index = loadErrorCallbacks.indexOf(callback);
+      if (index > -1) {
+        loadErrorCallbacks.splice(index, 1);
+      }
     }
   };
   function postMessage(type) {
