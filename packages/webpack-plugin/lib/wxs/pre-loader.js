@@ -83,9 +83,6 @@ module.exports = function (content) {
   if (mode === 'dd') {
     chainAssign(visitor, {
       MemberExpression (path) {
-        if (!t.isMemberExpression(path.node)) {
-          return
-        }
         const property = path.node.property
         if (
           (property.name === 'constructor' || property.value === 'constructor') &&
@@ -101,9 +98,12 @@ module.exports = function (content) {
   if (!module.wxs) {
     chainAssign(visitor, {
       MemberExpression (path) {
+        if (!t.isMemberExpression(path.node)) {
+          return
+        }
         const property = path.node.property
         if (
-          (property.name === 'constructor' || property.value === 'constructor') &&
+          property && (property.name === 'constructor' || property.value === 'constructor') &&
           !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
         ) {
           path.replaceWith(t.memberExpression(path.node, t.identifier('name')))
