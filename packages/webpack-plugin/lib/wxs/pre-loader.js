@@ -83,6 +83,9 @@ module.exports = function (content) {
   if (mode === 'dd') {
     chainAssign(visitor, {
       MemberExpression (path) {
+        if (!t.isMemberExpression(path.node)) {
+          return
+        }
         const property = path.node.property
         if (
           (property.name === 'constructor' || property.value === 'constructor') &&
