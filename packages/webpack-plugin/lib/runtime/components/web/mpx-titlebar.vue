@@ -58,8 +58,8 @@ export default {
     },
     warpStyle() {
       return {
-        marginTop: this.hidden ? '0' : 'calc(env(safe-area-inset-top, 0px) + 44px)',
-        height: this.hidden ? '100%' : 'calc(100% - env(safe-area-inset-top, 0px) - 44px)'
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 44px)',
+        height: '100%'
       }
     },
     // 内部标题栏高度（遵循小程序常见平台差异）
@@ -129,9 +129,9 @@ export default {
     ]
 
     // top-level wrapper: contains fixed titlebar and page content wrapper
-    return h('div', { class: 'mpx-page-warp', style: this.warpStyle }, [
-      h('div', {
-        class: ['mpx-titlebar', { 'mpx-titlebar--hidden': this.hidden }],
+    return h('div', { class: 'mpx-page-warp', style: this.hidden ? {} : this.warpStyle }, [
+      this.hidden ? null : h('div', {
+        class: ['mpx-titlebar'],
         style: this.rootStyle
       }, [
         h('div', { class: 'mpx-titlebar__safe', style: this.safeStyle }, [
@@ -142,7 +142,7 @@ export default {
           ])
         ])
       ]),
-      h('page', {}, [this.$slots.default])
+      h('page', { style: { position: 'relative'} }, [this.$slots.default])
     ])
   }
 }
@@ -150,16 +150,10 @@ export default {
 
 <style scoped>
 .mpx-page-warp {
-  width: '100%';
-  box-sizing: 'border-box';
-  position: 'relative'
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* 防止margin溢出合并 */
-.mpx-page-warp::before {
-  content: '';
-  display: table
-}
 
 .mpx-titlebar--hidden {
   display: none;
