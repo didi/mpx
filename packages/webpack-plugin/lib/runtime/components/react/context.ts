@@ -61,11 +61,6 @@ export interface StickyContextValue {
   unregisterStickyHeader: Function
 }
 
-export interface NavSharedValue {
-  customNav?: React.ReactNode
-  setCustomNav: (value: React.ReactNode) => void
-}
-
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -93,5 +88,3 @@ export const ScrollViewContext = createContext<ScrollViewContextValue>({ gesture
 export const PortalContext = createContext<PortalContextValue>(null as any)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
-
-export const NavSharedContext = createContext<NavSharedValue>(null as any)

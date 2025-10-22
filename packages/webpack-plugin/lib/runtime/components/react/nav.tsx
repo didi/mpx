@@ -1,8 +1,7 @@
 /* eslint-disable space-before-function-paren */
-import { createElement, useState, useMemo, memo, useContext, useLayoutEffect } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StatusBar, processColor, TouchableWithoutFeedback, Image, View, StyleSheet, Text } from 'react-native'
-import { useNavShared } from './useNavShared'
 
 function convertToHex(color?: string) {
   try {
@@ -89,7 +88,6 @@ const BACK_ICON =
 
 const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
   const [innerPageConfig, setPageConfig] = useState<PageConfig>(pageConfig || {})
-  const [customNav] = useNavShared()
   const safeAreaTop = useSafeAreaInsets()?.top || 0
 
   navigation.setPageConfig = (config: PageConfig) => {
@@ -105,13 +103,7 @@ const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
       barStyle={navigationBarTextStyle === NavColor.White ? 'light-content' : 'dark-content'}></StatusBar>
   )
 
-  if (isCustom)
-    return (
-      <>
-        {statusBarElement}
-        {customNav}
-      </>
-    )
+  if (isCustom) return statusBarElement
   // 假设是栈导航，获取栈的长度
   const stackLength = navigation.getState()?.routes?.length
   const onStackTopBack = mpxGlobal?.__mpx?.config?.rnConfig?.onStackTopBack
