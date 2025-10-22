@@ -93,5 +93,3 @@ export const ScrollViewContext = createContext<ScrollViewContextValue>({ gesture
 export const PortalContext = createContext<PortalContextValue>(null as any)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
-
-export const NavSharedContext = createContext<NavSharedValue>(null as any)
