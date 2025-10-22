@@ -6,11 +6,13 @@ export type PortalProps = {
   children?: ReactNode
 }
 
-const Portal = ({ children }:PortalProps): null => {
+const Portal = ({ children }: PortalProps): null => {
   const manager = useContext(PortalContext)
   const keyRef = useRef<any>(null)
   const { pageId } = useContext(RouteContext) || {}
   const varContext = useContext(VarContext)
+  const parentProvides = useContext(ProviderContext)
+
   if (varContext) {
     children = (<VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>)
   }
