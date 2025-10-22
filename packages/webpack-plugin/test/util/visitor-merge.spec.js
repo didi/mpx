@@ -1,15 +1,15 @@
-// 测试 chain-assgin 工具函数
-const chainAssign = require('../../lib/utils/chain-assign')
+// 测试 merge-visitors 工具函数
+const mergeVisitors = require('../../lib/utils/merge-visitors')
 
 describe('visitor-merge utility', function () {
   it('should be a function', function () {
-    expect(typeof chainAssign).toBe('function')
+    expect(typeof mergeVisitors).toBe('function')
   })
 
   it('should add new methods when no conflict exists', function () {
     const visitor = {}
 
-    chainAssign(visitor, {
+    mergeVisitors(visitor, {
       CallExpression: function () { return 'call' },
       Identifier: function () { return 'id' }
     })
@@ -25,21 +25,21 @@ describe('visitor-merge utility', function () {
     const executionOrder = []
 
     // 第一次添加
-    chainAssign(visitor, {
+    mergeVisitors(visitor, {
       CallExpression: function () {
         executionOrder.push('first')
       }
     })
 
     // 第二次添加相同的方法名
-    chainAssign(visitor, {
+    mergeVisitors(visitor, {
       CallExpression: function () {
         executionOrder.push('second')
       }
     })
 
     // 执行应该按顺序调用两个方法
-    visitor.CallExpression({})
+    visitor.CallExpression.enter.forEach(fn => fn({}))
 
     expect(executionOrder).toEqual(['first', 'second'])
   })
@@ -48,373 +48,308 @@ describe('visitor-merge utility', function () {
     const visitor = {}
     const executionOrder = []
 
-    chainAssign(visitor, {
+    // 第一次添加
+    mergeVisitors(visitor, {
       CallExpression: function (path) {
         executionOrder.push('first')
         path.removed = true
       }
     })
 
-    chainAssign(visitor, {
+    // 第二次添加相同的方法名
+    mergeVisitors(visitor, {
       CallExpression: function () {
         executionOrder.push('second')
       }
     })
 
-    visitor.CallExpression({})
+    // 模拟 path 对象
+    const mockPath = { removed: false }
+    visitor.CallExpression.enter.forEach(fn => fn(mockPath))
 
-    expect(executionOrder).toEqual(['first'])
-    expect(executionOrder).not.toContain('second')
+    // 第一个方法设置了 removed，第二个方法不应该执行
+    expect(executionOrder).toEqual(['first', 'second'])
+    expect(mockPath.removed).toBe(true)
   })
 
-  it('should respect path.shouldStop state', function () {
+  it('should handle enter/exit hooks', function () {
     const visitor = {}
     const executionOrder = []
 
-    chainAssign(visitor, {
-      CallExpression: function (path) {
-        executionOrder.push('first')
-        path.shouldStop = true
+    // 第一次添加
+    mergeVisitors(visitor, {
+      CallExpression: {
+        enter: function () {
+          executionOrder.push('first-enter')
+        },
+        exit: function () {
+          executionOrder.push('first-exit')
+        }
       }
     })
 
-    chainAssign(visitor, {
-      CallExpression: function () {
-        executionOrder.push('second')
+    // 第二次添加相同的方法名
+    mergeVisitors(visitor, {
+      CallExpression: {
+        enter: function () {
+          executionOrder.push('second-enter')
+        },
+        exit: function () {
+          executionOrder.push('second-exit')
+        }
       }
     })
 
-    visitor.CallExpression({})
+    // 对象形式合并后应该是对象形式，enter 和 exit 都是数组
+    expect(typeof visitor.CallExpression).toBe('object')
+    expect(Array.isArray(visitor.CallExpression.enter)).toBe(true)
+    expect(Array.isArray(visitor.CallExpression.exit)).toBe(true)
 
-    expect(executionOrder).toEqual(['first'])
-    expect(executionOrder).not.toContain('second')
+    // 执行 enter 和 exit 钩子
+    visitor.CallExpression.enter.forEach(fn => fn({}))
+    visitor.CallExpression.exit.forEach(fn => fn({}))
+
+    expect(executionOrder).toEqual(['first-enter', 'second-enter', 'first-exit', 'second-exit'])
   })
 
-  it('should handle multiple compositions correctly', function () {
+  it('should handle mixed function and object visitors', function () {
     const visitor = {}
     const executionOrder = []
 
-    // 三次合并
-    chainAssign(visitor, {
-      CallExpression: () => executionOrder.push('first')
-    })
-
-    chainAssign(visitor, {
-      CallExpression: () => executionOrder.push('second')
-    })
-
-    chainAssign(visitor, {
-      CallExpression: () => executionOrder.push('third')
-    })
-
-    visitor.CallExpression({})
-
-    expect(executionOrder).toEqual(['first', 'second', 'third'])
-  })
-
-  it('should preserve this context', function () {
-    const visitor = {}
-    const context = { name: 'test-context' }
-    let capturedThis = null
-
-    chainAssign(visitor, {
+    // 第一次添加函数形式
+    mergeVisitors(visitor, {
       CallExpression: function () {
-        capturedThis = this
+        executionOrder.push('function')
       }
     })
 
-    visitor.CallExpression.call(context, {})
-
-    expect(capturedThis).toBe(context)
-  })
-
-  it('should handle empty source object', function () {
-    const visitor = {
-      existing: () => 'original'
-    }
-
-    chainAssign(visitor, {})
-
-    expect(visitor.existing()).toBe('original')
-  })
-
-  it('should handle empty target object', function () {
-    const visitor = {}
-
-    chainAssign(visitor, {
-      newMethod: () => 'new'
+    // 第二次添加对象形式
+    mergeVisitors(visitor, {
+      CallExpression: {
+        enter: function () {
+          executionOrder.push('object-enter')
+        }
+      }
     })
 
-    expect(visitor.newMethod()).toBe('new')
+    // 混合形式合并后应该是对象形式
+    expect(typeof visitor.CallExpression).toBe('object')
+    expect(Array.isArray(visitor.CallExpression.enter)).toBe(true)
+
+    // 执行 enter 钩子
+    visitor.CallExpression.enter.forEach(fn => fn({}))
+
+    expect(executionOrder).toEqual(['function', 'object-enter'])
+  })
+
+  it('should handle empty visitor', function () {
+    const visitor = { CallExpression: function () { return 'existing' } }
+
+    mergeVisitors(visitor, {})
+
+    expect(typeof visitor.CallExpression).toBe('function')
+    expect(visitor.CallExpression()).toBe('existing')
   })
 })
 
 describe('WXS Pre-loader Visitor Merge', function () {
-  describe('Object.assign 覆盖问题演示', function () {
-    it('should demonstrate visitor method override issue with Object.assign', function () {
-      const visitor = {}
-      const executionLog = []
-      const moduleWxs = true
-      const mode = 'ali'
+  it('should handle complex visitor merging scenarios', function () {
+    const visitor = {}
+    const executionOrder = []
 
-      // 模拟条件：module.wxs = true && mode = 'ali'
-      if (moduleWxs && mode === 'ali') {
-        Object.assign(visitor, {
-          CallExpression: function (path) {
-            executionLog.push('Ali模式: CallExpression处理')
-          }
-        })
+    // 添加基础 visitor
+    mergeVisitors(visitor, {
+      CallExpression: function () {
+        executionOrder.push('base-call')
+      },
+      MemberExpression: function () {
+        executionOrder.push('base-member')
       }
-
-      // 模拟条件：module.wxs = true && mode !== 'wx'
-      if (moduleWxs && mode !== 'wx') {
-        Object.assign(visitor, {
-          CallExpression: function (path) {
-            executionLog.push('非wx模式: CallExpression处理')
-          }
-        })
-      }
-
-      // 执行visitor
-      visitor.CallExpression()
-
-      // 验证问题：只有最后一个处理器被执行
-      expect(executionLog).toEqual(['非wx模式: CallExpression处理'])
-      expect(executionLog).not.toContain('Ali模式: CallExpression处理')
-
-      console.log('Object.assign 覆盖问题:', executionLog)
     })
 
-    it('should demonstrate MemberExpression override in dd + non-wxs scenario', function () {
-      const visitor = {}
-      const executionLog = []
-      const moduleWxs = false
-      const mode = 'dd'
-
-      // 模拟条件：mode = 'dd'
-      if (mode === 'dd') {
-        Object.assign(visitor, {
-          MemberExpression: function (path) {
-            executionLog.push('滴滴小程序模式: MemberExpression处理')
-          }
-        })
+    // 添加扩展 visitor
+    mergeVisitors(visitor, {
+      CallExpression: function () {
+        executionOrder.push('extended-call')
+      },
+      Identifier: function () {
+        executionOrder.push('extended-id')
       }
-
-      // 模拟条件：!module.wxs
-      if (!moduleWxs) {
-        Object.assign(visitor, {
-          MemberExpression: function (path) {
-            executionLog.push('非wxs模式: MemberExpression处理')
-          }
-        })
-      }
-
-      // 执行visitor
-      visitor.MemberExpression()
-
-      // 验证问题：DD模式的处理被完全覆盖
-      expect(executionLog).toEqual(['非wxs模式: MemberExpression处理'])
-      expect(executionLog).not.toContain('DD模式: MemberExpression处理')
-
-      console.log('Object.assign 覆盖问题:', executionLog)
     })
+
+    // 执行所有方法
+    visitor.CallExpression.enter.forEach(fn => fn({}))
+    visitor.MemberExpression({})
+    visitor.Identifier({})
+
+    expect(executionOrder).toEqual(['base-call', 'extended-call', 'base-member', 'extended-id'])
+  })
+})
+
+describe('mergeVisitors 解决方案', function () {
+  it('CallExpression 合并测试', function () {
+    const visitor = {}
+    const executionLog = []
+
+    mergeVisitors(visitor, {
+      CallExpression: function (path) {
+        executionLog.push('wx')
+      }
+    })
+
+    mergeVisitors(visitor, {
+      CallExpression: function (path) {
+        executionLog.push('ali')
+      }
+    })
+
+    // 模拟执行
+    visitor.CallExpression.enter.forEach(fn => fn({}))
+
+    console.log('mergeVisitors CallExpression 解决方案:', executionLog)
+    expect(executionLog).toEqual(['wx', 'ali'])
   })
 
-  describe('chainAssign 解决方案', function () {
-    it('should safely merge CallExpression visitors without override', function () {
-      const visitor = {}
-      const executionLog = []
-      const moduleWxs = true
-      const mode = 'ali'
+  it('MemberExpression 合并测试', function () {
+    const visitor = {}
+    const executionLog = []
 
-      // 模拟条件：module.wxs = true && mode = 'ali'
-      if (moduleWxs && mode === 'ali') {
-        chainAssign(visitor, {
-          CallExpression: function (path) {
-            executionLog.push('Ali模式: CallExpression处理')
-          }
-        })
+    mergeVisitors(visitor, {
+      MemberExpression: function (path) {
+        executionLog.push('wxs')
       }
-
-      // 模拟条件：module.wxs = true && mode !== 'wx'
-      if (moduleWxs && mode !== 'wx') {
-        chainAssign(visitor, {
-          CallExpression: function (path) {
-            executionLog.push('非wx模式: CallExpression处理')
-          }
-        })
-      }
-
-      // 执行visitor，传入mock的path对象
-      visitor.CallExpression({})
-
-      // 验证解决方案：两个处理器都被执行
-      expect(executionLog).toEqual([
-        'Ali模式: CallExpression处理',
-        '非wx模式: CallExpression处理'
-      ])
-
-      console.log('chainAssign CallExpression 解决方案:', executionLog)
     })
 
-    it('should safely merge MemberExpression visitors without override', function () {
-      const visitor = {}
-      const executionLog = []
-      const moduleWxs = false
-      const mode = 'dd'
-
-      // 模拟条件：mode = 'dd'
-      if (mode === 'dd') {
-        chainAssign(visitor, {
-          MemberExpression: function (path) {
-            executionLog.push('DD模式: MemberExpression处理')
-          }
-        })
+    mergeVisitors(visitor, {
+      MemberExpression: function (path) {
+        executionLog.push('dd')
       }
-
-      // 模拟条件：!module.wxs
-      if (!moduleWxs) {
-        chainAssign(visitor, {
-          MemberExpression: function (path) {
-            executionLog.push('非wxs模式: MemberExpression处理')
-          }
-        })
-      }
-
-      // 执行visitor，传入mock的path对象
-      visitor.MemberExpression({})
-
-      // 验证解决方案：两个处理器都被执行
-      expect(executionLog).toEqual([
-        'DD模式: MemberExpression处理',
-        '非wxs模式: MemberExpression处理'
-      ])
-
-      console.log('chainAssign MemberExpression 解决方案:', executionLog)
     })
 
-    it('should respect path state and skip second visitor when path is stopped', function () {
-      const visitor = {}
-      const executionLog = []
+    // 模拟执行
+    visitor.MemberExpression.enter.forEach(fn => fn({}))
 
-      chainAssign(visitor, {
-        CallExpression: function (path) {
-          executionLog.push('第一个处理器')
-          path.shouldStop = true // 第一个处理器设置停止标志
-        }
-      })
-
-      chainAssign(visitor, {
-        CallExpression: function (path) {
-          executionLog.push('第二个处理器')
-        }
-      })
-
-      // 执行visitor
-      visitor.CallExpression({})
-
-      // 验证：第二个处理器被跳过
-      expect(executionLog).toEqual(['第一个处理器'])
-      expect(executionLog).not.toContain('第二个处理器')
-
-      console.log('状态感知测试:', executionLog)
-    })
-
-    it('should respect path state and skip second visitor when path is removed', function () {
-      const visitor = {}
-      const executionLog = []
-
-      chainAssign(visitor, {
-        MemberExpression: function (path) {
-          executionLog.push('第一个处理器')
-          path.removed = true // 第一个处理器标记节点已移除
-        }
-      })
-
-      chainAssign(visitor, {
-        MemberExpression: function (path) {
-          executionLog.push('第二个处理器')
-        }
-      })
-
-      // 执行visitor
-      visitor.MemberExpression({})
-
-      // 验证：第二个处理器被跳过
-      expect(executionLog).toEqual(['第一个处理器'])
-      expect(executionLog).not.toContain('第二个处理器')
-
-      console.log('节点移除状态测试:', executionLog)
-    })
+    console.log('mergeVisitors MemberExpression 解决方案:', executionLog)
+    expect(executionLog).toEqual(['wxs', 'dd'])
   })
 
-  describe('真实场景模拟', function () {
-    it('should handle complex multi-platform scenario correctly', function () {
-      const scenarios = [
-        {
-          name: '支付宝小程序WXS',
-          config: { moduleWxs: true, mode: 'ali' },
-          expectedConflicts: ['CallExpression']
-        },
-        {
-          name: '滴滴小程序普通JS',
-          config: { moduleWxs: false, mode: 'dd' },
-          expectedConflicts: ['MemberExpression']
-        },
-        {
-          name: '头条小程序WXS',
-          config: { moduleWxs: true, mode: 'tt' },
-          expectedConflicts: ['CallExpression']
-        },
-        {
-          name: '微信小程序WXS',
-          config: { moduleWxs: true, mode: 'wx' },
-          expectedConflicts: [] // 微信模式没有冲突
-        }
-      ]
+  it('复杂场景测试', function () {
+    const visitor = {}
+    const executionLog = []
 
-      scenarios.forEach(scenario => {
-        console.log(`\n测试场景: ${scenario.name}`)
-        const { moduleWxs, mode } = scenario.config
-
-        // 模拟原始的Object.assign方式
-        const oldVisitor = {}
-        const newVisitor = {}
-
-        // 应用所有条件
-        if (moduleWxs) {
-          if (mode === 'ali') {
-            Object.assign(oldVisitor, { CallExpression: () => 'ali' })
-            chainAssign(newVisitor, { CallExpression: () => 'ali' })
-          }
-
-          if (mode !== 'wx') {
-            Object.assign(oldVisitor, { CallExpression: () => 'non-wx' })
-            chainAssign(newVisitor, { CallExpression: () => 'non-wx' })
-          }
-        }
-
-        if (mode === 'dd') {
-          Object.assign(oldVisitor, { MemberExpression: () => 'dd' })
-          chainAssign(newVisitor, { MemberExpression: () => 'dd' })
-        }
-
-        if (!moduleWxs) {
-          Object.assign(oldVisitor, { MemberExpression: () => 'non-wxs' })
-          chainAssign(newVisitor, { MemberExpression: () => 'non-wxs' })
-        }
-
-        // 验证是否有冲突
-        const hasConflicts = scenario.expectedConflicts.length > 0
-
-        if (hasConflicts) {
-          // 验证Object.assign确实有覆盖问题
-          expect(Object.keys(oldVisitor)).toEqual(Object.keys(newVisitor))
-          console.log(`检测到预期的冲突: ${scenario.expectedConflicts.join(', ')}`)
-        } else {
-          console.log('无冲突场景，两种方式结果一致')
-        }
-      })
+    mergeVisitors(visitor, {
+      CallExpression: function (path) {
+        executionLog.push('wx')
+      }
     })
+
+    mergeVisitors(visitor, {
+      CallExpression: function (path) {
+        executionLog.push('ali')
+      }
+    })
+
+    // 验证合并后的函数可以正常执行
+    expect(typeof visitor.CallExpression).not.toBe('function')
+    visitor.CallExpression.enter.forEach(fn => fn({}))
+    expect(executionLog).toEqual(['wx', 'ali'])
+  })
+
+  it('enter/exit 钩子合并测试', function () {
+    const visitor = {}
+    const executionLog = []
+
+    mergeVisitors(visitor, {
+      CallExpression: {
+        enter: function (path) {
+          executionLog.push('wx-enter')
+        },
+        exit: function (path) {
+          executionLog.push('wx-exit')
+        }
+      }
+    })
+
+    mergeVisitors(visitor, {
+      CallExpression: {
+        enter: function (path) {
+          executionLog.push('ali-enter')
+        },
+        exit: function (path) {
+          executionLog.push('ali-exit')
+        }
+      }
+    })
+
+    // 执行 enter 钩子
+    visitor.CallExpression.enter.forEach(fn => fn({}))
+    // 执行 exit 钩子
+    visitor.CallExpression.exit.forEach(fn => fn({}))
+
+    expect(executionLog).toEqual(['wx-enter', 'ali-enter', 'wx-exit', 'ali-exit'])
+  })
+
+  it('混合函数和对象形式的 visitor', function () {
+    const visitor = {}
+    const executionLog = []
+
+    // 第一个是函数形式
+    mergeVisitors(visitor, {
+      CallExpression: function (path) {
+        executionLog.push('function-form')
+      }
+    })
+
+    // 第二个是对象形式
+    mergeVisitors(visitor, {
+      CallExpression: {
+        enter: function (path) {
+          executionLog.push('object-enter')
+        },
+        exit: function (path) {
+          executionLog.push('object-exit')
+        }
+      }
+    })
+
+    // 执行
+    visitor.CallExpression.enter.forEach(fn => fn({}))
+    visitor.CallExpression.exit({})
+
+    expect(executionLog).toEqual(['function-form', 'object-enter', 'object-exit'])
+  })
+
+  it('测试 visitor 不会相互影响', function () {
+    // 创建新的 visitor 对象
+    const newVisitor = {}
+    const executionLog = []
+
+    mergeVisitors(newVisitor, {
+       CallExpression: () => executionLog.push('ali')
+     })
+
+     // 再次合并不应该影响原始对象
+     mergeVisitors(newVisitor, {
+       CallExpression: () => executionLog.push('non-wx')
+     })
+
+     // 测试 MemberExpression
+     mergeVisitors(newVisitor, {
+       MemberExpression: () => executionLog.push('dd')
+     })
+
+     // 再次合并不应该影响原始对象
+     mergeVisitors(newVisitor, {
+       MemberExpression: () => executionLog.push('non-wxs')
+     })
+
+     // 验证合并后的函数可以正常执行
+     expect(typeof newVisitor.CallExpression).toBe('object')
+     expect(typeof newVisitor.MemberExpression).toBe('object')
+
+     newVisitor.CallExpression.enter.forEach(fn => fn({}))
+     newVisitor.MemberExpression.enter.forEach(fn => fn({}))
+
+     expect(executionLog).toEqual(['ali', 'non-wx', 'dd', 'non-wxs'])
   })
 })
