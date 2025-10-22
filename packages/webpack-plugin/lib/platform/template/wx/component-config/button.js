@@ -31,13 +31,16 @@ module.exports = function ({ print }) {
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const wxPropValueLog = print({ platform: 'wx', tag: TAG_NAME, isError: false, type: 'value' })
   const iosValueLogError = print({ platform: 'ios', tag: TAG_NAME, isError: true, type: 'value' })
+  const iosValueLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'value' })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
   const androidValueLogError = print({ platform: 'android', tag: TAG_NAME, isError: true, type: 'value' })
+  const androidValueLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'value' })
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
 
   const harmonyValueLogError = print({ platform: 'harmony', tag: TAG_NAME, isError: true, type: 'value' })
+  const harmonyValueLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'value' })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
 
@@ -124,7 +127,7 @@ module.exports = function ({ print }) {
           if (isMustache(value)) {
             ttValueLog({ name, value })
           } else {
-            const supportList = ['share', 'getPhoneNumber', 'contact', 'im', 'openSetting']
+            const supportList = ['share', 'getPhoneNumber', 'contact', 'im', 'openSetting', 'addShortcut']
             if (value && supportList.indexOf(value) === -1) {
               ttValueLogError({ name, value })
             }
@@ -133,19 +136,25 @@ module.exports = function ({ print }) {
         ios ({ name, value }) {
           // TODO 此处open-type无其他属性支持了？
           const supported = ['share']
-          if (!supported.includes(value)) {
+          if (isMustache(value)) {
+            iosValueLog({ name, value })
+          } else if (!supported.includes(value)) {
             iosValueLogError({ name, value })
           }
         },
         android ({ name, value }) {
           const supported = ['share']
-          if (!supported.includes(value)) {
+          if (isMustache(value)) {
+            androidValueLog({ name, value })
+          } else if (!supported.includes(value)) {
             androidValueLogError({ name, value })
           }
         },
         harmony ({ name, value }) {
           const supported = ['share']
-          if (!supported.includes(value)) {
+          if (isMustache(value)) {
+            harmonyValueLog({ name, value })
+          } else if (!supported.includes(value)) {
             harmonyValueLogError({ name, value })
           }
         }

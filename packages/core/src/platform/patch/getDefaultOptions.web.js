@@ -89,8 +89,8 @@ export function getDefaultOptions ({ type, rawOptions = {} }) {
     },
     destroyed () {
       if (this.__mpxProxy) {
-        this.__mpxProxy.state = UNMOUNTED
         this.__mpxProxy.callHook(UNMOUNTED)
+        this.__mpxProxy.state = UNMOUNTED
       }
     },
     serverPrefetch (...args) {

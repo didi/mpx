@@ -82,6 +82,9 @@ const hasProto = '__proto__' in {}
 function cached (fn) {
   const cache = Object.create(null)
   return function cachedFn (str) {
+    if (typeof str !== 'string') {
+      return fn(str)
+    }
     const hit = cache[str]
     return hit || (cache[str] = fn(str))
   }

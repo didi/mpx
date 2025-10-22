@@ -116,6 +116,9 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
       source: { html: generateHTML(html) },
       onMessage: (event: WebViewMessageEvent) => {
         setWebViewHeight(+event.nativeEvent.data)
+      },
+      style: {
+        backgroundColor: 'transparent'
       }
     })
   )

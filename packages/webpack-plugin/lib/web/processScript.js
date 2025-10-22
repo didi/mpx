@@ -7,7 +7,8 @@ const {
   buildComponentsMap,
   getRequireScript,
   buildGlobalParams,
-  stringifyRequest
+  stringifyRequest,
+  buildI18n
 } = require('./script-helper')
 
 module.exports = function (script, {
@@ -24,7 +25,9 @@ module.exports = function (script, {
   wxsModuleMap,
   localComponentsMap
 }, callback) {
-  const { projectRoot, appInfo, webConfig } = loaderContext.getMpx()
+  const { projectRoot, appInfo, webConfig, i18n } = loaderContext.getMpx()
+
+  const { disablePageTransition = true } = webConfig
 
   let output = '/* script */\n'
 
@@ -70,19 +73,23 @@ module.exports = function (script, {
       }
 
       content += buildGlobalParams({ moduleId, scriptSrcMode, loaderContext, isProduction, webConfig, hasApp })
+      if (!hasApp && i18n) {
+        content += buildI18n({ i18n, loaderContext })
+      }
       content += getRequireScript({ ctorType, script, loaderContext })
       content += `
+  // @ts-ignore
   export default processComponentOption({
     option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
     ctorType: ${JSON.stringify(ctorType)},
     outputPath: ${JSON.stringify(outputPath)},
     pageConfig: ${JSON.stringify(pageConfig)},
-    // @ts-ignore
     componentsMap: ${shallowStringify(componentsMap)},
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     wxsMixin: getWxsMixin(wxsModules),
-    hasApp: ${hasApp}
+    hasApp: ${hasApp},
+    disablePageTransition: ${JSON.stringify(disablePageTransition)},
   })\n`
       return content
     }

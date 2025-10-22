@@ -14,24 +14,24 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
 
     config 可指定以下属性：
     - **url**
-    
+
         `string`
-    
+
         设置请求url
     - **method**
 
         `string`
-    
+
         设置请求方式，默认为GET
     - **data**
 
         `object`
-    
+
         设置请求参数
     - **params**
 
         `object`
-    
+
         设置请求参数，参数会以 Query String 的形式进行传递
     - **header**
 
@@ -40,14 +40,14 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
         设置请求的 header，header 中不能设置 Referer。
         `content-type` 默认为 `application/json`
     - **timeout**
-                        
+
         `number`
-                        
+
         单位为毫秒。若不传，默认读取app.json文件中__networkTimeout属性。 对于超时的处理可在 catch 方法中进行
     - **emulateJSON**
 
         `boolean`
-    
+
         设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
     - **usePre**
 
@@ -565,6 +565,7 @@ useFetch().fetch({
 | onNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | offNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
 | createVideoContext |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
+| onLazyLoadError |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
 ## webview-bridge
 Mpx 支持小程序跨平台后，多个平台的小程序里都提供了 webview 组件，webview 打开的 H5 页面可以通过小程序提供的 API 来与小程序通信以及调用一些小程序的能力，但是各家小程序对于 webview 提供的API是不一样的。
 
@@ -694,20 +695,20 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
   `Array<object>`
 
   配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
-  
+
   - name
-  
+
     `string`
 
     分组名称
 
   - threshold
-  
+
     `string | object`
 
     分组相关体积阈值，若不配置则该分组不校验体积阈值，同时也支持对分组中占各分包体积阈值
 
-    
+
     ```html
     // 分组体积限额 500KB
     threshold: '500KB'
@@ -719,32 +720,32 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
       }
     }
     ```
-    
+
   - entryRules
-  
+
     `object`
-  
+
     配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry
-  
+
       - include: 包含符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
-    
-    
+
+
     ```html
     include: [/@someGroup\/some-npm-package/],
     exclude: [/@someGroup\/some-two-pack/]
     ```
-    
+
   - noEntryRules
 
     `object`
 
     配置计算分组中纯 js 入口引入的体积（不包含组件和页面）
-  
+
       - include: 包含符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
-    
-    
+
+
     ```html
     include: [/@someGroup\/some-npm-package/],
     exclude: [/@someGroup\/some-two-pack/]
@@ -982,7 +983,7 @@ function t(key: string, choice?: number, values: Array | Object): TranslateResul
       }
     }
   }
-  
+
   createComponent({
     setup(){
         const { t } = useI18n({

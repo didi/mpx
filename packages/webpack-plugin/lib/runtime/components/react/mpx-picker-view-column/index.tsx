@@ -5,7 +5,8 @@ import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAn
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
-import MpxPickerVIewColumnItem from './pickerViewColumnItem'
+import MpxPickerViewColumnItem from './pickerViewColumnItem'
+import MpxPickerViewColumnItemLite from './pickerViewColumnItemLite'
 import { PickerViewColumnAnimationContext } from '../mpx-picker-view/pickerVIewContext'
 import { calcHeightOffsets } from './pickerViewFaces'
 
@@ -25,6 +26,7 @@ interface ColumnProps {
   }
   pickerMaskStyle: Record<string, any>
   pickerIndicatorStyle: Record<string, any>
+  enableWheelAnimation?: boolean
 }
 
 const visibleCount = 5
@@ -39,6 +41,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     wrapperStyle,
     pickerMaskStyle,
     pickerIndicatorStyle,
+    enableWheelAnimation = true,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
@@ -223,8 +226,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     // 全局注册的振动触感 hook
-    const pickerVibrate = global.__mpx?.config?.rnConfig?.pickerVibrate
-    if (typeof pickerVibrate !== 'function') {
+    const onPickerVibrate = global.__mpx?.config?.rnConfig?.onPickerVibrate
+    if (typeof onPickerVibrate !== 'function') {
       return
     }
     const { y } = e.nativeEvent.contentOffset
@@ -238,7 +241,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
             y: currentId * itemRawH
           }
           // vibrateShort({ type: 'selection' })
-          pickerVibrate()
+          onPickerVibrate()
         }
       }
     }
@@ -287,8 +290,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {
-      return (
-        <MpxPickerVIewColumnItem
+      return enableWheelAnimation
+        ? (<MpxPickerViewColumnItem
           key={index}
           item={item}
           index={index}
@@ -297,8 +300,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           textProps={textProps}
           visibleCount={visibleCount}
           onItemLayout={onItemLayout}
-        />
-      )
+        />)
+        : (<MpxPickerViewColumnItemLite
+          key={index}
+          item={item}
+          index={index}
+          itemHeight={itemHeight}
+          textStyle={textStyle}
+          textProps={textProps}
+          onItemLayout={onItemLayout}
+        />)
     })
 
   const renderScollView = () => {
@@ -351,9 +362,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   return (
     <View style={[styles.wrapper, normalStyle]}>
-        {renderScollView()}
-        {renderMask()}
-        {renderIndicator()}
+      {renderScollView()}
+      {renderMask()}
+      {renderIndicator()}
     </View>
   )
 })

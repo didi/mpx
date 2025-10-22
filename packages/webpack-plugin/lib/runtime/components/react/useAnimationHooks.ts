@@ -14,6 +14,7 @@ import {
 } from 'react-native-reanimated'
 import type { AnimationCallback, WithTimingConfig, SharedValue, AnimatableValue } from 'react-native-reanimated'
 import { error, hasOwn, collectDataset } from '@mpxjs/utils'
+import { useRunOnJSCallback } from './utils'
 import { ExtendedViewStyle } from './types/common'
 import type { _ViewProps } from './mpx-view'
 
@@ -84,88 +85,6 @@ const InitialValue: ExtendedViewStyle = Object.assign({
 const TransformOrigin = 'transformOrigin'
 // transform
 const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
-// 多value解析
-const parseValues = (str: string, char = ' ') => {
-  let stack = 0
-  let temp = ''
-  const result = []
-  for (let i = 0; i < str.length; i++) {
-    if (str[i] === '(') {
-      stack++
-    } else if (str[i] === ')') {
-      stack--
-    }
-    // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
-      temp += str[i]
-    }
-    if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp)
-      temp = ''
-    }
-  }
-  return result
-}
-// parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
-const parseTransform = (transformStr: string) => {
-  const values = parseValues(transformStr)
-  const transform: {[propName: string]: string|number|number[]}[] = []
-  values.forEach(item => {
-    const match = item.match(/([/\w]+)\((.+)\)/)
-    if (match && match.length >= 3) {
-      let key = match[1]
-      const val = match[2]
-      switch (key) {
-        case 'translateX':
-        case 'translateY':
-        case 'scaleX':
-        case 'scaleY':
-        case 'rotateX':
-        case 'rotateY':
-        case 'rotateZ':
-        case 'rotate':
-        case 'skewX':
-        case 'skewY':
-        case 'perspective':
-          // rotate 处理成 rotateZ
-          key = key === 'rotate' ? 'rotateZ' : key
-          // 单个值处理
-          transform.push({ [key]: global.__formatValue(val) })
-          break
-        case 'matrix':
-          transform.push({ [key]: parseValues(val, ',').map(val => +val) })
-          break
-        case 'translate':
-        case 'scale':
-        case 'skew':
-        case 'translate3d': // x y 支持 z不支持
-        case 'scale3d': // x y 支持 z不支持
-        {
-          // 2 个以上的值处理
-          key = key.replace('3d', '')
-          const vals = parseValues(val, ',').splice(0, 3)
-          // scale(.5) === scaleX(.5) scaleY(.5)
-          if (vals.length === 1 && key === 'scale') {
-            vals.push(vals[0])
-          }
-          const xyz = ['X', 'Y', 'Z']
-          transform.push(...vals.map((v, index) => {
-            return { [`${key}${xyz[index] || ''}`]: global.__formatValue(v.trim()) }
-          }))
-          break
-        }
-      }
-    }
-  })
-  return transform
-}
-// format style
-const formatStyle = (style: ExtendedViewStyle): ExtendedViewStyle => {
-  if (!style.transform || Array.isArray(style.transform)) return style
-  return Object.assign({}, style, {
-    transform: parseTransform(style.transform)
-  })
-}
 
 // transform 数组转对象
 function getTransformObj (transforms: { [propName: string]: string | number }[]) {
@@ -176,7 +95,7 @@ function getTransformObj (transforms: { [propName: string]: string | number }[])
 }
 
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
-  const { style = {}, animation, enableAnimation, transitionend, layoutRef } = props
+  const { style: originalStyle = {}, animation, enableAnimation, transitionend, layoutRef } = props
   const enableStyleAnimation = enableAnimation || !!animation
   const enableAnimationRef = useRef(enableStyleAnimation)
   if (enableAnimationRef.current !== enableStyleAnimation) {
@@ -185,7 +104,6 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
 
   if (!enableAnimationRef.current) return { enableStyleAnimation: false }
 
-  const originalStyle = formatStyle(style)
   // id 标识
   const id = animation?.id || -1
   // 有动画样式的 style key
@@ -214,7 +132,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   useEffect(() => {
     // style 更新后同步更新 lastStyleRef & shareValMap
     updateStyleVal()
-  }, [style])
+  }, [originalStyle])
   // ** 获取动画样式prop & 驱动动画
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -301,13 +219,19 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
       timeStamp: Date.now()
     })
   }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const runOnJSCallbackRef = useRef({
+    withTimingCallback
+  })
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 创建单个animation
   function getAnimation ({ key, value }: { key: string, value: string|number }, { delay, duration, easing }: ExtendWithTimingConfig, callback?: AnimationCallback) {
     const animation = typeof callback === 'function'
       ? withTiming(value, { duration, easing }, (finished, current) => {
         callback(finished, current)
         if (transitionend && finished) {
-          runOnJS(withTimingCallback)(finished, current, duration)
+          runOnJS(runOnJSCallback)('withTimingCallback', finished, current, duration)
         }
       })
       : withTiming(value, { duration, easing })

@@ -1,12 +1,9 @@
 const runRules = require('../../run-rules')
 const normalizeTest = require('../normalize-test')
 const changeKey = require('../change-key')
-const normalize = require('../../../utils/normalize')
 const { capitalToHyphen } = require('../../../utils/string')
-const { isOriginTag, isBuildInTag } = require('../../../utils/dom-tag-config')
-
-const mpxViewPath = normalize.lib('runtime/components/ali/mpx-view.mpx')
-const mpxTextPath = normalize.lib('runtime/components/ali/mpx-text.mpx')
+const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../utils/dom-tag-config')
+const getBuildInTagComponent = require('../../../utils/get-build-tag-component')
 
 module.exports = function getSpec ({ warn, error }) {
   function print (mode, path, isError) {
@@ -46,28 +43,26 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   // 处理支付宝 componentPlaceholder 不支持 view、text 原生标签
-  function aliComponentPlaceholderFallback (input) {
-    // 处理 驼峰转连字符
-    input = componentNameCapitalToHyphen('componentPlaceholder')(input)
+  // 将 placeholder 中使用的内建组件转化为 mpx-xxx, 并在 usingComponents 填充
+  function fixComponentPlaceholder (input, { mode }) {
+    if (!input.componentPlaceholder) return input
+    if (mode === 'ali') {
+      // 处理 驼峰转连字符
+      input = componentNameCapitalToHyphen('componentPlaceholder')(input)
+    }
     const componentPlaceholder = input.componentPlaceholder
-    const usingComponents = input.usingComponents || (input.usingComponents = {})
+    const usingComponents = input.usingComponents || {}
     for (const cph in componentPlaceholder) {
       const cur = componentPlaceholder[cph]
-      const placeholderCompMatched = cur.match(/^(?:view|text)$/g)
-      if (!Array.isArray(placeholderCompMatched)) continue
-      let compName, compPath
-      switch (placeholderCompMatched[0]) {
-        case 'view':
-          compName = 'mpx-view'
-          compPath = mpxViewPath
-          break
-        case 'text':
-          compName = 'mpx-text'
-          compPath = mpxTextPath
-      }
-      usingComponents[compName] = compPath
-      componentPlaceholder[cph] = compName
+      const comp = getBuildInTagComponent(mode, cur)
+      if (!comp || usingComponents[cur]) continue
+      const { name, resource } = comp
+      usingComponents[name] = resource
+      componentPlaceholder[cph] = name
     }
+
+    input.usingComponents = usingComponents
+    input.componentPlaceholder = componentPlaceholder
     return input
   }
 
@@ -128,19 +123,41 @@ module.exports = function getSpec ({ warn, error }) {
   /**
    * 将小程序代码中使用的与原生 HTML tag 或 内建组件 同名的组件进行转化，以解决与原生tag命名冲突问题。
    */
-  function fixComponentName (type) {
-    return function (input) {
-      const usingComponents = input[type]
-      if (usingComponents) {
-        Object.keys(usingComponents).forEach(tag => {
-          if (isOriginTag(tag) || isBuildInTag(tag)) {
-            usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
-            delete usingComponents[tag]
+  function fixComponentName (input, { mode }) {
+    const isNeedFixTag = (tag) => {
+      switch (mode) {
+        case 'web': return isOriginTag(tag) || isBuildInWebTag(tag)
+        case 'ios':
+        case 'android':
+        case 'harmony': return isOriginTag(tag) || isBuildInReactTag(tag)
+      }
+    }
+
+    const usingComponents = input.usingComponents
+    const componentPlaceholder = input.componentPlaceholder
+    if (usingComponents) {
+      const transfromKeys = []
+      Object.keys(usingComponents).forEach(tag => {
+        if (isNeedFixTag(tag)) {
+          usingComponents[`mpx-com-${tag}`] = usingComponents[tag]
+          delete usingComponents[tag]
+          transfromKeys.push(tag)
+        }
+      })
+
+      if (transfromKeys.length && componentPlaceholder) {
+        Object.keys(componentPlaceholder).forEach(key => {
+          if (transfromKeys.includes(componentPlaceholder[key])) {
+            componentPlaceholder[key] = `mpx-com-${componentPlaceholder[key]}`
+          }
+          if (transfromKeys.includes(key)) {
+            componentPlaceholder[`mpx-com-${key}`] = componentPlaceholder[key]
+            delete componentPlaceholder[key]
           }
         })
       }
-      return input
     }
+    return input
   }
 
   const componentRules = [
@@ -150,16 +167,8 @@ module.exports = function getSpec ({ warn, error }) {
     },
     {
       test: 'componentPlaceholder',
-      ali: aliComponentPlaceholderFallback,
       swan: deletePath(),
       jd: deletePath()
-    },
-    {
-      test: 'usingComponents',
-      web: fixComponentName('usingComponents'),
-      ios: fixComponentName('usingComponents'),
-      android: fixComponentName('usingComponents'),
-      harmony: fixComponentName('usingComponents')
     },
     {
       test: 'usingComponents',
@@ -170,7 +179,18 @@ module.exports = function getSpec ({ warn, error }) {
       swan: addGlobalComponents,
       qq: addGlobalComponents,
       tt: addGlobalComponents,
-      jd: addGlobalComponents
+      jd: addGlobalComponents,
+      web: fixComponentName,
+      ios: fixComponentName,
+      android: fixComponentName,
+      harmony: fixComponentName
+    },
+    {
+      ali: fixComponentPlaceholder,
+      web: fixComponentPlaceholder,
+      ios: fixComponentPlaceholder,
+      android: fixComponentPlaceholder,
+      harmony: fixComponentPlaceholder
     }
   ]
 
@@ -354,7 +374,6 @@ module.exports = function getSpec ({ warn, error }) {
       },
       {
         test: 'preloadRule',
-        tt: deletePath(),
         jd: deletePath()
       },
       {
@@ -371,13 +390,6 @@ module.exports = function getSpec ({ warn, error }) {
         swan: deletePath(true),
         tt: deletePath(),
         jd: deletePath(true)
-      },
-      {
-        test: 'usingComponents',
-        web: fixComponentName('usingComponents'),
-        ios: fixComponentName('usingComponents'),
-        android: fixComponentName('usingComponents'),
-        harmony: fixComponentName('usingComponents')
       },
       {
         test: 'usingComponents',

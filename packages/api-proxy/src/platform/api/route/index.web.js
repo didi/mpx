@@ -1,4 +1,4 @@
-import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser } from '../../../common/js'
+import { successHandle, failHandle, isTabBarPage, throwSSRWarning, isBrowser, resolvePath } from '../../../common/js'
 import { EventChannel } from '../event-channel'
 
 let routeCount = 0
@@ -46,9 +46,13 @@ function navigateTo (options = {}) {
       const res = { errMsg: 'navigateTo:fail can not navigateTo a tabBar page' }
       failHandle(res, options.fail, options.complete)
     }
+    const finalPath = resolvePath(options.url, router.currentRoute.path).slice(1)
     const eventChannel = new EventChannel()
     router.__mpxAction = {
-      type: 'to',
+      type: 'to'
+    }
+    global.__mpxEventChannel = {
+      route: finalPath,
       eventChannel
     }
     if (options.events) {

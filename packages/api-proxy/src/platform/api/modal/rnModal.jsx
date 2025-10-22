@@ -47,7 +47,8 @@ const showModal = function (options = {}) {
       alignItems: 'center',
       display: 'flex',
       backgroundColor: 'rgba(0,0,0,0.6)',
-      position: 'absolute'
+      position: 'absolute',
+      zIndex: 10000
     },
     modalContent: {
       paddingTop: 20,

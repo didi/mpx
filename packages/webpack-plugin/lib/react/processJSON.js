@@ -8,6 +8,7 @@ const addQuery = require('../utils/add-query')
 const parseComponent = require('../parser')
 const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
+const { transSubpackage } = require('../utils/trans-async-sub-rules')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
@@ -38,23 +39,38 @@ module.exports = function (jsonContent, {
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
-      new Error('[json processor][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     loaderContext.emitError(
-      new Error('[json compiler][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
+  function fillInComponentsMap (name, entry, tarRoot) {
+    const { resource, outputPath } = entry
+    const { resourcePath } = parseRequest(resource)
+    componentsMap[resourcePath] = outputPath
+    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+    localComponentsMap[name] = {
+      resource: addQuery(resource, {
+        isComponent: true,
+        outputPath
+      }),
+      async: tarRoot
+    }
+  }
+
   const {
     isUrlRequest,
     urlToRequest,
     processPage,
-    processComponent
+    processComponent,
+    processPlaceholder
   } = createJSONHelper({
     loaderContext,
     emitWarning,
@@ -247,7 +263,7 @@ module.exports = function (jsonContent, {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
           if (pageKeySet.has(key)) return callback()
           pageKeySet.add(key)
-          const { resourcePath, queryObj } = parseRequest(resource)
+          const { resourcePath } = parseRequest(resource)
           if (localPagesMap[outputPath]) {
             const { resourcePath: oldResourcePath } = parseRequest(localPagesMap[outputPath].resource)
             if (oldResourcePath !== resourcePath) {
@@ -259,9 +275,11 @@ module.exports = function (jsonContent, {
 
           pagesMap[resourcePath] = outputPath
           loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'page', outputPath))
+          // 通过asyncSubPackagesNameRules对tarRoot进行修改，仅修改tarRoot，不修改outputPath页面路径
+          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
           localPagesMap[outputPath] = {
             resource: addQuery(resource, { isPage: true }),
-            async: queryObj.async || tarRoot,
+            async: tarRoot,
             isFirst
           }
           callback()
@@ -300,22 +318,34 @@ module.exports = function (jsonContent, {
 
   const processComponents = (components, context, callback) => {
     if (components) {
+      const asyncComponents = []
+      const resolveResourcePathMap = new Map()
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, { resource, outputPath } = {}, { tarRoot } = {}) => {
+        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder, resourcePath } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          const { resourcePath, queryObj } = parseRequest(resource)
-          componentsMap[resourcePath] = outputPath
-          loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-          localComponentsMap[name] = {
-            resource: addQuery(resource, {
-              isComponent: true,
-              outputPath
-            }),
-            async: queryObj.async || tarRoot
-          }
+          const { relativePath } = entry
+
+          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+
+          resolveResourcePathMap.set(name, resourcePath)
+          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+
+          fillInComponentsMap(name, entry, tarRoot)
           callback()
         })
-      }, callback)
+      }, (err) => {
+        if (err) return callback(err)
+        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+          processPlaceholder({ jsonObj, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, placeholder) => {
+            if (err) return callback(err)
+            if (placeholder) {
+              const { name, entry } = placeholder
+              fillInComponentsMap(name, entry, '')
+            }
+            callback()
+          })
+        }, callback)
+      })
     } else {
       callback()
     }
@@ -333,7 +363,6 @@ module.exports = function (jsonContent, {
       callback()
     }
   }
-
   async.parallel([
     (callback) => {
       // 添加首页标识

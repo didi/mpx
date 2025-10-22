@@ -34,7 +34,8 @@ module.exports = function getSpec ({ warn, error }) {
       touchstart: 'touchstart',
       touchmove: 'touchmove',
       touchend: 'touchend',
-      touchcancel: 'touchcancel'
+      touchcancel: 'touchcancel',
+      transitionend: 'transitionend'
     }
     if (eventMap[eventName]) {
       return eventMap[eventName]
@@ -462,7 +463,9 @@ module.exports = function getSpec ({ warn, error }) {
           ali (prefix) {
             const prefixMap = {
               bind: 'on',
-              catch: 'catch'
+              catch: 'catch',
+              'capture-catch': 'capture-catch',
+              'capture-bind': 'capture-on'
             }
             if (!prefixMap[prefix]) {
               error(`Ali environment does not support [${prefix}] event handling!`)

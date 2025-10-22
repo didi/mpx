@@ -48,7 +48,7 @@ interface Rules {
 }
 ```
 
-## MpxWebpackPlugin 
+## MpxWebpackPlugin
 
 Mpx 编译构建跨平台小程序和 web 的 webpack 主插件，安装示例如下：
 
@@ -824,8 +824,17 @@ module.exports = defineConfig({
 
 transRpxFn 配置用于自定义输出 web 时对于 rpx 样式单位的转换逻辑，常见的方式有转换为 vw 或转换为 rem
 
+`{useSSR: boolean}`
+
+useSSR 默认值为 `false`，当 SSR 模式下使用异步分包时，需要将 useSSR 设置为 `true`, 其他场景不需要。
+
+`{disablePageTransition: boolean}`
+
+用于配置禁用/开启页面切换动画，默认禁用
+
+
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -834,7 +843,11 @@ module.exports = defineConfig({
           transRpxFn: function (match, $1) {
             if ($1 === '0') return $1
             return `${$1 * +(100 / 750).toFixed(8)}vw`
-          }
+          },
+          // 当 SSR 模式下使用异步分包时
+          useSSR: true,
+          // 开启页面切换动画
+          disablePageTransition: false
         }
       }
     }
@@ -1133,7 +1146,7 @@ module.exports = defineConfig({
 
 `boolean = false`
 
-Mpx 框架在输出 微信小程序、支付宝小程序、字节小程序、Web 平台时，默认支持分包异步化能力，但若在某些场景下需要关闭该能力，可配置该项。
+Mpx 框架在输出 微信小程序、支付宝小程序、字节小程序、Web、RN 平台时，默认支持分包异步化能力，但若在某些场景下需要关闭该能力，可配置该项。
 
 ```js
 // vue.config.js
@@ -1380,7 +1393,7 @@ module.exports = defineConfig({
 
 如果创建项目时未选 unocss，需手动安装，安装示例如下：
 
-```bash 
+```bash
 npm install -D @mpxjs/unocss-plugin
 pnpm install -D @mpxjs/unocss-plugin
 yarn add -D @mpxjs/unocss-plugin
@@ -1712,7 +1725,7 @@ module.exports = defineConfig({
 
 Mpx 内置的 unocss preset，继承自 `@unocss/preset-uno`，并额外提供小程序原子类的预设样式，安装示例如下：
 
-```bash 
+```bash
 npm install -D @mpxjs/unocss-base
 pnpm install -D @mpxjs/unocss-base
 yarn add -D @mpxjs/unocss-base
@@ -1740,7 +1753,7 @@ yarn add -D @mpxjs/unocss-base
 ### baseFontSize
 
 `number = 37.5`
- 
+
 同比换算1rem = 37.5rpx适配小程序
 ```js
   // uno.config.js
@@ -1854,7 +1867,7 @@ CSS变量的前缀
 ```css
   .bg-red-500{--un-bg-opacity:1;background-color:rgba(239,68,68,var(--un-bg-opacity));}
 ```
-  
+
 ## Request query
 
 Mpx中允许用户在request中传递特定query执行特定逻辑，目前已支持的query如下：
@@ -2055,7 +2068,7 @@ module.exports = defineConfig({
 ，如果你希望对于部分主包页面或者分包页面配置路由懒加载并想自定义Chunk Name，则可以使用该功能。
 
 ```html
-// app.mpx 
+// app.mpx
 <script type="application/json">
   {
     "pages": [

@@ -285,6 +285,13 @@ module.exports = function getSpec ({ warn, error }) {
 
   // line-height
   const formatLineHeight = ({ prop, value, selector }) => {
+    // line-height 0 直接返回
+    if (+value === 0) {
+      return {
+        prop,
+        value
+      }
+    }
     return verifyValues({ prop, value, selector }) && ({
       prop,
       value: /^\s*(-?(\d+(\.\d+)?|\.\d+))\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
@@ -308,7 +315,7 @@ module.exports = function getSpec ({ warn, error }) {
     switch (prop) {
       case bgPropMap.image: {
         // background-image 支持背景图/渐变/css var
-        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value)) {
+        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value) || value === 'none') {
           return { prop, value }
         } else {
           error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
@@ -351,6 +358,13 @@ module.exports = function getSpec ({ warn, error }) {
         if (cssVariableExp.test(value)) {
           error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
+        }
+        // background: none
+        if (value === 'none') {
+          return [
+            { prop: bgPropMap.image, value },
+            { prop: bgPropMap.color, value: 'transparent' }
+          ]
         }
         const bgMap = []
         const values = parseValues(value)
@@ -540,6 +554,17 @@ module.exports = function getSpec ({ warn, error }) {
   //   })
   //   return cssMap
   // }
+  const formatBorder = ({ prop, value, selector }, { mode }) => {
+    value = value.trim()
+    if (value === 'none') {
+      return {
+        prop: 'borderWidth',
+        value: 0
+      }
+    } else {
+      return formatAbbreviation({ prop, value, selector }, { mode })
+    }
+  }
 
   return {
     supportedModes: ['ios', 'android', 'harmony'],
@@ -586,6 +611,12 @@ module.exports = function getSpec ({ warn, error }) {
       //   android: formatBoxShadow,
       //   harmony: formatBoxShadow
       // },
+      {
+        test: 'border',
+        ios: formatBorder,
+        android: formatBorder,
+        harmony: formatBorder
+      },
       // 通用的简写格式匹配
       {
         test: new RegExp('^(' + Object.keys(AbbreviationMap).join('|') + ')$'),
