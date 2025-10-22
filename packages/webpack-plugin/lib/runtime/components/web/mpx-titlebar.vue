@@ -1,5 +1,13 @@
 <script>
 import mpx from '@mpxjs/core'
+
+const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent)
+const innerHeight = (isIOS ? 44 : 48) + 'px'
+
+const safeStyle = { paddingTop: 'var(--safe-area-inset-top)' }
+
+console.log('isIOS', isIOS)
+
 export default {
   name: 'mpx-titlebar',
   props: {
@@ -49,23 +57,19 @@ export default {
         return false
       }
     },
-    // safe area 顶部 padding，使用 env(safe-area-inset-top)
-    safeStyle() {
-      // 多数浏览器支持 env(), 为兼容也使用 constant() 备选（旧 iOS Safari）
-      return {
-        paddingTop: 'env(safe-area-inset-top, 0px)'
+    // 安卓安全高度
+    safeAreaInsetTop() {
+      if (typeof mpx.config.webConfig.safeAreaInsetTop === 'number' && mpx.config.webConfig.safeAreaInsetTop >= 0) {
+        return mpx.config.webConfig.safeAreaInsetTop
       }
+      return 24
     },
     warpStyle() {
       return {
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 44px)',
-        height: '100%'
+        '--titlebar-height': innerHeight,
+        '--safe-area-inset-top': `${isIOS ? 'env(safe-area-inset-top, constant(safe-area-inset-top), 0px)' : this.safeAreaInsetTop + 'px'}`,
+        paddingTop: 'calc(var(--safe-area-inset-top) + var(--titlebar-height))',
       }
-    },
-    // 内部标题栏高度（遵循小程序常见平台差异）
-    innerHeight() {
-      const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent)
-      return (isIOS ? 44 : 48) + 'px'
     },
     rootStyle() {
       return {
@@ -75,7 +79,7 @@ export default {
     },
     innerStyle() {
       return {
-        height: this.innerHeight
+        height: innerHeight
       }
     }
   },
@@ -134,7 +138,7 @@ export default {
         class: ['mpx-titlebar'],
         style: this.rootStyle
       }, [
-        h('div', { class: 'mpx-titlebar__safe', style: this.safeStyle }, [
+        h('div', { class: 'mpx-titlebar__safe', style: safeStyle }, [
           h('div', { class: 'mpx-titlebar__inner', style: this.innerStyle }, [
             h('div', { class: 'mpx-titlebar__left', on: { click: this.onLeftClick } }, leftChildren),
             h('div', { class: 'mpx-titlebar__center' }, centerChildren),
@@ -151,6 +155,7 @@ export default {
 <style scoped>
 .mpx-page-warp {
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
 }
 
@@ -160,9 +165,7 @@ export default {
 }
 
 .mpx-titlebar__safe {
-  /* safe area handled by padding-top; include both env and constant for broader iOS support */
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-top: constant(safe-area-inset-top, 0px);
+  padding-top: var(--safe-area-inset-top);
 }
 
 .mpx-titlebar__inner {
@@ -209,7 +212,7 @@ export default {
 
 .mpx-titlebar {
   /* flex-shrink: 0; */
-  height: calc(env(safe-area-inset-top, 0px) + 44px);
+  height: calc(var(--safe-area-inset-top) + var(--titlebar-height));
   width: 100%;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
