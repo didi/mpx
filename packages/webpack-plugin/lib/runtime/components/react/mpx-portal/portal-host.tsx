@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode, useMemo, useContext, useState, useCallback } from 'react'
+import { useEffect, useRef, ReactNode, useMemo, useContext } from 'react'
 import {
   View,
   DeviceEventEmitter,
@@ -6,20 +6,18 @@ import {
   StyleSheet
 } from 'react-native'
 import PortalManager from './portal-manager'
-import { NoopContext, PortalContext, PortalManagerContextValue, PortalManagerProxyContext, RouteContext } from '../context'
+import { PortalContext, RouteContext } from '../context'
 
 type PortalHostProps = {
   children: ReactNode,
-  RouteContext?: typeof RouteContext,
-  PortalManagerProxyContext?: typeof PortalManagerProxyContext
-  PortalContext?: typeof PortalContext
-  /**
-   * 是否禁止监听外部事件
-   * @default false
-   */
-  disableListenExternalEvent?: boolean
+  pageId: number
 }
 
+interface PortalManagerContextValue {
+  mount: (key: number, children: React.ReactNode) => void
+  update: (key: number, children: React.ReactNode) => void
+  unmount: (key: number) => void
+}
 
 export type Operation =
   | { type: 'mount'; key: number; children: ReactNode }
@@ -60,20 +58,11 @@ class PortalGuard {
  */
 export const portal = new PortalGuard()
 
-const PortalHost = ({
-  children,
-  RouteContext: CustomeRouteContext = RouteContext,
-  PortalManagerProxyContext: ScopePortalManagerProxyContext = NoopContext,
-  PortalContext: ScopePortalContext = PortalContext,
-  disableListenExternalEvent
-}: PortalHostProps): JSX.Element => {
+const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
   const _nextKey = useRef(0)
-  const portalManagerContext = useContext(ScopePortalManagerProxyContext)
-  const _manager = useRef<PortalManagerContextValue | null>(null)
-  const manager = portalManagerContext || _manager
-
+  const manager = useRef<PortalManagerContextValue | null>(null)
   const queue = useRef<Array<{ type: string, key: number; children: ReactNode }>>([])
-  const { pageId } = useContext(CustomeRouteContext) || {}
+  const { pageId } = useContext(RouteContext) || {}
   const mount = (children: ReactNode, _key?: number, id?: number|null) => {
     if (id !== pageId) return
     const key = _key || _nextKey.current++
@@ -107,10 +96,6 @@ const PortalHost = ({
     }
   }
   const subScriptions = useMemo(() => {
-    if (disableListenExternalEvent) {
-      return []
-    }
-
     return [
       TopViewEventEmitter.addListener(addType, mount),
       TopViewEventEmitter.addListener(removeType, unmount),
@@ -138,7 +123,7 @@ const PortalHost = ({
     }
   }, [])
   return (
-    <ScopePortalContext.Provider
+    <PortalContext.Provider
       value={{
         mount,
         update,
@@ -148,9 +133,8 @@ const PortalHost = ({
       <View style={styles.container} collapsable={false}>
         {children}
       </View>
-      {/* 代理存在时，不使用 PortalManager，由外部控制 */}
-      {portalManagerContext ? null : <PortalManager ref={manager} />}
-    </ScopePortalContext.Provider>
+      <PortalManager ref={manager} />
+    </PortalContext.Provider>
   )
 }
 
