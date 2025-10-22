@@ -7,7 +7,7 @@
  * {memberExpression: {enter: fn1}}, {memberExpression: {exit:fn2}} => {memberExpression: {enter: fn1, exit: fn2}}
 **/
 
-module.exports = function chainAssign (target, source) {
+module.exports = function mergeVisitors (target, source) {
   for (const [key, value] of Object.entries(source)) {
     if (target[key]) {
       // 如果已存在同名方法，需要合并
