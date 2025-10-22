@@ -299,7 +299,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       setKeyboardAvoidContext()
     }
 
-    if (bindfocus && keyboardAvoid?.current) {
+    if (bindfocus) {
       const focusAction = () => {
         bindfocus(
           getCustomEvent(
@@ -308,24 +308,30 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
             {
               detail: {
                 value: tmpValue.current || '',
-                height: keyboardAvoid.current?.keyboardHeight,
+                height: keyboardAvoid?.current?.keyboardHeight
               },
               layoutRef
             },
             props
           )
         )
-        if (keyboardAvoid.current?.onKeyboardShow) {
+        if (keyboardAvoid?.current?.onKeyboardShow) {
           keyboardAvoid.current.onKeyboardShow = undefined
         }
       }
-      if (keyboardAvoid.current.keyboardHeight) {
-        // iOS: keyboard 获取高度时机 keyboardWillShow 在 input focus 之前，可以立即执行
-        focusAction()
+      if (keyboardAvoid?.current) {
+        // 有 keyboardAvoiding
+        if (keyboardAvoid.current.keyboardHeight) {
+          // iOS: keyboard 获取高度时机 keyboardWillShow 在 input focus 之前，可以立即执行
+          focusAction()
+        } else {
+          // Android,Harmony: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
+          evt.persist()
+          keyboardAvoid.current.onKeyboardShow = focusAction
+        }
       } else {
-        // Android,Harmony: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
-        evt.persist()
-        keyboardAvoid.current.onKeyboardShow = focusAction
+        // 无 keyboardAvoiding，直接执行 focus 回调
+        focusAction()
       }
     }
   }
