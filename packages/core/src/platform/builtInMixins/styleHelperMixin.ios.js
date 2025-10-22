@@ -257,18 +257,7 @@ export default function styleHelperMixin () {
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
-        const mergeResult = isNativeStaticStyle
-          ? (...args) => result.push(...args)
-          : (...args) => {
-              return args.reduce((result, arg) => {
-                if (arg._media?.length) {
-                  Object.assign(result, arg._default, getMediaStyle(arg._media))
-                } else {
-                  Object.assign(result, arg._default)
-                }
-                return result
-              }, result)
-            }
+        const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
         // 使用一下 __getSizeCount 触发其 get
         this.__getSizeCount()
 
@@ -280,9 +269,17 @@ export default function styleHelperMixin () {
             let localStyle, appStyle
             const getAppClassStyle = global.__getAppClassStyle || noop
             if (localStyle = this.__getClassStyle(className)) {
-              mergeResult(localStyle || empty)
+              if (localStyle._media?.length) {
+                mergeResult(localStyle._default, getMediaStyle(localStyle._media))
+              } else {
+                mergeResult(localStyle._default)
+              }
             } else if (appStyle = getAppClassStyle(className)) {
-              mergeResult(appStyle || empty)
+              if (appStyle._media?.length) {
+                mergeResult(appStyle._default, getMediaStyle(appStyle._media))
+              } else {
+                mergeResult(appStyle._default)
+              }
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               mergeResult(this.__props[className])
