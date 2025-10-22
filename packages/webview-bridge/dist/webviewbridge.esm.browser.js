@@ -121,10 +121,10 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
 
 const initWebviewBridge = () => {
   sdkReady = (env !== 'web' && env !== 'rn') ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
-  sdkReady.catch((err) => {
+  sdkReady.catch((err = {}) => {
     loadErrorCallbacks.forEach((callback) => {
       if (typeof callback === 'function') {
-        callback(err && err.message || err);
+        callback(err.message || err);
       }
     });
   });

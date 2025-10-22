@@ -125,10 +125,11 @@
   }
   var initWebviewBridge = function initWebviewBridge() {
     sdkReady = env !== 'web' && env !== 'rn' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
-    sdkReady["catch"](function (err) {
+    sdkReady["catch"](function () {
+      var err = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       loadErrorCallbacks.forEach(function (callback) {
         if (typeof callback === 'function') {
-          callback(err && err.message || err);
+          callback(err.message || err);
         }
       });
     });
