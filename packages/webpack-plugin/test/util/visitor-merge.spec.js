@@ -314,7 +314,7 @@ describe('mergeVisitors 解决方案', function () {
 
     // 执行
     visitor.CallExpression.enter.forEach(fn => fn({}))
-    visitor.CallExpression.exit({})
+    visitor.CallExpression.exit.forEach(fn => fn({}))
 
     expect(executionLog).toEqual(['function-form', 'object-enter', 'object-exit'])
   })
