@@ -52,6 +52,7 @@ import {
 import contextMap from '../dynamic/vnode/context'
 import { getAst } from '../dynamic/astCache'
 import { inject, provide } from '../platform/export/inject'
+import { startPerformanceTimer, endPerformanceTimer } from '../helper/performanceMonitor'
 
 let uid = 0
 
@@ -164,6 +165,8 @@ export default class MpxProxy {
   }
 
   created () {
+    const timer = isReact ? startPerformanceTimer(this.uid, 'proxy.created') : null
+
     if (__mpx_dynamic_runtime__) {
       // 缓存上下文，在 destoryed 阶段删除
       contextMap.set(this.uid, this.target)
@@ -171,23 +174,52 @@ export default class MpxProxy {
     if (!isWeb) {
       // web中BEFORECREATE钩子通过vue的beforeCreate钩子单独驱动
       this.callHook(BEFORECREATE)
+
+      if (timer) timer.checkpoint('BEFORECREATE hook called')
+
       setCurrentInstance(this)
       this.parent = this.resolveParent()
       this.provides = this.parent ? this.parent.provides : Object.create(null)
+
+      if (timer) timer.checkpoint('parent and provides resolved')
+
       // 在 props/data 初始化之前初始化 inject
       this.initInject()
+
+      if (timer) timer.checkpoint('initInject')
+
       this.initProps()
+
+      if (timer) timer.checkpoint('initProps')
+
       this.initSetup()
+
+      if (timer) timer.checkpoint('initSetup')
+
       this.initData()
+
+      if (timer) timer.checkpoint('initData')
+
       this.initComputed()
+
+      if (timer) timer.checkpoint('initComputed')
+
       this.initWatch()
+
+      if (timer) timer.checkpoint('initWatch')
+
       // 在 props/data 初始化之后初始化 provide
       this.initProvide()
+
+      if (timer) timer.checkpoint('initProvide')
+
       unsetCurrentInstance()
     }
 
     this.state = CREATED
     this.callHook(CREATED)
+
+    if (timer) timer.checkpoint('CREATED hook called')
 
     if (!isWeb && !isReact) {
       this.initRender()
@@ -196,6 +228,8 @@ export default class MpxProxy {
     if (this.reCreated) {
       nextTick(this.mounted.bind(this))
     }
+
+    if (timer) endPerformanceTimer(timer, this.name)
   }
 
   resolveParent () {
@@ -223,11 +257,21 @@ export default class MpxProxy {
 
   mounted () {
     if (this.state === CREATED) {
+      const timer = isReact ? startPerformanceTimer(this.uid, 'mounted') : null
+
       // 用于处理refs等前置工作
       this.callHook(BEFOREMOUNT)
+
+      if (timer) timer.checkpoint('BEFOREMOUNT hook called')
+
       this.state = MOUNTED
       this.callHook(MOUNTED)
+
+      if (timer) timer.checkpoint('MOUNTED hook called')
+
       this.currentRenderTask && this.currentRenderTask.resolve()
+
+      if (timer) endPerformanceTimer(timer, this.name)
     }
   }
 

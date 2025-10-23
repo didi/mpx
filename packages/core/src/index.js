@@ -63,6 +63,17 @@ export { getMixin } from './core/mergeOptions'
 
 export { dynamic } from './dynamic/astCache'
 
+export {
+  enablePerformanceMonitor,
+  getPerformanceSummary,
+  printPerformanceReport,
+  printPerformanceStats,
+  printDetailedPerformanceData,
+  clearAllPerformanceData,
+  clearInstancePerformanceData,
+  getInstancePerformanceData
+} from './helper/performanceMonitor'
+
 export function toPureObject (obj) {
   return diffAndCloneA(obj).clone
 }
@@ -154,7 +165,18 @@ Mpx.config = {
   /**
   * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
   */
-  rnConfig: {}
+  rnConfig: {},
+  /**
+  * 性能监控配置
+  * enablePerformanceMonitor: 是否启用性能监控
+  * performanceLogThreshold: 性能日志阈值，单位ms，只记录超过阈值的日志
+  * enablePerformanceCheckpoints: 是否启用详细的 checkpoint 记录（禁用可减少开销）
+  * performanceRealtimeLog: 是否启用实时日志输出（禁用可大幅减少开销，改为批量输出）
+  */
+  enablePerformanceMonitor: false,
+  performanceLogThreshold: 0,
+  enablePerformanceCheckpoints: true,
+  performanceRealtimeLog: true
 }
 
 init(Mpx)

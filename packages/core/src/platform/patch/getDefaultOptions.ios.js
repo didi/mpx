@@ -18,6 +18,7 @@ import {
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '../env/nav'
+import { startPerformanceTimer, endPerformanceTimer } from '../../helper/performanceMonitor'
 
 function getSystemInfo () {
   const windowDimensions = ReactNative.Dimensions.get('window')
@@ -34,6 +35,8 @@ function getSystemInfo () {
 }
 
 function createEffect (proxy, componentsMap) {
+  const timer = startPerformanceTimer(proxy.uid, 'createEffect')
+
   const update = proxy.update = () => {
     // react update props in child render(async), do not need exec pre render
     // if (proxy.propsUpdatedFlag) {
@@ -47,6 +50,9 @@ function createEffect (proxy, componentsMap) {
     proxy.onStoreChange && proxy.onStoreChange()
   }
   update.id = proxy.uid
+
+  if (timer) timer.checkpoint('update function created')
+
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
@@ -61,6 +67,8 @@ function createEffect (proxy, componentsMap) {
     return createElement(type, ...rest)
   }
 
+  if (timer) timer.checkpoint('helper functions created')
+
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
@@ -68,6 +76,10 @@ function createEffect (proxy, componentsMap) {
   }, () => queueJob(update), proxy.scope)
   // render effect允许自触发
   proxy.toggleRecurse(true)
+
+  if (timer) timer.checkpoint('ReactiveEffect created')
+
+  endPerformanceTimer(timer, proxy.name)
 }
 
 function getRootProps (props, validProps) {
@@ -212,6 +224,9 @@ const instanceProto = {
 }
 
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
+  // timer 会在创建 proxy 后再启动，以便使用 proxy.uid 作为 instanceId
+  let timer = null
+
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -309,7 +324,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   }
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
+
+  // 创建 proxy 后启动性能监控，使用 proxy.uid 作为 instanceId
+  timer = startPerformanceTimer(proxy.uid, 'createInstance')
+  if (timer) timer.checkpoint('MpxProxy created')
+
   proxy.created()
+
+  if (timer) timer.checkpoint('proxy.created() finished')
 
   if (type === 'page') {
     const props = propsRef.current
@@ -321,6 +343,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       }
     }
     proxy.callHook(ONLOAD, [loadParams])
+    if (timer) timer.checkpoint('ONLOAD hook called')
   }
 
   Object.assign(proxy, {
@@ -342,10 +365,17 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       return proxy.stateVersion
     }
   })
+
+  if (timer) timer.checkpoint('proxy methods assigned')
+
   // react数据响应组件更新管理器
   if (!proxy.effect) {
     createEffect(proxy, componentsMap)
   }
+
+  if (timer) timer.checkpoint('createEffect finished')
+
+  endPerformanceTimer(timer, rawOptions.name || rawOptions.__mpxBuiltIn || `${type}#${proxy.uid}`)
 
   return instance
 }
