@@ -577,22 +577,15 @@ module.exports = {
         }
       },
       getEvent (eventName, prefix = 'bind') {
-        return prefix + eventName
+         if (eventName.includes('-')) {
+          return `${prefix}:${eventName}`
+        } else {
+          return prefix + eventName
+        }
       },
       defaultModelProp: 'value',
       defaultModelEvent: 'input',
-      defaultModelValuePath: 'value',
-      shallowStringify (obj) {
-        const arr = []
-        for (const key in obj) {
-          let value = obj[key]
-          if (Array.isArray(value)) {
-            value = `[${value.join(',')}]`
-          }
-          arr.push(`${key}:${value}`)
-        }
-        return ` {${arr.join(',')}} `
-      }
+      defaultModelValuePath: 'value'
     },
     wxs: {
       tag: 'ks',
@@ -606,6 +599,9 @@ module.exports = {
       elseif: 'ks:elif',
       else: 'ks:else',
       for: 'ks:for',
+      forIndex: 'ks:for-index',
+      forItem: 'ks:for-item',
+      key: 'ks:key',
       dynamicClass: 'ks:class',
       dynamicStyle: 'ks:style',
       ref: 'ks:ref',

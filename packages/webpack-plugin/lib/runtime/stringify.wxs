@@ -173,12 +173,40 @@ function dash2hump (value) {
 
 function parseStyleText (cssText) {
   var res = {}
-  var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
-  var arr = cssText.split(listDelimiter)
+  var arr = []
+  
+  // 快手平台不支持负向前瞻断言 ;(?![^(]*[)])，需要手动解析
+  // 手动解析逻辑：跟踪括号深度，只在括号外的分号处分割
+  if (__mpx_mode__ === 'ks') {
+    var start = 0
+    var depth = 0
+    for (var i = 0; i < cssText.length; i++) {
+      var char = cssText[i]
+      if (char === '(') {
+        depth++
+      } else if (char === ')') {
+        depth--
+      } else if (char === ';' && depth === 0) {
+        var segment = cssText.substring(start, i)
+        if (segment) {
+          arr.push(segment)
+        }
+        start = i + 1
+      }
+    }
+    // 添加最后一段（如果没有以分号结尾）
+    var lastSegment = cssText.substring(start)
+    if (lastSegment) {
+      arr.push(lastSegment)
+    }
+  } else {
+    var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
+    arr = cssText.split(listDelimiter)
+  }
+  
   for (var i = 0; i < arr.length; i++) {
     var item = arr[i]
     if (item) {
-      // 在 ks 环境中，正则 split 对捕获组的支持有问题
       var colonIndex = item.indexOf(':')
       if (colonIndex > 0) {
         var k = dash2hump(item.substring(0, colonIndex).trim())
