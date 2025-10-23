@@ -45,7 +45,7 @@ function objectKeys (obj) {
 }
 
 function genRegExp (str, flags) {
-  if (!__mpx_wxs__) {
+  if (!__mpx_wxs__ || __mpx_mode__ === 'ks') {
     return new RegExp(str, flags)
   } else {
     return getRegExp(str, flags)
@@ -173,45 +173,16 @@ function dash2hump (value) {
 
 function parseStyleText (cssText) {
   var res = {}
-  var arr = []
-  
-  // 快手平台不支持负向前瞻断言 ;(?![^(]*[)])，需要手动解析
-  // 手动解析逻辑：跟踪括号深度，只在括号外的分号处分割
-  if (__mpx_mode__ === 'ks') {
-    var start = 0
-    var depth = 0
-    for (var i = 0; i < cssText.length; i++) {
-      var char = cssText[i]
-      if (char === '(') {
-        depth++
-      } else if (char === ')') {
-        depth--
-      } else if (char === ';' && depth === 0) {
-        var segment = cssText.substring(start, i)
-        if (segment) {
-          arr.push(segment)
-        }
-        start = i + 1
-      }
-    }
-    // 添加最后一段（如果没有以分号结尾）
-    var lastSegment = cssText.substring(start)
-    if (lastSegment) {
-      arr.push(lastSegment)
-    }
-  } else {
-    var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
-    arr = cssText.split(listDelimiter)
-  }
-  
+  var listDelimiter = genRegExp(';(?![^(]*[)])', 'g')
+  var propertyDelimiter = genRegExp(':(.+)')
+  var arr = cssText.split(listDelimiter)
   for (var i = 0; i < arr.length; i++) {
     var item = arr[i]
     if (item) {
-      var colonIndex = item.indexOf(':')
-      if (colonIndex > 0) {
-        var k = dash2hump(item.substring(0, colonIndex).trim())
-        var v = item.substring(colonIndex + 1).trim()
-        res[k] = v
+      var tmp = item.split(propertyDelimiter)
+      if (tmp.length > 1) {
+        var k = dash2hump(tmp[0].trim())
+        res[k] = tmp[1].trim()
       }
     }
   }
