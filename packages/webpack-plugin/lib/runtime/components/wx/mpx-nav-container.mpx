@@ -1,9 +1,0 @@
-<template>
-    <slot />
-</template>
-<script type="application/json">
-    {
-        "component": true,
-        "usingComponents": {}
-    }
-</script>
