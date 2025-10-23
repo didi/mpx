@@ -25,14 +25,22 @@ ${result}
 
 const getLangFromExtension = (filename) => {
   const ext = path.extname(filename)
-  const lang = ext === '.styl' ? 'stylus' : 'css'
-  return lang
+  switch (ext) {
+    case '.styl':
+      return 'stylus'
+    case '.less':
+      return 'less'
+    case '.scss':
+      return 'scss'
+    default:
+      return 'css'
+  }
 }
 
 describe('strip-conditional-loader', () => {
   fixture(
     // './fixtures/css-condition/at-import/index.styl',
-    './fixtures/**/index.{styl,css}',
+    './fixtures/**/index.{styl,less,css,scss}',
     async ({ filename, config = {}, cwd }) => {
       const { lang = getLangFromExtension(filename), defs = {} } = config
 
