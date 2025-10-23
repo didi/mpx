@@ -1,7 +1,8 @@
 const TAG_NAME = 'label'
-const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
 
-module.exports = function () {
+module.exports = function ({ print }) {
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+
   return {
     test: TAG_NAME,
     ios (tag, { el }) {

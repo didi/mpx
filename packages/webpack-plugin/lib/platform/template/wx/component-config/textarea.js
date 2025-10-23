@@ -99,7 +99,7 @@ module.exports = function ({ print }) {
         harmony: harmonyPropLog
       },
       {
-        test: /^cursor-spacing|cursor|selection-start|selection-end|adjust-position|hold-keyboard|disable-default-padding|confirm-hold|adjust-keyboard-to|placeholder-class|show-confirm-bar)$/,
+        test: /^(cursor-spacing|cursor|selection-start|selection-end|adjust-position|hold-keyboard|disable-default-padding|confirm-hold|adjust-keyboard-to|placeholder-class|show-confirm-bar)$/,
         ks: ksPropLog
       }
     ],
