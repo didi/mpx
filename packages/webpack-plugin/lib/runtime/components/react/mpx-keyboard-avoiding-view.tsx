@@ -1,3 +1,4 @@
+/* eslint-disable space-before-function-paren */
 import React, { ReactNode, useContext, useEffect, useRef } from 'react'
 import { DimensionValue, EmitterSubscription, Keyboard, View, ViewStyle, NativeSyntheticEvent, NativeTouchEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation } from 'react-native-reanimated'
@@ -91,10 +92,10 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
                 return aboveOffset > 0 ? belowValue : aboveValue
               }
 
-              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY;
-              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing;
-              const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing);
-              return aboveOffset > 0 ? belowValue : aboveValue;
+              const aboveOffset = offset.value + pageY + height - endCoordinates.screenY
+              const aboveValue = -aboveOffset >= cursorSpacing ? 0 : aboveOffset + cursorSpacing
+              const belowValue = Math.min(endCoordinates.height, aboveOffset + cursorSpacing)
+              return aboveOffset > 0 ? belowValue : aboveValue
             }
 
             cancelAnimation(offset)
@@ -105,8 +106,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
               }
             })
           })
-        };
-        (isIOS ? () => (timerRef.current = setTimeout(callback)) : callback)();
+        }
+        ;(isIOS ? () => (timerRef.current = setTimeout(callback)) : callback)()
       }
     }
 
@@ -118,10 +119,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         Keyboard.addListener('keyboardWillHide', resetKeyboard)
       ]
     } else {
-      subscriptions = [
-        Keyboard.addListener('keyboardDidShow', keybaordAvoding),
-        Keyboard.addListener('keyboardDidHide', resetKeyboard)
-      ]
+      subscriptions = [Keyboard.addListener('keyboardDidShow', keybaordAvoding), Keyboard.addListener('keyboardDidHide', resetKeyboard)]
     }
 
     return () => {
