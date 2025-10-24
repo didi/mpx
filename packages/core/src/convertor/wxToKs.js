@@ -1,16 +1,19 @@
-const BEHAVIORS_MAP = {
-  'wx://form-field': 'ks://form-field',
-  'wx://form-field-group': 'ks://form-field-group',
-  'wx://form-field-button': 'ks://form-field-button',
-  'wx://component-export': 'ks://component-export'
-}
+import { error } from '@mpxjs/utils'
+
+const BEHAVIORS_MAP = [
+  'wx://form-field',
+  'wx://form-field-group',
+  'wx://form-field-button',
+  'wx://component-export'
+]
 
 export default {
   convert (options) {
     if (options.behaviors) {
       options.behaviors.forEach((behavior, idx) => {
-        if (typeof behavior === 'string' && BEHAVIORS_MAP[behavior]) {
-          options.behaviors.splice(idx, 1, BEHAVIORS_MAP[behavior])
+        if (BEHAVIORS_MAP.includes(behavior)) {
+          error(`Built-in behavior "${behavior}" is not supported in ks environment!`, global.currentResource || global.currentModuleId)
+          options.behaviors.splice(idx, 1)
         }
       })
     }
