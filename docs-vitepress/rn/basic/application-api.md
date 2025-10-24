@@ -221,34 +221,54 @@ module.exports = {
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
 
 ### 跨平台 API 使用限制
+### selectComponent/selectAllComponents
+在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
+  * id 选择器：`#id`
+  * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
+  
+```javascript
+<template>
+  <!-- 必须添加 wx:ref 标记 -->
+  <list wx:ref class="list"></list>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    ready() {
+      // 获取组件实例
+      const instance = this.selectComponent('.list')
+      console.log('selectComponent', instance)
+    }
+  })
+</script>
+```
 
 #### createSelectorQuery
 
-**上下文指定：** RN 环境下必须手动调用 `.in(this)` 指定组件上下文
+使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致。
 
-```js
-import { createComponent } from '@mpxjs/core'
+```javascript
+<template>
+  <view wx:ref class="title">this is view</view>
+</template>
 
-createComponent({
-  attached() {
-    const query = wx.createSelectorQuery().in(this) // ⚠️ 必须指定组件实例
-    query.select('#the-id').boundingClientRect((rect) => {
-      console.log('rect', rect)
-    })
-    .exec()
-  }
-})
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    ready() {
+      this.createSelectorQuery()
+        .select('.title')
+        .boundingClientRect(res => {
+          console.log('the rect res is:', res)
+        })
+        .exec()
+    }
+  })
+</script>
 ```
-
-**选择器限制：** RN 环境仅支持以下选择器类型
-
-| 选择器类型 | 格式 | 示例 |
-|------------|------|------|
-| ID 选择器 | `#id` | `#my-element` |
-| Class 选择器 | `.class` | `.item` |
-| 多 Class 选择器 | `.class1.class2` | `.item.active.selected` |
-
-> ❌ **不支持：** 标签选择器、属性选择器、伪类选择器等
 
 ### Webview 通信
 
