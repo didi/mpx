@@ -481,10 +481,10 @@ module.exports = function (content) {
       if (json.tabBar && json.tabBar[itemKey]) {
         json.tabBar[itemKey].forEach((item, index) => {
           if (item[iconKey] && isUrlRequest(item[iconKey])) {
-            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(urlToRequest(item[iconKey]), { useLocal: true })}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${iconKey} = require("${addQuery(urlToRequest(item[iconKey]), { useLocal: true, from: 'tabbar' })}");\n`
           }
           if (item[activeIconKey] && isUrlRequest(item[activeIconKey])) {
-            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(urlToRequest(item[activeIconKey]), { useLocal: true })}");\n`
+            output += `json.tabBar.${itemKey}[${index}].${activeIconKey} = require("${addQuery(urlToRequest(item[activeIconKey]), { useLocal: true, from: 'tabbar' })}");\n`
           }
         })
       }

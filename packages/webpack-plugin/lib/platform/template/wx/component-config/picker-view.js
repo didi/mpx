@@ -9,6 +9,8 @@ module.exports = function ({ print }) {
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
   const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
+  const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -44,6 +46,16 @@ module.exports = function ({ print }) {
         ios: iosEventLog,
         android: androidEventLog,
         harmony: harmonyEventLog
+      },
+      {
+        test: /^(immediate-change)$/,
+        swan: baiduEventLog,
+        ks: ksEventLog,
+        ios: iosEventLog,
+        android: androidEventLog,
+        harmony: harmonyEventLog,
+        web: webEventLog,
+        jd: jdEventLog
       }
     ]
   }

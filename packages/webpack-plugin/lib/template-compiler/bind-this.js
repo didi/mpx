@@ -258,7 +258,7 @@ module.exports = {
     })
     return {
       code: pCollectKeys.map((key) => {
-        return isSimpleKey(key) ? `_sc(${JSON.stringify(key)});` : `_c(${JSON.stringify(key)});`
+        return isSimpleKey(key) ? `mpx_sc(${JSON.stringify(key)});` : `mpx_c(${JSON.stringify(key)});`
       }).join('\n'),
       propKeys: [...propKeySet]
     }
@@ -436,7 +436,7 @@ module.exports = {
         exit (path) {
           if (path.collectInfo) {
             const { isSimple, key } = path.collectInfo
-            const callee = isSimple ? t.identifier('_sc') : t.identifier('_c')
+            const callee = isSimple ? t.identifier('mpx_sc') : t.identifier('mpx_c')
             const replaceNode = renderReduce
               ? t.callExpression(callee, [key])
               : t.callExpression(callee, [key, path.node])
