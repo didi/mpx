@@ -32,7 +32,7 @@ describe('test mpx scroll', () => {
   }
 
   test('el is a dom', () => {
-    expect(ms.el).toEqual(document.querySelector('page'))
+    expect(ms.el).toEqual(document.querySelector('.mpx-page'))
   })
 
   test('regist events and hooks', () => {
