@@ -1,0 +1,19 @@
+<template>
+  <view>
+    <asyncComp></asyncComp>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({})
+</script>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "asyncComp": "../../test/components/asyncComp.mpx",
+  }
+}
+</script>

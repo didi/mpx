@@ -8,10 +8,6 @@ const rawDimensions = {
 }
 let width, height
 
-// TODO 临时适配折叠屏场景适配
-// const isLargeFoldableLike = (__mpx_mode__ === 'android') && (height / width < 1.5) && (width > 600)
-// if (isLargeFoldableLike) width = width / 2
-
 function customDimensions (dimensions) {
   if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
     dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
