@@ -457,6 +457,7 @@ movable-view的可移动区域。
 | indicator-class         | string          |                | 设置选择器中间选中框的类名 |
 | mask-style              | string          |                | 设置蒙层的样式           |
 | mask-class              | string          |                | 设置蒙层的类名           |
+| enable-wheel-animation <badge type="tip" text="2.10.17+" />  | boolean         |   `true`       | RN环境特有属性，是否开启滚轮滚动动画效果  |
 
 事件
 
