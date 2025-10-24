@@ -405,7 +405,7 @@ interface MpxConfig {
   rnConfig: RnConfig,
 }
 
-type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
+type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'| 'ks' | 'jd' | 'dd'
 
 interface ImplementOptions {
   modes?: Array<SupportedMode>

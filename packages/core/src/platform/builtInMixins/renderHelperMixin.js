@@ -3,7 +3,7 @@ import { getByPath, hasOwn, isObject } from '@mpxjs/utils'
 export default function renderHelperMixin () {
   return {
     methods: {
-      _i (val, handler) {
+      mpx_i (val, handler) {
         let i, l, keys, key
         if (Array.isArray(val) || typeof val === 'string') {
           for (i = 0, l = val.length; i < l; i++) {
@@ -22,7 +22,7 @@ export default function renderHelperMixin () {
         }
       },
       // collect
-      _c (key, value) {
+      mpx_c (key, value) {
         if (hasOwn(this.__mpxProxy.renderData, key)) {
           return this.__mpxProxy.renderData[key]
         }
@@ -33,10 +33,10 @@ export default function renderHelperMixin () {
         return value
       },
       // simple collect
-      _sc (key) {
+      mpx_sc (key) {
         return (this.__mpxProxy.renderData[key] = this[key])
       },
-      _r (skipPre, vnode) {
+      mpx_r (skipPre, vnode) {
         this.__mpxProxy.renderWithData(skipPre, vnode)
       }
     }

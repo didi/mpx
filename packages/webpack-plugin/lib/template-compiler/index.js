@@ -112,10 +112,10 @@ module.exports = function (raw) {
   if (rawCode) {
     try {
       const ignoreMap = Object.assign({
-        _i: true,
-        _c: true,
-        _sc: true,
-        _r: true
+        mpx_i: true,
+        mpx_c: true,
+        mpx_sc: true,
+        mpx_r: true
       }, meta.wxsModuleMap)
       const bindResult = optimizeRenderLevel === 2
         ? bindThis.transformSimple(rawCode, {
@@ -126,9 +126,9 @@ module.exports = function (raw) {
           renderReduce: optimizeRenderLevel === 1,
           ignoreMap
         })
-      resultSource += `global.currentInject.render = function (_i, _c, _r, _sc) {
+      resultSource += `global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
 ${bindResult.code}
-_r(${optimizeRenderLevel === 2 ? 'true' : ''});
+mpx_r(${optimizeRenderLevel === 2 ? 'true' : ''});
 };\n`
       if ((mode === 'tt' || mode === 'swan') && bindResult.propKeys) {
         resultSource += `global.currentInject.propKeys = ${JSON.stringify(bindResult.propKeys)};\n`
