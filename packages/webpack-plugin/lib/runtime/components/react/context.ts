@@ -1,5 +1,5 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent, Animated } from 'react-native'
+import { NativeSyntheticEvent, Animated, ScaledSize } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
@@ -50,6 +50,11 @@ export interface ScrollViewContextValue {
 export interface RouteContextValue {
   pageId: number
   navigation: Record<string, any>
+}
+
+export interface DimensionsValue {
+  window: ScaledSize;
+  screen: ScaledSize;
 }
 
 export interface StickyContextValue {
