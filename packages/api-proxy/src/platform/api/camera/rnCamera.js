@@ -13,11 +13,12 @@ export default class CreateCamera {
   }
 
   setZoom (options = {}) {
-    const { zoom, success = noop, fail = noop, complete = noop } = options
+    const { zoom } = options
     if (this.camera.setZoom) {
       this.camera.setZoom(zoom)
     }
   }
+
   takePhoto (options = {}) {
     const { success = noop, fail = noop, complete = noop } = options
     const takePhoto = this.camera.getTakePhoto?.()
@@ -40,11 +41,12 @@ export default class CreateCamera {
       })
     }
   }
+
   startRecord (options = {}) {
     let { timeout = 30, success = noop, fail = noop, complete = noop, timeoutCallback = noop } = options
     timeout = timeout > 300 ? 300 : timeout
     let recordTimer = null
-    let isTimeout = false
+    const isTimeout = false
     const startRecord = this.camera.getStartRecord?.()
     if (startRecord) {
       const result = {
@@ -78,7 +80,8 @@ export default class CreateCamera {
       complete(result)
     }
   }
-  stopRecord(options = {}) {
+
+  stopRecord (options = {}) {
     const { success = noop, fail = noop, complete = noop } = options
     const stopRecord = this.camera.getStopRecord?.()
     if (stopRecord) {
