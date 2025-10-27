@@ -13,11 +13,15 @@ import {
   hasChanged
 } from '@mpxjs/utils'
 
+import { startPerformanceTimer, endPerformanceTimer } from '../helper/performanceMonitor'
+
 const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 
 const rawSet = new WeakSet()
 
 let isForceTrigger = false
+
+const observeDepthMap = new Map()
 
 export function setForceTrigger (val) {
   isForceTrigger = val
@@ -32,9 +36,13 @@ export function setForceTrigger (val) {
 export class Observer {
   dep = new Dep()
 
-  constructor (value, shallow) {
+  constructor (value, shallow, uid, timer = null) {
+    const activeTimer = timer
+    if (activeTimer) activeTimer.checkpoint('init constructor')
+    this.uid = uid
     this.value = value
     this.shallow = shallow
+    if (activeTimer) activeTimer.checkpoint('before def')
     def(value, ObKey, this)
     if (Array.isArray(value)) {
       const augment = hasProto && arrayProtoAugment
@@ -43,8 +51,11 @@ export class Observer {
       augment(value, arrayMethods, arrayKeys)
       !shallow && this.observeArray(value)
     } else {
+      if (activeTimer) activeTimer.checkpoint('before walk')
       this.walk(value, shallow)
+      if (activeTimer) activeTimer.checkpoint('after walk')
     }
+    endPerformanceTimer(activeTimer, 'new observe')
   }
 
   /**
@@ -54,7 +65,7 @@ export class Observer {
    */
   walk (obj, shallow) {
     Object.keys(obj).forEach((key) => {
-      defineReactive(obj, key, obj[key], shallow)
+      defineReactive(obj, key, obj[key], shallow, this.uid)
     })
   }
 
@@ -63,7 +74,7 @@ export class Observer {
    */
   observeArray (arr) {
     for (let i = 0, l = arr.length; i < l; i++) {
-      observe(arr[i])
+      observe(arr[i], false, this.uid)
     }
   }
 }
@@ -95,21 +106,49 @@ function copyAugment (target, src, keys) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
-function observe (value, shallow) {
+function incrementObserveDepth (uid) {
+  if (uid == null) return { depth: 0, isRoot: false }
+  const depth = observeDepthMap.get(uid) || 0
+  observeDepthMap.set(uid, depth + 1)
+  return { depth: depth + 1, isRoot: depth === 0 }
+}
+
+function decrementObserveDepth (uid) {
+  if (uid == null) return
+  const depth = observeDepthMap.get(uid)
+  if (depth == null) return
+  if (depth <= 1) {
+    observeDepthMap.delete(uid)
+  } else {
+    observeDepthMap.set(uid, depth - 1)
+  }
+}
+
+function observe (value, shallow, uid) {
+  const { depth, isRoot } = incrementObserveDepth(uid)
+  const timer = isRoot && uid != null ? startPerformanceTimer(uid, 'init observe') : null
   if (!isObject(value) || rawSet.has(value)) {
+    endPerformanceTimer(timer, 'init observe')
+    decrementObserveDepth(uid)
     return
   }
+  if (timer) timer.checkpoint('before getObserver')
   let ob = getObserver(value)
+  if (timer) timer.checkpoint('getObserver finished')
   if (!ob && (Array.isArray(value) || isPlainObject(value)) && Object.isExtensible(value)) {
-    ob = new Observer(value, shallow)
+    const newObserverTimer = depth === 1 && uid != null ? startPerformanceTimer(uid, 'new observe') : null
+    ob = new Observer(value, shallow, uid, newObserverTimer)
   }
+  if (timer) timer.checkpoint('after new Observer')
+  endPerformanceTimer(timer, 'init observe')
+  decrementObserveDepth(uid)
   return ob
 }
 
 /**
  * Define a reactive property on an Object.
  */
-export function defineReactive (obj, key, val, shallow) {
+export function defineReactive (obj, key, val, shallow, uid) {
   const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
@@ -121,7 +160,7 @@ export function defineReactive (obj, key, val, shallow) {
   const getter = property && property.get
   const setter = property && property.set
 
-  let childOb = shallow ? getObserver(val) : observe(val)
+  let childOb = shallow ? getObserver(val) : observe(val, false, uid)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
@@ -150,7 +189,7 @@ export function defineReactive (obj, key, val, shallow) {
       } else {
         val = newVal
       }
-      childOb = shallow ? getObserver(newVal) : observe(newVal)
+      childOb = shallow ? getObserver(newVal) : observe(newVal, false, uid)
       dep.notify()
     }
   })
@@ -176,7 +215,7 @@ export function set (target, key, val) {
     target[key] = val
     return val
   }
-  defineReactive(ob.value, key, val, ob.shallow)
+  defineReactive(ob.value, key, val, ob.shallow, ob.uid)
   ob.dep.notify()
   return val
 }
@@ -215,8 +254,8 @@ function dependArray (arr) {
   }
 }
 
-export function reactive (value) {
-  observe(value)
+export function reactive (value, uid) {
+  observe(value, false, uid)
   return value
 }
 

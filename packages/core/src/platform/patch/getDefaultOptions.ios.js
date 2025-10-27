@@ -226,7 +226,7 @@ const instanceProto = {
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
   const predictedUid = typeof peekNextProxyUid === 'function' ? peekNextProxyUid() : null
   let timer = predictedUid != null ? startPerformanceTimer(predictedUid, 'createInstance') : null
-
+  if (timer) timer.checkpoint('before create instance')
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -285,7 +285,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       enumerable: false
     }
   })
-
+  if (timer) timer.checkpoint('create instance finished')
   if (type === 'component') {
     Object.defineProperty(instance, '__componentPath', {
       get () {
@@ -294,7 +294,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       enumerable: false
     })
   }
-
+  if (timer) timer.checkpoint('after define __componentPath')
   if (relation) {
     Object.defineProperty(instance, '__relation', {
       get () {
@@ -303,14 +303,16 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       enumerable: false
     })
   }
-
+  if (timer) timer.checkpoint('after define relation')
   // bind this & assign methods
+
   if (rawOptions.methods) {
     Object.entries(rawOptions.methods).forEach(([key, method]) => {
       instance[key] = method.bind(instance)
     })
   }
-
+  if (timer) timer.checkpoint('after define methods')
+  if (timer) timer.checkpoint('after create instance finished')
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name

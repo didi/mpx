@@ -357,15 +357,20 @@ export default class MpxProxy {
   }
 
   initProps () {
+    let timer = null
     if (isReact) {
       // react模式下props内部对象透传无需深clone，依赖对象深层的数据响应触发子组件更新
       this.props = this.target.__getProps()
-      reactive(this.processShallowReactive(this.props))
+      timer = isReact ? startPerformanceTimer(this.uid, 'init props') : null
+      if (timer) timer.checkpoint('before reactive props')
+      reactive(this.processShallowReactive(this.props), this.uid)
+      if (timer) timer.checkpoint('after reactive props')
     } else {
       this.props = diffAndCloneA(this.target.__getProps(this.options)).clone
       reactive(this.processShallowReactive(this.props))
     }
     proxy(this.target, this.props, undefined, false, this.createProxyConflictHandler('props'))
+    endPerformanceTimer(timer, 'init props')
   }
 
   initSetup () {
