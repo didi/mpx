@@ -221,6 +221,8 @@ export default {
   left: 0;
   right: 0;
   z-index: 99999;
+  /* 脱离上下文，单独渲染加速，修复安卓低端机型在页面滚动时titlebar闪烁问题 */
+  transform: translateZ(0);
 }
 
 .mpx-titlebar__content {
