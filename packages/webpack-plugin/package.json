@@ -30,6 +30,9 @@
     "@better-scroll/zoom": "^2.5.1",
     "@mpxjs/template-engine": "^2.8.7",
     "@mpxjs/utils": "^2.10.16",
+    "postcss-less": "^6.0.0",
+    "postcss-scss": "^4.0.9",
+    "postcss-styl": "^0.12.3",
     "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
@@ -82,7 +85,6 @@
     "url": "https://github.com/didi/mpx/issues"
   },
   "scripts": {
-    "pretest": "npm i --legacy-peer-deps postcss-styl postcss-less less postcss-scss -D",
     "test": "jest --passWithNoTests",
     "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
     "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
