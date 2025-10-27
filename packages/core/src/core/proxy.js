@@ -56,6 +56,10 @@ import { startPerformanceTimer, endPerformanceTimer } from '../helper/performanc
 
 let uid = 0
 
+export function peekNextProxyUid () {
+  return uid
+}
+
 const envObj = getEnvObj()
 
 class RenderTask {

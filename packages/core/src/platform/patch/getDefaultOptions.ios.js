@@ -4,7 +4,7 @@ import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
 import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
-import MpxProxy from '../../core/proxy'
+import MpxProxy, { peekNextProxyUid } from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
@@ -224,8 +224,8 @@ const instanceProto = {
 }
 
 function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
-  // timer 会在创建 proxy 后再启动，以便使用 proxy.uid 作为 instanceId
-  let timer = null
+  const predictedUid = typeof peekNextProxyUid === 'function' ? peekNextProxyUid() : null
+  let timer = predictedUid != null ? startPerformanceTimer(predictedUid, 'createInstance') : null
 
   const instance = Object.create(instanceProto, {
     dataset: {
@@ -323,10 +323,13 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     }
   }
 
+  if (timer) timer.checkpoint('before new MpxProxy')
+
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
 
-  // 创建 proxy 后启动性能监控，使用 proxy.uid 作为 instanceId
-  timer = startPerformanceTimer(proxy.uid, 'createInstance')
+  if (!timer) {
+    timer = startPerformanceTimer(proxy.uid, 'createInstance')
+  }
   if (timer) timer.checkpoint('MpxProxy created')
 
   proxy.created()

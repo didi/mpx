@@ -147,14 +147,29 @@ export function getPerformanceSummary() {
     instances: []
   }
 
+  // 定义顶层 timer（不包含在其他 timer 内部的）
+  const topLevelTimers = ['createInstance', 'mounted', 'beforeUpdate', 'updated']
+
   instancePerformanceMap.forEach((data, instanceId) => {
     const timers = data.timers
-    const totalTime = timers.reduce((sum, timer) => sum + timer.totalDuration, 0)
+    
+    // 只统计顶层 timer，避免重复计算
+    // 例如: proxy.created 和 createEffect 的时间已经包含在 createInstance 中
+    const totalTime = timers
+      .filter(timer => topLevelTimers.includes(timer.name))
+      .reduce((sum, timer) => sum + timer.totalDuration, 0)
+    
+    // 构建各阶段详细耗时（用于分析）
+    const breakdown = {}
+    timers.forEach(t => {
+      breakdown[t.name] = t.totalDuration
+    })
 
     summary.instances.push({
       instanceId,
       componentName: data.componentName,
-      totalTime,
+      totalTime, // 真实的总耗时（只统计顶层 timer）
+      breakdown, // 各阶段详细耗时（包含所有 timer）
       timers: timers.map(t => ({
         name: t.name,
         duration: t.totalDuration,
@@ -312,7 +327,7 @@ export function printPerformanceStats(options = {}) {
  * 适合在测试结束后批量查看每个组件的详细耗时
  */
 export function printDetailedPerformanceData(options = {}) {
-  const { minTime = 0, batchSize = 10 } = options
+  const { minTime = 0, batchSize = 10, topN } = options
   const summary = getPerformanceSummary()
 
   if (summary.totalInstances === 0) {
@@ -320,14 +335,29 @@ export function printDetailedPerformanceData(options = {}) {
     return
   }
 
-  const instances = summary.instances
+  const filteredInstances = summary.instances
     .filter(item => item.totalTime >= minTime)
     .sort((a, b) => b.totalTime - a.totalTime)
+  const normalizedTopN = typeof topN === 'number' && Number.isFinite(topN) && topN > 0
+    ? Math.floor(topN)
+    : null
+  const instances = normalizedTopN
+    ? filteredInstances.slice(0, Math.min(normalizedTopN, filteredInstances.length))
+    : filteredInstances
 
   console.log('\n========== MPX 组件详细性能数据 ==========')
   console.log(`总组件数: ${summary.totalInstances}`)
-  console.log(`显示组件数: ${instances.length}`)
+  if (normalizedTopN) {
+    console.log(`显示组件数: ${instances.length} (Top ${instances.length} / ${filteredInstances.length})`)
+  } else {
+    console.log(`显示组件数: ${instances.length}`)
+  }
   console.log('==========================================\n')
+
+  if (instances.length === 0) {
+    console.log('[MPX Performance] 当前条件未匹配到任何组件数据\n')
+    return []
+  }
 
   // 分批输出，避免日志被截断
   for (let i = 0; i < instances.length; i += batchSize) {
@@ -340,7 +370,7 @@ export function printDetailedPerformanceData(options = {}) {
       const name = item.componentName || `component#${item.instanceId}`
 
       console.log(`[${globalIdx}] ${name}`)
-      console.log(`  总耗时: ${item.totalTime.toFixed(3)}ms`)
+      console.log(`  真实总耗时: ${item.totalTime.toFixed(3)}ms (仅统计顶层 timer)`)
       console.log(`  组件ID: ${item.instanceId}`)
 
       // 显示每个 timer 的详细信息
@@ -384,12 +414,13 @@ export function printDetailedPerformanceData(options = {}) {
   const maxComponentTime = Math.max(...instances.map(i => i.totalTime))
   const minComponentTime = Math.min(...instances.map(i => i.totalTime))
 
-  console.log('📊 总体统计:')
+  console.log('📊 总体统计 (基于真实耗时，已避免重复计算):')
   console.log(`  总组件数: ${instances.length}`)
-  console.log(`  累计总耗时: ${totalTime.toFixed(3)}ms`)
+  console.log(`  真实累计总耗时: ${totalTime.toFixed(3)}ms (仅统计: createInstance + mounted 等顶层 timer)`)
   console.log(`  平均耗时: ${avgTime.toFixed(3)}ms`)
   console.log(`  最大耗时: ${maxComponentTime.toFixed(3)}ms`)
   console.log(`  最小耗时: ${minComponentTime.toFixed(3)}ms`)
+  console.log(`\n  ℹ️  说明: proxy.created、createEffect 等已包含在 createInstance 中，不重复计算`)
 
   // 2. 各个 Timer 的累加统计
   const timerStats = {}
