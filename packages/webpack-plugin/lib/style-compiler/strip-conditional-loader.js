@@ -193,7 +193,17 @@ async function stripByPostcss(options) {
   const syntax = styleSyntaxProcesserMap[options.lang]?.()
   const defs = options.defs ?? {}
 
-  const afterConditionStrip = stripCondition(options.css, defs)
+  function stripContentCondition(content) {
+    content = stripCondition(content, defs)
+
+    if (options.lang === 'stylus') {
+      content = content.replace(/\t/g, '  ')
+    }
+
+    return content
+  }
+
+  const afterConditionStrip = stripContentCondition(options.css, defs)
 
     /**
    * @type {import('postcss').AcceptedPlugin[]}
@@ -204,7 +214,7 @@ async function stripByPostcss(options) {
         let content = await fs.readFile(filename, 'utf-8')
         const processer = postcss(plugins)
 
-        content = stripCondition(content, defs)
+        content = stripContentCondition(content, defs)
 
         const { css } = await processer.process(content, {
           syntax,
@@ -246,7 +256,6 @@ async function stripByPostcss(options) {
   ]
 
   const processer = postcss(plugins)
-
   return processer.process(afterConditionStrip, {
     from: options.resourcePath,
     syntax
