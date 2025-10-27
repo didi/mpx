@@ -33,19 +33,41 @@ function addHooks (result, visitor) {
   }
 }
 
+function normalizeVisitor(visitor) {
+  if (typeof visitor === 'function') {
+    return { enter: [visitor], exit: [] }
+  }
+
+  if (visitor.enter) {
+    if (!Array.isArray(visitor.enter)) {
+      visitor.enter = [visitor.enter]
+    }
+  } else {
+    visitor.enter = []
+  }
+
+  if (visitor.exit) {
+    if (!Array.isArray(visitor.exit)) {
+      visitor.exit = [visitor.exit]
+    }
+  } else {
+    visitor.exit = []
+  }
+
+  return visitor
+}
+
 module.exports = function mergeVisitors (target, source) {
   for (const [key, value] of Object.entries(source)) {
     if (!target[key]) {
       target[key] = value
     } else {
-      const result = { enter: [], exit: [] }
+      target[key] = normalizeVisitor(target[key])
       // 合并现有值和新值
-      addHooks(result, target[key])
-      addHooks(result, value)
-      if (result.exit.length === 0) {
-        delete result.exit
+      addHooks(target[key], value)
+      if (target[key]?.exit.length === 0) {
+        delete target[key]?.exit
       }
-      target[key] = result
     }
   }
 
