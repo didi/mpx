@@ -243,14 +243,13 @@ async function stripByPostcss(options) {
       // less/scss syntax 在 postcss 重新生成 css 后，`//` 注释后面不会保留换行，会和后续的 css 语句和注释连在一起，导致后续语法错误
       postcssPlugin: 'mpx-strip-conditional-loader-append-command',
       CommentExit(comment) {
-        if (!comment.raws.right) {
-          comment.raws.right = '\n'
+        comment.raws.right ??= ''
+
+        if (comment.raws.right.endsWith('\n')) {
           return
         }
 
-        if (!comment.raws.right.startsWith('\n')) {
-          comment.raws.right = '\n' + comment.raws.right
-        }
+        comment.raws.right += '\n'
       }
     }
   ]
