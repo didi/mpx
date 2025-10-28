@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/api-proxy",
-  "version": "2.10.16",
+  "version": "2.10.16-beta.6",
   "description": "convert miniprogram API at each end",
   "module": "src/index.js",
   "types": "@types/index.d.ts",
@@ -46,7 +46,9 @@
     "react-native-device-info": "*",
     "react-native-get-location": "*",
     "react-native-haptic-feedback": "*",
-    "react-native-safe-area-context": "*"
+    "react-native-safe-area-context": "*",
+    "react-native-ble-manager": "*",
+    "react-native-wifi-reborn": "*"
   },
   "peerDependenciesMeta": {
     "@react-native-async-storage/async-storage": {
@@ -65,6 +67,12 @@
       "optional": true
     },
     "react-native-haptic-feedback": {
+      "optional": true
+    },
+    "react-native-ble-manager": {
+      "optional": true
+    },
+    "react-native-wifi-reborn": {
       "optional": true
     }
   }

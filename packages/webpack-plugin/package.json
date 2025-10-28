@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.16",
+  "version": "2.10.16-beta.6",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -30,6 +30,9 @@
     "@better-scroll/zoom": "^2.5.1",
     "@mpxjs/template-engine": "^2.8.7",
     "@mpxjs/utils": "2.10.16-beta.6",
+    "postcss-less": "^6.0.0",
+    "postcss-scss": "^4.0.9",
+    "postcss-styl": "^0.12.3",
     "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
@@ -102,6 +105,7 @@
     "react-native-safe-area-context": "^4.12.0",
     "react-native-svg": "^15.8.0",
     "react-native-video": "^6.9.0",
+    "react-native-vision-camera": "^4.7.2",
     "react-native-webview": "^13.12.2",
     "rimraf": "^6.0.1"
   },
