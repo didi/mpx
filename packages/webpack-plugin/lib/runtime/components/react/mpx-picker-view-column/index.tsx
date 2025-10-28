@@ -98,6 +98,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     return [{ paddingVertical: paddingHeight }]
   }, [paddingHeight])
 
+  const initialContentOffsetY = useMemo(
+    () => initialIndex * itemRawH,
+    [initialIndex, itemRawH]
+  )
+
   const getIndex = useCallback((y: number) => {
     const calc = Math.round(y / itemRawH)
     return Math.max(0, Math.min(calc, maxIndex))
@@ -154,17 +159,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       activeIndex.current = initialIndex
     }, isIOS ? 0 : 200)
   }, [itemRawH, maxIndex, initialIndex])
-
-  const onContentSizeChange = useCallback((_w: number, h: number) => {
-    const y = initialIndex * itemRawH
-    if (y <= h) {
-      clearTimerScrollTo()
-      timerScrollTo.current = setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
-        activeIndex.current = initialIndex
-      }, 0)
-    }
-  }, [itemRawH, initialIndex])
 
   const onItemLayout = useCallback((e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
@@ -331,8 +325,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       onScrollEndDrag,
       onMomentumScrollBegin,
       onMomentumScrollEnd,
-      onContentSizeChange,
-      contentContainerStyle
+      contentContainerStyle,
+      contentOffset: { x: 0, y: initialContentOffsetY }
     }) as React.ComponentProps<typeof Reanimated.ScrollView>
 
     return createElement(
