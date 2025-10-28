@@ -1,0 +1,57 @@
+<script>
+import mpx, { createApp } from '@mpxjs/core'
+import apiProxy from '@mpxjs/api-proxy'
+import { createPinia } from '@mpxjs/pinia'
+
+mpx.use(apiProxy, { usePromise: true })
+
+mpx.config.webRouteConfig = {
+  mode: 'history'
+}
+
+createApp({
+  onLaunch() {
+    //
+  },
+  onAppInit() {
+    const pinia = createPinia()
+    return {
+      pinia
+    }
+  },
+  onSSRAppCreated({ pinia, router, app, context }) {
+    return new Promise((resolve, reject) => {
+      router.push(context.url)
+      router.onReady(() => {
+        context.rendered = () => {
+          context.state = pinia.state.value
+        }
+        resolve(app)
+      }, reject)
+    })
+  }
+})
+</script>
+
+<style>
+  /*此处编写全局样式*/
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/index"
+    ]
+  }
+</script>
+
+<!--也可以通过以下形式用js输出json，便于书写注释和使用条件编译-->
+
+<!--<script name="json">-->
+<!--  // 可以写注释，通过defs注入的常量做一些判断之类的操作-->
+<!--  module.exports = {-->
+<!--    pages: [-->
+<!--      './pages/index'-->
+<!--    ]-->
+<!--  }-->
+<!--</script>-->

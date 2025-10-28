@@ -1,0 +1,41 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "modules": false,
+        "shippedProposals": true
+      }
+    ],
+    [
+      "@babel/preset-react",
+      {
+        "runtime": "automatic"
+      }
+    ],
+  ],
+  "plugins": [
+    [
+      "@babel/transform-runtime",
+      {
+        "corejs": 3,
+        "version": "^7.10.4"
+      }
+    ],
+    "@mpxjs/babel-plugin-inject-page-events",
+    "react-native-reanimated/plugin"
+  ],
+  "sourceType": "unambiguous",
+  "env": {
+    "test": {
+      "presets": [
+        [
+          "@babel/env",
+          {
+            "shippedProposals": true
+          }
+        ]
+      ]
+    }
+  }
+}
