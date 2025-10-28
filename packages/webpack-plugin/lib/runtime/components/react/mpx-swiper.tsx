@@ -604,28 +604,20 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     function handleEnd (eventData: EventDataType) {
       'worklet'
       const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
-      if (isCriticalItem) {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
-            currentIndex.value = selectedIndex
+
+      offset.value = withTiming(targetOffset, {
+        duration: easeDuration,
+        easing: easeMap[easeingFunc]
+      }, () => {
+        if (touchfinish.value !== false) {
+          currentIndex.value = selectedIndex
+          // 只在临界情况下设置 resetOffset
+          if (isCriticalItem) {
             offset.value = resetOffset
-            runOnJS(runOnJSCallback)('resumeLoop')
           }
-        })
-      } else {
-        offset.value = withTiming(targetOffset, {
-          duration: easeDuration,
-          easing: easeMap[easeingFunc]
-        }, () => {
-          if (touchfinish.value !== false) {
-            currentIndex.value = selectedIndex
-            runOnJS(runOnJSCallback)('resumeLoop')
-          }
-        })
-      }
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
     }
     function handleBack (eventData: EventDataType) {
       'worklet'
@@ -644,6 +636,32 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }, () => {
         if (touchfinish.value !== false) {
           currentIndex.value = moveToIndex
+          runOnJS(runOnJSCallback)('resumeLoop')
+        }
+      })
+    }
+    function handleInertialSlide (eventData: EventDataType, velocity: number) {
+      'worklet'
+      const clampedVelocity = Math.sign(velocity) * Math.min(Math.abs(velocity), 900)
+      const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
+
+      // 基于速度计算动画持续时间
+      const velocityFactor = Math.min(Math.abs(clampedVelocity) / 1000, 1.2)
+      const baseDuration = 300
+      const minDuration = 250
+      const duration = Math.max(baseDuration / velocityFactor, minDuration)
+      // 合并重复的动画逻辑
+      offset.value = withTiming(targetOffset, {
+        duration: duration,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1)
+      }, (finished) => {
+        'worklet'
+        if (finished) {
+          currentIndex.value = selectedIndex
+          // 只在临界情况下设置 resetOffset
+          if (isCriticalItem) {
+            offset.value = resetOffset
+          }
           runOnJS(runOnJSCallback)('resumeLoop')
         }
       })
@@ -823,6 +841,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const velocity = e[strVelocity]
         if (Math.abs(velocity) < longPressRatio) {
           handleLongPress(eventData)
+        } else if (Math.abs(velocity) > 200) {
+          // 速度较大，使用惯性滑动
+          handleInertialSlide(eventData, velocity)
         } else {
           handleEnd(eventData)
         }
