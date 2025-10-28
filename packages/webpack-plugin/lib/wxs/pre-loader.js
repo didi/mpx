@@ -100,7 +100,7 @@ module.exports = function (content) {
       MemberExpression (path) {
         const property = path.node.property
         if (
-          (property.name === 'constructor' || property.value === 'constructor') &&
+          property && (property.name === 'constructor' || property.value === 'constructor') &&
           !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
         ) {
           path.replaceWith(t.memberExpression(path.node, t.identifier('name')))

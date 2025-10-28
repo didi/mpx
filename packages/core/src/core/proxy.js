@@ -335,7 +335,7 @@ export default class MpxProxy {
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
           getPageId: this.target.getPageId.bind(this.target),
-          getOpenerEventChannel: this.target.getOpenerEventChannel.bind(this.target)
+          getOpenerEventChannel: this.target.getOpenerEventChannel ? this.target.getOpenerEventChannel.bind(this.target) : noop
         }
       ])
       if (!isObject(setupResult)) {
@@ -731,10 +731,10 @@ export default class MpxProxy {
   initRender () {
     if (this.options.__nativeRender__) return this.doRender()
 
-    const _i = this.target._i.bind(this.target)
-    const _c = this.target._c.bind(this.target)
-    const _r = this.target._r.bind(this.target)
-    const _sc = this.target._sc.bind(this.target)
+    const mpx_i = this.target.mpx_i.bind(this.target)
+    const mpx_c = this.target.mpx_c.bind(this.target)
+    const mpx_r = this.target.mpx_r.bind(this.target)
+    const mpx_sc = this.target.mpx_sc.bind(this.target)
     const _g = this.target._g?.bind(this.target)
     const __getAst = this.target.__getAst?.bind(this.target)
     const moduleId = this.target.__moduleId
@@ -748,7 +748,7 @@ export default class MpxProxy {
       if (dynamicTarget || __getAst) {
         try {
           const ast = getAst(__getAst, moduleId)
-          return _r(false, _g(ast, moduleId))
+          return mpx_r(false, _g(ast, moduleId))
         } catch (e) {
           e.errType = 'mpx-dynamic-render'
           e.errmsg = e.message
@@ -761,7 +761,7 @@ export default class MpxProxy {
       }
       if (this.target.__injectedRender) {
         try {
-          return this.target.__injectedRender(_i, _c, _r, _sc)
+          return this.target.__injectedRender(mpx_i, mpx_c, mpx_r, mpx_sc)
         } catch (e) {
           warn('Failed to execute render function, degrade to full-set-data mode.', this.options.mpxFileResource, e)
           this.render()
