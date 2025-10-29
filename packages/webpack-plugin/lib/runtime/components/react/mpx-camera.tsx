@@ -1,7 +1,15 @@
 import React, { forwardRef, useRef, useCallback, useContext, useState, useEffect } from 'react'
-import { Camera, useCameraDevice, useCodeScanner, useCameraFormat, useFrameProcessor } from 'react-native-vision-camera'
+// import { Camera, useCameraDevice, useCodeScanner, useCameraFormat } from 'react-native-vision-camera'
 import { getCustomEvent } from './getInnerListeners'
+import { noop } from '@mpxjs/utils'
 import { RouteContext } from './context'
+
+const qualityValue = {
+  high: 90,
+  normal: 75,
+  low: 50,
+  original: 100
+}
 
 interface CameraProps {
   mode?: 'normal' | 'scanCode'
@@ -16,20 +24,44 @@ interface CameraProps {
   bindscancode?: (result: { type: string, data: string }) => void
 }
 
+interface TakePhotoOptions {
+  quality?: 'high' | 'normal' | 'low' | 'original'
+  success?: (result: { errMsg: string, tempImagePath: string }) => void
+  fail?: (result: { errMsg: string }) => void
+  complete?: (result: { errMsg: string, tempImagePath?: string }) => void
+}
+
+interface RecordOptions {
+  timeout?: number
+  success?: (result: { errMsg: string }) => void
+  fail?: (result: { errMsg: string, error?: any }) => void
+  complete?: (result: { errMsg: string }) => void
+  timeoutCallback?: (result: { errMsg: string, error?: any }) => void
+}
+
+interface StopRecordOptions {
+  success?: (result: { errMsg: string, tempVideoPath: string, duration: number }) => void
+  fail?: (result: { errMsg: string }) => void
+  complete?: (result: { errMsg: string, tempVideoPath?: string, duration?: number }) => void
+}
+
 interface CameraRef {
   setZoom: (zoom: number) => void
-  getTakePhoto: () => (() => Promise<any>) | undefined
-  getStartRecord: () => ((options: any) => void) | undefined
-  getStopRecord: () => (() => void) | undefined
+  takePhoto: (options?: TakePhotoOptions) => void
+  startRecord: (options?: RecordOptions) => void
+  stopRecord: (options?: StopRecordOptions) => void
 }
 
 type HandlerRef<T, P> = {
-  // 根据实际的 HandlerRef 类型定义调整
   current: T | null
 }
 
-const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
-  const cameraRef = useRef<Camera>(null)
+let RecordRes: any = null
+
+const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { Camera, useCameraDevice, useCodeScanner, useCameraFormat } = require('react-native-vision-camera')
+  const cameraRef = useRef<any>(null)
   const {
     mode = 'normal',
     resolution = 'medium',
@@ -70,7 +102,7 @@ const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props:
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
-    onCodeScanned: (codes) => {
+    onCodeScanned: (codes: any[]) => {
       const result = codes.map(code => code.value).join(',')
       bindscancode && bindscancode(getCustomEvent('scancode', {}, {
         detail: {
@@ -115,14 +147,97 @@ const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props:
     setZoom: (zoom: number) => {
       setZoomValue(zoom)
     },
-    getTakePhoto: () => {
-      return cameraRef.current?.takePhoto
+    takePhoto: (options: TakePhotoOptions = {}) => {
+      const { success = noop, fail = noop, complete = noop } = options
+      cameraRef.current?.takePhoto?.({
+        quality: qualityValue[options.quality || 'normal'] as number
+      } as any).then((res: { path: any }) => {
+        const result = {
+          errMsg: 'takePhoto:ok',
+          tempImagePath: res.path
+        }
+        success(result)
+        complete(result)
+      }).catch(() => {
+        const result = {
+          errMsg: 'takePhoto:fail'
+        }
+        fail(result)
+        complete(result)
+      })
     },
-    getStartRecord: () => {
-      return cameraRef.current?.startRecording
+    startRecord: (options: RecordOptions = {}) => {
+      let { timeout = 30, success = noop, fail = noop, complete = noop, timeoutCallback = noop } = options
+      timeout = timeout > 300 ? 300 : timeout
+      let recordTimer: NodeJS.Timeout | null = null
+      let isTimeout = false
+      try {
+        const result = {
+          errMsg: 'startRecord:ok'
+        }
+        success(result)
+        complete(result)
+
+        cameraRef.current?.startRecording?.({
+          onRecordingError: (error: any) => {
+            if (recordTimer) clearTimeout(recordTimer)
+            const errorResult = {
+              errMsg: 'startRecord:fail during recording',
+              error: error
+            }
+            timeoutCallback(errorResult)
+          },
+          onRecordingFinished: (video: any) => {
+            RecordRes = video
+            if (recordTimer) clearTimeout(recordTimer)
+          }
+        })
+
+        recordTimer = setTimeout(() => { // 超时自动停止
+          isTimeout = true
+          cameraRef.current?.stopRecording().catch(() => {
+            // 忽略停止录制时的错误
+          })
+        }, timeout * 1000)
+      } catch (error: any) {
+        if (recordTimer) clearTimeout(recordTimer)
+        const result = {
+          errMsg: 'startRecord:fail ' + (error.message || 'unknown error')
+        }
+        fail(result)
+        complete(result)
+      }
     },
-    getStopRecord: () => {
-      return cameraRef.current?.stopRecording
+    stopRecord: (options: StopRecordOptions = {}) => {
+      const { success = noop, fail = noop, complete = noop } = options
+      try {
+        cameraRef.current?.stopRecording().then(() => {
+          setTimeout(() => {
+            if (RecordRes) {
+              const result = {
+                errMsg: 'stopRecord:ok',
+                tempVideoPath: RecordRes?.path,
+                duration: RecordRes.duration * 1000 // 转成ms
+              }
+              RecordRes = null
+              success(result)
+              complete(result)
+            }
+          }, 200) // 延时200ms，确保录制结果已准备好
+        }).catch((e: any) => {
+          const result = {
+            errMsg: 'stopRecord:fail ' + (e.message || 'promise rejected')
+          }
+          fail(result)
+          complete(result)
+        })
+      } catch (error: any) {
+        const result = {
+          errMsg: 'stopRecord:fail ' + (error.message || 'unknown error')
+        }
+        fail(result)
+        complete(result)
+      }
     }
   }
 
@@ -147,7 +262,7 @@ const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props:
     <Camera
       ref={cameraRef}
       isActive={true}
-      photo={isPhoto}
+      photo={true}
       video={true}
       onInitialized={onInitialized}
       onStopped={onStopped}
