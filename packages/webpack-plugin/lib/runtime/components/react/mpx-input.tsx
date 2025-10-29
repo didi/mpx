@@ -295,9 +295,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    if (!keyboardAvoid?.current) {
-      setKeyboardAvoidContext()
-    }
+    setKeyboardAvoidContext()
 
     if (bindfocus) {
       const focusAction = () => {
