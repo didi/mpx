@@ -204,12 +204,13 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         ? ruleV
         : transitionSupportedProperty[key]
       // 获取到的toVal为百分比格式化shareValMap为百分比
-      if (percentExp.test(`${toVal}`) && typeof +shareValMap[key].value === 'number') {
-        shareValMap[key].value = `${shareValMap[key].value as number * 100}%`
-      } else if (percentExp.test(shareValMap[key].value as string) && typeof +toVal === 'number') {
+      const shareVal = shareValMap[key].value
+      if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && typeof +shareVal === 'number') {
+        shareValMap[key].value = `${shareVal as number * 100}%`
+      } else if (percentExp.test(shareVal as string) && !percentExp.test(toVal as string) && typeof +toVal === 'number') {
         // 初始值为百分比则格式化toVal为百分比
         toVal = `${toVal * 100}%`
-      } else if (typeof toVal !== typeof shareValMap[key].value) {
+      } else if (typeof toVal !== typeof shareVal) {
         // transition动画起始值和终态值类型不一致报错提示一下
         error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
