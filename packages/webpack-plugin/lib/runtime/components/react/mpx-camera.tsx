@@ -59,6 +59,7 @@ type HandlerRef<T, P> = {
 let RecordRes: any = null
 
 const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { Camera, useCameraDevice, useCodeScanner, useCameraFormat } = require('react-native-vision-camera')
   const cameraRef = useRef<any>(null)
   const {
