@@ -642,11 +642,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
     function handleInertialSlide (eventData: EventDataType, velocity: number) {
       'worklet'
-      const clampedVelocity = Math.sign(velocity) * Math.min(Math.abs(velocity), 900)
+      const clampedVelocity = Math.min(Math.abs(velocity), 900)
       const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
 
       // 基于速度计算动画持续时间
-      const velocityFactor = Math.min(Math.abs(clampedVelocity) / 1000, 1.2)
+      const velocityFactor = Math.min(clampedVelocity / 1000, 1.2)
       const baseDuration = 300
       const minDuration = 250
       const duration = Math.max(baseDuration / velocityFactor, minDuration)
