@@ -417,44 +417,50 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   )
 
-  const getSvgImage = () => createElement(
-    View,
-    innerProps,
-    createElement(SvgCssUri, {
-      uri: src,
-      onLayout: onSvgLoad,
-      onError: binderror && onSvgError,
-      style: extendObject(
-        { transformOrigin: 'left top' },
-        modeStyle
-      )
-    })
-  )
-
-  const getBaseImage = () => renderImage(
-    extendObject(
-      {
-        source: { uri: src },
-        resizeMode: resizeMode,
-        onLoad: bindload && onImageLoad,
-        onError: binderror && onImageError,
+  function renderSvgImage () {
+    return createElement(
+      View,
+      innerProps,
+      createElement(SvgCssUri, {
+        uri: src,
+        onLayout: onSvgLoad,
+        onError: binderror && onSvgError,
         style: extendObject(
-          {
-            transformOrigin: 'left top',
-            width: isCropMode ? imageWidth : '100%',
-            height: isCropMode ? imageHeight : '100%'
-          },
-          isCropMode ? modeStyle : {}
+          { transformOrigin: 'left top' },
+          modeStyle
         )
-      },
-      isLayoutMode ? {} : innerProps
-    ),
-    enableFastImage
-  )
+      })
+    )
+  }
 
-  const getLayoutImage = () => createElement(View, innerProps, loaded && getBaseImage())
+  function renderBaseImage () {
+    return renderImage(
+      extendObject(
+        {
+          source: { uri: src },
+          resizeMode: resizeMode,
+          onLoad: bindload && onImageLoad,
+          onError: binderror && onImageError,
+          style: extendObject(
+            {
+              transformOrigin: 'left top',
+              width: isCropMode ? imageWidth : '100%',
+              height: isCropMode ? imageHeight : '100%'
+            },
+            isCropMode ? modeStyle : {}
+          )
+        },
+        isLayoutMode ? {} : innerProps
+      ),
+      enableFastImage
+    )
+  }
 
-  const finalComponent = isSvg ? getSvgImage() : isLayoutMode ? getLayoutImage() : getBaseImage()
+  function renderLayoutImage () {
+    return createElement(View, innerProps, loaded && renderBaseImage())
+  }
+
+  const finalComponent = isSvg ? renderSvgImage() : isLayoutMode ? renderLayoutImage() : renderBaseImage()
 
   if (hasPositionFixed) {
     return createElement(Portal, null, finalComponent)
