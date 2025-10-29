@@ -99,6 +99,17 @@ const sidebar: DefaultTheme.Sidebar = {
       ],
     },
     {
+      text: "跨端 RN",
+      items: [
+        { text: "快速开始", link: "/guide/rn/start" },
+        { text: "组件使用与开发", link: "/guide/rn/component" },
+        { text: "模板语法与生命周期", link: "/guide/rn/template" },
+        { text: "跨端样式", link: "/guide/rn/style" },
+        { text: "应用能力", link: "/guide/rn/application-api" },
+        { text: "混合编写 RN", link: "/guide/rn/hybrid-with-react-native" },
+      ],
+    },
+    {
       text: "组合式 API",
       items: [
         {
@@ -150,31 +161,9 @@ const sidebar: DefaultTheme.Sidebar = {
       ],
     },
   ],
-  "/rn/": [
-    {
-      text: "基础",
-      items: [
-        { text: "快速开始", link: "/rn/basic/start" },
-        { text: "组件使用与开发", link: "/rn/basic/component" },
-        { text: "模板语法与生命周期", link: "/rn/basic/template" },
-        { text: "跨端样式", link: "/rn/basic/style" },
-        { text: "应用能力", link: "/rn/basic/application-api" },
-      ],
-    },
-    {
-      text: "进阶",
-      items: [
-        { text: "混合编写 RN", link: "/rn/advance/hybrid-with-react-native" },
-      ],
-    },
-    // {
-    //   text: "生态",
-    //   items: [{ text: "生态 SDK", link: "/rn/ecosystem/ecosystem-sdk" }],
-    // },
-  ],
   "/api/": [
     {
-      text: "运行时 API",
+      text: "框架 API",
       items: [
         { text: "API 参考", link: "/api/" },
         { text: "全局配置", link: "/api/app-config" },
@@ -193,7 +182,7 @@ const sidebar: DefaultTheme.Sidebar = {
   ],
   "/api-proxy/": [
     {
-      text: "跨端转换 API",
+      text: "基础 API",
       link: "/api-proxy/index",
       items: [
         {
@@ -994,27 +983,15 @@ export default withPwa(
         {
           text: "指南",
           activeMatch: "^/guide/",
-          items: [
-            {
-              text: "快速开始",
-              activeMatch: "^/guide/start/",
-              link: "/guide/basic/start",
-            },
-            {
-              text: "跨端输出 RN",
-              activeMatch: "^/rn/",
-              link: "/rn/basic/start",
-              badge: { text: "新" },
-            },
-          ],
+          link: "/guide/basic/start",
         },
         {
           text: "API",
           activeMatch: "^/(api|api-proxy)/",
           items: [
-            { text: "运行时 API", activeMatch: "^/api/", link: "/api/" },
+            { text: "框架 API", activeMatch: "^/api/", link: "/api/" },
             {
-              text: "跨端转换 API",
+              text: "基础 API",
               activeMatch: "^/api-proxy/",
               link: "/api-proxy/",
               badge: { text: "新" },
