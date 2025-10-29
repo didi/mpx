@@ -1,6 +1,8 @@
 const compiler = require('../../lib/template-compiler/compiler')
 const lib = require('../../lib/utils/normalize').lib
 const getRulesRunner = require('../../lib/platform/index')
+const genNodeReact = require('../../lib/template-compiler/gen-node-react')
+const { isReact } = require('../../lib/utils/env')
 
 const errorFn = jest.fn(console.error)
 const warnFn = jest.fn(console.warn)
@@ -23,6 +25,9 @@ function compileTemplate (template, { srcMode = 'wx', mode = 'ali', env = '' } =
     proxyComponentEventsRules: []
   })
   const ast = parsed.root
+  if (isReact(mode)) {
+    return genNodeReact(ast)
+  }
   return compiler.serialize(ast)
 }
 

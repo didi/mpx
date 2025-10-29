@@ -230,7 +230,7 @@ export default function createApp (options) {
     const { initialRouteName, initialParams } = initialRouteRef.current
     const navScreenOpts = {
       headerShown: false,
-      statusBarTranslucent: true,
+      statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
       statusBarBackgroundColor: 'transparent'
     }
 
