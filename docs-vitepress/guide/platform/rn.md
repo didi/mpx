@@ -40,7 +40,7 @@ Mpx 框架在样式处理部分的具体工作主要分为两大类有：
 - 100% 计算
 - css func 处理，包括 env()、calc()、var()
 ### CSS选择器
-RN 环境下仅支持单个**类选择器**，不支持类名组合选择器，不过逗号组合的选择器本质上还是单类选择器，是可以支持的。
+RN 环境下仅支持**单类选择器**、**page选择器**、**:host选择器**，不支持类名组合选择器，不过逗号组合的选择器本质上还是单类选择器，是可以支持的。
 ``` css
 /* 支持 */
 .classname {
@@ -48,6 +48,12 @@ RN 环境下仅支持单个**类选择器**，不支持类名组合选择器，�
 }
 .classA, .classB {
   color: red
+}
+page {
+   color: red
+}
+:host {
+   color: red
 }
 /* 不支持 */
 view, text {
@@ -309,30 +315,71 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 ### 使用RN组件
 在Mpx组件内引用RN组件，采用如下方式
 - **RN组件注册方式**：需在components属性下进行引用注册。
-- **RN组件的属性与事件**：属性与事件参考RN原生支持的属性与事件名，对应赋值方式按照Mpx语法进行双括号包裹，组件使用的值需要通过 REACTHOOKSEXEC方法的返回值的方式进行声明。
-- **RN组件的样式定义**: 组件支持样式属性的透传，通过在RN组件上定义styles即可透传样式
+- **RN组件的属性与事件**：属性与事件参考RN原生支持的属性与事件名，对应赋值方式按照Mpx语法进行双括号包裹，组件使用的值需要通过 onReactHooksExec 的返回值的方式进行声明。
+- **RN组件的样式定义**: 组件支持样式属性的透传，通过在RN组件上定义style即可透传样式
 - **其他功能**: 支持在RN组件内使用slot
-```javascript
+```html
 <template>
     <view>
         <!-- 事件的value需要使用双括号包裹 -->
         <ScrollView onScroll="{{scrollAction}}">
-          <View styles="{{viewStyle}}">
+          <View style="{{viewStyle}}">
             <!-- 可混合编写mpx组件 -->
             <view>我是Mpx组件</view>
             <!-- 支持在RN组件内部定义插槽 -->
             <slot name="myslot"></slot>
-          <View>
+          </View>
+        </ScrollView>
+    </view>
+</template>
+<script setup>
+    import { onReactHooksExec } from '@mpxjs/core'
+    import { ScrollView } from 'react-native-gesture-handler'
+    import { View } from 'react-native'
+
+    onReactHooksExec(() => {
+        return {
+            viewStyle: {
+              width: 200,
+              height: 200
+            }
+        }
+    })
+    defineOptions({
+        // 声明 RN 组件
+        components: {
+            ScrollView,
+            View
+        }
+    })
+</script>
+```
+
+在选项式api中，使用 REACTHOOKSEXEC 替代 onReactHooksExec，例如
+```html
+<template>
+    <view>
+        <!-- 事件的value需要使用双括号包裹 -->
+        <ScrollView onScroll="{{scrollAction}}">
+          <View style="{{viewStyle}}">
+            <!-- 可混合编写mpx组件 -->
+            <view>我是Mpx组件</view>
+            <!-- 支持在RN组件内部定义插槽 -->
+            <slot name="myslot"></slot>
+          </View>
         </ScrollView>
     </view>
 </template>
 <script>
     import { createComponent, REACTHOOKSEXEC } from '@mpxjs/core'
     import { ScrollView } from 'react-native-gesture-handler'
+    import { View } from 'react-native'
     createComponent({
+        // 声明 RN 组件
         components: {
-            ScrollView
-        }
+            ScrollView,
+            View
+        },
         [REACTHOOKSEXEC](){
             return {
               viewStyle: {
@@ -344,6 +391,9 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
     })
 </script>
 ```
+
+
+
 ### 使用React hooks
 Mpx提供了hooks的执行机制，通过在Mpx组件内注册REACTHOOKSEXEC方法，保障RN组件的初始化执行。hooks的返回值支持数据与方法
 - 模板上RN组件/Mpx组件的数据渲染
@@ -1385,14 +1435,14 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 | id, dataset | ✅ 完全支持 | 节点基础属性 |
 | setData | ✅ 完全支持 | 数据更新方法 |
 | triggerEvent | ✅ 完全支持 | 事件触发 |
-| selectComponent | ✅ 有限制 | 选择子组件，仅支持 id/class 选择器，需配合 `wx:ref` 使用 |
-| selectAllComponents | ✅ 有限制 | 选择所有子组件，仅支持 id/class 选择器，需配合 `wx:ref` 使用 |
+| createSelectorQuery | ✅ 有限制 | 返回一个 SelectorQuery 对象实例，用以查询基础节点位置等属性，需配合 `wx:ref` 使用 |
+| selectComponent | ✅ 有限制 | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例，需配合 `wx:ref` 使用 |
+| selectAllComponents | ✅ 有限制 | 在父组件当中获取子组件的实例对象，返回匹配到的全部组件实例对象组成的数组，需配合 `wx:ref` 使用 |
 | $set, $watch, $delete | ✅ 完全支持 | 响应式数据操作 |
 | $refs, $forceUpdate, $nextTick | ✅ 完全支持 | 组件实例方法 |
 | $rawOptions | ✅ 完全支持 | 原始选项访问 |
 | $i18n | ✅ 完全支持 | 国际化访问器 |
 | is | ✅ 完全支持 | 动态组件 |
-| createSelectorQuery | ❌ 不支持 | 节点查询 |
 
 **🔧 selectComponent / selectAllComponents 使用要点**
 
@@ -1420,7 +1470,30 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
   })
 </script>
 ```
+**🔧 createSelectorQuery 使用要点**
 
+ 使用 `createSelectorQuery` 来获取基础组件需要在基础节点上标记 `wx:ref` 标签才能生效，以及所支持的选择器范围和 `selectComponent`/`selectAllComponents` 一致
+
+```javascript
+<template>
+  <view wx:ref class="title">this is view</view>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    ready() {
+      this.createSelectorQuery()
+        .select('.title')
+        .boundingClientRect(res => {
+          console.log('the rect res is:', res)
+        })
+        .exec()
+    }
+  })
+</script>
+```
 
 ### 样式规则
 #### position
