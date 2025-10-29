@@ -1014,7 +1014,7 @@ function processComponentIs (el, options) {
     ranges = range.split(',').map(i => i.trim()).filter(i => i)
   } else {
     // 根据原始用户写的usingComponents字段生成ranges
-    ranges = options.originalUsingComponents
+    ranges = options.originalUsingComponents || []
   }
 
   const rangeMap = new Map()
@@ -1884,24 +1884,25 @@ function processRefReact (el, meta) {
     /**
      * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
      */
-    if (!val) {
-      const rawId = el.attrsMap.id
-      const rawClass = el.attrsMap.class
-      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
-
-      if (rawId) {
-        const staticId = parseMustacheWithContext(rawId).result
-        selectors.push({ prefix: '#', selector: `${staticId}` })
-      }
-      if (rawClass || rawDynamicClass) {
-        const staticClass = parseMustacheWithContext(rawClass).result
-        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
-      }
-    } else {
+    if (val) {
       meta.refs.push(refConf)
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
+
+    const rawId = el.attrsMap.id
+    const rawClass = el.attrsMap.class
+    const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
+    if (rawId) {
+      const staticId = parseMustacheWithContext(rawId).result
+      selectors.push({ prefix: '#', selector: `${staticId}` })
+    }
+    if (rawClass || rawDynamicClass) {
+      const staticClass = parseMustacheWithContext(rawClass).result
+      const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+      selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
+    }
+
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     const refFnId = forScopes.reduce((preV, curV) => {
       return `${preV} + "_" + ${curV.index}`
