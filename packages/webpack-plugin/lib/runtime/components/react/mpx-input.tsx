@@ -280,8 +280,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const setKeyboardAvoidContext = () => {
-    if (adjustPosition && keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef }
+    if (keyboardAvoid) {
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition }
     }
   }
 
@@ -295,20 +295,45 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    setKeyboardAvoidContext()
-    bindfocus && bindfocus(
-      getCustomEvent(
-        'focus',
-        evt,
-        {
-          detail: {
-            value: tmpValue.current || ''
-          },
-          layoutRef
-        },
-        props
-      )
-    )
+    if (!keyboardAvoid?.current) {
+      setKeyboardAvoidContext()
+    }
+
+    if (bindfocus) {
+      const focusAction = () => {
+        bindfocus(
+          getCustomEvent(
+            'focus',
+            evt,
+            {
+              detail: {
+                value: tmpValue.current || '',
+                height: keyboardAvoid?.current?.keyboardHeight
+              },
+              layoutRef
+            },
+            props
+          )
+        )
+        if (keyboardAvoid?.current?.onKeyboardShow) {
+          keyboardAvoid.current.onKeyboardShow = undefined
+        }
+      }
+      if (keyboardAvoid?.current) {
+        // 有 keyboardAvoiding
+        if (keyboardAvoid.current.keyboardHeight) {
+          // iOS: keyboard 获取高度时机 keyboardWillShow 在 input focus 之前，可以立即执行
+          focusAction()
+        } else {
+          // Android,Harmony: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
+          evt.persist()
+          keyboardAvoid.current.onKeyboardShow = focusAction
+        }
+      } else {
+        // 无 keyboardAvoiding，直接执行 focus 回调
+        focusAction()
+      }
+    }
   }
 
   const onBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {

@@ -193,7 +193,17 @@ async function stripByPostcss(options) {
   const syntax = styleSyntaxProcesserMap[options.lang]?.()
   const defs = options.defs ?? {}
 
-  const afterConditionStrip = stripCondition(options.css, defs)
+  function stripContentCondition(content) {
+    content = stripCondition(content, defs)
+
+    if (options.lang === 'stylus') {
+      content = content.replace(/\t/g, '  ')
+    }
+
+    return content
+  }
+
+  const afterConditionStrip = stripContentCondition(options.css, defs)
 
     /**
    * @type {import('postcss').AcceptedPlugin[]}
@@ -204,7 +214,7 @@ async function stripByPostcss(options) {
         let content = await fs.readFile(filename, 'utf-8')
         const processer = postcss(plugins)
 
-        content = stripCondition(content, defs)
+        content = stripContentCondition(content, defs)
 
         const { css } = await processer.process(content, {
           syntax,
@@ -228,11 +238,24 @@ async function stripByPostcss(options) {
           })
         })
       }
-    })
+    }),
+    {
+      // less/scss syntax 在 postcss 重新生成 css 后，`//` 注释后面不会保留换行，会和后续的 css 语句和注释连在一起，导致后续语法错误
+      postcssPlugin: 'mpx-strip-conditional-loader-append-command',
+      CommentExit(comment) {
+        if (!comment.raws.right) {
+          comment.raws.right = '\n'
+          return
+        }
+
+        if (!comment.raws.right.startsWith('\n')) {
+          comment.raws.right = '\n' + comment.raws.right
+        }
+      }
+    }
   ]
 
   const processer = postcss(plugins)
-
   return processer.process(afterConditionStrip, {
     from: options.resourcePath,
     syntax

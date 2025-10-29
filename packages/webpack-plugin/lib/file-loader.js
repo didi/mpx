@@ -8,7 +8,9 @@ module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
   const mpx = this.getMpx()
-  const isRN = ['ios', 'android', 'harmony'].includes(mpx.mode)
+
+  const { mode } = mpx
+  const isRN = ['ios', 'android', 'harmony'].includes(mode)
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -17,6 +19,7 @@ module.exports = function loader (content, prevOptions) {
   })
 
   let outputPath = url
+  const { resourcePath, queryObj } = parseRequest(this.resource)
 
   if (options.publicPath) {
     if (options.outputPathCDN) {
@@ -27,13 +30,19 @@ module.exports = function loader (content, prevOptions) {
       }
     }
   } else {
-    const { resourcePath, queryObj } = parseRequest(this.resource)
     const packageRoot = queryObj.packageRoot || ''
     url = outputPath = toPosix(path.join(packageRoot, outputPath))
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
   }
 
-  let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
+  let publicPath
+
+  // 快手小程序 tabbar icon 资源路径不能以 / 开头
+  if (queryObj.from === 'tabbar' && mode === 'ks') {
+    publicPath = JSON.stringify(url)
+  } else {
+    publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
+  }
 
   if (isRN) {
     publicPath = `__mpx_require_external__(${JSON.stringify(url)})`
@@ -47,6 +56,7 @@ module.exports = function loader (content, prevOptions) {
         ? options.publicPath
         : `${options.publicPath}/`}${url}`
     }
+
     publicPath = JSON.stringify(publicPath)
   }
 

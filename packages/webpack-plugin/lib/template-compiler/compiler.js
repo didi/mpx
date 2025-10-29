@@ -1884,24 +1884,25 @@ function processRefReact (el, meta) {
     /**
      * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
      */
-    if (!val) {
-      const rawId = el.attrsMap.id
-      const rawClass = el.attrsMap.class
-      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
-
-      if (rawId) {
-        const staticId = parseMustacheWithContext(rawId).result
-        selectors.push({ prefix: '#', selector: `${staticId}` })
-      }
-      if (rawClass || rawDynamicClass) {
-        const staticClass = parseMustacheWithContext(rawClass).result
-        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
-      }
-    } else {
+    if (val) {
       meta.refs.push(refConf)
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
+
+    const rawId = el.attrsMap.id
+    const rawClass = el.attrsMap.class
+    const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
+    if (rawId) {
+      const staticId = parseMustacheWithContext(rawId).result
+      selectors.push({ prefix: '#', selector: `${staticId}` })
+    }
+    if (rawClass || rawDynamicClass) {
+      const staticClass = parseMustacheWithContext(rawClass).result
+      const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+      selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
+    }
+
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     const refFnId = forScopes.reduce((preV, curV) => {
       return `${preV} + "_" + ${curV.index}`
@@ -2719,7 +2720,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,ks,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)
@@ -3261,7 +3262,7 @@ function genFor (node) {
   node.forProcessed = true
   const index = node.for.index || 'index'
   const item = node.for.item || 'item'
-  return `_i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
+  return `mpx_i(${node.for.exp}, function(${item},${index}){\n${genNode(node)}});\n`
 }
 
 function genNode (node) {
