@@ -352,9 +352,8 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             </View>
             )
           : (
-          <View style={StyleSheet.absoluteFill}>
-            <WebView
-            style={ defaultWebViewStyle }
+          <WebView
+            containerStyle={ defaultWebViewStyle }
             source={{ uri: src }}
             ref={webViewRef}
             javaScriptEnabled={true}
@@ -366,8 +365,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onHttpError={onHttpError}
             onError={onError}
             allowsBackForwardNavigationGestures={true}
-          ></WebView>
-      </View>)}
+          ></WebView>)}
       </Portal>
   )
 })
