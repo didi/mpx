@@ -1014,7 +1014,7 @@ function processComponentIs (el, options) {
     ranges = range.split(',').map(i => i.trim()).filter(i => i)
   } else {
     // 根据原始用户写的usingComponents字段生成ranges
-    ranges = options.originalUsingComponents
+    ranges = options.originalUsingComponents || []
   }
 
   const rangeMap = new Map()
