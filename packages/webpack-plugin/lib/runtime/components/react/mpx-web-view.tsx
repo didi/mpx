@@ -127,8 +127,16 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
     style: defaultWebViewStyle
   })
 
+  const getHostFromUrl = function (url: string): string {
+    if (!url) return ''
+    // 匹配协议://主机名(:端口) 的模式
+    const regex = /^(?:https?|ftp):\/\/([^/?:#]+)(?::(\d+))?/i
+    const match = url.match(regex)
+    return match ? match[1] : ''
+  }
+
   const hostValidate = (url: string) => {
-    const host = url && new URL(url).host
+    const host = url && getHostFromUrl(url)
     const hostWhitelists = mpx.config.rnConfig?.webviewConfig?.hostWhitelists || []
     if (hostWhitelists.length) {
       return hostWhitelists.some((item: string) => {
@@ -343,8 +351,9 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
               <View style={styles.loadErrorButton} onTouchEnd={_reload}><Text style={{ fontSize: 12, color: '#666666' }}>{currentErrorText.button}</Text></View>
             </View>
             )
-          : (<WebView
-            style={ defaultWebViewStyle }
+          : (
+          <WebView
+            containerStyle={ defaultWebViewStyle }
             source={{ uri: src }}
             ref={webViewRef}
             javaScriptEnabled={true}
@@ -356,7 +365,7 @@ const _WebView = forwardRef<HandlerRef<WebView, WebViewProps>, WebViewProps>((pr
             onHttpError={onHttpError}
             onError={onError}
             allowsBackForwardNavigationGestures={true}
-      ></WebView>)}
+          ></WebView>)}
       </Portal>
   )
 })
