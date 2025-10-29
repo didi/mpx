@@ -786,14 +786,14 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 | id, dataset | ✅ 完全支持 | 节点基础属性 |
 | setData | ✅ 完全支持 | 数据更新方法 |
 | triggerEvent | ✅ 完全支持 | 事件触发 |
-| selectComponent | ✅ 有限制 | 选择子组件，仅支持 id/class 选择器，需配合 `wx:ref` 使用 |
-| selectAllComponents | ✅ 有限制 | 选择所有子组件，仅支持 id/class 选择器，需配合 `wx:ref` 使用 |
+| createSelectorQuery | ✅ 有限制 | 返回一个 SelectorQuery 对象实例，用以查询基础节点位置等属性，需配合 `wx:ref` 使用 |
+| selectComponent | ✅ 有限制 | 在父组件当中获取子组件的实例对象，返回匹配到的第一个组件实例，需配合 `wx:ref` 使用 |
+| selectAllComponents | ✅ 有限制 | 在父组件当中获取子组件的实例对象，返回匹配到的全部组件实例对象组成的数组，需配合 `wx:ref` 使用 |
 | $set, $watch, $delete | ✅ 完全支持 | 响应式数据操作 |
 | $refs, $forceUpdate, $nextTick | ✅ 完全支持 | 组件实例方法 |
 | $rawOptions | ✅ 完全支持 | 原始选项访问 |
 | $i18n | ✅ 完全支持 | 国际化访问器 |
 | is | ✅ 完全支持 | 动态组件 |
-| createSelectorQuery | ❌ 不支持 | 节点查询 |
 
 #### selectComponent / selectAllComponents 使用要点
 
