@@ -13,11 +13,16 @@
     "test": {
       "presets": [
         [
-          "@babel/env",
+          "@babel/preset-env",
           {
-            "shippedProposals": true
+            "shippedProposals": true,
+            "targets": {
+              "node": "current"
+            }
           }
-        ]
+        ],
+        "@babel/preset-react",
+        "@babel/preset-typescript"
       ]
     }
   }
