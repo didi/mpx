@@ -590,7 +590,7 @@ overflow: scroll;  /* 滚动查看溢出内容 */
 
 控制元素是否响应触摸事件。
 
-**值类型**：`auto` | `none` | `box-none` <badge type="tip" text="RN" /> | `box-only` <badge text="RN" />
+**值类型**：`auto` | `none` | `box-none`（仅 RN 支持）| `box-only`（仅 RN 支持）
 
 > [!tip] 💡 RN 特有值
 >
@@ -950,7 +950,7 @@ border-top: 1px solid red;    /* 上边框：宽度 样式 颜色 */
 border-left: 2px dotted blue; /* 左边框：宽度 样式 颜色 */
 ```
 
-### background<badge type="tip" text="<view>" />
+### background
 
 背景的简写属性。
 
@@ -977,7 +977,7 @@ background-color: #ff0000;
 background-color: rgba(255, 0, 0, 0.5);
 ```
 
-### background-image <badge type="tip" text="<view>" />
+### background-image
 
 设置背景图片或渐变。
 
@@ -993,7 +993,7 @@ background-image: linear-gradient(45deg, blue, red);
 background-image: linear-gradient(to right, blue 0%, red 100%);
 ```
 
-### background-size <badge type="tip" text="<view>" />
+### background-size
 
 设置背景图片大小。
 > [!tip] 注意
@@ -1008,7 +1008,7 @@ background-size: contain;  /* 完整显示 */
 background-size: 50% 25%;  /* 宽度 高度 */
 ```
 
-### background-repeat <badge type="tip" text="<view>" />
+### background-repeat
 
 设置背景图片重复方式。
 
@@ -1024,7 +1024,7 @@ background-repeat: no-repeat;
 background-repeat: repeat;
 ```
 
-### background-position <badge type="tip" text="<view>" />
+### background-position
 
 设置背景图片位置。
 > [!tip] 注意
@@ -1189,7 +1189,7 @@ text-align: center;  /* 居中对齐 */
 text-align: justify; /* 两端对齐 */
 ```
 
-### vertical-align  <badge type="tip" text="Android" />
+### vertical-align
 
 设置行内文本的垂直对齐方式。
 
@@ -1363,7 +1363,7 @@ transform-origin: 50% 50% 30px;  /* X Y Z 坐标 */
 transform-origin: left top 10px; /* 关键字 + Z 偏移 */
 ```
 
-### backface-visibility <badge type="tip" text="<view>" />
+### backface-visibility
 
 设置背面可见性。
 
@@ -1377,7 +1377,7 @@ transform-origin: left top 10px; /* 关键字 + Z 偏移 */
 backface-visibility: hidden; /* 背面隐藏 */
 ```
 
-### object-fit <badge type="tip" text="<view>" />
+### object-fit
 
 设置替换元素的内容应该如何适应到其使用高度和宽度确定的框。
 
