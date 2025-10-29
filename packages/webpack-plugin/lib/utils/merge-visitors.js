@@ -16,7 +16,7 @@ function mergeVisitorHooks (result, visitor) {
 }
 
 function normalizeVisitor(visitor) {
-  if (Array.isArray(visitor.exit) && Array.isArray(visitor.exit)) {
+  if (Array.isArray(visitor.enter) && Array.isArray(visitor.exit)) {
     return visitor
   }
   if (typeof visitor === 'function') {
