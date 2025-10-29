@@ -1,0 +1,17 @@
+<template mode="ali">
+  <view>{{__mpx_mode__}}</view>
+  <view class=".test">test</view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  onLoad () {}
+})
+</script>
+
+<style lang="stylus">
+ .test
+   font-size 12px
+</style>

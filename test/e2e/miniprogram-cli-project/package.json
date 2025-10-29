@@ -8,10 +8,14 @@
     "lint": "eslint --ext .js,.ts,.mpx src/",
     "build:android": "mpx-cli-service build --targets=android && cd ReactNativeProject && npm run bundle:android",
     "build:ios": "mpx-cli-service build --targets=ios && cd ReactNativeProject && npm run bundle:ios",
+    "build:harmony": "mpx-cli-service build --targets=harmony && cd ReactNativeProject && npm run bundle:android",
     "build:ssr": "mpx-cli-service build:ssr",
+    "build:web": "mpx-cli-service build --targets=web",
     "serve:android": "cd ReactNativeProject && npm run android && cd .. && mpx-cli-service serve --targets=android",
     "serve:ios": "cd ReactNativeProject && npm run ios && cd .. && mpx-cli-service serve --targets=ios",
+    "serve:harmony": "cd ReactNativeProject && npm run android && cd .. && mpx-cli-service serve --targets=harmony",
     "serve:ssr": "mpx-cli-service serve:ssr",
+    "serve:web": "mpx-cli-service serve --targets=web",
     "copyPlugin": "sh ./copyWebpackPlugin.sh"
   },
   "dependencies": {
