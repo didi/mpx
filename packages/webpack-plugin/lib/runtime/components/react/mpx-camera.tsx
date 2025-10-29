@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef, useCallback, useContext, useState, useEffect } from 'react'
-import { Camera, useCameraDevice, useCodeScanner, useCameraFormat } from 'react-native-vision-camera'
+// import { Camera, useCameraDevice, useCodeScanner, useCameraFormat } from 'react-native-vision-camera'
 import { getCustomEvent } from './getInnerListeners'
 import { noop } from '@mpxjs/utils'
 import { RouteContext } from './context'
@@ -58,8 +58,9 @@ type HandlerRef<T, P> = {
 
 let RecordRes: any = null
 
-const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
-  const cameraRef = useRef<Camera>(null)
+const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
+  const { Camera, useCameraDevice, useCodeScanner, useCameraFormat } = require('react-native-vision-camera')
+  const cameraRef = useRef<any>(null)
   const {
     mode = 'normal',
     resolution = 'medium',
@@ -100,7 +101,7 @@ const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props:
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
-    onCodeScanned: (codes) => {
+    onCodeScanned: (codes: any[]) => {
       const result = codes.map(code => code.value).join(',')
       bindscancode && bindscancode(getCustomEvent('scancode', {}, {
         detail: {
@@ -149,14 +150,14 @@ const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props:
       const { success = noop, fail = noop, complete = noop } = options
       cameraRef.current?.takePhoto?.({
         quality: qualityValue[options.quality || 'normal'] as number
-      } as any).then((res) => {
+      } as any).then((res: { path: any }) => {
         const result = {
           errMsg: 'takePhoto:ok',
           tempImagePath: res.path
         }
         success(result)
         complete(result)
-      }).catch((res) => {
+      }).catch(() => {
         const result = {
           errMsg: 'takePhoto:fail'
         }
@@ -177,7 +178,7 @@ const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props:
         complete(result)
 
         cameraRef.current?.startRecording?.({
-          onRecordingError: (error) => {
+          onRecordingError: (error: any) => {
             if (recordTimer) clearTimeout(recordTimer)
             const errorResult = {
               errMsg: 'startRecord:fail during recording',
@@ -185,7 +186,7 @@ const _camera = forwardRef<HandlerRef<Camera, CameraProps>, CameraProps>((props:
             }
             timeoutCallback(errorResult)
           },
-          onRecordingFinished: (video) => {
+          onRecordingFinished: (video: any) => {
             RecordRes = video
             if (recordTimer) clearTimeout(recordTimer)
           }
