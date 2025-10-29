@@ -464,7 +464,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   )
 
-  const SvgImage = createElement(
+  const getSvgImage = () => createElement(
     View,
     innerProps,
     createElement(SvgCssUri, {
@@ -478,7 +478,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     })
   )
 
-  const BaseImage = renderImage(
+  const getBaseImage = () => renderImage(
     extendObject(
       {
         source: { uri: src },
@@ -499,9 +499,9 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     enableFastImage
   )
 
-  const LayoutImage = createElement(View, innerProps, loaded && BaseImage)
+  const getLayoutImage = () => createElement(View, innerProps, loaded && getBaseImage())
 
-  const finalComponent = isSvg ? SvgImage : isLayoutMode ? LayoutImage : BaseImage
+  const finalComponent = isSvg ? getSvgImage() : isLayoutMode ? getLayoutImage() : getBaseImage()
 
   if (hasPositionFixed) {
     return createElement(Portal, null, finalComponent)
