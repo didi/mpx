@@ -16,11 +16,11 @@ function mergeVisitorHooks (result, visitor) {
 }
 
 function normalizeVisitor(visitor) {
-  if (visitor.__isNormalized) {
+  if (visitor.enter && visitor.exit) {
     return visitor
   }
   if (typeof visitor === 'function') {
-    return { enter: [visitor], exit: [], __isNormalized: true }
+    return { enter: [visitor], exit: [] }
   }
 
   if (visitor.enter) {
@@ -38,7 +38,6 @@ function normalizeVisitor(visitor) {
   } else {
     visitor.exit = []
   }
-  visitor.__isNormalized = true
   return visitor
 }
 
