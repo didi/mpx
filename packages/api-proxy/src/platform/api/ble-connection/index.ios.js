@@ -1,4 +1,3 @@
-import BleManager from 'react-native-ble-manager'
 import { noop } from '@mpxjs/utils'
 import mpx from '@mpxjs/core'
 import { Platform, PermissionsAndroid } from 'react-native'
@@ -72,6 +71,7 @@ const commonFailHandler = function (errMsg, fail, complete) {
 }
 
 function openBluetoothAdapter (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { success = noop, fail = noop, complete = noop } = options
   let bluetoothPermission = requestBluetoothPermission
   if (__mpx_env__ === 'android' && mpx.rnConfig?.bluetoothPermission) { // 安卓需要验证权限，开放给用户可以自定义验证权限的方法
@@ -118,6 +118,7 @@ function openBluetoothAdapter (options = {}) {
 }
 
 function closeBluetoothAdapter (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { success = noop, fail = noop, complete = noop } = options
   if (!bleManagerInitialized) {
     const result = {
@@ -183,6 +184,7 @@ function closeBluetoothAdapter (options = {}) {
 }
 
 function startBluetoothDevicesDiscovery (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const {
     services = [],
     allowDuplicatesKey = false,
@@ -243,6 +245,7 @@ function startBluetoothDevicesDiscovery (options = {}) {
 }
 
 function stopBluetoothDevicesDiscovery (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
@@ -282,6 +285,7 @@ function offBluetoothDeviceFound (callback) {
 }
 
 function getConnectedBluetoothDevices (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { services = [], success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
@@ -306,6 +310,7 @@ function getConnectedBluetoothDevices (options = {}) {
 }
 
 function getBluetoothAdapterState (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
@@ -326,6 +331,7 @@ function getBluetoothAdapterState (options = {}) {
   })
 }
 function onDidUpdateState () {
+  const BleManager = require('react-native-ble-manager').default
   updateStateSubscription = BleManager.onDidUpdateState((state) => {
     onStateChangeCallbacks.forEach(cb => {
       cb({
@@ -384,6 +390,7 @@ function getBluetoothDevices (options = {}) { // 该能力只是获取应用级�
 }
 
 function writeBLECharacteristicValue (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, serviceId, characteristicId, value, success = noop, fail = noop, complete = noop } = options
   if (!deviceId || !serviceId || !characteristicId || !value) {
     const result = {
@@ -413,6 +420,7 @@ function writeBLECharacteristicValue (options = {}) {
 }
 
 function readBLECharacteristicValue (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, serviceId, characteristicId, success = noop, fail = noop, complete = noop } = options
 
   if (!deviceId || !serviceId || !characteristicId) {
@@ -449,6 +457,7 @@ function readBLECharacteristicValue (options = {}) {
 }
 
 function notifyBLECharacteristicValueChange (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, serviceId, characteristicId, state = true, success = noop, fail = noop, complete = noop } = options
 
   if (!deviceId || !serviceId || !characteristicId) {
@@ -502,6 +511,7 @@ function notifyBLECharacteristicValueChange (options = {}) {
 
 let valueForCharacteristicSubscriptions = null
 function onBLECharacteristicValueChange (callback) {
+  const BleManager = require('react-native-ble-manager').default
   if (characteristicCallbacks.length === 0) {
     valueForCharacteristicSubscriptions = BleManager.onDidUpdateValueForCharacteristic((data) => {
       // 将byte array转换为ArrayBuffer
@@ -538,6 +548,7 @@ function offBLECharacteristicValueChange (callback) {
 }
 
 function setBLEMTU (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, mtu, success = noop, fail = noop, complete = noop } = options
   if (!mtu) {
     commonFailHandler('setBLEMTU:fail parameter error: parameter.mtu should be Number instead of Undefined;', fail, complete)
@@ -569,6 +580,7 @@ function setBLEMTU (options = {}) {
 }
 
 function getBLEDeviceRSSI (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, success = noop, fail = noop, complete = noop } = options
 
   if (!deviceId) {
@@ -599,6 +611,7 @@ function getBLEDeviceRSSI (options = {}) {
 }
 
 function getBLEDeviceServices (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, success = noop, fail = noop, complete = noop } = options
 
   if (!deviceId) {
@@ -683,6 +696,7 @@ function getBLEDeviceCharacteristics (options = {}) {
 }
 
 function createBLEConnection (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, timeout, success = noop, fail = noop, complete = noop } = options
 
   if (!deviceId) {
@@ -730,6 +744,7 @@ function createBLEConnection (options = {}) {
 }
 
 function closeBLEConnection (options = {}) {
+  const BleManager = require('react-native-ble-manager').default
   const { deviceId, success = noop, fail = noop, complete = noop } = options
 
   if (!deviceId) {

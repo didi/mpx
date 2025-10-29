@@ -1,4 +1,3 @@
-import WifiManager from 'react-native-wifi-reborn'
 import { PermissionsAndroid } from 'react-native'
 import { noop } from '@mpxjs/utils'
 import mpx from '@mpxjs/core'
@@ -22,6 +21,7 @@ async function requestWifiPermission () {
 }
 
 function startWifi (options = {}) {
+  const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
@@ -65,6 +65,7 @@ function startWifi (options = {}) {
 }
 
 function stopWifi (options = {}) {
+  const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
@@ -83,6 +84,7 @@ function stopWifi (options = {}) {
 }
 
 function getWifiList (options = {}) {
+  const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
@@ -148,6 +150,7 @@ function offGetWifiList (callback) {
 }
 
 function getConnectedWifi (options = {}) {
+  const WifiManager = require('react-native-wifi-reborn').default
   const { partialInfo = false, success = noop, fail = noop, complete = noop } = options
 
   if (!startWifiReady) {
