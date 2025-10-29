@@ -9,33 +9,18 @@
  **/
 
 // 辅助函数：将 visitor 的所有钩子添加到结果中
-function addHooks (result, visitor) {
-  if (typeof visitor === 'function') {
-    // 函数形式的 visitor 只作为 enter 钩子
-    result.enter.push(visitor)
-  } else {
-    // 处理 enter 钩子
-    if (visitor.enter) {
-      if (Array.isArray(visitor.enter)) {
-        result.enter.push(...visitor.enter)
-      } else {
-        result.enter.push(visitor.enter)
-      }
-    }
-    // 处理 exit 钩子
-    if (visitor.exit) {
-      if (Array.isArray(visitor.exit)) {
-        result.exit.push(...visitor.exit)
-      } else {
-        result.exit.push(visitor.exit)
-      }
-    }
-  }
+function mergeVisitorHooks (result, visitor) {
+  result.enter = result.enter.concat(visitor.enter)
+  result.exit = result.exit.concat(visitor.exit)
+  return result
 }
 
 function normalizeVisitor(visitor) {
+  if (visitor.__isNormalized) {
+    return visitor
+  }
   if (typeof visitor === 'function') {
-    return { enter: [visitor], exit: [] }
+    return { enter: [visitor], exit: [], __isNormalized: true }
   }
 
   if (visitor.enter) {
@@ -53,21 +38,17 @@ function normalizeVisitor(visitor) {
   } else {
     visitor.exit = []
   }
-
+  visitor.__isNormalized = true
   return visitor
 }
 
 module.exports = function mergeVisitors (target, source) {
   for (const [key, value] of Object.entries(source)) {
     if (!target[key]) {
-      target[key] = value
+      target[key] = normalizeVisitor(value)
     } else {
-      target[key] = normalizeVisitor(target[key])
       // 合并现有值和新值
-      addHooks(target[key], value)
-      if (target[key]?.exit.length === 0) {
-        delete target[key]?.exit
-      }
+      target[key] = mergeVisitorHooks(normalizeVisitor(target[key]), normalizeVisitor(value))
     }
   }
 

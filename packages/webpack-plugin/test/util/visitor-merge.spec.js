@@ -14,10 +14,10 @@ describe('visitor-merge utility', function () {
       Identifier: function () { return 'id' }
     })
 
-    expect(typeof visitor.CallExpression).toBe('function')
-    expect(typeof visitor.Identifier).toBe('function')
-    expect(visitor.CallExpression()).toBe('call')
-    expect(visitor.Identifier()).toBe('id')
+    expect(typeof visitor.CallExpression).toBe('object')
+    expect(typeof visitor.Identifier).toBe('object')
+    expect(visitor.CallExpression.enter[0]()).toBe('call')
+    expect(visitor.Identifier.enter[0]()).toBe('id')
   })
 
   it('should compose methods when conflicts exist', function () {
@@ -179,8 +179,8 @@ describe('WXS Pre-loader Visitor Merge', function () {
 
     // 执行所有方法
     visitor.CallExpression.enter.forEach(fn => fn({}))
-    visitor.MemberExpression({})
-    visitor.Identifier({})
+    visitor.MemberExpression.enter.forEach(fn => fn({}))
+    visitor.Identifier.enter.forEach(fn => fn({}))
 
     expect(executionOrder).toEqual(['base-call', 'extended-call', 'base-member', 'extended-id'])
   })
