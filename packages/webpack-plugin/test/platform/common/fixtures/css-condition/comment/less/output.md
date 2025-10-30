@@ -12,7 +12,8 @@
 
 ```less
 @name: red; // hello world
- .selector {
+
+.selector {
     color: blue // hello world
 }
 ```

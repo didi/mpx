@@ -1,10 +1,7 @@
 const { fixture } = require('../../util/testing')
-const {
-  stripByPostcss
-} = require('../../../lib/style-compiler/strip-conditional-loader')
+const { stripByPostcss } = require('../../../lib/style-compiler/strip-conditional-loader')
 const fs = require('node:fs/promises')
 const path = require('path')
-
 function formatResult(result, config) {
   return `
 
@@ -23,7 +20,7 @@ ${result}
     `.trim()
 }
 
-const getLangFromExtension = (filename) => {
+const getLangFromExtension = filename => {
   const ext = path.extname(filename)
   switch (ext) {
     case '.styl':
@@ -40,7 +37,7 @@ const getLangFromExtension = (filename) => {
 describe('strip-conditional-loader', () => {
   fixture(
     // './fixtures/css-condition/at-import/index.styl',
-    './fixtures/**/index.{styl,less,css,scss}',
+    './fixtures/css-condition/**/index.{styl,less,css,scss}',
     async ({ filename, config = {}, cwd }) => {
       const { lang = getLangFromExtension(filename), defs = {} } = config
 
@@ -49,17 +46,19 @@ describe('strip-conditional-loader', () => {
       let result
 
       try {
-        result = await stripByPostcss({
-          css: content,
-          lang,
-          resourcePath: filename,
-          defs,
-          resolve: (base, id, callback) => {
-            callback(null, path.join(base, id))
-          }
-        })
+        result = (
+          await stripByPostcss({
+            css: content,
+            lang,
+            resourcePath: filename,
+            defs,
+            resolve: (base, id, callback) => {
+              callback(null, path.join(base, id))
+            }
+          })
+        ).css
       } catch (error) {
-        result = `Error: ${error?.message ?? error.toString()}`
+        result = `Error: ${error?.message.trim() || error}`
       }
 
       return formatResult(result, {

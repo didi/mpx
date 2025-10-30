@@ -1,7 +1,7 @@
 const fs = require('fs/promises')
 const parseRequest = require('../utils/parse-request')
-const atImport = require('postcss-import')
-const { default: postcss } = require('postcss')
+const path = require('path')
+const loaderUtils = require('loader-utils')
 
 class Node {
   constructor(type, condition = null) {
@@ -47,7 +47,7 @@ function parse(cssString) {
   const ast = []
   const nodeStack = []
   let currentChildren = ast
-  tokens.forEach((token) => {
+  tokens.forEach(token => {
     if (token.type === 'text') {
       const node = new Node('Text')
       node.value = token.content
@@ -85,7 +85,7 @@ function parse(cssString) {
 function evaluateCondition(condition, defs) {
   try {
     const keys = Object.keys(defs)
-    const values = keys.map((key) => defs[key])
+    const values = keys.map(key => defs[key])
     /* eslint-disable no-new-func */
     const func = new Function(...keys, `return (${condition});`)
     return func(...values)
@@ -151,46 +151,109 @@ function stripCondition(content, defs) {
  * @property {(id: string, base: string) => Promise<string | null> | string | null;} resolve 解析文件路径的函数
  */
 
-/**
- *
- * @param {Function} callback
- * @param {string} name
- * @returns
- */
-const shouldInstallWarning = (callback, name) => {
-  return () => {
-    try {
-      return callback()
-    } catch (error) {
-      throw new Error(
-        `[mpx-strip-conditional-loader]: ${name} is not installed, please install it first.\norginal Error: ${
-          error?.message ?? error.toString()
-        }`,
-        {
-          cause: error
-        }
-      )
-    }
+async function atImport(options) {
+  let { css, load, resolve, from } = options
+  const fromParent = path.dirname(from)
+  const e1 = /\/\*[\s\S]*?\*\//g
+  // 匹配 // 单行注释，可能匹配到静态资源中的 http:// 的 //，不过影响不大， @import 不太可能出现在静态资源链接中
+  const e2 = /\/\/.*/g
+  // 使用正则匹配匹配出 多行注释和单行注释
+  const comments = []
+  let comment
+  while ((comment = e1.exec(css))) {
+    const [content] = comment
+    comments.push({
+      start: comment.index,
+      end: comment.index + content.length,
+      content: content
+    })
   }
-}
-/**
- *
- * @typedef {import('postcss').ProcessOptions} ProcessOptions
- * @typedef {import('postcss').Root} Root
- *
- * @type {Record<string, ProcessOptions['syntax']>}
- */
-const styleSyntaxProcesserMap = {
-  stylus: shouldInstallWarning(() => require('postcss-styl'), 'postcss-styl'),
-  less: shouldInstallWarning(() => require('postcss-less'), 'postcss-less'),
-  scss: shouldInstallWarning(() => require('postcss-scss'), 'postcss-scss')
-}
 
+  while ((comment = e2.exec(css))) {
+    const [content] = comment
+    comments.push({
+      start: comment.index,
+      end: comment.index + content.length,
+      content: content
+    })
+  }
+
+  // 排序方便二分
+  comments.sort((a, b) => (a.start > b.start ? 1 : -1))
+
+  function isInComments(index) {
+    let left = 0
+    let right = comments.length - 1
+
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2)
+      const comment = comments[mid]
+
+      if (index >= comment.start && index <= comment.end) {
+        return true
+      } else if (index < comment.start) {
+        right = mid - 1
+      } else {
+        left = mid + 1
+      }
+    }
+
+    return false
+  }
+
+  // 使用正则表达式匹配出所有 @import 语法，语法包含 @import "path", @import 'path', @import url("path"), @import url('path')
+  // 注意清理分号，否则留个分号会报错
+  const importRegex = /@import\s+(url\(['"]([^'"]+)['"]\)|['"]([^'"]+)['"])(\s*;)?/g
+  let importList = []
+  let importMatch
+  while ((importMatch = importRegex.exec(css))) {
+    const fullMatch = importMatch[0]
+    const importSyntax = fullMatch.trim()
+    importSyntax.startsWith('@import')
+    const importValue = importSyntax.slice(7).trim()
+    // 匹配 @import 后字符串格式
+    const importUrlRegex = /url\s*\(['"]([^'"]+)['"]\)/g
+    const importStrRegexp = /^(['"])([^'"]+)\1/
+
+    let urlMatch = null
+    if (importValue.startsWith('url')) {
+      urlMatch = importUrlRegex.exec(importValue)?.[1]
+    } else {
+      urlMatch = importStrRegexp.exec(importValue)?.[2]
+    }
+    if (!urlMatch) {
+      continue
+    }
+
+    importList.push({
+      start: importMatch.index,
+      end: importMatch.index + fullMatch.length,
+      content: fullMatch,
+      url: urlMatch
+    })
+  }
+
+  // 过滤掉在注释中的 @import 语法
+  importList = importList.filter(imp => !isInComments(imp.start))
+
+  // 逆序替换 import，避免修改内容导致的索引偏移问题
+  importList.sort((a, b) => (a.start > b.start ? -1 : 1))
+
+  for (const imp of importList) {
+    const importPath = imp.url
+    if (!importPath) continue
+    // 非法路径直接报错
+    const resolvedUrl = await resolve(importPath, fromParent)
+    const content = (await load(resolvedUrl)) ?? ''
+    css = css.slice(0, imp.start) + '\n' + content + '\n' + css.slice(imp.end)
+  }
+
+  return css
+}
 /**
  * @param {StripByPostcssOption} options
  */
 async function stripByPostcss(options) {
-  const syntax = styleSyntaxProcesserMap[options.lang]?.()
   const defs = options.defs ?? {}
 
   function stripContentCondition(content) {
@@ -203,62 +266,52 @@ async function stripByPostcss(options) {
     return content
   }
 
+  /**
+   * @type {string}
+   */
   const afterConditionStrip = stripContentCondition(options.css, defs)
 
-    /**
-   * @type {import('postcss').AcceptedPlugin[]}
-   */
-  const plugins = [
-    atImport({
-      async load(filename) {
-        let content = await fs.readFile(filename, 'utf-8')
-        const processer = postcss(plugins)
+  const atImportOptions = {
+    async load(filename) {
+      let content = await fs.readFile(filename, 'utf-8')
 
-        content = stripContentCondition(content, defs)
+      content = stripContentCondition(content, defs)
 
-        const { css } = await processer.process(content, {
-          syntax,
-          from: filename,
-          to: options.resourcePath
+      return await atImport({
+        ...atImportOptions,
+        from: filename,
+        css: content
+      })
+    },
+    resolve: (id, base) => {
+      return new Promise((resolve, reject) => {
+        // 处理 ~ 开头的路径
+        options.resolve(base, id.startsWith('~') && !id.startsWith('~/') ? loaderUtils.urlToRequest(id) : id, (err, res) => {
+          if (err) return reject(err)
+          if (typeof res !== 'string') {
+            return reject(new Error(`[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`))
+          }
+          resolve(res)
         })
-        return css
-      },
-      resolve: (id, base) => {
-        return new Promise((resolve, reject) => {
-          options.resolve(base, id, (err, res) => {
-            if (err) return reject(err)
-            if (typeof res !== 'string') {
-              return reject(
-                new Error(
-                  `[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`
-                )
-              )
-            }
-            resolve(res)
-          })
-        })
-      }
-    }),
-    {
-      // less/scss syntax 在 postcss 重新生成 css 后，`//` 注释后面不会保留换行，会和后续的 css 语句和注释连在一起，导致后续语法错误
-      postcssPlugin: 'mpx-strip-conditional-loader-append-command',
-      CommentExit(comment) {
-        comment.raws.right ??= ''
-
-        if (comment.raws.right.endsWith('\n')) {
-          return
-        }
-
-        comment.raws.right += '\n'
-      }
+      })
     }
-  ]
+  }
 
-  const processer = postcss(plugins)
-  return processer.process(afterConditionStrip, {
-    from: options.resourcePath,
-    syntax
-  })
+  return {
+    css: await atImport({
+      ...atImportOptions,
+      from: options.resourcePath,
+      css: afterConditionStrip
+    })
+  }
+}
+
+const createResolver = (contetx, extensions) =>
+  contetx.getResolve({ mainFiles: ['index'], extensions: [...extensions, '.css'], preferRelative: true })
+const resolver = {
+  stylus: contetx => createResolver(contetx, ['.styl']),
+  scss: contetx => createResolver(contetx, ['.scss']),
+  less: contetx => createResolver(contetx, ['.styl'])
 }
 
 /**
@@ -279,7 +332,7 @@ module.exports = async function (css) {
     resourcePath,
     css,
     defs: mpx.defs,
-    resolve: this.resolve.bind(this)
+    resolve: resolver[queryObj.lang] ? resolver[queryObj.lang](this) : this.resolve.bind(this)
   })
 
   callback(null, result.css, result.map)
