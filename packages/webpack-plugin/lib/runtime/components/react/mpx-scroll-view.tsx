@@ -599,7 +599,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       transform: [{ translateY: Math.min(translateY.value, refresherHeight.value) }],
       backgroundColor: refresherBackground || 'transparent'
     }
-  }, [refresherBackground])
+  })
 
   // 内容区域的动画样式 - 只有内容区域需要下移
   const contentAnimatedStyle = useAnimatedStyle(() => {
