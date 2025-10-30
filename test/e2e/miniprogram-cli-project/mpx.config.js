@@ -50,6 +50,6 @@ module.exports = defineConfig({
    */
   configureWebpack(config) {
     // 在遇到第一个错误时立即停止编译
-    // config.bail = true
+    config.bail = true
   },
 });
