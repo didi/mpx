@@ -6,7 +6,7 @@
 </template>
 <script>
   import { createPage } from '@mpxjs/core'
-qqq
+
   createPage({
     onLoad () {
     }
