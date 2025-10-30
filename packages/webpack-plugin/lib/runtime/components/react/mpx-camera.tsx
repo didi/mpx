@@ -246,13 +246,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     navigation.pageMap = navigation.pageMap || {}
     const pageKey = 'page' + pageId
     navigation.pageMap[pageKey] = navigation.pageMap[pageKey] || {}
-    // 现在 camera 对象是稳定的，setZoom 方法会使用最新的 setZoomValue
     navigation.pageMap[pageKey].camera = camera
-  }
-
-  // 所有 Hooks 调用完成后再进行条件判断
-  if (hasPermission === null) {
-    return null
   }
 
   if (!hasPermission) {
