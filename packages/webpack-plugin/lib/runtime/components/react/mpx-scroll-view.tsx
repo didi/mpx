@@ -165,7 +165,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const { refresherContent, otherContent } = getRefresherContent(props.children)
   const hasRefresher = refresherContent && refresherEnabled
 
-  // 只在需要时初始化刷新相关的state和shared values
   const [refreshing, setRefreshing] = useState(false)
   const [enableScroll, setEnableScroll] = useState(true)
   const [scrollBounces, setScrollBounces] = useState(false)
@@ -590,9 +589,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  // 刷新控件的动画样式 - 只在需要时创建
+  // 刷新控件的动画样式
   const refresherAnimatedStyle = useAnimatedStyle(() => {
-    if (!hasRefresher) return {}
     return {
       position: 'absolute',
       left: 0,
@@ -601,11 +599,10 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       transform: [{ translateY: Math.min(translateY.value, refresherHeight.value) }],
       backgroundColor: refresherBackground || 'transparent'
     }
-  }, [hasRefresher, refresherBackground])
+  }, [refresherBackground])
 
   // 内容区域的动画样式 - 只有内容区域需要下移
   const contentAnimatedStyle = useAnimatedStyle(() => {
-    if (!hasRefresher) return {}
     return {
       transform: [{
         translateY: translateY.value > refresherHeight.value
@@ -613,7 +610,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           : translateY.value
       }]
     }
-  }, [hasRefresher])
+  })
 
   function onRefresherLayout (e: LayoutChangeEvent) {
     const { height } = e.nativeEvent.layout
@@ -781,7 +778,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     ], { layoutRef })
 
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
-  const scrollViewContent = () => {
+
+  const createScrollViewContent = () => {
     const wrappedChildren = wrapChildren(hasRefresher ? extendObject({}, props, { children: otherContent }) : props,
       {
         hasVarDec,
@@ -807,14 +805,14 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         createElement(
           Animated.View,
           { style: contentAnimatedStyle },
-          scrollViewContent()
+          createScrollViewContent()
         )
       )
     )
   }
 
   const commonScrollView = () => {
-    const refreshControl = refresherEnabled && !hasRefresher
+    const refreshControl = refresherEnabled
       ? createElement(RefreshControl, extendObject({
         progressBackgroundColor: refresherBackground,
         refreshing: refreshing,
@@ -827,7 +825,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     return createElement(
       ScrollViewComponent,
       extendObject({}, innerProps, { refreshControl }),
-      scrollViewContent()
+      createScrollViewContent()
     )
   }
 
