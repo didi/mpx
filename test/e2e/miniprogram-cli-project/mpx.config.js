@@ -48,5 +48,8 @@ module.exports = defineConfig({
    * 如果希望node_modules下的文件时对应的缓存可以失效，
    * 可以将configureWebpack.snap.managedPaths修改为 []
    */
-  configureWebpack(config) {},
+  configureWebpack(config) {
+    // 在遇到第一个错误时立即停止编译
+    // config.bail = true
+  },
 });
