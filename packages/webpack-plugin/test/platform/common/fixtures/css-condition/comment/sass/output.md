@@ -13,8 +13,7 @@
 ```scss
 
 $color: red; // this is a comment
- .selector {
+.selector {
   color: $color; // another comment
-
 }
 ```

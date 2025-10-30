@@ -4,7 +4,9 @@
 {
     "lang": "stylus",
     "resourcePath": "index.styl",
-    "defs": {}
+    "defs": {
+        "isMobile": false
+    }
 }
 ```
 
@@ -12,16 +14,6 @@
 
 ```stylus
 
-
-
-.s2
-    color green
-
-
-.s1
-    color: blue
-
-
-.index
-    color: red
+.selector
+    
 ```

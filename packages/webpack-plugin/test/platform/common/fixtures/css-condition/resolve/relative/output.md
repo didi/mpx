@@ -12,16 +12,7 @@
 
 ```stylus
 
+.selector
+    color: red;
 
-
-.s2
-    color green
-
-
-.s1
-    color: blue
-
-
-.index
-    color: red
 ```
