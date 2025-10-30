@@ -3,8 +3,7 @@ import { noop, getFocusedNavigation } from '@mpxjs/utils'
 export default class CreateCamera {
   constructor () {
     const navigation = getFocusedNavigation() || {}
-    const pageId = navigation.pageId
-    this.camera = pageId ? navigation.pageMap?.['page' + pageId]?.camera || {} : {}
+    this.camera = navigation.camera || {}
   }
 
   setZoom (options = {}) {
