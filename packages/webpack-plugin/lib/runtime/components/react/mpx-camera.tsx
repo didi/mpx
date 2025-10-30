@@ -240,7 +240,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       }
     }
   }
-  
   if (navigation) {
     navigation.camera = camera
   }
