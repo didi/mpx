@@ -6,7 +6,6 @@
 </template>
 <script>
   import { createPage } from '@mpxjs/core'
-  import something from './non-existent-module'
 
   createPage({
     onLoad () {
