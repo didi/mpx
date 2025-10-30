@@ -49,7 +49,13 @@ module.exports = defineConfig({
    * 可以将configureWebpack.snap.managedPaths修改为 []
    */
   configureWebpack(config) {
-    // 在遇到第一个错误时立即停止编译
+    // 在遇到第一个错误时立即停止编译，不再继续处理
     config.bail = true
-  },
+    
+    // 有错误时不输出资源文件
+    config.optimization = {
+      ...config.optimization,
+      emitOnErrors: false
+    }
+  }
 });
