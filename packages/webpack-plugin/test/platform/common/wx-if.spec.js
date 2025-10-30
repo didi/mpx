@@ -70,6 +70,34 @@ describe('template if should transform correct', function () {
         'createElement(getComponent("mpx-text"), null,"1"))')
     })
 
+    it('should keep node when condition is false', function () {
+      const input = '<view><text wx:if="{{false}}">1</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null)')
+    })
+
+    it('should keep node when wx:elif condition is true', function () {
+      const input = '<view><text wx:if="{{condition}}">1</text><text wx:elif="{{true}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">1</text><text wx:else>2</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?' +
+          'createElement(getComponent("mpx-text"), null,"1"):createElement(getComponent("mpx-text"), null,"2"))')
+    })
+
+    it('should remove node when wx:elif condition is false', function () {
+      const input = '<view><text wx:if="{{condition}}">1</text><text wx:elif="{{false}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">1</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"1"):null)')
+    })
+
     it('should handle __mpx_mode__ in condition', function () {
       const input = `
         <view>
