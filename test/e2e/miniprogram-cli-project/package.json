@@ -11,6 +11,7 @@
     "build:harmony": "mpx-cli-service build --targets=harmony && cd ReactNativeProject && npm run bundle:android",
     "build:ssr": "mpx-cli-service build:ssr",
     "build:web": "mpx-cli-service build --targets=web",
+    "build:cross": "mpx-cli-service build --targets=android,ios,harmony,web",
     "serve:android": "cd ReactNativeProject && npm run android && cd .. && mpx-cli-service serve --targets=android",
     "serve:ios": "cd ReactNativeProject && npm run ios && cd .. && mpx-cli-service serve --targets=ios",
     "serve:harmony": "cd ReactNativeProject && npm run android && cd .. && mpx-cli-service serve --targets=harmony",

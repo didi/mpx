@@ -29,6 +29,7 @@ jobs:
             ~/.npm
             node_modules
             test/e2e/miniprogram-project/node_modules
+            test/e2e/miniprogram-cli-project/node_modules
             test/e2e/plugin-project/node_modules
             packages/webpack-plugin/node_modules
             packages/core/node_modules
@@ -41,13 +42,16 @@ jobs:
 
       - name: install deps
         if: steps.cache.outputs.cache-hit != 'true'
-        run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/plugin-project
+        run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/miniprogram-cli-project && npm i --prefix test/e2e/plugin-project
 
       - name: copy-webpack-plugin
-        run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run copyPlugin --prefix test/e2e/plugin-project
+        run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run copyPlugin --prefix test/e2e/miniprogram-cli-project && npm run copyPlugin --prefix test/e2e/plugin-project
 
       - name: build-miniprogram
         run: npm run build:cross --prefix test/e2e/miniprogram-project
+
+      - name: build-miniprogram-cli
+        run: npm run build:cross --prefix test/e2e/miniprogram-cli-project
 
       - name: build-plugin
         run: npm run build --prefix test/e2e/plugin-project

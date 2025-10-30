@@ -19,7 +19,7 @@ echo "start copy utils"
 
 rm -rf ./node_modules/@mpxjs/utils/src
 
-scp -r ../../../packages/@mpxjs/utils/src/ ./node_modules/@mpxjs/@mpxjs/utils/src/
+scp -r ../../../packages/utils/src/ ./node_modules/@mpxjs/utils/src/
 
 echo "end copy utils"
 
