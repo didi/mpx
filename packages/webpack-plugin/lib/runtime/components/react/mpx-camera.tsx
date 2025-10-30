@@ -62,7 +62,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { Camera, useCameraDevice, useCodeScanner, useCameraFormat } = require('react-native-vision-camera')
   const cameraRef = useRef<any>(null)
-  const { pageId } = useContext(RouteContext) || {}
   const {
     mode = 'normal',
     resolution = 'medium',
@@ -242,17 +241,8 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
   }
 
-  if (navigation && pageId) {
-    navigation.pageMap = navigation.pageMap || {}
-    const pageKey = 'page' + pageId
-    navigation.pageMap[pageKey] = navigation.pageMap[pageKey] || {}
-    // 现在 camera 对象是稳定的，setZoom 方法会使用最新的 setZoomValue
-    navigation.pageMap[pageKey].camera = camera
-  }
-
-  // 所有 Hooks 调用完成后再进行条件判断
-  if (hasPermission === null) {
-    return null
+  if (navigation) {
+    navigation.camera = camera
   }
 
   if (!hasPermission) {
