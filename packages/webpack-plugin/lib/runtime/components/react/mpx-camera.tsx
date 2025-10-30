@@ -240,14 +240,8 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       }
     }
   }
-
   if (navigation) {
     navigation.camera = camera
-  }
-
-  // 所有 Hooks 调用完成后再进行条件判断
-  if (hasPermission === null) {
-    return null
   }
 
   if (!hasPermission) {
