@@ -44,6 +44,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm i && npm i --prefix test/e2e/miniprogram-project && npm i --prefix test/e2e/miniprogram-cli-project && npm i --prefix test/e2e/plugin-project
 
+      - name: build webpack-plugin
+        run: npm run build --prefix packages/webpack-plugin
+
       - name: copy-webpack-plugin
         run: npm run copyPlugin --prefix test/e2e/miniprogram-project && npm run copyPlugin --prefix test/e2e/miniprogram-cli-project && npm run copyPlugin --prefix test/e2e/plugin-project
 
