@@ -764,7 +764,9 @@ function parse (template, options) {
 
       const children = currentParent.children
 
-      if (currentParent.tag !== 'text') {
+      const isTextLikeParent = currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text'
+
+      if (!isTextLikeParent) {
         text = text.trim()
       } else {
         text = text.trim() ? text : ''
