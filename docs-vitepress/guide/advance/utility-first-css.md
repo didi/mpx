@@ -122,11 +122,16 @@ plugins.push(new MpxUnocssPlugin())
   const { defineConfig } = require('unocss')
   const presetMpx = require('@mpxjs/unocss-base')
 
+  const { defineConfig } = require("unocss")
+  const presetMpx = require("@mpxjs/unocss-base")
+
   module.exports = defineConfig({
-    include: [/\.mpx($|\?)/],
-    presets: [
-      presetMpx()
-    ]
+    content: {
+      pipeline: {
+        include: [/\.mpx($|\?)/],
+      },
+    },
+    presets: [presetMpx()],
   })
   ``` 
 
