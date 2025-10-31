@@ -1,0 +1,25 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Mpx",
+  "description": "Mpx is an enhanced cross-end mini-program framework that improves development experience and performance, allowing efficient construction of high-performance cross-end mini-program applications with a Vue-like development experience.",
+  "branch": "feat-context7",
+  "excludeFolders": [
+    "examples",
+    "legacy",
+    "packages",
+    "test"
+  ],
+  "excludeFiles": [
+    "CHANGELOG.md",
+    "changelog.md",
+    "CHANGELOG.mdx",
+    "changelog.mdx",
+    "LICENSE.md",
+    "license.md",
+    "CODE_OF_CONDUCT.md",
+    "code_of_conduct.md",
+    "README.md",
+    "babel.config.json"
+  ],
+  "previousVersions": []
+}
