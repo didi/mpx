@@ -29,7 +29,7 @@
     "pinia": "^2.0.14",
     "react": "18.3.1",
     "react-native": "0.77.2",
-    "react-native-reanimated": "^3.17.1",
+    "react-native-reanimated": "3.17.1",
     "vue": "^2.7.0",
     "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
