@@ -18,7 +18,7 @@
  * ✔ selection-start
  * ✔ selection-end
  * ✔ adjust-position
- * ✘ hold-keyboard
+ * ✔ hold-keyboard
  * ✘ safe-password-cert-path
  * ✘ safe-password-length
  * ✘ safe-password-time-stamp
@@ -102,6 +102,7 @@ export interface InputProps {
   'parent-width'?: number
   'parent-height'?: number
   'adjust-position': boolean,
+  'hold-keyboard'?: boolean
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -150,6 +151,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
+    'hold-keyboard': holdKeyboard = false,
     bindinput,
     bindfocus,
     bindblur,
@@ -281,7 +283,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition }
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard }
     }
   }
 
