@@ -147,7 +147,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -169,7 +170,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
