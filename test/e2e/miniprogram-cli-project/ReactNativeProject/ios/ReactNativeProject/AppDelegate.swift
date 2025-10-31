@@ -1,12 +1,10 @@
 import UIKit
-import ExpoModulesCore
-import Expo
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 
 @main
-class AppDelegate: ExpoAppDelegate {
+class AppDelegate: RCTAppDelegate {
   override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
     self.moduleName = "ReactNativeProject"
     self.dependencyProvider = RCTAppDependencyProvider()
