@@ -18,18 +18,18 @@ createApp({
 // 可以写注释，通过defs注入的常量做一些判断之类的操作
 const commonPages = [
   "./pages/index",
-  // "./pages/mode",
-  // {
-  //   "src": "./pages/testPageAlias",
-  //   "path": "pages/alias"
-  // }
+  "./pages/mode",
+  {
+    "src": "./pages/testPageAlias",
+    "path": "pages/alias"
+  }
 ]
 
 module.exports = {
   pages: commonPages,
-  // packages: [
-  //   "./subpackage/test/app.mpx?root=test",
-  //   "./subpackage/test2/app.mpx?root=test2"
-  // ]
+  packages: [
+    "./subpackage/test/app.mpx?root=test",
+    "./subpackage/test2/app.mpx?root=test2"
+  ]
 }
 </script>

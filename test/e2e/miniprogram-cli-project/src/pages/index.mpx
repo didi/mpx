@@ -1,8 +1,7 @@
 <template>
   <view>
-    111
-    <!-- <list></list>
-    <customOutputComp></customOutputComp> -->
+    <list></list>
+    <customOutputComp></customOutputComp>
   </view>
 </template>
 <script>
@@ -16,9 +15,9 @@
 
 <script type="application/json">
   {
-    // "usingComponents": {
-    //   "list": "../components/list",
-    //   "customOutputComp": "../components/customOutputCom.mpx"
-    // }
+    "usingComponents": {
+      "list": "../components/list",
+      "customOutputComp": "../components/customOutputCom.mpx"
+    }
   }
 </script>
