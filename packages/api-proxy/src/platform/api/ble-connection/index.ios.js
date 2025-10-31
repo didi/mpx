@@ -685,10 +685,11 @@ function getBLEDeviceCharacteristics (options = {}) {
   const characteristics = characteristicsList.map(char => ({
     uuid: char.characteristic,
     properties: {
-      read: char.properties.Read === 'Read',
-      write: char.properties.Write === 'Write',
-      notify: char.properties.Notify === 'Notify',
-      indicate: char.properties.Indicate === 'Indicate'
+      read: !!char.properties.Read,
+      write: !!char.properties.Write,
+      notify: !!char.properties.Notify,
+      indicate: !!char.properties.Indicate,
+      writeNoResponse: !!char.properties.writeWithoutResponse
     }
   }))
 
