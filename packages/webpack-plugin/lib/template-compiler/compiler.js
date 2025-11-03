@@ -764,9 +764,7 @@ function parse (template, options) {
 
       const children = currentParent.children
 
-      const isTextLikeParent = currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text'
-
-      if (!isTextLikeParent) {
+      if (currentParent.tag !== 'text') {
         text = text.trim()
       } else {
         text = text.trim() ? text : ''
@@ -1014,7 +1012,7 @@ function processComponentIs (el, options) {
     ranges = range.split(',').map(i => i.trim()).filter(i => i)
   } else {
     // 根据原始用户写的usingComponents字段生成ranges
-    ranges = options.originalUsingComponents
+    ranges = options.originalUsingComponents || []
   }
 
   const rangeMap = new Map()
