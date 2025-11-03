@@ -323,24 +323,21 @@ export default class MpxProxy {
   initSetup () {
     const setup = this.options.setup
     if (setup) {
-      const context = {
-        triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
-        refs: this.target.$refs,
-        asyncRefs: this.target.$asyncRefs,
-        forceUpdate: this.forceUpdate.bind(this),
-        selectComponent: this.target.selectComponent.bind(this.target),
-        selectAllComponents: this.target.selectAllComponents.bind(this.target),
-        createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
-        createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
-        getPageId: this.target.getPageId.bind(this.target)
-      }
-
-      // getOpenerEventChannel 方法仅页面可用
-      if (this.options.__type__ === 'page' && typeof this.target.getOpenerEventChannel === 'function') {
-        context.getOpenerEventChannel = this.target.getOpenerEventChannel.bind(this.target)
-      }
-
-      let setupResult = callWithErrorHandling(setup, this, 'setup function', [this.props, context])
+      let setupResult = callWithErrorHandling(setup, this, 'setup function', [
+        this.props,
+        {
+          triggerEvent: this.target.triggerEvent ? this.target.triggerEvent.bind(this.target) : noop,
+          refs: this.target.$refs,
+          asyncRefs: this.target.$asyncRefs,
+          forceUpdate: this.forceUpdate.bind(this),
+          selectComponent: this.target.selectComponent.bind(this.target),
+          selectAllComponents: this.target.selectAllComponents.bind(this.target),
+          createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
+          createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
+          getPageId: this.target.getPageId.bind(this.target),
+          getOpenerEventChannel: this.options.__type__ === 'page' ? this.target.getOpenerEventChannel.bind(this.target) : noop
+        }
+      ])
       if (!isObject(setupResult)) {
         error(`Setup() should return a object, received: ${type(setupResult)}.`, this.options.mpxFileResource)
         return
