@@ -1,21 +1,29 @@
-import { useMemo, useRef } from 'react'
-import { error } from '@mpxjs/utils'
+import { useMemo, useRef, useEffect } from 'react'
+import { error, hasOwn } from '@mpxjs/utils'
 import {
   Easing,
   withSequence,
   makeMutable,
-  runOnJS
+  runOnJS,
+  useSharedValue,
+  useAnimatedStyle,
+  cancelAnimation
 } from 'react-native-reanimated'
 import {
-  EasingKey,
-  TransformOrigin,
+  easingKey,
+  transformOrigin as TransformOrigin,
   animationAPIInitialValue,
   percentExp,
   isTransform,
   getInitialVal,
-  getAnimation
+  getAnimation,
+  transition,
+  transform,
+  getTransformObj,
+  formatAnimatedKeys
 } from './utils'
 import { useRunOnJSCallback } from '../utils'
+import type { NativeSyntheticEvent, TransformsStyle } from 'react-native'
 import type { AnimationCallback, SharedValue, AnimatableValue } from 'react-native-reanimated'
 import type { ExtendedViewStyle } from '../types/common'
 import type { AnimationHooksPropsType } from './utils'
@@ -23,16 +31,18 @@ import type { AnimationHooksPropsType } from './utils'
 export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useAnimationAPIHooks, props=`, props)
   const { style: originalStyle = {}, animation, transitionend } = props
-  const propsRef = useRef<AnimationHooksPropsType>({})
-  propsRef.current = props
-  const transitionendRunJS = (duration: number, finished?: boolean, current?: AnimatableValue) => {
-    const { transitionend } = propsRef.current
-    transitionend && transitionend(finished, current, duration)
+  // style变更标识(首次render不执行)
+  const animationDeps = useRef(-1)
+  // 若为 animation API，则使用 animation.id 为依赖
+  if (animation?.id) {
+    animationDeps.current = animation.id
   }
-  const runOnJSCallbackRef = useRef({
-    transitionendRunJS
-  })
-  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+  // 有动画样式的 style key(useAnimatedStyle使用)
+  const animatedStyleKeys = useSharedValue([] as (string|string[])[])
+  // 记录动画key的style样式值 没有的话设置为false
+  const animatedKeys = useRef([] as string[])
+  // 记录上次style map
+  const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // ** 全量 style prop sharedValue
   const shareValMap = useMemo(() => {
     return Object.keys(animationAPIInitialValue).reduce((valMap, key) => {
@@ -41,6 +51,32 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
+  const runOnJSCallbackRef = useRef({})
+  if (transitionend) {
+    runOnJSCallbackRef.current = {
+      transitionend
+    }
+  }
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+  // 设置 lastShareValRef & shareValMap
+  function updateStyleVal () {
+    Object.keys(shareValMap).forEach(key => {
+      const value = originalStyle[key]
+      if (key === transform) {
+        Object.entries(getTransformObj(value)).forEach(([key, value]) => {
+          if (value !== lastStyleRef.current[key]) {
+            lastStyleRef.current[key] = value
+            shareValMap[key].value = value
+          }
+        })
+      } else if (hasOwn(shareValMap, key)) {
+        if (value !== lastStyleRef.current[key]) {
+          lastStyleRef.current[key] = value
+          shareValMap[key].value = value
+        }
+      }
+    })
+  }
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
     const actions = animation?.actions || []
@@ -48,7 +84,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
     const lastValueMap = {} as { [propName: keyof ExtendedViewStyle]: string|number }
     actions.forEach(({ animatedOption, rules, transform }, index) => {
       const { delay, duration, timingFunction, transformOrigin } = animatedOption
-      const easing = timingFunction ? EasingKey[timingFunction] : Easing.inOut(Easing.quad)
+      const easing = timingFunction ? easingKey[timingFunction] : Easing.inOut(Easing.quad)
       let needSetCallback = true
       const callback: AnimationCallback = (finished?: boolean, current?: AnimatableValue) => {
         'worklet'
@@ -58,7 +94,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
             const transformOrigin = actions[index + 1].animatedOption?.transformOrigin
             transformOrigin && (shareValMap[TransformOrigin].value = transformOrigin)
           }
-          transitionend && runOnJS(runOnJSCallback)('transitionendRunJS', duration, finished, current)
+          transitionend && runOnJS(runOnJSCallback)('transitionend', duration, finished, current)
         }
       }
       if (index === 0) {
@@ -103,20 +139,60 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
     })
   }
   // 循环 animation actions 获取所有有动画的 style prop name
-  function getAnimatedStyleKeys (animatedKeys: {[propName: keyof ExtendedViewStyle]: boolean}) {
+  function getAnimatedStyleKeys () {
     return (animation?.actions || []).reduce((keyMap, action) => {
       const { rules, transform } = action
       const ruleArr = [...rules.keys(), ...transform.keys()]
       ruleArr.forEach(key => {
-        if (!keyMap[key]) keyMap[key] = true
+        keyMap.add(key)
       })
       // console.log('getAnimatedStyleKeys keyMap=', keyMap)
       return keyMap
-    }, animatedKeys)
+    }, new Set())
   }
-  return {
-    shareValMap,
-    createAnimation,
-    getAnimatedStyleKeys
+  // 获取动画样式&驱动动画
+  function startAnimation () {
+    // 更新动画样式 key map
+    animatedKeys.current = [...getAnimatedStyleKeys()] as string[]
+    animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...animatedKeys.current])
+    // 驱动动画
+    createAnimation(animatedKeys.current)
   }
+  // ** style 更新
+  useEffect(() => {
+    // animation api style 更新同步更新 shareVal（默认）
+    updateStyleVal()
+  }, [originalStyle])
+  // ** 获取动画样式prop & 驱动动画
+  useEffect(() => {
+    if (animationDeps.current <= 0) return
+    startAnimation()
+  }, [animationDeps.current])
+  // ** 清空动画
+  useEffect(() => {
+    return () => {
+      Object.values(shareValMap).forEach((value) => {
+        cancelAnimation(value)
+      })
+    }
+  }, [])
+  // ** 生成动画样式
+  return useAnimatedStyle(() => {
+    // console.info(`useAnimatedStyle styles=`, originalStyle)
+    return animatedStyleKeys.value.reduce((styles, key) => {
+      if (Array.isArray(key)) {
+        const transformStyle = getTransformObj(originalStyle.transform || [])
+        key.forEach((transformKey) => {
+          transformStyle[transformKey] = shareValMap[transformKey].value
+        })
+        styles.transform = Object.entries(transformStyle).map(([key, value]) => {
+          return { [key]: value }
+        }) as Extract<'transform', TransformsStyle>
+      } else {
+        styles[key] = shareValMap[key].value
+      }
+      // console.log('animationStyle', styles)
+      return styles
+    }, {} as ExtendedViewStyle)
+  })
 }

@@ -53,12 +53,12 @@ export const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 // export const NumberExp = /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/
 // export const ColorExp = /^(color|(.+Color))$/
 // transform
-export const Transform = 'transform'
-export const TransformOrigin = 'transformOrigin'
-export const Transition = 'transition'
+export const transform = 'transform'
+export const transformOrigin = 'transformOrigin'
+export const transition = 'transition'
 
 // 微信 timingFunction 和 RN Easing 对应关系
-export const EasingKey = {
+export const easingKey = {
   linear: Easing.linear,
   ease: Easing.inOut(Easing.ease),
   'ease-in': Easing.in(Easing.poly(3)),
@@ -67,7 +67,7 @@ export const EasingKey = {
   // 'step-start': '',
   // 'step-end': ''
 }
-export const TransformInitial: ExtendedViewStyle = {
+export const transformInitial: ExtendedViewStyle = {
   // matrix: 0,
   // matrix3d: 0,
   // rotate: '0deg',
@@ -100,7 +100,7 @@ export const animationAPIInitialValue: ExtendedViewStyle = Object.assign({
   bottom: 0,
   left: 0,
   transformOrigin: ['50%', '50%', 0]
-}, TransformInitial)
+}, transformInitial)
 // transition property
 export const transitionSupportedProperty = Object.assign({
   color: 'transparent',
@@ -143,7 +143,7 @@ export const transitionSupportedProperty = Object.assign({
 
 // export type PropertyType = keyof transitionSupportedProperty
 // transform
-export const isTransform = (key: string) => Object.keys(TransformInitial).includes(key)
+export const isTransform = (key: string) => Object.keys(transformInitial).includes(key)
 // transform 数组转对象
 export function getTransformObj (transforms: { [propName: string]: string | number }[]) {
   'worklet'
