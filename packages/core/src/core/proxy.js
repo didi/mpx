@@ -335,7 +335,7 @@ export default class MpxProxy {
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
           getPageId: this.target.getPageId.bind(this.target),
-          getOpenerEventChannel: this.options.__type__ === 'page' ? this.target.getOpenerEventChannel.bind(this.target) : noop
+          getOpenerEventChannel: (typeof this.target.getOpenerEventChannel === 'function') ? this.target.getOpenerEventChannel.bind(this.target) : noop
         }
       ])
       if (!isObject(setupResult)) {
