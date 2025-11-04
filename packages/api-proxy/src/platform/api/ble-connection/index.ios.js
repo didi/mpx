@@ -74,8 +74,8 @@ function openBluetoothAdapter (options = {}) {
   const BleManager = require('react-native-ble-manager').default
   const { success = noop, fail = noop, complete = noop } = options
   let bluetoothPermission = requestBluetoothPermission
-  if (__mpx_env__ === 'android' && mpx.rnConfig?.bluetoothPermission) { // 安卓需要验证权限，开放给用户可以自定义验证权限的方法
-    bluetoothPermission = mpx.rnConfig.bluetoothPermission
+  if (mpx.config?.rnConfig?.bluetoothPermission) { // 安卓需要验证权限，开放给用户可以自定义验证权限的方法
+    bluetoothPermission = mpx.config.rnConfig.bluetoothPermission
   }
   // 先请求权限，再初始化蓝牙管理器
   bluetoothPermission().then((hasPermissions) => {
@@ -685,10 +685,11 @@ function getBLEDeviceCharacteristics (options = {}) {
   const characteristics = characteristicsList.map(char => ({
     uuid: char.characteristic,
     properties: {
-      read: char.properties.Read === 'Read',
-      write: char.properties.Write === 'Write',
-      notify: char.properties.Notify === 'Notify',
-      indicate: char.properties.Indicate === 'Indicate'
+      read: !!char.properties.Read,
+      write: !!char.properties.Write,
+      notify: !!char.properties.Notify,
+      indicate: !!char.properties.Indicate,
+      writeNoResponse: !!char.properties.writeWithoutResponse
     }
   }))
 
