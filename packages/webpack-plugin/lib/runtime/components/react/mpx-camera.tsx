@@ -78,6 +78,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   const { navigation } = useContext(RouteContext) || {}
   const [zoomValue, setZoomValue] = useState<number>(1)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+  const hasCamera = useRef(false)
 
   // 先定义常量，避免在条件判断后使用
   const maxZoom = device?.maxZoom || 1
@@ -123,25 +124,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   const onStopped = useCallback(() => {
     bindstop && bindstop()
   }, [bindstop])
-
-  // 检查相机权限
-  useEffect(() => {
-    const checkCameraPermission = async () => {
-      try {
-        const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
-        if (typeof cameraPermission === 'function') {
-          const permissionResult = await cameraPermission()
-          setHasPermission(permissionResult === true)
-        } else {
-          setHasPermission(true)
-        }
-      } catch (error) {
-        setHasPermission(false)
-      }
-    }
-
-    checkCameraPermission()
-  }, [])
 
   const camera: CameraRef = {
     setZoom: (zoom: number) => {
@@ -241,15 +223,32 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
   }
 
-  if (navigation) {
-    navigation.camera = camera
-  }
+  useEffect(() => {
+    if (navigation) {
+      if (navigation && !navigation.camera) {
+        navigation.camera = camera
+      } else {
+        hasCamera.current = true
+        navigation.camera.multi = true
+      }
+    }
+    const checkCameraPermission = async () => {
+      try {
+        const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
+        if (typeof cameraPermission === 'function') {
+          const permissionResult = await cameraPermission()
+          setHasPermission(permissionResult === true)
+        } else {
+          setHasPermission(true)
+        }
+      } catch (error) {
+        setHasPermission(false)
+      }
+    }
+    checkCameraPermission()
+  }, [])
 
-  if (!hasPermission) {
-    return null
-  }
-
-  if (!device) {
+  if (!hasPermission || hasCamera.current || !device) {
     return null
   }
 
