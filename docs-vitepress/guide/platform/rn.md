@@ -21,7 +21,7 @@ npx mpx-cli-service build --targets=harmony
 > 构建其他平台参考 [快速开始](../basic/start.html)
 
 ## 跨端样式定义
-RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation、transition 等等）。
+RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系，RN 有一小部分样式属性（比如 tintColor、writingDirection 等等） CSS 不支持，CSS 也有少部分样式属性 RN 不支持（比如 clip-path、animation 等等）。
 
 因此，一方面，在我们进行跨平台开发时，跨平台样式属性声明要尽量使用两边样式属性的交集；另一方面为了减少开发适配的成本，Mpx 内部也对 RN 的样式作了部分抹平。
 
@@ -310,6 +310,9 @@ env() 函数通过和 var() 函数类似形式， 区别在于：一是环境变
 后续支持。
 
 ## 跨端动画
+基础组件 view 支持两种动画形式 createAnimation API 和 transition，
+可以通过设置 animation 属于来使用 createAnimation API 动画，通过 class 或者 style 设置 css transition 来使用 transition 动画，
+可以用过 prop enableAnimation = 1/2 来指定使用 createAnimation API/transition 的动画形式，，enableAnimation 设置 true 值默认为 createAnimation API 形式，需要注意的是指定动画类型后，对应的动画参数也需要匹配设置，详细使用文档如下：
 ### createAnimation 动画API
 创建一个动画实例 animation，调用实例的方法来描述动画，最后通过动画实例的 export 方法导出动画数据传递给组件的 animation 属性。
 详情参考以下动画部分微信小程序文档，以下仅描述支持能力有差异部分：
