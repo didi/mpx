@@ -37,7 +37,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     animationType = enableAnimation
   }
   const animationTypeRef = useRef(animationType)
-  if (animationTypeRef.current === AnimationType.CssAnimation) {
+  if (animationType === AnimationType.CssAnimation) {
     // 暂不支持 CssAnimation 提示
     error('[Mpx runtime error]: CSS animation is not supported yet')
   }

@@ -144,16 +144,16 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
       const { rules, transform } = action
       const ruleArr = [...rules.keys(), ...transform.keys()]
       ruleArr.forEach(key => {
-        keyMap.add(key)
+        keyMap.push(key)
       })
       // console.log('getAnimatedStyleKeys keyMap=', keyMap)
       return keyMap
-    }, new Set())
+    }, [] as string[])
   }
   // 获取动画样式&驱动动画
   function startAnimation () {
     // 更新动画样式 key map
-    animatedKeys.current = [...getAnimatedStyleKeys()] as string[]
+    animatedKeys.current = getAnimatedStyleKeys()
     animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...animatedKeys.current])
     // 驱动动画
     createAnimation(animatedKeys.current)
