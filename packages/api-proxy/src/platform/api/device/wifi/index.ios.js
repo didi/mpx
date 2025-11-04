@@ -33,8 +33,8 @@ function startWifi (options = {}) {
   }
   startWifiReady = true
   let wifiPermission = requestWifiPermission
-  if (mpx.rnConfig?.wifiPermission) {
-    wifiPermission = mpx.rnConfig.wifiPermission
+  if (mpx.config?.rnConfig?.wifiPermission) {
+    wifiPermission = mpx.config.rnConfig.wifiPermission
   }
   wifiPermission().then(async () => {
     let enabled
