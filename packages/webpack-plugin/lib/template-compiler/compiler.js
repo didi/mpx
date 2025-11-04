@@ -2531,23 +2531,44 @@ function processScoped (el) {
 function processTextOverflow (el) {
   // 处理 text 组件的 overflow 属性
   if (el.tag === 'text' || el.tag === 'mpx-text' || el.tag === 'mpx-simple-text' || el.tag === 'mpx-view') {
-    const overflowAttr = getAndRemoveAttr(el, 'overflowLine')
-    if (overflowAttr.has && overflowAttr.val) {
-      if (!el.attrsMap['numberOfLines'] && isReact(mode)) {
-        addAttrs(el, [{
+    const maxLines = getAndRemoveAttr(el, 'max-lines')
+    const overflowType = getAndRemoveAttr(el, 'overflow')
+    if (overflowType && overflowType !== 'ellipsis') return
+    const maxLinesValue = maxLines.val || 1
+    if (!el.attrsMap.numberOfLines && isReact(mode)) {
+      addAttrs(el, [
+        {
           name: 'numberOfLines',
-          value: overflowAttr.val
-        }])
-      }
-      // 检查是否已经有 max-length 属性
-      if (!el.attrsMap['max-length'] && !isMiniProgram(mode)) {
-        // 添加 max-length 属性
-        addAttrs(el, [{
-          name: 'max-length',
-          value: overflowAttr.val
-        }])
-      }
+          value: maxLinesValue
+        }
+      ])
     }
+    // 检查是否已经有 max-lines 属性
+    if (!el.attrsMap['max-lines'] && isMiniProgram(mode)) {
+      // 添加 max-lines 属性
+      addAttrs(el, [
+        {
+          name: 'max-lines',
+          value: maxLinesValue
+        },
+        {
+          name: 'overflow',
+          value: 'ellipsis'
+        }
+      ])
+    }
+
+        if (
+          !isReact(mode) &&
+          (el.tag === 'text' || el.tag === 'span' || el.tag === 'view')
+        ) {
+          addAttrs(el, [
+            {
+              name: 'style',
+              value: `-webkit-box-orient: vertical; -webkit-line-clamp: ${maxLinesValue}; overflow: hidden; text-overflow: ellipsis;`
+            }
+          ])
+        }
   }
 }
 
