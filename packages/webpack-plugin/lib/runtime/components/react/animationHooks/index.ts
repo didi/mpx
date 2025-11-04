@@ -42,7 +42,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     error('[Mpx runtime error]: CSS animation is not supported yet')
   }
   if (animationType! && animationTypeRef.current !== animationType) {
-    // 允许 none到API、CssTransition或API、CssTransition到none，不允许 API、CssTransition 互切
+    // 允许 API、CssTransition 到 none，不允许 API、CssTransition 互切，不允许 none 到 API、CssTransition
     error('[Mpx runtime error]: The animation type should be stable in the component lifecycle, or you can set animation type with [enable-animation].')
   }
   if (!animationTypeRef.current) return { enableStyleAnimation: false }
