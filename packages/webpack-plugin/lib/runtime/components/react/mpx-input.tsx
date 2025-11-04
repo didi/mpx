@@ -118,11 +118,11 @@ export interface PrivateInputProps {
 
 type FinalInputProps = InputProps & PrivateInputProps
 
-const keyboardTypeMap: Record<Type, string> = {
-  text: 'default',
+const inputModeMap: Record<Type, string> = {
+  text: 'text',
   number: 'numeric',
-  idcard: 'default',
-  digit: isIOS ? 'decimal-pad' : 'numeric'
+  idcard: 'text',
+  digit: 'decimal'
 }
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
@@ -182,7 +182,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     return ''
   }
 
-  const keyboardType = keyboardTypeMap[type]
+  const inputMode = inputModeMap[type]
   const defaultValue = parseValue(value)
   const textAlignVertical = multiline ? 'top' : 'auto'
 
@@ -463,7 +463,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle),
         allowFontScaling,
-        keyboardType: keyboardType,
+        inputMode: inputMode,
         secureTextEntry: !!password,
         defaultValue: defaultValue,
         value: inputValue,
