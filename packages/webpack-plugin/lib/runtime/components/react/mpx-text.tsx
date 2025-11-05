@@ -49,6 +49,8 @@ interface _TextProps extends TextProps {
   'parent-height'?: number
   'text-align-vertical'?: boolean
   decode?: boolean
+  'enable-add-space'?: boolean
+  'space-font-size'?: number
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
@@ -63,7 +65,9 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    decode
+    decode,
+    'enable-add-space': enableAddSpace,
+    'space-font-size': spaceFontSize
   } = props
 
   const extendStyle = textAlignVertical ? { includeFontPadding: false, textAlignVertical: 'center' } : null
@@ -100,11 +104,21 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     [
       'user-select',
       'decode',
-      'text-align-vertical'
+      'text-align-vertical',
+      'enable-add-space',
+      'space-font-size'
     ]
   )
 
-  const children = decode ? getDecodedChildren(props.children) : props.children
+  let children = decode ? getDecodedChildren(props.children) : props.children
+
+  // 如果启用了 enable-add-space，在末尾追加一个空格节点，规避小米手机文字被截断问题
+  if (enableAddSpace) {
+    const spaceNode = createElement(Text, {
+      style: spaceFontSize ? { fontSize: spaceFontSize } : undefined
+    }, ' ')
+    children = createElement(Text, null, children, spaceNode)
+  }
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     extendObject({}, props, {

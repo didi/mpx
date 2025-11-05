@@ -2304,7 +2304,7 @@ function processText (el, options, meta) {
 }
 
 // RN中裸文字需被Text包裹
-// 为了批量修改Text默认属性，如allowFontScaling，使用mpx-simple-text进行包裹
+// 为了批量修改Text默认属性，如allowFontScaling，使用mpx-inline-text进行包裹
 function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
