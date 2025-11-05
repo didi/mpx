@@ -173,8 +173,8 @@ RN 原生较多属性不支持百分比，或对百分比的支持存在 bug（�
 - **基于父节点宽度计算**：`width`、`left`、`right` 需要传入 `parent-width` 属性
 
 ```html
-<view parent-width="300" style="width: calc(100% - 20px);">内容</view>
-<view parent-height="400" style="height: calc(80% + 10px);">内容</view>
+<view parent-width="{{ 300 }}" style="width: calc(100% - 20px);">内容</view>
+<view parent-height="{{ 400 }}" style="height: calc(80% + 10px);">内容</view>
 ```
 
 > [!tip] 💡 注意
