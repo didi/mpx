@@ -295,7 +295,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       dots.push(<View style={[dotCommonStyle, { backgroundColor: unActionColor }]} key={i}></View>)
     }
     return (
-      <View pointerEvents="none" style={styles['pagination_' + dir]} key={2}>
+      <View pointerEvents="none" style={styles['pagination_' + dir]} key="pagination">
         <View style={[styles['pagerWrapper' + dir]]}>
           <Animated.View style={[
             dotCommonStyle,
@@ -861,7 +861,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     style: [normalStyle, layoutStyle, styles.swiper]
   }, layoutProps, innerProps)
   const animateComponent = createElement(Animated.View, {
-    key: 1,
+    key: 'animate-view',
     style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
   }, wrapChildren({
     children: arrPages
