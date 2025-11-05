@@ -15,8 +15,8 @@
 
 ```css
 header {}
-
+/*@mpx-if(isMobile)*/
 .mobile { display: block; }
-
+/*@mpx-endif */
 body {}
 ```
