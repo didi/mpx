@@ -47,6 +47,7 @@ interface _TextProps extends TextProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  'text-align-vertical'?: boolean
   decode?: boolean
 }
 
@@ -57,6 +58,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'text-align-vertical': textAlignVertical,
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
@@ -64,12 +66,14 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     decode
   } = props
 
+  const extendStyle = textAlignVertical ? { includeFontPadding: false, textAlignVertical: 'center' } : null
+
   const {
     normalStyle,
     hasVarDec,
     varContextRef,
     hasPositionFixed
-  } = useTransformStyle(style, {
+  } = useTransformStyle(extendStyle ? extendObject({}, style, extendStyle) : style, {
     enableVar,
     externalVarContext,
     parentFontSize,
@@ -95,7 +99,8 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     ),
     [
       'user-select',
-      'decode'
+      'decode',
+      'text-align-vertical'
     ]
   )
 

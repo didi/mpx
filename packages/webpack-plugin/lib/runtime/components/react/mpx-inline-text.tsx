@@ -1,12 +1,25 @@
-import { Text, TextProps } from 'react-native'
-import { JSX, createElement } from 'react'
+import { Text, TextProps, TextStyle } from 'react-native'
+import { JSX, createElement, ReactNode } from 'react'
 
 import { extendObject } from './utils'
 
-const InlineText = (props: TextProps): JSX.Element => {
+interface _TextProps extends TextProps {
+  style?: TextStyle
+  children?: ReactNode
+  'text-align-vertical'?: boolean
+}
+
+const InlineText = (props: _TextProps): JSX.Element => {
   const {
-    allowFontScaling = false
+    allowFontScaling = false,
+    'text-align-vertical': textAlignVertical
   } = props
+
+  const extendStyle = textAlignVertical ? { includeFontPadding: false, textAlignVertical: 'center' } : null
+
+  if (extendStyle) {
+    props.style = extendObject({}, props.style, extendStyle)
+  }
 
   return createElement(Text, extendObject({}, props, {
     allowFontScaling
