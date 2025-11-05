@@ -29,7 +29,8 @@ function tokenize(cssString) {
     // match[2] 为条件（如果存在）
     tokens.push({
       type: match[1], // 'if'、'elif'、'else' 或 'endif'
-      condition: match[2] ? match[2].trim() : null
+      condition: match[2] ? match[2].trim() : null,
+      rawValue: match[0]
     })
     lastIndex = regex.lastIndex
   }
@@ -54,6 +55,7 @@ function parse(cssString) {
       currentChildren.push(node)
     } else if (token.type === 'if') {
       const node = new Node('If', token.condition)
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       nodeStack.push(currentChildren)
       currentChildren = node.children
@@ -63,6 +65,7 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('ElseIf', token.condition)
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'else') {
@@ -71,12 +74,16 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('Else')
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'endif') {
+      const node = new Node('EndIf')
+      node.rawValue = token.rawValue || ''
       if (nodeStack.length > 0) {
         currentChildren = nodeStack.pop()
       }
+      currentChildren.push(node)
     }
   })
   return ast
@@ -105,17 +112,22 @@ function traverseAndEvaluate(ast, defs) {
       } else if (node.type === 'If') {
         // 直接判断 If 节点
         batchedIf = false
+        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'ElseIf' && !batchedIf) {
+        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'Else' && !batchedIf) {
+        output += node.rawValue || ''
         traverse(node.children)
+      } else if (node.type === 'EndIf') {
+        output += node.rawValue || ''
       }
     }
   }
