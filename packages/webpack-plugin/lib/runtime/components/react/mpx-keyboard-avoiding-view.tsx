@@ -53,6 +53,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
   const onTouchEnd = ({ nativeEvent }: NativeSyntheticEvent<NativeTouchEvent & { origin?: string }>) => {
     if (nativeEvent.origin !== 'input') {
+      if (keyboardAvoid?.current?.holdKeyboard) {
+        return
+      }
       Keyboard.isVisible() && Keyboard.dismiss()
     }
   }

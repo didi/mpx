@@ -10,6 +10,7 @@ export type KeyboardAvoidContextValue = MutableRefObject<{
   cursorSpacing: number
   ref: MutableRefObject<any>
   adjustPosition: boolean
+  holdKeyboard?: boolean
   keyboardHeight?: number
   onKeyboardShow?: () => void
 } | null>
