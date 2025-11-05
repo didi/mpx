@@ -2933,6 +2933,95 @@ function processMpxTagName (el) {
   }
 }
 
+// 处理 max-lines 跨平台属性
+function processMaxLines (el) {
+  const maxLinesAttr = getAndRemoveAttr(el, 'max-lines')
+  if (!maxLinesAttr.val) return
+
+  const parsed = parseMustacheWithContext(maxLinesAttr.val)
+
+  if (isReact(mode)) {
+    // iOS/Android 环境：转换为 numberOfLines
+    addAttrs(el, [{ name: 'numberOfLines', value: maxLinesAttr.val }])
+  } else if (isWeb(mode)) {
+    // Web 环境
+
+    // 构建多行截断样式对象
+    const linesStyleObj = `{
+  display:  (${parsed.result}) <= 1 ? 'inline-block' : '-webkit-box',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  textOverflow: (${parsed.result}) <= 1 ? 'ellipsis' : '',
+  WebkitBoxOrient: 'vertical',
+  WebkitLineClamp: ${parsed.result}
+}`
+
+    // 查找已有的 style 或 wx:style
+    const existingStyles = []
+    el.attrsList.forEach(attr => {
+      if (attr.name === 'style' || attr.name === 'wx:style') {
+        const styleParsed = parseMustacheWithContext(attr.value)
+        existingStyles.push(styleParsed.result)
+      }
+    })
+
+    if (existingStyles.length > 0) {
+      // 有现有样式，删除原有的 style/wx:style，添加合并后的 :style
+      getAndRemoveAttr(el, 'style')
+      getAndRemoveAttr(el, 'wx:style')
+      existingStyles.push(linesStyleObj)
+      addAttrs(el, [{
+        name: ':style',
+        value: `[${existingStyles.join(', ')}] | transRpxStyle`
+      }])
+    } else {
+      // 没有现有样式，直接添加 :style
+      addAttrs(el, [{
+        name: ':style',
+        value: `[${linesStyleObj}] | transRpxStyle`
+      }])
+    }
+  } else {
+    // 小程序环境：保留 max-lines，添加 wx:style
+    addAttrs(el, [{ name: 'max-lines', value: maxLinesAttr.val }, { name: 'overflow', value: 'ellipsis' }])
+
+    const linesStyleObj = `{
+  display:  (${parsed.result}) <= 1 ? 'inline-block' : '-webkit-box',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  textOverflow: (${parsed.result}) <= 1 ? 'ellipsis' : '',
+  WebkitBoxOrient: 'vertical',
+  WebkitLineClamp: ${parsed.result}
+}`
+
+    // 循环获取所有的 style 或 wx:style
+    const styleExpressions = []
+
+    // 获取所有 wx:style
+    let wxStyleAttr
+    while ((wxStyleAttr = getAndRemoveAttr(el, 'wx:style')).val) {
+      const parsed = parseMustacheWithContext(wxStyleAttr.val)
+      styleExpressions.push(parsed.result)
+    }
+
+    if (styleExpressions.length > 0) {
+      // 有现有样式，使用数组形式合并
+      // wx:style="{{[style1, style2, linesStyle]}}"
+      const styleArray = [...styleExpressions, linesStyleObj].join(', ')
+      addAttrs(el, [{
+        name: 'wx:style',
+        value: `{{[${styleArray}]}}`
+      }])
+    } else {
+      // 没有现有样式，直接添加
+      addAttrs(el, [{
+        name: 'wx:style',
+        value: `{{${linesStyleObj}}}`
+      }])
+    }
+  }
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2941,6 +3030,9 @@ function processElement (el, root, options, meta) {
   }
 
   processMpxTagName(el)
+
+  // 处理 max-lines 跨平台属性（在平台规则处理之前）
+  processMaxLines(el)
 
   if (runtimeCompile && options.dynamicTemplateRuleRunner) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
