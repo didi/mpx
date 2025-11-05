@@ -148,7 +148,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     autoplay = false,
     circular = false,
     disableGesture = false,
-    current: propCurrent = 0,
+    current: propCurrent,
     bindchange
   } = props
   const easeingFunc = props['easing-function'] || 'default'
@@ -199,10 +199,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 每个元素的宽度 or 高度，有固定值直接初始化无则0
   const step = useSharedValue(initStep)
   // 记录选中元素的索引值
-  const currentIndex = useSharedValue(propCurrent)
+  const currentIndex = useSharedValue(propCurrent || 0)
   // const initOffset = getOffset(props.current || 0, initStep)
   // 记录元素的偏移量
-  const offset = useSharedValue(getOffset(propCurrent, initStep))
+  const offset = useSharedValue(getOffset(propCurrent || 0, initStep))
   const strAbso = 'absolute' + dir.toUpperCase() as StrAbsoType
   const strVelocity = 'velocity' + dir.toUpperCase() as StrVelocityType
   // 标识手指触摸和抬起, 起点在onBegin
@@ -271,7 +271,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const iStep = dir === 'x' ? realWidth : realHeight
     if (iStep !== step.value) {
       step.value = iStep
-      updateCurrent(propCurrent, iStep)
+      updateCurrent(propCurrent || 0, iStep)
       updateAutoplay()
     }
   }
@@ -520,7 +520,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     // 1. 如果用户在touch的过程中, 外部更新了current以外部为准（小程序表现）
     // 2. 手指滑动过程中更新索引，外部会把current再传入进来，导致offset直接更新，增加判断不同才更新
     if (propCurrent !== currentIndex.value) {
-      updateCurrent(propCurrent, step.value)
+      updateCurrent(propCurrent || 0, step.value)
     }
   }, [propCurrent])
 
@@ -788,6 +788,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           offset.value = moveDistance + offset.value
         }
+        preAbsolutePos.value = e[strAbso]
+      })
+      .onEnd((e) => {
+        // 修复部分安卓机型下onFinalize拿到的absolute值 和 onUpdate不一致的情况，通过onEnd进行修正为最终的位置
         preAbsolutePos.value = e[strAbso]
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
