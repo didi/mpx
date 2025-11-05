@@ -54,7 +54,7 @@ import {
   NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS, isAndroid, isHarmony } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -101,8 +101,10 @@ export interface InputProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  // 只有 RN 环境读取
+  'keyboard-type'?: string,
   'adjust-position': boolean,
-  'hold-keyboard'?: boolean
+  'hold-keyboard'?: boolean,
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -151,6 +153,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
+    'keyboard-type': originalKeyboardType,
     'hold-keyboard': holdKeyboard = false,
     bindinput,
     bindfocus,
@@ -184,7 +187,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     return ''
   }
 
-  const keyboardType = keyboardTypeMap[type]
+  const keyboardType = (isIOS || isAndroid || isHarmony) ? originalKeyboardType || keyboardTypeMap[type] : keyboardTypeMap[type]
   const defaultValue = parseValue(value)
   const textAlignVertical = multiline ? 'top' : 'auto'
 
