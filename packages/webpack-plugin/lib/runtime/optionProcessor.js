@@ -2,6 +2,7 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
+import { warn } from '@mpxjs/utils'
 const dash2hump = require('../utils/hump-dash').dash2hump
 
 export function processComponentOption (
@@ -107,6 +108,10 @@ registered in parent context!`)
 
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
+  if (!component) {
+    warn('[Mpx runtime warn]: component is not found, please check')
+    return null
+  }
   // eslint-disable-next-line
   if (extendOptions && !component.__mpxExtended) {
     extend(component, extendOptions, { __mpxExtended: true })

@@ -1,9 +1,16 @@
 import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-async-suspense'
 import { memo, forwardRef, createElement } from 'react'
+import { warn } from '@mpxjs/utils'
 import { extend } from './utils'
 
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
+  if (!component) {
+    warn(
+      `[Mpx runtime warn]: ${extendOptions.displayName || ''} component is not found, please check`
+    )
+    return null
+  }
   // eslint-disable-next-line
   if (extendOptions && !component.__mpxExtended) {
     extend(component, extendOptions, { __mpxExtended: true })
