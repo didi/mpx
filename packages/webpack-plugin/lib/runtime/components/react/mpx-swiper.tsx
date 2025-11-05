@@ -861,7 +861,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     style: [normalStyle, layoutStyle, styles.swiper]
   }, layoutProps, innerProps)
   const animateComponent = createElement(Animated.View, {
-    key: 'swiper-container',
+    key: 'swiperContainer',
     style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
   }, wrapChildren({
     children: arrPages
