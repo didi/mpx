@@ -140,6 +140,8 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
     }
   })
   // console.log(`parseTransitionStyle transitionData=`, transitionData)
+  // 从style 中解析的动画数据，结构如下：
+  // transitionMap= {"marginLeft": {"delay": 0, "duration": 3000, "easing": []}, "transform": {"delay": 0, "duration": 3000, "easing": []}}
   const transitionMap = transitionData.reduce((acc, cur) => {
     // hasOwn(transitionSupportedProperty, dash2hump(val)) || val === Transform
     const { property = '', duration = 0, delay = 0, easing = Easing.inOut(Easing.ease) } = cur
@@ -205,11 +207,13 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         value = originalStyle.transform
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
+            lastStyleRef.current[key] = value
             animationDeps.current += 1
           }
         })
       } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
+          lastStyleRef.current[key] = value
           animationDeps.current += 1
         }
       }
@@ -262,7 +266,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // 从 transition 获取 AnimatedKeys
   function getAnimatedStyleKeys () {
     return Object.keys(transitionMap).reduce((animatedKeys, key) => {
-      if (isTransform(key) && originalStyle.transform) {
+      if (key === 'transform' && originalStyle.transform) {
         Object.keys(getTransformObj(originalStyle.transform)).forEach((prop: string) => {
           animatedKeys.push(prop)
         })
