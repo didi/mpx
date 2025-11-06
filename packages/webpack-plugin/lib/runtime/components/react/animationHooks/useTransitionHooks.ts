@@ -200,8 +200,9 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // 设置 lastShareValRef & shareValMap
   function updateStyleVal () {
     Object.keys(shareValMap).forEach(key => {
-      const value = originalStyle[key]
+      let value = originalStyle[key]
       if (isTransform(key)) {
+        value = originalStyle.transform
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             animationDeps.current += 1
