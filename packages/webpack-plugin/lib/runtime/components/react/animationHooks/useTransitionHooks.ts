@@ -162,7 +162,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
   // style变更标识(首次render不执行)
-  const animationDeps = useRef(-1)
+  const animationDeps = useRef(false)
   // 有动画样式的 style key(useAnimatedStyle使用)
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
@@ -208,13 +208,13 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
-            animationDeps.current += 1
+            if (!animationDeps.current) animationDeps.current = true
           }
         })
       } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
           lastStyleRef.current[key] = value
-          animationDeps.current += 1
+          if (!animationDeps.current) animationDeps.current = true
         }
       }
     })
@@ -284,17 +284,17 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     // 驱动动画
     createAnimation(animatedKeys.current)
   }
+  // ** 获取动画样式prop & 驱动动画
+  useEffect(() => {
+    // console.log('useEffect animationDeps=', animationDeps.current)
+    if (!animationDeps.current) return
+    startAnimation()
+  }, [animationDeps.current])
   // ** style 更新
   useEffect(() => {
     // css transition 更新 animationDeps
     updateStyleVal()
   }, [originalStyle])
-  // ** 获取动画样式prop & 驱动动画
-  useEffect(() => {
-    // console.log('useEffect animationDeps=', animationDeps.current)
-    if (animationDeps.current <= 0) return
-    startAnimation()
-  }, [animationDeps.current])
   // ** 清空动画
   useEffect(() => {
     return () => {
