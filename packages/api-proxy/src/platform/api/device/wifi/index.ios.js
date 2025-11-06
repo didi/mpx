@@ -3,7 +3,6 @@ import { noop, type } from '@mpxjs/utils'
 import mpx from '@mpxjs/core'
 let startWifiReady = false
 const wifiListListeners = []
-let getWifiListTimer = null
 
 async function requestWifiPermission () {
   const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
@@ -78,8 +77,6 @@ function stopWifi (options = {}) {
     complete(result)
     return
   }
-  clearTimeout(getWifiListTimer)
-  getWifiListTimer = null
   startWifiReady = false
   const result = {
     errMsg: 'stopWifi:success'
@@ -89,12 +86,6 @@ function stopWifi (options = {}) {
 }
 
 function getWifiList (options = {}) {
-  let getWifiNumber = 15
-  if (getWifiListTimer) {
-    clearTimeout(getWifiListTimer)
-    getWifiListTimer = null
-  }
-  let isGetWifi = true
   const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
@@ -114,48 +105,34 @@ function getWifiList (options = {}) {
     complete(result)
     return
   }
-  function reGetWifiList () {
-    WifiManager.reScanAndLoadWifiList().then((res) => {
-      const result = res.map(item => {
-        return {
-          SSID: item.SSID,
-          BSSID: item.BSSID,
-          frequency: item.frequency,
-          signalStrength: 100 + (item.level || 0)
-        }
-      })
-      wifiListListeners.forEach(callback => {
-        if (type(callback) === 'Function') {
-          callback({ wifiList: result })
-        }
-      })
-      if (isGetWifi) {
-        const result = {
-          errMsg: 'getWifiList:success',
-          errno: 0,
-          errCode: 0
-        }
-        success(result)
-        complete(result)
-        isGetWifi = false
-      }
-    }).catch(() => {
-      if (isGetWifi) {
-        const result = {
-          errMsg: 'getWifiList:fail'
-        }
-        fail(result)
-        complete(result)
-        isGetWifi = false
+  WifiManager.reScanAndLoadWifiList().then((res) => {
+    const wifiList = res.map(item => {
+      return {
+        SSID: item.SSID,
+        BSSID: item.BSSID,
+        frequency: item.frequency,
+        signalStrength: 100 + (item.level || 0)
       }
     })
-    if (getWifiNumber-- > 0) {
-      getWifiListTimer = setTimeout(() => {
-        reGetWifiList()
-      }, 30000)
+    wifiListListeners.forEach(callback => {
+      if (type(callback) === 'Function') {
+        callback({ wifiList })
+      }
+    })
+    const result = {
+      errMsg: 'getWifiList:success',
+      errno: 0,
+      errCode: 0
     }
-  }
-  reGetWifiList()
+    success(result)
+    complete(result)
+  }).catch(() => {
+    const result = {
+      errMsg: 'getWifiList:fail'
+    }
+    fail(result)
+    complete(result)
+  })
 }
 
 function onGetWifiList (callback) {
