@@ -10,12 +10,10 @@ import {
 } from 'react-native-reanimated'
 import {
   easingKey,
-  transform,
   transitionSupportedProperty,
   transformInitial,
   cubicBezierExp,
   secondRegExp,
-  transition,
   percentExp,
   getTransformObj,
   getUnit,
@@ -26,7 +24,7 @@ import {
 } from './utils'
 import { parseValues, useRunOnJSCallback } from '../utils'
 import type { SharedValue, AnimatableValue, EasingFunction } from 'react-native-reanimated'
-import type { NativeSyntheticEvent, TransformsStyle } from 'react-native'
+import type { TransformsStyle } from 'react-native'
 import type { ExtendedViewStyle } from '../types/common'
 import type { AnimationHooksPropsType, TransitionMap, TimingFunction } from './utils'
 
@@ -100,8 +98,8 @@ function parseTransitionSingleProp (vals: string[], property: string) {
 // transition 解析
 function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   let transitionData: AnimationDataType[] = []
-  Object.entries(originalStyle).filter(arr => arr[0].includes(transition)).forEach(([prop, value]) => {
-    if (prop === transition) {
+  Object.entries(originalStyle).filter(arr => arr[0].includes('transition')).forEach(([prop, value]) => {
+    if (prop === 'transition') {
       const vals = parseValues(value, ',').map(item => {
         return parseTransitionSingleProp(parseValues(item), prop).reduce((map, subItem) => {
           return Object.assign(map, subItem)
@@ -145,7 +143,7 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   const transitionMap = transitionData.reduce((acc, cur) => {
     // hasOwn(transitionSupportedProperty, dash2hump(val)) || val === Transform
     const { property = '', duration = 0, delay = 0, easing = Easing.inOut(Easing.ease) } = cur
-    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === transform) && duration > 0) {
+    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === 'transform') && duration > 0) {
       acc[property] = {
         duration,
         delay,
@@ -177,7 +175,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   const shareValMap = useMemo(() => {
     return Object.keys(transitionMap).reduce((valMap, property) => {
       // const { property } = transition || {}
-      if (property === transform) {
+      if (property === 'transform') {
         Object.keys(originalStyle.transform ? getTransformObj(originalStyle.transform!) : transformInitial).forEach((key) => {
           const defaultVal = getInitialVal(originalStyle, key)
           // console.log(`shareValMap property=${key} defaultVal=${defaultVal}`)
@@ -203,7 +201,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   function updateStyleVal () {
     Object.keys(shareValMap).forEach(key => {
       const value = originalStyle[key]
-      if (key === transform) {
+      if (isTransform(key)) {
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             animationDeps.current += 1
@@ -242,7 +240,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
-      const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? transform : key]
+      const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? 'transform' : key]
       // console.log('animationOptions=', { delay, duration, easing })
       let callback
       if (transitionend) {
@@ -263,8 +261,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // 从 transition 获取 AnimatedKeys
   function getAnimatedStyleKeys () {
     return Object.keys(transitionMap).reduce((animatedKeys, key) => {
-      if (key === transform && originalStyle[transform]) {
-        Object.keys(getTransformObj(originalStyle[transform])).forEach((prop: string) => {
+      if (isTransform(key) && originalStyle.transform) {
+        Object.keys(getTransformObj(originalStyle.transform)).forEach((prop: string) => {
           animatedKeys.push(prop)
         })
       } else if (originalStyle[key]) {

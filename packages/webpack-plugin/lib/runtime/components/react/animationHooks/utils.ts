@@ -4,6 +4,7 @@ import {
   withDelay
 } from 'react-native-reanimated'
 import type { AnimatableValue, WithTimingConfig, AnimationCallback, EasingFunction } from 'react-native-reanimated'
+import { hasOwn } from '@mpxjs/utils'
 import type { ExtendedViewStyle } from '../types/common'
 import type { _ViewProps } from '../mpx-view'
 
@@ -53,9 +54,9 @@ export const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 // export const NumberExp = /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/
 // export const ColorExp = /^(color|(.+Color))$/
 // transform
-export const transform = 'transform'
-export const transformOrigin = 'transformOrigin'
-export const transition = 'transition'
+// export const transform = 'transform'
+// export const transformOrigin = 'transformOrigin'
+// export const transition = 'transition'
 
 // 微信 timingFunction 和 RN Easing 对应关系
 export const easingKey = {
@@ -143,7 +144,7 @@ export const transitionSupportedProperty = Object.assign({
 
 // export type PropertyType = keyof transitionSupportedProperty
 // transform
-export const isTransform = (key: string) => Object.keys(transformInitial).includes(key)
+export const isTransform = (key: string) => hasOwn(transformInitial, key)
 // transform 数组转对象
 export function getTransformObj (transforms: { [propName: string]: string | number }[]) {
   'worklet'

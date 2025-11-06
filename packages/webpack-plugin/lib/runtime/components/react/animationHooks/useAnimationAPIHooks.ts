@@ -11,14 +11,11 @@ import {
 } from 'react-native-reanimated'
 import {
   easingKey,
-  transformOrigin as TransformOrigin,
   animationAPIInitialValue,
   percentExp,
   isTransform,
   getInitialVal,
   getAnimation,
-  transition,
-  transform,
   getTransformObj,
   formatAnimatedKeys
 } from './utils'
@@ -62,7 +59,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
   function updateStyleVal () {
     Object.keys(shareValMap).forEach(key => {
       const value = originalStyle[key]
-      if (key === transform) {
+      if (isTransform(key)) {
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
@@ -92,14 +89,14 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
         if (finished) {
           if (index < actions.length - 1) {
             const transformOrigin = actions[index + 1].animatedOption?.transformOrigin
-            transformOrigin && (shareValMap[TransformOrigin].value = transformOrigin)
+            transformOrigin && (shareValMap.transformOrigin.value = transformOrigin)
           }
           transitionend && runOnJS(runOnJSCallback)('transitionend', duration, finished, current)
         }
       }
       if (index === 0) {
         // 设置当次中心
-        transformOrigin && (shareValMap[TransformOrigin].value = transformOrigin)
+        transformOrigin && (shareValMap.transformOrigin.value = transformOrigin)
       }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
@@ -154,7 +151,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
   function startAnimation () {
     // 更新动画样式 key map
     animatedKeys.current = getAnimatedStyleKeys()
-    animatedStyleKeys.value = formatAnimatedKeys([TransformOrigin, ...animatedKeys.current])
+    animatedStyleKeys.value = formatAnimatedKeys(['transformOrigin', ...animatedKeys.current])
     // 驱动动画
     createAnimation(animatedKeys.current)
   }
