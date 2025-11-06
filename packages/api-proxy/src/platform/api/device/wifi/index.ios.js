@@ -1,8 +1,9 @@
 import { PermissionsAndroid } from 'react-native'
-import { noop } from '@mpxjs/utils'
+import { noop, type } from '@mpxjs/utils'
 import mpx from '@mpxjs/core'
 let startWifiReady = false
 const wifiListListeners = []
+let getWifiListTimer = null
 
 async function requestWifiPermission () {
   const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
@@ -31,7 +32,6 @@ function startWifi (options = {}) {
     complete(result)
     return
   }
-  startWifiReady = true
   let wifiPermission = requestWifiPermission
   if (mpx.config?.rnConfig?.wifiPermission) {
     wifiPermission = mpx.config.rnConfig.wifiPermission
@@ -43,17 +43,21 @@ function startWifi (options = {}) {
     } catch (e) {
       enabled = false
     }
+    if (!enabled) {
+      const result = {
+        errMsg: 'startWifi:fail wifi not turned on',
+        errCode: 12005
+      }
+      fail(result)
+      complete(result)
+      return
+    }
+    startWifiReady = true
     const result = {
       errMsg: 'startWifi:success'
     }
-    if (!enabled) {
-      WifiManager.setEnabled(true)
-      success(result)
-      complete(result)
-    } else {
-      success(result)
-      complete(result)
-    }
+    success(result)
+    complete(result)
   }).catch((err) => {
     const result = {
       errMsg: 'startWifi:fail ' + (typeof err === 'string' ? err : ''),
@@ -65,7 +69,6 @@ function startWifi (options = {}) {
 }
 
 function stopWifi (options = {}) {
-  const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
@@ -75,7 +78,9 @@ function stopWifi (options = {}) {
     complete(result)
     return
   }
-  WifiManager.setEnabled(false)
+  clearTimeout(getWifiListTimer)
+  getWifiListTimer = null
+  startWifiReady = false
   const result = {
     errMsg: 'stopWifi:success'
   }
@@ -84,6 +89,12 @@ function stopWifi (options = {}) {
 }
 
 function getWifiList (options = {}) {
+  let getWifiNumber = 15
+  if (getWifiListTimer) {
+    clearTimeout(getWifiListTimer)
+    getWifiListTimer = null
+  }
+  let isGetWifi = true
   const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
@@ -103,33 +114,48 @@ function getWifiList (options = {}) {
     complete(result)
     return
   }
-  WifiManager.loadWifiList().then((res) => {
-    if (wifiListListeners.length) {
+  function reGetWifiList () {
+    WifiManager.reScanAndLoadWifiList().then((res) => {
       const result = res.map(item => {
         return {
           SSID: item.SSID,
           BSSID: item.BSSID,
-          frequency: item.frequency
+          frequency: item.frequency,
+          signalStrength: 100 + (item.level || 0)
         }
       })
       wifiListListeners.forEach(callback => {
-        callback({ wifiList: result })
+        if (type(callback) === 'Function') {
+          callback({ wifiList: result })
+        }
       })
+      if (isGetWifi) {
+        const result = {
+          errMsg: 'getWifiList:success',
+          errno: 0,
+          errCode: 0
+        }
+        success(result)
+        complete(result)
+        isGetWifi = false
+      }
+    }).catch(() => {
+      if (isGetWifi) {
+        const result = {
+          errMsg: 'getWifiList:fail'
+        }
+        fail(result)
+        complete(result)
+        isGetWifi = false
+      }
+    })
+    if (getWifiNumber-- > 0) {
+      getWifiListTimer = setTimeout(() => {
+        reGetWifiList()
+      }, 30000)
     }
-    const result = {
-      errMsg: 'getWifiList:success',
-      errno: 0,
-      errCode: 0
-    }
-    success(result)
-    complete(result)
-  }).catch(() => {
-    const result = {
-      errMsg: 'getWifiList:fail'
-    }
-    fail(result)
-    complete(result)
-  })
+  }
+  reGetWifiList()
 }
 
 function onGetWifiList (callback) {
@@ -177,8 +203,7 @@ function getConnectedWifi (options = {}) {
       }
       success(result)
       complete(result)
-    }).catch((error) => {
-      console.log(error)
+    }).catch(() => {
       const result = {
         errMsg: 'getConnectedWifi:fail'
       }
