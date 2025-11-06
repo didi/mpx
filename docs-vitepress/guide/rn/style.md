@@ -443,10 +443,10 @@ calc(expression)
 百分比在 `calc()` 中的计算逻辑详见 [百分比单位说明](#百分比单位说明)。
 
 ```css
-/* 需要指定 parent-width 或 parent-height */
+/* 注意：需要在 template 模板对应元素标签中指定 parent-width 或 parent-height 属性 */
 .percentage {
-  width: calc(100% - 20px);   /* 需要 parent-width 属性 */
-  height: calc(80% + 10px);   /* 需要 parent-height 属性 */
+  width: calc(100% - 20px);   /* 需要在模板中指定 parent-width 属性 */
+  height: calc(80% + 10px);   /* 需要在模板中指定 parent-height 属性 */
 }
 ```
 ### env() 函数
