@@ -7,7 +7,16 @@
     "defs": {
         "isMobile": true,
         "__mpx_mode__": "ios"
-    }
+    },
+    "dependencies": [
+        "s2.styl",
+        "s2.styl",
+        "s2.styl",
+        "s2.styl",
+        "s2.styl",
+        "s2.styl",
+        "s2.styl"
+    ]
 }
 ```
 

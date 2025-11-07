@@ -4,7 +4,8 @@
 {
     "lang": "less",
     "resourcePath": "index.less",
-    "defs": {}
+    "defs": {},
+    "dependencies": []
 }
 ```
 

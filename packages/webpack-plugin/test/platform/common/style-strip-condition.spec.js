@@ -44,27 +44,30 @@ describe('strip-conditional-loader', () => {
       const content = await fs.readFile(filename, 'utf-8')
 
       let result
+      let dependencies = []
 
       try {
-        result = (
-          await stripByPostcss({
-            css: content,
-            lang,
-            resourcePath: filename,
-            defs,
-            resolve: (base, id, callback) => {
-              callback(null, path.join(base, id))
-            }
-          })
-        ).css
+        const output = await stripByPostcss({
+          css: content,
+          lang,
+          resourcePath: filename,
+          defs,
+          resolve: (base, id, callback) => {
+            callback(null, path.join(base, id))
+          }
+        })
+        result = output.css
+        dependencies = output.dependencies || []
       } catch (error) {
+        console.log(error)
         result = `Error: ${error?.message.trim() || error}`
       }
 
       return formatResult(result, {
         lang,
         resourcePath: path.relative(cwd, filename),
-        defs
+        defs,
+        dependencies: dependencies.map(dep => path.relative(cwd, dep))
       })
     },
     {

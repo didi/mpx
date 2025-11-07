@@ -6,7 +6,10 @@
     "resourcePath": "index.styl",
     "defs": {
         "isMobile": true
-    }
+    },
+    "dependencies": [
+        "s1.styl"
+    ]
 }
 ```
 

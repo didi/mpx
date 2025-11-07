@@ -7,7 +7,8 @@
     "defs": {
         "isMobile": true,
         "hasFeature": true
-    }
+    },
+    "dependencies": []
 }
 ```
 

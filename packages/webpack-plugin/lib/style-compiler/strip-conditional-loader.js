@@ -251,16 +251,31 @@ async function atImport(options) {
   // 逆序替换 import，避免修改内容导致的索引偏移问题
   importList.sort((a, b) => (a.start > b.start ? -1 : 1))
 
-  for (const imp of importList) {
-    const importPath = imp.url
-    if (!importPath) continue
-    // 非法路径直接报错
-    const resolvedUrl = await resolve(importPath, fromParent)
-    const content = (await load(resolvedUrl)) ?? ''
-    css = css.slice(0, imp.start) + '\n' + content + '\n' + css.slice(imp.end)
+  const result = await Promise.all(
+    importList.map(async imp => {
+      const importPath = imp.url
+      if (!importPath) return
+      // 非法路径直接报错
+      const resolvedUrl = await resolve(importPath, fromParent)
+      const content = (await load(resolvedUrl)) ?? ''
+      return {
+        content,
+        start: imp.start,
+        end: imp.end,
+        resolvedUrl
+      }
+    })
+  )
+
+  for (const res of result) {
+    if (!res) continue
+    css = css.slice(0, res.start) + '\n' + res.content + '\n' + css.slice(res.end)
   }
 
-  return css
+  return {
+    css,
+    imports: result.map(item => item.resolvedUrl)
+  }
 }
 /**
  * @param {StripByPostcssOption} options
@@ -282,6 +297,7 @@ async function stripByPostcss(options) {
    * @type {string}
    */
   const afterConditionStrip = stripContentCondition(options.css, defs)
+  const dependencies = []
 
   const atImportOptions = {
     async load(filename) {
@@ -289,11 +305,13 @@ async function stripByPostcss(options) {
 
       content = stripContentCondition(content, defs)
 
-      return await atImport({
+      const data = await atImport({
         ...atImportOptions,
         from: filename,
         css: content
       })
+      dependencies.push(...data.imports)
+      return data.css
     },
     resolve: (id, base) => {
       return new Promise((resolve, reject) => {
@@ -309,21 +327,26 @@ async function stripByPostcss(options) {
     }
   }
 
+  const result = await atImport({
+    ...atImportOptions,
+    from: options.resourcePath,
+    css: afterConditionStrip
+  })
+
+  dependencies.push(...result.imports)
+
   return {
-    css: await atImport({
-      ...atImportOptions,
-      from: options.resourcePath,
-      css: afterConditionStrip
-    })
+    css: result.css,
+    dependencies
   }
 }
 
-const createResolver = (contetx, extensions) =>
-  contetx.getResolve({ mainFiles: ['index'], extensions: [...extensions, '.css'], preferRelative: true })
+const createResolver = (context, extensions) =>
+  context.getResolve({ mainFiles: ['index'], extensions: [...extensions, '.css'], preferRelative: true })
 const resolver = {
-  stylus: contetx => createResolver(contetx, ['.styl']),
-  scss: contetx => createResolver(contetx, ['.scss']),
-  less: contetx => createResolver(contetx, ['.styl'])
+  stylus: context => createResolver(context, ['.styl']),
+  scss: context => createResolver(context, ['.scss']),
+  less: context => createResolver(context, ['.styl'])
 }
 
 /**
@@ -346,6 +369,10 @@ module.exports = async function (css) {
     defs: mpx.defs,
     resolve: resolver[queryObj.lang] ? resolver[queryObj.lang](this) : this.resolve.bind(this)
   })
+
+  for (const dep of result.dependencies) {
+    this.addDependency(path.normalize(dep))
+  }
 
   callback(null, result.css, result.map)
 }

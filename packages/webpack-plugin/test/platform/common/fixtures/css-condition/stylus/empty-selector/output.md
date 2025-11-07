@@ -6,7 +6,8 @@
     "resourcePath": "index.styl",
     "defs": {
         "isMobile": false
-    }
+    },
+    "dependencies": []
 }
 ```
 

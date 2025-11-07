@@ -4,7 +4,10 @@
 {
     "lang": "stylus",
     "resourcePath": "index.styl",
-    "defs": {}
+    "defs": {},
+    "dependencies": [
+        "s1.styl"
+    ]
 }
 ```
 
