@@ -99,12 +99,12 @@ rules: [
 
 通过给 style 标签添加 src 属性引入外部样式，最终公共样式代码只会打包一份。
 
-``` template
+``` html
 <!-- index.mpx -->
 <style lang="stylus" src="../styles/common.styl"></style>
 ```
 
-``` template
+``` html
 <!-- list.mpx -->
 <style lang="stylus" src="../styles/common.styl"></style>
 ```
@@ -115,14 +115,14 @@ Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxs
 
 如果指定 style 标签的 lang 属性并且使用 @import 导入样式，那么这个文件经过对应的 loader 处理之后的内容会重复打包到引用它的文件目录下，并不会抽离成单独的文件，这样无形中增加了代码体积。
 
-``` template
+``` html
 <!-- index.mpx -->
 <style lang="stylus">
   @import "../styles/mixin.styl"
 </style>
 ```
 
-``` template
+``` html
 <!-- list.mpx -->
 <style lang="less">
   @import "../styles/mixin.less";
@@ -140,14 +140,14 @@ Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxs
 }
 ```
 
-``` template
+``` html
 <!-- index.mpx -->
 <style>
   @import "../styles/mixin.css";
 </style>
 ```
 
-``` template
+``` html
 <!-- list.mpx -->
 <style>
   @import "../styles/mixin.css";
