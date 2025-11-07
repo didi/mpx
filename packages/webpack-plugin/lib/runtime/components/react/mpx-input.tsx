@@ -281,7 +281,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition }
+      keyboardAvoid.current = {
+        cursorSpacing,
+        ref: nodeRef,
+        adjustPosition,
+        // fix: iOS 会在 onFocus 之前触发 keyboardWillShow 并且赋值 keyboardHeight
+        // 这里手动同步下 keyboardHeight，防止 onFocus setKeyboardAvoidContext 删掉 keyboardHeight
+        keyboardHeight: keyboardAvoid?.current?.keyboardHeight
+      }
     }
   }
 
@@ -315,6 +322,9 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         )
         if (keyboardAvoid?.current?.onKeyboardShow) {
           keyboardAvoid.current.onKeyboardShow = undefined
+        }
+        if (keyboardAvoid?.current?.keyboardHeight) {
+          keyboardAvoid.current.keyboardHeight = undefined
         }
       }
       if (keyboardAvoid?.current) {
