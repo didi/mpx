@@ -94,8 +94,7 @@ const sidebar: DefaultTheme.Sidebar = {
       text: "跨端基础",
       items: [
         { text: "跨端输出配置", link: "/guide/cross-platform/basic" },
-        { text: "条件编译机制", link: "/guide/cross-platform/conditional" },
-        { text: "平台差异处理", link: "/guide/cross-platform/differences" },
+        { text: "条件编译机制", link: "/guide/cross-platform/conditional" }
       ],
     },
     {
