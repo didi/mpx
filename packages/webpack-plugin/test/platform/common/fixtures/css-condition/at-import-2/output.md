@@ -61,17 +61,17 @@
 .selector3
   color green /** comment 5 */
 
-
+/* @mpx-if (!isMobile) *//* @mpx-else */
 .layout-nested-else
   background #fff
   color blue
-
+/* @mpx-endif */
 
 .text-ellipsis {
-  
+  /* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') *//* @mpx-endif */
 }
 
-
+/* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') *//* @mpx-endif */
 
 .layout
   background red
