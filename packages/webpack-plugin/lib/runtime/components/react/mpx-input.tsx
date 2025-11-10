@@ -95,16 +95,16 @@ export interface InputProps {
   'selection-start'?: number
   'selection-end'?: number
   'placeholder-style'?: { color?: string }
-  'enable-offset'?: boolean,
+  'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
   // 只有 RN 环境读取
-  'keyboard-type'?: string,
-  'adjust-position': boolean,
-  'hold-keyboard'?: boolean,
+  'keyboard-type'?: string
+  'adjust-position': boolean
+  'hold-keyboard'?: boolean
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
