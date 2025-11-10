@@ -161,8 +161,8 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
 export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
-  // style变更标识(首次render不执行)
-  const animationDeps = useRef(false)
+  // style变更标识(首次render不执行)，初始值为-1，首次渲染后为0，有style更新则为1
+  const animationDeps = useRef(-1)
   // 有动画样式的 style key(useAnimatedStyle使用)
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
@@ -193,30 +193,29 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
   const runOnJSCallbackRef = useRef({})
-  if (transitionend) {
-    runOnJSCallbackRef.current = {
-      transitionend
-    }
-  }
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 设置 lastShareValRef & shareValMap
   function updateStyleVal () {
-    Object.keys(shareValMap).forEach(key => {
+    return Object.keys(shareValMap).some(key => {
+      let isUpdate = 0
       let value = originalStyle[key]
       if (isTransform(key)) {
         value = originalStyle.transform
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
-            if (!animationDeps.current) animationDeps.current = true
+            isUpdate = 1
+            return isUpdate
           }
         })
       } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
           lastStyleRef.current[key] = value
-          if (!animationDeps.current) animationDeps.current = true
+          isUpdate = 1
+          return isUpdate
         }
       }
+      return isUpdate
     })
   }
   // 根据 animation action 创建&驱动动画
@@ -247,18 +246,25 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? 'transform' : key]
       // console.log('animationOptions=', { delay, duration, easing })
-      let callback
-      if (transitionend) {
-        callback = (finished?: boolean, current?: AnimatableValue) => {
-          'worklet'
-          // 动画结束后设置下一次transformOrigin
-          if (finished) {
-            runOnJS(runOnJSCallback)('transitionend', duration, finished, current)
+      // animationCallback !callbackMap.get(duration) && callback ? callback : undefined
+      runOnJSCallbackRef.current = {
+        animationCallback: (duration: number) => {
+          if (!callbackMap.get(duration) && transitionend) {
+            transitionend()
+            callbackMap.set(duration, true)
           }
+          // Todo transitionend 连续动画
+          // animationDeps.current = 0
         }
       }
-      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, !callbackMap.get(duration) && callback ? callback : undefined)
-      callbackMap.set(duration, true)
+      const callback = (finished?: boolean, current?: AnimatableValue) => {
+        'worklet'
+        // 动画结束后设置下一次transformOrigin
+        if (finished) {
+          runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
+        }
+      }
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
       shareValMap[key].value = animation
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })
@@ -284,17 +290,25 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     // 驱动动画
     createAnimation(animatedKeys.current)
   }
-  // ** 获取动画样式prop & 驱动动画
-  useEffect(() => {
-    // console.log('useEffect animationDeps=', animationDeps.current)
-    if (!animationDeps.current) return
-    startAnimation()
-  }, [animationDeps.current])
   // ** style 更新
   useEffect(() => {
+    console.log('useEffect originalStyle animationDeps=', animationDeps.current, originalStyle)
     // css transition 更新 animationDeps
-    updateStyleVal()
+    if (animationDeps.current === -1) {
+      // 首次不更新
+      animationDeps.current = 0
+      return
+    }
+    animationDeps.current = +updateStyleVal()
   }, [originalStyle])
+  // ** 获取动画样式prop & 驱动动画
+  useEffect(() => {
+    console.log('useEffect animationDeps animationDeps=', animationDeps.current)
+    if (animationDeps.current <= 0) {
+      return
+    }
+    startAnimation()
+  }, [animationDeps.current])
   // ** 清空动画
   useEffect(() => {
     return () => {
