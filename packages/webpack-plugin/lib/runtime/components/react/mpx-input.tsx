@@ -54,7 +54,7 @@ import {
   NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS, isAndroid, isHarmony } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -187,7 +187,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     return ''
   }
 
-  const keyboardType = (isIOS || isAndroid || isHarmony) ? originalKeyboardType || keyboardTypeMap[type] : keyboardTypeMap[type]
+  const keyboardType = originalKeyboardType || keyboardTypeMap[type]
   const defaultValue = parseValue(value)
   const textAlignVertical = multiline ? 'top' : 'auto'
 
