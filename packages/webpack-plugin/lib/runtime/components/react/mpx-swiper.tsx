@@ -429,11 +429,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [])
 
-  function handleSwiperChange (current: number, pCurrent: number) {
-    if (pCurrent !== currentIndex.value) {
-      const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-      bindchange && bindchange(eventData)
-    }
+  function handleSwiperChange (current: number) {
+    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+    bindchange && bindchange(eventData)
   }
 
   const runOnJSCallbackRef = useRef({
@@ -483,7 +481,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     if (newIndex !== preIndex && bindchange) {
-      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
+      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex)
     }
   })
 
@@ -788,6 +786,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           offset.value = moveDistance + offset.value
         }
+        preAbsolutePos.value = e[strAbso]
+      })
+      .onEnd((e) => {
+        // 修复某些安卓机型小米 onFinalize拿到的absolute值不正确的问题, onUpdate并不是最终的值
         preAbsolutePos.value = e[strAbso]
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
