@@ -25,8 +25,8 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const isShow = useRef<boolean>(false)
 
   const animatedStyle = useAnimatedStyle(() => ({
-    // translate/position top可能会导致底部渲染区域缺失
-    marginTop: -offset.value,
+    // translate/position top会+overflow hidden会导致底部渲染区域缺失(需要 android 配置聚焦时禁用高度缩小)，margin-top 会导致 portal 的定位失效，无法顶起 portal
+    transform: [{ translateY: -offset.value }],
     flexBasis: basic.value as DimensionValue
   }))
 

@@ -1,24 +1,30 @@
+// 用于lib下文件的语法检查，ts 类型提示
 {
   "include": [
+    "./lib",
+  ],
+  "exclude": [
     "./lib/runtime/components/react"
   ],
   "compilerOptions": {
+    "module": "nodenext",
     "target": "esnext",
-    "module": "esnext",
-    "outDir": "./lib/runtime/components/react/dist",
     "noImplicitThis": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
     "strictNullChecks": true,
-    "moduleResolution": "node",
-    "declaration": true,
-    "declarationMap": true,
+    "moduleResolution": "nodenext",
     "allowSyntheticDefaultImports": true,
-    "jsx": "preserve",
+    "noEmit": true,
     "lib": [
       "esnext",
-      "dom",
-      "dom.iterable"
     ]
-  }
+  },
+  "references": [
+    {
+      "path": "./tsconfig.react.json"
+    }
+  ]
 }
