@@ -218,3 +218,17 @@ Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几�
   })
 </script>
 ```
+
+## Mpx 增强事件代理
+
+Mpx 提供了事件代理机制，通过在事件绑定上添加 `.proxy` 修饰符，可以在事件触发时调用全局的 `proxyEventHandler` 钩子。
+
+示例：
+
+```html
+<view bindtap.proxy="handleTap">代理事件</view>
+```
+
+当点击时，除了执行 `handleTap`，还会触发 `Mpx.config.proxyEventHandler(event, componentIns)`。
+
+更多细节见 [proxyEventHandler](/api/app-config.html#proxyeventhandler)。
