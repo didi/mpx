@@ -601,12 +601,12 @@ function compileScriptSetup (
   }
 
   if (optionsRuntimeDecl) {
+    // 将一个对象的所有属性/方法节点从 { a, b, c } 格式转换为 a:..., b:..., c:...
     for (const node of optionsRuntimeDecl) {
       if (node.key.name === 'properties' && hasDefinePropsCall) {
         console.warn(`${DEFINE_PROPS} has been called, ${DEFINE_OPTIONS} set properties will be ignored`)
       } else {
-        const declCode = content.slice(node.value.start, node.value.end).trim()
-        runtimeOptions += `\n ${node.key.name}: ${declCode},`
+        runtimeOptions += `\n ${content.slice(node.start, node.end).trim()},`
       }
     }
   }
