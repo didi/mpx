@@ -13,7 +13,7 @@ export type AnimationType = 'api'|'animation'|'transition'|'none'
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean | AnimationType, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
   const { style: originalStyle = {}, enableAnimation, animation, transitionend, layoutRef } = props
   // 记录动画类型 优先级 css transition > API
-  let animationType = 'none'
+  let animationType = ''
   const propNames = Object.keys(originalStyle)
   if (propNames.find(item => item.includes('animation'))) {
     // css animation 只做检测提示
