@@ -95,13 +95,15 @@ export interface InputProps {
   'selection-start'?: number
   'selection-end'?: number
   'placeholder-style'?: { color?: string }
-  'enable-offset'?: boolean,
+  'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'adjust-position': boolean,
+  // 只有 RN 环境读取
+  'keyboard-type'?: string
+  'adjust-position': boolean
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -150,6 +152,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
+    'keyboard-type': originalKeyboardType,
     bindinput,
     bindfocus,
     bindblur,
@@ -182,7 +185,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     return ''
   }
 
-  const keyboardType = keyboardTypeMap[type]
+  const keyboardType = originalKeyboardType || keyboardTypeMap[type]
   const defaultValue = parseValue(value)
   const textAlignVertical = multiline ? 'top' : 'auto'
 
