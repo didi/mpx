@@ -1,4 +1,4 @@
-import { noop } from '@mpxjs/utils'
+import { noop, type } from '@mpxjs/utils'
 import mpx from '@mpxjs/core'
 import { Platform, PermissionsAndroid } from 'react-native'
 import { base64ToArrayBuffer } from '../base/index'
@@ -217,19 +217,23 @@ function startBluetoothDevicesDiscovery (options = {}) {
       }
     }
     deviceFoundCallbacks.forEach(cb => {
-      cb({
-        devices: [deviceInfo]
-      })
+      if (type(cb) === 'Function') {
+        cb({
+          devices: [deviceInfo]
+        })
+      }
     })
     getDevices.push(deviceInfo)
     // 处理设备发现逻辑
   })
   BleManager.scan(services, 0, allowDuplicatesKey).then((res) => { // 必须，没有开启扫描，onDiscoverPeripheral回调不会触发
     onStateChangeCallbacks.forEach(cb => {
-      cb({
-        available: true,
-        discovering: true
-      })
+      if (type(cb) === 'Function') {
+        cb({
+          available: true,
+          discovering: true
+        })
+      }
     })
     discovering = true
     getDevices = [] // 清空之前的发现设备列表
@@ -256,10 +260,12 @@ function stopBluetoothDevicesDiscovery (options = {}) {
   BleManager.stopScan().then(() => {
     discovering = false
     onStateChangeCallbacks.forEach(cb => {
-      cb({
-        available: true,
-        discovering: false
-      })
+      if (type(cb) === 'Function') {
+        cb({
+          available: true,
+          discovering: false
+        })
+      }
     })
     const result = {
       errMsg: 'stopBluetoothDevicesDiscovery:ok'
@@ -334,18 +340,22 @@ function onDidUpdateState () {
   const BleManager = require('react-native-ble-manager').default
   updateStateSubscription = BleManager.onDidUpdateState((state) => {
     onStateChangeCallbacks.forEach(cb => {
-      cb({
-        available: state.state === 'on',
-        discovering: state.state === 'on' ? discovering : false
-      })
+      if (type(cb) === 'Function') {
+        cb({
+          available: state.state === 'on',
+          discovering: state.state === 'on' ? discovering : false
+        })
+      }
     })
     if (onBLEConnectionStateCallbacks.length && connectedDeviceId.length && state.state !== 'on') {
       connectedDeviceId.forEach((id) => {
         onBLEConnectionStateCallbacks.forEach(cb => {
-          cb({
-            deviceId: id,
-            connected: false
-          })
+          if (type(cb) === 'Function') {
+            cb({
+              deviceId: id,
+              connected: false
+            })
+          }
         })
       })
     }
@@ -527,7 +537,9 @@ function onBLECharacteristicValueChange (callback) {
         value: buffer
       }
       characteristicCallbacks.forEach(cb => {
-        cb(result)
+        if (type(cb) === 'Function') {
+          cb(result)
+        }
       })
     })
   }
@@ -723,10 +735,12 @@ function createBLEConnection (options = {}) {
     }
     clearTimeout(createBLEConnectionTimeout)
     onBLEConnectionStateCallbacks.forEach(cb => {
-      cb({
-        deviceId,
-        connected: true
-      })
+      if (type(cb) === 'Function') {
+        cb({
+          deviceId,
+          connected: true
+        })
+      }
     })
     connectedDevices.add(deviceId)
     const result = {
@@ -769,10 +783,12 @@ function closeBLEConnection (options = {}) {
       connectedDeviceId.splice(index, 1) // 记录一下已连接的设备id
     }
     onBLEConnectionStateCallbacks.forEach(cb => {
-      cb({
-        deviceId,
-        connected: false
-      })
+      if (type(cb) === 'Function') {
+        cb({
+          deviceId,
+          connected: false
+        })
+      }
     })
     connectedDevices.delete(deviceId)
     const result = {

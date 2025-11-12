@@ -1,5 +1,5 @@
 import { PermissionsAndroid } from 'react-native'
-import { noop } from '@mpxjs/utils'
+import { noop, type } from '@mpxjs/utils'
 import mpx from '@mpxjs/core'
 let startWifiReady = false
 const wifiListListeners = []
@@ -31,7 +31,6 @@ function startWifi (options = {}) {
     complete(result)
     return
   }
-  startWifiReady = true
   let wifiPermission = requestWifiPermission
   if (mpx.config?.rnConfig?.wifiPermission) {
     wifiPermission = mpx.config.rnConfig.wifiPermission
@@ -43,17 +42,21 @@ function startWifi (options = {}) {
     } catch (e) {
       enabled = false
     }
+    if (!enabled) {
+      const result = {
+        errMsg: 'startWifi:fail wifi not turned on',
+        errCode: 12005
+      }
+      fail(result)
+      complete(result)
+      return
+    }
+    startWifiReady = true
     const result = {
       errMsg: 'startWifi:success'
     }
-    if (!enabled) {
-      WifiManager.setEnabled(true)
-      success(result)
-      complete(result)
-    } else {
-      success(result)
-      complete(result)
-    }
+    success(result)
+    complete(result)
   }).catch((err) => {
     const result = {
       errMsg: 'startWifi:fail ' + (typeof err === 'string' ? err : ''),
@@ -65,7 +68,6 @@ function startWifi (options = {}) {
 }
 
 function stopWifi (options = {}) {
-  const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
@@ -75,7 +77,7 @@ function stopWifi (options = {}) {
     complete(result)
     return
   }
-  WifiManager.setEnabled(false)
+  startWifiReady = false
   const result = {
     errMsg: 'stopWifi:success'
   }
@@ -103,19 +105,20 @@ function getWifiList (options = {}) {
     complete(result)
     return
   }
-  WifiManager.loadWifiList().then((res) => {
-    if (wifiListListeners.length) {
-      const result = res.map(item => {
-        return {
-          SSID: item.SSID,
-          BSSID: item.BSSID,
-          frequency: item.frequency
-        }
-      })
-      wifiListListeners.forEach(callback => {
-        callback({ wifiList: result })
-      })
-    }
+  WifiManager.reScanAndLoadWifiList().then((res) => {
+    const wifiList = res.map(item => {
+      return {
+        SSID: item.SSID,
+        BSSID: item.BSSID,
+        frequency: item.frequency,
+        signalStrength: 100 + (item.level || 0)
+      }
+    })
+    wifiListListeners.forEach(callback => {
+      if (type(callback) === 'Function') {
+        callback({ wifiList })
+      }
+    })
     const result = {
       errMsg: 'getWifiList:success',
       errno: 0,
@@ -177,8 +180,7 @@ function getConnectedWifi (options = {}) {
       }
       success(result)
       complete(result)
-    }).catch((error) => {
-      console.log(error)
+    }).catch(() => {
       const result = {
         errMsg: 'getConnectedWifi:fail'
       }
