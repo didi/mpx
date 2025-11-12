@@ -200,7 +200,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     { padding: 0, backgroundColor: '#fff' },
     style,
     multiline && autoHeight
-      ? { height: 'auto', minHeight: Math.max((style as any)?.minHeight || 35, contentHeight) }
+      ? extendObject(
+        { height: 'auto' },
+        (style as any)?.minHeight
+          ? { minHeight: (style as any)?.minHeight } // 用户设置了 minHeight 才会透传
+          : {}
+      )
       : {}
   )
 
