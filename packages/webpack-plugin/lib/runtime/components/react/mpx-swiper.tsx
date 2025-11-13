@@ -15,6 +15,7 @@ import Portal from './mpx-portal'
  * ✔ indicator-height
  * ✔ indicator-radius
  * ✔ indicator-spacing
+ * ✔ indicator-margin
  * ✔ indicator-active-color
  * ✔ autoplay
  * ✔ current
@@ -54,6 +55,7 @@ interface SwiperProps {
   'indicator-height'?: number
   'indicator-spacing'?: number
   'indicator-radius'?: number
+  'indicator-margin'?: number
   'indicator-active-color'?: string
   vertical?: boolean
   style: {
@@ -80,23 +82,23 @@ interface SwiperProps {
 const styles: { [key: string]: Object } = {
   pagination_x: {
     position: 'absolute',
-    bottom: 25,
+    bottom: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'flex-end'
   },
   pagination_y: {
     position: 'absolute',
-    right: 15,
+    right: 0,
     top: 0,
     bottom: 0,
     flexDirection: 'column',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'flex-end'
   },
   pagerWrapperx: {
     position: 'absolute',
@@ -138,6 +140,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'indicator-height': dotHeight = 8,
     'indicator-radius': dotRadius = 4,
     'indicator-spacing': dotSpacing = 4,
+    'indicator-margin': paginationMargin = 10,
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
     'parent-font-size': parentFontSize,
@@ -308,8 +311,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     for (let i = 0; i < children.length; i++) {
       dots.push(<View style={[dotCommonStyle, { backgroundColor: unActionColor }]} key={i}></View>)
     }
+    let paginationStyle = styles['pagination_' + dir]
+    if (paginationMargin) {
+      paginationStyle = {
+        ...paginationStyle,
+        marginBottom: paginationMargin,
+        marginLeft: paginationMargin,
+        marginRight: paginationMargin,
+        marginTop: paginationMargin
+      }
+    }
     return (
-      <View pointerEvents="none" style={styles['pagination_' + dir]}>
+      <View pointerEvents="none" style={paginationStyle}>
         <View style={[styles['pagerWrapper' + dir]]}>
           <Animated.View style={[
             dotCommonStyle,
