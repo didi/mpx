@@ -14,7 +14,6 @@ import Portal from './mpx-portal'
  * ✔ indicator-width
  * ✔ indicator-height
  * ✔ indicator-radius
- * ✔ indicator-margin
  * ✔ indicator-spacing
  * ✔ indicator-active-color
  * ✔ autoplay
@@ -53,7 +52,6 @@ interface SwiperProps {
   'indicator-color'?: string
   'indicator-width'?: number
   'indicator-height'?: number
-  'indicator-margin'?: number
   'indicator-spacing'?: number
   'indicator-radius'?: number
   'indicator-active-color'?: string
@@ -119,16 +117,6 @@ const styles: { [key: string]: Object } = {
   }
 }
 
-const dotCommonStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  marginLeft: 3,
-  marginRight: 3,
-  marginTop: 3,
-  marginBottom: 3,
-  zIndex: 98
-}
 const activeDotStyle = {
   zIndex: 99
 }
@@ -149,7 +137,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'indicator-width': dotWidth = 8,
     'indicator-height': dotHeight = 8,
     'indicator-radius': dotRadius = 4,
-    'indicator-margin': paginationMargin = 10,
     'indicator-spacing': dotSpacing = 4,
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
