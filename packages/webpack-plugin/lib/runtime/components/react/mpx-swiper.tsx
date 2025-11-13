@@ -11,6 +11,11 @@ import Portal from './mpx-portal'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
+ * ✔ indicator-width
+ * ✔ indicator-height
+ * ✔ indicator-radius
+ * ✔ indicator-margin
+ * ✔ indicator-spacing
  * ✔ indicator-active-color
  * ✔ autoplay
  * ✔ current
@@ -46,6 +51,11 @@ interface SwiperProps {
   scale?: boolean
   'indicator-dots'?: boolean
   'indicator-color'?: string
+  'indicator-width'?: number
+  'indicator-height'?: number
+  'indicator-margin'?: number
+  'indicator-spacing'?: number
+  'indicator-radius'?: number
   'indicator-active-color'?: string
   vertical?: boolean
   style: {
@@ -136,6 +146,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const {
     'indicator-dots': showPagination,
     'indicator-color': dotColor = 'rgba(0, 0, 0, .3)',
+    'indicator-width': dotWidth = 8,
+    'indicator-height': dotHeight = 8,
+    'indicator-radius': dotRadius = 4,
+    'indicator-margin': paginationMargin = 10,
+    'indicator-spacing': dotSpacing = 4,
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
     'parent-font-size': parentFontSize,
@@ -151,6 +166,17 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     current: propCurrent = 0,
     bindchange
   } = props
+
+  const dotCommonStyle = {
+    width: dotWidth,
+    height: dotHeight,
+    borderRadius: dotRadius,
+    marginLeft: dotSpacing,
+    marginRight: dotSpacing,
+    marginTop: dotSpacing,
+    marginBottom: dotSpacing,
+    zIndex: 98
+  }
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
@@ -252,6 +278,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'style',
       'indicator-dots',
       'indicator-color',
+      'indicator-width',
       'indicator-active-color',
       'previous-margin',
       'vertical',
