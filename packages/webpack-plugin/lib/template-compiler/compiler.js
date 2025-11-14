@@ -2935,7 +2935,7 @@ function processMpxTagName (el) {
 
 // 处理 max-lines 跨平台属性
 function processMaxLines (el) {
-  const maxLinesAttr = getAndRemoveAttr(el, 'max-lines')
+  const maxLinesAttr = getAndRemoveAttr(el, 'enable-max-lines')
   if (!maxLinesAttr.val) return
 
   const parsed = parseMustacheWithContext(maxLinesAttr.val)
@@ -2980,7 +2980,7 @@ function processMaxLines (el) {
       }])
     }
   } else {
-    // 小程序环境：保留 max-lines，添加 wx:style
+    // 小程序环境
     addAttrs(el, [{ name: 'max-lines', value: maxLinesAttr.val }, { name: 'overflow', value: 'ellipsis' }])
 
     const styleExpressions = []
