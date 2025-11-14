@@ -41,13 +41,16 @@ interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
   selectable?: boolean
+  decode?: boolean
   'user-select'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  decode?: boolean
+  'enable-android-align-center'?: boolean
+  'enable-add-space'?: boolean
+  'space-font-size'?: number
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
@@ -55,21 +58,26 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     style = {},
     allowFontScaling = false,
     selectable,
+    decode,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'enable-android-align-center': enableAndroidAlignCenter,
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    decode
+    'enable-add-space': enableAddSpace,
+    'space-font-size': spaceFontSize
   } = props
+
+  const extendStyle = enableAndroidAlignCenter ? { includeFontPadding: false, textAlignVertical: 'center' } : null
 
   const {
     normalStyle,
     hasVarDec,
     varContextRef,
     hasPositionFixed
-  } = useTransformStyle(style, {
+  } = useTransformStyle(extendStyle ? extendObject({}, style, extendStyle) : style, {
     enableVar,
     externalVarContext,
     parentFontSize,
@@ -95,11 +103,22 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     ),
     [
       'user-select',
-      'decode'
+      'decode',
+      'enable-android-align-center',
+      'enable-add-space',
+      'space-font-size'
     ]
   )
 
-  const children = decode ? getDecodedChildren(props.children) : props.children
+  let children = decode ? getDecodedChildren(props.children) : props.children
+
+  // 如果启用了 enable-add-space，在末尾追加一个空格节点，规避小米手机文字被截断问题
+  if (enableAddSpace) {
+    const spaceNode = createElement(Text, {
+      style: spaceFontSize ? { fontSize: spaceFontSize } : undefined
+    }, ' ')
+    children = Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
+  }
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     extendObject({}, props, {
