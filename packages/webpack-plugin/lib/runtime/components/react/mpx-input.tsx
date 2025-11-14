@@ -18,7 +18,7 @@
  * ✔ selection-start
  * ✔ selection-end
  * ✔ adjust-position
- * ✘ hold-keyboard
+ * ✔ hold-keyboard
  * ✘ safe-password-cert-path
  * ✘ safe-password-length
  * ✘ safe-password-time-stamp
@@ -102,6 +102,7 @@ export interface InputProps {
   'parent-width'?: number
   'parent-height'?: number
   'adjust-position': boolean,
+  'hold-keyboard'?: boolean
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -150,6 +151,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
+    'hold-keyboard': holdKeyboard = false,
     bindinput,
     bindfocus,
     bindblur,
@@ -280,8 +282,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const setKeyboardAvoidContext = () => {
-    if (adjustPosition && keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef }
+    if (keyboardAvoid) {
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard }
     }
   }
 
@@ -296,19 +298,42 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
     setKeyboardAvoidContext()
-    bindfocus && bindfocus(
-      getCustomEvent(
-        'focus',
-        evt,
-        {
-          detail: {
-            value: tmpValue.current || ''
-          },
-          layoutRef
-        },
-        props
-      )
-    )
+
+    if (bindfocus) {
+      const focusAction = () => {
+        bindfocus(
+          getCustomEvent(
+            'focus',
+            evt,
+            {
+              detail: {
+                value: tmpValue.current || '',
+                height: keyboardAvoid?.current?.keyboardHeight
+              },
+              layoutRef
+            },
+            props
+          )
+        )
+        if (keyboardAvoid?.current?.onKeyboardShow) {
+          keyboardAvoid.current.onKeyboardShow = undefined
+        }
+      }
+      if (keyboardAvoid?.current) {
+        // 有 keyboardAvoiding
+        if (keyboardAvoid.current.keyboardHeight) {
+          // iOS: keyboard 获取高度时机 keyboardWillShow 在 input focus 之前，可以立即执行
+          focusAction()
+        } else {
+          // Android,Harmony: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
+          evt.persist()
+          keyboardAvoid.current.onKeyboardShow = focusAction
+        }
+      } else {
+        // 无 keyboardAvoiding，直接执行 focus 回调
+        focusAction()
+      }
+    }
   }
 
   const onBlur = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {

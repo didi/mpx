@@ -10,7 +10,7 @@ import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
-import { innerNav } from './env/nav'
+import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
@@ -62,8 +62,8 @@ export default function createApp (options) {
               flex: 1
             }
           },
-          createElement(innerNav, {
-            pageConfig: pageConfig,
+          createElement(MpxNav, {
+            pageConfig,
             navigation
           }),
           children
@@ -213,7 +213,7 @@ export default function createApp (options) {
     const { initialRouteName, initialParams } = initialRouteRef.current
     const navScreenOpts = {
       headerShown: false,
-      statusBarTranslucent: true,
+      statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
       statusBarBackgroundColor: 'transparent'
     }
 

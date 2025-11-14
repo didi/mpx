@@ -17,7 +17,7 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '../env/nav'
+import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
 function getSystemInfo () {
   const windowDimensions = global.__mpxAppDimensionsInfo.window
@@ -440,6 +440,11 @@ function usePageStatus (navigation, pageId) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
+    if (navigation.isFocused && navigation.isFocused()) {
+      Promise.resolve().then(() => {
+        pageStatusMap[pageId] = 'show'
+      })
+    }
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
     })
