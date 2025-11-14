@@ -109,7 +109,7 @@ registered in parent context!`)
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   if (!component) {
-    warn('[Mpx runtime warn]: component is not found, please check')
+    warn('component not found, please check')
     return null
   }
   // eslint-disable-next-line

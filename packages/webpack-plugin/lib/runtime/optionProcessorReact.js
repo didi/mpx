@@ -7,7 +7,7 @@ export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   if (!component) {
     warn(
-      `[Mpx runtime warn]: ${extendOptions.displayName || ''} component is not found, please check`
+      `${extendOptions?.displayName || ''} component not found, please check`
     )
     return null
   }
