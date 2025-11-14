@@ -1,0 +1,11 @@
+<template mode="swan">
+  <view>{{__mpx_mode__}}</view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  onLoad () {}
+})
+</script>
