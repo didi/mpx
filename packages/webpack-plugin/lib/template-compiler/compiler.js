@@ -2940,22 +2940,21 @@ function processMaxLines (el) {
 
   const parsed = parseMustacheWithContext(maxLinesAttr.val)
 
-  if (isReact(mode)) {
-    // iOS/Android 环境：转换为 numberOfLines
-    addAttrs(el, [{ name: 'numberOfLines', value: maxLinesAttr.val }])
-  } else if (isWeb(mode)) {
-    // Web 环境
-
-    // 构建多行截断样式对象
-    const linesStyleObj = `{
+  const linesStyleObj = `{
   display:  (${parsed.result}) <= 1 ? 'inline-block' : '-webkit-box',
   maxWidth: '100%',
   overflow: 'hidden',
+  whiteSpace: (${parsed.result}) <= 1 ? 'nowrap' : '',
   textOverflow: (${parsed.result}) <= 1 ? 'ellipsis' : '',
   WebkitBoxOrient: 'vertical',
   WebkitLineClamp: ${parsed.result}
 }`
 
+  if (isReact(mode)) {
+    // iOS/Android 环境：转换为 numberOfLines
+    addAttrs(el, [{ name: 'numberOfLines', value: maxLinesAttr.val }])
+  } else if (isWeb(mode)) {
+    // Web 环境
     // 查找已有的 style 或 wx:style
     const existingStyles = []
     el.attrsList.forEach(attr => {
@@ -2975,7 +2974,6 @@ function processMaxLines (el) {
         value: `[${existingStyles.join(', ')}] | transRpxStyle`
       }])
     } else {
-      // 没有现有样式，直接添加 :style
       addAttrs(el, [{
         name: ':style',
         value: `[${linesStyleObj}] | transRpxStyle`
@@ -2985,16 +2983,6 @@ function processMaxLines (el) {
     // 小程序环境：保留 max-lines，添加 wx:style
     addAttrs(el, [{ name: 'max-lines', value: maxLinesAttr.val }, { name: 'overflow', value: 'ellipsis' }])
 
-    const linesStyleObj = `{
-  display:  (${parsed.result}) <= 1 ? 'inline-block' : '-webkit-box',
-  maxWidth: '100%',
-  overflow: 'hidden',
-  textOverflow: (${parsed.result}) <= 1 ? 'ellipsis' : '',
-  WebkitBoxOrient: 'vertical',
-  WebkitLineClamp: ${parsed.result}
-}`
-
-    // 循环获取所有的 style 或 wx:style
     const styleExpressions = []
 
     // 获取所有 wx:style
@@ -3013,7 +3001,6 @@ function processMaxLines (el) {
         value: `{{[${styleArray}]}}`
       }])
     } else {
-      // 没有现有样式，直接添加
       addAttrs(el, [{
         name: 'wx:style',
         value: `{{${linesStyleObj}}}`

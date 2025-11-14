@@ -41,14 +41,14 @@ interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
   selectable?: boolean
+  decode?: boolean
   'user-select'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'text-align-vertical'?: boolean
-  decode?: boolean
+  'enable-android-align-center'?: boolean
   'enable-add-space'?: boolean
   'space-font-size'?: number
 }
@@ -60,7 +60,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
-    'text-align-vertical': textAlignVertical,
+    'enable-android-align-center': enableAndroidAlignCenter,
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
@@ -70,7 +70,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'space-font-size': spaceFontSize
   } = props
 
-  const extendStyle = textAlignVertical ? { includeFontPadding: false, textAlignVertical: 'center' } : null
+  const extendStyle = enableAndroidAlignCenter ? { includeFontPadding: false, textAlignVertical: 'center' } : null
 
   const {
     normalStyle,
@@ -104,7 +104,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     [
       'user-select',
       'decode',
-      'text-align-vertical',
+      'enable-android-align-center',
       'enable-add-space',
       'space-font-size'
     ]
@@ -117,7 +117,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     const spaceNode = createElement(Text, {
       style: spaceFontSize ? { fontSize: spaceFontSize } : undefined
     }, ' ')
-    children = createElement(Text, null, children, spaceNode)
+    children = Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
   }
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(

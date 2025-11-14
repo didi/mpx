@@ -6,7 +6,7 @@ import { extendObject } from './utils'
 interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
-  'text-align-vertical'?: boolean
+  'enable-android-align-center'?: boolean
   'enable-add-space'?: boolean
   'space-font-size'?: number
 }
@@ -14,12 +14,12 @@ interface _TextProps extends TextProps {
 const SimpleText = (props: _TextProps): JSX.Element => {
   const {
     allowFontScaling = false,
-    'text-align-vertical': textAlignVertical,
+    'enable-android-align-center': enableAndroidAlignCenter,
     'enable-add-space': enableAddSpace,
     'space-font-size': spaceFontSize
   } = props
 
-  const extendStyle = textAlignVertical ? { includeFontPadding: false, textAlignVertical: 'center' } : null
+  const extendStyle = enableAndroidAlignCenter ? { includeFontPadding: false, textAlignVertical: 'center' } : null
 
   const innerProps = useInnerProps(
     extendObject(
@@ -30,7 +30,7 @@ const SimpleText = (props: _TextProps): JSX.Element => {
         style: extendStyle ? extendObject({}, props.style, extendStyle) : props.style
       }
     ),
-    ['text-align-vertical', 'enable-add-space', 'space-font-size']
+    ['enable-android-align-center', 'enable-add-space', 'space-font-size']
   )
 
   let children = props.children
@@ -40,7 +40,7 @@ const SimpleText = (props: _TextProps): JSX.Element => {
     const spaceNode = createElement(Text, {
       style: spaceFontSize ? { fontSize: spaceFontSize } : undefined
     }, ' ')
-    children = createElement(Text, null, children, spaceNode)
+    children = Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
   }
 
   return createElement(Text, innerProps, children)
