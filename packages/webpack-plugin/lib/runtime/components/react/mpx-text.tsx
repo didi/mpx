@@ -58,6 +58,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     style = {},
     allowFontScaling = false,
     selectable,
+    decode,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'enable-android-align-center': enableAndroidAlignCenter,
@@ -65,7 +66,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    decode,
     'enable-add-space': enableAddSpace,
     'space-font-size': spaceFontSize
   } = props
