@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -70,7 +70,7 @@ export default function createApp (options) {
         )
       }
       const getComponent = () => {
-        return item.displayName ? item : item()
+        return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
       }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
