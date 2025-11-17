@@ -791,6 +791,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
         preAbsolutePos.value = e[strAbso]
       })
+      .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        // 修复某些安卓机型小米 onFinalize拿到的absolute值不正确的问题, onUpdate并不是最终的值
+        preAbsolutePos.value = e[strAbso]
+      })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
         if (touchfinish.value) return
