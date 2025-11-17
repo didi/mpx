@@ -109,7 +109,7 @@ registered in parent context!`)
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   if (!component) {
-    error('getComponent() expected component options as first argument, but got undefined.')
+    error('getComponent() expected component options as the first argument, but got undefined.')
     return null
   }
   // eslint-disable-next-line
