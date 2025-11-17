@@ -14,10 +14,6 @@ import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
 
-function getPageSize (window = ReactNative.Dimensions.get('window')) {
-  return window.width + 'x' + window.height
-}
-
 function filterOptions (options, appData) {
   const newOptions = {}
   Object.keys(options).forEach(key => {
@@ -208,22 +204,9 @@ export default function createApp (options) {
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
-
-      let count = 0
-      let lastPageSize = getPageSize()
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const pageSize = getPageSize(window)
-        if (pageSize === lastPageSize) return
-        lastPageSize = pageSize
-        const navigation = getFocusedNavigation()
-        if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-          global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
-        }
-      })
       return () => {
         appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
-        resizeSubScription && resizeSubScription.remove()
       }
     }, [])
 
