@@ -14,7 +14,11 @@ function getBasePath (navigation) {
 let timerId = null
 function isLock (navigationHelper, type, options) {
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-    const res = { errMsg: `${type}:fail the previous routing event didn't complete` }
+    const { path } = parseUrl(options.url)
+    const res = {
+      errMsg: `${type}:fail the previous routing event didn't complete`,
+      path
+    }
     failHandle(res, options.fail, options.complete)
     return true
   }
