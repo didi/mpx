@@ -213,6 +213,9 @@ function startBluetoothDevicesDiscovery (options = {}) {
     if (allowDuplicatesKey === false) {
       const existingDeviceIndex = getDevices.findIndex(existingDevice => existingDevice.deviceId === deviceInfo.deviceId)
       if (existingDeviceIndex > -1) {
+        if (device.name) {
+          getDevices.splice(existingDeviceIndex, 1, deviceInfo)
+        }
         return
       }
     }
