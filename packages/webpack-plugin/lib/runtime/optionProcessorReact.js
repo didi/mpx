@@ -7,7 +7,7 @@ export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   if (!component) {
     error(
-      `getComponent expecting a function/class component ${extendOptions?.displayName ? [extendOptions.displayName] : ''} as first argument, but got undefined.`
+      `getComponent expecting a function/class component ${extendOptions?.displayName ? `[${extendOptions.displayName}]` : ''} as first argument, but got undefined.`
     )
     return null
   }
