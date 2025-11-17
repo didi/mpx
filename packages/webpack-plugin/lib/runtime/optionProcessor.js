@@ -2,7 +2,7 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
-import { warn } from '@mpxjs/utils'
+import { error } from '@mpxjs/utils'
 const dash2hump = require('../utils/hump-dash').dash2hump
 
 export function processComponentOption (
@@ -109,7 +109,7 @@ registered in parent context!`)
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   if (!component) {
-    warn('component not found, please check')
+    error('getComponent() expected component options as first argument, but got undefined.')
     return null
   }
   // eslint-disable-next-line

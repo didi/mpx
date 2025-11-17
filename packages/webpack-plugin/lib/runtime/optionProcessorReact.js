@@ -1,13 +1,13 @@
 import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-async-suspense'
 import { memo, forwardRef, createElement } from 'react'
-import { warn } from '@mpxjs/utils'
+import { error } from '@mpxjs/utils'
 import { extend } from './utils'
 
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
   if (!component) {
-    warn(
-      `${extendOptions?.displayName || ''} component not found, please check`
+    error(
+      `getComponent expecting a function/class component ${extendOptions?.displayName ? [extendOptions.displayName] : ''} as first argument, but got undefined.`
     )
     return null
   }
