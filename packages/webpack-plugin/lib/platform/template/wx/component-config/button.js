@@ -195,7 +195,7 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(lang|from-type|hover-class|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|phone-number-no-quota-toast|bindgetuserinfo|bindcontact|createliveactivity|bindgetphonenumber|bindgetrealtimephonenumber|binderror|bindopensetting|bindlaunchapp|bindchooseavatar|bindagreeprivacyauthorization)$/,
+        test: /^(lang|from-type|send-message-title|send-message-path|send-message-img|app-parameter|show-message-card|phone-number-no-quota-toast|bindgetuserinfo|bindcontact|createliveactivity|bindgetphonenumber|bindgetrealtimephonenumber|binderror|bindopensetting|bindlaunchapp|bindchooseavatar|bindagreeprivacyauthorization)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog
