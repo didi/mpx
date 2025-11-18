@@ -3,8 +3,8 @@ const selectorParser = require('postcss-selector-parser')
 const { MPX_TAG_PAGE_SELECTOR } = require('../utils/const')
 const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh)\s*$/
-const numberRegExp = /^\s*(-?\d+(\.\d+)?)(px)?\s*$/
+const parseValues = require('../utils/string').parseValues
+const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
@@ -16,16 +16,53 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
   })
 
   function formatValue (value) {
-    let matched
     let needStringify = true
-    if ((matched = numberRegExp.exec(value))) {
-      value = matched[1]
-      needStringify = false
-    } else if (unitRegExp.test(value) || hairlineRegExp.test(value)) {
-      value = `global.__formatValue(${JSON.stringify(value)})`
+    const matched = unitRegExp.exec(value)
+    if (matched) {
+      if (!matched[2] || matched[2] === 'px') {
+        value = matched[1]
+        needStringify = false
+      } else {
+        value = `global.__formatValue(${+matched[1]}, '${matched[2]}')`
+        needStringify = false
+      }
+    }
+    if (hairlineRegExp.test(value)) {
+      value = `global.__formatValue(${JSON.stringify(value)}, 'hairlineWidth')`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
+  }
+
+  function getMediaOptions (params) {
+    return parseValues(params).reduce((option, item) => {
+      if (['all', 'print'].includes(item)) {
+        if (item === 'media') {
+          option.type = item
+        } else {
+          error('not supported ', item)
+          return option
+        }
+      }
+      if (['not', 'only', 'or', ','].includes(item)) {
+        if (item === 'and') {
+          option.logical_operators = item
+        } else {
+          error('not supported ', item)
+          return option
+        }
+      }
+      const bracketsExp = /\((.+?)\)/
+      if (bracketsExp.test(item)) {
+        const range = parseValues((item.match(bracketsExp)?.[1] || ''), ':')
+        if (range.length < 2) {
+          return option
+        } else {
+          option[dash2hump(range[0])] = +formatValue(range[1])
+        }
+      }
+      return option
+    }, {})
   }
 
   const rulesRunner = getRulesRunner({
@@ -79,7 +116,8 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
     })
 
     const classMapKeys = []
-
+    const options = getMediaOptions(rule.parent.params || '')
+    const isMedia = options.maxWidth || options.minWidth
     selectorParser(selectors => {
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
@@ -93,7 +131,20 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          classMap[key] = Object.assign(classMap[key] || {}, classMapValue)
+          const _default = classMap[key]?._default || {}
+          const _media = classMap[key]?._media || []
+          if (isMedia) {
+            _media.push({
+              options,
+              value: classMapValue
+            })
+          } else {
+            Object.assign(_default, classMapValue)
+          }
+          classMap[key] = {
+            _media,
+            _default
+          }
         }
       })
     }
