@@ -78,7 +78,7 @@ function stopWifi (options = {}) {
     return
   }
   startWifiReady = false
-  wifiListListeners = []
+  wifiListListeners.length = 0
   const result = {
     errMsg: 'stopWifi:success'
   }
