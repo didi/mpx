@@ -15,5 +15,5 @@
 ```stylus
 
 .selector
-    
+    /* @mpx-if (isMobile) *//* @mpx-endif */
 ```
