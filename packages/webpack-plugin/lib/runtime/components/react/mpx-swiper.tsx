@@ -11,6 +11,11 @@ import Portal from './mpx-portal'
 /**
  * ✔ indicator-dots
  * ✔ indicator-color
+ * ✔ indicator-width
+ * ✔ indicator-height
+ * ✔ indicator-radius
+ * ✔ indicator-spacing
+ * ✔ indicator-margin
  * ✔ indicator-active-color
  * ✔ autoplay
  * ✔ current
@@ -46,6 +51,11 @@ interface SwiperProps {
   scale?: boolean
   'indicator-dots'?: boolean
   'indicator-color'?: string
+  'indicator-width'?: number
+  'indicator-height'?: number
+  'indicator-spacing'?: number
+  'indicator-radius'?: number
+  'indicator-margin'?: number
   'indicator-active-color'?: string
   vertical?: boolean
   style: {
@@ -72,23 +82,23 @@ interface SwiperProps {
 const styles: { [key: string]: Object } = {
   pagination_x: {
     position: 'absolute',
-    bottom: 25,
+    bottom: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'flex-end'
   },
   pagination_y: {
     position: 'absolute',
-    right: 15,
+    right: 0,
     top: 0,
     bottom: 0,
     flexDirection: 'column',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'flex-end'
   },
   pagerWrapperx: {
     position: 'absolute',
@@ -109,16 +119,6 @@ const styles: { [key: string]: Object } = {
   }
 }
 
-const dotCommonStyle = {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  marginLeft: 3,
-  marginRight: 3,
-  marginTop: 3,
-  marginBottom: 3,
-  zIndex: 98
-}
 const activeDotStyle = {
   zIndex: 99
 }
@@ -136,6 +136,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const {
     'indicator-dots': showPagination,
     'indicator-color': dotColor = 'rgba(0, 0, 0, .3)',
+    'indicator-width': dotWidth = 8,
+    'indicator-height': dotHeight = 8,
+    'indicator-radius': dotRadius = 4,
+    'indicator-spacing': dotSpacing = 4,
+    'indicator-margin': paginationMargin = 10,
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
     'parent-font-size': parentFontSize,
@@ -151,6 +156,17 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     current: propCurrent = 0,
     bindchange
   } = props
+
+  const dotCommonStyle = {
+    width: dotWidth,
+    height: dotHeight,
+    borderRadius: dotRadius,
+    marginLeft: dotSpacing,
+    marginRight: dotSpacing,
+    marginTop: dotSpacing,
+    marginBottom: dotSpacing,
+    zIndex: 98
+  }
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
@@ -252,6 +268,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'style',
       'indicator-dots',
       'indicator-color',
+      'indicator-width',
       'indicator-active-color',
       'previous-margin',
       'vertical',
@@ -294,8 +311,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     for (let i = 0; i < children.length; i++) {
       dots.push(<View style={[dotCommonStyle, { backgroundColor: unActionColor }]} key={i}></View>)
     }
+    let paginationStyle = styles['pagination_' + dir]
+    if (paginationMargin) {
+      paginationStyle = {
+        ...paginationStyle,
+        marginBottom: paginationMargin,
+        marginLeft: paginationMargin,
+        marginRight: paginationMargin,
+        marginTop: paginationMargin
+      }
+    }
     return (
-      <View pointerEvents="none" style={styles['pagination_' + dir]}>
+      <View pointerEvents="none" style={paginationStyle}>
         <View style={[styles['pagerWrapper' + dir]]}>
           <Animated.View style={[
             dotCommonStyle,

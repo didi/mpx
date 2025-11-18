@@ -2245,7 +2245,6 @@ function postProcessIfReact (el) {
           delete el.elseif
           el._if = true
           addIfCondition(ifNode, {
-            exp: el.elseif.exp,
             block: el
           })
           removeNode(el, true)
