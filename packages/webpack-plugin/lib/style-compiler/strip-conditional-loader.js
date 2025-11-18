@@ -2,6 +2,7 @@ const fs = require('fs/promises')
 const parseRequest = require('../utils/parse-request')
 const path = require('path')
 const loaderUtils = require('loader-utils')
+const url = require('url')
 
 class Node {
   constructor(type, condition = null) {
@@ -135,6 +136,14 @@ function stripCondition(content, defs) {
   return result
 }
 
+// 参考 stylus/lib/functions/resolver.js 对 url 的处理逻辑
+function shouldReserveUrl(filename) {
+  // @ts-ignore
+  // eslint-disable-next-line node/no-deprecated-api
+  const parsed = url.parse(filename)
+  return parsed.protocol
+}
+
 /**
  * @typedef {Object} StripByPostcssOption
  * @property {string} lang 样式语法格式
@@ -241,7 +250,7 @@ async function atImport(options) {
 
   for (const imp of importList) {
     const importPath = imp.url
-    if (!importPath) continue
+    if (!importPath || shouldReserveUrl(importPath)) continue
     // 非法路径直接报错
     const resolvedUrl = await resolve(importPath, fromParent)
     const content = (await load(resolvedUrl)) ?? ''
