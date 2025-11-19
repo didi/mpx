@@ -56,95 +56,103 @@ const BindingTypes = {
   OPTIONS: 'options'
 }
 
-// ✨ 新增：解析外部类型文件
-function resolveExternalType (importSource, typeName, currentFilePath, plugins) {
-  try {
-    // 1. 解析文件路径
-    const currentDir = path.dirname(currentFilePath)
-    let resolvedPath = importSource
-
-    // 处理相对路径
-    if (importSource.startsWith('./') || importSource.startsWith('../')) {
-      resolvedPath = path.resolve(currentDir, importSource)
-      // 尝试添加扩展名
-      const extensions = ['.ts', '.tsx', '.d.ts', '']
-      let foundPath = null
-      for (const ext of extensions) {
-        const testPath = resolvedPath + ext
-        if (fs.existsSync(testPath)) {
-          foundPath = testPath
-          break
-        }
-      }
-      if (!foundPath) {
-        console.warn(`[Mpx] Cannot resolve external type file: ${importSource}`)
-        return null
-      }
-      resolvedPath = foundPath
-    }
-
+/**
+ * ✨ 改进版：使用 webpack resolve API 解析外部类型文件
+ *
+ * @param {object} loaderContext - webpack loader 上下文
+ * @param {string} importSource - 导入路径（如 './types' 或 '@/types/common'）
+ * @param {string} typeName - 要查找的类型名称
+ * @param {array} plugins - babel 解析插件
+ * @returns {Promise<object|null>} 返回类型 AST 节点或 null
+ */
+function resolveExternalType (loaderContext, importSource, typeName, plugins) {
+  return new Promise((resolve, reject) => {
+    // 1. 生成缓存键（使用当前文件路径 + 导入路径 + 类型名）
+    const cacheKey = `${loaderContext.resourcePath}:${importSource}:${typeName}`
     // 2. 检查缓存
-    const cacheKey = `${resolvedPath}:${typeName}`
     if (externalTypeCache.has(cacheKey)) {
-      return externalTypeCache.get(cacheKey)
+      return resolve(externalTypeCache.get(cacheKey))
     }
 
-    // 3. 读取并解析外部文件
-    const externalContent = fs.readFileSync(resolvedPath, 'utf-8')
-    const externalAst = babylon.parse(externalContent, {
-      plugins: plugins || ['typescript', 'decorators-legacy'],
-      sourceType: 'module'
-    })
-
-    // 4. 在外部文件中查找类型定义
-    let foundType = null
-    for (const node of externalAst.program.body) {
-      // interface 定义
-      if (node.type === 'TSInterfaceDeclaration' && node.id.name === typeName) {
-        foundType = node.body
-        break
-      }
-
-      // type 别名
-      if (node.type === 'TSTypeAliasDeclaration' && node.id.name === typeName) {
-        if (node.typeAnnotation.type === 'TSTypeLiteral' || node.typeAnnotation.type === 'TSFunctionType') {
-          foundType = node.typeAnnotation
-          break
+    // 3. ✨ 简化：直接使用 webpack 的 resolve
+    // 注意：确保 webpack.config.js 中配置了正确的 extensions 和 mainFields
+    loaderContext.resolve(
+      loaderContext.context,// 当前文件所在目录
+      importSource,// 要解析的路径
+      (err, resolvedPath) => {
+        if (err) {
+          // 解析失败时优雅降级
+          console.warn(`[Mpx] Cannot resolve external type file: ${importSource}`, err.message)
+          return resolve(null)
         }
-      }
 
-      // export interface
-      if (node.type === 'ExportNamedDeclaration' && node.declaration) {
-        if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id.name === typeName) {
-          foundType = node.declaration.body
-          break
-        }
-        if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id.name === typeName) {
-          if (node.declaration.typeAnnotation.type === 'TSTypeLiteral' ||
-            node.declaration.typeAnnotation.type === 'TSFunctionType') {
-            foundType = node.declaration.typeAnnotation
-            break
+        try {
+          // 4. 添加依赖追踪（让 webpack 知道这个文件的变化）
+          loaderContext.addDependency(resolvedPath)
+
+          // 5. 读取并解析外部文件
+          const externalContent = fs.readFileSync(resolvedPath, 'utf-8')
+          const externalAst = babylon.parse(externalContent, {
+            plugins: plugins || ['typescript', 'decorators-legacy'],
+            sourceType: 'module'
+          })
+
+          // 6. 在外部文件中查找类型定义
+          let foundType = null
+          for (const node of externalAst.program.body) {
+            // interface 定义
+            if (node.type === 'TSInterfaceDeclaration' && node.id.name === typeName) {
+              foundType = node.body
+              break
+            }
+
+            // type 别名
+            if (node.type === 'TSTypeAliasDeclaration' && node.id.name === typeName) {
+              if (node.typeAnnotation.type === 'TSTypeLiteral' || node.typeAnnotation.type === 'TSFunctionType') {
+                foundType = node.typeAnnotation
+                break
+              }
+            }
+
+            // export interface
+            if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+              if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id.name === typeName) {
+                foundType = node.declaration.body
+                break
+              }
+              if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id.name === typeName) {
+                if (node.declaration.typeAnnotation.type === 'TSTypeLiteral' ||
+                    node.declaration.typeAnnotation.type === 'TSFunctionType') {
+                  foundType = node.declaration.typeAnnotation
+                  break
+                }
+              }
+            }
           }
+
+          // 7. 缓存结果
+          if (foundType) {
+            externalTypeCache.set(cacheKey, foundType)
+            console.log(`[Mpx] Successfully resolved external type "${typeName}" from "${importSource}" (${resolvedPath})`)
+          } else {
+            console.warn(`[Mpx] Type "${typeName}" not found in ${resolvedPath}`)
+          }
+
+          resolve(foundType)
+        } catch (parseError) {
+          console.warn(`[Mpx] Error parsing external type file: ${parseError.message}`)
+          resolve(null)
         }
       }
-    }
-
-    // 5. 缓存结果
-    if (foundType) {
-      externalTypeCache.set(cacheKey, foundType)
-    }
-
-    return foundType
-  } catch (error) {
-    console.warn(`[Mpx] Error resolving external type: ${error.message}`)
-    return null
-  }
+    )
+  })
 }
 
-function compileScriptSetup (
+async function compileScriptSetup (
   scriptSetup,
   ctorType,
-  filePath
+  filePath,
+  loaderContext// ✨ 新增参数：webpack loader 上下文
 ) {
   const content = scriptSetup.content
   const _s = new MagicString(content)
@@ -274,7 +282,7 @@ function compileScriptSetup (
     return true
   }
 
-  function processDefineProps (node, declId) {
+  async function processDefineProps (node, declId) {
     if (!isCallOf(node, DEFINE_PROPS)) {
       return false
     }
@@ -300,7 +308,7 @@ function compileScriptSetup (
       }
 
       propsTypeDeclRaw = node.typeParameters.params[0]
-      propsTypeDecl = resolveQualifiedType(
+      propsTypeDecl = await resolveQualifiedType(
         propsTypeDeclRaw,
         node => node.type === 'TSFunctionType' || node.type === 'TSTypeLiteral'
       )
@@ -321,11 +329,11 @@ function compileScriptSetup (
     return true
   }
 
-  function processWithDefaults (node, declId) {
+  async function processWithDefaults (node, declId) {
     if (!isCallOf(node, WITH_DEFAULTS)) {
       return false
     }
-    if (processDefineProps(node.arguments[0], declId)) {
+    if (await processDefineProps(node.arguments[0], declId)) {
       if (propsRuntimeDecl) {
         error(
           `${WITH_DEFAULTS} can only be used with type-based ` +
@@ -352,7 +360,8 @@ function compileScriptSetup (
     return true
   }
 
-  function resolveQualifiedType (node, qualifier) {
+  // ✨ 改进版：支持异步的外部类型解析
+  async function resolveQualifiedType (node, qualifier) {
     if (qualifier(node)) {
       return node
     }
@@ -382,18 +391,16 @@ function compileScriptSetup (
         }
       }
 
-      // 如果当前文件找不到，尝试从外部导入中查找
+      // 2️⃣ ✨ 如果找不到，尝试从外部导入中查找（使用 webpack resolve）
       if (typeImports[refName]) {
         const typeImport = typeImports[refName]
-        const externalType = resolveExternalType(
+        const externalType = await resolveExternalType(
+          loaderContext, // ✨ 传入 webpack loader 上下文
           typeImport.source,
           typeImport.imported,
-          filePath,
           plugins
         )
-
         if (externalType) {
-          console.log(`[Mpx] Successfully resolved external type "${refName}" from "${typeImport.source}"`)
           return externalType
         }
       }
@@ -553,10 +560,10 @@ function compileScriptSetup (
     // process defineProps defineOptions 等编译宏
     if (node.type === 'ExpressionStatement') {
       if (
-        processDefineProps(node.expression) ||
+        await processDefineProps(node.expression) ||
         processDefineOptions(node.expression) ||
         processDefineExpose(node.expression) ||
-        processWithDefaults(node.expression)
+        await processWithDefaults(node.expression)
       ) {
         _s.remove(node.start, node.end)
       }
@@ -568,7 +575,7 @@ function compileScriptSetup (
       for (let i = 0; i < total; i++) {
         const decl = node.declarations[i]
         if (decl.init) {
-          const isDefineProps = processDefineProps(decl.init, decl.id) || processWithDefaults(decl.init, decl.id)
+          const isDefineProps = await processDefineProps(decl.init, decl.id) || await processWithDefaults(decl.init, decl.id)
           const isDefineOptions = processDefineOptions(decl.init, decl.id)
           if (isDefineProps || isDefineOptions) {
             if (left === 1) {
@@ -1285,30 +1292,37 @@ function getCtor (ctorType) {
   return ctor
 }
 
+// ✨ 改进：loader 导出改为 async，并传入 loaderContext
 module.exports = async function (content, sourceMap) {
   const { queryObj } = parseRequest(this.resource)
   const { ctorType, lang } = queryObj
   const filePath = this.resourcePath
   const callback = this.async()
   let finalSourceMap = null
-  const {
-    content: callbackContent,
-    map
-  } = compileScriptSetup({
-    content,
-    lang
-  }, ctorType, filePath)
-  finalSourceMap = map
-  if (sourceMap) {
-    const compiledMapConsumer = await new SourceMapConsumer(map)
-    const compiledMapGenerator = SourceMapGenerator.fromSourceMap(compiledMapConsumer)
 
-    const originalConsumer = await new SourceMapConsumer(sourceMap)
-    compiledMapGenerator.applySourceMap(
-      originalConsumer,
-      filePath // 需要确保与原始映射的source路径一致
-    )
-    finalSourceMap = compiledMapGenerator.toJSON()
+  try {
+    // ✨ 传入 this（loader context）到 compileScriptSetup
+    const {
+      content: callbackContent,
+      map
+    } = await compileScriptSetup({
+      content,
+      lang
+    }, ctorType, filePath, this) // 传入 loader context
+    finalSourceMap = map
+    if (sourceMap) {
+      const compiledMapConsumer = await new SourceMapConsumer(map)
+      const compiledMapGenerator = SourceMapGenerator.fromSourceMap(compiledMapConsumer)
+
+      const originalConsumer = await new SourceMapConsumer(sourceMap)
+      compiledMapGenerator.applySourceMap(
+        originalConsumer,
+        filePath // 需要确保与原始映射的source路径一致
+      )
+      finalSourceMap = compiledMapGenerator.toJSON()
+    }
+    callback(null, callbackContent, finalSourceMap)
+  } catch (error) {
+    callback(error)
   }
-  callback(null, callbackContent, finalSourceMap)
 }
