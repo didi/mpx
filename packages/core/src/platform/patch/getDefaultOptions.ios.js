@@ -506,7 +506,17 @@ function getLayoutData (headerHeight) {
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
-  const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+
+  let bottomVirtualHeight = 0
+  if (ReactNative.Platform.OS === 'android') {
+    // 滴滴乘客端内方案是在Target35已在引擎容易层适配windowHeight和之前的版本一样，且底部虚拟按键占位。
+    // 此处添加此逻辑用来适配如果其他app没做对应适配，底部虚拟按键不占位，不算高度，当做避让区域
+    if (screenDimensions.height === windowDimensions.height) {
+      bottomVirtualHeight = 0
+    } else {
+      bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+    }
+  }
   return {
     left: 0,
     top: headerHeight,
