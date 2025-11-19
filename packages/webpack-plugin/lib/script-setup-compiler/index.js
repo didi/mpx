@@ -3,8 +3,10 @@ const MagicString = require('magic-string')
 const { SourceMapConsumer, SourceMapGenerator } = require('source-map')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
-const formatCodeFrame = require('@babel/code-frame')
+const formatCodeFrame = require('@babel/code-frame').default
 const parseRequest = require('../utils/parse-request')
+const fs = require('fs')
+const path = require('path')
 
 // Special compiler macros
 const DEFINE_PROPS = 'defineProps'
@@ -13,6 +15,8 @@ const DEFINE_EXPOSE = 'defineExpose'
 const WITH_DEFAULTS = 'withDefaults'
 
 const MPX_CORE = '@mpxjs/core'
+
+const externalTypeCache = new Map()
 
 const BindingTypes = {
   /**
@@ -52,6 +56,91 @@ const BindingTypes = {
   OPTIONS: 'options'
 }
 
+// ✨ 新增：解析外部类型文件
+function resolveExternalType (importSource, typeName, currentFilePath, plugins) {
+  try {
+    // 1. 解析文件路径
+    const currentDir = path.dirname(currentFilePath)
+    let resolvedPath = importSource
+
+    // 处理相对路径
+    if (importSource.startsWith('./') || importSource.startsWith('../')) {
+      resolvedPath = path.resolve(currentDir, importSource)
+      // 尝试添加扩展名
+      const extensions = ['.ts', '.tsx', '.d.ts', '']
+      let foundPath = null
+      for (const ext of extensions) {
+        const testPath = resolvedPath + ext
+        if (fs.existsSync(testPath)) {
+          foundPath = testPath
+          break
+        }
+      }
+      if (!foundPath) {
+        console.warn(`[Mpx] Cannot resolve external type file: ${importSource}`)
+        return null
+      }
+      resolvedPath = foundPath
+    }
+
+    // 2. 检查缓存
+    const cacheKey = `${resolvedPath}:${typeName}`
+    if (externalTypeCache.has(cacheKey)) {
+      return externalTypeCache.get(cacheKey)
+    }
+
+    // 3. 读取并解析外部文件
+    const externalContent = fs.readFileSync(resolvedPath, 'utf-8')
+    const externalAst = babylon.parse(externalContent, {
+      plugins: plugins || ['typescript', 'decorators-legacy'],
+      sourceType: 'module'
+    })
+
+    // 4. 在外部文件中查找类型定义
+    let foundType = null
+    for (const node of externalAst.program.body) {
+      // interface 定义
+      if (node.type === 'TSInterfaceDeclaration' && node.id.name === typeName) {
+        foundType = node.body
+        break
+      }
+
+      // type 别名
+      if (node.type === 'TSTypeAliasDeclaration' && node.id.name === typeName) {
+        if (node.typeAnnotation.type === 'TSTypeLiteral' || node.typeAnnotation.type === 'TSFunctionType') {
+          foundType = node.typeAnnotation
+          break
+        }
+      }
+
+      // export interface
+      if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+        if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id.name === typeName) {
+          foundType = node.declaration.body
+          break
+        }
+        if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id.name === typeName) {
+          if (node.declaration.typeAnnotation.type === 'TSTypeLiteral' ||
+            node.declaration.typeAnnotation.type === 'TSFunctionType') {
+            foundType = node.declaration.typeAnnotation
+            break
+          }
+        }
+      }
+    }
+
+    // 5. 缓存结果
+    if (foundType) {
+      externalTypeCache.set(cacheKey, foundType)
+    }
+
+    return foundType
+  } catch (error) {
+    console.warn(`[Mpx] Error resolving external type: ${error.message}`)
+    return null
+  }
+}
+
 function compileScriptSetup (
   scriptSetup,
   ctorType,
@@ -63,6 +152,7 @@ function compileScriptSetup (
   const setupBindings = Object.create(null)
   const userImportAlias = Object.create(null)
   const userImports = Object.create(null)
+  const typeImports = Object.create(null)
   // const genSourceMap = false
 
   let startOffset = 0
@@ -128,6 +218,13 @@ function compileScriptSetup (
       imported: imported || 'default',
       source,
       isFromSetup
+    }
+
+    if (isType && imported) {
+      typeImports[local] = {
+        source,
+        imported: imported === '*' ? local : imported
+      }
     }
   }
 
@@ -276,11 +373,28 @@ function compileScriptSetup (
           return isQualifiedType(node.declaration)
         }
       }
+
       const body = scriptSetupAst.program.body
       for (const node of body) {
         const qualified = isQualifiedType(node)
         if (qualified) {
           return qualified
+        }
+      }
+
+      // 如果当前文件找不到，尝试从外部导入中查找
+      if (typeImports[refName]) {
+        const typeImport = typeImports[refName]
+        const externalType = resolveExternalType(
+          typeImport.source,
+          typeImport.imported,
+          filePath,
+          plugins
+        )
+
+        if (externalType) {
+          console.log(`[Mpx] Successfully resolved external type "${refName}" from "${typeImport.source}"`)
+          return externalType
         }
       }
     }
@@ -1089,7 +1203,7 @@ function isReferencedIdentifier (
 
 function extractIdentifiers (
   param,
-  nodes
+  nodes = []
 ) {
   switch (param.type) {
     case 'Identifier':
