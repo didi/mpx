@@ -18,4 +18,15 @@ buildscript {
     }
 }
 
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            // Detox 本地仓库
+            url("$rootDir/../node_modules/detox/Detox-android")
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
