@@ -17,11 +17,11 @@ import {
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '../env/nav'
+import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
 function getSystemInfo () {
-  const windowDimensions = ReactNative.Dimensions.get('window')
-  const screenDimensions = ReactNative.Dimensions.get('screen')
+  const windowDimensions = global.__mpxAppDimensionsInfo.window
+  const screenDimensions = global.__mpxAppDimensionsInfo.screen
   return {
     deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
     size: {
@@ -302,6 +302,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     setFocusedNavigation(props.navigation)
+    set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(props.navigation)
@@ -375,9 +376,18 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
-const triggerResizeEvent = (mpxProxy) => {
-  const type = mpxProxy.options.__type__
+const triggerResizeEvent = (mpxProxy, sizeRef) => {
+  const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
+  const newSize = systemInfo.size
+
+  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
+    return
+  }
+
+  Object.assign(sizeRef.current, systemInfo)
+
+  const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])
   if (type === 'page') {
@@ -389,6 +399,8 @@ const triggerResizeEvent = (mpxProxy) => {
 }
 
 function usePageEffect (mpxProxy, pageId) {
+  const sizeRef = useRef(getSystemInfo())
+
   useEffect(() => {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
@@ -399,27 +411,40 @@ function usePageEffect (mpxProxy, pageId) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
+            // 仅在尺寸确实变化时才触发resize事件
+            triggerResizeEvent(mpxProxy, sizeRef)
+
+            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
+            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
+            }
           } else if (/^resize/.test(newVal)) {
-            triggerResizeEvent(mpxProxy)
+            triggerResizeEvent(mpxProxy, sizeRef)
           }
         }, { sync: true })
       }
     }
     return () => {
       unWatch && unWatch()
+      del(global.__mpxPageSizeCountMap, pageId)
     }
   }, [])
 }
 
 let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
+    if (navigation.isFocused && navigation.isFocused()) {
+      Promise.resolve().then(() => {
+        pageStatusMap[pageId] = 'show'
+      })
+    }
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
     })
@@ -514,7 +539,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.layout = getLayoutData(headerHeight)
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
+      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
         navigation.layout = getLayoutData(headerHeight)
       })
       return () => dimensionListener?.remove()
