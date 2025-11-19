@@ -7,7 +7,7 @@
     <view class="path_index_path">{{pathIndexPath}}</view>
     <!--图片的路径引用-->
     <!-- <image src="../static/img/test.png" class="image_path_require"></image> -->
-    <button bindtap="testTransRules">click test trans rules</button>
+    <button bindtap="testNavigateTo">click test navigateTo</button>
     <!--defs 测试使用-->
     <view class="test_defs">defs: {{__testDef__}}</view>
     <!--decodeText 测试使用-->
@@ -32,7 +32,7 @@
       // testPngPath: testPngPath
     },
     methods: {
-      testTransRules() {
+      testNavigateTo() {
         mpx.navigateTo({
           url: '/pages/index'
         })
