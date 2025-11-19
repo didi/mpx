@@ -6,7 +6,6 @@ const t = require('@babel/types')
 const formatCodeFrame = require('@babel/code-frame').default
 const parseRequest = require('../utils/parse-request')
 const fs = require('fs')
-const path = require('path')
 
 // Special compiler macros
 const DEFINE_PROPS = 'defineProps'
@@ -73,12 +72,11 @@ function resolveExternalType (loaderContext, importSource, typeName, plugins) {
     if (externalTypeCache.has(cacheKey)) {
       return resolve(externalTypeCache.get(cacheKey))
     }
-
     // 3. ✨ 简化：直接使用 webpack 的 resolve
     // 注意：确保 webpack.config.js 中配置了正确的 extensions 和 mainFields
     loaderContext.resolve(
-      loaderContext.context,// 当前文件所在目录
-      importSource,// 要解析的路径
+      loaderContext.context,
+      importSource,
       (err, resolvedPath) => {
         if (err) {
           // 解析失败时优雅降级
@@ -89,7 +87,6 @@ function resolveExternalType (loaderContext, importSource, typeName, plugins) {
         try {
           // 4. 添加依赖追踪（让 webpack 知道这个文件的变化）
           loaderContext.addDependency(resolvedPath)
-
           // 5. 读取并解析外部文件
           const externalContent = fs.readFileSync(resolvedPath, 'utf-8')
           const externalAst = babylon.parse(externalContent, {
@@ -97,33 +94,22 @@ function resolveExternalType (loaderContext, importSource, typeName, plugins) {
             sourceType: 'module'
           })
 
-          // 6. 在外部文件中查找类型定义
+          // 6. ✨ 优化：只查找导出的类型定义（符合 TypeScript 模块系统）
+          // 根据 TS 规范，只有 export 的类型才能被外部导入，未导出的类型无法访问
           let foundType = null
           for (const node of externalAst.program.body) {
-            // interface 定义
-            if (node.type === 'TSInterfaceDeclaration' && node.id.name === typeName) {
-              foundType = node.body
-              break
-            }
-
-            // type 别名
-            if (node.type === 'TSTypeAliasDeclaration' && node.id.name === typeName) {
-              if (node.typeAnnotation.type === 'TSTypeLiteral' || node.typeAnnotation.type === 'TSFunctionType') {
-                foundType = node.typeAnnotation
-                break
-              }
-            }
-
-            // export interface
+            // 只检查 ExportNamedDeclaration (export interface / export type)
             if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+              // export interface
               if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id.name === typeName) {
                 foundType = node.declaration.body
                 break
               }
+              // export type (对象字面量或函数类型)
               if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id.name === typeName) {
-                if (node.declaration.typeAnnotation.type === 'TSTypeLiteral' ||
-                    node.declaration.typeAnnotation.type === 'TSFunctionType') {
-                  foundType = node.declaration.typeAnnotation
+                const typeAnnotation = node.declaration.typeAnnotation
+                if (typeAnnotation.type === 'TSTypeLiteral' || typeAnnotation.type === 'TSFunctionType') {
+                  foundType = typeAnnotation
                   break
                 }
               }
@@ -135,7 +121,7 @@ function resolveExternalType (loaderContext, importSource, typeName, plugins) {
             externalTypeCache.set(cacheKey, foundType)
             console.log(`[Mpx] Successfully resolved external type "${typeName}" from "${importSource}" (${resolvedPath})`)
           } else {
-            console.warn(`[Mpx] Type "${typeName}" not found in ${resolvedPath}`)
+            console.warn(`[Mpx] Type "${typeName}" not found or not exported in ${resolvedPath}`)
           }
 
           resolve(foundType)
