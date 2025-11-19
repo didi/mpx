@@ -2,9 +2,9 @@ name: E2E Tests
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master, dev, feat-rn-e2e-detox ]
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, feat-rn-e2e-detox ]
   workflow_dispatch: # 允许手动触发
 
 jobs:
@@ -21,22 +21,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            test/e2e/miniprogram-cli-project/package-lock.json
-            test/e2e/miniprogram-cli-project/ReactNativeProject/package-lock.json
       
       - name: Install dependencies
         run: |
-          npm ci
+          npm install
           cd test/e2e/miniprogram-cli-project
-          npm ci
+          npm install
       
       - name: Setup React Native dependencies
         run: |
           cd test/e2e/miniprogram-cli-project/ReactNativeProject
-          npm ci
+          npm install
       
       - name: Install CocoaPods dependencies
         run: |
@@ -100,11 +95,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            test/e2e/miniprogram-cli-project/package-lock.json
-            test/e2e/miniprogram-cli-project/ReactNativeProject/package-lock.json
       
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -115,14 +105,14 @@ jobs:
       
       - name: Install dependencies
         run: |
-          npm ci
+          npm install
           cd test/e2e/miniprogram-cli-project
-          npm ci
+          npm install
       
       - name: Setup React Native dependencies
         run: |
           cd test/e2e/miniprogram-cli-project/ReactNativeProject
-          npm ci
+          npm install
       
       - name: Install Detox CLI
         run: npm install -g detox-cli
