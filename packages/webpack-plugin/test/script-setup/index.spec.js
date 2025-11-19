@@ -31,7 +31,7 @@ describe('script-setup compiler external type resolution', () => {
         },
         resolve: (ctx, req, cb) => {
           // Simple resolution logic mimicking webpack resolve
-          let resolved = path.resolve(ctx, req)
+          const resolved = path.resolve(ctx, req)
           // Try exact match first, then append .ts
           if (mockFiles[resolved]) {
             cb(null, resolved)
@@ -52,7 +52,6 @@ describe('script-setup compiler external type resolution', () => {
   }
 
   describe('External Type Resolution', () => {
-    
     test('should resolve exported interface props', async () => {
       const typesPath = path.resolve('/app/src/types.ts')
       const files = {
@@ -70,7 +69,7 @@ describe('script-setup compiler external type resolution', () => {
         defineExpose({});
       `
       const result = await runCompiler(content, files)
-      
+
       expect(result).toContain('properties: {')
       expect(result).toMatch(/msg:\s*{\s*type:\s*String\s*}/)
       expect(result).toMatch(/count:\s*{\s*type:\s*Number\s*}/)
@@ -93,7 +92,7 @@ describe('script-setup compiler external type resolution', () => {
         defineExpose({});
       `
       const result = await runCompiler(content, files)
-      
+
       expect(result).toMatch(/name:\s*{\s*type:\s*String\s*}/)
       expect(result).toMatch(/age:\s*{\s*type:\s*Number\s*}/)
     })
@@ -113,7 +112,7 @@ describe('script-setup compiler external type resolution', () => {
         defineExpose({});
       `
       const result = await runCompiler(content, files)
-      
+
       expect(result).toMatch(/id:\s*{\s*type:\s*String\s*}/)
     })
 
@@ -129,7 +128,7 @@ describe('script-setup compiler external type resolution', () => {
           }
         `
       }
-      
+
       // Case 1: Trying to use non-exported type
       const content1 = `
         import { InternalProps } from './types';
@@ -173,7 +172,7 @@ describe('script-setup compiler external type resolution', () => {
         defineExpose({});
       `
       const result = await runCompiler(content, files)
-      
+
       expect(result).toMatch(/meta:\s*{\s*type:\s*null\s*}/)
     })
 
@@ -198,10 +197,9 @@ describe('script-setup compiler external type resolution', () => {
         defineExpose({});
       `
       const result = await runCompiler(content, files)
-      
+
       expect(result).toMatch(/local:\s*{\s*type:\s*String\s*}/)
       expect(result).not.toContain('external')
     })
-
   })
 })
