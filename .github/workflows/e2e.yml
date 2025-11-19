@@ -1,0 +1,207 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  e2e-ios:
+    name: E2E Tests (iOS)
+    runs-on: macos-14 # 使用最新的 macOS runner
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd test/e2e/miniprogram-cli-project
+          npm ci
+      
+      - name: Setup React Native dependencies
+        run: |
+          cd test/e2e/miniprogram-cli-project/ReactNativeProject
+          npm ci
+      
+      - name: Install CocoaPods dependencies
+        run: |
+          cd test/e2e/miniprogram-cli-project/ReactNativeProject/ios
+          pod install --repo-update
+      
+      - name: Install Detox CLI
+        run: npm install -g detox-cli
+
+      - name: Build Mpx bundle for iOS
+        run: |
+          cd test/e2e/miniprogram-cli-project
+          npm run build:ios
+      
+      - name: Build iOS app for Detox
+        run: |
+          cd test/e2e/miniprogram-cli-project/ReactNativeProject
+          npm run e2e:build:ios
+      
+      - name: Run iOS E2E tests
+        run: |
+          cd test/e2e/miniprogram-cli-project/ReactNativeProject
+          # 启动 Metro Bundler 在后台
+          npm start &
+          METRO_PID=$!
+          
+          # 等待 Metro 启动
+          echo "Waiting for Metro Bundler to start..."
+          npx wait-on tcp:8081 --timeout 60000
+          
+          # 运行测试
+          npm run e2e:test:ios -- --loglevel trace
+          
+          # 保存退出码
+          TEST_EXIT_CODE=$?
+          
+          # 停止 Metro
+          kill $METRO_PID || true
+          
+          # 返回测试退出码
+          exit $TEST_EXIT_CODE
+      
+      - name: Upload test artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-ios-artifacts
+          path: test/e2e/miniprogram-cli-project/ReactNativeProject/artifacts/
+          retention-days: 7
+
+  e2e-android:
+    name: E2E Tests (Android)
+    runs-on: macos-14 # macOS 提供更好的 Android 模拟器性能
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+          cache: 'gradle'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd test/e2e/miniprogram-cli-project
+          npm ci
+      
+      - name: Setup React Native dependencies
+        run: |
+          cd test/e2e/miniprogram-cli-project/ReactNativeProject
+          npm ci
+      
+      - name: Install Detox CLI
+        run: npm install -g detox-cli
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-34
+      
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: echo "Generated AVD snapshot for caching."
+      
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      - name: Build Mpx bundle for Android
+        run: |
+          cd test/e2e/miniprogram-cli-project
+          npm run build:android
+
+      - name: Build Android app for Detox
+        run: |
+          cd test/e2e/miniprogram-cli-project/ReactNativeProject
+          npm run e2e:build:android
+      
+      - name: Run Android E2E tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            cd test/e2e/miniprogram-cli-project/ReactNativeProject
+            
+            # 启动 Metro Bundler 在后台
+            npm start &
+            METRO_PID=$!
+            
+            # 等待 Metro 启动
+            echo "Waiting for Metro Bundler to start..."
+            npx wait-on tcp:8081 --timeout 120000
+            
+            # 配置 adb 端口转发
+            adb reverse tcp:8081 tcp:8081
+            adb reverse tcp:8097 tcp:8097
+            
+            # 运行测试
+            npm run e2e:test:android -- --loglevel trace
+            
+            # 保存退出码
+            TEST_EXIT_CODE=$?
+            
+            # 停止 Metro
+            kill $METRO_PID || true
+            
+            # 返回测试退出码
+            exit $TEST_EXIT_CODE
+      
+      - name: Upload test artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-android-artifacts
+          path: test/e2e/miniprogram-cli-project/ReactNativeProject/artifacts/
+          retention-days: 7
