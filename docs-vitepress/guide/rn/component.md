@@ -104,7 +104,7 @@
 | enhanced                | boolean | `false`   | scroll-view 组件功能增强                             |
 | refresher-enabled       | boolean | `false`   | 开启自定义下拉刷新                                    |
 | scroll-anchoring        | boolean | `false`   | 开启滚动区域滚动锚点                                   |
-| scroll-into-view	        | boolean | `false` | 值应为某子元素id（id不能以数字开头）    |  
+| scroll-into-view	        | boolean | `false` | 值应为某子元素id（id不能以数字开头）。<br>⚠️有限制使用，[详见注意事项](#scroll-into-view注意事项)    |  
 | scroll-into-view-offset	        | number | `0` | 跳转到 scroll-into-view 目标节点时的额外偏移                       |
 | refresher-default-style | string  | `'black'` | 设置下拉刷新默认样式,支持 `black`、`white`、`none`，仅安卓支持 |
 | refresher-background    | string  | `'#fff'`  | 设置自定义下拉刷新背景颜色，仅安卓支持                         |
@@ -132,7 +132,7 @@
 
 > [!tip] 注意
 >
-> - 若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。
+> - <span id="scroll-into-view注意事项">若使用 scroll-into-view 属性，需要 id 对应的组件节点添加 wx:ref 标记，否则无法正常滚动。另外组件节点需要是内置基础组件，自定义组件暂不支持。</span>
 > - simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 > - wait-for  为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
 > - scroll-view 组件在滚动过程中，不会触发其自身或子组件的 touchend 事件响应，这是 RN 底层实现导致的问题，手势系统识别当前是 scroll-view 的滚动，就会取消掉 touchend 事件的响应。
