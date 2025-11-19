@@ -55,85 +55,6 @@ const BindingTypes = {
   OPTIONS: 'options'
 }
 
-/**
- * ✨ 改进版：使用 webpack resolve API 解析外部类型文件
- *
- * @param {object} loaderContext - webpack loader 上下文
- * @param {string} importSource - 导入路径（如 './types' 或 '@/types/common'）
- * @param {string} typeName - 要查找的类型名称
- * @param {array} plugins - babel 解析插件
- * @returns {Promise<object|null>} 返回类型 AST 节点或 null
- */
-function resolveExternalType (loaderContext, importSource, typeName, plugins) {
-  return new Promise((resolve, reject) => {
-    // 1. 生成缓存键（使用当前文件路径 + 导入路径 + 类型名）
-    const cacheKey = `${loaderContext.resourcePath}:${importSource}:${typeName}`
-    // 2. 检查缓存
-    if (externalTypeCache.has(cacheKey)) {
-      return resolve(externalTypeCache.get(cacheKey))
-    }
-    // 3. ✨ 简化：直接使用 webpack 的 resolve
-    // 注意：确保 webpack.config.js 中配置了正确的 extensions 和 mainFields
-    loaderContext.resolve(
-      loaderContext.context,
-      importSource,
-      (err, resolvedPath) => {
-        if (err) {
-          // 解析失败时优雅降级
-          console.warn(`[Mpx] Cannot resolve external type file: ${importSource}`, err.message)
-          return resolve(null)
-        }
-
-        try {
-          // 4. 添加依赖追踪（让 webpack 知道这个文件的变化）
-          loaderContext.addDependency(resolvedPath)
-          // 5. 读取并解析外部文件
-          const externalContent = fs.readFileSync(resolvedPath, 'utf-8')
-          const externalAst = babylon.parse(externalContent, {
-            plugins: plugins || ['typescript', 'decorators-legacy'],
-            sourceType: 'module'
-          })
-
-          // 6. ✨ 优化：只查找导出的类型定义（符合 TypeScript 模块系统）
-          // 根据 TS 规范，只有 export 的类型才能被外部导入，未导出的类型无法访问
-          let foundType = null
-          for (const node of externalAst.program.body) {
-            // 只检查 ExportNamedDeclaration (export interface / export type)
-            if (node.type === 'ExportNamedDeclaration' && node.declaration) {
-              // export interface
-              if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id.name === typeName) {
-                foundType = node.declaration.body
-                break
-              }
-              // export type (对象字面量或函数类型)
-              if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id.name === typeName) {
-                const typeAnnotation = node.declaration.typeAnnotation
-                if (typeAnnotation.type === 'TSTypeLiteral' || typeAnnotation.type === 'TSFunctionType') {
-                  foundType = typeAnnotation
-                  break
-                }
-              }
-            }
-          }
-
-          // 7. 缓存结果
-          if (foundType) {
-            externalTypeCache.set(cacheKey, foundType)
-            console.log(`[Mpx] Successfully resolved external type "${typeName}" from "${importSource}" (${resolvedPath})`)
-          } else {
-            console.warn(`[Mpx] Type "${typeName}" not found or not exported in ${resolvedPath}`)
-          }
-
-          resolve(foundType)
-        } catch (parseError) {
-          console.warn(`[Mpx] Error parsing external type file: ${parseError.message}`)
-          resolve(null)
-        }
-      }
-    )
-  })
-}
-
 async function compileScriptSetup (
   scriptSetup,
   ctorType,
@@ -146,7 +67,6 @@ async function compileScriptSetup (
   const setupBindings = Object.create(null)
   const userImportAlias = Object.create(null)
   const userImports = Object.create(null)
-  const typeImports = Object.create(null)
   // const genSourceMap = false
 
   let startOffset = 0
@@ -195,6 +115,60 @@ async function compileScriptSetup (
     }
   }
 
+  function resolveExternalType (loaderContext, importSource, typeName, plugins) {
+    return new Promise((resolve, reject) => {
+      const cacheKey = `${loaderContext.resourcePath}:${importSource}:${typeName}`
+      if (externalTypeCache.has(cacheKey)) {
+        return resolve(externalTypeCache.get(cacheKey))
+      }
+      loaderContext.resolve(
+        loaderContext.context,
+        importSource,
+        (err, resolvedPath) => {
+          if (err) {
+            error(`Cannot resolve external type file: ${importSource} in ${resolvedPath}`)
+            return resolve(null)
+          }
+          try {
+            const externalContent = fs.readFileSync(resolvedPath, 'utf-8')
+            const externalAst = babylon.parse(externalContent, {
+              plugins: plugins || ['typescript', 'decorators-legacy'],
+              sourceType: 'module'
+            })
+            let foundType = null
+            for (const node of externalAst.program.body) {
+              // 只检查 ExportNamedDeclaration (export interface / export type)
+              if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+                // export interface
+                if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id.name === typeName) {
+                  foundType = node.declaration.body
+                  break
+                }
+                // export type (对象字面量或函数类型)
+                if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id.name === typeName) {
+                  const typeAnnotation = node.declaration.typeAnnotation
+                  if (typeAnnotation.type === 'TSTypeLiteral' || typeAnnotation.type === 'TSFunctionType') {
+                    foundType = typeAnnotation
+                    break
+                  }
+                }
+              }
+            }
+            if (foundType) {
+              externalTypeCache.set(cacheKey, foundType)
+            } else {
+              error(`Type "${typeName}" not found or not exported in ${resolvedPath}`)
+            }
+            resolve(foundType)
+          } catch (parseError) {
+            error(`Error parsing external type file: ${parseError.message}`)
+            resolve(null)
+          }
+        }
+      )
+    })
+  }
+
   function registerUserImport (
     source,
     local,
@@ -212,13 +186,6 @@ async function compileScriptSetup (
       imported: imported || 'default',
       source,
       isFromSetup
-    }
-
-    if (isType && imported) {
-      typeImports[local] = {
-        source,
-        imported: imported === '*' ? local : imported
-      }
     }
   }
 
@@ -377,13 +344,13 @@ async function compileScriptSetup (
         }
       }
 
-      // 2️⃣ ✨ 如果找不到，尝试从外部导入中查找（使用 webpack resolve）
-      if (typeImports[refName]) {
-        const typeImport = typeImports[refName]
+      // 尝试从外部导入中查找
+      if (userImports[refName]) {
+        const userImport = userImports[refName]
         const externalType = await resolveExternalType(
-          loaderContext, // ✨ 传入 webpack loader 上下文
-          typeImport.source,
-          typeImport.imported,
+          loaderContext,
+          userImport.source,
+          userImport.imported,
           plugins
         )
         if (externalType) {
