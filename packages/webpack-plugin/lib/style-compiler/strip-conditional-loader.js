@@ -251,8 +251,13 @@ async function atImport(options) {
   for (const imp of importList) {
     const importPath = imp.url
     if (!importPath || shouldReserveUrl(importPath)) continue
-    // 非法路径直接报错
-    const resolvedUrl = await resolve(importPath, fromParent)
+    // 非法路径直接跳过
+    let resolvedUrl
+    try {
+      resolvedUrl = await resolve(importPath, fromParent)
+    } catch (error) {
+      continue
+    }
     const content = (await load(resolvedUrl)) ?? ''
     css = css.slice(0, imp.start) + '\n' + content + '\n' + css.slice(imp.end)
   }

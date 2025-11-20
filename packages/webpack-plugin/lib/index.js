@@ -1935,6 +1935,7 @@ try {
 
           if (targetIndex !== undefined) {
             loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
+            loaders.splice(targetIndex, 0, { loader: styleStripConditionalPath })
           }
         }
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
