@@ -298,12 +298,15 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    if (!bindfocus) {
-      return
+    if (!keyboardAvoid?.current) {
+      // Android：从一个正聚焦状态 input，聚焦到另一个新的 input 时，正常会触发如下时序：
+      // 新的 Input `onTouchStart` -> 旧输入框键盘 `keyboardDidHide` -> 新的 Input `onFocus`
+      // 导致这里的 keyboardAvoid.current 为 null，所以需要判空重新初始化。
+      setKeyboardAvoidContext()
     }
 
     const focusAction = () => {
-      bindfocus(
+      bindfocus?.(
         getCustomEvent(
           'focus',
           evt,
