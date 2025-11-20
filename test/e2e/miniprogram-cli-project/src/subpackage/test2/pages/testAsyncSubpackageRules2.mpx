@@ -15,8 +15,7 @@ createPage({})
 {
   "usingComponents": {
     "asyncComp": "../../test/components/asyncComp.mpx",
-    // 应该复用 placeholder-view
-    "placeholder-view": "../../../components/placeholder-view.mpx"
+    "placeholder-view": "../../../components/common/placeholder-view.mpx"
   }
 }
 </script>

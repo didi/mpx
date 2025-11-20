@@ -13,7 +13,7 @@ createPage({})
 <script type="application/json">
 {
   "usingComponents": {
-    "asyncComp": "../../test/components/asyncComp.mpx",
+    "asyncComp": "../../test/components/asyncComp.mpx"
   }
 }
 </script>

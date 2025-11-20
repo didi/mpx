@@ -1,0 +1,34 @@
+<template>
+  <view class="container" testID="page2-container">
+    <!--defs 测试使用-->
+    <view class="margin20"><text testID="page2-defs">defs: {{__testDef__}}</text></view>
+
+    <view class="margin20"><text testID="page2-mixins">mixins data: {{ list.tv }}</text></view>
+
+    <!--i18n 测试使用-->
+    <view class="margin20"><text testID="page2-i18n">i18n: {{$t('hello')}}</text></view>
+  </view>
+</template>
+
+<script>
+  import  { createComponent } from '@mpxjs/core'
+  import mixins from '../../mixins'
+
+  createComponent({
+    data: {
+    },
+    mixins: [mixins],
+  })
+</script>
+
+<style lang="stylus" scoped>
+.margin20 {
+  margin: 50px;
+}
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

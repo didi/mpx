@@ -1,80 +1,62 @@
-describe('Mpx React Native App E2E Tests', () => {
+describe('MPX RN DEMO Page e2e test', () => {
   beforeAll(async () => {
-    await device.launchApp()
-  })
+    await device.launchApp({newInstance: true});
+  });
 
-  beforeEach(async () => {
-    await device.reloadReactNative()
-  })
+  it('renders home page correctly', async () => {
+    // wait for app load
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await expect(element(by.id('homePage'))).toBeVisible();
+    await expect(element(by.text('MPX RN DEMO'))).toBeVisible();
+  });
 
-  it('should launch app and display list component', async () => {
-    // 等待应用加载
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // 验证列表项显示
-    await waitFor(element(by.text('手机')))
+  it('counter increases by 2 when button is clicked', async () => {
+    await expect(element(by.id('counter'))).toHaveText('0');
+    await element(by.id('counterBtn')).tap();
+    await expect(element(by.id('counter'))).toHaveText('2');
+    await element(by.id('counterBtn')).tap();
+    await expect(element(by.id('counter'))).toHaveText('4');
+  });
+
+  it('input syncs with display', async () => {
+    await element(by.id('input')).replaceText('mpxTest');
+    await expect(element(by.id('inputResult'))).toHaveText('mpxTest');
+  });
+
+  it('renders the list with 3 items', async () => {
+    await expect(element(by.id('listItem-0'))).toBeVisible();
+    await expect(element(by.id('listItem-1'))).toBeVisible();
+    await expect(element(by.id('listItem-2'))).toBeVisible();
+    await expect(element(by.text('Apple'))).toBeVisible();
+    await expect(element(by.text('Banana'))).toBeVisible();
+    await expect(element(by.text('Orange'))).toBeVisible();
+  });
+
+  it('should take screenshot for page1', async () => {
+    // screenshot for documentation/debug
+    await device.takeScreenshot('page1');
+  });
+
+  it('navigation button is visible and can be tapped', async () => {
+    await expect(element(by.text('click test navigateTo'))).toBeVisible();
+    await element(by.text('click test navigateTo')).tap();
+    await waitFor(element(by.id('page2-container')))
       .toBeVisible()
-      .withTimeout(5000)
-    
-    await expect(element(by.text('电视'))).toBeVisible()
-    await expect(element(by.text('电脑'))).toBeVisible()
-  })
+      .withTimeout(2000);
+  });
 
-  it('should display count value', async () => {
-    // 验证 count 初始值为 0
-    await waitFor(element(by.text('0')))
-      .toBeVisible()
-      .withTimeout(3000)
-  })
+  it('navigates to page2 and verifies content', async () => {
+    // verify page2 content
+    await expect(element(by.id('page2-defs'))).toBeVisible();
+    await expect(element(by.id('page2-mixins'))).toBeVisible();
+    await expect(element(by.id('page2-i18n'))).toBeVisible();
+    await expect(element(by.id('page2-defs'))).toHaveText('defs: default def');
+    await expect(element(by.id('page2-mixins'))).toHaveText('mixins data: 电视');
+    await expect(element(by.id('page2-i18n'))).toHaveText('i18n: hello');
+  });
 
-  it('should display page path', async () => {
-    // 验证路径显示
-    await expect(element(by.text('/pages/index'))).toBeVisible()
-  })
-
-  it('should display button with correct text', async () => {
-    // 验证按钮存在
-    await expect(element(by.text('click test navigateTo'))).toBeVisible()
-  })
-
-  it('should navigate when button is clicked', async () => {
-    // 点击按钮触发导航到 /pages/index
-    await element(by.text('click test navigateTo')).tap()
-    
-    // 等待页面跳转和重新加载
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // 验证跳转后页面仍然显示相同内容
-    // （因为跳转到 /pages/index，就是当前页面本身）
-    await waitFor(element(by.text('手机')))
-      .toBeVisible()
-      .withTimeout(3000)
-    
-    await expect(element(by.text('/pages/index'))).toBeVisible()
-    
-    // 截图记录跳转后的状态
-    await device.takeScreenshot('after-navigation')
-  })
-
-  it('should display defs test content', async () => {
-    // 验证 defs 功能的文本
-    await expect(element(by.text('defs: default def test'))).toBeVisible()
-  })
-
-  // 跳过 HTML 解码文本测试，因为在 React Native 中文本渲染方式特殊
-  it.skip('should display decoded HTML text', async () => {
-    // 此测试跳过：特殊字符在 RN 中的文本匹配比较复杂
-    // 可以通过截图人工验证
-  })
-
-  it('should display hello text', async () => {
-    // 验证基础文本
-    await expect(element(by.text('hello'))).toBeVisible()
-  })
-
-  it('should take screenshot for documentation', async () => {
-    // 保存截图用于文档或调试
-    await device.takeScreenshot('mpx-list-component')
-  })
-})
-
+  it('should take screenshot for page2', async () => {
+    // screenshot for documentation/debug
+    await device.takeScreenshot('page2');
+  });
+});

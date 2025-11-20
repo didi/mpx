@@ -18,7 +18,7 @@ module.exports = defineConfig({
         },
         // 定义一些全局环境变量，可在JS/模板/样式/JSON中使用
         defs: {
-          __testDef__: "default def test",
+          __testDef__: "default def",
         },
         decodeHTMLText: true,
         i18n: {

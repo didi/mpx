@@ -1,0 +1,73 @@
+<template>
+  <view testID="homePage">
+    <text class="title">MPX RN DEMO</text>
+    <view class="block">
+      <text>计数器：</text>
+      <text testID="counter">{{count}}</text>
+      <button testID="counterBtn" class="btn" bindtap="incCount">+2</button>
+    </view>
+    <view class="block">
+      <text>输入：</text>
+      <input testID="input" value="{{inputVal}}" bindinput="onInput" class="input"/>
+      <text testID="inputResult">{{inputVal}}</text>
+    </view>
+    <view class="block">
+      <text>列表渲染：</text>
+      <view wx:for="{{list}}" wx:for-index="idx" wx:key="*this" testID="listItem-{{idx}}" class="list-item">
+        <text>{{item}}</text>
+      </view>
+    </view>
+
+    <button bindtap="goToPage2">click test navigateTo</button>
+  </view>
+</template>
+
+<script>
+  import mpx, { createPage } from '@mpxjs/core'
+  import page2 from './page2.mpx?resolve'
+  import store from '../store'
+
+  createPage({
+    data: {
+      inputVal: '',
+      list: ['Apple', 'Banana', 'Orange']
+    },
+    computed: {
+      count () {
+        return store.state.count
+      }
+    },
+    methods: {
+      incCount() {
+        store.mutations.increment()
+      },
+      onInput(e) {
+        this.inputVal = e.detail.value
+      },
+      goToPage2 () {
+        mpx.navigateTo({
+          url: page2
+        })
+      }
+    }
+  })
+</script>
+
+<style scoped>
+.title {
+  font-size: 20px;
+  font-weight: bold;
+}
+.block {
+  margin: 12px 0;
+}
+.btn {
+}
+.input {
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+}
+.list-item {
+  padding: 2px 0;
+}
+</style>
