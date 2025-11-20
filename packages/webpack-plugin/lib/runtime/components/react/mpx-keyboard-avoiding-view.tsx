@@ -72,7 +72,6 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     let subscriptions: EmitterSubscription[] = []
 
     function keybaordAvoding(evt: any) {
-      console.log('---> debug keyboardDidShow', !!keyboardAvoid?.current)
       if (!keyboardAvoid?.current || isShow.current) {
         return
       }
