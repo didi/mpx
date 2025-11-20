@@ -21,7 +21,6 @@ async function requestWifiPermission () {
 }
 
 function startWifi (options = {}) {
-  const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
@@ -31,6 +30,7 @@ function startWifi (options = {}) {
     complete(result)
     return
   }
+  const WifiManager = require('react-native-wifi-reborn').default
   let wifiPermission = requestWifiPermission
   if (mpx.config?.rnConfig?.wifiPermission) {
     wifiPermission = mpx.config.rnConfig.wifiPermission
@@ -71,7 +71,7 @@ function stopWifi (options = {}) {
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
-      errMsg: 'startWifi:fail ios system not support, you need to manually go to the Settings to enable wifi'
+      errMsg: 'stopWifi:fail ios system not support, you need to manually go to the Settings to enable wifi'
     }
     fail(result)
     complete(result)
@@ -87,11 +87,10 @@ function stopWifi (options = {}) {
 }
 
 function getWifiList (options = {}) {
-  const WifiManager = require('react-native-wifi-reborn').default
   const { success = noop, fail = noop, complete = noop } = options
   if (__mpx_mode__ === 'ios') {
     const result = {
-      errMsg: 'startWifi:fail ios system not support'
+      errMsg: 'getWifiList:fail ios system not support'
     }
     fail(result)
     complete(result)
@@ -99,13 +98,14 @@ function getWifiList (options = {}) {
   }
   if (!startWifiReady) {
     const result = {
-      errMsg: 'startWifi:fail not init startWifi',
+      errMsg: 'getWifiList:fail not init startWifi',
       errCode: 12000
     }
     fail(result)
     complete(result)
     return
   }
+  const WifiManager = require('react-native-wifi-reborn').default
   WifiManager.reScanAndLoadWifiList().then((res) => {
     const wifiList = res.map(item => {
       return {
@@ -154,19 +154,18 @@ function offGetWifiList (callback) {
 }
 
 function getConnectedWifi (options = {}) {
-  const WifiManager = require('react-native-wifi-reborn').default
   const { partialInfo = false, success = noop, fail = noop, complete = noop } = options
 
   if (!startWifiReady) {
     const result = {
-      errMsg: 'startWifi:fail not init startWifi',
+      errMsg: 'getConnectedWifi:fail not init startWifi',
       errCode: 12000
     }
     fail(result)
     complete(result)
     return
   }
-
+  const WifiManager = require('react-native-wifi-reborn').default
   if (partialInfo) {
     WifiManager.getCurrentWifiSSID().then((res) => {
       const wifi = {
