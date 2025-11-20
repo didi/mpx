@@ -1369,6 +1369,10 @@ transform: scale(1.2) skewX(10deg);
 /* RN 数组格式，仅 rn 支持 */
 transform: [{translateX: 50}, {rotate: '45deg'}];
 ```
+> [!tip] 注意
+>
+> 1.RN transform 不支持 scaleZ/scale3d/translateZ/translate3d/rotate3d/matrix3d
+> 2.skew/skewX/skewY 在 RN Android 上不生效
 
 ### transform-origin
 

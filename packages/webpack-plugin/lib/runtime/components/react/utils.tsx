@@ -288,6 +288,10 @@ function transformStringify (styleObj: Record<string, any>) {
   if (isNumber(styleObj.fontWeight)) {
     styleObj.fontWeight = '' + styleObj.fontWeight
   }
+  // transformOrigin 20px 需要转换为 transformOrigin '20'
+  if (isNumber(styleObj.transformOrigin)) {
+    styleObj.transformOrigin = '' + styleObj.transformOrigin
+  }
 }
 
 function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {

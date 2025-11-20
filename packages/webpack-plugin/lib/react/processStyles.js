@@ -64,6 +64,7 @@ module.exports = function (styles, {
         }, '')
         if (ctorType === 'app') {
           output += `
+          global.__classCaches = global.__classCaches || []
           const __classCache = new Map()
           global.__classCaches.push(__classCache)
           let __appClassMap
@@ -75,6 +76,7 @@ module.exports = function (styles, {
           };\n`
         } else {
           output += `
+          global.__classCaches = global.__classCaches || []
           const __classCache = new Map()
           global.__classCaches.push(__classCache)
           let __classMap
