@@ -322,7 +322,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }
     }
     return (
-      <View pointerEvents="none" style={paginationStyle}>
+      <View pointerEvents="none" style={paginationStyle} key="pagination">
         <View style={[styles['pagerWrapper' + dir]]}>
           <Animated.View style={[
             dotCommonStyle,
@@ -888,6 +888,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     style: [normalStyle, layoutStyle, styles.swiper]
   }, layoutProps, innerProps)
   const animateComponent = createElement(Animated.View, {
+    key: 'swiperContainer',
     style: [{ flexDirection: dir === 'x' ? 'row' : 'column', width: '100%', height: '100%' }, animatedStyles]
   }, wrapChildren({
     children: arrPages
