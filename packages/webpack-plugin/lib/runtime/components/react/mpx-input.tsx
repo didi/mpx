@@ -199,9 +199,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const styleObj = extendObject(
     { padding: 0, backgroundColor: '#fff' },
     style,
-    multiline && autoHeight
-      ? { height: 'auto', minHeight: Math.max((style as any)?.minHeight || 35, contentHeight) }
-      : {}
+    multiline && autoHeight ? { height: 'auto' } : {}
   )
 
   const {
