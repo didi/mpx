@@ -6,7 +6,7 @@
     <view class="margin20"><text testID="page2-mixins">mixins data: {{ list.tv }}</text></view>
 
     <!--i18n 测试使用-->
-    <view class="margin20"><text testID="page2-i18n">i18n: {{$t('hello')}}</text></view>
+    <view class="margin20"><text testID="page2-i18n">i18n: {{ $t('message.hello', { msg: 'hello' }) }}</text></view>
   </view>
 </template>
 

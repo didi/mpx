@@ -1,14 +1,16 @@
-import { createStore } from '@mpxjs/store'
+import { defineStore } from "@mpxjs/pinia";
 
-const store = createStore({
-  state: {
-    count: 0
+const store = defineStore('store', {
+  state: () => {
+    return {
+      count: 0,
+    };
   },
-  mutations: {
-    increment (state) {
-      state.count += 2
-    }
-  }
-})
+  actions: {
+    increment() {
+      this.count += 2;
+    },
+  },
+});
 
 export default store

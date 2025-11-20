@@ -1,6 +1,12 @@
 <script>
 import mpx, {createApp} from '@mpxjs/core'
 import apiProxy from '@mpxjs/api-proxy'
+import { createPinia } from '@mpxjs/pinia'
+
+const pinia = createPinia()
+
+mpx.use(pinia)
+
 
 mpx.use(apiProxy, {usePromise: true})
 
@@ -19,7 +25,7 @@ createApp({
 const commonPages = [
   "./pages/page1",
   "./pages/page2",
-  "./pages/mode",
+  "./pages/mode.ios",
   {
     "src": "./pages/testPageAlias",
     "path": "pages/alias"

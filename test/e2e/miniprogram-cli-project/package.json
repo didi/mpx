@@ -6,6 +6,7 @@
     "serve": "mpx-cli-service serve",
     "build": "mpx-cli-service build",
     "lint": "eslint --ext .js,.ts,.mpx src/",
+    "serve:wx": "mpx-cli-service serve --targets=wx",
     "build:android": "mpx-cli-service build --targets=android && cd ReactNativeProject && npm run bundle:android",
     "build:ios": "mpx-cli-service build --targets=ios && cd ReactNativeProject && npm run bundle:ios",
     "build:harmony": "mpx-cli-service build --targets=harmony && cd ReactNativeProject && npm run bundle:android",

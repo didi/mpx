@@ -352,14 +352,25 @@ __webpack_require__.g.__style = "v1"
 __webpack_require__.g.__mpxPageConfig = undefined
 __webpack_require__.g.__appComponentsMap = {}
 __webpack_require__.g.__preloadRule = undefined
-__webpack_require__.g.currentInject.pagesMap = {'pages/page2':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(671), {displayName: "Page"}) },'pages/mode':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(237), {displayName: "Page"}) },'pages/alias':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(676), {displayName: "Page"}) },'test2/pages/index':(0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getAsyncSuspense)({
+__webpack_require__.g.currentInject.pagesMap = {'pages/page2':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(671), {displayName: "Page"}) },'pages/mode':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(237), {displayName: "Page"}) },'pages/alias':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(676), {displayName: "Page"}) },'test/pages/index':(0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getAsyncSuspense)({
+  type: "page",
+  moduleId: "_458b7c5d",
+  chunkName: "test",
+  
+  
+  getChildren () {
+    return Promise.all(/* import() | test/index */[__webpack_require__.e(1), __webpack_require__.e(2)]).then(__webpack_require__.bind(__webpack_require__, 925)).then(function (res) {
+      return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(res, {displayName: "Page"})
+    })
+  }
+}),'test2/pages/index':(0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getAsyncSuspense)({
   type: "page",
   moduleId: "_c1a642ba",
   chunkName: "test2",
   
   
   getChildren () {
-    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 925)).then(function (res) {
+    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 928)).then(function (res) {
       return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(res, {displayName: "Page"})
     })
   }
@@ -370,7 +381,7 @@ __webpack_require__.g.currentInject.pagesMap = {'pages/page2':function(){ return
   
   
   getChildren () {
-    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 928)).then(function (res) {
+    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 930)).then(function (res) {
       return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(res, {displayName: "Page"})
     })
   }
@@ -381,7 +392,7 @@ __webpack_require__.g.currentInject.pagesMap = {'pages/page2':function(){ return
   
   
   getChildren () {
-    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 937)).then(function (res) {
+    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 934)).then(function (res) {
       return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(res, {displayName: "Page"})
     })
   }
@@ -392,18 +403,7 @@ __webpack_require__.g.currentInject.pagesMap = {'pages/page2':function(){ return
   
   
   getChildren () {
-    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 932)).then(function (res) {
-      return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(res, {displayName: "Page"})
-    })
-  }
-}),'test/pages/index':(0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getAsyncSuspense)({
-  type: "page",
-  moduleId: "_458b7c5d",
-  chunkName: "test",
-  
-  
-  getChildren () {
-    return Promise.all(/* import() | test/index */[__webpack_require__.e(1), __webpack_require__.e(2)]).then(__webpack_require__.bind(__webpack_require__, 941)).then(function (res) {
+    return Promise.all(/* import() | test2/index */[__webpack_require__.e(1), __webpack_require__.e(3)]).then(__webpack_require__.bind(__webpack_require__, 938)).then(function (res) {
       return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(res, {displayName: "Page"})
     })
   }
@@ -6285,8 +6285,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4);
 /* template */
 __webpack_require__.g.currentInject = {
-  moduleId: "_014cb295"
+  moduleId: "_3cea9cb3"
 };
+/* styles */
+
+          let __classMap
+          __webpack_require__.g.currentInject.injectMethods = {
+            __getClassMap: function() {
+              if(!__classMap) {
+                __classMap = {'mpx-page':{'flex':1},'test':{'fontSize':12}};
+              }
+              return __classMap;
+            }
+          };
 /* json */
 /* script */
 
@@ -6294,12 +6305,12 @@ __webpack_require__.g.currentInject.pageConfig = {}
 
 var componentsMap = {}
 __webpack_require__.g.currentInject.componentsMap = componentsMap
-__webpack_require__.g.currentModuleId = "_014cb295"
+__webpack_require__.g.currentModuleId = "_3cea9cb3"
 __webpack_require__.g.currentSrcMode = "wx"
-__webpack_require__.g.currentResource = "/Users/didi/Work/Code/mpx/test/e2e/miniprogram-cli-project/src/pages/mode.android.mpx"
+__webpack_require__.g.currentResource = "/Users/didi/Work/Code/mpx/test/e2e/miniprogram-cli-project/src/pages/mode.ios.mpx"
 /** script content **/
 __webpack_require__(238)
-/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.g.__mpxOptionsMap["_014cb295"]);
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.g.__mpxOptionsMap["_3cea9cb3"]);
 
 
 /***/ }),
@@ -7486,7 +7497,7 @@ function mergeMixins(parent, child) {
       mergeProvide(parent, child, key);
     } else if (key !== 'mixins' && key !== 'mpxCustomKeysForBlend') {
       // 收集非函数的自定义属性，在Component创建的页面中挂载到this上，模拟Page创建页面的表现，swan当中component构造器也能自动挂载自定义数据，不需要框架模拟挂载
-      if (curType === 'blend' && typeof child[key] !== 'function' && !_platform_patch_builtInKeysMap__WEBPACK_IMPORTED_MODULE_10__["default"][key] && "android" !== 'swan') {
+      if (curType === 'blend' && typeof child[key] !== 'function' && !_platform_patch_builtInKeysMap__WEBPACK_IMPORTED_MODULE_10__["default"][key] && "ios" !== 'swan') {
         mpxCustomKeysMap[key] = true;
       }
       mergeDefault(parent, child, key);
@@ -10500,7 +10511,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   setFocusedNavigation: function() { return /* binding */ setFocusedNavigation; }
 /* harmony export */ });
 function getEnvObj() {
-  switch ("android") {
+  switch ("ios") {
     case 'wx':
       return wx;
     case 'ali':
@@ -10524,7 +10535,7 @@ function getEnvObj() {
 var isBrowser = typeof window !== 'undefined';
 var isDev = "development" !== 'production';
 var isReact =  true || 0;
-var isWeb = "android" === 'web';
+var isWeb = "ios" === 'web';
 var focusedNavigation;
 function setFocusedNavigation(navigation) {
   focusedNavigation = navigation;
@@ -11758,7 +11769,7 @@ function implement(name) {
     _ref$remove = _ref.remove,
     remove = _ref$remove === void 0 ? false : _ref$remove;
   if (!name) return;
-  if (_babel_runtime_corejs3_core_js_stable_instance_index_of__WEBPACK_IMPORTED_MODULE_0___default()(modes).call(modes, "android") > -1) {
+  if (_babel_runtime_corejs3_core_js_stable_instance_index_of__WEBPACK_IMPORTED_MODULE_0___default()(modes).call(modes, "ios") > -1) {
     processor();
     implemented[name] = {
       remove: remove
@@ -12093,7 +12104,7 @@ var convertModes = {
   'wx-harmony': 'wxToHarmony'
 };
 function getConvertMode(srcMode) {
-  return convertModes[srcMode + '-' + "android"];
+  return convertModes[srcMode + '-' + "ios"];
 }
 
 /***/ }),
@@ -23934,9 +23945,9 @@ var DEFAULT_FONT_SIZE = 16;
 var HIDDEN_STYLE = {
   opacity: 0
 };
-var isIOS = "android" === 'ios';
-var isAndroid = "android" === 'android';
-var isHarmony = "android" === 'harmony';
+var isIOS = "ios" === 'ios';
+var isAndroid = "ios" === 'android';
+var isHarmony = "ios" === 'harmony';
 var varDecRegExp = /^--/;
 var varUseRegExp = /var\(/;
 var unoVarDecRegExp = /^--un-/;
@@ -28141,37 +28152,37 @@ Input.displayName = 'MpxInput';
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(239);
-/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(458);
-/* harmony import */ var _page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(669);
-/* harmony import */ var _page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(670);
+/* harmony import */ var _babel_runtime_corejs3_helpers_objectSpread2__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(592);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(458);
+/* harmony import */ var _page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(669);
+/* harmony import */ var _page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(670);
+/* harmony import */ var _mpxjs_pinia__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(943);
 
 
 
-(0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_0__["default"])({
+
+
+(0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_1__["default"])({
   data: {
     inputVal: '',
     list: ['Apple', 'Banana', 'Orange']
   },
-  computed: {
-    count: function count() {
-      return _store__WEBPACK_IMPORTED_MODULE_3__["default"].state.count;
-    }
-  },
-  methods: {
+  computed: (0,_babel_runtime_corejs3_helpers_objectSpread2__WEBPACK_IMPORTED_MODULE_0__["default"])({}, (0,_mpxjs_pinia__WEBPACK_IMPORTED_MODULE_5__.mapState)(_store__WEBPACK_IMPORTED_MODULE_4__["default"], ['count'])),
+  methods: (0,_babel_runtime_corejs3_helpers_objectSpread2__WEBPACK_IMPORTED_MODULE_0__["default"])((0,_babel_runtime_corejs3_helpers_objectSpread2__WEBPACK_IMPORTED_MODULE_0__["default"])({}, (0,_mpxjs_pinia__WEBPACK_IMPORTED_MODULE_5__.mapActions)(_store__WEBPACK_IMPORTED_MODULE_4__["default"], ['increment'])), {}, {
     incCount: function incCount() {
-      _store__WEBPACK_IMPORTED_MODULE_3__["default"].mutations.increment();
+      this.increment();
     },
     onInput: function onInput(e) {
       this.inputVal = e.detail.value;
     },
     goToPage2: function goToPage2() {
-      _mpxjs_core__WEBPACK_IMPORTED_MODULE_1__["default"].navigateTo({
-        url: (_page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_2___default())
+      _mpxjs_core__WEBPACK_IMPORTED_MODULE_2__["default"].navigateTo({
+        url: (_page2_mpx_resolve__WEBPACK_IMPORTED_MODULE_3___default())
       });
     }
-  }
+  })
 });
 
 /***/ }),
@@ -28186,15 +28197,17 @@ module.exports = "/pages/page2"
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _mpxjs_store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(558);
+/* harmony import */ var _mpxjs_pinia__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(943);
 
-var store = (0,_mpxjs_store__WEBPACK_IMPORTED_MODULE_0__.createStore)({
-  state: {
-    count: 0
+var store = (0,_mpxjs_pinia__WEBPACK_IMPORTED_MODULE_0__.defineStore)('store', {
+  state: function state() {
+    return {
+      count: 0
+    };
   },
-  mutations: {
-    increment: function increment(state) {
-      state.count += 2;
+  actions: {
+    increment: function increment() {
+      this.count += 2;
     }
   }
 });
@@ -28261,7 +28274,9 @@ __webpack_require__.g.currentInject.render = function (createElement, getCompone
   style: this.__getStyle("margin20", "", "", "")
 }, createElement(getComponent("mpx-text"), {
   testID: "page2-i18n"
-}, "i18n: " + this.$t('hello')))));
+}, "i18n: " + this.$t('message.hello', {
+  msg: 'hello'
+})))));
 };
 /* styles */
 
@@ -28388,8 +28403,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(458);
 /* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(560);
 /* harmony import */ var _mpxjs_api_proxy__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(679);
+/* harmony import */ var _mpxjs_pinia__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(943);
 
 
+
+var pinia = (0,_mpxjs_pinia__WEBPACK_IMPORTED_MODULE_3__.createPinia)();
+_mpxjs_core__WEBPACK_IMPORTED_MODULE_0__["default"].use(pinia);
 _mpxjs_core__WEBPACK_IMPORTED_MODULE_0__["default"].use(_mpxjs_api_proxy__WEBPACK_IMPORTED_MODULE_2__["default"], {
   usePromise: true
 });
@@ -28559,7 +28578,7 @@ function install(target) {
     custom = _options$custom === void 0 ? {} : _options$custom;
   var transedApi = _babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_0___default()({}, _common_js__WEBPACK_IMPORTED_MODULE_2__.ENV_OBJ, _platform__WEBPACK_IMPORTED_MODULE_1__);
   var promisedApi = usePromise ? (0,_common_js_promisify__WEBPACK_IMPORTED_MODULE_3__["default"])(transedApi, whiteList, blackList) : {};
-  _babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_0___default()(target, transedApi, promisedApi, custom["android"]);
+  _babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_0___default()(target, transedApi, promisedApi, custom["ios"]);
 }
 function getProxy() {
   var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -29248,7 +29267,7 @@ function error(msg) {
 function envError(method) {
   return function () {
     var _context;
-    (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_3__.error)(_babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2___default()(_context = "\n ".concat("android", "\u73AF\u5883\u4E0D\u652F\u6301")).call(_context, method, "\u65B9\u6CD5"), '@mpxjs/api-proxy');
+    (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_3__.error)(_babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2___default()(_context = "\n ".concat("ios", "\u73AF\u5883\u4E0D\u652F\u6301")).call(_context, method, "\u65B9\u6CD5"), '@mpxjs/api-proxy');
   };
 }
 function defineUnsupportedProps(resObj, props) {
@@ -29257,7 +29276,7 @@ function defineUnsupportedProps(resObj, props) {
     defineProps[item] = {
       get: function get() {
         var _context2;
-        warn(_babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2___default()(_context2 = "The ".concat(item, " attribute is not supported in ")).call(_context2, "android", " environment"));
+        warn(_babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2___default()(_context2 = "The ".concat(item, " attribute is not supported in ")).call(_context2, "ios", " environment"));
         return null;
       }
     };
@@ -29345,8 +29364,8 @@ var getWindowInfo = function getWindowInfo() {
     _insets$right = insets.right,
     right = _insets$right === void 0 ? 0 : _insets$right;
   var layout = navigation.layout || {};
-  var screenHeight =  false ? 0 : dimensionsScreen.height - (layout.bottomVirtualHeight || 0); // 解决安卓开启屏幕内导航安卓把安全区计算进去后产生的影响
-  var screenWidth =  false ? 0 : dimensionsScreen.width - right;
+  var screenHeight =  true ? dimensionsScreen.height : 0; // 解决安卓开启屏幕内导航安卓把安全区计算进去后产生的影响
+  var screenWidth =  true ? dimensionsScreen.width : 0;
   var layoutHeight = layout.height || 0;
   var layoutWidth = layout.width || 0;
   var windowHeight = layoutHeight || screenHeight;
@@ -39897,10 +39916,8 @@ var getSystemInfo = function getSystemInfo() {
 var getDeviceInfo = function getDeviceInfo() {
   var _context2;
   var deviceInfo = {};
-  if (true) {
-    var deviceAbi = react_native_device_info__WEBPACK_IMPORTED_MODULE_2___default().supported64BitAbisSync() || [];
-    deviceInfo.deviceAbi = deviceAbi[0] || null;
-  }
+  if (false) // removed by dead control flow
+{ var deviceAbi; }
   (0,_common_js__WEBPACK_IMPORTED_MODULE_4__.defineUnsupportedProps)(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType']);
   _babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_1___default()(deviceInfo, {
     brand: react_native_device_info__WEBPACK_IMPORTED_MODULE_2___default().getBrand(),
@@ -40486,10 +40503,10 @@ function keyboardShowListener(e) {
 function keyboardHideListener(e) {
   var endCoordinates = e.endCoordinates || {};
   var height;
-  if (false) // removed by dead control flow
-{} else {
-    height = endCoordinates.height;
-  }
+  if (true) {
+    height = 0;
+  } else // removed by dead control flow
+{}
   // eslint-disable-next-line node/no-callback-literal
   callbacks.forEach(function (cb) {
     return cb({
@@ -40648,6 +40665,752 @@ function promisify(listObj, whiteList, customBlackList) {
   return result;
 }
 /* harmony default export */ __webpack_exports__["default"] = (promisify);
+
+/***/ }),
+/* 925 */,
+/* 926 */,
+/* 927 */,
+/* 928 */,
+/* 929 */,
+/* 930 */,
+/* 931 */,
+/* 932 */,
+/* 933 */,
+/* 934 */,
+/* 935 */,
+/* 936 */,
+/* 937 */,
+/* 938 */,
+/* 939 */,
+/* 940 */,
+/* 941 */,
+/* 942 */,
+/* 943 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createPinia: function() { return /* reexport safe */ _createPinia__WEBPACK_IMPORTED_MODULE_17__.createPinia; },
+/* harmony export */   defineStore: function() { return /* binding */ defineStore; },
+/* harmony export */   getActivePinia: function() { return /* reexport safe */ _util__WEBPACK_IMPORTED_MODULE_19__.getActivePinia; },
+/* harmony export */   mapActions: function() { return /* reexport safe */ _mapHelper__WEBPACK_IMPORTED_MODULE_21__.mapActions; },
+/* harmony export */   mapGetters: function() { return /* reexport safe */ _mapHelper__WEBPACK_IMPORTED_MODULE_21__.mapGetters; },
+/* harmony export */   mapState: function() { return /* reexport safe */ _mapHelper__WEBPACK_IMPORTED_MODULE_21__.mapState; },
+/* harmony export */   mapStores: function() { return /* reexport safe */ _mapHelper__WEBPACK_IMPORTED_MODULE_21__.mapStores; },
+/* harmony export */   mapWritableState: function() { return /* reexport safe */ _mapHelper__WEBPACK_IMPORTED_MODULE_21__.mapWritableState; },
+/* harmony export */   setActivePinia: function() { return /* reexport safe */ _util__WEBPACK_IMPORTED_MODULE_19__.setActivePinia; },
+/* harmony export */   setMapStoreSuffix: function() { return /* reexport safe */ _mapHelper__WEBPACK_IMPORTED_MODULE_21__.setMapStoreSuffix; },
+/* harmony export */   storeToRefs: function() { return /* reexport safe */ _storeToRefs__WEBPACK_IMPORTED_MODULE_22__.storeToRefs; }
+/* harmony export */ });
+/* harmony import */ var _babel_runtime_corejs3_helpers_typeof__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(297);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(232);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_weak_map__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(534);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_weak_map__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_weak_map__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(360);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(246);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_symbol__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(522);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_symbol__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_symbol__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(944);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_promise__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(418);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_promise__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_promise__WEBPACK_IMPORTED_MODULE_7__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_includes__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(376);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_includes__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_includes__WEBPACK_IMPORTED_MODULE_8__);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(480);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(464);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(479);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(528);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(511);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(521);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(512);
+/* harmony import */ var _mpxjs_utils__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(294);
+/* harmony import */ var _createPinia__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(945);
+/* harmony import */ var _const__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(947);
+/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(946);
+/* harmony import */ var _subscription__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(948);
+/* harmony import */ var _mapHelper__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(949);
+/* harmony import */ var _storeToRefs__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(950);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var assign = (_babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_1___default());
+var skipHydrateMap = /* #__PURE__ */new (_babel_runtime_corejs3_core_js_stable_weak_map__WEBPACK_IMPORTED_MODULE_2___default())();
+function shouldHydrate(obj) {
+  return !skipHydrateMap.has(obj);
+}
+
+/**
+ * @description: create options store
+ * @param id: store id
+ * @param options: storeOptions
+ * @param pinia: global pinia
+ * @return {*} options store
+ */
+function createOptionsStore(id, options, pinia) {
+  var state = options.state,
+    actions = options.actions,
+    getters = options.getters;
+  var initialState = pinia.state.value[id];
+  var store = {};
+  function setupFn() {
+    var _context;
+    if (!initialState) {
+      // init state
+      (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.set)(pinia.state.value, id, state ? state() : {});
+    }
+    // to make state reactive
+    var localState = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_11__.toRefs)(pinia.state.value[id]);
+    return assign(localState, actions, _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_3___default()(_context = _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_4___default()(getters || {})).call(_context, function (computedGetters, name) {
+      // to wrap getters with computed to be reactive
+      computedGetters[name] = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.markRaw)((0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_12__.computed)(function () {
+        (0,_util__WEBPACK_IMPORTED_MODULE_19__.setActivePinia)(pinia);
+        var store = pinia._s.get(id);
+        return getters[name].call(store, store);
+      }));
+      return computedGetters;
+    }, {}));
+  }
+  store = createSetupStore(id, setupFn, options, pinia, true);
+  store.$reset = function $reset() {
+    var newState = state ? state() : {};
+    this.$patch(function ($state) {
+      assign($state, newState);
+    });
+  };
+  return store;
+}
+
+/**
+ * @description: create setup store
+ * @param $id: store id
+ * @param setup: function
+ * @param options: storeOptions
+ * @param pinia: global pinia
+ * @param isOptionsStore to create options store
+ * @return {*} setup store
+ */
+function createSetupStore($id, setup) {
+  var _context2;
+  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var pinia = arguments.length > 3 ? arguments[3] : undefined;
+  var isOptionsStore = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+  var scope;
+  var optionsForPlugin = assign({
+    actions: {}
+  }, options);
+  if ( true && !pinia._e.active) {
+    throw new _mpxjs_utils__WEBPACK_IMPORTED_MODULE_16__.error('Pinia destroyed');
+  }
+  var $subscribeOptions = {
+    deep: true
+    // flush: 'post',
+  };
+  if (true) {
+    $subscribeOptions.onTrigger = function (event) {
+      if (isListening) {
+        debuggerEvents = event;
+      } else if (isListening === false) {
+        if (Array.isArray(debuggerEvents)) {
+          debuggerEvents.push(event);
+        } else {
+          (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_16__.error)('🍍 debuggerEvents should be an array. This is most likely an internal Pinia bug.');
+        }
+      }
+    };
+  }
+
+  // internal state
+  var isListening;
+  var isSyncListening;
+  var subscriptions = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.markRaw)([]);
+  var actionSubscriptions = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.markRaw)([]);
+  var debuggerEvents;
+  var initialState = pinia.state.value[$id];
+  if (!isOptionsStore && !initialState) {
+    (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.set)(pinia.state.value, $id, {});
+  }
+  var activeListener;
+  function $patch(stateOrMutator) {
+    if (isOptionsStore) {
+      if (this && this.$id === $id) {
+        this && _babel_runtime_corejs3_core_js_stable_object_assign__WEBPACK_IMPORTED_MODULE_1___default()({}, this);
+      }
+    }
+    var subscriptionMutation;
+    isListening = isSyncListening = false;
+    // reset the debugger events since patches are sync
+    if (true) {
+      debuggerEvents = [];
+    }
+    if (typeof stateOrMutator === 'function') {
+      stateOrMutator(pinia.state.value[$id]);
+      subscriptionMutation = {
+        type: _const__WEBPACK_IMPORTED_MODULE_18__.MutationType.patchFunction,
+        storeId: $id,
+        events: debuggerEvents
+      };
+    } else {
+      (0,_util__WEBPACK_IMPORTED_MODULE_19__.mergeReactiveObjects)(pinia.state.value[$id], stateOrMutator);
+      subscriptionMutation = {
+        type: _const__WEBPACK_IMPORTED_MODULE_18__.MutationType.patchObject,
+        payload: stateOrMutator,
+        storeId: $id,
+        events: debuggerEvents
+      };
+    }
+    // eslint-disable-next-line
+    var myListenerId = activeListener = _babel_runtime_corejs3_core_js_stable_symbol__WEBPACK_IMPORTED_MODULE_5___default()();
+    isSyncListening = true;
+    (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_15__.nextTick)().then(function () {
+      if (activeListener === myListenerId) {
+        isListening = true;
+      }
+    });
+    (0,_subscription__WEBPACK_IMPORTED_MODULE_20__.triggerSubscriptions)(subscriptions, subscriptionMutation, pinia.state.value[$id]);
+  }
+  var $reset =  true ? function () {
+    throw new _mpxjs_utils__WEBPACK_IMPORTED_MODULE_16__.error("\uD83C\uDF4D: Store \"".concat($id, "\" is build using the setup syntax and does not implement $reset()."));
+  } : 0;
+  function $dispose() {
+    scope.stop();
+    // clean data
+    subscriptions = [];
+    actionSubscriptions = [];
+    pinia._s.delete($id);
+  }
+  /**
+  * Wraps an action to handle subscriptions.
+  * @param name - name of the action
+  * @param action - action to wrap
+  * @returns a wrapped action to handle subscriptions
+  */
+  function wrapAction(name, action) {
+    return function () {
+      (0,_util__WEBPACK_IMPORTED_MODULE_19__.setActivePinia)(pinia);
+      var args = _babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_6___default()(arguments);
+      var afterCallbackList = [];
+      var onErrorCallbackList = [];
+      function after(callback) {
+        afterCallbackList.push(callback);
+      }
+      function onError(callback) {
+        onErrorCallbackList.push(callback);
+      }
+      (0,_subscription__WEBPACK_IMPORTED_MODULE_20__.triggerSubscriptions)(actionSubscriptions, {
+        args: args,
+        name: name,
+        store: store,
+        after: after,
+        onError: onError
+      });
+      var ret;
+      try {
+        ret = action.apply(this && this.$id === $id ? this : store, args);
+        // handle sync errors
+      } catch (error) {
+        (0,_subscription__WEBPACK_IMPORTED_MODULE_20__.triggerSubscriptions)(onErrorCallbackList, error);
+        throw error;
+      }
+      if (ret instanceof (_babel_runtime_corejs3_core_js_stable_promise__WEBPACK_IMPORTED_MODULE_7___default())) {
+        return ret.then(function (value) {
+          (0,_subscription__WEBPACK_IMPORTED_MODULE_20__.triggerSubscriptions)(afterCallbackList, value);
+          return value;
+        }).catch(function (error) {
+          (0,_subscription__WEBPACK_IMPORTED_MODULE_20__.triggerSubscriptions)(onErrorCallbackList, error);
+          return _babel_runtime_corejs3_core_js_stable_promise__WEBPACK_IMPORTED_MODULE_7___default().reject(error);
+        });
+      }
+      // allow the afterCallback to override the return value
+      (0,_subscription__WEBPACK_IMPORTED_MODULE_20__.triggerSubscriptions)(afterCallbackList, ret);
+      return ret;
+    };
+  }
+  var partialStore = {
+    _p: pinia,
+    _s: scope,
+    $id: $id,
+    $onAction: _subscription__WEBPACK_IMPORTED_MODULE_20__.addSubscription.bind(null, actionSubscriptions),
+    $patch: $patch,
+    $reset: $reset,
+    $subscribe: function $subscribe(callback) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var removeSubscription = (0,_subscription__WEBPACK_IMPORTED_MODULE_20__.addSubscription)(subscriptions, callback, options.detached, function () {
+        return stopWatcher();
+      });
+      var stopWatcher = scope.run(function () {
+        return (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_9__.watch)(function () {
+          return pinia.state.value[$id];
+        }, function (state) {
+          if (options.flush === 'sync' ? isSyncListening : isListening) {
+            // eslint-disable-next-line
+            callback({
+              storeId: $id,
+              type: _const__WEBPACK_IMPORTED_MODULE_18__.MutationType.direct,
+              events: debuggerEvents
+            }, state);
+          }
+        }, assign({}, $subscribeOptions, options));
+      });
+      return removeSubscription;
+    },
+    $dispose: $dispose
+  };
+  var store = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.reactive)(assign({}, partialStore));
+  // store the partial store now so the setup of stores can instantiate each other before they are finished without
+  // creating infinite loops.
+  pinia._s.set($id, store);
+  var setupStore = pinia._e.run(function () {
+    scope = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_13__.effectScope)();
+    return scope.run(function () {
+      return setup();
+    });
+  });
+  for (var key in setupStore) {
+    var prop = setupStore[key];
+    if ((0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_11__.isRef)(prop) && !(0,_util__WEBPACK_IMPORTED_MODULE_19__.isComputed)(prop) || (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.isReactive)(prop)) {
+      if (!isOptionsStore) {
+        // in setup stores we must hydrate the state and sync pinia state tree with the refs the user just created
+        if (initialState && shouldHydrate(prop)) {
+          if ((0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_11__.isRef)(prop)) {
+            prop.value = initialState[key];
+          } else {
+            // composition style ordinarily create ref or reactive prop
+            (0,_util__WEBPACK_IMPORTED_MODULE_19__.mergeReactiveObjects)(prop, initialState[key]);
+          }
+        }
+        // sync pinia
+        (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.set)(pinia.state.value[$id], key, prop);
+      }
+    } else if (typeof prop === 'function') {
+      var actionValue = wrapAction(key, prop);
+      (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.set)(setupStore, key, actionValue);
+      optionsForPlugin.actions[key] = prop;
+    }
+  }
+  // add props to store
+  _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_4___default()(setupStore).forEach(function (key) {
+    (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_10__.set)(store, key, setupStore[key]);
+  });
+  // define $state
+  Object.defineProperty(store, '$state', {
+    get: function get() {
+      return pinia.state.value[$id];
+    },
+    set: function set(state) {
+      $patch(function ($state) {
+        assign($state, state);
+      });
+    }
+  });
+  // apply all plugins
+  pinia._p.forEach(function (extender) {
+    if (true) {
+      var extensions = scope.run(function () {
+        return extender({
+          store: store,
+          app: pinia._a || (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_14__.getCurrentInstance)(),
+          pinia: pinia,
+          options: optionsForPlugin
+        });
+      });
+      assign(store, extensions);
+    } else // removed by dead control flow
+{}
+  });
+  if ( true && store.$state && (0,_babel_runtime_corejs3_helpers_typeof__WEBPACK_IMPORTED_MODULE_0__["default"])(store.$state) === 'object' && typeof store.$state.constructor === 'function' && !_babel_runtime_corejs3_core_js_stable_instance_includes__WEBPACK_IMPORTED_MODULE_8___default()(_context2 = store.$state.constructor.toString()).call(_context2, '[native code]')) {
+    (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_16__.warn)('[🍍]: The "state" must be a plain object. It cannot be\n' + '\tstate: () => new MyClass()\n' + "Found in store \"".concat(store.$id, "\"."));
+  }
+  // only apply hydrate to option stores with an initial state in pinia
+  if (initialState && isOptionsStore && options.hydrate) {
+    options.hydrate(store.$state, initialState);
+  }
+  isListening = true;
+  isSyncListening = true;
+  (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_15__.nextTick)().then(function () {
+    isListening = true;
+  });
+  return store;
+}
+function defineStore(idOrOptions, setup, setupOptions) {
+  var id;
+  var options;
+  var isSetupStore = typeof setup === 'function';
+  if (typeof idOrOptions === 'string') {
+    id = idOrOptions;
+    options = isSetupStore ? setupOptions : setup;
+  } else {
+    options = idOrOptions;
+    id = idOrOptions.id;
+  }
+  function useStore(pinia) {
+    if ( true && !_util__WEBPACK_IMPORTED_MODULE_19__.activePinia) {
+      (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_16__.error)('[🍍]: getActivePinia was called with no active Pinia. Did you forget to install pinia?\n' + '\tconst pinia = createPinia()\n' + '\tapp.use(pinia)\n' + 'This will fail in production.');
+    }
+    pinia = pinia || _util__WEBPACK_IMPORTED_MODULE_19__.activePinia;
+    if (pinia) (0,_util__WEBPACK_IMPORTED_MODULE_19__.setActivePinia)(pinia);
+    if (!pinia._s.has(id)) {
+      if (isSetupStore) {
+        createSetupStore(id, setup, options, pinia);
+      } else {
+        createOptionsStore(id, options, pinia);
+      }
+      if (true) {
+        useStore._pinia = pinia;
+      }
+    }
+    var store = pinia._s.get(id);
+    return store;
+  }
+  useStore.$id = id;
+  return useStore;
+}
+
+
+/***/ }),
+/* 944 */
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+module.exports = __webpack_require__(191);
+
+/***/ }),
+/* 945 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createPinia: function() { return /* binding */ createPinia; }
+/* harmony export */ });
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_map__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(202);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_map__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_map__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(464);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(479);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(511);
+/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(946);
+
+
+
+
+/**
+ * @description: create pinia instance, only called once through entire lifecycle of miniApp
+ * @return {*} pinia
+ */
+function createPinia() {
+  var activePinia = (0,_util__WEBPACK_IMPORTED_MODULE_4__.getActivePinia)();
+  if (activePinia) {
+    return activePinia;
+  }
+  var scope = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.effectScope)(true);
+  // create ref state
+  var state = scope.run(function () {
+    return (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_2__.ref)({});
+  });
+  var _p = [];
+  var pinia = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_1__.markRaw)({
+    install: function install() {
+      console.warn('pinia no longer needs to be installed via mpx.use in version 2.9');
+    },
+    use: function use(plugin) {
+      _p.push(plugin);
+      return this;
+    },
+    _p: _p,
+    _a: null,
+    _e: scope,
+    _s: new (_babel_runtime_corejs3_core_js_stable_map__WEBPACK_IMPORTED_MODULE_0___default())(),
+    state: state
+  });
+  (0,_util__WEBPACK_IMPORTED_MODULE_4__.setActivePinia)(pinia);
+  return pinia;
+}
+
+/***/ }),
+/* 946 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   activePinia: function() { return /* binding */ activePinia; },
+/* harmony export */   getActivePinia: function() { return /* binding */ getActivePinia; },
+/* harmony export */   isComputed: function() { return /* binding */ isComputed; },
+/* harmony export */   mergeReactiveObjects: function() { return /* binding */ mergeReactiveObjects; },
+/* harmony export */   setActivePinia: function() { return /* binding */ setActivePinia; }
+/* harmony export */ });
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(464);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(479);
+/* harmony import */ var _mpxjs_utils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(294);
+
+
+var activePinia;
+var setActivePinia = function setActivePinia(pinia) {
+  return activePinia = pinia;
+};
+var getActivePinia = function getActivePinia() {
+  return activePinia;
+};
+function isComputed(obj) {
+  return !!((0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_1__.isRef)(obj) && obj.effect);
+}
+function mergeReactiveObjects(target, patchToApply) {
+  for (var key in patchToApply) {
+    if (!Object.prototype.hasOwnProperty.call(patchToApply, key)) continue;
+    var subPatch = patchToApply[key];
+    var targetValue = target[key];
+    if ((0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_2__.isPlainObject)(targetValue) && (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_2__.isPlainObject)(subPatch) && Object.prototype.hasOwnProperty.call(target, key) && !(0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_1__.isRef)(subPatch) && !(0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_0__.isReactive)(subPatch)) {
+      target[key] = mergeReactiveObjects(targetValue, subPatch);
+    } else {
+      target[key] = subPatch;
+    }
+  }
+  return target;
+}
+
+
+/***/ }),
+/* 947 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MutationType: function() { return /* binding */ MutationType; },
+/* harmony export */   storeRefsBlackList: function() { return /* binding */ storeRefsBlackList; }
+/* harmony export */ });
+var MutationType = {
+  direct: 'direct',
+  // store.xxx = xxx
+  patchObject: 'patchObject',
+  // $patch({})
+  patchFunction: 'patchFunction' // $patch(() => {})
+};
+
+// to avoid warning in vue2, exclude relevant properties
+var storeRefsBlackList = ['$dispose', '$id', '$onAction', '$patch', '$reset', '$subscribe', '_p', '_s', '_hotUpdate', '_r'];
+
+/***/ }),
+/* 948 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   addSubscription: function() { return /* binding */ addSubscription; },
+/* harmony export */   triggerSubscriptions: function() { return /* binding */ triggerSubscriptions; }
+/* harmony export */ });
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_index_of__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(225);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_index_of__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_index_of__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_splice__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(251);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_splice__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_splice__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_slice__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(231);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_slice__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_slice__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(521);
+
+
+
+
+function addSubscription(subscriptions, callback, detached) {
+  var onCleanup = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : function () {};
+  subscriptions.push(callback);
+  var removeSubscription = function removeSubscription() {
+    var idx = _babel_runtime_corejs3_core_js_stable_instance_index_of__WEBPACK_IMPORTED_MODULE_0___default()(subscriptions).call(subscriptions, callback);
+    if (idx > -1) {
+      _babel_runtime_corejs3_core_js_stable_instance_splice__WEBPACK_IMPORTED_MODULE_1___default()(subscriptions).call(subscriptions, idx, 1);
+      onCleanup();
+    }
+  };
+  if (!detached && (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.getCurrentInstance)()) {
+    (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.onUnmounted)(removeSubscription);
+  }
+  return removeSubscription;
+}
+function triggerSubscriptions(subscriptions) {
+  for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    args[_key - 1] = arguments[_key];
+  }
+  _babel_runtime_corejs3_core_js_stable_instance_slice__WEBPACK_IMPORTED_MODULE_2___default()(subscriptions).call(subscriptions).forEach(function (callback) {
+    // eslint-disable-next-line
+    callback.apply(void 0, args);
+  });
+}
+
+/***/ }),
+/* 949 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   mapActions: function() { return /* binding */ mapActions; },
+/* harmony export */   mapGetters: function() { return /* binding */ mapGetters; },
+/* harmony export */   mapState: function() { return /* binding */ mapState; },
+/* harmony export */   mapStores: function() { return /* binding */ mapStores; },
+/* harmony export */   mapWritableState: function() { return /* binding */ mapWritableState; },
+/* harmony export */   setMapStoreSuffix: function() { return /* binding */ setMapStoreSuffix; }
+/* harmony export */ });
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(360);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(246);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(946);
+/* harmony import */ var _mpxjs_utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(294);
+
+
+
+
+/**
+ * @description: allow use state/getters of a store in computed field
+ * @param {*} useStore store to map from
+ * @param {*} keysOrMapper array or object
+ * @return {*} store[key]
+ */
+function mapState(useStore, keysOrMapper) {
+  var _context;
+  var pinia = (0,_util__WEBPACK_IMPORTED_MODULE_2__.getActivePinia)();
+  return Array.isArray(keysOrMapper) ? _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default()(keysOrMapper).call(keysOrMapper, function (reduced, key) {
+    reduced[key] = function () {
+      return useStore(pinia)[key];
+    };
+    return reduced;
+  }, {}) : _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default()(_context = _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_1___default()(keysOrMapper)).call(_context, function (reduced, key) {
+    reduced[key] = function () {
+      var store = useStore(pinia);
+      var storeKey = keysOrMapper[key];
+      return typeof storeKey === 'function'
+      // eslint-disable-next-line
+      ? storeKey.call(store, store) : store[storeKey];
+    };
+    return reduced;
+  }, {});
+}
+var mapGetters = mapState;
+
+/**
+ * @description: allow to use actions of a store in computed field
+ * @param {*} useStore store to map from
+ * @param {*} keysOrMapper array or object
+ * @return {*} store[key]
+ */
+function mapActions(useStore, keysOrMapper) {
+  var _context2;
+  var pinia = (0,_util__WEBPACK_IMPORTED_MODULE_2__.getActivePinia)();
+  return Array.isArray(keysOrMapper) ? _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default()(keysOrMapper).call(keysOrMapper, function (reduced, key) {
+    reduced[key] = function () {
+      var _useStore;
+      return (_useStore = useStore(pinia))[key].apply(_useStore, arguments);
+    };
+    return reduced;
+  }, {}) : _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default()(_context2 = _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_1___default()(keysOrMapper)).call(_context2, function (reduced, key) {
+    reduced[key] = function () {
+      var _useStore2;
+      return (_useStore2 = useStore(pinia))[keysOrMapper[key]].apply(_useStore2, arguments);
+    };
+    return reduced;
+  }, {});
+}
+/**
+  *@description: allow to use writable state/getters of a store in computed field
+  * @param useStore - store to map from
+  * @param keysOrMapper - array or object
+  */
+function mapWritableState(useStore, keysOrMapper) {
+  var _context3;
+  var pinia = (0,_util__WEBPACK_IMPORTED_MODULE_2__.getActivePinia)();
+  return Array.isArray(keysOrMapper) ? _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default()(keysOrMapper).call(keysOrMapper, function (reduced, key) {
+    reduced[key] = {
+      get: function get() {
+        return useStore(pinia)[key];
+      },
+      set: function set(value) {
+        return useStore(pinia)[key] = value;
+      }
+    };
+    return reduced;
+  }, {}) : _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default()(_context3 = _babel_runtime_corejs3_core_js_stable_object_keys__WEBPACK_IMPORTED_MODULE_1___default()(keysOrMapper)).call(_context3, function (reduced, key) {
+    reduced[key] = {
+      get: function get() {
+        return useStore(pinia)[keysOrMapper[key]];
+      },
+      set: function set(value) {
+        return useStore(pinia)[keysOrMapper[key]] = value;
+      }
+    };
+    return reduced;
+  }, {});
+}
+var mapStoreSuffix = 'Store';
+/**
+  * @description: Defaults to `"Store"`, change the suffix added by mapStores()
+  * @param suffix - new suffix
+  */
+function setMapStoreSuffix(suffix) {
+  mapStoreSuffix = suffix;
+}
+/**
+ * @description: allow to stores in computed field, to avoid writing too much props by calling mapstate/getter
+ * @param stores - list of stores to map to an object
+ */
+function mapStores() {
+  for (var _len = arguments.length, stores = new Array(_len), _key = 0; _key < _len; _key++) {
+    stores[_key] = arguments[_key];
+  }
+  var pinia = (0,_util__WEBPACK_IMPORTED_MODULE_2__.getActivePinia)();
+  if ( true && Array.isArray(stores[0])) {
+    (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_3__.warn)('[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n' + 'Replace\n' + '\tmapStores([useAuthStore, useCartStore])\n' + 'with\n' + '\tmapStores(useAuthStore, useCartStore)\n' + 'This will fail in production if not fixed.');
+    stores = stores[0];
+  }
+  return _babel_runtime_corejs3_core_js_stable_instance_reduce__WEBPACK_IMPORTED_MODULE_0___default()(stores).call(stores, function (reduced, useStore) {
+    reduced[useStore.$id + mapStoreSuffix] = function () {
+      return useStore(pinia);
+    };
+    return reduced;
+  }, {});
+}
+
+
+/***/ }),
+/* 950 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   storeToRefs: function() { return /* binding */ storeToRefs; }
+/* harmony export */ });
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(479);
+/* harmony import */ var _mpxjs_utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(294);
+/* harmony import */ var _const__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(947);
+
+
+
+var storeRefsBlackListMap = (0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_1__.makeMap)(_const__WEBPACK_IMPORTED_MODULE_2__.storeRefsBlackList);
+function storeToRefs(store) {
+  var refs = {};
+  for (var key in store) {
+    if (!storeRefsBlackListMap[key] && !(0,_mpxjs_utils__WEBPACK_IMPORTED_MODULE_1__.isFunction)(store[key])) {
+      refs[key] = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_0__.toRef)(store, key);
+    }
+  }
+  return refs;
+}
 
 /***/ })
 /******/ 	]);

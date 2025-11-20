@@ -26,6 +26,7 @@
   import mpx, { createPage } from '@mpxjs/core'
   import page2 from './page2.mpx?resolve'
   import store from '../store'
+  import { mapState, mapActions } from '@mpxjs/pinia'
 
   createPage({
     data: {
@@ -33,13 +34,12 @@
       list: ['Apple', 'Banana', 'Orange']
     },
     computed: {
-      count () {
-        return store.state.count
-      }
+      ...mapState(store, ['count']),
     },
     methods: {
+      ...mapActions(store, ['increment']),
       incCount() {
-        store.mutations.increment()
+        this.increment()
       },
       onInput(e) {
         this.inputVal = e.detail.value

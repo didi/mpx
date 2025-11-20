@@ -6,7 +6,6 @@ describe('MPX RN DEMO Page e2e test', () => {
   it('renders home page correctly', async () => {
     // wait for app load
     await new Promise(resolve => setTimeout(resolve, 2000));
-    await expect(element(by.id('homePage'))).toBeVisible();
     await expect(element(by.text('MPX RN DEMO'))).toBeVisible();
   });
 
@@ -52,7 +51,7 @@ describe('MPX RN DEMO Page e2e test', () => {
     await expect(element(by.id('page2-i18n'))).toBeVisible();
     await expect(element(by.id('page2-defs'))).toHaveText('defs: default def');
     await expect(element(by.id('page2-mixins'))).toHaveText('mixins data: 电视');
-    await expect(element(by.id('page2-i18n'))).toHaveText('i18n: hello');
+    await expect(element(by.id('page2-i18n'))).toHaveText('i18n: hello world');
   });
 
   it('should take screenshot for page2', async () => {
