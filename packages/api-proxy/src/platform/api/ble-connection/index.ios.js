@@ -199,7 +199,7 @@ function startBluetoothDevicesDiscovery (options = {}) {
   }
   DiscoverPeripheralSubscription = BleManager.onDiscoverPeripheral((device) => {
     const advertising = device.advertising || {}
-    const advertisData = advertising.manufacturerData && Object.values(advertising.manufacturerData)[0]?.data || null
+    const advertisData = (advertising.manufacturerData && Object.values(advertising.manufacturerData)[0]?.data) || null
     const deviceInfo = {
       deviceId: device.id,
       name: device.name || advertising.localName || '未知设备',
