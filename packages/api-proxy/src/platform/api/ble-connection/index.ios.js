@@ -404,20 +404,27 @@ function getBluetoothDevices (options = {}) { // 该能力只是获取应用级�
 
 function writeBLECharacteristicValue (options = {}) {
   const BleManager = require('react-native-ble-manager').default
-  const { deviceId, serviceId, characteristicId, value, success = noop, fail = noop, complete = noop } = options
+  const { deviceId, serviceId, characteristicId, value, writeType, success = noop, fail = noop, complete = noop } = options
   if (!deviceId || !serviceId || !characteristicId || !value) {
     const result = {
-      errMsg: 'writeBLECharacteristicValue:ok',
-      errno: 1509000
+      errMsg: 'writeBLECharacteristicValue:fail parameter error',
+      errno: 1001
     }
     success(result)
-    complete(result)
+    fail(result)
     return
   }
-
+  let writeTypeValue = writeType
+  if (!writeType) {
+    // 与小程序拉齐 iOS 未传值的情况优先 write，安卓优先 writeNoResponse 。
+    writeTypeValue = __mpx_mode__ === 'ios' ? 'write' : 'writeNoResponse'
+  }
   // 将ArrayBuffer转换为byte array
   const bytes = Array.from(new Uint8Array(value))
-  BleManager.write(deviceId, serviceId, characteristicId, bytes).then(() => {
+  const writeMethod = writeTypeValue === 'writeNoResponse'
+    ? BleManager.writeWithoutResponse(deviceId, serviceId, characteristicId, bytes)
+    : BleManager.write(deviceId, serviceId, characteristicId, bytes)
+  writeMethod.then(() => {
     const result = {
       errMsg: 'writeBLECharacteristicValue:ok'
     }
@@ -641,8 +648,7 @@ function getBLEDeviceServices (options = {}) {
   }
   BleManager.retrieveServices(deviceId).then((peripheralInfo) => {
     const services = peripheralInfo.services.map(service => ({
-      uuid: service.uuid,
-      isPrimary: true
+      uuid: service.uuid
     }))
 
     // 存储服务信息
@@ -704,7 +710,7 @@ function getBLEDeviceCharacteristics (options = {}) {
       write: !!char.properties.Write,
       notify: !!char.properties.Notify,
       indicate: !!char.properties.Indicate,
-      writeNoResponse: !!char.properties.writeWithoutResponse
+      writeNoResponse: !!char.properties.WriteWithoutResponse
     }
   }))
 
