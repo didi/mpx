@@ -1,4 +1,5 @@
 const { hump2dash } = require('../../../utils/hump-dash')
+const { parseValues } = require('../../../utils/string')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
@@ -87,28 +88,6 @@ module.exports = function getSpec ({ warn, error }) {
     for (const rule of propValueTypeRules) {
       if (rule[1].test(prop)) return rule[0]
     }
-  }
-  // 多value解析
-  const parseValues = (str, char = ' ') => {
-    let stack = 0
-    let temp = ''
-    const result = []
-    for (let i = 0; i < str.length; i++) {
-      if (str[i] === '(') {
-        stack++
-      } else if (str[i] === ')') {
-        stack--
-      }
-      // 非括号内 或者 非分隔字符且非空
-      if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
-        temp += str[i]
-      }
-      if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-        result.push(temp)
-        temp = ''
-      }
-    }
-    return result
   }
   // const getDefaultValueFromVar = (str) => {
   //   const totalVarExp = /^var\((.+)\)$/
@@ -315,7 +294,7 @@ module.exports = function getSpec ({ warn, error }) {
     switch (prop) {
       case bgPropMap.image: {
         // background-image 支持背景图/渐变/css var
-        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value)) {
+        if (cssVariableExp.test(value) || urlExp.test(value) || linearExp.test(value) || value === 'none') {
           return { prop, value }
         } else {
           error(`Value of ${prop} in ${selector} selector only support value <url()> or <linear-gradient()>, received ${value}, please check again!`)
@@ -358,6 +337,13 @@ module.exports = function getSpec ({ warn, error }) {
         if (cssVariableExp.test(value)) {
           error(`Property [${bgPropMap.all}] in ${selector} is abbreviated property and does not support CSS var`)
           return false
+        }
+        // background: none
+        if (value === 'none') {
+          return [
+            { prop: bgPropMap.image, value },
+            { prop: bgPropMap.color, value: 'transparent' }
+          ]
         }
         const bgMap = []
         const values = parseValues(value)

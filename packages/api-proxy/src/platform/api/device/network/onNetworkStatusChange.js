@@ -5,10 +5,10 @@ const oldObserveList = new Set()
 
 if (isBrowser) {
   window.addEventListener('offline', () => {
-    oldObserveList.forEach(fn => fn({ isConnected: false, type: 'none' }))
+    oldObserveList.forEach(fn => fn({ isConnected: false, networkType: 'none' }))
   })
   window.addEventListener('online', () => {
-    oldObserveList.forEach(fn => fn({ isConnected: true, type: 'unknow' }))
+    oldObserveList.forEach(fn => fn({ isConnected: true, networkType: 'unknow' }))
   })
 }
 
@@ -22,7 +22,7 @@ export function onNetworkStatusChange (callbackFn) {
       const isConnected = navigator.onLine
       callbackFn({
         isConnected,
-        type: isConnected ? evt.currentTarget.effectiveType : 'none'
+        networkType: isConnected ? evt.currentTarget.effectiveType : 'none'
       })
     }
     fnMap.set(callbackFn, proxyCallback)

@@ -130,6 +130,6 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
   return finalComponent
 })
 
-_RichText.displayName = 'mpx-rich-text'
+_RichText.displayName = 'MpxRichText'
 
 export default _RichText
