@@ -10,7 +10,8 @@ const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
-const { RESOLVE_IGNORED_ERR } = require('../utils/const')
+const { RESOLVE_IGNORED_ERR, EXTEND_COMPONENT_CONFIG } = require('../utils/const')
+const normalize = require('../utils/normalize')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
 module.exports = function (jsonContent, {
@@ -30,7 +31,8 @@ module.exports = function (jsonContent, {
     mode,
     srcMode,
     env,
-    projectRoot
+    projectRoot,
+    useExtendComponents = {}
   } = mpx
 
   const context = loaderContext.context
@@ -115,6 +117,19 @@ module.exports = function (jsonContent, {
 
     if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
+    } else {
+      if (useExtendComponents[mode]) {
+        const extendComponents = {}
+        useExtendComponents[mode].forEach((name) => {
+          const componentConfig = EXTEND_COMPONENT_CONFIG[name]
+          if (componentConfig && componentConfig[mode]) {
+            extendComponents[name] = normalize.lib(componentConfig[mode])
+          } else {
+            emitWarning(`extend component ${name} is not supported in ${mode} environment!`)
+          }
+        })
+        jsonObj.usingComponents = Object.assign({}, extendComponents, jsonObj.usingComponents)
+      }
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)
