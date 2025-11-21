@@ -45,7 +45,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         // 修复 Android 点击键盘收起按钮时当前 input 没触发失焦的问题
         inputRef.blur()
       }
-      keyboardAvoid.current = null
+      if (!keyboardAvoid.current.onKeyboardShow) {
+        keyboardAvoid.current = null
+      }
     }
 
     cancelAnimation(offset)

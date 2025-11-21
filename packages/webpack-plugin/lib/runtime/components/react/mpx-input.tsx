@@ -301,16 +301,16 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       setKeyboardAvoidContext()
     }
 
-    if (bindfocus && keyboardAvoid?.current) {
+    if (keyboardAvoid?.current) {
       const focusAction = () => {
-        bindfocus(
+        bindfocus?.(
           getCustomEvent(
             'focus',
             evt,
             {
               detail: {
                 value: tmpValue.current || '',
-                height: keyboardAvoid.current?.keyboardHeight,
+                height: keyboardAvoid.current?.keyboardHeight
               },
               layoutRef
             },
