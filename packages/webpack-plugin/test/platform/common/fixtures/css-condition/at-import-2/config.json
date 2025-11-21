@@ -1,5 +1,6 @@
 {
     "defs": {
-        "isMobile": true
+        "isMobile": true,
+        "__mpx_mode__": "ios"
     }
 }
