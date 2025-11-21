@@ -97,10 +97,10 @@ sixSection:
     details: 页面桥接
     icon: https://dpubstatic.udache.com/static/dpubimg/trdVxyR_5_/kaifa_icon_6.png
     actionLink: /api/extend.html#webview-bridge
-  - title: '@mpxjs/vscode-plugin ide'
-    details: 插件
+  - title: 'Mpx language tools'
+    details: IDE 插件等语言工具
     icon: https://dpubstatic.udache.com/static/dpubimg/PczNH3wywM/kaifa_icon_7.png
-    actionLink: https://marketplace.visualstudio.com/items?itemName=pagnkelly.mpx
+    actionLink: https://github.com/mpx-ecology/language-tools
   - title: '@mpxjs/es-check'
     details: 高级语法检查
     icon: https://dpubstatic.udache.com/static/dpubimg/qXb0ZEY4xN/kaifa_icon_8.png

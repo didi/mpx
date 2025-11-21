@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
@@ -156,6 +156,8 @@ const selfPercentRule: Record<string, 'height' | 'width'> = {
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
+  minHeight: true,
+  maxHeight: true,
   top: true,
   bottom: true
 }
@@ -310,7 +312,7 @@ function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
-  const transform: {[propName: string]: string|number|number[]}[] = []
+  const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
     if (match && match.length >= 3) {
@@ -785,13 +787,11 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   const gesture = useMemo(() => {
     return Gesture.Pan()
       .onTouchesDown(() => {
-        'worklet'
-        runOnJS(setStartTimer)()
+        setStartTimer()
       })
       .onTouchesUp(() => {
-        'worklet'
-        runOnJS(setStayTimer)()
-      })
+        setStayTimer()
+      }).runOnJS(true)
   }, [])
 
   if (gestureRef) {
@@ -802,4 +802,20 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
     isHover,
     gesture
   }
+}
+
+export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<string, AnyFunc>>) {
+  const invokeCallback = useCallback((key: string, ...args: any) => {
+    const callback = callbackMapRef.current[key]
+    // eslint-disable-next-line node/no-callback-literal
+    if (isFunction(callback)) return callback(...args)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      callbackMapRef.current = {}
+    }
+  }, [])
+
+  return invokeCallback
 }

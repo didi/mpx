@@ -31,7 +31,7 @@ module.exports = function (raw) {
   const ctorType = queryObj.ctorType
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
-  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath)
+  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath, false, queryObj.moduleId ? null : this)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
