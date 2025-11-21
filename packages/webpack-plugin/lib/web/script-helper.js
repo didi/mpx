@@ -13,7 +13,7 @@ function stringifyRequest (loaderContext, request) {
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
-    return `/* webpackChunkName: "${chunkName}" */`
+    return `/* webpackChunkName: "${chunkName}/index" */`
   }
   return ''
 }
@@ -186,13 +186,17 @@ function buildGlobalParams ({
   return content
 }
 
-function buildI18n ({ i18n, loaderContext }) {
+function buildI18n ({ i18n, isMain, loaderContext }) {
   let i18nContent = ''
   const i18nObj = Object.assign({}, i18n)
-  i18nContent += `
-  import VueI18n from 'vue-i18n'
+  if (!isMain) {
+    i18nContent += `import Vue from 'vue'
+    import Mpx from '@mpxjs/core'\n`
+  }
+  i18nContent += `import VueI18n from 'vue-i18n'
   import { createI18n } from 'vue-i18n-bridge'
-  Vue.use(VueI18n , { bridge: true })\n`
+  if (!Mpx.i18n) {
+    Vue.use(VueI18n , { bridge: true })\n`
   const requestObj = {}
   const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
   i18nKeys.forEach((key) => {
@@ -201,15 +205,16 @@ function buildI18n ({ i18n, loaderContext }) {
       delete i18nObj[`${key}Path`]
     }
   })
-  i18nContent += `  var i18nCfg = ${JSON.stringify(i18nObj)}\n`
+  i18nContent += `    var i18nCfg = ${JSON.stringify(i18nObj)}\n`
   Object.keys(requestObj).forEach((key) => {
-    i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
+    i18nContent += `    i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += `
-  i18nCfg.legacy = false
-  var i18n = createI18n(i18nCfg, VueI18n)
-  Vue.use(i18n)
-  Mpx.i18n = i18n\n`
+    i18nCfg.legacy = false
+    var i18n = createI18n(i18nCfg, VueI18n)
+    Vue.use(i18n)
+    Mpx.i18n = i18n
+  }\n`
   return i18nContent
 }
 

@@ -113,7 +113,7 @@ module.exports = function (template, {
         output += `var ${module} = require(${loaderUtils.stringifyRequest(this, src)});\n`
       }
 
-      const rawCode = genNode(root)
+      const rawCode = genNode(root, true)
       if (rawCode) {
         try {
           const ignoreMap = Object.assign({

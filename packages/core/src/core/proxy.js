@@ -101,6 +101,7 @@ function preProcessRenderData (renderData) {
   })
   return processedRenderData
 }
+
 export default class MpxProxy {
   constructor (options, target, reCreated) {
     this.target = target
@@ -111,6 +112,7 @@ export default class MpxProxy {
     this.name = options.name || ''
     this.options = options
     this.shallowReactivePattern = this.options.options?.shallowReactivePattern
+    this.disconnectOnUnmounted = !!this.options.options?.disconnectOnUnmounted
     // beforeCreate -> created -> mounted -> unmounted
     this.state = BEFORECREATE
     this.ignoreProxyMap = makeMap(Mpx.config.ignoreProxyWhiteList)
@@ -257,6 +259,21 @@ export default class MpxProxy {
         observer.disconnect()
       })
     }
+    // 临时规避Reanimated worklet闭包捕获导致的内存泄漏问题
+    if (isReact && this.disconnectOnUnmounted) {
+      Object.keys(this.localKeysMap).forEach((key) => {
+        delete this.target[key]
+      })
+      Object.keys(this.props).forEach((key) => {
+        delete this.target[key]
+      })
+      this.scope = null
+      this.data = null
+      this.props = null
+      this.renderData = null
+      this.miniRenderData = null
+      this.forceUpdateData = null
+    }
   }
 
   isUnmounted () {
@@ -266,10 +283,10 @@ export default class MpxProxy {
   createProxyConflictHandler (owner) {
     return (key) => {
       if (this.ignoreProxyMap[key]) {
-        !this.reCreated && error(`The ${owner} key [${key}] is a reserved keyword of miniprogram, please check and rename it.`, this.options.mpxFileResource)
+        error(`The ${owner} key [${key}] is a reserved keyword of miniprogram, please check and rename it.`, this.options.mpxFileResource)
         return false
       }
-      !this.reCreated && error(`The ${owner} key [${key}] exist in the current instance already, please check and rename it.`, this.options.mpxFileResource)
+      if (!this.reCreated) error(`The ${owner} key [${key}] exist in the current instance already, please check and rename it.`, this.options.mpxFileResource)
     }
   }
 
@@ -317,7 +334,8 @@ export default class MpxProxy {
           selectAllComponents: this.target.selectAllComponents.bind(this.target),
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
-          getPageId: this.target.getPageId.bind(this.target)
+          getPageId: this.target.getPageId.bind(this.target),
+          getOpenerEventChannel: this.target.getOpenerEventChannel.bind(this.target)
         }
       ])
       if (!isObject(setupResult)) {
@@ -467,10 +485,16 @@ export default class MpxProxy {
     return res
   }
 
-  collectLocalKeys (data, filter = () => true) {
-    Object.keys(data).filter((key) => filter(key, data[key])).forEach((key) => {
-      this.localKeysMap[key] = true
-    })
+  collectLocalKeys (data, filter) {
+    if (isFunction(filter)) {
+      Object.keys(data).filter((key) => filter(key, data[key])).forEach((key) => {
+        this.localKeysMap[key] = true
+      })
+    } else {
+      Object.keys(data).forEach((key) => {
+        this.localKeysMap[key] = true
+      })
+    }
   }
 
   callHook (hookName, params, hooksOnly) {
@@ -478,11 +502,19 @@ export default class MpxProxy {
     const hooks = this.hooks[hookName] || []
     let result
     if (isFunction(hook) && !hooksOnly) {
+      const setContext = hookName !== BEFORECREATE
+      if (setContext) {
+        setCurrentInstance(this)
+      }
       result = callWithErrorHandling(hook.bind(this.target), this, `${hookName} hook`, params)
+      if (setContext) {
+        unsetCurrentInstance()
+      }
     }
     hooks.forEach((hook) => {
       result = params ? hook(...params) : hook()
     })
+
     return result
   }
 

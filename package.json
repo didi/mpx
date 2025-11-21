@@ -12,7 +12,7 @@
     "docs:dev": "vitepress dev docs-vitepress",
     "docs:build": "vitepress build docs-vitepress",
     "docs:preview": "vitepress preview docs-vitepress",
-    "tsc:build": "npm --workspace=./packages/webpack-plugin run build"
+    "build:tsc": "npm --workspace=./packages/webpack-plugin run build"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

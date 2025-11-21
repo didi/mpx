@@ -10,7 +10,8 @@ export function init (Mpx) {
     show: [],
     hide: [],
     error: [],
-    rejection: []
+    rejection: [],
+    lazyLoad: []
   }
   global.__navigationHelper = navigationHelper
   if (global.i18n) {

@@ -17,6 +17,18 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-progress'
     },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-progress'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-progress'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-progress'
+    },
     props: [
       {
         test: /^(border-radius|font-size|color|active-mode|duration)$/,

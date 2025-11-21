@@ -5,14 +5,14 @@ const { resolveDist, resolve } = require('../util')
 function loadComponent (componentPathStr) {
   const outputMap = require(resolveDist('outputMap.json', 'wx'))
   const componentPath = resolve(componentPathStr)
-  const realComponentPath = resolveDist(outputMap[componentPath], 'wx')
+  const realComponentPath = resolveDist(outputMap.outputPathMap[componentPath], 'wx')
   return simulate.load(realComponentPath, undefined, { rootPath: resolveDist('', 'wx') })
 }
 
 function getBuildOutFilePath (componentPathStr, mode) {
   const outputMap = require(resolveDist('outputMap.json', mode))
   const componentPath = resolve(componentPathStr)
-  return resolveDist(outputMap[componentPath], mode)
+  return resolveDist(outputMap.outputPathMap[componentPath], mode)
 }
 
 function readFile (path) {

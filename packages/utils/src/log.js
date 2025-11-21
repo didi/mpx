@@ -29,7 +29,7 @@ export function warn (msg, location, e) {
 
 export function error (msg, location, e) {
   const errorHandler = mpxGlobal.__mpx?.config.errorHandler
-  if (isDev && !e) {
+  if (!e) {
     e = new Error('Mpx runtime error')
   }
   if (isFunction(errorHandler)) {
@@ -45,6 +45,7 @@ function log (type, msg, location, e) {
     if (location) {
       header = `[Mpx runtime ${type} at ${location}]: `
     }
+
     console[type](header + msg)
     if (e) console[type](e)
   }

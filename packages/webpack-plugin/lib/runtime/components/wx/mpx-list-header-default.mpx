@@ -1,0 +1,21 @@
+<template>
+  <view class="mpx-list-header-default">
+    <view class="mpx-default-content">list-header-default</view>
+  </view>
+</template>
+
+<style lang="stylus" scoped>
+.mpx-list-header-default
+  margin 4px 16px
+  padding 16px
+  background #fff
+  border-radius 8px
+  box-shadow 0 2px 4px rgba(0,0,0,0.1)
+
+.mpx-default-content
+  display flex
+  flex-direction column
+  font-size 14px
+  color #666
+
+</style>
