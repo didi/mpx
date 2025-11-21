@@ -10,7 +10,8 @@ const getJSONContent = require('../utils/get-json-content')
 const resolve = require('../utils/resolve')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
-const { RESOLVE_IGNORED_ERR, EXTEND_COMPONENTS_LIST } = require('../utils/const')
+const { RESOLVE_IGNORED_ERR, EXTEND_COMPONENT_CONFIG } = require('../utils/const')
+const normalize = require('../utils/normalize')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 
 module.exports = function (jsonContent, {
@@ -120,8 +121,9 @@ module.exports = function (jsonContent, {
       if (useExtendComponents[mode]) {
         const extendComponents = {}
         useExtendComponents[mode].forEach((name) => {
-          if (EXTEND_COMPONENTS_LIST[mode].includes(name)) {
-            extendComponents[name] = require.resolve(`../runtime/components/web/mpx-${name}.vue`)
+          const componentConfig = EXTEND_COMPONENT_CONFIG[name]
+          if (componentConfig && componentConfig[mode]) {
+            extendComponents[name] = normalize.lib(componentConfig[mode])
           } else {
             emitWarning(`extend component ${name} is not supported in ${mode} environment!`)
           }

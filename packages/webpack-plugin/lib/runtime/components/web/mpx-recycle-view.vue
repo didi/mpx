@@ -15,19 +15,19 @@
       :style="scrollViewStyle"
     >
       <div class="content-wrapper">
-        <template v-if="genericlistHeader">
+        <template v-if="useListHeader">
           <list-header :listHeaderData="listHeaderData"></list-header>
         </template>
         <div class="infinite-list-placeholder" ref="infinitePlaceholder"></div>
         <div class="infinite-list" ref="infiniteList">
           <template v-for="item in visibleData">
             <section-header
-              v-if="item.itemData.isSectionHeader && genericsectionHeader"
+              v-if="item.itemData.isSectionHeader"
               :key="'header' + item._index"
               :itemData="item.itemData"
             />
             <recycle-item
-              v-if="!item.itemData.isSectionHeader && genericrecycleItem"
+              v-if="!item.itemData.isSectionHeader"
               :key="'item' + item._index"
               :itemData="item.itemData"
             />
@@ -135,6 +135,10 @@ export default {
       type: Boolean,
       default: false
     },
+    useListHeader: {
+      type: Boolean,
+      default: true
+    },
     generichash: String,
     genericlistHeader: String,
     genericrecycleItem: String,
@@ -234,7 +238,7 @@ export default {
     },
     _listHeaderHeight() {
       let listHeaderHeight = 0;
-      if (this.genericlistHeader) {
+      if (this.useListHeader) {
         listHeaderHeight =
           this.getItemHeight(this.listHeaderData, 0, "listHeaderHeight") || 0;
       }
