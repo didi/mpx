@@ -4,7 +4,7 @@ const { trimBlankRow } = require('../../../lib/utils/string')
 describe('render function simplify should correct', function () {
   it('should normal delete is correct', function () {
     const input = `
-      global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+      global.currentInject.render = function (_i, _c, _r, _sc) {
         a;
         if (a) {}
 
@@ -35,7 +35,7 @@ describe('render function simplify should correct', function () {
         this._p(obj3)
         String(obj3,'123').b.c
         !!!String(obj3).b.c;
-        mpx_i(obj3, function() {})
+        _i(obj3, function() {})
 
         obj5
         !obj5
@@ -58,43 +58,43 @@ describe('render function simplify should correct', function () {
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
-  if (mpx_sc("a")) {}
+global.currentInject.render = function (_i, _c, _r, _sc) {
+  if (_sc("a")) {}
 
-  mpx_sc("b");
-  mpx_sc("c");
+  _sc("b");
+  _sc("c");
 
-  mpx_sc("a") ? "" : "";
-  mpx_sc("a") && mpx_sc("b");
+  _sc("a") ? "" : "";
+  _sc("a") && _sc("b");
 
-  mpx_sc("d");
+  _sc("d");
 
-  mpx_sc("e");
+  _sc("e");
 
-  mpx_sc("a") ? "" : "";
+  _sc("a") ? "" : "";
 
-  if (mpx_sc("f") + mpx_sc("g")) {}
+  if (_sc("f") + _sc("g")) {}
 
-  mpx_sc("obj1");
+  _sc("obj1");
 
-  mpx_sc("obj2");
+  _sc("obj2");
 
-  mpx_i(mpx_sc("obj3"), function () {});
+  _i(_sc("obj3"), function () {});
 
-  mpx_sc("obj5");
+  _sc("obj5");
 
-  mpx_sc("name");
+  _sc("name");
 
-  mpx_sc("nameage");
+  _sc("nameage");
 
-  mpx_sc("handlerName");
+  _sc("handlerName");
 
   ({
     tap: [["handler", true, 123]],
     click: [["handler", ""]]
   });
 
-  mpx_sc("aName");
+  _sc("aName");
 
   ({
     open: true,
@@ -107,7 +107,7 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
 
   it('should computed delete is correct', function () {
     const input = `
-      global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+      global.currentInject.render = function (_i, _c, _r, _sc) {
         a.b
         if (a['b']) {}
         c;
@@ -125,26 +125,26 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
-  if (mpx_c("a.b")) {}
+global.currentInject.render = function (_i, _c, _r, _sc) {
+  if (_c("a.b")) {}
 
-  mpx_sc("a")[mpx_sc("c")];
-  mpx_c("a.b")[mpx_c("c.d")];
+  _sc("a")[_sc("c")];
+  _c("a.b")[_c("c.d")];
 
-  mpx_c("e1[0].name");
-  mpx_sc("e2")["a.b.c"];
-  mpx_sc("f1")["a.b.c"]["d"];
-  mpx_c("f2.a")["b.c.d"];
-  mpx_c("g1.a")["b.c"].d;
-  mpx_c("g2.a.b.c.d");
-  mpx_c("g3.a.b")["c.d"].e;
+  _c("e1[0].name");
+  _sc("e2")["a.b.c"];
+  _sc("f1")["a.b.c"]["d"];
+  _c("f2.a")["b.c.d"];
+  _c("g1.a")["b.c"].d;
+  _c("g2.a.b.c.d");
+  _c("g3.a.b")["c.d"].e;
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
 
   it('should expression delete is correct', function () {
     const input = `
-      global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+      global.currentInject.render = function (_i, _c, _r, _sc) {
         // 逻辑运算          
         obj3 || ''
         obj3 && obj3.b
@@ -201,79 +201,79 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
 
         obj13;
         obj14;
-        mpx_i([obj13, obj14], function() {});
+        _i([obj13, obj14], function() {});
       }`
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+global.currentInject.render = function (_i, _c, _r, _sc) {
   // 逻辑运算          
-  mpx_sc("obj3") || '';
-  mpx_sc("obj3") && mpx_c("obj3.b");
+  _sc("obj3") || '';
+  _sc("obj3") && _c("obj3.b");
 
-  mpx_sc("obj4");
-  '' || 123 || mpx_sc("obj4");
-  mpx_sc("obj5") || 123 || '';
+  _sc("obj4");
+  '' || 123 || _sc("obj4");
+  _sc("obj5") || 123 || '';
   
-  mpx_sc("obj6");
-  mpx_sc("obj6") || mpx_sc("obj7") || '';
+  _sc("obj6");
+  _sc("obj6") || _sc("obj7") || '';
 
-  mpx_sc("a1");
-  mpx_sc("b1");
+  _sc("a1");
+  _sc("b1");
 
-  mpx_sc("c1");
+  _sc("c1");
 
-  mpx_sc("a1") || mpx_sc("b1") || mpx_sc("c1");
+  _sc("a1") || _sc("b1") || _sc("c1");
 
-  mpx_sc("a2");
-  mpx_sc("b2");
+  _sc("a2");
+  _sc("b2");
 
-  mpx_sc("a2") || mpx_sc("b2") || '';
+  _sc("a2") || _sc("b2") || '';
 
-  mpx_sc("a3");
-  mpx_sc("c3");
+  _sc("a3");
+  _sc("c3");
 
-  mpx_sc("a3") || '' || mpx_sc("c3");
+  _sc("a3") || '' || _sc("c3");
 
-  mpx_sc("a4");
+  _sc("a4");
 
-  mpx_sc("b5");
+  _sc("b5");
 
-  mpx_sc("c5");
+  _sc("c5");
 
-  mpx_sc("a5") && mpx_sc("b5");
+  _sc("a5") && _sc("b5");
 
-  if (mpx_sc("a5") && mpx_sc("b5")) {}
+  if (_sc("a5") && _sc("b5")) {}
 
-  if (mpx_sc("a5") ? mpx_sc("b5") : mpx_sc("c5")) {}
+  if (_sc("a5") ? _sc("b5") : _sc("c5")) {}
   
-  mpx_sc("a6") ? mpx_sc("b6") : mpx_sc("c6"); // b6 c6只出现一次，不会被删除
+  _sc("a6") ? _sc("b6") : _sc("c6"); // b6 c6只出现一次，不会被删除
 
-  mpx_sc("b7");
-  mpx_sc("a7") ? "" : mpx_sc("c7");
+  _sc("b7");
+  _sc("a7") ? "" : _sc("c7");
 
-  mpx_sc("obj8");
+  _sc("obj8");
   "" + 'rpx';
   'height:' + "" + 'rpx';
   'height' + ':' + "";
   
-  mpx_sc("obj9");
+  _sc("obj9");
 
-  mpx_sc("obj10");
+  _sc("obj10");
 
-  mpx_sc("obj11");
+  _sc("obj11");
 
-  mpx_sc("obj12");
+  _sc("obj12");
 
-  mpx_sc("obj9") || mpx_sc("obj10") || mpx_sc("obj11") && mpx_sc("obj12");
+  _sc("obj9") || _sc("obj10") || _sc("obj11") && _sc("obj12");
 
-  mpx_i([mpx_sc("obj13"), mpx_sc("obj14")], function () {});
+  _i([_sc("obj13"), _sc("obj14")], function () {});
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
   })
 
   it('should backtrack variable deletion is correct', function () {
     const input = `
-    global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+    global.currentInject.render = function (_i, _c, _r, _sc) {
       a
       {
         c
@@ -294,23 +294,23 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
     `
     const res = bindThis(input, { needCollect: true, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
-  mpx_sc("a");
+global.currentInject.render = function (_i, _c, _r, _sc) {
+  _sc("a");
 
   {
-    mpx_sc("c");
+    _sc("c");
 
     {}
 
-    mpx_sc("aa"); // 分割线
+    _sc("aa"); // 分割线
 
 
     {
-      mpx_sc("d");
+      _sc("d");
     }
   }
 
-  mpx_sc("b");
+  _sc("b");
 
 };`
     expect(trimBlankRow(res)).toBe(trimBlankRow(output))
@@ -318,8 +318,8 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
 
   it('should scope var is correct', function () {
     const input = `
-      global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
-        this.mpx_i(list, function (item, index) {
+      global.currentInject.render = function (_i, _c, _r, _sc) {
+        this._i(list, function (item, index) {
           item;
           index;
           item.a ? "" : item.b;
@@ -330,8 +330,8 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
     `
     const res = bindThis(input, { needCollect: false, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
-  this.mpx_i(this.list, function (item, index) {
+global.currentInject.render = function (_i, _c, _r, _sc) {
+  this._i(this.list, function (item, index) {
     item.a ? "" : "";
     item.a || item.b;
   });
@@ -341,7 +341,7 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
 
   it('should propKeys is correct', function () {
     const input = `
-      global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+      global.currentInject.render = function (_i, _c, _r, _sc) {
         this._p(a);
         this._p(a + b);
         this._p(a && c);
@@ -356,7 +356,7 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
 
   it('should needCollect config is correct', function () {
     const input = `
-      global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+      global.currentInject.render = function (_i, _c, _r, _sc) {
         name;
         !name;
         !!name;
@@ -385,7 +385,7 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
     `
     const res = bindThis(input, { needCollect: false, renderReduce: true }).code
     const output = `
-global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+global.currentInject.render = function (_i, _c, _r, _sc) {
   this.name;
 
   this.name3[this.name2];
@@ -408,7 +408,7 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
 
   it('should wxs is correct', function () {
     const input = `
-      global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
+      global.currentInject.render = function (_i, _c, _r, _sc) {
         a;
         tools.hexToRgba(a);
 
@@ -441,29 +441,29 @@ global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
       }
     }).code
     const output = `
-global.currentInject.render = function (mpx_i, mpx_c, mpx_r, mpx_sc) {
-  mpx_sc("a");
+global.currentInject.render = function (_i, _c, _r, _sc) {
+  _sc("a");
 
-  mpx_sc("b");
+  _sc("b");
 
   0 ? "" : 1;
   0 ? "" : 1;
-  mpx_sc("c");
+  _sc("c");
 
-  tools(mpx_sc("d"), tools(mpx_sc("e")));
-  tools(mpx_sc("d"), tools(mpx_sc("e"), 1));
+  tools(_sc("d"), tools(_sc("e")));
+  tools(_sc("d"), tools(_sc("e"), 1));
 
-  mpx_sc("a2");
-  mpx_sc("a3");
-  mpx_sc("a4");
-  mpx_sc("a5");
-  mpx_sc("a6");
-  tools(mpx_sc("a1")) ? mpx_sc("a2") || (mpx_sc("a3") || mpx_sc("a4")) && mpx_sc("a5") : "";
+  _sc("a2");
+  _sc("a3");
+  _sc("a4");
+  _sc("a5");
+  _sc("a6");
+  tools(_sc("a1")) ? _sc("a2") || (_sc("a3") || _sc("a4")) && _sc("a5") : "";
 
-  mpx_sc("a8");
-  mpx_sc("a9");
-  mpx_sc("a10");
-  mpx_sc("a7") + '' ? "" : {
+  _sc("a8");
+  _sc("a9");
+  _sc("a10");
+  _sc("a7") + '' ? "" : {
     name: "" + ""
   };
 };`
