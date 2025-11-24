@@ -19,7 +19,6 @@ module.exports = function loader (content, prevOptions) {
   })
 
   let outputPath = url
-  const { resourcePath, queryObj } = parseRequest(this.resource)
 
   if (options.publicPath) {
     if (options.outputPathCDN) {
@@ -30,19 +29,13 @@ module.exports = function loader (content, prevOptions) {
       }
     }
   } else {
+    const { resourcePath, queryObj } = parseRequest(this.resource)
     const packageRoot = queryObj.packageRoot || ''
     url = outputPath = toPosix(path.join(packageRoot, outputPath))
     this._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'staticResource', outputPath, packageRoot))
   }
 
-  let publicPath
-
-  // 快手小程序 tabbar icon 资源路径不能以 / 开头
-  if (queryObj.from === 'tabbar' && mode === 'ks') {
-    publicPath = JSON.stringify(url)
-  } else {
-    publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
-  }
+  let publicPath = `__webpack_public_path__ + ${JSON.stringify(url)}`
 
   if (isRN) {
     publicPath = `__mpx_require_external__(${JSON.stringify(url)})`
