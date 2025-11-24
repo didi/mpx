@@ -128,7 +128,7 @@ module.exports = function (raw) {
         })
       resultSource += `global.currentInject.render = function (_i, _c, _r, _sc) {
 ${bindResult.code}
-mpx_r(${optimizeRenderLevel === 2 ? 'true' : ''});
+_r(${optimizeRenderLevel === 2 ? 'true' : ''});
 };\n`
       if ((mode === 'tt' || mode === 'swan') && bindResult.propKeys) {
         resultSource += `global.currentInject.propKeys = ${JSON.stringify(bindResult.propKeys)};\n`
