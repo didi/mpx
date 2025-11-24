@@ -1,12 +1,11 @@
 <template>
   <view class="mpx-sticky-section">
-      <slot></slot>
-    </view>
+    <slot></slot>
   </view>
 </template>
 
 <script>
-  import mpx, { createComponent } from '@mpxjs/core'
+  import { createComponent } from '@mpxjs/core'
 
   createComponent({
     

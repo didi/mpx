@@ -4,7 +4,6 @@
       id="scrollViewContainer"
       class="scroll-view-container"
       wx:ref="mpxRecycleView"
-      enableSticky="{{enableSticky}}"
       scroll-y="{{true}}"
       scroll-top="{{scrollTop}}"
       enhanced="{{enhanced}}"
@@ -18,7 +17,7 @@
       wx:style="{{scrollViewStyle}}"
     >
       <view class="content-wrapper">
-        <block wx:if="{{mpxGenericListHeader}}">
+        <block wx:if="{{useListHeader}}">
           <list-header listHeaderData="{{listHeaderData}}"></list-header>
         </block>
         <view
@@ -29,12 +28,12 @@
         <view class="infinite-list" ref="infiniteList" wx:style="{{infiniteListStyle}}">
           <block wx:for="{{visibleData}}">
             <section-header
-              wx:if="{{item.itemData.isSectionHeader && mpxGenericSectionHeader}}"
+              wx:if="{{item.itemData.isSectionHeader}}"
               wx:key="header{{_index}}"
               itemData="{{item.itemData}}"
             />
             <recycle-item
-              wx:if="{{!item.itemData.isSectionHeader && mpxGenericRecycleItem}}"
+              wx:if="{{!item.itemData.isSectionHeader}}"
               wx:key="item{{_index}}"
               itemData="{{item.itemData}}"
             />
@@ -45,8 +44,7 @@
         wx:if="{{ _stickyHeaders &&
           _stickyHeaders.length &&
           positions.length && 
-          enableSticky &&
-          mpxGenericSectionHeader
+          enableSticky
         }}"
       >
         <sticky-header
@@ -145,9 +143,6 @@
         type: Number,
         value: 300
       },
-      mpxGenericRecycleItem: String,
-      mpxGenericSectionHeader: String,
-      mpxGenericListHeader: String,
       enablePolling: {
         type: Boolean,
         value: false
@@ -155,6 +150,10 @@
       pollingDuration: {
         type: Number,
         value: 3000
+      },
+      useListHeader: {
+        type: Boolean,
+        value: true
       }
     },
     data: {
@@ -243,7 +242,7 @@
       },
       _listHeaderHeight() {
         let listHeaderHeight = 0
-        if (this.mpxGenericListHeader) {
+        if (this.useListHeader) {
           listHeaderHeight = this.getItemHeight(this.listHeaderData, 0, 'listHeaderHeight') || 0
         }
         return listHeaderHeight
@@ -506,13 +505,13 @@
     },
     "componentGenerics": {
       "recycle-item": {
-        "default": "./mpx-view.mpx"
+        "default": "../wx/mpx-recycle-item-default.mpx"
       },
       "section-header": {
-        "default": "./mpx-view.mpx"
+        "default": "../wx/mpx-section-header-default.mpx"
       },
       "list-header": {
-        "default": "./mpx-view.mpx"
+        "default": "../wx/mpx-list-header-default.mpx"
       }
     }
   }

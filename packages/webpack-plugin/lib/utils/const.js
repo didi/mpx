@@ -16,6 +16,12 @@ module.exports = {
       ios: 'runtime/components/react/dist/mpx-recycle-view.jsx',
       android: 'runtime/components/react/dist/mpx-recycle-view.jsx',
       harmony: 'runtime/components/react/dist/mpx-recycle-view.jsx'
+    },
+    'sticky-header': {
+      ali: 'runtime/components/ali/mpx-sticky-header.mpx'
+    },
+    'sticky-section': {
+      ali: 'runtime/components/ali/mpx-sticky-section.mpx'
     }
   },
   MPX_TAG_PAGE_SELECTOR: 'mpx-page'
