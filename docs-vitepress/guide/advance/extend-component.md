@@ -11,7 +11,7 @@
 | height                | String/Number | 100%    | 组件高度                | 全平台    |
 | width                 | String/Number | 100%    | 组件宽度                | 全平台    |
 | listData              | Array       | []       | 列表数据，含分组结构    | 全平台    |
-| enable-sticky          | Boolean     | false    | 启用分组吸顶            | 全平台    |
+| enable-sticky          | Boolean     | false    | 启用分组吸顶            | 全平台<br>⚠️在微信小程序环境，需要使用 skyline 渲染模式，webview 模式不支持    |
 | scroll-with-animation   | Boolean     | false    | 滚动动画                | 全平台    |
 | generic:recycle-item         | string      |       | 列表项，抽象节点组件名，对应组件需要通过 usingComponents 注册               | 全平台  |
 | generic:section-header    | string      |       | 列表分组头，抽象节点组件名，对应组件需要通过 usingComponents 注册          | 全平台  |
