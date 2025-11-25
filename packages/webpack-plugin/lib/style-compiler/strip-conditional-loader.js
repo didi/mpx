@@ -226,7 +226,6 @@ async function atImport(options) {
   let importList = []
   let importMatch
   while ((importMatch = importRegex.exec(css))) {
-    console.log('found import', importMatch)
     const sep = importMatch[1] || ''
     const fullMatch = importMatch[0]
     const importSyntax = fullMatch.trim()

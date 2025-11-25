@@ -199,9 +199,7 @@ async function rebaseUrls(file, rootFile, content, resolver, ignoreUrl) {
     if (ignoreUrl?.(unquotedUrl, rawUrl)) return false
     if (unquotedUrl[0] === '/') return unquotedUrl
     const absolute = (await resolver(unquotedUrl, file)) || path.resolve(fileDir, unquotedUrl)
-    console.log('rebasing url', { unquotedUrl, absolute, fileDir, file })
     const relative = path.relative(rootDir, absolute)
-    console.log('rebasing url', { relative, unquotedUrl, absolute, fileDir, file })
     return normalizePath(relative)
   }
 
