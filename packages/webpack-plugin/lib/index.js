@@ -58,7 +58,7 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
-const styleStripConditionalPath = normalize.lib('style-compiler/strip-conditional-loader')
+const stylecssConditionPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -129,10 +129,37 @@ class EntryNode {
   }
 }
 
+/**
+ * @typedef {Object} CssConditionOptions
+ * @property {boolean} before 是否开启样式条件编译前置处理
+ * @property {boolean} after 是否开启样式条件编译后置处理
+ * @property {(string|RegExp)[]} beforeExclude 前置处理排除的文件
+ * @property {(string|RegExp)[]} afterExclude 后置处理排除的文件
+ * @property {boolean} legacy 降级到旧版编译
+ * @property {boolean} beforeLegacy scss-loader, less-loader, stylus-loader 等 loader 前置编译降级到旧版编译
+ * @property {boolean} afterLegacy scss-loader, less-loader, stylus-loader 等 loader 后置编译降级到旧版编译
+ *
+ * @typedef {Object} CssOptions
+ * @property {CssConditionOptions} cssCondition 样式条件编译配置
+ */
+
+/**
+ * @typedef {Object} MpxWebpackPluginOptions
+ * @property {CssOptions} style 样式相关配置
+ */
+
 class MpxWebpackPlugin {
+  /**
+   *
+   * @param {MpxWebpackPluginOptions} options
+   */
   constructor (options = {}) {
     options.mode = options.mode || 'wx'
     options.env = options.env || ''
+    options.style = options.style || {}
+    options.style.cssCondition = options.style.cssCondition ?? {}
+    options.style.cssCondition.before = options.style.cssCondition.before ?? true
+    options.style.cssCondition.after = options.style.cssCondition.after ?? true
     options.srcMode = options.srcMode || options.mode
     if (options.mode !== options.srcMode && options.srcMode !== 'wx') {
       errors.push('MpxWebpackPlugin supports srcMode to be "wx" only temporarily!')
@@ -323,6 +350,7 @@ class MpxWebpackPlugin {
   }
 
   apply (compiler) {
+    const options = this.options
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -1934,8 +1962,12 @@ try {
             .find(index => index !== -1)
 
           if (targetIndex !== undefined) {
-            loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
-            loaders.splice(targetIndex, 0, { loader: styleStripConditionalPath })
+            if (options.style.cssCondition.before) {
+              loaders.splice(targetIndex + 1, 0, { loader: stylecssConditionPath, options: { ...options.style.cssCondition, stage: 'before' } })
+            }
+            if (options.style.cssCondition.after) {
+              loaders.splice(targetIndex, 0, { loader: stylecssConditionPath, options: { ...options.style.cssCondition, stage: 'after' } })
+            }
           }
         }
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
@@ -2088,3 +2120,12 @@ try {
 }
 
 module.exports = MpxWebpackPlugin
+
+/**
+ * 定义 MpxWebpackPlugin 的配置
+ * @param {MpxWebpackPluginOptions} options - 插件选项
+ * @returns {MpxWebpackPluginOptions}
+ */
+module.exports.defineConfig = function defineConfig(options) {
+  return options
+}

@@ -14,5 +14,7 @@
 @import url('https://www.baidu.com/style.css');
 @import url('data://www.baidu.com/style.css');
 @import url('http://www.baidu.com/style.css');
-@import url('file:/./foo.css');
+
+@import "nested/foo.css";
+
 ```
