@@ -2941,7 +2941,7 @@ function processTextMaxLines (el) {
 
   const parsed = parseMustacheWithContext(maxLinesAttr.val)
 
-  const singleLineStyleStr = `"display:inline-block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"`
+  const singleLineStyleStr = '"display:inline-block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"'
   const multiLineStyleStr = `"display:-webkit-box;max-width:100%;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:" + (${parsed.result}) + ";"`
   const linesStyleStr = `((${parsed.result}) <= 1 ? ${singleLineStyleStr} : ${multiLineStyleStr})`
   const { val: styleAttrVal } = getAndRemoveAttr(el, 'style')
