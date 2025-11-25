@@ -1,6 +1,6 @@
-import React, { forwardRef, useRef, useCallback, useContext, useState, useEffect } from 'react'
-// import { Camera, useCameraDevice, useCodeScanner, useCameraFormat } from 'react-native-vision-camera'
-import { getCustomEvent } from './getInnerListeners'
+import React, { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect } from 'react'
+import { useTransformStyle, useLayout, extendObject } from './utils'
+import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { noop } from '@mpxjs/utils'
 import { RouteContext } from './context'
 
@@ -22,6 +22,11 @@ interface CameraProps {
   binderror?: (error: { message: string }) => void
   bindinitdone?: (result: { type: string, data: string }) => void
   bindscancode?: (result: { type: string, data: string }) => void
+  'parent-font-size'?: number
+  'parent-width'?: number
+  'parent-height'?: number
+  'enable-var'?: boolean
+  'external-var-context'?: any
 }
 
 interface TakePhotoOptions {
@@ -70,9 +75,31 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     frameSize = 'medium',
     bindinitdone,
     bindstop,
-    bindscancode
+    bindscancode,
+    'parent-font-size': parentFontSize,
+    'parent-width': parentWidth,
+    'parent-height': parentHeight,
+    'enable-var': enableVar,
+    'external-var-context': externalVarContext,
+    style = {}
   } = props
-
+  const styleObj = extendObject(
+    {},
+    style
+  )
+  const {
+    normalStyle,
+    hasSelfPercent,
+    setWidth,
+    setHeight
+  } = useTransformStyle(styleObj, {
+    enableVar,
+    externalVarContext,
+    parentFontSize,
+    parentWidth,
+    parentHeight
+  })
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: cameraRef })
   const isPhoto = mode === 'normal'
   const device = useCameraDevice(devicePosition || 'back')
   const { navigation } = useContext(RouteContext) || {}
@@ -93,7 +120,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     large: { width: 1080, height: 810 }
   }
 
-  // 所有 Hooks 必须在条件判断之前调用
   const format = useCameraFormat(device, [
     {
       photoResolution: RESOLUTION_MAPPING[resolution],
@@ -132,6 +158,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     takePhoto: (options: TakePhotoOptions = {}) => {
       const { success = noop, fail = noop, complete = noop } = options
       cameraRef.current?.takePhoto?.({
+        flash,
         quality: qualityValue[options.quality || 'normal'] as number
       } as any).then((res: { path: any }) => {
         const result = {
@@ -161,6 +188,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         complete(result)
 
         cameraRef.current?.startRecording?.({
+          flash,
           onRecordingError: (error: any) => {
             if (recordTimer) clearTimeout(recordTimer)
             const errorResult = {
@@ -246,29 +274,52 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       }
     }
     checkCameraPermission()
+    return () => {
+      if (navigation && navigation.camera) {
+        navigation.camera = null
+      }
+    }
   }, [])
+
+  const innerProps = useInnerProps(
+    extendObject(
+      {},
+      props,
+      layoutProps,
+      {
+        ref: cameraRef,
+        style: extendObject({}, normalStyle, layoutStyle),
+        isActive: true,
+        photo: true,
+        video: true,
+        onInitialized,
+        onStopped,
+        device,
+        format,
+        codeScanner: !isPhoto ? codeScanner : undefined,
+        zoom: zoomValue
+      }
+    ),
+    [
+      'mode',
+      'resolution',
+      'frame-size',
+      'bindinitdone',
+      'bindstop',
+      'flash',
+      'bindscancode',
+      'binderror'
+    ],
+    {
+      layoutRef
+    }
+  )
 
   if (!hasPermission || hasCamera.current || !device) {
     return null
   }
 
-  return (
-    <Camera
-      ref={cameraRef}
-      isActive={true}
-      photo={true}
-      video={true}
-      onInitialized={onInitialized}
-      onStopped={onStopped}
-      device={device}
-      flash={flash}
-      format={format}
-      codeScanner={!isPhoto ? codeScanner : undefined}
-      style={{ flex: 1 }}
-      zoom={zoomValue}
-      {...props}
-    />
-  )
+  return createElement(Camera, innerProps)
 })
 
 _camera.displayName = 'MpxCamera'
