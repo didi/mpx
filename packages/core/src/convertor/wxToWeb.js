@@ -6,7 +6,8 @@ import {
   diffAndCloneA,
   error,
   hasOwn,
-  isDev
+  isDev,
+  getDefaultValueByType
 } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 
@@ -56,6 +57,13 @@ export default {
                   return diffAndCloneA(prop.value).clone
                 }
                 : prop.value
+            } else {
+              // 没有显式设置value时，根据type自动添加默认值，与微信小程序原生行为保持一致
+              const defaultValue = getDefaultValueByType(prop.type, 'web')
+              if (defaultValue !== undefined) {
+                // Vue 中 Array 类型需要使用函数返回，避免多个组件实例共享同一个引用
+                newProp.default = defaultValue;
+              }
             }
             props[key] = newProp
           } else {
