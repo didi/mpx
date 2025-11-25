@@ -15,7 +15,7 @@ export default function pageStatusMixin (mixinType) {
       },
       onLoad (query) {
         if (__mpx_mode__ === 'wx') {
-          const loadParams = Object.assign({}, query)
+          const loadParams = {}
           // 此处单独处理微信与其他端保持一致，传入onload的参数都是经过decodeURIComponent处理过的
           if (isObject(query)) {
             for (const key in query) {
