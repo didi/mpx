@@ -9,7 +9,7 @@ import { useRef, forwardRef, ReactNode, JSX, createElement, Children } from 'rea
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, useAddSpace } from './utils'
 
 const decodeMap = {
   '&lt;': '<',
@@ -112,13 +112,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
 
   let children = decode ? getDecodedChildren(props.children) : props.children
 
-  // 如果启用了 enable-add-space，在末尾追加一个空格节点，规避小米手机文字被截断问题
-  if (enableAddSpace) {
-    const spaceNode = createElement(Text, {
-      style: spaceFontSize ? { fontSize: spaceFontSize } : undefined
-    }, ' ')
-    children = Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
-  }
+  children = useAddSpace(children, { enableAddSpace, spaceFontSize })
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     extendObject({}, props, {

@@ -15,7 +15,7 @@ const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
-const { isReact, isWeb, isNoMode } = require('../utils/env')
+const { isReact, isWeb, isNoMode, isMiniProgram } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
@@ -2934,78 +2934,31 @@ function processMpxTagName (el) {
 }
 
 // 处理 max-lines 跨平台属性
-function processMaxLines (el) {
+function processTextMaxLines (el) {
+  if (el.tag !== 'text') return
   const maxLinesAttr = getAndRemoveAttr(el, 'enable-max-lines')
   if (!maxLinesAttr.val) return
 
   const parsed = parseMustacheWithContext(maxLinesAttr.val)
 
-  const linesStyleObj = `{
-  display:  (${parsed.result}) <= 1 ? 'inline-block' : '-webkit-box',
-  maxWidth: '100%',
-  overflow: 'hidden',
-  whiteSpace: (${parsed.result}) <= 1 ? 'nowrap' : '',
-  textOverflow: (${parsed.result}) <= 1 ? 'ellipsis' : '',
-  WebkitBoxOrient: 'vertical',
-  WebkitLineClamp: ${parsed.result}
-}`
+  const singleLineStyleStr = `"display:inline-block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"`
+  const multiLineStyleStr = `"display:-webkit-box;max-width:100%;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:" + (${parsed.result}) + ";"`
+  const linesStyleStr = `((${parsed.result}) <= 1 ? ${singleLineStyleStr} : ${multiLineStyleStr})`
+  const { val: styleAttrVal } = getAndRemoveAttr(el, 'style')
+  const styleVal = styleAttrVal ? parseMustacheWithContext(styleAttrVal).result : ''
+  const mergedStyleStr = styleVal ? `${linesStyleStr} + ';' + (${styleVal})` : linesStyleStr
 
   if (isReact(mode)) {
     // iOS/Android 环境：转换为 numberOfLines
     addAttrs(el, [{ name: 'numberOfLines', value: maxLinesAttr.val }])
-  } else if (isWeb(mode)) {
-    // Web 环境
-    // 查找已有的 style 或 wx:style
-    const existingStyles = []
-    el.attrsList.forEach(attr => {
-      if (attr.name === 'style' || attr.name === 'wx:style') {
-        const styleParsed = parseMustacheWithContext(attr.value)
-        existingStyles.push(styleParsed.result)
-      }
-    })
-
-    if (existingStyles.length > 0) {
-      // 有现有样式，删除原有的 style/wx:style，添加合并后的 :style
-      getAndRemoveAttr(el, 'style')
-      getAndRemoveAttr(el, 'wx:style')
-      existingStyles.push(linesStyleObj)
-      addAttrs(el, [{
-        name: ':style',
-        value: `[${existingStyles.join(', ')}] | transRpxStyle`
-      }])
-    } else {
-      addAttrs(el, [{
-        name: ':style',
-        value: `[${linesStyleObj}] | transRpxStyle`
-      }])
-    }
   } else {
-    // 小程序环境
-    addAttrs(el, [{ name: 'max-lines', value: maxLinesAttr.val }, { name: 'overflow', value: 'ellipsis' }])
-
-    const styleExpressions = []
-
-    // 获取所有 wx:style
-    let wxStyleAttr
-    while ((wxStyleAttr = getAndRemoveAttr(el, 'wx:style')).val) {
-      const parsed = parseMustacheWithContext(wxStyleAttr.val)
-      styleExpressions.push(parsed.result)
+    if (isMiniProgram()) {
+      addAttrs(el, [{ name: 'max-lines', value: maxLinesAttr.val }, { name: 'overflow', value: 'ellipsis' }])
     }
-
-    if (styleExpressions.length > 0) {
-      // 有现有样式，使用数组形式合并
-      // wx:style="{{[style1, style2, linesStyle]}}"
-      const styleArray = [...styleExpressions, linesStyleObj].join(', ')
-      addAttrs(el, [{
-        name: 'wx:style',
-        value: `{{[${styleArray}]}}`
-      }])
-    } else {
-      addAttrs(el, [{
-        name: 'wx:style',
-        value: `{{${linesStyleObj}}}`
-      }])
-    }
+    addAttrs(el, [{
+      name: 'style',
+      value: `{{${mergedStyleStr}}}`
+    }])
   }
 }
 
@@ -3019,7 +2972,7 @@ function processElement (el, root, options, meta) {
   processMpxTagName(el)
 
   // 处理 max-lines 跨平台属性（在平台规则处理之前）
-  processMaxLines(el)
+  processTextMaxLines(el)
 
   if (runtimeCompile && options.dynamicTemplateRuleRunner) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])

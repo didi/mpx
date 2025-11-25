@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
-import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image, Text } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
@@ -14,7 +14,7 @@ export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
-export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling|enable-android-align-center|enable-add-space|space-font-size/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling/
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
@@ -827,4 +827,11 @@ export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<stri
   }, [])
 
   return invokeCallback
+}
+
+export function useAddSpace (children: ReactNode, { enableAddSpace, spaceFontSize }: { enableAddSpace?: boolean, spaceFontSize?: number }) {
+  if (!enableAddSpace) return children
+  const spaceProps = spaceFontSize ? { style: { fontSize: spaceFontSize } } : undefined
+  const spaceNode = createElement(Text, spaceProps, ' ')
+  return Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
 }

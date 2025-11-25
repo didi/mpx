@@ -1,7 +1,7 @@
 import { Text, TextProps, TextStyle } from 'react-native'
 import { JSX, createElement, ReactNode } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject } from './utils'
+import { extendObject, useAddSpace } from './utils'
 
 interface _TextProps extends TextProps {
   style?: TextStyle
@@ -33,15 +33,7 @@ const SimpleText = (props: _TextProps): JSX.Element => {
     ['enable-android-align-center', 'enable-add-space', 'space-font-size']
   )
 
-  let children = props.children
-
-  // 如果启用了 enable-add-space，在末尾追加一个空格节点
-  if (enableAddSpace) {
-    const spaceNode = createElement(Text, {
-      style: spaceFontSize ? { fontSize: spaceFontSize } : undefined
-    }, ' ')
-    children = Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
-  }
+  const children = useAddSpace(props.children, { enableAddSpace, spaceFontSize })
 
   return createElement(Text, innerProps, children)
 }
