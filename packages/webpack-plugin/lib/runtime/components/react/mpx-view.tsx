@@ -287,7 +287,7 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      if (type === 'linear' && (!layoutWidth || !layoutHeight)) {
+      if (type === 'linear' && (!layoutWidth || !layoutHeight) && isNeedLayout(preImageInfo)) {
         // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
         // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %。
         dimensions = {
@@ -295,6 +295,7 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
           height: 0
         } as { width: NumberVal, height: NumberVal }
       } else {
+        // background-size: 100px 100px; 这种手动设置具体值的场景，不会触发 onLayout，需要走这里的逻辑（通过上面 isNeedLayout 判断）
         dimensions = {
           width: isPercent(width) ? width : +width,
           height: isPercent(height) ? height : +height
