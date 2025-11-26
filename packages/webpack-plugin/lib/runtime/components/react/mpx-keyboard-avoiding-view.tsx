@@ -26,7 +26,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
   const animatedStyle = useAnimatedStyle(() => ({
     // translate/position top可能会导致底部渲染区域缺失
-    marginTop: -offset.value,
+    transform: [{ translateY: -offset.value }],
     flexBasis: basic.value as DimensionValue
   }))
 
