@@ -1,13 +1,14 @@
 // 用于 react 生成
 {
   "include": [
-    "./lib/runtime/components/react"
+    "./"
   ],
   "exclude": [],
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "outDir": "./lib/runtime/components/react/dist",
+    "outDir": "./dist",
+    "rootDir": "./",
     "noImplicitThis": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
