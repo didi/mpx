@@ -833,8 +833,8 @@ export function useAddSpace (children: ReactNode, { enableAddSpace, spaceFontSiz
   if (!enableAddSpace) return children
   const spaceNode = createElement(Text, 
     spaceFontSize 
-        ? { key: '__mpx_space__', style: { fontSize: spaceFontSize } } 
-        : { key: '__mpx_space__' }, 
+        ? { key: '__mpx_text_space__', style: { fontSize: spaceFontSize } }
+        : { key: '__mpx_text_space__' },
     ' '
   )
   return Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
