@@ -80,7 +80,7 @@ const specialValues = {
   false: false
 }
 
-function parseQuery (query, withoutDecode = false) {
+function parseQuery (query, noDecode = false) {
   if (query.slice(0, 1) !== '?') {
     throw new Error(
       "A valid query string passed to parseQuery should begin with '?'"
@@ -104,8 +104,8 @@ function parseQuery (query, withoutDecode = false) {
     const idx = arg.indexOf('=')
 
     if (idx >= 0) {
-      let name = withoutDecode ? arg.slice(0, idx) : decode(arg.slice(0, idx))
-      let value = withoutDecode ? arg.slice(idx + 1) : decode(arg.slice(idx + 1))
+      let name = noDecode ? arg.slice(0, idx) : decode(arg.slice(0, idx))
+      let value = noDecode ? arg.slice(idx + 1) : decode(arg.slice(idx + 1))
 
       // eslint-disable-next-line no-prototype-builtins
       if (specialValues.hasOwnProperty(value)) {
@@ -125,9 +125,9 @@ function parseQuery (query, withoutDecode = false) {
       }
     } else {
       if (arg.slice(0, 1) === '-') {
-        result['-' + decode(arg.slice(1))] = false
+        result[decode(arg.slice(1))] = false
       } else if (arg.slice(0, 1) === '+') {
-        result[' ' + decode(arg.slice(1))] = true
+        result[decode(arg.slice(1))] = true
       } else {
         result[decode(arg)] = true
       }
@@ -137,7 +137,7 @@ function parseQuery (query, withoutDecode = false) {
   return result
 }
 
-function parseUrlQuery (url, withoutDecode = false) {
+function parseUrlQuery (url, noDecode = false) {
   let path = url
   let query = ''
   const queryIndex = url.indexOf('?')
@@ -145,7 +145,7 @@ function parseUrlQuery (url, withoutDecode = false) {
     path = url.slice(0, queryIndex)
     query = url.slice(queryIndex)
   }
-  const queryObj = parseQuery(query || '?', withoutDecode)
+  const queryObj = parseQuery(query || '?', noDecode)
   return {
     path,
     queryObj

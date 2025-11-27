@@ -153,9 +153,9 @@ createPage({
 // test页面
 ...
 createPage({
-  onLoad(params, decodedParams) {
-    // params = {name: "%E6%88%91", encode: "true"}
-    // decodedParams = {name: "我", encode: "true"}
+  onLoad(rawQuery, decodedQuery) {
+    // rawQuery = {name: "%E6%88%91", encode: "true"}
+    // decodedQuery = {name: "我", encode: "true"}
     ...
   }
 })
@@ -179,9 +179,9 @@ createPage({
 // test页面
 ...
 createPage({
-  onLoad(params, decodedParams) {
-    // params = {name: "我", encode: "true"}
-    // decodedParams = {name: "我", encode: "true"}
+  onLoad(rawQuery, decodedQuery) {
+    // rawQuery = {name: "我", encode: "true"}
+    // decodedQuery = {name: "我", encode: "true"}
     ...
   }
 })

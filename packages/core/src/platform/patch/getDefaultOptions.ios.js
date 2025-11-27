@@ -314,14 +314,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    const loadParams = {}
-    const params = props.route.params
-    if (isObject(params)) {
-      for (const key in params) {
-        loadParams[key] = decodeURIComponent(params[key])
+    const decodedQuery = {}
+    const rawQuery = props.route.params
+    if (isObject(rawQuery)) {
+      for (const key in rawQuery) {
+        decodedQuery[key] = decodeURIComponent(rawQuery[key])
       }
     }
-    proxy.callHook(ONLOAD, [params, loadParams])
+    proxy.callHook(ONLOAD, [rawQuery, decodedQuery])
   }
 
   Object.assign(proxy, {
