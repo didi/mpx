@@ -12,6 +12,7 @@ export type KeyboardAvoidContextValue = MutableRefObject<{
   adjustPosition: boolean
   keyboardHeight?: number
   onKeyboardShow?: () => void
+  readyToShow?: boolean
 } | null>
 
 export interface GroupValue {
