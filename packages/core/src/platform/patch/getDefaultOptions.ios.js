@@ -314,7 +314,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    proxy.callHook(ONLOAD, [props.route.params || {}])
+    const loadParams = {}
+    const params = props.route.params
+    if (isObject(params)) {
+      for (const key in params) {
+        loadParams[key] = decodeURIComponent(params[key])
+      }
+    }
+    proxy.callHook(ONLOAD, [params, loadParams])
   }
 
   Object.assign(proxy, {
