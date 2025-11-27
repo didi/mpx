@@ -33,7 +33,12 @@ function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
   return window.width + 'x' + window.height
 }
 
-Dimensions.addEventListener('change', ({ window, screen }) => {
+if (global.__mpxDimensionChangeSubscription) {
+  // 适配热更新场景，清除旧的监听，避免重复触发
+  global.__mpxDimensionChangeSubscription.remove()
+}
+
+global.__mpxDimensionChangeSubscription = Dimensions.addEventListener('change', ({ window, screen }) => {
   const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
   useDimensionsInfo({ window, screen })
 
