@@ -2971,7 +2971,7 @@ function processElement (el, root, options, meta) {
 
   processMpxTagName(el)
 
-  // 处理 max-lines 跨平台属性（在平台规则处理之前）
+  // 处理 enable-max-lines 跨平台属性（在平台规则处理之前）
   processTextMaxLines(el)
 
   if (runtimeCompile && options.dynamicTemplateRuleRunner) {

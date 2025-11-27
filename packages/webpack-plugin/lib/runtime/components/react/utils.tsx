@@ -831,10 +831,10 @@ export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<stri
 
 export function useAddSpace (children: ReactNode, { enableAddSpace, spaceFontSize }: { enableAddSpace?: boolean, spaceFontSize?: number }) {
   if (!enableAddSpace) return children
-  const spaceNode = createElement(Text, 
-    spaceFontSize 
-        ? { key: '__mpx_text_space__', style: { fontSize: spaceFontSize } }
-        : { key: '__mpx_text_space__' },
+  const spaceNode = createElement(Text,
+    spaceFontSize
+      ? { key: '__mpx_text_space__', style: { fontSize: spaceFontSize } }
+      : { key: '__mpx_text_space__' },
     ' '
   )
   return Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
