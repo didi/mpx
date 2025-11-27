@@ -1,7 +1,12 @@
 <template>
-  <scroll-view class="container" scroll-y="{{ true }}">
+  <scroll-view class="container" scroll-y="{{ true }}" testID="viewPage">
     <view class="header">
-      <text class="title">View 组件能力测试</text>
+      <view class="header-content">
+        <view class="back-btn" bindtap="goBack" testID="backBtn">
+          <text class="back-text">←</text>
+        </view>
+        <text class="title" testID="viewTitle">View 组件能力测试</text>
+      </view>
     </view>
 
     <view class="config-section">
@@ -12,7 +17,8 @@
           <view wx:for="{{ testTypes }}" wx:key="value"
             class="option-btn {{ testType === item.value ? 'btn-active' : '' }}"
             bindtap="setTestType"
-            data-type="{{ item.value }}">
+            data-type="{{ item.value }}"
+            testID="testType-{{item.value}}">
             {{ item.label }}
           </view>
         </view>
@@ -25,54 +31,56 @@
           <view wx:for="{{ countList }}" wx:key="*this"
             class="option-btn {{ count === item ? 'btn-active' : '' }} {{ testType === 'animation' ? 'btn-disabled' : '' }}"
             bindtap="{{ testType === 'animation' ? '' : 'setCount' }}"
-            data-count="{{ item }}">
+            data-count="{{ item }}"
+            testID="count-{{item}}">
             {{ item }}
           </view>
         </view>
       </view>
     </view>
 
-    <view class="lifecycle-info">
+    <view class="lifecycle-info" testID="lifecycleInfo">
       <text class="info-title">生命周期耗时</text>
       <view class="info-row">
         <text class="info-label">测试能力:</text>
-        <text class="info-value">{{ currentTypeLabel }}</text>
+        <text class="info-value" testID="currentTestType">{{ currentTypeLabel }}</text>
       </view>
       <view class="info-row">
         <text class="info-label">View 数量:</text>
-        <text class="info-value">{{ count }}</text>
+        <text class="info-value" testID="currentCount">{{ count }}</text>
       </view>
-      <view class="info-row highlight">
+      <view class="info-row-highlight">
         <text class="info-label">Created → Mounted:</text>
-        <text class="info-value highlight-value">{{ duration }}ms</text>
+        <text class="info-value highlight-value" testID="duration">{{ duration }}ms</text>
       </view>
     </view>
 
     <view class="action-section">
-      <view class="btn primary" bindtap="runTest">
+      <view class="btn primary" bindtap="runTest" testID="runTestBtn">
         <text class="btn-text">{{ testing ? '测试中...' : '开始测试' }}</text>
       </view>
     </view>
 
     <!-- 通过 wx:if 控制子组件，每次切换都会触发完整生命周期 -->
-    <view class="test-area">
-      <text class="area-title">{{ currentTypeLabel }} - {{ testType === 'animation' ? '10' : count }} 个 View</text>
+    <view class="test-area" testID="testArea">
+      <text class="area-title" testID="areaTitle">{{ currentTypeLabel }} - {{ testType === 'animation' ? '10' : count }} 个 View</text>
       <text class="area-note" wx:if="{{ testType === 'animation' }}">* Animation 使用 mpx.createAnimation()，固定 10 个组件演示</text>
       <view-list 
         wx:if="{{showComponent}}" 
         count="{{count}}"
         test-type="{{testType}}"
         bindready="onComponentReady"
+        testID="viewList"
       />
-      <view class="empty-hint" wx:else>
+      <view class="empty-hint" wx:else testID="emptyHint">
         <text class="hint-text">点击「开始测试」渲染组件</text>
       </view>
     </view>
   </scroll-view>
 </template>
 
-<script lang="ts" setup>
-import { ref, computed, onMounted } from '@mpxjs/core'
+<script setup>
+import mpx, { ref, computed, onMounted } from '@mpxjs/core'
 
 // 测试类型配置
 const testTypes = ref([
@@ -99,7 +107,7 @@ const currentTypeLabel = computed(() => {
   return type ? type.label : ''
 })
 
-function setTestType(e: any) {
+function setTestType(e) {
   const type = e.currentTarget.dataset.type
   testType.value = type
   // Animation 固定10个
@@ -111,7 +119,7 @@ function setTestType(e: any) {
   duration.value = '0'
 }
 
-function setCount(e: any) {
+function setCount(e) {
   // Animation 固定10个，不可修改
   if (testType.value === 'animation') return
   
@@ -136,12 +144,16 @@ function runTest() {
   }, 100)
 }
 
-function onComponentReady(e: any) {
+function onComponentReady(e) {
   const detail = e.detail
   duration.value = detail.duration
   testing.value = false
   
   console.log(`[Parent] ${detail.testType} - ${detail.count} views: ${detail.duration}ms`)
+}
+
+function goBack() {
+  mpx.navigateBack()
 }
 
 // 页面加载后自动运行一次测试
@@ -163,7 +175,8 @@ defineExpose({
   setTestType,
   setCount,
   runTest,
-  onComponentReady
+  onComponentReady,
+  goBack
 })
 </script>
 
@@ -174,15 +187,34 @@ defineExpose({
 }
 
 .header {
-  padding: 20px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.header-content {
+  flex-direction: row;
   align-items: center;
+}
+
+.back-btn {
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.back-text {
+  font-size: 20px;
+  color: #fff;
+  font-weight: bold;
 }
 
 .title {
   font-size: 18px;
   font-weight: bold;
   color: #fff;
+  flex: 1;
 }
 
 .config-section {
@@ -194,10 +226,6 @@ defineExpose({
 
 .config-item {
   margin-bottom: 16px;
-}
-
-.config-item:last-child {
-  margin-bottom: 0;
 }
 
 .config-label {
@@ -256,8 +284,10 @@ defineExpose({
   border-bottom-color: #eee;
 }
 
-.info-row.highlight {
-  border-bottom-width: 0;
+.info-row-highlight {
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px 0;
   padding-top: 12px;
   margin-top: 4px;
 }

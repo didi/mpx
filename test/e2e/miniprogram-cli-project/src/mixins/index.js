@@ -1,7 +1,7 @@
 // mixin.js
 export default {
   data: {
-    list: {
+    list1: {
       'phone': '手机',
       'tv': '电视',
       'computer': '电脑'

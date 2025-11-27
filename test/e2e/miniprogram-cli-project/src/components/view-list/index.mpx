@@ -49,7 +49,7 @@
     <block wx:elif="{{ testType === 'animation' }}">
       <view class="anim-container">
         <view 
-          class="item"
+          class="anim-item {{ 'anim-color-' + (index % 5) }}"
           wx:for="{{animItems}}"
           wx:key="index"
           animation="{{item.animation}}"
@@ -78,31 +78,37 @@
   </view>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import mpx, { ref, onMounted, getCurrentInstance } from '@mpxjs/core'
 
 // 记录 created 时间点（setup 执行开始）
 const createdTime = performance.now()
 console.log(`[ViewList] Created at: ${createdTime.toFixed(2)}ms`)
 
-const props = defineProps<{
-  count: number
-  testType: string
-}>()
+const props = defineProps({
+  count: {
+    type: Number,
+    default: 50
+  },
+  testType: {
+    type: String,
+    default: 'background'
+  }
+})
 
 // 生成普通 items
-const items = ref<number[]>([])
+const items = ref([])
 items.value = Array.from({ length: props.count }, (_, i) => i + 1)
 
 // 动画 items（每个有自己的动画对象）
-const animItems = ref<Array<{ id: number; animation: any }>>([])
+const animItems = ref([])
 
 // 动画实例存储
-const animationInstances: any[] = []
+const animationInstances = []
 
 // 初始化动画
 function initAnimations() {
-  const newAnimItems: Array<{ id: number; animation: any }> = []
+  const newAnimItems = []
   
   for (let i = 0; i < props.count; i++) {
     const animInstance = mpx.createAnimation({
@@ -174,7 +180,9 @@ onMounted(() => {
     testType: props.testType
   }
   const instance = getCurrentInstance()
-  instance?.proxy?.triggerEvent('ready', eventDetail)
+  if (instance && instance.proxy) {
+    instance.proxy.triggerEvent('ready', eventDetail)
+  }
 })
 
 defineExpose({

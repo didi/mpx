@@ -1,7 +1,7 @@
 <template>
-  <scroll-view class="container" scroll-y="{{ true }}">
+  <scroll-view class="container" scroll-y="{{ true }}" testID="indexPage">
     <view class="header">
-      <text class="title">MPX 组件测试</text>
+      <text class="title" testID="indexTitle">MPX 组件测试</text>
       <text class="subtitle">选择组件开始测试</text>
     </view>
 
@@ -12,6 +12,7 @@
         wx:key="name"
         bindtap="navigateToTest"
         data-path="{{item.path}}"
+        testID="component-{{item.name}}"
       >
         <view class="item-left">
           <text class="item-icon">{{ item.icon }}</text>
@@ -30,17 +31,10 @@
   </scroll-view>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import mpx from '@mpxjs/core'
 
-interface ComponentInfo {
-  name: string
-  path: string
-  icon: string
-  desc: string
-}
-
-const components: ComponentInfo[] = [
+const components = [
   {
     name: 'view',
     path: '/pages/view',
@@ -55,7 +49,7 @@ const components: ComponentInfo[] = [
   }
 ]
 
-function navigateToTest(e: any) {
+function navigateToTest(e) {
   const path = e.currentTarget.dataset.path
   mpx.navigateTo({
     url: path

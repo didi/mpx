@@ -1,30 +1,82 @@
 <template>
-  <view testID="homePage">
-    <text class="title">MPX RN DEMO</text>
-    <view class="block">
-      <text>计数器：</text>
-      <text testID="counter">{{count}}</text>
-      <button testID="counterBtn" class="btn" bindtap="incCount">+2</button>
-    </view>
-    <view class="block">
-      <text>输入：</text>
-      <input testID="input" value="{{inputVal}}" bindinput="onInput" class="input"/>
-      <text testID="inputResult">{{inputVal}}</text>
-    </view>
-    <view class="block">
-      <text>列表渲染：</text>
-      <view wx:for="{{list}}" wx:for-index="idx" wx:key="*this" testID="listItem-{{idx}}" class="list-item">
-        <text>{{item}}</text>
+  <scroll-view class="container" scroll-y="{{ true }}" testID="homePage">
+    <!-- 导航栏 -->
+    <view class="header">
+      <view class="header-content">
+        <view class="back-btn" bindtap="goBack" testID="backBtn">
+          <text class="back-text">←</text>
+        </view>
+        <text class="header-title">功能测试</text>
       </view>
     </view>
 
-    <view class="margin20"><text testID="page2-defs">defs: {{__testDef__}}</text></view>
+    <!-- 计数器卡片 -->
+    <view class="card">
+      <view class="card-header">
+        <text class="card-icon">🔢</text>
+        <text class="card-title">计数器</text>
+      </view>
+      <view class="card-body">
+        <view class="counter-display">
+          <text class="counter-value" testID="counter">{{count}}</text>
+        </view>
+        <button testID="counterBtn" class="primary-btn" bindtap="incCount">
+          <text class="btn-text">+2</text>
+        </button>
+      </view>
+    </view>
 
-    <view class="margin20"><text testID="page2-mixins">mixins data: {{ list.tv }}</text></view>
+    <!-- 输入框卡片 -->
+    <view class="card">
+      <view class="card-header">
+        <text class="card-icon">✏️</text>
+        <text class="card-title">双向绑定</text>
+      </view>
+      <view class="card-body">
+        <input testID="input" value="{{inputVal}}" bindinput="onInput" class="text-input" placeholder="请输入内容..."/>
+        <view class="result-box">
+          <text class="result-label">实时结果：</text>
+          <text class="result-value" testID="inputResult">{{inputVal || '无'}}</text>
+        </view>
+      </view>
+    </view>
 
-    <!--i18n 测试使用-->
-    <view class="margin20"><text testID="page2-i18n">i18n: {{ $t('message.hello', { msg: 'hello' }) }}</text></view>
-  </view>
+    <!-- 列表渲染卡片 -->
+    <view class="card">
+      <view class="card-header">
+        <text class="card-icon">📋</text>
+        <text class="card-title">列表渲染</text>
+      </view>
+      <view class="card-body">
+        <view wx:for="{{list}}" wx:for-index="idx" wx:key="*this" testID="listItem-{{idx}}" class="list-item">
+          <view class="list-dot"></view>
+          <text class="list-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 高级特性卡片 -->
+    <view class="card">
+      <view class="card-header">
+        <text class="card-icon">⚙️</text>
+        <text class="card-title">高级特性</text>
+      </view>
+      <view class="card-body">
+        <view class="feature-item">
+          <text class="feature-label">Defs:</text>
+          <text class="feature-value" testID="page2-defs">{{__testDef__}}</text>
+        </view>
+        <view class="feature-item">
+          <text class="feature-label">Mixins:</text>
+          <text class="feature-value" testID="page2-mixins">{{ list1.tv }}</text>
+        </view>
+        <view class="feature-item">
+          <text class="feature-label">i18n:</text>
+          <text class="feature-value" testID="page2-i18n">{{ $t('message.hello', { msg: 'hello' }) }}</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
 </template>
 
 <script>
@@ -49,29 +101,182 @@
       },
       onInput(e) {
         this.inputVal = e.detail.value
+      },
+      goBack() {
+        mpx.navigateBack()
       }
     }
   })
 </script>
 
-<style scoped>
-.title {
+<style>
+.container {
+  flex: 1;
+  background-color: #f0f2f5;
+}
+
+.header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #00C853, #00E676);
+}
+
+.header-content {
+  flex-direction: row;
+  align-items: center;
+}
+
+.back-btn {
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.back-text {
   font-size: 20px;
+  color: #fff;
   font-weight: bold;
 }
-.block {
-  margin: 12px 0;
+
+.header-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  flex: 1;
 }
-.btn {
+
+.card {
+  margin: 12px 16px;
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
 }
-.input {
-  border: 1px solid #ddd;
-  padding: 4px 8px;
+
+.card-header {
+  flex-direction: row;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
 }
+
+.card-icon {
+  font-size: 20px;
+  margin-right: 10px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.card-body {
+  padding: 16px;
+}
+
+.counter-display {
+  align-items: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.counter-value {
+  font-size: 48px;
+  font-weight: bold;
+  color: #00C853;
+}
+
+.primary-btn {
+  background-color: #00C853;
+  padding: 12px;
+  border-radius: 8px;
+  align-items: center;
+}
+
+.btn-text {
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.text-input {
+  border-width: 1px;
+  border-color: #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 15px;
+  background-color: #f8f9fa;
+  margin-bottom: 12px;
+}
+
+.result-box {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px;
+  background-color: #e8f5e9;
+  border-radius: 8px;
+}
+
+.result-label {
+  font-size: 14px;
+  color: #666;
+  margin-right: 8px;
+}
+
+.result-value {
+  font-size: 14px;
+  color: #00C853;
+  font-weight: 500;
+}
+
 .list-item {
-  padding: 2px 0;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
 }
-.margin20 {
-  margin: 50px;
+
+.list-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00C853;
+  margin-right: 12px;
+}
+
+.list-text {
+  font-size: 15px;
+  color: #333;
+}
+
+.feature-item {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+}
+
+.feature-label {
+  font-size: 14px;
+  color: #666;
+  width: 70px;
+}
+
+.feature-value {
+  font-size: 14px;
+  color: #333;
+  flex: 1;
 }
 </style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "功能测试"
+}
+</script>
