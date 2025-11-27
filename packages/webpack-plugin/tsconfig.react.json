@@ -1,8 +1,0 @@
-// 用于 react 目录下的类型提示，和 tsconfig.build.json 写在一起会导致 outDir 路径生成错误（react/dist/lib/xxx）
-{
-  "extends": "./tsconfig.build.json",
-  "compilerOptions": {
-    "noEmit": false,
-    "composite": true
-  }
-}

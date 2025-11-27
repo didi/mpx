@@ -25,7 +25,9 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   const isShow = useRef<boolean>(false)
 
   const animatedStyle = useAnimatedStyle(() => ({
-    // translate/position top会+overflow hidden会导致底部渲染区域缺失(需要 android 配置聚焦时禁用高度缩小)，margin-top 会导致 portal 的定位失效，无法顶起 portal
+    // translate/position top+ overflow hidden 在 android 上时因为键盘顶起让页面高度变小，同时元素位置上移
+    // 此时最底部的区域是超出了页面高度的，hidden生效就被隐藏掉，因此需要 android 配置聚焦时禁用高度缩小
+    // margin-top 因为在 react-native 上和 flex 1 同时存在时，负值只会让容器高度整体变高，不会让元素上移
     transform: [{ translateY: -offset.value }],
     flexBasis: basic.value as DimensionValue
   }))
