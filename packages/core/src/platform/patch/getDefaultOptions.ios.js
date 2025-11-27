@@ -642,6 +642,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     useEffect(() => {
+      if (navigation.camera?.multi) { // RN端一个页面只能有一个camera组件 放在更新中是避免有wx:if的情况
+        navigation.camera.multi = false
+        warn('<camera>: 一个页面只能插入一个')
+      }
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
@@ -651,10 +655,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     usePageEffect(proxy, pageId)
     useEffect(() => {
       proxy.mounted()
-      if (navigation.camera?.multi) {
-        navigation.camera.multi = false
-        warn('<camera>: 一个页面只能插入一个')
-      }
       return () => {
         proxy.unmounted()
         proxy.target.__resetInstance()
