@@ -2933,7 +2933,6 @@ function processMpxTagName (el) {
   }
 }
 
-// 处理 max-lines 跨平台属性
 function processTextMaxLines (el) {
   if (el.tag !== 'text') return
   const maxLinesAttr = getAndRemoveAttr(el, 'enable-max-lines')
