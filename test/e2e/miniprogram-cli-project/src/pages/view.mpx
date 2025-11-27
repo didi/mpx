@@ -1,0 +1,340 @@
+<template>
+  <scroll-view class="container" scroll-y="{{ true }}">
+    <view class="header">
+      <text class="title">View 组件能力测试</text>
+    </view>
+
+    <view class="config-section">
+      <!-- 测试能力选择 -->
+      <view class="config-item">
+        <text class="config-label">测试能力</text>
+        <view class="config-options">
+          <view wx:for="{{ testTypes }}" wx:key="value"
+            class="option-btn {{ testType === item.value ? 'btn-active' : '' }}"
+            bindtap="setTestType"
+            data-type="{{ item.value }}">
+            {{ item.label }}
+          </view>
+        </view>
+      </view>
+
+      <!-- View 数量选择 -->
+      <view class="config-item {{ testType === 'animation' ? 'config-disabled' : '' }}">
+        <text class="config-label">View 数量{{ testType === 'animation' ? '（动画固定10个）' : '' }}</text>
+        <view class="config-options">
+          <view wx:for="{{ countList }}" wx:key="*this"
+            class="option-btn {{ count === item ? 'btn-active' : '' }} {{ testType === 'animation' ? 'btn-disabled' : '' }}"
+            bindtap="{{ testType === 'animation' ? '' : 'setCount' }}"
+            data-count="{{ item }}">
+            {{ item }}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="lifecycle-info">
+      <text class="info-title">生命周期耗时</text>
+      <view class="info-row">
+        <text class="info-label">测试能力:</text>
+        <text class="info-value">{{ currentTypeLabel }}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">View 数量:</text>
+        <text class="info-value">{{ count }}</text>
+      </view>
+      <view class="info-row highlight">
+        <text class="info-label">Created → Mounted:</text>
+        <text class="info-value highlight-value">{{ duration }}ms</text>
+      </view>
+    </view>
+
+    <view class="action-section">
+      <view class="btn primary" bindtap="runTest">
+        <text class="btn-text">{{ testing ? '测试中...' : '开始测试' }}</text>
+      </view>
+    </view>
+
+    <!-- 通过 wx:if 控制子组件，每次切换都会触发完整生命周期 -->
+    <view class="test-area">
+      <text class="area-title">{{ currentTypeLabel }} - {{ testType === 'animation' ? '10' : count }} 个 View</text>
+      <text class="area-note" wx:if="{{ testType === 'animation' }}">* Animation 使用 mpx.createAnimation()，固定 10 个组件演示</text>
+      <view-list 
+        wx:if="{{showComponent}}" 
+        count="{{count}}"
+        test-type="{{testType}}"
+        bindready="onComponentReady"
+      />
+      <view class="empty-hint" wx:else>
+        <text class="hint-text">点击「开始测试」渲染组件</text>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+
+<script lang="ts" setup>
+import { ref, computed, onMounted } from '@mpxjs/core'
+
+// 测试类型配置
+const testTypes = ref([
+  { label: 'Background', value: 'background' },
+  { label: 'Shadow', value: 'shadow' },
+  { label: 'Radius', value: 'radius' },
+  { label: 'Transform', value: 'transform' },
+  { label: 'Opacity', value: 'opacity' },
+  { label: 'Animation', value: 'animation' },
+  { label: 'Simple View', value: 'simple-view' },
+  { label: '综合', value: 'mixed' }
+])
+
+const testType = ref('background')
+const count = ref(50)
+const testing = ref(false)
+const showComponent = ref(false)
+const duration = ref('0')
+const countList = ref([10, 50, 100, 500, 1000])
+
+// 当前选中类型的标签
+const currentTypeLabel = computed(() => {
+  const type = testTypes.value.find(t => t.value === testType.value)
+  return type ? type.label : ''
+})
+
+function setTestType(e: any) {
+  const type = e.currentTarget.dataset.type
+  testType.value = type
+  // Animation 固定10个
+  if (type === 'animation') {
+    count.value = 10
+  }
+  // 切换类型后隐藏组件，等待下次测试
+  showComponent.value = false
+  duration.value = '0'
+}
+
+function setCount(e: any) {
+  // Animation 固定10个，不可修改
+  if (testType.value === 'animation') return
+  
+  const newCount = parseInt(e.currentTarget.dataset.count)
+  count.value = newCount
+  // 切换数量后隐藏组件，等待下次测试
+  showComponent.value = false
+  duration.value = '0'
+}
+
+function runTest() {
+  if (testing.value) return
+  
+  testing.value = true
+  
+  // 先隐藏组件（销毁）
+  showComponent.value = false
+  
+  // 等待销毁完成后再显示（重新创建）
+  setTimeout(() => {
+    showComponent.value = true
+  }, 100)
+}
+
+function onComponentReady(e: any) {
+  const detail = e.detail
+  duration.value = detail.duration
+  testing.value = false
+  
+  console.log(`[Parent] ${detail.testType} - ${detail.count} views: ${detail.duration}ms`)
+}
+
+// 页面加载后自动运行一次测试
+onMounted(() => {
+  setTimeout(() => {
+    runTest()
+  }, 300)
+})
+
+defineExpose({
+  testTypes,
+  testType,
+  count,
+  testing,
+  showComponent,
+  duration,
+  countList,
+  currentTypeLabel,
+  setTestType,
+  setCount,
+  runTest,
+  onComponentReady
+})
+</script>
+
+<style>
+.container {
+  flex: 1;
+  background-color: #f5f5f5;
+}
+
+.header {
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  align-items: center;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.config-section {
+  padding: 16px;
+  background-color: #fff;
+  margin: 16px;
+  border-radius: 12px;
+}
+
+.config-item {
+  margin-bottom: 16px;
+}
+
+.config-item:last-child {
+  margin-bottom: 0;
+}
+
+.config-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.config-options {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.option-btn {
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  border-radius: 6px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #333;
+}
+
+.btn-active {
+  background-color: #007AFF;
+  color: #fff;
+}
+
+.btn-disabled {
+  opacity: 0.4;
+}
+
+.config-disabled {
+  opacity: 0.6;
+}
+
+.lifecycle-info {
+  padding: 16px;
+  background-color: #fff;
+  margin: 0 16px 16px;
+  border-radius: 12px;
+}
+
+.info-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.info-row {
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom-width: 1px;
+  border-bottom-color: #eee;
+}
+
+.info-row.highlight {
+  border-bottom-width: 0;
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.info-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.highlight-value {
+  font-size: 18px;
+  color: #007AFF;
+  font-weight: bold;
+}
+
+.action-section {
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  padding: 14px;
+  border-radius: 8px;
+  align-items: center;
+}
+
+.primary {
+  background-color: #007AFF;
+}
+
+.btn-text {
+  font-size: 16px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.test-area {
+  padding: 16px;
+  background-color: #fff;
+  margin: 0 16px 16px;
+  border-radius: 12px;
+}
+
+.area-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.area-note {
+  font-size: 12px;
+  color: #FF9500;
+  margin-bottom: 12px;
+}
+
+.empty-hint {
+  padding: 40px 20px;
+  align-items: center;
+}
+
+.hint-text {
+  font-size: 14px;
+  color: #999;
+}
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "view-list": "../components/view-list/index"
+  },
+  "navigationBarTitleText": "View 组件能力测试"
+}
+</script>

@@ -1,0 +1,158 @@
+<template>
+  <scroll-view class="container" scroll-y="{{ true }}">
+    <view class="header">
+      <text class="title">MPX 组件测试</text>
+      <text class="subtitle">选择组件开始测试</text>
+    </view>
+
+    <view class="component-list">
+      <view 
+        class="component-item"
+        wx:for="{{components}}"
+        wx:key="name"
+        bindtap="navigateToTest"
+        data-path="{{item.path}}"
+      >
+        <view class="item-left">
+          <text class="item-icon">{{ item.icon }}</text>
+          <view class="item-info">
+            <text class="item-name">{{ item.name }}</text>
+            <text class="item-desc">{{ item.desc }}</text>
+          </view>
+        </view>
+        <text class="item-arrow">→</text>
+      </view>
+    </view>
+
+    <view class="footer">
+      <text class="footer-text">测试结果将在控制台输出</text>
+    </view>
+  </scroll-view>
+</template>
+
+<script lang="ts" setup>
+import mpx from '@mpxjs/core'
+
+interface ComponentInfo {
+  name: string
+  path: string
+  icon: string
+  desc: string
+}
+
+const components: ComponentInfo[] = [
+  {
+    name: 'view',
+    path: '/pages/view',
+    icon: '📦',
+    desc: 'view 组件能力测试'
+  },
+  {
+    name: '其他',
+    path: '/pages/common',
+    icon: '📝',
+    desc: '其他功能测试'
+  }
+]
+
+function navigateToTest(e: any) {
+  const path = e.currentTarget.dataset.path
+  mpx.navigateTo({
+    url: path
+  })
+}
+
+defineExpose({
+  components,
+  navigateToTest
+})
+</script>
+
+<style>
+.container {
+  flex: 1;
+  background-color: #f5f5f5;
+}
+
+.header {
+  padding: 32px 20px;
+  background-color: #007AFF;
+  align-items: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.component-list {
+  padding: 16px;
+}
+
+.component-item {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: #fff;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.item-left {
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+}
+
+.item-icon {
+  font-size: 28px;
+  margin-right: 16px;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.item-desc {
+  font-size: 12px;
+  color: #999;
+}
+
+.item-arrow {
+  font-size: 18px;
+  color: #ccc;
+}
+
+.footer {
+  padding: 20px;
+  align-items: center;
+}
+
+.footer-text {
+  font-size: 12px;
+  color: #999;
+}
+</style>
+
+<script type="application/json">
+  {
+    "usingComponents": {
+    },
+    "navigationBarTitleText": "性能测试"
+  }
+</script>

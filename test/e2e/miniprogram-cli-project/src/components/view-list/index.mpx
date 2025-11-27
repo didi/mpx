@@ -1,0 +1,364 @@
+<template>
+  <view class="container">
+    <!-- Background 测试 -->
+    <block wx:if="{{ testType === 'background' }}">
+      <view 
+        class="item {{ index % 2 === 0 ? 'bg-gradient1' : 'bg-gradient2' }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      />
+    </block>
+
+    <!-- Shadow 测试 -->
+    <block wx:elif="{{ testType === 'shadow' }}">
+      <view 
+        class="item {{ index % 2 === 0 ? 'shadow-blue' : 'shadow-pink' }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      />
+    </block>
+
+    <!-- Border-Radius 测试 -->
+    <block wx:elif="{{ testType === 'radius' }}">
+      <view 
+        class="item {{ index % 2 === 0 ? 'radius-sm' : 'radius-circle' }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      />
+    </block>
+
+    <!-- Transform 测试 -->
+    <block wx:elif="{{ testType === 'transform' }}">
+      <view 
+        class="item {{ index % 4 === 0 ? 'transform-rotate' : index % 4 === 1 ? 'transform-scale' : index % 4 === 2 ? 'transform-translate' : 'transform-skew' }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      />
+    </block>
+
+    <!-- Opacity 测试 -->
+    <block wx:elif="{{ testType === 'opacity' }}">
+      <view 
+        class="item {{ index % 4 === 0 ? 'opacity-100' : index % 4 === 1 ? 'opacity-75' : index % 4 === 2 ? 'opacity-50' : 'opacity-25' }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      />
+    </block>
+
+    <!-- Animation 动画测试 (使用 mpx.createAnimation) -->
+    <block wx:elif="{{ testType === 'animation' }}">
+      <view class="anim-container">
+        <view 
+          class="item"
+          wx:for="{{animItems}}"
+          wx:key="index"
+          animation="{{item.animation}}"
+        />
+      </view>
+    </block>
+
+    <!-- simple-view -->
+    <block wx:elif="{{ testType === 'simple-view' }}">
+      <view 
+        class="item simple-view"
+        wx:for="{{items}}"
+        wx:key="index"
+        is-simple="{{ true }}"
+      />
+    </block>
+
+    <!-- mixed -->
+    <block wx:else>
+      <view 
+        class="item item-mixed {{ 'mixed-' + (index % 6) }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      />
+    </block>
+  </view>
+</template>
+
+<script lang="ts" setup>
+import mpx, { ref, onMounted, getCurrentInstance } from '@mpxjs/core'
+
+// 记录 created 时间点（setup 执行开始）
+const createdTime = performance.now()
+console.log(`[ViewList] Created at: ${createdTime.toFixed(2)}ms`)
+
+const props = defineProps<{
+  count: number
+  testType: string
+}>()
+
+// 生成普通 items
+const items = ref<number[]>([])
+items.value = Array.from({ length: props.count }, (_, i) => i + 1)
+
+// 动画 items（每个有自己的动画对象）
+const animItems = ref<Array<{ id: number; animation: any }>>([])
+
+// 动画实例存储
+const animationInstances: any[] = []
+
+// 初始化动画
+function initAnimations() {
+  const newAnimItems: Array<{ id: number; animation: any }> = []
+  
+  for (let i = 0; i < props.count; i++) {
+    const animInstance = mpx.createAnimation({
+      duration: 400,
+      timingFunction: 'ease-in-out'
+    })
+    animationInstances.push(animInstance)
+    newAnimItems.push({
+      id: i,
+      animation: {}
+    })
+  }
+  
+  animItems.value = newAnimItems
+}
+
+// 运行动画循环
+function runAnimationLoop() {
+  // 交错执行动画
+  for (let i = 0; i < props.count; i++) {
+    const delay = i * 150  // 每个延迟150ms
+    const animInstance = animationInstances[i]
+    
+    setTimeout(() => {
+      // 缩小 + 透明
+      animInstance.scale(0.5).opacity(0.2).step({ duration: 300 })
+      animItems.value[i].animation = animInstance.export()
+      
+      // 恢复
+      setTimeout(() => {
+        animInstance.scale(1).opacity(1).step({ duration: 300 })
+        animItems.value[i].animation = animInstance.export()
+      }, 400)
+    }, delay)
+  }
+}
+
+// 初始化
+if (props.testType === 'animation') {
+  initAnimations()
+}
+
+console.log(`[ViewList] Items generated: ${items.value.length}, testType: ${props.testType}`)
+
+onMounted(() => {
+  const mountedTime = performance.now()
+  const duration = mountedTime - createdTime
+  
+  console.log(`[ViewList] Mounted at: ${mountedTime.toFixed(2)}ms`)
+  console.log(`[ViewList] ========================================`)
+  console.log(`[ViewList] Test Type: ${props.testType}`)
+  console.log(`[ViewList] View Count: ${props.count}`)
+  console.log(`[ViewList] Created → Mounted: ${duration.toFixed(2)}ms`)
+  console.log(`[ViewList] ========================================`)
+  
+  // 如果是动画测试，启动动画
+  if (props.testType === 'animation') {
+    setTimeout(() => {
+      runAnimationLoop()
+    }, 300)
+  }
+  
+  // 通知父组件
+  const eventDetail = {
+    createdTime: createdTime.toFixed(2),
+    mountedTime: mountedTime.toFixed(2),
+    duration: duration.toFixed(2),
+    count: props.count,
+    testType: props.testType
+  }
+  const instance = getCurrentInstance()
+  instance?.proxy?.triggerEvent('ready', eventDetail)
+})
+
+defineExpose({
+  items,
+  animItems
+})
+</script>
+
+<style>
+.container {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.item {
+  width: 32px;
+  height: 32px;
+  margin: 2px;
+}
+
+/* Background 样式 */
+.bg-gradient1 {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 6px;
+}
+
+.bg-gradient2 {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  border-radius: 6px;
+}
+
+/* Shadow 样式 */
+.shadow-blue {
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.5);
+}
+
+.shadow-pink {
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(240, 147, 251, 0.5);
+}
+
+/* Border-Radius 样式 */
+.radius-sm {
+  background: linear-gradient(135deg, #34C759, #30D158);
+  border-radius: 8px;
+}
+
+.radius-circle {
+  background: linear-gradient(135deg, #FF2D55, #FF375F);
+  border-radius: 50%;
+}
+
+/* Transform 样式 */
+.transform-rotate {
+  background: linear-gradient(135deg, #007AFF, #5AC8FA);
+  border-radius: 6px;
+  transform: rotate(10deg);
+}
+
+.transform-scale {
+  background: linear-gradient(135deg, #34C759, #30D158);
+  border-radius: 6px;
+  transform: scale(0.8);
+}
+
+.transform-translate {
+  background: linear-gradient(135deg, #FF9500, #FFCC00);
+  border-radius: 6px;
+  transform: translateY(-10%);
+}
+
+.transform-skew {
+  background: linear-gradient(135deg, #FF2D55, #FF375F);
+  border-radius: 6px;
+  transform: skewX(-8deg);
+}
+
+/* Opacity 样式 */
+.opacity-100 {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 6px;
+  opacity: 1;
+}
+
+.opacity-75 {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 6px;
+  opacity: 0.75;
+}
+
+.opacity-50 {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 6px;
+  opacity: 0.5;
+}
+
+.opacity-25 {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 6px;
+  opacity: 0.25;
+}
+
+/* Animation 动画样式 */
+.anim-container {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.anim-item {
+  width: 40px;
+  height: 40px;
+  margin: 8px;
+  border-radius: 50%;
+}
+
+.anim-color-0 {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.anim-color-1 {
+  background: linear-gradient(135deg, #34C759, #30D158);
+}
+
+.anim-color-2 {
+  background: linear-gradient(135deg, #FF9500, #FFCC00);
+}
+
+.anim-color-3 {
+  background: linear-gradient(135deg, #FF2D55, #FF375F);
+}
+
+.anim-color-4 {
+  background: linear-gradient(135deg, #007AFF, #5AC8FA);
+}
+
+/* Simple View 样式 */
+.simple-view {
+  border: 1px solid pink;
+}
+/* Mixed 综合样式 */
+.item-mixed {
+  border-radius: 6px;
+}
+
+.mixed-0 {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.mixed-1 {
+  background-color: #fff;
+  border-width: 2px;
+  border-color: #007AFF;
+  border-style: solid;
+}
+
+.mixed-2 {
+  background-color: #fff;
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.5);
+}
+
+.mixed-3 {
+  background: linear-gradient(135deg, #34C759, #30D158);
+  transform: rotate(8deg);
+}
+
+.mixed-4 {
+  background: linear-gradient(135deg, #FF9500, #FFCC00);
+  border-radius: 50%;
+}
+
+.mixed-5 {
+  background: linear-gradient(135deg, #FF2D55, #FF375F);
+  opacity: 0.7;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

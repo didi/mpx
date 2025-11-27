@@ -18,21 +18,27 @@
       </view>
     </view>
 
-    <button bindtap="goToPage2">click test navigateTo</button>
+    <view class="margin20"><text testID="page2-defs">defs: {{__testDef__}}</text></view>
+
+    <view class="margin20"><text testID="page2-mixins">mixins data: {{ list.tv }}</text></view>
+
+    <!--i18n 测试使用-->
+    <view class="margin20"><text testID="page2-i18n">i18n: {{ $t('message.hello', { msg: 'hello' }) }}</text></view>
   </view>
 </template>
 
 <script>
   import mpx, { createPage } from '@mpxjs/core'
-  import page2 from './page2.mpx?resolve'
   import store from '../store'
   import { mapState, mapActions } from '@mpxjs/pinia'
+  import mixins from '../mixins'
 
   createPage({
     data: {
       inputVal: '',
       list: ['Apple', 'Banana', 'Orange']
     },
+    mixins: [mixins],
     computed: {
       ...mapState(store, ['count']),
     },
@@ -43,11 +49,6 @@
       },
       onInput(e) {
         this.inputVal = e.detail.value
-      },
-      goToPage2 () {
-        mpx.navigateTo({
-          url: page2
-        })
       }
     }
   })
@@ -69,5 +70,8 @@
 }
 .list-item {
   padding: 2px 0;
+}
+.margin20 {
+  margin: 50px;
 }
 </style>

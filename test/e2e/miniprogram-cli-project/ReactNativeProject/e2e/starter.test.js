@@ -31,20 +31,8 @@ describe('MPX RN DEMO Page e2e test', () => {
     await expect(element(by.text('Orange'))).toBeVisible();
   });
 
-  it('should take screenshot for page1', async () => {
-    // screenshot for documentation/debug
-    await device.takeScreenshot('page1');
-  });
 
-  it('navigation button is visible and can be tapped', async () => {
-    await expect(element(by.text('click test navigateTo'))).toBeVisible();
-    await element(by.text('click test navigateTo')).tap();
-    await waitFor(element(by.id('page2-container')))
-      .toBeVisible()
-      .withTimeout(2000);
-  });
-
-  it('navigates to page2 and verifies content', async () => {
+  it('other feature', async () => {
     // verify page2 content
     await expect(element(by.id('page2-defs'))).toBeVisible();
     await expect(element(by.id('page2-mixins'))).toBeVisible();
@@ -54,8 +42,8 @@ describe('MPX RN DEMO Page e2e test', () => {
     await expect(element(by.id('page2-i18n'))).toHaveText('i18n: hello world');
   });
 
-  it('should take screenshot for page2', async () => {
+  it('should take screenshot for common', async () => {
     // screenshot for documentation/debug
-    await device.takeScreenshot('page2');
+    await device.takeScreenshot('common');
   });
 });
