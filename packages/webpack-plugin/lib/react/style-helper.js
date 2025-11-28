@@ -9,7 +9,14 @@ const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error }) {
-  const classMap = ctorType === 'page' ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1 } } : {}
+  const classMap = ctorType === 'page'
+      ? {
+          [MPX_TAG_PAGE_SELECTOR]: {
+            _media: [],
+            _default: { flex: 1, height: "'100%'" }
+          }
+        }
+      : {}
 
   const root = postcss.parse(content, {
     from: filename
