@@ -320,37 +320,6 @@ if (__mpx_mode__ === 'web') {
 }
 ```
 
-## getCurrentPages
-getCurrentPages() 获取当前页面栈。数组中第一个元素为首页，最后一个元素为当前页面。
-
-#### 基础用法
-```js
-// 获取页面栈数组（按栈顺序排列，最后一个元素为当前页面）
-const pages = getCurrentPages();
-const currentPage = pages[pages.length - 1]; // 当前页实例
-
-// 示例：获取当前页面路径和参数
-console.log('当前页面路径:', currentPage.route); // 输出如 'pages/home/index'
-console.log('页面参数:', currentPage.options); // 输出 onLoad 中的 query 对象
-```
-#### 获取上一页实例
-
-```js
-const pages = getCurrentPages();
-const prevPage = pages[pages.length - 2]; // 上一页实例
-if (prevPage) {
-  console.log('上一页路径:', prevPage.route);
-  // 调用上一页方法（需确保方法存在）
-  prevPage.someMethod?.();
-}
-```
-::: tip 注意
-注意事项
-不要尝试修改页面栈，会导致路由以及页面状态错误。
-
-不要在 App.onLaunch 的时候调用 getCurrentPages()，此时 page 还没有生成。
-:::
-
 ## 内建生命周期变量 {#built-in-lifecycle-variable}
 Mpx 在运行时自身有着一套内建生命周期，当开发者想使用内建生命周期时，可以通过内建生命周期变量进行对应生命周期的注册，
 需要注意的是，这部分内建生命周期变量**只能用于选项式 API 中**。
