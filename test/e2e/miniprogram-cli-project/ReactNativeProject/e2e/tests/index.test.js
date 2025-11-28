@@ -9,9 +9,9 @@ describe('Index Page', () => {
     await expect(element(by.id('indexTitle'))).toHaveText('MPX 组件测试');
   });
 
-  it('shows component list with view and common entries', async () => {
+  it('shows component list with view, text and common entries', async () => {
     await expect(element(by.id('component-view'))).toBeVisible();
+    await expect(element(by.id('component-text'))).toBeVisible();
     await expect(element(by.id('component-其他'))).toBeVisible();
   });
 });
-

@@ -42,9 +42,15 @@ const components = [
     desc: 'view 组件能力测试'
   },
   {
+    name: 'text',
+    path: '/pages/text',
+    icon: '📝',
+    desc: 'text 组件能力测试'
+  },
+  {
     name: '其他',
     path: '/pages/common',
-    icon: '📝',
+    icon: '⚙️',
     desc: '其他功能测试'
   }
 ]
@@ -147,6 +153,6 @@ defineExpose({
   {
     "usingComponents": {
     },
-    "navigationBarTitleText": "性能测试"
+    "navigationBarTitleText": "性能测试",
   }
 </script>

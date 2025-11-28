@@ -15,6 +15,7 @@ describe('View Component Test Page', () => {
   });
 
   it('shows all test type options', async () => {
+    await expect(element(by.id('testType-basic'))).toBeVisible();
     await expect(element(by.id('testType-background'))).toBeVisible();
     await expect(element(by.id('testType-shadow'))).toBeVisible();
     await expect(element(by.id('testType-radius'))).toBeVisible();
@@ -40,11 +41,20 @@ describe('View Component Test Page', () => {
     await expect(element(by.id('duration'))).toBeVisible();
   });
 
-  it('tests background with 100 views', async () => {
-    // 设置 count 为 100
+  it('tests basic with 100 views', async () => {
+    // 默认是 basic，设置 count 为 100
     await element(by.id('count-100')).tap();
     await element(by.id('runTestBtn')).tap();
     // 等待组件渲染完成
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await expect(element(by.id('currentTestType'))).toHaveText('Basic');
+    await expect(element(by.id('currentCount'))).toHaveText('100');
+    await device.takeScreenshot('view-basic');
+  });
+
+  it('tests background with 100 views', async () => {
+    await element(by.id('testType-background')).tap();
+    await element(by.id('runTestBtn')).tap();
     await new Promise(resolve => setTimeout(resolve, 2000));
     await expect(element(by.id('currentTestType'))).toHaveText('Background');
     await expect(element(by.id('currentCount'))).toHaveText('100');

@@ -1,11 +1,11 @@
 <template>
-  <scroll-view class="container" scroll-y="{{ true }}" testID="viewPage">
+  <scroll-view class="container" scroll-y="{{ true }}" testID="textPage">
     <view class="header">
       <view class="header-content">
         <view class="back-btn" bindtap="goBack" testID="backBtn">
           <text class="back-text">←</text>
         </view>
-        <text class="title" testID="viewTitle">View 组件能力测试</text>
+        <text class="title" testID="textTitle">Text 组件能力测试</text>
       </view>
     </view>
 
@@ -24,13 +24,13 @@
         </view>
       </view>
 
-      <!-- View 数量选择 -->
-      <view class="config-item {{ testType === 'animation' ? 'config-disabled' : '' }}">
-        <text class="config-label">View 数量{{ testType === 'animation' ? '（动画固定10个）' : '' }}</text>
+      <!-- Text 数量选择 -->
+      <view class="config-item">
+        <text class="config-label">Text 数量</text>
         <view class="config-options">
           <view wx:for="{{ countList }}" wx:key="*this"
-            class="option-btn {{ count === item ? 'btn-active' : '' }} {{ testType === 'animation' ? 'btn-disabled' : '' }}"
-            bindtap="{{ testType === 'animation' ? '' : 'setCount' }}"
+            class="option-btn {{ count === item ? 'btn-active' : '' }}"
+            bindtap="setCount"
             data-count="{{ item }}"
             testID="count-{{item}}">
             {{ item }}
@@ -46,7 +46,7 @@
         <text class="info-value" testID="currentTestType">{{ currentTypeLabel }}</text>
       </view>
       <view class="info-row">
-        <text class="info-label">View 数量:</text>
+        <text class="info-label">Text 数量:</text>
         <text class="info-value" testID="currentCount">{{ count }}</text>
       </view>
       <view class="info-row-highlight">
@@ -63,14 +63,13 @@
 
     <!-- 通过 wx:if 控制子组件，每次切换都会触发完整生命周期 -->
     <view class="test-area" testID="testArea">
-      <text class="area-title" testID="areaTitle">{{ currentTypeLabel }} - {{ testType === 'animation' ? '10' : count }} 个 View</text>
-      <text class="area-note" wx:if="{{ testType === 'animation' }}">* Animation 使用 mpx.createAnimation()，固定 10 个组件演示</text>
-      <view-list 
+      <text class="area-title" testID="areaTitle">{{ currentTypeLabel }} - {{ count }} 个 Text</text>
+      <text-list 
         wx:if="{{showComponent}}" 
         count="{{count}}"
         test-type="{{testType}}"
         bindready="onComponentReady"
-        testID="viewList"
+        testID="textList"
       />
       <view class="empty-hint" wx:else testID="emptyHint">
         <text class="hint-text">点击「开始测试」渲染组件</text>
@@ -85,18 +84,17 @@ import mpx, { ref, computed, onMounted } from '@mpxjs/core'
 // 测试类型配置
 const testTypes = ref([
   { label: 'Basic', value: 'basic' },
-  { label: 'Background', value: 'background' },
-  { label: 'Shadow', value: 'shadow' },
-  { label: 'Radius', value: 'radius' },
-  { label: 'Transform', value: 'transform' },
-  { label: 'Opacity', value: 'opacity' },
-  { label: 'Animation', value: 'animation' },
-  { label: 'Simple View', value: 'simple-view' },
+  { label: 'Simple', value: 'simple-text' },
+  { label: 'Font Size', value: 'font-size' },
+  { label: 'Var', value: 'var' },
+  { label: 'Calc', value: 'calc' },
+  { label: 'Bindtap', value: 'bindtap' },
+  { label: 'Line Height', value: 'line-height' },
   { label: '综合', value: 'mixed' }
 ])
 
 const testType = ref('basic')
-const count = ref(50)
+const count = ref(100)
 const testing = ref(false)
 const showComponent = ref(false)
 const duration = ref('0')
@@ -111,19 +109,12 @@ const currentTypeLabel = computed(() => {
 function setTestType(e) {
   const type = e.currentTarget.dataset.type
   testType.value = type
-  // Animation 固定10个
-  if (type === 'animation') {
-    count.value = 10
-  }
   // 切换类型后隐藏组件，等待下次测试
   showComponent.value = false
   duration.value = '0'
 }
 
 function setCount(e) {
-  // Animation 固定10个，不可修改
-  if (testType.value === 'animation') return
-  
   const newCount = parseInt(e.currentTarget.dataset.count)
   count.value = newCount
   // 切换数量后隐藏组件，等待下次测试
@@ -150,7 +141,7 @@ function onComponentReady(e) {
   duration.value = detail.duration
   testing.value = false
   
-  console.log(`[Parent] ${detail.testType} - ${detail.count} views: ${detail.duration}ms`)
+  console.log(`[Parent] ${detail.testType} - ${detail.count} texts: ${detail.duration}ms`)
 }
 
 function goBack() {
@@ -189,7 +180,7 @@ defineExpose({
 
 .header {
   padding: 16px 20px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
 }
 
 .header-content {
@@ -251,16 +242,8 @@ defineExpose({
 }
 
 .btn-active {
-  background-color: #007AFF;
+  background-color: #FF6B6B;
   color: #fff;
-}
-
-.btn-disabled {
-  opacity: 0.4;
-}
-
-.config-disabled {
-  opacity: 0.6;
 }
 
 .lifecycle-info {
@@ -306,7 +289,7 @@ defineExpose({
 
 .highlight-value {
   font-size: 18px;
-  color: #007AFF;
+  color: #FF6B6B;
   font-weight: bold;
 }
 
@@ -322,7 +305,7 @@ defineExpose({
 }
 
 .primary {
-  background-color: #007AFF;
+  background-color: #FF6B6B;
 }
 
 .btn-text {
@@ -341,12 +324,6 @@ defineExpose({
 .area-title {
   font-size: 14px;
   color: #666;
-  margin-bottom: 4px;
-}
-
-.area-note {
-  font-size: 12px;
-  color: #FF9500;
   margin-bottom: 12px;
 }
 
@@ -364,8 +341,9 @@ defineExpose({
 <script type="application/json">
 {
   "usingComponents": {
-    "view-list": "../components/view-list/index"
+    "text-list": "../components/text-list/index"
   },
-  "navigationBarTitleText": "View 组件能力测试"
+  "navigationBarTitleText": "Text 组件能力测试"
 }
 </script>
+

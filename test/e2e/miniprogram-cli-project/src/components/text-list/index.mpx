@@ -1,0 +1,436 @@
+<template>
+  <view class="container">
+    <!-- 基础文本 -->
+    <block wx:if="{{ testType === 'basic' }}">
+      <text 
+        class="item text-basic"
+        wx:for="{{items}}"
+        wx:key="index"
+      >文本{{index + 1}}</text>
+    </block>
+
+    <!-- simple-text -->
+    <block wx:elif="{{ testType === 'simple-text' }}">
+      <text 
+        class="item"
+        wx:for="{{items}}"
+        wx:key="index"
+        is-simple="{{ true }}"
+      >simple-text</text>
+    </block>
+
+    <!-- 字体大小百分比 -->
+    <block wx:elif="{{ testType === 'font-size' }}">
+      <text 
+        class="item {{'font-size-percent-' + (index % 2)}}"
+        wx:for="{{items}}"
+        wx:key="index"
+        parent-font-size="20px"
+      >Aa</text>
+    </block>
+
+    <!-- CSS 变量 var() -->
+    <block wx:elif="{{ testType === 'var' }}">
+      <view class="var-container">
+        <text 
+          class="item var-text {{ 'var-color-' + (index % 4) }}"
+          wx:for="{{items}}"
+          wx:key="index"
+        >Var{{index + 1}}</text>
+      </view>
+    </block>
+
+    <!-- CSS calc() 计算 -->
+    <block wx:elif="{{ testType === 'calc' }}">
+      <text 
+        class="item {{ 'calc-size-' + (index % 3) }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      >Calc</text>
+    </block>
+
+    <!-- bindtap 点击事件 -->
+    <block wx:elif="{{ testType === 'bindtap' }}">
+      <text 
+        class="item tap-text {{ tappedIndex === index ? 'tap-active' : '' }}"
+        wx:for="{{items}}"
+        wx:key="index"
+        bindtap="onTextTap"
+        data-index="{{index}}"
+      >点击{{index + 1}}</text>
+      <view class="tap-info" wx:if="{{ tapCount > 0 }}">
+        <text class="tap-count">点击次数: {{ tapCount }}</text>
+        <text class="tap-last">最后点击: 第 {{ tappedIndex + 1 }} 个</text>
+      </view>
+    </block>
+
+    <!-- 行高 -->
+    <block wx:elif="{{ testType === 'line-height' }}">
+      <text 
+        class="item line-text {{ 'line-height-' + (index % 3) }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      >这是一段较长的文本用于测试行高效果，包含多行内容展示。</text>
+    </block>
+
+    <!-- 综合测试 -->
+    <block wx:else>
+      <text 
+        class="item {{ 'mixed-' + (index % 12) }}"
+        wx:for="{{items}}"
+        wx:key="index"
+        bindtap="onMixedTap"
+        data-index="{{index}}"
+      >综合{{index + 1}}</text>
+    </block>
+  </view>
+</template>
+
+<script setup>
+import { ref, onMounted, getCurrentInstance } from '@mpxjs/core'
+
+// 记录 created 时间点（setup 执行开始）
+const createdTime = performance.now()
+
+const props = defineProps({
+  count: {
+    type: Number,
+    default: 50
+  },
+  testType: {
+    type: String,
+    default: 'basic'
+  }
+})
+
+// 生成普通 items
+const items = ref([])
+items.value = Array.from({ length: props.count }, (_, i) => i + 1)
+
+// 点击状态
+const tapCount = ref(0)
+const tappedIndex = ref(-1)
+
+// 点击事件处理
+function onTextTap(e) {
+  const index = e.currentTarget.dataset.index
+  tappedIndex.value = index
+  tapCount.value++
+  console.log(`[TextList] Text ${index + 1} tapped, total: ${tapCount.value}`)
+}
+
+// 综合测试点击
+function onMixedTap(e) {
+  const index = e.currentTarget.dataset.index
+  console.log(`[TextList] Mixed text ${index + 1} tapped`)
+}
+onMounted(() => {
+  const mountedTime = performance.now()
+  const duration = mountedTime - createdTime
+  
+  setTimeout(() => {
+    console.log(`[TextList] Mounted at: ${mountedTime.toFixed(2)}ms`)
+    console.log(`[TextList] ========================================`)
+    console.log(`[TextList] Test Type: ${props.testType}`)
+    console.log(`[TextList] Text Count: ${props.count}`)
+    console.log(`[TextList] Created → Mounted: ${duration.toFixed(2)}ms`)
+    console.log(`[TextList] ========================================`)
+  })
+  
+  // 通知父组件
+  const eventDetail = {
+    createdTime: createdTime.toFixed(2),
+    mountedTime: mountedTime.toFixed(2),
+    duration: duration.toFixed(2),
+    count: props.count,
+    testType: props.testType
+  }
+  const instance = getCurrentInstance()
+  if (instance && instance.proxy) {
+    instance.proxy.triggerEvent('ready', eventDetail)
+  }
+})
+
+defineExpose({
+  items,
+  tapCount,
+  tappedIndex,
+  onTextTap,
+  onMixedTap
+})
+</script>
+
+<style>
+/* CSS 变量定义 */
+.container {
+  --primary-color: #667eea;
+  --success-color: #00C853;
+  --warning-color: #FF9500;
+  --danger-color: #f5576c;
+  --base-size: 14px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 4px;
+}
+
+.item {
+  margin: 4px;
+  padding: 6px 10px;
+}
+
+/* 基础文本样式 */
+.text-basic {
+  font-size: 14px;
+  color: #333;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+/* 字体大小百分比 */
+.font-size-percent-0 {
+  font-size: 100%;
+  color: #666;
+}
+
+.font-size-percent-1 {
+  font-size: 80%;
+  color: #444;
+}
+
+/* CSS 变量 var() 测试 */
+.var-container {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.var-text {
+  font-size: 14px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.var-color-0 {
+  color: var(--primary-color, #667eea);
+}
+
+.var-color-1 {
+  color: var(--success-color, #00C853);
+}
+
+.var-color-2 {
+  color: var(--warning-color, #FF9500);
+}
+
+.var-color-3 {
+  color: var(--danger-color, #f5576c);
+}
+
+/* CSS calc() 计算测试 */
+.calc-size-0 {
+  font-size: calc(var(--base-size, 14px) + 2px);
+  color: var(--primary-color, #667eea);
+  background-color: #f0f0ff;
+  border-radius: 4px;
+}
+
+.calc-size-1 {
+  font-size: calc(var(--base-size, 14px) * 1.2);
+  color: var(--success-color, #00C853);
+  background-color: #f0fff0;
+  border-radius: 4px;
+}
+
+.calc-size-2 {
+  font-size: calc(10px * 2);
+  color: #FF9500;
+  background-color: #fffaf0;
+  border-radius: 4px;
+}
+
+/* bindtap 点击测试 */
+.tap-text {
+  font-size: 14px;
+  color: #333;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  border-width: 2px;
+  border-color: transparent;
+}
+
+.tap-active {
+  background-color: #FF6B6B;
+  color: #fff;
+  border-color: #FF4444;
+}
+
+.tap-info {
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 12px;
+  margin-top: 12px;
+  background-color: #fff3f3;
+  border-radius: 8px;
+}
+
+.tap-count {
+  font-size: 14px;
+  color: #FF6B6B;
+  font-weight: 600;
+}
+
+.tap-last {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 行高 */
+.line-text {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #f0f0f0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333;
+}
+
+.line-height-0 {
+  line-height: 18px;
+}
+
+.line-height-1 {
+  line-height: 200%;
+}
+
+.line-height-2 {
+  line-height: 32px;
+}
+
+/* 综合样式 - 12种丰富组合 */
+
+/* 渐变背景 + 粗体 */
+.mixed-0 {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+/* 下划线 + 斜体效果 */
+.mixed-1 {
+  font-size: 16px;
+  color: #f5576c;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+/* 大字体 + 粗体 + 背景 */
+.mixed-2 {
+  font-size: 20px;
+  color: #00C853;
+  font-weight: 800;
+  background-color: #e8f5e9;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+/* 删除线 + 背景 */
+.mixed-3 {
+  font-size: 14px;
+  color: #FF9500;
+  text-decoration: line-through;
+  background-color: #fff3e0;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+
+/* 边框样式 */
+.mixed-4 {
+  font-size: 14px;
+  color: #007AFF;
+  font-weight: 600;
+  border-width: 2px;
+  border-color: #007AFF;
+  border-radius: 20px;
+  padding: 6px 14px;
+}
+
+/* 紫色渐变背景 */
+.mixed-5 {
+  font-size: 13px;
+  color: #fff;
+  font-weight: 600;
+  border-color: #9C27B0;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+/* 小字体 + 灰色 + 字间距 */
+.mixed-6 {
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 2px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+
+/* 大字体 + 细体 */
+.mixed-7 {
+  font-size: 22px;
+  color: #333;
+  font-weight: 300;
+}
+
+/* 绿色背景 + 白字 */
+.mixed-8 {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 600;
+  background-color: #4CAF50;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+/* 红色边框 + 红字 */
+.mixed-9 {
+  font-size: 14px;
+  color: #f44336;
+  font-weight: 500;
+  border-width: 1px;
+  border-color: #f44336;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+
+/* 橙色渐变 + 圆角 */
+.mixed-10 {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 700;
+  border-color: #FF9800;
+  border-radius: 16px;
+  padding: 8px 16px;
+}
+
+/* 青色主题 */
+.mixed-11 {
+  font-size: 15px;
+  color: #00BCD4;
+  font-weight: 600;
+  background-color: #e0f7fa;
+  border-width: 1px;
+  border-color: #00BCD4;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

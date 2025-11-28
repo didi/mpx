@@ -1,7 +1,16 @@
 <template>
   <view class="container">
+    <!-- Basic 测试 -->
+    <block wx:if="{{ testType === 'basic' }}">
+      <view 
+        class="item basic-item {{ index % 2 === 0 ? 'basic-even' : 'basic-odd' }}"
+        wx:for="{{items}}"
+        wx:key="index"
+      />
+    </block>
+
     <!-- Background 测试 -->
-    <block wx:if="{{ testType === 'background' }}">
+    <block wx:elif="{{ testType === 'background' }}">
       <view 
         class="item {{ index % 2 === 0 ? 'bg-gradient1' : 'bg-gradient2' }}"
         wx:for="{{items}}"
@@ -157,13 +166,14 @@ onMounted(() => {
   const mountedTime = performance.now()
   const duration = mountedTime - createdTime
   
-  console.log(`[ViewList] Mounted at: ${mountedTime.toFixed(2)}ms`)
-  console.log(`[ViewList] ========================================`)
-  console.log(`[ViewList] Test Type: ${props.testType}`)
-  console.log(`[ViewList] View Count: ${props.count}`)
-  console.log(`[ViewList] Created → Mounted: ${duration.toFixed(2)}ms`)
-  console.log(`[ViewList] ========================================`)
-  
+  setTimeout(() => {
+    console.log(`[ViewList] Mounted at: ${mountedTime.toFixed(2)}ms`)
+    console.log(`[ViewList] ========================================`)
+    console.log(`[ViewList] Test Type: ${props.testType}`)
+    console.log(`[ViewList] View Count: ${props.count}`)
+    console.log(`[ViewList] Created → Mounted: ${duration.toFixed(2)}ms`)
+    console.log(`[ViewList] ========================================`)
+  })
   // 如果是动画测试，启动动画
   if (props.testType === 'animation') {
     setTimeout(() => {
@@ -203,14 +213,33 @@ defineExpose({
   margin: 2px;
 }
 
+/* Basic 样式 */
+.basic-item {
+  border-radius: 4px;
+}
+
+.basic-even {
+  background-color: #e3f2fd;
+  border-width: 1px;
+  border-color: #2196F3;
+}
+
+.basic-odd {
+  background-color: #fff3e0;
+  border-width: 1px;
+  border-color: #FF9800;
+}
+
 /* Background 样式 */
 .bg-gradient1 {
   background: linear-gradient(135deg, #667eea, #764ba2);
+  background-size: 100% 50%;
   border-radius: 6px;
 }
 
 .bg-gradient2 {
   background: linear-gradient(135deg, #f093fb, #f5576c);
+  background-size: 32px 32px;
   border-radius: 6px;
 }
 

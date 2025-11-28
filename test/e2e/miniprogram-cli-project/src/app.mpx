@@ -25,6 +25,7 @@ createApp({
 const commonPages = [
   "./pages/index",
   "./pages/view",
+  "./pages/text",
   "./pages/common"
 ]
 
