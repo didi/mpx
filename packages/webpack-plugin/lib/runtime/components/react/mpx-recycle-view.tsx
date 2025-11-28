@@ -1,18 +1,21 @@
 import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle } from 'react'
-import { SectionList, FlatList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle } from './utils'
+
+// 扁平化后的 item 类型
+interface FlatListItem {
+  type: 'header' | 'item';
+  data: any;
+  originalIndex: number;
+  sectionIndex?: number;
+}
+
 interface ListItem {
   isSectionHeader?: boolean;
   _originalItemIndex?: number;
   [key: string]: any;
-}
-
-interface Section {
-  headerData: ListItem | null;
-  data: ListItem[];
-  hasSectionHeader?: boolean;
-  _originalItemIndex?: number;
 }
 
 interface ItemHeightType {
@@ -79,23 +82,6 @@ const getListHeaderComponent = (generichash: string, generickey: string, data: a
   return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
 }
 
-const getSectionHeaderRenderer = (generichash: string, generickey: string) => {
-  if (!generichash || !generickey) return undefined
-  return (sectionData: { section: Section }) => {
-    if (!sectionData.section.hasSectionHeader) return null
-    const SectionHeaderComponent = getGeneric(generichash, generickey)
-    return SectionHeaderComponent ? createElement(SectionHeaderComponent, { itemData: sectionData.section.headerData }) : null
-  }
-}
-
-const getItemRenderer = (generichash: string, generickey: string) => {
-  if (!generichash || !generickey) return undefined
-  return ({ item }: { item: any }) => {
-    const ItemComponent = getGeneric(generichash, generickey)
-    return ItemComponent ? createElement(ItemComponent, { itemData: item }) : null
-  }
-}
-
 const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   const {
     enhanced = false,
@@ -103,7 +89,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     scrollEventThrottle = 0,
     height,
     width,
-    listData,
+    listData = [],
     generichash,
     style = {},
     itemHeight = {},
@@ -129,11 +115,10 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
 
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
 
-  const scrollViewRef = useRef<any>(null)
+  const scrollViewRef = useRef<FlashList<FlatListItem> | null>(null)
 
-  const indexMap = useRef<{ [key: string]: string | number }>({})
-
-  const reverseIndexMap = useRef<{ [key: string]: number }>({})
+  // 原始索引 -> 扁平列表索引的映射
+  const indexMap = useRef<{ [key: number]: number }>({})
 
   const {
     hasSelfPercent,
@@ -173,173 +158,126 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       )
   }
 
-  // 通过sectionIndex和rowIndex获取原始索引
-  const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header'): number => {
-    const key = `${sectionIndex}_${rowIndex}`
-    return reverseIndexMap.current[key] ?? -1 // 如果找不到，返回-1
-  }
+  // 将 listData 转换为扁平化数组，同时计算 sticky header 索引
+  const { flatData, stickyIndices } = useMemo(() => {
+    const flat: FlatListItem[] = []
+    const sticky: number[] = []
+    indexMap.current = {}
 
-  const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
+    let sectionIndex = -1
+
+    listData.forEach((item: ListItem, index: number) => {
+      if (item.isSectionHeader) {
+        sectionIndex++
+        // 记录 sticky header 的索引
+        if (enableSticky) {
+          sticky.push(flat.length)
+        }
+        flat.push({
+          type: 'header',
+          data: item,
+          originalIndex: index,
+          sectionIndex
+        })
+        // 原始索引 -> 扁平索引
+        indexMap.current[index] = flat.length - 1
+      } else {
+        flat.push({
+          type: 'item',
+          data: extendObject({}, item, { _originalItemIndex: index }),
+          originalIndex: index,
+          sectionIndex: sectionIndex >= 0 ? sectionIndex : 0
+        })
+        indexMap.current[index] = flat.length - 1
+      }
+    })
+
+    return { flatData: flat, stickyIndices: sticky }
+  }, [listData, enableSticky])
+
+  const scrollToIndex = ({ index, animated = true, viewOffset = 0 }: ScrollPositionParams) => {
     if (scrollViewRef.current) {
-      // 通过索引映射表快速定位位置
-      const position = indexMap.current[index]
-      const [sectionIndex, itemIndex] = (position as string).split('_')
-      scrollViewRef.current.scrollToLocation?.({
-        itemIndex: itemIndex === 'header' ? 0 : Number(itemIndex) + 1,
-        sectionIndex: Number(sectionIndex) || 0,
-        animated,
-        viewOffset,
-        viewPosition
-      })
+      const flatIndex = indexMap.current[index]
+      if (flatIndex !== undefined) {
+        scrollViewRef.current.scrollToIndex({
+          index: flatIndex,
+          animated,
+          viewOffset
+        })
+      }
     }
   }
 
-  const getItemHeight = ({ sectionIndex, rowIndex }: { sectionIndex: number, rowIndex: number }) => {
-    if (!itemHeight) {
-      return 0
-    }
-    if ((itemHeight as ItemHeightType).getter) {
-      const item = convertedListData[sectionIndex].data[rowIndex]
-      // 使用getOriginalIndex获取原始索引
-      const originalIndex = getOriginalIndex(sectionIndex, rowIndex)
-      return (itemHeight as ItemHeightType).getter?.(item, originalIndex) || 0
+  // 根据 item 类型返回高度
+  const getItemSize = (item: FlatListItem, index: number): number => {
+    if (item.type === 'header') {
+      if ((sectionHeaderHeight as ItemHeightType).getter) {
+        return (sectionHeaderHeight as ItemHeightType).getter?.(item.data, item.originalIndex) || 0
+      }
+      return (sectionHeaderHeight as ItemHeightType).value || 0
     } else {
+      if ((itemHeight as ItemHeightType).getter) {
+        return (itemHeight as ItemHeightType).getter?.(item.data, item.originalIndex) || 0
+      }
       return (itemHeight as ItemHeightType).value || 0
     }
   }
 
-  const getSectionHeaderHeight = ({ sectionIndex }: { sectionIndex: number }) => {
-    const item = convertedListData[sectionIndex]
-    const { hasSectionHeader } = item
-    // 使用getOriginalIndex获取原始索引
-    const originalIndex = getOriginalIndex(sectionIndex, 'header')
-    if (!hasSectionHeader) return 0
-    if ((sectionHeaderHeight as ItemHeightType).getter) {
-      return (sectionHeaderHeight as ItemHeightType).getter?.(item, originalIndex) || 0
+  // FlashList 的 overrideItemLayout
+  const overrideItemLayout = (layout: { span?: number; size?: number }, item: FlatListItem, index: number) => {
+    layout.size = getItemSize(item, index)
+  }
+
+  // 获取 item 类型，用于 FlashList 的类型分离优化
+  const getItemType = (item: FlatListItem): string => {
+    return item.type
+  }
+
+  // 渲染单个 item (包括 header 和普通 item)
+  const renderItem = ({ item }: { item: FlatListItem }) => {
+    if (item.type === 'header') {
+      const SectionHeaderComponent = getGeneric(generichash, genericsectionHeader)
+      return SectionHeaderComponent ? createElement(SectionHeaderComponent, { itemData: item.data }) : null
     } else {
-      return (sectionHeaderHeight as ItemHeightType).value || 0
+      const ItemComponent = getGeneric(generichash, genericrecycleItem)
+      return ItemComponent ? createElement(ItemComponent, { itemData: item.data }) : null
     }
   }
 
-  const convertedListData = useMemo(() => {
-    const sections: Section[] = []
-    let currentSection: Section | null = null
-    // 清空之前的索引映射
-    indexMap.current = {}
-    // 清空反向索引映射
-    reverseIndexMap.current = {}
-    listData.forEach((item: ListItem, index: number) => {
-      if (item.isSectionHeader) {
-        // 如果已经存在一个 section，先把它添加到 sections 中
-        if (currentSection) {
-          sections.push(currentSection)
-        }
-        // 创建新的 section
-        currentSection = {
-          headerData: item,
-          data: [],
-          hasSectionHeader: true,
-          _originalItemIndex: index
-        }
-        // 为 section header 添加索引映射
-        const sectionIndex = sections.length
-        indexMap.current[index] = `${sectionIndex}_header`
-        // 添加反向索引映射
-        reverseIndexMap.current[`${sectionIndex}_header`] = index
-      } else {
-        // 如果没有当前 section，创建一个默认的
-        if (!currentSection) {
-          // 创建默认section (无header的section)
-          currentSection = {
-            headerData: null,
-            data: [],
-            hasSectionHeader: false,
-            _originalItemIndex: -1
-          }
-        }
-        // 将 item 添加到当前 section 的 data 中
-        const itemIndex = currentSection.data.length
-        currentSection.data.push(extendObject({}, item, {
-          _originalItemIndex: index
-        }))
-        let sectionIndex
-        // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
-        if (!currentSection.hasSectionHeader && sections.length === 0) {
-          // 在默认section中(第一个且无header)
-          sectionIndex = 0
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        } else {
-          // 在普通section中
-          sectionIndex = sections.length
-          indexMap.current[index] = `${sectionIndex}_${itemIndex}`
-        }
-        // 添加反向索引映射
-        reverseIndexMap.current[`${sectionIndex}_${itemIndex}`] = index
-      }
-    })
-    // 添加最后一个 section
-    if (currentSection) {
-      sections.push(currentSection)
-    }
-    return sections
-  }, [listData])
+  // 估算 item 平均大小，FlashList 需要这个值来优化渲染
+  const estimatedItemSize = useMemo(() => {
+    const headerSize = (sectionHeaderHeight as ItemHeightType).value || 50
+    const normalSize = (itemHeight as ItemHeightType).value || 50
+    const totalCount = flatData.length
+    const headerCount = stickyIndices.length
 
-  const { getItemLayout } = useMemo(() => {
-    const layouts: Array<{ length: number, offset: number, index: number }> = []
-    let offset = 0
-
-    if (useListHeader) {
-      // 计算列表头部的高度
-      offset += listHeaderHeight.getter?.() || listHeaderHeight.value || 0
+    // 如果没有数据，返回默认值
+    if (totalCount === 0) {
+      return normalSize
     }
 
-    // 遍历所有 sections
-    convertedListData.forEach((section: Section, sectionIndex: number) => {
-      // 添加 section header 的位置信息
-      const headerHeight = getSectionHeaderHeight({ sectionIndex })
-      layouts.push({
-        length: headerHeight,
-        offset,
-        index: layouts.length
-      })
-      offset += headerHeight
-
-      // 添加该 section 中所有 items 的位置信息
-      section.data.forEach((item: ListItem, itemIndex: number) => {
-        const contenteight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
-        layouts.push({
-          length: contenteight,
-          offset,
-          index: layouts.length
-        })
-        offset += contenteight
-      })
-
-      // 添加该 section 尾部位置信息
-      // 因为即使 sectionList 没传 renderSectionFooter，getItemLayout 中的 index 的计算也会包含尾部节点
-      layouts.push({
-        length: 0,
-        offset,
-        index: layouts.length
-      })
-    })
-    return {
-      itemLayouts: layouts,
-      getItemLayout: (data: any, index: number) => layouts[index]
+    // 如果有 section header，使用加权平均
+    if (headerCount > 0) {
+      const itemCount = totalCount - headerCount
+      return (headerCount * headerSize + itemCount * normalSize) / totalCount
     }
-  }, [convertedListData, useListHeader])
+
+    return normalSize
+  }, [sectionHeaderHeight, itemHeight, flatData.length, stickyIndices.length])
+
+  // keyExtractor 用于生成唯一 key
+  const keyExtractor = (item: FlatListItem, index: number): string => {
+    return `${item.type}_${item.originalIndex}_${index}`
+  }
 
   const scrollAdditionalProps = extendObject(
     {
-      alwaysBounceVertical: false,
-      alwaysBounceHorizontal: false,
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
+      showsVerticalScrollIndicator: showScrollbar,
       showsHorizontalScrollIndicator: showScrollbar,
       onEndReachedThreshold,
-      ref: scrollViewRef,
       bounces: false,
-      stickySectionHeadersEnabled: enableSticky,
       onScroll: onScroll,
       onEndReached: onEndReached
     },
@@ -374,15 +312,20 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   ], { layoutRef })
 
   return createElement(
-    SectionList,
+    FlashList,
     extendObject(
       {
+        ref: scrollViewRef,
+        contentContainerStyle: { backgroundColor: style.backgroundColor },
         style: [{ height, width }, style, layoutStyle],
-        sections: convertedListData,
-        renderItem: getItemRenderer(generichash, genericrecycleItem),
-        getItemLayout: getItemLayout,
+        data: flatData,
+        renderItem: renderItem,
+        keyExtractor: keyExtractor,
+        getItemType: getItemType,
+        estimatedItemSize: estimatedItemSize,
+        overrideItemLayout: overrideItemLayout,
+        stickyHeaderIndices: enableSticky && stickyIndices.length > 0 ? stickyIndices : undefined,
         ListHeaderComponent: useListHeader ? getListHeaderComponent(generichash, genericListHeader, listHeaderData) : null,
-        renderSectionHeader: getSectionHeaderRenderer(generichash, genericsectionHeader),
         refreshControl: refresherEnabled
           ? React.createElement(RefreshControl, {
             onRefresh: onRefresh,
