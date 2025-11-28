@@ -13,18 +13,18 @@ export default function pageStatusMixin (mixinType) {
       onResize (e) {
         this.__mpxProxy.callHook(ONRESIZE, [e])
       },
-      onLoad (query) {
-        if (__mpx_mode__ === 'wx') {
-          const loadParams = {}
-          // 此处单独处理微信与其他端保持一致，传入onload的参数都是经过decodeURIComponent处理过的
-          if (isObject(query)) {
-            for (const key in query) {
-              loadParams[key] = decodeURIComponent(query[key])
+      onLoad (rawQuery) {
+        if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'qq' || __mpx_mode__ === 'tt') {
+          const decodedQuery = {}
+          // 处理以上平台直接透传encode的结果，给到onload第二个参数供开发者使用
+          if (isObject(rawQuery)) {
+            for (const key in rawQuery) {
+              decodedQuery[key] = decodeURIComponent(rawQuery[key])
             }
           }
-          this.__mpxProxy.callHook(ONLOAD, [loadParams])
+          this.__mpxProxy.callHook(ONLOAD, [rawQuery, decodedQuery])
         } else {
-          this.__mpxProxy.callHook(ONLOAD, [query])
+          this.__mpxProxy.callHook(ONLOAD, [rawQuery, rawQuery])
         }
       }
     }
