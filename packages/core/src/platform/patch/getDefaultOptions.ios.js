@@ -399,6 +399,8 @@ function usePageEffect (mpxProxy, pageId) {
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
     const hasHideHook = hasPageHook(mpxProxy, [ONHIDE, 'hide'])
     const hasResizeHook = hasPageHook(mpxProxy, [ONRESIZE, 'resize'])
+    const currentCountMap = global.__mpxPageSizeCountMap
+
     if (hasShowHook || hasHideHook || hasResizeHook) {
       if (hasOwn(pageStatusMap, pageId)) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
@@ -420,7 +422,10 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
-      del(global.__mpxPageSizeCountMap, pageId)
+      // 兼容热更新场景下，旧页面的删除时机可能晚与新页面创建时机，再次删除前需判断global.__mpxPageSizeCountMap未发生变化
+      if (global.__mpxPageSizeCountMap === currentCountMap) {
+        del(global.__mpxPageSizeCountMap, pageId)
+      }
     }
   }, [])
 }
