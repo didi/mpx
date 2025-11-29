@@ -161,8 +161,8 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
 export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
-  // style变更标识(首次render不执行)，初始值为-1，首次渲染后为0，有style更新则为1
-  const animationDeps = useRef(-1)
+  // style变更标识(首次render不执行)，初始值为0，首次渲染后为1
+  const animationDeps = useRef(0)
   // 有动画样式的 style key(useAnimatedStyle使用)
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
   // 记录动画key的style样式值 没有的话设置为false
@@ -253,8 +253,6 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
             transitionend()
             callbackMap.set(duration, true)
           }
-          // Todo transitionend 连续动画
-          // animationDeps.current = 0
         }
       }
       const callback = (finished?: boolean, current?: AnimatableValue) => {
@@ -293,22 +291,13 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // ** style 更新
   useEffect(() => {
     console.log('useEffect originalStyle animationDeps=', animationDeps.current, originalStyle)
-    // css transition 更新 animationDeps
-    if (animationDeps.current === -1) {
-      // 首次不更新
-      animationDeps.current = 0
+    // 首次不执行
+    if (!animationDeps.current) {
+      animationDeps.current = 1
       return
     }
-    animationDeps.current = +updateStyleVal()
+    if (updateStyleVal()) startAnimation()
   }, [originalStyle])
-  // ** 获取动画样式prop & 驱动动画
-  useEffect(() => {
-    console.log('useEffect animationDeps animationDeps=', animationDeps.current)
-    if (animationDeps.current <= 0) {
-      return
-    }
-    startAnimation()
-  }, [animationDeps.current])
   // ** 清空动画
   useEffect(() => {
     return () => {
