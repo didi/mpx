@@ -126,8 +126,8 @@ height: {
 
   createPage({
     data: {
-      width: 375,
-      height: 500,
+      width: 0,
+      height: 0,
       bufferScale: 5,
       dataList: generateData(100),
       itemHeight: {
@@ -143,6 +143,10 @@ height: {
       listHeaderHeight: {
         value: 100
       }
+    },
+    onLoad() {
+      this.height = mpx.getWindowInfo().windowHeight
+      this.width = mpx.getWindowInfo().windowWidth
     }
   })
   </script>
