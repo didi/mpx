@@ -1,6 +1,6 @@
 # Mpx 扩展组件
 
-除基础组件外，Mpx 额外提供一些扩展组件。扩展组件需用户手动在 `mpx.config.js`中通过编译配置`useExtendComponents`按需注册使用。
+除基础组件外，Mpx 额外提供一些扩展组件。扩展组件需开发者在 `mpx.config.js`中通过编译配置`useExtendComponents`按需注册，注册成功后即可作为全局自定义组件使用。
 ```js
 // mpx.config.js
 defineConfig({
