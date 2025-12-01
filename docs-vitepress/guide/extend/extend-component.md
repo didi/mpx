@@ -40,7 +40,7 @@ defineConfig({
 | generic:recycle-item         | string      |       | 列表项，抽象节点组件名，对应组件需要通过 usingComponents 注册               | 全平台  |
 | generic:section-header    | string      |       | 列表分组头，抽象节点组件名，对应组件需要通过 usingComponents 注册          | 全平台  |
 | generic:list-header     | string      |       | 列表头，抽象节点组件名，对应组件需要通过 usingComponents 注册       | 全平台  |
-| useListHeader         | Boolean     | true     | 使用自定义列表头        | 全平台    |
+| useListHeader         | Boolean     | false     | 使用自定义列表头        | 全平台    |
 | listHeaderData        | Object      | {}       | 列表头数据              | 全平台    |
 | itemHeight            | Object      | {}       | 列表项高度配置（支持 getter/value），必须配置    | 全平台      |
 | sectionHeaderHeight   | Object      | {}       | 分组头部高度配置（getter/value），若使用了自定义分组头必须配置      | 全平台      |
@@ -93,11 +93,12 @@ height: {
   width="{{width}}"
   height="{{height}}"
   listData="{{dataList}}"
-  enable-sticky="{{true}}"
   itemHeight="{{ itemHeight }}"
   sectionHeaderHeight="{{headerHeight}}"
   listHeaderHeight="{{listHeaderHeight}}"
   bufferScale="{{bufferScale}}"
+  useListHeader="{{true}}"
+  enable-sticky="{{true}}"
 />
 <script>
   import mpx, { createPage, createComponent } from '@mpxjs/core'
