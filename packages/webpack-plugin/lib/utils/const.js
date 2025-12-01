@@ -17,6 +17,6 @@ module.exports = {
       android: 'runtime/components/react/dist/mpx-recycle-view.jsx',
       harmony: 'runtime/components/react/dist/mpx-recycle-view.jsx'
     }
-  }
+  },
   MPX_TAG_PAGE_SELECTOR: 'mpx-page'
 }
