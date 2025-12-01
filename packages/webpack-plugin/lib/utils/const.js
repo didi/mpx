@@ -18,4 +18,5 @@ module.exports = {
       harmony: 'runtime/components/react/dist/mpx-recycle-view.jsx'
     }
   }
+  MPX_TAG_PAGE_SELECTOR: 'mpx-page'
 }

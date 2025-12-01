@@ -7,14 +7,27 @@ const readFileSyncInDist = (filePath, options) => {
   return fs.readFileSync(realPath, options)
 }
 
+// 排序SubPackages数组，按root字段排序，每一项的pages按字符串排序
+const sortSubPackages = (subPackages) => {
+  return subPackages
+    .sort((a, b) => a.root.localeCompare(b.root))
+    .map((item) => ({
+      ...item,
+      pages: item.pages.sort()
+    }))
+}
+
 describe('test App instance', () => {
   let subpackage = []
   beforeEach(() => {
-    subpackage = [
+    subpackage = sortSubPackages([
       {
         'root': 'test2',
         'pages': [
-          'pages/index'
+          'pages/index',
+          'pages/testAsyncSubpackageRules1',
+          'pages/testAsyncSubpackageRules2',
+          'pages/testAsyncSubpackageRules3'
         ]
       },
       {
@@ -23,17 +36,14 @@ describe('test App instance', () => {
           'pages/index'
         ]
       }
-    ]
+    ])
   })
 
   it('should wx App instance json is correct', function () {
     const wxAppJsonStr = readFileSyncInDist('dist/wx/app.json', 'utf-8')
     const wxAppJsonObj = json5.parse(wxAppJsonStr)
     // const wxPages = wxAppJsonObj.pages
-    const wxSubPackages = wxAppJsonObj.subPackages
-    if (subpackage[0].root !== wxSubPackages[0].root) {
-      subpackage.reverse()
-    }
+    const wxSubPackages = sortSubPackages(wxAppJsonObj.subPackages)
     // expect(wxPages).toMatch(['pages/index', 'pages/mode', 'pages/alias', 'pages/someEnv'])
     expect(wxSubPackages).toEqual(subpackage)
   })
@@ -42,11 +52,8 @@ describe('test App instance', () => {
     const aliAppJsonStr = readFileSyncInDist('dist/ali/app.json', 'utf-8')
     const aliAppJsonObj = json5.parse(aliAppJsonStr)
     const aliPages = aliAppJsonObj.pages
-    const aliSubPackages = aliAppJsonObj.subPackages
+    const aliSubPackages = sortSubPackages(aliAppJsonObj.subPackages)
     expect(aliPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
-    if (subpackage[0].root !== aliSubPackages[0].root) {
-      subpackage.reverse()
-    }
     expect(aliSubPackages).toEqual(subpackage)
   })
 
@@ -54,11 +61,8 @@ describe('test App instance', () => {
     const ttAppJsonStr = readFileSyncInDist('dist/tt/app.json', 'utf-8')
     const ttAppJsonObj = json5.parse(ttAppJsonStr)
     const ttPages = ttAppJsonObj.pages
-    const ttSubPackages = ttAppJsonObj.subPackages
+    const ttSubPackages = sortSubPackages(ttAppJsonObj.subPackages)
     expect(ttPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
-    if (subpackage[0].root !== ttSubPackages[0].root) {
-      subpackage.reverse()
-    }
     expect(ttSubPackages).toEqual(subpackage)
   })
 
@@ -66,11 +70,8 @@ describe('test App instance', () => {
     const swanAppJsonStr = readFileSyncInDist('dist/swan/app.json', 'utf-8')
     const swanAppJsonObj = json5.parse(swanAppJsonStr)
     const swanPages = swanAppJsonObj.pages
-    const swanSubPackages = swanAppJsonObj.subPackages
+    const swanSubPackages = sortSubPackages(swanAppJsonObj.subPackages)
     expect(swanPages).toEqual(['pages/index', 'pages/mode', 'pages/alias'])
-    if (subpackage[0].root !== swanSubPackages[0].root) {
-      subpackage.reverse()
-    }
     expect(swanSubPackages).toEqual(subpackage)
   })
 
