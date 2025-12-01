@@ -14,11 +14,14 @@
       <view class="config-item">
         <text class="config-label">测试能力</text>
         <view class="config-options">
-          <view wx:for="{{ testTypes }}" wx:key="value"
+          <view
+            wx:for="{{ testTypes }}"
+            wx:key="value"
             class="option-btn {{ testType === item.value ? 'btn-active' : '' }}"
             bindtap="setTestType"
             data-type="{{ item.value }}"
-            testID="testType-{{item.value}}">
+            testID="testType-{{item.value}}"
+          >
             {{ item.label }}
           </view>
         </view>
@@ -26,13 +29,18 @@
 
       <!-- View 数量选择 -->
       <view class="config-item {{ testType === 'animation' ? 'config-disabled' : '' }}">
-        <text class="config-label">View 数量{{ testType === 'animation' ? '（动画固定10个）' : '' }}</text>
+        <text class="config-label"
+          >View 数量{{ testType === 'animation' ? '（动画固定10个）' : '' }}</text
+        >
         <view class="config-options">
-          <view wx:for="{{ countList }}" wx:key="*this"
+          <view
+            wx:for="{{ countList }}"
+            wx:key="*this"
             class="option-btn {{ count === item ? 'btn-active' : '' }} {{ testType === 'animation' ? 'btn-disabled' : '' }}"
             bindtap="{{ testType === 'animation' ? '' : 'setCount' }}"
             data-count="{{ item }}"
-            testID="count-{{item}}">
+            testID="count-{{item}}"
+          >
             {{ item }}
           </view>
         </view>
@@ -50,23 +58,84 @@
         <text class="info-value" testID="currentCount">{{ count }}</text>
       </view>
       <view class="info-row-highlight">
-        <text class="info-label">Created → Mounted:</text>
-        <text class="info-value highlight-value" testID="duration">{{ duration }}ms</text>
+        <text class="info-label">{{ isBenchmarking ? '进度:' : 'Created → Mounted:' }}</text>
+        <text class="info-value highlight-value" testID="duration">{{
+          isBenchmarking ? currentRound + '/' + totalRounds : duration + 'ms'
+        }}</text>
+      </view>
+
+      <!-- 基准测试统计结果 -->
+      <view wx:if="{{ benchmarkStats }}" class="stats-section" testID="benchmarkStats">
+        <view class="stats-divider"></view>
+        <text class="stats-title">📊 基准测试统计</text>
+        <view class="stats-row">
+          <text class="stats-label">测试轮次:</text>
+          <text class="stats-value" testID="statsRounds"
+            >{{ benchmarkStats.trimmedRounds }} (去极值后)</text
+          >
+        </view>
+        <view class="stats-row">
+          <text class="stats-label">中位数:</text>
+          <text class="stats-value stats-primary" testID="statsMedian"
+            >{{ benchmarkStats.median.toFixed(2) }}ms</text
+          >
+        </view>
+        <view class="stats-row">
+          <text class="stats-label">平均值:</text>
+          <text class="stats-value" testID="statsMean">{{ benchmarkStats.mean.toFixed(2) }}ms</text>
+        </view>
+        <view class="stats-row">
+          <text class="stats-label">范围:</text>
+          <text class="stats-value" testID="statsRange"
+            >{{ benchmarkStats.min.toFixed(2) }} ~ {{ benchmarkStats.max.toFixed(2) }}ms</text
+          >
+        </view>
+        <view class="stats-row">
+          <text class="stats-label">标准差:</text>
+          <text class="stats-value" testID="statsStdDev"
+            >{{ benchmarkStats.stdDev.toFixed(2) }}ms</text
+          >
+        </view>
+        <view class="stats-row">
+          <text class="stats-label">变异系数:</text>
+          <text
+            class="stats-value {{ benchmarkStats.cv < 10 ? 'stats-stable' : benchmarkStats.cv < 20 ? 'stats-moderate' : 'stats-unstable' }}"
+            testID="statsCV"
+            >
+            {{ benchmarkStats.cv.toFixed(2) }}%{{
+              benchmarkStats.cv < 10 ? '✓ 稳定' : benchmarkStats.cv < 20 ? '⚠ 一般' : '✗ 不稳定'
+            }}</text
+          >
+        </view>
       </view>
     </view>
 
     <view class="action-section">
-      <view class="btn primary" bindtap="runTest" testID="runTestBtn">
-        <text class="btn-text">{{ testing ? '测试中...' : '开始测试' }}</text>
+      <view class="btn-row">
+        <view class="btn secondary" bindtap="runTest" testID="runTestBtn">
+          <text class="btn-text-secondary">{{
+            testing && !isBenchmarking ? '测试中...' : '单次测试'
+          }}</text>
+        </view>
+        <view class="btn primary" bindtap="runBenchmark" testID="runBenchmarkBtn">
+          <text class="btn-text">{{
+            isBenchmarking ? '测试中 ' + currentRound + '/' + totalRounds : '基准测试 (推荐)'
+          }}</text>
+        </view>
       </view>
+      <text class="action-hint">💡 基准测试：2轮预热 + 5轮测量，取中位数，结果更稳定</text>
     </view>
 
     <!-- 通过 wx:if 控制子组件，每次切换都会触发完整生命周期 -->
     <view class="test-area" testID="testArea">
-      <text class="area-title" testID="areaTitle">{{ currentTypeLabel }} - {{ testType === 'animation' ? '10' : count }} 个 View</text>
-      <text class="area-note" wx:if="{{ testType === 'animation' }}">* Animation 使用 mpx.createAnimation()，固定 10 个组件演示</text>
-      <view-list 
-        wx:if="{{showComponent}}" 
+      <text class="area-title" testID="areaTitle"
+        >{{ currentTypeLabel }} - {{ testType === 'animation' ? '10' : count }} 个 View</text
+      >
+      <text class="area-note" wx:if="{{ testType === 'animation' }}"
+        >* Animation 使用 mpx.createAnimation()，固定 10 个组件演示</text
+      >
+      <view-list
+        wx:if="{{showComponent}}"
         count="{{count}}"
         test-type="{{testType}}"
         bindready="onComponentReady"
@@ -80,292 +149,509 @@
 </template>
 
 <script setup>
-import mpx, { ref, computed, onMounted } from '@mpxjs/core'
+  import mpx, { ref, computed } from '@mpxjs/core'
 
-// 测试类型配置
-const testTypes = ref([
-  { label: 'Basic', value: 'basic' },
-  { label: 'Background', value: 'background' },
-  { label: 'Shadow', value: 'shadow' },
-  { label: 'Radius', value: 'radius' },
-  { label: 'Transform', value: 'transform' },
-  { label: 'Opacity', value: 'opacity' },
-  { label: 'Animation', value: 'animation' },
-  { label: 'Simple View', value: 'simple-view' },
-  { label: '综合', value: 'mixed' }
-])
+  // 测试类型配置
+  const testTypes = ref([
+    { label: 'Basic', value: 'basic' },
+    { label: 'Background', value: 'background' },
+    { label: 'Shadow', value: 'shadow' },
+    { label: 'Radius', value: 'radius' },
+    { label: 'Transform', value: 'transform' },
+    { label: 'Opacity', value: 'opacity' },
+    { label: 'Animation', value: 'animation' },
+    { label: 'Simple View', value: 'simple-view' },
+    { label: '综合', value: 'mixed' }
+  ])
 
-const testType = ref('basic')
-const count = ref(50)
-const testing = ref(false)
-const showComponent = ref(false)
-const duration = ref('0')
-const countList = ref([10, 50, 100, 500, 1000])
+  const testType = ref('basic')
+  const count = ref(50)
+  const testing = ref(false)
+  const showComponent = ref(false)
+  const duration = ref('0')
+  const countList = ref([10, 50, 100, 500, 1000])
 
-// 当前选中类型的标签
-const currentTypeLabel = computed(() => {
-  const type = testTypes.value.find(t => t.value === testType.value)
-  return type ? type.label : ''
-})
+  // === 性能测试稳定性增强 ===
+  const BENCHMARK_ROUNDS = 5 // 正式测量轮次
+  const WARMUP_ROUNDS = 2 // 预热轮次（结果不计入统计）
+  const DESTROY_DELAY = 100 // 销毁后等待时间(ms)，确保组件完全销毁
 
-function setTestType(e) {
-  const type = e.currentTarget.dataset.type
-  testType.value = type
-  // Animation 固定10个
-  if (type === 'animation') {
-    count.value = 10
+  // 根据 view 数量动态计算冷却时间
+  // 冷却时间 = 渲染完成后等待的时间，让设备状态恢复（GC、内存释放等）
+  // 注意：这个时间是在 onComponentReady 回调后才开始计时，不会影响渲染
+  function getRoundInterval() {
+    const viewCount = count.value
+    if (viewCount <= 100) return 300 // 少量view，冷却300ms
+    if (viewCount <= 500) return 500 // 中等数量，冷却500ms
+    return 800 // 大量view(1000)，冷却800ms
   }
-  // 切换类型后隐藏组件，等待下次测试
-  showComponent.value = false
-  duration.value = '0'
-}
 
-function setCount(e) {
-  // Animation 固定10个，不可修改
-  if (testType.value === 'animation') return
-  
-  const newCount = parseInt(e.currentTarget.dataset.count)
-  count.value = newCount
-  // 切换数量后隐藏组件，等待下次测试
-  showComponent.value = false
-  duration.value = '0'
-}
+  const benchmarkResults = ref([]) // 存储每轮测量结果
+  const currentRound = ref(0) // 当前轮次
+  const totalRounds = ref(0) // 总轮次（预热+正式）
+  const isBenchmarking = ref(false) // 是否在进行多轮测试
+  const benchmarkStats = ref(null) // 统计结果
 
-function runTest() {
-  if (testing.value) return
-  
-  testing.value = true
-  
-  // 先隐藏组件（销毁）
-  showComponent.value = false
-  
-  // 等待销毁完成后再显示（重新创建）
-  setTimeout(() => {
-    showComponent.value = true
-  }, 100)
-}
+  // 当前选中类型的标签
+  const currentTypeLabel = computed(() => {
+    const type = testTypes.value.find((t) => t.value === testType.value)
+    return type ? type.label : ''
+  })
 
-function onComponentReady(e) {
-  const detail = e.detail
-  duration.value = detail.duration
-  testing.value = false
-  
-  console.log(`[Parent] ${detail.testType} - ${detail.count} views: ${detail.duration}ms`)
-}
+  function setTestType(e) {
+    const type = e.currentTarget.dataset.type
+    testType.value = type
+    // Animation 固定10个
+    if (type === 'animation') {
+      count.value = 10
+    }
+    // 切换类型后隐藏组件，等待下次测试
+    showComponent.value = false
+    duration.value = '0'
+    resetBenchmark()
+  }
 
-function goBack() {
-  mpx.navigateBack()
-}
+  function setCount(e) {
+    // Animation 固定10个，不可修改
+    if (testType.value === 'animation') return
 
-// 页面加载后自动运行一次测试
-onMounted(() => {
-  setTimeout(() => {
-    runTest()
-  }, 300)
-})
+    const newCount = parseInt(e.currentTarget.dataset.count)
+    count.value = newCount
+    // 切换数量后隐藏组件，等待下次测试
+    showComponent.value = false
+    duration.value = '0'
+    resetBenchmark()
+  }
 
-defineExpose({
-  testTypes,
-  testType,
-  count,
-  testing,
-  showComponent,
-  duration,
-  countList,
-  currentTypeLabel,
-  setTestType,
-  setCount,
-  runTest,
-  onComponentReady,
-  goBack
-})
+  // 重置测试状态
+  function resetBenchmark() {
+    benchmarkResults.value = []
+    currentRound.value = 0
+    totalRounds.value = 0
+    isBenchmarking.value = false
+    benchmarkStats.value = null
+  }
+
+  // 单次测试（用于快速预览）
+  function runTest() {
+    if (testing.value || isBenchmarking.value) return
+
+    testing.value = true
+    showComponent.value = false
+
+    // 等待组件完全销毁后再重新创建
+    setTimeout(() => {
+      showComponent.value = true
+    }, DESTROY_DELAY)
+  }
+
+  // 多轮基准测试（用于稳定的性能测量）
+  function runBenchmark() {
+    if (testing.value || isBenchmarking.value) return
+
+    resetBenchmark()
+    isBenchmarking.value = true
+    totalRounds.value = WARMUP_ROUNDS + BENCHMARK_ROUNDS
+
+    console.log(
+      `[Benchmark] Starting: ${WARMUP_ROUNDS} warmup + ${BENCHMARK_ROUNDS} benchmark rounds`
+    )
+    runNextRound()
+  }
+
+  function runNextRound() {
+    currentRound.value++
+    testing.value = true
+    showComponent.value = false
+
+    // 等待组件完全销毁后再重新创建
+    setTimeout(() => {
+      showComponent.value = true
+    }, DESTROY_DELAY)
+  }
+
+  function onComponentReady(e) {
+    const detail = e.detail
+    const durationValue = parseFloat(detail.duration)
+
+    if (isBenchmarking.value) {
+      const isWarmup = currentRound.value <= WARMUP_ROUNDS
+
+      if (!isWarmup) {
+        // 正式测量，记录结果
+        benchmarkResults.value.push(durationValue)
+      }
+
+      console.log(
+        `[Benchmark] Round ${currentRound.value}/${totalRounds.value} ${isWarmup ? '(warmup)' : ''}: ${detail.duration}ms`
+      )
+
+      if (currentRound.value < totalRounds.value) {
+        // 渲染完成后，等待冷却时间让设备恢复，再进入下一轮
+        testing.value = false
+        const cooldownTime = getRoundInterval()
+        console.log(`[Benchmark] Cooling down for ${cooldownTime}ms before next round...`)
+        setTimeout(() => {
+          runNextRound()
+        }, cooldownTime)
+      } else {
+        // 所有轮次完成，计算统计结果
+        finishBenchmark()
+      }
+    } else {
+      // 单次测试模式
+      duration.value = detail.duration
+      testing.value = false
+      console.log(`[Single] ${detail.testType} - ${detail.count} views: ${detail.duration}ms`)
+    }
+  }
+
+  // 计算统计结果
+  function finishBenchmark() {
+    const results = benchmarkResults.value.slice().sort((a, b) => a - b)
+    const n = results.length
+
+    if (n === 0) {
+      testing.value = false
+      isBenchmarking.value = false
+      return
+    }
+
+    // 去除最高和最低值（如果样本足够）
+    let trimmedResults = results
+    if (n >= 5) {
+      trimmedResults = results.slice(1, -1) // 去掉首尾各1个
+    }
+
+    const sum = trimmedResults.reduce((a, b) => a + b, 0)
+    const mean = sum / trimmedResults.length
+    const median =
+      trimmedResults.length % 2 === 0
+        ? (trimmedResults[trimmedResults.length / 2 - 1] +
+            trimmedResults[trimmedResults.length / 2]) /
+          2
+        : trimmedResults[Math.floor(trimmedResults.length / 2)]
+
+    // 计算标准差
+    const squaredDiffs = trimmedResults.map((v) => Math.pow(v - mean, 2))
+    const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / trimmedResults.length
+    const stdDev = Math.sqrt(avgSquaredDiff)
+
+    // 计算变异系数 (CV = 标准差/平均值 * 100%)
+    const cv = (stdDev / mean) * 100
+
+    benchmarkStats.value = {
+      rounds: n,
+      trimmedRounds: trimmedResults.length,
+      min: Math.min(...trimmedResults),
+      max: Math.max(...trimmedResults),
+      mean: mean,
+      median: median,
+      stdDev: stdDev,
+      cv: cv,
+      rawResults: results,
+      trimmedResults: trimmedResults
+    }
+
+    // 显示中位数作为主要结果（中位数比平均值更稳定）
+    duration.value = median.toFixed(2)
+
+    testing.value = false
+    isBenchmarking.value = false
+  }
+
+  function goBack() {
+    mpx.navigateBack()
+  }
+
+  defineExpose({
+    testTypes,
+    testType,
+    count,
+    testing,
+    showComponent,
+    duration,
+    countList,
+    currentTypeLabel,
+    benchmarkResults,
+    currentRound,
+    totalRounds,
+    isBenchmarking,
+    benchmarkStats,
+    setTestType,
+    setCount,
+    runTest,
+    runBenchmark,
+    onComponentReady,
+    goBack
+  })
 </script>
 
 <style>
-.container {
-  flex: 1;
-  background-color: #f5f5f5;
-}
+  .container {
+    flex: 1;
+    background-color: #f5f5f5;
+  }
 
-.header {
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-}
+  .header {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
 
-.header-content {
-  flex-direction: row;
-  align-items: center;
-}
+  .header-content {
+    flex-direction: row;
+    align-items: center;
+  }
 
-.back-btn {
-  width: 32px;
-  height: 32px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-}
+  .back-btn {
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+  }
 
-.back-text {
-  font-size: 20px;
-  color: #fff;
-  font-weight: bold;
-}
+  .back-text {
+    font-size: 20px;
+    color: #fff;
+    font-weight: bold;
+  }
 
-.title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
-  flex: 1;
-}
+  .title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    flex: 1;
+  }
 
-.config-section {
-  padding: 16px;
-  background-color: #fff;
-  margin: 16px;
-  border-radius: 12px;
-}
+  .config-section {
+    padding: 16px;
+    background-color: #fff;
+    margin: 16px;
+    border-radius: 12px;
+  }
 
-.config-item {
-  margin-bottom: 16px;
-}
+  .config-item {
+    margin-bottom: 16px;
+  }
 
-.config-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 8px;
-}
+  .config-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+  }
 
-.config-options {
-  flex-direction: row;
-  flex-wrap: wrap;
-}
+  .config-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 
-.option-btn {
-  padding: 8px 12px;
-  background-color: #f0f0f0;
-  border-radius: 6px;
-  margin-right: 8px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: #333;
-}
+  .option-btn {
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #333;
+  }
 
-.btn-active {
-  background-color: #007AFF;
-  color: #fff;
-}
+  .btn-active {
+    background-color: #007aff;
+    color: #fff;
+  }
 
-.btn-disabled {
-  opacity: 0.4;
-}
+  .btn-disabled {
+    opacity: 0.4;
+  }
 
-.config-disabled {
-  opacity: 0.6;
-}
+  .config-disabled {
+    opacity: 0.6;
+  }
 
-.lifecycle-info {
-  padding: 16px;
-  background-color: #fff;
-  margin: 0 16px 16px;
-  border-radius: 12px;
-}
+  .lifecycle-info {
+    padding: 16px;
+    background-color: #fff;
+    margin: 0 16px 16px;
+    border-radius: 12px;
+  }
 
-.info-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 12px;
-}
+  .info-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 12px;
+  }
 
-.info-row {
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom-width: 1px;
-  border-bottom-color: #eee;
-}
+  .info-row {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: #eee;
+  }
 
-.info-row-highlight {
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 10px 0;
-  padding-top: 12px;
-  margin-top: 4px;
-}
+  .info-row-highlight {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 0;
+    padding-top: 12px;
+    margin-top: 4px;
+  }
 
-.info-label {
-  font-size: 14px;
-  color: #666;
-}
+  .info-label {
+    font-size: 14px;
+    color: #666;
+  }
 
-.info-value {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-}
+  .info-value {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+  }
 
-.highlight-value {
-  font-size: 18px;
-  color: #007AFF;
-  font-weight: bold;
-}
+  .highlight-value {
+    font-size: 18px;
+    color: #007aff;
+    font-weight: bold;
+  }
 
-.action-section {
-  padding: 0 16px;
-  margin-bottom: 16px;
-}
+  /* 统计信息样式 */
+  .stats-section {
+    margin-top: 12px;
+  }
 
-.btn {
-  padding: 14px;
-  border-radius: 8px;
-  align-items: center;
-}
+  .stats-divider {
+    height: 1px;
+    background-color: #eee;
+    margin-bottom: 12px;
+  }
 
-.primary {
-  background-color: #007AFF;
-}
+  .stats-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+  }
 
-.btn-text {
-  font-size: 16px;
-  color: #fff;
-  font-weight: bold;
-}
+  .stats-row {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
 
-.test-area {
-  padding: 16px;
-  background-color: #fff;
-  margin: 0 16px 16px;
-  border-radius: 12px;
-}
+  .stats-label {
+    font-size: 13px;
+    color: #888;
+  }
 
-.area-title {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
-}
+  .stats-value {
+    font-size: 13px;
+    color: #333;
+  }
 
-.area-note {
-  font-size: 12px;
-  color: #FF9500;
-  margin-bottom: 12px;
-}
+  .stats-primary {
+    font-weight: bold;
+    color: #007aff;
+    font-size: 15px;
+  }
 
-.empty-hint {
-  padding: 40px 20px;
-  align-items: center;
-}
+  .stats-stable {
+    color: #34c759;
+    font-weight: bold;
+  }
 
-.hint-text {
-  font-size: 14px;
-  color: #999;
-}
+  .stats-moderate {
+    color: #ff9500;
+    font-weight: bold;
+  }
+
+  .stats-unstable {
+    color: #ff3b30;
+    font-weight: bold;
+  }
+
+  .action-section {
+    padding: 0 16px;
+    margin-bottom: 16px;
+  }
+
+  .btn-row {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .btn {
+    padding: 14px;
+    border-radius: 8px;
+    align-items: center;
+    flex: 1;
+  }
+
+  .primary {
+    background-color: #007aff;
+    margin-left: 8px;
+  }
+
+  .secondary {
+    background-color: #f0f0f0;
+    margin-right: 8px;
+  }
+
+  .btn-text {
+    font-size: 14px;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  .btn-text-secondary {
+    font-size: 14px;
+    color: #666;
+    font-weight: bold;
+  }
+
+  .action-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .test-area {
+    padding: 16px;
+    background-color: #fff;
+    margin: 0 16px 16px;
+    border-radius: 12px;
+  }
+
+  .area-title {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .area-note {
+    font-size: 12px;
+    color: #ff9500;
+    margin-bottom: 12px;
+  }
+
+  .empty-hint {
+    padding: 40px 20px;
+    align-items: center;
+  }
+
+  .hint-text {
+    font-size: 14px;
+    color: #999;
+  }
 </style>
 
 <script type="application/json">
-{
-  "usingComponents": {
-    "view-list": "../components/view-list/index"
-  },
-  "navigationBarTitleText": "View 组件能力测试"
-}
+  {
+    "usingComponents": {
+      "view-list": "../components/view-list/index"
+    },
+    "navigationBarTitleText": "View 组件能力测试"
+  }
 </script>
