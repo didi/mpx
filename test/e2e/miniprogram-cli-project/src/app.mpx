@@ -23,6 +23,7 @@ const commonPages = [
   "./pages/index",
   "./pages/view",
   "./pages/text",
+  "./pages/scroll-view",
   "./pages/common"
 ]
 

@@ -1,7 +1,7 @@
 /* @refresh reset */
 // inject pageconfigmap for screen
 var context = (function() { return this })() || Function("return this")();
-context.__mpxPageConfigsMap = {"pages/index":{"navigationBarTitleText":"性能测试"},"pages/view":{"navigationBarTitleText":"View 组件能力测试"},"pages/text":{"navigationBarTitleText":"Text 组件能力测试"},"pages/common":{"navigationBarTitleText":"功能测试"}};
+context.__mpxPageConfigsMap = {"pages/index":{"navigationBarTitleText":"性能测试"},"pages/view":{"navigationBarTitleText":"View 组件能力测试"},"pages/text":{"navigationBarTitleText":"Text 组件能力测试"},"pages/common":{"navigationBarTitleText":"功能测试"},"pages/scroll-view":{"navigationBarTitleText":"scroll-view 测试"}};
 
 self.__mpxClearAsyncChunkCache = self.__mpxClearAsyncChunkCache || function (ids) {
   ids = JSON.stringify(ids)
@@ -407,7 +407,7 @@ __webpack_require__.g.currentInject.pagesMap = {'pages/index':function(){ return
       return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(res, {displayName: "Page"})
     })
   }
-})}
+}),'pages/scroll-view':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(955), {displayName: "Page"}) }}
 __webpack_require__.g.currentInject.firstPage = "pages/index"
 __webpack_require__.g.currentModuleId = "mpx-app-scope"
 __webpack_require__.g.currentSrcMode = "wx"
@@ -15977,6 +15977,11 @@ __webpack_require__.r(__webpack_exports__);
       path: '/pages/text',
       icon: '📝',
       desc: 'text 组件能力测试'
+    }, {
+      name: 'scroll-view',
+      path: '/pages/scroll-view',
+      icon: '📜',
+      desc: 'scroll-view 组件功能测试'
     }, {
       name: '其他',
       path: '/pages/common',
@@ -43725,6 +43730,405 @@ function promisify(listObj, whiteList, customBlackList) {
   return result;
 }
 /* harmony default export */ __webpack_exports__["default"] = (promisify);
+
+/***/ }),
+/* 937 */,
+/* 938 */,
+/* 939 */,
+/* 940 */,
+/* 941 */,
+/* 942 */,
+/* 943 */,
+/* 944 */,
+/* 945 */,
+/* 946 */,
+/* 947 */,
+/* 948 */,
+/* 949 */,
+/* 950 */,
+/* 951 */,
+/* 952 */,
+/* 953 */,
+/* 954 */,
+/* 955 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4);
+/* template */
+__webpack_require__.g.currentInject = {
+  moduleId: "_5655a1fc"
+};
+__webpack_require__.g.currentInject.render = function (createElement, getComponent) {
+  return createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("mpx-page", "", "", "")
+}, createElement(getComponent("mpx-view"), {
+  testID: "scrollViewPage",
+  style: this.__getStyle("container", "", "", "")
+}, createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("header", "", "", "")
+}, createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("header-content", "", "", "")
+}, createElement(getComponent("mpx-view"), {
+  bindtap: this.goBack,
+  testID: "backBtn",
+  style: this.__getStyle("back-btn", "", "", "")
+}, createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("back-text", "", "", "")
+}, "←")), createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("title", "", "", "")
+}, "scroll-view 组件测试"))), createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("control-panel", "", "", "")
+}, createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("type-selector", "", "", "")
+}, this.__iter(this.testTypes, function (item, index) {
+  return createElement(getComponent("mpx-view"), {
+    bindtap: this.switchType,
+    "data-type": item.value,
+    testID: "type-" + item.value,
+    style: this.__getStyle("type-btn " + (this.currentType === item.value ? 'type-btn-active' : ''), "", "", ""),
+    key: this.__getWxKey(item, "value", index)
+  }, createElement(getComponent("mpx-text"), {
+    style: this.__getStyle("type-text " + (this.currentType === item.value ? 'active-type-text' : ''), "", "", "")
+  }, item.label));
+})), createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("action-buttons", "", "", "")
+}, createElement(getComponent("mpx-view"), {
+  bindtap: this.scrollToTop,
+  testID: "scrollToTopBtn",
+  style: this.__getStyle("btn", "", "", "")
+}, createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("btn-text", "", "", "")
+}, "滚动到顶部")), createElement(getComponent("mpx-view"), {
+  bindtap: this.scrollToBottom,
+  testID: "scrollToBottomBtn",
+  style: this.__getStyle("btn", "", "", "")
+}, createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("btn-text", "", "", "")
+}, "滚动到底部")), createElement(getComponent("mpx-view"), {
+  bindtap: this.scrollToElement,
+  testID: "scrollToElementBtn",
+  style: this.__getStyle("btn", "", "", "")
+}, createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("btn-text", "", "", "")
+}, "滚动到 item-5")), createElement(getComponent("mpx-view"), {
+  bindtap: this.toggleRefresher,
+  testID: "toggleRefresherBtn",
+  style: this.__getStyle("btn", "", "", "")
+}, createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("btn-text", "", "", "")
+}, this.refresherEnabled ? '关闭刷新' : '开启刷新')))), createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("status-panel", "", "", "")
+}, createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("status-label", "", "", "")
+}, "当前测试类型:"), createElement(getComponent("mpx-text"), {
+  testID: "currentType",
+  style: this.__getStyle("status-value", "", "", "")
+}, this.currentTypeLabel), createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("status-label", "", "", "")
+}, "滚动位置:"), createElement(getComponent("mpx-text"), {
+  testID: "scrollPosition",
+  style: this.__getStyle("status-value", "", "", "")
+}, this.scrollInfo), createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("status-label", "", "", "")
+}, "事件记录:"), createElement(getComponent("mpx-text"), {
+  testID: "eventLog",
+  style: this.__getStyle("status-value", "", "", "")
+}, this.lastEvent), createElement(getComponent("mpx-text"), {
+  style: this.__getStyle("status-label", "", "", "")
+}, "刷新状态:"), createElement(getComponent("mpx-text"), {
+  testID: "refreshStatus",
+  style: this.__getStyle("status-value", "", "", "")
+}, this.refreshStatus)), this.currentType === 'vertical' ? createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("scroll-test-area", "", "", "")
+}, createElement(getComponent("mpx-scroll-view"), {
+  "scroll-y": true,
+  "scroll-top": this.scrollTop,
+  "scroll-into-view": this.scrollIntoView,
+  "scroll-with-animation": true,
+  "upper-threshold": 50,
+  "lower-threshold": 50,
+  "show-scrollbar": true,
+  "refresher-enabled": this.refresherEnabled,
+  "refresher-triggered": this.refresherTriggered,
+  "refresher-default-style": "black",
+  bindscrolltoupper: this.onScrollToUpper,
+  bindscrolltolower: this.onScrollToLower,
+  bindscroll: this.onScroll,
+  bindrefresherrefresh: this.onRefresh,
+  testID: "verticalScrollView",
+  __selectRef: this.__selectRef.bind(this),
+  style: this.__getStyle("scroll-view-vertical", "", "", "")
+}, this.__iter(this.listItems, function (item, index) {
+  return createElement(getComponent("mpx-view"), {
+    id: "item-" + item.id,
+    testID: "listItem-" + item.id,
+    style: this.__getStyle("list-item", "", "", ""),
+    key: this.__getWxKey(item, "id", index)
+  }, createElement(getComponent("mpx-text"), {
+    style: this.__getStyle("item-text", "", "", "")
+  }, item.text));
+}))) : null, this.currentType === 'horizontal' ? createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("scroll-test-area", "", "", "")
+}, createElement(getComponent("mpx-scroll-view"), {
+  "scroll-x": true,
+  "scroll-left": this.scrollLeft,
+  "scroll-into-view": this.scrollIntoView,
+  "scroll-with-animation": true,
+  "upper-threshold": 50,
+  "lower-threshold": 50,
+  "show-scrollbar": true,
+  bindscrolltoupper: this.onScrollToUpper,
+  bindscrolltolower: this.onScrollToLower,
+  bindscroll: this.onScroll,
+  testID: "horizontalScrollView",
+  __selectRef: this.__selectRef.bind(this),
+  style: this.__getStyle("scroll-view-horizontal", "", "", "")
+}, createElement(getComponent("mpx-view"), {
+  style: this.__getStyle("horizontal-container", "", "", "")
+}, this.__iter(this.listItems, function (item, index) {
+  return createElement(getComponent("mpx-view"), {
+    id: "hitem-" + item.id,
+    testID: "hListItem-" + item.id,
+    style: this.__getStyle("horizontal-item", "", "", ""),
+    key: this.__getWxKey(item, "id", index)
+  }, createElement(getComponent("mpx-text"), {
+    style: this.__getStyle("item-text horizontal-item-text", "", "", "")
+  }, item.id));
+})))) : null));
+};
+/* styles */
+
+          let __classMap
+          __webpack_require__.g.currentInject.injectMethods = {
+            __getClassMap: function() {
+              if(!__classMap) {
+                __classMap = {'mpx-page':{'flex':1},'container':{'flexGrow':1,'flexShrink':1,'flexBasis':0,'backgroundColor':"#f0f0f0"},'header':{'paddingTop':16,'paddingRight':20,'paddingBottom':16,'paddingLeft':20,'backgroundImage':"linear-gradient(135deg, #667eea, #764ba2)"},'header-content':{'flexDirection':"row",'alignItems':"center"},'back-btn':{'width':32,'height':32,'alignItems':"center",'justifyContent':"center",'marginRight':8},'back-text':{'fontSize':20,'color':"#fff",'fontWeight':"bold"},'title':{'fontSize':18,'fontWeight':"bold",'color':"#fff",'flexGrow':1,'flexShrink':1,'flexBasis':0},'control-panel':{'padding':16,'backgroundColor':"#fff",'marginBottom':8},'section-title':{'fontSize':18,'fontWeight':"bold",'color':"#333",'marginBottom':12},'type-selector':{'flexDirection':"row",'flexWrap':"wrap",'marginBottom':12},'type-btn':{'paddingTop':8,'paddingRight':16,'paddingBottom':8,'paddingLeft':16,'backgroundColor':"#e0e0e0",'borderRadius':20,'marginRight':8,'marginBottom':8},'type-btn-active':{'backgroundColor':"#007AFF"},'type-text':{'fontSize':14,'color':"#333"},'active-type-text':{'color':"#fff"},'action-buttons':{'flexDirection':"row",'flexWrap':"wrap"},'btn':{'paddingTop':8,'paddingRight':12,'paddingBottom':8,'paddingLeft':12,'backgroundColor':"#007AFF",'borderRadius':6,'marginRight':8,'marginBottom':8},'btn-text':{'fontSize':12,'color':"#fff"},'status-panel':{'paddingTop':12,'paddingRight':16,'paddingBottom':12,'paddingLeft':16,'backgroundColor':"#fff",'marginBottom':8},'status-label':{'fontSize':12,'color':"#666",'marginTop':4},'status-value':{'fontSize':14,'color':"#333",'fontWeight':500,'marginBottom':8},'scroll-test-area':{'flexGrow':1,'flexShrink':1,'flexBasis':0,'paddingTop':0,'paddingRight':16,'paddingBottom':0,'paddingLeft':16,'marginBottom':8},'scroll-view-vertical':{'height':300,'backgroundColor':"#fff",'borderRadius':8},'list-item':{'padding':16,'borderBottomWidth':1,'borderBottomColor':"#eee"},'item-text':{'fontSize':14,'color':"#333"},'scroll-view-horizontal':{'height':100,'backgroundColor':"#fff",'borderRadius':8},'horizontal-container':{'flexDirection':"row"},'horizontal-item':{'width':80,'height':80,'backgroundColor':"#007AFF",'margin':10,'borderRadius':8,'alignItems':"center",'justifyContent':"center"},'horizontal-item-text':{'color':"#fff",'fontSize':18,'fontWeight':"bold"},'scroll-view-paging':{'height':200,'backgroundColor':"#fff",'borderRadius':8},'page-item':{'height':200,'alignItems':"center",'justifyContent':"center"},'page-text':{'fontSize':24,'fontWeight':"bold",'color':"#fff"}};
+              }
+              return __classMap;
+            }
+          };
+/* json */
+/* script */
+
+__webpack_require__.g.currentInject.pageConfig = {"navigationBarTitleText":"scroll-view 测试"}
+
+var componentsMap = {'mpx-view':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(238), {__mpxBuiltIn: true}) },'mpx-text':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(458), {__mpxBuiltIn: true}) },'mpx-scroll-view':function(){ return (0,_mpxjs_webpack_plugin_lib_runtime_optionProcessorReact__WEBPACK_IMPORTED_MODULE_0__.getComponent)(__webpack_require__(457), {__mpxBuiltIn: true}) }}
+__webpack_require__.g.currentInject.componentsMap = componentsMap
+__webpack_require__.g.currentModuleId = "_5655a1fc"
+__webpack_require__.g.currentSrcMode = "wx"
+__webpack_require__.g.currentResource = "/Users/didi/Work/Code/mpx/test/e2e/miniprogram-cli-project/src/pages/scroll-view.mpx"
+/** script content **/
+__webpack_require__(956)
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.g.__mpxOptionsMap["_5655a1fc"]);
+
+
+/***/ }),
+/* 956 */
+/***/ (function(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_find__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(421);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_find__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_find__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(669);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(310);
+/* harmony import */ var _babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(480);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(534);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(460);
+/* harmony import */ var _mpxjs_core__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(592);
+
+
+
+
+
+
+(0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_6__["default"])({
+  setup: function setup(__props, __context) {
+    var useContext = function useContext() {
+      return __context;
+    };
+
+    // 测试类型
+
+    var testTypes = [{
+      value: 'vertical',
+      label: '纵向滚动'
+    }, {
+      value: 'horizontal',
+      label: '横向滚动'
+    }];
+    var currentType = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)('vertical');
+    var currentTypeLabel = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_4__.computed)(function () {
+      var type = _babel_runtime_corejs3_core_js_stable_instance_find__WEBPACK_IMPORTED_MODULE_0___default()(testTypes).call(testTypes, function (t) {
+        return t.value === currentType.value;
+      });
+      return type ? type.label : '';
+    });
+
+    // 滚动控制
+    var scrollTop = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)(0);
+    var scrollLeft = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)(0);
+    var scrollIntoView = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)('');
+
+    // 刷新控制
+    var refresherEnabled = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)(false);
+    var refresherTriggered = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)(false);
+    var refreshStatus = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)('未开启');
+
+    // 滚动状态
+    var scrollInfo = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)('x: 0, y: 0');
+    var lastEvent = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)('无');
+
+    // 生成列表数据
+    var listItems = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)(_babel_runtime_corejs3_core_js_stable_array_from__WEBPACK_IMPORTED_MODULE_1___default()({
+      length: 20
+    }, function (_, i) {
+      return {
+        id: i,
+        text: "\u5217\u8868\u9879 ".concat(i + 1, " - \u8FD9\u662F\u4E00\u6BB5\u6D4B\u8BD5\u6587\u672C\u5185\u5BB9")
+      };
+    }));
+
+    // 分页数据
+    var pageItems = (0,_mpxjs_core__WEBPACK_IMPORTED_MODULE_3__.ref)([{
+      id: 0,
+      color: '#FF6B6B'
+    }, {
+      id: 1,
+      color: '#4ECDC4'
+    }, {
+      id: 2,
+      color: '#45B7D1'
+    }, {
+      id: 3,
+      color: '#96CEB4'
+    }, {
+      id: 4,
+      color: '#FFEAA7'
+    }]);
+
+    // 切换测试类型
+    function switchType(e) {
+      var type = e.currentTarget.dataset.type;
+      currentType.value = type;
+      // 重置滚动位置
+      scrollTop.value = 0;
+      scrollLeft.value = 0;
+      scrollIntoView.value = '';
+      lastEvent.value = '切换到: ' + type;
+    }
+
+    // 滚动到顶部
+    function scrollToTop() {
+      if (currentType.value === 'horizontal') {
+        scrollLeft.value = 0;
+      } else {
+        scrollTop.value = 0;
+      }
+      lastEvent.value = '手动滚动到顶部/左侧';
+    }
+
+    // 滚动到底部
+    function scrollToBottom() {
+      if (currentType.value === 'horizontal') {
+        scrollLeft.value = 9999;
+      } else {
+        scrollTop.value = 9999;
+      }
+      lastEvent.value = '手动滚动到底部/右侧';
+    }
+
+    // 滚动到指定元素
+    function scrollToElement() {
+      if (currentType.value === 'horizontal') {
+        scrollIntoView.value = 'hitem-5';
+      } else {
+        scrollIntoView.value = 'item-5';
+      }
+      lastEvent.value = '滚动到 item-5';
+    }
+
+    // 切换刷新器
+    function toggleRefresher() {
+      refresherEnabled.value = !refresherEnabled.value;
+      refreshStatus.value = refresherEnabled.value ? '已开启' : '未开启';
+      if (!refresherEnabled.value) {
+        refresherTriggered.value = false;
+      }
+    }
+
+    // 滚动事件
+    function onScroll(e) {
+      var _context;
+      var _e$detail = e.detail,
+        x = _e$detail.scrollLeft,
+        y = _e$detail.scrollTop;
+      scrollInfo.value = _babel_runtime_corejs3_core_js_stable_instance_concat__WEBPACK_IMPORTED_MODULE_2___default()(_context = "x: ".concat(Math.round(x), ", y: ")).call(_context, Math.round(y));
+    }
+
+    // 滚动到顶部事件
+    function onScrollToUpper(e) {
+      var _e$detail2;
+      var direction = ((_e$detail2 = e.detail) === null || _e$detail2 === void 0 ? void 0 : _e$detail2.direction) || 'top';
+      lastEvent.value = "\u89E6\u9876\u4E8B\u4EF6: ".concat(direction);
+    }
+
+    // 滚动到底部事件
+    function onScrollToLower(e) {
+      var _e$detail3;
+      var direction = ((_e$detail3 = e.detail) === null || _e$detail3 === void 0 ? void 0 : _e$detail3.direction) || 'bottom';
+      lastEvent.value = "\u89E6\u5E95\u4E8B\u4EF6: ".concat(direction);
+    }
+
+    // 刷新事件
+    function onRefresh() {
+      refreshStatus.value = '刷新中...';
+      refresherTriggered.value = true;
+      lastEvent.value = '触发下拉刷新';
+
+      // 模拟异步刷新操作
+      setTimeout(function () {
+        refresherTriggered.value = false;
+        refreshStatus.value = '刷新完成';
+        lastEvent.value = '刷新完成';
+      }, 1500);
+    }
+
+    // 返回首页
+    function goBack() {
+      _mpxjs_core__WEBPACK_IMPORTED_MODULE_5__["default"].navigateBack();
+    }
+    return {
+      currentType: currentType,
+      scrollTop: scrollTop,
+      scrollLeft: scrollLeft,
+      scrollIntoView: scrollIntoView,
+      refresherEnabled: refresherEnabled,
+      pageItems: pageItems,
+      currentTypeLabel: currentTypeLabel,
+      listItems: listItems,
+      testTypes: testTypes,
+      lastEvent: lastEvent,
+      scrollInfo: scrollInfo,
+      refreshStatus: refreshStatus,
+      refresherTriggered: refresherTriggered,
+      switchType: switchType,
+      scrollToTop: scrollToTop,
+      scrollToBottom: scrollToBottom,
+      scrollToElement: scrollToElement,
+      toggleRefresher: toggleRefresher,
+      onScroll: onScroll,
+      onScrollToUpper: onScrollToUpper,
+      onScrollToLower: onScrollToLower,
+      onRefresh: onRefresh,
+      goBack: goBack
+    };
+  }
+});
 
 /***/ })
 /******/ 	]);

@@ -1,0 +1,478 @@
+<template>
+  <view class="container" testID="scrollViewPage">
+    <!-- 顶部 Header -->
+    <view class="header">
+      <view class="header-content">
+        <view class="back-btn" bindtap="goBack" testID="backBtn">
+          <text class="back-text">←</text>
+        </view>
+        <text class="title">scroll-view 组件测试</text>
+      </view>
+    </view>
+
+    <!-- 控制区域 -->
+    <view class="control-panel">
+      
+      <!-- 测试类型选择 -->
+      <view class="type-selector">
+        <view 
+          wx:for="{{testTypes}}" 
+          wx:key="value"
+          class="type-btn {{currentType === item.value ? 'type-btn-active' : ''}}"
+          bindtap="switchType"
+          data-type="{{item.value}}"
+          testID="type-{{item.value}}"
+        >
+          <text class="type-text {{currentType === item.value ? 'active-type-text' : ''}}">{{item.label}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="action-buttons">
+        <view class="btn" bindtap="scrollToTop" testID="scrollToTopBtn">
+          <text class="btn-text">滚动到顶部</text>
+        </view>
+        <view class="btn" bindtap="scrollToBottom" testID="scrollToBottomBtn">
+          <text class="btn-text">滚动到底部</text>
+        </view>
+        <view class="btn" bindtap="scrollToElement" testID="scrollToElementBtn">
+          <text class="btn-text">滚动到 item-5</text>
+        </view>
+        <view class="btn" bindtap="toggleRefresher" testID="toggleRefresherBtn">
+          <text class="btn-text">{{refresherEnabled ? '关闭刷新' : '开启刷新'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 状态显示 -->
+    <view class="status-panel">
+      <text class="status-label">当前测试类型:</text>
+      <text class="status-value" testID="currentType">{{currentTypeLabel}}</text>
+      
+      <text class="status-label">滚动位置:</text>
+      <text class="status-value" testID="scrollPosition">{{scrollInfo}}</text>
+      
+      <text class="status-label">事件记录:</text>
+      <text class="status-value" testID="eventLog">{{lastEvent}}</text>
+      
+      <text class="status-label">刷新状态:</text>
+      <text class="status-value" testID="refreshStatus">{{refreshStatus}}</text>
+    </view>
+
+    <!-- 纵向滚动测试 -->
+    <view class="scroll-test-area" wx:if="{{currentType === 'vertical'}}">
+      <scroll-view 
+        class="scroll-view-vertical"
+        scroll-y="{{true}}"
+        scroll-top="{{scrollTop}}"
+        scroll-into-view="{{scrollIntoView}}"
+        scroll-with-animation="{{true}}"
+        upper-threshold="{{50}}"
+        lower-threshold="{{50}}"
+        show-scrollbar="{{true}}"
+        refresher-enabled="{{refresherEnabled}}"
+        refresher-triggered="{{refresherTriggered}}"
+        refresher-default-style="black"
+        bindscrolltoupper="onScrollToUpper"
+        bindscrolltolower="onScrollToLower"
+        bindscroll="onScroll"
+        bindrefresherrefresh="onRefresh"
+        testID="verticalScrollView"
+      >
+        <view 
+          wx:for="{{listItems}}" 
+          wx:key="id"
+          class="list-item"
+          id="item-{{item.id}}"
+          testID="listItem-{{item.id}}"
+        >
+          <text class="item-text">{{item.text}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 横向滚动测试 -->
+    <view class="scroll-test-area" wx:if="{{currentType === 'horizontal'}}">
+      <scroll-view 
+        class="scroll-view-horizontal"
+        scroll-x="{{true}}"
+        scroll-left="{{scrollLeft}}"
+        scroll-into-view="{{scrollIntoView}}"
+        scroll-with-animation="{{true}}"
+        upper-threshold="{{50}}"
+        lower-threshold="{{50}}"
+        show-scrollbar="{{true}}"
+        bindscrolltoupper="onScrollToUpper"
+        bindscrolltolower="onScrollToLower"
+        bindscroll="onScroll"
+        testID="horizontalScrollView"
+      >
+        <view class="horizontal-container">
+          <view 
+            wx:for="{{listItems}}" 
+            wx:key="id"
+            class="horizontal-item"
+            id="hitem-{{item.id}}"
+            testID="hListItem-{{item.id}}"
+          >
+            <text class="item-text horizontal-item-text">{{item.id}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+  </view>
+</template>
+
+<script setup>
+import { ref, computed } from '@mpxjs/core'
+import mpx from '@mpxjs/core'
+
+// 测试类型
+const testTypes = [
+  { value: 'vertical', label: '纵向滚动' },
+  { value: 'horizontal', label: '横向滚动' }
+]
+
+const currentType = ref('vertical')
+const currentTypeLabel = computed(() => {
+  const type = testTypes.find(t => t.value === currentType.value)
+  return type ? type.label : ''
+})
+
+// 滚动控制
+const scrollTop = ref(0)
+const scrollLeft = ref(0)
+const scrollIntoView = ref('')
+
+// 刷新控制
+const refresherEnabled = ref(false)
+const refresherTriggered = ref(false)
+const refreshStatus = ref('未开启')
+
+// 滚动状态
+const scrollInfo = ref('x: 0, y: 0')
+const lastEvent = ref('无')
+
+// 生成列表数据
+const listItems = ref(
+  Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    text: `列表项 ${i + 1} - 这是一段测试文本内容`
+  }))
+)
+
+// 分页数据
+const pageItems = ref([
+  { id: 0, color: '#FF6B6B' },
+  { id: 1, color: '#4ECDC4' },
+  { id: 2, color: '#45B7D1' },
+  { id: 3, color: '#96CEB4' },
+  { id: 4, color: '#FFEAA7' }
+])
+
+// 切换测试类型
+function switchType(e) {
+  const type = e.currentTarget.dataset.type
+  currentType.value = type
+  // 重置滚动位置
+  scrollTop.value = 0
+  scrollLeft.value = 0
+  scrollIntoView.value = ''
+  lastEvent.value = '切换到: ' + type
+}
+
+// 滚动到顶部
+function scrollToTop() {
+  if (currentType.value === 'horizontal') {
+    scrollLeft.value = 0
+  } else {
+    scrollTop.value = 0
+  }
+  lastEvent.value = '手动滚动到顶部/左侧'
+}
+
+// 滚动到底部
+function scrollToBottom() {
+  if (currentType.value === 'horizontal') {
+    scrollLeft.value = 9999
+  } else {
+    scrollTop.value = 9999
+  }
+  lastEvent.value = '手动滚动到底部/右侧'
+}
+
+// 滚动到指定元素
+function scrollToElement() {
+  if (currentType.value === 'horizontal') {
+    scrollIntoView.value = 'hitem-5'
+  } else {
+    scrollIntoView.value = 'item-5'
+  }
+  lastEvent.value = '滚动到 item-5'
+}
+
+// 切换刷新器
+function toggleRefresher() {
+  refresherEnabled.value = !refresherEnabled.value
+  refreshStatus.value = refresherEnabled.value ? '已开启' : '未开启'
+  if (!refresherEnabled.value) {
+    refresherTriggered.value = false
+  }
+}
+
+// 滚动事件
+function onScroll(e) {
+  const { scrollLeft: x, scrollTop: y } = e.detail
+  scrollInfo.value = `x: ${Math.round(x)}, y: ${Math.round(y)}`
+}
+
+// 滚动到顶部事件
+function onScrollToUpper(e) {
+  const direction = e.detail?.direction || 'top'
+  lastEvent.value = `触顶事件: ${direction}`
+}
+
+// 滚动到底部事件
+function onScrollToLower(e) {
+  const direction = e.detail?.direction || 'bottom'
+  lastEvent.value = `触底事件: ${direction}`
+}
+
+// 刷新事件
+function onRefresh() {
+  refreshStatus.value = '刷新中...'
+  refresherTriggered.value = true
+  lastEvent.value = '触发下拉刷新'
+  
+  // 模拟异步刷新操作
+  setTimeout(() => {
+    refresherTriggered.value = false
+    refreshStatus.value = '刷新完成'
+    lastEvent.value = '刷新完成'
+  }, 1500)
+}
+
+// 返回首页
+function goBack() {
+  mpx.navigateBack()
+}
+
+defineExpose({
+  currentType,
+  scrollTop,
+  scrollLeft,
+  scrollIntoView,
+  refresherEnabled,
+  pageItems,
+  currentTypeLabel,
+  listItems,
+  testTypes,
+  lastEvent,
+  scrollInfo,
+  refreshStatus,
+  refresherTriggered,
+  switchType,
+  scrollToTop,
+  scrollToBottom,
+  scrollToElement,
+  toggleRefresher,
+  onScroll,
+  onScrollToUpper,
+  onScrollToLower,
+  onRefresh,
+  goBack
+})
+</script>
+
+<style>
+.container {
+  flex: 1;
+  background-color: #f0f0f0;
+}
+
+.header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.header-content {
+  flex-direction: row;
+  align-items: center;
+}
+
+.back-btn {
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.back-text {
+  font-size: 20px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  flex: 1;
+}
+
+.control-panel {
+  padding: 16px;
+  background-color: #fff;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.type-selector {
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.type-btn {
+  padding: 8px 16px;
+  background-color: #e0e0e0;
+  border-radius: 20px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.type-btn-active {
+  background-color: #007AFF;
+}
+
+.type-text {
+  font-size: 14px;
+  color: #333;
+}
+.active-type-text {
+  color: #fff;
+}
+
+.action-buttons {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 12px;
+  background-color: #007AFF;
+  border-radius: 6px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.btn-text {
+  font-size: 12px;
+  color: #fff;
+}
+
+.status-panel {
+  padding: 12px 16px;
+  background-color: #fff;
+  margin-bottom: 8px;
+}
+
+.status-label {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.status-value {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.scroll-test-area {
+  flex: 1;
+  padding: 0 16px;
+  margin-bottom: 8px;
+}
+
+/* 纵向滚动样式 */
+.scroll-view-vertical {
+  height: 300px;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+.list-item {
+  padding: 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #eee;
+}
+
+.item-text {
+  font-size: 14px;
+  color: #333;
+}
+
+/* 横向滚动样式 */
+.scroll-view-horizontal {
+  height: 100px;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+.horizontal-container {
+  flex-direction: row;
+}
+
+.horizontal-item {
+  width: 80px;
+  height: 80px;
+  background-color: #007AFF;
+  margin: 10px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.horizontal-item-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 分页滚动样式 */
+.scroll-view-paging {
+  height: 200px;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+.page-item {
+  height: 200px;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+}
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "scroll-view 测试"
+}
+</script>
+

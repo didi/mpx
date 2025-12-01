@@ -48,6 +48,12 @@ const components = [
     desc: 'text 组件能力测试'
   },
   {
+    name: 'scroll-view',
+    path: '/pages/scroll-view',
+    icon: '📜',
+    desc: 'scroll-view 组件功能测试'
+  },
+  {
     name: '其他',
     path: '/pages/common',
     icon: '⚙️',
