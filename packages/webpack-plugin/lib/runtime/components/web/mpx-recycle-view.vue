@@ -137,7 +137,7 @@ export default {
     },
     useListHeader: {
       type: Boolean,
-      default: true
+      default: false
     },
     generichash: String,
     genericlistHeader: String,

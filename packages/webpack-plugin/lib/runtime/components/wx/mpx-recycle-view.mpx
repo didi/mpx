@@ -81,7 +81,7 @@ createComponent({
     },
     useListHeader: {
       type: Boolean,
-      value: true
+      value: false
     }
   },
   data: {

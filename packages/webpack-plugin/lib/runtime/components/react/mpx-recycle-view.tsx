@@ -110,7 +110,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     sectionHeaderHeight = {},
     listHeaderHeight = {},
     listHeaderData = null,
-    useListHeader = true,
+    useListHeader = false,
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
     'genericlist-header': genericListHeader,
