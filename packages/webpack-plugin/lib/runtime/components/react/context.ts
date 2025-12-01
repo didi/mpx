@@ -1,14 +1,19 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent, Animated } from 'react-native'
+import { NativeSyntheticEvent, Animated, ScaledSize } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
-export type KeyboardAvoidContextValue = MutableRefObject<
-  { cursorSpacing: number, ref: MutableRefObject<any> } | null
->
+export type KeyboardAvoidContextValue = MutableRefObject<{
+  cursorSpacing: number
+  ref: MutableRefObject<any>
+  adjustPosition: boolean
+  holdKeyboard?: boolean
+  keyboardHeight?: number
+  onKeyboardShow?: () => void
+} | null>
 
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
@@ -37,13 +42,13 @@ export interface IntersectionObserver {
 }
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number | null, id?: number| null) => number| undefined
+  mount: (children: React.ReactNode, key?: number | null, id?: number | null) => number | undefined
   update: (key: number, children: React.ReactNode) => void
   unmount: (key: number) => void
 }
 
 export interface ScrollViewContextValue {
-  gestureRef: React.RefObject<any> | null,
+  gestureRef: React.RefObject<any> | null
   scrollOffset: Animated.Value
 }
 
@@ -52,8 +57,13 @@ export interface RouteContextValue {
   navigation: Record<string, any>
 }
 
+export interface DimensionsValue {
+  window: ScaledSize;
+  screen: ScaledSize;
+}
+
 export interface StickyContextValue {
-  registerStickyHeader: Function,
+  registerStickyHeader: Function
   unregisterStickyHeader: Function
 }
 
@@ -84,3 +94,5 @@ export const ScrollViewContext = createContext<ScrollViewContextValue>({ gesture
 export const PortalContext = createContext<PortalContextValue>(null as any)
 
 export const StickyContext = createContext<StickyContextValue>({ registerStickyHeader: noop, unregisterStickyHeader: noop })
+
+export const ProviderContext = createContext(null)

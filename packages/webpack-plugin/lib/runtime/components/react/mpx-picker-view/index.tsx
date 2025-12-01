@@ -33,6 +33,7 @@ interface PickerViewProps {
   style?: {
     [key: string]: any
   }
+  'enable-wheel-animation'?: boolean
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
   'enable-var'?: boolean
@@ -69,6 +70,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     value = [],
     bindchange,
     style,
+    'enable-wheel-animation': enableWheelAnimation = true,
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
@@ -168,7 +170,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         columnData,
         ref: cloneRef,
         columnIndex: index,
-        key: `pick-view-${index}`,
+        key: `pick-view-${index}-${columnData.length}`,
         wrapperStyle: {
           height: normalStyle?.height || DefaultPickerItemH,
           itemHeight: indicatorH || DefaultPickerItemH
@@ -176,7 +178,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
         pickerIndicatorStyle,
-        pickerMaskStyle
+        pickerMaskStyle,
+        enableWheelAnimation
       }
     )
     const realElement = React.cloneElement(child, wrappedProps)

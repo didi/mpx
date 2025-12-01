@@ -13,11 +13,8 @@ const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
 const { processExtendComponents } = require('../utils/process-extend-components')
-const normalize = require('../utils/normalize')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
-const mpxViewPath = normalize.lib('runtime/components/react/dist/mpx-view.jsx')
-const mpxTextPath = normalize.lib('runtime/components/react/dist/mpx-text.jsx')
 
 module.exports = function (jsonContent, {
   loaderContext,
@@ -51,23 +48,38 @@ module.exports = function (jsonContent, {
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
-      new Error('[json processor][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     loaderContext.emitError(
-      new Error('[json compiler][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + loaderContext.resource + ']: ' + msg)
     )
   }
 
   const stringifyRequest = r => loaderUtils.stringifyRequest(loaderContext, r)
 
+  function fillInComponentsMap (name, entry, tarRoot) {
+    const { resource, outputPath } = entry
+    const { resourcePath } = parseRequest(resource)
+    componentsMap[resourcePath] = outputPath
+    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
+    localComponentsMap[name] = {
+      resource: addQuery(resource, {
+        isComponent: true,
+        outputPath
+      }),
+      async: tarRoot
+    }
+  }
+
   const {
     isUrlRequest,
     urlToRequest,
     processPage,
-    processComponent
+    processComponent,
+    processPlaceholder
   } = createJSONHelper({
     loaderContext,
     emitWarning,
@@ -154,45 +166,6 @@ module.exports = function (jsonContent, {
     position: 'bottom',
     custom: false,
     isShow: true
-  }
-
-  const fillInComponentPlaceholder = (name, placeholder, placeholderEntry) => {
-    const componentPlaceholder = jsonObj.componentPlaceholder || {}
-    if (componentPlaceholder[name]) return
-    componentPlaceholder[name] = placeholder
-    jsonObj.componentPlaceholder = componentPlaceholder
-    if (placeholderEntry && !jsonObj.usingComponents[placeholder]) jsonObj.usingComponents[placeholder] = placeholderEntry
-  }
-
-  const fillInComponentsMap = (name, entry, tarRoot) => {
-    const { resource, outputPath } = entry
-    const { resourcePath } = parseRequest(resource)
-    tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-    componentsMap[resourcePath] = outputPath
-    loaderContext._module && loaderContext._module.addPresentationalDependency(new RecordResourceMapDependency(resourcePath, 'component', outputPath))
-    localComponentsMap[name] = {
-      resource: addQuery(resource, {
-        isComponent: true,
-        outputPath
-      }),
-      async: tarRoot
-    }
-  }
-
-  const normalizePlaceholder = (placeholder) => {
-    if (typeof placeholder === 'string') {
-      const placeholderMap = mode === 'ali'
-        ? {
-          view: { name: 'mpx-view', resource: mpxViewPath },
-          text: { name: 'mpx-text', resource: mpxTextPath }
-        }
-        : {}
-      placeholder = placeholderMap[placeholder] || { name: placeholder }
-    }
-    if (!placeholder.name) {
-      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
-    }
-    return placeholder
   }
 
   const processTabBar = (tabBar, callback) => {
@@ -364,38 +337,34 @@ module.exports = function (jsonContent, {
 
   const processComponents = (components, context, callback) => {
     if (components) {
+      const asyncComponents = []
+      const resolveResourcePathMap = new Map()
       async.eachOf(components, (component, name, callback) => {
-        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder } = {}) => {
+        processComponent(component, context, {}, (err, entry = {}, { tarRoot, placeholder, resourcePath } = {}) => {
           if (err) return callback(err === RESOLVE_IGNORED_ERR ? null : err)
-          fillInComponentsMap(name, entry, tarRoot)
           const { relativePath } = entry
 
-          if (tarRoot) {
-            if (placeholder) {
-              placeholder = normalizePlaceholder(placeholder)
-              if (placeholder.resource) {
-                processComponent(placeholder.resource, projectRoot, { relativePath }, (err, entry) => {
-                  if (err) return callback(err)
-                  fillInComponentPlaceholder(name, placeholder.name, entry)
-                  fillInComponentsMap(placeholder.name, entry, '')
-                  callback()
-                })
-              } else {
-                fillInComponentPlaceholder(name, placeholder.name)
-                callback()
-              }
-            } else {
-              if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {
-                const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
-                emitError(errMsg)
-              }
-              callback()
-            }
-          } else {
-            callback()
-          }
+          tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+
+          resolveResourcePathMap.set(name, resourcePath)
+          if (tarRoot) asyncComponents.push({ name, tarRoot, placeholder, relativePath })
+
+          fillInComponentsMap(name, entry, tarRoot)
+          callback()
         })
-      }, callback)
+      }, (err) => {
+        if (err) return callback(err)
+        async.each(asyncComponents, ({ name, tarRoot, placeholder, relativePath }, callback) => {
+          processPlaceholder({ jsonObj, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, (err, placeholder) => {
+            if (err) return callback(err)
+            if (placeholder) {
+              const { name, entry } = placeholder
+              fillInComponentsMap(name, entry, '')
+            }
+            callback()
+          })
+        }, callback)
+      })
     } else {
       callback()
     }
@@ -413,7 +382,6 @@ module.exports = function (jsonContent, {
       callback()
     }
   }
-
   async.parallel([
     (callback) => {
       // 添加首页标识

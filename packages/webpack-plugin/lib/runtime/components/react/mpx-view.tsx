@@ -501,7 +501,7 @@ function parseBgImage (text: string): {
   type?: 'image' | 'linear'
   src?: string
 } {
-  if (!text) return {}
+  if (!text || text === 'none') return {}
 
   const src = parseUrl(text)
   if (src) return { src, type: 'image' }

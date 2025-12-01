@@ -98,7 +98,7 @@ function compileScriptSetup (
   ) {
     if (node) {
       throw new Error(
-        `[@mpxjs/webpack-plugin script-setup-compiler] ${msg}\n\n${filePath}\n${formatCodeFrame(
+        `[Mpx script error]: ${msg}\n\n${filePath}\n${formatCodeFrame(
           content,
           node.start + startOffset,
           end
@@ -106,7 +106,7 @@ function compileScriptSetup (
       )
     } else {
       throw new Error(
-        `[@mpxjs/webpack-plugin script-setup-compiler] ${msg}\n\n${filePath}\n`
+        `[Mpx script error]: ${msg}\n\n${filePath}\n`
       )
     }
   }
