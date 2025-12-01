@@ -485,6 +485,7 @@ export default {
 .mpx-recycle-view {
   position: relative;
   overflow: hidden;
+  height: 100%;
 }
 
 .content-wrapper {
