@@ -29,22 +29,22 @@ describe('Common Page', () => {
   });
 
   it('renders the list with 3 items', async () => {
-    await expect(element(by.id('listItem-0'))).toBeVisible();
-    await expect(element(by.id('listItem-1'))).toBeVisible();
-    await expect(element(by.id('listItem-2'))).toBeVisible();
-    await expect(element(by.text('Apple'))).toBeVisible();
-    await expect(element(by.text('Banana'))).toBeVisible();
-    await expect(element(by.text('Orange'))).toBeVisible();
+    await expect(element(by.id('listItem-0'))).toExist();
+    await expect(element(by.id('listItem-1'))).toExist();
+    await expect(element(by.id('listItem-2'))).toExist();
+    await expect(element(by.text('Apple'))).toExist();
+    await expect(element(by.text('Banana'))).toExist();
+    await expect(element(by.text('Orange'))).toExist();
   });
 
   it('verifies advanced features section exists', async () => {
     // 滚动到底部查看高级特性
-    await element(by.id('homePage')).scroll(300, 'down');
+    await element(by.id('homePage')).scroll(300, 'down', 0.5, 0.1);
     await new Promise(resolve => setTimeout(resolve, 500));
     // 只检查元素存在，不检查可见性（因为可能被部分遮挡）
-    await expect(element(by.id('page2-defs'))).toExist();
-    await expect(element(by.id('page2-mixins'))).toExist();
-    await expect(element(by.id('page2-i18n'))).toExist();
+    await expect(element(by.id('page2-defs'))).toHaveText('default def');
+    await expect(element(by.id('page2-mixins'))).toHaveText('电视');
+    await expect(element(by.id('page2-i18n'))).toHaveText('hello world');
   });
 
   it('takes screenshot for common page', async () => {

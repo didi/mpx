@@ -99,10 +99,7 @@
           <text
             class="stats-value {{ benchmarkStats.cv < 10 ? 'stats-stable' : benchmarkStats.cv < 20 ? 'stats-moderate' : 'stats-unstable' }}"
             testID="statsCV"
-            >
-            {{ benchmarkStats.cv.toFixed(2) }}%{{
-              benchmarkStats.cv < 10 ? '✓ 稳定' : benchmarkStats.cv < 20 ? '⚠ 一般' : '✗ 不稳定'
-            }}</text
+            >{{ benchmarkStats.cv.toFixed(2) }}%{{benchmarkStats.cv < 10 ? '✓ 稳定' : benchmarkStats.cv < 20 ? '⚠ 一般' : '✗ 不稳定'}}</text
           >
         </view>
       </view>
