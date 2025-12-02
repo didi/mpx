@@ -456,11 +456,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [])
 
-  function handleSwiperChange (current: number, pCurrent: number) {
-    if (pCurrent !== currentIndex.value) {
-      const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-      bindchange && bindchange(eventData)
-    }
+  function handleSwiperChange (current: number) {
+    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+    bindchange && bindchange(eventData)
   }
 
   const runOnJSCallbackRef = useRef({
@@ -510,7 +508,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     if (newIndex !== preIndex && bindchange) {
-      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
+      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex)
     }
   })
 
@@ -815,6 +813,16 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           offset.value = moveDistance + offset.value
         }
+        preAbsolutePos.value = e[strAbso]
+      })
+      .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+        // 修复某些安卓机型小米 onFinalize拿到的absolute值不正确的问题
+        /**
+         * 正常滑动状态:
+         * 1. 手势会触发onUpdate、onEnd、onFinalize，大部分手机拿到的absoluteX值是一样的，方向是基于onBegin的起点方向判断(moveTranstion)
+         * 2. 部分安卓的机型onEnd和onFinalize是一致的，但是和onUpdate是不一致的，导致判断错误，因此修正为一致
+         * 非正常滑动状态：手势会触发onBegin、onFinalize，不会触发onEnd, 也会基于onBegin的起点方向进行判断(preAbsolutePos)
+        */
         preAbsolutePos.value = e[strAbso]
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
