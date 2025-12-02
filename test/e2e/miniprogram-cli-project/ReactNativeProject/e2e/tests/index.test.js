@@ -12,6 +12,7 @@ describe('Index Page', () => {
   it('shows component list with view, text and common entries', async () => {
     await expect(element(by.id('component-view'))).toBeVisible();
     await expect(element(by.id('component-text'))).toBeVisible();
+    await expect(element(by.id('component-scroll-view'))).toBeVisible();
     await expect(element(by.id('component-其他'))).toBeVisible();
   });
 });

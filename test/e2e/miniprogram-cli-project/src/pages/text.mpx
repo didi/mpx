@@ -399,7 +399,7 @@ defineExpose({
 
 .header {
   padding: 16px 20px;
-  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+  background: linear-gradient(135deg, #667eea, #764ba2);
 }
 
 .header-content {
@@ -461,7 +461,7 @@ defineExpose({
 }
 
 .btn-active {
-  background-color: #ff6b6b;
+  background-color: #007AFF;
   color: #fff;
 }
 
@@ -508,7 +508,7 @@ defineExpose({
 
 .highlight-value {
   font-size: 18px;
-  color: #ff6b6b;
+  color: #007AFF;
   font-weight: bold;
 }
 
@@ -548,7 +548,7 @@ defineExpose({
 
 .stats-primary {
   font-weight: bold;
-  color: #ff6b6b;
+  color: #667eea;
   font-size: 15px;
 }
 
@@ -585,7 +585,7 @@ defineExpose({
 }
 
 .primary {
-  background-color: #ff6b6b;
+  background-color: #007aff;
   margin-left: 8px;
 }
 

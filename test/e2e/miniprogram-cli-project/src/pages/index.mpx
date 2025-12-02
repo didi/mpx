@@ -24,10 +24,6 @@
         <text class="item-arrow">→</text>
       </view>
     </view>
-
-    <view class="footer">
-      <text class="footer-text">测试结果将在控制台输出</text>
-    </view>
   </scroll-view>
 </template>
 
@@ -143,22 +139,12 @@ defineExpose({
   font-size: 18px;
   color: #ccc;
 }
-
-.footer {
-  padding: 20px;
-  align-items: center;
-}
-
-.footer-text {
-  font-size: 12px;
-  color: #999;
-}
 </style>
 
 <script type="application/json">
   {
     "usingComponents": {
     },
-    "navigationBarTitleText": "性能测试",
+    "navigationBarTitleText": "MPX 基础组件"
   }
 </script>
