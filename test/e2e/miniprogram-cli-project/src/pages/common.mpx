@@ -117,7 +117,7 @@
 
 .header {
   padding: 16px 20px;
-  background: linear-gradient(135deg, #00C853, #00E676);
+  background: linear-gradient(135deg, #667eea, #764ba2);
 }
 
 .header-content {
@@ -187,11 +187,11 @@
 .counter-value {
   font-size: 48px;
   font-weight: bold;
-  color: #00C853;
+  color: #007AFF;
 }
 
 .primary-btn {
-  background-color: #00C853;
+  background-color: #007AFF;
   padding: 12px;
   border-radius: 8px;
   align-items: center;
@@ -217,7 +217,7 @@
   flex-direction: row;
   align-items: center;
   padding: 12px;
-  background-color: #e8f5e9;
+  background-color: #ebebec;
   border-radius: 8px;
 }
 
@@ -229,7 +229,7 @@
 
 .result-value {
   font-size: 14px;
-  color: #00C853;
+  color: #007AFF;
   font-weight: 500;
 }
 
@@ -245,7 +245,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #00C853;
+  background-color: #007AFF;
   margin-right: 12px;
 }
 
