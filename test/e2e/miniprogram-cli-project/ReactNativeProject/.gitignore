@@ -75,3 +75,5 @@ yarn-error.log
 
 
 artifacts/
+
+index.js
