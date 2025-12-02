@@ -127,6 +127,22 @@ describe('Scroll-View Component Test Page', () => {
       await device.takeScreenshot('scroll-view-refresher-enabled');
     });
 
+    it('shows refresh indicator on pull down', async () => {
+      // 先滚动到顶部
+      await element(by.id('scrollToTopBtn')).tap();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // 在 scroll-view 上执行较大幅度的下拉操作触发刷新
+      await element(by.id('verticalScrollView')).swipe('down', 'slow', 0.8, 0.5, 0.1);
+
+      // 等待刷新完成（1.5秒后完成）
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // 验证刷新完成
+      await expect(element(by.id('refreshStatus'))).toHaveText('刷新完成');
+      await device.takeScreenshot('scroll-view-refresh-complete');
+    });
+
     it('disables refresher on toggle again', async () => {
       await element(by.id('toggleRefresherBtn')).tap();
       await new Promise((resolve) => setTimeout(resolve, 300));
