@@ -57,14 +57,18 @@ export default function getBuiltInMixins ({ type, rawOptions = {} }) {
     }
     // 此为纯增强类mixins，原生模式下不需要注入
     if (!rawOptions.__nativeRender__) {
-      bulitInMixins = bulitInMixins.concat([
-        renderHelperMixin(),
+      const enhancedMixins = [
         showMixin(type),
         i18nMixin(),
         dynamicRenderHelperMixin(),
         dynamicSlotMixin(),
         dynamicRefsMixin()
-      ])
+      ]
+      if (__mpx_mode__ !== 'ks') {
+        // ks methods 不支持 _ 或者 $ 开头的方法名，所以 ks 不走 methods mixin
+        enhancedMixins.unshift(renderHelperMixin())
+      }
+      bulitInMixins = bulitInMixins.concat(enhancedMixins)
     }
   }
   return bulitInMixins.filter(item => item)

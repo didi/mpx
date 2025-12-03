@@ -23,6 +23,8 @@ module.exports = function ({ print }) {
   const harmonyValueLogError = print({ platform: 'harmony', tag: TAG_NAME, isError: true, type: 'value' })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -95,12 +97,17 @@ module.exports = function ({ print }) {
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog
+      },
+      {
+        test: /^(cursor-spacing|cursor|selection-start|selection-end|adjust-position|hold-keyboard|disable-default-padding|confirm-hold|adjust-keyboard-to|placeholder-class|show-confirm-bar)$/,
+        ks: ksPropLog
       }
     ],
     event: [
       {
         test: /^(confirm|linechange)$/,
-        web: webEventLog
+        web: webEventLog,
+        ks: ksEventLog
       },
       {
         test: /^keyboardheightchange$/,
@@ -124,7 +131,17 @@ module.exports = function ({ print }) {
         test: /^keyboard.+$/,
         ios: iosEventLog,
         android: androidEventLog,
-        harmony: harmonyEventLog
+        harmony: harmonyEventLog,
+        ks: ksEventLog
+      },
+      {
+        test: /^(selectionchange)$/,
+        ks: ksEventLog,
+        ali: aliEventLog,
+        jd: jdEventLog,
+        qq: qqEventLog,
+        tt: ttEventLog,
+        web: webEventLog
       }
     ]
   }
