@@ -10,7 +10,6 @@ global.__mpxAppDimensionsInfo = {
 global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
 
-global.__classCaches = []
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
     const styleObj = classMap[className]?.()
