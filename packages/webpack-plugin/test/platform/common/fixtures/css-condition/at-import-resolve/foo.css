@@ -1,0 +1,5 @@
+/* @import "./nested/bar.css"; */
+
+.color {
+  color: red;
+}
