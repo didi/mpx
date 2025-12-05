@@ -196,8 +196,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 设置 lastShareValRef & shareValMap
   function updateStyleVal () {
-    return Object.keys(shareValMap).some(key => {
-      let isUpdate = 0
+    let isUpdate = 0
+    Object.keys(shareValMap).forEach(key => {
       let value = originalStyle[key]
       if (isTransform(key)) {
         value = originalStyle.transform
@@ -205,18 +205,16 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
             isUpdate = 1
-            return isUpdate
           }
         })
       } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
           lastStyleRef.current[key] = value
           isUpdate = 1
-          return isUpdate
         }
       }
-      return isUpdate
     })
+    return isUpdate
   }
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
