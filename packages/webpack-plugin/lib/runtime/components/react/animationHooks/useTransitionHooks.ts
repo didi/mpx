@@ -218,8 +218,6 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   }
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
-    // duration 不同需要再次执行回调，这里记录一下上次propName动画的duration
-    const callbackMap = new Map()
     animatedKeys.forEach(key => {
       // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
       let ruleV = originalStyle[key]
@@ -244,13 +242,9 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
       const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? 'transform' : key]
       // console.log('animationOptions=', { delay, duration, easing })
-      // animationCallback !callbackMap.get(duration) && callback ? callback : undefined
       runOnJSCallbackRef.current = {
         animationCallback: (duration: number) => {
-          if (!callbackMap.get(duration) && transitionend) {
-            transitionend()
-            callbackMap.set(duration, true)
-          }
+          transitionend?.()
         }
       }
       const callback = (finished?: boolean, current?: AnimatableValue) => {
