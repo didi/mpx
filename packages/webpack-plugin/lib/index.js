@@ -86,6 +86,10 @@ const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
 
+/**
+ * @param {import('webpack').NormalModule} module
+ * @returns
+ */
 const isStaticModule = module => {
   if (!module.resource) return false
   const { queryObj } = parseRequest(module.resource)
@@ -322,6 +326,9 @@ class MpxWebpackPlugin {
     }
   }
 
+  /**
+   * @param {import('webpack').Compiler} compiler
+   */
   apply (compiler) {
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
