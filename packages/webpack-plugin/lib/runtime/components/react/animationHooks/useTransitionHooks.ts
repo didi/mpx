@@ -204,13 +204,13 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         Object.entries(getTransformObj(value)).forEach(([key, value]) => {
           if (value !== lastStyleRef.current[key]) {
             lastStyleRef.current[key] = value
-            isUpdate = 1
+            if (!isUpdate) isUpdate = 1
           }
         })
       } else if (hasOwn(shareValMap, key)) {
         if (value !== lastStyleRef.current[key]) {
           lastStyleRef.current[key] = value
-          isUpdate = 1
+          if (!isUpdate) isUpdate = 1
         }
       }
     })
@@ -218,10 +218,12 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   }
   // 根据 animation action 创建&驱动动画
   function createAnimation (animatedKeys: string[] = []) {
+    let transformTransitionendDone = false
     animatedKeys.forEach(key => {
       // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
+      const isTransformKey = isTransform(key)
       let ruleV = originalStyle[key]
-      if (isTransform(key)) {
+      if (isTransformKey) {
         const transform = getTransformObj(originalStyle.transform!)
         ruleV = transform[key]
       }
@@ -240,21 +242,27 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
-      const { delay = 0, duration, easing } = transitionMap[isTransform(key) ? 'transform' : key]
+      const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
       // console.log('animationOptions=', { delay, duration, easing })
-      runOnJSCallbackRef.current = {
-        animationCallback: (duration: number) => {
-          transitionend?.()
+      let callback
+      if (transitionend) {
+        runOnJSCallbackRef.current = {
+          animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
+            transitionend(finished, current, duration)
+          }
+        }
+        callback = (finished?: boolean, current?: AnimatableValue) => {
+          'worklet'
+          // 动画结束后设置下一次transformOrigin
+          if (finished) {
+            runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
+          }
         }
       }
-      const callback = (finished?: boolean, current?: AnimatableValue) => {
-        'worklet'
-        // 动画结束后设置下一次transformOrigin
-        if (finished) {
-          runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
-        }
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback && (!isTransformKey || !transformTransitionendDone) ? callback : undefined)
+      if (isTransformKey) {
+        transformTransitionendDone = true
       }
-      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
       shareValMap[key].value = animation
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })
@@ -266,7 +274,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         Object.keys(getTransformObj(originalStyle.transform)).forEach((prop: string) => {
           animatedKeys.push(prop)
         })
-      } else if (originalStyle[key]) {
+      } else if (originalStyle[key] !== undefined) {
         animatedKeys.push(key)
       }
       return animatedKeys

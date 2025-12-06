@@ -92,7 +92,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
             const transformOrigin = actions[index + 1].animatedOption?.transformOrigin
             transformOrigin && (shareValMap.transformOrigin.value = transformOrigin)
           }
-          transitionend && runOnJS(runOnJSCallback)('transitionend', duration, finished, current)
+          transitionend && runOnJS(runOnJSCallback)('transitionend', finished, current, duration)
         }
       }
       if (index === 0) {
