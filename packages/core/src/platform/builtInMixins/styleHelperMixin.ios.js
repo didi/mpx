@@ -266,17 +266,17 @@ export default function styleHelperMixin () {
 
         const { mergeToLayer, genResult } = createLayer(isNativeStaticStyle)
 
-        let needAddUnoPreflight = false
-
-        const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
 
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
+          let needAddUnoPreflight = false
+          const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
+
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             const getAppClassStyle = global.__getAppClassStyle || noop
-            if (localStyle = this.__getClassStyle(className)) {
+            if (localStyle = this.__getClassStyle?.(className)) {
               if (localStyle._media?.length) {
                 mergeToLayer('normal', localStyle._default, getMediaStyle(localStyle._media))
               } else {
@@ -300,11 +300,13 @@ export default function styleHelperMixin () {
               mergeToLayer('normal', this.__props[className])
             }
           })
+
+          if (needAddUnoPreflight) {
+            mergeToLayer('preflight', unoPreflightsClassMap)
+          }
         }
 
-        if (needAddUnoPreflight) {
-          mergeToLayer('preflight', unoPreflightsClassMap)
-        }
+
 
         if (staticStyle || dynamicStyle) {
           const styleObj = {}
