@@ -14,7 +14,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
   output = compiler.parseComponent(content, {
     mode,
     filePath,
-    // pad: 'line', // stylus编译遇到大量空行时会出现栈溢出，故注释掉
+    pad: 'line',
     env
   })
   if (needMap) {

@@ -1,7 +1,6 @@
 const fs = require('fs')
 const path = require('path')
 const json5 = require('json5')
-const {wx} = require("@mpxjs/webpack-plugin/lib/config");
 
 const readFileSyncInDist = (filePath, options) => {
   const realPath = path.join(path.resolve(), filePath)

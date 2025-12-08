@@ -4,7 +4,7 @@ type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
 
 type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
 
-interface compContext {
+export interface compContext {
   [key: string]: any
 }
 
@@ -139,21 +139,14 @@ export interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapActionsToInstance<K extends keyof A>(maps: K[], context: compContext): Pick<GetActions<A>, K>
   mapActionsToInstance(depPath: string, maps: string[], context: compContext): void
 }
-type GetComputedSetKeys<T> = {
-  [K in keyof T]: T[K] extends {
-    get(): any,
-    set(val: any): void
-  } ? K : never
-}[keyof T]
 
 export type GetComputedType<T> = {
-  readonly [K in Exclude<keyof T, GetComputedSetKeys<T>>]: T[K] extends () => infer R ? R : T[K]
-} & {
-    [K in GetComputedSetKeys<T>]: T[K] extends {
-      get(): infer R,
-      set(val: any): void
-    } ? R : T[K]
-  }
+  [K in keyof T]: T[K] extends { get: (...args: any[]) => infer R }
+    ? R
+    : T[K] extends (...args: any[]) => infer R
+    ? R
+    : never
+}
 
 interface MutationsAndActionsWithThis {
   [key: string]: (...payload: any[]) => any
@@ -165,7 +158,7 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
-interface mapStateFunctionType<S, G> {
+export interface mapStateFunctionType<S, G> {
   [key: string]: (state: S, getter: G) => any
 }
 interface DeeperMutationsAndActions {
@@ -249,7 +242,7 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   modules?: Record<string, StoreOptWithThis<{}, {}, {}, {}, {}>>
 }
 
-interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
+export interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   [DEPS_SYMBOL]: D
   [STATE_SYMBOL]: S
@@ -391,7 +384,7 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapActionsToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
 }
 
-type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
+export type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
 
 interface StoreOpt<S, G, M, A, D extends Deps> {
   state?: S,

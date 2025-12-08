@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -15,7 +15,8 @@ const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
-const { isReact, isWeb } = require('../utils/env')
+const { isReact, isWeb, isNoMode } = require('../utils/env')
+const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
   return false
@@ -119,6 +120,8 @@ const rulesResultMap = new Map()
 let usingComponents = []
 let usingComponentsInfo = {}
 let componentGenerics = {}
+// 跨平台语法检测的配置，在模块加载时初始化一次
+let crossPlatformConfig = null
 
 function updateForScopesMap () {
   forScopesMap = {}
@@ -147,11 +150,11 @@ const deleteErrorInResultMap = (node) => {
 }
 
 function baseWarn (msg) {
-  console.warn(('[template compiler]: ' + msg))
+  console.warn(('[Mpx template warning]: ' + msg))
 }
 
 function baseError (msg) {
-  console.error(('[template compiler]: ' + msg))
+  console.error(('[Mpx template error]: ' + msg))
 }
 
 const decodeMap = {
@@ -176,11 +179,11 @@ const i18nWxsPath = normalize.lib('runtime/i18n.wxs')
 const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
-const i18nModuleName = '_i'
+const i18nModuleName = '_i_'
 const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
-const stringifyModuleName = '_s'
+const stringifyModuleName = '_s_'
 const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
-const optionalChainWxsName = '_oc' // 改成_oc解决web下_o重名问题
+const optionalChainWxsName = '_oc_' // 改成_oc解决web下_o重名问题
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
 const tagRE = /\{\{((?:.|\n|\r)+?)\}\}(?!})/
@@ -581,7 +584,8 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      if (options.pad) {
+      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
+      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -636,8 +640,9 @@ function parse (template, options) {
   processingTemplate = false
   rulesResultMap.clear()
   componentGenerics = options.componentGenerics || {}
+  // 初始化跨平台语法检测配置（每次解析时只初始化一次）
+  crossPlatformConfig = initCrossPlatformConfig()
 
-  if (typeof options.usingComponentsInfo === 'string') options.usingComponentsInfo = JSON.parse(options.usingComponentsInfo)
   usingComponents = Object.keys(options.usingComponentsInfo)
   usingComponentsInfo = options.usingComponentsInfo
 
@@ -680,7 +685,6 @@ function parse (template, options) {
     meta.options.virtualHost = true
   }
   let currentParent
-  let multiRootError
   // 用于记录模板用到的组件，匹配引用组件，看是否有冗余
   const tagNames = new Set()
 
@@ -759,6 +763,7 @@ function parse (template, options) {
       if (!currentParent) genTempRoot()
 
       const children = currentParent.children
+
       if (currentParent.tag !== 'text') {
         text = text.trim()
       } else {
@@ -792,9 +797,10 @@ function parse (template, options) {
     }
   })
 
-  if (multiRootError) {
-    error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
-  }
+  // multiRoot
+  // if (root.tag === 'temp-node' && root.children && root.children.filter(node => node.tag !== 'temp-node').length > 1) {
+  //   error$1('Template fields should has one single root, considering wrapping your template content with <view> or <text> tag!')
+  // }
 
   if (hasI18n) {
     if (i18nInjectableComputed.length) {
@@ -999,12 +1005,34 @@ function processComponentIs (el, options) {
   }
 
   const range = getAndRemoveAttr(el, 'range').val
-  const isInRange = makeMap(range || '')
-  el.components = (usingComponents).filter(i => {
-    if (!range) return true
-    return isInRange(i)
+
+  // Map<CurrentName, SourceName>
+  let ranges
+  if (range) {
+    ranges = range.split(',').map(i => i.trim()).filter(i => i)
+  } else {
+    // 根据原始用户写的usingComponents字段生成ranges
+    ranges = options.originalUsingComponents || []
+  }
+
+  const rangeMap = new Map()
+  ranges.forEach(name => {
+    rangeMap.set(['ali', 'swan'].includes(mode) ? capitalToHyphen(name) : name, name)
   })
-  if (!el.components.length) {
+
+  // Map<CurrentName, SourceName>
+  el.componentMap = new Map()
+  usingComponents.forEach((name) => {
+    if (rangeMap.size === 0) {
+      el.componentMap.set(name, name)
+    } else {
+      if (rangeMap.has(name)) {
+        el.componentMap.set(name, rangeMap.get(name))
+      }
+    }
+  })
+
+  if (el.componentMap.size === 0) {
     warn$1('Component in which <component> tag is used must have a non blank usingComponents field')
   }
 
@@ -1365,8 +1393,35 @@ function processEventReact (el, options) {
   // }
 }
 
+function isNeedBind (configs, isProxy) {
+  if (isProxy) return true
+  if (configs.length > 1) return true
+  if (configs.length === 1) return configs[0].hasArgs
+  return false
+}
+
+function processEventBinding (el, configs) {
+  let resultName
+  configs.forEach(({ name }) => {
+    if (name) {
+      // 清空原始事件绑定
+      let has
+      do {
+        has = getAndRemoveAttr(el, name).has
+      } while (has)
+
+      if (!resultName) {
+        // 清除修饰符
+        resultName = name.replace(/\..*/, '')
+      }
+    }
+  })
+  return { resultName }
+}
+
 function processEvent (el, options) {
   const eventConfigMap = {}
+  const finalEventsMap = {}
   el.attrsList.forEach(function ({ name, value }) {
     const parsedEvent = config[mode].event.parseEvent(name)
 
@@ -1378,14 +1433,21 @@ function processEvent (el, options) {
       const extraStr = runtimeCompile && prefix === 'catch' ? `, "__mpx_${prefix}"` : ''
       const parsedFunc = parseFuncStr(value, extraStr)
       if (parsedFunc) {
+        const isCapture = /^capture/.test(prefix)
         if (!eventConfigMap[type]) {
           eventConfigMap[type] = {
-            configs: []
+            configs: [],
+            captureConfigs: []
           }
         }
-        eventConfigMap[type].configs.push(Object.assign({ name }, parsedFunc))
+        const targetConfigs = isCapture ? eventConfigMap[type].captureConfigs : eventConfigMap[type].configs
+        targetConfigs.push(Object.assign({ name }, parsedFunc))
         if (modifiers.indexOf('proxy') > -1 || options.forceProxyEvent) {
-          eventConfigMap[type].proxy = true
+          if (isCapture) {
+            eventConfigMap[type].captureProxy = true
+          } else {
+            eventConfigMap[type].proxy = true
+          }
         }
       }
     }
@@ -1425,40 +1487,21 @@ function processEvent (el, options) {
   }
 
   for (const type in eventConfigMap) {
-    let needBind = false
-    const { configs, proxy } = eventConfigMap[type]
-    delete eventConfigMap[type]
-    if (proxy) {
-      needBind = true
-    } else if (configs.length > 1) {
-      needBind = true
-    } else if (configs.length === 1) {
-      needBind = !!configs[0].hasArgs
-    }
+    const { configs = [], captureConfigs = [], proxy, captureProxy } = eventConfigMap[type]
+
+    let needBubblingBind = isNeedBind(configs, proxy)
+    let needCaptureBind = isNeedBind(captureConfigs, captureProxy)
 
     const escapedType = dash2hump(type)
     // 排除特殊情况
     if (!isValidIdentifierStr(escapedType)) {
       warn$1(`EventName ${type} which need be framework proxy processed must be a valid identifier!`)
-      needBind = false
+      needBubblingBind = false
+      needCaptureBind = false
     }
 
-    if (needBind) {
-      let resultName
-      configs.forEach(({ name }) => {
-        if (name) {
-          // 清空原始事件绑定
-          let has
-          do {
-            has = getAndRemoveAttr(el, name).has
-          } while (has)
-
-          if (!resultName) {
-            // 清除修饰符
-            resultName = name.replace(/\..*/, '')
-          }
-        }
-      })
+    if (needBubblingBind) {
+      const { resultName } = processEventBinding(el, configs)
 
       addAttrs(el, [
         {
@@ -1466,16 +1509,35 @@ function processEvent (el, options) {
           value: '__invoke'
         }
       ])
-      eventConfigMap[escapedType] = configs.map((item) => {
+      if (!finalEventsMap.bubble) {
+        finalEventsMap.bubble = {}
+      }
+      finalEventsMap.bubble[escapedType] = configs.map((item) => {
+        return item.expStr
+      })
+    }
+
+    if (needCaptureBind) {
+      const { resultName } = processEventBinding(el, captureConfigs)
+      addAttrs(el, [
+        {
+          name: resultName || config[mode].event.getEvent(type),
+          value: '__captureInvoke'
+        }
+      ])
+      if (!finalEventsMap.capture) {
+        finalEventsMap.capture = {}
+      }
+      finalEventsMap.capture[escapedType] = captureConfigs.map((item) => {
         return item.expStr
       })
     }
   }
 
-  if (!isEmptyObject(eventConfigMap)) {
+  if (!isEmptyObject(finalEventsMap)) {
     addAttrs(el, [{
       name: 'data-eventconfigs',
-      value: `{{${shallowStringify(eventConfigMap, true)}}}`
+      value: `{{${shallowStringify(finalEventsMap, true)}}}`
     }])
   }
 }
@@ -1590,7 +1652,7 @@ function parseOptionalChaining (str) {
     }
     if (grammarMap.checkState() && haveNotGetValue) {
       // 值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-      throw new Error('[optionChain] option value illegal!!!')
+      throw new Error('[Mpx template error]: optionChain option value illegal!!!')
     }
     haveNotGetValue = true
     let keyValue = ''
@@ -1640,7 +1702,7 @@ function parseOptionalChaining (str) {
     }
     if (grammarMap.checkState() && haveNotGetValue) {
       // key值查找结束但是语法未闭合或者处理到边界还未结束，抛异常
-      throw new Error('[optionChain] option key illegal!!!')
+      throw new Error('[Mpx template error]: optionChain option key illegal!!!')
     }
     if (keyValue) {
       chainKey += `,'${keyValue}'`
@@ -1853,24 +1915,25 @@ function processRefReact (el, meta) {
     /**
      * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
      */
-    if (!val) {
-      const rawId = el.attrsMap.id
-      const rawClass = el.attrsMap.class
-      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
-
-      if (rawId) {
-        const staticId = parseMustacheWithContext(rawId).result
-        selectors.push({ prefix: '#', selector: `${staticId}` })
-      }
-      if (rawClass || rawDynamicClass) {
-        const staticClass = parseMustacheWithContext(rawClass).result
-        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
-      }
-    } else {
+    if (val) {
       meta.refs.push(refConf)
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
+
+    const rawId = el.attrsMap.id
+    const rawClass = el.attrsMap.class
+    const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
+    if (rawId) {
+      const staticId = parseMustacheWithContext(rawId).result
+      selectors.push({ prefix: '#', selector: `${staticId}` })
+    }
+    if (rawClass || rawDynamicClass) {
+      const staticClass = parseMustacheWithContext(rawClass).result
+      const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+      selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
+    }
+
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     const refFnId = forScopes.reduce((preV, curV) => {
       return `${preV} + "_" + ${curV.index}`
@@ -1968,7 +2031,18 @@ function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
     const isTemplateData = el.tag === 'template' && attr.name === 'data'
     const needWrap = isTemplateData && mode !== 'swan'
-    const value = needWrap ? `{${attr.value}}` : attr.value
+    let value = needWrap ? `{${attr.value}}` : attr.value
+
+    // 修复React Native环境下属性值中插值表达式带空格的问题
+    if (isReact(mode) && typeof value === 'string') {
+      // 检查是否为带空格的插值表达式
+      const trimmedValue = value.trim()
+      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+        value = trimmedValue
+      }
+    }
+
     const parsed = parseMustacheWithContext(value)
     if (parsed.hasBinding) {
       // 该属性判断用于提供给运行时对于计算属性作为props传递时提出警告
@@ -2035,7 +2109,7 @@ function postProcessFor (el) {
 function postProcessForReact (el) {
   if (el.for) {
     if (el.for.key) {
-      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
+      addExp(el, `this.__getWxKey(${el.for.item || 'item'}, ${stringify(el.for.key === '_' ? 'index' : el.for.key)}, ${el.for.index || 'index'})`, false, 'key')
       addAttrs(el, [{
         name: 'key',
         value: el.for.key
@@ -2071,13 +2145,24 @@ function postProcessIf (el) {
         replaceNode(el, getTempNode())._if = false
       }
     } else {
+      el._if = null
       attrs = [{
         name: config[mode].directive.if,
         value: el.if.raw
       }]
     }
   } else if (el.elseif) {
+    if (el.for) {
+      error$1(`wx:elif (wx:elif="${el.elseif.raw}") invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the elif-directive to it`)
+      return
+    }
+
     prevNode = findPrevNode(el)
+    if (!prevNode || prevNode._if === undefined) {
+      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
     if (prevNode._if === true) {
       removeNode(el)
     } else if (prevNode._if === false) {
@@ -2097,6 +2182,7 @@ function postProcessIf (el) {
           removeNode(el)
         }
       } else {
+        el._if = null
         attrs = [{
           name: config[mode].directive.elseif,
           value: el.elseif.raw
@@ -2104,7 +2190,17 @@ function postProcessIf (el) {
       }
     }
   } else if (el.else) {
+    if (el.for) {
+      error$1(`wx:else invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the else-directive to it`)
+      return
+    }
+
     prevNode = findPrevNode(el)
+    if (!prevNode || prevNode._if === undefined) {
+      error$1(`wx:else used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
     if (prevNode._if === true) {
       removeNode(el)
     } else if (prevNode._if === false) {
@@ -2128,23 +2224,99 @@ function addIfCondition (el, condition) {
   el.ifConditions.push(condition)
 }
 
+function getIfConditions (el) {
+  return el?.ifConditions || []
+}
+
 function postProcessIfReact (el) {
-  let prevNode
+  let prevNode, ifNode, result, ifConditions
   if (el.if) {
-    addIfCondition(el, {
-      exp: el.if.exp,
-      block: el
-    })
-  } else if (el.elseif || el.else) {
-    prevNode = findPrevNode(el)
-    if (prevNode && prevNode.if) {
-      addIfCondition(prevNode, {
-        exp: el.elseif && el.elseif.exp,
+    // 取值
+    // false -> 节点变为temp-node，并添加_if=false
+    // true -> 添加_if=true，移除if
+    // dynamic -> addIfCondition
+    result = evalExp(el.if.exp)
+    if (result.success) {
+      if (result.result) {
+        el._if = true
+        delete el.if
+      } else {
+        replaceNode(el, getTempNode())._if = false
+      }
+    } else {
+      el._if = null
+      addIfCondition(el, {
+        exp: el.if.exp,
+        block: el
+      })
+    }
+  } else if (el.elseif) {
+    if (el.for) {
+      error$1(`wx:elif (wx:elif="${el.elseif.raw}") invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the elif-directive to it`)
+      return
+    }
+
+    ifNode = findPrevNode(el)
+    ifConditions = getIfConditions(ifNode)
+    prevNode = ifConditions.length > 0 ? ifConditions[ifConditions.length - 1].block : ifNode
+
+    if (!prevNode || prevNode._if === undefined) {
+      error$1(`wx:elif="${el.elseif.raw}" used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      el.if = el.elseif
+      delete el.elseif
+      postProcessIfReact(el)
+    } else {
+      result = evalExp(el.elseif.exp)
+      if (result.success) {
+        if (result.result) {
+          delete el.elseif
+          el._if = true
+          addIfCondition(ifNode, {
+            block: el
+          })
+          removeNode(el, true)
+        } else {
+          removeNode(el)
+        }
+      } else {
+        el._if = null
+        addIfCondition(ifNode, {
+          exp: el.elseif.exp,
+          block: el
+        })
+        removeNode(el, true)
+      }
+    }
+  } else if (el.else) {
+    if (el.for) {
+      error$1(`wx:else invalidly used on the for-list <"${el.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the else-directive to it`)
+      return
+    }
+
+    ifNode = findPrevNode(el)
+    ifConditions = getIfConditions(ifNode)
+    prevNode = ifConditions.length > 0 ? ifConditions[ifConditions.length - 1].block : ifNode
+
+    if (!prevNode || prevNode._if === undefined) {
+      error$1(`wx:else used on element [${el.tag}] without corresponding wx:if or wx:elif.`)
+      return
+    }
+
+    if (prevNode._if === true) {
+      removeNode(el)
+    } else if (prevNode._if === false) {
+      delete el.else
+    } else {
+      addIfCondition(ifNode, {
         block: el
       })
       removeNode(el, true)
-    } else {
-      warn$1(`wx:${el.elseif ? `elif="${el.elseif.raw}"` : 'else'} used on element [${el.tag}] without corresponding wx:if.`)
     }
   }
 }
@@ -2511,6 +2683,16 @@ function getVirtualHostRoot (options, meta) {
     if (isWeb(mode) && ctorType === 'page') {
       return createASTElement('page')
     }
+    if (isReact(mode) && ctorType === 'page') {
+      const rootView = createASTElement('view', [
+        {
+          name: 'class',
+          value: MPX_TAG_PAGE_SELECTOR
+        }
+      ])
+      processElement(rootView, rootView, options, meta)
+      return rootView
+    }
   }
   return getTempNode()
 }
@@ -2704,6 +2886,78 @@ function processNoTransAttrs (el) {
   }
 }
 
+function initCrossPlatformConfig () {
+  // 定义平台与前缀的双向映射关系
+  const platformPrefixMap = {
+    wx: 'wx:',
+    ali: 'a:',
+    swan: 's-',
+    qq: 'qq:',
+    tt: 'tt:',
+    dd: 'dd:',
+    jd: 'jd:',
+    qa: 'qa:',
+    web: 'v-'
+  }
+
+  if (isNoMode(mode)) {
+    return null
+  }
+
+  return {
+    currentPrefix: platformPrefixMap[mode] || 'wx:',
+    platformPrefixMap
+  }
+}
+
+// 检测跨平台语法使用情况并给出警告
+function processCrossPlatformSyntaxWarning (el) {
+  // 使用转换后的属性列表进行检查
+  if (!el.attrsList || el.attrsList.length === 0) {
+    return
+  }
+
+  // 如果配置为空，说明不需要检测
+  if (!crossPlatformConfig) {
+    return
+  }
+
+  const { currentPrefix, platformPrefixMap } = crossPlatformConfig
+
+  // 检查转换后的属性列表
+  el.attrsList.forEach(attr => {
+    const attrName = attr.name
+
+    // 检查是否使用了平台前缀
+    for (const [platformName, prefix] of Object.entries(platformPrefixMap)) {
+      if (attrName.startsWith(prefix)) {
+        if (isReact(mode)) {
+          // React Native 平台：只允许使用 wx: 前缀，其他前缀报错
+          if (prefix !== 'wx:') {
+            error$1(
+              `React Native mode "${mode}" does not support "${prefix}" prefix. ` +
+              `Use "wx:" prefix instead. Found: "${attrName}"`
+            )
+          }
+        } else {
+          // 小程序平台：检测跨平台语法使用
+          if (platformName !== mode) {
+            // 构建建议的正确属性名
+            const suffixPart = attrName.substring(prefix.length)
+            const suggestedAttr = currentPrefix + suffixPart
+
+            warn$1(
+              `Your target mode is "${mode}", but used "${attrName}". ` +
+              `Did you mean "${suggestedAttr}"?`
+            )
+          }
+        }
+        break
+      }
+    }
+  })
+}
+
 function processMpxTagName (el) {
   const mpxTagName = getAndRemoveAttr(el, 'mpxTagName').val
   if (mpxTagName) {
@@ -2733,6 +2987,9 @@ function processElement (el, root, options, meta) {
 
   processDuplicateAttrsList(el)
 
+  // 检测跨平台语法使用情况并给出警告
+  processCrossPlatformSyntaxWarning(el)
+
   processInjectWxs(el, meta, options)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
@@ -2758,8 +3015,8 @@ function processElement (el, root, options, meta) {
     processIf(el)
     processFor(el)
     processRefReact(el, meta)
+    processStyleReact(el, options)
     if (!pass) {
-      processStyleReact(el, options)
       processEventReact(el, options)
       processComponentGenerics(el, meta)
       processComponentIs(el, options)
@@ -2877,7 +3134,7 @@ function cloneAttrsList (attrsList) {
 }
 
 function postProcessComponentIs (el, postProcessChild) {
-  if (el.is && el.components) {
+  if (el.is && el.componentMap && el.componentMap.size > 0) {
     let tempNode
     if (el.for || el.if || el.elseif || el.else) {
       tempNode = createASTElement('block')
@@ -2887,11 +3144,12 @@ function postProcessComponentIs (el, postProcessChild) {
     replaceNode(el, tempNode, true)
     postMoveBaseDirective(tempNode, el)
 
-    el.components.forEach(function (component) {
-      const newChild = createASTElement(component, cloneAttrsList(el.attrsList), tempNode)
+    // Map<CurrentName, SourceName>
+    el.componentMap.forEach((source, name) => {
+      const newChild = createASTElement(name, cloneAttrsList(el.attrsList), tempNode)
       newChild.if = {
-        raw: `{{${el.is} === ${stringify(component)}}}`,
-        exp: `${el.is} === ${stringify(component)}`
+        raw: `{{${el.is} === ${stringify(source)}}}`,
+        exp: `${el.is} === ${stringify(source)}`
       }
       el.children.forEach((child) => {
         addChild(newChild, cloneNode(child))
@@ -3016,30 +3274,12 @@ function genIf (node) {
 
 function genElseif (node) {
   node.elseifProcessed = true
-  if (node.for) {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
-    return
-  }
-  const preNode = findPrevNode(node)
-  if (preNode && (preNode.if || preNode.elseif)) {
-    return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
-  } else {
-    error$1(`wx:elif (wx:elif="${node.elseif.raw}") invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
-  }
+  return `else if(${node.elseif.exp}){\n${genNode(node)}}\n`
 }
 
 function genElse (node) {
   node.elseProcessed = true
-  if (node.for) {
-    error$1(`wx:else invalidly used on the for-list <"${node.tag}"> which has a wx:for directive, please create a block element to wrap the for-list and move the if-directive to it`)
-    return
-  }
-  const preNode = findPrevNode(node)
-  if (preNode && (preNode.if || preNode.elseif)) {
-    return `else{\n${genNode(node)}}\n`
-  } else {
-    error$1(`wx:else invalidly used on the element <"${node.tag}"> without corresponding wx:if or wx:elif.`)
-  }
+  return `else{\n${genNode(node)}}\n`
 }
 
 function genExps (node) {
@@ -3250,5 +3490,6 @@ module.exports = {
   findPrevNode,
   removeNode,
   replaceNode,
-  createASTElement
+  createASTElement,
+  evalExp
 }

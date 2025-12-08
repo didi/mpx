@@ -41,7 +41,6 @@ export default class Preview {
     })
     // click to close
     bindTap(this.preview, () => {
-      this.currentIndex = 0
       this.preview.style.display = 'none'
       this.preview.querySelector('.__mpx_preview_images__').remove()
       this.preview.remove()
@@ -54,10 +53,11 @@ export default class Preview {
    * @param {string[]} options.urls - 图片地址数组
    */
   show (options) {
-    const supported = ['urls', 'success', 'fail', 'complete']
+    const supported = ['urls', 'success', 'fail', 'complete', 'current']
     Object.keys(options).forEach(key => !supported.includes(key) && warn(`previewImage: 暂不支持选项 ${key} ！`))
-    const { urls, success, fail, complete } = options
+    const { urls, current, success, fail, complete } = options
     try {
+      this.currentIndex = urls.indexOf(current) > -1 ? urls.indexOf(current) : 0
       getRootElement().appendChild(this.preview)
       this.preview.style.display = 'block'
       // create images with urls
@@ -65,6 +65,7 @@ export default class Preview {
       this.preview.appendChild(createDom('div', { class: '__mpx_preview_images__' }, urls.map(url => createDom('div', {
         style: `background-image: url(${url})`
       }))))
+      this.preview.querySelector('.__mpx_preview_images__').style.transform = `translateX(-${this.currentIndex * 100}%)`
       this.maxIndex = urls.length
       this.updateTextTip()
       successHandle({ errMsg: 'previewImage:ok' }, success, complete)

@@ -1,23 +1,74 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject } from '@mpxjs/utils'
-import { Dimensions, StyleSheet } from 'react-native'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation, noop } from '@mpxjs/utils'
+import { StyleSheet, Dimensions } from 'react-native'
+import { reactive } from '../../observer/reactive'
+import Mpx from '../../index'
 
-let { width, height } = Dimensions.get('screen')
+global.__mpxAppDimensionsInfo = {
+  window: Dimensions.get('window'),
+  screen: Dimensions.get('screen')
+}
+global.__mpxSizeCount = 0
+global.__mpxPageSizeCountMap = reactive({})
 
-Dimensions.addEventListener('change', ({ screen }) => {
-  width = screen.width
-  height = screen.height
+global.__GCC = function (className, classMap, classMapValueCache) {
+  if (!classMapValueCache.has(className)) {
+    const styleObj = classMap[className]?.()
+    styleObj && classMapValueCache.set(className, styleObj)
+  }
+  return classMapValueCache.get(className)
+}
+
+let dimensionsInfoInitialized = false
+function useDimensionsInfo (dimensions) {
+  dimensionsInfoInitialized = true
+  if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
+    dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
+  }
+  global.__mpxAppDimensionsInfo.window = dimensions.window
+  global.__mpxAppDimensionsInfo.screen = dimensions.screen
+}
+
+function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
+  return window.width + 'x' + window.height
+}
+
+Dimensions.addEventListener('change', ({ window, screen }) => {
+  const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
+  useDimensionsInfo({ window, screen })
+
+  // 对比 screen 高宽是否存在变化
+  if (getPageSize(screen) === oldScreen) return
+
+  global.__classCaches?.forEach(cache => cache?.clear())
+
+  // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
+  global.__mpxSizeCount++
+
+  const navigation = getFocusedNavigation()
+
+  if (navigation) {
+    global.__mpxPageSizeCountMap[navigation.pageId] = global.__mpxSizeCount
+    if (hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
+      global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
+    }
+  }
 })
 
+// TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
+// TODO: 2 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions监听到的width/height尺寸错误，并触发多次问题
 function rpx (value) {
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
   // rn 单位 dp = 1(css)px =  1 物理像素 * pixelRatio(像素比)
   // px = rpx * (750 / 屏幕宽度)
-  return value * width / 750
+  return value * screenInfo.width / 750
 }
 function vw (value) {
-  return value * width / 100
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
+  return value * screenInfo.width / 100
 }
 function vh (value) {
-  return value * height / 100
+  const screenInfo = global.__mpxAppDimensionsInfo.screen
+  return value * screenInfo.height / 100
 }
 
 const unit = {
@@ -28,7 +79,14 @@ const unit = {
 
 const empty = {}
 
-function formatValue (value) {
+function formatValue (value, unitType) {
+  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  if (unitType === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
+  }
+  if (unitType && typeof unit[unitType] === 'function') {
+    return unit[unitType](+value)
+  }
   const matched = unitRegExp.exec(value)
   if (matched) {
     if (!matched[2] || matched[2] === 'px') {
@@ -132,72 +190,160 @@ function transformStyleObj (styleObj) {
   return transformed
 }
 
-function mergeToLayer (layerMap, name, classObj) {
-  const layer = layerMap[name] || layerMap.normal
-  Object.assign(layer, classObj)
+
+const createLayer = (isNativeStyle) => {
+  const layerMap = {
+    preflight:  isNativeStyle ? [] : {},
+    uno:  isNativeStyle ? [] : {},
+    app:  isNativeStyle ? [] : {},
+    normal:  isNativeStyle ? [] : {},
+    important:  isNativeStyle ? [] : {}
+  }
+
+  const genResult = () => {
+    if (isNativeStyle) {
+      return [
+        ...layerMap.preflight,
+        ...layerMap.uno,
+        ...layerMap.app,
+        ...layerMap.normal,
+        ...layerMap.important
+      ]
+    } else {
+      return Object.assign({}, layerMap.preflight, layerMap.uno, layerMap.app, layerMap.normal, layerMap.important)
+    }
+  }
+
+  const mergeToLayer = (name, ...classObjs) => {
+    const layer = layerMap[name] || layerMap.normal
+    return isNativeStyle ? layer.push(...classObjs) : Object.assign(layer, ...classObjs)
+  }
+
+  return {
+    mergeToLayer,
+    layerMap,
+    genResult
+  }
+}
+
+function isNativeStyle (style) {
+  return Array.isArray(style) || (
+    typeof style === 'object' &&
+    // Reanimated 的 animated style 通常会包含 viewDescriptors 或 _animations
+    (hasOwn(style, 'viewDescriptors') || hasOwn(style, '_animations'))
+  )
+}
+
+function getMediaStyle (media) {
+  if (!media || !media.length) return {}
+  const { width } = global.__mpxAppDimensionsInfo.screen
+  return media.reduce((styleObj, item) => {
+    const { options = {}, value = {} } = item
+    const { minWidth, maxWidth } = options
+    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(minWidth) && width >= minWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(maxWidth) && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    }
+    return styleObj
+  }, {})
 }
 
 export default function styleHelperMixin () {
   return {
     methods: {
+      __getSizeCount () {
+        return global.__mpxPageSizeCountMap[this.__pageId]
+      },
       __getClass (staticClass, dynamicClass) {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        const classMap = this.__getClassMap?.() || {}
-        const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
-        const appClassMap = global.__getAppClassMap?.() || {}
-        const layerMap = {
-          preflight: {},
-          uno: {},
-          normal: {},
-          important: {}
-        }
+
+        const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
+
+        const { mergeToLayer, genResult } = createLayer(isNativeStaticStyle)
+
         let needAddUnoPreflight = false
+
+        const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
+
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
+
           classString.split(/\s+/).forEach((className) => {
-            if (classMap[className]) {
-              mergeToLayer(layerMap, classMap[className].__layer, classMap[className])
-            } else if (appClassMap[className]) {
-              // todo 全局样式在每个页面和组件中生效，以支持全局原子类，后续支持样式模块复用后可考虑移除
-              mergeToLayer(layerMap, appClassMap[className].__layer, appClassMap[className])
+            let localStyle, appStyle
+            const getAppClassStyle = global.__getAppClassStyle || noop
+            if (localStyle = this.__getClassStyle(className)) {
+              if (localStyle._media?.length) {
+                mergeToLayer('normal', localStyle._default, getMediaStyle(localStyle._media))
+              } else {
+                mergeToLayer('normal', localStyle._default)
+              }
             } else if (unoClassMap[className]) {
-              const nuoClass = unoClassMap[className]
+              const unoClass = unoClassMap[className]._default
               const importantClass = className.endsWith('!')
-              mergeToLayer(layerMap, importantClass ? 'important' : 'uno', nuoClass)
-              needAddUnoPreflight = !!(nuoClass.transform || nuoClass.filter)
+              mergeToLayer(importantClass ? 'important' : 'uno', unoClass)
+              if (unoClass.transform || unoClass.filter) needAddUnoPreflight = true
             } else if (unoVarClassMap[className]) {
-              mergeToLayer(layerMap, 'important', unoVarClassMap[className])
+              mergeToLayer('important', unoVarClassMap[className]._default)
+            } else if (appStyle = getAppClassStyle(className)) {
+              if (appStyle._media?.length) {
+                mergeToLayer('app', appStyle._default, getMediaStyle(appStyle._media))
+              } else {
+                mergeToLayer('app', appStyle._default)
+              }
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeToLayer(layerMap, 'normal', this.__props[className])
+              mergeToLayer('normal', this.__props[className])
             }
           })
-          if (needAddUnoPreflight) mergeToLayer(layerMap, 'preflight', unoPreflightsClassMap)
         }
 
-        const result = Object.assign({}, layerMap.preflight, layerMap.uno, layerMap.normal, layerMap.important)
+        if (needAddUnoPreflight) {
+          mergeToLayer('preflight', unoPreflightsClassMap)
+        }
 
         if (staticStyle || dynamicStyle) {
-          const styleObj = Object.assign({}, parseStyleText(staticStyle), normalizeDynamicStyle(dynamicStyle))
-          Object.assign(result, transformStyleObj(styleObj))
+          const styleObj = {}
+          if (isNativeStaticStyle) {
+            if (Array.isArray(staticStyle)) {
+              mergeToLayer('normal', ...staticStyle)
+            } else {
+              mergeToLayer('normal', staticStyle)
+            }
+          } else {
+            Object.assign(styleObj, parseStyleText(staticStyle))
+          }
+          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
+          mergeToLayer('normal', transformStyleObj(styleObj))
         }
 
         if (hide) {
-          Object.assign(result, {
+          mergeToLayer('important', {
             // display: 'none'
             // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
             flex: 0,
             height: 0,
             width: 0,
-            padding: 0,
-            margin: 0,
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            marginTop: 0,
+            marginRight: 0,
+            marginBottom: 0,
+            marginLeft: 0,
             overflow: 'hidden'
           })
         }
 
-        return isEmptyObject(result) ? empty : result
+        const result = genResult()
+
+        const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+        return isEmpty ? empty : result
       }
     }
   }

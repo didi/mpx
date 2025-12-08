@@ -13,7 +13,7 @@ function stringifyRequest (loaderContext, request) {
 
 function getAsyncChunkName (chunkName) {
   if (chunkName && typeof chunkName !== 'boolean') {
-    return `/* webpackChunkName: "${chunkName}" */`
+    return `/* webpackChunkName: "${chunkName}/index" */`
   }
   return ''
 }
@@ -24,19 +24,29 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
+
       if (componentCfg.async) {
-        // todo 暂时只处理局部注册的组件作为componentPlaceholder，暂不支持全局组件和原生组件，如使用了支持范围外的组件将不进行placeholder渲染及替换
-        if (jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName] && localComponentsMap[jsonConfig.componentPlaceholder[componentName]]) {
-          const placeholder = jsonConfig.componentPlaceholder[componentName]
+        const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
+        if (placeholder) {
           const placeholderCfg = localComponentsMap[placeholder]
-          const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
-          if (placeholderCfg.async) {
-            loaderContext.emitWarning(
-              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
+          if (placeholderCfg) {
+            if (placeholderCfg.async) {
+              loaderContext.emitWarning(
+                new Error(`[Mpx json error][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
+              )
+            }
+            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
+            componentsMap[componentName] = `function(){return {component: import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)}), loading: getComponent(require(${placeholderRequest}))}}`
+          } else {
+            loaderContext.emitError(
+              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
             )
+            componentsMap[componentName] = `function(){return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)})}`
           }
-          componentsMap[componentName] = `function(){return {component: import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)}), loading: getComponent(require(${placeholderRequest}))}}`
         } else {
+          loaderContext.emitError(
+            new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
+          )
           componentsMap[componentName] = `function(){return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)})}`
         }
       } else {
@@ -75,7 +85,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
         }
       } else {
         loaderContext.emitWarning(
-          new Error(`[json processor][${loaderContext.resource}]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
+          new Error(`[Mpx json error][${loaderContext.resource}]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
         )
       }
     })
@@ -186,13 +196,17 @@ function buildGlobalParams ({
   return content
 }
 
-function buildI18n ({ i18n, loaderContext }) {
+function buildI18n ({ i18n, isMain, loaderContext }) {
   let i18nContent = ''
   const i18nObj = Object.assign({}, i18n)
-  i18nContent += `
-  import VueI18n from 'vue-i18n'
+  if (!isMain) {
+    i18nContent += `import Vue from 'vue'
+    import Mpx from '@mpxjs/core'\n`
+  }
+  i18nContent += `import VueI18n from 'vue-i18n'
   import { createI18n } from 'vue-i18n-bridge'
-  Vue.use(VueI18n , { bridge: true })\n`
+  if (!Mpx.i18n) {
+    Vue.use(VueI18n , { bridge: true })\n`
   const requestObj = {}
   const i18nKeys = ['messages', 'dateTimeFormats', 'numberFormats']
   i18nKeys.forEach((key) => {
@@ -201,15 +215,16 @@ function buildI18n ({ i18n, loaderContext }) {
       delete i18nObj[`${key}Path`]
     }
   })
-  i18nContent += `  var i18nCfg = ${JSON.stringify(i18nObj)}\n`
+  i18nContent += `    var i18nCfg = ${JSON.stringify(i18nObj)}\n`
   Object.keys(requestObj).forEach((key) => {
-    i18nContent += `  i18nCfg.${key} = require(${requestObj[key]})\n`
+    i18nContent += `    i18nCfg.${key} = require(${requestObj[key]})\n`
   })
   i18nContent += `
-  i18nCfg.legacy = false
-  var i18n = createI18n(i18nCfg, VueI18n)
-  Vue.use(i18n)
-  Mpx.i18n = i18n\n`
+    i18nCfg.legacy = false
+    var i18n = createI18n(i18nCfg, VueI18n)
+    Vue.use(i18n)
+    Mpx.i18n = i18n
+  }\n`
   return i18nContent
 }
 

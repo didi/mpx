@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
@@ -156,6 +156,8 @@ const selfPercentRule: Record<string, 'height' | 'width'> = {
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
+  minHeight: true,
+  maxHeight: true,
   top: true,
   bottom: true
 }
@@ -213,24 +215,33 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   const parsed = parseFunc(input, 'var')
   const replaced = new ReplaceSource(input)
 
-  parsed.forEach(({ start, end, args }) => {
+  for (const { start, end, args } of parsed) {
     const varName = args[0]
-    const fallback = args[1] || ''
+    const fallback = args[1]
     let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
+    if (varValue === undefined) return
     if (varUseRegExp.test(varValue)) {
-      varValue = '' + resolveVar(varValue, varContext)
+      varValue = resolveVar(varValue, varContext)
+      if (varValue === undefined) return
     } else {
-      varValue = '' + global.__formatValue(varValue)
+      varValue = global.__formatValue(varValue)
     }
     replaced.replace(start, end - 1, varValue)
-  })
+  }
+
   return global.__formatValue(replaced.source())
 }
 
 function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<string>>, varContext: Record<string, any>, visitOther: (arg: VisitorArg) => void) {
   varKeyPaths.forEach((varKeyPath) => {
     setStyle(styleObj, varKeyPath, ({ target, key, value }) => {
-      target[key] = resolveVar(value, varContext)
+      const resolved = resolveVar(value, varContext)
+      if (resolved === undefined) {
+        delete target[key]
+        error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
+        return
+      }
+      target[key] = resolved
       visitOther({ target, key, value: target[key], keyPath: varKeyPath })
     })
   })
@@ -277,6 +288,10 @@ function transformStringify (styleObj: Record<string, any>) {
   if (isNumber(styleObj.fontWeight)) {
     styleObj.fontWeight = '' + styleObj.fontWeight
   }
+  // transformOrigin 20px 需要转换为 transformOrigin '20'
+  if (isNumber(styleObj.transformOrigin)) {
+    styleObj.transformOrigin = '' + styleObj.transformOrigin
+  }
 }
 
 function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
@@ -310,7 +325,7 @@ function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
-  const transform: {[propName: string]: string|number|number[]}[] = []
+  const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
     if (match && match.length >= 3) {
@@ -785,13 +800,11 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
   const gesture = useMemo(() => {
     return Gesture.Pan()
       .onTouchesDown(() => {
-        'worklet'
-        runOnJS(setStartTimer)()
+        setStartTimer()
       })
       .onTouchesUp(() => {
-        'worklet'
-        runOnJS(setStayTimer)()
-      })
+        setStayTimer()
+      }).runOnJS(true)
   }, [])
 
   if (gestureRef) {
@@ -802,4 +815,20 @@ export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled
     isHover,
     gesture
   }
+}
+
+export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<string, AnyFunc>>) {
+  const invokeCallback = useCallback((key: string, ...args: any) => {
+    const callback = callbackMapRef.current[key]
+    // eslint-disable-next-line node/no-callback-literal
+    if (isFunction(callback)) return callback(...args)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      callbackMapRef.current = {}
+    }
+  }, [])
+
+  return invokeCallback
 }

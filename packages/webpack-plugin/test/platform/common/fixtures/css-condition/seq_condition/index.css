@@ -1,0 +1,9 @@
+header {}
+/*@mpx-if(isMobile)*/
+.mobile { display: block; }
+/*@mpx-elif(isTablet)*/
+.tablet { display: block; }
+/*@mpx-else*/
+.desktop { display: block; }
+/*@mpx-endif */
+body {}

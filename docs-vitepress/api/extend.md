@@ -14,24 +14,24 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
 
     config 可指定以下属性：
     - **url**
-    
+
         `string`
-    
+
         设置请求url
     - **method**
 
         `string`
-    
+
         设置请求方式，默认为GET
     - **data**
 
         `object`
-    
+
         设置请求参数
     - **params**
 
         `object`
-    
+
         设置请求参数，参数会以 Query String 的形式进行传递
     - **header**
 
@@ -40,14 +40,14 @@ mpx-fetch提供了一个实例**xfetch** ，该实例包含以下api
         设置请求的 header，header 中不能设置 Referer。
         `content-type` 默认为 `application/json`
     - **timeout**
-                        
+
         `number`
-                        
+
         单位为毫秒。若不传，默认读取app.json文件中__networkTimeout属性。 对于超时的处理可在 catch 方法中进行
     - **emulateJSON**
 
         `boolean`
-    
+
         设置为 true 时，等价于 header = {'content-type': 'application/x-www-form-urlencoded'}
     - **usePre**
 
@@ -451,214 +451,6 @@ useFetch().fetch({
 
 * **注意：** options 参数同 [XFetch](./extend.md#XFetch) 章节。
 
-
-## api-proxy
- Mpx目前已经支持的API转换列表，供参考
-
-| 方法/平台      | wx         | ali    | web    | RN  |
-| ------------- |:-----:| :-----:| :-----: | :-----:  |
-| getSystemInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getSystemInfoSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getDeviceInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getWindowInfo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getLaunchOptionsSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getEnterOptionsSync|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| nextTick |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| hideToast |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showModal |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| hideLoading |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| showActionSheet |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| createAnimation |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onAppShow |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onAppHide |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| offAppShow |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| offAppHide |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onError |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| offError |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onUnhandledRejection |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| offUnhandledRejection |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| createInnerAudioContext |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| closeBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| createBLEConnection |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| onBLEConnectionStateChange |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| createIntersectionObserver |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getExtConfig |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getExtConfigSync |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| onKeyboardHeightChange |:white_check_mark:|:x:|:x:|:white_check_mark:|
-| offKeyboardHeightChange |:white_check_mark:|:x:|:x:|:white_check_mark:|
-| hideKeyboard |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| getLocation |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| openLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| chooseLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| pageScrollTo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| stopPullDownRefresh |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| startPullDownRefresh |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| redirectTo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| navigateTo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| navigateBack |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| reLaunch |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| switchTab |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| setTabBarItem |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| setTabBarStyle |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| showTabBar |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| hideTabBar |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| vibrateShort |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| vibrateLong |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| showNavigationBarLoading |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| hideNavigationBarLoading  |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| setNavigationBarTitle |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| setNavigationBarColor |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| request |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| downloadFile  |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| uploadFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| setStorage  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| setStorageSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| removeStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| removeStorageSync |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getStorageSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| getStorageInfo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getStorageInfoSync  |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-| clearStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| clearStorageSync |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| saveImageToPhotosAlbum  |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| previewImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| compressImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| chooseImage |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getImageInfo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getLocation |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| saveFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| removeSavedFile |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getSavedFileList |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getSavedFileInfo |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| addPhoneContact |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| setClipboardData |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getClipboardData |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| setScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getScreenBrightness |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| makePhoneCall |:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|
-| stopAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| startAccelerometer |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| stopCompass |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| startCompass |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| stopGyroscope |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| startGyroscope |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| scanCode |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| login |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| checkSession |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| getUserInfo |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| requestPayment |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| createCanvasContext |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| canvasToTempFilePath |:white_check_mark:|:white_check_mark:|:x:|:x:|
-| canvasPutImageData |:white_check_mark:|:x:|:x:|:x:|
-| canvasGetImageData |:white_check_mark:|:x:|:x:|:x:|
-| createSelectorQuery |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| offWindowResize |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| arrayBufferToBase64 |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| base64ToArrayBuffer |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| connectSocket |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getNetworkType |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| offNetworkStatusChange |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| createVideoContext |:white_check_mark:|:white_check_mark:|:white_check_mark:|:x:|
-## webview-bridge
-Mpx 支持小程序跨平台后，多个平台的小程序里都提供了 webview 组件，webview 打开的 H5 页面可以通过小程序提供的 API 来与小程序通信以及调用一些小程序的能力，但是各家小程序对于 webview 提供的API是不一样的。
-
-比如微信的 webview 打开的 H5 页面里是通过调用 wx.miniProgram.navigateTo 来跳转到原生小程序页面的，而在支付宝是通过调用 my.navigateTo 来实现跳转的，那么我们开发 H5 时候为了让 H5 能适应各家小程序平台就需要写多份对应逻辑。
-
-为解决这个问题，Mpx 提供了抹平平台差异的bridge库：@mpxjs/webview-bridge。
-
-**安装：**
-```js
-npm install @mpxjs/webview-bridge
-```
-**使用：**
-```js
-import mpx from '@mpxjs/webview-bridge'
-mpx.navigateBack()
-mpx.env // 输出：wx/qq/ali/baidu/tt
-mpx.checkJSApi()
-```
-**cdn地址引用：**
-```js
-<!-- 开发环境版本，方便调试 -->
-<script src="https://dpubstatic.udache.com/static/dpubimg/D2JeLyT0_Y/2.2.43.webviewbridge.js"></script>
-
-<!-- 生产环境版本，压缩了体积 -->
-<script src="https://dpubstatic.udache.com/static/dpubimg/PRg145LZ-i/2.2.43.webviewbridge.min.js"></script>
-
-
-<!-- 同时支持 ES Module 引入的 -->
-// index.html
-<script type="module" src="https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.webviewbridge.esm.browser.min.js"></script>
-// main.js
-import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.webviewbridge.esm.browser.min.js"
-
-//ES Module 开发版本地址： https://dpubstatic.udache.com/static/dpubimg/cdhpNhmWmJ/2.2.43.webviewbridge.esm.browser.js
-```
-**基础方法提供：**
-| 方法/平台      | wx            | qq    | ali    | baidu    | tt    |
-| ------------- |:-----:| :-----:| :-----: |:-----:| -----:|
-| navigateTo|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| navigateBack|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| switchTab |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| reLaunch |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| redirectTo |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getEnv |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| postMessage |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getLoadError |:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| onMessage |:x:|:x:|:white_check_mark:|:x:|:x:|
-
-
-
-**扩展方法提供：**
-| 方法/平台      | wx            | qq    | ali    | baidu    | tt    |
-| ------------- |:-----:| :-----:| :-----: |:-----:| -----:|
-| checkJSApi|:white_check_mark:|:x:|:x:|:x:|:x:|
-| chooseImage|:white_check_mark:|:x:|:white_check_mark:|:white_check_mark:|:x:|
-| previewImage |:white_check_mark:|:x:|:white_check_mark:|:white_check_mark:|:x:|:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| uploadImage |:white_check_mark:|:x:|:x:|:x:|:x:|
-| downloadImage |:white_check_mark:|:x:|:x:|:x:|:x:|
-| getLocalImgData |:white_check_mark:|:x:|:x:|:x:|:x:|
-| startRecord |:white_check_mark:|:x:|:x:|:x:|:x:|
-| stopRecord |:white_check_mark:|:x:|:x:|:x:|:x:|
-| onVoiceRecordEnd |:white_check_mark:|:x:|:x:|:x:|:x:|
-| playVoice |:white_check_mark:|:x:|:x:|:x:|:x:|
-| pauseVoice |:white_check_mark:|:x:|:x:|:x:|:x:|
-| stopVoice |:white_check_mark:|:x:|:x:|:x:|:x:|
-| onVoicePlayEnd |:white_check_mark:|:x:|:x:|:x:|:x:|
-| uploadVoice |:white_check_mark:|:x:|:x:|:x:|:x:|
-| downloadVoice |:white_check_mark:|:x:|:x:|:x:|:x:|
-| translateVoice |:white_check_mark:|:x:|:x:|:x:|:x:|
-| getNetworkType |:white_check_mark:|:x:|:white_check_mark:|:white_check_mark:|:x:|
-| openLocation |:white_check_mark:|:x:|:white_check_mark:|:white_check_mark:|:x:|
-| getLocation |:white_check_mark:|:x:|:white_check_mark:|:white_check_mark:|:x:|
-| stopSearchBeacons |:white_check_mark:|:x:|:x:|:x:|:x:|
-| onSearchBeacons |:white_check_mark:|:x:|:x:|:x:|:x:|
-| scanQRCode |:white_check_mark:|:x:|:x:|:x:|:x:|
-| chooseCard |:white_check_mark:|:x:|:x:|:x:|:x:|
-| addCard |:white_check_mark:|:x:|:x:|:x:|:x:|
-| openCard |:white_check_mark:|:x:|:x:|:x:|:x:|
-| alert |:white_check_mark:|:white_check_mark:|:x:|
-| showLoading |:white_check_mark:|:white_check_mark:|:x:|
-| hideLoading |:white_check_mark:|:white_check_mark:|:x:|
-| setStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| removeStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| clearStorage |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| getStorageInfo |:white_check_mark:|:white_check_mark:|:white_check_mark:|
-| startShare |:white_check_mark:|:white_check_mark:|:x:|
-| tradePay |:white_check_mark:|:white_check_mark:|:x:|
-| onMessage |:x:|:x:|:white_check_mark:|:x:|:x:|
-
-::: warning
-这个库仅提供给 H5 使用，请勿在小程序环境引入
-:::
-
 ## size-report
 Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等维度的分析和对比，详细[请见](/advance/size-report.html)
 
@@ -694,20 +486,20 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
   `Array<object>`
 
   配置体积计算分组，以输入分组为维度对体积进行分析，当没有该配置时结果中将不会包含分组体积信息
-  
+
   - name
-  
+
     `string`
 
     分组名称
 
   - threshold
-  
+
     `string | object`
 
     分组相关体积阈值，若不配置则该分组不校验体积阈值，同时也支持对分组中占各分包体积阈值
 
-    
+
     ```html
     // 分组体积限额 500KB
     threshold: '500KB'
@@ -719,32 +511,32 @@ Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等�
       }
     }
     ```
-    
+
   - entryRules
-  
+
     `object`
-  
+
     配置分组 entry 匹配规则，小程序中所有的页面和组件都可被视为 entry
-  
+
       - include: 包含符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的入口文件，默认为空数组，规则数组中支持函数、正则、字符串
-    
-    
+
+
     ```html
     include: [/@someGroup\/some-npm-package/],
     exclude: [/@someGroup\/some-two-pack/]
     ```
-    
+
   - noEntryRules
 
     `object`
 
     配置计算分组中纯 js 入口引入的体积（不包含组件和页面）
-  
+
       - include: 包含符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
       - exclude: 剔除符合条件的 js 文件，默认为空数组，规则数组中支持函数、正则、字符串
-    
-    
+
+
     ```html
     include: [/@someGroup\/some-npm-package/],
     exclude: [/@someGroup\/some-two-pack/]
@@ -982,7 +774,7 @@ function t(key: string, choice?: number, values: Array | Object): TranslateResul
       }
     }
   }
-  
+
   createComponent({
     setup(){
         const { t } = useI18n({

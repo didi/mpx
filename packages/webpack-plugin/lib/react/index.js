@@ -21,6 +21,7 @@ module.exports = function ({
   hasComment,
   isNative,
   usingComponentsInfo,
+  originalUsingComponents,
   componentGenerics,
   autoScope,
   callback
@@ -35,6 +36,7 @@ module.exports = function ({
     })
   }
   const mpx = loaderContext.getMpx()
+  const rnConfig = mpx.rnConfig
   // 通过RecordLoaderContentDependency和loaderContentCache确保子request不再重复生成loaderContent
   const cacheContent = mpx.loaderContentCache.get(loaderContext.resourcePath)
   if (cacheContent) return callback(null, cacheContent)
@@ -52,6 +54,7 @@ module.exports = function ({
             moduleId,
             ctorType,
             usingComponentsInfo,
+            originalUsingComponents,
             componentGenerics
           }, callback)
         },
@@ -91,7 +94,8 @@ module.exports = function ({
         genericsInfo: templateRes.genericsInfo,
         wxsModuleMap: templateRes.wxsModuleMap,
         localComponentsMap: jsonRes.localComponentsMap,
-        localPagesMap: jsonRes.localPagesMap
+        localPagesMap: jsonRes.localPagesMap,
+        rnConfig
       }, callback)
     }
   ], (err, scriptRes) => {

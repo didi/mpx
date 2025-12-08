@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -13,15 +13,15 @@ import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/component
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
+  ProviderContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
 import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '../env/nav'
+import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
-const ProviderContext = createContext(null)
 function getSystemInfo () {
-  const windowDimensions = ReactNative.Dimensions.get('window')
-  const screenDimensions = ReactNative.Dimensions.get('screen')
+  const windowDimensions = global.__mpxAppDimensionsInfo.window
+  const screenDimensions = global.__mpxAppDimensionsInfo.screen
   return {
     deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
     size: {
@@ -33,7 +33,7 @@ function getSystemInfo () {
   }
 }
 
-function createEffect (proxy, components) {
+function createEffect (proxy, componentsMap) {
   const update = proxy.update = () => {
     // react update props in child render(async), do not need exec pre render
     // if (proxy.propsUpdatedFlag) {
@@ -50,10 +50,11 @@ function createEffect (proxy, components) {
   const getComponent = (tagName) => {
     if (!tagName) return null
     if (tagName === 'block') return Fragment
-    const appComponents = global.__getAppComponents?.() || {}
+    const appComponentsMap = global.__appComponentsMap || {}
     const generichash = proxy.target.generichash || ''
-    const genericComponents = global.__mpxGenericsMap?.[generichash] || noop
-    return components[tagName] || genericComponents(tagName) || appComponents[tagName] || getByPath(ReactNative, tagName)
+    const genericComponentsMap = global.__mpxGenericsMap?.[generichash] || {}
+    const component = componentsMap[tagName] || genericComponentsMap[tagName] || appComponentsMap[tagName]
+    return component ? component.displayName ? component : component() : getByPath(ReactNative, tagName)
   }
   const innerCreateElement = (type, ...rest) => {
     if (!type) return null
@@ -122,6 +123,13 @@ const instanceProto = {
   },
   createIntersectionObserver (opt) {
     return createIntersectionObserver(this, opt, this.__intersectionCtx)
+  },
+  // 触发页面范围内的所有observer的计算
+  __triggerIntersectionObserver () {
+    const intersectionObservers = this.__intersectionCtx
+    for (const key in this.__intersectionCtx) {
+      intersectionObservers[key].throttleMeasure()
+    }
   },
   __resetInstance () {
     this.__dispatchedSlotSet = new WeakSet()
@@ -203,7 +211,7 @@ const instanceProto = {
   }
 }
 
-function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides }) {
+function createInstance ({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides }) {
   const instance = Object.create(instanceProto, {
     dataset: {
       get () {
@@ -293,6 +301,8 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
+    setFocusedNavigation(props.navigation)
+    set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(props.navigation)
@@ -312,7 +322,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, components)
+        createEffect(proxy, componentsMap)
         proxy.stateVersion = Symbol()
       }
       proxy.onStoreChange = onStoreChange
@@ -328,7 +338,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, components)
+    createEffect(proxy, componentsMap)
   }
 
   return instance
@@ -359,9 +369,18 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
-const triggerResizeEvent = (mpxProxy) => {
-  const type = mpxProxy.options.__type__
+const triggerResizeEvent = (mpxProxy, sizeRef) => {
+  const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
+  const newSize = systemInfo.size
+
+  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
+    return
+  }
+
+  Object.assign(sizeRef.current, systemInfo)
+
+  const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])
   if (type === 'page') {
@@ -373,6 +392,8 @@ const triggerResizeEvent = (mpxProxy) => {
 }
 
 function usePageEffect (mpxProxy, pageId) {
+  const sizeRef = useRef(getSystemInfo())
+
   useEffect(() => {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
@@ -383,27 +404,40 @@ function usePageEffect (mpxProxy, pageId) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
+            // 仅在尺寸确实变化时才触发resize事件
+            triggerResizeEvent(mpxProxy, sizeRef)
+
+            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
+            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
+            }
           } else if (/^resize/.test(newVal)) {
-            triggerResizeEvent(mpxProxy)
+            triggerResizeEvent(mpxProxy, sizeRef)
           }
         }, { sync: true })
       }
     }
     return () => {
       unWatch && unWatch()
+      del(global.__mpxPageSizeCountMap, pageId)
     }
   }, [])
 }
 
 let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
+    if (navigation.isFocused && navigation.isFocused()) {
+      Promise.resolve().then(() => {
+        pageStatusMap[pageId] = 'show'
+      })
+    }
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
     })
@@ -417,6 +451,26 @@ function usePageStatus (navigation, pageId) {
       del(pageStatusMap, pageId)
     }
   }, [navigation])
+}
+
+function usePagePreload (route) {
+  const name = route.name
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const preloadRule = global.__preloadRule || {}
+      const { packages } = preloadRule[name] || {}
+      if (packages?.length > 0) {
+        const downloadChunkAsync = mpxGlobal.__mpx.config?.rnConfig?.downloadChunkAsync
+        if (typeof downloadChunkAsync === 'function') {
+          callWithErrorHandling(() => downloadChunkAsync(packages))
+        }
+      }
+    }, 800)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [])
 }
 
 const RelationsContext = createContext(null)
@@ -461,7 +515,6 @@ function getLayoutData (headerHeight) {
 
 export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom ({ navigation, route, ...props }) {
-    const rootRef = useRef(null)
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
     const currentPageId = useMemo(() => ++pageId, [])
@@ -479,12 +532,13 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.layout = getLayoutData(headerHeight)
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
+      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
         navigation.layout = getLayoutData(headerHeight)
       })
       return () => dimensionListener?.remove()
     }, [])
 
+    usePagePreload(route)
     usePageStatus(navigation, currentPageId)
 
     const withKeyboardAvoidingView = (element) => {
@@ -508,42 +562,47 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
     return withKeyboardAvoidingView(
-      createElement(ReactNative.View,
-        {
-          style: {
-            flex: 1,
-            backgroundColor: currentPageConfig?.backgroundColor || '#fff',
-            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
-            overflow: 'hidden'
-          },
-          ref: rootRef
-        },
-        createElement(RouteContext.Provider,
-          {
-            value: routeContextValRef.current
-          },
-          createElement(IntersectionObserverContext.Provider,
+        createElement(ReactNative.View,
             {
-              value: intersectionObservers.current
+              style: {
+                flex: 1,
+                // 页面容器背景色
+                backgroundColor: currentPageConfig?.backgroundColorContent || '#fff',
+                // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+                overflow: 'hidden'
+              }
             },
-            createElement(PortalHost,
-              null,
-              createElement(WrappedComponent, {
-                ...props,
-                navigation,
-                route,
-                id: currentPageId
-              })
+            createElement(RouteContext.Provider,
+                {
+                  value: routeContextValRef.current
+                },
+                createElement(IntersectionObserverContext.Provider,
+                    {
+                      value: intersectionObservers.current
+                    },
+                    createElement(PortalHost,
+                        null,
+                        createElement(WrappedComponent, {
+                          ...props,
+                          navigation,
+                          route,
+                          id: currentPageId
+                        })
+                    )
+                )
             )
-          )
         )
-      )
     )
   }
 }
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
-  const components = Object.assign({}, rawOptions.components, currentInject.getComponents())
+  const componentsMap = currentInject.componentsMap
+  if (rawOptions.components) {
+    Object.entries(rawOptions.components).forEach(([key, item]) => {
+      componentsMap[key] = () => item
+    })
+  }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
@@ -561,7 +620,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     let isFirst = false
     if (!instanceRef.current) {
       isFirst = true
-      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, components, pageId, intersectionCtx, relation, parentProvides })
+      instanceRef.current = createInstance({ propsRef, type, rawOptions, currentInject, validProps, componentsMap, pageId, intersectionCtx, relation, parentProvides })
     }
     const instance = instanceRef.current
     useImperativeHandle(ref, () => {
@@ -608,7 +667,6 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
 
     usePageEffect(proxy, pageId)
-
     useEffect(() => {
       proxy.mounted()
       return () => {

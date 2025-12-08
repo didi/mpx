@@ -41,10 +41,11 @@ const wrapFn = (fn) => {
 const getMeasureProps = (measureProps = []) => {
   return wrapFn((nodeInstance, resolve) => {
     const nodeRef = nodeInstance.nodeRef.current
-    const navigation = getFocusedNavigation()
+    const navigation = getFocusedNavigation() || {}
     setTimeout(() => {
       nodeRef.measure(function (x, y, width, height, pageX, pageY) {
-        pageY = pageY - navigation.layout.top
+        const layout = navigation.layout || {}
+        pageY = pageY - (layout.top || 0)
         const rectAndSize = {
           width,
           height,

@@ -1,6 +1,6 @@
 import transferOptions from '../core/transferOptions'
 import builtInKeysMap from './patch/builtInKeysMap'
-import { makeMap, spreadProp, getFocusedNavigation, hasOwn } from '@mpxjs/utils'
+import { makeMap, spreadProp, getFocusedNavigation, hasOwn, callWithErrorHandling } from '@mpxjs/utils'
 import { mergeLifecycle } from '../convertor/mergeLifecycle'
 import { LIFECYCLE } from '../platform/patch/lifecycle/index'
 import Mpx from '../index'
@@ -10,13 +10,9 @@ import { createElement, memo, useRef, useEffect } from 'react'
 import * as ReactNative from 'react-native'
 import { initAppProvides } from './export/inject'
 import { NavigationContainer, createNativeStackNavigator, SafeAreaProvider, GestureHandlerRootView } from './env/navigationHelper'
-import { innerNav } from './env/nav'
+import MpxNav from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
 const appHooksMap = makeMap(mergeLifecycle(LIFECYCLE).app)
-
-function getPageSize (window = ReactNative.Dimensions.get('window')) {
-  return window.width + 'x' + window.height
-}
 
 function filterOptions (options, appData) {
   const newOptions = {}
@@ -53,44 +49,41 @@ export default function createApp (options) {
   defaultOptions.onUnhandledRejection && global.__mpxAppCbs.rejection.push(defaultOptions.onUnhandledRejection.bind(appInstance))
   defaultOptions.onAppInit && defaultOptions.onAppInit()
 
-  const pages = currentInject.getPages() || {}
+  const pagesMap = currentInject.pagesMap || {}
   const firstPage = currentInject.firstPage
   const Stack = createNativeStackNavigator()
-  const withHeader = (wrappedComponent, { pageConfig = {} }) => {
-      return ({ navigation, ...props }) => {
-        return createElement(GestureHandlerRootView,
-        {
-          style: {
-            flex: 1
-          }
-        },
-        createElement(innerNav, {
-          pageConfig: pageConfig,
-          navigation
-        }),
-        createElement(wrappedComponent, { navigation, ...props })
-      )
-    }
-  }
   const getPageScreens = (initialRouteName, initialParams) => {
-    return Object.entries(pages).map(([key, item]) => {
-      // const options = {
-      //   // __mpxPageStatusMap 为编译注入的全局变量
-      //   headerShown: !(Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key]).navigationStyle === 'custom')
-      // }
+    return Object.entries(pagesMap).map(([key, item]) => {
       const pageConfig = Object.assign({}, global.__mpxPageConfig, global.__mpxPageConfigsMap[key])
+      const headerLayout = ({ navigation, children }) => {
+        return createElement(GestureHandlerRootView,
+          {
+            style: {
+              flex: 1
+            }
+          },
+          createElement(MpxNav, {
+            pageConfig,
+            navigation
+          }),
+          children
+        )
+      }
+      const getComponent = () => {
+        return item.displayName ? item : callWithErrorHandling(item, null, 'require page script')
+      }
       if (key === initialRouteName) {
         return createElement(Stack.Screen, {
           name: key,
-          component: withHeader(item, { pageConfig }),
-          initialParams
-          // options
+          getComponent,
+          initialParams,
+          layout: headerLayout
         })
       }
       return createElement(Stack.Screen, {
         name: key,
-        component: withHeader(item, { pageConfig })
-        // options
+        getComponent,
+        layout: headerLayout
       })
     })
   }
@@ -111,7 +104,7 @@ export default function createApp (options) {
     }
   }
   const appState = reactive({ state: '' })
-  // TODO hideReason 暂未完全模拟
+  // TODO reason 目前支持模拟 0/3
   // 0用户退出小程序
   // 1进入其他小程序
   // 2打开原生功能页
@@ -139,12 +132,10 @@ export default function createApp (options) {
       global.__mpxAppCbs.show.forEach((cb) => {
         cb(options)
       })
-    } else if (value === 'hide') {
-      const reason = appState.hideReason ?? 3
-      delete appState.hideReason
-      global.__mpxAppCbs.hide.forEach((cb) => {
+    } else if (value === 'hide' || value === 'exit') {
+       global.__mpxAppCbs.hide.forEach((cb) => {
         cb({
-          reason
+          reason: value === 'exit' ? 0 : 3
         })
       })
     }
@@ -157,7 +148,6 @@ export default function createApp (options) {
         global.__mpxPageStatusMap[navigation.pageId] = 'show'
       }
     } else if (currentState === 'inactive' || currentState === 'background') {
-      appState.hideReason = 3
       appState.state = 'hide'
       if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
         global.__mpxPageStatusMap[navigation.pageId] = 'hide'
@@ -214,32 +204,18 @@ export default function createApp (options) {
         if (Mpx.config.rnConfig.disableAppStateListener) return
         onAppStateChange(state)
       })
-
-      let count = 0
-      let lastPageSize = getPageSize()
-      const resizeSubScription = ReactNative.Dimensions.addEventListener('change', ({ window }) => {
-        const pageSize = getPageSize(window)
-        if (pageSize === lastPageSize) return
-        lastPageSize = pageSize
-        const navigation = getFocusedNavigation()
-        if (navigation && hasOwn(global.__mpxPageStatusMap, navigation.pageId)) {
-          global.__mpxPageStatusMap[navigation.pageId] = `resize${count++}`
-        }
-      })
       return () => {
-        appState.hideReason = 0
-        appState.state = 'hide'
+        appState.state = 'exit'
         changeSubscription && changeSubscription.remove()
-        resizeSubScription && resizeSubScription.remove()
       }
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
     const navScreenOpts = {
       headerShown: false,
-      statusBarTranslucent: true,
+      statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
       statusBarBackgroundColor: 'transparent'
-   }
+    }
 
     return createElement(SafeAreaProvider,
       null,
