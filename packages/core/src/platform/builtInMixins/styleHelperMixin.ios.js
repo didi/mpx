@@ -190,6 +190,30 @@ function transformStyleObj (styleObj) {
   return transformed
 }
 
+function isNativeStyle (style) {
+  return Array.isArray(style) || (
+    typeof style === 'object' &&
+    // Reanimated 的 animated style 通常会包含 viewDescriptors 或 _animations
+    (hasOwn(style, 'viewDescriptors') || hasOwn(style, '_animations'))
+  )
+}
+
+function getMediaStyle (media) {
+  if (!media || !media.length) return {}
+  const { width } = global.__mpxAppDimensionsInfo.screen
+  return media.reduce((styleObj, item) => {
+    const { options = {}, value = {} } = item
+    const { minWidth, maxWidth } = options
+    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(minWidth) && width >= minWidth) {
+      Object.assign(styleObj, value)
+    } else if (!isNaN(maxWidth) && width <= maxWidth) {
+      Object.assign(styleObj, value)
+    }
+    return styleObj
+  }, {})
+}
 
 const createLayer = (isNativeStyle) => {
   const layerMap = {
@@ -226,31 +250,6 @@ const createLayer = (isNativeStyle) => {
   }
 }
 
-function isNativeStyle (style) {
-  return Array.isArray(style) || (
-    typeof style === 'object' &&
-    // Reanimated 的 animated style 通常会包含 viewDescriptors 或 _animations
-    (hasOwn(style, 'viewDescriptors') || hasOwn(style, '_animations'))
-  )
-}
-
-function getMediaStyle (media) {
-  if (!media || !media.length) return {}
-  const { width } = global.__mpxAppDimensionsInfo.screen
-  return media.reduce((styleObj, item) => {
-    const { options = {}, value = {} } = item
-    const { minWidth, maxWidth } = options
-    if (!isNaN(minWidth) && !isNaN(maxWidth) && width >= minWidth && width <= maxWidth) {
-      Object.assign(styleObj, value)
-    } else if (!isNaN(minWidth) && width >= minWidth) {
-      Object.assign(styleObj, value)
-    } else if (!isNaN(maxWidth) && width <= maxWidth) {
-      Object.assign(styleObj, value)
-    }
-    return styleObj
-  }, {})
-}
-
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -276,11 +275,11 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             const getAppClassStyle = global.__getAppClassStyle || noop
-            if (localStyle = this.__getClassStyle?.(className)) {
+            if (localStyle = this.__getClassStyle(className)) {
               if (localStyle._media?.length) {
-                mergeToLayer('normal', localStyle._default, getMediaStyle(localStyle._media))
+                mergeToLayer(localStyle._layer || 'normal', localStyle._default, getMediaStyle(localStyle._media))
               } else {
-                mergeToLayer('normal', localStyle._default)
+                mergeToLayer(localStyle._layer || 'normal', localStyle._default)
               }
             } else if (unoClassMap[className]) {
               const unoClass = unoClassMap[className]._default
@@ -291,9 +290,9 @@ export default function styleHelperMixin () {
               mergeToLayer('important', unoVarClassMap[className]._default)
             } else if (appStyle = getAppClassStyle(className)) {
               if (appStyle._media?.length) {
-                mergeToLayer('app', appStyle._default, getMediaStyle(appStyle._media))
+                mergeToLayer(appStyle._layer || 'app', appStyle._default, getMediaStyle(appStyle._media))
               } else {
-                mergeToLayer('app', appStyle._default)
+                mergeToLayer(appStyle._layer || 'app', appStyle._default)
               }
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
