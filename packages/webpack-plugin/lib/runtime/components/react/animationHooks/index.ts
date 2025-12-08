@@ -1,4 +1,4 @@
-import { error, collectDataset } from '@mpxjs/utils'
+import { error, collectDataset, hasOwn } from '@mpxjs/utils'
 import { useRef } from 'react'
 import useAnimationAPIHooks from './useAnimationAPIHooks'
 import useTransitionHooks from './useTransitionHooks'
@@ -12,17 +12,17 @@ export type AnimationType = 'api'|'animation'|'transition'|'none'
 
 export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAnimation?: boolean | AnimationType, layoutRef: MutableRefObject<any>, transitionend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void }) {
   const { style: originalStyle = {}, enableAnimation, animation, transitionend, layoutRef } = props
-  // 记录动画类型 优先级 css transition > API
+  // 记录动画类型
   let animationType = ''
-  const propNames = Object.keys(originalStyle)
-  if (propNames.find(item => item.includes('animation'))) {
+  if (hasOwn(originalStyle, 'animation') || (hasOwn(originalStyle, 'animationName') && hasOwn(originalStyle, 'animationDuration'))) {
     // css animation 只做检测提示
     animationType = 'animation'
   }
   if (!!animation || enableAnimation === true) {
     animationType = 'api'
   }
-  if (propNames.find(item => item.includes('transition'))) {
+  // 优先级 css transition > API
+  if (hasOwn(originalStyle, 'transition') || (hasOwn(originalStyle, 'transitionProperty') && hasOwn(originalStyle, 'transitionDuration'))) {
     animationType = 'transition'
   }
   // 优先以 enableAnimation 定义类型为准

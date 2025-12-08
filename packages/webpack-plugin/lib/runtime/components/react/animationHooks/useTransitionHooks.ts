@@ -275,7 +275,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         Object.keys(getTransformObj(originalStyle.transform)).forEach((prop: string) => {
           animatedKeys.push(prop)
         })
-      } else if (originalStyle[key] !== undefined) {
+      } else {
+        // 非 transform 属性可以不定义 style， 使用初始值动画
         animatedKeys.push(key)
       }
       return animatedKeys
