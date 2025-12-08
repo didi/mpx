@@ -27,7 +27,7 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     const result = await config.loadConfig(root, configOrPath, extraConfigSources, defaults)
     rawConfig = result.config
     uno.setConfig(rawConfig)
-    // 优先传入配置、再是config 再是defualt
+    // plugin配置 > uno.config文件 > defualt
     rollupFilter = pluginutils.createFilter(
       configOrPath.include || rawConfig.include || defaultInclude, 
       configOrPath.exclude || rawConfig.exclude || defaultExclude
@@ -82,8 +82,8 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     if (code.includes(IGNORE_COMMENT)) {
       return false
     }
-    // rollupFilter不支持query，所以过滤掉query匹配
-    const path = id.split('?')[0] // id.replace(/\?v=\w+$/, '')
+    // rollupFilter不支持query，所以直接过滤掉query匹配
+    const path = id.split('?')[0]
     return code.includes(INCLUDE_COMMENT) || code.includes(CSS_PLACEHOLDER) || rollupFilter(path)
   }
 
