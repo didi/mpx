@@ -165,7 +165,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   const animationDeps = useRef(0)
   // 有动画样式的 style key(useAnimatedStyle使用)
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
-  // 记录动画key的style样式值 没有的话设置为false
+  // 记录需要执行动画的 propName
   const animatedKeys = useRef([] as string[])
   // 记录上次style map
   const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
@@ -230,15 +230,15 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       let toVal = ruleV !== undefined
         ? ruleV
         : transitionSupportedProperty[key]
-      // 获取到的toVal为百分比格式化shareValMap为百分比
       const shareVal = shareValMap[key].value
-      if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && typeof +shareVal === 'number') {
+      if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && !isNaN(+shareVal)) {
+        // 获取到的toVal为百分比格式化shareValMap为百分比
         shareValMap[key].value = `${shareVal as number * 100}%`
-      } else if (percentExp.test(shareVal as string) && !percentExp.test(toVal as string) && typeof +toVal === 'number') {
+      } else if (percentExp.test(shareVal as string) && !percentExp.test(toVal as string) && !isNaN(+toVal)) {
         // 初始值为百分比则格式化toVal为百分比
         toVal = `${toVal * 100}%`
       } else if (typeof toVal !== typeof shareVal) {
-        // transition动画起始值和终态值类型不一致报错提示一下
+        // 动画起始值和终态值类型不一致报错提示一下
         error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
       // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)

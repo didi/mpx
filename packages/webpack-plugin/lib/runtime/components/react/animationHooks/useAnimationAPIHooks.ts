@@ -30,13 +30,13 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
   const { style: originalStyle = {}, animation, transitionend } = props
   // style变更标识(首次render不执行)
   const animationDeps = useRef(-1)
-  // 若为 animation API，则使用 animation.id 为依赖
+  // animation API 使用 animation.id 为依赖
   if (animation?.id) {
     animationDeps.current = animation.id
   }
   // 有动画样式的 style key(useAnimatedStyle使用)
   const animatedStyleKeys = useSharedValue([] as (string|string[])[])
-  // 记录动画key的style样式值 没有的话设置为false
+  // 记录需要执行动画的 propName
   const animatedKeys = useRef([] as string[])
   // 记录上次style map
   const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
@@ -67,7 +67,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
             shareValMap[key].value = value
           }
         })
-      } else if (hasOwn(shareValMap, key)) {
+      } else {
         if (value !== lastStyleRef.current[key]) {
           lastStyleRef.current[key] = value
           shareValMap[key].value = value
@@ -95,12 +95,13 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
           transitionend && runOnJS(runOnJSCallback)('transitionend', finished, current, duration)
         }
       }
-      if (index === 0) {
+      if (index === 0 && transformOrigin) {
         // 设置当次中心
-        transformOrigin && (shareValMap.transformOrigin.value = transformOrigin)
+        shareValMap.transformOrigin.value = transformOrigin
       }
       // 添加每个key的多次step动画
       animatedKeys.forEach(key => {
+        const shareVal = shareValMap[key].value
         const ruleV = isTransform(key) ? transform.get(key) : rules.get(key)
         // color 设置为 1
         // key不存在，第一轮取shareValMap[key]value，非第一轮取上一轮的
@@ -108,14 +109,15 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
           ? ruleV
           : index > 0
             ? lastValueMap[key]
-            : shareValMap[key].value
-        if (percentExp.test(`${toVal}`) && typeof +shareValMap[key].value === 'number') {
-          shareValMap[key].value = `${shareValMap[key].value as number * 100}%`
-        } else if (percentExp.test(shareValMap[key].value as string) && typeof +toVal === 'number') {
+            : shareVal
+        if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && !isNaN(+shareVal)) {
+          // 获取到的toVal为百分比格式化shareValMap为百分比
+          shareValMap[key].value = `${shareVal as number * 100}%`
+        } else if (percentExp.test(shareVal as string) && !percentExp.test(toVal as string) && !isNaN(+toVal)) {
           // 初始值为百分比则格式化toVal为百分比
           toVal = `${toVal as number * 100}%`
-        } else if (typeof toVal !== typeof shareValMap[key].value) {
-          // transition动画起始值和终态值类型不一致报错提示一下
+        } else if (typeof toVal !== typeof shareVal) {
+          // 动画起始值和终态值类型不一致报错提示一下
           error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
         }
         // Todo 对齐wx
