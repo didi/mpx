@@ -245,7 +245,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
       // console.log('animationOptions=', { delay, duration, easing })
       let callback
-      if (transitionend) {
+      if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
         runOnJSCallbackRef.current = {
           animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
             transitionend(finished, current, duration)
@@ -259,7 +259,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
           }
         }
       }
-      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback && (!isTransformKey || !transformTransitionendDone) ? callback : undefined)
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
+      // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
       if (isTransformKey) {
         transformTransitionendDone = true
       }
