@@ -29,7 +29,7 @@ function createContext (configOrPath, defaults = {}, extraConfigSources = []) {
     uno.setConfig(rawConfig)
     // plugin配置 > uno.config文件 > defualt
     rollupFilter = pluginutils.createFilter(
-      configOrPath.include || rawConfig.include || defaultInclude, 
+      configOrPath.include || rawConfig.include || defaultInclude,
       configOrPath.exclude || rawConfig.exclude || defaultExclude
     )
     const presets = /* @__PURE__ */ new Set()
