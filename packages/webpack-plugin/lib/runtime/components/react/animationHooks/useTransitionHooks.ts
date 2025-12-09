@@ -296,6 +296,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     // 首次不执行
     if (!animationDeps.current) {
       animationDeps.current = 1
+      // 更新 lastStyleRef
+      updateStyleVal()
       return
     }
     if (updateStyleVal()) startAnimation()
