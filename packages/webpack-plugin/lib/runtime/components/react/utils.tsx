@@ -388,6 +388,14 @@ function transformBoxShadow (styleObj: Record<string, any>) {
   }, '')
 }
 
+function transformZIndex (styleObj: Record<string, any>) {
+  if (!styleObj.zIndex || typeof styleObj.zIndex === 'number') return
+  if (styleObj.zIndex === 'auto') {
+    error('Property [z-index] does not supported [auto], please check again!')
+    styleObj.zIndex = 0
+  }
+}
+
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -531,10 +539,10 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-
   // transform 字符串格式转化数组格式
   transformTransform(normalStyle)
-
+  // transform z-index auto to 0
+  transformZIndex(normalStyle)
   return {
     hasVarDec,
     varContextRef,

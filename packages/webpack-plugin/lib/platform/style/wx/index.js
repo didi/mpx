@@ -519,6 +519,16 @@ module.exports = function getSpec ({ warn, error }) {
     return { prop, value: values[0].trim() }
   }
 
+  const formatZIndex = ({ prop, value, selector }, { mode }) => {
+    // z-index auto 报错
+    if (value === 'auto') {
+      error(`Property [${prop}] does not supported [${value}] on ${selector} in ${mode} environment, please check again!`)
+      // Todo 返回0还是直接删除??
+      return false
+    }
+    return { prop, value: value }
+  }
+
   // const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
   //   value = value.trim()
   //   if (value === 'none') {
@@ -583,6 +593,12 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatFontFamily,
         android: formatFontFamily,
         harmony: formatFontFamily
+      },
+      {
+        test: 'z-index',
+        ios: formatZIndex,
+        android: formatZIndex,
+        harmony: formatZIndex
       },
       // {
       //   test: 'box-shadow',
