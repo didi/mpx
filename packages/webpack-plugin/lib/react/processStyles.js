@@ -24,7 +24,7 @@ module.exports = function (styles, {
         new Error('[Mpx style error][' + loaderContext.resource + ']: ' + msg)
       )
     }
-    const { mode, srcMode } = loaderContext.getMpx()
+    const { mode, srcMode, hasUnoCSS } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -63,6 +63,21 @@ module.exports = function (styles, {
           return result
         }, '')
         if (ctorType === 'app') {
+          if (hasUnoCSS) {
+            output += `
+            let __unoClass
+            global.__getUnoClass = function () {
+              if (!__unoClass) {
+                __unoClass = {
+                  unoClassMap: __unoCssMapPlaceholder__,
+                  unoVarClassMap: __unoVarUtilitiesCssMap__,
+                  unoPreflightsClassMap: __unoCssMapPreflights__
+                }
+              }
+              return __unoClass
+            };\n
+            `
+          }
           output += `
           global.__classCaches = global.__classCaches || []
           const __classCache = new Map()
