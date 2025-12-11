@@ -459,10 +459,12 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
-      hasSelfPercent = true
-      percentKeyPaths.push(keyPath.slice())
-    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+    // fixme 去掉 translate & border-radius 的百分比计算
+    // if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+    //   hasSelfPercent = true
+    //   percentKeyPaths.push(keyPath.slice())
+    // } else
+    if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
       percentKeyPaths.push(keyPath.slice())
     }
   }
