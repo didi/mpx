@@ -168,7 +168,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // 记录需要执行动画的 propName
   const animatedKeys = useRef([] as string[])
   // 记录上次style map
-  const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
+  // const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // ** 从 style 中获取动画数据
   const transitionMap = useMemo(() => {
     return parseTransitionStyle(originalStyle)
@@ -194,32 +194,39 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   }, [])
   const runOnJSCallbackRef = useRef({})
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
-  // 设置 lastShareValRef & shareValMap
-  function updateStyleVal () {
-    let isUpdate = 0
+  // 从 transitionMap 获取动画信息
+  function getAnimatedInfo () {
+    const animatedKeysRef = [] as string[]
+    const animatedKeysShareVal = [] as (string|string[])[]
+    const transforms = [] as string[]
     Object.keys(shareValMap).forEach(key => {
-      let value = originalStyle[key]
-      if (isTransform(key)) {
-        value = originalStyle.transform
-        Object.entries(getTransformObj(value)).forEach(([key, value]) => {
-          if (value !== lastStyleRef.current[key]) {
-            lastStyleRef.current[key] = value
-            if (!isUpdate) isUpdate = 1
+      const value = originalStyle[key]
+      if (isTransform(key) && originalStyle.transform) {
+        Object.entries(getTransformObj(originalStyle.transform)).forEach(([prop, val]) => {
+          if (val !== undefined && val !== shareValMap[key].value) {
+            shareValMap[prop].value = val
           }
+          animatedKeysRef.push(prop)
+          transforms.push(prop)
         })
-      } else if (hasOwn(shareValMap, key)) {
-        if (value !== lastStyleRef.current[key]) {
-          lastStyleRef.current[key] = value
-          if (!isUpdate) isUpdate = 1
+      } else {
+        if (value !== undefined && value !== shareValMap[key].value) {
+          shareValMap[key].value = value
         }
+        animatedKeysRef.push(key)
+        animatedKeysShareVal.push(key)
       }
     })
-    return isUpdate
+    if (transforms.length) animatedKeysShareVal.push(transforms)
+    return {
+      animatedKeysRef,
+      animatedKeysShareVal
+    }
   }
   // 根据 animation action 创建&驱动动画
-  function createAnimation (animatedKeys: string[] = []) {
+  function createAnimation () {
     let transformTransitionendDone = false
-    animatedKeys.forEach(key => {
+    animatedKeys.current.forEach(key => {
       // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
       const isTransformKey = isTransform(key)
       let ruleV = originalStyle[key]
@@ -268,39 +275,19 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })
   }
-  // 从 transition 获取 AnimatedKeys
-  function getAnimatedStyleKeys () {
-    return Object.keys(transitionMap).reduce((animatedKeys, key) => {
-      if (key === 'transform' && originalStyle.transform) {
-        Object.keys(getTransformObj(originalStyle.transform)).forEach((prop: string) => {
-          animatedKeys.push(prop)
-        })
-      } else {
-        // 非 transform 属性可以不定义 style， 使用初始值动画
-        animatedKeys.push(key)
-      }
-      return animatedKeys
-    }, [] as string[])
-  }
-  // 获取动画样式&驱动动画
-  function startAnimation () {
-    // 更新动画样式 key map
-    animatedKeys.current = getAnimatedStyleKeys()
-    animatedStyleKeys.value = formatAnimatedKeys(animatedKeys.current)
-    // 驱动动画
-    createAnimation(animatedKeys.current)
-  }
   // ** style 更新
   useEffect(() => {
     console.log('useEffect originalStyle animationDeps=', animationDeps.current, originalStyle)
     // 首次不执行
     if (!animationDeps.current) {
       animationDeps.current = 1
-      // 更新 lastStyleRef
-      updateStyleVal()
+      // 更新 shareVale & 获取动画key
+      const { animatedKeysRef, animatedKeysShareVal } = getAnimatedInfo()
+      animatedKeys.current = animatedKeysRef
+      animatedStyleKeys.value = animatedKeysShareVal
       return
     }
-    if (updateStyleVal()) startAnimation()
+    createAnimation()
   }, [originalStyle])
   // ** 清空动画
   useEffect(() => {
