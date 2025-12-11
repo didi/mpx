@@ -188,7 +188,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
         valMap[property] = makeMutable(defaultVal)
       }
-      console.log('shareValMap = ', valMap)
+      // console.log('shareValMap = ', valMap)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
   }, [])
@@ -277,7 +277,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   }
   // ** style 更新
   useEffect(() => {
-    console.log('useEffect originalStyle animationDeps=', animationDeps.current, originalStyle)
+    // console.log('useEffect originalStyle animationDeps=', animationDeps.current, originalStyle)
     // 首次不执行
     if (!animationDeps.current) {
       animationDeps.current = 1
