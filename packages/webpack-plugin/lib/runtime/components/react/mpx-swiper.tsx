@@ -211,6 +211,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const preAbsolutePos = useSharedValue(0)
   // 记录从onBegin 到 onTouchesUp 时移动的距离
   const moveTranstion = useSharedValue(0)
+  // 记录用户手滑动的方向
+  const moveDir = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
 
@@ -658,6 +660,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 正常事件中拿到的translation值(正向滑动<0，倒着滑>0)
       const diffOffset = preOffset - currentOffset
       const half = Math.abs(diffOffset) > step.value / 2
+      // 是否超过一半是基于currentIndex对应的offset作为preOffset, 相差绝对值是否超过step的一半
+      // 1. onUpdate中超过一半，offset=80， preOffset = 100，此时判断未超过一半
+      // 2. onUpdate中未超过一半，onFinalize结束时offset = 80， preOffset = 0，判断正常超过一半
       const isTriggerUpdateHalf = (transdir < 0 && currentOffset < preOffset) || (transdir > 0 && currentOffset > preOffset)
       return {
         diffOffset,
@@ -671,7 +676,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       if (+diffOffset === 0) {
         runOnJS(runOnJSCallback)('resumeLoop')
       } else if (isTriggerUpdateHalf) {
-        // 如果触发了onUpdate时的索引变更
+        // 超过一半之后，currentIndex的已经变更，而计算是否超过half-是基于已经变更后的索引计算的,正好反向
         handleEnd(eventData)
       } else if (half) {
         handleEnd(eventData)
@@ -769,6 +774,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             const finalOffset = handleResistanceMove(eventData)
             offset.value = finalOffset
           }
+          moveDir.value = e[strAbso] - preAbsolutePos.value
           preAbsolutePos.value = e[strAbso]
           return
         }
@@ -776,6 +782,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (circularShared.value && childrenLength.value === 1) {
           const finalOffset = handleResistanceMove(eventData)
           offset.value = finalOffset
+          moveDir.value = e[strAbso] - preAbsolutePos.value
           preAbsolutePos.value = e[strAbso]
           return
         }
@@ -786,16 +793,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           offset.value = moveDistance + offset.value
         }
-        preAbsolutePos.value = e[strAbso]
-      })
-      .onEnd((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
-        // 修复某些安卓机型小米 onFinalize拿到的absolute值不正确的问题
-        /**
-         * 正常滑动状态:
-         * 1. 手势会触发onUpdate、onEnd、onFinalize，大部分手机拿到的absoluteX值是一样的，方向是基于onBegin的起点方向判断(moveTranstion)
-         * 2. 部分安卓的机型onEnd和onFinalize是一致的，但是和onUpdate是不一致的，导致判断错误，因此修正为一致
-         * 非正常滑动状态：手势会触发onBegin、onFinalize，不会触发onEnd, 也会基于onBegin的起点方向进行判断(preAbsolutePos)
-        */
+        moveDir.value = e[strAbso] - preAbsolutePos.value
         preAbsolutePos.value = e[strAbso]
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
@@ -803,10 +801,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (touchfinish.value) return
         touchfinish.value = true
         // 触发过onUpdate正常情况下e[strAbso] - preAbsolutePos.value=0; 未触发过onUpdate的情况下e[strAbso] - preAbsolutePos.value 不为0
+        // 正常状态下基于onUpdate时的moveDir判断方向、未触发onUpdate的则基于onBegin的moveTranstion判断方向
         const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance,
-          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value
+          transdir: moveDir.value !== 0 ? moveDir.value : e[strAbso] - moveTranstion.value
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
