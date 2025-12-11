@@ -523,8 +523,7 @@ module.exports = function getSpec ({ warn, error }) {
     // z-index auto 报错
     if (value === 'auto') {
       error(`Property [${prop}] does not supported [${value}] on ${selector} in ${mode} environment, please check again!`)
-      // Todo 返回0还是直接删除??
-      return false
+      return { prop, value: 0 }
     }
     return { prop, value: value }
   }
