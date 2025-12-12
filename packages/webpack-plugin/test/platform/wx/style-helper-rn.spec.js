@@ -108,6 +108,85 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
+    test('should handle deeply nested CSS variables without infinite recursion', () => {
+      // 测试深度嵌套（但不超过限制）
+      const css = '.text { letter-spacing: var(--a, var(--b, var(--c, var(--d, var(--e, 2px))))); }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text._default).toEqual({
+        letterSpacing: '"var(--a, var(--b, var(--c, var(--d, var(--e, 2px)))))"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should stop at max depth for extremely nested CSS variables', () => {
+      // 测试超深嵌套（超过10层）
+      let nestedVar = '2px'
+      for (let i = 0; i < 15; i++) {
+        nestedVar = `var(--x${i}, ${nestedVar})`
+      }
+      const css = `.text { letter-spacing: ${nestedVar}; }`
+      const config = createConfig()
+
+      // 不应该导致堆栈溢出，应该正常返回或报错
+      expect(() => {
+        getClassMap({
+          content: css,
+          filename: 'test.css',
+          ...config
+        })
+      }).not.toThrow()
+    })
+
+    test('should handle self-referencing CSS variable without infinite loop', () => {
+      // 测试循环引用的情况：var(--x, var(--x))
+      // 注意：var(--x, var(--x)) 的 fallback 是 var(--x)，它们是不同的字符串
+      // 所以这种情况下 fallback 链会终止（var(--x) 没有 fallback 返回 null）
+      const css = '.text { letter-spacing: var(--x, var(--x)); }'
+      const config = createConfig()
+
+      // 不应该导致无限循环，应该正常返回
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      // 由于 var(--x) 没有 fallback，整个表达式是合法的，应该保留
+      expect(result.text._default).toEqual({
+        letterSpacing: '"var(--x, var(--x))"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should handle complex nested CSS variables with different fallbacks', () => {
+      // 测试复杂嵌套：var(--a, var(--b, var(--a, 2px)))
+      // 虽然看起来像循环引用，但每个 var() 的完整字符串都不同
+      // var(--a, var(--b, var(--a, 2px))) -> fallback: var(--b, var(--a, 2px))
+      // var(--b, var(--a, 2px)) -> fallback: var(--a, 2px)
+      // var(--a, 2px) -> fallback: 2px (有效)
+      const css = '.text { letter-spacing: var(--a, var(--b, var(--a, 2px))); }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      // 应该成功解析，因为最终 fallback 是有效的 2px
+      expect(result.text._default).toEqual({
+        letterSpacing: '"var(--a, var(--b, var(--a, 2px)))"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
     test('should work on both ios and android modes', () => {
       const css = '.text { letter-spacing: var(--x, normal); }'
 

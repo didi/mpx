@@ -89,33 +89,54 @@ module.exports = function getSpec ({ warn, error }) {
       if (rule[1].test(prop)) return rule[0]
     }
   }
+
   // 从 CSS 变量中提取 fallback 值进行验证
-  const getDefaultValueFromVar = (str) => {
+  // 返回值：fallback 值 | null（没有 fallback）| undefined（循环引用）
+  const getDefaultValueFromVar = (str, visited = new Set()) => {
     const totalVarExp = /^var\((.+)\)$/
     if (!totalVarExp.test(str)) return str
+
+    // 防止循环引用 - 返回 undefined 表示检测到循环
+    if (visited.has(str)) return undefined
+    visited.add(str)
+
     const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
-    if (newVal.length <= 1) return '' // 没有 fallback
+    if (newVal.length <= 1) return null // 没有 fallback
     const fallback = newVal[1].trim()
     // 如果 fallback 也是 var()，递归提取
-    if (totalVarExp.test(fallback)) return getDefaultValueFromVar(fallback)
+    if (totalVarExp.test(fallback)) return getDefaultValueFromVar(fallback, visited)
     return fallback
   }
 
-  // 属性值校验
-  const verifyValues = ({ prop, value, selector }, isError = true) => {
+  const verifyValues = ({ prop, value, selector }, isError = true, visited = new Set()) => {
     prop = prop.trim()
     value = value.trim()
     const tips = isError ? error : warn
+
     // 对于包含 CSS 变量的值，提取 fallback 值进行验证
     if (cssVariableExp.test(value)) {
+      // 防止循环引用
+      if (visited.has(value)) {
+        tips(`CSS variable circular reference detected in ${selector} for property ${prop}, value: ${value}`)
+        return false
+      }
+      visited.add(value)
+
       const fallback = getDefaultValueFromVar(value)
-      if (fallback) {
-        // 验证 fallback 值
-        const fallbackValid = verifyValues({ prop, value: fallback, selector }, isError)
-        if (!fallbackValid) {
-          // fallback 值不合法，返回 false
-          return false
-        }
+      // undefined 表示检测到循环引用
+      if (fallback === undefined) {
+        tips(`CSS variable circular reference in fallback chain detected in ${selector} for property ${prop}, value: ${value}`)
+        return false
+      }
+      // null 表示没有 fallback，CSS 变量本身是合法的（运行时会解析）
+      if (fallback === null) {
+        return true
+      }
+      // 有 fallback 值，继续验证
+      const fallbackValid = verifyValues({ prop, value: fallback, selector }, isError, visited)
+      if (!fallbackValid) {
+        // fallback 值不合法，返回 false
+        return false
       }
       // CSS 变量本身是合法的（运行时会解析）
       return true
