@@ -89,20 +89,40 @@ module.exports = function getSpec ({ warn, error }) {
       if (rule[1].test(prop)) return rule[0]
     }
   }
-  // const getDefaultValueFromVar = (str) => {
-  //   const totalVarExp = /^var\((.+)\)$/
-  //   if (!totalVarExp.test(str)) return str
-  //   const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
-  //   if (newVal.length <= 1) return ''
-  //   if (!totalVarExp.test(newVal[1])) return newVal[1]
-  //   return getDefaultValueFromVar(newVal[1])
-  // }
+  // 从 CSS 变量中提取 fallback 值进行验证
+  const getDefaultValueFromVar = (str) => {
+    const totalVarExp = /^var\((.+)\)$/
+    if (!totalVarExp.test(str)) return str
+    const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
+    if (newVal.length <= 1) return '' // 没有 fallback
+    const fallback = newVal[1].trim()
+    // 如果 fallback 也是 var()，递归提取
+    if (totalVarExp.test(fallback)) return getDefaultValueFromVar(fallback)
+    return fallback
+  }
+
   // 属性值校验
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
     value = value.trim()
     const tips = isError ? error : warn
-    if (cssVariableExp.test(value) || calcExp.test(value) || envExp.test(value)) return true
+    // 对于包含 CSS 变量的值，提取 fallback 值进行验证
+    if (cssVariableExp.test(value)) {
+      const fallback = getDefaultValueFromVar(value)
+      if (fallback) {
+        // 验证 fallback 值
+        const fallbackValid = verifyValues({ prop, value: fallback, selector }, isError)
+        if (!fallbackValid) {
+          // fallback 值不合法，返回 false
+          return false
+        }
+      }
+      // CSS 变量本身是合法的（运行时会解析）
+      return true
+    }
+    
+    // calc() 和 env() 跳过验证
+    if (calcExp.test(value) || envExp.test(value)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
       number: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
