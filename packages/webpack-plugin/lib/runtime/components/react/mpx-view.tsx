@@ -514,19 +514,24 @@ function parseBgImage (text: string): {
   }
 }
 
-function normalizeBackgroundSize (backgroundSize: Exclude<ExtendedViewStyle['backgroundSize'], undefined>, type: 'image' | 'linear' | undefined) {
+function normalizeBackgroundSize (
+  backgroundSize: NonNullable<ExtendedViewStyle['backgroundSize']>,
+  type: 'image' | 'linear' | undefined
+): DimensionValue[] {
   const sizeList = backgroundSize.slice()
   if (sizeList.length === 1) sizeList.push('auto')
 
-  if (type === 'linear') {
-    // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
-    for (const i in sizeList) {
-      const val = sizeList[i]
-      sizeList[i] = /^cover|contain|auto$/.test(val as string) ? '100%' : val
-    }
-  }
+  return sizeList.map((val) => {
+    if (typeof val !== 'string') return val
 
-  return sizeList
+    // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
+    if (type === 'linear' && /^cover|contain|auto$/.test(val)) {
+      val = '100%'
+    }
+
+    // 模板 style 属性传入时， 需要额外转换处理单位 px/rpx/vh
+    return global.__formatValue(val) as DimensionValue
+  })
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
