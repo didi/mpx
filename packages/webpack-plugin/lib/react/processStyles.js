@@ -48,6 +48,11 @@ module.exports = function (styles, {
     }, (err) => {
       if (err) return callback(err)
       try {
+        output += `
+          var _f = global.__formatValue
+          global.__classCaches = global.__classCaches || []
+          var __classCache = new Map()
+          global.__classCaches.push(__classCache)`
         const classMap = getClassMap({
           content,
           filename: loaderContext.resourcePath,
@@ -55,7 +60,8 @@ module.exports = function (styles, {
           srcMode,
           ctorType,
           warn,
-          error
+          error,
+          formatValueName: '_f'
         })
         const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
           result !== '' && (result += ',')
@@ -64,10 +70,7 @@ module.exports = function (styles, {
         }, '')
         if (ctorType === 'app') {
           output += `
-          global.__classCaches = global.__classCaches || []
-          const __classCache = new Map()
-          global.__classCaches.push(__classCache)
-          let __appClassMap
+          var __appClassMap
           global.__getAppClassStyle = function(className) {
             if(!__appClassMap) {
               __appClassMap = {${classMapCode}};
@@ -76,10 +79,7 @@ module.exports = function (styles, {
           };\n`
         } else {
           output += `
-          global.__classCaches = global.__classCaches || []
-          const __classCache = new Map()
-          global.__classCaches.push(__classCache)
-          let __classMap
+          var __classMap
           global.currentInject.injectMethods = {
             __getClassStyle: function(className) {
               if(!__classMap) {
