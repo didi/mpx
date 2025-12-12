@@ -25,7 +25,7 @@ function isLock (navigationHelper, type, options) {
   clearTimeout(timerId)
   timerId = setTimeout(() => {
     if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-      navigationHelper.lastFailCallback('timeout')
+      navigationHelper.lastFailCallback(`${type}:fail timeout ${options.url || ''}`)
       navigationHelper.lastFailCallback = null
     }
   }, 1000)
@@ -43,7 +43,7 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
 
@@ -70,7 +70,7 @@ function redirectTo (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
@@ -120,7 +120,7 @@ function reLaunch (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.reset({
