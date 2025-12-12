@@ -14,8 +14,8 @@
 </template>
 
 <script>
-import { watch } from "vue"
-import { useData } from "vitepress"
+import { nextTick, watch } from "vue"
+import { useData, useRoute } from "vitepress"
 import Content from "../global-components/Content.vue"
 import Footer from "../global-components/Footer.vue"
 import Navbar from "../components/Navbar.vue"
@@ -40,6 +40,10 @@ export default {
   },
   mounted () {
     const { frontmatter, isDark } = useData()
+    const route = useRoute()
+
+    nextTick(() => scrollToActiveSidebarItem())
+
     // 非首页回到首页，关闭暗色模式
     // 非首页，切换到首页，再切换回来，保持之前非首页的亮暗模式
     watch(() => isDark.value, (value) => {
@@ -60,6 +64,10 @@ export default {
         isDark.value = this.isDarkNotHomepage
       }
     }, { immediate: true })
+    watch(() => route.path, () =>
+      nextTick(() => {
+        scrollToActiveSidebarItem()
+      }))
     
     const MOBILE_DESKTOP_BREAKPOINT = 719
     const handleLinksWrapWidth = () => {
@@ -79,6 +87,13 @@ export default {
     }
   }
 };
+
+function scrollToActiveSidebarItem() {
+  const activeLink = document.querySelector("#VPSidebarNav div.is-link.is-active.has-active")
+  if (activeLink) {
+    activeLink.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
+}
 </script>
 
 <style lang="stylus" scoped>

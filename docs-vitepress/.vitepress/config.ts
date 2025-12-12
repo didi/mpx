@@ -994,7 +994,17 @@ export default withPwa(
         {
           text: "指南",
           activeMatch: "^/guide/",
-          link: "/guide/basic/start",
+          items: [
+            {
+              text: "基础指南",
+              link: "/guide/basic/start",
+            },
+            {
+              text: "跨端 RN",
+              link: "/guide/rn/start",
+              badge: { text: "新" },
+            },
+          ],
         },
         {
           text: "API",
