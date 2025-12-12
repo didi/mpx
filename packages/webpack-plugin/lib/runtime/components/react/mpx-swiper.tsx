@@ -227,6 +227,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const preAbsolutePos = useSharedValue(0)
   // 记录从onBegin 到 onTouchesUp 时移动的距离
   const moveTranstion = useSharedValue(0)
+  // 记录用户手滑动的方向
+  const moveDir = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
 
@@ -456,11 +458,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [])
 
-  function handleSwiperChange (current: number, pCurrent: number) {
-    if (pCurrent !== currentIndex.value) {
-      const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
-      bindchange && bindchange(eventData)
-    }
+  function handleSwiperChange (current: number) {
+    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+    bindchange && bindchange(eventData)
   }
 
   const runOnJSCallbackRef = useRef({
@@ -510,7 +510,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     if (newIndex !== preIndex && bindchange) {
-      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
+      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex)
     }
   })
 
@@ -687,6 +687,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 正常事件中拿到的translation值(正向滑动<0，倒着滑>0)
       const diffOffset = preOffset - currentOffset
       const half = Math.abs(diffOffset) > step.value / 2
+      // 是否超过一半是基于currentIndex对应的offset作为preOffset, 相差绝对值是否超过step的一半
+      // 1. onUpdate中超过一半，offset=80， preOffset = 100，此时判断未超过一半
+      // 2. onUpdate中未超过一半，onFinalize结束时offset = 80， preOffset = 0，判断正常超过一半
       const isTriggerUpdateHalf = (transdir < 0 && currentOffset < preOffset) || (transdir > 0 && currentOffset > preOffset)
       return {
         diffOffset,
@@ -700,7 +703,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       if (+diffOffset === 0) {
         runOnJS(runOnJSCallback)('resumeLoop')
       } else if (isTriggerUpdateHalf) {
-        // 如果触发了onUpdate时的索引变更
+        // 超过一半之后，currentIndex的已经变更，而计算是否超过half-是基于已经变更后的索引计算的,正好反向
         handleEnd(eventData)
       } else if (half) {
         handleEnd(eventData)
@@ -798,6 +801,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             const finalOffset = handleResistanceMove(eventData)
             offset.value = finalOffset
           }
+          moveDir.value = e[strAbso] - preAbsolutePos.value
           preAbsolutePos.value = e[strAbso]
           return
         }
@@ -805,6 +809,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (circularShared.value && childrenLength.value === 1) {
           const finalOffset = handleResistanceMove(eventData)
           offset.value = finalOffset
+          moveDir.value = e[strAbso] - preAbsolutePos.value
           preAbsolutePos.value = e[strAbso]
           return
         }
@@ -815,6 +820,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         } else {
           offset.value = moveDistance + offset.value
         }
+        moveDir.value = e[strAbso] - preAbsolutePos.value
         preAbsolutePos.value = e[strAbso]
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
@@ -822,10 +828,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (touchfinish.value) return
         touchfinish.value = true
         // 触发过onUpdate正常情况下e[strAbso] - preAbsolutePos.value=0; 未触发过onUpdate的情况下e[strAbso] - preAbsolutePos.value 不为0
+        // 正常状态下基于onUpdate时的moveDir判断方向、未触发onUpdate的则基于onBegin的moveTranstion判断方向
         const moveDistance = e[strAbso] - preAbsolutePos.value
         const eventData = {
           translation: moveDistance,
-          transdir: moveDistance !== 0 ? moveDistance : e[strAbso] - moveTranstion.value
+          transdir: moveDir.value !== 0 ? moveDir.value : e[strAbso] - moveTranstion.value
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
