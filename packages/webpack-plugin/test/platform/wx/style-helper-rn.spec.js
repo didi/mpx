@@ -13,7 +13,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should filter out letter-spacing with invalid "normal" fallback', () => {
       const css = '.text { letter-spacing: var(--x, normal); }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -29,7 +29,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should filter out line-height with invalid "normal" fallback', () => {
       const css = '.text { line-height: var(--y, normal); }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -45,7 +45,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should keep valid CSS variable with numeric fallback', () => {
       const css = '.text { letter-spacing: var(--x, 2px); line-height: var(--y, 1.5); }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -62,7 +62,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should keep CSS variable without fallback', () => {
       const css = '.text { letter-spacing: var(--x); line-height: var(--y); }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -79,7 +79,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should validate nested CSS variables recursively', () => {
       const css = '.text { letter-spacing: var(--x, var(--y, normal)); }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -95,7 +95,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should keep nested CSS variables with valid fallback', () => {
       const css = '.text { letter-spacing: var(--x, var(--y, 2px)); }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -110,7 +110,7 @@ describe('React Native style validation for CSS variables', () => {
 
     test('should work on both ios and android modes', () => {
       const css = '.text { letter-spacing: var(--x, normal); }'
-      
+
       ;['ios', 'android', 'harmony'].forEach(mode => {
         const config = createConfig(mode)
         const result = getClassMap({
@@ -129,7 +129,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should keep margin with "auto" fallback', () => {
       const css = '.box { margin-left: var(--m, auto); }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -145,7 +145,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should filter out direct letter-spacing: normal', () => {
       const css = '.text { letter-spacing: normal; }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -159,7 +159,7 @@ describe('React Native style validation for CSS variables', () => {
     test('should keep direct letter-spacing: 2px', () => {
       const css = '.text { letter-spacing: 2px; }'
       const config = createConfig()
-      
+
       const result = getClassMap({
         content: css,
         filename: 'test.css',
@@ -173,4 +173,3 @@ describe('React Native style validation for CSS variables', () => {
     })
   })
 })
-
