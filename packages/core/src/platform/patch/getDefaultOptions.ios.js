@@ -295,13 +295,17 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       instance[key] = method.bind(instance)
     })
   }
-
+  const loadParams = {}
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     setFocusedNavigation(props.navigation)
+
+    if (!global.__mpxAppHotLaunched && global.__mpxInitialRunParams) {
+      Object.assign(loadParams, global.__mpxInitialRunParams)
+    }
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(props.navigation)
@@ -313,7 +317,6 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    const loadParams = {}
     // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
     if (isObject(props.route.params)) {
       for (const key in props.route.params) {

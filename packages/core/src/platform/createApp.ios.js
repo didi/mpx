@@ -80,7 +80,6 @@ export default function createApp (options) {
         return createElement(Stack.Screen, {
           name: key,
           getComponent,
-          initialParams,
           layout: headerLayout
         })
       }
@@ -228,6 +227,10 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    if (!global.__mpxAppHotLaunched) {
+      global.__mpxInitialRouteName = initialRouteName
+      global.__mpxInitialRunParams = initialParams
+    }
     const navScreenOpts = {
       headerShown: false,
       statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
