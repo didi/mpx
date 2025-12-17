@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, warn, setFocusedNavigation } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -600,7 +600,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
-    const { pageId } = useContext(RouteContext) || {}
+    const { pageId, navigation } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
@@ -650,6 +650,10 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     }
 
     useEffect(() => {
+      if (navigation.camera?.multi) { // RN端一个页面只能有一个camera组件 放在更新中是避免有wx:if的情况
+        navigation.camera.multi = false
+        warn('<camera>: 一个页面只能插入一个')
+      }
       if (proxy.pendingUpdatedFlag) {
         proxy.pendingUpdatedFlag = false
         proxy.callHook(UPDATED)
