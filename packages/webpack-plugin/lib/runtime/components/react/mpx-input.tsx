@@ -18,7 +18,7 @@
  * ✔ selection-start
  * ✔ selection-end
  * ✔ adjust-position
- * ✘ hold-keyboard
+ * ✔ hold-keyboard
  * ✘ safe-password-cert-path
  * ✘ safe-password-length
  * ✘ safe-password-time-stamp
@@ -95,13 +95,16 @@ export interface InputProps {
   'selection-start'?: number
   'selection-end'?: number
   'placeholder-style'?: { color?: string }
-  'enable-offset'?: boolean,
+  'enable-offset'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'adjust-position': boolean,
+  // 只有 RN 环境读取
+  'keyboard-type'?: string
+  'adjust-position': boolean
+  'hold-keyboard'?: boolean
   bindinput?: (evt: NativeSyntheticEvent<TextInputTextInputEventData> | unknown) => void
   bindfocus?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
   bindblur?: (evt: NativeSyntheticEvent<TextInputFocusEventData> | unknown) => void
@@ -118,11 +121,11 @@ export interface PrivateInputProps {
 
 type FinalInputProps = InputProps & PrivateInputProps
 
-const keyboardTypeMap: Record<Type, string> = {
-  text: 'default',
+const inputModeMap: Record<Type, string> = {
+  text: 'text',
   number: 'numeric',
-  idcard: 'default',
-  digit: isIOS ? 'decimal-pad' : 'numeric'
+  idcard: 'text',
+  digit: 'decimal'
 }
 
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
@@ -150,6 +153,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'adjust-position': adjustPosition = true,
+    'keyboard-type': originalKeyboardType,
+    'hold-keyboard': holdKeyboard = false,
     bindinput,
     bindfocus,
     bindblur,
@@ -182,7 +187,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     return ''
   }
 
-  const keyboardType = keyboardTypeMap[type]
   const defaultValue = parseValue(value)
   const textAlignVertical = multiline ? 'top' : 'auto'
 
@@ -281,6 +285,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard }
       keyboardAvoid.current = {
         cursorSpacing,
         ref: nodeRef,
@@ -473,7 +478,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle),
         allowFontScaling,
-        keyboardType: keyboardType,
+        inputMode: originalKeyboardType ? undefined : inputModeMap[type],
+        keyboardType: originalKeyboardType,
         secureTextEntry: !!password,
         defaultValue: defaultValue,
         value: inputValue,

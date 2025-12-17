@@ -4,7 +4,8 @@
 {
     "lang": "scss",
     "resourcePath": "index.scss",
-    "defs": {}
+    "defs": {},
+    "dependencies": []
 }
 ```
 

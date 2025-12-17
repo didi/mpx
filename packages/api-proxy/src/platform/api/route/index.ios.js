@@ -14,7 +14,7 @@ function getBasePath (navigation) {
 let timerId = null
 function isLock (navigationHelper, type, options) {
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-    const { path } = parseUrl(options.url || '')
+    const { path } = parseUrl(options.url)
     const res = {
       errMsg: `${type}:fail the previous routing event didn't complete`,
       path
@@ -43,7 +43,7 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
 
@@ -70,7 +70,7 @@ function redirectTo (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
@@ -120,7 +120,7 @@ function reLaunch (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.reset({

@@ -141,6 +141,177 @@ describe('template if should transform correct', function () {
       expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,' +
         '(true && someVar)?createElement(getComponent("mpx-text"), null,"1"):null)')
     })
+
+    it('should handle static true wx:if with dynamic wx:elif', function () {
+      const input = '<view><text wx:if="{{true}}">1</text><text wx:elif="{{condition}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text>1</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,createElement(getComponent("mpx-text"), null,"1"))')
+    })
+
+    it('should handle static true wx:if with static true wx:elif', function () {
+      const input = '<view><text wx:if="{{true}}">1</text><text wx:elif="{{true}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text>1</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,createElement(getComponent("mpx-text"), null,"1"))')
+    })
+
+    it('should handle static true wx:if with static false wx:elif', function () {
+      const input = '<view><text wx:if="{{true}}">1</text><text wx:elif="{{false}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text>1</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,createElement(getComponent("mpx-text"), null,"1"))')
+    })
+
+    it('should handle static false wx:if with dynamic wx:elif', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{condition}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">2</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"2"):null)')
+    })
+
+    it('should handle static false wx:if with static true wx:elif', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{true}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text>2</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,createElement(getComponent("mpx-text"), null,"2"))')
+    })
+
+    it('should handle static false wx:if with static false wx:elif', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{false}}">2</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null)')
+    })
+
+    it('should handle static true wx:if with wx:elif and wx:else', function () {
+      const input = '<view><text wx:if="{{true}}">1</text><text wx:elif="{{condition}}">2</text><text wx:else>3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text>1</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,createElement(getComponent("mpx-text"), null,"1"))')
+    })
+
+    it('should handle static false wx:if with static true wx:elif and wx:else', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{true}}">2</text><text wx:else>3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text>2</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,createElement(getComponent("mpx-text"), null,"2"))')
+    })
+
+    it('should handle static false wx:if with static false wx:elif and wx:else', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{false}}">2</text><text wx:else>3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text>3</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,createElement(getComponent("mpx-text"), null,"3"))')
+    })
+
+    it('should handle dynamic wx:if with static false wx:elif and wx:else', function () {
+      const input = '<view><text wx:if="{{condition}}">1</text><text wx:elif="{{false}}">2</text><text wx:else>3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">1</text><text wx:else>3</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"1"):createElement(getComponent("mpx-text"), null,"3"))')
+    })
+
+    it('should handle dynamic wx:if with static true wx:elif and wx:else', function () {
+      const input = '<view><text wx:if="{{condition}}">1</text><text wx:elif="{{true}}">2</text><text wx:else>3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">1</text><text wx:else>2</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"1"):createElement(getComponent("mpx-text"), null,"2"))')
+    })
+
+    it('should handle multiple dynamic wx:elif', function () {
+      const input = '<view><text wx:if="{{condition1}}">1</text><text wx:elif="{{condition2}}">2</text><text wx:elif="{{condition3}}">3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition1}}">1</text><text wx:elif="{{condition2}}">2</text><text wx:elif="{{condition3}}">3</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition1)?createElement(getComponent("mpx-text"), null,"1"):(condition2)?createElement(getComponent("mpx-text"), null,"2"):(condition3)?createElement(getComponent("mpx-text"), null,"3"):null)')
+    })
+
+    it('should handle multiple wx:elif with static false', function () {
+      const input = '<view><text wx:if="{{condition}}">1</text><text wx:elif="{{false}}">2</text><text wx:elif="{{condition2}}">3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">1</text><text wx:elif="{{condition2}}">3</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"1"):(condition2)?createElement(getComponent("mpx-text"), null,"3"):null)')
+    })
+
+    it('should handle multiple wx:elif with static true in middle', function () {
+      const input = '<view><text wx:if="{{condition}}">1</text><text wx:elif="{{true}}">2</text><text wx:elif="{{condition2}}">3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">1</text><text wx:else>2</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"1"):createElement(getComponent("mpx-text"), null,"2"))')
+    })
+
+    it('should handle static false wx:if with multiple wx:elif', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{condition1}}">2</text><text wx:elif="{{condition2}}">3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition1}}">2</text><text wx:elif="{{condition2}}">3</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition1)?createElement(getComponent("mpx-text"), null,"2"):(condition2)?createElement(getComponent("mpx-text"), null,"3"):null)')
+    })
+
+    it('should handle static false wx:if with multiple static false wx:elif', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{false}}">2</text><text wx:elif="{{false}}">3</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null)')
+    })
+
+    it('should handle multiple wx:elif with wx:else', function () {
+      const input = '<view><text wx:if="{{condition1}}">1</text><text wx:elif="{{condition2}}">2</text><text wx:elif="{{condition3}}">3</text><text wx:else>4</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition1}}">1</text><text wx:elif="{{condition2}}">2</text><text wx:elif="{{condition3}}">3</text><text wx:else>4</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition1)?createElement(getComponent("mpx-text"), null,"1"):(condition2)?createElement(getComponent("mpx-text"), null,"2"):(condition3)?createElement(getComponent("mpx-text"), null,"3"):createElement(getComponent("mpx-text"), null,"4"))')
+    })
+
+    it('should handle static false wx:if with multiple wx:elif and wx:else', function () {
+      const input = '<view><text wx:if="{{false}}">1</text><text wx:elif="{{false}}">2</text><text wx:elif="{{condition}}">3</text><text wx:else>4</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">3</text><text wx:else>4</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"3"):createElement(getComponent("mpx-text"), null,"4"))')
+    })
+
+    it('should handle static true in second wx:elif', function () {
+      const input = '<view><text wx:if="{{condition}}">1</text><text wx:elif="{{false}}">2</text><text wx:elif="{{true}}">3</text><text wx:elif="{{condition2}}">4</text></view>'
+      const wxOutput = compileTemplateToWx(input)
+      expect(wxOutput).toBe('<view><text wx:if="{{condition}}">1</text><text wx:else>3</text></view>')
+
+      const iosOutput = compileTemplateToIos(input)
+      expect(iosOutput).toBe('createElement(getComponent("mpx-view"), null,(condition)?createElement(getComponent("mpx-text"), null,"1"):createElement(getComponent("mpx-text"), null,"3"))')
+    })
   })
 
   describe('error cases', () => {

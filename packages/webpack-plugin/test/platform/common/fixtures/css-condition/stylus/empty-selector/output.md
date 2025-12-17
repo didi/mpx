@@ -6,7 +6,8 @@
     "resourcePath": "index.styl",
     "defs": {
         "isMobile": false
-    }
+    },
+    "dependencies": []
 }
 ```
 
@@ -15,5 +16,5 @@
 ```stylus
 
 .selector
-    
+    /* @mpx-if (isMobile) *//* @mpx-endif */
 ```

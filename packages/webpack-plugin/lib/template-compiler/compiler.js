@@ -764,8 +764,6 @@ function parse (template, options) {
 
       const children = currentParent.children
 
-      // const isTextLikeParent = currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text'
-
       if (currentParent.tag !== 'text') {
         text = text.trim()
       } else {
@@ -2719,7 +2717,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,ks,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)

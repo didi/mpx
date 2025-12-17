@@ -3,7 +3,6 @@ const parseRequest = require('../utils/parse-request')
 const path = require('path')
 const loaderUtils = require('loader-utils')
 const url = require('url')
-const { rebaseUrls } = require('./strip-conditional-loader/rebaseUrl')
 
 class Node {
   constructor(type, condition = null) {
@@ -31,7 +30,8 @@ function tokenize(cssString) {
     // match[2] 为条件（如果存在）
     tokens.push({
       type: match[1], // 'if'、'elif'、'else' 或 'endif'
-      condition: match[2] ? match[2].trim() : null
+      condition: match[2] ? match[2].trim() : null,
+      rawValue: match[0]
     })
     lastIndex = regex.lastIndex
   }
@@ -56,6 +56,7 @@ function parse(cssString) {
       currentChildren.push(node)
     } else if (token.type === 'if') {
       const node = new Node('If', token.condition)
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       nodeStack.push(currentChildren)
       currentChildren = node.children
@@ -65,6 +66,7 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('ElseIf', token.condition)
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'else') {
@@ -73,12 +75,16 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('Else')
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'endif') {
+      const node = new Node('EndIf')
+      node.rawValue = token.rawValue || ''
       if (nodeStack.length > 0) {
         currentChildren = nodeStack.pop()
       }
+      currentChildren.push(node)
     }
   })
   return ast
@@ -107,17 +113,22 @@ function traverseAndEvaluate(ast, defs) {
       } else if (node.type === 'If') {
         // 直接判断 If 节点
         batchedIf = false
+        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'ElseIf' && !batchedIf) {
+        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'Else' && !batchedIf) {
+        output += node.rawValue || ''
         traverse(node.children)
+      } else if (node.type === 'EndIf') {
+        output += node.rawValue || ''
       }
     }
   }
@@ -167,9 +178,6 @@ function shouldReserveUrl(filename) {
  * @property {(resourcePath: string) => boolean} filter
  */
 
-/**
- * @param {AtImportConfig} options
- */
 async function atImport(options) {
   let { css, load, resolve, from } = options
   const fromParent = path.dirname(from)
@@ -222,11 +230,10 @@ async function atImport(options) {
 
   // 使用正则表达式匹配出所有 @import 语法，语法包含 @import "path", @import 'path', @import url("path"), @import url('path')
   // 注意清理分号，否则留个分号会报错
-  const importRegex = /([ \t]+)?@import\s+(url\(['"]([^'"]+)['"]\)|['"]([^'"]+)['"])(\s*;)?/g
+  const importRegex = /@import\s+(url\(['"]([^'"]+)['"]\)|['"]([^'"]+)['"])(\s*;)?/g
   let importList = []
   let importMatch
   while ((importMatch = importRegex.exec(css))) {
-    const sep = importMatch[1] || ''
     const fullMatch = importMatch[0]
     const importSyntax = fullMatch.trim()
     importSyntax.startsWith('@import')
@@ -249,8 +256,7 @@ async function atImport(options) {
       start: importMatch.index,
       end: importMatch.index + fullMatch.length,
       content: fullMatch,
-      url: urlMatch,
-      padStart: sep || ''
+      url: urlMatch
     })
   }
 
@@ -260,28 +266,31 @@ async function atImport(options) {
   // 逆序替换 import，避免修改内容导致的索引偏移问题
   importList.sort((a, b) => (a.start > b.start ? -1 : 1))
 
-  for (const imp of importList) {
-    const importPath = imp.url
-    if (!importPath || shouldReserveUrl(importPath)) continue
-    // 非法路径直接跳过
-    let resolvedUrl
-    try {
-      resolvedUrl = await resolve(importPath, fromParent)
-      if (options.filter && !options.filter(path.relative(options.root, resolvedUrl))) {
-        continue
+  const result = await Promise.all(
+    importList.map(async imp => {
+      const importPath = imp.url
+      if (!importPath) return
+      // 非法路径直接报错
+      const resolvedUrl = await resolve(importPath, fromParent)
+      const content = (await load(resolvedUrl)) ?? ''
+      return {
+        content,
+        start: imp.start,
+        end: imp.end,
+        resolvedUrl
       }
-    } catch (error) {
-      continue
-    }
-    let content = (await load(resolvedUrl)) ?? ''
-    content = content
-      .split('\n')
-      .map(line => imp.padStart + line)
-      .join('\n')
-    css = css.slice(0, imp.start) + '\n' + content + '\n' + css.slice(imp.end)
+    })
+  )
+
+  for (const res of result) {
+    if (!res) continue
+    css = css.slice(0, res.start) + '\n' + res.content + '\n' + css.slice(res.end)
   }
 
-  return css
+  return {
+    css,
+    imports: result.map(item => item.resolvedUrl)
+  }
 }
 /**
  * @param {StripByPostcssOption} options
@@ -310,52 +319,56 @@ async function stripByPostcss(options) {
    * @type {string}
    */
   const afterConditionStrip = stripContentCondition(options.css, defs)
+  const dependencies = []
 
-  const resolve = (id, base) => {
-    return new Promise((resolve, reject) => {
-      // 处理 ~ 开头的路径
-      options.langContext.resolve(base, id.startsWith('~') && !id.startsWith('~/') ? loaderUtils.urlToRequest(id) : id, (err, res) => {
-        if (err) return reject(err)
-        if (typeof res !== 'string') {
-          return reject(new Error(`[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`))
-        }
-        resolve(res)
-      })
-    })
-  }
   const atImportOptions = {
-    filter: options.filter,
-    root: options.root,
     async load(filename) {
       let content = await fs.readFile(filename, 'utf-8')
 
       content = stripContentCondition(content, defs)
 
-      const r1 = await atImport({
+      const data = await atImport({
         ...atImportOptions,
         from: filename,
         css: content
       })
-
-      const r2 = await rebaseUrls(filename, options.resourcePath, r1, (url, file) =>
-        resolve(url, path.dirname(file), options.langContext.ignoreRebaseUrl).catch(() => undefined)
-      ).catch(err => {
-        console.error('[mpx-strip-conditional-loader]: rebaseUrls error', err)
-        throw err
-      })
-
-      return r2.contents ?? r1
+      dependencies.push(...data.imports)
+      return data.css
     },
-    resolve
+    resolve: (id, base) => {
+      return new Promise((resolve, reject) => {
+        // 处理 ~ 开头的路径
+        options.resolve(base, id.startsWith('~') && !id.startsWith('~/') ? loaderUtils.urlToRequest(id) : id, (err, res) => {
+          if (err) return reject(err)
+          if (typeof res !== 'string') {
+            return reject(new Error(`[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`))
+          }
+          resolve(res)
+        })
+      })
+    }
   }
+
+  const result = await atImport({
+    ...atImportOptions,
+    from: options.resourcePath,
+    css: afterConditionStrip
+  })
+
+  dependencies.push(...result.imports)
 
   return {
-    css: await atImport({
-      ...atImportOptions,
-      from: options.resourcePath,
-      css: afterConditionStrip
-    })
+    css: result.css,
+    dependencies
   }
+}
+
+const createResolver = (context, extensions) =>
+  context.getResolve({ mainFiles: ['index'], extensions: [...extensions, '.css'], preferRelative: true })
+const resolver = {
+  stylus: context => createResolver(context, ['.styl']),
+  scss: context => createResolver(context, ['.scss']),
+  less: context => createResolver(context, ['.styl'])
 }
 
 /**
@@ -469,10 +482,12 @@ module.exports = async function (css) {
     resourcePath,
     css,
     defs: mpx.defs,
-    filter,
-    langContext: langContext[queryObj.lang],
-    root: process.cwd()
+    resolve: resolver[queryObj.lang] ? resolver[queryObj.lang](this) : this.resolve.bind(this)
   })
+
+  for (const dep of result.dependencies) {
+    this.addDependency(path.normalize(dep))
+  }
 
   callback(null, result.css, result.map)
 }
