@@ -1,7 +1,7 @@
 import React, { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect } from 'react'
 import { useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { noop } from '@mpxjs/utils'
+import { noop, warn } from '@mpxjs/utils'
 import { RouteContext } from './context'
 
 const qualityValue = {
@@ -257,7 +257,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         navigation.camera = camera
       } else {
         hasCamera.current = true
-        navigation.camera.multi = true
+        warn('<camera>: 一个页面只能插入一个')
       }
     }
     const checkCameraPermission = async () => {
