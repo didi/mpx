@@ -39,7 +39,7 @@ describe('strip-conditional-loader', () => {
     // './fixtures/css-condition/at-import/index.styl',
     './fixtures/css-condition/**/index.{styl,less,css,scss}',
     async ({ filename, config = {}, cwd }) => {
-      const { lang = getLangFromExtension(filename), defs = {}, exclude = [], legacy } = config
+      const { lang = getLangFromExtension(filename), defs = {} } = config
 
       const content = await fs.readFile(filename, 'utf-8')
 

@@ -2,7 +2,6 @@ const fs = require('fs/promises')
 const parseRequest = require('../utils/parse-request')
 const path = require('path')
 const loaderUtils = require('loader-utils')
-const url = require('url')
 
 class Node {
   constructor(type, condition = null) {
@@ -146,14 +145,6 @@ function stripCondition(content, defs) {
   const ast = parse(content)
   const result = traverseAndEvaluate(ast, defs)
   return result
-}
-
-// 参考 stylus/lib/functions/resolver.js 对 url 的处理逻辑
-function shouldReserveUrl(filename) {
-  // @ts-ignore
-  // eslint-disable-next-line node/no-deprecated-api
-  const parsed = url.parse(filename)
-  return parsed.protocol
 }
 
 /**
@@ -323,7 +314,7 @@ async function stripByPostcss(options) {
 
   const atImportOptions = {
     async load(filename) {
-      let content = await fs.readFile(filename, 'utf-8')
+      let content = fs.readFileSync(filename, 'utf-8')
 
       content = stripContentCondition(content, defs)
 
@@ -369,64 +360,6 @@ const resolver = {
   stylus: context => createResolver(context, ['.styl']),
   scss: context => createResolver(context, ['.scss']),
   less: context => createResolver(context, ['.styl'])
-}
-
-/**
- *
- * @param {import('webpack').LoaderContext<any>} contetx
- * @param {string[]} extensions
- * @returns
- */
-const createResolver = (contetx, extensions) =>
-  contetx.getResolve({ mainFiles: ['index'], extensions: [...extensions, '.css'], preferRelative: true })
-
-/**
- * @typedef {Object} StyleLangContext
- * @property {import('webpack').Resolver['resolve']} resolve
- * @property {(unquotedUrl: string, rawUrl: string) => boolean} ignoreRebaseUrl
- */
-/**
- * @type {Record<string, StyleLangContext>}
- */
-const langContext = {
-  stylus: {
-    resolve: context => createResolver(context, ['.styl']),
-    ignoreRebaseUrl: (unquotedUrl, rawUrl) => {
-      return unquotedUrl[0] === '$' || unquotedUrl.startsWith('@') || unquotedUrl.startsWith('%s')
-    }
-  },
-  scss: {
-    resolve: context => createResolver(context, ['.scss']),
-    ignoreRebaseUrl: (unquotedUrl, rawUrl) => {
-      const isQuoted = rawUrl[0] === '"' || rawUrl[0] === "'"
-      // matches `url($foo)`
-      if (!isQuoted && unquotedUrl[0] === '$') {
-        return true
-      }
-      // matches `url(#{foo})` and `url('#{foo}')`
-      return unquotedUrl.startsWith('#{')
-    }
-  },
-  less: {
-    resolve: context => createResolver(context, ['.less']),
-    ignoreRebaseUrl: (unquotedUrl, _rawUrl) => {
-      // matches both
-      // - interpolation: `url('@{foo}')`
-      // - variable: `url(@foo)`
-      return unquotedUrl[0] === '@'
-    }
-  },
-  css: {
-    resolve: context => createResolver(context, ['.css']),
-    ignoreRebaseUrl: (unquotedUrl, rawUrl) => {
-      const isQuoted = rawUrl[0] === '"' || rawUrl[0] === "'"
-      // matches `url($foo)`
-      if (!isQuoted && unquotedUrl[0] === '$') {
-        return true
-      }
-      return unquotedUrl.startsWith('@')
-    }
-  }
 }
 
 /**
