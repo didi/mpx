@@ -1,7 +1,4 @@
-const fs = require('fs/promises')
-const parseRequest = require('../utils/parse-request')
-const path = require('path')
-const loaderUtils = require('loader-utils')
+const fs = require('fs')
 
 class Node {
   constructor(type, condition = null) {
@@ -146,243 +143,67 @@ function stripCondition(content, defs) {
   const result = traverseAndEvaluate(ast, defs)
   return result
 }
-
-/**
- * @typedef {Object} StripByPostcssOption
- * @property {string} lang 样式语法格式
- * @property {string} resourcePath 文件路径
- * @property {string} root 根文件路径
- * @property {string} css 源文件
- * @property {Record<string, any>} defs 条件定义
- * @property {StyleLangContext!} langContext 语言相关上下文
- * @property {(resourcePath: string) => boolean} [filter] 过滤函数
- * @property {boolean} legacy 是否使用旧版条件编译
- */
-
-/**
- * @typedef {Object} AtImportConfig
- * @property {string} css 样式内容
- * @property {string} from 当前文件路径
- * @property {string} root 根文件路径
- * @property {(filename: string) => Promise<string> | string} load 加载文件内容的函数
- * @property {(id: string, base: string) => Promise<string | null> | string | null} resolve 解析文件路径的函数
- * @property {(resourcePath: string) => boolean} filter
- */
-
-async function atImport(options) {
-  let { css, load, resolve, from } = options
-  const fromParent = path.dirname(from)
-  const e1 = /\/\*[\s\S]*?\*\//g
-  // 匹配 // 单行注释，可能匹配到静态资源中的 http:// 的 //，不过影响不大， @import 不太可能出现在静态资源链接中
-  const e2 = /\/\/.*/g
-  // 使用正则匹配匹配出 多行注释和单行注释
-  const comments = []
-  let comment
-  while ((comment = e1.exec(css))) {
-    const [content] = comment
-    comments.push({
-      start: comment.index,
-      end: comment.index + content.length,
-      content: content
-    })
-  }
-
-  while ((comment = e2.exec(css))) {
-    const [content] = comment
-    comments.push({
-      start: comment.index,
-      end: comment.index + content.length,
-      content: content
-    })
-  }
-
-  // 排序方便二分
-  comments.sort((a, b) => (a.start > b.start ? 1 : -1))
-
-  function isInComments(index) {
-    let left = 0
-    let right = comments.length - 1
-
-    while (left <= right) {
-      const mid = Math.floor((left + right) / 2)
-      const comment = comments[mid]
-
-      if (index >= comment.start && index <= comment.end) {
-        return true
-      } else if (index < comment.start) {
-        right = mid - 1
-      } else {
-        left = mid + 1
-      }
-    }
-
-    return false
-  }
-
-  // 使用正则表达式匹配出所有 @import 语法，语法包含 @import "path", @import 'path', @import url("path"), @import url('path')
-  // 注意清理分号，否则留个分号会报错
-  const importRegex = /@import\s+(url\(['"]([^'"]+)['"]\)|['"]([^'"]+)['"])(\s*;)?/g
-  let importList = []
-  let importMatch
-  while ((importMatch = importRegex.exec(css))) {
-    const fullMatch = importMatch[0]
-    const importSyntax = fullMatch.trim()
-    importSyntax.startsWith('@import')
-    const importValue = importSyntax.slice(7).trim()
-    // 匹配 @import 后字符串格式
-    const importUrlRegex = /url\s*\(['"]([^'"]+)['"]\)/g
-    const importStrRegexp = /^(['"])([^'"]+)\1/
-
-    let urlMatch = null
-    if (importValue.startsWith('url')) {
-      urlMatch = importUrlRegex.exec(importValue)?.[1]
-    } else {
-      urlMatch = importStrRegexp.exec(importValue)?.[2]
-    }
-    if (!urlMatch) {
-      continue
-    }
-
-    importList.push({
-      start: importMatch.index,
-      end: importMatch.index + fullMatch.length,
-      content: fullMatch,
-      url: urlMatch
-    })
-  }
-
-  // 过滤掉在注释中的 @import 语法
-  importList = importList.filter(imp => !isInComments(imp.start))
-
-  // 逆序替换 import，避免修改内容导致的索引偏移问题
-  importList.sort((a, b) => (a.start > b.start ? -1 : 1))
-
-  const result = await Promise.all(
-    importList.map(async imp => {
-      const importPath = imp.url
-      if (!importPath) return
-      // 非法路径直接报错
-      const resolvedUrl = await resolve(importPath, fromParent)
-      const content = (await load(resolvedUrl)) ?? ''
-      return {
-        content,
-        start: imp.start,
-        end: imp.end,
-        resolvedUrl
-      }
-    })
-  )
-
-  for (const res of result) {
-    if (!res) continue
-    css = css.slice(0, res.start) + '\n' + res.content + '\n' + css.slice(res.end)
-  }
-
-  return {
-    css,
-    imports: result.map(item => item.resolvedUrl)
-  }
-}
 /**
  * @param {StripByPostcssOption} options
  */
 async function stripByPostcss(options) {
   const defs = options.defs ?? {}
+  const afterConditionStrip = stripCondition(options.css, defs)
+  return {
+    css: afterConditionStrip
+  }
+}
 
-  if (options.legacy) {
-    const afterConditionStrip = stripCondition(options.css, defs)
-    return {
-      css: afterConditionStrip
-    }
+function rewriteReadFileSyncForCss(defs) {
+  function shouldStrip(path) {
+    return typeof path === 'string' && /\.(styl|scss|sass|less|css)$/.test(path)
   }
 
-  function stripContentCondition(content) {
-    content = stripCondition(content, defs)
+  const readFileSync = fs.readFileSync
+  const readFile = fs.readFile
 
-    if (options.lang === 'stylus') {
-      content = content.replace(/\t/g, '  ')
+  fs.readFileSync = function (path, options) {
+    const content = readFileSync.call(fs, path, options)
+    if (shouldStrip(path)) {
+      try {
+        if (typeof content === 'string') {
+          return stripCondition(content, defs)
+        }
+      } catch (e) {
+        return content
+      }
     }
-
     return content
   }
 
-  /**
-   * @type {string}
-   */
-  const afterConditionStrip = stripContentCondition(options.css, defs)
-  const dependencies = []
-
-  const atImportOptions = {
-    async load(filename) {
-      let content = fs.readFileSync(filename, 'utf-8')
-
-      content = stripContentCondition(content, defs)
-
-      const data = await atImport({
-        ...atImportOptions,
-        from: filename,
-        css: content
-      })
-      dependencies.push(...data.imports)
-      return data.css
-    },
-    resolve: (id, base) => {
-      return new Promise((resolve, reject) => {
-        // 处理 ~ 开头的路径
-        options.resolve(base, id.startsWith('~') && !id.startsWith('~/') ? loaderUtils.urlToRequest(id) : id, (err, res) => {
-          if (err) return reject(err)
-          if (typeof res !== 'string') {
-            return reject(new Error(`[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`))
-          }
-          resolve(res)
-        })
-      })
+  fs.readFile = function (path, options, callback) {
+    // 处理参数重载
+    let cb = callback
+    if (typeof options === 'function') {
+      cb = options
+      options = null
     }
+
+    const wrappedCallback = (err, data) => {
+      if (err) return cb(err)
+      if (shouldStrip(path)) {
+        try {
+          if (typeof data === 'string') {
+            const result = stripCondition(data, defs)
+            return cb(null, result)
+          }
+        } catch (e) {
+          return cb(null, data)
+        }
+      }
+      cb(null, data)
+    }
+
+    if (options) {
+      return readFile.call(fs, path, options, wrappedCallback)
+    }
+    return readFile.call(fs, path, wrappedCallback)
   }
-
-  const result = await atImport({
-    ...atImportOptions,
-    from: options.resourcePath,
-    css: afterConditionStrip
-  })
-
-  dependencies.push(...result.imports)
-
-  return {
-    css: result.css,
-    dependencies
-  }
-}
-
-const createResolver = (context, extensions) =>
-  context.getResolve({ mainFiles: ['index'], extensions: [...extensions, '.css'], preferRelative: true })
-const resolver = {
-  stylus: context => createResolver(context, ['.styl']),
-  scss: context => createResolver(context, ['.scss']),
-  less: context => createResolver(context, ['.styl'])
-}
-
-/**
- * @typedef {Object} Options
- * @property {'before' | 'after'} stage 进行条件编译的时机
- * @property {boolean} [before=true] 是否在样式处理loader之前进行条件编译
- * @property {boolean} [after=true] 是否在样式处理loader之后进行条件编译
- * @property {(string | RegExp)[]} beforeExclude 在样式处理loader之前进行条件编译时排除的文件
- * @property {(string | RegExp)[]} afterExclude 在样式处理loader之后进行条件编译时排除的文件
- * @property {Record<string, any>} [defs] 全局条件定义
- * @property {boolean} [legacy=false]
- * @property {boolean} [beforeLegacy=false] scss-loader, less-loader, stylus-loader 等 loader 前置编译降级到旧版编译
- * @property {boolean} [afterLegacy=false] scss-loader, less-loader, stylus-loader 等 loader 后置编译降级到旧版编译
- *
- */
-
-/**
- * @param {import('webpack').Compiler} compiler
- * @param {(string | RegExp)[]} exclude
- */
-const createFilter = (compiler, exclude, include) => {
-  const matcher = compiler.webpack.ModuleFilenameHelpers.matchObject.bind(undefined, { include, exclude })
-  return resourcePath => matcher(resourcePath)
 }
 /**
  *
@@ -390,40 +211,13 @@ const createFilter = (compiler, exclude, include) => {
  * @param {string} css
  */
 module.exports = async function (css) {
-  /**
-   * @type {Options}
-   */
-  const options = this.getOptions()
   this.cacheable()
-  const filter = options.stage === 'before' ? createFilter(this._compiler, options.beforeExclude) : createFilter(this._compiler, options.afterExclude)
-  let legacy = (options.stage === 'before' ? options.beforeLegacy : options.afterLegacy)
-  if (legacy === undefined) {
-    legacy = options.legacy === true
-  }
-
   const callback = this.async()
-
   const mpx = this.getMpx()
-  const { resourcePath, queryObj } = parseRequest(this.resource)
-
-  if (!filter(resourcePath)) {
-    return callback(null, css)
-  }
-
-  const result = await stripByPostcss({
-    lang: queryObj.lang,
-    resourcePath,
-    css,
-    defs: mpx.defs,
-    resolve: resolver[queryObj.lang] ? resolver[queryObj.lang](this) : this.resolve.bind(this)
-  })
-
-  for (const dep of result.dependencies) {
-    this.addDependency(path.normalize(dep))
-  }
-
-  callback(null, result.css, result.map)
+  const result = stripCondition(css, mpx.defs)
+  callback(null, result)
 }
 
 module.exports.stripByPostcss = stripByPostcss
 module.exports.stripCondition = stripCondition
+module.exports.rewriteReadFileSyncForCss = rewriteReadFileSyncForCss
