@@ -5,16 +5,14 @@ const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
 const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error }) {
   const classMap = ctorType === 'page'
       ? {
-          [MPX_TAG_PAGE_SELECTOR]: {
-            _media: [],
-            _default: { flex: 1, height: "'100%'" }
-          }
+          [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" }
         }
       : {}
 
@@ -118,8 +116,21 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
     const classMapKeys = []
     selectorParser(selectors => {
       selectors.each(selector => {
-        if (selector.nodes.length === 1 && (selector.nodes[0].type === 'class' || (ruleName === 'keyframes' && selector.nodes[0].type === 'tag'))) {
+        if (selector.nodes.length === 1 && (selector.nodes[0].type === 'class')) {
           classMapKeys.push(selector.nodes[0].value)
+        } else if (ruleName === 'keyframes' && selector.nodes[0].type === 'tag') {
+          const value = selector.nodes[0].value
+          const val = value.match(percentExp)?.[2] / 100
+          if (value === 'from') {
+            // from
+            classMapKeys.push(0)
+          } else if (value === 'to') {
+            // to
+            classMapKeys.push(1)
+          } else if (!isNaN(val)) {
+            // 百分比
+            classMapKeys.push(val)
+          }
         } else {
           error('Only single class selector is supported in react native mode temporarily.')
         }
@@ -128,22 +139,27 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
 
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
-        if (key === 'from') key = '0%'
-        if (key === 'to') key = '100%'
         if (Object.keys(classMapValue).length) {
-          const _default = classMap[key]?._default || {}
-          const _media = classMap[key]?._media || []
-          if (ruleName === 'media' && (options.minWidth || options.maxWidth)) {
+          if (ruleName === 'media' && options && (options.minWidth || options.maxWidth)) {
+            // 当前是媒体查询
+            const _default = classMap[key]?._default || classMap[key] || {}
+            const _media = classMap[key]?._media || []
             _media.push({
               options,
               value: classMapValue
             })
+            classMap[key] = {
+              _default,
+              _media
+            }
+          } else if (classMap[key]?._default) {
+            // 已有媒体查询数据，此次非媒体查询
+            const _default = classMap[key]?._default || {}
+            classMap[key]._default = Object.assign(_default, classMapValue)
           } else {
-            Object.assign(_default, classMapValue)
-          }
-          classMap[key] = {
-            _media,
-            _default
+            // 无媒体查询
+            const val = classMap[key] || {}
+            classMap[key] = Object.assign(val, classMapValue)
           }
         }
       })
@@ -156,9 +172,15 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
       return
     }
     const ruleName = rule.name
-    const ruleClassMap = ruleName === 'keyframes' ? {} : classMap
+    let ruleClassMap
+    let options
+    if (ruleName === 'media') {
+      options = getMediaOptions(rule.params)
+      ruleClassMap = classMap
+    } else if (ruleName === 'keyframes') {
+      ruleClassMap = {}
+    }
     rule.walkRules(node => {
-      const options = ruleName === 'media' ? getMediaOptions(rule.params) : null
       walkRule({
         rule: node,
         ruleName,
@@ -166,12 +188,14 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
         classMap: ruleClassMap
       })
     })
-    if (ruleName === 'keyframes' && Object.keys(ruleClassMap).length > 0) {
-      const animationName = rule.params
-      if (!classMap.animations) {
-        classMap.animations = {}
+    if (ruleName === 'keyframes') {
+      if (Object.keys(ruleClassMap).length > 0) {
+        const animationName = rule.params
+        if (!classMap.keyframes) {
+          classMap.keyframes = {}
+        }
+        classMap.keyframes[animationName] = ruleClassMap
       }
-      classMap.animations[animationName] = ruleClassMap
     }
   })
   root.walkRules(rule => {

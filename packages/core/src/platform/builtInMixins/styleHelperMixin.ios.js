@@ -271,13 +271,13 @@ export default function styleHelperMixin () {
               if (localStyle._media?.length) {
                 mergeResult(localStyle._default, getMediaStyle(localStyle._media))
               } else {
-                mergeResult(localStyle._default)
+                mergeResult(localStyle)
               }
             } else if (appStyle = getAppClassStyle(className)) {
               if (appStyle._media?.length) {
                 mergeResult(appStyle._default, getMediaStyle(appStyle._media))
               } else {
-                mergeResult(appStyle._default)
+                mergeResult(appStyle)
               }
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
@@ -320,6 +320,20 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+        if (hasOwn(result, 'animation') || hasOwn(result, 'animationName')) {
+          let keyframes, appKeyframes
+          if (keyframes = this.__getClassStyle?.('keyframes')) {
+            mergeResult({
+              keyframes
+            })
+            console.error(result)
+          } else if (appKeyframes = global.__getAppClassStyle?.('keyframes')) {
+            // console.error('appStyle=', appStyle)
+            mergeResult({
+              keyframes
+            })
+          }
+        }
         return isEmpty ? empty : result
       }
     }

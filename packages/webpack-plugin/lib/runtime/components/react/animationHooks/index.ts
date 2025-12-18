@@ -2,6 +2,7 @@ import { error, collectDataset, hasOwn } from '@mpxjs/utils'
 import { useRef } from 'react'
 import useAnimationAPIHooks from './useAnimationAPIHooks'
 import useTransitionHooks from './useTransitionHooks'
+import useCssAnimationHooks from './useCssAnimationHooks'
 import type { AnimatableValue } from 'react-native-reanimated'
 import type { MutableRefObject } from 'react'
 import type { NativeSyntheticEvent } from 'react-native'
@@ -34,11 +35,11 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     // 允许 API、CssTransition 到 none，不允许 API、CssTransition 互切，不允许 none 到 API、CssTransition
     error('[Mpx runtime error]: The animation type should be stable in the component lifecycle, or you can set animation type with [enable-animation].')
   }
-  if (animationType === 'animation') {
-    // 暂不支持 CssAnimation 提示
-    error('[Mpx runtime error]: CSS animation is not supported yet')
-    return { enableStyleAnimation: false }
-  }
+  // if (animationType === 'animation') {
+  //   // 暂不支持 CssAnimation 提示
+  //   error('[Mpx runtime error]: CSS animation is not supported yet')
+  //   return { enableStyleAnimation: false }
+  // }
   if (!animationTypeRef.current) return { enableStyleAnimation: false }
 
   const hooksProps = { style: originalStyle }
@@ -66,10 +67,13 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   }
   return {
     enableStyleAnimation: !!animationTypeRef.current,
-    animationStyle: animationTypeRef.current === 'api'
+    animationStyle: animationTypeRef.current === 'animation'
       // eslint-disable-next-line react-hooks/rules-of-hooks
-      ? useAnimationAPIHooks(hooksProps)
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      : useTransitionHooks(hooksProps)
+      ? useCssAnimationHooks(hooksProps)
+      : animationTypeRef.current === 'api'
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        ? useAnimationAPIHooks(hooksProps)
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        : useTransitionHooks(hooksProps)
   }
 }
