@@ -1109,27 +1109,6 @@ function stringifyWithResolveComputed (modelValue) {
   return result.join('+')
 }
 
-function processUnoPseudo (staticClass, unoCtx) {
-  const { config } = unoCtx
-  const separators = config.separators.join('|')
-  const pseudoClassReg = new RegExp(`(hover)(?:${separators})`) // 目前仅处理了 hover 状态
-  const pseudoClass = {}
-  const newStaticClass = staticClass.split(/\s+/).map(rawClass => {
-    const pseudoMatch = rawClass.match(pseudoClassReg)
-    if (pseudoMatch) {
-      const pseudo = pseudoMatch[1]
-      pseudoClass[pseudo] = pseudoClass[pseudo] || []
-      pseudoClass[pseudo].push(rawClass + ':' + pseudo)
-      return ''
-    }
-    return rawClass
-  }).filter(Boolean).join(' ')
-  return {
-    newStaticClass,
-    pseudoClass
-  }
-}
-
 function processStyleReact (el, options) {
   // process class/wx:class/style/wx:style/wx:show for react native
   const dynamicClass = getAndRemoveAttr(el, config[mode].directive.dynamicClass).val
@@ -1143,15 +1122,6 @@ function processStyleReact (el, options) {
   const { val: show, has } = getAndRemoveAttr(el, config[mode].directive.show)
   if (has && show === undefined) {
     error$1(`Attrs ${config[mode].directive.show} should have a value `)
-  }
-
-  let unoStaticHoverClass = ''
-  if (options.hasUnoCSS) {
-    const result = processUnoPseudo(staticClass, options.unoCtx)
-    staticClass = result.newStaticClass
-    if (result.pseudoClass.hover) {
-      unoStaticHoverClass = result.pseudoClass.hover.join(' ')
-    }
   }
 
   if (dynamicClass || staticClass || dynamicStyle || staticStyle || show) {
@@ -1174,9 +1144,6 @@ function processStyleReact (el, options) {
       let staticClass = el.attrsMap[className + '-class'] || ''
       let staticStyle = getAndRemoveAttr(el, className + '-style').val || ''
       staticClass = staticClass.replace(/\s+/g, ' ')
-      if (unoStaticHoverClass && className === 'hover') {
-        staticClass += unoStaticHoverClass
-      }
       staticStyle = staticStyle.replace(/\s+/g, ' ')
       if ((staticClass && staticClass !== 'none') || staticStyle) {
         const staticClassExp = parseMustacheWithContext(staticClass).result

@@ -5,11 +5,18 @@ import { RESOLVED_ID_RE } from '../web-plugin/consts.js'
 import { getClassMap } from '@mpxjs/webpack-plugin/lib/react/style-helper.js'
 import shallowStringify from '@mpxjs/webpack-plugin/lib/utils/shallow-stringify.js'
 import { fileURLToPath } from 'url'
+import isValidIdentifierStr from '../../../webpack-plugin/lib/utils/is-valid-identifier-str.js'
 
 const __filename = fileURLToPath(import.meta.url) // 当前文件的绝对路径
 const __dirname = nodePath.dirname(__filename) // 当前文件的目录路径
 
 const PLUGIN_NAME = 'unocss:webpack'
+
+const classMapToCode = (classMap) => Object.entries(classMap).reduce((result, [key, value]) => {
+  result !== '' && (result += ',')
+  result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: () => (${shallowStringify(value)})`
+  return result
+}, '')
 
 function WebpackPlugin (configOrPath, defaults) {
   return {
@@ -80,13 +87,15 @@ function WebpackPlugin (configOrPath, defaults) {
             code = code
               .replace('__unoCssMapPlaceholder__', () => {
                 replaced = true
-                return shallowStringify(classMap)
+                return classMapToCode(classMap)
               })
               .replace('__unoVarUtilitiesCssMap__', () => {
-                return shallowStringify(utilitiesClassMap)
+                // 工具类（纯css变量类）覆盖抽离，例如: shadow + shdow-op，shdow-op 优先级更高，和声明顺序无关
+                // shdow-op 会被抽离到 utilitiesClassMap 放在 important layer里
+                return classMapToCode(utilitiesClassMap)
               })
               .replace('__unoCssMapPreflights__', () => {
-                return JSON.stringify(preflightsClassMap)
+                return `__uno_preflight: () => { return { _default: ${JSON.stringify(preflightsClassMap)} } }`
               })
             if (replaced) { compilation.assets[file] = new WebpackSources.RawSource(code) }
           }

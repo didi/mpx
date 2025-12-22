@@ -63,29 +63,33 @@ module.exports = function (styles, {
           return result
         }, '')
         if (ctorType === 'app') {
+          output += `
+          global.__classCaches = global.__classCaches || [];
+          const __classCache = new Map();
+          global.__classCaches.push(__classCache);\n`
+
           if (hasUnoCSS) {
             output += `
-            let __unoClass
-            global.__getUnoClass = function () {
-              if (!__unoClass) {
-                __unoClass = {
-                  unoClassMap: __unoCssMapPlaceholder__,
-                  unoVarClassMap: __unoVarUtilitiesCssMap__,
-                  unoPreflightsClassMap: __unoCssMapPreflights__
-                }
+            let __unoClassMap;
+            global.__getUnoStyle = function(className) {
+              if (!__unoClassMap) {
+                __unoClassMap = {__unoCssMapPlaceholder__}
               }
-              return __unoClass
-            };\n
-            `
+              return global.__GCC(className, __unoClassMap, __classCache);
+            };
+            let __unoVarClassMap;
+            global.__getUnoVarStyle = function(className) {
+              if (!__unoVarClassMap) {
+                __unoVarClassMap = {__unoVarUtilitiesCssMap__}
+              }
+              return global.__GCC(className, __unoVarClassMap, __classCache);
+            };\n`
           }
           output += `
-          global.__classCaches = global.__classCaches || []
-          const __classCache = new Map()
-          global.__classCaches.push(__classCache)
           let __appClassMap
           global.__getAppClassStyle = function(className) {
             if(!__appClassMap) {
-              __appClassMap = {${classMapCode}};
+              __appClassMap = {__unoCssMapPreflights__, ${classMapCode}};
             }
             return global.__GCC(className, __appClassMap, __classCache);
           };\n`

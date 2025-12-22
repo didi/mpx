@@ -217,24 +217,24 @@ function getMediaStyle (media) {
 
 const createLayer = (isNativeStyle) => {
   const layerMap = {
-    preflight:  isNativeStyle ? [] : {},
-    uno:  isNativeStyle ? [] : {},
-    app:  isNativeStyle ? [] : {},
-    normal:  isNativeStyle ? [] : {},
-    important:  isNativeStyle ? [] : {}
+    preflight: isNativeStyle ? [] : {},
+    app: isNativeStyle ? [] : {},
+    uno: isNativeStyle ? [] : {},
+    normal: isNativeStyle ? [] : {},
+    important: isNativeStyle ? [] : {}
   }
 
   const genResult = () => {
     if (isNativeStyle) {
       return [
         ...layerMap.preflight,
-        ...layerMap.uno,
         ...layerMap.app,
+        ...layerMap.uno,
         ...layerMap.normal,
         ...layerMap.important
       ]
     } else {
-      return Object.assign({}, layerMap.preflight, layerMap.uno, layerMap.app, layerMap.normal, layerMap.important)
+      return Object.assign({}, layerMap.preflight, layerMap.app, layerMap.uno, layerMap.normal, layerMap.important)
     }
   }
 
@@ -270,24 +270,27 @@ export default function styleHelperMixin () {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           let needAddUnoPreflight = false
-          const { unoClassMap = {}, unoVarClassMap = {}, unoPreflightsClassMap = {} } = global.__getUnoClass?.() || {}
+          const unoInject = !!global.__getUnoStyle
+          const getAppClassStyle = global.__getAppClassStyle || noop
 
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
-            const getAppClassStyle = global.__getAppClassStyle || noop
             if (localStyle = this.__getClassStyle(className)) {
               if (localStyle._media?.length) {
                 mergeToLayer(localStyle._layer || 'normal', localStyle._default, getMediaStyle(localStyle._media))
               } else {
                 mergeToLayer(localStyle._layer || 'normal', localStyle._default)
               }
-            } else if (unoClassMap[className]) {
-              const unoClass = unoClassMap[className]._default
-              const importantClass = className.endsWith('!')
-              mergeToLayer(importantClass ? 'important' : 'uno', unoClass)
-              if (unoClass.transform || unoClass.filter) needAddUnoPreflight = true
-            } else if (unoVarClassMap[className]) {
-              mergeToLayer('important', unoVarClassMap[className]._default)
+            } else if (unoInject) {
+              let unoStyle, unoVarStyle
+              if (unoStyle = global.__getUnoStyle(className)) {
+                unoStyle = unoStyle._default
+                const importantClass = className.endsWith('!')
+                mergeToLayer(importantClass ? 'important' : 'uno', unoStyle)
+                if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
+              } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
+                mergeToLayer('important', unoVarStyle._default)
+              }
             } else if (appStyle = getAppClassStyle(className)) {
               if (appStyle._media?.length) {
                 mergeToLayer(appStyle._layer || 'app', appStyle._default, getMediaStyle(appStyle._media))
@@ -301,7 +304,7 @@ export default function styleHelperMixin () {
           })
 
           if (needAddUnoPreflight) {
-            mergeToLayer('preflight', unoPreflightsClassMap)
+            mergeToLayer('preflight', getAppClassStyle('__uno_preflight')._default)
           }
         }
 

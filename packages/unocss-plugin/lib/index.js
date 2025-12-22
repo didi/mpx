@@ -349,16 +349,10 @@ class MpxUnocssPlugin {
           }
           return 'main'
         }
-        let checkApplyReg
-        if (this.options.transformCSS) {
-          const checkApplyList = this.options.transformCSS.applyVariable || ['--at-apply', '--uno-apply', '--uno']
-          checkApplyReg = new RegExp(`(${checkApplyList.join('|')})(\s)?\:`)
-        }
         // 处理wxss
         const processStyle = async (file, source) => {
           const content = source.source()
-          const hasApplyVariable = checkApplyReg && checkApplyReg.test(content)
-          if (!content || !(cssRequiresTransform(content) || hasApplyVariable)) return
+          if (!content || !(cssRequiresTransform(content, this.options.transformCSS))) return
           const output = await transformStyle(content, file, uno, this.options.transformCSS)
           if (!output || output.length <= 0) {
             error(`${file} 解析style错误,检查样式文件输入!`)
