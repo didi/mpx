@@ -39,7 +39,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
-    'box-sizing': ['border-box'],
+    'box-sizing': ['border-box', 'content-box'],
     'backface-visibility': ['visible', 'hidden'],
     overflow: ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
