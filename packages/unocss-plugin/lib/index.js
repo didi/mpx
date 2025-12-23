@@ -304,7 +304,7 @@ class MpxUnocssPlugin {
           assets[file] = getRawSource(output)
         }
         // 处理wxml
-        const { template: templateExt, styles: styleExt } = mpxConfig[mode].typeExtMap
+        const { template: templateExt, styles: styleExt } = mpxConfig[mode].typeExtMap || {}
         const packageClassesMaps = {
           main: {}
         }
