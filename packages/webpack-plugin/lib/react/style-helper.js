@@ -91,7 +91,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
   root.walkRules(rule => {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
-      if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
+      if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
       if (!Array.isArray(newData)) {
