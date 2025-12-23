@@ -108,20 +108,13 @@ module.exports = function getSpec ({ warn, error }) {
     return fallback
   }
 
-  const verifyValues = ({ prop, value, selector }, isError = true, visited = new Set()) => {
+  const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
     value = value.trim()
     const tips = isError ? error : warn
 
     // 对于包含 CSS 变量的值，提取 fallback 值进行验证
     if (cssVariableExp.test(value)) {
-      // 防止循环引用
-      if (visited.has(value)) {
-        tips(`CSS variable circular reference detected in ${selector} for property ${prop}, value: ${value}`)
-        return false
-      }
-      visited.add(value)
-
       const fallback = getDefaultValueFromVar(value)
       // undefined 表示检测到循环引用
       if (fallback === undefined) {
@@ -132,14 +125,8 @@ module.exports = function getSpec ({ warn, error }) {
       if (fallback === null) {
         return true
       }
-      // 有 fallback 值，继续验证
-      const fallbackValid = verifyValues({ prop, value: fallback, selector }, isError, visited)
-      if (!fallbackValid) {
-        // fallback 值不合法，返回 false
-        return false
-      }
-      // CSS 变量本身是合法的（运行时会解析）
-      return true
+      // 有 fallback 值，将 fallback 作为新的 value 继续后续验证流程
+      value = fallback
     }
 
     // calc() 和 env() 跳过验证
