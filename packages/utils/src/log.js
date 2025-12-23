@@ -1,4 +1,5 @@
 import { isFunction } from './base'
+import { getStackByFiberInDevAndProd } from './componentError'
 
 const isDev = process.env.NODE_ENV !== 'production'
 
@@ -27,10 +28,15 @@ export function warn (msg, location, e) {
   }
 }
 
-export function error (msg, location, e) {
+export function error (msg, location, e, options = {}) {
+  const { workInProgress } = options
+  let stack = ''
+  if (workInProgress) {
+    stack = getStackByFiberInDevAndProd(workInProgress)
+  }
   const errorHandler = mpxGlobal.__mpx?.config.errorHandler
   if (!e) {
-    e = new Error(msg)
+    e = new Error(stack ? `${msg}\n Error Component Stack:${stack}` : msg)
   }
   if (isFunction(errorHandler)) {
     errorHandler(msg, location, e)
