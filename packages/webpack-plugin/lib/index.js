@@ -79,6 +79,7 @@ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
+const { rewriteFsForCss } = require('./style-compiler/strip-conditional-loader')
 
 checkVersionCompatibility()
 
@@ -323,6 +324,9 @@ class MpxWebpackPlugin {
   }
 
   apply (compiler) {
+    // 注入 fs 代理
+    rewriteReadFileSyncForCss(this.options.defs, this.options.projectRoot)
+
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
