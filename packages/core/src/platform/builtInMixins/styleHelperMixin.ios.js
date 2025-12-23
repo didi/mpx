@@ -11,7 +11,7 @@ global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
 
 global.__GCC = function (className, classMap, classMapValueCache) {
-  if (!classMapValueCache.get(className)) {
+  if (!classMapValueCache.has(className)) {
     const styleObj = classMap[className]?.()
     styleObj && classMapValueCache.set(className, styleObj)
   }
