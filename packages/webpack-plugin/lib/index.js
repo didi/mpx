@@ -325,7 +325,7 @@ class MpxWebpackPlugin {
 
   apply (compiler) {
     // 注入 fs 代理
-    rewriteReadFileSyncForCss(this.options.defs, this.options.projectRoot)
+    rewriteFsForCss(this.options.defs, this.options.projectRoot)
 
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
