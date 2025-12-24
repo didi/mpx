@@ -157,7 +157,6 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
             const val = classMap[key] || {}
             classMap[key] = Object.assign(val, classMapValue)
           }
-
         }
       })
     }

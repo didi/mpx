@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation, noop } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
