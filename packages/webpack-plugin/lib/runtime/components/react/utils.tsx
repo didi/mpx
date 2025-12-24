@@ -238,7 +238,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
       const resolved = resolveVar(value, varContext)
       if (resolved === undefined) {
         delete target[key]
-        // if (resolved === undefined) error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
+        // error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
         return
       }
       target[key] = resolved
@@ -410,7 +410,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
   let hasVarUse = false
-  const hasSelfPercent = false
+  let hasSelfPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const unoVarKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
@@ -452,18 +452,19 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
+  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
+      // calc translate & border-radius 的百分比计算
+      if (hasOwn(selfPercentRule, key) && /%/.test(value)) {
+        hasSelfPercent = true
+        percentKeyPaths.push(keyPath.slice())
+      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
     // fixme 去掉 translate & border-radius 的百分比计算
-    // if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
-    //   hasSelfPercent = true
-    //   percentKeyPaths.push(keyPath.slice())
-    // } else
     if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
       percentKeyPaths.push(keyPath.slice())
     }

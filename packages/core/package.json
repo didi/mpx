@@ -38,7 +38,7 @@
     "react-native-screens": "*",
     "react-native-video": "*",
     "react-native-webview": "*",
-    "vue": "^3.5.26",
+    "vue": "^2.7.10",
     "vue-demi": "^0.14.6",
     "vue-i18n": "^8.27.2",
     "vue-i18n-bridge": "^9.2.2"
