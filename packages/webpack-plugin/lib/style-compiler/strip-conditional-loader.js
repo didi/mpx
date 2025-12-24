@@ -1,5 +1,4 @@
 const fs = require('fs')
-const Module = require('module')
 
 class Node {
   constructor(type, condition = null) {
@@ -27,8 +26,7 @@ function tokenize(cssString) {
     // match[2] 为条件（如果存在）
     tokens.push({
       type: match[1], // 'if'、'elif'、'else' 或 'endif'
-      condition: match[2] ? match[2].trim() : null,
-      rawValue: match[0]
+      condition: match[2] ? match[2].trim() : null
     })
     lastIndex = regex.lastIndex
   }
@@ -53,7 +51,6 @@ function parse(cssString) {
       currentChildren.push(node)
     } else if (token.type === 'if') {
       const node = new Node('If', token.condition)
-      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       nodeStack.push(currentChildren)
       currentChildren = node.children
@@ -63,7 +60,6 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('ElseIf', token.condition)
-      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'else') {
@@ -72,16 +68,12 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('Else')
-      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'endif') {
-      const node = new Node('EndIf')
-      node.rawValue = token.rawValue || ''
       if (nodeStack.length > 0) {
         currentChildren = nodeStack.pop()
       }
-      currentChildren.push(node)
     }
   })
   return ast
@@ -110,22 +102,17 @@ function traverseAndEvaluate(ast, defs) {
       } else if (node.type === 'If') {
         // 直接判断 If 节点
         batchedIf = false
-        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'ElseIf' && !batchedIf) {
-        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'Else' && !batchedIf) {
-        output += node.rawValue || ''
         traverse(node.children)
-      } else if (node.type === 'EndIf') {
-        output += node.rawValue || ''
       }
     }
   }
@@ -144,75 +131,69 @@ function stripCondition(content, defs) {
   return traverseAndEvaluate(ast, defs)
 }
 
-function rewriteFsForCss(defs, projectRoot) {
+let proxyReadFileSync
+let proxyReadFile
+const rawReadFileSync = fs.readFileSync
+const rawReadFile = fs.readFile
+
+function rewriteFSForCss() {
+  proxyReadFileSync = function (path, options) {
+    return rawReadFileSync.call(fs, path, options)
+  }
+  proxyReadFile = function (path, options, callback) {
+    return rawReadFile.call(fs, path, options, callback)
+  }
+  fs.readFileSync = function (path, options) {
+    return proxyReadFileSync(path, options)
+  }
+  fs.readFile = function (path, options, callback) {
+    return proxyReadFile(path, options, callback)
+  }
+}
+
+function startFSStripForCss(defs) {
   function shouldStrip(path) {
     return typeof path === 'string' && /\.(styl|scss|sass|less|css)$/.test(path)
   }
+  proxyReadFileSync = function (path, options) {
+    const content = rawReadFileSync.call(fs, path, options)
+    if (shouldStrip(path)) {
+      try {
+        if (typeof content === 'string') {
+          return stripCondition(content, defs)
+        }
+      } catch (e) {
+        return content
+      }
+    }
+    return content
+  }
 
-  function patchFs(fsModule) {
-    const readFileSync = fsModule.readFileSync
-    const readFile = fsModule.readFile
+  proxyReadFile = function (path, options, callback) {
+    let cb = callback
+    if (typeof options === 'function') {
+      cb = options
+      options = null
+    }
 
-    fsModule.readFileSync = function (path, options) {
-      const content = readFileSync.call(fsModule, path, options)
+    const wrappedCallback = (err, data) => {
+      if (err) return cb(err)
       if (shouldStrip(path)) {
         try {
-          if (typeof content === 'string') {
-            return stripCondition(content, defs)
+          if (typeof data === 'string') {
+            const result = stripCondition(data, defs)
+            return cb(null, result)
           }
         } catch (e) {
-          return content
+          return cb(null, data)
         }
       }
-      return content
+      cb(null, data)
     }
-
-    fsModule.readFile = function (path, options, callback) {
-      // 处理参数重载
-      let cb = callback
-      if (typeof options === 'function') {
-        cb = options
-        options = null
-      }
-
-      const wrappedCallback = (err, data) => {
-        if (err) return cb(err)
-        if (shouldStrip(path)) {
-          try {
-            if (typeof data === 'string') {
-              const result = stripCondition(data, defs)
-              return cb(null, result)
-            }
-          } catch (e) {
-            return cb(null, data)
-          }
-        }
-        cb(null, data)
-      }
-
-      if (options) {
-        return readFile.call(fsModule, path, options, wrappedCallback)
-      }
-      return readFile.call(fsModule, path, wrappedCallback)
+    if (options) {
+      return rawReadFile.call(fs, path, options, wrappedCallback)
     }
-  }
-
-  patchFs(fs)
-  try {
-    patchFs(require('graceful-fs'))
-  } catch (e) {
-    console.error('[mpx-strip-conditional-loader]: Error patching graceful-fs:', e)
-  }
-
-  try {
-    const createRequire = Module.createRequire
-    if (createRequire) {
-      const lessPath = require.resolve('less', { paths: [projectRoot || process.cwd()] })
-      const lessRequire = createRequire(lessPath)
-      patchFs(lessRequire('graceful-fs'))
-    }
-  } catch (e) {
-    console.error('[mpx-strip-conditional-loader]: Error patching graceful-fs used by less:', e)
+    return rawReadFile.call(fs, path, wrappedCallback)
   }
 }
 /**
@@ -232,4 +213,5 @@ module.exports = async function (css) {
 }
 
 module.exports.stripCondition = stripCondition
-module.exports.rewriteFsForCss = rewriteFsForCss
+module.exports.rewriteFSForCss = rewriteFSForCss
+module.exports.startFSStripForCss = startFSStripForCss
