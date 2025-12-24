@@ -9,14 +9,7 @@ const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueName, warn, error }) {
-  const classMap = ctorType === 'page'
-      ? {
-          [MPX_TAG_PAGE_SELECTOR]: {
-            _media: [],
-            _default: { flex: 1, height: "'100%'" }
-          }
-        }
-      : {}
+  const classMap = ctorType === 'page' ? { flex: 1, height: "'100%'" } : {}
 
   const root = postcss.parse(content, {
     from: filename
@@ -140,20 +133,29 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          const _default = classMap[key]?._default || {}
-          const _media = classMap[key]?._media || []
+          let _default = classMap[key]?._default
+          let _media = classMap[key]?._media
           if (isMedia) {
+            // 当前是媒体查询
+            _default = _default || {}
+            _media = _media || []
             _media.push({
               options,
               value: classMapValue
             })
-          } else {
+            classMap[key] = {
+              _media,
+              _default
+            }
+          } else if (_default) {
+            // 已有媒体查询数据，此次非媒体查询
             Object.assign(_default, classMapValue)
+          } else {
+            // 无媒体查询
+            const val = classMap[key] || {}
+            classMap[key] = Object.assign(val, classMapValue)
           }
-          classMap[key] = {
-            _media,
-            _default
-          }
+
         }
       })
     }
