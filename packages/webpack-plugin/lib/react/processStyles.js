@@ -64,7 +64,7 @@ module.exports = function (styles, {
         })
         const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
           result !== '' && (result += ',')
-          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(_f){ return ${shallowStringify(value)};}`
+          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(_f){return ${shallowStringify(value)};}`
           return result
         }, '')
         if (ctorType === 'app') {
