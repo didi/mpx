@@ -49,7 +49,6 @@ module.exports = function (styles, {
       if (err) return callback(err)
       try {
         output += `
-          var _f = global.__formatValue
           global.__classCaches = global.__classCaches || []
           var __classCache = new Map()
           global.__classCaches.push(__classCache)`
@@ -65,7 +64,7 @@ module.exports = function (styles, {
         })
         const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
           result !== '' && (result += ',')
-          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: () => (${shallowStringify(value)})`
+          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(_f){ return ${shallowStringify(value)};}`
           return result
         }, '')
         if (ctorType === 'app') {

@@ -12,7 +12,8 @@ global.__mpxPageSizeCountMap = reactive({})
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
-    const styleObj = classMap[className]?.()
+    const _f = global.__formatValue
+    const styleObj = classMap[className]?.(_f)
     styleObj && classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
@@ -266,14 +267,13 @@ export default function styleHelperMixin () {
 
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
-            const getAppClassStyle = global.__getAppClassStyle || noop
             if (localStyle = this.__getClassStyle?.(className)) {
               if (localStyle._media?.length) {
                 mergeResult(localStyle._default, getMediaStyle(localStyle._media))
               } else {
                 mergeResult(localStyle)
               }
-            } else if (appStyle = getAppClassStyle(className)) {
+            } else if (appStyle = global.__getAppClassStyle?.(className)) {
               if (appStyle._media?.length) {
                 mergeResult(appStyle._default, getMediaStyle(appStyle._media))
               } else {
