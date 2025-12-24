@@ -25,7 +25,7 @@ function isLock (navigationHelper, type, options) {
   clearTimeout(timerId)
   timerId = setTimeout(() => {
     if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-      navigationHelper.lastFailCallback('timeout')
+      navigationHelper.lastFailCallback(`${type}:fail timeout ${options.url || ''}`)
       navigationHelper.lastFailCallback = null
     }
   }, 1000)
