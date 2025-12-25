@@ -19,8 +19,7 @@ import {
   getUnit,
   getInitialVal,
   getAnimation,
-  isTransform,
-  formatAnimatedKeys
+  isTransform
 } from './utils'
 import { parseValues, useRunOnJSCallback } from '../utils'
 import type { SharedValue, AnimatableValue, EasingFunction } from 'react-native-reanimated'
@@ -163,10 +162,6 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   const { style: originalStyle = {}, transitionend } = props
   // style变更标识(首次render不执行)，初始值为0，首次渲染后为1
   const animationDeps = useRef(0)
-  // 有动画样式的 style key(useAnimatedStyle使用)
-  const animatedStyleKeys = useSharedValue([] as (string|string[])[])
-  // 记录需要执行动画的 propName
-  const animatedKeys = useRef([] as string[])
   // 记录上次style map
   // const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
   // ** 从 style 中获取动画数据
@@ -174,59 +169,46 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     return parseTransitionStyle(originalStyle)
   }, [])
   // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
-  const shareValMap = useMemo(() => {
-    return Object.keys(transitionMap).reduce((valMap, property) => {
+  const { shareValMap, animatedKeys, animatedKeysShareVal } = useMemo(() => {
+    // 记录需要执行动画的 propName
+    const animatedKeys = [] as string[]
+    const animatedKeysShareVal = [] as (string|string[])[]
+    const transforms = [] as string[]
+    const shareValMap = Object.keys(transitionMap).reduce((valMap, property) => {
       // const { property } = transition || {}
       if (property === 'transform') {
         Object.keys(originalStyle.transform ? getTransformObj(originalStyle.transform!) : transformInitial).forEach((key) => {
           const defaultVal = getInitialVal(originalStyle, key)
           // console.log(`shareValMap property=${key} defaultVal=${defaultVal}`)
           valMap[key] = makeMutable(defaultVal)
+          animatedKeys.push(key)
+          transforms.push(key)
         })
       } else if (hasOwn(transitionSupportedProperty, property)) {
         const defaultVal = getInitialVal(originalStyle, property)
         // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
         valMap[property] = makeMutable(defaultVal)
+        animatedKeys.push(property)
+        animatedKeysShareVal.push(property)
       }
       // console.log('shareValMap = ', valMap)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
-  }, [])
-  const runOnJSCallbackRef = useRef({})
-  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
-  // 从 transitionMap 获取动画信息
-  function getAnimatedInfo () {
-    const animatedKeysRef = [] as string[]
-    const animatedKeysShareVal = [] as (string|string[])[]
-    const transforms = [] as string[]
-    Object.keys(shareValMap).forEach(key => {
-      const value = originalStyle[key]
-      if (isTransform(key) && originalStyle.transform) {
-        Object.entries(getTransformObj(originalStyle.transform)).forEach(([prop, val]) => {
-          if (val !== undefined && val !== shareValMap[key].value) {
-            shareValMap[prop].value = val
-          }
-          animatedKeysRef.push(prop)
-          transforms.push(prop)
-        })
-      } else {
-        if (value !== undefined && value !== shareValMap[key].value) {
-          shareValMap[key].value = value
-        }
-        animatedKeysRef.push(key)
-        animatedKeysShareVal.push(key)
-      }
-    })
     if (transforms.length) animatedKeysShareVal.push(transforms)
     return {
-      animatedKeysRef,
+      shareValMap,
+      animatedKeys,
       animatedKeysShareVal
     }
-  }
+  }, [])
+  // 有动画样式的 style key(useAnimatedStyle使用)
+  const animatedStyleKeys = useSharedValue(animatedKeysShareVal)
+  const runOnJSCallbackRef = useRef({})
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 根据 animation action 创建&驱动动画
   function createAnimation () {
     let transformTransitionendDone = false
-    animatedKeys.current.forEach(key => {
+    animatedKeys.forEach(key => {
       // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
       const isTransformKey = isTransform(key)
       let ruleV = originalStyle[key]
@@ -281,10 +263,6 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     // 首次不执行
     if (!animationDeps.current) {
       animationDeps.current = 1
-      // 更新 shareVale & 获取动画key
-      const { animatedKeysRef, animatedKeysShareVal } = getAnimatedInfo()
-      animatedKeys.current = animatedKeysRef
-      animatedStyleKeys.value = animatedKeysShareVal
       return
     }
     createAnimation()
