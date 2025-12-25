@@ -9,7 +9,7 @@ const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error }) {
+function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
       ? {
           [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" }
@@ -28,12 +28,12 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
         value = matched[1]
         needStringify = false
       } else {
-        value = `global.__formatValue(${+matched[1]}, '${matched[2]}')`
+        value = `${formatValueName || 'global.__formatValue'}(${+matched[1]}, '${matched[2]}')`
         needStringify = false
       }
     }
     if (hairlineRegExp.test(value)) {
-      value = `global.__formatValue(${JSON.stringify(value)}, 'hairlineWidth')`
+      value = `${formatValueName || 'global.__formatValue'}(${JSON.stringify(value)}, 'hairlineWidth')`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
