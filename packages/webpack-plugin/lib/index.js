@@ -79,6 +79,7 @@ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
+const { rewriteReadFileSyncForCss } = require('./style-compiler/strip-conditional-loader')
 
 checkVersionCompatibility()
 
@@ -323,6 +324,7 @@ class MpxWebpackPlugin {
   }
 
   apply (compiler) {
+
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -476,6 +478,8 @@ class MpxWebpackPlugin {
     Object.keys(defs).forEach((key) => {
       defsOpt[key] = JSON.stringify(defs[key])
     })
+
+    rewriteReadFileSyncForCss(defs)
 
     // define mode & defs
     new DefinePlugin(defsOpt).apply(compiler)
@@ -1729,7 +1733,14 @@ class MpxWebpackPlugin {
 
           if (isReact(mpx.mode)) {
             // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
-            source.add('/* @refresh reset */\n')
+            if (process.env.NODE_ENV !== 'production') {
+              source.add(`/* @refresh reset */
+if (module.hot) {
+  module.hot.accept(() => {
+    require("react-native").DevSettings.reload();
+  });
+}\n`)
+            }
             // 注入页面的配置，供screen前置设置导航情况
             if (isRuntime) {
               source.add('// inject pageconfigmap for screen\n' +
@@ -2087,3 +2098,12 @@ try {
 }
 
 module.exports = MpxWebpackPlugin
+
+/**
+ * 定义 MpxWebpackPlugin 的配置
+ * @param {MpxWebpackPluginOptions} options - 插件选项
+ * @returns {MpxWebpackPluginOptions}
+ */
+module.exports.defineConfig = function defineConfig(options) {
+  return options
+}

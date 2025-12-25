@@ -1,7 +1,4 @@
-const fs = require('fs/promises')
-const parseRequest = require('../utils/parse-request')
-const atImport = require('postcss-import')
-const { default: postcss } = require('postcss')
+const fs = require('fs')
 
 class Node {
   constructor(type, condition = null) {
@@ -29,7 +26,8 @@ function tokenize(cssString) {
     // match[2] 为条件（如果存在）
     tokens.push({
       type: match[1], // 'if'、'elif'、'else' 或 'endif'
-      condition: match[2] ? match[2].trim() : null
+      condition: match[2] ? match[2].trim() : null,
+      rawValue: match[0]
     })
     lastIndex = regex.lastIndex
   }
@@ -47,13 +45,14 @@ function parse(cssString) {
   const ast = []
   const nodeStack = []
   let currentChildren = ast
-  tokens.forEach((token) => {
+  tokens.forEach(token => {
     if (token.type === 'text') {
       const node = new Node('Text')
       node.value = token.content
       currentChildren.push(node)
     } else if (token.type === 'if') {
       const node = new Node('If', token.condition)
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       nodeStack.push(currentChildren)
       currentChildren = node.children
@@ -63,6 +62,7 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('ElseIf', token.condition)
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'else') {
@@ -71,12 +71,16 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('Else')
+      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'endif') {
+      const node = new Node('EndIf')
+      node.rawValue = token.rawValue || ''
       if (nodeStack.length > 0) {
         currentChildren = nodeStack.pop()
       }
+      currentChildren.push(node)
     }
   })
   return ast
@@ -85,7 +89,7 @@ function parse(cssString) {
 function evaluateCondition(condition, defs) {
   try {
     const keys = Object.keys(defs)
-    const values = keys.map((key) => defs[key])
+    const values = keys.map(key => defs[key])
     /* eslint-disable no-new-func */
     const func = new Function(...keys, `return (${condition});`)
     return func(...values)
@@ -105,17 +109,22 @@ function traverseAndEvaluate(ast, defs) {
       } else if (node.type === 'If') {
         // 直接判断 If 节点
         batchedIf = false
+        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'ElseIf' && !batchedIf) {
+        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'Else' && !batchedIf) {
+        output += node.rawValue || ''
         traverse(node.children)
+      } else if (node.type === 'EndIf') {
+        output += node.rawValue || ''
       }
     }
   }
@@ -134,133 +143,68 @@ function stripCondition(content, defs) {
   const result = traverseAndEvaluate(ast, defs)
   return result
 }
-
-/**
- * @typedef {Object} StripByPostcssOption
- * @property {string} lang 样式语法格式
- * @property {string} resourcePath 文件路径
- * @property {string} css 源文件
- * @property {Record<string, any>} defs 条件定义
- * @property {import('webpack').LoaderContext<any>['resolve']} resolve webpack resolve 方法
- */
-
-/**
- * @typedef {Object} AtImportConfig
- * @property {string} from 当前文件路径
- * @property {(filename: string) => Promise<string> | string;} load 加载文件内容的函数
- * @property {(id: string, base: string) => Promise<string | null> | string | null;} resolve 解析文件路径的函数
- */
-
-/**
- *
- * @param {Function} callback
- * @param {string} name
- * @returns
- */
-const shouldInstallWarning = (callback, name) => {
-  return () => {
-    try {
-      return callback()
-    } catch (error) {
-      throw new Error(
-        `[mpx-strip-conditional-loader]: ${name} is not installed, please install it first.\norginal Error: ${
-          error?.message ?? error.toString()
-        }`,
-        {
-          cause: error
-        }
-      )
-    }
-  }
-}
-/**
- *
- * @typedef {import('postcss').ProcessOptions} ProcessOptions
- * @typedef {import('postcss').Root} Root
- *
- * @type {Record<string, ProcessOptions['syntax']>}
- */
-const styleSyntaxProcesserMap = {
-  stylus: shouldInstallWarning(() => require('postcss-styl'), 'postcss-styl'),
-  less: shouldInstallWarning(() => require('postcss-less'), 'postcss-less'),
-  scss: shouldInstallWarning(() => require('postcss-scss'), 'postcss-scss')
-}
-
 /**
  * @param {StripByPostcssOption} options
  */
 async function stripByPostcss(options) {
-  const syntax = styleSyntaxProcesserMap[options.lang]?.()
   const defs = options.defs ?? {}
+  const afterConditionStrip = stripCondition(options.css, defs)
+  return {
+    css: afterConditionStrip
+  }
+}
 
-  function stripContentCondition(content) {
-    content = stripCondition(content, defs)
+function rewriteReadFileSyncForCss(defs) {
+  function shouldStrip(path) {
+    return typeof path === 'string' && /\.(styl|scss|sass|less|css)$/.test(path)
+  }
 
-    if (options.lang === 'stylus') {
-      content = content.replace(/\t/g, '  ')
+  const readFileSync = fs.readFileSync
+  const readFile = fs.readFile
+
+  fs.readFileSync = function (path, options) {
+    const content = readFileSync.call(fs, path, options)
+    if (shouldStrip(path)) {
+      try {
+        if (typeof content === 'string') {
+          return stripCondition(content, defs)
+        }
+      } catch (e) {
+        return content
+      }
     }
-
     return content
   }
 
-  const afterConditionStrip = stripContentCondition(options.css, defs)
-
-    /**
-   * @type {import('postcss').AcceptedPlugin[]}
-   */
-  const plugins = [
-    atImport({
-      async load(filename) {
-        let content = await fs.readFile(filename, 'utf-8')
-        const processer = postcss(plugins)
-
-        content = stripContentCondition(content, defs)
-
-        const { css } = await processer.process(content, {
-          syntax,
-          from: filename,
-          to: options.resourcePath
-        })
-        return css
-      },
-      resolve: (id, base) => {
-        return new Promise((resolve, reject) => {
-          options.resolve(base, id, (err, res) => {
-            if (err) return reject(err)
-            if (typeof res !== 'string') {
-              return reject(
-                new Error(
-                  `[mpx-strip-conditional-loader]: Cannot resolve ${id} from ${base}`
-                )
-              )
-            }
-            resolve(res)
-          })
-        })
-      }
-    }),
-    {
-      // less/scss syntax 在 postcss 重新生成 css 后，`//` 注释后面不会保留换行，会和后续的 css 语句和注释连在一起，导致后续语法错误
-      postcssPlugin: 'mpx-strip-conditional-loader-append-command',
-      CommentExit(comment) {
-        comment.raws.right ??= ''
-
-        if (comment.raws.right.endsWith('\n')) {
-          return
-        }
-
-        comment.raws.right += '\n'
-      }
+  fs.readFile = function (path, options, callback) {
+    // 处理参数重载
+    let cb = callback
+    if (typeof options === 'function') {
+      cb = options
+      options = null
     }
-  ]
 
-  const processer = postcss(plugins)
-  return processer.process(afterConditionStrip, {
-    from: options.resourcePath,
-    syntax
-  })
+    const wrappedCallback = (err, data) => {
+      if (err) return cb(err)
+      if (shouldStrip(path)) {
+        try {
+          if (typeof data === 'string') {
+            const result = stripCondition(data, defs)
+            return cb(null, result)
+          }
+        } catch (e) {
+          return cb(null, data)
+        }
+      }
+      cb(null, data)
+    }
+
+    if (options) {
+      return readFile.call(fs, path, options, wrappedCallback)
+    }
+    return readFile.call(fs, path, wrappedCallback)
+  }
 }
-
 /**
  *
  * @this {import('webpack').LoaderContext<any>}
@@ -268,22 +212,12 @@ async function stripByPostcss(options) {
  */
 module.exports = async function (css) {
   this.cacheable()
-
   const callback = this.async()
-
   const mpx = this.getMpx()
-  const { resourcePath, queryObj } = parseRequest(this.resource)
-
-  const result = await stripByPostcss({
-    lang: queryObj.lang,
-    resourcePath,
-    css,
-    defs: mpx.defs,
-    resolve: this.resolve.bind(this)
-  })
-
-  callback(null, result.css, result.map)
+  const result = stripCondition(css, mpx.defs)
+  callback(null, result)
 }
 
 module.exports.stripByPostcss = stripByPostcss
 module.exports.stripCondition = stripCondition
+module.exports.rewriteReadFileSyncForCss = rewriteReadFileSyncForCss

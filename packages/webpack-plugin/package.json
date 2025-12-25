@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.17",
+  "version": "2.10.17-beta.3",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -51,25 +51,18 @@
     "mime": "^2.2.2",
     "object-assign": "^4.1.1",
     "postcss": "^8.4.5",
-    "postcss-import": "^16.1.1",
-    "postcss-less": "^6.0.0",
     "postcss-load-config": "^3.1.1",
     "postcss-modules-extract-imports": "^3.0.0",
     "postcss-modules-local-by-default": "^4.0.0",
     "postcss-modules-scope": "^3.0.0",
     "postcss-modules-values": "^4.0.0",
-    "postcss-scss": "^4.0.9",
     "postcss-selector-parser": "^6.0.8",
-    "postcss-styl": "^0.12.3",
     "postcss-value-parser": "^4.0.2",
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
-    "postcss-less": "^6.0.0",
-    "postcss-scss": "^4.0.9",
-    "postcss-styl": "^0.12.3",
     "webpack": "^5.75.0"
   },
   "publishConfig": {
@@ -95,7 +88,6 @@
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^8.1.0",
-    "@types/postcss-import": "^14.0.3",
     "@types/react": "^18.2.79",
     "glob": "^11.0.2",
     "react-native": "^0.74.5",
@@ -105,6 +97,7 @@
     "react-native-safe-area-context": "^4.12.0",
     "react-native-svg": "^15.8.0",
     "react-native-video": "^6.9.0",
+    "react-native-vision-camera": "^4.7.2",
     "react-native-webview": "^13.12.2",
     "rimraf": "^6.0.1"
   },

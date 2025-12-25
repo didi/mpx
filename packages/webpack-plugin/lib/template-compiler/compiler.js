@@ -764,9 +764,7 @@ function parse (template, options) {
 
       const children = currentParent.children
 
-      const isTextLikeParent = currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text'
-
-      if (!isTextLikeParent) {
+      if (currentParent.tag !== 'text') {
         text = text.trim()
       } else {
         text = text.trim() ? text : ''
@@ -2247,7 +2245,6 @@ function postProcessIfReact (el) {
           delete el.elseif
           el._if = true
           addIfCondition(ifNode, {
-            exp: el.elseif.exp,
             block: el
           })
           removeNode(el, true)
@@ -2720,7 +2717,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,ks,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)
