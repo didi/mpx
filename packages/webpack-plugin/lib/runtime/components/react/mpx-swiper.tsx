@@ -667,26 +667,26 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       let resetOffset = 0
       let resetPreOffset = 0
       if (moveToOffset < boundaryEnd) {
-          isBoundary = true
-          // 超过边界的距离
-          const exceedLength = Math.abs(moveToOffset) - Math.abs(boundaryEnd)
-          // 计算对标正常元素所在的offset
-          resetOffset = patchElmNumShared.value * step.value + exceedLength
-          resetPreOffset = patchElmNumShared.value * step.value
+        isBoundary = true
+        // 超过边界的距离
+        const exceedLength = Math.abs(moveToOffset) - Math.abs(boundaryEnd)
+        // 计算对标正常元素所在的offset
+        resetOffset = patchElmNumShared.value * step.value + exceedLength
+        resetPreOffset = patchElmNumShared.value * step.value
       }
       if (moveToOffset > boundaryStart) {
-          isBoundary = true
-          // 超过边界的距离
-          const exceedLength = Math.abs(boundaryStart) - Math.abs(moveToOffset)
-          // 计算对标正常元素所在的offset
-          resetOffset = (patchElmNumShared.value + childrenLength.value - 1) * step.value - exceedLength
-          resetPreOffset = (patchElmNumShared.value + childrenLength.value) * step.value
+        isBoundary = true
+        // 超过边界的距离
+        const exceedLength = Math.abs(boundaryStart) - Math.abs(moveToOffset)
+        // 计算对标正常元素所在的offset
+        resetOffset = (patchElmNumShared.value + childrenLength.value - 1) * step.value - exceedLength
+        resetPreOffset = (patchElmNumShared.value + childrenLength.value) * step.value
       }
       return {
-          isBoundary,
-          resetOffset: -resetOffset,
-          resetPreOffset: -resetPreOffset
-      };
+        isBoundary,
+        resetOffset: -resetOffset,
+        resetPreOffset: -resetPreOffset
+      }
     }
     // 非循环超出边界，应用阻力; 开始滑动少阻力小，滑动越长阻力越大
     function handleResistanceMove (eventData: EventDataType) {
@@ -766,7 +766,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         // 4. 循环更新：正常
         const { isBoundary, resetOffset, resetPreOffset } = reachBoundary(eventData)
         if (childrenLength.value > 1 && isBoundary && circularShared.value) {
-          offset.value = resetOffset;
+          offset.value = resetOffset
           preOffset.value = resetPreOffset
         } else {
           offset.value = moveDistance + offset.value
@@ -789,7 +789,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
         // 起始方向：基于offset和(修正)preOffset判断
         const originData = {
-          transdir: offset.value - preOffset.value !== 0 ? offset.value - preOffset.value :  defaultDir
+          transdir: offset.value - preOffset.value !== 0 ? offset.value - preOffset.value : defaultDir
         }
         const eventData = {
           translation: moveDistance,
@@ -819,18 +819,17 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         // 用于判断是否超过一半(当前offset + 起始或修正起始offset)，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
         const offsetHalf = Math.abs(Math.abs(preOffset.value) - Math.abs(offset.value)) > step.value / 2
         if (offsetHalf) {
-          if(Math.abs(velocity) > longPressRatio) {
+          if (Math.abs(velocity) > longPressRatio) {
             // 超过速度阈值，按照实时方向(快速来回滑动)
             handleEnd(realtimeData)
           } else {
             // 超过速度阈值，按照起始方向（慢速长按）
             handleEnd(originData)
           }
-        }
-        else {
+        } else {
           if (Math.abs(velocity) > longPressRatio) {
             // 超过速度阈值，按照实时方向(快速来回滑动)
-            handleEnd(realtimeData) 
+            handleEnd(realtimeData)
           } else {
             // 超过速度阈值，按照起始方向（慢速长按）
             handleBack(originData)
