@@ -33,6 +33,10 @@ type EventDataType = {
   // onUpdate时根据上一个判断方向，onFinalize根据transformStart判断
   transdir: number
 }
+// 只基于方向 + offset 计算最终的索引
+type EventEndType = {
+  transdir: number
+}
 
 interface SwiperProps {
   children?: ReactNode
@@ -203,6 +207,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // const initOffset = getOffset(props.current || 0, initStep)
   // 记录元素的偏移量
   const offset = useSharedValue(getOffset(propCurrent, initStep))
+  // 记录起始的offset，用于判断是否超过一半(当前offset + 起始或修正起始offset)，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
+  const preOffset = useSharedValue(0)
   const strAbso = 'absolute' + dir.toUpperCase() as StrAbsoType
   const strVelocity = 'velocity' + dir.toUpperCase() as StrVelocityType
   // 标识手指触摸和抬起, 起点在onBegin
@@ -542,7 +548,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     }
   }, [circular, preMargin])
   const { gestureHandler } = useMemo(() => {
-    function getTargetPosition (eventData: EventDataType) {
+    // 基于transdir + 当前offset计算索引
+    function getTargetPosition (eventData: EventEndType) {
       'worklet'
       // 移动的距离
       const { transdir } = eventData
@@ -601,7 +608,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         return true
       }
     }
-    function handleEnd (eventData: EventDataType) {
+    function handleEnd (eventData: EventEndType) {
       'worklet'
       const { isCriticalItem, targetOffset, resetOffset, selectedIndex } = getTargetPosition(eventData)
       if (isCriticalItem) {
@@ -627,7 +634,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         })
       }
     }
-    function handleBack (eventData: EventDataType) {
+    function handleBack (eventData: EventEndType) {
       'worklet'
       const { transdir } = eventData
       // 向右滑动的back:trans < 0， 向左滑动的back: trans < 0
@@ -648,69 +655,38 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
       })
     }
-    // 当前的offset和index多对应的offset进行对比，判断是否超过一半
-    function computeHalf (eventData: EventDataType) {
-      'worklet'
-      const { transdir } = eventData
-      const currentOffset = Math.abs(offset.value)
-      let preOffset = (currentIndex.value + patchElmNumShared.value) * step.value
-      if (circularShared.value) {
-        preOffset -= preMarginShared.value
-      }
-      // 正常事件中拿到的translation值(正向滑动<0，倒着滑>0)
-      const diffOffset = preOffset - currentOffset
-      const half = Math.abs(diffOffset) > step.value / 2
-      // 是否超过一半是基于currentIndex对应的offset作为preOffset, 相差绝对值是否超过step的一半
-      // 1. onUpdate中超过一半，offset=80， preOffset = 100，此时判断未超过一半
-      // 2. onUpdate中未超过一半，onFinalize结束时offset = 80， preOffset = 0，判断正常超过一半
-      const isTriggerUpdateHalf = (transdir < 0 && currentOffset < preOffset) || (transdir > 0 && currentOffset > preOffset)
-      return {
-        diffOffset,
-        half,
-        isTriggerUpdateHalf
-      }
-    }
-    function handleLongPress (eventData: EventDataType) {
-      'worklet'
-      const { diffOffset, half, isTriggerUpdateHalf } = computeHalf(eventData)
-      if (+diffOffset === 0) {
-        runOnJS(runOnJSCallback)('resumeLoop')
-      } else if (isTriggerUpdateHalf) {
-        // 超过一半之后，currentIndex的已经变更，而计算是否超过half-是基于已经变更后的索引计算的,正好反向
-        handleEnd(eventData)
-      } else if (half) {
-        handleEnd(eventData)
-      } else {
-        handleBack(eventData)
-      }
-    }
     function reachBoundary (eventData: EventDataType) {
       'worklet'
       // 1. 基于当前的offset和translation判断是否超过当前边界值
       const { translation } = eventData
-      const boundaryStart = -patchElmNumShared.value * step.value
+      // 与终点的逻辑对齐，都是超过补位元素对应的起点offset
+      const boundaryStart = 0
       const boundaryEnd = -(childrenLength.value + patchElmNumShared.value) * step.value
       const moveToOffset = offset.value + translation
       let isBoundary = false
       let resetOffset = 0
+      let resetPreOffset = 0
       if (moveToOffset < boundaryEnd) {
-        isBoundary = true
-        // 超过边界的距离
-        const exceedLength = Math.abs(moveToOffset) - Math.abs(boundaryEnd)
-        // 计算对标正常元素所在的offset
-        resetOffset = patchElmNumShared.value * step.value + exceedLength
+          isBoundary = true
+          // 超过边界的距离
+          const exceedLength = Math.abs(moveToOffset) - Math.abs(boundaryEnd)
+          // 计算对标正常元素所在的offset
+          resetOffset = patchElmNumShared.value * step.value + exceedLength
+          resetPreOffset = patchElmNumShared.value * step.value
       }
       if (moveToOffset > boundaryStart) {
-        isBoundary = true
-        // 超过边界的距离
-        const exceedLength = Math.abs(boundaryStart) - Math.abs(moveToOffset)
-        // 计算对标正常元素所在的offset
-        resetOffset = (patchElmNumShared.value + childrenLength.value - 1) * step.value + (step.value - exceedLength)
+          isBoundary = true
+          // 超过边界的距离
+          const exceedLength = Math.abs(boundaryStart) - Math.abs(moveToOffset)
+          // 计算对标正常元素所在的offset
+          resetOffset = (patchElmNumShared.value + childrenLength.value - 1) * step.value - exceedLength
+          resetPreOffset = (patchElmNumShared.value + childrenLength.value) * step.value
       }
       return {
-        isBoundary,
-        resetOffset: -resetOffset
-      }
+          isBoundary,
+          resetOffset: -resetOffset,
+          resetPreOffset: -resetPreOffset
+      };
     }
     // 非循环超出边界，应用阻力; 开始滑动少阻力小，滑动越长阻力越大
     function handleResistanceMove (eventData: EventDataType) {
@@ -751,6 +727,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         runOnJS(runOnJSCallback)('pauseLoop')
         preAbsolutePos.value = e[strAbso]
         moveTranstion.value = e[strAbso]
+        preOffset.value = offset.value
       })
       .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
@@ -761,9 +738,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           transdir: moveDistance
         }
         // 1. 支持滑动中超出一半更新索引的能力：只更新索引并不会影响onFinalize依据当前offset计算的索引
-        const { half } = computeHalf(eventData)
-        if (childrenLength.value > 1 && half) {
-          const { selectedIndex } = getTargetPosition(eventData)
+        const offsetHalf = Math.abs(Math.abs(preOffset.value) - Math.abs(offset.value)) > step.value / 2
+        if (childrenLength.value > 1 && offsetHalf) {
+          const { selectedIndex } = getTargetPosition({ transdir: moveDistance } as EventEndType)
           currentIndex.value = selectedIndex
         }
         // 2. 非循环: 处理用户一直拖拽到临界点的场景,如果放到onFinalize无法阻止offset.value更新为越界的值
@@ -787,9 +764,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           return
         }
         // 4. 循环更新：正常
-        const { isBoundary, resetOffset } = reachBoundary(eventData)
+        const { isBoundary, resetOffset, resetPreOffset } = reachBoundary(eventData)
         if (childrenLength.value > 1 && isBoundary && circularShared.value) {
-          offset.value = resetOffset
+          offset.value = resetOffset;
+          preOffset.value = resetPreOffset
         } else {
           offset.value = moveDistance + offset.value
         }
@@ -803,9 +781,19 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         // 触发过onUpdate正常情况下e[strAbso] - preAbsolutePos.value=0; 未触发过onUpdate的情况下e[strAbso] - preAbsolutePos.value 不为0
         // 正常状态下基于onUpdate时的moveDir判断方向、未触发onUpdate的则基于onBegin的moveTranstion判断方向
         const moveDistance = e[strAbso] - preAbsolutePos.value
+        // 默认兜底方向: 以onBegin为起点，因一些原因未触发onUpdate但是触发了位移
+        const defaultDir = e[strAbso] - moveTranstion.value
+        // 实时方向：方向基于onUpdate时的方向，滑动的速度超过阈值时基于实时的滑动方向计算
+        const realtimeData = {
+          transdir: moveDir.value !== 0 ? moveDir.value : defaultDir
+        }
+        // 起始方向：基于offset和(修正)preOffset判断
+        const originData = {
+          transdir: offset.value - preOffset.value !== 0 ? offset.value - preOffset.value :  defaultDir
+        }
         const eventData = {
           translation: moveDistance,
-          transdir: moveDir.value !== 0 ? moveDir.value : e[strAbso] - moveTranstion.value
+          transdir: realtimeData.transdir
         }
         // 1. 只有一个元素：循环 和 非循环状态，都走回弹效果
         if (childrenLength.value === 1) {
@@ -819,19 +807,34 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         // 非循环支持最后元素可滑动能力后，向左快速移动未超过最大可移动范围一半，因为offset为正值，向左滑动handleBack，默认向上取整
         // 但是在offset大于0时，取0。[-100, 0](back取0), [0, 100](back取1)， 所以handleLongPress里的处理逻辑需要兼容支持，因此这里直接单独处理，不耦合下方公共的判断逻辑。
         if (!circularShared.value && !canMove(eventData)) {
-          if (eventData.transdir < 0) {
-            handleBack(eventData)
+          if (realtimeData.transdir < 0) {
+            handleBack(realtimeData)
           } else {
-            handleEnd(eventData)
+            handleEnd(realtimeData)
           }
           return
         }
         // 3. 非循环状态可移动态、循环状态, 正常逻辑处理
         const velocity = e[strVelocity]
-        if (Math.abs(velocity) < longPressRatio) {
-          handleLongPress(eventData)
-        } else {
-          handleEnd(eventData)
+        // 用于判断是否超过一半(当前offset + 起始或修正起始offset)，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
+        const offsetHalf = Math.abs(Math.abs(preOffset.value) - Math.abs(offset.value)) > step.value / 2
+        if (offsetHalf) {
+          if(Math.abs(velocity) > longPressRatio) {
+            // 超过速度阈值，按照实时方向(快速来回滑动)
+            handleEnd(realtimeData)
+          } else {
+            // 超过速度阈值，按照起始方向（慢速长按）
+            handleEnd(originData)
+          }
+        }
+        else {
+          if (Math.abs(velocity) > longPressRatio) {
+            // 超过速度阈值，按照实时方向(快速来回滑动)
+            handleEnd(realtimeData) 
+          } else {
+            // 超过速度阈值，按照起始方向（慢速长按）
+            handleBack(originData)
+          }
         }
       })
       .withRef(swiperGestureRef)
