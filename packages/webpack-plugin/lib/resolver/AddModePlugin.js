@@ -24,6 +24,12 @@ module.exports = class AddModePlugin {
       if (request.mode || request.env) {
         return callback()
       }
+
+      const queryObj = parseQuery(request.query || '?')
+      if (queryObj.mode) {
+        return callback()
+      }
+
       const obj = {
         mode
       }
@@ -37,7 +43,6 @@ module.exports = class AddModePlugin {
       // 当前资源没有后缀名或者路径不符合fileConditionRules规则时，直接返回
       if (!extname || !matchCondition(resourcePath, fileConditionRules)) return callback()
 
-      const queryObj = parseQuery(request.query || '?')
       const queryInfix = queryObj.infix
       if (!implicitMode) queryObj.mode = mode
       queryObj.infix = `${queryInfix || ''}.${mode}`
