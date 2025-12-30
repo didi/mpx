@@ -26,8 +26,7 @@ function tokenize(cssString) {
     // match[2] 为条件（如果存在）
     tokens.push({
       type: match[1], // 'if'、'elif'、'else' 或 'endif'
-      condition: match[2] ? match[2].trim() : null,
-      rawValue: match[0]
+      condition: match[2] ? match[2].trim() : null
     })
     lastIndex = regex.lastIndex
   }
@@ -52,7 +51,6 @@ function parse(cssString) {
       currentChildren.push(node)
     } else if (token.type === 'if') {
       const node = new Node('If', token.condition)
-      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       nodeStack.push(currentChildren)
       currentChildren = node.children
@@ -62,7 +60,6 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('ElseIf', token.condition)
-      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'else') {
@@ -71,16 +68,12 @@ function parse(cssString) {
       }
       currentChildren = nodeStack[nodeStack.length - 1]
       const node = new Node('Else')
-      node.rawValue = token.rawValue || ''
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'endif') {
-      const node = new Node('EndIf')
-      node.rawValue = token.rawValue || ''
       if (nodeStack.length > 0) {
         currentChildren = nodeStack.pop()
       }
-      currentChildren.push(node)
     }
   })
   return ast
@@ -109,22 +102,17 @@ function traverseAndEvaluate(ast, defs) {
       } else if (node.type === 'If') {
         // 直接判断 If 节点
         batchedIf = false
-        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'ElseIf' && !batchedIf) {
-        output += node.rawValue || ''
         if (evaluateCondition(node.condition, defs)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'Else' && !batchedIf) {
-        output += node.rawValue || ''
         traverse(node.children)
-      } else if (node.type === 'EndIf') {
-        output += node.rawValue || ''
       }
     }
   }
@@ -140,30 +128,35 @@ function traverseAndEvaluate(ast, defs) {
  */
 function stripCondition(content, defs) {
   const ast = parse(content)
-  const result = traverseAndEvaluate(ast, defs)
-  return result
+  return traverseAndEvaluate(ast, defs)
 }
-/**
- * @param {StripByPostcssOption} options
- */
-async function stripByPostcss(options) {
-  const defs = options.defs ?? {}
-  const afterConditionStrip = stripCondition(options.css, defs)
-  return {
-    css: afterConditionStrip
+
+let proxyReadFileSync
+let proxyReadFile
+const rawReadFileSync = fs.readFileSync
+const rawReadFile = fs.readFile
+
+function rewriteFSForCss() {
+  proxyReadFileSync = function (path, options) {
+    return rawReadFileSync.call(fs, path, options)
+  }
+  proxyReadFile = function (path, options, callback) {
+    return rawReadFile.call(fs, path, options, callback)
+  }
+  fs.readFileSync = function (path, options) {
+    return proxyReadFileSync(path, options)
+  }
+  fs.readFile = function (path, options, callback) {
+    return proxyReadFile(path, options, callback)
   }
 }
 
-function rewriteReadFileSyncForCss(defs) {
+function startFSStripForCss(defs) {
   function shouldStrip(path) {
     return typeof path === 'string' && /\.(styl|scss|sass|less|css)$/.test(path)
   }
-
-  const readFileSync = fs.readFileSync
-  const readFile = fs.readFile
-
-  fs.readFileSync = function (path, options) {
-    const content = readFileSync.call(fs, path, options)
+  proxyReadFileSync = function (path, options) {
+    const content = rawReadFileSync.call(fs, path, options)
     if (shouldStrip(path)) {
       try {
         if (typeof content === 'string') {
@@ -176,8 +169,7 @@ function rewriteReadFileSyncForCss(defs) {
     return content
   }
 
-  fs.readFile = function (path, options, callback) {
-    // 处理参数重载
+  proxyReadFile = function (path, options, callback) {
     let cb = callback
     if (typeof options === 'function') {
       cb = options
@@ -198,11 +190,10 @@ function rewriteReadFileSyncForCss(defs) {
       }
       cb(null, data)
     }
-
     if (options) {
-      return readFile.call(fs, path, options, wrappedCallback)
+      return rawReadFile.call(fs, path, options, wrappedCallback)
     }
-    return readFile.call(fs, path, wrappedCallback)
+    return rawReadFile.call(fs, path, wrappedCallback)
   }
 }
 /**
@@ -212,12 +203,15 @@ function rewriteReadFileSyncForCss(defs) {
  */
 module.exports = async function (css) {
   this.cacheable()
+
   const callback = this.async()
+
   const mpx = this.getMpx()
   const result = stripCondition(css, mpx.defs)
+
   callback(null, result)
 }
 
-module.exports.stripByPostcss = stripByPostcss
 module.exports.stripCondition = stripCondition
-module.exports.rewriteReadFileSyncForCss = rewriteReadFileSyncForCss
+module.exports.rewriteFSForCss = rewriteFSForCss
+module.exports.startFSStripForCss = startFSStripForCss
