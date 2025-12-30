@@ -23,7 +23,7 @@ const getImageInfo = function (options = {}) {
     return
   }
   let path = ''
-  if (src.toLowerCase().startsWith("http")) {
+  if (src.toLowerCase().startsWith('http')) {
     path = src
   }
   Image.getSize(src, (width, height) => {
