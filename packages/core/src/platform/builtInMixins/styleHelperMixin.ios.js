@@ -267,7 +267,7 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             const getAppClassStyle = global.__getAppClassStyle || noop
-            if (localStyle = this.__getClassStyle(className)) {
+            if (localStyle = this.__getClassStyle?.(className)) {
               if (localStyle._media?.length) {
                 mergeResult(localStyle._default, getMediaStyle(localStyle._media))
               } else {

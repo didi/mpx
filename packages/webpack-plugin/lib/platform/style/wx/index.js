@@ -3,7 +3,7 @@ const { parseValues } = require('../../../utils/string')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -39,7 +39,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // React 属性支持的枚举值
   const SUPPORTED_PROP_VAL_ARR = {
-    'box-sizing': ['border-box'],
+    'box-sizing': ['border-box', 'content-box'],
     'backface-visibility': ['visible', 'hidden'],
     overflow: ['visible', 'hidden', 'scroll'],
     'border-style': ['solid', 'dotted', 'dashed'],
@@ -89,20 +89,48 @@ module.exports = function getSpec ({ warn, error }) {
       if (rule[1].test(prop)) return rule[0]
     }
   }
-  // const getDefaultValueFromVar = (str) => {
-  //   const totalVarExp = /^var\((.+)\)$/
-  //   if (!totalVarExp.test(str)) return str
-  //   const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
-  //   if (newVal.length <= 1) return ''
-  //   if (!totalVarExp.test(newVal[1])) return newVal[1]
-  //   return getDefaultValueFromVar(newVal[1])
-  // }
-  // 属性值校验
+
+  // 从 CSS 变量中提取 fallback 值进行验证
+  // 返回值：fallback 值 | null（没有 fallback）| undefined（循环引用）
+  const getDefaultValueFromVar = (str, visited = new Set()) => {
+    const totalVarExp = /^var\((.+)\)$/
+    if (!totalVarExp.test(str)) return str
+
+    // 防止循环引用 - 返回 undefined 表示检测到循环
+    if (visited.has(str)) return undefined
+    visited.add(str)
+
+    const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
+    if (newVal.length <= 1) return null // 没有 fallback
+    const fallback = newVal[1].trim()
+    // 如果 fallback 也是 var()，递归提取
+    if (totalVarExp.test(fallback)) return getDefaultValueFromVar(fallback, visited)
+    return fallback
+  }
+
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
     value = value.trim()
     const tips = isError ? error : warn
-    if (cssVariableExp.test(value) || calcExp.test(value) || envExp.test(value)) return true
+
+    // 对于包含 CSS 变量的值，提取 fallback 值进行验证
+    if (cssVariableExp.test(value)) {
+      const fallback = getDefaultValueFromVar(value)
+      // undefined 表示检测到循环引用
+      if (fallback === undefined) {
+        tips(`CSS variable circular reference in fallback chain detected in ${selector} for property ${prop}, value: ${value}`)
+        return false
+      }
+      // null 表示没有 fallback，CSS 变量本身是合法的（运行时会解析）
+      if (fallback === null) {
+        return true
+      }
+      // 有 fallback 值，将 fallback 作为新的 value 继续后续验证流程
+      value = fallback
+    }
+
+    // calc() 和 env() 跳过验证
+    if (calcExp.test(value) || envExp.test(value)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
       number: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
@@ -372,6 +400,8 @@ module.exports = function getSpec ({ warn, error }) {
     // css var & 数组直接返回
     if (Array.isArray(value) || cssVariableExp.test(value)) return { prop, value }
     const values = parseValues(value)
+    // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+    values.sort()
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\((.+)\)/)
