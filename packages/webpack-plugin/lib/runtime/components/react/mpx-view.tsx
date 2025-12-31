@@ -777,7 +777,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
         ref: nodeRef,
         style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
       }
-
     ),
     [
       'hover-start-time',
