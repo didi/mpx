@@ -4,10 +4,10 @@ sidebarDepth: 2
 
 # 编译构建
 
-对于使用 `@mpxjs/cli@3.x` 脚手架初始化的项目而言，编译构建相关的配置统一收敛至项目根目录下的 `vue.config.js` 进行配置。一个新项目初始化的 `vue.config.js` 如下图，相较于 `@mpxjs/cli@2.x` 版本，在新的初始化项目当中原有的编译构建配置都收敛至 cli 插件当中进行管理和维护，同时还对外暴露相关的接口或者 api 使得开发者能自定义修改 cli 插件当中默认的配置。
+对于使用 `@mpxjs/cli@3.x` 脚手架初始化的项目而言，编译构建相关的配置统一收敛至项目根目录下的 `mpx.config.js` 进行配置。一个新项目初始化的 `mpx.config.js` 如下图，相较于 `@mpxjs/cli@2.x` 版本，在新的初始化项目当中原有的编译构建配置都收敛至 cli 插件当中进行管理和维护，同时还对外暴露相关的接口或者 api 使得开发者能自定义修改 cli 插件当中默认的配置。
 
 ```javascript
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -70,7 +70,7 @@ yarn add -D @mpxjs/webpack-plugin
 
 使用示例如下：
 ```javascript
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -111,7 +111,7 @@ mode 为 Mpx 编译的目标平台， 目前支持的有微信小程序(wx)\支�
 默认和 [mode](#mode) 一致。，当 srcMode 和 mode 不一致时，会读取相应的配置对项目进行编译和运行时的转换。
 
 ```javascript
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -134,7 +134,7 @@ module.exports = defineConfig({
 批量指定文件mode，用于条件编译场景下使用某些单小程序平台的库时批量标记这些文件的mode为对应平台，而不再走转换规则。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -157,7 +157,7 @@ module.exports = defineConfig({
 定义若干个外部样式类，这些将会覆盖元素原有的样式。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -180,7 +180,7 @@ module.exports = defineConfig({
 指定resolveMode，默认webpack，更便于引入npm包中的页面/组件等资源。若想编写时和原生保持一致或兼容已有原生项目，可设为native，此时需要提供[projectRoot](#projectroot)以指定项目根目录，且使用npm资源时需在前面加`~`。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -199,7 +199,7 @@ module.exports = defineConfig({
 当resolveMode为native时需通过该字段指定项目根目录。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -219,7 +219,7 @@ module.exports = defineConfig({
 webpack 的输出默认是全量输出，而小程序开发者工具不关心文件是否真正发生了变化。设置为 change 时，Mpx 在 watch 模式下将内部 diff 一次，只会对内容发生变化的文件进行写入，以提升小程序开发者工具编译性能。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -238,7 +238,7 @@ module.exports = defineConfig({
 是否需要对样式加 scope ，目前只有支付宝小程序平台没有样式隔离，因此该部分内容也只对支付宝小程序平台生效。提供 include 和 exclude 以精确控制对哪些文件进行样式隔离，哪些不隔离，和webpack的rules规则相同。也可以通过在 style 代码块上声明 scoped 进行。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -266,7 +266,7 @@ module.exports = defineConfig({
 是否转换 wx / my 等全局对象为 Mpx 对象，
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -288,7 +288,7 @@ module.exports = defineConfig({
 强制代理规则内配置的事件。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -309,7 +309,7 @@ module.exports = defineConfig({
 给模板、js、json、style中定义一些全局常量。一般用于区分平台/环境。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -369,7 +369,7 @@ const env = __env__;
 `Mpx` 提供了可以给自定义标签设置资源的功能，配置该属性后，即可在目标标签中使用 `:src` 加载相应资源文件
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -395,7 +395,7 @@ module.exports = defineConfig({
 目前仅支持微信小程序 weui 组件库通过 useExtendedLib 扩展库的方式引入，这种方式引入的组件将不会计入代码包大小。配置 externals 选项，Mpx 将不会解析 weui 组件的路径并打包。
 
 ``` javascript
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -478,7 +478,7 @@ module.exports = defineConfig({
   2. 如package.json中无miniprogram字段，但配置了miniNpmPackage，则默认会拼接miniprogram_dist目录
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -500,7 +500,7 @@ module.exports = defineConfig({
 但存在一种场景，例如使用 antd-mini 组件库时，使用纯支付宝场景下的包无需读取 miniprogram 字段进行拼接，但是对应 npm 包又存在 miniprogram 字段，这时需要通过该配置告诉框架不要去读，直接走默认路径。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -519,7 +519,7 @@ module.exports = defineConfig({
 为了获取更丰富的生命周期来进行更加完善的增强处理，在非支付宝小程序环境下，`Mpx` 默认会使用 `Conponent` 构造器来创建页面。将该值设置为 `true` 时，会强制使用 `Page` 构造器创建页面。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -543,7 +543,7 @@ module.exports = defineConfig({
 为了处理某些IDE中不支持`rpx`单位的问题，Mpx 提供了一个将 px 转换为 rpx 的功能。支持通过注释控制行级、块级的是否转换，支持局部使用，支持不同依赖分别使用不用的转换规则等灵活的能力。`transRpxRules`可以是一个对象，也可以是多个这种对象组成的数组。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const path = require('path')
 
 module.exports = defineConfig({
@@ -580,7 +580,7 @@ module.exports = defineConfig({
 设计师给的稿是2倍图，分辨率750px。或者更高倍图。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -600,7 +600,7 @@ module.exports = defineConfig({
 大部分样式都用px下，某些元素期望用rpx。或者反过来。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -622,7 +622,7 @@ mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，�
 使用了第三方组件，它的设计宽度和主项目不一致，期望能设置不同的转换规则
 
 ```js
-// vue.config.js
+// mpx.config.js
 const path = require('path')
 
 module.exports = defineConfig({
@@ -720,7 +720,7 @@ module.exports = defineConfig({
 使用类似于 postcss.config.js 的语法书写 postcss 的配置文件。用于定义 Mpx 对于组件/页面样式进行 postcss 处理时的配置， ignoreConfigFile 传递为 true 时会忽略项目中的 postcss 配置文件 。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -742,7 +742,7 @@ module.exports = defineConfig({
 **注意**：默认添加的 postcss 插件均会在`mpx的内置插件`（例如如rpx插件等）之后处理。如需使配置的插件优先于内置插件，可以在 `postcssInlineConfig` 中添加 `mpxPrePlugins` 配置：
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -804,7 +804,7 @@ module.exports = {
 为原生多文件写法添加css预处理语言支持，用于优先搜索预编译器后缀的文件，按 cssLangs 中的声明顺序查找。默认按照 css , less , stylus ,  scss , sass 的顺序
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -858,7 +858,7 @@ module.exports = defineConfig({
 ### i18n
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -930,7 +930,7 @@ messages: {
 检查资源输出情况，如果置为true，则会提示有哪些资源被同时输出到了多个分包，可以检查是否应该放进主包以消减体积，设置为 `'component'` 的话，则只检查组件资源是否被输出到多个分包。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -951,7 +951,7 @@ module.exports = defineConfig({
 依据微信小程序的分包策略，多个分包使用到的 js 模块会打入主包当中，但在大型分包较多的项目中，该策略极易将大量的模块打入主包，从而使主包体积大小超出2M限制，该配置项提供给开发者自主抉择，可将部分模块冗余输出至多个分包，从而控制主包体积不超限
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -974,7 +974,7 @@ module.exports = defineConfig({
 是否生成构建结果与源码之间的映射文件。用于单元测试等场景。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -996,7 +996,7 @@ module.exports = defineConfig({
 默认情况下，自定义组件本身的那个节点是一个“普通”的节点，使用时可以在这个节点上设置 `class` 、`style` 、动画、 flex 布局等，就如同普通的 view 组件节点一样。但有些时候，自定义组件并不希望这个节点本身可以设置样式、响应 flex 布局等，而是希望自定义组件内部的第一层节点能够响应 flex 布局或者样式由自定义组件本身完全决定。这种情况下，可以将这个自定义组件设置为“虚拟的”。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1021,7 +1021,7 @@ module.exports = defineConfig({
 **注意：** @mpxjs/webpack-plugin@2.9.41版本之前该配置为 partialCompile。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1061,7 +1061,7 @@ render 函数中可能会存在一些重复变量，该配置可消除 render �
 * level = 2时，框架生成 render 函数中仅保留所有 template 中使用到的响应性变量，无任何计算逻辑保留，render 函数体积达最小状态，但 setData 传输量相对于 level=1 会有所增加。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1098,7 +1098,7 @@ interface AsyncSubpackageRules {
 异步分包场景下批量设置组件或 js 模块的异步分包，提升资源异步分包输出的灵活性。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1130,7 +1130,7 @@ module.exports = defineConfig({
 开启时在处理`require.async`时会添加单次重试逻辑
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1149,7 +1149,7 @@ module.exports = defineConfig({
 Mpx 框架在输出 微信小程序、支付宝小程序、字节小程序、Web、RN 平台时，默认支持分包异步化能力，但若在某些场景下需要关闭该能力，可配置该项。
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1168,7 +1168,7 @@ module.exports = defineConfig({
 开启后可优化编译配置减少构建产物体积
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = defineConfig({
   pluginOptions: {
     mpx: {
@@ -1212,7 +1212,7 @@ module.exports = {
 `MpxWebpackPlugin.pluginLoader` 用于根据开发者编写的`plugin.json`文件内容，将特定的小程序组件、页面以及 js 文件进行构建，最终以小程序插件的形式输出。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -1238,7 +1238,7 @@ module.exports = defineConfig({
 加载并解析 `wxs` 脚本文件，并针对不同平台，做了差异化处理；同时可支持处理内联`wxs`。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -1263,7 +1263,7 @@ module.exports = defineConfig({
 提供图像资源的处理，生成对应图像文件，输出到输出目录并返回 public URL。如果是分包资源，则会输出到相应的分包资源文件目录中。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -1293,7 +1293,7 @@ module.exports = defineConfig({
 微信小程序对于图像资源存在一些限制，`MpxWebpackPlugin.urlLoader` 针对这些差异做了相关处理，开发者可以使用web应用开发的方式进行图像资源的引入，`MpxWebpackPlugin.urlLoader` 可根据图像资源的不同引入方式，支持 CDN 或者 Base64 的方式进行处理。更多细节请查阅[图像资源处理](../guide/advance/image-process.md)。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -1329,7 +1329,7 @@ module.exports = defineConfig({
 你可以提供该页面给其他小程序使用。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -1345,7 +1345,7 @@ module.exports = defineConfig({
 你可以提供该组件给其他小程序使用。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -1360,7 +1360,7 @@ module.exports = defineConfig({
 在 webpack config entry 入口文件配置中，你可以使用该方法获取原生小程序入口文件路径。如果你不想将原生的小程序入口文件整合为 `app.mpx` 文件，则可以使用该方法直接使用原有的小程序入口文件进行编译。见[#1330]([1330](https://github.com/didi/mpx/issues/1330))。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -1378,7 +1378,7 @@ Mpx 编译 unocss 原子类的 webpack 主插件
 
 如果在使用 `@mpxjs/cli@3.x` 创建项目时选择了 unocss，会自动安装 MpxUnocssPlugin ，直接在 mpx.unocss 配置项中传入相关配置即可
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1402,7 +1402,7 @@ yarn add -D @mpxjs/unocss-plugin
 使用示例如下：
 
 ```js
-  // vue.config.js
+  // mpx.config.js
   const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
   const { defineConfig } = require('@vue/cli-service')
 
@@ -1426,7 +1426,7 @@ yarn add -D @mpxjs/unocss-plugin
 生成主包或分包通用样式存储的相对路径
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1453,7 +1453,7 @@ module.exports = defineConfig({
 使用到某个原子类的最小分包个数，比如设置为2的话一个原子类只有超过2个分包使用才会输出到主包
 > 主要是用来控制主包占用的，数值越大分包的原子类就有更大可能性不占用主包
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1481,7 +1481,7 @@ unocss将把生成的`bg-black`样式打包到主包
 需要和微信小程序的styleIsolation配合使用，比如小程序使用样式隔离的话，这里需要对应配置为isolated，这样的话每个组件会独立引用对应的原子类文件，配置为'apply-shared'的话只有父级页面和app会建立引用，然后通过配合微信的apply-shared的方式获取父级上定义的原子类
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1506,7 +1506,7 @@ module.exports = defineConfig({
 配置需要扫描的文件目录
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1527,7 +1527,7 @@ module.exports = defineConfig({
 
 针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则，可自定义转译规则
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1556,7 +1556,7 @@ module.exports = defineConfig({
 文件根目录
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1576,7 +1576,7 @@ module.exports = defineConfig({
 转化css指令为常规css
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1609,7 +1609,7 @@ module.exports = defineConfig({
 
 转化Variant group
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1636,7 +1636,7 @@ module.exports = defineConfig({
 config可以传配置对象也可以传一个配置文件路径
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1691,7 +1691,7 @@ module.exports = defineConfig({
 configFiles的话是传递额外的配置文件数组，比如不想用uno.config作为配置文件的话可以在这里面配
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -1933,7 +1933,7 @@ wx.navigateTo({url : '/test/homepage/index'})
 对于使用`MpxWebpackPlugin.urlLoader`的文件，如果在引用资源的末尾加上`?fallback=true`，则使用配置的自定义loader。图片的引入和处理详见[图像资源处理](../guide/advance/image-process.html)。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   pluginOptions: {
@@ -2015,7 +2015,7 @@ isStyle 是在非 style 模块中编写样式时，声明这部分引用的静�
 你可以提供该页面给其他小程序使用。此外，独立页面构建也可以通过MpxWebpackPlugin.getPageEntry生成，推荐使用[此方法。](#mpxwebpackplugin-getpageentry)
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -2048,7 +2048,7 @@ module.exports = {
 此外，独立组件构建也可以通过MpxWebpackPlugin.getComponentEntry生成，推荐使用[此方法。](#mpxwebpackplugin-getcomponententry)。
 
 ```js
-// vue.config.js
+// mpx.config.js
 const { defineConfig } = require('@vue/cli-service')
 const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
 module.exports = defineConfig({
@@ -2092,4 +2092,27 @@ module.exports = defineConfig({
   }
 </script>
 
+```
+## useExtendComponents
+`object`
+
+除基础组件外，Mpx 还提供了一些扩展组件。这些组件需要开发者根据运行环境进行按需注册。注册成功后，即可作为全局自定义组件使用。
+```js
+// mpx.config.js
+defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        useExtendComponents: {
+          wx: ["recycle-view"],
+          ali: ["recycle-view"],
+          web: ["recycle-view"],
+          ios: ["recycle-view"],
+          android: ["recycle-view"],
+          harmony: ["recycle-view"]
+        }
+      }
+    }
+  }
+})
 ```
