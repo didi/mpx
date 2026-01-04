@@ -25,12 +25,12 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         value = matched[1]
         needStringify = false
       } else {
-        value = `${formatValueName || 'global.__formatValue'}(${+matched[1]}, '${matched[2]}')`
+        value = `${formatValueName}(${+matched[1]}, '${matched[2]}')`
         needStringify = false
       }
     }
     if (hairlineRegExp.test(value)) {
-      value = `${formatValueName || 'global.__formatValue'}(${JSON.stringify(value)}, 'hairlineWidth')`
+      value = `${formatValueName}(${JSON.stringify(value)}, 'hairlineWidth')`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value

@@ -52,6 +52,7 @@ module.exports = function (styles, {
           global.__classCaches = global.__classCaches || []
           var __classCache = new Map()
           global.__classCaches.push(__classCache)`
+        const formatValueName = '_f'
         const classMap = getClassMap({
           content,
           filename: loaderContext.resourcePath,
@@ -60,11 +61,11 @@ module.exports = function (styles, {
           ctorType,
           warn,
           error,
-          formatValueName: '_f'
+          formatValueName
         })
         const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
           result !== '' && (result += ',')
-          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(_f){return ${shallowStringify(value)};}`
+          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(${formatValueName}){return ${shallowStringify(value)};}`
           return result
         }, '')
         if (ctorType === 'app') {
