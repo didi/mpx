@@ -369,6 +369,17 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
   let vStart: 'top' | 'bottom' = 'top'
   let vOffset: PositionVal = 0
 
+  if (!Array.isArray(parts)) {
+    // 模板 style 属性传入单个数值时不会和 class 一样转成数组，需要手动转换
+    parts = [parts]
+  }
+  // 模板 style 属性传入时， 需要额外转换处理单位 px/rpx/vh 以及 center 转化为 50%
+  parts = (parts as (PositionVal | string)[]).map((part) => {
+    if (typeof part !== 'string') return part
+    if (part === 'center') return '50%'
+    return global.__formatValue(part) as PositionVal
+  })
+
   if (parts.length === 4) return parts as backgroundPositionList
 
   // 归一化
