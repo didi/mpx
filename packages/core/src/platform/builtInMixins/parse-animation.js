@@ -128,7 +128,9 @@ function parseTransitionSingleProp (vals, property = '') {
       const bezierParams = getBezierParams(value)
       return {
         prop: 'transitionTimingFunction',
-        value: bezierParams?.length ? Easing.bezier(bezierParams[0], bezierParams[1], bezierParams[2], bezierParams[3]) : easingKey[val] || Easing.inOut(Easing.ease)
+        value: bezierParams?.length
+            ? Easing.bezier(bezierParams[0], bezierParams[1], bezierParams[2], bezierParams[3])
+            : easingKey[value] || Easing.inOut(Easing.ease)
       }
     }
     // behavior
@@ -156,7 +158,7 @@ function parseTransitionSingleProp (vals, property = '') {
 }
 // animation & transition 解析
 export function parseAnimationStyle (originalStyle, cssProp = 'animation') {
-  let animationData = {}
+  const animationData = {}
   Object.entries(originalStyle).forEach(([propName, value]) => {
     if (!propName.includes(cssProp)) return
     if (propName === cssProp) {
@@ -172,7 +174,7 @@ export function parseAnimationStyle (originalStyle, cssProp = 'animation') {
       }, {})
       Object.entries(vals).forEach(([prop, vals]) => {
         if (animationData[prop]?.length) {
-          (animationData[prop].length >= vals.length ? animationData[prop] : vals).forEach((item,idx) => {
+          (animationData[prop].length >= vals.length ? animationData[prop] : vals).forEach((item, idx) => {
             if (animationData[prop][idx] && vals[idx]) {
               animationData[prop][idx] = vals[idx]
             } else if (vals[idx]) {
@@ -180,19 +182,19 @@ export function parseAnimationStyle (originalStyle, cssProp = 'animation') {
             }
           })
         } else {
-          console.error(prop, vals, 999333)
+          // console.error(prop, vals, 999333)
           animationData[prop] = vals
         }
       })
-      console.error('animation style, ', vals)
+      // console.error('animation style, ', vals)
     } else {
       const vals = (cssProp === 'transition' ? parseTransitionSingleProp(parseValues(value, ','), propName) : parseAnimationSingleProp(parseValues(value, ','), propName)).reduce((acc, { prop, value }) => {
         acc.push(value)
         return acc
       }, [])
-      console.error(`${propName} style, `, vals)
+      // console.error(`${propName} style, `, vals)
       if (animationData[propName]?.length) {
-        (animationData[propName].length >= vals.length ? animationData[propName] : vals).forEach((item,idx) => {
+        (animationData[propName].length >= vals.length ? animationData[propName] : vals).forEach((item, idx) => {
           if (animationData[propName][idx] && vals[idx]) {
             animationData[propName][idx] = vals[idx]
           } else if (vals[idx]) {
