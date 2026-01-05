@@ -170,6 +170,8 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
   root.walkAtRules(rule => {
     if (rule.name !== 'media' && rule.name !== 'keyframes') {
       warn(`Only @media and @keyframes rules is supported in react native mode temporarily, but got @${rule.name}`)
+      // 删除不支持的 AtRule，防止其影响后续解析
+      rule.remove()
       return
     }
     const ruleName = rule.name
