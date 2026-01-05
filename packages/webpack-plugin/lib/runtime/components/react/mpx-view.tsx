@@ -775,7 +775,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       layoutProps,
       {
         ref: nodeRef,
-        style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
+        style: animationStyle ? [viewStyle, animationStyle] : viewStyle
       }
 
     ),

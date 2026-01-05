@@ -1,8 +1,6 @@
 import { error, collectDataset, hasOwn } from '@mpxjs/utils'
 import { useRef } from 'react'
 import useAnimationAPIHooks from './useAnimationAPIHooks'
-import useTransitionHooks from './useTransitionHooks'
-import useCssAnimationHooks from './useCssAnimationHooks'
 import type { AnimatableValue } from 'react-native-reanimated'
 import type { MutableRefObject } from 'react'
 import type { NativeSyntheticEvent } from 'react-native'
@@ -15,7 +13,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   const { style: originalStyle = {}, enableAnimation, animation, transitionend, layoutRef } = props
   // 记录动画类型
   let animationType = ''
-  if (hasOwn(originalStyle, 'animation') || (hasOwn(originalStyle, 'animationName') && hasOwn(originalStyle, 'animationDuration'))) {
+  if (hasOwn(originalStyle, 'animationName') && hasOwn(originalStyle, 'animationDuration')) {
     // css animation 只做检测提示
     animationType = 'animation'
   }
@@ -23,7 +21,7 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
     animationType = 'api'
   }
   // 优先级 css transition > API
-  if (hasOwn(originalStyle, 'transition') || (hasOwn(originalStyle, 'transitionProperty') && hasOwn(originalStyle, 'transitionDuration'))) {
+  if (hasOwn(originalStyle, 'transitionProperty') && hasOwn(originalStyle, 'transitionDuration')) {
     animationType = 'transition'
   }
   // 优先以 enableAnimation 定义类型为准
@@ -67,13 +65,9 @@ export default function useAnimationHooks<T, P> (props: _ViewProps & { enableAni
   }
   return {
     enableStyleAnimation: !!animationTypeRef.current,
-    animationStyle: animationTypeRef.current === 'animation'
+    animationStyle: animationTypeRef.current === 'api'
       // eslint-disable-next-line react-hooks/rules-of-hooks
-      ? useCssAnimationHooks(hooksProps)
-      : animationTypeRef.current === 'api'
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        ? useAnimationAPIHooks(hooksProps)
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        : useTransitionHooks(hooksProps)
+      ? useAnimationAPIHooks(hooksProps)
+      : undefined
   }
 }

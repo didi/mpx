@@ -2,6 +2,7 @@ import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocused
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
+import { parseAnimationStyle } from './parse-animation'
 
 global.__mpxAppDimensionsInfo = {
   window: Dimensions.get('window'),
@@ -320,20 +321,28 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
-        if (hasOwn(result, 'animation') || hasOwn(result, 'animationName')) {
-          let keyframes, appKeyframes
-          if (keyframes = this.__getClassStyle?.('keyframes')) {
-            mergeResult({
-              keyframes
-            })
-            console.error(result)
-          } else if (appKeyframes = global.__getAppClassStyle?.('keyframes')) {
-            // console.error('appStyle=', appStyle)
-            mergeResult({
-              keyframes
+        // parse animation
+        if (hasOwn(result, 'animationName') || hasOwn(result, 'animation')) {
+          const animationData = parseAnimationStyle(result)
+          // console.error('parse animation result: ', animationData)
+          const keyframes = {}
+          if (animationData.animationName?.length) {
+            animationData.animationName.forEach(animationName => {
+              const _keyframe = this.__getClassStyle?.(animationName) || global.__getAppClassStyle?.(animationName)
+              _keyframe && (keyframes[animationName] = _keyframe)
             })
           }
+          mergeResult(animationData, keyframes)
+          delete result.animation
         }
+        // parse transition
+        if (hasOwn(result, 'transitionName') || hasOwn(result, 'transition')) {
+          const transitionData = parseAnimationStyle(result, 'transition')
+          // console.error('parse transition result: ', transitionData)
+          mergeResult(transitionData)
+          delete result.transition
+        }
+        // console.error('styleHelperMixin: result=', result)
         return isEmpty ? empty : result
       }
     }

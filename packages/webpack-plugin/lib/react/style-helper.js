@@ -5,7 +5,7 @@ const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
 const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
-const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
+// const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
@@ -119,17 +119,18 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         if (selector.nodes.length === 1 && (selector.nodes[0].type === 'class')) {
           classMapKeys.push(selector.nodes[0].value)
         } else if (ruleName === 'keyframes' && selector.nodes[0].type === 'tag') {
+          // 动画帧参数
           const value = selector.nodes[0].value
-          const val = value.match(percentExp)?.[2] / 100
+          // const val = value.match(percentExp)?.[2] / 100
           if (value === 'from') {
             // from
-            classMapKeys.push(0)
+            classMapKeys.push('0%')
           } else if (value === 'to') {
             // to
-            classMapKeys.push(1)
-          } else if (!isNaN(val)) {
+            classMapKeys.push('100%')
+          } else {
             // 百分比
-            classMapKeys.push(val)
+            classMapKeys.push(value)
           }
         } else {
           error('Only single class selector is supported in react native mode temporarily.')
@@ -189,12 +190,9 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
       })
     })
     if (ruleName === 'keyframes') {
-      if (Object.keys(ruleClassMap).length > 0) {
-        const animationName = rule.params
-        if (!classMap.keyframes) {
-          classMap.keyframes = {}
-        }
-        classMap.keyframes[animationName] = ruleClassMap
+      const animationName = rule.params
+      if (Object.keys(ruleClassMap).length > 0 && animationName) {
+        classMap[animationName] = ruleClassMap
       }
     }
   })
