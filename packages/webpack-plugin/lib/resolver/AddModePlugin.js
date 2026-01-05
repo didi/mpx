@@ -44,21 +44,31 @@ module.exports = class AddModePlugin {
       if (!extname || !matchCondition(resourcePath, fileConditionRules)) return callback()
 
       const queryInfix = queryObj.infix
-      if (!implicitMode) queryObj.mode = mode
-      queryObj.infix = `${queryInfix || ''}.${mode}`
 
       // 如果已经确认是mode后缀的文件，添加query与mode后直接返回
       if (modePattern.test(path.basename(resourcePath))) {
-        request.query = stringifyQuery(queryObj)
-        request.mode = obj.mode
+        // 已经被resolved到对应mode的文件，避免重复添加mode
+        const isResolved = (implicitMode || queryObj.mode === mode) && modePattern.test(queryObj.infix)
+        if (!isResolved) {
+          queryObj.infix = `${queryInfix || ''}.${mode}`
+          if (!implicitMode) queryObj.mode = mode
+          request.query = stringifyQuery(queryObj)
+          request.mode = obj.mode
+        }
         return callback()
       } else if (defaultMode && defaultModePattern.test(path.basename(resourcePath))) {
-        queryObj.infix = `${queryInfix || ''}.${defaultMode}`
-        request.query = stringifyQuery(queryObj)
-        request.mode = obj.mode
+        const isResolved = (implicitMode || queryObj.mode === mode) && defaultModePattern.test(queryObj.infix)
+        if (!isResolved) {
+          queryObj.infix = `${queryInfix || ''}.${defaultMode}`
+          if (!implicitMode) queryObj.mode = mode
+          request.query = stringifyQuery(queryObj)
+          request.mode = obj.mode
+        }
         return callback()
       }
 
+      if (!implicitMode) queryObj.mode = mode
+      queryObj.infix = `${queryInfix || ''}.${mode}`
       obj.query = stringifyQuery(queryObj)
       obj.path = addInfix(resourcePath, mode, extname)
       obj.relativePath = request.relativePath && addInfix(request.relativePath, mode, extname)
