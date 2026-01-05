@@ -28,12 +28,12 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         value = matched[1]
         needStringify = false
       } else {
-        value = `${formatValueName || 'global.__formatValue'}(${+matched[1]}, '${matched[2]}')`
+        value = `${formatValueName}(${+matched[1]}, '${matched[2]}')`
         needStringify = false
       }
     }
     if (hairlineRegExp.test(value)) {
-      value = `${formatValueName || 'global.__formatValue'}(${JSON.stringify(value)}, 'hairlineWidth')`
+      value = `${formatValueName}(${JSON.stringify(value)}, 'hairlineWidth')`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
@@ -82,7 +82,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
   function walkRule ({ rule, classMap, ruleName = '', options }) {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
-      if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
+      if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
       if (!Array.isArray(newData)) {
@@ -141,10 +141,12 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
+          let _default = classMap[key]?._default
+          let _media = classMap[key]?._media
           if (ruleName === 'media' && options && (options.minWidth || options.maxWidth)) {
             // 当前是媒体查询
-            const _default = classMap[key]?._default || classMap[key] || {}
-            const _media = classMap[key]?._media || []
+            _default = _default || {}
+            _media = _media || []
             _media.push({
               options,
               value: classMapValue
@@ -153,10 +155,9 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
               _default,
               _media
             }
-          } else if (classMap[key]?._default) {
+          } else if (_default) {
             // 已有媒体查询数据，此次非媒体查询
-            const _default = classMap[key]?._default || {}
-            classMap[key]._default = Object.assign(_default, classMapValue)
+            Object.assign(_default, classMapValue)
           } else {
             // 无媒体查询
             const val = classMap[key] || {}

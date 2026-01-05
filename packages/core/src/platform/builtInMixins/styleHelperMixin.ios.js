@@ -1,4 +1,4 @@
-import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation, noop } from '@mpxjs/utils'
+import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocusedNavigation } from '@mpxjs/utils'
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
@@ -13,7 +13,7 @@ global.__mpxPageSizeCountMap = reactive({})
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
-    const styleObj = classMap[className]?.()
+    const styleObj = classMap[className]?.(global.__formatValue)
     styleObj && classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
@@ -267,14 +267,13 @@ export default function styleHelperMixin () {
 
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
-            const getAppClassStyle = global.__getAppClassStyle || noop
-            if (localStyle = this.__getClassStyle(className)) {
+            if (localStyle = this.__getClassStyle?.(className)) {
               if (localStyle._media?.length) {
                 mergeResult(localStyle._default, getMediaStyle(localStyle._media))
               } else {
                 mergeResult(localStyle)
               }
-            } else if (appStyle = getAppClassStyle(className)) {
+            } else if (appStyle = global.__getAppClassStyle?.(className)) {
               if (appStyle._media?.length) {
                 mergeResult(appStyle._default, getMediaStyle(appStyle._media))
               } else {
