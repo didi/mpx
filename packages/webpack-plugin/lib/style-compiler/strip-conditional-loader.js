@@ -11,7 +11,12 @@ class Node {
 
 // 提取 css string 为 token
 function tokenize(cssString) {
-  const regex = /\/\*\s*@mpx-(if|elif|else|endif)(?:\s*\((.*?)\))?\s*\*\//g
+  // Support /* ... */, // ..., and <!-- ... --> styles
+  // 1. : /\/\*\s*@mpx-(if|elif|else|endif)(?:\s*\(([\s\S]*?)\))?\s*\*\//g
+  // 2. : /\/\/\s*@mpx-(if|elif|else|endif)(?:\s*\((.*?)\))?\s*$/gm
+  // 3. : /<!--\s*@mpx-(if|elif|else|endif)(?:\s*\(([\s\S]*?)\))?\s*-->/g
+  // Combined:
+  const regex = /(?:\/\*\s*@mpx-(if|elif|else|endif)(?:\s*\(([\s\S]*?)\))?\s*\*\/)|(?:\/\/\s*@mpx-(if|elif|else|endif)(?:\s*\((.*?)\))?\s*)|(?:<!--\s*@mpx-(if|elif|else|endif)(?:\s*\(([\s\S]*?)\))?\s*-->)/g
   const tokens = []
   let lastIndex = 0
   let match
@@ -22,11 +27,15 @@ function tokenize(cssString) {
       const text = cssString.substring(lastIndex, match.index)
       tokens.push({ type: 'text', content: text })
     }
-    // match[1] 为关键字：if, elif, else, endif
-    // match[2] 为条件（如果存在）
+    // 1,2: (/* ... */)
+    // 3,4: (// ...)
+    // 5,6: (<!-- ... -->)
+    const type = match[1] || match[3] || match[5]
+    const condition = (match[2] || match[4] || match[6])
+
     tokens.push({
-      type: match[1], // 'if'、'elif'、'else' 或 'endif'
-      condition: match[2] ? match[2].trim() : null
+      type: type,
+      condition: condition ? condition.trim() : null
     })
     lastIndex = regex.lastIndex
   }
@@ -137,23 +146,17 @@ const rawReadFileSync = fs.readFileSync
 const rawReadFile = fs.readFile
 
 function rewriteFSForCss() {
-  proxyReadFileSync = function (path, options) {
-    return rawReadFileSync.call(fs, path, options)
+  fs.readFileSync = function () {
+    return (proxyReadFileSync || rawReadFileSync).apply(fs, arguments)
   }
-  proxyReadFile = function (path, options, callback) {
-    return rawReadFile.call(fs, path, options, callback)
-  }
-  fs.readFileSync = function (path, options) {
-    return proxyReadFileSync(path, options)
-  }
-  fs.readFile = function (path, options, callback) {
-    return proxyReadFile(path, options, callback)
+  fs.readFile = function () {
+    return (proxyReadFile || rawReadFile).apply(fs, arguments)
   }
 }
 
 function startFSStripForCss(defs) {
   function shouldStrip(path) {
-    return typeof path === 'string' && /\.(styl|scss|sass|less|css)$/.test(path)
+    return typeof path === 'string' && /\.(styl|scss|sass|less|css|mpx)$/.test(path)
   }
   proxyReadFileSync = function (path, options) {
     const content = rawReadFileSync.call(fs, path, options)
@@ -161,6 +164,12 @@ function startFSStripForCss(defs) {
       try {
         if (typeof content === 'string') {
           return stripCondition(content, defs)
+        } else if (Buffer.isBuffer(content)) {
+          const str = content.toString('utf-8')
+          const result = stripCondition(str, defs)
+          if (result !== str) {
+            return Buffer.from(result, 'utf-8')
+          }
         }
       } catch (e) {
         return content
@@ -169,31 +178,38 @@ function startFSStripForCss(defs) {
     return content
   }
 
-  proxyReadFile = function (path, options, callback) {
-    let cb = callback
-    if (typeof options === 'function') {
-      cb = options
-      options = null
+  proxyReadFile = function () {
+    const args = Array.from(arguments)
+    const callback = args[args.length - 1]
+    const path = args[0]
+
+    if (typeof callback !== 'function') {
+      return rawReadFile.apply(fs, args)
     }
 
     const wrappedCallback = (err, data) => {
-      if (err) return cb(err)
+      if (err) return callback(err)
       if (shouldStrip(path)) {
         try {
           if (typeof data === 'string') {
             const result = stripCondition(data, defs)
-            return cb(null, result)
+            return callback(null, result)
+          } else if (Buffer.isBuffer(data)) {
+            const content = data.toString('utf-8')
+            const result = stripCondition(content, defs)
+            if (result !== content) {
+              return callback(null, Buffer.from(result, 'utf-8'))
+            }
           }
         } catch (e) {
-          return cb(null, data)
+          return callback(null, data)
         }
       }
-      cb(null, data)
+      callback(null, data)
     }
-    if (options) {
-      return rawReadFile.call(fs, path, options, wrappedCallback)
-    }
-    return rawReadFile.call(fs, path, wrappedCallback)
+
+    args[args.length - 1] = wrappedCallback
+    return rawReadFile.apply(fs, args)
   }
 }
 /**

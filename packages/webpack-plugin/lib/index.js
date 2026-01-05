@@ -58,7 +58,6 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
-const styleStripConditionalPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -1918,42 +1917,9 @@ try {
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
         const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
-
-        // 样式 loader 类型检测和条件编译 loader 插入的工具函数
-        const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
-        const injectStyleStripLoader = (loaders) => {
-          // 检查是否已经存在 stripLoader
-          const hasStripLoader = loaders.some(loader => {
-            const loaderPath = toPosix(loader.loader)
-            return loaderPath.includes('style-compiler/strip-conditional-loader')
-          })
-          if (hasStripLoader) {
-            return
-          }
-          const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
-          loaders.forEach((loader, index) => {
-            const currentLoader = toPosix(loader.loader)
-            for (const [key] of loaderTypes) {
-              if (currentLoader.includes(key)) {
-                loaderTypes.set(key, index)
-                break
-              }
-            }
-          })
-          const targetIndex = STYLE_LOADER_TYPES
-            .map(type => loaderTypes.get(`node_modules/${type}`))
-            .find(index => index !== -1)
-
-          if (targetIndex !== undefined) {
-            loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
-          }
-        }
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
-          if (type === 'styles') {
-            injectStyleStripLoader(loaders)
-          }
 
           switch (type) {
             case 'styles':
@@ -2006,7 +1972,6 @@ try {
         }
         // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
         if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
-          injectStyleStripLoader(loaders)
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1
