@@ -79,7 +79,8 @@ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
-
+const { rewriteFSForCss, startFSStripForCss } = require('./style-compiler/strip-conditional-loader')
+rewriteFSForCss()
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
@@ -323,6 +324,9 @@ class MpxWebpackPlugin {
   }
 
   apply (compiler) {
+    // 注入 fs 代理
+    startFSStripForCss(this.options.defs)
+
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -2094,3 +2098,12 @@ try {
 }
 
 module.exports = MpxWebpackPlugin
+
+/**
+ * 定义 MpxWebpackPlugin 的配置
+ * @param {MpxWebpackPluginOptions} options - 插件选项
+ * @returns {MpxWebpackPluginOptions}
+ */
+module.exports.defineConfig = function defineConfig(options) {
+  return options
+}
