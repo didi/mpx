@@ -1736,7 +1736,14 @@ class MpxWebpackPlugin {
 
           if (isReact(mpx.mode)) {
             // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
-            source.add('/* @refresh reset */\n')
+            if (process.env.NODE_ENV !== 'production') {
+              source.add(`/* @refresh reset */
+if (module.hot) {
+  module.hot.accept(() => {
+    require("react-native").DevSettings.reload();
+  });
+}\n`)
+            }
             // 注入页面的配置，供screen前置设置导航情况
             if (isRuntime) {
               source.add('// inject pageconfigmap for screen\n' +
