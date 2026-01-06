@@ -169,10 +169,11 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     return parseTransitionStyle(originalStyle)
   }, [])
   // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
-  const { shareValMap, animatedKeys, animatedKeysShareVal } = useMemo(() => {
+  const { shareValMap, animatedKeys, animatedStyleKeys } = useMemo(() => {
     // 记录需要执行动画的 propName
     const animatedKeys = [] as string[]
-    const animatedKeysShareVal = [] as (string|string[])[]
+    // 有动画样式的 style key(useAnimatedStyle使用)
+    const animatedStyleKeys = [] as (string|string[])[]
     const transforms = [] as string[]
     const shareValMap = Object.keys(transitionMap).reduce((valMap, property) => {
       // const { property } = transition || {}
@@ -189,20 +190,18 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
         valMap[property] = makeMutable(defaultVal)
         animatedKeys.push(property)
-        animatedKeysShareVal.push(property)
+        animatedStyleKeys.push(property)
       }
       // console.log('shareValMap = ', valMap)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
-    if (transforms.length) animatedKeysShareVal.push(transforms)
+    if (transforms.length) animatedStyleKeys.push(transforms)
     return {
       shareValMap,
       animatedKeys,
-      animatedKeysShareVal
+      animatedStyleKeys
     }
   }, [])
-  // 有动画样式的 style key(useAnimatedStyle使用)
-  const animatedStyleKeys = useSharedValue(animatedKeysShareVal)
   const runOnJSCallbackRef = useRef({})
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 根据 animation action 创建&驱动动画
@@ -278,7 +277,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // ** 生成动画样式
   return useAnimatedStyle(() => {
     // console.info(`useAnimatedStyle styles=`, originalStyle)
-    return animatedStyleKeys.value.reduce((styles, key) => {
+    return animatedStyleKeys.reduce((styles, key) => {
       if (Array.isArray(key)) {
         const transformStyle = getTransformObj(originalStyle.transform || [])
         key.forEach((transformKey) => {
