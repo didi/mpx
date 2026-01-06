@@ -107,7 +107,7 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(always-embed|hold-keyboard|safe-password-.+)$/,
+        test: /^(always-embed|safe-password-.+)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog
