@@ -26,7 +26,7 @@
   "peerDependencies": {
     "@d11/react-native-fast-image": "*",
     "@mpxjs/api-proxy": "^2.10.17-beta.0",
-    "@mpxjs/store": "^2.10.17-beta.0",
+    "@mpxjs/store": "^2.10.0",
     "@react-navigation/native": "*",
     "@react-navigation/native-stack": "*",
     "react": "*",
