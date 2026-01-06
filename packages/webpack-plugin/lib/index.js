@@ -87,6 +87,10 @@ const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
 
+/**
+ * @param {import('webpack').NormalModule} module
+ * @returns
+ */
 const isStaticModule = module => {
   if (!module.resource) return false
   const { queryObj } = parseRequest(module.resource)
@@ -323,6 +327,9 @@ class MpxWebpackPlugin {
     }
   }
 
+  /**
+   * @param {import('webpack').Compiler} compiler
+   */
   apply (compiler) {
     // 注入 fs 代理
     startFSStripForCss(this.options.defs)
