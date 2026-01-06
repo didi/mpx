@@ -363,16 +363,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     if (circular && intLen > 1) {
       // 动态生成前置补位元素
       const frontClones = []
+      // 计算补位序列的起始索引。例如 len=3, patch=2 -> start=1 (即从B开始)
+      const startIndex = intLen - (patchElmNum % intLen)
       for (let i = 0; i < patchElmNum; i++) {
-        // 算法解释：计算倒数第几个元素（处理循环情况）
-        const countFromBack = patchElmNum - i
-        const sourceIndex = (intLen - (countFromBack % intLen)) % intLen
+        const sourceIndex = (startIndex + i) % intLen
         frontClones.push(React.cloneElement(children[sourceIndex], { key: `clone_front_${i}` }))
       }
       // 动态生成后置补位元素
       const backClones = []
       for (let i = 0; i < patchElmNum; i++) {
-        // 算法解释：正序取开头元素。例如 patch=2, len=3 -> 取 index 0, 1
         const sourceIndex = i % intLen
         backClones.push(React.cloneElement(children[sourceIndex], { key: `clone_back_${i}` }))
       }
