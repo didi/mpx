@@ -26,10 +26,10 @@
   },
   "homepage": "https://github.com/didi/mpx#readme",
   "dependencies": {
-    "@mpxjs/utils": "^2.10.17"
+    "@mpxjs/utils": "^2.10.17-beta.0"
   },
   "peerDependencies": {
-    "@mpxjs/core": "^2.9.0"
+    "@mpxjs/core": "^2.10.17-beta.0"
   },
   "gitHead": "2d37697869b9bdda3efab92dda8c910b68fd05c0"
 }

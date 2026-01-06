@@ -29,8 +29,8 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
-    "@mpxjs/api-proxy": "^2.10.17",
-    "@mpxjs/utils": "^2.10.17",
+    "@mpxjs/api-proxy": "^2.10.17-beta.0",
+    "@mpxjs/utils": "^2.10.17-beta.0",
     "json-bigint": "^1.0.0",
     "path-to-regexp": "^6.2.0"
   },
