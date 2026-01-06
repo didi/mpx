@@ -141,7 +141,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
     'auto-focus': autoFocus,
     focus,
     'confirm-type': confirmType = 'done',
-    'confirm-hold': confirmHold = false,
+    'confirm-hold': confirmHold = true,
     cursor,
     'cursor-color': cursorColor,
     'selection-start': selectionStart = -1,
@@ -471,7 +471,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         autoFocus: !!autoFocus || !!focus,
         selection: selectionStart > -1 || typeof cursor === 'number' ? selection : undefined,
         selectionColor: cursorColor,
-        blurOnSubmit: !multiline && !confirmHold,
+        blurOnSubmit: multiline ? confirmType !== 'return' : confirmHold,
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
@@ -483,7 +483,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onChange,
         onSelectionChange,
         onContentSizeChange,
-        onSubmitEditing: bindconfirm && !multiline && onSubmitEditing
+        onSubmitEditing: bindconfirm && onSubmitEditing
       },
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
