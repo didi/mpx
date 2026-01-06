@@ -364,8 +364,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       // 动态生成前置补位元素
       const frontClones = []
       for (let i = 0; i < patchElmNum; i++) {
-        // 算法解释：倒序取末尾元素。例如 patch=2, len=3 -> 取 index 2, 1
-        const sourceIndex = (intLen - 1 - ((patchElmNum - 1 - i) % intLen))
+        // 算法解释：计算倒数第几个元素（处理循环情况）
+        const countFromBack = patchElmNum - i
+        const sourceIndex = (intLen - (countFromBack % intLen)) % intLen
         frontClones.push(React.cloneElement(children[sourceIndex], { key: `clone_front_${i}` }))
       }
       // 动态生成后置补位元素
