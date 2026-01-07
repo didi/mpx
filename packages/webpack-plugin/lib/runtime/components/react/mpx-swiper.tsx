@@ -132,7 +132,6 @@ const easeMap = {
   easeOutCubic: Easing.out(Easing.cubic),
   easeInOutCubic: Easing.inOut(Easing.cubic)
 }
-const isFirstRef = useRef(true)
 
 const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const {
@@ -233,6 +232,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const moveTranstion = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
+  // 记录是否首次
+  const isFirstRef = useRef(true)
 
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
