@@ -22,11 +22,11 @@ import {
   DimensionValue,
   ImageLoadEventData
 } from 'react-native'
-import { noop } from '@mpxjs/utils'
+import { hasOwn, noop } from '@mpxjs/utils'
 import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject } from './utils'
+import { SVG_REGEXP, PERCENT_REGEX, useLayout, useTransformStyle, renderImage, extendObject } from './utils'
 import Portal from './mpx-portal'
 
 export type Mode =
@@ -184,13 +184,25 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     }
   }
 
+  const selfPercentRule: Record<string, 'height' | 'width'> = {
+    borderTopLeftRadius: 'width',
+    borderBottomLeftRadius: 'width',
+    borderBottomRightRadius: 'width',
+    borderTopRightRadius: 'width',
+    borderRadius: 'width'
+  }
+  // fixme Image 组件 borderRadius 仅支持 number
+  const hasSelfPercentVal = Object.entries(style).some(([key, val]) => {
+    return hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(val)
+  })
+
   const {
     hasPositionFixed,
     hasSelfPercent,
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, hasSelfPercent: hasSelfPercentVal, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,
