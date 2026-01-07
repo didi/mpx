@@ -93,7 +93,7 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(always-embed|hold-keyboard|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
+        test: /^(always-embed|disable-default-padding|adjust-keyboard-to|fixed|show-confirm-bar)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog
