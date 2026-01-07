@@ -143,16 +143,17 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
     innerStyle: Partial<T>
   }
 }
-
-const selfPercentRule: Record<string, 'height' | 'width'> = {
-  translateX: 'width',
-  translateY: 'height',
+const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
   borderBottomLeftRadius: 'width',
   borderBottomRightRadius: 'width',
   borderTopRightRadius: 'width',
   borderRadius: 'width'
 }
+const selfPercentRule: Record<string, 'height' | 'width'> = Object.assign({
+  translateX: 'width',
+  translateY: 'height'
+}, radiusPercentRule)
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
@@ -394,16 +395,16 @@ interface TransformStyleConfig {
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
-  hasSelfPercent?: boolean
+  isTransformBorderRadiusPercent?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, hasSelfPercent: hasSelfPercentVal, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, isTransformBorderRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
   let hasVarDec = false
   let hasVarUse = false
-  let hasSelfPercent = hasSelfPercentVal || false
+  let hasSelfPercent = false
   const varKeyPaths: Array<Array<string>> = []
   const unoVarKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
@@ -458,7 +459,11 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
     // fixme 去掉 translate & border-radius 的百分比计算
-    if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+    // fixme Image 组件 borderRadius 仅支持 number
+    if (isTransformBorderRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
+      hasSelfPercent = true
+      percentKeyPaths.push(keyPath.slice())
+    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
       percentKeyPaths.push(keyPath.slice())
     }
   }
