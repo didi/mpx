@@ -473,9 +473,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  // transform 字符串格式转化数组格式(先转数组再处理css var)
-  transformTransform(styleObj)
-
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
@@ -541,6 +538,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
+  // transform 字符串格式转化数组格式(先转数组再处理css var)
+  transformTransform(styleObj)
 
   return {
     hasVarDec,
