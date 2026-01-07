@@ -190,7 +190,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, isTransformBorderRadiusPercent: isAndroid, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, isTransformBorderRadiusPercent: isAndroid && !isSvg && !isLayoutMode, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,
