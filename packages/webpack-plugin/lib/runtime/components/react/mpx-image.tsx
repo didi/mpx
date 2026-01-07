@@ -22,7 +22,7 @@ import {
   DimensionValue,
   ImageLoadEventData
 } from 'react-native'
-import { hasOwn, noop } from '@mpxjs/utils'
+import { noop } from '@mpxjs/utils'
 import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
