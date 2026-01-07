@@ -132,6 +132,7 @@ const easeMap = {
   easeOutCubic: Easing.out(Easing.cubic),
   easeInOutCubic: Easing.inOut(Easing.cubic)
 }
+const isFirstRef = useRef(true)
 
 const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((props: SwiperProps, ref): JSX.Element => {
   const {
@@ -527,9 +528,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
-    if (newIndex !== preIndex && bindchange) {
+    if (newIndex !== preIndex && bindchange && !isFirstRef.current) {
       runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
     }
+    isFirstRef.current = false
   })
 
   useEffect(() => {
