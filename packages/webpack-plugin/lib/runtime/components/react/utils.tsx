@@ -6,7 +6,6 @@ import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
-import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -475,8 +474,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
-  // transform 字符串格式转化数组格式(先转数组再处理css var)
-  transformTransform(styleObj)
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
@@ -542,9 +539,10 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-  if (Array.isArray(normalStyle.transform)) {
-    normalStyle.transform = normalStyle.transform.filter(item => !isEmptyObject(item))
-  }
+
+  // transform 字符串格式转化数组格式(先转数组再处理css var)
+  transformTransform(styleObj)
+
   return {
     hasVarDec,
     varContextRef,
