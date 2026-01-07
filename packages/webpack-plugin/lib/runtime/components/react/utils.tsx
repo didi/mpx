@@ -143,16 +143,17 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
     innerStyle: Partial<T>
   }
 }
-
-const selfPercentRule: Record<string, 'height' | 'width'> = {
-  translateX: 'width',
-  translateY: 'height',
+const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
   borderBottomLeftRadius: 'width',
   borderBottomRightRadius: 'width',
   borderTopRightRadius: 'width',
   borderRadius: 'width'
 }
+const selfPercentRule: Record<string, 'height' | 'width'> = Object.assign({
+  translateX: 'width',
+  translateY: 'height'
+}, radiusPercentRule)
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
@@ -390,23 +391,16 @@ function transformBoxShadow (styleObj: Record<string, any>) {
   }, '')
 }
 
-function transformZIndex (styleObj: Record<string, any>) {
-  if (!styleObj.zIndex || typeof styleObj.zIndex === 'number') return
-  if (styleObj.zIndex === 'auto') {
-    error('Property [z-index] does not supported [auto], please check again!')
-    styleObj.zIndex = 0
-  }
-}
-
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
+  isTransformBorderRadiusPercent?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, isTransformBorderRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -457,7 +451,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
       // calc translate & border-radius 的百分比计算
-      if (hasOwn(selfPercentRule, key) && /%/.test(value)) {
+      if (hasOwn(selfPercentRule, key) && /calc\(\d+%/.test(value)) {
         hasSelfPercent = true
         percentKeyPaths.push(keyPath.slice())
       }
@@ -467,7 +461,11 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
     // fixme 去掉 translate & border-radius 的百分比计算
-    if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+    // fixme Image 组件 borderRadius 仅支持 number
+    if (isTransformBorderRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
+      hasSelfPercent = true
+      percentKeyPaths.push(keyPath.slice())
+    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
       percentKeyPaths.push(keyPath.slice())
     }
   }
@@ -544,8 +542,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-  // transform z-index auto to 0
-  transformZIndex(normalStyle)
   if (Array.isArray(normalStyle.transform)) {
     normalStyle.transform = normalStyle.transform.filter(item => !isEmptyObject(item))
   }

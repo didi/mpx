@@ -26,7 +26,7 @@ import { noop } from '@mpxjs/utils'
 import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject } from './utils'
+import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
 import Portal from './mpx-portal'
 
 export type Mode =
@@ -190,7 +190,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, isTransformBorderRadiusPercent: isAndroid, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,
