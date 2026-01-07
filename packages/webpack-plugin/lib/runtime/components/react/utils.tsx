@@ -1,12 +1,11 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, isEmptyObject } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
-import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -239,7 +238,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
       const resolved = resolveVar(value, varContext)
       if (resolved === undefined) {
         delete target[key]
-        // error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
+        error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
         return
       }
       target[key] = resolved
@@ -473,8 +472,10 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
+
   // transform 字符串格式转化数组格式(先转数组再处理css var)
   transformTransform(styleObj)
+
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
