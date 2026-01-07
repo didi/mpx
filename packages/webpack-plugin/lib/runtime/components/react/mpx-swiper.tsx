@@ -192,7 +192,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const patchElmNum = circular ? (preMargin ? 2 : 1) : 0
   const patchElmNumShared = useSharedValue(patchElmNum)
   const circularShared = useSharedValue(circular)
-  const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
+  // 支持swiper-item 同时存在<swiper-item wx:for/>和<swiper-item>并列的情况
+  const children = (Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])).flat()
   // 对有变化的变量，在worklet中只能使用sharedValue变量，useRef不能更新
   const childrenLength = useSharedValue(children.length)
   const initWidth = typeof normalStyle?.width === 'number' ? normalStyle.width - preMargin - nextMargin : normalStyle.width
@@ -221,6 +222,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const moveDir = useSharedValue(0)
   const timerId = useRef(0 as number | ReturnType<typeof setTimeout>)
   const intervalTimer = props.interval || 500
+  // 记录是否首次，首次不能触发bindchange回调
+  const isFirstRef = useRef(true)
 
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
@@ -488,9 +491,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // 1. 用户在当前页切换选中项，动画；用户携带选中index打开到swiper页直接选中不走动画
   useAnimatedReaction(() => currentIndex.value, (newIndex: number, preIndex: number) => {
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
-    if (newIndex !== preIndex && bindchange) {
-      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex)
+    if (newIndex !== preIndex && bindchange && !isFirstRef.current) {
+      runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
     }
+    isFirstRef.current = false
   })
 
   useEffect(() => {
@@ -655,6 +659,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
       })
     }
+    function computeHalf () {
+      'worklet'
+      const currentOffset = Math.abs(offset.value)
+      let preOffset = (currentIndex.value + patchElmNumShared.value) * step.value
+      if (circularShared.value) {
+        preOffset -= preMarginShared.value
+      }
+      // 正常事件中拿到的translation值(正向滑动<0，倒着滑>0)
+      const diffOffset = preOffset - currentOffset
+      const half = Math.abs(diffOffset) > step.value / 2
+      return half
+    }
     function reachBoundary (eventData: EventDataType) {
       'worklet'
       // 1. 基于当前的offset和translation判断是否超过当前边界值
@@ -738,7 +754,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           transdir: moveDistance
         }
         // 1. 支持滑动中超出一半更新索引的能力：只更新索引并不会影响onFinalize依据当前offset计算的索引
-        const offsetHalf = Math.abs(Math.abs(preOffset.value) - Math.abs(offset.value)) > step.value / 2
+        // const offsetHalf = Math.abs(Math.abs(preOffset.value) - Math.abs(offset.value)) > step.value / 2
+        const offsetHalf = computeHalf()
         if (childrenLength.value > 1 && offsetHalf) {
           const { selectedIndex } = getTargetPosition({ transdir: moveDistance } as EventEndType)
           currentIndex.value = selectedIndex
