@@ -139,11 +139,10 @@ module.exports = function getSpec ({ warn, error }) {
     const type = getValueType(prop)
     const tipsType = (type) => {
       const info = {
-        [ValueType.number]: '2rpx,10%,30rpx',
         [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000',
         [ValueType.enum]: `${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}`
       }
-      tips(`Value of ${prop} in ${selector} should be ${type}, eg ${info[type]}, received [${value}], please check again!`)
+      tips(`Value of ${prop} in ${selector} should be ${type}${info[type] ? `, eg ${info[type]}` : ''}, received [${value}], please check again!`)
     }
     switch (type) {
       case ValueType.number: {
@@ -549,15 +548,6 @@ module.exports = function getSpec ({ warn, error }) {
     return { prop, value: values[0].trim() }
   }
 
-  const formatZIndex = ({ prop, value, selector }, { mode }) => {
-    // z-index auto 报错
-    if (value === 'auto') {
-      error(`Property [${prop}] does not supported [${value}] on ${selector} in ${mode} environment, please check again!`)
-      return { prop, value: 0 }
-    }
-    return { prop, value: value }
-  }
-
   // const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
   //   value = value.trim()
   //   if (value === 'none') {
@@ -622,12 +612,6 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatFontFamily,
         android: formatFontFamily,
         harmony: formatFontFamily
-      },
-      {
-        test: 'z-index',
-        ios: formatZIndex,
-        android: formatZIndex,
-        harmony: formatZIndex
       },
       // {
       //   test: 'box-shadow',
