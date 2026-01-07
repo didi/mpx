@@ -16,7 +16,7 @@
 RN 样式属性和 Web/小程序中 CSS 样式属性是相交关系：
 
 - **RN 独有属性**：`tintColor`、`writingDirection` 等，CSS 不支持
-- **CSS 独有属性**：`clip-path`、`animation`、`transition` 等，RN 不支持
+- **CSS 独有属性**：`clip-path`、`animation` 等，RN 不支持
 
 因此，在跨平台开发时：
 1. **优先使用交集属性**：尽量使用两边都支持的样式属性

@@ -94,8 +94,9 @@ export const transformInitial: ExtendedViewStyle = {
 export const animationAPIInitialValue: ExtendedViewStyle = Object.assign({
   opacity: 1,
   backgroundColor: 'transparent',
-  width: 0,
-  height: 0,
+  // fixme 未设置 height 初始值定义了 transition-property height 时把动画高度值把原由子元素撑开的高度给覆盖的问题
+  width: 'auto',
+  height: 'auto',
   top: 0,
   right: 0,
   bottom: 0,

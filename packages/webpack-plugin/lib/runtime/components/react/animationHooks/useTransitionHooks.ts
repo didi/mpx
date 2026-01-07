@@ -1,4 +1,4 @@
-import { hasOwn, dash2hump, error } from '@mpxjs/utils'
+import { hasOwn, dash2hump, error, warn } from '@mpxjs/utils'
 import { useMemo, useRef, useEffect } from 'react'
 import {
   Easing,
@@ -169,10 +169,11 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     return parseTransitionStyle(originalStyle)
   }, [])
   // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
-  const { shareValMap, animatedKeys, animatedKeysShareVal } = useMemo(() => {
+  const { shareValMap, animatedKeys, animatedStyleKeys } = useMemo(() => {
     // 记录需要执行动画的 propName
     const animatedKeys = [] as string[]
-    const animatedKeysShareVal = [] as (string|string[])[]
+    // 有动画样式的 style key(useAnimatedStyle使用)
+    const animatedStyleKeys = [] as (string|string[])[]
     const transforms = [] as string[]
     const shareValMap = Object.keys(transitionMap).reduce((valMap, property) => {
       // const { property } = transition || {}
@@ -189,20 +190,18 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         // console.log(`shareValMap property=${property} defaultVal=${defaultVal}`)
         valMap[property] = makeMutable(defaultVal)
         animatedKeys.push(property)
-        animatedKeysShareVal.push(property)
+        animatedStyleKeys.push(property)
       }
       // console.log('shareValMap = ', valMap)
       return valMap
     }, {} as { [propName: keyof ExtendedViewStyle]: SharedValue<string|number> })
-    if (transforms.length) animatedKeysShareVal.push(transforms)
+    if (transforms.length) animatedStyleKeys.push(transforms)
     return {
       shareValMap,
       animatedKeys,
-      animatedKeysShareVal
+      animatedStyleKeys
     }
   }, [])
-  // 有动画样式的 style key(useAnimatedStyle使用)
-  const animatedStyleKeys = useSharedValue(animatedKeysShareVal)
   const runOnJSCallbackRef = useRef({})
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 根据 animation action 创建&驱动动画
@@ -228,32 +227,37 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         toVal = `${toVal * 100}%`
       } else if (typeof toVal !== typeof shareVal) {
         // 动画起始值和终态值类型不一致报错提示一下
-        error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
+        warn(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
       }
-      // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
-      const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
-      // console.log('animationOptions=', { delay, duration, easing })
-      let callback
-      if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
-        runOnJSCallbackRef.current = {
-          animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
-            transitionend(finished, current, duration)
+      if ((toVal === 'auto' && !isNaN(+shareVal)) || (shareVal === 'auto' && !isNaN(+toVal))) {
+        // 有 auto 直接赋值不做动画
+        shareValMap[key].value = toVal
+      } else {
+        // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
+        const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
+        // console.log('animationOptions=', { delay, duration, easing })
+        let callback
+        if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
+          runOnJSCallbackRef.current = {
+            animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
+              transitionend(finished, current, duration)
+            }
+          }
+          callback = (finished?: boolean, current?: AnimatableValue) => {
+            'worklet'
+            // 动画结束后设置下一次transformOrigin
+            if (finished) {
+              runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
+            }
           }
         }
-        callback = (finished?: boolean, current?: AnimatableValue) => {
-          'worklet'
-          // 动画结束后设置下一次transformOrigin
-          if (finished) {
-            runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
-          }
+        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
+        // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
+        if (isTransformKey) {
+          transformTransitionendDone = true
         }
+        shareValMap[key].value = animation
       }
-      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
-      // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
-      if (isTransformKey) {
-        transformTransitionendDone = true
-      }
-      shareValMap[key].value = animation
       // console.log(`useTransitionHooks, ${key}=`, animation)
     })
   }
@@ -278,7 +282,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   // ** 生成动画样式
   return useAnimatedStyle(() => {
     // console.info(`useAnimatedStyle styles=`, originalStyle)
-    return animatedStyleKeys.value.reduce((styles, key) => {
+    return animatedStyleKeys.reduce((styles, key) => {
       if (Array.isArray(key)) {
         const transformStyle = getTransformObj(originalStyle.transform || [])
         key.forEach((transformKey) => {
