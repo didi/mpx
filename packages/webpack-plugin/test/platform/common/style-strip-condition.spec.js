@@ -1,6 +1,6 @@
-const { stripCondition } = require('../../../lib/style-compiler/strip-conditional-loader')
+const { stripCondition } = require('../../../lib/style-compiler/strip-conditional')
 
-describe('strip-conditional-loader unit tests', () => {
+describe('strip-conditional unit tests', () => {
   describe('stripCondition logic', () => {
     const defs = {
       platform: 'wx',
