@@ -68,6 +68,7 @@ import { getComponent, getAsyncSuspense } from ${stringifyRequest(loaderContext,
       output += buildI18n({ loaderContext })
     }
     output += getRequireScript({ ctorType, script, loaderContext })
+
     output += `export default global.__mpxOptionsMap[${JSON.stringify(moduleId)}]\n`
   }
 
