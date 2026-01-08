@@ -16,7 +16,7 @@ import {
   ProviderContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
+import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
 
 function getSystemInfo () {
@@ -509,7 +509,17 @@ function getLayoutData (headerHeight) {
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
-  const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+  // const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+  let bottomVirtualHeight = 0
+  // 红米手机&魅族16T手机的screen.height = windowHeight + bottomVirtualHeight 导致计算出来的底部虚拟偏少。此部分端引擎同学进行修改中
+  // mpx临时兼容 bottomVirtualHeight取 initialWindowMetrics.inset.bottom 和 反算出来的bottomVirtualHeight的更大的值
+  if (ReactNative.Platform.OS === 'android') {
+    if (isLandscape) {
+      bottomVirtualHeight = screenDimensions.height - windowDimensions.height
+    } else {
+      bottomVirtualHeight = Math.max(screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight, initialWindowMetrics?.insets?.bottom || 0, 0)
+    }
+  }
   return {
     left: 0,
     top: headerHeight,
