@@ -79,7 +79,7 @@ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
-const { startFSStripForCss } = require('./style-compiler/strip-conditional-loader')
+const { startFSStripForCss } = require('./style-compiler/strip-conditional')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
