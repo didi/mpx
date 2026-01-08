@@ -1,5 +1,6 @@
 'use strict'
 
+require('./init-mpx')
 const path = require('path')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
@@ -78,8 +79,7 @@ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
-const { rewriteFSForCss, startFSStripForCss } = require('./style-compiler/strip-conditional-loader')
-rewriteFSForCss()
+const { startFSStripForCss } = require('./style-compiler/strip-conditional-loader')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {

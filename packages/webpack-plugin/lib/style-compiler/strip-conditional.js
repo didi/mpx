@@ -145,7 +145,11 @@ let proxyReadFile
 const rawReadFileSync = fs.readFileSync
 const rawReadFile = fs.readFile
 
+let isRewritten = false
+
 function rewriteFSForCss() {
+  if (isRewritten) return
+  isRewritten = true
   fs.readFileSync = function () {
     return (proxyReadFileSync || rawReadFileSync).apply(fs, arguments)
   }
@@ -211,21 +215,6 @@ function startFSStripForCss(defs) {
     args[args.length - 1] = wrappedCallback
     return rawReadFile.apply(fs, args)
   }
-}
-/**
- *
- * @this {import('webpack').LoaderContext<any>}
- * @param {string} css
- */
-module.exports = async function (css) {
-  this.cacheable()
-
-  const callback = this.async()
-
-  const mpx = this.getMpx()
-  const result = stripCondition(css, mpx.defs)
-
-  callback(null, result)
 }
 
 module.exports.stripCondition = stripCondition
