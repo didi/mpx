@@ -105,13 +105,14 @@ const MpxNav = memo(({ pageConfig, navigation }: MpxNavProps) => {
       barStyle={navigationBarTextStyle === NavColor.White ? 'light-content' : 'dark-content'}></StatusBar>
   )
 
-  if (isCustom)
+  if (isCustom) {
     return (
       <>
         {statusBarElement}
         {customNav}
       </>
     )
+  }
   // 假设是栈导航，获取栈的长度
   const stackLength = navigation.getState()?.routes?.length
   const onStackTopBack = mpxGlobal?.__mpx?.config?.rnConfig?.onStackTopBack

@@ -9,7 +9,7 @@ interface MpxNavContainerProps {
   children?: React.ReactNode
 }
 
-export default function MpxNavContainer(props: MpxNavContainerProps) {
+export default function MpxNavContainer (props: MpxNavContainerProps) {
   const [, setCustomNav] = useNavShared()
 
   useLayoutEffect(() => {
@@ -26,7 +26,7 @@ export default function MpxNavContainer(props: MpxNavContainerProps) {
   return isAndroid ? null : props.children
 }
 
-export function NavSharedProvider({ children }: { children?: React.ReactNode }) {
+export function NavSharedProvider ({ children }: { children?: React.ReactNode }) {
   const [customNav, setCustomNav] = useState()
   const value = useMemo(() => ({ customNav, setCustomNav } as NavSharedValue), [customNav])
   return <NavSharedContext.Provider value={value}>{children}</NavSharedContext.Provider>
