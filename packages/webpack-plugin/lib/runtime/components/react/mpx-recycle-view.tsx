@@ -327,7 +327,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
-  }, [convertedListData, useListHeader])
+  }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, listHeaderHeight.value, listHeaderHeight.getter])
 
   const scrollAdditionalProps = extendObject(
     {
