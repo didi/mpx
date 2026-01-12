@@ -1434,7 +1434,7 @@ object-fit: scale-down; /* 缩小显示 */
 ## 跨端动画
 基础组件 view 支持两种动画形式 createAnimation API 和 transition，
 可以通过设置 animation 属于来使用 createAnimation API 动画，通过 class 或者 style 设置 css transition 来使用 transition 动画，
-可以用过 prop enableAnimation = api/transition 来指定使用 createAnimation API/transition 的动画形式，，enableAnimation 设置 true 默认为 createAnimation API 形式，需要注意的是指定动画类型后，对应的动画参数也需要匹配设置，详细使用文档如下：
+可以用过 prop enable-animation = api/transition 来指定使用 createAnimation API/transition 的动画形式，，enable-animation 设置 true 默认为 createAnimation API 形式，需要注意的是指定动画类型后，对应的动画参数也需要匹配设置，详细使用文档如下：
 
 ### createAnimation 动画API
 创建一个动画实例 animation，调用实例的方法来描述动画，最后通过动画实例的 export 方法导出动画数据传递给组件的 animation 属性。
