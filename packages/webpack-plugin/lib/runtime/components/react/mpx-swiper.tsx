@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, runOnJS
 import React, { JSX, forwardRef, useRef, useEffect, ReactNode, ReactElement, useMemo, createElement } from 'react'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback } from './utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, wrapChildren, extendObject, GestureHandler, flatGesture, useRunOnJSCallback, isHarmony } from './utils'
 import { SwiperContext } from './context'
 import Portal from './mpx-portal'
 /**
@@ -907,10 +907,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }, [gestureSwitch.current])
 
   const animatedStyles = useAnimatedStyle(() => {
+    const opacity = isHarmony ? 1 : (step.value > 0 ? 1 : 0)
     if (dir === 'x') {
-      return { transform: [{ translateX: offset.value }], opacity: step.value > 0 ? 1 : 0 }
+      return { transform: [{ translateX: offset.value }], opacity }
     } else {
-      return { transform: [{ translateY: offset.value }], opacity: step.value > 0 ? 1 : 0 }
+      return { transform: [{ translateY: offset.value }], opacity }
     }
   })
 
