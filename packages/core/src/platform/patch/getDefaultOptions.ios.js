@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -172,8 +172,8 @@ const instanceProto = {
               type: field
             }
           }
-          // 处理props默认值
-          propsData[key] = field.value
+          // 处理props默认值，没有显式设置value时根据type获取默认值，与微信小程序原生行为保持一致
+          propsData[key] = hasOwn(field, 'value') ? field.value : getDefaultValueByType(field.type)
         }
       }
     })
