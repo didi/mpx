@@ -25,7 +25,7 @@ function isLock (navigationHelper, type, options) {
   clearTimeout(timerId)
   timerId = setTimeout(() => {
     if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-      navigationHelper.lastFailCallback('timeout')
+      navigationHelper.lastFailCallback(`${type}:fail timeout ${options.url || ''}`)
       navigationHelper.lastFailCallback = null
     }
   }, 1000)
@@ -43,7 +43,7 @@ function navigateTo (options = {}) {
     if (options.events) {
       eventChannel._addListeners(options.events)
     }
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
 
@@ -70,7 +70,7 @@ function redirectTo (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.replace(finalPath, queryObj)
@@ -104,8 +104,10 @@ function navigateBack (options = {}) {
     }
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
-        navigationHelper.lastSuccessCallback()
-        navigationHelper.lastSuccessCallback = null
+        if (navigationHelper.lastSuccessCallback) {
+          navigationHelper.lastSuccessCallback()
+          navigationHelper.lastSuccessCallback = null
+        }
       })
     } else {
       navigation.pop(delta)
@@ -120,7 +122,7 @@ function reLaunch (options = {}) {
     return
   }
   if (navigation && navigationHelper) {
-    const { path, queryObj } = parseUrl(options.url)
+    const { path, queryObj } = parseUrl(options.url, true)
     const basePath = getBasePath(navigation)
     const finalPath = resolvePath(path, basePath).slice(1)
     navigation.reset({
