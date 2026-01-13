@@ -712,12 +712,26 @@ Mpx中提供了使用方法类似于 Vue 的动态组件能力，这是一个基
 ```html
 <!-- 组件模板 -->
 <!-- components/mySlot.mpx -->
-<view>
-  <view>这是组件模板</view>
-  <slot name="slot1"></slot>
-  <slot name="slot2"></slot>
-</view>
+<template>
+  <view>
+    <view>这是组件模板</view>
+    <slot name="slot1"></slot>
+    <slot name="slot2"></slot>
+  </view>
+<template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  options: {
+    multipleSlots: true // 启用多slot支持
+  }
+})
+</script>
 ```
+
+> 注意：使用多个slot时，需要在组件选项中开启 `multipleSlots: true`。
 
 使用组件时：
 
@@ -732,16 +746,6 @@ Mpx中提供了使用方法类似于 Vue 的动态组件能力，这是一个基
   </view>
 </template>
 
-<script>
-import { createComponent } from '@mpxjs/core'
-
-createComponent({
-  options: {
-    multipleSlots: true // 启用多slot支持
-  }
-})
-</script>
-
 <script type="application/json">
   {
     "usingComponents": {
@@ -750,7 +754,5 @@ createComponent({
   }
 </script>
 ```
-
-> 注意：使用多个slot时，需要在组件选项中开启 `multipleSlots: true`。
 
 更多关于插槽的使用细节可查看[微信小程序官方文档](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html)。
