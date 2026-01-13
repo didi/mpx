@@ -3,7 +3,7 @@ const { parseValues } = require('../../../utils/string')
 
 module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -400,6 +400,8 @@ module.exports = function getSpec ({ warn, error }) {
     // css var & 数组直接返回
     if (Array.isArray(value) || cssVariableExp.test(value)) return { prop, value }
     const values = parseValues(value)
+    // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+    values.sort()
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\((.+)\)/)
@@ -547,6 +549,15 @@ module.exports = function getSpec ({ warn, error }) {
     return { prop, value: values[0].trim() }
   }
 
+  const formatZIndex = ({ prop, value, selector }, { mode }) => {
+    // z-index auto 报错
+    if (value === 'auto') {
+      error(`Property [${prop}] does not supported [${value}] on ${selector} in ${mode} environment, please check again!`)
+      return { prop, value: 0 }
+    }
+    return { prop, value: value }
+  }
+
   // const formatBoxShadow = ({ prop, value, selector }, { mode }) => {
   //   value = value.trim()
   //   if (value === 'none') {
@@ -611,6 +622,12 @@ module.exports = function getSpec ({ warn, error }) {
         ios: formatFontFamily,
         android: formatFontFamily,
         harmony: formatFontFamily
+      },
+      {
+        test: 'z-index',
+        ios: formatZIndex,
+        android: formatZIndex,
+        harmony: formatZIndex
       },
       // {
       //   test: 'box-shadow',
