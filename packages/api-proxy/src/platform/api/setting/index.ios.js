@@ -10,10 +10,10 @@ const getMenuButtonBoundingClientRect = function () {
   const { screenWidth, statusBarHeight } = windowInfo
 
   // 微信小程序胶囊按钮的典型尺寸
-  const CAPSULE_WIDTH = 87  // 胶囊宽度
+  const CAPSULE_WIDTH = 87 // 胶囊宽度
   const CAPSULE_HEIGHT = 32 // 胶囊高度
-  const MARGIN_RIGHT = 7    // 距离右边距离
-  const MARGIN_TOP = 4      // 状态栏下方的间距
+  const MARGIN_RIGHT = 7 // 距离右边距离
+  const MARGIN_TOP = 4 // 状态栏下方的间距
 
   // 计算胶囊按钮的位置
   const top = statusBarHeight + MARGIN_TOP
