@@ -1,6 +1,6 @@
 'use strict'
 
-require('./init-mpx')
+require('./init')
 const path = require('path')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
