@@ -1,183 +1,26 @@
-import * as platformExports from '../../index.js'
+import { SUPPORTED_APIS as API_LIST, SUPPORTED_OBJECTS as OBJECT_CONFIG } from './rnCanIUseConfig'
 
 let SUPPORTED_APIS = null
 let SUPPORTED_OBJECTS = null
 let OBJECT_METHODS = null
 
 /**
- * 获取类的所有方法名（包括 getter/setter）
- * @param {Function} ClassConstructor - 类构造函数
- * @returns {Array<string>} 方法名数组
- */
-function getClassMethods (ClassConstructor) {
-  const methods = new Set()
-
-  // 从原型上获取所有方法和属性
-  const proto = ClassConstructor.prototype
-  if (proto) {
-    Object.getOwnPropertyNames(proto).forEach(key => {
-      if (key === 'constructor') return
-
-      const descriptor = Object.getOwnPropertyDescriptor(proto, key)
-      // 收集方法和 getter/setter
-      if (descriptor) {
-        if (typeof descriptor.value === 'function') {
-          methods.add(key)
-        } else if (descriptor.get || descriptor.set) {
-          // getter/setter 也算作可用的属性
-          methods.add(key)
-        }
-      }
-    })
-  }
-
-  return Array.from(methods)
-}
-
-/**
- * 检查导出是否为类构造函数
- * @param {*} exportValue - 导出值
- * @returns {boolean} 是否为类
- */
-function isClassConstructor (exportValue) {
-  if (typeof exportValue !== 'function') {
-    return false
-  }
-
-  // 检查是否有 prototype
-  if (!exportValue.prototype) {
-    return false
-  }
-
-  // 方法1: 检查原型上是否有多个属性（排除简单的构造函数）
-  // constructor 始终存在，如果还有其他属性/方法，很可能是类
-  const protoProps = Object.getOwnPropertyNames(exportValue.prototype)
-  if (protoProps.length > 1) {
-    return true
-  }
-
-  // 方法2: 检查 prototype 描述符（ES6 类特征）
-  // ES6 类的 prototype 属性是不可写的
-  const descriptor = Object.getOwnPropertyDescriptor(exportValue, 'prototype')
-  if (descriptor && !descriptor.writable) {
-    return true
-  }
-
-  return false
-}
-
-/**
- * 从 platform/index.js 的导出自动获取所有 API
- * class 不会从 platform 导出（它们通过工厂函数创建），需要单独扫描
- *
- * @returns {Set} API 集合
- */
-function scanPlatformApis () {
-  const apis = new Set()
-
-  // 遍历 platform 的所有导出
-  Object.keys(platformExports).forEach(exportName => {
-    // 跳过内部属性和 canIUse 本身（避免循环）
-    if (exportName === '__esModule' || exportName === 'default' || exportName === 'canIUse') {
-      return
-    }
-
-    const exportValue = platformExports[exportName]
-
-    // 收集所有函数和非空导出作为 API
-    if (typeof exportValue === 'function' || exportValue !== undefined) {
-      apis.add(exportName)
-    }
-  })
-
-  return apis
-}
-
-/**
- * 扫描并加载类定义
- *
- * @returns {Object} { objects: Set, methods: Object }
- */
-function scanClassDefinitions () {
-  const objects = new Set()
-  const methods = {}
-
-  /**
-   * 尝试加载一个模块并检查是否为类
-   * @param {string} modulePath - 模块路径
-   */
-  const tryLoadModule = (modulePath) => {
-    try {
-      const module = require(modulePath)
-      const exportValue = module.default || module
-      // 检查是否为类
-      if (isClassConstructor(exportValue)) {
-        // 优先使用类的 name 属性
-        const className = exportValue.name
-        if (className) {
-          objects.add(className)
-          methods[className] = getClassMethods(exportValue)
-        }
-      }
-    } catch (e) {
-      // 模块不存在或导入失败，静默跳过
-    }
-  }
-
-  // 类文件路径配置
-  // 添加新类时，在此处添加路径即可
-  const classPaths = [
-    // SelectorQuery 相关类
-    '../create-selector-query/rnSelectQuery',
-    '../create-selector-query/rnNodesRef',
-
-    // IntersectionObserver 相关类
-    '../create-intersection-observer/rnIntersectionObserver',
-
-    // Animation 相关类
-    '../animation/animation.ios',
-
-    // Task 相关类
-    '../socket/SocketTask',
-    '../request/RequestTask',
-    '../file/UploadTask',
-    '../file/DownloadTask',
-
-    // 其他 RN 工具类（按需添加）
-    '../window/rnWindow',
-    '../system/rnSystem',
-    '../storage/rnStorage',
-    '../device/network/rnNetwork',
-    '../clipboard-data/rnClipboard',
-    '../make-phone-call/rnMakePhone',
-    '../screen-brightness/rnScreenBrightness'
-  ]
-
-  // 尝试加载所有类文件
-  classPaths.forEach(tryLoadModule)
-
-  return { objects, methods }
-}
-
-/**
  * 初始化支持的 API 列表
  *
- * 架构设计说明：
- * 1. API：从 platform/index.js 自动获取，完全零硬编码
- * 2. 类：通过路径配置加载（必要的配置，因为类不从 platform 导出）
+ * 使用静态配置而不是动态导入，避免加载原生模块
+ * 这样 canIUse 只做判断，不触发任何模块的实际加载
  */
 function initSupportedApis () {
   if (SUPPORTED_APIS !== null) {
     return
   }
 
-  // 从 platform 导出自动获取所有 API
-  SUPPORTED_APIS = scanPlatformApis()
+  // 从静态配置中获取 API 列表
+  SUPPORTED_APIS = new Set(API_LIST)
 
-  // 通过路径配置扫描类定义
-  const { objects, methods } = scanClassDefinitions()
-  SUPPORTED_OBJECTS = objects
-  OBJECT_METHODS = methods
+  // 从静态配置中获取对象和方法
+  SUPPORTED_OBJECTS = new Set(Object.keys(OBJECT_CONFIG))
+  OBJECT_METHODS = OBJECT_CONFIG
 }
 
 /**

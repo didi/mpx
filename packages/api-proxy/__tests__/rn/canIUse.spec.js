@@ -12,6 +12,8 @@ describe('canIUse for RN', () => {
   })
 
   test('should return false for unsupported APIs', () => {
+    expect(canIUse('setClipboardData')).toBe(false)
+    expect(canIUse('getClipboardData')).toBe(false)
     expect(canIUse('someUnsupportedApi')).toBe(false)
     expect(canIUse('wx.someMethod')).toBe(false)
     expect(canIUse('nonExistentApi')).toBe(false)
@@ -56,5 +58,25 @@ describe('canIUse for RN', () => {
     expect(canIUse('createAnimation')).toBe(true)
     expect(canIUse('createSelectorQuery')).toBe(true)
     expect(canIUse('createIntersectionObserver')).toBe(true)
+  })
+
+  test('canIUse should be lightweight and fast', () => {
+    const { canIUse } = require('../../src/platform/api/base/rnCanIUse')
+
+    const start = Date.now()
+
+    // 执行 1000 次 canIUse 调用
+    for (let i = 0; i < 1000; i++) {
+      canIUse('getStorage')
+      canIUse('request')
+      canIUse('SelectorQuery.select')
+    }
+
+    const duration = Date.now() - start
+
+    // 应该非常快（< 100ms）
+    expect(duration).toBeLessThan(100)
+
+    console.log(`1000 次 canIUse 调用耗时: ${duration}ms`)
   })
 })
