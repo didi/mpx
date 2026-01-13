@@ -740,14 +740,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
   if (enableBackgroundRef.current !== enableBackground) {
-    const workInProgress = global.workInProgress
-    if (workInProgress) {
-      error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.', '', null, {
-        workInProgress
-      })
-    } else {
-      error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
-    }
+    error('[Mpx runtime error]: background use should be stable in the component lifecycle, or you can set [enable-background] with true.')
   }
 
   const nodeRef = useRef(null)

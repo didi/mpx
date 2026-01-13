@@ -81,14 +81,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
           }
         )
       } else {
-        const workInProgress = global.workInProgress
-        if (workInProgress) {
-          error('StickyHeader measureLayout error: scrollViewRef is not a valid native component reference', '', null, {
-            workInProgress
-          })
-        } else {
-          error('StickyHeader measureLayout error: scrollViewRef is not a valid native component reference')
-        }
+        error('StickyHeader measureLayout error: scrollViewRef is not a valid native component reference')
       }
     }
   }

@@ -11,7 +11,7 @@ declare module '@mpxjs/utils' {
     diffData: Object | null
   }
   export function isObject (value): value is Object
-  export function error (msg: string, location?: string, e?: any, options?: any): void
+  export function error (msg: string, location?: string, e?: any): void
   export function warn (msg: string, location?: string, e?: any): void
   export function collectDataset (props: Record<string, any>, needParse?: boolean): Record<string, any>
   export function getFocusedNavigation (): {

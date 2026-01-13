@@ -3,23 +3,17 @@ const IndeterminateComponent = 2 // Before we know whether it is function or cla
 const ForwardRef = 11
 const SimpleMemoComponent = 15
 let stopWhile = false
-const fiberError = ['MpxStickyHeader', 'MpxView']
 
 function describeComponentFrame(name, ownerName) {
   let sourceInfo = ''
-  if (fiberError.includes(ownerName) || !ownerName) {
-    return ''
-  }
+
   if (ownerName) {
     sourceInfo = ` (created by ${ownerName})`
   }
   if (ownerName === 'Page') {
     stopWhile = true
   }
-  if (name) {
-    return `\n    in   (${name})  ${sourceInfo}`
-  }
-  return ''
+  return `\n    in   (${name || 'Unknown'})  ${sourceInfo}`
 }
 
 function describeFunctionComponentFrame(fn, ownerFn) {
