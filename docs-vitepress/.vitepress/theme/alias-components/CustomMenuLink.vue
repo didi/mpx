@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { DefaultTheme } from 'vitepress/theme'
 import { useData } from 'vitepress'
+// @ts-ignore
 import { isActive } from 'vitepress/dist/client/shared.js'
 import { VPLink } from 'vitepress/theme'
 
