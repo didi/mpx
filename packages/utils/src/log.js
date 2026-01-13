@@ -28,8 +28,8 @@ export function warn (msg, location, e) {
   }
 }
 
-export function error (msg, location, e, options = {}) {
-  const { workInProgress } = options
+export function error (msg, location, e) {
+  const workInProgress = global.workInProgress
   let stack = ''
   if (workInProgress) {
     stack = getStackByFiberInDevAndProd(workInProgress)
