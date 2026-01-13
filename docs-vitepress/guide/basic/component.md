@@ -731,6 +731,8 @@ createComponent({
 </script>
 ```
 
+> 注意：使用多个slot时，需要在组件选项中开启 `multipleSlots: true`。
+
 使用组件时：
 
 ```html
@@ -752,7 +754,5 @@ createComponent({
   }
 </script>
 ```
-
-> 注意：使用多个slot时，需要在组件选项中开启 `multipleSlots: true`。
 
 更多关于插槽的使用细节可查看[微信小程序官方文档](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html)。
