@@ -4,6 +4,8 @@ module.exports = function ({ print }) {
   const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -27,7 +29,8 @@ module.exports = function ({ print }) {
         test: /^(scale-area)$/,
         ios: iosPropLog,
         android: androidPropLog,
-        harmony: harmonyPropLog
+        harmony: harmonyPropLog,
+        ks: ksPropLog
       }
     ]
   }

@@ -3,7 +3,7 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
@@ -172,8 +172,8 @@ const instanceProto = {
               type: field
             }
           }
-          // 处理props默认值
-          propsData[key] = field.value
+          // 处理props默认值，没有显式设置value时根据type获取默认值，与微信小程序原生行为保持一致
+          propsData[key] = hasOwn(field, 'value') ? field.value : getDefaultValueByType(field.type)
         }
       }
     })
@@ -314,14 +314,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    const loadParams = {}
-    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-    if (isObject(props.route.params)) {
-      for (const key in props.route.params) {
-        loadParams[key] = encodeURIComponent(props.route.params[key])
+    const decodedQuery = {}
+    const rawQuery = props.route.params || {}
+    if (isObject(rawQuery)) {
+      for (const key in rawQuery) {
+        decodedQuery[key] = decodeURIComponent(rawQuery[key])
       }
     }
-    proxy.callHook(ONLOAD, [loadParams])
+    proxy.callHook(ONLOAD, [rawQuery, decodedQuery])
   }
 
   Object.assign(proxy, {
