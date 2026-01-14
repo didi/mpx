@@ -1456,11 +1456,7 @@ class MpxWebpackPlugin {
                     const transRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
                     if (transRoot !== tarRoot) {
                       if (transRoot === '') {
-                        const entryName = getEntryName({
-                          _compilation: compilation,
-                          resource: parser.state.module.resource
-                        })
-                        if (entryName) depName = entryName
+                        depName = 'app'
                       } else {
                         depName = transRoot + '/index'
                       }
