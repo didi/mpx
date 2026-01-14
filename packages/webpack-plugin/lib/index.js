@@ -48,7 +48,6 @@ const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { transSubpackage } = require('./utils/trans-async-sub-rules')
-const getEntryName = require('./utils/get-entry-name')
 const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
@@ -1449,26 +1448,20 @@ class MpxWebpackPlugin {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.supportRequireAsync) {
+              let shouldSplitChunk = mpx.supportRequireAsync
+              if (shouldSplitChunk && isReact(mpx.mode)) {
+                const transTarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+                tarRoot = transTarRoot
+                if (transTarRoot === '') {
+                  shouldSplitChunk = false
+                }
+              }
+
+              if (shouldSplitChunk) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  let depName = tarRoot + '/index'
-                  if (isReact(mpx.mode)) {
-                    const transRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-                    if (transRoot !== tarRoot) {
-                      if (transRoot === '') {
-                        const entryName = getEntryName({
-                          _compilation: compilation,
-                          resource: parser.state.module.resource
-                        })
-                        if (entryName) depName = entryName
-                      } else {
-                        depName = transRoot + '/index'
-                      }
-                    }
-                  }
                   const depBlock = new AsyncDependenciesBlock(
                     {
-                      name: depName
+                      name: tarRoot + '/index'
                     },
                     expr.loc,
                     request
