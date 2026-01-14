@@ -48,6 +48,7 @@ const SplitChunksPlugin = require('webpack/lib/optimize/SplitChunksPlugin')
 const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { transSubpackage } = require('./utils/trans-async-sub-rules')
+const getEntryName = require('./utils/get-entry-name')
 const { matchCondition } = require('./utils/match-condition')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
@@ -1450,10 +1451,24 @@ class MpxWebpackPlugin {
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+                  let depName = tarRoot + '/index'
+                  if (isReact(mpx.mode)) {
+                    const transRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+                    if (transRoot !== tarRoot) {
+                      if (transRoot === '') {
+                        const entryName = getEntryName({
+                          _compilation: compilation,
+                          resource: parser.state.module.resource
+                        })
+                        if (entryName) depName = entryName
+                      } else {
+                        depName = transRoot + '/index'
+                      }
+                    }
+                  }
                   const depBlock = new AsyncDependenciesBlock(
                     {
-                      name: tarRoot + '/index'
+                      name: depName
                     },
                     expr.loc,
                     request
