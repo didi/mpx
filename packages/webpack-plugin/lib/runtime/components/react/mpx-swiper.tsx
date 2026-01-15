@@ -38,6 +38,11 @@ type EventDataType = {
   // onUpdate时根据上一个判断方向，onFinalize根据transformStart判断
   transdir: number
 }
+// bindtransition回调的参数
+type EventTransition = {
+  dx: number
+  dy: number
+}
 
 interface SwiperProps {
   children?: ReactNode
@@ -74,6 +79,8 @@ interface SwiperProps {
   'simultaneous-handlers'?: Array<GestureHandler>
   disableGesture?: boolean
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindtransition?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindanimationfinish?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 /**
@@ -154,7 +161,9 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     circular = false,
     disableGesture = false,
     current: propCurrent = 0,
-    bindchange
+    bindchange,
+    bindtransition,
+    bindanimationfinish
   } = props
 
   const dotCommonStyle = {
@@ -403,6 +412,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }, () => {
           currentIndex.value = nextIndex
           runOnJS(runOnJSCallback)('loop')
+          runOnJS(runOnJSCallback)('handleAnimationfinish', nextIndex)
         })
       } else {
         // 默认向右, 向下
@@ -418,6 +428,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             offset.value = initOffset
             currentIndex.value = nextIndex
             runOnJS(runOnJSCallback)('loop')
+            runOnJS(runOnJSCallback)('handleAnimationfinish', nextIndex)
           })
         } else {
           nextIndex = currentIndex.value + 1
@@ -429,6 +440,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           }, () => {
             currentIndex.value = nextIndex
             runOnJS(runOnJSCallback)('loop')
+            runOnJS(runOnJSCallback)('handleAnimationfinish', nextIndex)
           })
         }
       }
@@ -462,12 +474,23 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       bindchange && bindchange(eventData)
     }
   }
+  function handleTransition (transData: EventTransition) {
+    const eventData = getCustomEvent('change', {}, { detail: transData, layoutRef: layoutRef })
+    bindtransition && bindtransition(eventData)
+  }
+
+  function handleAnimationfinish (current: number) {
+    const eventData = getCustomEvent('change', {}, { detail: { current, source: 'touch' }, layoutRef: layoutRef })
+    bindanimationfinish && bindanimationfinish(eventData)
+  }
 
   const runOnJSCallbackRef = useRef({
     loop,
     pauseLoop,
     resumeLoop,
-    handleSwiperChange
+    handleSwiperChange,
+    handleTransition,
+    handleAnimationfinish
   })
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
@@ -493,6 +516,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           easing: easeMap[easeingFunc]
         }, () => {
           currentIndex.value = propCurrent
+          bindanimationfinish && runOnJS(runOnJSCallback)('handleAnimationfinish', propCurrent)
         })
       } else {
         offset.value = targetOffset
@@ -511,6 +535,28 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     // 这里必须传递函数名, 直接写()=> {}形式会报 访问了未sharedValue信息
     if (newIndex !== preIndex && bindchange) {
       runOnJS(runOnJSCallback)('handleSwiperChange', newIndex, propCurrent)
+    }
+  })
+  // todo: 如果通过设置current更改，dx和小程序的dx不对等
+  useAnimatedReaction(() => offset.value, (curOffset, preOffset) => {
+    const curAbsOffset = Math.abs(curOffset)
+    const preAbsOffset = Math.abs(preOffset || 0)
+    const computeOffset = step.value * (currentIndex.value + patchElmNumShared.value)
+    // 有小数点的情况
+    const isEqual = Math.abs(Math.floor(computeOffset) - Math.floor(Math.abs(offset.value))) <= 2
+    if (curAbsOffset !== preAbsOffset && curAbsOffset && !isEqual) {
+      // 移动的距离，手向左滑动正数( curAbsOffset >= preAbsOffset)，右右滑动是负数( curAbsOffset < preAbsOffset)
+      let trans = 0
+      if (curAbsOffset >= preAbsOffset) {
+        trans = curAbsOffset % step.value
+      } else {
+        trans = -(step.value - curAbsOffset % step.value)
+      }
+      const transData = {
+        dx: dir === 'x' ? trans : 0,
+        dy: dir === 'y' ? trans : 0
+      }
+      bindtransition && runOnJS(runOnJSCallback)('handleTransition', transData)
     }
   })
 
@@ -640,6 +686,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             currentIndex.value = selectedIndex
             offset.value = resetOffset
             runOnJS(runOnJSCallback)('resumeLoop')
+            bindanimationfinish && runOnJS(runOnJSCallback)('handleAnimationfinish', selectedIndex)
           }
         })
       } else {
@@ -650,6 +697,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           if (touchfinish.value !== false) {
             currentIndex.value = selectedIndex
             runOnJS(runOnJSCallback)('resumeLoop')
+            bindanimationfinish && runOnJS(runOnJSCallback)('handleAnimationfinish', selectedIndex)
           }
         })
       }
@@ -672,6 +720,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (touchfinish.value !== false) {
           currentIndex.value = moveToIndex
           runOnJS(runOnJSCallback)('resumeLoop')
+          bindanimationfinish && runOnJS(runOnJSCallback)('handleAnimationfinish', moveToIndex)
         }
       })
     }
