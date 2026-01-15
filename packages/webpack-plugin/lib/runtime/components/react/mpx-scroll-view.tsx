@@ -112,6 +112,11 @@ type ScrollAdditionalProps = {
 
 const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
 
+const REFRESH_COLOR = {
+  black: ['#000'],
+  white: ['#fff']
+}
+
 const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, ScrollViewProps>((scrollViewProps: ScrollViewProps = {}, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(scrollViewProps)
   const {
@@ -121,9 +126,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     binddragstart,
     binddragging,
     binddragend,
-    bindtouchstart,
     bindtouchmove,
-    bindtouchend,
     'scroll-x': scrollX = false,
     'scroll-y': scrollY = false,
     'enable-back-to-top': enableBackToTop = false,
@@ -159,14 +162,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
   const waitForHandlers = flatGesture(waitFor)
 
+  const { refresherContent, otherContent } = getRefresherContent(props.children)
+  const hasRefresher = refresherContent && refresherEnabled
+
   const [refreshing, setRefreshing] = useState(false)
-
   const [enableScroll, setEnableScroll] = useState(true)
-  const enableScrollValue = useSharedValue(true)
-
   const [scrollBounces, setScrollBounces] = useState(false)
-  const bouncesValue = useSharedValue(!!false)
 
+  const enableScrollValue = useSharedValue(true)
+  const bouncesValue = useSharedValue(false)
   const translateY = useSharedValue(0)
   const isAtTop = useSharedValue(true)
   const refresherHeight = useSharedValue(0)
@@ -186,15 +190,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const firstScrollIntoViewChange = useRef<boolean>(true)
 
-  const refreshColor = {
-    black: ['#000'],
-    white: ['#fff']
-  }
-
   const isContentSizeChange = useRef(false)
-
-  const { refresherContent, otherContent } = getRefresherContent(props.children)
-  const hasRefresher = refresherContent && refresherEnabled
 
   const {
     normalStyle,
@@ -643,67 +639,71 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  // 处理下拉刷新的手势
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      'worklet'
-      if (enhanced && !!bounces) {
-        if (event.translationY > 0 && bouncesValue.value) {
-          updateBouncesState(false)
-        } else if ((event.translationY < 0) && !bouncesValue.value) {
-          updateBouncesState(true)
-        }
-      }
+  // 处理下拉刷新的手势 - 使用 useMemo 避免每次渲染都创建
+  const panGesture = useMemo(() => {
+    if (!hasRefresher) return Gesture.Pan() // 返回空手势
 
-      if (translateY.value <= 0 && event.translationY < 0) {
-        // 滑动到顶再向上开启滚动
-        updateScrollState(true)
-      } else if (event.translationY > 0 && isAtTop.value) {
-        // 滚动到顶再向下禁止滚动
-        updateScrollState(false)
-      }
-      // 禁止滚动后切换为滑动
-      if (!enableScrollValue.value && isAtTop.value) {
-        if (refreshing) {
-          // 从完全展开状态(refresherHeight.value)开始计算偏移
-          translateY.value = Math.max(
-            0,
-            Math.min(
-              refresherHeight.value,
-              refresherHeight.value + event.translationY
-            )
-          )
-        } else if (event.translationY > 0) {
-          // 非刷新状态下的下拉逻辑保持不变
-          translateY.value = Math.min(event.translationY * 0.6, refresherHeight.value)
+    return Gesture.Pan()
+      .onUpdate((event) => {
+        'worklet'
+        if (enhanced && !!bounces) {
+          if (event.translationY > 0 && bouncesValue.value) {
+            updateBouncesState(false)
+          } else if ((event.translationY < 0) && !bouncesValue.value) {
+            updateBouncesState(true)
+          }
         }
-      }
-    })
-    .onEnd((event) => {
-      'worklet'
-      if (enableScrollValue.value) return
-      if (refreshing) {
-        // 刷新状态下，根据滑动距离决定是否隐藏
-        // 如果向下滑动没超过 refresherThreshold，就完全隐藏，如果向上滑动完全隐藏
-        if ((event.translationY > 0 && translateY.value < refresherThreshold) || event.translationY < 0) {
+
+        if (translateY.value <= 0 && event.translationY < 0) {
+          // 滑动到顶再向上开启滚动
+          updateScrollState(true)
+        } else if (event.translationY > 0 && isAtTop.value) {
+          // 滚动到顶再向下禁止滚动
+          updateScrollState(false)
+        }
+        // 禁止滚动后切换为滑动
+        if (!enableScrollValue.value && isAtTop.value) {
+          if (refreshing) {
+            // 从完全展开状态(refresherHeight.value)开始计算偏移
+            translateY.value = Math.max(
+              0,
+              Math.min(
+                refresherHeight.value,
+                refresherHeight.value + event.translationY
+              )
+            )
+          } else if (event.translationY > 0) {
+            // 非刷新状态下的下拉逻辑保持不变
+            translateY.value = Math.min(event.translationY * 0.6, refresherHeight.value)
+          }
+        }
+      })
+      .onEnd((event) => {
+        'worklet'
+        if (enableScrollValue.value) return
+        if (refreshing) {
+          // 刷新状态下，根据滑动距离决定是否隐藏
+          // 如果向下滑动没超过 refresherThreshold，就完全隐藏，如果向上滑动完全隐藏
+          if ((event.translationY > 0 && translateY.value < refresherThreshold) || event.translationY < 0) {
+            translateY.value = withTiming(0)
+            updateScrollState(true)
+            runOnJS(runOnJSCallback)('setRefreshing', false)
+          } else {
+            translateY.value = withTiming(refresherHeight.value)
+          }
+        } else if (event.translationY >= refresherHeight.value) {
+          // 触发刷新
+          translateY.value = withTiming(refresherHeight.value)
+          runOnJS(runOnJSCallback)('onRefresh')
+        } else {
+          // 回弹
           translateY.value = withTiming(0)
           updateScrollState(true)
           runOnJS(runOnJSCallback)('setRefreshing', false)
-        } else {
-          translateY.value = withTiming(refresherHeight.value)
         }
-      } else if (event.translationY >= refresherHeight.value) {
-        // 触发刷新
-        translateY.value = withTiming(refresherHeight.value)
-        runOnJS(runOnJSCallback)('onRefresh')
-      } else {
-        // 回弹
-        translateY.value = withTiming(0)
-        updateScrollState(true)
-        runOnJS(runOnJSCallback)('setRefreshing', false)
-      }
-    })
-    .simultaneousWithExternalGesture(scrollViewRef)
+      })
+      .simultaneousWithExternalGesture(scrollViewRef)
+  }, [hasRefresher, enhanced, bounces, refreshing, refresherThreshold])
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
@@ -779,61 +779,57 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
 
-  const withRefresherScrollView = createElement(
-    GestureDetector,
-    { gesture: panGesture },
-    createElement(
-      ScrollViewComponent,
-      innerProps,
-      createElement(
-        Animated.View,
-        { style: [refresherAnimatedStyle, refresherLayoutStyle], onLayout: onRefresherLayout },
-        refresherContent
-      ),
-      createElement(
-        Animated.View,
-        { style: contentAnimatedStyle },
-        createElement(
-          ScrollViewContext.Provider,
-          { value: contextValue },
-          wrapChildren(
-            extendObject({}, props, { children: otherContent }),
-            {
-              hasVarDec,
-              varContext: varContextRef.current,
-              textStyle,
-              textProps
-            }
-          )
-        )
-      )
-    )
-  )
-
-  const commonScrollView = createElement(
-    ScrollViewComponent,
-    extendObject({}, innerProps, {
-      refreshControl: refresherEnabled
-        ? createElement(RefreshControl, extendObject({
-          progressBackgroundColor: refresherBackground,
-          refreshing: refreshing,
-          onRefresh: onRefresh
-        }, refresherDefaultStyle && refresherDefaultStyle !== 'none'
-          ? { colors: refreshColor[refresherDefaultStyle] }
-          : {}))
-        : undefined
-    }),
-    createElement(ScrollViewContext.Provider, { value: contextValue },
-      wrapChildren(props, {
+  const createScrollViewContent = () => {
+    const wrappedChildren = wrapChildren(hasRefresher ? extendObject({}, props, { children: otherContent }) : props,
+      {
         hasVarDec,
         varContext: varContextRef.current,
         textStyle,
         textProps
       })
-    )
-  )
+    return createElement(ScrollViewContext.Provider, { value: contextValue }, wrappedChildren)
+  }
 
-  let scrollViewComponent = hasRefresher ? withRefresherScrollView : commonScrollView
+  const withRefresherScrollView = () => {
+    return createElement(
+      GestureDetector,
+      { gesture: panGesture },
+      createElement(
+        ScrollViewComponent,
+        innerProps,
+        createElement(
+          Animated.View,
+          { style: [refresherAnimatedStyle, refresherLayoutStyle], onLayout: onRefresherLayout },
+          refresherContent
+        ),
+        createElement(
+          Animated.View,
+          { style: contentAnimatedStyle },
+          createScrollViewContent()
+        )
+      )
+    )
+  }
+
+  const commonScrollView = () => {
+    const refreshControl = refresherEnabled
+      ? createElement(RefreshControl, extendObject({
+        progressBackgroundColor: refresherBackground,
+        refreshing: refreshing,
+        onRefresh: onRefresh
+      }, refresherDefaultStyle && refresherDefaultStyle !== 'none'
+        ? { colors: REFRESH_COLOR[refresherDefaultStyle] }
+        : {}))
+      : undefined
+
+    return createElement(
+      ScrollViewComponent,
+      extendObject({}, innerProps, { refreshControl }),
+      createScrollViewContent()
+    )
+  }
+
+  let scrollViewComponent = hasRefresher ? withRefresherScrollView() : commonScrollView()
 
   if (hasPositionFixed) {
     scrollViewComponent = createElement(Portal, null, scrollViewComponent)
