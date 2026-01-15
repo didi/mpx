@@ -41,11 +41,20 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
 
     if (keyboardAvoid?.current) {
       const inputRef = keyboardAvoid.current.ref?.current
-      if (inputRef && inputRef.isFocused()) {
+      if (inputRef && inputRef.isFocused() && !keyboardAvoid.current.readyToShow) {
         // 修复 Android 点击键盘收起按钮时当前 input 没触发失焦的问题
+        // keyboardAvoid.current.readyToShow = true 表示聚焦到了新的输入框，不需要手动触发失焦
         inputRef.blur()
       }
-      keyboardAvoid.current = null
+      if (!keyboardAvoid.current.onKeyboardShow) {
+        // 修复部分 Android 机型可能时序问题：当从 input 已聚焦状态，聚焦到另一个 input 时，可能时序：
+        // - 新的 Input `onTouchStart` -> 新的 Input `onFocus` -> 旧输入框键盘 `keyboardDidHide` -> 新输入框键盘 `keyboardDidShow`
+        // - 此时 keyboardAvoid.current 如果清空 null，会导致新输入框键盘 `keyboardDidShow` 回调 keybaordAvoding 执行失败。
+        // 修复方案：
+        // 如果出现时序问题，那么新的 Input `onFocus` 会更早执行，那么 `keyboardAvoid.current.onKeyboardShow` 存在，
+        // 那么不应该重置为 null，反之，说明时正常情况，应当重置为 null。
+        keyboardAvoid.current = null
+      }
     }
 
     cancelAnimation(offset)
@@ -66,6 +75,10 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     let subscriptions: EmitterSubscription[] = []
 
     function keybaordAvoding(evt: any) {
+      if (keyboardAvoid?.current?.readyToShow) {
+        // 重置标记位
+        keyboardAvoid.current.readyToShow = false
+      }
       if (!keyboardAvoid?.current || isShow.current) {
         return
       }
