@@ -73,6 +73,7 @@ interface SwiperProps {
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
   disableGesture?: boolean
+  'display-multiple-items'?: number
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
@@ -167,6 +168,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     marginBottom: dotSpacing,
     zIndex: 98
   }
+  const displayMultipleItems = props['display-multiple-items'] || 1
   const easeingFunc = props['easing-function'] || 'default'
   const easeDuration = props.duration || 500
   const horizontal = props.vertical !== undefined ? !props.vertical : true
@@ -200,18 +202,19 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const preMarginShared = useSharedValue(preMargin)
   const nextMarginShared = useSharedValue(nextMargin)
   const autoplayShared = useSharedValue(autoplay)
-  // 默认前后补位的元素个数
-  const patchElmNum = circular ? (preMargin ? 2 : 1) : 0
-  const patchElmNumShared = useSharedValue(patchElmNum)
-  const circularShared = useSharedValue(circular)
   const children = Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])
+  // 默认前后补位的元素个数
+  const patchElmNum = (circular && children.length > 1) ? displayMultipleItems + 1 : 0
+  const patchElmNumShared = useSharedValue(patchElmNum)
+  const displayMultipleItemsShared = useSharedValue(displayMultipleItems)
+  const circularShared = useSharedValue(circular)
   // 对有变化的变量，在worklet中只能使用sharedValue变量，useRef不能更新
   const childrenLength = useSharedValue(children.length)
   const initWidth = typeof normalStyle?.width === 'number' ? normalStyle.width - preMargin - nextMargin : normalStyle.width
   const initHeight = typeof normalStyle?.height === 'number' ? normalStyle.height - preMargin - nextMargin : normalStyle.height
   const dir = horizontal === false ? 'y' : 'x'
   const pstep = dir === 'x' ? initWidth : initHeight
-  const initStep: number = isNaN(pstep) ? 0 : pstep
+  const initStep: number = isNaN(pstep) ? 0 : pstep / displayMultipleItems
   // 每个元素的宽度 or 高度，有固定值直接初始化无则0
   const step = useSharedValue(initStep)
   // 记录选中元素的索引值
@@ -285,7 +288,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const { width, height } = e.nativeEvent.layout
     const realWidth = dir === 'x' ? width - preMargin - nextMargin : width
     const realHeight = dir === 'y' ? height - preMargin - nextMargin : height
-    const iStep = dir === 'x' ? realWidth : realHeight
+    const iStep = (dir === 'x' ? realWidth : realHeight) / displayMultipleItems
     if (iStep !== step.value) {
       step.value = iStep
       updateCurrent(propCurrent, iStep)
@@ -345,17 +348,21 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     const intLen = children.length
     let renderChild = children.slice()
     if (circular && intLen > 1) {
-      // 最前面加最后一个元素
-      const lastChild = React.cloneElement(children[intLen - 1] as ReactElement, { key: 'clone0' })
-      // 最后面加第一个元素
-      const firstChild = React.cloneElement(children[0] as ReactElement, { key: 'clone1' })
-      if (preMargin) {
-        const lastChild1 = React.cloneElement(children[intLen - 2] as ReactElement, { key: 'clone2' })
-        const firstChild1 = React.cloneElement(children[1] as ReactElement, { key: 'clone3' })
-        renderChild = [lastChild1, lastChild].concat(renderChild).concat([firstChild, firstChild1])
-      } else {
-        renderChild = [lastChild].concat(renderChild).concat([firstChild])
+      // 动态生成前置补位元素
+      const frontClones = []
+      // 计算补位序列的起始索引。例如 len=3, patch=2 -> start=1 (即从B开始)
+      const startIndex = intLen - (patchElmNum % intLen)
+      for (let i = 0; i < patchElmNum; i++) {
+        const sourceIndex = (startIndex + i) % intLen
+        frontClones.push(React.cloneElement(children[sourceIndex], { key: `clone_front_${i}` }))
       }
+      // 动态生成后置补位元素
+      const backClones = []
+      for (let i = 0; i < patchElmNum; i++) {
+        const sourceIndex = i % intLen
+        backClones.push(React.cloneElement(children[sourceIndex], { key: `clone_back_${i}` }))
+      }
+      renderChild = [...frontClones, ...renderChild, ...backClones]
     }
     const arrChildren = renderChild.map((child, index) => {
       const extraStyle = {} as { [key: string]: any }
@@ -390,7 +397,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       let nextIndex = currentIndex.value
       if (!circularShared.value) {
         // 获取下一个位置的坐标, 循环到最后一个元素,直接停止, 取消定时器
-        if (currentIndex.value === childrenLength.value - 1) {
+        if (currentIndex.value === childrenLength.value - displayMultipleItemsShared.value) {
           pauseLoop()
           return
         }
@@ -560,14 +567,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }
     }
   }, [autoplay])
-
   useEffect(() => {
-    if (circular !== circularShared.value) {
+    if (circular !== circularShared.value || patchElmNum !== patchElmNumShared.value || displayMultipleItems !== displayMultipleItemsShared.value) {
       circularShared.value = circular
-      patchElmNumShared.value = circular ? (preMargin ? 2 : 1) : 0
+      patchElmNumShared.value = patchElmNum
+      displayMultipleItemsShared.value = displayMultipleItems
       offset.value = getOffset(currentIndex.value, step.value)
     }
-  }, [circular, preMargin])
+  }, [circular, patchElmNum, displayMultipleItems])
   const { gestureHandler } = useMemo(() => {
     function getTargetPosition (eventData: EventDataType) {
       'worklet'
@@ -585,7 +592,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const moveToIndex = transdir < 0 ? Math.ceil(computedIndex) : Math.floor(computedIndex)
       // 实际应该定位的索引值
       if (!circularShared.value) {
-        selectedIndex = moveToIndex
+        const maxIndex = Math.max(0, childrenLength.value - displayMultipleItemsShared.value)
+        selectedIndex = Math.min(Math.max(moveToIndex, 0), maxIndex)
         moveToTargetPos = selectedIndex * step.value
       } else {
         if (moveToIndex >= childrenLength.value + patchElmNumShared.value) {
@@ -618,7 +626,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const gestureMovePos = offset.value + translation
       if (!circularShared.value) {
         // 如果只判断区间，中间非滑动状态(handleResistanceMove)向左滑动，突然改为向右滑动，但是还在非滑动态，本应该可滑动判断为了不可滑动
-        const posEnd = -step.value * (childrenLength.value - 1)
+        const posEnd = -step.value * (childrenLength.value - displayMultipleItemsShared.value)
         if (transdir < 0) {
           return gestureMovePos > posEnd
         } else {
@@ -742,7 +750,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const { translation, transdir } = eventData
       const moveToOffset = offset.value + translation
       const maxOverDrag = Math.floor(step.value / 2)
-      const maxOffset = translation < 0 ? -(childrenLength.value - 1) * step.value : 0
+      const maxOffset = translation < 0 ? -(childrenLength.value - displayMultipleItemsShared.value) * step.value : 0
       let resistance = 0.1
       let overDrag = 0
       let finalOffset = 0
