@@ -30,6 +30,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
+const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
 const filterRegExp = /(calc|env|%)/
 
@@ -39,6 +40,8 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-bottom': 'bottom',
   'safe-area-inset-left': 'left'
 }
+
+export const extendObject = Object.assign
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
@@ -149,7 +152,7 @@ const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopRightRadius: 'width',
   borderRadius: 'width'
 }
-const selfPercentRule: Record<string, 'height' | 'width'> = Object.assign({
+const selfPercentRule: Record<string, 'height' | 'width'> = extendObject({
   translateX: 'width',
   translateY: 'height'
 }, radiusPercentRule)
@@ -394,10 +397,10 @@ interface TransformStyleConfig {
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
-  isTransformBorderRadiusPercent?: boolean
+  transformRadiusPercent?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, isTransformBorderRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -448,7 +451,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
       // calc translate & border-radius 的百分比计算
-      if (hasOwn(selfPercentRule, key) && /calc\(\d+%/.test(value)) {
+      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
         hasSelfPercent = true
         percentKeyPaths.push(keyPath.slice())
       }
@@ -459,7 +462,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
     // fixme 去掉 translate & border-radius 的百分比计算
     // fixme Image 组件 borderRadius 仅支持 number
-    if (isTransformBorderRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
+    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
       hasSelfPercent = true
       percentKeyPaths.push(keyPath.slice())
     } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
@@ -735,8 +738,6 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
     return gesture?.current ? [gesture] : []
   })) || []
 }
-
-export const extendObject = Object.assign
 
 export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return

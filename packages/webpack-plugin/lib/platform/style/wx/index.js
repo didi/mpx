@@ -33,7 +33,8 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // 值类型
   const ValueType = {
-    number: 'number',
+    integer: 'integer',
+    length: 'length',
     color: 'color',
     enum: 'enum'
   }
@@ -63,26 +64,27 @@ module.exports = function getSpec ({ warn, error }) {
     'align-items': ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
-    'background-size': ['contain', 'cover', 'auto', ValueType.number],
-    'background-position': ['left', 'right', 'top', 'bottom', 'center', ValueType.number],
+    'background-size': ['contain', 'cover', 'auto', ValueType.length],
+    'background-position': ['left', 'right', 'top', 'bottom', 'center', ValueType.length],
     'background-repeat': ['no-repeat'],
-    width: ['auto', ValueType.number],
-    height: ['auto', ValueType.number],
-    'flex-basis': ['auto', ValueType.number],
-    margin: ['auto', ValueType.number],
-    'margin-top': ['auto', ValueType.number],
-    'margin-left': ['auto', ValueType.number],
-    'margin-bottom': ['auto', ValueType.number],
-    'margin-right': ['auto', ValueType.number],
-    'margin-horizontal': ['auto', ValueType.number],
-    'margin-vertical': ['auto', ValueType.number]
+    width: ['auto', ValueType.length],
+    height: ['auto', ValueType.length],
+    'flex-basis': ['auto', ValueType.length],
+    margin: ['auto', ValueType.length],
+    'margin-top': ['auto', ValueType.length],
+    'margin-left': ['auto', ValueType.length],
+    'margin-bottom': ['auto', ValueType.length],
+    'margin-right': ['auto', ValueType.length],
+    'margin-horizontal': ['auto', ValueType.length],
+    'margin-vertical': ['auto', ValueType.length]
   }
   // 获取值类型
   const getValueType = (prop) => {
     const propValueTypeRules = [
       // 重要！！优先判断是不是枚举类型
       [ValueType.enum, new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')],
-      [ValueType.number, /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/],
+      [ValueType.length, /^((gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|offset)))$/],
+      [ValueType.integer, /^((opacity|flex-grow|flex-shrink|z-index)|(.+-(index|opacity)))$/],
       [ValueType.color, /^(color|(.+-color))$/]
     ]
     for (const rule of propValueTypeRules) {
@@ -133,20 +135,29 @@ module.exports = function getSpec ({ warn, error }) {
     if (calcExp.test(value) || envExp.test(value)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
-      number: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
+      integer: /^(-?(\d+(\.\d+)?|\.\d+))$/,
+      length: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
       color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const type = getValueType(prop)
     const tipsType = (type) => {
       const info = {
+        [ValueType.length]: '2rpx,10%,30rpx',
         [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000',
         [ValueType.enum]: `${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}`
       }
       tips(`Value of ${prop} in ${selector} should be ${type}${info[type] ? `, eg ${info[type]}` : ''}, received [${value}], please check again!`)
     }
     switch (type) {
-      case ValueType.number: {
-        if (!valueExp.number.test(value)) {
+      case ValueType.length: {
+        if (!valueExp.length.test(value)) {
+          tipsType(type)
+          return false
+        }
+        return true
+      }
+      case ValueType.integer: {
+        if (!valueExp.integer.test(value)) {
           tipsType(type)
           return false
         }
