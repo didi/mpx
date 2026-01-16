@@ -6,7 +6,6 @@ import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
-import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -31,6 +30,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
+const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
 const filterRegExp = /(calc|env|%)/
 
@@ -40,6 +40,8 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-bottom': 'bottom',
   'safe-area-inset-left': 'left'
 }
+
+export const extendObject = Object.assign
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
@@ -143,16 +145,17 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
     innerStyle: Partial<T>
   }
 }
-
-const selfPercentRule: Record<string, 'height' | 'width'> = {
-  translateX: 'width',
-  translateY: 'height',
+const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
   borderBottomLeftRadius: 'width',
   borderBottomRightRadius: 'width',
   borderTopRightRadius: 'width',
   borderRadius: 'width'
 }
+const selfPercentRule: Record<string, 'height' | 'width'> = extendObject({
+  translateX: 'width',
+  translateY: 'height'
+}, radiusPercentRule)
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
@@ -394,9 +397,10 @@ interface TransformStyleConfig {
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
+  transformRadiusPercent?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -444,14 +448,21 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
+  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
+      // calc translate & border-radius 的百分比计算
+      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
+        hasSelfPercent = true
+        percentKeyPaths.push(keyPath.slice())
+      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+    // fixme 去掉 translate & border-radius 的百分比计算
+    // fixme Image 组件 borderRadius 仅支持 number
+    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
       hasSelfPercent = true
       percentKeyPaths.push(keyPath.slice())
     } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
@@ -467,7 +478,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
-
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
@@ -531,9 +541,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-
-  // transform 字符串格式转化数组格式
-  transformTransform(normalStyle)
+  // transform 字符串格式转化数组格式(先转数组再处理css var)
+  transformTransform(styleObj)
 
   return {
     hasVarDec,
@@ -729,8 +738,6 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
     return gesture?.current ? [gesture] : []
   })) || []
 }
-
-export const extendObject = Object.assign
 
 export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return
