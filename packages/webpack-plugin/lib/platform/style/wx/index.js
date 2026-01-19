@@ -110,7 +110,7 @@ module.exports = function getSpec ({ warn, error }) {
 
   // 属性值校验
   // 返回值：
-  // - 通过：返回用于最终输出的 rawValue（永远保持原始值，不做 fallback 折叠）
+  // - 通过：返回 true
   // - 失败：返回 false
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
@@ -119,7 +119,7 @@ module.exports = function getSpec ({ warn, error }) {
 
     // CSS 自定义属性（--xxx）是变量定义，不属于 RN 样式属性：
     // 不能按 `-height/-color` 等后缀推断类型去校验，否则会把变量定义错误过滤，导致运行时 var() 取值失败
-    if (/^--/.test(prop)) return rawValue
+    if (/^--/.test(prop)) return true
 
     // 校验阶段允许使用 fallback 作为最坏情况（避免 RN crash），但输出必须保留 rawValue
     let valueForVerify = rawValue
@@ -133,14 +133,14 @@ module.exports = function getSpec ({ warn, error }) {
       }
       // null 表示没有 fallback，CSS 变量本身是合法的（运行时会解析）
       if (fallback === null) {
-        return rawValue
+        return true
       }
       // 有 fallback 值：使用 fallback 继续做值校验
       valueForVerify = String(fallback).trim()
     }
 
     // calc() / env() 跳过值校验，但保留 rawValue 输出
-    if (calcExp.test(valueForVerify) || envExp.test(valueForVerify)) return rawValue
+    if (calcExp.test(valueForVerify) || envExp.test(valueForVerify)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
       number: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
@@ -161,14 +161,14 @@ module.exports = function getSpec ({ warn, error }) {
           tipsType(type)
           return false
         }
-        return rawValue
+        return true
       }
       case ValueType.color: {
         if (!valueExp.color.test(valueForVerify)) {
           tipsType(type)
           return false
         }
-        return rawValue
+        return true
       }
       case ValueType.enum: {
         const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(valueForVerify)
@@ -177,17 +177,14 @@ module.exports = function getSpec ({ warn, error }) {
           tipsType(type)
           return false
         }
-        return rawValue
+        return true
       }
     }
-    return rawValue
+    return true
   }
   // prop & value 校验：过滤的不合法的属性和属性值
   const verification = ({ prop, value, selector }, { mode }) => {
-    if (!verifyProps({ prop, value, selector }, { mode })) return false
-    const outValue = verifyValues({ prop, value, selector })
-    if (!outValue) return false
-    return { prop, value: outValue }
+    return verifyProps({ prop, value, selector }, { mode }) && verifyValues({ prop, value, selector }) && ({ prop, value })
   }
 
   // 简写转换规则
