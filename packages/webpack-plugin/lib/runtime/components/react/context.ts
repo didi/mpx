@@ -49,7 +49,7 @@ export interface PortalContextValue {
 
 export interface ScrollViewContextValue {
   gestureRef: React.RefObject<any> | null
-  scrollOffset: Animated.Value
+  scrollOffset: Animated.Value | number
 }
 
 export interface RouteContextValue {
@@ -89,7 +89,7 @@ export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: 0 })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
 
