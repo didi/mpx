@@ -1,5 +1,5 @@
-import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle } from 'react'
-import { SectionList, FlatList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback } from 'react'
+import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle } from './utils'
 interface ListItem {
@@ -134,6 +134,45 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   const indexMap = useRef<{ [key: string]: string | number }>({})
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
+
+  // 缓存 getGeneric 的结果，避免每次都创建新的组件引用
+  const genericComponentsCache = useRef<{ [key: string]: any }>({})
+  const getCachedGeneric = useCallback((generichash: string, generickey: string) => {
+    if (!generichash || !generickey) return null
+
+    const cacheKey = `${generichash}_${generickey}`
+    if (!genericComponentsCache.current[cacheKey]) {
+      genericComponentsCache.current[cacheKey] = getGeneric(generichash, generickey)
+    }
+    return genericComponentsCache.current[cacheKey]
+  }, [])
+
+  // 使用 ref 存储最新的 props，避免渲染函数引用变化导致组件重新挂载
+  const propsRef = useRef({ generichash, genericrecycleItem, genericsectionHeader, genericListHeader, listHeaderData, useListHeader })
+
+  propsRef.current = { generichash, genericrecycleItem, genericsectionHeader, genericListHeader, listHeaderData, useListHeader }
+
+  // 创建稳定的渲染函数引用，使用 getCachedGeneric 确保组件引用稳定
+  const stableItemRenderer = useCallback(({ item }: { item: any }) => {
+    const { generichash: hash, genericrecycleItem: key } = propsRef.current
+    const ItemComponent = getCachedGeneric(hash, key)
+    return ItemComponent ? createElement(ItemComponent, { itemData: item }) : null
+  }, [getCachedGeneric])
+
+  const stableSectionHeaderRenderer = useCallback((sectionData: { section: Section }) => {
+    if (!sectionData.section.hasSectionHeader) return null
+    const { generichash: hash, genericsectionHeader: key } = propsRef.current
+    const SectionHeaderComponent = getCachedGeneric(hash, key)
+    return SectionHeaderComponent ? createElement(SectionHeaderComponent, { itemData: sectionData.section.headerData }) : null
+  }, [getCachedGeneric])
+
+  // 创建稳定的 ListHeader 渲染函数，与 section-header 和 item 的处理方式一致
+  const getStableListHeader = useCallback(() => {
+    const { generichash: hash, genericListHeader: key, listHeaderData: data, useListHeader: use } = propsRef.current
+    if (!use || !hash || !key) return null
+    const ListHeaderComponent = getCachedGeneric(hash, key)
+    return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
+  }, [getCachedGeneric])
 
   const {
     hasSelfPercent,
@@ -327,7 +366,7 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
-  }, [convertedListData, useListHeader])
+  }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, listHeaderHeight.value, listHeaderHeight.getter])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -379,10 +418,10 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
       {
         style: [{ height, width }, style, layoutStyle],
         sections: convertedListData,
-        renderItem: getItemRenderer(generichash, genericrecycleItem),
+        renderItem: stableItemRenderer,
         getItemLayout: getItemLayout,
-        ListHeaderComponent: useListHeader ? getListHeaderComponent(generichash, genericListHeader, listHeaderData) : null,
-        renderSectionHeader: getSectionHeaderRenderer(generichash, genericsectionHeader),
+        ListHeaderComponent: getStableListHeader(),
+        renderSectionHeader: stableSectionHeaderRenderer,
         refreshControl: refresherEnabled
           ? React.createElement(RefreshControl, {
             onRefresh: onRefresh,
