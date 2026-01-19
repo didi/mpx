@@ -108,29 +108,39 @@ module.exports = function getSpec ({ warn, error }) {
     return fallback
   }
 
+  // 属性值校验
+  // 返回值：
+  // - 通过：返回用于最终输出的 rawValue（永远保持原始值，不做 fallback 折叠）
+  // - 失败：返回 false
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
-    value = value.trim()
+    const rawValue = String(value).trim()
     const tips = isError ? error : warn
 
-    // 对于包含 CSS 变量的值，提取 fallback 值进行验证
-    if (cssVariableExp.test(value)) {
-      const fallback = getDefaultValueFromVar(value)
+    // CSS 自定义属性（--xxx）是变量定义，不属于 RN 样式属性：
+    // 不能按 `-height/-color` 等后缀推断类型去校验，否则会把变量定义错误过滤，导致运行时 var() 取值失败
+    if (/^--/.test(prop)) return rawValue
+
+    // 校验阶段允许使用 fallback 作为最坏情况（避免 RN crash），但输出必须保留 rawValue
+    let valueForVerify = rawValue
+
+    if (cssVariableExp.test(valueForVerify)) {
+      const fallback = getDefaultValueFromVar(valueForVerify)
       // undefined 表示检测到循环引用
       if (fallback === undefined) {
-        tips(`CSS variable circular reference in fallback chain detected in ${selector} for property ${prop}, value: ${value}`)
+        tips(`CSS variable circular reference in fallback chain detected in ${selector} for property ${prop}, value: ${rawValue}`)
         return false
       }
       // null 表示没有 fallback，CSS 变量本身是合法的（运行时会解析）
       if (fallback === null) {
-        return true
+        return rawValue
       }
-      // 有 fallback 值，将 fallback 作为新的 value 继续后续验证流程
-      value = fallback
+      // 有 fallback 值：使用 fallback 继续做值校验
+      valueForVerify = String(fallback).trim()
     }
 
-    // calc() 和 env() 跳过验证
-    if (calcExp.test(value) || envExp.test(value)) return true
+    // calc() / env() 跳过值校验，但保留 rawValue 输出
+    if (calcExp.test(valueForVerify) || envExp.test(valueForVerify)) return rawValue
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
       number: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
@@ -143,38 +153,41 @@ module.exports = function getSpec ({ warn, error }) {
         [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000',
         [ValueType.enum]: `${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}`
       }
-      tips(`Value of ${prop} in ${selector} should be ${type}, eg ${info[type]}, received [${value}], please check again!`)
+      tips(`Value of ${prop} in ${selector} should be ${type}, eg ${info[type]}, received [${rawValue}], please check again!`)
     }
     switch (type) {
       case ValueType.number: {
-        if (!valueExp.number.test(value)) {
+        if (!valueExp.number.test(valueForVerify)) {
           tipsType(type)
           return false
         }
-        return true
+        return rawValue
       }
       case ValueType.color: {
-        if (!valueExp.color.test(value)) {
+        if (!valueExp.color.test(valueForVerify)) {
           tipsType(type)
           return false
         }
-        return true
+        return rawValue
       }
       case ValueType.enum: {
-        const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(value)
-        const isType = Object.keys(valueExp).some(item => valueExp[item].test(value) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
+        const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(valueForVerify)
+        const isType = Object.keys(valueExp).some(item => valueExp[item].test(valueForVerify) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
         if (!isIn && !isType) {
           tipsType(type)
           return false
         }
-        return true
+        return rawValue
       }
     }
-    return true
+    return rawValue
   }
   // prop & value 校验：过滤的不合法的属性和属性值
   const verification = ({ prop, value, selector }, { mode }) => {
-    return verifyProps({ prop, value, selector }, { mode }) && verifyValues({ prop, value, selector }) && ({ prop, value })
+    if (!verifyProps({ prop, value, selector }, { mode })) return false
+    const outValue = verifyValues({ prop, value, selector })
+    if (!outValue) return false
+    return { prop, value: outValue }
   }
 
   // 简写转换规则
