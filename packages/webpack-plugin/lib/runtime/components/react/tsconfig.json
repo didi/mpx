@@ -1,25 +1,26 @@
-// 用于lib下文件的语法检查，ts 类型提示
+// 用于 react 生成
 {
   "include": [
-    "./lib",
+    "./"
   ],
-  "exclude": [
-    "./lib/runtime/components/react"
-  ],
+  "exclude": [],
   "compilerOptions": {
-    "module": "nodenext",
     "target": "esnext",
+    "module": "esnext",
+    "outDir": "./dist",
+    "rootDir": "./",
     "noImplicitThis": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
-    "allowJs": true,
-    "checkJs": false,
     "strictNullChecks": true,
-    "moduleResolution": "nodenext",
+    "moduleResolution": "node",
+    "declaration": true,
     "allowSyntheticDefaultImports": true,
-    "noEmit": true,
+    "jsx": "preserve",
     "lib": [
       "esnext",
-    ]
+      "dom",
+      "dom.iterable"
+    ],
   }
 }
