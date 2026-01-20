@@ -24,6 +24,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   // 因此增加状态标记 + clearTimeout + cancelAnimation 来优化
   const isShow = useRef<boolean>(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const keybaordHandleTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const animatedStyle = useAnimatedStyle(() => ({
     // translate/position top可能会导致底部渲染区域缺失(需要 android 配置聚焦时禁用高度缩小)，margin-top 会导致 portal 的定位失效，无法顶起 portal
@@ -65,12 +66,14 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   useEffect(() => {
     let subscriptions: EmitterSubscription[] = []
 
+    // iphone 16 pro & iphone 其它 pro 上长按可能会触发两次 keyboard show 事件，第一次键盘高度错误，第二次正确，因此不能用节流、仅首次生效等操作控制 show 事件
     function keybaordAvoding(evt: any, ios = false) {
       if (keyboardAvoid?.current?.readyToShow) {
         // 重置标记位
         keyboardAvoid.current.readyToShow = false
       }
-      if (!keyboardAvoid?.current || isShow.current) {
+
+      if (!keyboardAvoid?.current) {
         return
       }
 
@@ -121,7 +124,11 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     if (isIOS) {
       subscriptions = [
         Keyboard.addListener('keyboardWillShow', (evt: any) => {
-          keybaordAvoding(evt, true)
+          if (keybaordHandleTimerRef.current) {
+            clearTimeout(keybaordHandleTimerRef.current)
+          }
+          // iphone 在input聚焦时长按滑动后会导致 show 事件先于 focus 事件发生，因此等一下，等 focus 先触发拿到 input，避免键盘出现但input没顶上去
+          keybaordHandleTimerRef.current = setTimeout(() => keybaordAvoding(evt, true), 32)
         }),
         Keyboard.addListener('keyboardWillHide', resetKeyboard)
       ]
@@ -132,6 +139,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     return () => {
       subscriptions.forEach(subscription => subscription.remove())
       timerRef.current && clearTimeout(timerRef.current)
+      keybaordHandleTimerRef.current && clearTimeout(keybaordHandleTimerRef.current)
     }
   }, [keyboardAvoid])
 
