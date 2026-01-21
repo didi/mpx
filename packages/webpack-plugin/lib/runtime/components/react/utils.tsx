@@ -221,23 +221,16 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     let varName = args[0]
     let fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
 
-    // 如果 varContext 中 key 存在但值是 undefined，按 CSS 语义仍应回退到 fallback
+    // 先处理 varValue
     let varValue = hasOwn(varContext, varName) ? varContext[varName] : undefined
-    if (varValue === undefined) varValue = fallback
-    if (varValue === undefined) return
-    if (varUseRegExp.test(varValue)) {
-      const resolvedNested = resolveVar(varValue, varContext)
-      if (resolvedNested === undefined) {
-        // CSS 语义：外层 var(--a, fallback) 若 --a 最终无法解析，应回退到外层 fallback
-        if (fallback === undefined) return
-        varValue = varUseRegExp.test(fallback) ? resolveVar(fallback, varContext) : global.__formatValue(fallback)
-        if (varValue === undefined) return
-      } else {
-        varValue = resolvedNested
-      }
-    } else {
-      varValue = global.__formatValue(varValue)
+    if (varValue !== undefined) {
+      varValue = varUseRegExp.test(varValue) ? resolveVar(varValue, varContext) : global.__formatValue(varValue)
     }
+    // 再处理 fallback
+    if (varValue === undefined && fallback !== undefined) {
+      varValue = varUseRegExp.test(fallback) ? resolveVar(fallback, varContext) : global.__formatValue(fallback)
+    }
+    if (varValue === undefined) return
     replaced.replace(start, end - 1, varValue)
   }
 
