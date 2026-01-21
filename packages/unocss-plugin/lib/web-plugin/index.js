@@ -1,3 +1,4 @@
+const postcss = require('postcss')
 const WebpackSources = require('webpack-sources')
 const VirtualModulesPlugin = require('webpack-virtual-modules')
 const node_path = require('node:path')
@@ -5,6 +6,7 @@ const process = require('process')
 const fs = require('fs')
 const { createContext, getPath, normalizeAbsolutePath } = require('./utils')
 const { LAYER_MARK_ALL, LAYER_PLACEHOLDER_RE, RESOLVED_ID_RE, getLayerPlaceholder, resolveId, resolveLayer } = require('./consts')
+const loadPostcssConfig = require('@mpxjs/webpack-plugin/lib/style-compiler/load-postcss-config')
 
 const PLUGIN_NAME = 'unocss:webpack'
 const VIRTUAL_MODULE_PREFIX = node_path.resolve(process.cwd(), '_virtual_')
@@ -89,8 +91,20 @@ function WebpackPlugin (configOrPath, defaults) {
         }
       })
 
-      compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
+      compiler.hooks.thisCompilation.tap({ name: PLUGIN_NAME, stage: 1000 }, (compilation) => {
+        const { __mpx__: mpx } = compilation
+        const inlineConfig = Object.assign({}, mpx.postcssInlineConfig, {
+          defs: mpx.defs,
+          inlineConfigFile: node_path.join(mpx.projectRoot, 'vue.config.js')
+        })
         compilation.hooks.optimizeAssets.tapPromise(PLUGIN_NAME, async () => {
+          const config = await loadPostcssConfig({
+            emitWarning (warning) {
+              compilation.warnings.push(warning)
+            }
+          }, inlineConfig)
+          const plugins = config.prePlugins.concat(config.plugins)
+          const options = Object.assign({ to: '__uno.css', from: '__uno.css', map: false }, config.options)
           // 清空transformCache避免watch修改不生效
           transformCache.clear()
           const tokens = new Set()
@@ -118,6 +132,7 @@ function WebpackPlugin (configOrPath, defaults) {
               if (quote === '\\"') { escaped = JSON.stringify(escaped).slice(1, -1) }
               return quote + escaped
             })
+            code = (await postcss(plugins).process(code, options)).content
             if (replaced) { compilation.assets[file] = new WebpackSources.RawSource(code) }
           }
         })
