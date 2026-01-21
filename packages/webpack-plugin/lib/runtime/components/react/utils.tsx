@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, isEmptyObject } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
@@ -243,7 +243,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
       const resolved = resolveVar(value, varContext)
       if (resolved === undefined) {
         delete target[key]
-        error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
+        // error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
         return
       }
       target[key] = resolved
@@ -306,7 +306,7 @@ function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
   }
 }
 // 多value解析
-function parseValues (str: string, char = ' ') {
+export function parseValues (str: string, char = ' ') {
   let stack = 0
   let temp = ''
   const result = []
@@ -317,11 +317,11 @@ function parseValues (str: string, char = ' ') {
       stack--
     }
     // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
+    if (stack !== 0 || str[i] !== char) {
       temp += str[i]
     }
     if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp)
+      result.push(temp.trim())
       temp = ''
     }
   }
@@ -330,6 +330,8 @@ function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
+  // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+  values.sort()
   const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
@@ -393,6 +395,14 @@ function transformBoxShadow (styleObj: Record<string, any>) {
   }, '')
 }
 
+function transformZIndex (styleObj: Record<string, any>) {
+  if (!styleObj.zIndex || typeof styleObj.zIndex === 'number') return
+  if (styleObj.zIndex === 'auto') {
+    error('Property [z-index] does not supported [auto], please check again!')
+    styleObj.zIndex = 0
+  }
+}
+
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
@@ -449,17 +459,20 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
+  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
+      // calc translate & border-radius 的百分比计算
+      if (hasOwn(selfPercentRule, key) && /%/.test(value)) {
+        hasSelfPercent = true
+        percentKeyPaths.push(keyPath.slice())
+      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
-      hasSelfPercent = true
-      percentKeyPaths.push(keyPath.slice())
-    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+    // fixme 去掉 translate & border-radius 的百分比计算
+    if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
       percentKeyPaths.push(keyPath.slice())
     }
   }
@@ -469,10 +482,10 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
-
+  // transform 字符串格式转化数组格式(先转数组再处理css var)
+  transformTransform(styleObj)
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
-
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
@@ -536,10 +549,11 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-
-  // transform 字符串格式转化数组格式
-  transformTransform(normalStyle)
-
+  // transform z-index auto to 0
+  transformZIndex(normalStyle)
+  if (Array.isArray(normalStyle.transform)) {
+    normalStyle.transform = normalStyle.transform.filter(item => !isEmptyObject(item))
+  }
   return {
     hasVarDec,
     varContextRef,

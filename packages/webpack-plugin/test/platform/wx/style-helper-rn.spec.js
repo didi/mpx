@@ -52,7 +52,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '"var(--x, 2px)"',
         lineHeight: '"var(--y, 1.5)"'
       })
@@ -69,7 +69,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '"var(--x)"',
         lineHeight: '"var(--y)"'
       })
@@ -102,7 +102,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '"var(--x, var(--y, 2px))"'
       })
       expect(config.error).not.toHaveBeenCalled()
@@ -119,7 +119,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '"var(--a, var(--b, var(--c, var(--d, var(--e, 2px)))))"'
       })
       expect(config.error).not.toHaveBeenCalled()
@@ -159,7 +159,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       // 由于 var(--x) 没有 fallback，整个表达式是合法的，应该保留
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '"var(--x, var(--x))"'
       })
       expect(config.error).not.toHaveBeenCalled()
@@ -181,7 +181,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       // 应该成功解析，因为最终 fallback 是有效的 2px
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '"var(--a, var(--b, var(--a, 2px)))"'
       })
       expect(config.error).not.toHaveBeenCalled()
@@ -215,7 +215,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.box._default).toHaveProperty('marginLeft')
+      expect(result.box).toHaveProperty('marginLeft')
       expect(config.error).not.toHaveBeenCalled()
     })
   })
@@ -245,7 +245,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '2'
       })
       expect(config.error).not.toHaveBeenCalled()
