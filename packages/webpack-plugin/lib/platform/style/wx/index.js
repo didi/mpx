@@ -102,7 +102,8 @@ module.exports = function getSpec ({ warn, error }) {
 
     const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
     if (newVal.length <= 1) return null // 没有 fallback
-    const fallback = newVal[1].trim()
+    // fallback 可能本身包含逗号（如多 font-family 兜底、渐变等），这里取第2段及之后并 join 回去
+    const fallback = newVal.slice(1).join(',').trim()
     // 如果 fallback 也是 var()，递归提取
     if (totalVarExp.test(fallback)) return getDefaultValueFromVar(fallback, visited)
     return fallback
@@ -136,7 +137,7 @@ module.exports = function getSpec ({ warn, error }) {
         return true
       }
       // 有 fallback 值：使用 fallback 继续做值校验
-      valueForVerify = String(fallback).trim()
+      valueForVerify = fallback.trim()
     }
 
     // calc() / env() 跳过值校验，但保留 rawValue 输出
