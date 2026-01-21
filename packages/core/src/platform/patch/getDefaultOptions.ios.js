@@ -513,7 +513,7 @@ function getLayoutData (headerHeight) {
     } else {
       bottomVirtualHeight = initialWindowMetrics?.insets?.bottom || 0
       if (typeof mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight === 'function') {
-        bottomVirtualHeight = mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight() || initialWindowMetrics?.insets?.bottom || 0
+        bottomVirtualHeight = mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight() || 0
       }
     }
   }
