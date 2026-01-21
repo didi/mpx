@@ -217,18 +217,9 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   for (const { start, end, args } of parsed) {
     // NOTE:
     // - CSS var() fallback 允许包含空格、逗号等字符（如 font-family 的 fallback）
-    // - 我们的 parseFunc 会按逗号分割 args，但在极端输入下（如全角逗号等）可能导致 fallback 丢失
-    // 因此这里做一次兜底：fallback 取 args[1..] 的拼接，并在缺失时尝试从 args[0] 再拆一次。
+    // - parseFunc 会按逗号分割 args，因此这里把 args[1..] 重新 join 回 fallback
     let varName = args[0]
     let fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
-    if (fallback === undefined && typeof varName === 'string') {
-      // fallback: handle cases like "--x， PingFang SC" (fullwidth comma) or other non-standard separators
-      const parts = varName.split(/,|，/)
-      if (parts.length > 1) {
-        varName = parts[0].trim()
-        fallback = parts.slice(1).join(',').trim()
-      }
-    }
 
     // 如果 varContext 中 key 存在但值是 undefined，按 CSS 语义仍应回退到 fallback
     let varValue = hasOwn(varContext, varName) ? varContext[varName] : undefined
