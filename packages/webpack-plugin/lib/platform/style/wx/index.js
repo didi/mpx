@@ -1,7 +1,7 @@
 const { hump2dash } = require('../../../utils/hump-dash')
 const { parseValues } = require('../../../utils/string')
 
-module.exports = function getSpec ({ warn, error }) {
+module.exports = function getSpec({ warn, error }) {
   // React Native 双端都不支持的 CSS property
   const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
   const unsupportedPropMode = {
@@ -115,7 +115,7 @@ module.exports = function getSpec ({ warn, error }) {
   // - 失败：返回 false
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
-    const rawValue = String(value).trim()
+    const rawValue = value.trim()
     const tips = isError ? error : warn
 
     // CSS 自定义属性（--xxx）是变量定义，不属于 RN 样式属性：
@@ -442,23 +442,23 @@ module.exports = function getSpec ({ warn, error }) {
           case 'skew':
           case 'translate3d': // x y 支持 z不支持
           case 'scale3d': // x y 支持 z不支持
-          {
-            // 2 个以上的值处理
-            key = key.replace('3d', '')
-            const vals = parseValues(val, ',').splice(0, 3)
-            // scale(.5) === scaleX(.5) scaleY(.5)
-            if (vals.length === 1 && key === 'scale') {
-              vals.push(vals[0])
-            }
-            const xyz = ['X', 'Y', 'Z']
-            transform.push(...vals.map((v, index) => {
-              if (key !== 'rotate' && index > 1) {
-                unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
+            {
+              // 2 个以上的值处理
+              key = key.replace('3d', '')
+              const vals = parseValues(val, ',').splice(0, 3)
+              // scale(.5) === scaleX(.5) scaleY(.5)
+              if (vals.length === 1 && key === 'scale') {
+                vals.push(vals[0])
               }
-              return { [`${key}${xyz[index] || ''}`]: v.trim() }
-            }))
-            break
-          }
+              const xyz = ['X', 'Y', 'Z']
+              transform.push(...vals.map((v, index) => {
+                if (key !== 'rotate' && index > 1) {
+                  unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
+                }
+                return { [`${key}${xyz[index] || ''}`]: v.trim() }
+              }))
+              break
+            }
           case 'translateZ':
           case 'scaleZ':
           case 'rotate3d': // x y z angle
