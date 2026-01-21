@@ -218,8 +218,8 @@ function resolveVar (input: string, varContext: Record<string, any>) {
     // NOTE:
     // - CSS var() fallback 允许包含空格、逗号等字符（如 font-family 的 fallback）
     // - parseFunc 会按逗号分割 args，因此这里把 args[1..] 重新 join 回 fallback
-    let varName = args[0]
-    let fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
+    const varName = args[0]
+    const fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
 
     // 先处理 varValue
     let varValue = hasOwn(varContext, varName) ? varContext[varName] : undefined
