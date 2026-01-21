@@ -4,9 +4,8 @@ import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } fr
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
+import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
-import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -764,7 +763,8 @@ export function renderImage (
   imageProps: ImageProps | FastImageProps,
   enableFastImage = false
 ) {
-  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? require('@d11/react-native-fast-image').default : Image
   return createElement(Component, imageProps)
 }
 
