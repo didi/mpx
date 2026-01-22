@@ -270,13 +270,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
   }, [])
 
-  if (navigation && navigation.camera && navigation.camera !== camera) {
-    warn('<camera>: 一个页面只能插入一个')
-    return null
-  } else if (navigation) {
-    navigation.camera = camera
-  }
-
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -310,6 +303,13 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       layoutRef
     }
   )
+
+  if (navigation && navigation.camera && navigation.camera !== camera) {
+    warn('<camera>: 一个页面只能插入一个')
+    return null
+  } else if (navigation) {
+    navigation.camera = camera
+  }
 
   if (!hasPermission || !device) {
     return null
