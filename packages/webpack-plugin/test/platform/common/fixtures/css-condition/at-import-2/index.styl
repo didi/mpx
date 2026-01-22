@@ -1,0 +1,54 @@
+@import './s2.styl'
+// comment 1
+// comment 2
+
+.selector1
+  color blue
+
+/// comment 3           2
+// @import './s2.styl'
+// @import './s1_in_commend.styl'
+@import './s2.styl'
+@import url('./s2.styl')
+@import "./s2.styl"
+@import url("./s2.styl")
+
+.selector2
+  color red
+
+// 111
+@import 's2.styl'
+// 111
+
+/** comment 4
+@import './s2.styl'
+ */
+
+.selector3
+  color green /** comment 5 */
+
+/* @mpx-if (!isMobile) */
+.layout-nested-if
+  background blue
+
+/* @mpx-else */
+.layout-nested-else
+  background #fff
+  color blue
+/* @mpx-endif */
+
+.text-ellipsis {
+  /* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') */
+  overflow hidden
+  text-overflow ellipsis
+  white-space nowrap
+  /* @mpx-endif */
+}
+
+/* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') */
+.text-ellipsis
+  overflow hidden
+  text-overflow ellipsis
+  white-space nowrap
+/* @mpx-endif */
+@import './s2.styl'

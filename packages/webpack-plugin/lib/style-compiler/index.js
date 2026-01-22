@@ -18,7 +18,8 @@ module.exports = function (css, map) {
   const { resourcePath, queryObj } = parseRequest(this.resource)
   const mpx = this.getMpx()
   const mpxStyleOptions = (queryObj.mpxStyleOptions && JSON.parse(queryObj.mpxStyleOptions)) || {}
-  const id = queryObj.moduleId || mpxStyleOptions.mid || mpx.getModuleId(resourcePath)
+  const id = queryObj.moduleId || mpxStyleOptions.mid || mpx.getModuleId(resourcePath, false, (queryObj.moduleId || mpxStyleOptions.mid) ? null : this)
+
   const appInfo = mpx.appInfo
   const defs = mpx.defs
   const mode = mpx.mode
@@ -55,7 +56,7 @@ module.exports = function (css, map) {
     }
 
     if (isReact(mode)) {
-      plugins.push(transSpecial({ id }))
+      plugins.push(transSpecial({ id, transPage: true }))
     }
 
     // plugins.push(pluginCondStrip({

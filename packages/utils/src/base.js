@@ -82,6 +82,9 @@ const hasProto = '__proto__' in {}
 function cached (fn) {
   const cache = Object.create(null)
   return function cachedFn (str) {
+    if (typeof str !== 'string') {
+      return fn(str)
+    }
     const hit = cache[str]
     return hit || (cache[str] = fn(str))
   }
@@ -132,6 +135,24 @@ function hasChanged (value, oldValue) {
   return !Object.is(value, oldValue)
 }
 
+// 根据类型获取小程序默认值，与微信小程序原生行为保持一致
+function getDefaultValueByType (type, mode) {
+  switch (type) {
+    case String:
+      return ''
+    case Number:
+      return 0
+    case Boolean:
+      return false
+    case Object:
+      return null
+    case Array:
+      return mode === 'web' ? () => [] : []
+    default:
+      return undefined
+  }
+}
+
 export {
   hasProto,
   noop,
@@ -153,5 +174,6 @@ export {
   def,
   hasChanged,
   forEach,
-  cached
+  cached,
+  getDefaultValueByType
 }

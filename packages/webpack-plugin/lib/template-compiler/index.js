@@ -24,14 +24,15 @@ module.exports = function (raw) {
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const wxsContentMap = mpx.wxsContentMap
   const optimizeRenderRules = mpx.optimizeRenderRules
-  const usingComponentsInfo = queryObj.usingComponentsInfo || {}
+  const usingComponentsInfo = queryObj.usingComponentsInfo ? JSON.parse(queryObj.usingComponentsInfo) : {}
+  const originalUsingComponents = queryObj.originalUsingComponents ? JSON.parse(queryObj.originalUsingComponents) : []
   const componentPlaceholder = queryObj.componentPlaceholder || []
   const hasComment = queryObj.hasComment
   const isNative = queryObj.isNative
   const ctorType = queryObj.ctorType
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
-  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath)
+  const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath, false, queryObj.moduleId ? null : this)
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -43,13 +44,13 @@ module.exports = function (raw) {
 
   const warn = (msg) => {
     this.emitWarning(
-      new Error('[template compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const error = (msg) => {
     this.emitError(
-      new Error('[template compiler][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template error][' + this.resource + ']: ' + msg)
     )
   }
 
@@ -70,6 +71,7 @@ module.exports = function (raw) {
     hasScoped,
     moduleId,
     usingComponentsInfo,
+    originalUsingComponents,
     // 这里需传递rawResourcePath和wxsContentMap保持一致
     filePath: rawResourcePath,
     i18n,

@@ -2,6 +2,7 @@
   <view>
     <list></list>
     <customOutputComp></customOutputComp>
+    <mode></mode>
   </view>
 </template>
 
@@ -17,7 +18,8 @@
   {
     "usingComponents": {
       "list": "../components/list",
-      "customOutputComp": "../components/customOutputCom.mpx"
+      "customOutputComp": "../components/customOutputCom.mpx",
+      "mode": "../components/mode",
     }
   }
 </script>
