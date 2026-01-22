@@ -618,7 +618,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     const instanceRef = useRef(null)
     const propsRef = useRef(null)
     const intersectionCtx = useContext(IntersectionObserverContext)
-    const { pageId, navigation } = useContext(RouteContext) || {}
+    const { pageId } = useContext(RouteContext) || {}
     const parentProvides = useContext(ProviderContext)
     let relation = null
     if (hasDescendantRelation || hasAncestorRelation) {
