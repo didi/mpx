@@ -39,6 +39,9 @@
             />
           </block>
         </view>
+        <block wx:if="{{useListFooter}}">
+          <list-footer listFooterData="{{listFooterData}}"></list-footer>
+        </block>
       </view>
       <block
         wx:if="{{ _stickyHeaders &&
@@ -154,6 +157,16 @@
       useListHeader: {
         type: Boolean,
         value: false
+      },
+      listFooterData: {
+        type: Object,
+        value: () => {
+          return {}
+        }
+      },
+      useListFooter: {
+        type: Boolean,
+        value: false
       }
     },
     data: {
@@ -260,6 +273,30 @@
           // 更新真实偏移量
           this.setStartOffset()
         }
+      },
+      itemHeight: {
+        handler() {
+          this.initPositions()
+          this.setPlaceholderStyle()
+          this.setStartOffset()
+        },
+        deep: true
+      },
+      sectionHeaderHeight: {
+        handler() {
+          this.initPositions()
+          this.setPlaceholderStyle()
+          this.setStartOffset()
+        },
+        deep: true
+      },
+      listHeaderHeight: {
+        handler() {
+          this.initPositions()
+          this.setPlaceholderStyle()
+          this.setStartOffset()
+        },
+        deep: true
       },
       containerHeight() {
         this.calculateVisibleCounts()
@@ -512,6 +549,9 @@
       },
       "list-header": {
         "default": "../wx/mpx-list-header-default.mpx"
+      },
+      "list-footer": {
+        "default": "../wx/mpx-list-footer-default.mpx"
       }
     }
   }
