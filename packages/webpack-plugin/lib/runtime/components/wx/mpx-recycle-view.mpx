@@ -27,6 +27,9 @@
         </block>
       </sticky-section>
     </block>
+    <block wx:if="{{ useListFooter }}">
+      <list-footer listFooterData="{{ listFooterData }}"></list-footer>
+    </block>
   </scroll-view>
 </template>
 
@@ -82,6 +85,14 @@ createComponent({
     useListHeader: {
       type: Boolean,
       value: false
+    },
+    listFooterData: {
+      type: Object,
+      value: null
+    },
+    useListFooter: {
+      type: Boolean,
+      value: false
     }
   },
   data: {
@@ -134,7 +145,7 @@ createComponent({
       const sections = []
       let currentSection = null
 
-      data.forEach((item, index) => {
+      data && data.forEach((item, index) => {
         if (item.isSectionHeader) {
           // 如果已经存在一个 section，先把它添加到 sections 中
           if (currentSection) {
@@ -187,6 +198,9 @@ createComponent({
       },
       "list-header": {
         "default": "./mpx-list-header-default"
+      },
+      "list-footer": {
+        "default": "./mpx-list-footer-default"
       }
     }
   }

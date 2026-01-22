@@ -33,6 +33,9 @@
             />
           </template>
         </div>
+        <template v-if="useListFooter">
+          <list-footer :listFooterData="listFooterData"></list-footer>
+        </template>
       </div>
       <template
         v-if="
@@ -139,8 +142,19 @@ export default {
       type: Boolean,
       default: true
     },
+    listFooterData: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
+    useListFooter: {
+      type: Boolean,
+      default: false
+    },
     generichash: String,
     genericlistHeader: String,
+    genericlistFooter: String,
     genericrecycleItem: String,
     genericsectionHeader: String
   },
@@ -261,6 +275,30 @@ export default {
         this.setStartOffset();
       },
     },
+    itemHeight: {
+      handler() {
+        this.initPositions();
+        this.setPlaceholderStyle();
+        this.setStartOffset();
+      },
+      deep: true
+    },
+    sectionHeaderHeight: {
+      handler() {
+        this.initPositions();
+        this.setPlaceholderStyle();
+        this.setStartOffset();
+      },
+      deep: true
+    },
+    listHeaderHeight: {
+      handler() {
+        this.initPositions();
+        this.setPlaceholderStyle();
+        this.setStartOffset();
+      },
+      deep: true
+    },
     containerHeight() {
       this.calculateVisibleCounts();
     },
@@ -288,8 +326,9 @@ export default {
       let components = null;
       const genericList = {
         "recycle-item": this.genericrecycleItem ,
-        "list-header": this.genericlistHeader ,
-        "section-header": this.genericsectionHeader
+        "list-header": this.genericlistHeader,
+        "section-header": this.genericsectionHeader,
+        "list-footer": this.genericlistFooter
       }
 
       for (const key in genericList) {
