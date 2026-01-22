@@ -8,8 +8,8 @@ import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleShee
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
-import useAnimationHooks from './useAnimationHooks'
-import type { AnimationProp } from './useAnimationHooks'
+import useAnimationHooks, { AnimationType } from './animationHooks/index'
+import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
@@ -32,7 +32,7 @@ export interface _ViewProps extends ViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'enable-animation'?: boolean
+  'enable-animation'?: boolean | AnimationType
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -369,6 +369,17 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
   let vStart: 'top' | 'bottom' = 'top'
   let vOffset: PositionVal = 0
 
+  if (!Array.isArray(parts)) {
+    // 模板 style 属性传入单个数值时不会和 class 一样转成数组，需要手动转换
+    parts = [parts]
+  }
+  // 模板 style 属性传入时， 需要额外转换处理单位 px/rpx/vh 以及 center 转化为 50%
+  parts = (parts as (PositionVal | string)[]).map((part) => {
+    if (typeof part !== 'string') return part
+    if (part === 'center') return '50%'
+    return global.__formatValue(part) as PositionVal
+  })
+
   if (parts.length === 4) return parts as backgroundPositionList
 
   // 归一化
@@ -514,19 +525,24 @@ function parseBgImage (text: string): {
   }
 }
 
-function normalizeBackgroundSize (backgroundSize: Exclude<ExtendedViewStyle['backgroundSize'], undefined>, type: 'image' | 'linear' | undefined) {
+function normalizeBackgroundSize (
+  backgroundSize: NonNullable<ExtendedViewStyle['backgroundSize']>,
+  type: 'image' | 'linear' | undefined
+): DimensionValue[] {
   const sizeList = backgroundSize.slice()
   if (sizeList.length === 1) sizeList.push('auto')
 
-  if (type === 'linear') {
-    // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
-    for (const i in sizeList) {
-      const val = sizeList[i]
-      sizeList[i] = /^cover|contain|auto$/.test(val as string) ? '100%' : val
-    }
-  }
+  return sizeList.map((val) => {
+    if (typeof val !== 'string') return val
 
-  return sizeList
+    // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
+    if (type === 'linear' && /^cover|contain|auto$/.test(val)) {
+      val = '100%'
+    }
+
+    // 模板 style 属性传入时， 需要额外转换处理单位 px/rpx/vh
+    return global.__formatValue(val) as DimensionValue
+  })
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
