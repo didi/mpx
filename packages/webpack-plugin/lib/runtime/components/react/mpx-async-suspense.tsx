@@ -1,6 +1,5 @@
 import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode, createElement } from 'react'
 import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native'
-import FastImage from '@d11/react-native-fast-image'
 import { AnyFunc } from './types/common'
 
 const asyncChunkMap = new Map()
@@ -82,6 +81,8 @@ const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
 }
 
 const DefaultLoading = () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const FastImage = require('@d11/react-native-fast-image').default
   return (
     <View style={styles.container}>
       <FastImage
