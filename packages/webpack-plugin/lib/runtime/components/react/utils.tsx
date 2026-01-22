@@ -4,7 +4,7 @@ import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } fr
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
+import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
@@ -219,16 +219,22 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   const replaced = new ReplaceSource(input)
 
   for (const { start, end, args } of parsed) {
+    // NOTE:
+    // - CSS var() fallback 允许包含空格、逗号等字符（如 font-family 的 fallback）
+    // - parseFunc 会按逗号分割 args，因此这里把 args[1..] 重新 join 回 fallback
     const varName = args[0]
-    const fallback = args[1]
-    let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
-    if (varValue === undefined) return
-    if (varUseRegExp.test(varValue)) {
-      varValue = resolveVar(varValue, varContext)
-      if (varValue === undefined) return
-    } else {
-      varValue = global.__formatValue(varValue)
+    const fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
+
+    // 先处理 varValue
+    let varValue = hasOwn(varContext, varName) ? varContext[varName] : undefined
+    if (varValue !== undefined) {
+      varValue = varUseRegExp.test(varValue) ? resolveVar(varValue, varContext) : global.__formatValue(varValue)
     }
+    // 再处理 fallback
+    if (varValue === undefined && fallback !== undefined) {
+      varValue = varUseRegExp.test(fallback) ? resolveVar(fallback, varContext) : global.__formatValue(fallback)
+    }
+    if (varValue === undefined) return
     replaced.replace(start, end - 1, varValue)
   }
 
@@ -749,7 +755,8 @@ export function renderImage (
   imageProps: ImageProps | FastImageProps,
   enableFastImage = false
 ) {
-  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? require('@d11/react-native-fast-image').default : Image
   return createElement(Component, imageProps)
 }
 
