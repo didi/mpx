@@ -109,7 +109,41 @@ export const SUPPORTED_APIS = [
 
   // window
   'onWindowResize',
-  'offWindowResize'
+  'offWindowResize',
+
+  // bluetooth
+  'openBluetoothAdapter',
+  'closeBluetoothAdapter',
+  'startBluetoothDevicesDiscovery',
+  'stopBluetoothDevicesDiscovery',
+  'onBluetoothDeviceFound',
+  'offBluetoothDeviceFound',
+  'getConnectedBluetoothDevices',
+  'getBluetoothAdapterState',
+  'onBluetoothAdapterStateChange',
+  'offBluetoothAdapterStateChange',
+  'getBluetoothDevices',
+  'writeBLECharacteristicValue',
+  'readBLECharacteristicValue',
+  'notifyBLECharacteristicValueChange',
+  'onBLECharacteristicValueChange',
+  'offBLECharacteristicValueChange',
+  'setBLEMTU',
+  'getBLEDeviceRSSI',
+  'getBLEDeviceServices',
+  'getBLEDeviceCharacteristics',
+  'createBLEConnection',
+  'closeBLEConnection',
+  'onBLEConnectionStateChange',
+  'offBLEConnectionStateChange',
+
+  // wifi
+  'startWifi',
+  'stopWifi',
+  'getWifiList',
+  'onGetWifiList',
+  'offGetWifiList',
+  'getConnectedWifi'
 ]
 
 /**
