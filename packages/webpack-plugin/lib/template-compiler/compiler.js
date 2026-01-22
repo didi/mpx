@@ -764,9 +764,7 @@ function parse (template, options) {
 
       const children = currentParent.children
 
-      const isTextLikeParent = currentParent.tag === 'text' || currentParent.tag === 'mpx-text' || currentParent.tag === 'Text' || currentParent.tag === 'mpx-simple-text'
-
-      if (!isTextLikeParent) {
+      if (currentParent.tag !== 'text') {
         text = text.trim()
       } else {
         text = text.trim() ? text : ''
@@ -1014,7 +1012,7 @@ function processComponentIs (el, options) {
     ranges = range.split(',').map(i => i.trim()).filter(i => i)
   } else {
     // 根据原始用户写的usingComponents字段生成ranges
-    ranges = options.originalUsingComponents
+    ranges = options.originalUsingComponents || []
   }
 
   const rangeMap = new Map()
@@ -1884,24 +1882,25 @@ function processRefReact (el, meta) {
     /**
      * selectorsConf: [type, [[prefix, selector], [prefix, selector]]]
      */
-    if (!val) {
-      const rawId = el.attrsMap.id
-      const rawClass = el.attrsMap.class
-      const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
-
-      if (rawId) {
-        const staticId = parseMustacheWithContext(rawId).result
-        selectors.push({ prefix: '#', selector: `${staticId}` })
-      }
-      if (rawClass || rawDynamicClass) {
-        const staticClass = parseMustacheWithContext(rawClass).result
-        const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
-        selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
-      }
-    } else {
+    if (val) {
       meta.refs.push(refConf)
       selectors.push({ prefix: '', selector: `"${refConf.key}"` })
     }
+
+    const rawId = el.attrsMap.id
+    const rawClass = el.attrsMap.class
+    const rawDynamicClass = el.attrsMap[config[mode].directive.dynamicClass]
+
+    if (rawId) {
+      const staticId = parseMustacheWithContext(rawId).result
+      selectors.push({ prefix: '#', selector: `${staticId}` })
+    }
+    if (rawClass || rawDynamicClass) {
+      const staticClass = parseMustacheWithContext(rawClass).result
+      const dynamicClass = parseMustacheWithContext(rawDynamicClass).result
+      selectors.push({ prefix: '.', selector: `this.__getClass(${staticClass}, ${dynamicClass})` })
+    }
+
     const selectorsConf = selectors.map(item => `["${item.prefix}", ${item.selector}]`)
     const refFnId = forScopes.reduce((preV, curV) => {
       return `${preV} + "_" + ${curV.index}`
@@ -2246,7 +2245,6 @@ function postProcessIfReact (el) {
           delete el.elseif
           el._if = true
           addIfCondition(ifNode, {
-            exp: el.elseif.exp,
             block: el
           })
           removeNode(el, true)
@@ -2719,7 +2717,7 @@ function postProcessTemplate (el) {
   }
 }
 
-const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,noMode')
+const isValidMode = makeMap('wx,ali,swan,tt,qq,web,qa,jd,dd,tenon,ios,android,harmony,ks,noMode')
 
 function isValidModeP (i) {
   return isValidMode(i[0] === '_' ? i.slice(1) : i)
