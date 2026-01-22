@@ -414,6 +414,9 @@
           if (this.bs) this.bs.refresh()
         }
       },
+      forceUpdateRefreshVersion () {
+        this.refreshVersion++
+      },
       compare(num1, num2, scale = 1) {
         return Math.abs(num1 - num2) < scale
       },

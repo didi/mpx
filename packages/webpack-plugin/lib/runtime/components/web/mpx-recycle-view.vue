@@ -169,16 +169,16 @@ export default {
   },
   computed: {
     _listData() {
-      return this.listData.map((item, index) => {
+      return (this.listData && this.listData.map((item, index) => {
         return {
           itemData: item,
           _index: `_${index}`,
         };
-      });
+      })) || [];
     },
     _stickyHeaders() {
       const data = [];
-      this.listData.forEach((item, index) => {
+      this.listData && this.listData.forEach((item, index) => {
         if (item.isSectionHeader) {
           data.push({
             itemData: item,
@@ -277,25 +277,19 @@ export default {
     },
     itemHeight: {
       handler() {
-        this.initPositions();
-        this.setPlaceholderStyle();
-        this.setStartOffset();
+        this.handleHeightChange()
       },
       deep: true
     },
     sectionHeaderHeight: {
       handler() {
-        this.initPositions();
-        this.setPlaceholderStyle();
-        this.setStartOffset();
+        this.handleHeightChange()
       },
       deep: true
     },
     listHeaderHeight: {
       handler() {
-        this.initPositions();
-        this.setPlaceholderStyle();
-        this.setStartOffset();
+        this.handleHeightChange()
       },
       deep: true
     },
@@ -318,6 +312,14 @@ export default {
     this.setStartOffset();
   },
   methods: {
+    handleHeightChange () {
+      this.initPositions();
+      this.setPlaceholderStyle();
+      this.setStartOffset();
+      // 外部传值虽然变了，但是未触发 DOM 实际宽高变更，所以也不会自动触发 scrollView 内部 refresh 机制
+      // 需要手动触发，让 sticky-header 重新计算位置
+      this.$refs.scrollView?.forceUpdateRefreshVersion?.()
+    },
     registerGenericComponents() {
       if (!this.generichash || !global.__mpxGenericsMap[this.generichash]) {
         return;
@@ -484,7 +486,7 @@ export default {
     onRefresherrefresh(e) {
       this.$emit("refresherrefresh", e);
     },
-    scrollToIndex({ index, animated, viewPosition = 0 }) {
+    scrollToIndex({ index, animated, viewPosition = 0, viewOffset = 0 }) {
       const isStickyHeader = this._listData[index].itemData?.isSectionHeader;
       let prevHeaderHeight = 0;
       // 如果不是sticky header 查找最近一个吸顶的 sticky header
@@ -509,6 +511,8 @@ export default {
         // 滚动到可视区中央
         targetTop = itemTop - (containerHeight - itemHeight) / 2;
       }
+
+      targetTop -= viewOffset;
 
       this.$refs.scrollView?.bs.scrollTo(0, -targetTop, animated ? 200 : 0);
     },

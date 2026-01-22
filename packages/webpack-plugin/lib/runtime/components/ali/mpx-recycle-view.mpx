@@ -181,16 +181,16 @@
     },
     computed: {
       _listData() {
-        return this.listData.map((item, index) => {
+        return (this.listData && this.listData.map((item, index) => {
           return {
             itemData: item,
             _index: `_${index}`
           }
-        })
+        })) || []
       },
       _stickyHeaders() {
         const data = []
-        this.listData.forEach((item, index) => {
+        this.listData && this.listData.forEach((item, index) => {
           if (item.isSectionHeader) {
             data.push({
               itemData: item,
@@ -456,7 +456,7 @@
       onRefresherrefresh(e) {
         this.triggerEvent('refresherrefresh', e)
       },
-      scrollToIndex({ index, viewPosition = 0 }) {
+      scrollToIndex({ index, viewPosition = 0, viewOffset = 0 }) {
         const isStickyHeader = this._listData[index].itemData?.isSectionHeader
         let prevHeaderHeight = 0
         // 如果不是sticky header 查找最近一个吸顶的 sticky header
@@ -481,6 +481,14 @@
           // 滚动到可视区中央
           targetTop = itemTop - (containerHeight - itemHeight) / 2
         }
+
+        targetTop -= viewOffset
+
+        // 如果 targetTop 为 0，触发不了支付宝滚动，所以需要加一个很小的值
+        if (targetTop <= 0) {
+          targetTop = 0.01
+        }
+
         // 支付宝小程序不支持 animated 参数，也不支持 scrollTo 方法滚动
         this.scrollTop = targetTop
 
