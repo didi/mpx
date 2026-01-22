@@ -1,5 +1,5 @@
-import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, memo } from 'react'
-import { SectionList, FlatList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo } from 'react'
+import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle } from './utils'
 interface ListItem {
