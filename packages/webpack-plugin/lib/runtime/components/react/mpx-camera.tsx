@@ -1,4 +1,4 @@
-import React, { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect } from 'react'
+import React, { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
 import { useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { noop, warn } from '@mpxjs/utils'
@@ -105,7 +105,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   const { navigation } = useContext(RouteContext) || {}
   const [zoomValue, setZoomValue] = useState<number>(1)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
-  const hasCamera = useRef(false)
 
   // 先定义常量，避免在条件判断后使用
   const maxZoom = device?.maxZoom || 1
@@ -151,7 +150,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     bindstop && bindstop()
   }, [bindstop])
 
-  const camera: CameraRef = {
+  const camera: CameraRef = useMemo(() => ({
     setZoom: (zoom: number) => {
       setZoomValue(zoom)
     },
@@ -179,7 +178,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       let { timeout = 30, success = noop, fail = noop, complete = noop, timeoutCallback = noop } = options
       timeout = timeout > 300 ? 300 : timeout
       let recordTimer: NodeJS.Timeout | null = null
-      let isTimeout = false
       try {
         const result = {
           errMsg: 'startRecord:ok'
@@ -204,7 +202,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         })
 
         recordTimer = setTimeout(() => { // 超时自动停止
-          isTimeout = true
           cameraRef.current?.stopRecording().catch(() => {
             // 忽略停止录制时的错误
           })
@@ -249,17 +246,9 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         complete(result)
       }
     }
-  }
+  }), [])
 
   useEffect(() => {
-    if (navigation) {
-      if (navigation && !navigation.camera) {
-        navigation.camera = camera
-      } else {
-        hasCamera.current = true
-        warn('<camera>: 一个页面只能插入一个')
-      }
-    }
     const checkCameraPermission = async () => {
       try {
         const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
@@ -275,11 +264,18 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
     checkCameraPermission()
     return () => {
-      if (navigation && navigation.camera) {
-        navigation.camera = null
+      if (navigation?.camera === camera) {
+        delete navigation.camera
       }
     }
   }, [])
+
+  if (navigation && navigation.camera && navigation.camera !== camera) {
+    warn('<camera>: 一个页面只能插入一个')
+    return null
+  } else if (navigation) {
+    navigation.camera = camera
+  }
 
   const innerProps = useInnerProps(
     extendObject(
@@ -315,7 +311,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
   )
 
-  if (!hasPermission || hasCamera.current || !device) {
+  if (!hasPermission || !device) {
     return null
   }
 
