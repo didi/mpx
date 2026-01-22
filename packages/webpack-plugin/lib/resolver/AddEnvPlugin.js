@@ -16,6 +16,8 @@ module.exports = class AddEnvPlugin {
   apply (resolver) {
     const target = resolver.ensureHook(this.target)
     const env = this.env
+    const envPattern = new RegExp(`\\.${env}(\\.|$)`)
+
     resolver.getHook(this.source).tapAsync('AddEnvPlugin', (request, resolveContext, callback) => {
       if (request.env) {
         return callback()
@@ -32,11 +34,22 @@ module.exports = class AddEnvPlugin {
       }
       // 当前资源没有后缀名或者路径不符合fileConditionRules规则时，直接返回
       if (!extname || !matchCondition(resourcePath, this.fileConditionRules)) return callback()
+
       const queryObj = parseQuery(request.query || '?')
       queryObj.infix = `${queryObj.infix || ''}.${env}`
+
+      const resourceBasename = path.basename(resourcePath)
+      // 如果 infix 与 resourcePath 无法匹配，则认为未命中env
+      if (envPattern.test(resourceBasename) && resourceBasename.includes(queryObj.infix)) {
+        request.query = stringifyQuery(queryObj)
+        request.env = obj.env
+        return callback()
+      }
+
       obj.query = stringifyQuery(queryObj)
       obj.path = addInfix(resourcePath, env, extname)
       obj.relativePath = request.relativePath && addInfix(request.relativePath, env, extname)
+
       resolver.doResolve(target, Object.assign({}, request, obj), 'add env: ' + env, resolveContext, callback)
     })
   }

@@ -1,5 +1,6 @@
 'use strict'
 
+require('./init')
 const path = require('path')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
@@ -14,8 +15,7 @@ const EntryPlugin = require('webpack/lib/EntryPlugin')
 const JavascriptModulesPlugin = require('webpack/lib/javascript/JavascriptModulesPlugin')
 const FlagEntryExportAsUsedPlugin = require('webpack/lib/FlagEntryExportAsUsedPlugin')
 const FileSystemInfo = require('webpack/lib/FileSystemInfo')
-const ImportDependency = require('webpack/lib/dependencies/ImportDependency')
-const ImportDependencyTemplate = require('./dependencies/ImportDependencyTemplate')
+const ImportDependency = require('./dependencies/ImportDependency')
 const AsyncDependenciesBlock = require('webpack/lib/AsyncDependenciesBlock')
 const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const normalize = require('./utils/normalize')
@@ -37,6 +37,7 @@ const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
 const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordPageConfigMapDependency = require('./dependencies/RecordPageConfigsMapDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
+const RecordModuleIdMapDependency = require('./dependencies/RecordModuleIdMapDependency')
 const RecordGlobalComponentsDependency = require('./dependencies/RecordGlobalComponentsDependency')
 const RecordIndependentDependency = require('./dependencies/RecordIndependentDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
@@ -58,7 +59,6 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
-const styleStripConditionalPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -77,15 +77,19 @@ const VirtualModulesPlugin = require('webpack-virtual-modules')
 const RuntimeGlobals = require('webpack/lib/RuntimeGlobals')
 const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
-const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./retry-runtime-module')
+const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
-
+const { startFSStripForCss } = require('./style-compiler/strip-conditional')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
 
+/**
+ * @param {import('webpack').NormalModule} module
+ * @returns
+ */
 const isStaticModule = module => {
   if (!module.resource) return false
   const { queryObj } = parseRequest(module.resource)
@@ -322,7 +326,13 @@ class MpxWebpackPlugin {
     }
   }
 
+  /**
+   * @param {import('webpack').Compiler} compiler
+   */
   apply (compiler) {
+    // 注入 fs 代理
+    startFSStripForCss(this.options.defs)
+
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -674,6 +684,9 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RecordResourceMapDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordResourceMapDependency, new RecordResourceMapDependency.Template())
 
+      compilation.dependencyFactories.set(RecordModuleIdMapDependency, new NullFactory())
+      compilation.dependencyTemplates.set(RecordModuleIdMapDependency, new RecordModuleIdMapDependency.Template())
+
       compilation.dependencyFactories.set(RecordGlobalComponentsDependency, new NullFactory())
       compilation.dependencyTemplates.set(RecordGlobalComponentsDependency, new RecordGlobalComponentsDependency.Template())
 
@@ -698,7 +711,8 @@ class MpxWebpackPlugin {
       compilation.dependencyFactories.set(RequireExternalDependency, new NullFactory())
       compilation.dependencyTemplates.set(RequireExternalDependency, new RequireExternalDependency.Template())
 
-      compilation.dependencyTemplates.set(ImportDependency, new ImportDependencyTemplate())
+      compilation.dependencyFactories.set(ImportDependency, normalModuleFactory)
+      compilation.dependencyTemplates.set(ImportDependency, new ImportDependency.Template())
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
@@ -721,6 +735,8 @@ class MpxWebpackPlugin {
           componentsMap: {
             main: {}
           },
+          // 资源与moduleId关系记录
+          resourceModuleIdMap: {},
           // 静态资源(图片，字体，独立样式)等，依照所属包进行记录
           staticResourcesMap: {
             main: {}
@@ -1453,10 +1469,6 @@ class MpxWebpackPlugin {
               if (mpx.supportRequireAsync) {
                 if (isWeb(mpx.mode) || isReact(mpx.mode)) {
                   if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-                  request = addQuery(request, {
-                    isRequireAsync: true,
-                    retryRequireAsync: JSON.stringify(this.options.retryRequireAsync)
-                  })
                   const depBlock = new AsyncDependenciesBlock(
                     {
                       name: tarRoot + '/index'
@@ -1464,7 +1476,10 @@ class MpxWebpackPlugin {
                     expr.loc,
                     request
                   )
-                  const dep = new ImportDependency(request, expr.range)
+                  const dep = new ImportDependency(request, expr.range, undefined, {
+                    isRequireAsync: true,
+                    retryRequireAsync: this.options.retryRequireAsync
+                  })
                   dep.loc = expr.loc
                   depBlock.addDependency(dep)
                   parser.state.current.addBlock(depBlock)
@@ -1685,11 +1700,12 @@ class MpxWebpackPlugin {
 
         if (this.options.generateBuildMap) {
           const pagesMap = compilation.__mpx__.pagesMap
+          const resourceModuleIdMap = compilation.__mpx__.resourceModuleIdMap
           const componentsPackageMap = compilation.__mpx__.componentsMap
           const componentsMap = Object.keys(componentsPackageMap).map(item => componentsPackageMap[item]).reduce((pre, cur) => {
             return { ...pre, ...cur }
           }, {})
-          const outputMap = JSON.stringify({ ...pagesMap, ...componentsMap })
+          const outputMap = JSON.stringify({ outputPathMap: { ...pagesMap, ...componentsMap }, moduleIdMap: resourceModuleIdMap })
           const filename = this.options.generateBuildMap.filename || 'outputMap.json'
           compilation.assets[filename] = new RawSource(outputMap)
         }
@@ -1723,7 +1739,14 @@ class MpxWebpackPlugin {
 
           if (isReact(mpx.mode)) {
             // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
-            source.add('/* @refresh reset */\n')
+            if (process.env.NODE_ENV !== 'production') {
+              source.add(`/* @refresh reset */
+if (module.hot) {
+  module.hot.accept(() => {
+    require("react-native").DevSettings.reload();
+  });
+}\n`)
+            }
             // 注入页面的配置，供screen前置设置导航情况
             if (isRuntime) {
               source.add('// inject pageconfigmap for screen\n' +
@@ -1904,22 +1927,6 @@ try {
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
-
-          if (type === 'styles') {
-            let insertBeforeIndex = -1
-            // 单次遍历收集所有索引
-            loaders.forEach((loader, index) => {
-              const currentLoader = toPosix(loader.loader)
-              if (currentLoader.includes('node_modules/stylus-loader') || currentLoader.includes('node_modules/sass-loader') || currentLoader.includes('node_modules/less-loader')) {
-                insertBeforeIndex = index
-              }
-            })
-
-            if (insertBeforeIndex !== -1) {
-              loaders.splice(insertBeforeIndex, 0, { loader: styleStripConditionalPath })
-            }
-            loaders.push({ loader: styleStripConditionalPath })
-          }
 
           switch (type) {
             case 'styles':

@@ -6,7 +6,8 @@ import {
   diffAndCloneA,
   error,
   hasOwn,
-  isDev
+  isDev,
+  getDefaultValueByType
 } from '@mpxjs/utils'
 import { implemented } from '../core/implement'
 
@@ -14,7 +15,7 @@ import { implemented } from '../core/implement'
 const unsupported = ['moved', 'definitionFilter', 'onShareAppMessage']
 
 function convertErrorDesc (key) {
-  error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource)
+  error(`Options.${key} is not supported in runtime conversion from wx to web.`, global.currentResource || global.currentModuleId)
 }
 
 function notSupportTip (options) {
@@ -56,6 +57,12 @@ export default {
                   return diffAndCloneA(prop.value).clone
                 }
                 : prop.value
+            } else {
+              // 没有显式设置value时，根据type自动添加默认值，与微信小程序原生行为保持一致
+              const defaultValue = getDefaultValueByType(prop.type, 'web')
+              if (defaultValue !== undefined) {
+                newProp.default = defaultValue
+              }
             }
             props[key] = newProp
           } else {

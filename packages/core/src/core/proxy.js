@@ -31,8 +31,10 @@ import {
   wrapMethodsWithErrorHandling,
   warn,
   error,
-  getEnvObj
+  getEnvObj,
+  def
 } from '@mpxjs/utils'
+import { renderHelperDefs } from '../platform/builtInMixins/renderHelperMixin'
 import {
   BEFORECREATE,
   CREATED,
@@ -190,6 +192,7 @@ export default class MpxProxy {
     this.callHook(CREATED)
 
     if (!isWeb && !isReact) {
+      this.initRenderHelpers()
       this.initRender()
     }
 
@@ -335,7 +338,7 @@ export default class MpxProxy {
           createSelectorQuery: this.target.createSelectorQuery ? this.target.createSelectorQuery.bind(this.target) : envObj.createSelectorQuery.bind(envObj),
           createIntersectionObserver: this.target.createIntersectionObserver ? this.target.createIntersectionObserver.bind(this.target) : envObj.createIntersectionObserver.bind(envObj),
           getPageId: this.target.getPageId.bind(this.target),
-          getOpenerEventChannel: this.target.getOpenerEventChannel.bind(this.target)
+          getOpenerEventChannel: this.target.getOpenerEventChannel ? this.target.getOpenerEventChannel.bind(this.target) : noop
         }
       ])
       if (!isObject(setupResult)) {
@@ -726,6 +729,15 @@ export default class MpxProxy {
     flushPreFlushCbs(this)
     resetTracking()
     this.toggleRecurse(true)
+  }
+
+  initRenderHelpers () {
+    if (this.options.__nativeRender__ || __mpx_mode__ !== 'ks') return
+    Object.keys(renderHelperDefs).forEach((key) => {
+      if (!hasOwn(this.target, key)) {
+        def(this.target, key, renderHelperDefs[key])
+      }
+    })
   }
 
   initRender () {

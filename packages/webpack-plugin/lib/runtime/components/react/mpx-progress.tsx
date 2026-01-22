@@ -35,7 +35,7 @@ import Animated, {
 
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { useLayout, useTransformStyle, extendObject } from './utils'
+import { useLayout, useTransformStyle, extendObject, useRunOnJSCallback } from './utils'
 import Portal from './mpx-portal'
 
 export interface ProgressProps {
@@ -70,7 +70,6 @@ const Progress = forwardRef<
     active = false,
     'active-mode': activeMode = 'backwards',
     duration = 30,
-    bindactiveend,
     style = {},
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -80,7 +79,7 @@ const Progress = forwardRef<
   } = props
 
   const nodeRef = useRef(null)
-  const propsRef = useRef({})
+  const propsRef = useRef(props)
   propsRef.current = props
 
   // 进度值状态
@@ -113,6 +112,22 @@ const Progress = forwardRef<
     style: normalStyle
   })
 
+  // 使用 useRunOnJSCallback 处理动画回调
+  const runOnJSCallbackRef = useRef({
+    triggerActiveEnd: (percent: number) => {
+      const currentProps = propsRef.current
+      if (currentProps.bindactiveend) {
+        currentProps.bindactiveend({
+          type: 'activeend',
+          detail: {
+            percent: percent
+          }
+        })
+      }
+    }
+  })
+  const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
+
   // 进度条动画函数
   const startProgressAnimation = (targetPercent: number, startPercent: number, animationDuration: number, onFinished?: () => void) => {
     // 根据 active-mode 设置起始位置
@@ -125,23 +140,11 @@ const Progress = forwardRef<
       },
       (finished) => {
         if (finished && onFinished) {
-          // 在动画回调中，需要使用runOnJS回到主线程
-          runOnJS(onFinished)()
+          // 在动画回调中，执行传入的worklet函数
+          onFinished()
         }
       }
     )
-  }
-
-  // 创建在主线程执行的事件回调函数
-  const triggerActiveEnd = (percent: number) => {
-    if (bindactiveend) {
-      bindactiveend({
-        type: 'activeend',
-        detail: {
-          percent: percent
-        }
-      })
-    }
   }
 
   // 进度变化时的动画效果
@@ -161,19 +164,18 @@ const Progress = forwardRef<
       const percentDiff = Math.abs(targetPercent - startPercent)
       const animationDuration = percentDiff * duration
 
-      // 创建动画完成回调
-      const onAnimationFinished = () => {
-        triggerActiveEnd(targetPercent)
-      }
-
       // 执行动画
-      startProgressAnimation(targetPercent, startPercent, animationDuration, onAnimationFinished)
+      startProgressAnimation(targetPercent, startPercent, animationDuration, () => {
+        'worklet'
+        // 在worklet函数内部执行runOnJS调用runOnJSCallback
+        runOnJS(runOnJSCallback)('triggerActiveEnd', targetPercent)
+      })
     } else {
       progressWidth.value = targetPercent
     }
 
     setLastPercent(targetPercent)
-  }, [percent, active, activeMode, duration, bindactiveend])
+  }, [percent, active, activeMode, duration])
 
   // 初始化时设置进度值
   useEffect(() => {
