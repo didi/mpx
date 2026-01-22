@@ -69,7 +69,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.text._default).toEqual({
+      expect(result.text).toEqual({
         letterSpacing: '"var(--x, 0)"'
       })
       expect(config.error).not.toHaveBeenCalled()
@@ -85,7 +85,7 @@ describe('React Native style validation for CSS variables', () => {
         ...config
       })
 
-      expect(result.btn._default).toEqual({
+      expect(result.btn).toEqual({
         '--dn-container-height': '"var(--dn-tag-height, auto)"'
       })
       expect(config.error).not.toHaveBeenCalled()
