@@ -179,6 +179,7 @@ module.exports = function getSpec ({ warn, error }) {
       swan: addGlobalComponents,
       qq: addGlobalComponents,
       tt: addGlobalComponents,
+      ks: addGlobalComponents,
       jd: addGlobalComponents,
       web: fixComponentName,
       ios: fixComponentName,
@@ -284,6 +285,7 @@ module.exports = function getSpec ({ warn, error }) {
       'swan',
       'qq',
       'tt',
+      'ks',
       'jd',
       'qa',
       'dd',
@@ -401,6 +403,7 @@ module.exports = function getSpec ({ warn, error }) {
         qq: fillGlobalComponents,
         swan: fillGlobalComponents,
         tt: fillGlobalComponents,
+        ks: fillGlobalComponents,
         jd: fillGlobalComponents
       },
       {
@@ -408,6 +411,7 @@ module.exports = function getSpec ({ warn, error }) {
         qq: deletePath({ noLog: true }),
         swan: deletePath({ noLog: true }),
         tt: deletePath({ noLog: true }),
+        ks: deletePath({ noLog: true }),
         jd: deletePath({ noLog: true })
       },
       {
@@ -446,6 +450,7 @@ module.exports = function getSpec ({ warn, error }) {
         qq: getTabBarRule(),
         swan: getTabBarRule(),
         tt: getTabBarRule(),
+        ks: getTabBarRule(),
         jd: getTabBarRule()
       },
       {
@@ -454,6 +459,7 @@ module.exports = function getSpec ({ warn, error }) {
         qq: getWindowRule(),
         swan: getWindowRule(),
         tt: getWindowRule(),
+        ks: getWindowRule(),
         jd: getWindowRule()
       }
     ]
