@@ -129,12 +129,17 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
     onCodeScanned: (codes: any[]) => {
-      const result = codes.map(code => code.value).join(',')
-      bindscancode && bindscancode(getCustomEvent('scancode', {}, {
-        detail: {
-          result: codes.map(code => code.value).join(',')
-        }
-      }))
+      codes.forEach(code => {
+        const type = code.type === 'qr' ? 'QR_CODE' : code.type?.toUpperCase()
+        const frame = code.frame || {}
+        bindscancode && bindscancode(getCustomEvent('scancode', {}, {
+          detail: {
+            result: code.value,
+            type,
+            scanArea: [parseInt(frame.x) || 0, parseInt(frame.y) || 0, parseInt(frame.width) || 0, parseInt(frame.height) || 0]
+          }
+        }))
+      })
     }
   })
 
