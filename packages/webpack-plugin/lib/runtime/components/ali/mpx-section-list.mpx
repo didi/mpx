@@ -1,5 +1,5 @@
 <template>
-  <view class="mpx-recycle-view">
+  <view class="mpx-section-list">
     <scroll-view
       id="scrollViewContainer"
       class="scroll-view-container"
@@ -513,7 +513,7 @@
   .scroll-view-container {
     position: relative;
   }
-  .mpx-recycle-view {
+  .mpx-section-list {
     position: relative;
     overflow: hidden;
   }

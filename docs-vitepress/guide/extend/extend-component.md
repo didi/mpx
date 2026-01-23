@@ -1,28 +1,21 @@
 # Mpx 扩展组件
 
-除基础组件外，Mpx 额外提供一些扩展组件。扩展组件需开发者在 `mpx.config.js`中通过编译配置`useExtendComponents`按需注册，注册成功后即可作为全局自定义组件使用。
-```js
-// mpx.config.js
-defineConfig({
-  pluginOptions: {
-    mpx: {
-      plugin: {
-        useExtendComponents: {
-          wx: ["recycle-view"],
-          ali: ["recycle-view"],
-          web: ["recycle-view"],
-          ios: ["recycle-view"],
-          android: ["recycle-view"],
-          harmony: ["recycle-view"]
-        }
-      }
-    }
+除基础组件外，Mpx 额外提供一些扩展组件。扩展组件需要在页面或组件的 `usingComponents` 中注册后使用。
+
+```html
+<script type="application/json">
+{
+  "usingComponents": {
+    "section-list": "@mpxjs/webpack-plugin/lib/runtime/components/extends/section-list"
   }
-})
+}
+</script>
 ```
 
+Mpx 会根据当前编译的目标平台（wx/ali/web/ios/android/harmony），自动解析到对应平台的扩展组件实现。
 
-## recycle-view 
+
+## section-list
 
 跨端虚拟列表组件，可自定义分组头、列表头、列表项，自动分段渲染兼容各端。
 
@@ -86,7 +79,7 @@ height: {
 ### 用法示例
 
 ```js
-<recycle-view
+<section-list
   generic:recycle-item="normal-recycle-item"
   generic:section-header="section-header"
   generic:list-header="list-header"
@@ -154,6 +147,7 @@ height: {
   <script type="application/json">
   {
     "usingComponents": {
+      "section-list": "@mpxjs/webpack-plugin/lib/runtime/components/extends/section-list",
       "normal-recycle-item": "@/components/recycle-item",
       "section-header": "@/components/section-header",
       "list-header": "@/components/list"
@@ -168,6 +162,6 @@ height: {
 - 可直接调用 ref 实例执行 `scrollToIndex` 方法实现滚动。
 - 如果用户滑动的速度超过渲染的速度，则会先看到空白的内容，这是为了长列表优化不得不作出的妥协。
 - 当某行滑出渲染区域之外后，其内部状态将不会保留。
-- 在 RN 环境，recycle-view 通过 RN 提供的 SectionList 实现分组吸顶。受 RN 底层实现机制限制，开启 `enable-sticky` 且快速滑动时，自定义分组头有时会出现闪烁现象。此问题需要等待 RN 官方修复，我们会持续关注并跟进。
+- 在 RN 环境，section-list 通过 RN 提供的 SectionList 实现分组吸顶。受 RN 底层实现机制限制，开启 `enable-sticky` 且快速滑动时，自定义分组头有时会出现闪烁现象。此问题需要等待 RN 官方修复，我们会持续关注并跟进。
 - 若某行需要使用 `section-header` 对应的抽象节点渲染，则该行数据必须包含 `isSectionHeader: true` 字段；否则默认使用 `recycle-item` 对应的抽象节点渲染
 

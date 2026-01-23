@@ -13,7 +13,6 @@ const createJSONHelper = require('./helper')
 const RecordIndependentDependency = require('../dependencies/RecordIndependentDependency')
 const RecordRuntimeInfoDependency = require('../dependencies/RecordRuntimeInfoDependency')
 const { MPX_DISABLE_EXTRACTOR_CACHE, RESOLVE_IGNORED_ERR, JSON_JS_EXT } = require('../utils/const')
-const { processExtendComponents } = require('../utils/process-extend-components')
 const resolve = require('../utils/resolve')
 const resolveTabBarPath = require('../utils/resolve-tab-bar-path')
 const resolveMpxCustomElementPath = require('../utils/resolve-mpx-custom-element-path')
@@ -165,17 +164,6 @@ module.exports = function (content) {
     json.usingComponents = json.usingComponents || {}
   }
 
-  if (mode === 'wx' || mode === 'ali') {
-    const { useExtendComponents = {} } = mpx
-    if ((isApp || !hasApp) && useExtendComponents[mode]) {
-      const extendComponents = processExtendComponents({
-        useExtendComponents,
-        mode,
-        emitWarning
-      })
-      json.usingComponents = Object.assign({}, extendComponents, json.usingComponents)
-    }
-  }
 
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {

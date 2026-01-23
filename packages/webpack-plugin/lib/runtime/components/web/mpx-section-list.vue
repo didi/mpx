@@ -1,5 +1,5 @@
 <template>
-  <div class="mpx-recycle-view">
+  <div class="mpx-section-list">
     <ScrollView
       ref="scrollView"
       :enableSticky="enableSticky"
@@ -525,7 +525,7 @@ export default {
 </script>
 
 <style scoped>
-.mpx-recycle-view {
+.mpx-section-list {
   position: relative;
   overflow: hidden;
   height: 100%;

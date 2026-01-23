@@ -1,5 +1,5 @@
 <template>
-  <scroll-view  wx:ref="recycleViewRef" class="mpx-recycle-view" scroll-y wx:style="{{ scrollViewStyle }}" type="custom"
+  <scroll-view  wx:ref="recycleViewRef" class="mpx-section-list" scroll-y wx:style="{{ scrollViewStyle }}" type="custom"
     enhanced="{{ enhanced }}" scroll-with-animation="{{ scrollWithAnimation }}" bounces="{{ bounces }}"
     show-scrollbar="{{ showScrollbar }}" refresher-enabled="{{ refresherEnabled }}"
     refresher-triggered="{{ refresherTriggered }}" bindscroll="onScroll" bindrefresherrefresh="onRefresh" scroll-into-view-offset="{{ scrollIntoViewOffset }}"
