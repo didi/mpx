@@ -97,6 +97,9 @@ export const SUPPORTED_APIS = [
   'getSystemInfo',
   'getSystemInfoSync',
 
+  // setting
+  'getMenuButtonBoundingClientRect',
+
   // toast
   'showToast',
   'hideToast',
