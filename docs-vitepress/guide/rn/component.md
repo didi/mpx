@@ -401,7 +401,7 @@ movable-view的可移动区域。
 | focus                   | boolean | `false`       | 获取焦点                                                    |
 | auto-height             | boolean | `false`       | 是否自动增高，设置 auto-height 时，style.height不生效          |
 | confirm-type            | string  | `done`        | 设置键盘右下角按钮的文字，可选值为 `send`、`search`、`next`、`go`、`done`，不支持 `return`                       |
-| confirm-hold            | boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
+| confirm-hold            |         |               | 暂不支持                         |
 | hold-keyboard           | boolean | `false`       | 输入框聚焦时，点击页面其他地方是否收起键盘 <badge type="tip" text="2.10.18+" /> |
 | cursor                  | number  |               | 指定 focus 时的光标位置                                      |
 | cursor-color            | string  |               | 光标颜色                                                    |
