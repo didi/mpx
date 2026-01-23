@@ -476,3 +476,24 @@ boolean
 Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callback)` 作为 Mpx 应用切换切换台的驱动，从而触发对于的钩子（如onhide/onshow）
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能会出现AppState触发时机异常的情况（例如从 RN 页面跳转到 NA 页面时），此时可以将 disableAppStateListener 设置为 true 来禁用框架内部对 AppState 的监听。但需要在合适的时机手动调用 setAppShow() 与 setAppHide() 方法来进行驱动以确保对于的钩子能正常触发。
+
+
+### 自定义设置底部虚拟按键区高度
+
+#### mpx.config.rnConfig.getBottomVirtualHeight
+
+```ts
+() => number
+```
+Android的不同系统或者手机的虚拟按键区高度可能存在不同的情况，框架内部统一使用了initialWindowMetrics.insets.bottom，如存在需要单独调整的场景可自定义设置虚拟按键区高度。
+
+```javascript
+// 例子
+import ReactNative from 'react-native'
+import { initialWindowMetrics } from 'react-native-safe-area-context'
+mpx.config.rnConfig.getBottomVirtualHeight = (bottomHeight) => {
+  const screenDimensions = ReactNative.Dimensions.get('screen')
+  const windowDimensions = ReactNative.Dimensions.get('window')
+  return Math.max(initialWindowMetrics?.insets?.bottom || 0 , (screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0, 0)
+}vscode 如何打开markdown
+```
