@@ -1,0 +1,31 @@
+<template>
+  <sticky-section padding="{{ padding }}" push-pinned-header="{{ pushPinnedHeader }}">
+    <slot></slot>
+  </sticky-section>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    options: {
+      virtualHost: true
+    },
+    properties: {
+      padding: {
+        type: Array,
+        value: [0, 0, 0, 0]
+      },
+      pushPinnedHeader: {
+        type: Boolean,
+        value: true
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

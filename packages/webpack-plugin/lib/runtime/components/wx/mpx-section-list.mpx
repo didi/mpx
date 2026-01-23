@@ -193,16 +193,16 @@ createComponent({
     "component": true,
     "componentGenerics": {
       "recycle-item": {
-        "default": "./mpx-recycle-item-default"
+        "default": "./mpx-section-list-default/list-item.mpx"
       },
       "section-header": {
-        "default": "./mpx-section-header-default"
+        "default": "./mpx-section-list-default/section-header.mpx"
       },
       "list-header": {
-        "default": "./mpx-list-header-default"
+        "default": "./mpx-section-list-default/list-header.mpx"
       },
       "list-footer": {
-        "default": "./mpx-list-footer-default"
+        "default": "./mpx-section-list-default/list-footer.mpx"
       }
     }
   }

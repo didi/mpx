@@ -550,16 +550,16 @@
     },
     "componentGenerics": {
       "recycle-item": {
-        "default": "../wx/mpx-recycle-item-default.mpx"
+        "default": "../wx/mpx-section-list-default/recycle-item.mpx"
       },
       "section-header": {
-        "default": "../wx/mpx-section-header-default.mpx"
+        "default": "../wx/mpx-section-list-default/section-header.mpx"
       },
       "list-header": {
-        "default": "../wx/mpx-list-header-default.mpx"
+        "default": "../wx/mpx-section-list-default/list-header.mpx"
       },
       "list-footer": {
-        "default": "../wx/mpx-list-footer-default.mpx"
+        "default": "../wx/mpx-section-list-default/list-footer.mpx"
       }
     }
   }
