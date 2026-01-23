@@ -550,7 +550,7 @@
     },
     "componentGenerics": {
       "recycle-item": {
-        "default": "../wx/mpx-section-list-default/recycle-item.mpx"
+        "default": "../wx/mpx-section-list-default/list-item.mpx"
       },
       "section-header": {
         "default": "../wx/mpx-section-list-default/section-header.mpx"

@@ -4,6 +4,11 @@
   </view>
 </template>
 
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({})
+</script>
+
 <style lang="stylus" scoped>
 .mpx-section-header-default
   margin 4px 16px
