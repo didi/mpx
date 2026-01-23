@@ -32,17 +32,10 @@ module.exports = function (jsonContent, {
     mode,
     srcMode,
     env,
-    projectRoot,
-    appInfo
+    projectRoot
   } = mpx
 
   const context = loaderContext.context
-
-  let hasApp = true
-
-  if (!appInfo.name) {
-    hasApp = false
-  }
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(

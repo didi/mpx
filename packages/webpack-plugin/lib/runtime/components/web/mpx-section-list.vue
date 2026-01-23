@@ -22,13 +22,13 @@
         <div class="infinite-list" ref="infiniteList">
           <template v-for="item in visibleData">
             <section-header
-              v-if="item.itemData.isSectionHeader"
-              :key="'header' + item._index"
+              v-if="item.itemData && item.itemData.isSectionHeader"
+              :key="'header' + (item.itemData.item_key || item._index)"
               :itemData="item.itemData"
             />
             <recycle-item
-              v-if="!item.itemData.isSectionHeader"
-              :key="'item' + item._index"
+              v-if="item.itemData && !item.itemData.isSectionHeader"
+              :key="'item' + (item.itemData.item_key || item._index)"
               :itemData="item.itemData"
             />
           </template>

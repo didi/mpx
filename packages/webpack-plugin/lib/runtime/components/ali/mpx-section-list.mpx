@@ -28,13 +28,13 @@
         <view class="infinite-list" ref="infiniteList" wx:style="{{infiniteListStyle}}">
           <block wx:for="{{visibleData}}">
             <section-header
-              wx:if="{{item.itemData.isSectionHeader}}"
-              wx:key="header{{_index}}"
+              wx:if="{{item.itemData && item.itemData.isSectionHeader}}"
+              wx:key="header{{item.itemData.item_key || item._index}}"
               itemData="{{item.itemData}}"
             />
             <recycle-item
-              wx:if="{{!item.itemData.isSectionHeader}}"
-              wx:key="item{{_index}}"
+              wx:if="{{item.itemData && !item.itemData.isSectionHeader}}"
+              wx:key="item{{item.itemData.item_key || item._index}}"
               itemData="{{item.itemData}}"
             />
           </block>

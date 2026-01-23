@@ -75,15 +75,10 @@ module.exports = function (content) {
   const { getRequestString } = createHelpers(this)
 
   let currentName
-  let hasApp = true
   if (isApp) {
     currentName = appInfo.name
   } else {
     currentName = componentsMap[resourcePath] || pagesMap[resourcePath]
-  }
-
-  if (!appInfo.name) {
-    hasApp = false
   }
 
   const relativePath = useRelativePath ? publicPath + path.dirname(currentName) : ''
