@@ -13,12 +13,11 @@ let stopWhile = false
 
 function describeComponentFrame(name, ownerName) {
   let sourceInfo = ''
-
   if (ownerName) {
     sourceInfo = ` (created by ${ownerName})`
   }
 
-  if (ownerName === 'Page') {
+  if (name === 'MpxPage') {
     stopWhile = true
   }
 
