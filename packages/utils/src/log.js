@@ -1,4 +1,4 @@
-import { isFunction } from './base'
+import { isFunction, type } from './base'
 import { getStackByFiberInDevAndProd } from './componentError'
 
 const isDev = process.env.NODE_ENV !== 'production'
@@ -37,6 +37,15 @@ export function error (msg, location, e) {
   const errorHandler = mpxGlobal.__mpx?.config.errorHandler
   if (!e) {
     e = new Error(stack ? `${msg}\n Error Component Stack:${stack}` : msg)
+  } else {
+    if (type(e) === 'Error') {
+      if (stack) {
+        e.message += `\n Error Component Stack:\n${stack}`
+      }
+    }
+    if (type(e) === 'String') {
+      e += `\n Error Component Stack:\n${stack}`
+    }
   }
   if (isFunction(errorHandler)) {
     errorHandler(msg, location, e)
