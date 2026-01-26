@@ -38,15 +38,16 @@ export function error (msg, location, e) {
   if (!e) {
     e = new Error(stack ? `${msg}\n Error Component Stack:${stack}` : msg)
   } else {
-    if (type(e) === 'Error') {
-      if (stack) {
+    if (stack) {
+      if (type(e) === 'Error') {
         e.message += `\n Error Component Stack:\n${stack}`
       }
-    }
-    if (type(e) === 'String') {
-      e += `\n Error Component Stack:\n${stack}`
+      if (type(e) === 'String') {
+        e += `\n Error Component Stack:\n${stack}`
+      }
     }
   }
+  
   if (isFunction(errorHandler)) {
     errorHandler(msg, location, e)
   } else {
