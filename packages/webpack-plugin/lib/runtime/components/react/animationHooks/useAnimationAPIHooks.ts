@@ -121,7 +121,7 @@ export default function useAnimationAPIHooks<T, P> (props: AnimationHooksPropsTy
           error(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
         }
         // Todo 对齐wx
-        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
+        const animation = (toVal === 'auto' && !isNaN(+shareVal)) || (shareVal === 'auto' && !isNaN(+toVal)) ? toVal : getAnimation({ key, value: toVal! }, { delay, duration, easing }, needSetCallback ? callback : undefined)
         needSetCallback = false
         if (!sequence[key]) {
           sequence[key] = [animation]
