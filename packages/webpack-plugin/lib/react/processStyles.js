@@ -2,6 +2,7 @@ const createHelpers = require('../helpers')
 const async = require('async')
 const getClassMap = require('./style-helper').getClassMap
 const shallowStringify = require('../utils/shallow-stringify')
+const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
 
 module.exports = function (styles, {
   loaderContext,
@@ -47,6 +48,11 @@ module.exports = function (styles, {
     }, (err) => {
       if (err) return callback(err)
       try {
+        output += `
+          global.__classCaches = global.__classCaches || []
+          var __classCache = new Map()
+          global.__classCaches.push(__classCache)`
+        const formatValueName = '_f'
         const classMap = getClassMap({
           content,
           filename: loaderContext.resourcePath,
@@ -54,26 +60,32 @@ module.exports = function (styles, {
           srcMode,
           ctorType,
           warn,
-          error
+          error,
+          formatValueName
         })
+        const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
+          result !== '' && (result += ',')
+          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(${formatValueName}){return ${shallowStringify(value)};}`
+          return result
+        }, '')
         if (ctorType === 'app') {
           output += `
-          let __appClassMap
-          global.__getAppClassMap = function() {
+          var __appClassMap
+          global.__getAppClassStyle = function(className) {
             if(!__appClassMap) {
-              __appClassMap = ${shallowStringify(classMap)};
+              __appClassMap = {${classMapCode}};
             }
-            return __appClassMap;
+            return global.__GCC(className, __appClassMap, __classCache);
           };\n`
         } else {
           output += `
-          let __classMap
+          var __classMap
           global.currentInject.injectMethods = {
-            __getClassMap: function() {
+            __getClassStyle: function(className) {
               if(!__classMap) {
-                __classMap = ${shallowStringify(classMap)};
+                __classMap = {${classMapCode}};
               }
-              return __classMap;
+              return global.__GCC(className, __classMap, __classCache);
             }
           };\n`
         }

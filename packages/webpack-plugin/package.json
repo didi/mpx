@@ -1,6 +1,6 @@
 {
   "name": "@mpxjs/webpack-plugin",
-  "version": "2.10.16",
+  "version": "2.10.17",
   "description": "mpx compile core",
   "keywords": [
     "mpx"
@@ -29,10 +29,7 @@
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
     "@mpxjs/template-engine": "^2.8.7",
-    "@mpxjs/utils": "^2.10.16",
-    "postcss-less": "^6.0.0",
-    "postcss-scss": "^4.0.9",
-    "postcss-styl": "^0.12.3",
+    "@mpxjs/utils": "^2.10.17",
     "acorn": "^8.11.3",
     "acorn-walk": "^7.2.0",
     "async": "^2.6.0",
@@ -54,7 +51,6 @@
     "mime": "^2.2.2",
     "object-assign": "^4.1.1",
     "postcss": "^8.4.5",
-    "postcss-import": "^16.1.1",
     "postcss-load-config": "^3.1.1",
     "postcss-modules-extract-imports": "^3.0.0",
     "postcss-modules-local-by-default": "^4.0.0",
@@ -67,9 +63,6 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
-    "postcss-less": "^6.0.0",
-    "postcss-scss": "^4.0.9",
-    "postcss-styl": "^0.12.3",
     "webpack": "^5.75.0"
   },
   "publishConfig": {
@@ -87,15 +80,14 @@
   "scripts": {
     "test": "jest --passWithNoTests",
     "copy-icons": "cp -r ./lib/runtime/components/react/mpx-icon/icons ./lib/runtime/components/react/dist/mpx-icon/icons",
-    "build": "rimraf ./lib/runtime/components/react/dist && tsc && npm run copy-icons"
+    "build": "rimraf ./lib/runtime/components/react/dist && tsc -p ./lib/runtime/components/react/tsconfig.json && npm run copy-icons"
   },
   "devDependencies": {
     "@d11/react-native-fast-image": "^8.6.12",
-    "@mpxjs/api-proxy": "^2.10.16",
+    "@mpxjs/api-proxy": "^2.10.17",
     "@types/babel-traverse": "^6.25.4",
     "@types/babel-types": "^7.0.4",
     "@types/glob": "^8.1.0",
-    "@types/postcss-import": "^14.0.3",
     "@types/react": "^18.2.79",
     "glob": "^11.0.2",
     "react-native": "^0.74.5",
@@ -106,7 +98,8 @@
     "react-native-svg": "^15.8.0",
     "react-native-video": "^6.9.0",
     "react-native-webview": "^13.12.2",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "webpack": "^5.75.0"
   },
   "engines": {
     "node": ">=14.14.0"

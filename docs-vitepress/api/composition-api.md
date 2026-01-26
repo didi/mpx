@@ -128,6 +128,67 @@ createComponent({
 `Function`
 
 小程序页面 onLoad 事件，监听页面加载。
+::: tip 注意
+在页面拼接参数时，不同平台对 URL 参数的处理方式存在差异：
+- **微信、QQ、字节跳动、RN**：参数透传，保持原始格式
+- **其他平台**：会自动对 encode 后的参数进行 decode
+
+为了提供统一的参数处理方式，`onLoad` 钩子额外提供了一个经过 encode 处理的参数对象，方便业务使用统一的参数格式，同时不影响各平台原有的参数返回。
+
+**微信、QQ、字节跳动、RN下的效果：**
+```js
+// A页面
+...
+createPage({
+  methods: {
+    jumpPage () {
+      mpx.navigateTo({
+        url: `./pages/test?name=${encodeURIComponent('我')}&encode=true`
+      })
+    }
+  }
+})
+...
+
+// test页面
+...
+createPage({
+  onLoad(rawQuery, decodedQuery) {
+    // rawQuery = {name: "%E6%88%91", encode: "true"}
+    // decodedQuery = {name: "我", encode: "true"}
+    ...
+  }
+})
+...
+```
+**其他平台的效果：**
+```js
+// A页面
+...
+createPage({
+  methods: {
+    jumpPage () {
+      mpx.navigateTo({
+        url: `./pages/test?name=${encodeURIComponent('我')}&encode=true`
+      })
+    }
+  }
+})
+...
+
+// test页面
+...
+createPage({
+  onLoad(rawQuery, decodedQuery) {
+    // rawQuery = {name: "我", encode: "true"}
+    // decodedQuery = {name: "我", encode: "true"}
+    ...
+  }
+})
+...
+```
+
+:::
 
 ### onShow
 `Function`
