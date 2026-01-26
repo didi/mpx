@@ -1123,6 +1123,39 @@ module.exports = defineConfig({
 * 本功能只会对使用require.async异步引用的js模块生效，若引用路径中已配置?root，则以路径中?root优先
 :::
 
+### transSubpackageRules
+
+`Array`
+
+仅在输出 RN (ios/android/harmony) 时生效。
+
+用于配置分包资源转移规则，可将指定分包中的页面或组件资源转移到其他分包或主包中。
+
+- **from**: `Array<string>` 源分包名称列表
+- **to**: `string` 目标分包名称。当为 `''` (空字符串) 时，表示输出到主包
+
+#### 示例
+
+```js
+// vue.config.js
+module.exports = {
+  pluginOptions: {
+    mpx: {
+      transSubpackageRules: [
+        {
+          from: ['comp-pages'],
+          to: 'common'
+        },
+        {
+          from: ['sub1'],
+          to: ''
+        }
+      ]
+    }
+  }
+}
+```
+
 ### retryRequireAsync
 
 `boolean = false`
