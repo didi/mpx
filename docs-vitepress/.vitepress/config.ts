@@ -20,13 +20,24 @@ declare module "vitepress" {
     }
   }
 }
+interface ExtendedSidebarItem extends DefaultTheme.SidebarItem {
+  badge?: { text?: string }
+  items?: ExtendedSidebarItem[]
+}
+type ExtendedSidebar =
+  | ExtendedSidebarItem[]
+  | {
+      [path: string]:
+        | ExtendedSidebarItem[]
+        | { items: ExtendedSidebarItem[]; base: string }
+    }
 
 const ogUrl = "https://mpxjs.cn/"
 const ogImage = `${ogUrl}logo.png`
 const title = "Mpx 框架"
 const description = "深度性能优化的增强型小程序开发框架"
 
-const sidebar: DefaultTheme.Sidebar = {
+const sidebar: ExtendedSidebar = {
   "/guide/": [
     {
       text: "基础",
@@ -95,11 +106,11 @@ const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: "跨端输出配置", link: "/guide/cross-platform/basic" },
         { text: "条件编译机制", link: "/guide/cross-platform/conditional" },
-        { text: "平台差异处理", link: "/guide/cross-platform/differences" },
       ],
     },
     {
       text: "跨端 RN",
+      badge: { text: "新" },
       items: [
         { text: "快速开始", link: "/guide/rn/start" },
         { text: "组件使用与开发", link: "/guide/rn/component" },
@@ -1014,7 +1025,7 @@ export default withPwa(
         level: [2, 3],
         label: "本页目录",
       },
-      sidebar,
+      sidebar: sidebar as DefaultTheme.Sidebar,
       darkModeSwitchLabel: "外观",
       sidebarMenuLabel: "菜单",
       returnToTopLabel: "返回顶部",
@@ -1039,6 +1050,7 @@ export default withPwa(
     vite: {
       logLevel: "info",
       plugins: [
+        // @ts-ignore
         llmstxt({
           customTemplateVariables: {
             title,
@@ -1046,6 +1058,7 @@ export default withPwa(
           },
           ignoreFiles: ["index.md", "api/index.md"],
         }),
+        // @ts-ignore
         groupIconVitePlugin({
           customIcon: {
             ios: "logos:apple",
@@ -1082,6 +1095,15 @@ export default withPwa(
             replacement: fileURLToPath(
               new URL(
                 "./theme/alias-components/CustomMenuLink.vue",
+                import.meta.url
+              )
+            ),
+          },
+          {
+            find: /^.*\/VPSidebarItem\.vue$/,
+            replacement: fileURLToPath(
+              new URL(
+                "./theme/alias-components/CustomSidebarItem.vue",
                 import.meta.url
               )
             ),

@@ -7,6 +7,7 @@ module.exports = function ({ print }) {
   const qqPropLog = print({ platform: 'qq', tag: TAG_NAME, isError: false })
   const ttPropLog = print({ platform: 'bytedance', tag: TAG_NAME, isError: false })
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
   const jdEventLog = print({ platform: 'jd', tag: TAG_NAME, isError: false, type: 'event' })
   const jdPropLog = print({ platform: 'jd', tag: TAG_NAME, isError: false })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
@@ -16,6 +17,7 @@ module.exports = function ({ print }) {
   const androidEventLog = print({ platform: 'android', tag: TAG_NAME, isError: false, type: 'event' })
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const harmonyEventLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false, type: 'event' })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -69,6 +71,10 @@ module.exports = function ({ print }) {
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog
+      },
+      {
+        test: /^(snap-to-edge|previous-margin|next-margin|display-multiple-items|direction|layout-type|transformer-type|indicator-type|indicator-margin|indicator-spacing|indicator-radius|indicator-width|indicator-height|indicator-alignment|indicator-offset|scroll-with-animation|cache-extent)$/,
+        ks: ksPropLog
       }
     ],
     event: [
@@ -95,6 +101,10 @@ module.exports = function ({ print }) {
         ios: iosEventLog,
         android: androidEventLog,
         harmony: harmonyEventLog
+      },
+      {
+        test: /^(onscrollstart|onscrollupdate|onscrollend)$/,
+        ks: ksEventLog
       }
     ]
   }
