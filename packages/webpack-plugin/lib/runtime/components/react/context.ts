@@ -12,7 +12,10 @@ export type KeyboardAvoidContextValue = MutableRefObject<{
   adjustPosition: boolean
   holdKeyboard?: boolean
   keyboardHeight?: number
+  /** @internal bindfocus 异步延迟上报方法 */
   onKeyboardShow?: () => void
+  /** @internal 多个 Input 切换聚焦场景标记位 */
+  readyToShow?: boolean
 } | null>
 
 export interface GroupValue {
