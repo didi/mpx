@@ -47,7 +47,6 @@ export function error (msg, location, e) {
       }
     }
   }
-  
   if (isFunction(errorHandler)) {
     errorHandler(msg, location, e)
   } else {
