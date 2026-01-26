@@ -36,7 +36,7 @@ export function error (msg, location, e) {
   }
   const errorHandler = mpxGlobal.__mpx?.config.errorHandler
   if (!e) {
-    e = new Error(stack ? `${msg}\n Error Component Stack:${stack}` : msg)
+    e = new Error(stack ? `${msg}\n Error Component Stack:\n${stack}` : msg)
   } else {
     if (stack) {
       if (type(e) === 'Error') {
