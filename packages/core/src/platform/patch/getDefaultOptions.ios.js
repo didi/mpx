@@ -9,7 +9,6 @@ import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view'
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
@@ -509,15 +508,15 @@ function getLayoutData (headerHeight) {
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
-  // const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
   let bottomVirtualHeight = 0
-  // 红米手机&魅族16T手机的screen.height = windowHeight + bottomVirtualHeight 导致计算出来的底部虚拟偏少。此部分端引擎同学进行修改中
-  // mpx临时兼容 bottomVirtualHeight取 initialWindowMetrics.inset.bottom 和 反算出来的bottomVirtualHeight的更大的值
   if (ReactNative.Platform.OS === 'android') {
     if (isLandscape) {
       bottomVirtualHeight = screenDimensions.height - windowDimensions.height
     } else {
-      bottomVirtualHeight = Math.max(screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight, initialWindowMetrics?.insets?.bottom || 0, 0)
+      bottomVirtualHeight = initialWindowMetrics?.insets?.bottom || 0
+      if (typeof mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight === 'function') {
+        bottomVirtualHeight = mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight() || 0
+      }
     }
   }
   return {
@@ -562,6 +561,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     usePageStatus(navigation, currentPageId)
 
     const withKeyboardAvoidingView = (element) => {
+      if (currentPageConfig.disableKeyboardAvoiding) return element
+      const MpxKeyboardAvoidingView = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view').default
       return createElement(KeyboardAvoidContext.Provider,
         {
           value: keyboardAvoidRef
@@ -582,36 +583,36 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     // android存在第一次打开insets都返回为0情况，后续会触发第二次渲染后正确
     navigation.insets = useSafeAreaInsets()
     return withKeyboardAvoidingView(
-        createElement(ReactNative.View,
+      createElement(ReactNative.View,
+        {
+          style: {
+            flex: 1,
+            // 页面容器背景色
+            backgroundColor: currentPageConfig?.backgroundColorContent || '#fff',
+            // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
+            overflow: 'hidden'
+          }
+        },
+        createElement(RouteContext.Provider,
+          {
+            value: routeContextValRef.current
+          },
+          createElement(IntersectionObserverContext.Provider,
             {
-              style: {
-                flex: 1,
-                // 页面容器背景色
-                backgroundColor: currentPageConfig?.backgroundColorContent || '#fff',
-                // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
-                overflow: 'hidden'
-              }
+              value: intersectionObservers.current
             },
-            createElement(RouteContext.Provider,
-                {
-                  value: routeContextValRef.current
-                },
-                createElement(IntersectionObserverContext.Provider,
-                    {
-                      value: intersectionObservers.current
-                    },
-                    createElement(PortalHost,
-                        null,
-                        createElement(WrappedComponent, {
-                          ...props,
-                          navigation,
-                          route,
-                          id: currentPageId
-                        })
-                    )
-                )
+            createElement(PortalHost,
+              null,
+              createElement(WrappedComponent, {
+                ...props,
+                navigation,
+                route,
+                id: currentPageId
+              })
             )
+          )
         )
+      )
     )
   }
 }

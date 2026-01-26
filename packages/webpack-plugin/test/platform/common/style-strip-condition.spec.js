@@ -1,6 +1,6 @@
-const { stripCondition } = require('../../../lib/style-compiler/strip-conditional-loader')
+const { stripCondition } = require('../../../lib/style-compiler/strip-conditional')
 
-describe('strip-conditional-loader unit tests', () => {
+describe('strip-conditional unit tests', () => {
   describe('stripCondition logic', () => {
     const defs = {
       platform: 'wx',
@@ -106,6 +106,34 @@ describe('strip-conditional-loader unit tests', () => {
         expect(result).not.toContain('<view>Ali</view>')
         expect(result).toContain('<view>Wx</view>')
         expect(result).not.toContain('<view>Other</view>')
+      })
+    })
+
+    describe('Error Handling', () => {
+      it('should throw error when mpx-if is not closed', () => {
+        const input = `
+          /* @mpx-if (platform === 'wx') */
+          .wx { color: red; }
+        `
+        expect(() => stripCondition(input, defs)).toThrow('[Mpx strip conditional error]: mpx-if without a matching endif')
+      })
+
+      it('should throw error when mpx-elif without preceding if', () => {
+        const input = `
+          /* @mpx-elif (platform === 'wx') */
+          .wx { color: red; }
+          /* @mpx-endif */
+        `
+        expect(() => stripCondition(input, defs)).toThrow('[Mpx style error]: elif without a preceding if')
+      })
+
+      it('should throw error when mpx-else without preceding if', () => {
+        const input = `
+          /* @mpx-else */
+          .other { color: blue; }
+          /* @mpx-endif */
+        `
+        expect(() => stripCondition(input, defs)).toThrow('[Mpx style error]: else without a preceding if')
       })
     })
 

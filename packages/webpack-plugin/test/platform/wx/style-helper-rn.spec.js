@@ -59,6 +59,38 @@ describe('React Native style validation for CSS variables', () => {
       expect(config.error).not.toHaveBeenCalled()
     })
 
+    test('should keep CSS variable with 0 fallback (no compile-time folding)', () => {
+      const css = '.text { letter-spacing: var(--x, 0); }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text).toEqual({
+        letterSpacing: '"var(--x, 0)"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should keep CSS custom property with var() fallback (do not validate as RN number)', () => {
+      const css = '.btn { --dn-container-height: var(--dn-tag-height, auto); }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.btn).toEqual({
+        '--dn-container-height': '"var(--dn-tag-height, auto)"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
     test('should keep CSS variable without fallback', () => {
       const css = '.text { letter-spacing: var(--x); line-height: var(--y); }'
       const config = createConfig()
