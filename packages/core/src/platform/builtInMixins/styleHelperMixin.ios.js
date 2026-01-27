@@ -277,9 +277,6 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              if('start-point-wrapper' === staticClass) {
-                console.log(1213313, localStyle);
-              }
               if (localStyle._media?.length) {
                 mergeToLayer(localStyle._layer || 'normal', localStyle._default, getMediaStyle(localStyle._media))
               } else {
@@ -288,6 +285,10 @@ export default function styleHelperMixin () {
             } else if (unoInject) {
               let unoStyle, unoVarStyle
               if (unoStyle = global.__getUnoStyle(className)) {
+                if(className === 'w-24rpx') {
+                  console.log(12313, unoStyle);
+
+                }
                 const importantClass = className.endsWith('!')
                 mergeToLayer(importantClass ? 'important' : 'uno', unoStyle)
                 if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
@@ -295,9 +296,6 @@ export default function styleHelperMixin () {
                 mergeToLayer('important', unoVarStyle)
               }
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              if('start-point-wrapper' === staticClass) {
-                console.log(appStyle);
-              }
               if (appStyle._media?.length) {
                 mergeToLayer(appStyle._layer || 'app', appStyle._default, getMediaStyle(appStyle._media))
               } else {
@@ -350,13 +348,7 @@ export default function styleHelperMixin () {
           })
         }
 
-        if('start-point-wrapper' === staticClass) {
-                console.log(layerMap);
-              }
-
         const result = genResult()
-
-        // console.log(staticClass, dynamicClass , result);
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
         return isEmpty ? empty : result

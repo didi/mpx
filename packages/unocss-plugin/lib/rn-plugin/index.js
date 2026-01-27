@@ -12,9 +12,11 @@ const __dirname = nodePath.dirname(__filename) // 当前文件的目录路径
 
 const PLUGIN_NAME = 'unocss:webpack'
 
+const formatValueName = '_f'
+
 const classMapToCode = (classMap) => Object.entries(classMap).reduce((result, [key, value]) => {
   result !== '' && (result += ',')
-  result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: () => (${shallowStringify(value)})`
+  result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(${formatValueName}){return ${shallowStringify(value)};}`
   return result
 }, '')
 
@@ -61,6 +63,7 @@ function WebpackPlugin (configOrPath, defaults) {
           if (uno.blocked.size) {
             compilation.errors.push(`[Mpx Unocss]: all those '${[...uno.blocked].join(', ')}' class utilities is not supported in react native mode`)
           }
+
           const getLayersClassMap = (layers) => {
             return getClassMap({
               content: result.getLayers(layers),
@@ -72,7 +75,8 @@ function WebpackPlugin (configOrPath, defaults) {
               },
               error: msg => {
                 compilation.errors.push(msg)
-              }
+              },
+              formatValueName
             })
           }
           const classMap = getLayersClassMap(result.layers.filter(v => v !== 'varUtilities'))
