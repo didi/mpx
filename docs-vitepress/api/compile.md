@@ -1137,7 +1137,7 @@ module.exports = defineConfig({
 #### 示例
 
 ```js
-// vue.config.js
+// mpx.config.js
 module.exports = {
   pluginOptions: {
     mpx: {
