@@ -95,7 +95,7 @@ function WebpackPlugin (configOrPath, defaults) {
                 return classMapToCode(utilitiesClassMap)
               })
               .replace('__unoCssMapPreflights__', () => {
-                return `__uno_preflight: () => { return { _default: ${JSON.stringify(preflightsClassMap)} } }`
+                return `__uno_preflight: () => { return ${JSON.stringify(preflightsClassMap)} }`
               })
             if (replaced) { compilation.assets[file] = new WebpackSources.RawSource(code) }
           }
