@@ -14,7 +14,7 @@ function getBasePath (navigation) {
 let timerId = null
 function isLock (navigationHelper, type, options) {
   if (navigationHelper.lastSuccessCallback && navigationHelper.lastFailCallback) {
-    const { path } = parseUrl(options.url)
+    const { path } = parseUrl(options.url || '')
     const res = {
       errMsg: `${type}:fail the previous routing event didn't complete`,
       path
@@ -104,8 +104,10 @@ function navigateBack (options = {}) {
     }
     if (delta >= routeLength && global.__mpx?.config.rnConfig.onAppBack?.(delta - routeLength + 1)) {
       nextTick(() => {
-        navigationHelper.lastSuccessCallback()
-        navigationHelper.lastSuccessCallback = null
+        if (navigationHelper.lastSuccessCallback) {
+          navigationHelper.lastSuccessCallback()
+          navigationHelper.lastSuccessCallback = null
+        }
       })
     } else {
       navigation.pop(delta)

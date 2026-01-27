@@ -48,6 +48,11 @@ module.exports = function (styles, {
     }, (err) => {
       if (err) return callback(err)
       try {
+        output += `
+          global.__classCaches = global.__classCaches || []
+          var __classCache = new Map()
+          global.__classCaches.push(__classCache)`
+        const formatValueName = '_f'
         const classMap = getClassMap({
           content,
           filename: loaderContext.resourcePath,
@@ -55,29 +60,30 @@ module.exports = function (styles, {
           srcMode,
           ctorType,
           warn,
-          error
+          error,
+          formatValueName
         })
         const classMapCode = Object.entries(classMap).reduce((result, [key, value]) => {
           result !== '' && (result += ',')
-          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: () => (${shallowStringify(value)})`
+          result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(${formatValueName}){return ${shallowStringify(value)};}`
           return result
         }, '')
         if (ctorType === 'app') {
           output += `
           global.__classCaches = global.__classCaches || [];
-          const __classCache = new Map();
+          var __classCache = new Map();
           global.__classCaches.push(__classCache);\n`
 
           if (hasUnoCSS) {
             output += `
-            let __unoClassMap;
+            var __unoClassMap;
             global.__getUnoStyle = function(className) {
               if (!__unoClassMap) {
                 __unoClassMap = {__unoCssMapPlaceholder__}
               }
               return global.__GCC(className, __unoClassMap, __classCache);
             };
-            let __unoVarClassMap;
+            var __unoVarClassMap;
             global.__getUnoVarStyle = function(className) {
               if (!__unoVarClassMap) {
                 __unoVarClassMap = {__unoVarUtilitiesCssMap__}
@@ -86,7 +92,7 @@ module.exports = function (styles, {
             };\n`
           }
           output += `
-          let __appClassMap
+          var __appClassMap
           global.__getAppClassStyle = function(className) {
             if(!__appClassMap) {
               __appClassMap = {__unoCssMapPreflights__, ${classMapCode}};
@@ -95,10 +101,7 @@ module.exports = function (styles, {
           };\n`
         } else {
           output += `
-          global.__classCaches = global.__classCaches || []
-          const __classCache = new Map()
-          global.__classCaches.push(__classCache)
-          let __classMap
+          var __classMap
           global.currentInject.injectMethods = {
             __getClassStyle: function(className) {
               if(!__classMap) {
