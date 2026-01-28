@@ -159,7 +159,6 @@ module.exports = function (content) {
     json.usingComponents = json.usingComponents || {}
   }
 
-
   // 快应用补全json配置，必填项
   if (mode === 'qa' && isApp) {
     const defaultConf = {

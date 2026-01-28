@@ -116,6 +116,7 @@ module.exports = function (jsonContent, {
     if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
     }
+
     const rulesRunner = getRulesRunner(rulesRunnerOptions)
 
     if (rulesRunner) {
