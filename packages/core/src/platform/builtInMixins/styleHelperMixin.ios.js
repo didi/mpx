@@ -283,8 +283,12 @@ export default function styleHelperMixin () {
             } else if (unoInject) {
               let unoStyle, unoVarStyle
               if (unoStyle = global.__getUnoStyle(className)) {
-                const importantClass = className.endsWith('!')
-                mergeToLayer(importantClass ? 'important' : 'uno', unoStyle, unoStyle._media?.length ? getMediaStyle(unoStyle._media) : undefined)
+                const layer = className.endsWith('!') ? 'important' : 'uno'
+                if (unoStyle._media?.length) {
+                  mergeToLayer(layer, unoStyle._default, getMediaStyle(unoStyle._media))
+                } else {
+                  mergeToLayer(layer, unoStyle)
+                }
                 if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
               } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
                 mergeToLayer('important', unoVarStyle)
