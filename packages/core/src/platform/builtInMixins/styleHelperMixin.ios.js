@@ -262,16 +262,15 @@ export default function styleHelperMixin () {
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
-        const { mergeToLayer, genResult} = createLayer(isNativeStaticStyle)
+        const { mergeToLayer, genResult } = createLayer(isNativeStaticStyle)
 
+         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
-
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           let needAddUnoPreflight = false
           const unoInject = !!global.__getUnoStyle
-          const getAppClassStyle = global.__getAppClassStyle || noop
 
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
@@ -303,11 +302,9 @@ export default function styleHelperMixin () {
           })
 
           if (needAddUnoPreflight) {
-            mergeToLayer('preflight', getAppClassStyle('__uno_preflight'))
+            mergeToLayer('preflight', global.__getAppClassStyle?.('__uno_preflight'))
           }
         }
-
-
 
         if (staticStyle || dynamicStyle) {
           const styleObj = {}

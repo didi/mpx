@@ -68,7 +68,7 @@ function cssRequiresTransform (source, transformCSS) {
   let checkApplyReg
   if (transformCSS) {
     const checkApplyList = transformCSS.applyVariable || ['--at-apply', '--uno-apply', '--uno']
-    checkApplyReg = new RegExp(`(${checkApplyList.join('|')})(\s)?\:`)
+    checkApplyReg = new RegExp(`(${checkApplyList.join('|')})(\\s)?:`)
   }
   return hasDirectiveTest.test(source) || hasThemeFunctionTest.test(source) || (checkApplyReg && checkApplyReg.test(source))
 }
