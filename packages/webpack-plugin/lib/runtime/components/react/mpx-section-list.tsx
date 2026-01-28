@@ -20,7 +20,7 @@ interface ItemHeightType {
   getter?: (item: any, index: number) => number;
 }
 
-interface RecycleViewProps {
+interface SectionListProps {
   enhanced?: boolean;
   bounces?: boolean;
   scrollEventThrottle?: number;
@@ -76,7 +76,7 @@ const getGeneric = (generichash: string, generickey: string) => {
   }))
 }
 
-const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
+const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   const {
     enhanced = false,
     bounces = true,
@@ -434,4 +434,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   )
 })
 
-export default RecycleView
+_SectionList.displayName = 'MpxSectionList'
+
+export default _SectionList
