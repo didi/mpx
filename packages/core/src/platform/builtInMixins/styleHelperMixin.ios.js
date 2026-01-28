@@ -260,10 +260,9 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
-        const { mergeToLayer, genResult, layerMap} = createLayer(isNativeStaticStyle)
+        const { mergeToLayer, genResult} = createLayer(isNativeStaticStyle)
 
 
         if (staticClass || dynamicClass) {
@@ -285,12 +284,8 @@ export default function styleHelperMixin () {
             } else if (unoInject) {
               let unoStyle, unoVarStyle
               if (unoStyle = global.__getUnoStyle(className)) {
-                if(className === 'w-24rpx') {
-                  console.log(12313, unoStyle);
-
-                }
                 const importantClass = className.endsWith('!')
-                mergeToLayer(importantClass ? 'important' : 'uno', unoStyle)
+                mergeToLayer(importantClass ? 'important' : 'uno', unoStyle, unoStyle._media?.length ? getMediaStyle(unoStyle._media) : undefined)
                 if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
               } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
                 mergeToLayer('important', unoVarStyle)
@@ -351,6 +346,7 @@ export default function styleHelperMixin () {
         const result = genResult()
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+
         return isEmpty ? empty : result
       }
     }

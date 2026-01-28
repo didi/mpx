@@ -26,7 +26,7 @@ const checkVars = [
 
 function normalizeTransformVar (res) {
   checkVars.forEach(key => {
-    if (res[key] !== undefined && res[key] === 0) {
+    if (res[key] !== undefined && (res[key] === 0 || res[key] === '0')) {
       res[key] = '0deg'
     }
   })
