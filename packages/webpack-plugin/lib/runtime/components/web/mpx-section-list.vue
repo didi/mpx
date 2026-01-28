@@ -1,5 +1,5 @@
 <template>
-  <div class="mpx-recycle-view">
+  <div class="mpx-section-list">
     <ScrollView
       ref="scrollView"
       :enableSticky="enableSticky"
@@ -22,17 +22,20 @@
         <div class="infinite-list" ref="infiniteList">
           <template v-for="item in visibleData">
             <section-header
-              v-if="item.itemData.isSectionHeader"
-              :key="'header' + item._index"
+              v-if="item.itemData && item.itemData.isSectionHeader"
+              :key="'header' + (item.itemData.item_key || item._index)"
               :itemData="item.itemData"
             />
             <recycle-item
-              v-if="!item.itemData.isSectionHeader"
-              :key="'item' + item._index"
+              v-if="item.itemData && !item.itemData.isSectionHeader"
+              :key="'item' + (item.itemData.item_key || item._index)"
               :itemData="item.itemData"
             />
           </template>
         </div>
+        <template v-if="useListFooter">
+          <list-footer :listFooterData="listFooterData"></list-footer>
+        </template>
       </div>
       <template
         v-if="
@@ -139,8 +142,19 @@ export default {
       type: Boolean,
       default: true
     },
+    listFooterData: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
+    useListFooter: {
+      type: Boolean,
+      default: false
+    },
     generichash: String,
     genericlistHeader: String,
+    genericlistFooter: String,
     genericrecycleItem: String,
     genericsectionHeader: String
   },
@@ -155,16 +169,16 @@ export default {
   },
   computed: {
     _listData() {
-      return this.listData.map((item, index) => {
+      return (this.listData && this.listData.map((item, index) => {
         return {
           itemData: item,
           _index: `_${index}`,
         };
-      });
+      })) || [];
     },
     _stickyHeaders() {
       const data = [];
-      this.listData.forEach((item, index) => {
+      this.listData && this.listData.forEach((item, index) => {
         if (item.isSectionHeader) {
           data.push({
             itemData: item,
@@ -261,6 +275,24 @@ export default {
         this.setStartOffset();
       },
     },
+    itemHeight: {
+      handler() {
+        this.handleHeightChange()
+      },
+      deep: true
+    },
+    sectionHeaderHeight: {
+      handler() {
+        this.handleHeightChange()
+      },
+      deep: true
+    },
+    listHeaderHeight: {
+      handler() {
+        this.handleHeightChange()
+      },
+      deep: true
+    },
     containerHeight() {
       this.calculateVisibleCounts();
     },
@@ -280,6 +312,14 @@ export default {
     this.setStartOffset();
   },
   methods: {
+    handleHeightChange () {
+      this.initPositions();
+      this.setPlaceholderStyle();
+      this.setStartOffset();
+      // 外部传值虽然变了，但是未触发 DOM 实际宽高变更，所以也不会自动触发 scrollView 内部 refresh 机制
+      // 需要手动触发，让 sticky-header 重新计算位置
+      this.$refs.scrollView?.forceUpdateRefreshVersion?.()
+    },
     registerGenericComponents() {
       if (!this.generichash || !global.__mpxGenericsMap[this.generichash]) {
         return;
@@ -288,8 +328,9 @@ export default {
       let components = null;
       const genericList = {
         "recycle-item": this.genericrecycleItem ,
-        "list-header": this.genericlistHeader ,
-        "section-header": this.genericsectionHeader
+        "list-header": this.genericlistHeader,
+        "section-header": this.genericsectionHeader,
+        "list-footer": this.genericlistFooter
       }
 
       for (const key in genericList) {
@@ -445,7 +486,7 @@ export default {
     onRefresherrefresh(e) {
       this.$emit("refresherrefresh", e);
     },
-    scrollToIndex({ index, animated, viewPosition = 0 }) {
+    scrollToIndex({ index, animated, viewPosition = 0, viewOffset = 0 }) {
       const isStickyHeader = this._listData[index].itemData?.isSectionHeader;
       let prevHeaderHeight = 0;
       // 如果不是sticky header 查找最近一个吸顶的 sticky header
@@ -471,6 +512,8 @@ export default {
         targetTop = itemTop - (containerHeight - itemHeight) / 2;
       }
 
+      targetTop -= viewOffset;
+
       this.$refs.scrollView?.bs.scrollTo(0, -targetTop, animated ? 200 : 0);
     },
   },
@@ -482,7 +525,7 @@ export default {
 </script>
 
 <style scoped>
-.mpx-recycle-view {
+.mpx-section-list {
   position: relative;
   overflow: hidden;
   height: 100%;

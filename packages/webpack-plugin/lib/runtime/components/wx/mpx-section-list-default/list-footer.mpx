@@ -1,11 +1,16 @@
 <template>
-  <view class="mpx-list-header-default">
-    <view class="mpx-default-content">list-header-default</view>
+  <view class="mpx-list-footer-default">
+    <view class="mpx-default-content">list-footer-default</view>
   </view>
 </template>
 
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({})
+</script>
+
 <style lang="stylus" scoped>
-.mpx-list-header-default
+.mpx-list-footer-default
   margin 4px 16px
   padding 16px
   background #fff

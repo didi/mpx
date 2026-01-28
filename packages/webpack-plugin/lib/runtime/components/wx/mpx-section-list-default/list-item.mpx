@@ -1,11 +1,16 @@
 <template>
-  <view class="mpx-section-header-default">
-    <view class="mpx-default-content">section-header-default</view>
+  <view class="mpx-recycle-item-default">
+    <view class="mpx-default-content">recycle-item-default</view>
   </view>
 </template>
 
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({})
+</script>
+
 <style lang="stylus" scoped>
-.mpx-section-header-default
+.mpx-recycle-item-default
   margin 4px 16px
   padding 16px
   background #fff

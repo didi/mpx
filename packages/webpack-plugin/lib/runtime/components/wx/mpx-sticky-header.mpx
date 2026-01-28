@@ -1,0 +1,40 @@
+<template>
+  <sticky-header offset-top="{{offsetTop}}" padding="{{padding}}" allow-overlapping="{{allowOverlapping}}" bindstickontopchange="handleStickyChange">
+    <slot></slot>
+  </sticky-header>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    options: {
+      virtualHost: true
+    },
+    properties: {
+      offsetTop: {
+        type: Number,
+        value: 0
+      },
+      padding: {
+        type: Array,
+        value: [0, 0, 0, 0]
+      },
+      allowOverlapping: {
+        type: Boolean,
+        value: false
+      }
+    },
+    methods: {
+      handleStickyChange(e) {
+        this.triggerEvent('stickontopchange', e.detail)
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

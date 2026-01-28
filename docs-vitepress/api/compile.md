@@ -2093,26 +2093,3 @@ module.exports = defineConfig({
 </script>
 
 ```
-## useExtendComponents
-`object`
-
-除基础组件外，Mpx 还提供了一些扩展组件。这些组件需要开发者根据运行环境进行按需注册。注册成功后，即可作为全局自定义组件使用。
-```js
-// mpx.config.js
-defineConfig({
-  pluginOptions: {
-    mpx: {
-      plugin: {
-        useExtendComponents: {
-          wx: ["recycle-view"],
-          ali: ["recycle-view"],
-          web: ["recycle-view"],
-          ios: ["recycle-view"],
-          android: ["recycle-view"],
-          harmony: ["recycle-view"]
-        }
-      }
-    }
-  }
-})
-```

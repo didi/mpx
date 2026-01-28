@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback } from 'react'
+import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle } from './utils'
@@ -20,7 +20,7 @@ interface ItemHeightType {
   getter?: (item: any, index: number) => number;
 }
 
-interface RecycleViewProps {
+interface SectionListProps {
   enhanced?: boolean;
   bounces?: boolean;
   scrollEventThrottle?: number;
@@ -34,9 +34,12 @@ interface RecycleViewProps {
   listHeaderData?: any;
   listHeaderHeight?: ItemHeightType;
   useListHeader?: boolean;
+  listFooterData?: any;
+  useListFooter?: boolean;
   'genericrecycle-item'?: string;
   'genericsection-header'?: string;
   'genericlist-header'?: string;
+  'genericlist-footer'?: string;
   'enable-var'?: boolean;
   'external-var-context'?: any;
   'parent-font-size'?: number;
@@ -66,37 +69,14 @@ const getGeneric = (generichash: string, generickey: string) => {
   const GenericComponent = global.__mpxGenericsMap?.[generichash]?.[generickey]?.()
   if (!GenericComponent) return null
 
-  return forwardRef((props: any, ref: any) => {
+  return memo(forwardRef((props: any, ref: any) => {
     return createElement(GenericComponent, extendObject({}, {
       ref: ref
     }, props))
-  })
+  }))
 }
 
-const getListHeaderComponent = (generichash: string, generickey: string, data: any) => {
-  if (!generichash || !generickey) return undefined
-  const ListHeaderComponent = getGeneric(generichash, generickey)
-  return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
-}
-
-const getSectionHeaderRenderer = (generichash: string, generickey: string) => {
-  if (!generichash || !generickey) return undefined
-  return (sectionData: { section: Section }) => {
-    if (!sectionData.section.hasSectionHeader) return null
-    const SectionHeaderComponent = getGeneric(generichash, generickey)
-    return SectionHeaderComponent ? createElement(SectionHeaderComponent, { itemData: sectionData.section.headerData }) : null
-  }
-}
-
-const getItemRenderer = (generichash: string, generickey: string) => {
-  if (!generichash || !generickey) return undefined
-  return ({ item }: { item: any }) => {
-    const ItemComponent = getGeneric(generichash, generickey)
-    return ItemComponent ? createElement(ItemComponent, { itemData: item }) : null
-  }
-}
-
-const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
+const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   const {
     enhanced = false,
     bounces = true,
@@ -111,9 +91,12 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     listHeaderHeight = {},
     listHeaderData = null,
     useListHeader = false,
+    listFooterData = null,
+    useListFooter = false,
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
     'genericlist-header': genericListHeader,
+    'genericlist-footer': genericListFooter,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
@@ -134,45 +117,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   const indexMap = useRef<{ [key: string]: string | number }>({})
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
-
-  // 缓存 getGeneric 的结果，避免每次都创建新的组件引用
-  const genericComponentsCache = useRef<{ [key: string]: any }>({})
-  const getCachedGeneric = useCallback((generichash: string, generickey: string) => {
-    if (!generichash || !generickey) return null
-
-    const cacheKey = `${generichash}_${generickey}`
-    if (!genericComponentsCache.current[cacheKey]) {
-      genericComponentsCache.current[cacheKey] = getGeneric(generichash, generickey)
-    }
-    return genericComponentsCache.current[cacheKey]
-  }, [])
-
-  // 使用 ref 存储最新的 props，避免渲染函数引用变化导致组件重新挂载
-  const propsRef = useRef({ generichash, genericrecycleItem, genericsectionHeader, genericListHeader, listHeaderData, useListHeader })
-
-  propsRef.current = { generichash, genericrecycleItem, genericsectionHeader, genericListHeader, listHeaderData, useListHeader }
-
-  // 创建稳定的渲染函数引用，使用 getCachedGeneric 确保组件引用稳定
-  const stableItemRenderer = useCallback(({ item }: { item: any }) => {
-    const { generichash: hash, genericrecycleItem: key } = propsRef.current
-    const ItemComponent = getCachedGeneric(hash, key)
-    return ItemComponent ? createElement(ItemComponent, { itemData: item }) : null
-  }, [getCachedGeneric])
-
-  const stableSectionHeaderRenderer = useCallback((sectionData: { section: Section }) => {
-    if (!sectionData.section.hasSectionHeader) return null
-    const { generichash: hash, genericsectionHeader: key } = propsRef.current
-    const SectionHeaderComponent = getCachedGeneric(hash, key)
-    return SectionHeaderComponent ? createElement(SectionHeaderComponent, { itemData: sectionData.section.headerData }) : null
-  }, [getCachedGeneric])
-
-  // 创建稳定的 ListHeader 渲染函数，与 section-header 和 item 的处理方式一致
-  const getStableListHeader = useCallback(() => {
-    const { generichash: hash, genericListHeader: key, listHeaderData: data, useListHeader: use } = propsRef.current
-    if (!use || !hash || !key) return null
-    const ListHeaderComponent = getCachedGeneric(hash, key)
-    return ListHeaderComponent ? createElement(ListHeaderComponent, { listHeaderData: data }) : null
-  }, [getCachedGeneric])
 
   const {
     hasSelfPercent,
@@ -267,6 +211,12 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     indexMap.current = {}
     // 清空反向索引映射
     reverseIndexMap.current = {}
+
+    // 处理 listData 为空的情况
+    if (!listData || !listData.length) {
+      return sections
+    }
+
     listData.forEach((item: ListItem, index: number) => {
       if (item.isSectionHeader) {
         // 如果已经存在一个 section，先把它添加到 sections 中
@@ -412,16 +362,66 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
     'bindrefresherrefresh'
   ], { layoutRef })
 
+  // 使用 ref 保存最新的数据，避免数据变化时组件销毁重建
+  const listHeaderDataRef = useRef(listHeaderData)
+  listHeaderDataRef.current = listHeaderData
+
+  const listFooterDataRef = useRef(listFooterData)
+  listFooterDataRef.current = listFooterData
+
+  // 使用 useMemo 获取 GenericComponent 并创建渲染函数，避免每次组件更新都重新创建函数引用导致不必要的重新渲染
+  const renderItem = useMemo(
+    () => {
+      const ItemComponent = getGeneric(generichash, genericrecycleItem)
+      if (!ItemComponent) return undefined
+      return ({ item }: { item: any }) => createElement(ItemComponent, { itemData: item })
+    },
+    [generichash, genericrecycleItem]
+  )
+
+  const renderSectionHeader = useMemo(
+    () => {
+      const SectionHeaderComponent = getGeneric(generichash, genericsectionHeader)
+      if (!SectionHeaderComponent) return undefined
+      return (sectionData: { section: Section }) => {
+        if (!sectionData.section.hasSectionHeader) return null
+        return createElement(SectionHeaderComponent, { itemData: sectionData.section.headerData })
+      }
+    },
+    [generichash, genericsectionHeader]
+  )
+
+  const ListHeaderComponent = useMemo(
+    () => {
+      if (!useListHeader) return null
+      const ListHeaderGenericComponent = getGeneric(generichash, genericListHeader)
+      if (!ListHeaderGenericComponent) return null
+      return () => createElement(ListHeaderGenericComponent, { listHeaderData: listHeaderDataRef.current })
+    },
+    [useListHeader, generichash, genericListHeader]
+  )
+
+  const ListFooterComponent = useMemo(
+    () => {
+      if (!useListFooter) return null
+      const ListFooterGenericComponent = getGeneric(generichash, genericListFooter)
+      if (!ListFooterGenericComponent) return null
+      return () => createElement(ListFooterGenericComponent, { listFooterData: listFooterDataRef.current })
+    },
+    [useListFooter, generichash, genericListFooter]
+  )
+
   return createElement(
     SectionList,
     extendObject(
       {
         style: [{ height, width }, style, layoutStyle],
         sections: convertedListData,
-        renderItem: stableItemRenderer,
+        renderItem: renderItem,
         getItemLayout: getItemLayout,
-        ListHeaderComponent: getStableListHeader(),
-        renderSectionHeader: stableSectionHeaderRenderer,
+        ListHeaderComponent: useListHeader ? ListHeaderComponent : null,
+        ListFooterComponent: useListFooter ? ListFooterComponent : null,
+        renderSectionHeader: renderSectionHeader,
         refreshControl: refresherEnabled
           ? React.createElement(RefreshControl, {
             onRefresh: onRefresh,
@@ -434,4 +434,6 @@ const RecycleView = forwardRef<any, RecycleViewProps>((props = {}, ref) => {
   )
 })
 
-export default RecycleView
+_SectionList.displayName = 'MpxSectionList'
+
+export default _SectionList

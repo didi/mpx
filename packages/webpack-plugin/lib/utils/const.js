@@ -1,3 +1,5 @@
+const componentPrefixPath = '@mpxjs/webpack-plugin/lib/runtime/components'
+
 module.exports = {
   MPX_PROCESSED_FLAG: 'mpx_processed',
   MPX_DISABLE_EXTRACTOR_CACHE: 'mpx_disable_extractor_cache',
@@ -9,19 +11,29 @@ module.exports = {
   PARENT_MODULE_ID: '__pid',
   // 扩展组件的平台配置：声明哪些组件在哪些平台有专用实现，哪些使用公共组件
   EXTEND_COMPONENT_CONFIG: {
-    'recycle-view': {
-      wx: 'runtime/components/wx/mpx-recycle-view.mpx',
-      ali: 'runtime/components/ali/mpx-recycle-view.mpx',
-      web: 'runtime/components/web/mpx-recycle-view.vue',
-      ios: 'runtime/components/react/dist/mpx-recycle-view.jsx',
-      android: 'runtime/components/react/dist/mpx-recycle-view.jsx',
-      harmony: 'runtime/components/react/dist/mpx-recycle-view.jsx'
+    'section-list': {
+      wx: `${componentPrefixPath}/wx/mpx-section-list.mpx`,
+      ali: `${componentPrefixPath}/ali/mpx-section-list.mpx`,
+      web: `${componentPrefixPath}/web/mpx-section-list.vue`,
+      ios: `${componentPrefixPath}/react/dist/mpx-section-list.jsx`,
+      android: `${componentPrefixPath}/react/dist/mpx-section-list.jsx`,
+      harmony: `${componentPrefixPath}/react/dist/mpx-section-list.jsx`
     },
     'sticky-header': {
-      ali: 'runtime/components/ali/mpx-sticky-header.mpx'
+      wx: `${componentPrefixPath}/wx/mpx-sticky-header.mpx`,
+      ali: `${componentPrefixPath}/ali/mpx-sticky-header.mpx`,
+      web: `${componentPrefixPath}/web/mpx-sticky-header.vue`,
+      ios: `${componentPrefixPath}/react/dist/mpx-sticky-header.jsx`,
+      android: `${componentPrefixPath}/react/dist/mpx-sticky-header.jsx`,
+      harmony: `${componentPrefixPath}/react/dist/mpx-sticky-header.jsx`
     },
     'sticky-section': {
-      ali: 'runtime/components/ali/mpx-sticky-section.mpx'
+      wx: `${componentPrefixPath}/wx/mpx-sticky-section.mpx`,
+      ali: `${componentPrefixPath}/ali/mpx-sticky-section.mpx`,
+      web: `${componentPrefixPath}/web/mpx-sticky-section.vue`,
+      ios: `${componentPrefixPath}/react/dist/mpx-sticky-section.jsx`,
+      android: `${componentPrefixPath}/react/dist/mpx-sticky-section.jsx`,
+      harmony: `${componentPrefixPath}/react/dist/mpx-sticky-section.jsx`
     }
   },
   MPX_TAG_PAGE_SELECTOR: 'mpx-page'

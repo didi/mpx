@@ -255,7 +255,6 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // layout 完成前先隐藏，避免安卓闪烁问题
   const refresherLayoutStyle = useMemo(() => { return !hasRefresherLayoutRef.current ? HIDDEN_STYLE : {} }, [hasRefresherLayoutRef.current])
-
   const lastOffset = useRef(0)
 
   if (scrollX && scrollY) {

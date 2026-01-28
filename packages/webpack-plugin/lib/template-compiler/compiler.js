@@ -728,7 +728,6 @@ function parse (template, options) {
       processElement(element, root, options, meta)
 
       tagNames.add(element.tag)
-
       // 统计通过抽象节点方式使用的组件
       element.attrsList.forEach((attr) => {
         if (genericRE.test(attr.name)) {

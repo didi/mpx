@@ -1,5 +1,5 @@
 <template>
-  <view class="mpx-recycle-view">
+  <view class="mpx-section-list">
     <scroll-view
       id="scrollViewContainer"
       class="scroll-view-container"
@@ -28,17 +28,20 @@
         <view class="infinite-list" ref="infiniteList" wx:style="{{infiniteListStyle}}">
           <block wx:for="{{visibleData}}">
             <section-header
-              wx:if="{{item.itemData.isSectionHeader}}"
-              wx:key="header{{_index}}"
+              wx:if="{{item.itemData && item.itemData.isSectionHeader}}"
+              wx:key="header{{item.itemData.item_key || item._index}}"
               itemData="{{item.itemData}}"
             />
             <recycle-item
-              wx:if="{{!item.itemData.isSectionHeader}}"
-              wx:key="item{{_index}}"
+              wx:if="{{item.itemData && !item.itemData.isSectionHeader}}"
+              wx:key="item{{item.itemData.item_key || item._index}}"
               itemData="{{item.itemData}}"
             />
           </block>
         </view>
+        <block wx:if="{{useListFooter}}">
+          <list-footer listFooterData="{{listFooterData}}"></list-footer>
+        </block>
       </view>
       <block
         wx:if="{{ _stickyHeaders &&
@@ -154,6 +157,16 @@
       useListHeader: {
         type: Boolean,
         value: false
+      },
+      listFooterData: {
+        type: Object,
+        value: () => {
+          return {}
+        }
+      },
+      useListFooter: {
+        type: Boolean,
+        value: false
       }
     },
     data: {
@@ -168,16 +181,16 @@
     },
     computed: {
       _listData() {
-        return this.listData.map((item, index) => {
+        return (this.listData && this.listData.map((item, index) => {
           return {
             itemData: item,
             _index: `_${index}`
           }
-        })
+        })) || []
       },
       _stickyHeaders() {
         const data = []
-        this.listData.forEach((item, index) => {
+        this.listData && this.listData.forEach((item, index) => {
           if (item.isSectionHeader) {
             data.push({
               itemData: item,
@@ -260,6 +273,30 @@
           // 更新真实偏移量
           this.setStartOffset()
         }
+      },
+      itemHeight: {
+        handler() {
+          this.initPositions()
+          this.setPlaceholderStyle()
+          this.setStartOffset()
+        },
+        deep: true
+      },
+      sectionHeaderHeight: {
+        handler() {
+          this.initPositions()
+          this.setPlaceholderStyle()
+          this.setStartOffset()
+        },
+        deep: true
+      },
+      listHeaderHeight: {
+        handler() {
+          this.initPositions()
+          this.setPlaceholderStyle()
+          this.setStartOffset()
+        },
+        deep: true
       },
       containerHeight() {
         this.calculateVisibleCounts()
@@ -419,7 +456,7 @@
       onRefresherrefresh(e) {
         this.triggerEvent('refresherrefresh', e)
       },
-      scrollToIndex({ index, viewPosition = 0 }) {
+      scrollToIndex({ index, viewPosition = 0, viewOffset = 0 }) {
         const isStickyHeader = this._listData[index].itemData?.isSectionHeader
         let prevHeaderHeight = 0
         // 如果不是sticky header 查找最近一个吸顶的 sticky header
@@ -444,6 +481,14 @@
           // 滚动到可视区中央
           targetTop = itemTop - (containerHeight - itemHeight) / 2
         }
+
+        targetTop -= viewOffset
+
+        // 如果 targetTop 为 0，触发不了支付宝滚动，所以需要加一个很小的值
+        if (targetTop <= 0) {
+          targetTop = 0.01
+        }
+
         // 支付宝小程序不支持 animated 参数，也不支持 scrollTo 方法滚动
         this.scrollTop = targetTop
 
@@ -468,7 +513,7 @@
   .scroll-view-container {
     position: relative;
   }
-  .mpx-recycle-view {
+  .mpx-section-list {
     position: relative;
     overflow: hidden;
   }
@@ -505,13 +550,16 @@
     },
     "componentGenerics": {
       "recycle-item": {
-        "default": "../wx/mpx-recycle-item-default.mpx"
+        "default": "../wx/mpx-section-list-default/list-item.mpx"
       },
       "section-header": {
-        "default": "../wx/mpx-section-header-default.mpx"
+        "default": "../wx/mpx-section-list-default/section-header.mpx"
       },
       "list-header": {
-        "default": "../wx/mpx-list-header-default.mpx"
+        "default": "../wx/mpx-section-list-default/list-header.mpx"
+      },
+      "list-footer": {
+        "default": "../wx/mpx-section-list-default/list-footer.mpx"
       }
     }
   }

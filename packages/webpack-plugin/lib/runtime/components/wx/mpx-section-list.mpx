@@ -1,8 +1,8 @@
 <template>
-  <scroll-view wx:ref="recycleViewRef" class="mpx-recycle-view" scroll-y wx:style="{{ scrollViewStyle }}" type="custom"
+  <scroll-view  wx:ref="recycleViewRef" class="mpx-section-list" scroll-y wx:style="{{ scrollViewStyle }}" type="custom"
     enhanced="{{ enhanced }}" scroll-with-animation="{{ scrollWithAnimation }}" bounces="{{ bounces }}"
     show-scrollbar="{{ showScrollbar }}" refresher-enabled="{{ refresherEnabled }}"
-    refresher-triggered="{{ refresherTriggered }}" bindscroll="onScroll" bindrefresherrefresh="onRefresh"
+    refresher-triggered="{{ refresherTriggered }}" bindscroll="onScroll" bindrefresherrefresh="onRefresh" scroll-into-view-offset="{{ scrollIntoViewOffset }}"
     scroll-into-view="{{ scrollIntoViewId }}" scroll-into-view-alignment="{{ viewPosition }}">
     <block wx:if="{{ useListHeader }}">
       <list-header listHeaderData="{{ listHeaderData }}"></list-header>
@@ -26,6 +26,9 @@
           <recycle-item itemData="{{ subItem.itemData }}" id="{{ subItem._domId }}"></recycle-item>
         </block>
       </sticky-section>
+    </block>
+    <block wx:if="{{ useListFooter }}">
+      <list-footer listFooterData="{{ listFooterData }}"></list-footer>
     </block>
   </scroll-view>
 </template>
@@ -82,11 +85,20 @@ createComponent({
     useListHeader: {
       type: Boolean,
       value: false
+    },
+    listFooterData: {
+      type: Object,
+      value: null
+    },
+    useListFooter: {
+      type: Boolean,
+      value: false
     }
   },
   data: {
     convertedListData: [],
     scrollIntoViewId: '',
+    scrollIntoViewOffset: 0,
     viewPosition: 'start'
   },
   computed: {
@@ -112,7 +124,7 @@ createComponent({
     onRefresh(e) {
       this.triggerEvent('refresh', e)
     },
-    scrollToIndex({ index, animated, viewPosition = 0 }) {
+    scrollToIndex({ index, viewPosition = 0, viewOffset = 0 }) {
       if (index >= 0) {
         this.scrollIntoViewId = `mpx-recycle-item-${index}`
         switch (viewPosition) {
@@ -128,13 +140,14 @@ createComponent({
           default:
             this.viewPosition = 'start'
         }
+        this.scrollIntoViewOffset = -viewOffset || 0
       }
     },
     convertToSectionListData(data) {
       const sections = []
       let currentSection = null
 
-      data.forEach((item, index) => {
+      data && data.forEach((item, index) => {
         if (item.isSectionHeader) {
           // 如果已经存在一个 section，先把它添加到 sections 中
           if (currentSection) {
@@ -180,13 +193,16 @@ createComponent({
     "component": true,
     "componentGenerics": {
       "recycle-item": {
-        "default": "./mpx-recycle-item-default"
+        "default": "./mpx-section-list-default/list-item.mpx"
       },
       "section-header": {
-        "default": "./mpx-section-header-default"
+        "default": "./mpx-section-list-default/section-header.mpx"
       },
       "list-header": {
-        "default": "./mpx-list-header-default"
+        "default": "./mpx-section-list-default/list-header.mpx"
+      },
+      "list-footer": {
+        "default": "./mpx-section-list-default/list-footer.mpx"
       }
     }
   }

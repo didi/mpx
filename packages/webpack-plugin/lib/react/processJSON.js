@@ -12,7 +12,6 @@ const { transSubpackage } = require('../utils/trans-async-sub-rules')
 const createJSONHelper = require('../json-compiler/helper')
 const getRulesRunner = require('../platform/index')
 const { RESOLVE_IGNORED_ERR } = require('../utils/const')
-const { processExtendComponents } = require('../utils/process-extend-components')
 const RecordResourceMapDependency = require('../dependencies/RecordResourceMapDependency')
 const RecordPageConfigsMapDependency = require('../dependencies/RecordPageConfigsMapDependency')
 
@@ -33,18 +32,10 @@ module.exports = function (jsonContent, {
     mode,
     srcMode,
     env,
-    projectRoot,
-    useExtendComponents = {},
-    appInfo
+    projectRoot
   } = mpx
 
   const context = loaderContext.context
-
-  let hasApp = true
-
-  if (!appInfo.name) {
-    hasApp = false
-  }
 
   const emitWarning = (msg) => {
     loaderContext.emitWarning(
@@ -126,16 +117,6 @@ module.exports = function (jsonContent, {
 
     if (ctorType !== 'app') {
       rulesRunnerOptions.mainKey = ctorType
-    }
-    if (!hasApp || ctorType === 'app') {
-      if (useExtendComponents[mode]) {
-        const extendComponents = processExtendComponents({
-          useExtendComponents,
-          mode,
-          emitWarning
-        })
-        jsonObj.usingComponents = Object.assign({}, extendComponents, jsonObj.usingComponents)
-      }
     }
 
     const rulesRunner = getRulesRunner(rulesRunnerOptions)
