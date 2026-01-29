@@ -208,8 +208,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   // const initOffset = getOffset(props.current || 0, initStep)
   // 记录元素的偏移量
   const offset = useSharedValue(getOffset(propCurrent, initStep))
-  // 记录起始的offset，用于判断是否超过一半(当前offset + 起始或修正起始offset)，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
-  const preOffset = useSharedValue(0)
   const strAbso = 'absolute' + dir.toUpperCase() as StrAbsoType
   const strVelocity = 'velocity' + dir.toUpperCase() as StrVelocityType
   // 标识手指触摸和抬起, 起点在onBegin
@@ -681,14 +679,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       const moveToOffset = offset.value + translation
       let isBoundary = false
       let resetOffset = 0
-      let resetPreOffset = 0
       if (moveToOffset < boundaryEnd) {
         isBoundary = true
         // 超过边界的距离
         const exceedLength = Math.abs(moveToOffset) - Math.abs(boundaryEnd)
         // 计算对标正常元素所在的offset
         resetOffset = patchElmNumShared.value * step.value + exceedLength
-        resetPreOffset = patchElmNumShared.value * step.value
       }
       if (moveToOffset > boundaryStart) {
         isBoundary = true
@@ -696,12 +692,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const exceedLength = Math.abs(boundaryStart) - Math.abs(moveToOffset)
         // 计算对标正常元素所在的offset
         resetOffset = (patchElmNumShared.value + childrenLength.value - 1) * step.value - exceedLength
-        resetPreOffset = (patchElmNumShared.value + childrenLength.value) * step.value
       }
       return {
         isBoundary,
-        resetOffset: -resetOffset,
-        resetPreOffset: -resetPreOffset
+        resetOffset: -resetOffset
       }
     }
     // 非循环超出边界，应用阻力; 开始滑动少阻力小，滑动越长阻力越大
@@ -734,6 +728,14 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       }
       return finalOffset
     }
+    // 设置手势移动的方向
+    function setMoveDir(curAbsoPos: number) {
+        'worklet'
+        const distance = curAbsoPos - preAbsolutePos.value
+        if (distance) {
+            moveDir.value = curAbsoPos - preAbsolutePos.value
+        }
+    }
     const gesturePan = Gesture.Pan()
       .onBegin((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
@@ -743,7 +745,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         runOnJS(runOnJSCallback)('pauseLoop')
         preAbsolutePos.value = e[strAbso]
         moveTranstion.value = e[strAbso]
-        preOffset.value = offset.value
       })
       .onUpdate((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
         'worklet'
@@ -754,7 +755,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           transdir: moveDistance
         }
         // 1. 支持滑动中超出一半更新索引的能力：只更新索引并不会影响onFinalize依据当前offset计算的索引
-        // const offsetHalf = Math.abs(Math.abs(preOffset.value) - Math.abs(offset.value)) > step.value / 2
         const offsetHalf = computeHalf()
         if (childrenLength.value > 1 && offsetHalf) {
           const { selectedIndex } = getTargetPosition({ transdir: moveDistance } as EventEndType)
@@ -768,7 +768,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
             const finalOffset = handleResistanceMove(eventData)
             offset.value = finalOffset
           }
-          moveDir.value = e[strAbso] - preAbsolutePos.value
+          setMoveDir(e[strAbso])
           preAbsolutePos.value = e[strAbso]
           return
         }
@@ -776,19 +776,18 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         if (circularShared.value && childrenLength.value === 1) {
           const finalOffset = handleResistanceMove(eventData)
           offset.value = finalOffset
-          moveDir.value = e[strAbso] - preAbsolutePos.value
+          setMoveDir(e[strAbso])
           preAbsolutePos.value = e[strAbso]
           return
         }
         // 4. 循环更新：正常
-        const { isBoundary, resetOffset, resetPreOffset } = reachBoundary(eventData)
+        const { isBoundary, resetOffset } = reachBoundary(eventData)
         if (childrenLength.value > 1 && isBoundary && circularShared.value) {
           offset.value = resetOffset
-          preOffset.value = resetPreOffset
         } else {
           offset.value = moveDistance + offset.value
         }
-        moveDir.value = e[strAbso] - preAbsolutePos.value
+        setMoveDir(e[strAbso])
         preAbsolutePos.value = e[strAbso]
       })
       .onFinalize((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
@@ -802,11 +801,11 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const defaultDir = e[strAbso] - moveTranstion.value
         // 实时方向：方向基于onUpdate时的方向，滑动的速度超过阈值时基于实时的滑动方向计算
         const realtimeData = {
-          transdir: moveDir.value !== 0 ? moveDir.value : defaultDir
+          transdir: moveDir.value || defaultDir
         }
-        // 起始方向：基于offset和(修正)preOffset判断
+        // 起始方向：基于用户起始手势
         const originData = {
-          transdir: offset.value - preOffset.value !== 0 ? offset.value - preOffset.value : defaultDir
+          transdir: defaultDir
         }
         const eventData = {
           translation: moveDistance,
@@ -833,8 +832,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         }
         // 3. 非循环状态可移动态、循环状态, 正常逻辑处理
         const velocity = e[strVelocity]
-        // 用于判断是否超过一半(当前offset + 起始或修正起始offset)，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
-        const offsetHalf = Math.abs(Math.abs(preOffset.value) - Math.abs(offset.value)) > step.value / 2
+        // 用于判断是否超过一半，基于索引判断是否超过一半不可行(1.滑动过程中索引会变更导致计算反向, 2.边界场景会更新offset也会导致基于索引+offset判断实效)
+        const tmp = offset.value % step.value > step.value / 2
+        // 小于0手向左滑动
+        const offsetHalf = originData.transdir < 0 ? tmp : !tmp
         if (offsetHalf) {
           if (Math.abs(velocity) > longPressRatio) {
             // 超过速度阈值，按照实时方向(快速来回滑动)
