@@ -1,4 +1,4 @@
-import React, { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
+import { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
 import { useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { noop, warn } from '@mpxjs/utils'
@@ -14,9 +14,9 @@ const qualityValue = {
 interface CameraProps {
   mode?: 'normal' | 'scanCode'
   resolution?: 'low' | 'medium' | 'high'
-  devicePosition?: 'front' | 'back'
+  'device-position'?: 'front' | 'back'
   flash?: 'auto' | 'on' | 'off'
-  frameSize?: 'small' | 'medium' | 'large'
+  'frame-size'?: 'small' | 'medium' | 'large'
   style?: Record<string, any>
   bindstop?: () => void
   binderror?: (error: { message: string }) => void
@@ -70,9 +70,9 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   const {
     mode = 'normal',
     resolution = 'medium',
-    devicePosition = 'back',
+    'device-position': devicePosition = 'back',
     flash = 'auto',
-    frameSize = 'medium',
+    'frame-size': frameSize = 'medium',
     bindinitdone,
     bindstop,
     bindscancode,
@@ -108,15 +108,15 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
 
   // 先定义常量，避免在条件判断后使用
   const maxZoom = device?.maxZoom || 1
-  const RESOLUTION_MAPPING: Record<string, { width: number, height: number }> = {
-    low: { width: 640, height: 480 },
-    medium: { width: 1280, height: 720 },
-    high: { width: 1920, height: 1080 }
+  const RESOLUTION_MAPPING: Record<string, { width: number, height: number } | 'max'> = {
+    low: { width: 1280, height: 720 },
+    medium: { width: 1920, height: 1080 },
+    high: 'max'
   }
-  const FRAME_SIZE_MAPPING: Record<string, { width: number, height: number }> = {
-    small: { width: 480, height: 360 },
-    medium: { width: 720, height: 540 },
-    large: { width: 1080, height: 810 }
+  const FRAME_SIZE_MAPPING: Record<string, { width: number, height: number } | 'max'> = {
+    small: { width: 1280, height: 720 },
+    medium: { width: 1920, height: 1080 },
+    large: 'max'
   }
 
   const format = useCameraFormat(device, [
@@ -127,7 +127,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   ])
 
   const codeScanner = useCodeScanner({
-    codeTypes: ['qr', 'ean-13'],
+    codeTypes: ['qr'],
     onCodeScanned: (codes: any[]) => {
       codes.forEach(code => {
         const type = code.type === 'qr' ? 'QR_CODE' : code.type?.toUpperCase()
