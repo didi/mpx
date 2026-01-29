@@ -80,12 +80,17 @@
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | user-select             | boolean  | `false`       | 文本是否可选。 |
 | is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 text 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
+| enable-max-lines | number  | -  | 跨平台属性，开启后 web/小程序/rn 环境均生效。用于限制文本最大行数, 文本溢出仅支持尾部打点模式|
+|  enable-android-align-center | boolean  | `false`  | RN环境特有属性，开启后 Text 组件样式将默认增加 includeFontPadding: false 与 textAlignVertical: 'center' 配置 |
+| enable-add-space | boolean  | `false`  | RN环境特有属性，开启后将在文本尾部补一个空格字符，用于规避小米 HyperOS2 系统下 RN Text 组件出现“吞字”问题 |
+| space-font-size | number  | -  | RN环境特有属性，用于设置空格大小，与 `enable-add-space` 配合使用 |
 
 
 
 > [!tip] 注意
 > - 未包裹 text 标签的文本，会自动包裹 text 标签。
 > - text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
+> - enable-add-space、enable-android-align-center、space-font-size 仅 text 组件支持，使用 view 组件直接包裹文本的场景不支持
 
 ### scroll-view
 可滚动视图区域。
