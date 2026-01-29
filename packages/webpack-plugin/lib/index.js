@@ -79,7 +79,7 @@ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
-const { startFSStripForCss } = require('./style-compiler/strip-conditional')
+const { startFSStripForCss, registerStripCompilation } = require('./style-compiler/strip-conditional')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
@@ -716,6 +716,7 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
+      registerStripCompilation(compilation)
       compilation.warnings.push(...warnings)
       compilation.errors.push(...errors)
       const moduleGraph = compilation.moduleGraph

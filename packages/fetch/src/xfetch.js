@@ -175,21 +175,23 @@ export default class XFetch {
       delete this.cacheRequestData[cacheKey]
       // 缓存是否过期：大于cacheInvalidationTime（默认为3s）则算过期
       const isNotExpired = Date.now() - cacheRequestData.lastTime <= config.usePre.cacheInvalidationTime
-      if (isNotExpired && checkCacheConfig(config, cacheRequestData) && cacheRequestData.responsePromise) {
+      if (isNotExpired && cacheRequestData.responsePromise && checkCacheConfig(config, cacheRequestData)) {
         return cacheRequestData.responsePromise.then(response => {
           // 添加 isCache 标识该请求来源于缓存
           return extend({ isCache: true }, response)
         })
       }
     }
-    const { params, data, method } = config
-    this.cacheRequestData[cacheKey] = {
-      cacheKey,
-      params,
-      data,
-      method,
-      lastTime: Date.now(),
-      responsePromise: null
+    if (config.usePre.mode !== 'consumer') {
+      const { params, data, method } = config
+      this.cacheRequestData[cacheKey] = {
+        cacheKey,
+        params,
+        data,
+        method,
+        lastTime: Date.now(),
+        responsePromise: null
+      }
     }
     return false
   }

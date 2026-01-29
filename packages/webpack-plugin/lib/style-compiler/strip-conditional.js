@@ -85,6 +85,9 @@ function parse(cssString) {
       }
     }
   })
+  if (nodeStack.length > 0) {
+    throw new Error('[Mpx strip conditional error]: mpx-if without a matching endif')
+  }
   return ast
 }
 
@@ -146,6 +149,21 @@ const rawReadFileSync = fs.readFileSync
 const rawReadFile = fs.readFile
 
 let isRewritten = false
+let __compilation = null
+
+function registerStripCompilation(compilation) {
+  __compilation = compilation
+}
+
+function logStripError(path, e) {
+  const msg = `[Mpx strip conditional error]\n  path: ${path}\n  message: ${e && e.message}\n  stack:\n${e && e.stack}`
+  console.error(msg)
+  if (__compilation && Array.isArray(__compilation.errors)) {
+    const err = new Error(msg)
+    err.file = path
+    __compilation.errors.push(err)
+  }
+}
 
 function rewriteFSForCss() {
   if (isRewritten) return
@@ -176,6 +194,7 @@ function startFSStripForCss(defs) {
           }
         }
       } catch (e) {
+        logStripError(path, e)
         return content
       }
     }
@@ -206,6 +225,7 @@ function startFSStripForCss(defs) {
             }
           }
         } catch (e) {
+          logStripError(path, e)
           return callback(null, data)
         }
       }
@@ -220,3 +240,4 @@ function startFSStripForCss(defs) {
 module.exports.stripCondition = stripCondition
 module.exports.rewriteFSForCss = rewriteFSForCss
 module.exports.startFSStripForCss = startFSStripForCss
+module.exports.registerStripCompilation = registerStripCompilation
