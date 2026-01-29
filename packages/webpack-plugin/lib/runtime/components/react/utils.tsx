@@ -550,7 +550,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // transform rpx to px
   transformBoxShadow(normalStyle)
   // transform 字符串格式转化数组格式(先转数组再处理css var)
-  transformTransform(styleObj)
+  transformTransform(normalStyle)
 
   return {
     hasVarDec,
