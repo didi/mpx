@@ -159,7 +159,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
             }
           } else if (_default) {
             // 已有媒体查询数据，此次非媒体查询
-            Object.assign(_default, classMapValue)
+            Object.assign(_default, classMapValue, layerObj)
           } else {
             // 无媒体查询
             const val = classMap[key] || {}
