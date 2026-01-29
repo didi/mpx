@@ -260,19 +260,17 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
 
-        const { mergeToLayer, genResult, layerMap} = createLayer(isNativeStaticStyle)
+        const { mergeToLayer, genResult } = createLayer(isNativeStaticStyle)
 
+         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
-
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           let needAddUnoPreflight = false
           const unoInject = !!global.__getUnoStyle
-          const getAppClassStyle = global.__getAppClassStyle || noop
 
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
@@ -285,12 +283,12 @@ export default function styleHelperMixin () {
             } else if (unoInject) {
               let unoStyle, unoVarStyle
               if (unoStyle = global.__getUnoStyle(className)) {
-                if(className === 'w-24rpx') {
-                  console.log(12313, unoStyle);
-
+                const layer = className.endsWith('!') ? 'important' : 'uno'
+                if (unoStyle._media?.length) {
+                  mergeToLayer(layer, unoStyle._default, getMediaStyle(unoStyle._media))
+                } else {
+                  mergeToLayer(layer, unoStyle)
                 }
-                const importantClass = className.endsWith('!')
-                mergeToLayer(importantClass ? 'important' : 'uno', unoStyle)
                 if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
               } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
                 mergeToLayer('important', unoVarStyle)
@@ -308,11 +306,9 @@ export default function styleHelperMixin () {
           })
 
           if (needAddUnoPreflight) {
-            mergeToLayer('preflight', getAppClassStyle('__uno_preflight'))
+            mergeToLayer('preflight', global.__getAppClassStyle?.('__uno_preflight'))
           }
         }
-
-
 
         if (staticStyle || dynamicStyle) {
           const styleObj = {}
@@ -351,6 +347,7 @@ export default function styleHelperMixin () {
         const result = genResult()
 
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+
         return isEmpty ? empty : result
       }
     }
