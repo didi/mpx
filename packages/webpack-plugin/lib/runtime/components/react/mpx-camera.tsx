@@ -290,7 +290,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         format,
         codeScanner: !isPhoto ? codeScanner : undefined,
         zoom: zoomValue,
-        torch: flash === 'on' ? 'on' : flash === 'off' ? 'off' : undefined
+        torch: flash
       }
     ),
     [
