@@ -90,15 +90,24 @@ module.exports = function (styles, {
               }
               return global.__GCC(className, __unoVarClassMap, __classCache);
             };\n`
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {__unoCssMapPreflights__, ${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
+          } else {
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
           }
-          output += `
-          var __appClassMap
-          global.__getAppClassStyle = function(className) {
-            if(!__appClassMap) {
-              __appClassMap = {__unoCssMapPreflights__, ${classMapCode}};
-            }
-            return global.__GCC(className, __appClassMap, __classCache);
-          };\n`
         } else {
           output += `
           var __classMap
