@@ -250,6 +250,23 @@ const createLayer = (isNativeStyle) => {
   }
 }
 
+const HIDE_STYLE = {
+  // display: 'none'
+  // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
+  flex: 0,
+  height: 0,
+  width: 0,
+  paddingTop: 0,
+  paddingRight: 0,
+  paddingBottom: 0,
+  paddingLeft: 0,
+  marginTop: 0,
+  marginRight: 0,
+  marginBottom: 0,
+  marginLeft: 0,
+  overflow: 'hidden'
+}
+
 export default function styleHelperMixin () {
   return {
     methods: {
@@ -270,29 +287,24 @@ export default function styleHelperMixin () {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
 
           let needAddUnoPreflight = false
-          const unoInject = !!global.__getUnoStyle
 
           classString.split(/\s+/).forEach((className) => {
-            let localStyle, appStyle
+            let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
               if (localStyle._media?.length) {
                 mergeToLayer(localStyle._layer || 'normal', localStyle._default, getMediaStyle(localStyle._media))
               } else {
                 mergeToLayer(localStyle._layer || 'normal', localStyle)
               }
-            } else if (unoInject) {
-              let unoStyle, unoVarStyle
-              if (unoStyle = global.__getUnoStyle(className)) {
-                const layer = className.endsWith('!') ? 'important' : 'uno'
+            } else if (unoStyle = global.__getUnoStyle(className)) {
                 if (unoStyle._media?.length) {
-                  mergeToLayer(layer, unoStyle._default, getMediaStyle(unoStyle._media))
+                  mergeToLayer(unoStyle.__layer || 'uno', unoStyle._default, getMediaStyle(unoStyle._media))
                 } else {
-                  mergeToLayer(layer, unoStyle)
+                  mergeToLayer(unoStyle.__layer || 'uno', unoStyle)
                 }
                 if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
-              } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
+            } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
                 mergeToLayer('important', unoVarStyle)
-              }
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               if (appStyle._media?.length) {
                 mergeToLayer(appStyle._layer || 'app', appStyle._default, getMediaStyle(appStyle._media))
@@ -326,22 +338,7 @@ export default function styleHelperMixin () {
         }
 
         if (hide) {
-          mergeToLayer('important', {
-            // display: 'none'
-            // RN下display:'none'容易引发未知异常问题，使用布局样式模拟
-            flex: 0,
-            height: 0,
-            width: 0,
-            paddingTop: 0,
-            paddingRight: 0,
-            paddingBottom: 0,
-            paddingLeft: 0,
-            marginTop: 0,
-            marginRight: 0,
-            marginBottom: 0,
-            marginLeft: 0,
-            overflow: 'hidden'
-          })
+          mergeToLayer('important', HIDE_STYLE)
         }
 
         const result = genResult()

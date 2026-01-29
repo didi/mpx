@@ -142,6 +142,9 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
           const layerObj = layer ? { _layer: layer } : {}
+          if (key.endsWith('!')) {
+            layerObj._layer = '"important"'
+          }
           let _default = classMap[key]?._default
           let _media = classMap[key]?._media
           if (isMedia) {
