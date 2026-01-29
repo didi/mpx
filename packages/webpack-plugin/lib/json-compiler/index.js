@@ -75,7 +75,6 @@ module.exports = function (content) {
   const { getRequestString } = createHelpers(this)
 
   let currentName
-
   if (isApp) {
     currentName = appInfo.name
   } else {
