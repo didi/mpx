@@ -162,7 +162,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     takePhoto: (options: TakePhotoOptions = {}) => {
       const { success = noop, fail = noop, complete = noop } = options
       cameraRef.current?.takePhoto?.({
-        flash,
         quality: qualityValue[options.quality || 'normal'] as number
       } as any).then((res: { path: any }) => {
         const result = {
@@ -191,7 +190,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         complete(result)
 
         cameraRef.current?.startRecording?.({
-          flash,
           onRecordingError: (error: any) => {
             if (recordTimer) clearTimeout(recordTimer)
             const errorResult = {
@@ -291,7 +289,8 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         device,
         format,
         codeScanner: !isPhoto ? codeScanner : undefined,
-        zoom: zoomValue
+        zoom: zoomValue,
+        torch: flash === 'on' ? 'on' : flash === 'off' ? 'off' : undefined
       }
     ),
     [
