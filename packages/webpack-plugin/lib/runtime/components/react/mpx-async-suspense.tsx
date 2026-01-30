@@ -82,7 +82,8 @@ const DefaultFallback = ({ onReload }: DefaultFallbackProps) => {
 
 const DefaultLoading = () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const FastImage = require('@d11/react-native-fast-image')
+  const FastImageModule = require('@d11/react-native-fast-image')
+  const FastImage = FastImageModule && FastImageModule.default ? FastImageModule.default : FastImageModule
   return (
     <View style={styles.container}>
       <FastImage
