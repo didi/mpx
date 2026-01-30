@@ -79,15 +79,12 @@ const unit = {
 
 const empty = {}
 
-let needPageSize = false
-
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType === 'hairlineWidth') {
     return StyleSheet.hairlineWidth
   }
   if (unitType && typeof unit[unitType] === 'function') {
-    needPageSize = true
     return unit[unitType](+value)
   }
   const matched = unitRegExp.exec(value)
@@ -95,7 +92,6 @@ function formatValue (value, unitType) {
     if (!matched[2] || matched[2] === 'px') {
       return +matched[1]
     } else {
-      needPageSize = true
       return unit[matched[2]](+matched[1])
     }
   }
@@ -258,10 +254,11 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
-        needPageSize = false
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
+
+        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -322,10 +319,6 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
-        if (needPageSize) {
-          // 使用一下 __getSizeCount 触发其 get
-          this.__getSizeCount()
-        }
         return isEmpty ? empty : result
       }
     }
