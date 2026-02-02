@@ -193,7 +193,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   const patchElmNumShared = useSharedValue(patchElmNum)
   const circularShared = useSharedValue(circular)
   // 支持swiper-item 同时存在<swiper-item wx:for/>和<swiper-item>并列的情况
-  const children = (Array.isArray(props.children) ? props.children.filter(child => child) : (props.children ? [props.children] : [])).flat()
+  const children = React.Children.toArray(props.children) as ReactElement[]
   // 对有变化的变量，在worklet中只能使用sharedValue变量，useRef不能更新
   const childrenLength = useSharedValue(children.length)
   const initWidth = typeof normalStyle?.width === 'number' ? normalStyle.width - preMargin - nextMargin : normalStyle.width
@@ -729,12 +729,12 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       return finalOffset
     }
     // 设置手势移动的方向
-    function setMoveDir(curAbsoPos: number) {
-        'worklet'
-        const distance = curAbsoPos - preAbsolutePos.value
-        if (distance) {
-            moveDir.value = curAbsoPos - preAbsolutePos.value
-        }
+    function setMoveDir (curAbsoPos: number) {
+      'worklet'
+      const distance = curAbsoPos - preAbsolutePos.value
+      if (distance) {
+        moveDir.value = curAbsoPos - preAbsolutePos.value
+      }
     }
     const gesturePan = Gesture.Pan()
       .onBegin((e: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
