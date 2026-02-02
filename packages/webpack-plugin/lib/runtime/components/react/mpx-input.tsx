@@ -499,7 +499,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
         multiline: multiline || needMultilineFix,
-        ...(needMultilineFix ? { numberOfLines: 1 } : {}),
         onTouchStart,
         onTouchEnd,
         onFocus,
@@ -509,6 +508,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onContentSizeChange,
         onSubmitEditing: bindconfirm && onSubmitEditing
       },
+      needMultilineFix ? { numberOfLines: 1 } : {},
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [
