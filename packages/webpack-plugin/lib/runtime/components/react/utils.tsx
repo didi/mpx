@@ -757,10 +757,12 @@ export function renderImage (
   imageProps: ImageProps | FastImageProps,
   enableFastImage = false
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const FastImageModule = enableFastImage ? require('@d11/react-native-fast-image') : null
-  const FastImage = FastImageModule && FastImageModule.default ? FastImageModule.default : FastImageModule
-  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage && FastImage ? FastImage : Image
+  let Component: React.ComponentType<ImageProps | FastImageProps> = Image
+  if (enableFastImage) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fastImageModule = require('@d11/react-native-fast-image')
+    Component = fastImageModule.default || fastImageModule
+  }
   return createElement(Component, imageProps)
 }
 
