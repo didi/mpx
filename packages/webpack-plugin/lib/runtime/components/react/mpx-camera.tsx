@@ -1,8 +1,9 @@
 import { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
 import { getCurrentPage, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { noop, warn } from '@mpxjs/utils'
+import { noop, warn, hasOwn } from '@mpxjs/utils'
 import { RouteContext } from './context'
+import { watch, WatchOptions } from '@mpxjs/core'
 
 const qualityValue = {
   high: 90,
@@ -119,21 +120,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     small: { width: 1280, height: 720 },
     medium: { width: 1920, height: 1080 },
     large: 'max'
-  }
-  const showHandle = useCallback(() => {
-    if (page.id === pageId) {
-        setIsActive(true)
-    }
-  }, [])
-  const hideHandle = useCallback(() => {
-    setIsActive(false)
-  }, [])
-
-  if (global.__mpxAppCbs.show.indexOf(showHandle) === -1) {
-    global.__mpxAppCbs.show.push(showHandle)
-  }
-  if (global.__mpxAppCbs.hide.indexOf(hideHandle) === -1) {
-    global.__mpxAppCbs.hide.push(hideHandle)
   }
 
   const format = useCameraFormat(device, [
@@ -269,6 +255,19 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   }), [])
 
   useEffect(() => {
+    let unWatch: any
+    if (pageId && hasOwn(global.__mpxPageStatusMap, String(pageId))) {
+      unWatch = watch(() => global.__mpxPageStatusMap[pageId], (newVal: string) => {
+        if (newVal === 'show') {
+          if (page.id === pageId) {
+            setIsActive(true)
+          }
+        }
+        if (newVal === 'hide') {
+          setIsActive(false)
+        }
+      }, { sync: true } as WatchOptions)
+    }
     const checkCameraPermission = async () => {
       try {
         const cameraPermission = global?.__mpx?.config?.rnConfig?.cameraPermission
@@ -287,14 +286,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       if (navigation?.camera === camera) {
         delete navigation.camera
       }
-      const showHandleIndex = global.__mpxAppCbs.show.indexOf(showHandle)
-      const hideHandleIndex = global.__mpxAppCbs.hide.indexOf(hideHandle)
-      if (showHandleIndex !== -1) {
-        global.__mpxAppCbs.show.splice(showHandleIndex, 1)
-      }
-      if (hideHandleIndex !== -1) {
-        global.__mpxAppCbs.hide.splice(hideHandleIndex, 1)
-      }
+      unWatch && unWatch()
     }
   }, [])
 
