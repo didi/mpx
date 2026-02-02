@@ -1,5 +1,5 @@
 import { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
-import { useTransformStyle, useLayout, extendObject } from './utils'
+import { getCurrentPage, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { noop, warn } from '@mpxjs/utils'
 import { RouteContext } from './context'
@@ -102,9 +102,11 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: cameraRef })
   const isPhoto = mode === 'normal'
   const device = useCameraDevice(devicePosition || 'back')
-  const { navigation } = useContext(RouteContext) || {}
+  const { navigation, pageId } = useContext(RouteContext) || {}
   const [zoomValue, setZoomValue] = useState<number>(1)
+  const [isActive, setIsActive] = useState<boolean>(true)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+  const page = getCurrentPage(pageId)
 
   // 先定义常量，避免在条件判断后使用
   const maxZoom = device?.maxZoom || 1
@@ -117,6 +119,21 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     small: { width: 1280, height: 720 },
     medium: { width: 1920, height: 1080 },
     large: 'max'
+  }
+  const showHandle = useCallback(() => {
+    if (page.id === pageId) {
+        setIsActive(true)
+    }
+  }, [])
+  const hideHandle = useCallback(() => {
+    setIsActive(false)
+  }, [])
+
+  if (global.__mpxAppCbs.show.indexOf(showHandle) === -1) {
+    global.__mpxAppCbs.show.push(showHandle)
+  }
+  if (global.__mpxAppCbs.hide.indexOf(hideHandle) === -1) {
+    global.__mpxAppCbs.hide.push(hideHandle)
   }
 
   const format = useCameraFormat(device, [
@@ -270,6 +287,14 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       if (navigation?.camera === camera) {
         delete navigation.camera
       }
+      const showHandleIndex = global.__mpxAppCbs.show.indexOf(showHandle)
+      const hideHandleIndex = global.__mpxAppCbs.hide.indexOf(hideHandle)
+      if (showHandleIndex !== -1) {
+        global.__mpxAppCbs.show.splice(showHandleIndex, 1)
+      }
+      if (hideHandleIndex !== -1) {
+        global.__mpxAppCbs.hide.splice(hideHandleIndex, 1)
+      }
     }
   }, [])
 
@@ -281,7 +306,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       {
         ref: cameraRef,
         style: extendObject({}, normalStyle, layoutStyle),
-        isActive: true,
+        isActive,
         photo: true,
         video: true,
         onInitialized,
