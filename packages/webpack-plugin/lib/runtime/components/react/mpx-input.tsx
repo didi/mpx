@@ -54,7 +54,7 @@ import {
   NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isAndroid } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -188,6 +188,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const defaultValue = parseValue(value)
+  // 微信小程序的 input 永远是单行，textAlignVertical 固定为 auto
+  // multiline 为 true 时表示是 textarea 组件复用此逻辑
   const textAlignVertical = multiline ? 'top' : 'auto'
   const isAutoFocus = !!autoFocus || !!focus
 
@@ -467,6 +469,12 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       : (nodeRef.current as TextInput)?.blur()
   }, [isAutoFocus])
 
+  // 使用 multiline 来修复光标位置问题
+  // React Native 的 TextInput 在 textAlign center + placeholder 时光标会跑到右边
+  // 这个问题只在 Android 上出现
+  // 参考：https://github.com/facebook/react-native/issues/28794 (Android only)
+  const needMultilineFix = isAndroid && !multiline
+
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -490,7 +498,8 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: !!multiline,
+        multiline: multiline || needMultilineFix,
+        ...(needMultilineFix ? { numberOfLines: 1 } : {}),
         onTouchStart,
         onTouchEnd,
         onFocus,
