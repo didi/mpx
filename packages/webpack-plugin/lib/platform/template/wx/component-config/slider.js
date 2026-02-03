@@ -8,6 +8,18 @@ module.exports = function ({ print }) {
       el.isBuiltIn = true
       return 'mpx-slider'
     },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-slider'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-slider'
+    },
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-slider'
+    },
     props: [
       {
         test: /^color$/,
@@ -42,6 +54,14 @@ module.exports = function ({ print }) {
       {
         test: /^(activeColor|backgroundColor)$/,
         tt (obj) {
+          const propsMap = {
+            activeColor: 'active-color',
+            backgroundColor: 'background-color'
+          }
+          obj.name = propsMap[obj.name]
+          return obj
+        },
+        ks (obj) {
           const propsMap = {
             activeColor: 'active-color',
             backgroundColor: 'background-color'

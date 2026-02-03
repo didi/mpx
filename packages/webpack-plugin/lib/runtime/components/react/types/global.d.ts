@@ -34,6 +34,7 @@ declare module '@mpxjs/utils' {
     },
     setOptions: (params: Record<string, any>) => void
   } | undefined
+  export function dash2hump (str: string): string
 }
 
 declare let global: {

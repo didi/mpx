@@ -8,8 +8,8 @@ import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleShee
 import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
-import useAnimationHooks from './useAnimationHooks'
-import type { AnimationProp } from './useAnimationHooks'
+import useAnimationHooks, { AnimationType } from './animationHooks/index'
+import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
@@ -32,7 +32,7 @@ export interface _ViewProps extends ViewProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'enable-animation'?: boolean
+  'enable-animation'?: boolean | AnimationType
   bindtouchstart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchmove?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
   bindtouchend?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
@@ -287,16 +287,13 @@ function backgroundSize (imageProps: ImageProps, preImageInfo: PreImageInfo, ima
     } else { // 数值类型      ImageStyle
       // 数值类型设置为 stretch
       imageProps.resizeMode = 'stretch'
-      if (type === 'linear') {
-        const dimensionWidth = calcPercent(width as NumberVal, layoutWidth) || 0
-        const dimensionHeight = calcPercent(height as NumberVal, layoutHeight) || 0
-        // ios 上 linear 组件只要重新触发渲染，在渲染过程中 width 或者 height 被设置为 0，即使后面再更新为正常宽高，也会渲染不出来
-        if (dimensionWidth && dimensionHeight) {
-          dimensions = {
-            width: dimensionWidth,
-            height: dimensionHeight
-          } as { width: NumberVal, height: NumberVal }
-        }
+      if (type === 'linear' && (!layoutWidth || !layoutHeight) && (isPercent(width) || isPercent(height))) {
+        // ios 上 linear 组件只要重新触发渲染，在渲染过程中外层容器 width 或者 height 被设置为 0，通过设置 % 的方式会渲染不出来，即使后面再更新为正常宽高也渲染不出来
+        // 所以 hack 手动先将 linear 宽高也设置为 0，后面再更新为正确的数值或 %。
+        dimensions = {
+          width: 0,
+          height: 0
+        } as { width: NumberVal, height: NumberVal }
       } else {
         dimensions = {
           width: isPercent(width) ? width : +width,
@@ -371,6 +368,17 @@ function normalizeBackgroundPosition (parts: PositionVal[]): backgroundPositionL
   let hOffset: PositionVal = 0
   let vStart: 'top' | 'bottom' = 'top'
   let vOffset: PositionVal = 0
+
+  if (!Array.isArray(parts)) {
+    // 模板 style 属性传入单个数值时不会和 class 一样转成数组，需要手动转换
+    parts = [parts]
+  }
+  // 模板 style 属性传入时， 需要额外转换处理单位 px/rpx/vh 以及 center 转化为 50%
+  parts = (parts as (PositionVal | string)[]).map((part) => {
+    if (typeof part !== 'string') return part
+    if (part === 'center') return '50%'
+    return global.__formatValue(part) as PositionVal
+  })
 
   if (parts.length === 4) return parts as backgroundPositionList
 
@@ -504,7 +512,7 @@ function parseBgImage (text: string): {
   type?: 'image' | 'linear'
   src?: string
 } {
-  if (!text) return {}
+  if (!text || text === 'none') return {}
 
   const src = parseUrl(text)
   if (src) return { src, type: 'image' }
@@ -517,19 +525,24 @@ function parseBgImage (text: string): {
   }
 }
 
-function normalizeBackgroundSize (backgroundSize: Exclude<ExtendedViewStyle['backgroundSize'], undefined>, type: 'image' | 'linear' | undefined) {
+function normalizeBackgroundSize (
+  backgroundSize: NonNullable<ExtendedViewStyle['backgroundSize']>,
+  type: 'image' | 'linear' | undefined
+): DimensionValue[] {
   const sizeList = backgroundSize.slice()
   if (sizeList.length === 1) sizeList.push('auto')
 
-  if (type === 'linear') {
-    // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
-    for (const i in sizeList) {
-      const val = sizeList[i]
-      sizeList[i] = /^cover|contain|auto$/.test(val as string) ? '100%' : val
-    }
-  }
+  return sizeList.map((val) => {
+    if (typeof val !== 'string') return val
 
-  return sizeList
+    // 处理当使用渐变的时候，background-size出现cover, contain, auto，当作100%处理
+    if (type === 'linear' && /^cover|contain|auto$/.test(val)) {
+      val = '100%'
+    }
+
+    // 模板 style 属性传入时， 需要额外转换处理单位 px/rpx/vh
+    return global.__formatValue(val) as DimensionValue
+  })
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
@@ -780,7 +793,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
         ref: nodeRef,
         style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
       }
-
     ),
     [
       'hover-start-time',

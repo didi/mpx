@@ -3,25 +3,25 @@ import * as ReactNative from 'react-native'
 import { ReactiveEffect } from '../../observer/effect'
 import { watch } from '../../observer/watch'
 import { del, reactive, set } from '../../observer/reactive'
-import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation } from '@mpxjs/utils'
+import { hasOwn, isFunction, noop, isObject, isArray, getByPath, collectDataset, hump2dash, dash2hump, callWithErrorHandling, wrapMethodsWithErrorHandling, error, setFocusedNavigation, getDefaultValueByType } from '@mpxjs/utils'
 import MpxProxy from '../../core/proxy'
 import { BEFOREUPDATE, ONLOAD, UPDATED, ONSHOW, ONHIDE, ONRESIZE, REACTHOOKSEXEC } from '../../core/innerLifecycle'
 import mergeOptions from '../../core/mergeOptions'
 import { queueJob, hasPendingJob } from '../../observer/scheduler'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
-import MpxKeyboardAvoidingView from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view'
 import {
   IntersectionObserverContext,
   KeyboardAvoidContext,
+  ProviderContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
-import { useInnerHeaderHeight } from '../env/nav'
+import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
+import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
+import Mpx from '../../index'
 
-const ProviderContext = createContext(null)
 function getSystemInfo () {
-  const windowDimensions = ReactNative.Dimensions.get('window')
-  const screenDimensions = ReactNative.Dimensions.get('screen')
+  const windowDimensions = global.__mpxAppDimensionsInfo.window
+  const screenDimensions = global.__mpxAppDimensionsInfo.screen
   return {
     deviceOrientation: windowDimensions.width > windowDimensions.height ? 'landscape' : 'portrait',
     size: {
@@ -172,8 +172,8 @@ const instanceProto = {
               type: field
             }
           }
-          // 处理props默认值
-          propsData[key] = field.value
+          // 处理props默认值，没有显式设置value时根据type获取默认值，与微信小程序原生行为保持一致
+          propsData[key] = hasOwn(field, 'value') ? field.value : getDefaultValueByType(field.type)
         }
       }
     })
@@ -302,6 +302,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     setFocusedNavigation(props.navigation)
+    set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
       global.__mpxAppOnLaunch(props.navigation)
@@ -313,14 +314,14 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   if (type === 'page') {
     const props = propsRef.current
-    const loadParams = {}
-    // 此处拿到的props.route.params内属性的value被进行过了一次decode, 不符合预期，此处额外进行一次encode来与微信对齐
-    if (isObject(props.route.params)) {
-      for (const key in props.route.params) {
-        loadParams[key] = encodeURIComponent(props.route.params[key])
+    const decodedQuery = {}
+    const rawQuery = props.route.params || {}
+    if (isObject(rawQuery)) {
+      for (const key in rawQuery) {
+        decodedQuery[key] = decodeURIComponent(rawQuery[key])
       }
     }
-    proxy.callHook(ONLOAD, [loadParams])
+    proxy.callHook(ONLOAD, [rawQuery, decodedQuery])
   }
 
   Object.assign(proxy, {
@@ -375,9 +376,18 @@ const triggerPageStatusHook = (mpxProxy, event) => {
   }
 }
 
-const triggerResizeEvent = (mpxProxy) => {
-  const type = mpxProxy.options.__type__
+const triggerResizeEvent = (mpxProxy, sizeRef) => {
+  const oldSize = sizeRef.current.size
   const systemInfo = getSystemInfo()
+  const newSize = systemInfo.size
+
+  if (oldSize && oldSize.windowWidth === newSize.windowWidth && oldSize.windowHeight === newSize.windowHeight) {
+    return
+  }
+
+  Object.assign(sizeRef.current, systemInfo)
+
+  const type = mpxProxy.options.__type__
   const target = mpxProxy.target
   mpxProxy.callHook(ONRESIZE, [systemInfo])
   if (type === 'page') {
@@ -389,6 +399,8 @@ const triggerResizeEvent = (mpxProxy) => {
 }
 
 function usePageEffect (mpxProxy, pageId) {
+  const sizeRef = useRef(getSystemInfo())
+
   useEffect(() => {
     let unWatch
     const hasShowHook = hasPageHook(mpxProxy, [ONSHOW, 'show'])
@@ -399,27 +411,40 @@ function usePageEffect (mpxProxy, pageId) {
         unWatch = watch(() => pageStatusMap[pageId], (newVal) => {
           if (newVal === 'show' || newVal === 'hide') {
             triggerPageStatusHook(mpxProxy, newVal)
+            // 仅在尺寸确实变化时才触发resize事件
+            triggerResizeEvent(mpxProxy, sizeRef)
+
+            // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
+            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+              // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
+              global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
+            }
           } else if (/^resize/.test(newVal)) {
-            triggerResizeEvent(mpxProxy)
+            triggerResizeEvent(mpxProxy, sizeRef)
           }
         }, { sync: true })
       }
     }
     return () => {
       unWatch && unWatch()
+      del(global.__mpxPageSizeCountMap, pageId)
     }
   }, [])
 }
 
 let pageId = 0
 const pageStatusMap = global.__mpxPageStatusMap = reactive({})
-
 function usePageStatus (navigation, pageId) {
   navigation.pageId = pageId
   if (!hasOwn(pageStatusMap, pageId)) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
+    if (navigation.isFocused && navigation.isFocused()) {
+      Promise.resolve().then(() => {
+        pageStatusMap[pageId] = 'show'
+      })
+    }
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
     })
@@ -481,7 +506,17 @@ function getLayoutData (headerHeight) {
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
-  const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+  let bottomVirtualHeight = 0
+  if (ReactNative.Platform.OS === 'android') {
+    if (isLandscape) {
+      bottomVirtualHeight = screenDimensions.height - windowDimensions.height
+    } else {
+      bottomVirtualHeight = initialWindowMetrics?.insets?.bottom || 0
+      if (typeof mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight === 'function') {
+        bottomVirtualHeight = mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight() || 0
+      }
+    }
+  }
   return {
     left: 0,
     top: headerHeight,
@@ -497,7 +532,6 @@ function getLayoutData (headerHeight) {
 
 export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
   return function PageWrapperCom ({ navigation, route, ...props }) {
-    const rootRef = useRef(null)
     const keyboardAvoidRef = useRef(null)
     const intersectionObservers = useRef({})
     const currentPageId = useMemo(() => ++pageId, [])
@@ -515,7 +549,7 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     navigation.layout = getLayoutData(headerHeight)
 
     useEffect(() => {
-      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ screen }) => {
+      const dimensionListener = ReactNative.Dimensions.addEventListener('change', ({ window, screen }) => {
         navigation.layout = getLayoutData(headerHeight)
       })
       return () => dimensionListener?.remove()
@@ -525,6 +559,8 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     usePageStatus(navigation, currentPageId)
 
     const withKeyboardAvoidingView = (element) => {
+      if (currentPageConfig.disableKeyboardAvoiding) return element
+      const MpxKeyboardAvoidingView = require('@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-keyboard-avoiding-view').default
       return createElement(KeyboardAvoidContext.Provider,
         {
           value: keyboardAvoidRef
@@ -549,11 +585,11 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
         {
           style: {
             flex: 1,
-            backgroundColor: currentPageConfig?.backgroundColor || '#fff',
+            // 页面容器背景色
+            backgroundColor: currentPageConfig?.backgroundColorContent || '#fff',
             // 解决页面内有元素定位relative left为负值的时候，回退的时候还能看到对应元素问题
             overflow: 'hidden'
-          },
-          ref: rootRef
+          }
         },
         createElement(RouteContext.Provider,
           {
@@ -578,6 +614,20 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     )
   }
 }
+
+function updateProps (instance, props, validProps) {
+  Object.keys(validProps).forEach((key) => {
+    if (hasOwn(props, key)) {
+      instance[key] = props[key]
+    } else {
+      const altKey = hump2dash(key)
+      if (hasOwn(props, altKey)) {
+        instance[key] = props[altKey]
+      }
+    }
+  })
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const componentsMap = currentInject.componentsMap
@@ -630,16 +680,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     if (!isFirst) {
       // 处理props更新
-      Object.keys(validProps).forEach((key) => {
-        if (hasOwn(props, key)) {
-          instance[key] = props[key]
-        } else {
-          const altKey = hump2dash(key)
-          if (hasOwn(props, altKey)) {
-            instance[key] = props[altKey]
-          }
-        }
-      })
+      if (Mpx.config.forceFlushSync) {
+        // 避免开启forceFlushSync时react报错：Cannot update a component while rendering a different component
+        Promise.resolve().then(() => {
+          updateProps(instance, props, validProps)
+        })
+      } else {
+        updateProps(instance, props, validProps)
+      }
     }
 
     useEffect(() => {

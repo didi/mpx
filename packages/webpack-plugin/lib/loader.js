@@ -10,6 +10,7 @@ const AppEntryDependency = require('./dependencies/AppEntryDependency')
 const RecordResourceMapDependency = require('./dependencies/RecordResourceMapDependency')
 const CommonJsVariableDependency = require('./dependencies/CommonJsVariableDependency')
 const DynamicEntryDependency = require('./dependencies/DynamicEntryDependency')
+const RecordModuleIdMapDependency = require('./dependencies/RecordModuleIdMapDependency')
 const tsWatchRunLoaderFilter = require('./utils/ts-loader-watch-run-loader-filter')
 const { isReact } = require('./utils/env')
 const preProcessJson = require('./utils/pre-process-json')
@@ -18,6 +19,10 @@ const processWeb = require('./web')
 const processReact = require('./react')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
+/**
+ * @this {MpxLoaderContext<any>}
+ * @param {string} content
+ */
 module.exports = function (content) {
   this.cacheable()
 
@@ -50,13 +55,13 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
@@ -87,6 +92,7 @@ module.exports = function (content) {
   const isProduction = this.minimize || process.env.NODE_ENV === 'production'
   const filePath = this.resourcePath
   const moduleId = mpx.getModuleId(resourcePath, ctorType === 'app')
+  this._module.addPresentationalDependency(new RecordModuleIdMapDependency(moduleId, resourcePath))
 
   const parts = parseComponent(content, {
     filePath,
@@ -121,6 +127,7 @@ module.exports = function (content) {
         componentPlaceholder,
         componentGenerics,
         usingComponentsInfo,
+        originalUsingComponents,
         jsonContent
       } = jsonInfo
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
@@ -144,7 +151,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -166,7 +174,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -235,6 +244,7 @@ module.exports = function (content) {
           ctorType,
           moduleId,
           usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          originalUsingComponents: JSON.stringify(originalUsingComponents),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开

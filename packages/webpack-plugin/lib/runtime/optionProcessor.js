@@ -2,6 +2,7 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
+import { error } from '@mpxjs/utils'
 const dash2hump = require('../utils/hump-dash').dash2hump
 
 export function processComponentOption (
@@ -14,7 +15,8 @@ export function processComponentOption (
     componentGenerics,
     genericsInfo,
     wxsMixin,
-    hasApp
+    hasApp,
+    disablePageTransition
   }
 ) {
   // 局部注册页面和组件中依赖的组件
@@ -79,7 +81,7 @@ registered in parent context!`)
         transitionName: ''
       }
     }
-    if (!global.__mpx.config.webConfig.disablePageTransition) {
+    if (!disablePageTransition) {
       option.watch = {
         $route: {
           handler () {
@@ -106,8 +108,14 @@ registered in parent context!`)
 
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
+  if (!component) {
+    error('getComponent() expected component options as the first argument, but got undefined.')
+    return null
+  }
   // eslint-disable-next-line
-  if (extendOptions) extend(component, extendOptions)
+  if (extendOptions && !component.__mpxExtended) {
+    extend(component, extendOptions, { __mpxExtended: true })
+  }
   return component
 }
 
