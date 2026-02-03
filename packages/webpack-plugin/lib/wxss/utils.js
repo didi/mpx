@@ -1059,8 +1059,7 @@ function getModuleCode (
       if (isRN) {
         beforeCode += `___CSS_LOADER_EXPORT___.i(${item.importName}${hasParams ? `, ${printedParam}` : ''});\n`
       } else {
-        const otherParams = hasParams ? printedParam : ''
-        beforeCode += `___CSS_LOADER_EXPORT___.push([module.id, '@import "' + ${item.importName} + '";', ${JSON.stringify(otherParams)} ]);\n`
+        beforeCode += `___CSS_LOADER_EXPORT___.push([module.id, '@import "' + ${item.importName} + '";'${hasParams ? `, ${printedParam}` : ''}]);\n`
       }
     }
   }

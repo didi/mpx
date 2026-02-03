@@ -92,11 +92,13 @@ module.exports = async function loader (content, map, meta) {
         filter: options.import.filter,
         urlHandler: (url) => {
           url = combineRequests(getPreRequester(this)(options.importLoaders), url)
+          if (isRN) {
+            return stringifyRequest(this, url)
+          }
           return getRequestString('styles', { src: url }, {
             isStatic: true,
             issuerResource: this.resource,
-            fromImport: true,
-            ...(isRN ? { extract: false } : {})
+            fromImport: true
           })
         }
       })
