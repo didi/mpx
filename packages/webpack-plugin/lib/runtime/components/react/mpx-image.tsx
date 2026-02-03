@@ -134,7 +134,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
-    'enable-fast-image': enableFastImage = true,
+    'enable-fast-image': enableFastImage,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     bindload,

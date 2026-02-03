@@ -755,7 +755,7 @@ export function getCurrentPage (pageId: number | null | undefined) {
 
 export function renderImage (
   imageProps: ImageProps | FastImageProps,
-  enableFastImage = false
+  enableFastImage = true
 ) {
   let Component: React.ComponentType<ImageProps | FastImageProps> = Image
   if (enableFastImage) {
