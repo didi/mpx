@@ -24,4 +24,3 @@ describe('react/rn wx:key compatible cases', function () {
     )
   })
 })
-
