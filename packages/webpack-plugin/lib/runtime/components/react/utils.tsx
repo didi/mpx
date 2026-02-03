@@ -755,10 +755,14 @@ export function getCurrentPage (pageId: number | null | undefined) {
 
 export function renderImage (
   imageProps: ImageProps | FastImageProps,
-  enableFastImage = false
+  enableFastImage = true
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? require('@d11/react-native-fast-image') : Image
+  let Component: React.ComponentType<ImageProps | FastImageProps> = Image
+  if (enableFastImage) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fastImageModule = require('@d11/react-native-fast-image')
+    Component = fastImageModule.default || fastImageModule
+  }
   return createElement(Component, imageProps)
 }
 
