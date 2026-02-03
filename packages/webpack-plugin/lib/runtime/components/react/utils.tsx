@@ -30,6 +30,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
+const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
 const filterRegExp = /(calc|env|%)/
 
@@ -39,6 +40,8 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-bottom': 'bottom',
   'safe-area-inset-left': 'left'
 }
+
+export const extendObject = Object.assign
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
@@ -142,16 +145,17 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
     innerStyle: Partial<T>
   }
 }
-
-const selfPercentRule: Record<string, 'height' | 'width'> = {
-  translateX: 'width',
-  translateY: 'height',
+const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
   borderBottomLeftRadius: 'width',
   borderBottomRightRadius: 'width',
   borderTopRightRadius: 'width',
   borderRadius: 'width'
 }
+const selfPercentRule: Record<string, 'height' | 'width'> = extendObject({
+  translateX: 'width',
+  translateY: 'height'
+}, radiusPercentRule)
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
@@ -306,7 +310,7 @@ function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
   }
 }
 // 多value解析
-function parseValues (str: string, char = ' ') {
+export function parseValues (str: string, char = ' ') {
   let stack = 0
   let temp = ''
   const result = []
@@ -317,11 +321,11 @@ function parseValues (str: string, char = ' ') {
       stack--
     }
     // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
+    if (stack !== 0 || str[i] !== char) {
       temp += str[i]
     }
     if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp)
+      result.push(temp.trim())
       temp = ''
     }
   }
@@ -330,6 +334,8 @@ function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
+  // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+  values.sort()
   const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
@@ -399,9 +405,10 @@ interface TransformStyleConfig {
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
+  transformRadiusPercent?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -449,14 +456,21 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
+  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
+      // calc translate & border-radius 的百分比计算
+      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
+        hasSelfPercent = true
+        percentKeyPaths.push(keyPath.slice())
+      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+    // fixme 去掉 translate & border-radius 的百分比计算
+    // fixme Image 组件 borderRadius 仅支持 number
+    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
       hasSelfPercent = true
       percentKeyPaths.push(keyPath.slice())
     } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
@@ -472,7 +486,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
-
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
@@ -536,8 +549,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-
-  // transform 字符串格式转化数组格式
+  // transform 字符串格式转化数组格式(先转数组再处理css var)
   transformTransform(normalStyle)
 
   return {
@@ -735,8 +747,6 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
   })) || []
 }
 
-export const extendObject = Object.assign
-
 export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return
   const pages = global.getCurrentPages()
@@ -748,7 +758,7 @@ export function renderImage (
   enableFastImage = false
 ) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? require('@d11/react-native-fast-image').default : Image
+  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? require('@d11/react-native-fast-image') : Image
   return createElement(Component, imageProps)
 }
 

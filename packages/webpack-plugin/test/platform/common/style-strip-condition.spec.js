@@ -109,6 +109,34 @@ describe('strip-conditional unit tests', () => {
       })
     })
 
+    describe('Error Handling', () => {
+      it('should throw error when mpx-if is not closed', () => {
+        const input = `
+          /* @mpx-if (platform === 'wx') */
+          .wx { color: red; }
+        `
+        expect(() => stripCondition(input, defs)).toThrow('[Mpx strip conditional error]: mpx-if without a matching endif')
+      })
+
+      it('should throw error when mpx-elif without preceding if', () => {
+        const input = `
+          /* @mpx-elif (platform === 'wx') */
+          .wx { color: red; }
+          /* @mpx-endif */
+        `
+        expect(() => stripCondition(input, defs)).toThrow('[Mpx style error]: elif without a preceding if')
+      })
+
+      it('should throw error when mpx-else without preceding if', () => {
+        const input = `
+          /* @mpx-else */
+          .other { color: blue; }
+          /* @mpx-endif */
+        `
+        expect(() => stripCondition(input, defs)).toThrow('[Mpx style error]: else without a preceding if')
+      })
+    })
+
     describe('Nested Conditions', () => {
       it('should handle nested conditions', () => {
         const input = `
