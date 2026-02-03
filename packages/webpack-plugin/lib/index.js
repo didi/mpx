@@ -1,5 +1,6 @@
 'use strict'
 
+require('./init')
 const path = require('path')
 const { ConcatSource, RawSource } = require('webpack').sources
 const ResolveDependency = require('./dependencies/ResolveDependency')
@@ -58,7 +59,6 @@ const wxssLoaderPath = normalize.lib('wxss/index')
 const wxmlLoaderPath = normalize.lib('wxml/loader')
 const wxsLoaderPath = normalize.lib('wxs/loader')
 const styleCompilerPath = normalize.lib('style-compiler/index')
-const styleStripConditionalPath = normalize.lib('style-compiler/strip-conditional-loader')
 const templateCompilerPath = normalize.lib('template-compiler/index')
 const jsonCompilerPath = normalize.lib('json-compiler/index')
 const jsonThemeCompilerPath = normalize.lib('json-compiler/theme')
@@ -79,13 +79,17 @@ const LoadAsyncChunkModule = require('./react/LoadAsyncChunkModule')
 const ExternalModule = require('webpack/lib/ExternalModule')
 const { RetryRuntimeModule, RetryRuntimeGlobal } = require('./dependencies/RetryRuntimeModule')
 const checkVersionCompatibility = require('./utils/check-core-version-match')
-
+const { startFSStripForCss, registerStripCompilation } = require('./style-compiler/strip-conditional')
 checkVersionCompatibility()
 
 const isProductionLikeMode = options => {
   return options.mode === 'production' || !options.mode
 }
 
+/**
+ * @param {import('webpack').NormalModule} module
+ * @returns
+ */
 const isStaticModule = module => {
   if (!module.resource) return false
   const { queryObj } = parseRequest(module.resource)
@@ -322,7 +326,13 @@ class MpxWebpackPlugin {
     }
   }
 
+  /**
+   * @param {import('webpack').Compiler} compiler
+   */
   apply (compiler) {
+    // 注入 fs 代理
+    startFSStripForCss(this.options.defs)
+
     if (!compiler.__mpx__) {
       compiler.__mpx__ = true
     } else {
@@ -706,6 +716,7 @@ class MpxWebpackPlugin {
     })
 
     compiler.hooks.thisCompilation.tap('MpxWebpackPlugin', (compilation, { normalModuleFactory }) => {
+      registerStripCompilation(compilation)
       compilation.warnings.push(...warnings)
       compilation.errors.push(...errors)
       const moduleGraph = compilation.moduleGraph
@@ -1444,6 +1455,7 @@ class MpxWebpackPlugin {
             const context = parser.state.module.context
             const { queryObj, resourcePath } = parseRequest(request)
             let tarRoot = queryObj.root
+
             if (!tarRoot && mpx.asyncSubpackageRules) {
               for (const item of mpx.asyncSubpackageRules) {
                 if (matchCondition(resourcePath, item)) {
@@ -1452,49 +1464,49 @@ class MpxWebpackPlugin {
                 }
               }
             }
-            if (tarRoot) {
+            // TODO 后续考虑和 asyncSubpackageRules 配置合并
+            if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+
+            if (tarRoot && mpx.supportRequireAsync) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.supportRequireAsync) {
-                if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-                  const depBlock = new AsyncDependenciesBlock(
-                    {
-                      name: tarRoot + '/index'
-                    },
-                    expr.loc,
-                    request
-                  )
-                  const dep = new ImportDependency(request, expr.range, undefined, {
-                    isRequireAsync: true,
-                    retryRequireAsync: this.options.retryRequireAsync
-                  })
-                  dep.loc = expr.loc
-                  depBlock.addDependency(dep)
-                  parser.state.current.addBlock(depBlock)
-                } else {
-                  const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
-                    isAsync: true,
-                    isRequireAsync: true,
-                    retryRequireAsync: this.options.retryRequireAsync,
-                    requireAsyncRange: expr.range
-                  })
-
-                  parser.state.current.addPresentationalDependency(dep)
-                  // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
-                  parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
-                }
+              if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                const depBlock = new AsyncDependenciesBlock(
+                  {
+                    name: tarRoot + '/index'
+                  },
+                  expr.loc,
+                  request
+                )
+                const dep = new ImportDependency(request, expr.range, undefined, {
+                  isRequireAsync: true,
+                  retryRequireAsync: this.options.retryRequireAsync
+                })
+                dep.loc = expr.loc
+                depBlock.addDependency(dep)
+                parser.state.current.addBlock(depBlock)
               } else {
-                const range = expr.range
-                const dep = new CommonJsAsyncDependency(request, range)
-                parser.state.current.addDependency(dep)
+                const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
+                  isAsync: true,
+                  isRequireAsync: true,
+                  retryRequireAsync: this.options.retryRequireAsync,
+                  requireAsyncRange: expr.range
+                })
+
+                parser.state.current.addPresentationalDependency(dep)
+                // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+                parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
               }
-              if (args) parser.walkExpressions(args)
-              return true
             } else {
-              compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
+              const dep = new CommonJsAsyncDependency(request, expr.range)
+              parser.state.current.addDependency(dep)
+              if (!tarRoot) {
+                compilation.warnings.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
+              }
             }
+            if (args) parser.walkExpressions(args)
+            return true
           }
         }
 
@@ -1729,7 +1741,14 @@ class MpxWebpackPlugin {
 
           if (isReact(mpx.mode)) {
             // 添加 @refresh reset 注释用于在 React HMR 时刷新组件
-            source.add('/* @refresh reset */\n')
+            if (process.env.NODE_ENV !== 'production') {
+              source.add(`/* @refresh reset */
+if (module.hot) {
+  module.hot.accept(() => {
+    require("react-native").DevSettings.reload();
+  });
+}\n`)
+            }
             // 注入页面的配置，供screen前置设置导航情况
             if (isRuntime) {
               source.add('// inject pageconfigmap for screen\n' +
@@ -1907,42 +1926,9 @@ try {
       normalModuleFactory.hooks.afterResolve.tap('MpxWebpackPlugin', ({ createData }) => {
         const { queryObj } = parseRequest(createData.request)
         const loaders = createData.loaders
-
-        // 样式 loader 类型检测和条件编译 loader 插入的工具函数
-        const STYLE_LOADER_TYPES = ['stylus-loader', 'sass-loader', 'less-loader', 'css-loader', wxssLoaderPath]
-        const injectStyleStripLoader = (loaders) => {
-          // 检查是否已经存在 stripLoader
-          const hasStripLoader = loaders.some(loader => {
-            const loaderPath = toPosix(loader.loader)
-            return loaderPath.includes('style-compiler/strip-conditional-loader')
-          })
-          if (hasStripLoader) {
-            return
-          }
-          const loaderTypes = new Map(STYLE_LOADER_TYPES.map(type => [`node_modules/${type}`, -1]))
-          loaders.forEach((loader, index) => {
-            const currentLoader = toPosix(loader.loader)
-            for (const [key] of loaderTypes) {
-              if (currentLoader.includes(key)) {
-                loaderTypes.set(key, index)
-                break
-              }
-            }
-          })
-          const targetIndex = STYLE_LOADER_TYPES
-            .map(type => loaderTypes.get(`node_modules/${type}`))
-            .find(index => index !== -1)
-
-          if (targetIndex !== undefined) {
-            loaders.splice(targetIndex + 1, 0, { loader: styleStripConditionalPath })
-          }
-        }
         if (queryObj.mpx && queryObj.mpx !== MPX_PROCESSED_FLAG) {
           const type = queryObj.type
           const extract = queryObj.extract
-          if (type === 'styles') {
-            injectStyleStripLoader(loaders)
-          }
 
           switch (type) {
             case 'styles':
@@ -1995,7 +1981,6 @@ try {
         }
         // mpxStyleOptions 为 mpx style 文件的标识，避免 Vue 文件插入 styleCompiler 后导致 vue scoped 样式隔离失效
         if (isWeb(mpx.mode) && queryObj.mpxStyleOptions) {
-          injectStyleStripLoader(loaders)
           const firstLoader = loaders[0] ? toPosix(loaders[0].loader) : ''
           const isPitcherRequest = firstLoader.includes('node_modules/vue-loader/lib/loaders/pitcher')
           let cssLoaderIndex = -1

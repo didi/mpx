@@ -4,7 +4,8 @@
 {
     "lang": "less",
     "resourcePath": "index.less",
-    "defs": {}
+    "defs": {},
+    "dependencies": []
 }
 ```
 
@@ -12,7 +13,8 @@
 
 ```less
 @name: red; // hello world
- .selector {
+
+.selector {
     color: blue // hello world
 }
 ```
