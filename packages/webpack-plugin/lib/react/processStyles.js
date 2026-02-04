@@ -24,7 +24,7 @@ module.exports = function (styles, {
         new Error('[Mpx style error][' + loaderContext.resource + ']: ' + msg)
       )
     }
-    const { mode, srcMode } = loaderContext.getMpx()
+    const { mode, srcMode, hasUnoCSS } = loaderContext.getMpx()
     async.eachOfSeries(styles, (style, i, callback) => {
       const scoped = style.scoped || autoScope
       const extraOptions = {
@@ -70,13 +70,44 @@ module.exports = function (styles, {
         }, '')
         if (ctorType === 'app') {
           output += `
-          var __appClassMap
-          global.__getAppClassStyle = function(className) {
-            if(!__appClassMap) {
-              __appClassMap = {${classMapCode}};
-            }
-            return global.__GCC(className, __appClassMap, __classCache);
-          };\n`
+          global.__classCaches = global.__classCaches || [];
+          var __classCache = new Map();
+          global.__classCaches.push(__classCache);\n`
+
+          if (hasUnoCSS) {
+            output += `
+            var __unoClassMap;
+            global.__getUnoStyle = function(className) {
+              if (!__unoClassMap) {
+                __unoClassMap = {__unoCssMapPlaceholder__}
+              }
+              return global.__GCC(className, __unoClassMap, __classCache);
+            };
+            var __unoVarClassMap;
+            global.__getUnoVarStyle = function(className) {
+              if (!__unoVarClassMap) {
+                __unoVarClassMap = {__unoVarUtilitiesCssMap__}
+              }
+              return global.__GCC(className, __unoVarClassMap, __classCache);
+            };\n`
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {__unoCssMapPreflights__, ${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
+          } else {
+            output += `
+            var __appClassMap
+            global.__getAppClassStyle = function(className) {
+              if(!__appClassMap) {
+                __appClassMap = {${classMapCode}};
+              }
+              return global.__GCC(className, __appClassMap, __classCache);
+            };\n`
+          }
         } else {
           output += `
           var __classMap

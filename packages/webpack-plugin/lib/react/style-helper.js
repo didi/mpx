@@ -87,6 +87,12 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
 
   root.walkRules(rule => {
     const classMapValue = {}
+    const prev = rule.prev()
+    let layer
+    if (prev && prev.type === 'comment' && prev.text.includes('rn-layer:')) {
+      layer = JSON.stringify(prev.text.split(':')[1].trim())
+    }
+
     rule.walkDecls(({ prop, value }) => {
       if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
@@ -118,7 +124,6 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         classMapValue[prop] = value
       })
     })
-
     const classMapKeys = []
     const options = getMediaOptions(rule.parent.params || '')
     const isMedia = options.maxWidth || options.minWidth
@@ -126,15 +131,20 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
           classMapKeys.push(selector.nodes[0].value)
+        } else if (selector.nodes.length === 2 && selector.nodes[0].type === 'class' && selector.nodes[1].type === 'pseudo') {
+          classMapKeys.push(selector.nodes[0].value + selector.nodes[1].value)
         } else {
           error('Only single class selector is supported in react native mode temporarily.')
         }
       })
     }).processSync(rule.selector)
-
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
+          const layerObj = layer ? { _layer: layer } : {}
+          if (key.endsWith('!')) {
+            layerObj._layer = '"important"'
+          }
           let _default = classMap[key]?._default
           let _media = classMap[key]?._media
           if (isMedia) {
@@ -147,15 +157,16 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
             })
             classMap[key] = {
               _media,
-              _default
+              _default,
+              ...layerObj
             }
           } else if (_default) {
             // 已有媒体查询数据，此次非媒体查询
-            Object.assign(_default, classMapValue)
+            Object.assign(_default, classMapValue, layerObj)
           } else {
             // 无媒体查询
             const val = classMap[key] || {}
-            classMap[key] = Object.assign(val, classMapValue)
+            classMap[key] = Object.assign(val, classMapValue, layerObj)
           }
         }
       })
