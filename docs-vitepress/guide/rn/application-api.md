@@ -310,10 +310,12 @@ module.exports = defineConfig({
   pluginOptions: {
     mpx: {
       plugin: {
-        asyncChunk: {
-          timeout: 5000, // 加载超时时间(ms)
-          loading: path.resolve(__dirname, 'src/components/loading.mpx'),    // 加载页面
-          fallback: path.resolve(__dirname, 'src/components/fallback.mpx')   // 兜底页面
+        rnConfig: {
+          asyncChunk: {
+            timeout: 10000, // 异步分包加载超时时间(ms)，默认为 10s
+            loading: path.resolve(__dirname, 'src/components/loading.mpx'),    // 自定义异步分包 loading 页面
+            fallback: path.resolve(__dirname, 'src/components/fallback.mpx')   // 自定义异步分包页面加载失败的兜底页面配置
+          }
         }
       }
     }
