@@ -101,7 +101,8 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     parentHeight
   })
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: cameraRef })
-  const isPhoto = mode === 'normal'
+  const isPhoto = useRef<boolean>(false)
+  isPhoto.current = mode === 'normal'
   const device = useCameraDevice(devicePosition || 'back')
   const { navigation, pageId } = useContext(RouteContext) || {}
   const [zoomValue, setZoomValue] = useState<number>(1)
@@ -128,7 +129,17 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       videoResolution: FRAME_SIZE_MAPPING[frameSize] || RESOLUTION_MAPPING[resolution]
     }
   ])
-
+  const isScancode = useCallback((fail: (res: { errMsg: string }) => void, complete: (res: { errMsg: string }) => void) => {
+    if (!isPhoto.current) {
+      const result = {
+        errMsg: 'Not allow to invoke takePhoto in \'scanCode\' mode.'
+      }
+      fail(result)
+      complete(result)
+      return true
+    }
+    return false
+  }, [])
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
     onCodeScanned: (codes: any[]) => {
@@ -164,6 +175,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     },
     takePhoto: (options: TakePhotoOptions = {}) => {
       const { success = noop, fail = noop, complete = noop } = options
+      if (isScancode(fail, complete)) return
       cameraRef.current?.takePhoto?.({
         quality: qualityValue[options.quality || 'normal'] as number
       } as any).then((res: { path: any }) => {
@@ -185,6 +197,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       let { timeout = 30, success = noop, fail = noop, complete = noop, timeoutCallback = noop } = options
       timeout = timeout > 300 ? 300 : timeout
       let recordTimer: NodeJS.Timeout | null = null
+      if (isScancode(fail, complete)) return
       try {
         const result = {
           errMsg: 'startRecord:ok'
@@ -223,6 +236,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     },
     stopRecord: (options: StopRecordOptions = {}) => {
       const { success = noop, fail = noop, complete = noop } = options
+      if (isScancode(fail, complete)) return
       try {
         cameraRef.current?.stopRecording().then(() => {
           setTimeout(() => {
@@ -305,7 +319,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         onStopped,
         device,
         format,
-        codeScanner: !isPhoto ? codeScanner : undefined,
+        codeScanner: !isPhoto.current ? codeScanner : undefined,
         zoom: zoomValue,
         torch: flash
       }
