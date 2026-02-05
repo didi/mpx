@@ -3,7 +3,7 @@ import Dep from './dep'
 import { createRef } from './ref'
 import { ReactiveEffect } from './effect'
 
-export function computed (getterOrOptions) {
+export function computed (getterOrOptions, options = {}) {
   let getter, setter
   if (isFunction(getterOrOptions)) {
     getter = getterOrOptions
@@ -17,7 +17,7 @@ export function computed (getterOrOptions) {
   let value
   const effect = new ReactiveEffect(getter, () => {
     dirty = true
-  })
+  }, options.debug || 0, options.name || 'anonymous computed')
 
   return createRef({
     get: () => {

@@ -33,7 +33,7 @@ function getSystemInfo () {
   }
 }
 
-function createEffect (proxy, componentsMap) {
+function createEffect (proxy, componentsMap, rawOptions) {
   const update = proxy.update = () => {
     // react update props in child render(async), do not need exec pre render
     // if (proxy.propsUpdatedFlag) {
@@ -65,7 +65,7 @@ function createEffect (proxy, componentsMap) {
     // reset instance
     proxy.target.__resetInstance()
     return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
-  }, () => queueJob(update), proxy.scope)
+  }, () => { return queueJob(update) }, proxy.scope, 1, `MpxRenderEffect-${rawOptions.mpxFileResource || 'unknown'}`)
   // render effect允许自触发
   proxy.toggleRecurse(true)
 }
@@ -332,7 +332,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
     stateVersion: Symbol(),
     subscribe: (onStoreChange) => {
       if (!proxy.effect) {
-        createEffect(proxy, componentsMap)
+        createEffect(proxy, componentsMap, rawOptions)
         proxy.stateVersion = Symbol()
       }
       proxy.onStoreChange = onStoreChange
@@ -348,7 +348,7 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
   })
   // react数据响应组件更新管理器
   if (!proxy.effect) {
-    createEffect(proxy, componentsMap)
+    createEffect(proxy, componentsMap, rawOptions)
   }
 
   return instance

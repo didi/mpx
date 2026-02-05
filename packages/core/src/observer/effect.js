@@ -17,6 +17,8 @@ export function resetTracking () {
   shouldTrack = last === undefined ? true : last
 }
 
+global.__setMpxReactiveEffect = (value) => {}
+
 export class ReactiveEffect {
   active = true
   deps = []
@@ -24,15 +26,45 @@ export class ReactiveEffect {
   depIds = new Set()
   newDepIds = new Set()
   allowRecurse = false
+  debug = 0
+  name = 'no-name'
 
   constructor (
     fn,
     scheduler,
-    scope
+    scope,
+    debug,
+    name
   ) {
+    this.debug = debug || 0
+    this.name = name || 'no-name'
     this.id = ++uid
-    this.fn = fn
-    this.scheduler = scheduler
+    this.fn = (...args) => {
+      this.debug > 0 && console.log(`[Mpx Effect] id:${this.id} name: ${this.name} will run`)
+      this.debug > 1 && console.log(new Error().stack)
+      const t = global.__setMpxReactiveEffect
+      global.__setMpxReactiveEffect = (option) => {
+        Object.entries(option).forEach(([key, value]) => {
+          this[key] = value
+        })
+      }
+      const result = fn(...args)
+      global.__setMpxReactiveEffect = t
+      return result
+    }
+    this.scheduler = (...args) => {
+      this.debug > 0 && console.log(`[Mpx Effect] id:${this.id} name: ${this.name} will scheduled`)
+      this.debug > 1 && console.log(new Error().stack)
+      const t = global.__setMpxReactiveEffect
+      global.__setMpxReactiveEffect = (option) => {
+        Object.entries(option).forEach(([key, value]) => {
+          this[key] = value
+        })
+      }
+      const result = scheduler(...args)
+      global.__setMpxReactiveEffect = t
+      return result
+    }
     this.pausedState = PausedState.resumed
     recordEffectScope(this, scope)
   }
@@ -85,12 +117,16 @@ export class ReactiveEffect {
   }
 
   // same as trigger
-  update () {
+  update (key, value, stack) {
     // avoid dead cycle
     if (Dep.target !== this || this.allowRecurse) {
       if (this.pausedState !== PausedState.resumed) {
+        this.debug > 0 && console.log(`[Mpx Effect] id:${this.id} name: ${this.name} pausedState will set to dirty with, from ${key}: ${value}`)
+        this.debug > 1 && console.log(stack)
         this.pausedState = PausedState.dirty
       } else {
+        this.debug > 0 && console.log(`[Mpx Effect] id:${this.id} name: ${this.name} will updated, from ${key}: ${value}`)
+        this.debug > 1 && console.log(stack)
         this.scheduler ? this.scheduler() : this.run()
       }
     }
