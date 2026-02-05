@@ -26,11 +26,11 @@ export default class Dep {
     }
   }
 
-  notify () {
+  notify (key, value, stack) {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
     for (let i = 0, l = subs.length; i < l; i++) {
-      subs[i].update()
+      subs[i].update(key, value, stack)
     }
   }
 }

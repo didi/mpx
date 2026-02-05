@@ -137,7 +137,7 @@ export function watch (source, cb, options = {}) {
 
   job.allowRecurse = !!cb
 
-  const effect = new ReactiveEffect(getter, scheduler)
+  const effect = new ReactiveEffect(getter, scheduler, options.debug || 0, options.name || 'anonymous watch')
 
   if (cb) {
     if (immediate) {

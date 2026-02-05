@@ -121,6 +121,8 @@ export function defineReactive (obj, key, val, shallow) {
   const getter = property && property.get
   const setter = property && property.set
 
+  const stack = new Error().stack
+
   let childOb = shallow ? getObserver(val) : observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -151,7 +153,7 @@ export function defineReactive (obj, key, val, shallow) {
         val = newVal
       }
       childOb = shallow ? getObserver(newVal) : observe(newVal)
-      dep.notify()
+      dep.notify(key, newVal, stack)
     }
   })
 }
@@ -177,7 +179,7 @@ export function set (target, key, val) {
     return val
   }
   defineReactive(ob.value, key, val, ob.shallow)
-  ob.dep.notify()
+  ob.dep.notify(key, val, new Error().stack)
   return val
 }
 
@@ -197,7 +199,7 @@ export function del (target, key) {
   if (!ob) {
     return
   }
-  ob.dep.notify()
+  ob.dep.notify(key, undefined, new Error().stack)
 }
 
 /**
