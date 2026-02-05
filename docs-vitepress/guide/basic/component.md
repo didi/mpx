@@ -16,12 +16,12 @@
   <view>组件名称: {{ name }}</view>
 </template>
 <script>
-  import { createComponent } from "@mpxjs/core";
+  import { createComponent } from '@mpxjs/core'
   createComponent({
     data: {
-      name: "list",
+      name: 'list',
     },
-  });
+  })
 </script>
 
 <!--页面 index.mpx-->
@@ -31,8 +31,8 @@
   </view>
 </template>
 <script>
-  import { createPage } from "@mpxjs/core";
-  createPage({});
+  import { createPage } from '@mpxjs/core'
+  createPage({})
 </script>
 <script type="application/json">
   {
@@ -68,13 +68,13 @@
   </view>
   <template>
     <script>
-      import { createComponent } from "@mpxjs/core";
+      import { createComponent } from '@mpxjs/core'
 
       createComponent({
         options: {
           multipleSlots: true, // 启用多slot支持
         },
-      });
+      })
     </script></template
   ></template
 >
@@ -120,17 +120,17 @@ Mpx 中提供了使用方法类似于 Vue 的动态组件能力，这是一个�
 </view>
 
 <script>
-  import { createComponent } from "@mpxjs/core";
+  import { createComponent } from '@mpxjs/core'
   createComponent({
     data: {
-      current: "test",
+      current: 'test',
     },
     ready() {
       setTimeout(() => {
-        this.current = "list";
-      }, 3000);
+        this.current = 'list'
+      }, 3000)
     },
-  });
+  })
 </script>
 
 <script type="application/json">
@@ -181,7 +181,7 @@ button {
 
 ```ts
 interface ComponentOptions {
-  externalClasses?: string[];
+  externalClasses?: string[]
 }
 ```
 
@@ -198,15 +198,15 @@ externalClasses 支持以下功能：
 </template>
 <script>
   // 组件 custom-component.js
-  import { createComponent } from "@mpxjs/core";
+  import { createComponent } from '@mpxjs/core'
 
   createComponent({
-    externalClasses: ["my-class", "other-class"],
+    externalClasses: ['my-class', 'other-class'],
 
     options: {
-      styleIsolation: "isolated",
+      styleIsolation: 'isolated',
     },
-  });
+  })
 </script>
 ```
 
@@ -260,19 +260,19 @@ type PropType =
   | BooleanConstructor // Boolean
   | ObjectConstructor // Object
   | ArrayConstructor // Array;
-  | null; // null
+  | null // null
 
 interface ComponentOptions {
   properties?: {
-    [key: string]: PropOptions | PropType;
-  };
+    [key: string]: PropOptions | PropType
+  }
 }
 
 interface PropOptions {
-  type: PropType; // type 为必填项
-  value?: any;
-  optionalTypes?: PropType[]; // 属性的类型（可以指定多个）
-  observer?: string | ((newVal: any, oldVal: any) => void);
+  type: PropType // type 为必填项
+  value?: any
+  optionalTypes?: PropType[] // 属性的类型（可以指定多个）
+  observer?: string | ((newVal: any, oldVal: any) => void)
 }
 ```
 
@@ -294,7 +294,7 @@ createComponent({
     // 基础类型
     propA: {
       type: String,
-      value: "",
+      value: '',
     },
     // 简化的定义方式
     propB: Number,
@@ -308,11 +308,11 @@ createComponent({
     propE: {
       type: Object,
       observer(newVal, oldVal) {
-        console.log("propE changed:", newVal, oldVal);
+        console.log('propE changed:', newVal, oldVal)
       },
     },
   },
-});
+})
 ```
 
 **参考**：[微信小程序 properties 定义](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html#properties-%E5%AE%9A%E4%B9%89)
@@ -323,7 +323,7 @@ createComponent({
 
 ```ts
 interface ComponentOptions {
-  data?: object | (() => object);
+  data?: object | (() => object)
 }
 ```
 
@@ -339,23 +339,23 @@ data 可以是一个函数返回一个普通 JavaScript 对象，也可以是一
 </template>
 
 <script>
-  import { createComponent } from "@mpxjs/core";
+  import { createComponent } from '@mpxjs/core'
 
   createComponent({
     data: {
       count: 0,
-      message: "Hello",
+      message: 'Hello',
       userInfo: {
-        name: "John",
+        name: 'John',
         age: 20,
       },
     },
     methods: {
       addCount() {
-        this.count++;
+        this.count++
       },
     },
-  });
+  })
 </script>
 ```
 
@@ -364,22 +364,22 @@ data 可以是一个函数返回一个普通 JavaScript 对象，也可以是一
 用于声明基于现有数据的计算属性。
 
 ```ts
-type ComputedGetter<T> = () => T;
-type ComputedSetter<T> = (value: T) => void;
+type ComputedGetter<T> = () => T
+type ComputedSetter<T> = (value: T) => void
 
 interface WritableComputedOptions<T> {
-  get: ComputedGetter<T>;
-  set: ComputedSetter<T>;
+  get: ComputedGetter<T>
+  set: ComputedSetter<T>
 }
 
 // 计算属性可以是函数或对象
-type ComputedOption<T> = ComputedGetter<T> | WritableComputedOptions<T>;
+type ComputedOption<T> = ComputedGetter<T> | WritableComputedOptions<T>
 
 // 组件选项的接口
 interface ComponentOptions {
   computed?: {
-    [K: string]: ComputedOption<any>;
-  };
+    [K: string]: ComputedOption<any>
+  }
 }
 ```
 
@@ -390,30 +390,30 @@ interface ComponentOptions {
 computed 选项用于声明依赖于其他数据的计算属性。计算属性的结果会被缓存，只有在依赖发生变化时才会重新计算。
 
 ```js
-import { createComponent } from "@mpxjs/core";
+import { createComponent } from '@mpxjs/core'
 createComponent({
   data() {
     return {
       price: 100,
       quantity: 2,
-    };
+    }
   },
   computed: {
     // 只读计算属性
     total() {
-      return this.price * this.quantity;
+      return this.price * this.quantity
     },
     // 可读写计算属性
     discount: {
       get() {
-        return this.price * 0.9;
+        return this.price * 0.9
       },
       set(value) {
-        this.price = value / 0.9;
+        this.price = value / 0.9
       },
     },
   },
-});
+})
 ```
 
 > 注意
@@ -426,21 +426,21 @@ createComponent({
 
 ```ts
 // flush 选项的可选值类型
-type FlushMode = "sync" | "post" | "pre";
+type FlushMode = 'sync' | 'post' | 'pre'
 
 interface ComponentOptions {
   watch?: {
-    [key: string]: WatchOption | WatchCallback | string;
-  };
+    [key: string]: WatchOption | WatchCallback | string
+  }
 }
 
-type WatchCallback = (newValue: any, oldValue: any) => void;
+type WatchCallback = (newValue: any, oldValue: any) => void
 
 interface WatchOption {
-  handler: WatchCallback | string;
-  immediate?: boolean; // 是否立即执行
-  deep?: boolean; // 是否深度监听
-  flush?: FlushMode; // 回调的执行时机
+  handler: WatchCallback | string
+  immediate?: boolean // 是否立即执行
+  deep?: boolean // 是否深度监听
+  flush?: FlushMode // 回调的执行时机
 }
 ```
 
@@ -459,42 +459,42 @@ watch 选项用于监听数据的变化并执行相应的回调函数。支持�
 createComponent({
   data() {
     return {
-      message: "Hello",
+      message: 'Hello',
       user: {
-        name: "John",
+        name: 'John',
         age: 20,
       },
-    };
+    }
   },
   watch: {
     // 简单监听
     message(newVal, oldVal) {
-      console.log("message changed:", newVal, oldVal);
+      console.log('message changed:', newVal, oldVal)
     },
 
     // 深度监听
     user: {
       handler(newVal, oldVal) {
-        console.log("user changed:", newVal, oldVal);
+        console.log('user changed:', newVal, oldVal)
       },
       deep: true,
       immediate: true,
     },
 
     // 监听对象的属性
-    "user.name"(newVal, oldVal) {
-      console.log("user.name changed:", newVal, oldVal);
+    'user.name'(newVal, oldVal) {
+      console.log('user.name changed:', newVal, oldVal)
     },
 
     // 控制执行时机
     count: {
       handler(newVal) {
-        console.log("count changed:", newVal);
+        console.log('count changed:', newVal)
       },
-      flush: "post", // DOM 更新后执行
+      flush: 'post', // DOM 更新后执行
     },
   },
-});
+})
 ```
 
 ### methods
@@ -504,8 +504,8 @@ createComponent({
 ```ts
 interface ComponentOptions {
   methods?: {
-    [key: string]: (...args: any[]) => any;
-  };
+    [key: string]: (...args: any[]) => any
+  }
 }
 ```
 
@@ -516,15 +516,15 @@ createComponent({
   methods: {
     handleClick() {
       // 访问数据
-      console.log(this.message);
+      console.log(this.message)
       // 调用其他方法
-      this.otherMethod();
+      this.otherMethod()
     },
     otherMethod() {
       // ...
     },
   },
-});
+})
 ```
 
 ### mixins
@@ -538,34 +538,34 @@ createComponent({
 `setup` 函数在组件创建时执行，返回组件所需的数据和方法，是组合式 API 的核心。
 
 ```js
-import { createComponent, ref, onMounted, onUnmounted } from "@mpxjs/core";
+import { createComponent, ref, onMounted, onUnmounted } from '@mpxjs/core'
 
 createComponent({
   properties: {
     user: String,
   },
   setup(props) {
-    const repositories = ref([]);
+    const repositories = ref([])
     const getUserRepositories = async () => {
-      repositories.value = await fetchUserRepositories(props.user);
-    };
+      repositories.value = await fetchUserRepositories(props.user)
+    }
 
     // 注册生命周期钩子
     onMounted(() => {
-      console.log("Component mounted.");
-      getUserRepositories();
-    });
+      console.log('Component mounted.')
+      getUserRepositories()
+    })
 
     onUnmounted(() => {
-      console.log("Component unmounted.");
-    });
+      console.log('Component unmounted.')
+    })
 
     return {
       repositories,
       getUserRepositories,
-    };
+    }
   },
-});
+})
 ```
 
 详情请查看[组合式 API](../composition-api/composition-api.md)
@@ -590,17 +590,17 @@ createComponent({
 
 ```ts
 interface RelationOption {
-  type: "parent" | "child" | "ancestor" | "descendant"; // 关系类型
-  linked?: (target: any) => void; // 关系建立时的回调
-  linkChanged?: (target: any) => void; // 关系变化时的回调
-  unlinked?: (target: any) => void; // 关系解除时的回调
-  target?: string; // 关联的 behavior
+  type: 'parent' | 'child' | 'ancestor' | 'descendant' // 关系类型
+  linked?: (target: any) => void // 关系建立时的回调
+  linkChanged?: (target: any) => void // 关系变化时的回调
+  unlinked?: (target: any) => void // 关系解除时的回调
+  target?: string // 关联的 behavior
 }
 
 interface ComponentOptions {
   relations?: {
-    [componentPath: string]: RelationOption;
-  };
+    [componentPath: string]: RelationOption
+  }
 }
 ```
 
@@ -615,36 +615,36 @@ relations 支持以下功能：
 
 ```js
 // custom-ul 组件
-import { createComponent } from "@mpxjs/core";
+import { createComponent } from '@mpxjs/core'
 createComponent({
   relations: {
-    "./custom-li": {
-      type: "child", // 关联的目标节点应为子节点
+    './custom-li': {
+      type: 'child', // 关联的目标节点应为子节点
       linked(target) {
         // 每次有 custom-li 被插入时执行
-        console.log("li linked", target);
+        console.log('li linked', target)
       },
       unlinked(target) {
         // 每次有 custom-li 被移除时执行
-        console.log("li unlinked", target);
+        console.log('li unlinked', target)
       },
     },
   },
-});
+})
 
 // custom-li 组件
-import { createComponent } from "@mpxjs/core";
+import { createComponent } from '@mpxjs/core'
 createComponent({
   relations: {
-    "./custom-ul": {
-      type: "parent", // 关联的目标节点应为父节点
+    './custom-ul': {
+      type: 'parent', // 关联的目标节点应为父节点
       linked(target) {
         // 每次被插入到 custom-ul 时执行
-        console.log("ul linked", target);
+        console.log('ul linked', target)
       },
     },
   },
-});
+})
 ```
 
 ### options
@@ -654,17 +654,17 @@ createComponent({
 ```ts
 interface ComponentOptions {
   options?: {
-    virtualHost?: boolean; // 设置组件是否为虚拟节点
+    virtualHost?: boolean // 设置组件是否为虚拟节点
     styleIsolation?:
-      | "isolated"
-      | "apply-shared"
-      | "shared"
-      | "page-isolated"
-      | "page-apply-shared"
-      | "page-shared"; // 设置样式隔离选项
-    multipleSlots?: boolean; // 启用多 slot 支持
-    addGlobalClass?: boolean; // 允许组件的样式影响到外部
-  };
+      | 'isolated'
+      | 'apply-shared'
+      | 'shared'
+      | 'page-isolated'
+      | 'page-apply-shared'
+      | 'page-shared' // 设置样式隔离选项
+    multipleSlots?: boolean // 启用多 slot 支持
+    addGlobalClass?: boolean // 允许组件的样式影响到外部
+  }
 }
 ```
 
@@ -728,7 +728,7 @@ options 支持以下配置：
 
 ```ts
 interface ComponentInstance {
-  $forceUpdate(data?: Record<string, any>): void;
+  $forceUpdate(data?: Record<string, any>): void
 }
 ```
 
@@ -742,11 +742,11 @@ interface ComponentInstance {
     name: string,
     detail?: object,
     options?: {
-      bubbles?: boolean;
-      composed?: boolean;
-      capturePhase?: boolean;
+      bubbles?: boolean
+      composed?: boolean
+      capturePhase?: boolean
     }
-  ): void;
+  ): void
 }
 ```
 
@@ -756,7 +756,7 @@ interface ComponentInstance {
 
 ```ts
 interface ComponentInstance {
-  getPageId(): string;
+  getPageId(): string
 }
 ```
 
@@ -766,7 +766,7 @@ interface ComponentInstance {
 
 ```ts
 interface ComponentInstance {
-  selectComponent(selector: string): object;
+  selectComponent(selector: string): object
 }
 ```
 
@@ -776,7 +776,7 @@ interface ComponentInstance {
 
 ```ts
 interface ComponentInstance {
-  selectAllComponents(selector: string): object[];
+  selectAllComponents(selector: string): object[]
 }
 ```
 
@@ -786,7 +786,7 @@ interface ComponentInstance {
 
 ```ts
 interface ComponentInstance {
-  createSelectorQuery(): SelectorQuery;
+  createSelectorQuery(): SelectorQuery
 }
 ```
 
@@ -797,10 +797,10 @@ interface ComponentInstance {
 ```ts
 interface ComponentInstance {
   createIntersectionObserver(options?: {
-    thresholds?: number[];
-    initialRatio?: number;
-    observeAll?: boolean;
-  }): IntersectionObserver;
+    thresholds?: number[]
+    initialRatio?: number
+    observeAll?: boolean
+  }): IntersectionObserver
 }
 ```
 
