@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.trae/
 .cache/
 .gitconfig
 node_modules/

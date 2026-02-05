@@ -1,4 +1,58 @@
-# CSS 处理
+# 样式定义
+
+## 基础语法
+
+Mpx 中的样式定义遵循 WXSS (WeiXin Style Sheets) 规范，WXSS 具有 CSS 大部分特性，同时为了更适合开发微信小程序，对 CSS 进行了扩充以及修改。
+
+### 尺寸单位
+
+`rpx`（responsive pixel）: 可以根据屏幕宽度进行自适应。规定屏幕宽为 750rpx。如在 iPhone6 上，屏幕宽度为 375px，共有 750 个物理像素，则 750rpx = 375px = 750物理像素，1rpx = 0.5px = 1物理像素。
+
+**设备 rpx 换算 px (屏幕宽度/750)**
+
+| 设备 | rpx换算px (屏幕宽度/750) | px换算rpx (750/屏幕宽度) |
+| :--- | :--- | :--- |
+| iPhone5 | 1rpx = 0.42px | 1px = 2.34rpx |
+| iPhone6 | 1rpx = 0.5px | 1px = 2rpx |
+| iPhone6 Plus | 1rpx = 0.552px | 1px = 1.81rpx |
+
+> **建议**：开发微信小程序时设计师可以用 iPhone6 作为视觉稿的标准。
+
+### 样式导入
+
+使用 `@import` 语句可以导入外联样式表，`@import` 后跟需要导入的外联样式表的相对路径，用 `;` 表示语句结束。
+
+```css
+/** common.wxss **/
+.small-p {
+  padding:5px;
+}
+```
+
+```css
+/** app.wxss **/
+@import "common.wxss";
+.middle-p {
+  padding:15px;
+}
+```
+
+### 选择器
+
+目前支持的选择器有：
+
+| 选择器 | 样例 | 样例描述 |
+| :--- | :--- | :--- |
+| .class | .intro | 选择所有拥有 class="intro" 的组件 |
+| #id | #firstname | 选择拥有 id="firstname" 的组件 |
+| element | view | 选择所有 view 组件 |
+| element, element | view, checkbox | 选择所有文档的 view 组件和所有的 checkbox 组件 |
+| ::after | view::after | 在 view 组件后边插入内容 |
+| ::before | view::before | 在 view 组件前边插入内容 |
+
+### 全局样式与局部样式
+
+定义在 `app.mpx` 中的样式为全局样式，作用于每一个页面。在 page 的 `mpx` 文件中定义的样式为局部样式，只作用在对应的页面，并会覆盖 `app.mpx` 中相同的选择器。
 
 ## CSS 预编译
 

@@ -27,10 +27,10 @@ interface ExtendedSidebarItem extends DefaultTheme.SidebarItem {
 type ExtendedSidebar =
   | ExtendedSidebarItem[]
   | {
-      [path: string]:
-        | ExtendedSidebarItem[]
-        | { items: ExtendedSidebarItem[]; base: string }
-    }
+    [path: string]:
+    | ExtendedSidebarItem[]
+    | { items: ExtendedSidebarItem[]; base: string }
+  }
 
 const ogUrl = "https://mpxjs.cn/"
 const ogImage = `${ogUrl}logo.png`
@@ -43,27 +43,25 @@ const sidebar: ExtendedSidebar = {
       text: "基础",
       items: [
         { text: "快速开始", link: "/guide/basic/start" },
-        { text: "介绍", link: "/guide/basic/intro" },
-        { text: "单文件开发", link: "/guide/basic/single-file" },
+        { text: "概要介绍", link: "/guide/basic/intro" },
         { text: "IDE 支持", link: "/guide/basic/ide" },
-        { text: "模板语法", link: "/guide/basic/template" },
-        { text: "CSS 处理", link: "/guide/basic/css" },
+        { text: "项目结构", link: "/guide/basic/project-structure" },
+        { text: "创建 App", link: "/guide/basic/app" },
+        { text: "创建页面", link: "/guide/basic/page" },
+        { text: "自定义组件", link: "/guide/basic/component" },
+        { text: "单文件开发", link: "/guide/basic/single-file" },
         { text: "数据响应", link: "/guide/basic/reactive" },
-        {
-          text: "类名样式绑定",
-          link: "/guide/basic/class-style-binding",
-        },
+        { text: "生命周期", link: "/guide/basic/lifecycle" },
+        { text: "模板语法", link: "/guide/basic/template" },
+        { text: "数据绑定", link: "/guide/basic/data-binding" },
+        { text: "类名样式绑定", link: "/guide/basic/class-style-binding" },
         { text: "条件渲染", link: "/guide/basic/conditional-render" },
         { text: "列表渲染", link: "/guide/basic/list-render" },
         { text: "事件处理", link: "/guide/basic/event" },
         { text: "双向绑定", link: "/guide/basic/two-way-binding" },
-        { text: "自定义组件", link: "/guide/basic/component" },
         { text: "获取组件实例/节点信息", link: "/guide/basic/refs" },
-        {
-          text: "模版内可选链表达式",
-          link: "/guide/basic/option-chain",
-        },
-        { text: "生命周期", link: "/guide/basic/lifecycle" },
+        { text: "样式定义", link: "/guide/basic/css" },
+        
       ],
     },
     {
