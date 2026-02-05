@@ -48,7 +48,7 @@ const sidebar: ExtendedSidebar = {
         { text: "项目结构", link: "/guide/basic/project-structure" },
         { text: "创建 App", link: "/guide/basic/app" },
         { text: "创建页面", link: "/guide/basic/page" },
-        { text: "自定义组件", link: "/guide/basic/component" },
+        { text: "创建组件", link: "/guide/basic/component" },
         { text: "单文件开发", link: "/guide/basic/single-file" },
         { text: "数据响应", link: "/guide/basic/reactive" },
         { text: "生命周期", link: "/guide/basic/lifecycle" },
