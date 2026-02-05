@@ -50,9 +50,9 @@ Mpx 中的样式定义遵循 WXSS (WeiXin Style Sheets) 规范，WXSS 具有 CSS
 | ::after | view::after | 在 view 组件后边插入内容 |
 | ::before | view::before | 在 view 组件前边插入内容 |
 
-### 全局样式与局部样式
+> **注意**
+> - 当需要跨端输出 React Native 时，仅支持类选择器（.class）。
 
-定义在 `app.mpx` 中的样式为全局样式，作用于每一个页面。在 page 的 `mpx` 文件中定义的样式为局部样式，只作用在对应的页面，并会覆盖 `app.mpx` 中相同的选择器。
 
 ## CSS 预编译
 
@@ -250,3 +250,32 @@ npm i -D cssnano-preset-advanced
 ```
 
 optimisation 配置可以点击[详情](https://www.cssnano.cn/docs/what-are-optimisations/)查看更多配置项。
+
+## 原子类
+
+Mpx 框架内置了基于 [unocss](https://unocss.dev/) 的原子类支持，让小程序开发也能使用原子类。用户可以在 Mpx 页面/组件模板中直接使用一些预定义的基础样式类，诸如 `flex`，`pt-4`，`text-center` 和 `rotate-90` 等，对样式进行组合定义。
+
+### 简单示例
+
+```html
+<view class="container">
+  <view class="flex">
+    <view class="py-8 px-8 inline-flex mx-auto bg-white rounded-xl shadow-md">
+      <view class="text-center">
+        <view class="text-base text-black font-semibold mb-2">
+          Erin Lindford
+        </view>
+        <view class="text-gray-500 font-medium pb-3">
+          Product Engineer
+        </view>
+        <view
+          class="mt-2 px-4 py-1 text-sm text-purple-600 font-semibold rounded-full border border-solid border-purple-200">
+          Message
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+```
+
+更多详细用法请查看[使用原子类](../advance/utility-first-css.md)。
