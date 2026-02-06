@@ -30,7 +30,7 @@ export default function pageScrollMixin (mixinType) {
        */
       __registerPageScrollTo () {
         const navigation = getFocusedNavigation()
-        
+
         // navigation.pageScrollTo 不存在时才注册，避免重复
         if (navigation && !navigation.pageScrollTo) {
           navigation.pageScrollTo = (options) => {
@@ -38,7 +38,7 @@ export default function pageScrollMixin (mixinType) {
           }
         }
       },
-      
+
       /**
        * 查找可滚动的节点（带缓存）
        * @returns {Object|null} 滚动视图的节点实例
@@ -54,7 +54,7 @@ export default function pageScrollMixin (mixinType) {
 
         for (const refs of Object.values(this.__refs)) {
           if (!Array.isArray(refs)) continue
-          
+
           for (const ref of refs) {
             if (ref.type === 'node' && ref.instance?.getNodeInstance) {
               const nodeInstance = ref.instance.getNodeInstance()
@@ -66,10 +66,10 @@ export default function pageScrollMixin (mixinType) {
             }
           }
         }
-        
+
         return null
       },
-      
+
       /**
        * 页面滚动到指定位置
        * @param {Object} options - 配置选项
@@ -92,12 +92,12 @@ export default function pageScrollMixin (mixinType) {
 
         try {
           const nodeInstance = this.__findScrollableNode()
-          
+
           if (nodeInstance) {
             this.__executeScroll(nodeInstance, scrollTop, duration, selector, offsetTop, onSuccess, onFail)
             return
           }
-          
+
           // 没找到可滚动视图
           const errMsg = 'pageScrollTo:fail scrollable view not found. Please ensure the page has a scroll-view component with scroll-y or scroll-x enabled'
           warn(errMsg)
@@ -108,14 +108,14 @@ export default function pageScrollMixin (mixinType) {
           onFail && onFail(errMsg)
         }
       },
-      
+
       /**
        * 执行滚动操作
        */
       __executeScroll (scrollViewNodeInstance, scrollTop, duration, selector, offsetTop, onSuccess, onFail) {
         try {
           const scrollViewNode = scrollViewNodeInstance.instance.node
-          
+
           // 如果提供了 selector，使用 scrollIntoView
           if (selector) {
             if (scrollViewNode.scrollIntoView) {
@@ -124,8 +124,8 @@ export default function pageScrollMixin (mixinType) {
                 offset: offsetTop,
                 animated: duration > 0,
                 duration,
-                __selectRef: this.__selectRef,  // 传递页面的 __selectRef 方法
-                scrollViewNativeRef: scrollViewNodeInstance.nodeRef?.current  // 传递 scroll-view 的原生引用
+                __selectRef: this.__selectRef, // 传递页面的 __selectRef 方法
+                scrollViewNativeRef: scrollViewNodeInstance.nodeRef?.current // 传递 scroll-view 的原生引用
               })
               onSuccess && onSuccess()
             } else {

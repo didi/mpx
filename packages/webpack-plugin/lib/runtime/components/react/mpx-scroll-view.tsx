@@ -305,31 +305,31 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       // 获取当前滚动位置
       const currentY = scrollOptions.current.scrollTop || 0
       const currentX = scrollOptions.current.scrollLeft || 0
-      
+
       const startTime = Date.now()
       const deltaY = top - currentY
       const deltaX = left - currentX
-      
+
       // 缓动函数：easeInOutCubic
       const easing = (t: number) => {
         return t < 0.5
           ? 4 * t * t * t
           : 1 - Math.pow(-2 * t + 2, 3) / 2
       }
-      
+
       // 使用 requestAnimationFrame 实现平滑动画
       const animate = () => {
         const elapsed = Date.now() - startTime
         const progress = Math.min(elapsed / duration, 1) // 0 到 1
-        
+
         const easeProgress = easing(progress)
         const nextY = currentY + deltaY * easeProgress
         const nextX = currentX + deltaX * easeProgress
-        
+
         if (scrollViewRef.current) {
           scrollViewRef.current.scrollTo({ y: nextY, x: nextX, animated: false })
         }
-        
+
         if (progress < 1) {
           requestAnimationFrame(animate)
         } else {
@@ -339,7 +339,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
           }
         }
       }
-      
+
       requestAnimationFrame(animate)
     } else {
       // 使用原生的 scrollTo
@@ -351,27 +351,27 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     try {
       // 优先使用传递进来的 __selectRef（来自 pageScrollMixin），其次使用 props 中的
       const currentSelectRef = __selectRef || propsRef.current.__selectRef
-      
+
       // 检查 __selectRef 是否存在
       if (!currentSelectRef) {
         const errMsg = '__selectRef is not available. Please ensure the scroll-view component is properly initialized.'
         warn(errMsg)
         return
       }
-      
+
       // 优先使用传递进来的 scrollViewNativeRef，其次使用本地的 scrollViewRef
       const targetScrollViewRef = scrollViewNativeRef || scrollViewRef.current
-      
+
       // 检查 scrollViewRef
       if (!targetScrollViewRef) {
         const errMsg = 'scrollViewRef is not ready'
         warn(errMsg)
         return
       }
-      
+
       // 如果 selector 不包含前缀，默认添加 # 前缀（id 选择器）
       const normalizedSelector = selector.startsWith('#') || selector.startsWith('.') ? selector : `#${selector}`
-      
+
       // 调用 __selectRef 查找元素
       const refs = currentSelectRef(normalizedSelector, 'node')
       if (!refs) {
@@ -379,41 +379,41 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         warn(errMsg)
         return
       }
-      
+
       // 获取节点实例
       if (typeof refs.getNodeInstance !== 'function') {
         const errMsg = `getNodeInstance is not a function for selector: ${normalizedSelector}`
         warn(errMsg)
         return
       }
-      
+
       const nodeInstance = refs.getNodeInstance()
       if (!nodeInstance) {
         const errMsg = `Node instance is null for selector: ${normalizedSelector}`
         warn(errMsg)
         return
       }
-      
+
       const { nodeRef } = nodeInstance
       if (!nodeRef?.current) {
         const errMsg = `Node ref not available for selector: ${normalizedSelector}`
         warn(errMsg)
         return
       }
-      
+
       // 执行 measureLayout
       if (typeof nodeRef.current.measureLayout !== 'function') {
         const errMsg = `measureLayout is not a function for selector: ${normalizedSelector}`
         warn(errMsg)
         return
       }
-      
+
       nodeRef.current.measureLayout(
         targetScrollViewRef,
         (left: number, top: number) => {
           const adjustedLeft = scrollX ? left + offset : left
           const adjustedTop = scrollY ? top + offset : top
-          
+
           // 使用 scrollTo 方法，支持 duration 参数
           if (duration !== undefined) {
             scrollTo({ left: adjustedLeft, top: adjustedTop, animated, duration })
