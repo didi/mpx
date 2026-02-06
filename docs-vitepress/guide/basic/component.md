@@ -527,6 +527,36 @@ createComponent({
 })
 ```
 
+### provide / inject
+
+`provide` 和 `inject` 提供了一种跨层级组件分发数据的方法。
+
+父组件作为依赖提供者，其后代组件（无论层级多深）都可以注入该依赖。
+
+```js
+// 父组件
+createComponent({
+  data: {
+    s: 'foo'
+  },
+  provide() {
+    return {
+      s: this.s
+    }
+  }
+})
+
+// 后代组件
+createComponent({
+  inject: ['s'],
+  ready() {
+    console.log(this.s) // "foo"
+  }
+})
+```
+
+详情请查看[依赖注入](../advance/provide-inject.md)
+
 ### mixins
 
 一个包含组件选项对象的数组，这些选项都将被混入到当前组件的实例中。
