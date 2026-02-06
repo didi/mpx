@@ -13,12 +13,16 @@ export default function pageScrollMixin (mixinType) {
   return {
     [CREATED] () {
       this.__registerPageScrollTo()
+      // 初始化缓存
+      this.__scrollableNodeCache = null
     },
     beforeUnmount () {
       const navigation = getFocusedNavigation()
       if (navigation && navigation.pageScrollTo) {
         delete navigation.pageScrollTo
       }
+      // 清理缓存
+      this.__scrollableNodeCache = null
     },
     methods: {
       /**
@@ -33,6 +37,37 @@ export default function pageScrollMixin (mixinType) {
             this.__pageScrollTo(options)
           }
         }
+      },
+      
+      /**
+       * 查找可滚动的节点（带缓存）
+       * @returns {Object|null} 滚动视图的节点实例
+       */
+      __findScrollableNode () {
+        // 如果缓存存在且有效，直接返回
+        if (this.__scrollableNodeCache?.instance?.node?.scrollTo) {
+          return this.__scrollableNodeCache
+        }
+
+        // 缓存失效或不存在，重新查找
+        if (!this.__refs) return null
+
+        for (const refs of Object.values(this.__refs)) {
+          if (!Array.isArray(refs)) continue
+          
+          for (const ref of refs) {
+            if (ref.type === 'node' && ref.instance?.getNodeInstance) {
+              const nodeInstance = ref.instance.getNodeInstance()
+              if (nodeInstance?.instance?.node?.scrollTo) {
+                // 缓存找到的节点
+                this.__scrollableNodeCache = nodeInstance
+                return nodeInstance
+              }
+            }
+          }
+        }
+        
+        return null
       },
       
       /**
@@ -56,23 +91,11 @@ export default function pageScrollMixin (mixinType) {
         } = options
 
         try {
-          // 遍历页面中的所有 refs，找到第一个有 scrollTo 方法的节点
-          if (this.__refs) {
-            for (const key in this.__refs) {
-              const refs = this.__refs[key]
-              if (Array.isArray(refs)) {
-                for (const ref of refs) {
-                  if (ref.type === 'node' && ref.instance?.getNodeInstance) {
-                    const nodeInstance = ref.instance.getNodeInstance()
-                    
-                    if (nodeInstance?.instance?.node?.scrollTo) {
-                      this.__executeScroll(nodeInstance, scrollTop, duration, selector, offsetTop, onSuccess, onFail)
-                      return
-                    }
-                  }
-                }
-              }
-            }
+          const nodeInstance = this.__findScrollableNode()
+          
+          if (nodeInstance) {
+            this.__executeScroll(nodeInstance, scrollTop, duration, selector, offsetTop, onSuccess, onFail)
+            return
           }
           
           // 没找到可滚动视图
