@@ -310,16 +310,19 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       const deltaY = top - currentY
       const deltaX = left - currentX
       
+      // 缓动函数：easeInOutCubic
+      const easing = (t: number) => {
+        return t < 0.5
+          ? 4 * t * t * t
+          : 1 - Math.pow(-2 * t + 2, 3) / 2
+      }
+      
       // 使用 requestAnimationFrame 实现平滑动画
       const animate = () => {
         const elapsed = Date.now() - startTime
         const progress = Math.min(elapsed / duration, 1) // 0 到 1
         
-        // 使用 easeInOutCubic 缓动函数
-        const easeProgress = progress < 0.5
-          ? 4 * progress * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 3) / 2
-        
+        const easeProgress = easing(progress)
         const nextY = currentY + deltaY * easeProgress
         const nextX = currentX + deltaX * easeProgress
         
