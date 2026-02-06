@@ -23,6 +23,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
   // 比如机型 iPhone 11 Pro，可能会导致显隐动画冲突
   // 因此增加状态标记 + cancelAnimation 来优化
   const isShow = useRef<boolean>(false)
+  const keybaordHandleTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const animatedStyle = useAnimatedStyle(() => ({
     // translate/position top+ overflow hidden 在 android 上时因为键盘顶起让页面高度变小，同时元素位置上移
@@ -79,7 +80,7 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
         // 重置标记位
         keyboardAvoid.current.readyToShow = false
       }
-      if (!keyboardAvoid?.current || isShow.current) {
+      if (!keyboardAvoid?.current) {
         return
       }
 
@@ -124,13 +125,23 @@ const KeyboardAvoidingView = ({ children, style, contentContainerStyle }: Keyboa
     }
 
     if (isIOS) {
-      subscriptions = [Keyboard.addListener('keyboardWillShow', keybaordAvoding), Keyboard.addListener('keyboardWillHide', resetKeyboard)]
+      subscriptions = [
+        Keyboard.addListener('keyboardWillShow', (evt: any) => {
+          if (keybaordHandleTimerRef.current) {
+            clearTimeout(keybaordHandleTimerRef.current)
+          }
+          // iphone 在input聚焦时长按滑动后会导致 show 事件先于 focus 事件发生，因此等一下，等 focus 先触发拿到 input，避免键盘出现但input没顶上去
+          keybaordHandleTimerRef.current = setTimeout(() => keybaordAvoding(evt), 32)
+        }),
+        Keyboard.addListener('keyboardWillHide', resetKeyboard)
+      ]
     } else {
       subscriptions = [Keyboard.addListener('keyboardDidShow', keybaordAvoding), Keyboard.addListener('keyboardDidHide', resetKeyboard)]
     }
 
     return () => {
       subscriptions.forEach(subscription => subscription.remove())
+      keybaordHandleTimerRef.current && clearTimeout(keybaordHandleTimerRef.current)
     }
   }, [keyboardAvoid])
 
