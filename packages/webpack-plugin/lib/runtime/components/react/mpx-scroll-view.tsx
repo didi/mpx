@@ -299,8 +299,49 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }, [refresherTriggered])
 
-  function scrollTo ({ top = 0, left = 0, animated = false }: { top?: number; left?: number; animated?: boolean }) {
-    scrollToOffset(left, top, animated)
+  function scrollTo ({ top = 0, left = 0, animated = false, duration }: { top?: number; left?: number; animated?: boolean; duration?: number }) {
+    // 如果指定了 duration 且需要动画，使用自定义动画
+    if (animated && duration && duration > 0) {
+      // 获取当前滚动位置
+      const currentY = scrollOptions.current.scrollTop || 0
+      const currentX = scrollOptions.current.scrollLeft || 0
+      
+      const startTime = Date.now()
+      const deltaY = top - currentY
+      const deltaX = left - currentX
+      
+      // 使用 requestAnimationFrame 实现平滑动画
+      const animate = () => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(elapsed / duration, 1) // 0 到 1
+        
+        // 使用 easeInOutCubic 缓动函数
+        const easeProgress = progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2
+        
+        const nextY = currentY + deltaY * easeProgress
+        const nextX = currentX + deltaX * easeProgress
+        
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: nextY, x: nextX, animated: false })
+        }
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          // 确保最终位置准确
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollTo({ y: top, x: left, animated: false })
+          }
+        }
+      }
+      
+      requestAnimationFrame(animate)
+    } else {
+      // 使用原生的 scrollTo
+      scrollToOffset(left, top, animated)
+    }
   }
 
   function handleScrollIntoView (selector = '', { offset = 0, animated = true } = {}) {
