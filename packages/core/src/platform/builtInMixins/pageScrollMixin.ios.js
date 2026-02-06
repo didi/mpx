@@ -66,7 +66,7 @@ export default function pageScrollMixin (mixinType) {
                     const nodeInstance = ref.instance.getNodeInstance()
                     
                     if (nodeInstance?.instance?.node?.scrollTo) {
-                      this.__executeScroll(nodeInstance.instance.node, scrollTop, duration, selector, offsetTop, onSuccess, onFail)
+                      this.__executeScroll(nodeInstance, scrollTop, duration, selector, offsetTop, onSuccess, onFail)
                       return
                     }
                   }
@@ -89,15 +89,20 @@ export default function pageScrollMixin (mixinType) {
       /**
        * 执行滚动操作
        */
-      __executeScroll (scrollViewNode, scrollTop, duration, selector, offsetTop, onSuccess, onFail) {
+      __executeScroll (scrollViewNodeInstance, scrollTop, duration, selector, offsetTop, onSuccess, onFail) {
         try {
+          const scrollViewNode = scrollViewNodeInstance.instance.node
+          
           // 如果提供了 selector，使用 scrollIntoView
           if (selector) {
             if (scrollViewNode.scrollIntoView) {
+              // 将页面的 __selectRef 传递给 scrollIntoView
               scrollViewNode.scrollIntoView(selector, {
                 offset: offsetTop,
                 animated: duration > 0,
-                duration
+                duration,
+                __selectRef: this.__selectRef,  // 传递页面的 __selectRef 方法
+                scrollViewNativeRef: scrollViewNodeInstance.nodeRef?.current  // 传递 scroll-view 的原生引用
               })
               onSuccess && onSuccess()
             } else {

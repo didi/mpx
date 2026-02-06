@@ -344,18 +344,88 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function handleScrollIntoView (selector = '', { offset = 0, animated = true } = {}) {
-    const refs = __selectRef!(`#${selector}`, 'node')
-    if (!refs) return
-    const { nodeRef } = refs.getNodeInstance()
-    nodeRef.current?.measureLayout(
-      scrollViewRef.current,
-      (left: number, top: number) => {
-        const adjustedLeft = scrollX ? left + offset : left
-        const adjustedTop = scrollY ? top + offset : top
-        scrollToOffset(adjustedLeft, adjustedTop, animated)
+  function handleScrollIntoView (selector = '', { offset = 0, animated = true, duration = undefined, __selectRef = undefined, scrollViewNativeRef = undefined }: { offset?: number; animated?: boolean; duration?: number; __selectRef?: any; scrollViewNativeRef?: any } = {}) {
+    try {
+      // 优先使用传递进来的 __selectRef（来自 pageScrollMixin），其次使用 props 中的
+      const currentSelectRef = __selectRef || propsRef.current.__selectRef
+      
+      // 检查 __selectRef 是否存在
+      if (!currentSelectRef) {
+        const errMsg = '__selectRef is not available. Please ensure the scroll-view component is properly initialized.'
+        warn(errMsg)
+        return
       }
-    )
+      
+      // 优先使用传递进来的 scrollViewNativeRef，其次使用本地的 scrollViewRef
+      const targetScrollViewRef = scrollViewNativeRef || scrollViewRef.current
+      
+      // 检查 scrollViewRef
+      if (!targetScrollViewRef) {
+        const errMsg = 'scrollViewRef is not ready'
+        warn(errMsg)
+        return
+      }
+      
+      // 如果 selector 不包含前缀，默认添加 # 前缀（id 选择器）
+      const normalizedSelector = selector.startsWith('#') || selector.startsWith('.') ? selector : `#${selector}`
+      
+      // 调用 __selectRef 查找元素
+      const refs = currentSelectRef(normalizedSelector, 'node')
+      if (!refs) {
+        const errMsg = `Element not found for selector: ${normalizedSelector}`
+        warn(errMsg)
+        return
+      }
+      
+      // 获取节点实例
+      if (typeof refs.getNodeInstance !== 'function') {
+        const errMsg = `getNodeInstance is not a function for selector: ${normalizedSelector}`
+        warn(errMsg)
+        return
+      }
+      
+      const nodeInstance = refs.getNodeInstance()
+      if (!nodeInstance) {
+        const errMsg = `Node instance is null for selector: ${normalizedSelector}`
+        warn(errMsg)
+        return
+      }
+      
+      const { nodeRef } = nodeInstance
+      if (!nodeRef?.current) {
+        const errMsg = `Node ref not available for selector: ${normalizedSelector}`
+        warn(errMsg)
+        return
+      }
+      
+      // 执行 measureLayout
+      if (typeof nodeRef.current.measureLayout !== 'function') {
+        const errMsg = `measureLayout is not a function for selector: ${normalizedSelector}`
+        warn(errMsg)
+        return
+      }
+      
+      nodeRef.current.measureLayout(
+        targetScrollViewRef,
+        (left: number, top: number) => {
+          const adjustedLeft = scrollX ? left + offset : left
+          const adjustedTop = scrollY ? top + offset : top
+          
+          // 使用 scrollTo 方法，支持 duration 参数
+          if (duration !== undefined) {
+            scrollTo({ left: adjustedLeft, top: adjustedTop, animated, duration })
+          } else {
+            scrollToOffset(adjustedLeft, adjustedTop, animated)
+          }
+        },
+        (error: any) => {
+          warn(`Failed to measure layout for selector ${normalizedSelector}: ${error}`)
+        }
+      )
+    } catch (error: any) {
+      const errMsg = `handleScrollIntoView error for selector ${selector}: ${error?.message || error}`
+      warn(errMsg)
+    }
   }
 
   function selectLength (size: { height: number; width: number }) {
