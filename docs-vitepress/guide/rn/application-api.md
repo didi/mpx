@@ -5,10 +5,10 @@
 ### 目录概览
 
 - [配置能力](#配置能力) - App配置、页面配置、导航配置
-- [状态管理](#状态管理-1) - Pinia、Store、依赖注入
+- [状态管理](#状态管理) - Pinia、Store、依赖注入
 - [国际化](#国际化) - i18n多语言支持
 - [API能力](#api能力) - 跨平台API、Webview通信
-- [rnConfig 相关内容](#rnconfig-相关内容) - 异步分包、分享、路由控制、屏幕适配
+- [高级特性](#高级特性) - 异步分包、分享、路由控制、屏幕适配
 
 
 ## 配置能力
@@ -221,8 +221,10 @@ module.exports = {
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
 
 ### 跨平台 API 使用限制
-### selectComponent/selectAllComponents
-在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
+
+#### selectComponent/selectAllComponents
+
+在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式：
   * id 选择器：`#id`
   * class 选择器（可连续指定多个）：`.a-class` 或 `.a-class.b-class.c-class`
   
@@ -398,7 +400,7 @@ createComponent({
 
 当使用 [button 组件](./rn.html#button) 并指定 `open-type="share"` 时，将触发分享。在 RN 中的分享实现需由容器实现，可在 onShareAppMessage 中调用容器提供的能力完成分享逻辑实现。
 
-其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
+其参数为当前页面的 onShareAppMessage 钩子返回内容，如果返回内容中包含 promise，将会在 fulfilled 后将其结果合并再触发 onShareAppMessage
 
 ```ts
 (shareInfo: { title: string, path: string, imageUrl?: string }) => void
@@ -473,9 +475,9 @@ createComponent({
 boolean
 ```
 
-Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callback)` 作为 Mpx 应用切换切换台的驱动，从而触发对于的钩子（如onhide/onshow）
+Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callback)` 作为 Mpx 应用前后台切换的驱动，从而触发对应的钩子（如onhide/onshow）
 
-在需要将 RN 应用嵌入到现有的 NA 应用中时，可能会出现AppState触发时机异常的情况（例如从 RN 页面跳转到 NA 页面时），此时可以将 disableAppStateListener 设置为 true 来禁用框架内部对 AppState 的监听。但需要在合适的时机手动调用 setAppShow() 与 setAppHide() 方法来进行驱动以确保对于的钩子能正常触发。
+在需要将 RN 应用嵌入到现有的 NA 应用中时，可能会出现AppState触发时机异常的情况（例如从 RN 页面跳转到 NA 页面时），此时可以将 disableAppStateListener 设置为 true 来禁用框架内部对 AppState 的监听。但需要在合适的时机手动调用 setAppShow() 与 setAppHide() 方法来进行驱动以确保对应的钩子能正常触发。
 
 
 ### 自定义设置底部虚拟按键区高度
@@ -488,10 +490,10 @@ Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callb
 Android的不同系统或者手机的虚拟按键区高度可能存在不同的情况，框架内部统一使用了initialWindowMetrics.insets.bottom，如存在需要单独调整的场景可自定义设置虚拟按键区高度。
 
 ```javascript
-// 例子
+// 示例
 import ReactNative from 'react-native'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-mpx.config.rnConfig.getBottomVirtualHeight = (bottomHeight) => {
+mpx.config.rnConfig.getBottomVirtualHeight = () => {
   const screenDimensions = ReactNative.Dimensions.get('screen')
   const windowDimensions = ReactNative.Dimensions.get('window')
   return Math.max(initialWindowMetrics?.insets?.bottom || 0 , (screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0, 0)
