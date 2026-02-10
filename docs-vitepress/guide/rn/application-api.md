@@ -495,5 +495,5 @@ mpx.config.rnConfig.getBottomVirtualHeight = (bottomHeight) => {
   const screenDimensions = ReactNative.Dimensions.get('screen')
   const windowDimensions = ReactNative.Dimensions.get('window')
   return Math.max(initialWindowMetrics?.insets?.bottom || 0 , (screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0, 0)
-}vscode 如何打开markdown
+}
 ```
