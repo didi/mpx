@@ -1,12 +1,11 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
-import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn, isEmptyObject } from '@mpxjs/utils'
+import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
+import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
-import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -31,6 +30,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
+const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
 const filterRegExp = /(calc|env|%)/
 
@@ -40,6 +40,8 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-bottom': 'bottom',
   'safe-area-inset-left': 'left'
 }
+
+export const extendObject = Object.assign
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
@@ -143,16 +145,17 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
     innerStyle: Partial<T>
   }
 }
-
-const selfPercentRule: Record<string, 'height' | 'width'> = {
-  translateX: 'width',
-  translateY: 'height',
+const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
   borderBottomLeftRadius: 'width',
   borderBottomRightRadius: 'width',
   borderTopRightRadius: 'width',
   borderRadius: 'width'
 }
+const selfPercentRule: Record<string, 'height' | 'width'> = extendObject({
+  translateX: 'width',
+  translateY: 'height'
+}, radiusPercentRule)
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
@@ -216,16 +219,22 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   const replaced = new ReplaceSource(input)
 
   for (const { start, end, args } of parsed) {
+    // NOTE:
+    // - CSS var() fallback 允许包含空格、逗号等字符（如 font-family 的 fallback）
+    // - parseFunc 会按逗号分割 args，因此这里把 args[1..] 重新 join 回 fallback
     const varName = args[0]
-    const fallback = args[1]
-    let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
-    if (varValue === undefined) return
-    if (varUseRegExp.test(varValue)) {
-      varValue = resolveVar(varValue, varContext)
-      if (varValue === undefined) return
-    } else {
-      varValue = global.__formatValue(varValue)
+    const fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
+
+    // 先处理 varValue
+    let varValue = hasOwn(varContext, varName) ? varContext[varName] : undefined
+    if (varValue !== undefined) {
+      varValue = varUseRegExp.test(varValue) ? resolveVar(varValue, varContext) : global.__formatValue(varValue)
     }
+    // 再处理 fallback
+    if (varValue === undefined && fallback !== undefined) {
+      varValue = varUseRegExp.test(fallback) ? resolveVar(fallback, varContext) : global.__formatValue(fallback)
+    }
+    if (varValue === undefined) return
     replaced.replace(start, end - 1, varValue)
   }
 
@@ -238,7 +247,7 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
       const resolved = resolveVar(value, varContext)
       if (resolved === undefined) {
         delete target[key]
-        // error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
+        error(`Can not resolve css var at ${varKeyPath.join('.')}:${value}.`)
         return
       }
       target[key] = resolved
@@ -390,23 +399,16 @@ function transformBoxShadow (styleObj: Record<string, any>) {
   }, '')
 }
 
-function transformZIndex (styleObj: Record<string, any>) {
-  if (!styleObj.zIndex || typeof styleObj.zIndex === 'number') return
-  if (styleObj.zIndex === 'auto') {
-    error('Property [z-index] does not supported [auto], please check again!')
-    styleObj.zIndex = 0
-  }
-}
-
 interface TransformStyleConfig {
   enableVar?: boolean
   externalVarContext?: Record<string, any>
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
+  transformRadiusPercent?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -457,7 +459,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
       // calc translate & border-radius 的百分比计算
-      if (hasOwn(selfPercentRule, key) && /%/.test(value)) {
+      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
         hasSelfPercent = true
         percentKeyPaths.push(keyPath.slice())
       }
@@ -467,7 +469,11 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
     // fixme 去掉 translate & border-radius 的百分比计算
-    if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+    // fixme Image 组件 borderRadius 仅支持 number
+    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
+      hasSelfPercent = true
+      percentKeyPaths.push(keyPath.slice())
+    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
       percentKeyPaths.push(keyPath.slice())
     }
   }
@@ -477,8 +483,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
-  // transform 字符串格式转化数组格式(先转数组再处理css var)
-  transformTransform(styleObj)
+
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
@@ -544,11 +549,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-  // transform z-index auto to 0
-  transformZIndex(normalStyle)
-  if (Array.isArray(normalStyle.transform)) {
-    normalStyle.transform = normalStyle.transform.filter(item => !isEmptyObject(item))
-  }
+  // transform 字符串格式转化数组格式(先转数组再处理css var)
+  transformTransform(normalStyle)
+
   return {
     hasVarDec,
     varContextRef,
@@ -744,8 +747,6 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
   })) || []
 }
 
-export const extendObject = Object.assign
-
 export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return
   const pages = global.getCurrentPages()
@@ -754,9 +755,14 @@ export function getCurrentPage (pageId: number | null | undefined) {
 
 export function renderImage (
   imageProps: ImageProps | FastImageProps,
-  enableFastImage = false
+  enableFastImage = true
 ) {
-  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
+  let Component: React.ComponentType<ImageProps | FastImageProps> = Image
+  if (enableFastImage) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fastImageModule = require('@d11/react-native-fast-image')
+    Component = fastImageModule.default || fastImageModule
+  }
   return createElement(Component, imageProps)
 }
 

@@ -66,9 +66,10 @@
 
 
 > [!tip] 注意
-> - 未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
+> - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 > - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
-> - background-image、background-size、background-position 等背景图相关 css 属性，仅 view 组件支持
+> - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
+> - 出于性能考虑，基础组件的样式增强能力（如 `enable-var`、`enable-background`、`enable-animation`）采用按需启用策略。view 组件仅在**首次**渲染时检测样式并决定是否开启对应能力。由于 React Hooks 的一致性约束，增强能力无法在后续更新阶段再动态启用，因此当组件生命周期内**可能**使用相关能力时，需在首次渲染时**显式声明**启用，比如 <span v-pre>`enable-animation="{{ true }}"`</span>。
 
 ### text
 文本。
@@ -400,7 +401,7 @@ movable-view的可移动区域。
 | focus                   | boolean | `false`       | 获取焦点                                                    |
 | auto-height             | boolean | `false`       | 是否自动增高，设置 auto-height 时，style.height不生效          |
 | confirm-type            | string  | `done`        | 设置键盘右下角按钮的文字，可选值为 `send`、`search`、`next`、`go`、`done`，不支持 `return`                       |
-| confirm-hold            | boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
+| confirm-hold            |         |               | 暂不支持                         |
 | hold-keyboard           | boolean | `false`       | 输入框聚焦时，点击页面其他地方是否收起键盘 <badge type="tip" text="2.10.18+" /> |
 | cursor                  | number  |               | 指定 focus 时的光标位置                                      |
 | cursor-color            | string  |               | 光标颜色                                                    |
