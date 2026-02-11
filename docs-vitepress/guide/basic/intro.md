@@ -19,24 +19,24 @@ Mpx使用类似Vue的单文件开发模式，小程序原本的template/js/style
 
 ### 数据响应 {#data-reactivity}
 
-数据响应是Mpx提供的核心增强能力，该能力主要受Vue的启发，主要包含数据赋值响应，watch api和computed计算属性等能力，关于该能力更详细的介绍可以查看[这里](./reactive.md)
+数据响应是Mpx提供的核心增强能力，该能力主要受Vue的启发，主要包含数据赋值响应，watch api和computed计算属性等能力，关于该能力更详细的介绍可以查看[这里](reactive.md)
 
 ### 增强的模板语法 {#enhanced-template-syntax}
 
 同样受到Vue的启发，Mpx提供了很多增强模板语法便于开发者方便快捷地进行视图开发，主要包含以下：
 
-* [wx:style动态样式](./class-style-binding.md#style-binding)
-* [wx:class动态类名](./class-style-binding.md#class-binding)
-* [wx:model双向绑定](./two-way-binding.md)
-* [wx:model-prop双向绑定属性](./two-way-binding.md#change-two-way-binding-event-prop)
-* [wx:model-event双向绑定事件](./two-way-binding.md#change-two-way-binding-event-prop)
-* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#change-two-way-binding-path)
-* [wx:model-filter双向绑定过滤器](./two-way-binding.md#two-way-binding-filter)
-* [wx:ref获取实例](./refs.md)
-* [wx:show隐藏显示](./conditional-render.md)
-* [component动态组件](./component.md#dynamic-component)
-* [事件处理内联传参](./event.md)
-* [模板条件编译](./conditional-render.md)
+* [wx:style动态样式](class-style-binding.md#style-binding)
+* [wx:class动态类名](class-style-binding.md#class-binding)
+* [wx:model双向绑定](two-way-binding.md)
+* [wx:model-prop双向绑定属性](two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-event双向绑定事件](two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-value-path双向绑定数据路径](two-way-binding.md#change-two-way-binding-path)
+* [wx:model-filter双向绑定过滤器](two-way-binding.md#two-way-binding-filter)
+* [wx:ref获取实例](refs.md)
+* [wx:show隐藏显示](conditional-render.md)
+* [component动态组件](component.md#dynamic-component)
+* [事件处理内联传参](event.md)
+* [模板条件编译](conditional-render.md)
 
 ### 极致性能 {#extreme-performance}
 
@@ -62,8 +62,8 @@ Mpx的编译构建以webpack为基础，针对小程序项目结构深度定制�
 * [原生组件支持](../advance/progressive.md#native-integration)
 * [原生能力兼容(custom-tab-bar/workers/云开发等)](../advance/ability-compatible.md)
 * [小程序插件](../advance/plugin.md)
-* [模板预编译](./template.md#template-precompile)
-* [css预编译](./css.md)
+* [模板预编译](template.md#template-precompile)
+* [css预编译](css.md)
 * [静态资源处理](../advance/image-process.md)
 
 
@@ -86,16 +86,16 @@ Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增�
 
 
 Mpx具有以下功能特性：
-* 数据响应 (赋值响应 / [watch](./reactive.md) / [computed](./reactive.md))
-* 增强模板语法 ([动态组件](./component.md#dynamic-component) / [样式绑定 / 类名绑定 ](./class-style-binding.md) / [内联事件函数](./event.md) / [双向绑定](./two-way-binding.md) / [refs](./refs.md))
+* 数据响应 (赋值响应 / [watch](reactive.md) / [computed](reactive.md))
+* 增强模板语法 ([动态组件](component.md#dynamic-component) / [样式绑定 / 类名绑定 ](class-style-binding.md) / [内联事件函数](event.md) / [双向绑定](two-way-binding.md) / [refs](refs.md))
 * 极致性能 ([运行时性能优化](../understand/runtime.md) / [包体积优化](../advance/subpackage.md#分包) / 框架运行时体积14KB)
 * [高效强大的编译构建](../understand/compile.md) (基于webpack / 兼容webpack生态 / 兼容原生小程序 / 完善支持npm场景下的分包输出 / 高效调试)
-* [单文件组件开发](./single-file.md)
+* [单文件组件开发](single-file.md)
 * [渐进接入 / 原生组件支持](../advance/progressive.md)
 * [状态管理](../advance/store.md) (Vuex规范 / 支持多实例Store)
 * 跨团队开发 ([packages](../advance/subpackage.md#packages))
 * 逻辑复用 ([mixins](../advance/mixin.md))
-* [周边能力支持](../extend/) (fetch / api增强 / mock / webview-bridge)
+* [周边能力支持](../extend) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
 * [多平台增强](../advance/platform.md#multi-platform-support) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
 * [跨平台编译](../advance/platform.md#跨平台编译) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](../advance/platform.md#cross-platform-web)中运行)

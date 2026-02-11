@@ -43,12 +43,6 @@ File: guide/basic/component.md
 File: guide/basic/page.md
   Link: [provide / inject](./component.md#provide-inject)
   Error: Anchor 'provide-inject' not found in component.md
-File: guide/basic/page.md
-  Link: [$forceUpdate](./component.md#$forceupdate)
-  Error: Anchor '$forceupdate' not found in component.md
-File: guide/basic/page.md
-  Link: [$nextTick](./component.md#$nexttick)
-  Error: Anchor '$nexttick' not found in component.md
 File: guide/basic/start.md
   Link: [packages 多人合作](../advance/subpackage.md#packages)
   Error: Anchor 'packages' not found in subpackage.md

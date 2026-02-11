@@ -4,8 +4,8 @@
 
 Mpx 在包体积控制上做了很多工作，主要包括：
 * [完善的分包支持](./subpackage.md#分包)
-* [基于依赖声明的按需构建](./npm.md)
-* [图像资源处理](./image-process.md)
+* [基于依赖声明的按需构建](npm.md)
+* [图像资源处理](image-process.md)
 * [公共样式复用](../basic/css.md#common-style-reuse)
 
 此外由于 Mpx 的编译构建完全基于 webpack，也能够直接复用webpack生态自带的代码压缩，模块复用，tree shaking，side effects 等能力对代码体积进行优化。

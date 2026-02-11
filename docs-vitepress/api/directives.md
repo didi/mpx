@@ -287,7 +287,7 @@ createComponent({
   </view>
   ```
 
-**参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.md#类名绑定)
+**参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.md#class-binding)
 
 ## wx:style
 
@@ -345,7 +345,7 @@ createComponent({
 </view>
 ```
 
-**参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.md#样式绑定)
+**参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.md#style-binding)
 
 ## wx:model
 

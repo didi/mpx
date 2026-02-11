@@ -79,7 +79,7 @@ RN 组件支持样式属性的透传，`style/wx:style` 样式属性用法与小
 ### RN 组件的属性与事件 {#rn-component-props-events}
 
 - RN 组件属性与事件参考 RN 原生支持的属性与事件名，对应赋值方式按照 Mpx 语法进行双括号包裹。
-- 组件使用的值既可以沿用 Mpx 组件的 `data`、`computed` 等响应式数据，也可以通过 [使用 React Hooks](#使用-react-hooks) 返回值进行声明。
+- 组件使用的值既可以沿用 Mpx 组件的 `data`、`computed` 等响应式数据，也可以通过 [使用 React Hooks](#use-react-hooks) 返回值进行声明。
 
 > [!important] 注意
 > 使用 React Hooks 导出的变量如果需要在模板上进行响应式更新，需要配合组件设置 `disableMemo: true` 使用，详见下方[配合模板响应式](#with-template-reactivity)。

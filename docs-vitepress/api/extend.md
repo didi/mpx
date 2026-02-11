@@ -449,7 +449,7 @@ useFetch().fetch({
 })
 ```
 
-* **注意：** options 参数同 [XFetch](./extend.md#XFetch) 章节。
+* **注意：** options 参数同 [XFetch](extend.md#xfetch) 章节。
 
 ## size-report
 Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等维度的分析和对比，详细[请见](/advance/size-report.html)

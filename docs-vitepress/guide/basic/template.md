@@ -6,18 +6,18 @@ Mpx中的模板语法以小程序模板语法为基础，支持小程序的全�
 
 Mpx提供的增强指令语法如下：
 
-* [wx:style动态样式](./class-style-binding.md#style-binding)
-* [wx:class动态类名](./class-style-binding.md#class-binding)
-* [wx:model双向绑定](./two-way-binding.md)
-* [wx:model-prop双向绑定属性](./two-way-binding.md#change-two-way-binding-event-prop)
-* [wx:model-event双向绑定事件](./two-way-binding.md#change-two-way-binding-event-prop)
-* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#change-two-way-binding-path)
-* [wx:model-filter双向绑定过滤器](./two-way-binding.md#two-way-binding-filter)
-* [wx:ref获取实例](./refs.md)
-* [wx:show隐藏显示](./conditional-render.md)
-* [component动态组件](./component.md#dynamic-component)
-* [事件处理内联传参](./event.md)
-* [模板条件编译](./template.md)
+* [wx:style动态样式](class-style-binding.md#style-binding)
+* [wx:class动态类名](class-style-binding.md#class-binding)
+* [wx:model双向绑定](two-way-binding.md)
+* [wx:model-prop双向绑定属性](two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-event双向绑定事件](two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-value-path双向绑定数据路径](two-way-binding.md#change-two-way-binding-path)
+* [wx:model-filter双向绑定过滤器](two-way-binding.md#two-way-binding-filter)
+* [wx:ref获取实例](refs.md)
+* [wx:show隐藏显示](conditional-render.md)
+* [component动态组件](component.md#dynamic-component)
+* [事件处理内联传参](event.md)
+* [模板条件编译](template.md)
 
 下面是使用了模板增强语法的一个简单实例，许多在原生小程序上很繁琐的模板描述在增强语法的帮助下变得清晰简洁：
 

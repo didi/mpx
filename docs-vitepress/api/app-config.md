@@ -177,4 +177,4 @@ mpx.config.webConfig.routeConfig = {
 // 禁用页面切换动画
 mpx.config.webConfig.disablePageTransition = true
 ```
-此处的 `disablePageTransition` 后续将被废弃，请使用编译阶段的[disablePageTransition](./compile.md#webconfig)进行配置
+此处的 `disablePageTransition` 后续将被废弃，请使用编译阶段的[disablePageTransition](compile.md#webconfig)进行配置

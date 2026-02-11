@@ -16,7 +16,7 @@
 
 ## 页面模板 {#page-template}
 
-页面模板的写法与组件模板相同，具体可参考[模版语法](./template.md)。页面模板与页面数据结合后生成的节点树，将被渲染到页面上。
+页面模板的写法与组件模板相同，具体可参考[模版语法](template.md)。页面模板与页面数据结合后生成的节点树，将被渲染到页面上。
 
 ## 页面构造 {#page-constructor}
 
@@ -96,12 +96,12 @@ Mpx 中页面的构造选项与组件高度一致，支持 `data`、`computed`�
 
 | 选项 | 说明 | 详细介绍 |
 | :--- | :--- | :--- |
-| data | 页面的初始数据 | [data](./component.md#data) |
-| computed | 计算属性，用于声明依赖于其他数据的计算属性 | [computed](./component.md#computed) |
-| watch | 侦听器，用于监听数据的变化并执行相应的回调 | [watch](./component.md#watch) |
-| methods | 页面方法，包括事件响应函数和任意的自定义方法 | [methods](./component.md#methods) |
+| data | 页面的初始数据 | [data](component.md#data) |
+| computed | 计算属性，用于声明依赖于其他数据的计算属性 | [computed](component.md#computed) |
+| watch | 侦听器，用于监听数据的变化并执行相应的回调 | [watch](component.md#watch) |
+| methods | 页面方法，包括事件响应函数和任意的自定义方法 | [methods](component.md#methods) |
 | provide / inject | 依赖注入，用于跨层级组件分发数据 | [provide / inject](./component.md#provide-inject) |
-| setup | 组合式 API 入口，返回页面所需的数据和方法 | [setup](./component.md#setup) |
+| setup | 组合式 API 入口，返回页面所需的数据和方法 | [setup](component.md#setup) |
 
 > **注意**
 > - Mpx 底层默认使用 Component 构造器创建页面，因此自定义方法需要放置在 `methods` 选项中，这与原生小程序 Page 构造器直接挂载在配置对象下不同。
@@ -150,16 +150,16 @@ Mpx 中页面的构造选项与组件高度一致，支持 `data`、`computed`�
 | 方法/属性 | 说明 | 详细介绍 |
 | :--- | :--- | :--- |
 | route | 当前页面的路径，类型为 String | - |
-| getPageId | 返回页面标识符 | [getPageId](./component.md#getpageid) |
-| selectComponent | 使用选择器选择组件实例节点 | [selectComponent](./component.md#selectcomponent) |
-| selectAllComponents | 使用选择器选择组件实例节点，返回全部匹配节点 | [selectAllComponents](./component.md#selectallcomponents) |
-| createSelectorQuery | 创建一个 SelectorQuery 对象 | [createSelectorQuery](./component.md#createselectorquery) |
-| createIntersectionObserver | 创建一个 IntersectionObserver 对象 | [createIntersectionObserver](./component.md#createintersectionobserver) |
-| $watch | 动态创建一个侦听器 | [$watch](./component.md#$watch) |
-| $forceUpdate | 强制更新视图 | [$forceUpdate](./component.md#$forceupdate) |
-| $nextTick | 延迟到下次 DOM 更新循环之后执行 | [$nextTick](./component.md#$nexttick) |
-| $set | 向响应式对象中添加一个 property | [$set](./component.md#$set) |
-| $delete | 删除对象的 property | [$delete](./component.md#$delete) |
+| getPageId | 返回页面标识符 | [getPageId](component.md#getpageid) |
+| selectComponent | 使用选择器选择组件实例节点 | [selectComponent](component.md#selectcomponent) |
+| selectAllComponents | 使用选择器选择组件实例节点，返回全部匹配节点 | [selectAllComponents](component.md#selectallcomponents) |
+| createSelectorQuery | 创建一个 SelectorQuery 对象 | [createSelectorQuery](component.md#createselectorquery) |
+| createIntersectionObserver | 创建一个 IntersectionObserver 对象 | [createIntersectionObserver](component.md#createintersectionobserver) |
+| $watch | 动态创建一个侦听器 | [$watch](component.md#watch) |
+| $forceUpdate | 强制更新视图 | [$forceUpdate](component.md#forceupdate) |
+| $nextTick | 延迟到下次 DOM 更新循环之后执行 | [$nextTick](component.md#nexttick) |
+| $set | 向响应式对象中添加一个 property | [$set](component.md#set) |
+| $delete | 删除对象的 property | [$delete](component.md#delete) |
 
 ## 页面样式 {#page-style}
 

@@ -86,5 +86,5 @@ src/
 
 ## 下一步 {#next-step}
 
-- [条件编译机制](./conditional.md) - 了解如何处理平台差异
+- [条件编译机制](conditional.md) - 了解如何处理平台差异
 - [平台差异处理](./differences.md) - 掌握差异抹平技巧

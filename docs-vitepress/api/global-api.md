@@ -375,7 +375,7 @@ createComponent({
 
 ### SERVERPREFETCH
 
-选项式 API 中使用，作用同[onServerPrefetch](composition-api.md#onServerPrefetch)
+选项式 API 中使用，作用同[onServerPrefetch](composition-api.md#onserverprefetch)
 
 ### BEFOREUNMOUNT
 

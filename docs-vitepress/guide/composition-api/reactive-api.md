@@ -191,7 +191,7 @@ setTimeout(() => {
 
 ### 停止侦听 {#stop-watching}
 
-当 `watchEffect` 在组件的 [setup()](composition-api.md#Setup) 函数或[生命周期钩子](composition-api.md#lifecycle-hooks)被调用时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。
+当 `watchEffect` 在组件的 [setup()](composition-api.md#setup) 函数或[生命周期钩子](composition-api.md#lifecycle-hooks)被调用时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。
 
 在一些情况下，也可以显式调用返回值以停止侦听：
 

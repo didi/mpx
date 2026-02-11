@@ -45,7 +45,7 @@
 
 ## 组件模板 {#component-template}
 
-组件模板的写法与页面模板相同，具体可参考[模版语法](./template.md)。组件模板与组件数据结合后生成的节点树，将被插入到组件的引用位置上。
+组件模板的写法与页面模板相同，具体可参考[模版语法](template.md)。组件模板与组件数据结合后生成的节点树，将被插入到组件的引用位置上。
 
 ### 组件模板的 slot {#component-template-slot}
 
@@ -160,7 +160,7 @@ interface ComponentOptions {
 
 data 可以是一个函数返回一个普通 JavaScript 对象，也可以是一个普通 JavaScript 对象。
 
-关于 data 的响应式特性及详细使用，请参考 [data](./reactive.md#data)。
+关于 data 的响应式特性及详细使用，请参考 [data](reactive.md#data)。
 
 ### properties
 
@@ -201,7 +201,7 @@ properties 定义包含以下选项：
 > 1. 属性名应避免以 data 开头，例如 data-xyz="" 会被作为节点 dataset 来处理
 > 2. 在组件定义和使用时，属性名和 data 字段相互间都不能冲突
 
-关于 properties 的响应式特性及详细使用，请参考 [properties](./reactive.md#properties)。
+关于 properties 的响应式特性及详细使用，请参考 [properties](reactive.md#properties)。
 
 ### computed
 
@@ -229,7 +229,7 @@ interface ComponentOptions {
 
 该选项接收一个对象，其中键是计算属性的名称，值是一个计算属性 getter，或一个具有 get 和 set 方法的对象 (用于声明可写的计算属性)。
 
-关于 computed 的缓存特性及详细使用，请参考 [计算属性 (Computed)](./reactive.md#计算属性-computed)。
+关于 computed 的缓存特性及详细使用，请参考 [计算属性 (Computed)](reactive.md#computed)。
 
 ### watch
 
@@ -265,7 +265,7 @@ watch 选项用于监听数据的变化并执行相应的回调函数。支持�
   - `'post'`: 视图更新后执行（默认值）
   - `'pre'`: 视图更新前执行
 
-关于 watch 的详细使用及异步更新策略，请参考 [侦听器 (Watch)](./reactive.md#侦听器-watch)。
+关于 watch 的详细使用及异步更新策略，请参考 [侦听器 (Watch)](reactive.md#watch)。
 
 ### methods
 
@@ -596,7 +596,7 @@ interface ComponentInstance {
 
 用于动态地创建一个侦听器，返回一个取消观察函数。
 
-详细用法请参考 [实例方法 $watch](./reactive.md#实例方法-watch)。
+详细用法请参考 [实例方法 $watch](reactive.md#instance-method-watch)。
 
 ### $forceUpdate
 
@@ -612,19 +612,19 @@ interface ComponentInstance {
 
 将回调延迟到下次 DOM 更新循环之后执行。在修改数据之后立即使用它，然后等待 DOM 更新。
 
-详细用法请参考 [异步更新队列](./reactive.md#async-update-queue)。
+详细用法请参考 [异步更新队列](reactive.md#async-update-queue)。
 
 ### $set
 
 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
 
-详细用法请参考 [检测变化的注意事项 - 对象](./reactive.md#objects)。
+详细用法请参考 [检测变化的注意事项 - 对象](reactive.md#objects)。
 
 ### $delete
 
 删除对象的 property。如果对象是响应式的，确保删除能触发更新视图。
 
-详细用法请参考 [检测变化的注意事项 - 对象](./reactive.md#objects)。
+详细用法请参考 [检测变化的注意事项 - 对象](reactive.md#objects)。
 
 ## 组件样式 {#component-style}
 

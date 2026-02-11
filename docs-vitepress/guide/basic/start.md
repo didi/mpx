@@ -158,7 +158,7 @@ json 区块完全支持小程序原生的[app.json 配置](https://developers.we
 
 进入 src/pages/index.mpx，可以看到同样是.vue 风格的单文件结构，比起上面的 app.mpx 多了一个 template 区块，用于定义页面模板，除了支持小程序本身的全部模块语法和指令外，mpx 还参考 vue 提供了大量[模板增强指令](../../api/directives.md)，便于用户更快速高效地进行界面开发。
 
-在 js 中调用 createPage 创建页面时，除了支持原本小程序支持的[Page 配置](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html)外，我们还支持以[数据响应](./reactive.md)为核心的一系列增强能力。
+在 js 中调用 createPage 创建页面时，除了支持原本小程序支持的[Page 配置](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html)外，我们还支持以[数据响应](reactive.md)为核心的一系列增强能力。
 
 在 json 中，我们同样支持原生的[页面 json 配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/page.html)，此外，我们能够直接在`usingComponents`中填写 npm 地址引用 npm 包中的组件，mpx 组件和原生小程序组件均可引用，无需调用开发者工具 npm 编译，且能够通过依赖收集按需进行打包。
 
