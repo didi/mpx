@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/window/wx.onWindowResize.html)
 
-### 参数
+### 参数 {#parameters}
 
 **function listener**\
 窗口尺寸变化事件的监听函数
@@ -15,7 +15,7 @@
 
 **Object res**
 
-### 示例代码
+### 示例代码 {#example-code}
 
 <table>
   <thead>

@@ -1,6 +1,6 @@
-# 快速开始
+# 快速开始 {#quick-start}
 
-## 安装脚手架
+## 安装脚手架 {#install-scaffold}
 
 ::: code-group
 
@@ -20,7 +20,7 @@ yarn global add @mpxjs/cli
 
 > @mpxjs/cli 文档 https://github.com/mpx-ecology/mpx-cli
 
-## 创建项目安装依赖
+## 创建项目安装依赖 {#create-project-install-dep}
 
 在当前目录下创建 mpx 项目。
 
@@ -44,9 +44,9 @@ npm install
 
 补充提示：
 
-- 推荐的 IDE 配置是 [VS Code](https://code.visualstudio.com) + [Mpx (Official)](https://marketplace.visualstudio.com/items?itemName=mpxjs.mpx-official) 扩展。如果使用其他编辑器，参考 [IDE 支持章节](/guide/basic/ide.html)。
+- 推荐的 IDE 配置是 [VS Code](https://code.visualstudio.com) + [Mpx (Official)](https://marketplace.visualstudio.com/items?itemName=mpxjs.mpx-official) 扩展。如果使用其他编辑器，参考 [IDE 支持章节](ide.md)。
 
-## 编译构建
+## 编译构建 {#compile-build}
 
 相关命令
 
@@ -63,7 +63,7 @@ npm install
 npm run serve
 ```
 
-### CLI 命令
+### CLI 命令 {#cli-commands}
 
 #### build
 
@@ -80,7 +80,7 @@ npm run serve
 ```
 
 ```sh
-# 构建小程序，默认微信
+# 构建小程序，默认微信 {#build-miniprogram-wechat}
 mpx-cli-service build --targets=wx,ali
 ```
 
@@ -112,13 +112,13 @@ mpx-cli-service build --targets=wx,ali
   --env        自定义 __mpx_env__
 ```
 
-## 预览调试
+## 预览调试 {#preview-debug}
 
 使用小程序开发者工具打开 dist 下对应平台的目录，对你的小程序进行预览、调试，详情可参考[小程序开发指南](https://developers.weixin.qq.com/miniprogram/dev/framework/quickstart/getstart.html)
 
 > 开启小程序开发者工具的 watch 选项，配合 mpx 本身的 watch，能够得到很好的开发调试体验。
 
-## 开始 code
+## 开始 code {#start-code}
 
 在 Mpx 中，我们使用`@mpxjs/core`提供的 createApp、createPage 和 createComponent 函数（分别对应原生小程序中的 App、Page 和 Component）来创建 App、页面和组件，我们下面根据脚手架创建出的初始项目目录，进行简单的介绍。
 
@@ -222,7 +222,7 @@ json 区块完全支持小程序原生的[app.json 配置](https://developers.we
 
 更多用法可以查看我们的官方实例：[https://github.com/didi/mpx/tree/master/examples/](https://github.com/didi/mpx/tree/master/examples/)
 
-## 跨平台输出
+## 跨平台输出 {#cross-platform-output}
 
 如果你选择的 base 平台为微信，mpx 提供了强大的跨平台输出能力，能够将你的小程序源码输出到目前业内的全部小程序平台(微信/支付宝/百度/头条/QQ)中和 web 平台中运行。
 

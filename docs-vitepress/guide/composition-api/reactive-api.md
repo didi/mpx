@@ -1,8 +1,8 @@
-# 响应式 API
+# 响应式 API {#reactive-api}
 
 在 Mpx 中，为了支持[组合式 API](composition-api.md) 的使用，我们参考 Vue3 提供了相关的响应式 API，但由于 `proxy` 目前仍然存在浏览器兼容性问题，我们在底层还是基于 `Object.defineProperty` 实现的数据响应，因此相较于 Vue3 提供的 API 存在一些删减，同时也存在与 Vue2 一样的数据响应[使用限制](https://v2.cn.vuejs.org/v2/guide/reactivity.html#%E6%A3%80%E6%B5%8B%E5%8F%98%E5%8C%96%E7%9A%84%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9)。
 
-## 创建响应式对象
+## 创建响应式对象 {#create-reactive-object}
 
 在 Mpx 中，我们可以使用 `reactive` 方法将一个 JavaScript 对象**深度转换**为响应式对象，当对象内数据发生变化时能够被系统感知，相当于 Vue2 中的 `observable`，需要注意的是在 Mpx 中 `reactive()` 是将传入的对象进行响应性转化后返回原对象，而在 Vue3 中则会基于 `proxy` API 返回传入对象的响应式代理。
 
@@ -42,7 +42,7 @@ count.value++
 console.log(count.value) // 1
 ```
 
-### Ref 解包
+### Ref 解包 {#ref-unwrapping}
 
 当 `ref` 作为渲染上下文 (从 `setup()` 中返回的对象) 上的 property 返回并可以在模板中被访问时，它将自动浅层次解包内部值。只有访问嵌套的 ref 时需要在模板中添加 `.value`：
 
@@ -71,7 +71,7 @@ console.log(count.value) // 1
 </script>
 ```
 
-### 访问响应式对象
+### 访问响应式对象 {#access-reactive-object}
 
 当 `ref` 作为响应式对象的 property 被访问或更改时，为使其行为类似于普通 property，它会自动解包内部值：
 
@@ -105,7 +105,7 @@ const arr = reactive([ref('Hello world')])
 console.log(arr[0].value)
 ```
 
-## 响应式对象解构
+## 响应式对象解构 {#reactive-object-destructure}
 
 当我们想使用大型响应式对象的一些 property 时，可能很想使用 **ES6 解构**来获取我们想要的 property：
 
@@ -141,7 +141,7 @@ console.log(people.age) // 30
 
 你可以在[Refs API](../../api/reactivity-api.md#refs) 章节中了解更多关于 `refs` 的信息。
 
-## 计算值
+## 计算值 {#computed-values}
 
 有时我们需要依赖于其他状态的状态——在 选项式 API 中，这是用组件计算属性处理的，在新的组合式 API 中，我们可以使用 `computed` 函数直接创建计算值：它接受 getter 函数并为 getter 返回的值返回一个不可变的响应式 ref 对象。
 
@@ -189,7 +189,7 @@ setTimeout(() => {
 }, 100)
 ```
 
-### 停止侦听
+### 停止侦听 {#stop-watching}
 
 当 `watchEffect` 在组件的 [setup()](composition-api.md#Setup) 函数或[生命周期钩子](composition-api.md#lifecycle-hooks)被调用时，侦听器会被链接到该组件的生命周期，并在组件卸载时自动停止。
 
@@ -204,7 +204,7 @@ const stop = watchEffect(() => {
 stop()
 ```
 
-### 清除副作用
+### 清除副作用 {#cleanup-side-effect}
 
 有时副作用函数会执行一些异步的副作用，这些响应需要在其失效时清除 (即完成之前状态已改变了) 。所以侦听副作用传入的函数可以接收一个 `onInvalidate` 函数作入参，用来注册清理失效时的回调。当以下情况发生时，这个失效回调会被触发：
 
@@ -238,7 +238,7 @@ watchEffect(async onInvalidate => {
 
 我们知道异步函数都会隐式地返回一个 Promise，但是清理函数必须要在 Promise 被 resolve 之前被注册。
 
-### 副作用刷新时机
+### 副作用刷新时机 {#side-effect-flush-timing}
 
 默认情况下，数据发生变更时，关联的副作用会被推入异步队列中，进行异步刷新，这样可以避免同一个“tick” 中多个状态改变导致的不必要的重复调用。在核心的具体实现中，组件的 `render` 函数也是一个被侦听的副作用。当一个用户定义的副作用函数进入队列时，默认情况下，会在所有的组件 `render` 前执行：
 
@@ -299,7 +299,7 @@ watchEffect(
   * 更具体地说明什么状态应该触发侦听器重新运行；
   * 访问侦听状态变化前后的值。
   
-### 侦听单个数据源
+### 侦听单个数据源 {#watch-single-source}
 
 侦听器数据源可以是返回值的 getter 函数，也可以直接是 `ref`：
 
@@ -320,7 +320,7 @@ watch(count, (count, prevCount) => {
 })
 ```
 
-### 侦听多个数据源
+### 侦听多个数据源 {#watch-multiple-sources}
 
 侦听器还可以使用数组同时侦听多个源：
 
@@ -371,7 +371,7 @@ const changeValues = async () => {
 }
 ```
 
-### 侦听响应式对象
+### 侦听响应式对象 {#watch-reactive-object}
 
 为了侦听深度嵌套的对象或数组中 property 变化，我们需要将 `deep` 选项设置为 true：
 
@@ -443,9 +443,9 @@ watch(
 state.attributes.name = 'Alex' // 日志: "implicit deep" "Alex" "Alex"
 ```
 
-> 需要注意的是，在侦听使用 `reactive()` 创建的响应式对象时，受数据响应限制影响，在改变数组或使用 `set()` 新增对象属性时，存在和 Vue3 中表现不一致的情况，详情查看[这里](#数据响应限制带来的差异)
+> 需要注意的是，在侦听使用 `reactive()` 创建的响应式对象时，受数据响应限制影响，在改变数组或使用 `set()` 新增对象属性时，存在和 Vue3 中表现不一致的情况，详情查看[这里](#reactivity-limit-diff)
 
-### 立即回调的侦听器
+### 立即回调的侦听器 {#immediate-watch}
 
 同选项式 `watch` 一致，我们也可以通过传递 `immediate` 选项让侦听回调立即执行：
 
@@ -463,11 +463,11 @@ watch(
 )
 ```
 
-### 与 watchEffect 共享的行为
+### 与 watchEffect 共享的行为 {#shared-behavior-with-watcheffect}
 
-`watch` 与 `watchEffect` 共享[停止侦听](#停止侦听)，[清除副作用](#清除副作用) (相应地 `onInvalidate` 会作为回调的第三个参数传入)、[副作用刷新时机](#副作用刷新时机)行为。
+`watch` 与 `watchEffect` 共享[停止侦听](#stop-watching)，[清除副作用](#cleanup-side-effect) (相应地 `onInvalidate` 会作为回调的第三个参数传入)、[副作用刷新时机](#side-effect-flush-timing)行为。
 
-## 响应式 API 与 Vue3 中的区别
+## 响应式 API 与 Vue3 中的区别 {#diff-reactive-api-vue3}
 
 下面我们来总结一下 Mpx 中响应式 API 与 Vue3 中的区别：
 
@@ -477,7 +477,7 @@ watch(
 * 不支持对 `map`、`set` 等集合类型进行响应式转换
 * 受到 `Object.defineProperty` 实现带来的数据响应限制影响
 
-### 数据响应限制带来的差异
+### 数据响应限制带来的差异 {#reactivity-limit-diff}
 
 同 Vue2 一致，Mpx 无法感知到对象 property 的添加或移除，我们暴露了 `set` 和 `del` API 来让用户显式地进行相关操作：
 

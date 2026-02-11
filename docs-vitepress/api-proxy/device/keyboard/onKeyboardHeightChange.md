@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/keyboard/wx.onKeyboardHeightChange.html)
 
-### 参数
+### 参数 {#parameters}
 
 **function listener**\
 键盘高度变化事件的监听函数
@@ -20,7 +20,7 @@
 | height| number | 键盘高度 |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 mpx.onKeyboardHeightChange(res => {
   console.log(res.height)

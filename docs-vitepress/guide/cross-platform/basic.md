@@ -1,8 +1,8 @@
-# 跨端输出配置
+# 跨端输出配置 {#cross-platform-output-config}
 
 Mpx以微信增强DSL为基础，支持跨端输出至多端小程序、web和客户端，包括支付宝、百度、抖音、京东、QQ等多端小程序平台，基于Vue的web平台，和基于react-native的ios、android及鸿蒙平台。
 
-## 跨端输出配置
+## 跨端输出配置 {#cross-platform-output-config}
 
 配置mpx进行跨端输出十分简单，找到项目构建的webpack配置，在@mpxjs/webpack-plugin的配置参数中设置mode和srcMode参数即可。
 
@@ -26,9 +26,9 @@ new MpxwebpackPlugin({
 }
 ```
 
-## 支持的平台
+## 支持的平台 {#supported-platforms}
 
-### 小程序平台
+### 小程序平台 {#miniprogram-platform}
 - 微信小程序 (wx)
 - 支付宝小程序 (ali)
 - 百度小程序 (swan)
@@ -36,41 +36,41 @@ new MpxwebpackPlugin({
 - 抖音小程序 (tt)
 - 京东小程序 (jd)
 
-### Web平台
+### Web平台 {#web-platform}
 - 基于Vue的Web应用 (web)
 
-### 客户端平台
+### 客户端平台 {#client-platform}
 - iOS应用 (ios)
 - Android应用 (android)
 - 鸿蒙应用 (harmony)
 
-## 构建命令
+## 构建命令 {#build-command}
 
-### 单平台构建
+### 单平台构建 {#single-platform-build}
 ```bash
-# 构建微信小程序
+# 构建微信小程序 {#build-wechat-miniprogram}
 npm run build:wx
 
-# 构建支付宝小程序
+# 构建支付宝小程序 {#build-alipay-miniprogram}
 npm run build:ali
 
-# 构建Web应用
+# 构建Web应用 {#build-web-app}
 npm run build:web
 
-# 构建iOS应用
+# 构建iOS应用 {#build-ios-app}
 npm run build:ios
 ```
 
-### 多平台构建
+### 多平台构建 {#multi-platform-build}
 ```bash
-# 构建所有支持的平台
+# 构建所有支持的平台 {#build-all-platforms}
 npm run build:cross
 
-# 构建指定的多个平台
+# 构建指定的多个平台 {#build-specific-platforms}
 mpx-cli-service build --targets=wx,ali,web
 ```
 
-## 项目结构
+## 项目结构 {#project-structure}
 
 跨端项目的典型目录结构：
 
@@ -84,7 +84,7 @@ src/
 └── app.json            # 应用配置
 ```
 
-## 下一步
+## 下一步 {#next-step}
 
 - [条件编译机制](./conditional.md) - 了解如何处理平台差异
 - [平台差异处理](./differences.md) - 掌握差异抹平技巧

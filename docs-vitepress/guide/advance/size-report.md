@@ -1,4 +1,4 @@
-# 包体积分析
+# 包体积分析 {#bundle-size-analysis}
 
 目前业内主流小程序平台都对小程序的代码包设置了严格的体积限制，微信是单包 2MB，总包 16MB，支付宝是单包 2MB，总包 8MB；包体积作为有限的资源，在小程序业务开发中异常重要，特别对于像滴滴出行这样的大型复杂业务。
 
@@ -6,13 +6,13 @@ Mpx 在包体积控制上做了很多工作，主要包括：
 * [完善的分包支持](./subpackage.md#分包)
 * [基于依赖声明的按需构建](./npm.md)
 * [图像资源处理](./image-process.md)
-* [公共样式复用](../basic/css.md#公共样式复用)
+* [公共样式复用](../basic/css.md#common-style-reuse)
 
 此外由于 Mpx 的编译构建完全基于 webpack，也能够直接复用webpack生态自带的代码压缩，模块复用，tree shaking，side effects 等能力对代码体积进行优化。
 
 但是系统能做的工作终究有限，在一些人为不规范操作的影响下，最终输出的项目依然可能存在大量优化空间，比如在业务中不会被调用但无法被 tree shaking / side effects 移除的代码，因为 npm 依赖版本不统一造成的重复依赖，未经压缩的图像静态资源等，在大型项目中，这些问题想要被发现会非常困难，因此我们非常需要一个体积分析工具来管控项目体积和发现隐藏的体积问题。
 
-## 与 webpack-bundle-analyzer 的区别
+## 与 webpack-bundle-analyzer 的区别 {#diff-webpack-bundle-analyzer}
 
 `webpack-bundle-analyzer` 提供了非常完善的体积分析和可视化展示能力，但是在 Mpx 构建输出小程序场景下，其所提供的能力还是有所缺失：
 * 只能对 js 资源进行模块体积分析，而小程序的输出中包含了大量的非 js 静态资源，如 wxss / wxml / json 等，这些资源的体积都不会被统计分析；
@@ -21,13 +21,13 @@ Mpx 在包体积控制上做了很多工作，主要包括：
 
 由于上述原因，我们提供了`@mpxjs/size-report`插件提供包体积分析能力，弥补了 `webpack-bundle-analyzer` 的能力缺失，为业务提供了便捷准确的包体积管控优化抓手。
 
-## 使用方法
+## 使用方法 {#usage}
 
-#### 安装插件
+#### 安装插件 {#install-plugin}
 ```
 npm i @mpxjs/size-report --save-dev
 ```
-#### 配置插件
+#### 配置插件 {#config-plugin}
 在项目 webpack.config 文件中配置使用 `@mpxjs/size-report` 插件即可使用，简单示例如下：
 
 ```js
@@ -190,7 +190,7 @@ module.exports = defineConfig({
 [![size-report](https://gift-static.hongyibo.com.cn/static/kfpub/3547/feat3.png)](https://mpxjs.cn)
 
 
-## 业务实践
+## 业务实践 {#business-practice}
 目前 sizeReport 工具在滴滴出行小程序, 花小猪, 青桔骑行, 特惠出行小程序以及一部分外部小程序中使用。
 
 在滴滴出行小程序中，配置使用 @mpxjs/size-report 插件后使包体积管控和优化更加工程化：
@@ -199,5 +199,5 @@ module.exports = defineConfig({
 
 * 基于各小程序平台对小程序总包，主包，分包有大小限制的原则，给各接入方配置了主包和首页分包体积大小占比阈值，在构建时检测到包体积超过阈值时，抛出 error 阻断构建，开发者可通过 size-report.json 中详细的包体积分析准确的找到体积变动点。
 
-## 总结
+## 总结 {#summary}
 Mpx sizeReport 工具对小程序体积计算有更细微(模块级别)的体积展示。 更加适合小程序开发场景的包体积分析。

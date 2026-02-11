@@ -1,4 +1,4 @@
-# 模板语法
+# 模板语法 {#template-syntax}
 
 Mpx中的模板语法以小程序模板语法为基础，支持小程序的全部模板语法，同时提供了一系列增强的模板指令及语法。
 
@@ -6,16 +6,16 @@ Mpx中的模板语法以小程序模板语法为基础，支持小程序的全�
 
 Mpx提供的增强指令语法如下：
 
-* [wx:style动态样式](./class-style-binding.md#样式绑定)
-* [wx:class动态类名](./class-style-binding.md#类名绑定)
+* [wx:style动态样式](./class-style-binding.md#style-binding)
+* [wx:class动态类名](./class-style-binding.md#class-binding)
 * [wx:model双向绑定](./two-way-binding.md)
-* [wx:model-prop双向绑定属性](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
-* [wx:model-event双向绑定事件](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
-* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#更改双向绑定事件数据路径)
-* [wx:model-filter双向绑定过滤器](./two-way-binding.md#双向绑定过滤器)
+* [wx:model-prop双向绑定属性](./two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-event双向绑定事件](./two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#change-two-way-binding-path)
+* [wx:model-filter双向绑定过滤器](./two-way-binding.md#two-way-binding-filter)
 * [wx:ref获取实例](./refs.md)
 * [wx:show隐藏显示](./conditional-render.md)
-* [component动态组件](./component.md#动态组件)
+* [component动态组件](./component.md#dynamic-component)
 * [事件处理内联传参](./event.md)
 * [模板条件编译](./template.md)
 
@@ -104,7 +104,7 @@ Mpx提供的增强指令语法如下：
 </script>
 ```
 
-## 模板预编译
+## 模板预编译 {#template-precompile}
 
 Mpx还支持开发者使用插值语法与小程序不冲突第三方的模板引擎语法来编写template，如pug：
 

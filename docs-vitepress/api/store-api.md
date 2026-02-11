@@ -19,13 +19,13 @@ function createStore(options: Object): Store
 
       store的根 state 对象。
 
-      [详细介绍](../guide/advance/store.html#state)
+      [详细介绍](../guide/advance/store.md#state)
 
     - **mutations**: `{ [type: string]: Function }`
 
       在 store 上注册 mutation，处理函数总是接受 state 作为第一个参数（如果定义在模块中，则为模块的局部状态），payload 作为第二个参数（可选）。
 
-      [详细介绍](../guide/advance/store.html#mutation)
+      [详细介绍](../guide/advance/store.md#mutation)
 
     - **actions**: `{ [type: string]: Function }`
 
@@ -42,7 +42,7 @@ function createStore(options: Object): Store
           ```
       同时如果有第二个参数 payload 的话也能够接收。
 
-      [详细介绍](../guide/advance/store.html#action)
+      [详细介绍](../guide/advance/store.md#action)
 
     - **getters**：`{[key: string]: Function }`
 
@@ -55,7 +55,7 @@ function createStore(options: Object): Store
         ```
       注册的 getter 暴露为 store.getters。
 
-      [详细介绍](../guide/advance/store.html#getter)
+      [详细介绍](../guide/advance/store.md#getter)
 
     - **modules**：`Object`
 
@@ -76,7 +76,7 @@ function createStore(options: Object): Store
 
       与根模块的选项一样，每个模块也包含 state 和 mutations 选项。模块的状态使用 key 关联到 store 的根状态。模块的 mutation 和 getter 只会接收 module 的局部状态作为第一个参数，而不是根状态，并且模块 action 的 context.state 同样指向局部状态。
 
-      [详细介绍](../guide/advance/store.html#modules)
+      [详细介绍](../guide/advance/store.md#modules)
 
     - **deps**：`Object`
 
@@ -87,7 +87,7 @@ function createStore(options: Object): Store
           store2: storeB
         }
         ```
-      [详细介绍](../guide/advance/store.html#modules)
+      [详细介绍](../guide/advance/store.md#modules)
 
 
 ```js
@@ -111,50 +111,50 @@ const store1 = createStore({
 const store2 = createStore({ ...options })
 ```
 
-### **Store 实例属性**
+### **Store 实例属性** {#store-instance-properties}
 
 * **state**：`Object`
     根状态。
 *  **getters**：`Object`
    暴露出注册的 getter。
 
-### **Store 实例方法**
+### **Store 实例方法** {#store-instance-methods}
 
 * commit
 ```js
 commit(type: string, payload?: any, options?: Object) | commit(mutation: Object, options?: Object)
 ```
-提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
+提交 mutation。[详细介绍](../guide/advance/store.md#mutation)
 
 * dispatch
 ```js
 dispatch(type: string, payload?: any, options?: Object) | dispatch(action: Object, options?: Object)
 ```
-分发 action。返回一个Promise。[详细介绍](../guide/advance/store.html#action)
+分发 action。返回一个Promise。[详细介绍](../guide/advance/store.md#action)
 
 * mapState
 ```js
 mapState(map: Array<string> | Object): Object
 ```
-为组件创建计算属性以返回 store 中的状态。[详细介绍](../guide/advance/store.html#state)
+为组件创建计算属性以返回 store 中的状态。[详细介绍](../guide/advance/store.md#state)
 
 * mapGetters
 ```js
 mapGetters(map: Array<string> | Object): Object
 ```
-为组件创建计算属性以返回 getter 的返回值。[详细介绍](../guide/advance/store.html#getter)
+为组件创建计算属性以返回 getter 的返回值。[详细介绍](../guide/advance/store.md#getter)
 
 * mapActions
 ```js
 mapActions(map: Array<string> | Object): Object
 ```
-创建组件方法分发 action。[详细介绍](../guide/advance/store.html#action)
+创建组件方法分发 action。[详细介绍](../guide/advance/store.md#action)
 
 * mapMutations
 ```js
 mapMutations(map: Array<string> | Object): Object
 ```
-创建组件方法提交 mutation。[详细介绍](../guide/advance/store.html#mutation)
+创建组件方法提交 mutation。[详细介绍](../guide/advance/store.md#mutation)
 
 * mapStateToRefs
 ```ts
@@ -162,7 +162,7 @@ mapStateToRefs(maps: Array<string> | Object): {
     [key: string]: ComputedRef<any>
 }
 ```
-**组合式 API 特有**，在组合式 API 场景下解构访问 getter 并保持 getter 响应性，可以使用该方法。[详细介绍](../guide/advance/store.html#use-store-in-composition-api)
+**组合式 API 特有**，在组合式 API 场景下解构访问 getter 并保持 getter 响应性，可以使用该方法。[详细介绍](../guide/advance/store.md#use-store-in-composition-api)
 
 * mapGettersToRefs
 ```js
@@ -170,7 +170,7 @@ mapGettersToRefs(maps: Array<string> | Object): {
     [key: string]: ComputedRef<any>
 }
 ```
-**组合式 API 特有**，在组合式 API 场景下需解构访问 state 并保持 state 响应性，可以使用该方法。[详细介绍](../guide/advance/store.html#use-store-in-composition-api)
+**组合式 API 特有**，在组合式 API 场景下需解构访问 state 并保持 state 响应性，可以使用该方法。[详细介绍](../guide/advance/store.md#use-store-in-composition-api)
 
 ## createStoreWithThis
 

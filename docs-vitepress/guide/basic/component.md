@@ -1,4 +1,4 @@
-# 创建组件
+# 创建组件 {#create-component}
 
 在 Mpx 中也可以使用类似 Vue 中的单文件自定义组件，我们可以在每个组件内封装自定义内容和逻辑。
 
@@ -6,9 +6,9 @@
 
 > 作为参考，原生小程序自定义组件的规范详情查看[这里](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html)，但在 Mpx 中自定义组件所支持的属性和功能还需以当前文档为准。
 
-## 创建与使用
+## 创建与使用 {#create-and-use}
 
-使用 [createComponent](/api/global-api.html#createcomponent) 方法创建自定义组件，在父组件/页面中通过 `usingComponents` 注册使用。
+使用 [createComponent](../../api/global-api.md#createcomponent) 方法创建自定义组件，在父组件/页面中通过 `usingComponents` 注册使用。
 
 ```html
 <!--组件 components/list.mpx-->
@@ -43,11 +43,11 @@
 </script>
 ```
 
-## 组件模板
+## 组件模板 {#component-template}
 
 组件模板的写法与页面模板相同，具体可参考[模版语法](./template.md)。组件模板与组件数据结合后生成的节点树，将被插入到组件的引用位置上。
 
-### 组件模板的 slot
+### 组件模板的 slot {#component-template-slot}
 
 在组件模板中可以包含 slot 节点，用于承载组件使用者提供的模板结构。
 
@@ -106,7 +106,7 @@
 
 更多关于插槽的使用细节可查看[微信小程序官方文档](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html)。
 
-### 动态组件
+### 动态组件 {#dynamic-component}
 
 Mpx 中提供了使用方法类似于 Vue 的动态组件能力，这是一个基于 wx:if 实现的语法。通过对 `is` 属性进行动态绑定，可以实现在同一个挂载点切换多个组件，前提需要动态切换的组件已经在全局或者组件中完成注册。
 
@@ -144,7 +144,7 @@ Mpx 中提供了使用方法类似于 Vue 的动态组件能力，这是一个�
 ```
 
 
-## 组件构造
+## 组件构造 {#component-construction}
 
 下面详细介绍 `createComponent` 所支持的构造选项。
 
@@ -331,7 +331,7 @@ createComponent({
 
 一个包含组件选项对象的数组，这些选项都将被混入到当前组件的实例中。
 
-详情请查看[mixins](https://mpxjs.cn/guide/advance/mixin.html)
+详情请查看[mixins](../advance/mixin.md)
 
 ### setup
 
@@ -479,15 +479,15 @@ options 支持以下配置：
 
 | 选项           | 微信 | 支付宝   | 百度 | QQ  | 字节 | Web      | RN       | 说明                                                                                                                                                                                                  |
 | -------------- | ---- | -------- | ---- | --- | ---- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| virtualHost    | ✓    | 依赖编译 | ✗    | ✓   | ✓    | 依赖编译 | 依赖编译 | Mpx 跨端输出支付宝、web 和 RN 时需要通过[autoVirtualHostRules 编译配置](https://mpxjs.cn/api/compile.html#autovirtualhostrules)控制在编译时模拟实现该行为                                             |
-| styleIsolation | ✓    | 依赖编译 | ✗    | ✓   | ✗    | 依赖编译 | ✗        | 微信默认开启样式隔离，输出支付宝和 web 可以通过[autoScopeRules 编译配置](https://mpxjs.cn/api/compile.html#autoscoperules)或在 style 标签中添加 scoped 属性模拟实现样式隔离，输出 RN 目前强制样式隔离 |
+| virtualHost    | ✓    | 依赖编译 | ✗    | ✓   | ✓    | 依赖编译 | 依赖编译 | Mpx 跨端输出支付宝、web 和 RN 时需要通过[autoVirtualHostRules 编译配置](../../api/compile.md#autovirtualhostrules)控制在编译时模拟实现该行为                                             |
+| styleIsolation | ✓    | 依赖编译 | ✗    | ✓   | ✗    | 依赖编译 | ✗        | 微信默认开启样式隔离，输出支付宝和 web 可以通过[autoScopeRules 编译配置](../../api/compile.md#autoscoperules)或在 style 标签中添加 scoped 属性模拟实现样式隔离，输出 RN 目前强制样式隔离 |
 | multipleSlots  | ✓    | -        | -    | ✓   | -    | -        | -        | 目前仅微信和 QQ 使用多个 slot 需要配置 multipleSlots，其他平台默认支持使用多 slot                                                                                                                     |
 
 > **注意：**
 > virtualHost 在支付宝平台默认为 false
 > options 中的特性以微信小程序为 base，随着微信小程序的持续迭代，此处列出的特性可能会存在部分缺失。
 
-### 生命周期
+### 生命周期 {#lifecycle}
 
 在 Mpx 内组件生命周期可以使用[框架内置生命周期](框架内置生命周期)，也可以使用以微信原生 base 的生命周期，在使用微信原生 base 的生命周期时，在跨平台输出时，框架会对生命周期进行映射抹平，将不同小程序平台的生命周期转换映射为内置生命周期后再进行统一的驱动，以抹平不同小程序平台生命周期钩子的差异。
 
@@ -502,9 +502,9 @@ options 支持以下配置：
 | ready    | 在组件在视图层布局完成后调用 |
 | detached | 在组件实例销毁时调用         |
 
-在组合式 API 中，需要使用框架暴露的统一的[生命周期钩子](https://mpxjs.cn/api/composition-api.html#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%92%A9%E5%AD%90)
+在组合式 API 中，需要使用框架暴露的统一的[生命周期钩子](../../api/composition-api.md#lifecycle-hooks)
 
-### 页面生命周期
+### 页面生命周期 {#page-lifecycle}
 
 组件中访问页面生命周期
 
@@ -516,9 +516,9 @@ options 支持以下配置：
 | hide     | 组件所在页面隐藏         |
 | resize   | 组件所在页面尺寸发生变化 |
 
-在组合式 API 中，需要使用框架暴露的 onShow、onHide、onResize，详情可[查看](https://mpxjs.cn/api/composition-api.html#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E9%92%A9%E5%AD%90)
+在组合式 API 中，需要使用框架暴露的 onShow、onHide、onResize，详情可[查看](../../api/composition-api.md#lifecycle-hooks)
 
-## 组件实例方法
+## 组件实例方法 {#component-instance-methods}
 
 ### triggerEvent
 
@@ -612,21 +612,21 @@ interface ComponentInstance {
 
 将回调延迟到下次 DOM 更新循环之后执行。在修改数据之后立即使用它，然后等待 DOM 更新。
 
-详细用法请参考 [异步更新队列](./reactive.md#异步更新队列)。
+详细用法请参考 [异步更新队列](./reactive.md#async-update-queue)。
 
 ### $set
 
 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
 
-详细用法请参考 [检测变化的注意事项 - 对象](./reactive.md#对象)。
+详细用法请参考 [检测变化的注意事项 - 对象](./reactive.md#objects)。
 
 ### $delete
 
 删除对象的 property。如果对象是响应式的，确保删除能触发更新视图。
 
-详细用法请参考 [检测变化的注意事项 - 对象](./reactive.md#对象)。
+详细用法请参考 [检测变化的注意事项 - 对象](./reactive.md#objects)。
 
-## 组件样式
+## 组件样式 {#component-style}
 
 组件对应 wxss 文件的样式，只对组件模板内的节点生效。编写组件样式时，需要注意以下几点：
 
@@ -656,7 +656,7 @@ button {
 }
 ```
 
-### 外部样式类
+### 外部样式类 {#external-style-class}
 
 有时，组件希望接受外部传入的样式类。此时可以在 Component 中用 externalClasses 定义段定义若干个外部样式类。
 
@@ -726,9 +726,9 @@ externalClasses 支持以下功能：
 
 > **注意：**
 >
-> - 该功能默认在微信小程序可用，在跨平台输出时，需要在 @mpxjs/webpack-plugin 中配置相关的 externalClasses, 否则跨平台时该能力不生效，具体配置请[查看](https://mpxjs.cn/api/compile.html#externalclasses)。
+> - 该功能默认在微信小程序可用，在跨平台输出时，需要在 @mpxjs/webpack-plugin 中配置相关的 externalClasses, 否则跨平台时该能力不生效，具体配置请[查看](../../api/compile.md#externalclasses)。
 
-## 组件配置
+## 组件配置 {#component-config}
 
 在组件的 `json` 文件中，可以配置以下字段：
 
@@ -742,7 +742,7 @@ externalClasses 支持以下功能：
 
 组件泛型（抽象节点）用于在组件中声明一个节点，其对应的实际组件由组件的使用者决定。这使得组件可以接受不同的子组件，增强了组件的复用性。
 
-#### 在组件中使用
+#### 在组件中使用 {#use-in-component}
 
 首先，在组件的 JSON 中声明抽象节点：
 
@@ -766,7 +766,7 @@ externalClasses 支持以下功能：
 </view>
 ```
 
-#### 使用包含抽象节点的组件
+#### 使用包含抽象节点的组件 {#use-component-with-abstract-node}
 
 在使用该组件的页面或父组件中，需要通过 `generic:xxx="yyy"` 属性来指定具体的组件：
 
@@ -780,7 +780,7 @@ externalClasses 支持以下功能：
 1. `custom-radio` 必须在当前页面的 JSON `usingComponents` 中注册。
 2. `generic:xxx` 的值只能是静态字符串，不支持数据绑定。
 
-#### 指定默认组件
+#### 指定默认组件 {#specify-default-component}
 
 可以在声明抽象节点时指定一个默认组件，当使用者未指定具体组件时，将使用默认组件：
 

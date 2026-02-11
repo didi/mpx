@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/login/wx.checkSession.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -17,7 +17,7 @@
 | complete | function |        | 否   | 接口调用结束的回调函数（调用成功、失败都会执行） |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 mpx.checkSession({
   success () {

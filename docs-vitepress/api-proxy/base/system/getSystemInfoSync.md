@@ -7,7 +7,7 @@ mpx.getSystemInfo 的同步版本。
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getSystemInfoSync.html)
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 try {
   const res = mpx.getSystemInfoSync()

@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/interaction/wx.showActionSheet.html)
 
-### 参数
+### 参数 {#parameters}
 **Object object**
 
 | 属性 | 类型 | 默认值 | 必填 | 说明 | 微信最低版本 |
@@ -28,7 +28,7 @@
 |------|------|------|
 | tapIndex | number | 用户点击的按钮序号，从上到下的顺序，从0开始 |
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.showActionSheet({

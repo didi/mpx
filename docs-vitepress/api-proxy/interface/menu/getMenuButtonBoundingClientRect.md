@@ -8,7 +8,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/menu/wx.getMenuButtonBoundingClientRect.html)
 
-### 返回值
+### 返回值 {#return-value}
 
 **Object**\
 菜单按钮的布局位置信息
@@ -23,7 +23,7 @@
 | left  | number | 左边界坐标，单位：px |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 const res = mpx.getMenuButtonBoundingClientRect()

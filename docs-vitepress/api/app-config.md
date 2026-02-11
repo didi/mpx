@@ -1,5 +1,5 @@
 
-# 全局配置
+# 全局配置 {#global-config}
 
 `Mpx.config` 是一个对象，包含 Mpx 的全局配置。可以在启动应用之前修改下列 property：
 
@@ -86,7 +86,7 @@ mpx.config.ignoreConflictWhiteList = ['id', 'test']
 
 `Function`
 
-需要代理的事件的钩子方法，该钩子方法仅对内联传参事件或 [forceProxyEventRules](/api/compile.html#forceproxyeventrules) 规则匹配的事件生效。
+需要代理的事件的钩子方法，该钩子方法仅对内联传参事件或 [forceProxyEventRules](compile.md#forceproxyeventrules) 规则匹配的事件生效。
 
 ```js
 import mpx from '@mpxjs/core'

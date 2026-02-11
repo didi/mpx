@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/user-info/wx.getUserInfo.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -102,7 +102,7 @@
 | cloudID      | string   | 敏感数据对应的云 ID，开通云开发的小程序才会返回，可通过云调用直接获取开放数据，详细见云调用直接获取开放数据 | 2.7.0    |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.getUserInfo({

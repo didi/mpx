@@ -1,4 +1,4 @@
-# 创建 App
+# 创建 App {#create-app}
 
 Mpx 应用需要在 `app.mpx` 中调用 `createApp` 方法注册App实例，绑定生命周期回调函数、错误监听和页面不存在监听函数等。
 
@@ -52,7 +52,7 @@ Mpx 应用需要在 `app.mpx` 中调用 `createApp` 方法注册App实例，绑�
 </style>
 ```
 
-### 生命周期
+### 生命周期 {#lifecycle}
 
 *   **onLaunch(Object object)**
     小程序初始化完成时触发，全局只触发一次。
@@ -95,7 +95,7 @@ console.log(appInstance.globalData) // I am global data
 > - 不要在定义于 `App()` 内的函数中，或调用 `App` 前调用 `getApp()` ，使用 `this` 就可以拿到 app 实例。
 > - 通过 `getApp()` 获取实例之后，不要私自调用生命周期函数。
 
-## App 样式
+## App 样式 {#app-style}
 
 在 `app.mpx` 中定义的样式为全局样式，会作用于应用中的所有页面。
 
@@ -115,11 +115,11 @@ console.log(appInstance.globalData) // I am global data
 > - 全局样式会影响所有页面，但页面局部样式（在页面的 `<style>` 中定义的样式）优先级高于全局样式。
 > - 可以在 `page` 选择器中定义通用的背景色、字体等样式。
 
-## App 配置
+## App 配置 {#app-config}
 
 Mpx 应用的全局配置位于 `app.mpx` 的 JSON 部分，对应用进行全局配置，决定页面文件的路径、窗口表现、设置网络超时时间、设置多 tab 等。
 
-### 配置项
+### 配置项 {#config-items}
 
 | 属性 | 类型 | 必填 | 描述 |
 | :--- | :--- | :--- | :--- |

@@ -1,4 +1,4 @@
-# 内建组件
+# 内建组件 {#built-in-components}
 
 ## component
 

@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/upload/wx.uploadFile.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -24,5 +24,5 @@
 | complete            | function       |        | 否   | 接口调用结束的回调函数（调用成功、失败都会执行） |          | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: green; font-weight: bold;">✓</span> |
 
 
-### 返回值
+### 返回值 {#return-value}
 [SocketTask](https://developers.weixin.qq.com/miniprogram/dev/api/network/websocket/SocketTask.html)

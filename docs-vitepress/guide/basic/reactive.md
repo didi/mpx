@@ -18,8 +18,6 @@ Mpx 参考了 Vue 2 的设计，在内部实现了一套精简高效的数据响
 
 `data` 选项用于声明组件的初始响应式数据。
 
-### 数据对象与函数 {#data-object-and-function}
-
 `data` 可以是一个普通 JavaScript 对象，也可以是一个返回对象的函数。
 
 ```js

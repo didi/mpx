@@ -1,6 +1,6 @@
-# 依赖注入（Provide/Inject）
+# 依赖注入（Provide/Inject） {#provide-inject}
 
-## 适用场景
+## 适用场景 {#usage-scenarios}
 
 通常情况下，从父组件向子组件传递数据时，我们会使用 props 向下传递。如果在一颗组件层级嵌套很深的组件树中，某个深层的子组件依赖一个较远的祖先组件中的部分数据。在这种情况下，如果仅使用 props 则必须将其沿着组件链路逐级传递下去，这就是 **prop 逐级透传（prop-drilling）** 问题。
 
@@ -8,9 +8,9 @@
 
 ![组件间 provide-inject 示意图](https://s3-gz01.didistatic.com/packages-mait/img/bLipGWmlcm1732166788438.png)
 
-## Provide 提供
+## Provide 提供 {#provide}
 
-### 组合式语法
+### 组合式语法 {#composition-syntax}
 
 在组合式语法中，需要使用到 `provide()` 函数，`provide()` 函数接收两个必填参数：
 
@@ -37,7 +37,7 @@ provide('double', double)
 </script>
 ```
 
-### 选项式语法
+### 选项式语法 {#options-syntax}
 
 选项式语法的 `setup()` 中，用法和组合式 API 一致。另外针对选项式语法，我们也提供了 `provide` 选项，它是**一个对象或返回一个对象的函数**。
 
@@ -69,7 +69,7 @@ createComponent({
 </script>
 ```
 
-### 应用级顶层 provide
+### 应用级顶层 provide {#app-level-provide}
 
 前面介绍的是在一个组件中提供依赖，我们还可以在整个应用层面提供依赖，这样整个应用中所有组件都可以使用。
 
@@ -86,9 +86,9 @@ createApp({
 })
 ```
 
-## Inject 注入
+## Inject 注入 {#inject}
 
-### 组合式语法
+### 组合式语法 {#composition-syntax}
 
 `inject()` 函数最多接收三个参数：
 
@@ -113,7 +113,7 @@ const value = inject('key', () => new ExpensiveClass(), true)
 
 如果提供的值是一个 ref，注入进来的会是该 ref 对象，而不会自动解包为其内部的值。这使得注入方能够通过 ref 对象和提供方保持响应性链接。
 
-### 选项式语法
+### 选项式语法 {#options-syntax}
 
 选项式语法的 `setup()` 中，用法和组合式 API 一致。另外针对选项式语法，我们也提供了 `inject` 选项，它是**一个数组或一个对象**。
 
@@ -158,7 +158,7 @@ createComponent({
 </script>
 ```
 
-## 避免注入名潜在冲突
+## 避免注入名潜在冲突 {#avoid-injection-name-conflict}
 
 如果你正在构建大型的应用，包含非常多的依赖提供，那么随处定义的注入名容易存在潜在的同名冲突。在 Mpx 实现中，同名的注入名会覆盖之前已有的注入名对应的提供值。
 
@@ -206,7 +206,7 @@ export const InjectionKeys = {
 }
 ```
 
-## TS 类型支持
+## TS 类型支持 {#ts-support}
 
 直接使用字符串注入 key 时，注入值的类型默认推导会是 `unknown`，需要通过泛型参数显式声明。因为无法保证运行时一定存在这个 provide，所以推导类型也可能是 `undefined`。当声明一个默认值后，这个 `undefined` 类型就可以成功被移除。
 
@@ -246,7 +246,7 @@ const foo3 = inject(key, 123) // 默认值应当为字符串类型
 
 > 👀 鼠标悬浮到上面代码可以查看具体 TS 类型
 
-## 跨端差异
+## 跨端差异 {#cross-platform-diff}
 
 - Mpx 输出 **Web** 端，使用规则与 Vue 一致，`provide/inject` 的生效范围严格遵行父子组件关系，只有父组件可以成功向子孙组件提供依赖。
 - Mpx 输出 **RN** 端，框架内部基于 React 的 `useContext` 钩子来转换实现，表现和 Web 端一致。

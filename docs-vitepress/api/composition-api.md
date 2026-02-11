@@ -1,4 +1,4 @@
-# 组合式 API
+# 组合式 API {#composition-api}
 
 ## setup
 一个组件选项，在组件被创建之前，props 被解析之后执行。是组合式 API 的入口。
@@ -63,7 +63,7 @@ interface SetupContext {
 function setup(props: Record<string, any>, context: SetupContext): Record<string, any>
 ```
 
-## 生命周期钩子
+## 生命周期钩子 {#lifecycle-hooks}
 可以通过直接导入 on* 函数来注册生命周期钩子：
 
 ```js

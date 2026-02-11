@@ -1,8 +1,8 @@
-# Mpx 生命周期
+# Mpx 生命周期 {#lifecycle}
 
 Mpx 作为跨端小程序框架，提供了一套统一的生命周期系统，抹平不同小程序平台生命周期的差异。本章节详细介绍 Mpx 中的各种生命周期钩子及其使用方法。
 
-## 生命周期概述
+## 生命周期概述 {#lifecycle-overview}
 
 Mpx 的生命周期体系包含以下几个层面：
 
@@ -11,14 +11,14 @@ Mpx 的生命周期体系包含以下几个层面：
 - **应用生命周期**：应用的启动、显示、隐藏、错误处理等
 - **SSR 生命周期**：服务端渲染特有的生命周期钩子
 
-## 生命周期体系概览
+## 生命周期体系概览 {#lifecycle-system-overview}
 
 Mpx 提供了两套生命周期使用方式：
 
 - **选项式 API**：使用原生小程序生命周期或框架内置生命周期常量
 - **组合式 API**：使用统一的 Vue 风格生命周期钩子
 
-### 生命周期对应关系
+### 生命周期对应关系 {#lifecycle-mapping}
 
 | 框架内置生命周期 | 选项式 API 用法 | 组合式 API 钩子 | 微信原生生命周期 |
 |:--------------|:-------------|:-------------|:-------------|
@@ -40,13 +40,13 @@ Mpx 提供了两套生命周期使用方式：
 > - 也可以使用框架内置生命周期常量（如 `[CREATED]() {}`、`[MOUNTED]() {}` ）来保持跨平台一致性
 > - 组合式 API 提供了统一的 Vue 风格生命周期钩子
 
-## Options 语法（选项式 API）
+## Options 语法（选项式 API） {#options-api}
 
 选项式 API 支持两种生命周期写法：
 1. **原生小程序生命周期**：直接使用各平台的原生生命周期名称
 2. **框架内置生命周期常量**：使用统一的框架内置生命周期常量
 
-### 组件生命周期
+### 组件生命周期 {#component-lifecycle}
 
 **原生小程序生命周期：**
 - `created` - 组件实例刚被创建时执行，此时不能调用 setData
@@ -142,7 +142,7 @@ createComponent({
 })
 ```
 
-### 页面生命周期
+### 页面生命周期 {#page-lifecycle}
 
 - `onLoad` - 页面加载时触发，只会调用一次
 - `onReady` - 页面初次渲染完成时触发，只会调用一次
@@ -226,7 +226,7 @@ createPage({
 })
 ```
 
-### 应用生命周期
+### 应用生命周期 {#app-lifecycle}
 
 应用生命周期用于 App 实例：
 
@@ -266,12 +266,12 @@ createApp({
 
 **注意：** 应用生命周期暂不支持框架内置生命周期常量，只能使用原生小程序应用生命周期。
 
-## Setup 语法（组合式 API）
+## Setup 语法（组合式 API） {#setup-api}
 
 组合式 API 使用统一的 Vue 风格生命周期钩子。
 
 
-### 组件/页面通用生命周期
+### 组件/页面通用生命周期 {#component-page-common-lifecycle}
 
 **组件和页面都可用的生命周期钩子：**
 - `onBeforeMount` - 挂载开始之前被调用
@@ -359,7 +359,7 @@ createComponent({
 })
 ```
 
-### 页面特有生命周期
+### 页面特有生命周期 {#page-specific-lifecycle}
 
 **仅页面可用的生命周期钩子：**
 - `onLoad` - 页面加载时触发，接收页面参数
@@ -385,17 +385,17 @@ createPage({
 })
 ```
 
-### 应用生命周期
+### 应用生命周期 {#app-lifecycle}
 
 **注意：** 应用实例暂不支持 setup 语法，只能使用选项式 API。
 
-## SSR 生命周期
+## SSR 生命周期 {#ssr-lifecycle}
 
-Mpx 2.9+ 版本提供了专门的 [web SSR](/guide/advance/ssr.html)（服务端渲染）生命周期钩子：
+Mpx 2.9+ 版本提供了专门的 [web SSR](../advance/ssr.md)（服务端渲染）生命周期钩子：
 
-### 通用生命周期
+### 通用生命周期 {#common-lifecycle}
 
-**[serverPrefetch](/guide/advance/ssr.html#serverprefetch) / [SERVERPREFETCH](/guide/advance/ssr.html#serverprefetch)**
+**[serverPrefetch](../advance/ssr.md#serverprefetch) / [SERVERPREFETCH](../advance/ssr.md#serverprefetch)**
 
 > 可在应用/页面/组件中使用，仅在服务端执行
 
@@ -451,11 +451,11 @@ createPage({
 })
 ```
 
-### 应用生命周期
+### 应用生命周期 {#app-lifecycle}
 
 **应用级别的 SSR 生命周期钩子：**
-- [`onAppInit`](/guide/advance/ssr.html#onappinit) - 应用初始化（服务端和客户端都执行）
-- [`onSSRAppCreated`](/guide/advance/ssr.html#onssrappcreated) - 应用创建完成（仅服务端执行）
+- [`onAppInit`](../advance/ssr.md#onappinit) - 应用初始化（服务端和客户端都执行）
+- [`onSSRAppCreated`](../advance/ssr.md#onssrappcreated) - 应用创建完成（仅服务端执行）
 
 ```js
 // app.mpx
@@ -479,11 +479,11 @@ createApp({
 })
 ```
 
-## 最佳实践
+## 最佳实践 {#best-practice}
 
-### 1. 选择合适的生命周期
+### 1. 选择合适的生命周期 {#choose-lifecycle}
 
-#### 选项式 API（原生小程序生命周期）
+#### 选项式 API（原生小程序生命周期） {#options-api-native}
 
 ```js
 // ✅ 正确：在 attached 中初始化数据
@@ -504,7 +504,7 @@ detached() {
 }
 ```
 
-#### 组合式 API（Vue 风格生命周期）
+#### 组合式 API（Vue 风格生命周期） {#setup-api-vue}
 
 ```js
 // ✅ 正确：在 setup 中初始化数据，onMounted 中操作 DOM

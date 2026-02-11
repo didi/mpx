@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/payment/wx.requestPayment.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -111,7 +111,7 @@
   </tbody>
 </table>
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 
 mpx.requestPayment({

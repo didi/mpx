@@ -1,6 +1,6 @@
-# 介绍
+# 介绍 {#intro}
 
-## Mpx是什么？
+## Mpx是什么？ {#what-is-mpx}
 
 Mpx是一款致力于提高小程序开发体验和开发效率的增强型小程序框架，通过Mpx，我们能够高效优雅地开发出具有极致性能的优质小程序应用，并将其输出到各大小程序平台和web平台中运行。
 
@@ -11,34 +11,34 @@ Mpx的核心设计理念在于增强，这意味着Mpx是对小程序原生开�
 最后，Mpx是一个开发框架，不是组件库，这一点经常会有开发者搞混。Mpx兼容业内已有的小程序组件库，如vant/iview等，我们之后也会开源内部基于Mpx开发的跨端组件库。
 
 
-## Mpx提供了哪些能力？
+## Mpx提供了哪些能力？ {#what-mpx-provides}
 
-### 单文件开发(SFC)
+### 单文件开发(SFC) {#sfc}
 
 Mpx使用类似Vue的单文件开发模式，小程序原本的template/js/style/json都可以写在单个的.mpx文件中，清晰便捷。
 
-### 数据响应
+### 数据响应 {#data-reactivity}
 
 数据响应是Mpx提供的核心增强能力，该能力主要受Vue的启发，主要包含数据赋值响应，watch api和computed计算属性等能力，关于该能力更详细的介绍可以查看[这里](./reactive.md)
 
-### 增强的模板语法
+### 增强的模板语法 {#enhanced-template-syntax}
 
 同样受到Vue的启发，Mpx提供了很多增强模板语法便于开发者方便快捷地进行视图开发，主要包含以下：
 
-* [wx:style动态样式](./class-style-binding.md#样式绑定)
-* [wx:class动态类名](./class-style-binding.md#类名绑定)
+* [wx:style动态样式](./class-style-binding.md#style-binding)
+* [wx:class动态类名](./class-style-binding.md#class-binding)
 * [wx:model双向绑定](./two-way-binding.md)
-* [wx:model-prop双向绑定属性](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
-* [wx:model-event双向绑定事件](./two-way-binding.md#更改双向绑定的监听事件及数据属性)
-* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#更改双向绑定事件数据路径)
-* [wx:model-filter双向绑定过滤器](./two-way-binding.md#双向绑定过滤器)
+* [wx:model-prop双向绑定属性](./two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-event双向绑定事件](./two-way-binding.md#change-two-way-binding-event-prop)
+* [wx:model-value-path双向绑定数据路径](./two-way-binding.md#change-two-way-binding-path)
+* [wx:model-filter双向绑定过滤器](./two-way-binding.md#two-way-binding-filter)
 * [wx:ref获取实例](./refs.md)
 * [wx:show隐藏显示](./conditional-render.md)
-* [component动态组件](./component.md#动态组件)
+* [component动态组件](./component.md#dynamic-component)
 * [事件处理内联传参](./event.md)
 * [模板条件编译](./conditional-render.md)
 
-### 极致性能
+### 极致性能 {#extreme-performance}
 
 Mpx在性能上做到了极致，我们在框架中通过模板数据依赖收集进行了深度的setData优化，做到了程序上的最优，让用户能够专注于业务开发；
 
@@ -48,30 +48,30 @@ Mpx在性能上做到了极致，我们在框架中通过模板数据依赖收�
 
 Mpx和业内其他框架的运行时性能对比可以参考[这篇文章](https://github.com/hiyuki/mp-framework-benchmark/blob/master/README.md)
 
-### 状态管理
+### 状态管理 {#state-management}
 
 Mpx借鉴Vuex的设计实现一套与框架搭配使用的状态管理(store)工具，除了支持Vuex中已有的特性外，我们还创新地提出了一种多实例store的跨团队状态管理模式，我们在业务中实际使用后普遍认为该设计比原有的modules更加灵活方便，更多详情可以[查看这里](../advance/store.md)
 
-### 编译构建
+### 编译构建 {#compile-build}
 
 Mpx的编译构建以webpack为基础，针对小程序项目结构深度定制开发了一个webpack插件和一系列loaders，整个构建过程完全基于依赖收集按需打包，兼容大部分webpack自身能力及生态，此外Mpx的编译构建还支持以下能力：
 
 * [npm构建](../advance/npm.md)
 * [分包构建](../advance/subpackage.md#分包)
 * [包体积优化](../advance/subpackage.md)
-* [原生组件支持](../advance/progressive.md#原生接入)
+* [原生组件支持](../advance/progressive.md#native-integration)
 * [原生能力兼容(custom-tab-bar/workers/云开发等)](../advance/ability-compatible.md)
 * [小程序插件](../advance/plugin.md)
-* [模板预编译](./template.md#模板预编译)
+* [模板预编译](./template.md#template-precompile)
 * [css预编译](./css.md)
 * [静态资源处理](../advance/image-process.md)
 
 
-### 跨平台能力
+### 跨平台能力 {#cross-platform-ability}
 
 Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增强开发，同时支持将一份基于微信增强的业务源码输出到全部的小程序平台和web平台中运行，也即将支持输出快应用的能力，更多详情请[查看这里](../advance/platform.md)
 
-### 完善的周边能力
+### 完善的周边能力 {#complete-ecosystem}
 
 除了上述的核心能力外，Mpx还提供了丰富的周边能力支持，主要包括以下能力：
 
@@ -87,7 +87,7 @@ Mpx支持全部小程序平台(微信，支付宝，百度，头条，qq)的增�
 
 Mpx具有以下功能特性：
 * 数据响应 (赋值响应 / [watch](./reactive.md) / [computed](./reactive.md))
-* 增强模板语法 ([动态组件](./component.md#动态组件) / [样式绑定 / 类名绑定 ](./class-style-binding.md) / [内联事件函数](./event.md) / [双向绑定](./two-way-binding.md) / [refs](./refs.md))
+* 增强模板语法 ([动态组件](./component.md#dynamic-component) / [样式绑定 / 类名绑定 ](./class-style-binding.md) / [内联事件函数](./event.md) / [双向绑定](./two-way-binding.md) / [refs](./refs.md))
 * 极致性能 ([运行时性能优化](../understand/runtime.md) / [包体积优化](../advance/subpackage.md#分包) / 框架运行时体积14KB)
 * [高效强大的编译构建](../understand/compile.md) (基于webpack / 兼容webpack生态 / 兼容原生小程序 / 完善支持npm场景下的分包输出 / 高效调试)
 * [单文件组件开发](./single-file.md)
@@ -97,14 +97,14 @@ Mpx具有以下功能特性：
 * 逻辑复用 ([mixins](../advance/mixin.md))
 * [周边能力支持](../extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
-* [多平台增强](../advance/platform.md#多平台支持) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
-* [跨平台编译](../advance/platform.md#跨平台编译) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](../advance/platform.md#跨平台输出web)中运行)
+* [多平台增强](../advance/platform.md#multi-platform-support) (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
+* [跨平台编译](../advance/platform.md#跨平台编译) (支持以微信为base，将一套代码转换输出到支付宝、百度、qq、头条小程序平台和[web平台](../advance/platform.md#cross-platform-web)中运行)
 * [TypeScript支持](../tool/ts.md) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](../tool/i18n.md)
 * 单元测试支持 (即将到来)
 * 快应用输出 (即将到来)
 
-## 对比其他小程序框架
+## 对比其他小程序框架 {#compare-other-frameworks}
 
 目前业内的小程序框架主要分为两类，一类是以uniapp，taro2为代表的静态编译型框架，这类框架以静态编译为主要手段，将React和Vue开发的业务源码转换到小程序环境中进行适配运行。这类框架的主要优点在于web项目迁移方便，跨端能力较强。但是由于React/Vue等web框架的DSL与小程序本身存在较大差距，无法完善支持原web框架的全部能力，开发的时候容易踩坑。
 

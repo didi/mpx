@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/interaction/wx.showModal.html)
 
-### 参数
+### 参数 {#parameters}
 **Object object**
 
 | 属性            | 类型     | 默认值   | 必填 | 说明                                         | 最低版本 | 支付宝 | RN | web |
@@ -37,7 +37,7 @@
 | confirm | boolean | 为 true 时，表示用户点击了确定按钮                           |          |
 | cancel  | boolean | 为 true 时，表示用户点击了取消（用于 Android 区分关闭方式） | 1.1.0    |
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.showModal({

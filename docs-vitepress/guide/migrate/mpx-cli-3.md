@@ -1,12 +1,12 @@
-# mpx-cli v2 迁移到 v3
+# mpx-cli v2 迁移到 v3 {#migrate-v2-to-v3}
 
-## 升级`@mpxjs/cli`
+## 升级`@mpxjs/cli` {#upgrade-cli}
 
 ```
 npm install @mpxjs/cli@3.x -g
 ```
 
-## 配置迁移
+## 配置迁移 {#config-migration}
 
 > v3 兼容了 v2 的所有配置，如果没有特殊修改，则不需要进行配置迁移。
 
@@ -35,7 +35,7 @@ module.exports = defineConfig({
 })
 ```
 
-## 新增自定义配置/修改已有配置参数
+## 新增自定义配置/修改已有配置参数 {#custom-config-change}
 
 ```js
 // vue.config.js
@@ -59,7 +59,7 @@ module.exports = defineConfig({
 - [webpack-chain](https://github.com/neutrinojs/webpack-chain)
 - [webpack-merge](https://github.com/survivejs/webpack-merge)
 
-## 编译后钩子
+## 编译后钩子 {#after-compile-hook}
 
 由于 webpack 配置都内置到了插件里，所以编译后的钩子无法像 2.x 一样直接在`webpack`脚本里添加。
 
@@ -90,7 +90,7 @@ module.exports = function (api, options) {
 
 然后在我们的项目里安装该插件并运行`npx mpx-cli-service build:upload`即可。
 
-## 项目结构变化
+## 项目结构变化 {#project-structure-change}
 
 ![项目结构变化](https://gift-static.hongyibo.com.cn/static/kfpub/3547/filetree.jpg)
 
@@ -104,7 +104,7 @@ v3 版本相对于 v2 版本的目录结构更加清晰。
 
 v3 版本相对于 v2 版本的整体架构相差较大，v3 版本主要基于`vue-cli`架构，主要有以下优势。
 
-### 1. 插件化
+### 1. 插件化 {#plugin-architecture}
 
 v3 版本的配置依靠插件化，将 v2 版本的文件配置整合到了各个自定义插件中。
 
@@ -116,14 +116,14 @@ v3 版本的配置依靠插件化，将 v2 版本的文件配置整合到了各�
 
 除此之外，也可以使用统一的`vue.config.js`来自定义配置，或者将配置抽离到插件当中，来进行统一的管理。
 
-### 2. 模板
+### 2. 模板 {#template}
 
 v3 版本的模板也可以通过插件进行自定义生成，同时不依赖于 github，在国内网络下不会有生成模板时网络错误的问题。
 
-### 3. 调试
+### 3. 调试 {#debug}
 
 v3 版本可以通过`mpx inspect:mp/web`来直接调试相关配置，可以更直观的发现配置错误。
 
-### 4. 插件管理
+### 4. 插件管理 {#plugin-management}
 
 使用`mpx invoke`/`mpx add`/`mpx upgrade`来管理插件，可以更细粒度的控制相关配置的更新。

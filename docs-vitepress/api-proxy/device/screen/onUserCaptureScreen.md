@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/screen/wx.onUserCaptureScreen.html)
 
-### 参数
+### 参数 {#parameters}
 
 **function listener**
 
@@ -21,7 +21,7 @@
 | query  | string  | 支持开发者自定义一键打开小程序时的 query                              | 3.3.0    | <span style="color: red; font-weight: bold;">✗</span> |
 | promise| promise | 如果该参数存在，则其它的参数将会以 resolve 结果为准，如果一秒内不 resolve，分享会使用上面传入的默认参数 | 3.3.0    | <span style="color: red; font-weight: bold;">✗</span> |
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.onUserCaptureScreen(function (res) {

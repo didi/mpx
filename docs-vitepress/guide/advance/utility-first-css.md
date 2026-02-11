@@ -1,4 +1,4 @@
-# 使用原子类
+# 使用原子类 {#use-utility-class}
 
 原子类(utility-first CSS)是近几年流行起来的一种全新的样式开发方式，在前端社区内取得了良好的口碑，越来越多的主流网站也基于原子类进行开发，我们耳熟能详的有[Github](https://github.com/)，[OpenAI](https://openai.com/)，[Netflix](https://top10.netflix.com/)
 和[NASA官网](https://www.jpl.nasa.gov/)
@@ -99,11 +99,11 @@ plugins.push(new MpxUnocssPlugin())
 
 关于`uno.config.js`可用配置项及`@mpxjs/unocss-plugin`及`@mpxjs/unocss-base`的配置项请参考[API文档](../../api/compile.md#mpxunocssplugin-配置)。
 
-### vscode插件支持
+### vscode插件支持 {#vscode-plugin-support}
 
 1. 安装 [unocss 官方插件](https://unocss.dev/integrations/vscode)。
 2.  修改 VSCode 设置中的 `unocss.languageIds` 选项（或者直接修改 VSCode JSON 配置文件），添加 "mpx"，实现智能提示等功能。
-  > _使用最新版本 [@mpxjs/cli](https://mpxjs.cn/guide/basic/start.html#%E5%AE%89%E8%A3%85%E8%84%9A%E6%89%8B%E6%9E%B6) 脚手架创建的项目会自动生成，可忽略这一步。_
+  > _使用最新版本 [@mpxjs/cli](../basic/start.md#install-scaffold) 脚手架创建的项目会自动生成，可忽略这一步。_
 
   ```json
   // .vscode/settings.json
@@ -115,7 +115,7 @@ plugins.push(new MpxUnocssPlugin())
   ```
 
 3. 修改 `uno.config.js` 支持 Mpx 预设。
-  > _使用 [@mpxjs/cli](https://mpxjs.cn/guide/basic/start.html#%E5%AE%89%E8%A3%85%E8%84%9A%E6%89%8B%E6%9E%B6) 脚手架创建的项目会自动生成，可忽略这一步。_
+  > _使用 [@mpxjs/cli](../basic/start.md#install-scaffold) 脚手架创建的项目会自动生成，可忽略这一步。_
 
   ```js
   // uno.config.js

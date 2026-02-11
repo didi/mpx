@@ -1,7 +1,7 @@
 ---
 sidebarDepth: 2
 ---
-# 周边拓展
+# 周边拓展 {#extensions}
 
 ## mpx-fetch
 
@@ -419,7 +419,7 @@ mpx.xfetch.clearProxy()
 useFetch(options?: FetchOptions):xfetch
 ```
 
-在组合式 API 中使用，用来获取 `@mpxjs/fetch` 插件的 xfetch 实例，等用于 `mpx.xfetch`。 关于 xfetch 实例的详细介绍，请点击[查看](/api/extend.html#mpx-fetch)
+在组合式 API 中使用，用来获取 `@mpxjs/fetch` 插件的 xfetch 实例，等用于 `mpx.xfetch`。 关于 xfetch 实例的详细介绍，请点击[查看](extend.md#mpx-fetch)
 
 此外该方法可选择传入 `options` 参数，若传入参数，则会创建一个新的 XFetch 实例返回，若不传入参数，则默认将全局 `xfetch` 实例返回。
 
@@ -454,7 +454,7 @@ useFetch().fetch({
 ## size-report
 Mpx框架项目包体积可以进行分组、分包、页面、冗余Npm包等维度的分析和对比，详细[请见](/advance/size-report.html)
 
-### 插件配置项
+### 插件配置项 {#plugin-options}
 
 - **server**
 

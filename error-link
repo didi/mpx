@@ -1,0 +1,189 @@
+File: guide/extend/index.md
+  Link: [详细介绍](#fetch)
+  Error: Anchor 'fetch' not found in index.md
+File: guide/extend/index.md
+  Link: [详细介绍](#api-proxy)
+  Error: Anchor 'api-proxy' not found in index.md
+File: guide/extend/index.md
+  Link: [详细介绍](#mock)
+  Error: Anchor 'mock' not found in index.md
+File: guide/cross-platform/basic.md
+  Link: [平台差异处理](./differences.md)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/cross-platform/differences.md
+File: guide/basic/lifecycle.md
+  Link: [ONLOAD](options)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/basic/options
+File: guide/basic/lifecycle.md
+  Link: [ONRESIZE](res)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/basic/res
+File: guide/basic/intro.md
+  Link: [分包构建](../advance/subpackage.md#分包)
+  Error: Anchor '分包' not found in subpackage.md
+File: guide/basic/intro.md
+  Link: [api增强抹平](../extend/api-proxy.md)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/extend/api-proxy.md
+File: guide/basic/intro.md
+  Link: [webview抹平](../../api/extend.md#webview-bridge)
+  Error: Anchor 'webview-bridge' not found in extend.md
+File: guide/basic/intro.md
+  Link: [包体积优化](../advance/subpackage.md#分包)
+  Error: Anchor '分包' not found in subpackage.md
+File: guide/basic/intro.md
+  Link: [packages](../advance/subpackage.md#packages)
+  Error: Anchor 'packages' not found in subpackage.md
+File: guide/basic/intro.md
+  Link: [跨平台编译](../advance/platform.md#跨平台编译)
+  Error: Anchor '跨平台编译' not found in platform.md
+File: guide/basic/intro.md
+  Link: [I18n国际化](../tool/i18n.md)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/tool/i18n.md
+File: guide/basic/component.md
+  Link: [框架内置生命周期](框架内置生命周期)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/basic/框架内置生命周期
+File: guide/basic/page.md
+  Link: [provide / inject](./component.md#provide-inject)
+  Error: Anchor 'provide-inject' not found in component.md
+File: guide/basic/page.md
+  Link: [$forceUpdate](./component.md#$forceupdate)
+  Error: Anchor '$forceupdate' not found in component.md
+File: guide/basic/page.md
+  Link: [$nextTick](./component.md#$nexttick)
+  Error: Anchor '$nexttick' not found in component.md
+File: guide/basic/start.md
+  Link: [packages 多人合作](../advance/subpackage.md#packages)
+  Error: Anchor 'packages' not found in subpackage.md
+File: guide/rn/template.md
+  Link: [wx:if](/api/directives.html#wx-if)
+  Error: Anchor 'wx-if' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:else](/api/directives.html#wx-else)
+  Error: Anchor 'wx-else' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:elif](/api/directives.html#wx-elif)
+  Error: Anchor 'wx-elif' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:show](/api/directives.html#wx-show)
+  Error: Anchor 'wx-show' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:for](/api/directives.html#wx-for)
+  Error: Anchor 'wx-for' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:for-item](/api/directives.html#wx-for-item)
+  Error: Anchor 'wx-for-item' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:for-index](/api/directives.html#wx-for-index)
+  Error: Anchor 'wx-for-index' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:class](/api/directives.html#wx-class)
+  Error: Anchor 'wx-class' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:style](/api/directives.html#wx-style)
+  Error: Anchor 'wx-style' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:model](/api/directives.html#wx-model)
+  Error: Anchor 'wx-model' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:model-prop](/api/directives.html#wx-model-prop)
+  Error: Anchor 'wx-model-prop' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:model-event](/api/directives.html#wx-model-event)
+  Error: Anchor 'wx-model-event' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:model-value-path](/api/directives.html#wx-model-value-path)
+  Error: Anchor 'wx-model-value-path' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:model-filter](/api/directives.html#wx-model-filter)
+  Error: Anchor 'wx-model-filter' not found in directives.md
+File: guide/rn/template.md
+  Link: [wx:ref](/api/directives.html#wx-ref)
+  Error: Anchor 'wx-ref' not found in directives.md
+File: guide/rn/template.md
+  Link: [@_mode](/api/directives.html#mode-1)
+  Error: Anchor 'mode-1' not found in directives.md
+File: guide/rn/component.md
+  Link: [Webview API](#webview-api)
+  Error: Anchor 'webview-api' not found in component.md
+File: guide/rn/application-api.md
+  Link: [状态管理](#状态管理-1)
+  Error: Anchor '状态管理-1' not found in application-api.md
+File: guide/rn/application-api.md
+  Link: [API能力](#api能力)
+  Error: Anchor 'api能力' not found in application-api.md
+File: guide/rn/application-api.md
+  Link: [rnConfig 相关内容](#rnconfig-相关内容)
+  Error: Anchor 'rnconfig-相关内容' not found in application-api.md
+File: guide/rn/application-api.md
+  Link: [依赖注入指南](/guide/advance/provide-inject.html#依赖注入-provide-inject)
+  Error: Anchor '依赖注入-provide-inject' not found in provide-inject.md
+File: guide/rn/application-api.md
+  Link: [查看完整文档](/api/extend.html#api-proxy)
+  Error: Anchor 'api-proxy' not found in extend.md
+File: guide/rn/application-api.md
+  Link: [button 组件](./rn.html#button)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/rn/rn.md
+File: guide/advance/progressive.md
+  Link: [导出原生](#导出原生)
+  Error: Anchor '导出原生' not found in progressive.md
+File: guide/advance/platform.md
+  Link: [跨平台编译](#跨平台编译)
+  Error: Anchor '跨平台编译' not found in platform.md
+File: guide/advance/subpackage.md
+  Link: [packages](#packages)
+  Error: Anchor 'packages' not found in subpackage.md
+File: guide/advance/utility-first-css.md
+  Link: [工具类支持范围](#工具类支持范围)
+  Error: Anchor '工具类支持范围' not found in utility-first-css.md
+File: guide/advance/utility-first-css.md
+  Link: [API文档](../../api/compile.md#mpxunocssplugin-配置)
+  Error: Anchor 'mpxunocssplugin-配置' not found in compile.md
+File: guide/advance/size-report.md
+  Link: [完善的分包支持](./subpackage.md#分包)
+  Error: Anchor '分包' not found in subpackage.md
+File: guide/composition-api/composition-api.md
+  Link: [这里](../extend.md#usefetch)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/extend.md
+File: articles/2.0.md
+  Link: [packages](../guide/advance/subpackage.md#packages)
+  Error: Anchor 'packages' not found in subpackage.md
+File: articles/mpx1.md
+  Link: [packages](../guide/advance/subpackage.md#packages)
+  Error: Anchor 'packages' not found in subpackage.md
+File: articles/mpx1.md
+  Link: [查阅我们的官方文档 - 跨平台编译](../guide/advance/platform.md#跨平台编译)
+  Error: Anchor '跨平台编译' not found in platform.md
+File: api/compile.md
+  Link: [工具-国际化i18n](../guide/tool/i18n.md)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/guide/tool/i18n.md
+File: api/compile.md
+  Link: [#1330]([1330](https://github.com/didi/mpx/issues/1330)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/api/[1330](https:/github.com/didi/mpx/issues/1330
+File: api/compile.md
+  Link: [此方法。](#mpxwebpackplugin-getpageentry)
+  Error: Anchor 'mpxwebpackplugin-getpageentry' not found in compile.md
+File: api/compile.md
+  Link: [此方法。](#mpxwebpackplugin-getcomponententry)
+  Error: Anchor 'mpxwebpackplugin-getcomponententry' not found in compile.md
+File: api/instance-api.md
+  Link: [ref](../api/directives.html#wx-ref)
+  Error: Anchor 'wx-ref' not found in directives.md
+File: api/composition-api.md
+  Link: [查看详情](../guide/advance/provide-inject.md#组合式语法-1)
+  Error: Anchor '组合式语法-1' not found in provide-inject.md
+File: api/builtIn.md
+  Link: [slot](../guide/basic/component.md#slot)
+  Error: Anchor 'slot' not found in component.md
+File: api/global-api.md
+  Link: [点击](/api/reactivity-api/basic-reactivity.html#reactive)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/api/reactivity-api/basic-reactivity.md
+File: api/global-api.md
+  Link: [查看详情](/api/global-api.html#del)
+  Error: Anchor 'del' not found in global-api.md
+File: api/global-api.md
+  Link: [查看详情](reactivity-api/computed-watch-api.html#watch)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/api/reactivity-api/computed-watch-api.md
+File: api/global-api.md
+  Link: [onUnmounted](/api/composition-api.html#onunmounted)
+  Error: Anchor 'onunmounted' not found in composition-api.md
+File: api/extend.md
+  Link: [请见](/advance/size-report.html)
+  Error: Target file not found: /Users/didi/work/mpx/docs-vitepress/advance/size-report.md

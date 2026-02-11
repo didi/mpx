@@ -1,4 +1,4 @@
-# 模板指令
+# 模板指令 {#template-directives}
 
 ## wx:if
 
@@ -7,10 +7,10 @@
 根据表达式的值的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy) 来有条件地渲染元素。在切换时元素及它的数据绑定 / 组件被销毁并重建。 **注意：如果元素是 `<block/>`, 注意它并不是一个组件，它仅仅是一个包装元素，不会在页面中做任何渲染，只接受控制属性**。
 
 ::: danger
-当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
+当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.md)
 :::
 
-**参考：** [条件渲染 - wx:if](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:if](../guide/basic/conditional-render.md)
 
 ## wx:elif
 
@@ -33,7 +33,7 @@
 </view>
 ```
 
-**参考：** [条件渲染 - wx:elif](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:elif](../guide/basic/conditional-render.md)
 
 ## wx:else
 
@@ -50,7 +50,7 @@
 </view>
 ```
 
-**参考：** [条件渲染 - wx:else](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:else](../guide/basic/conditional-render.md)
 
 ## wx:for
 
@@ -104,12 +104,12 @@ createComponent({
 ```
 
 ::: danger
-当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
+当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.md)
 :::
 
 `wx:for` 的详细用法可以通过以下链接查看教程详细说明。
 
-**参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for](../guide/basic/list-render.md)
 
 ## wx:for-index
 
@@ -139,7 +139,7 @@ createComponent({
 })
 ```
 
-**参考：** [列表渲染 - wx:for-index](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for-index](../guide/basic/list-render.md)
 
 ## wx:for-item
 
@@ -157,7 +157,7 @@ createComponent({
 </view>
 ```
 
-**参考：** [列表渲染 - wx:for-item](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for-item](../guide/basic/list-render.md)
 
 ## wx:key
 
@@ -176,13 +176,13 @@ createComponent({
 </view>
 ```
 
-**参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for](../guide/basic/list-render.md)
 
 ## wx:class
 
 绑定HTML Class: 类似vue的class绑定
 
-#对象用法
+# 对象用法 {#object-usage}
 
   我们可以传给 `wx:class` 一个对象，以动态地切换 class：
 
@@ -256,7 +256,7 @@ createComponent({
   </view>
   ```
 
-#数组用法
+# 数组用法 {#array-usage}
 
   我们可以把一个数组传给 `wx:class`，以应用一个 class 列表：
 
@@ -287,7 +287,7 @@ createComponent({
   </view>
   ```
 
-**参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.html#类名绑定)
+**参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.md#类名绑定)
 
 ## wx:style
 
@@ -345,7 +345,7 @@ createComponent({
 </view>
 ```
 
-**参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.html#样式绑定)
+**参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.md#样式绑定)
 
 ## wx:model
 
@@ -379,7 +379,7 @@ wx:model并不会影响相关的事件处理函数，比如像下面这样：
 <input wx:model="{{inputValue}}" bindinput="handleInput"/>
 ```
 
-**参考：** [双向绑定](../guide/basic/two-way-binding.html)
+**参考：** [双向绑定](../guide/basic/two-way-binding.md)
 
 ## wx:model-prop
 
@@ -536,7 +536,7 @@ Mpx提供了 `wx:ref=xxx` 来更方便获取 WXML 节点信息的对象。在JS�
   </script>
 ```
 
-**参考：** [获取组件实例 - wx:ref](../guide/basic/refs.html)
+**参考：** [获取组件实例 - wx:ref](../guide/basic/refs.md)
 
 ## wx:show
 
@@ -587,7 +587,7 @@ Page({
 
 Mpx做了增强的**内联传参**能力以及具体有哪些事件**类型**参考下方
 
-**参考：** [事件处理 - bind](../guide/basic/event.html)
+**参考：** [事件处理 - bind](../guide/basic/event.md)
 
 ## catch
 
@@ -635,7 +635,7 @@ Page({
 // middle
 ```
 
-**参考：** [事件处理 - catch](../guide/basic/event.html)
+**参考：** [事件处理 - catch](../guide/basic/event.md)
 
 ## capture-bind
 
@@ -656,7 +656,7 @@ capture-bind要在bind之前执行，是因为事件是先捕获后冒泡，**�
 
 点击inner view的调用顺序是(handleTap)2、4、3、1
 
-**参考：** [事件处理 - capture-bind](../guide/basic/event.html)
+**参考：** [事件处理 - capture-bind](../guide/basic/event.md)
 
 ## capture-catch
 
@@ -677,14 +677,14 @@ capture-catch中断捕获阶段和取消冒泡阶段
 
 点击inner view仅执行handleTap2
 
-**参考：** [事件处理 - capture-catch](../guide/basic/event.html)
+**参考：** [事件处理 - capture-catch](../guide/basic/event.md)
 
 
 ## @mode
 
 `type mode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa' | 'ios' | 'android' | 'harmony'`
 
-### 属性中使用
+### 属性中使用 {#use-in-attribute}
 跨平台输出场景下，Mpx 框架允许用户在组件上使用 @ 和 | 符号来指定某个节点或属性只在某些平台下有效。
 
 ```html
@@ -724,7 +724,7 @@ capture-catch中断捕获阶段和取消冒泡阶段
 </button>
 ```
 
-### 节点中使用
+### 节点中使用 {#use-in-node}
 同时，该指令也可以作用在单个节点上，来对节点进行跨平台条件判断。
 
 但需要注意的是，该指令作用在单个节点时，节点仅在目标平台输出，同时节点自身属性不会进行跨平台语法转换，不过其子节点不受影响。
@@ -767,7 +767,7 @@ capture-catch中断捕获阶段和取消冒泡阶段
 
 跨平台输出场景下，除了 mode 平台场景值，Mpx 框架还提供自定义 env 目标应用，来实现在不同应用下编译产出不同的代码。
 
-关于 env 的详细介绍可以点击[查看](../guide/advance/platform.html#use-env)
+关于 env 的详细介绍可以点击[查看](../guide/advance/platform.md#use-env)
 
 跨平台输出使用 env 与 mode 一样支持文件纬度、区块纬度、节点纬度、属性纬度等条件编译，这里我们仅介绍下节点和属性纬度的指令模式使用，env 与 mode 可以组合使用。
 

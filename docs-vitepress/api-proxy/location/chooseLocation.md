@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/location/wx.chooseLocation.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 

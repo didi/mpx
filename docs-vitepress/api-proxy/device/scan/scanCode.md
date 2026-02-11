@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/scan/wx.scanCode.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -173,7 +173,7 @@
 
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 // 允许从相机和相册扫码

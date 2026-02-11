@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/media/image/wx.compressImage.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -32,7 +32,7 @@
 | tempFilePath | string | 压缩后图片的临时文件路径 (本地路径) |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 mpx.compressImage({
   src: '', // 图片路径
