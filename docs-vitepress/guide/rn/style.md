@@ -269,7 +269,7 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 | **边框相关** | `border-radius`、`border-width`、`border-color`、`border` |
 | **方向边框** | `border-top`、`border-right`、`border-bottom`、`border-left` |
 
-### 示例 {#example}
+### 示例 {#example-1}
 
 ```css
 /* 简写属性示例 */
@@ -389,7 +389,7 @@ var(<custom-property-name>, <fallback-value>?)
 
 `calc()` 函数允许在声明 CSS 属性值时执行数学计算，使用表达式的结果作为最终值。
 
-#### 语法 {#syntax}
+#### 语法 {#syntax-1}
 
 ```css
 calc(expression)
@@ -411,7 +411,7 @@ calc(expression)
 > - **空格要求**：`+` 和 `-` 运算符两边必须有空格，* 和 / 这两个运算符前后不需要空格，但考虑到统一性，仍然推荐加上空格
 > - **单位支持**：所有能数值化的单位都支持 `calc()` 函数
 
-#### 使用示例 {#usage-example}
+#### 使用示例 {#usage-example-1}
 
 ```css
 /* 基本用法 */
@@ -453,7 +453,7 @@ calc(expression)
 
 `env()` 函数用于将系统定义的环境变量值插入到 CSS 中，主要用于处理设备的安全区域。
 
-#### 语法 {#syntax}
+#### 语法 {#syntax-2}
 
 ```css
 env(<environment-variable>, <fallback-value>?)
@@ -471,7 +471,7 @@ env(<environment-variable>, <fallback-value>?)
 | `safe-area-inset-bottom` | 底部安全距离 | 避开 Home 指示器等 |
 | `safe-area-inset-left` | 左侧安全距离 | 避开侧边区域 |
 
-#### 使用示例 {#usage-example}
+#### 使用示例 {#usage-example-2}
 
 ```css
 /* 基本用法 */
@@ -516,7 +516,7 @@ https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Using_media_q
 - not 不支持
 - only 不支持
 - or 不支持
-### 使用示例 {#usage-example}
+### 使用示例 {#usage-example-3}
 ```css
 /* 支持 */
 @media screen and (min-width: 900px) {}

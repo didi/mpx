@@ -2,7 +2,7 @@
 
 Mpx以微信增强DSL为基础，支持跨端输出至多端小程序、web和客户端，包括支付宝、百度、抖音、京东、QQ等多端小程序平台，基于Vue的web平台，和基于react-native的ios、android及鸿蒙平台。
 
-## 跨端输出配置 {#cross-platform-output-config}
+## 跨端输出配置 {#cross-platform-output-config-1}
 
 配置mpx进行跨端输出十分简单，找到项目构建的webpack配置，在@mpxjs/webpack-plugin的配置参数中设置mode和srcMode参数即可。
 

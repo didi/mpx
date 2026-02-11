@@ -86,7 +86,7 @@ RN 组件支持样式属性的透传，`style/wx:style` 样式属性用法与小
 
 ## 使用 React Hooks {#use-react-hooks}
 
-### 选项式 API {#options-api}
+### 选项式 API {#options-api-1}
 
 Mpx 提供了 React Hooks 执行机制，通过在 Mpx 组件内注册 `REACTHOOKSEXEC` 方法，保障 RN 组件的初始化执行。Hooks 的返回值支持数据与方法，比如：
 
@@ -131,7 +131,7 @@ Mpx 提供了 React Hooks 执行机制，通过在 Mpx 组件内注册 `REACTHOO
 </script>
 ```
 
-### 组合式 API {#composition-api}
+### 组合式 API {#composition-api-1}
 
 Mpx 也支持组合式 API 的使用，使用方式与选项式 API 类似，均在 `onReactHooksExec` 方法内进行 hooks 的注册与执行
 

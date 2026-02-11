@@ -440,11 +440,11 @@ module.exports = defineConfig({
 })
 ```
 
-#### 文件维度条件编译 {#file-conditional-compile}
+#### 文件维度条件编译 {#file-conditional-compile-1}
 
 微信转支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，而且这个地图组件在不同的目标环境中也有很大的差异，这时你可以在相同的位置新建一个 map.ali.didi.mpx 或 map.ali.qingju.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的 mode 和 env 来加载对应模块，当 mode 为 ali，env 为 didi 时，会优先加载 map.ali.didi.mpx、map.ali.mpx，如果没有定义 env，则会优先加载 map.ali.mpx，反之则会加载 map.mpx。
 
-#### 区块维度条件编译 {#block-conditional-compile}
+#### 区块维度条件编译 {#block-conditional-compile-1}
 
 在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`或`env`属性定义该区块的目标平台即可，示例如下：
 
@@ -482,11 +482,11 @@ module.exports = defineConfig({
 </template>
 ```
 
-#### 代码维度条件编译 {#code-conditional-compile}
+#### 代码维度条件编译 {#code-conditional-compile-1}
 
 如果在 MpxWebpackPlugin 插件初始化时自定义了 env，你可以访问`__mpx_env__`获取当前编译env，进行环境差异逻辑编写。使用方法与`__mpx_mode__`相同。
 
-#### 属性维度条件编译 {#attr-conditional-compile}
+#### 属性维度条件编译 {#attr-conditional-compile-1}
 
 env 属性维度条件编译与 mode 的用法大致相同，使用 `:` 符号与 mode 和其他 env 进行串联，与 mode 组合使用格式形如 `attr@mode:env:env|mode:env`，为了不与 mode 混淆，当条件编译中仅存在 env 条件时，也需要添加 `:` 前缀，形如 `attr@:env`。
 
@@ -537,7 +537,7 @@ env 属性维度的编译同样支持对整个节点或者节点标签名进行�
 
 在具体实现上，Mpx项目输出到web中运行时在组件化和路由层面都是基于Vue生态实现，所以可以将Mpx的跨端输出产物整合到既有的Vue项目中，或者在条件编译中直接使用Vue语法进行web端的实现。
 
-### 使用方法 {#usage}
+### 使用方法 {#usage-1}
 
 使用@mpxjs/cli创建新项目时选择跨平台并选择输出web后，即可生成可输出web的示例项目，运行`npm run build:web`，就会在dist/web下输出构建后的web项目，并启动静态服务预览运行。
 

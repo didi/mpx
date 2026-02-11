@@ -88,7 +88,7 @@ createApp({
 
 ## Inject 注入 {#inject}
 
-### 组合式语法 {#composition-syntax}
+### 组合式语法 {#composition-syntax-1}
 
 `inject()` 函数最多接收三个参数：
 
@@ -113,7 +113,7 @@ const value = inject('key', () => new ExpensiveClass(), true)
 
 如果提供的值是一个 ref，注入进来的会是该 ref 对象，而不会自动解包为其内部的值。这使得注入方能够通过 ref 对象和提供方保持响应性链接。
 
-### 选项式语法 {#options-syntax}
+### 选项式语法 {#options-syntax-1}
 
 选项式语法的 `setup()` 中，用法和组合式 API 一致。另外针对选项式语法，我们也提供了 `inject` 选项，它是**一个数组或一个对象**。
 

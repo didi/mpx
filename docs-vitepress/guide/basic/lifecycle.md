@@ -385,7 +385,7 @@ createPage({
 })
 ```
 
-### 应用生命周期 {#app-lifecycle}
+### 应用生命周期 {#app-lifecycle-1}
 
 **注意：** 应用实例暂不支持 setup 语法，只能使用选项式 API。
 
@@ -451,7 +451,7 @@ createPage({
 })
 ```
 
-### 应用生命周期 {#app-lifecycle}
+### 应用生命周期 {#app-lifecycle-2}
 
 **应用级别的 SSR 生命周期钩子：**
 - [`onAppInit`](../advance/ssr.md#onappinit) - 应用初始化（服务端和客户端都执行）

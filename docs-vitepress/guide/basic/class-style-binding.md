@@ -63,7 +63,7 @@ wx:class中传入字符串数组，字符串为类名。
 
 样式的增强指令是wx:style，可以与普通的style属性同时存在，在视图渲染中进行合成。
 
-### 对象语法 {#object-syntax}
+### 对象语法 {#object-syntax-1}
 
 wx:style中传入用样式对象，带有横杠的样式名可以用驼峰写法来代替
 
@@ -90,7 +90,7 @@ wx:style中传入用样式对象，带有横杠的样式名可以用驼峰写法
 </script>
 ```
 
-### 数组语法 {#array-syntax}
+### 数组语法 {#array-syntax-1}
 
 wx:style同样支持传入数组将多个样式合成应用到视图上
 
