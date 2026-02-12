@@ -1,10 +1,15 @@
-const { presetUno } = require('@unocss/preset-uno')
+import { presetWind3 } from '@unocss/preset-wind3'
+import { presetLegacyCompat } from '@unocss/preset-legacy-compat'
 
 // eslint-disable-next-line
 const remRE = /(-?[\.\d]+)rem/g
 
-module.exports = function presetMpx (options = {}) {
-  const uno = presetUno(options)
+export default function presetMpx (options = {}) {
+  const uno = presetWind3(options)
+  const LegacyCompat = presetLegacyCompat({
+    // commaStyleColorFunction: true,
+    legacyColorSpace: true
+  })
   const { baseFontSize = 37.5 } = options
   return {
     ...uno,
@@ -22,6 +27,7 @@ module.exports = function presetMpx (options = {}) {
             : `${p1 * baseFontSize}rpx`)
         }
       })
+      LegacyCompat.postprocess(util)
     }
   }
 }
