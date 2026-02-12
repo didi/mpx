@@ -94,7 +94,7 @@
 
 | 属性名                   | 类型     | 默认值     | 说明                                               |
 | ----------------------- | ------- | --------- | -------------------------------------------------- |
-| scroll-x                | boolean | `false`   | 允许横向滚动动 |
+| scroll-x                | boolean | `false`   | 允许横向滚动 |
 | scroll-y                | boolean | `false`   | 允许纵向滚动  |
 | upper-threshold         | number  | `50`      | 距顶部/左边多远时(单位 px),触发 scrolltoupper 事件      |
 | lower-threshold         | number  | `50`      | 距底部/右边多远时(单位 px),触发 scrolltolower 事件      |
