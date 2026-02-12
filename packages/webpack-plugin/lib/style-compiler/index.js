@@ -50,9 +50,9 @@ module.exports = function (css, map) {
     // ali平台下处理scoped和host选择器
     if (mode === 'ali' || mode === 'web') {
       if (queryObj.scoped || mpxStyleOptions.scoped) {
-        plugins.push(scopeId({ id }))
+        plugins.push(scopeId({ id, mode }))
       }
-      plugins.push(transSpecial({ id }))
+      plugins.push(transSpecial({ id, transPage: mode === 'web' }))
     }
 
     if (isReact(mode)) {

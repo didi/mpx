@@ -2648,7 +2648,14 @@ function getVirtualHostRoot (options, meta) {
       }
     }
     if (isWeb(mode) && ctorType === 'page') {
-      return createASTElement('page')
+      const pageElement = createASTElement('div', [
+        {
+          name: 'class',
+          value: MPX_TAG_PAGE_SELECTOR
+        }
+      ])
+      processScoped(pageElement)
+      return pageElement
     }
     if (isReact(mode) && ctorType === 'page') {
       const rootView = createASTElement('view', [

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mpx-tab-bar-container">
     <mpx-tab-bar v-show="showTabbar" ref="tabBar" :currentIndex="currentIndex" @change="itemChange"></mpx-tab-bar>
     <keep-alive>
       <component ref="tabBarPage" :is="currentComponent"></component>
@@ -8,6 +8,7 @@
 </template>
 
 <script>
+  import { computed } from 'vue'
   const tabBar = global.__tabBar
   const tabBarPagesMap = global.__tabBarPagesMap
 
@@ -29,7 +30,13 @@
     components,
     data () {
       return {
-        currentIndex: 0 // 当前被选中的tabbar
+        currentIndex: 0, // 当前被选中的tabbar
+        pageId: null
+      }
+    },
+     provide () {
+      return {
+        __pageId: computed(() => this.pageId),
       }
     },
     computed: {
@@ -46,6 +53,18 @@
       $route: {
         handler (to) {
           this.setCurrentIndex(to.path)
+        },
+        immediate: true
+      },
+      currentComponent: {
+        handler () {
+          // 当切换到新页面时，更新 pageId
+          this.$nextTick(() => {
+            const pageInstance = this.$refs.tabBarPage
+            if (pageInstance && pageInstance.__pageId !== undefined) {
+              this.pageId = pageInstance.__pageId
+            }
+          })
         },
         immediate: true
       }
@@ -74,4 +93,9 @@
     }
   }
 </script>
-
+<style lang="stylus">
+  .mpx-tab-bar-container {
+    width: 100%;
+    height: 100%;
+  }
+</style>
