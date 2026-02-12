@@ -1,14 +1,14 @@
-# 混合编写 RN
+# 混合编写 RN {#hybrid-rn}
 
 在编写 Mpx 组件时，在某些出于性能考虑的特定情况下，可能会涉及到 Mpx 和 RN 混合编写：**在 Mpx 项目内直接使用 RN 组件和编写 RN 代码**。
 
-## 混合使用 RN 组件
+## 混合使用 RN 组件 {#hybrid-use-rn-component}
 
-### RN 组件注册
+### RN 组件注册 {#rn-component-register}
 
 在 Mpx 组件内引用 RN 组件，需在 `components` 选项中进行注册。
 
-#### 选项式 API
+#### 选项式 API {#options-api}
 
 ```html {4,6,20-23}
 <template>
@@ -38,9 +38,9 @@
 </script>
 ```
 
-#### 组合式 API
+#### 组合式 API {#composition-api}
 
-组合式 API 需要在 [defineOptions](/guide/composition-api/composition-api.html#defineoptions) 中进行类似选项式 API 的 `components` 组件注册。
+组合式 API 需要在 [defineOptions](../composition-api/composition-api.md#defineoptions) 中进行类似选项式 API 的 `components` 组件注册。
 
 ```html {4-9}
 <script setup>
@@ -57,7 +57,7 @@
 </script>
 ```
 
-### RN 组件样式属性 style
+### RN 组件样式属性 style {#rn-component-style}
 
 RN 组件支持样式属性的透传，`style/wx:style` 样式属性用法与小程序一致，并且额外支持 RN 数组样式定义方式。
 
@@ -76,17 +76,17 @@ RN 组件支持样式属性的透传，`style/wx:style` 样式属性用法与小
 </template>
 ```
 
-### RN 组件的属性与事件
+### RN 组件的属性与事件 {#rn-component-props-events}
 
 - RN 组件属性与事件参考 RN 原生支持的属性与事件名，对应赋值方式按照 Mpx 语法进行双括号包裹。
-- 组件使用的值既可以沿用 Mpx 组件的 `data`、`computed` 等响应式数据，也可以通过 [使用 React Hooks](#使用-react-hooks) 返回值进行声明。
+- 组件使用的值既可以沿用 Mpx 组件的 `data`、`computed` 等响应式数据，也可以通过 [使用 React Hooks](#use-react-hooks) 返回值进行声明。
 
 > [!important] 注意
-> 使用 React Hooks 导出的变量如果需要在模板上进行响应式更新，需要配合组件设置 `disableMemo: true` 使用，详见下方[配合模板响应式](#配合模板响应式)。
+> 使用 React Hooks 导出的变量如果需要在模板上进行响应式更新，需要配合组件设置 `disableMemo: true` 使用，详见下方[配合模板响应式](#with-template-reactivity)。
 
-## 使用 React Hooks
+## 使用 React Hooks {#use-react-hooks}
 
-### 选项式 API
+### 选项式 API {#options-api-1}
 
 Mpx 提供了 React Hooks 执行机制，通过在 Mpx 组件内注册 `REACTHOOKSEXEC` 方法，保障 RN 组件的初始化执行。Hooks 的返回值支持数据与方法，比如：
 
@@ -131,7 +131,7 @@ Mpx 提供了 React Hooks 执行机制，通过在 Mpx 组件内注册 `REACTHOO
 </script>
 ```
 
-### 组合式 API
+### 组合式 API {#composition-api-1}
 
 Mpx 也支持组合式 API 的使用，使用方式与选项式 API 类似，均在 `onReactHooksExec` 方法内进行 hooks 的注册与执行
 
@@ -164,7 +164,7 @@ Mpx 也支持组合式 API 的使用，使用方式与选项式 API 类似，均
 </script>
 ```
 
-### 配合模板响应式
+### 配合模板响应式 {#with-template-reactivity}
 
 如果你尝试了上面的示例代码，可能会好奇为什么点击后控制台正常打印了日志 `trigger event: onTouchEnd`，但是模板上的 `count` 并没有更新呢？
 

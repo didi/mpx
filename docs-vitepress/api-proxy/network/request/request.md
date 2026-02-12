@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -623,10 +623,10 @@
 </table>
 
 
-### 返回值
+### 返回值 {#return-value}
 [RequestTask](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/RequestTask.html)
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.request({

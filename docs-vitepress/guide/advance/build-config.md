@@ -1,10 +1,10 @@
-# 编译配置
+# 编译配置 {#build-config}
 
 新版的 `@mpxjs/cli` 整体是基于 `@vue/cli` 的架构设计开发的。因此有关 `mpx` 编译构建相关的配置统一使用 `vue.config.js` 来进行管理。
 
-### 编译构建配置
+### 编译构建配置 {#build-setup}
 
-#### mpx 编译构建配置
+#### mpx 编译构建配置 {#mpx-build-config}
 
 有关 `mpx` 相关的 webpack 插件、loader 等在 `vue.config.js` 当中 `pluginOptions.mpx` 进行相关的配置：
 
@@ -22,7 +22,7 @@ module.exports = {
       // 具体可参考文档：https://www.mpxjs.cn/api/compile.html#mpxwebpackplugin-loader
       loader: {},
       // 提供图片资源处理简单操作
-      // 具体配置参考 https://mpxjs.cn/guide/advance/image-process.html#%E5%9B%BE%E5%83%8F%E8%B5%84%E6%BA%90%E5%BC%95%E5%85%A5%E6%9C%89%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F
+      // 具体配置参考 https://mpxjs.cn/guide/advance/image-process.html
       urlLoader: {
         name: 'img/[name][hash].[ext]',
         publicPath: '',
@@ -86,7 +86,7 @@ module.exports = {
 }
 ```
 
-### 根据不同的构建目标配置
+### 根据不同的构建目标配置 {#config-by-target}
 
 可根据构建平台和开发环境进行选择性的配置，在构建过程中暴露出来的环境变量包括：
 

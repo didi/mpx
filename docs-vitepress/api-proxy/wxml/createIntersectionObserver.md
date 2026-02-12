@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/wxml/wx.createIntersectionObserver.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object component**
 
@@ -23,5 +23,5 @@
 | observeAll   | boolean | false  | 否   | 是否同时观测多个目标节点（而非一个），如果设为 true ，observe 的 targetSelector 将选中多个节点（注意：同时选中过多节点将影响渲染性能） | 2.0.0    |
 | nativeMode   | boolean | false  | 否   | 是否使用原生观察器模式。                                                                              | 3.5.7    |
 
-### 返回值
+### 返回值 {#return-value}
 [IntersectionObserver](https://developers.weixin.qq.com/miniprogram/dev/api/wxml/IntersectionObserver.html)

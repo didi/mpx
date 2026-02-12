@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/setting/wx.getSetting.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -30,7 +30,7 @@
 | miniprogramAuthSetting | AuthSetting         | 在插件中调用时，当前宿主小程序的用户授权结果                 |          | <span style="color: red; font-weight: bold;">✗</span> |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.getSetting({

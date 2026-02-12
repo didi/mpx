@@ -1,8 +1,8 @@
-# 组件使用与开发
+# 组件使用与开发 {#component-usage-development}
 
 本节提供 Mpx RN 环境下的组件支持说明，详细列出了支持的基础组件及其可用属性、方法，以及自定义组件的相关配置。
 
-### 目录概览
+### 目录概览 {#directory-overview}
 
 - #### 基础组件
 **容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
@@ -16,9 +16,9 @@
 **其他组件**：[web-view](#web-view)
 
 - #### 自定义组件
-[组件属性配置](#组件属性配置) · [生命周期钩子](#生命周期钩子) · [实例属性和方法](#实例属性和方法)
+[组件属性配置](#component-props-config) · [生命周期钩子](#lifecycle-hooks) · [实例属性和方法](#instance-props-methods)
 
-### 使用原则
+### 使用原则 {#usage-principles}
 
 > [!important] 重要说明
 >
@@ -26,10 +26,10 @@
 > - **平台特性**：某些属性和功能仅在 RN 环境下可用
 > - **性能考量**：按需开启高级功能，避免不必要的性能开销
 
-## 基础组件
+## 基础组件 {#basic-components}
 目前 Mpx 输出 React Native 仅支持以下组件，文档中未提及的组件以及组件属性即为不支持，具体使用范围可参考如下文档
 
-### 基础组件通用属性
+### 基础组件通用属性 {#basic-component-common-props}
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
@@ -498,7 +498,7 @@ movable-view的可移动区域。
 | bindcancel      | 取消选择时触发                                         |
 | bindchange      | value 改变时触发 change 事件，`event.detail = {value}` |
 
-#### 普通选择器：mode = selector
+#### 普通选择器：mode = selector {#mode-selector}
 
 属性
 
@@ -508,7 +508,7 @@ movable-view的可移动区域。
 | range-key              | string                  | `false`       | 当 range 是一个 Object Array 时，通过 range-key 来指定 Object 中 key 的值作为选择器显示内容 |
 | value                  | number                  | 0             | 表示选择了 range 中的第几个（下标从 0 开始）|
 
-#### 多列选择器：mode = multiSelector
+#### 多列选择器：mode = multiSelector {#mode-multiselector}
 属性与事件
 
 | 属性名                  | 类型                     | 默认值         | 说明                           |
@@ -518,7 +518,7 @@ movable-view的可移动区域。
 | value                  | array                   | `[]`          | 表示选择了 range 中的第几个（下标从 0 开始）|
 | bindcolumnchange       |        function                 |               | 列改变时触发|
 
-#### 多列选择器：时间选择器：mode = time
+#### 多列选择器：时间选择器：mode = time {#mode-time}
 属性
 
 | 属性名                  | 类型                     | 默认值         | 说明                           |
@@ -527,7 +527,7 @@ movable-view的可移动区域。
 | start                  | string                  | `false`       | 表示有效时间范围的开始，字符串格式为"hh:mm" |
 | end                    | string                   | `[]`         | 表示有效时间范围的结束，字符串格式为"hh:mm"|
 
-#### 多列选择器：时间选择器：mode = date
+#### 多列选择器：时间选择器：mode = date {#mode-date}
 属性
 
 | 属性名                  | 类型                     | 默认值         | 说明                                      |
@@ -544,7 +544,7 @@ fields 有效值：
 | month                  | 选择器粒度为月份           |
 | day                   | 选择器粒度为天              |
 
-#### 省市区选择器：mode = region
+#### 省市区选择器：mode = region {#mode-region}
 属性
 
 | 属性名                  | 类型                     | 默认值         | 说明                                      |
@@ -749,13 +749,13 @@ API
 功能同 image 组件
 
 
-## 自定义组件
+## 自定义组件 {#custom-component}
 
 Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周期、插槽使用等更多组件开发的详细指南和高级用法，请参考 [自定义组件基础文档](../basic/component.md)。
 
 本节重点介绍在 RN 环境下的特殊注意事项和限制。
 
-### 组件属性配置
+### 组件属性配置 {#component-props-config}
 
 | 属性 | 支持状态 | 说明 |
 |------|---------|------|
@@ -766,12 +766,12 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 | observers | ✅ 完全支持 | 数据变化监听器 |
 | methods | ✅ 完全支持 | 组件方法定义 |
 | mixins | ✅ 完全支持 | 混入选项 |
-| externalClasses | ⚠️ 需要配置 | 外部样式类，需配置[构建选项](/api/compile.html#externalclasses) |
+| externalClasses | ⚠️ 需要配置 | 外部样式类，需配置[构建选项](../../api/compile.md#externalclasses) |
 | behaviors | ❌ 不支持 | 小程序 behaviors 机制 |
 | options | ❌ 不支持 | 组件选项（multipleSlots、virtualHost 等）|
 | relations | ❌ 不支持 | 组件关系定义 |
 
-### 生命周期钩子
+### 生命周期钩子 {#lifecycle-hooks}
 
 | 生命周期 | 支持状态 | 说明 |
 |---------|---------|------|
@@ -782,7 +782,7 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 | lifetimes | ✅ 完全支持 | 生命周期声明对象 |
 | pageLifetimes | ✅ 完全支持 | 页面生命周期（show、hide、resize）|
 
-### 实例属性和方法
+### 实例属性和方法 {#instance-props-methods}
 
 | 功能 | 支持状态 | 说明 |
 |------|---------|------|
@@ -798,7 +798,7 @@ Mpx 完全支持自定义组件功能，组件创建、属性配置、生命周�
 | $i18n | ✅ 完全支持 | 国际化访问器 |
 | is | ✅ 完全支持 | 动态组件 |
 
-#### selectComponent / selectAllComponents 使用要点
+#### selectComponent / selectAllComponents 使用要点 {#select-component-usage}
 
 在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时
 1. 必须在目标节点上标记 `wx:ref`

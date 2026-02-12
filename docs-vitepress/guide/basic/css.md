@@ -1,10 +1,10 @@
-# 样式定义
+# 样式定义 {#style-definition}
 
-## 基础语法
+## 基础语法 {#basic-syntax}
 
 Mpx 中的样式定义遵循 WXSS (WeiXin Style Sheets) 规范，WXSS 具有 CSS 大部分特性，同时为了更适合开发微信小程序，对 CSS 进行了扩充以及修改。
 
-### 尺寸单位
+### 尺寸单位 {#size-units}
 
 `rpx`（responsive pixel）: 可以根据屏幕宽度进行自适应。规定屏幕宽为 750rpx。如在 iPhone6 上，屏幕宽度为 375px，共有 750 个物理像素，则 750rpx = 375px = 750物理像素，1rpx = 0.5px = 1物理像素。
 
@@ -18,7 +18,7 @@ Mpx 中的样式定义遵循 WXSS (WeiXin Style Sheets) 规范，WXSS 具有 CSS
 
 > **建议**：开发微信小程序时设计师可以用 iPhone6 作为视觉稿的标准。
 
-### 样式导入
+### 样式导入 {#style-import}
 
 使用 `@import` 语句可以导入外联样式表，`@import` 后跟需要导入的外联样式表的相对路径，用 `;` 表示语句结束。
 
@@ -37,7 +37,7 @@ Mpx 中的样式定义遵循 WXSS (WeiXin Style Sheets) 规范，WXSS 具有 CSS
 }
 ```
 
-### 选择器
+### 选择器 {#selectors}
 
 目前支持的选择器有：
 
@@ -54,7 +54,7 @@ Mpx 中的样式定义遵循 WXSS (WeiXin Style Sheets) 规范，WXSS 具有 CSS
 > - 当需要跨端输出 React Native 时，仅支持类选择器（.class）。
 
 
-## CSS 预编译
+## CSS 预编译 {#css-precompile}
 
 Mpx 支持 CSS 预编译处理，你可以通过在 style 标签上设置 `lang` 属性，来指定使用的 CSS 预处理器，此外需要在对应的 webpack 配置文件中
 加入对应的 loader 配置
@@ -137,7 +137,7 @@ rules: [
 
 ```
 
-## 公共样式复用
+## 公共样式复用 {#common-style-reuse}
 
 为了达到最大限度的样式复用，Mpx 提供了以下两种方式实现公共样式抽离，但是最终打包的效果有所区别。
 
@@ -149,7 +149,7 @@ rules: [
   background-color #f00
 ```
 
-### style src 复用
+### style src 复用 {#style-src-reuse}
 
 通过给 style 标签添加 src 属性引入外部样式，最终公共样式代码只会打包一份。
 
@@ -165,7 +165,7 @@ rules: [
 
 Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxss 文件，这样既实现了样式抽离，又能节省打包后的代码体积。
 
-### @import 复用
+### @import 复用 {#import-reuse}
 
 如果指定 style 标签的 lang 属性并且使用 @import 导入样式，那么这个文件经过对应的 loader 处理之后的内容会重复打包到引用它的文件目录下，并不会抽离成单独的文件，这样无形中增加了代码体积。
 
@@ -210,7 +210,7 @@ Mpx 将 common.styl 中的代码经过 loader 编译后生成一份单独的 wxs
 
 对于多个页面或组件公用的样式，建议使用 style src 形式引入，避免一份样式被内联打成多份，同时还能使用 less、scss 等提升编码效率。
 
-## CSS 压缩
+## CSS 压缩 {#css-compress}
 
 在 production 模式下，框架默认会使用 [`cssnano`](https://www.cssnano.cn/) 对 css 内容进行压缩。
 
@@ -251,11 +251,11 @@ npm i -D cssnano-preset-advanced
 
 optimisation 配置可以点击[详情](https://www.cssnano.cn/docs/what-are-optimisations/)查看更多配置项。
 
-## 原子类
+## 原子类 {#utility-class}
 
 Mpx 框架内置了基于 [unocss](https://unocss.dev/) 的原子类支持，让小程序开发也能使用原子类。用户可以在 Mpx 页面/组件模板中直接使用一些预定义的基础样式类，诸如 `flex`，`pt-4`，`text-center` 和 `rotate-90` 等，对样式进行组合定义。
 
-### 简单示例
+### 简单示例 {#simple-example}
 
 ```html
 <view class="container">

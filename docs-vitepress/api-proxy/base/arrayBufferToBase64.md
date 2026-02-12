@@ -7,15 +7,15 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/wx.arrayBufferToBase64.html)
 
-### 参数
+### 参数 {#parameters}
 **ArrayBuffer arrayBuffer**\
 要转换成 Base64 字符串的 ArrayBuffer 对象
 
-### 返回值
+### 返回值 {#return-value}
 **string**\
 Base64 字符串
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 const arrayBuffer = new Uint8Array([11, 22, 33])
 const base64 = mpx.arrayBufferToBase64(arrayBuffer)

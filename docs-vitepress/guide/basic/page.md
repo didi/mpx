@@ -1,8 +1,9 @@
-# 创建页面
+# 创建页面 {#create-page}
 
 对于 Mpx 项目中的每个页面，都需要在对应的 `.mpx` 文件中进行定义，指定页面的初始数据、生命周期回调、事件处理函数等，并且在 `app.mpx` 中通过 `pages` 数组进行注册。
 
 ```html
+<!-- app.mpx -->
 <script type="application/json">
   {
     "pages": [
@@ -13,11 +14,11 @@
 </script>
 ```
 
-## 页面模板
+## 页面模板 {#page-template}
 
-页面模板的写法与组件模板相同，具体可参考[模版语法](./template.md)。页面模板与页面数据结合后生成的节点树，将被渲染到页面上。
+页面模板的写法与组件模板相同，具体可参考[模版语法](template.md)。页面模板与页面数据结合后生成的节点树，将被渲染到页面上。
 
-## 页面构造
+## 页面构造 {#page-constructor}
 
 `createPage` 是 Mpx 提供的用于构造页面的方法，它接受一个 Object 类型的参数，指定页面的初始数据、生命周期回调、事件处理函数等。
 
@@ -89,7 +90,24 @@
 </style>
 ```
 
-### 生命周期
+### 页面构造选项 {#page-constructor-options}
+
+Mpx 中页面的构造选项与组件高度一致，支持 `data`、`computed`、`watch`、`methods` 等选项。
+
+| 选项 | 说明 | 详细介绍 |
+| :--- | :--- | :--- |
+| data | 页面的初始数据 | [data](component.md#data) |
+| computed | 计算属性，用于声明依赖于其他数据的计算属性 | [computed](component.md#computed) |
+| watch | 侦听器，用于监听数据的变化并执行相应的回调 | [watch](component.md#watch) |
+| methods | 页面方法，包括事件响应函数和任意的自定义方法 | [methods](component.md#methods) |
+| provide / inject | 依赖注入，用于跨层级组件分发数据 | [provide / inject](./component.md#provide-inject) |
+| setup | 组合式 API 入口，返回页面所需的数据和方法 | [setup](component.md#setup) |
+
+> **注意**
+> - Mpx 底层默认使用 Component 构造器创建页面，因此自定义方法需要放置在 `methods` 选项中，这与原生小程序 Page 构造器直接挂载在配置对象下不同。
+> - Mpx 对 `data` 进行了响应式处理，直接修改 `this.text = 'xxx'` 即可驱动视图更新，无需调用 `this.setData`。
+
+### 页面生命周期 {#page-lifecycle}
 
 *   **onLoad(Object query)**
     页面加载时触发。一个页面只会调用一次，可以在 onLoad 的参数中获取打开当前页面路径中的参数。
@@ -125,157 +143,69 @@
 *   **onTabItemTap(Object object)**
     当前是 tab 页时，点击 tab 时触发。
 
-### data
+### 页面实例方法 {#page-instance-methods}
 
-`data` 是页面第一次渲染使用的初始数据。页面加载时，`data` 将会以 JSON 字符串的形式由逻辑层传至渲染层，因此 `data` 中的数据必须是可以转成 JSON 的类型：字符串，数字，布尔值，对象，数组。
+页面实例除了具备组件实例的大部分方法外，还具有一些特有的属性和方法。
 
-```js
-import { createPage } from '@mpxjs/core'
+| 方法/属性 | 说明 | 详细介绍 |
+| :--- | :--- | :--- |
+| route | 当前页面的路径，类型为 String | - |
+| getPageId | 返回页面标识符 | [getPageId](component.md#getpageid) |
+| selectComponent | 使用选择器选择组件实例节点 | [selectComponent](component.md#selectcomponent) |
+| selectAllComponents | 使用选择器选择组件实例节点，返回全部匹配节点 | [selectAllComponents](component.md#selectallcomponents) |
+| createSelectorQuery | 创建一个 SelectorQuery 对象 | [createSelectorQuery](component.md#createselectorquery) |
+| createIntersectionObserver | 创建一个 IntersectionObserver 对象 | [createIntersectionObserver](component.md#createintersectionobserver) |
+| $watch | 动态创建一个侦听器 | [$watch](component.md#watch) |
+| $forceUpdate | 强制更新视图 | [$forceUpdate](component.md#forceupdate) |
+| $nextTick | 延迟到下次 DOM 更新循环之后执行 | [$nextTick](component.md#nexttick) |
+| $set | 向响应式对象中添加一个 property | [$set](component.md#set) |
+| $delete | 删除对象的 property | [$delete](component.md#delete) |
 
-createPage({
-  data: {
-    message: 'Hello MINA!'
+## 页面样式 {#page-style}
+
+页面样式主要用于控制页面内的元素外观，在 Mpx 中，样式直接编写在 `.mpx` 单文件中的 `<style>` 标签内。
+
+### 全局样式与局部样式 {#global-and-local-style}
+
+定义在 `app.mpx` 的 `<style>` 标签中的样式为全局样式，作用于每一个页面。在页面的 `.mpx` 文件中 `<style>` 标签定义的样式为局部样式，只作用于当前页面，并会覆盖全局样式中相同的选择器。
+
+```html
+<!-- app.mpx -->
+<style>
+  .container {
+    padding: 20px;
   }
-})
-```
+</style>
 
-### methods
-
-组件的方法，包括事件响应函数和任意的自定义方法。在 Mpx 中，由于底层使用 Component 构造器，自定义方法必须放在 `methods` 对象中。
-
-```js
-import { createPage } from '@mpxjs/core'
-
-createPage({
-  data: {
-    text: ''
-  },
-  methods: {
-    viewTap() {
-      this.text = 'Clicked!'
-    }
+<!-- page.mpx -->
+<style>
+  .container {
+    padding: 10px; /* 覆盖全局样式 */
   }
-})
-```
-> **注意**
-> - Mpx 底层默认使用 Component 构造器创建页面，因此自定义方法需要放置在 `methods` 选项中。
-> - Mpx 对 `data` 进行了响应式处理，直接修改 `this.text = 'xxx'` 即可驱动视图更新，无需调用 `this.setData`。
-
-### computed
-
-`computed` 选项用于声明依赖于其他数据的计算属性。计算属性的结果会被缓存，只有在依赖发生变化时才会重新计算。
-
-```js
-import { createPage } from '@mpxjs/core'
-
-createPage({
-  data: {
-    firstName: 'John',
-    lastName: 'Doe'
-  },
-  computed: {
-    fullName() {
-      return this.firstName + ' ' + this.lastName
-    }
-  }
-})
-```
-详情请查看[计算属性](https://mpxjs.cn/guide/advance/computed.html)
-
-### watch
-
-`watch` 选项用于监听数据的变化并执行相应的回调函数。
-
-```js
-import { createPage } from '@mpxjs/core'
-
-createPage({
-  data: {
-    question: '',
-    answer: 'Questions usually contain a question mark. ;-)'
-  },
-  watch: {
-    // 只要 question 发生改变，这个函数就会执行
-    question(newQuestion, oldQuestion) {
-      if (newQuestion.indexOf('?') > -1) {
-        this.getAnswer()
-      }
-    }
-  }
-})
-```
-详情请查看[侦听器](https://mpxjs.cn/guide/advance/watch.html)
-
-### setup
-
-`setup` 函数在页面创建时执行，返回页面所需的数据和方法，是组合式 API 的核心。
-
-```js
-import { createPage, ref, onLoad, onShow } from '@mpxjs/core'
-
-createPage({
-  setup() {
-    const count = ref(0)
-    const increment = () => {
-      count.value++
-    }
-    
-    // 注册生命周期钩子
-    onLoad(() => {
-      console.log('Page Load')
-    })
-
-    onShow(() => {
-      console.log('Page Show')
-    })
-
-    return {
-      count,
-      increment
-    }
-  }
-})
-```
-详情请查看[组合式 API](../composition-api/composition-api.md)
-
-> **注意**
-> - Mpx 底层默认使用 Component 构造器创建页面，因此自定义方法需要放置在 `methods` 选项中。
-
-## 页面样式
-
-页面样式主要用于控制页面内的元素外观。
-
-### 全局样式与局部样式
-
-定义在 `app.mpx` 中的样式为全局样式，作用于每一个页面。在页面的 `wxss` 文件中定义的样式为局部样式，只作用于当前页面，并会覆盖全局样式中相同的选择器。
-
-```css
-/* app.mpx */
-.container {
-  padding: 20px;
-}
-
-/* page.mpx */
-.container {
-  padding: 10px; /* 覆盖全局样式 */
-}
+</style>
 ```
 
-### 样式导入
+### 样式导入 {#style-import}
 
 可以使用 `@import` 语句导入外联样式表。
 
-```css
-@import './common.wxss';
+```html
+<style>
+  @import './common.wxss';
+  
+  .page-container {
+    background-color: #f8f8f8;
+  }
+</style>
 ```
 
-## 页面配置
+## 页面配置 {#page-config}
 
 `app.json` 中的部分配置，也支持对单个页面进行配置，可以在页面对应的 `<script type="application/json">` 块中来对本页面的表现进行配置。
 
 页面中配置项在当前页面会覆盖 `app.json` 中相同的配置项（样式相关的配置项属于 `app.json` 中的 `window` 属性，但这里不需要额外指定 `window` 字段）。
 
-### 配置项
+### 配置项 {#config-items}
 
 | 属性 | 类型 | 默认值 | 描述 |
 | :--- | :--- | :--- | :--- |
@@ -290,16 +220,18 @@ createPage({
 | disableScroll | boolean | false | 设置为 true 则页面整体不能上下滚动 |
 | usingComponents | Object | 否 | 页面自定义组件配置 |
 
-### 配置示例
+### 配置示例 {#config-example}
 
-```json
-{
-  "navigationBarBackgroundColor": "#ffffff",
-  "navigationBarTextStyle": "black",
-  "navigationBarTitleText": "微信接口功能演示",
-  "backgroundColor": "#eeeeee",
-  "backgroundTextStyle": "light"
-}
+```html
+<script type="application/json">
+  {
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "微信接口功能演示",
+    "backgroundColor": "#eeeeee",
+    "backgroundTextStyle": "light"
+  }
+</script>
 ```
 
 更多配置项细节请参考[小程序页面配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/page.html)
