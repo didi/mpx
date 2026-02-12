@@ -222,7 +222,7 @@ class RNIntersectionObserver {
             // index: index,
             id: this.observerRefs[index].getNodeInstance().props?.current?.id,
             dataset: this.observerRefs[index].getNodeInstance().props?.current?.dataset || {},
-            intersectionRatio: Math.round(intersectionRatio * 100) / 100,
+            intersectionRatio,
             intersectionRect,
             boundingClientRect: observeRect,
             relativeRect: relativeRect,
