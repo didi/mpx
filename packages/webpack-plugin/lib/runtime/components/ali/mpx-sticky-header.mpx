@@ -1,0 +1,212 @@
+<template>
+  <view class="mpx-sticky-header-container">
+    <view class="mpx-sticky-header" wx:ref="stickyHeader" wx:style="{{stickyHeaderStyle}}">
+      <slot></slot>
+    </view>
+    <view
+      class="mpx-sticky-header-placeholder"
+      id="{{stickyId}}"
+      wx:style="{{placeholderStyle}}"
+    ></view>
+  </view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    properties: {
+      offsetTop: {
+        type: Number,
+        value: 0
+      },
+      scrollViewId: {
+        type: String,
+        value: ''
+      },
+      stickyId: {
+        type: String,
+        value: ''
+      },
+      padding: Array,
+      enablePolling: {
+        type: Boolean,
+        value: false
+      },
+      pollingDuration: {
+        type: Number,
+        value: 300
+      }
+    },
+    data: {
+      isStickOnTop: false,
+      scrollOffsetTop: 0,
+      headerHeight: 0,
+      stickyHeader: '',
+      headerTop: 0,
+      lastIntersectionRatio: -1,
+      pollingTimer: null
+    },
+    computed: {
+      paddingStyle() {
+        if (!this.padding || !Array.isArray(this.padding)) {
+          return ''
+        }
+        const [top = 0, right = 0, bottom = 0, left = 0] = this.padding
+        return `padding: ${top}px ${right}px ${bottom}px ${left}px;`
+      },
+      stickyHeaderStyle() {
+        const baseStyle = this.isStickOnTop
+          ? `position: fixed;top: ${this.scrollOffsetTop + this.offsetTop}px;`
+          : ''
+        return baseStyle + this.paddingStyle
+      },
+      placeholderStyle() {
+        const position = this.isStickOnTop ? 'relative' : 'absolute'
+        return `position: ${position};height: ${this.headerHeight}px;`
+      }
+    },
+    ready() {
+      if (!this.scrollViewId) {
+        console.error('[mpx runtime error]: scroll-view-id is necessary property in ali environment')
+      }
+      if (!this.stickyId) {
+        console.error('[mpx runtime error]: sticky-id is necessary property in ali environment')
+      }
+      this.initStickyHeader()
+        // 启动轮询
+      if (this.enablePolling) {
+        this.startPolling()
+      }
+    },
+    methods: {
+      initStickyHeader() {
+        this.createSelectorQuery()
+          .select('.mpx-sticky-header')
+          .boundingClientRect()
+          .exec((rect = []) => {
+            this.headerHeight = rect[0]?.height || 0
+          })
+
+        mpx
+          .createSelectorQuery()
+          .select(`#${this.scrollViewId}`)
+          .boundingClientRect()
+          .exec((res) => {
+            if (!res) return
+            this.scrollOffsetTop = res[0]?.top || 0
+            this.stickyHeader = mpx.createIntersectionObserver({
+              thresholds: [0.1, 0.9]
+            })
+            this.initObserver()
+          })
+      },
+      initObserver() {
+        this.stickyHeader.relativeTo(`#${this.scrollViewId}`).observe(`#${this.stickyId}`, (res) => {
+          const { intersectionRatio, intersectionRect, relativeRect, boundingClientRect } = res
+          if (intersectionRatio < this.lastIntersectionRatio) {
+            // boundingClientRect.top < relativeRect.top fixed，否则默认布局
+            this.handleStickyStateChange(boundingClientRect.top < relativeRect.top)
+          } else if (intersectionRatio > this.lastIntersectionRatio) {
+            this.handleStickyStateChange(false)
+          }
+          this.lastIntersectionRatio = intersectionRatio
+        })
+      },
+      refresh() {
+        // 并行执行两个独立的查询
+        Promise.all([
+          // 查询1：组件内部元素
+          new Promise((resolve) => {
+            this.createSelectorQuery()
+              .select('.mpx-sticky-header')
+              .boundingClientRect()
+              .select('.mpx-sticky-header-placeholder')
+              .boundingClientRect()
+              .exec((results) => {
+                resolve(results)
+              })
+          }),
+          // 查询2：页面级scrollView
+          new Promise((resolve) => {
+            mpx.createSelectorQuery()
+              .select(`#${this.scrollViewId}`)
+              .boundingClientRect()
+              .select(`#${this.scrollViewId}`)
+              .scrollOffset()
+              .exec((results) => {
+                resolve(results)
+              })
+          })
+        ]).then(([componentResults, scrollResults]) => {
+          const [stickyHeaderRect, placeholderRect] = componentResults
+          const [scrollViewRect, scrollOffsetData] = scrollResults
+          
+          if (!stickyHeaderRect || !placeholderRect || !scrollViewRect || !scrollOffsetData) return
+
+          this.scrollOffsetTop = scrollViewRect.top || 0
+          this.headerHeight = stickyHeaderRect.height
+
+          // 模拟 offsetTop 计算：sticky placeholder具体顶部距离 - scrollView顶部 + scrollView滚动位置
+          // 必须用 placeholder 到顶部距离，用 sticky 如果刚好差值为 0， 区分不出是本身就在顶部还是 fixed 在顶部
+          this.headerTop = placeholderRect.top - this.scrollOffsetTop + scrollOffsetData.scrollTop
+          
+          this.handleStickyStateChange(scrollOffsetData.scrollTop > this.headerTop)
+        })
+      },
+      handleStickyStateChange(shouldStick) {
+        // 如果状态没有变化，直接返回
+        if (shouldStick === this.isStickOnTop) {
+          return
+        }
+        // 更新状态
+        this.isStickOnTop = shouldStick
+        // 触发事件
+        this.triggerEvent('stickontopchange', {
+          isStickOnTop: shouldStick,
+          id: this.stickyId
+        })
+      },
+       // 启动轮询
+      startPolling() {
+        if (this.pollingTimer) {
+          clearInterval(this.pollingTimer)
+        }
+        this.pollingTimer = setInterval(() => {
+          this.refresh()
+        }, this.pollingDuration)
+      },
+      // 停止轮询
+      stopPolling() {
+        if (this.pollingTimer) {
+          clearInterval(this.pollingTimer)
+          this.pollingTimer = null
+        }
+      }
+    },
+    detached() {
+      // 清理观察器
+      if (this.stickyHeader) {
+        this.stickyHeader.disconnect()
+      }
+       // 清理轮询定时器
+      if (this.pollingTimer) {
+        clearInterval(this.pollingTimer)
+        this.pollingTimer = null
+      }
+    }
+  })
+</script>
+<style lang="stylus" scoped>
+  .mpx-sticky-header-container
+    position relative
+  .mpx-sticky-header-placeholder
+    position absolute
+    left 0
+    right 0
+    top 0
+    pointer-events none
+  .mpx-sticky-header
+    width 100%
+    box-sizing border-box
+</style>
