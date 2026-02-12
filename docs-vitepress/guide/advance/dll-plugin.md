@@ -1,6 +1,6 @@
-# 使用 DllPlugin
+# 使用 DllPlugin {#use-dll-plugin}
 
-### 相关插件简述
+### 相关插件简述 {#plugin-summary}
 #### DllPlugin
 
 > DllPlugin 和 DllReferencePlugin 用某种方法实现了拆分 bundles，同时还大大提升了构建的速度，这个插件是在一个额外的独立的 webpack 设置中创建一个只有 dll 的 bundle(dll-only-bundle)。并且会生成一个名为 manifest.json的文件，这个文件是用来让 DLLReferencePlugin 映射到相关的依赖上去的。
@@ -15,7 +15,7 @@ DllPlugin 用来将我们某些长时间不变更的资源，独立拆分出去�
 
 通过引用 dll 的 manifest 文件来把依赖的名称映射到模块的 id 上，之后再在需要的时候通过内置的 __webpack_require__ 函数来 require 他们。
 
-### Mpx中 DllPlugin 的使用
+### Mpx中 DllPlugin 的使用 {#use-dll-plugin-in-mpx}
 
 **1.通过 @mpxjs/cli init 生成项目**
 
@@ -112,7 +112,7 @@ DllPlugin 的配置项详见[文档](https://webpack.docschina.org/plugins/dll-p
       生成的 manifest json 文件 是否进行格式化
 
 
-### Mpx 中对 DllPlugin 配置所做的相关处理
+### Mpx 中对 DllPlugin 配置所做的相关处理 {#dll-plugin-config-process}
 
 正常使用 DllPlugin 是单独创建一个 webpack 配置文件，配置文件中加入 DllPlugin，然后运行 webpack 编译构建生成 dll 文件。
 
@@ -167,5 +167,5 @@ plugins.push(new webpack.DllReferencePlugin({
 DllReferencePlugin 的其他配置项详见[文档](https://webpack.docschina.org/plugins/dll-plugin/)
 
 
-### 总结
+### 总结 {#summary}
 综上所述，在 Mpx 中使用 dllPlugin 时，只需要进行 build/dll.config.js 文件的配置，然后通过 build:dll 命令生成 dll bundle，之后就可以正常的进行代码的 build 了。不过每次 build 需要检查下项目中使用的 npm 包版本与 dll bundle 中的 npm 包版本是否一致，避免因为包版本的滞后更新导致线上 bug，这里我们后续也会提供相应的包版本比对插件。

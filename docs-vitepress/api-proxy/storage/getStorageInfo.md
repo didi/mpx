@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/storage/wx.getStorageInfo.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -29,7 +29,7 @@
 | limitSize  | number         | 限制的空间大小，单位 KB         | <span style="color: green; font-weight: bold;">✓</span> | <span style="color: red; font-weight: bold;">✗</span> | <span style="color: red; font-weight: bold;">✗</span> |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 mpx.getStorageInfo({
   success (res) {

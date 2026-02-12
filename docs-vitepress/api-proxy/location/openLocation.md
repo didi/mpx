@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/location/wx.chooseLocation.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -24,7 +24,7 @@
 
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 mpx.getLocation({
  type: 'gcj02', //返回可以用于wx.openLocation的经纬度

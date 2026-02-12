@@ -6,7 +6,7 @@ mpx.closeBLEConnection(Object object)
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/bluetooth-ble/wx.closeBLEConnection.html)
 
-### 参数
+### 参数 {#parameters}
 **Object object**
 
 | 属性 | 类型 | 默认值 | 必填 | 说明 |
@@ -16,7 +16,7 @@ mpx.closeBLEConnection(Object object)
 | fail | function |  | 否 | 接口调用失败的回调函数 |
 | complete | function |  | 否 | 接口调用结束的回调函数（调用成功、失败都会执行） |
 
-### 错误
+### 错误 {#error}
 
 | 错误码 | 错误信息 | 说明 | 支付宝 |
 | --- | --- | --- | --- |
@@ -35,7 +35,7 @@ mpx.closeBLEConnection(Object object)
 | 10012 | operate time out | 连接超时 | **<span style="color: green;">✓</span>** |
 | 10013 | invalid_data | 连接 deviceId 为空或者是格式不正确 | **<span style="color: green;">✓</span>** |
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.closeBLEConnection({

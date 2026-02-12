@@ -1,4 +1,4 @@
-# IDE 支持
+# IDE 支持 {#ide-support}
 
 ## VS Code
 
@@ -16,7 +16,7 @@ Mpx (Official) 插件一大亮点功能是为 `<template>` 模板中的变量支
 
 有关更多插件详细功能介绍和使用说明，请参阅我们的[插件文档](https://github.com/mpx-ecology/language-tools/wiki)。
 
-## Open VSX 插件生态 IDE
+## Open VSX 插件生态 IDE {#open-vsx-ide}
 
 [Open VSX](https://open-vsx.org/) 是 Visual Studio Marketplace（VS Code 官方插件市场）的开源替代方案，可以为兼容 VS Code 的 IDE 提供插件市场支持。[Mpx (Official)](https://open-vsx.org/extension/mpxjs/mpx-official) 插件支持在 Open VSX 同步发版。
 

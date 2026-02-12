@@ -6,7 +6,7 @@ mpx.onBLEConnectionStateChange(function listener)
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/bluetooth-ble/wx.onBLEConnectionStateChange.html)
 
-### 参数
+### 参数 {#parameters}
 **function listener**
 
 蓝牙低功耗连接状态改变事件的监听函数
@@ -20,7 +20,7 @@ mpx.onBLEConnectionStateChange(function listener)
 | deviceId | string | 蓝牙设备 id |
 | connected | boolean | 是否处于已连接状态 |
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.onBLEConnectionStateChange(function(res) {

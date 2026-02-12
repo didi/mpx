@@ -1,4 +1,4 @@
-# 单元测试
+# 单元测试 {#unit-test}
 
 Mpx 框架提供了 jest 转换器 mpx-jest，结合微信小程序提供的 [miniprogram-simulate](https://github.com/wechat-miniprogram/miniprogram-simulate) 来进行单元测试的工作。
 
@@ -6,14 +6,14 @@ Mpx 框架提供了 jest 转换器 mpx-jest，结合微信小程序提供的 [mi
 
 如果是初始化项目，单元测试相关的项目依赖和配置可以通过 @mpx/cli 创建项目时选择使用单元测试选项自动生成，如果时旧项目需要使用，可以按照下方步骤安装依赖和添加配置。
 
-## 安装依赖
+## 安装依赖 {#install-dependencies}
 ```html
 npm i -D @mpxjs/mpx-jest @mpxjs/miniprogram-simulate jest babel-jest
 
 // 如果项目使用了ts，则还需要安装
 npm i -D ts-jest
 ```
-## jest 相关配置
+## jest 相关配置 {#jest-config}
 首先在项目根目录创建 jest.config.js 配置文件，并加入以下关键配置
 
 ```html
@@ -29,7 +29,7 @@ npm i -D ts-jest
 ```
 
 
-## 简单的断言
+## 简单的断言 {#simple-assertion}
 
 暂时进行一个简单的组件单元测试书写，对于复杂组件以及通用测试逻辑的总结我们会在后续进行发布。
 
@@ -87,7 +87,7 @@ describe('MyComponent', () => {
 })
 ```
 
-## 编写可被测试的组件
+## 编写可被测试的组件 {#testable-component}
 
 很多组件的渲染输出由它的 props 决定。事实上，如果一个组件的渲染输出完全取决于它的 props，那么它会让测试变得简单，就好像断言不同参数的纯函数的返回值。看下面这个例子：
 
@@ -126,7 +126,7 @@ describe('MyComponent', () => {
 })
 ```
 
-## 断言异步更新
+## 断言异步更新 {#assert-async-update}
 
 小程序视图层的更新是异步的，一些依赖视图更新结果的断言必须 await simulate.sleep() 或者 await comp.instance.$nextTick() 后进行：
 

@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getWindowInfo.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object**
 
@@ -50,7 +50,7 @@
 </table>
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 const deviceInfo = mpx.getDeviceInfo()
 

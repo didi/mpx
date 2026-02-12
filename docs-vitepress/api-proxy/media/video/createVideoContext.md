@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/media/video/wx.createVideoContext.html)
 
-### 参数
+### 参数 {#parameters}
 
 **string id**
 
@@ -16,5 +16,5 @@ video 组件的 id
 
 在自定义组件下，当前组件实例的this，以操作组件内 video 组件
 
-### 返回值
+### 返回值 {#return-value}
 [VideoContext](https://developers.weixin.qq.com/miniprogram/dev/api/media/video/VideoContext.html)

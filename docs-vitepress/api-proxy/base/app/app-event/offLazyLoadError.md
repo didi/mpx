@@ -6,13 +6,13 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/app/app-event/wx.offLazyLoadError.html)
 
-### 参数
+### 参数 {#parameters}
 
 **function listener**
 
 onLazyLoadError 传入的监听函数。不传此参数则移除所有监听函数(支付宝除外)。
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 const listener = function (res) { console.log(res) }
 

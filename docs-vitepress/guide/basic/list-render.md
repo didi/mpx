@@ -1,4 +1,4 @@
-# 列表渲染
+# 列表渲染 {#list-render}
 
 Mpx中的列表渲染与原生小程序中完全一致，详情可以查看[这里](https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/list.html)
 
@@ -30,12 +30,12 @@ Mpx中的列表渲染与原生小程序中完全一致，详情可以查看[这�
 </script>
 ```
 
-## 特殊处理
+## 特殊处理 {#special-handling}
 
 当列表中一些需要特殊二次处理的数据，可参考下列两种方式
 
 
-### computed方式
+### computed方式 {#computed-way}
 
 ```html
 <template>
@@ -76,7 +76,7 @@ Mpx中的列表渲染与原生小程序中完全一致，详情可以查看[这�
 ```
 
 
-### wxs方式
+### wxs方式 {#wxs-method}
 
 ```html
 <template>

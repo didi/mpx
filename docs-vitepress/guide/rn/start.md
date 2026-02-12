@@ -1,15 +1,15 @@
-# 快速开始
+# 快速开始 {#quick-start}
 
 Mpx 可通过输出为 React Native 代码实现直接在 iOS、Android 中作为 App 运行。
 
-### 1. 创建新项目
+### 1. 创建新项目 {#create-new-project}
 
 ```sh
-# 使用 Mpx CLI 创建支持 RN 的项目
+# 使用 Mpx CLI 创建支持 RN 的项目 {#create-rn-project-cli}
 npx @mpxjs/cli@latest create my-rn-app
 
-# 选择包含 React Native 支持的模板
-# ? 是否需要输出react-native Yes
+# 选择包含 React Native 支持的模板 {#select-rn-template}
+# ? 是否需要输出react-native Yes {#output-rn-yes}
 ```
 
 > [!tip] 注意
@@ -18,7 +18,7 @@ npx @mpxjs/cli@latest create my-rn-app
 >
 > 选择 “是否需要输出 react-native” 后，默认 Mpx 项目将包含一个由 `@react-native-community/cli` 创建的名为 ReactNativeProject 的 React Native 项目，以便用于对 React Native 代码的开发调试和编译。
 
-### 2. 项目结构
+### 2. 项目结构 {#project-structure}
 
 ```sh
 my-rn-app/
@@ -39,33 +39,33 @@ my-rn-app/
 └── mpx.config.js           # 构建配置
 ```
 
-### 3. 开发调试
+### 3. 开发调试 {#dev-debug}
 
 ::: code-group
 
 ```sh [iOS]
-# 运行 IOS 应用
+# 运行 IOS 应用 {#run-ios}
 npm run serve:ios
 ```
 
 ```sh [Android]
-# 运行 Android 应用
+# 运行 Android 应用 {#run-android}
 npm run serve:android
 ```
 
 :::
 
-### 4. 构建
+### 4. 构建 {#build}
 
 ::: code-group
 
 ```sh [iOS]
-# 编译到 IOS
+# 编译到 IOS {#build-ios}
 npm run build:ios
 ```
 
 ```sh [Android]
-# 编译到 Android
+# 编译到 Android {#build-android}
 npm run build:android
 ```
 

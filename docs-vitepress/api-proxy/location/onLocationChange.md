@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/location/wx.onLocationChange.html)
 
-### 参数
+### 参数 {#parameters}
 
 **function listener**\
 实时地理位置变化事件的监听函数
@@ -27,7 +27,7 @@
 | horizontalAccuracy| number | 水平精度，单位 m                                             | 1.2.0    |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 const _locationChangeFn = function(res) {

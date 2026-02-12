@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/scroll/wx.pageScrollTo.html)
 
-### 参数
+### 参数 {#parameters}
 **Object object**
 
 | 属性        | 类型     | 默认值 | 必填 | 说明                                                                 | 最低版本 | 支付宝 | web | RN |
@@ -19,7 +19,7 @@
 | fail        | function |        | 否   | 接口调用失败的回调函数                                               |          | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> |
 | complete    | function |        | 否   | 接口调用结束的回调函数（调用成功、失败都会执行）                      |          | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> | <span style='color: green; font-weight: bold;'>✓</span> |
 
-### 示例代码
+### 示例代码 {#example-code}
 
 #### 使用 scrollTop 滚动到指定位置
 

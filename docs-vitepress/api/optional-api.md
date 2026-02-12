@@ -1,4 +1,4 @@
-# 选项式 API
+# 选项式 API {#optional-api}
 
 ### options.shallowReactivePattern
 - **类型：** `RegExp`

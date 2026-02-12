@@ -2,10 +2,10 @@
 sidebarDepth: 2
 ---
 
-# Mpx 小程序单元测试能力建设与实践
+# Mpx 小程序单元测试能力建设与实践 {#unit-test-capability-construction}
 > 作者：[Blackgan3](https://github.com/Blackgan3)
 
-## 什么是单元测试
+## 什么是单元测试 {#what-is-unit-test}
 
 In computer programming, unit testing is a software testing method by which individual units of source code—sets of one or more computer program modules together with associated control data, usage procedures, and operating procedures—are tested to determine whether they are fit for use wikipedia
 
@@ -37,15 +37,15 @@ In computer programming, unit testing is a software testing method by which indi
 
 
 单元测试的书写初期必定伴随着大量精力与时间的消耗，但长期持续维护的业务在搭建并完善好整个单元测试体系后，可大大提高项目稳定性和研发效率
-## 前端单元测试
-### 前端单元测试工具
+## 前端单元测试 {#frontend-unit-test}
+### 前端单元测试工具 {#frontend-unit-test-tools}
 前端单元测试目前有很多框架和工具，我们下方列出三个较为流行的框架和工具库进行介绍
 
 - Mocha: 功能丰富的 javascript 测试框架(不包括断言和仿真环境，快照测试需额外配置)，可以运行在node.js和浏览器中
 - Jasmine：Behavior-Drive development(BDD)风格的测试框架，在业内较为流行,功能很全面，自带asssert、mock功能
 - Jest：一个功能全面的 javascript 测试框架，基于Jasmine 做了大量新特性(例如并行执行、源代码改动感知等)，开箱即用，适用于绝大多数 js 项目
 
-### 测试断言库
+### 测试断言库 {#assertion-library}
 在单测运行框架中，我们需要断言库来进行方法返回和实例状态的正确性验证
 
 - should: BDD风格断言                    (true).should.be.ok
@@ -54,7 +54,7 @@ In computer programming, unit testing is a software testing method by which indi
 - chai: expect()，assert()和should风格的断言都支持，全能型选手
 
 在众多前端单元测试框架中，Jest 目前凭借零配置，高性能，且对于断言，快照，覆盖率等都有很好的集成，是目前较为流行的一个单测框架
-### Jest 框架简介
+### Jest 框架简介 {#jest-introduction}
 简单来看下 Jest 框架的特点以及大致的运行原理
 
 **Jest 的整体框架特点大概归纳总结为以下几点:**
@@ -130,8 +130,8 @@ console.log(testFiles);
 **第五步 处理返回结果**
 此外 jest-runner中提供了一套类似于 redux 的数据流机制和eventEmitter来管理维护单测状态以及单测执行结果，在jest-runner 中进行事件触发，在TestScheduler 中进行事件监听并对执行结果进行各种处理和序列化，
 最后在 jest-core 中的runJest方法中进行执行结果的终端输出/文件输出等一系列处理。
-## 小程序单元测试
-### 与 web 应用的不同
+## 小程序单元测试 {#miniprogram-unit-test}
+### 与 web 应用的不同 {#difference-from-web}
 上个章节讲完前端单测简介，以及jest单测框架的大概运行原理后，接下来我们看下单元测试在小程序场景下与web场景的不同
 
 首先小程序本身是双线程分离的机制，但目前并没有这种独特的运行环境用来执行单元测试，这里需要借助小程序官方提供的 miniprogram-simulate 工具集，来将整体运行机制调整为单线程模拟运行，并利用 dom 环境来进行小程序组件的注册渲染以及整个自定义组件树的搭建
@@ -156,7 +156,7 @@ test('comp', () => {
 ```
 
 此外对于小程序工具集的整体运行流程，在下方章节进行了简要总结。
-### 小程序单测框架整体流程
+### 小程序单测框架整体流程 {#miniprogram-test-framework-flow}
 小程序单元测试中微信官方提供的相关库有 miniprogram-simulate、j-component 和 miniprogram-exparser等
 
 - miniprogram-simulate: 小程序自定义组件测试工具集，进行小程序内置组件的注册以及模拟微信原生api的注入
@@ -280,13 +280,13 @@ class Component {
 ```
 
 当然中间还有很多细节实现，比如模版渲染 j-component/template/compile，组件更新 j-component/render 等，感兴趣的话可以详细去看下里边具体的实现，这里我们暂且按下不表。至此，我们拿到了 component 实例，并可以进行正常的组件状态获取以及更新，然后在Jest框架中去断言组件的各种属性以及方法执行后的预期。
-## Mpx 框架单元测试
+## Mpx 框架单元测试 {#mpx-framework-unit-test}
 经过上方 Jest 框架讲解以及小程序单元测试流程分析后，接下来看下在Mpx框架中的单测能力支持实现
-### 初期版本
+### 初期版本 {#initial-version}
 Mpx框架的初期单测架构，是将Mpx框架开发的小程序项目，先构建编译为源码，再使用 miniprogram-simulate + j-component + jest 对构建后的小程序原生代码运行单元测试
 ![mpx-old-unit-test-architecture.png](https://cdn.nlark.com/yuque/0/2021/png/116604/1640786157277-5f92065d-c87e-46ed-b57e-4692b3d78a36.png#clientId=uc72cd25a-bebe-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=485&id=uf9a7caa5&margin=%5Bobject%20Object%5D&name=mpx-old-unit-test-architecture.png&originHeight=969&originWidth=3076&originalType=binary&ratio=1&rotation=0&showTitle=false&size=744497&status=done&style=none&taskId=uf25026f4-fd27-4116-bcb5-ffbe7357910&title=&width=1538)
 该方案执行任何case都需要执行完整的构建流程，而且预构建已经完成了所有的模块收集，无法使用jest提供的模块mock功能，导致业务使用成本很高，落地困难。
-### 优化版本
+### 优化版本 {#optimized-version}
 经过调研，Jest 本身支持代码转换功能
 > Jest在项目中以JavaScript的代码形式运行，但是如果使用一些Node.js不支持的，却可以开箱即用的语法(如JSX，TypeScript中的类型，Vue模板等)那你就需要将代码转换为纯JavaScript，转换的工作就是transformer
 
@@ -480,7 +480,7 @@ export function proxyFetch (mockUrl, mockUrlData) {
 
 至此，Mpx框架的单元测试方案整体上就完备了，整体上的方案架构如下图所示
 ![Mpx单测架构图.png](https://cdn.nlark.com/yuque/0/2022/png/116604/1645448762294-8e4cb0ab-bc09-4688-9360-ab4d67776af1.png#clientId=uc67aedb9-b0af-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=1164&id=u19264b9b&margin=%5Bobject%20Object%5D&name=Mpx%E5%8D%95%E6%B5%8B%E6%9E%B6%E6%9E%84%E5%9B%BE.png&originHeight=2327&originWidth=3335&originalType=binary&ratio=1&rotation=0&showTitle=false&size=7199152&status=done&style=none&taskId=uc2ecd51a-8419-46f1-a52a-1c9a8868ce1&title=&width=1667.5)
-## Mpx组件单元测试实战
+## Mpx组件单元测试实战 {#mpx-component-unit-test-practice}
 在上方介绍过整体的jest框架流程以及Mpx框架单元测试架构后，接下来我们着手进行 Mpx 框架开发的小程序组件的单元测试用例书写实战
 
 使用 @mpxjs/cli 创建模版项目时选择使用单元测试，**会自动生成有单测能力的模版项目**，和普通 Jest + miniprogram-simulate 搭建的原生小程序单测项目不同的是，transform 中添加了 Mpx 文件的处理，这里jest.config.js其他配置就不过多列出，可通过新创建项目进行查看。
@@ -630,7 +630,7 @@ export function proxyFetch (mockUrl, mockUrlData) {
 ```
 以上，我们对当前的示例组件完成了整体内容的单元测试书写，完整版单测文件可点击链接查看
 [https://github.com/Blackgan3/mpx-unit-test-demo/blob/master/test/components/example.spec.js](https://github.com/Blackgan3/mpx-unit-test-demo/blob/master/test/components/example.spec.js)
-## 结语
+## 结语 {#conclusion}
 通篇文章我们依次进行了前端常用单测框架简介，jest框架原理总结，小程序单元测试内部执行流程，最后介绍Mpx框架中单测能力的支持实现以及Mpx组件单测实战。
 
 学习到了jest不仅仅是一个单元测试框架，你甚至可以使用它的各个工具库自己创建一个单元测试框架；以及感受到小程序场景下单元测试的差异化；Mpx框架层面也做了诸多改造来支撑单测功能的落地。
