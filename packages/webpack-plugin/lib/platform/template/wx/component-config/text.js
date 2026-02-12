@@ -49,7 +49,7 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(space|decode)$/,
+        test: /^(space)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog

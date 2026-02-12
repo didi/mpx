@@ -9,7 +9,7 @@ import { useRef, forwardRef, ReactNode, JSX, createElement, Children } from 'rea
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, useAddSpace } from './utils'
 
 const decodeMap = {
   '&lt;': '<',
@@ -41,13 +41,16 @@ interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
   selectable?: boolean
+  decode?: boolean
   'user-select'?: boolean
   'enable-var'?: boolean
   'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  decode?: boolean
+  'enable-android-align-center'?: boolean
+  'enable-add-space'?: boolean
+  'space-font-size'?: number
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
@@ -55,21 +58,26 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     style = {},
     allowFontScaling = false,
     selectable,
+    decode,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
+    'enable-android-align-center': enableAndroidAlignCenter,
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    decode
+    'enable-add-space': enableAddSpace,
+    'space-font-size': spaceFontSize
   } = props
+
+  const extendStyle = enableAndroidAlignCenter ? { includeFontPadding: false, textAlignVertical: 'center' } : null
 
   const {
     normalStyle,
     hasVarDec,
     varContextRef,
     hasPositionFixed
-  } = useTransformStyle(style, {
+  } = useTransformStyle(extendStyle ? extendObject({}, style, extendStyle) : style, {
     enableVar,
     externalVarContext,
     parentFontSize,
@@ -95,11 +103,16 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     ),
     [
       'user-select',
-      'decode'
+      'decode',
+      'enable-android-align-center',
+      'enable-add-space',
+      'space-font-size'
     ]
   )
 
-  const children = decode ? getDecodedChildren(props.children) : props.children
+  let children = decode ? getDecodedChildren(props.children) : props.children
+
+  children = useAddSpace(children, { enableAddSpace, spaceFontSize })
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     extendObject({}, props, {

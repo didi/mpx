@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
-import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
+import { LayoutChangeEvent, TextStyle, ImageProps, Image, Text } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
 import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
@@ -851,4 +851,15 @@ export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<stri
   }, [])
 
   return invokeCallback
+}
+
+export function useAddSpace (children: ReactNode, { enableAddSpace, spaceFontSize }: { enableAddSpace?: boolean, spaceFontSize?: number }) {
+  if (!enableAddSpace) return children
+  const spaceNode = createElement(Text,
+    spaceFontSize
+      ? { key: '__mpx_text_space__', style: { fontSize: spaceFontSize } }
+      : { key: '__mpx_text_space__' },
+    ' '
+  )
+  return Array.isArray(children) ? children.concat(spaceNode) : [children, spaceNode]
 }

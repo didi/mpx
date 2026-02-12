@@ -15,7 +15,7 @@ const { isNonPhrasingTag } = require('../utils/dom-tag-config')
 const setBaseWxml = require('../runtime-render/base-wxml')
 const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
-const { isReact, isWeb, isNoMode } = require('../utils/env')
+const { isReact, isWeb, isNoMode, isMiniProgram } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 
 const no = function () {
@@ -2303,7 +2303,7 @@ function processText (el, options, meta) {
 }
 
 // RN中裸文字需被Text包裹
-// 为了批量修改Text默认属性，如allowFontScaling，使用mpx-simple-text进行包裹
+// 为了批量修改Text默认属性，如allowFontScaling，使用mpx-inline-text进行包裹
 function processWrapTextReact (el, options, meta) {
   const parent = el.parent
   const parentTag = parent.tag
@@ -2932,6 +2932,34 @@ function processMpxTagName (el) {
   }
 }
 
+function processTextMaxLines (el) {
+  if (el.tag !== 'text') return
+  const maxLinesAttr = getAndRemoveAttr(el, 'enable-max-lines')
+  if (!maxLinesAttr.val) return
+
+  const parsed = parseMustacheWithContext(maxLinesAttr.val)
+
+  const singleLineStyleStr = '"display:inline-block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"'
+  const multiLineStyleStr = `"display:-webkit-box;max-width:100%;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:" + (${parsed.result}) + ";"`
+  const linesStyleStr = `((${parsed.result}) <= 1 ? ${singleLineStyleStr} : ${multiLineStyleStr})`
+  const { val: styleAttrVal } = getAndRemoveAttr(el, 'style')
+  const styleVal = styleAttrVal ? parseMustacheWithContext(styleAttrVal).result : ''
+  const mergedStyleStr = styleVal ? `${linesStyleStr} + ';' + (${styleVal})` : linesStyleStr
+
+  if (isReact(mode)) {
+    // iOS/Android 环境：转换为 numberOfLines
+    addAttrs(el, [{ name: 'numberOfLines', value: maxLinesAttr.val }])
+  } else {
+    if (isMiniProgram()) {
+      addAttrs(el, [{ name: 'max-lines', value: maxLinesAttr.val }, { name: 'overflow', value: 'ellipsis' }])
+    }
+    addAttrs(el, [{
+      name: 'style',
+      value: `{{${mergedStyleStr}}}`
+    }])
+  }
+}
+
 function processElement (el, root, options, meta) {
   processAtMode(el)
   // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
@@ -2940,6 +2968,9 @@ function processElement (el, root, options, meta) {
   }
 
   processMpxTagName(el)
+
+  // 处理 enable-max-lines 跨平台属性（在平台规则处理之前）
+  processTextMaxLines(el)
 
   if (runtimeCompile && options.dynamicTemplateRuleRunner) {
     options.dynamicTemplateRuleRunner(el, options, config[mode])
