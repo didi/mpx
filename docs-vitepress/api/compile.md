@@ -2,7 +2,7 @@
 sidebarDepth: 2
 ---
 
-# 编译构建
+# 编译构建 {#compile-build}
 
 对于使用 `@mpxjs/cli@3.x` 脚手架初始化的项目而言，编译构建相关的配置统一收敛至项目根目录下的 `vue.config.js` 进行配置。一个新项目初始化的 `vue.config.js` 如下图，相较于 `@mpxjs/cli@2.x` 版本，在新的初始化项目当中原有的编译构建配置都收敛至 cli 插件当中进行管理和维护，同时还对外暴露相关的接口或者 api 使得开发者能自定义修改 cli 插件当中默认的配置。
 
@@ -34,7 +34,7 @@ module.exports = () => {
 }
 ```
 
-## 类型定义
+## 类型定义 {#type-definition}
 
 为了便于对编译配置的数据类型进行准确地描述，我们在这里对一些常用的配置类型进行定义
 
@@ -570,13 +570,13 @@ module.exports = defineConfig({
 })
 ```
 
-#### 应用场景及相应配置
+#### 应用场景及相应配置 {#scenarios-and-config}
 
 接下来我们来看下一些应用场景及如何配置。如果是用脚手架生成的项目，在`mpx.plugin.conf.js`里找到`transRpxRules`，应该已经有预设的`transRpxRules`选项，按例修改即可。
 
-三种场景分别是 [普通使用](#场景一) ， [只对某些特殊样式转换](#场景二) ， [不同路径分别配置规则](#场景三)
+三种场景分别是 [普通使用](#scenario-1) ， [只对某些特殊样式转换](#scenario-2) ， [不同路径分别配置规则](#scenario-3)
 
-#### 场景一
+#### 场景一 {#scenario-1}
 设计师给的稿是2倍图，分辨率750px。或者更高倍图。
 
 ```js
@@ -595,7 +595,7 @@ module.exports = defineConfig({
 })
 ```
 
-#### 场景二
+#### 场景二 {#scenario-2}
 
 大部分样式都用px下，某些元素期望用rpx。或者反过来。
 
@@ -618,7 +618,7 @@ module.exports = defineConfig({
 
 mpx的rpx注释能帮助你仅为部分类或者部分样式启用rpx转换，细节请看下方附录。
 
-#### 场景三
+#### 场景三 {#scenario-3}
 使用了第三方组件，它的设计宽度和主项目不一致，期望能设置不同的转换规则
 
 ```js
@@ -650,7 +650,7 @@ module.exports = defineConfig({
 
 > 注意事项：转换规则是不可以对一个文件做多次转换的，会出错，所以一旦被一个规则命中后就不会再次命中另一个规则，include 和 exclude 的编写需要注意先后顺序，就比如上面这个配置，如果第一个规则 include 的是 '/' 即整个项目，iview-weapp 里的样式就无法命中第二条规则了。
 
-#### transRpxRules附录
+#### transRpxRules附录 {#transrpxrules-appendix}
 
 - **designWidth**
 
@@ -1134,7 +1134,7 @@ module.exports = defineConfig({
 - **from**: `Array<string>` 源分包名称列表
 - **to**: `string` 目标分包名称。当为 `''` (空字符串) 时，表示输出到主包
 
-#### 示例
+#### 示例 {#example}
 
 ```js
 // mpx.config.js
@@ -1963,7 +1963,7 @@ wx.navigateTo({url : '/test/homepage/index'})
 
 `boolean`
 
-对于使用`MpxWebpackPlugin.urlLoader`的文件，如果在引用资源的末尾加上`?fallback=true`，则使用配置的自定义loader。图片的引入和处理详见[图像资源处理](../guide/advance/image-process.html)。
+对于使用`MpxWebpackPlugin.urlLoader`的文件，如果在引用资源的末尾加上`?fallback=true`，则使用配置的自定义loader。图片的引入和处理详见[图像资源处理](../guide/advance/image-process.md)。
 
 ```js
 // vue.config.js

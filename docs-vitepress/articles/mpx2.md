@@ -2,7 +2,7 @@
 sidebarDepth: 2
 ---
 
-# Mpx 小程序框架技术揭秘
+# Mpx 小程序框架技术揭秘 {#mpx-tech-reveal}
 
 > 作者：[CommanderXL](https://github.com/CommanderXL)
 
@@ -10,9 +10,9 @@ sidebarDepth: 2
 
 于是我挑了一些我非常感兴趣的点去学习了下 mpx 在相关功能上的设计与实现。
 
-## 编译环节
+## 编译环节 {#compilation-phase}
 
-### 动态入口编译
+### 动态入口编译 {#dynamic-entry-compilation}
 
 不同于 web 规范，我们都知道小程序每个 page/component 需要被最终在 webview 上渲染出来的内容是需要包含这几个独立的文件的：js/json/wxml/wxss。为了提升小程序的开发体验，mpx 参考 vue 的 SFC(single file component)的设计思路，采用单文件的代码组织方式进行开发。既然采用这种方式去组织代码的话，那么模板、逻辑代码、json配置文件、style样式等都放到了同一个文件当中。那么 mpx 需要做的一个工作就是如何将 SFC 在代码编译后拆分为 js/json/wxml/wxss 以满足小程序技术规范。熟悉 vue 生态的同学都知道，vue-loader 里面就做了这样一个编译转化工作。具体有关 vue-loader 的工作流程可以参见我写的[文章](https://github.com/CommanderXL/Biu-blog/issues/33)。
 
@@ -323,7 +323,7 @@ module.exports = function (raw) {
 }
 ```
 
-### template/script/style/json 模块单文件的生成
+### template/script/style/json 模块单文件的生成 {#single-file-generation}
 
 不同于 Vue 借助 webpack 是将 Vue 单文件最终打包成单独的 js chunk 文件。而小程序的规范是每个页面/组件需要对应的 wxml/js/wxss/json 4个文件。因为 mpx 使用单文件的方式去组织代码，所以在编译环节所需要做的工作之一就是将 mpx 单文件当中不同 block 的内容拆解到对应文件类型当中。在动态入口编译的小节里面我们了解到 mpx 会分析每个 mpx 文件的引用依赖，从而去给这个文件创建一个 entry 依赖(SingleEntryPlugin)并加入到 webpack 的编译流程当中。我们还是继续看下 mpx loader 对于 mpx 单文件初步编译转化后的内容：
 
@@ -481,11 +481,11 @@ module.exports = function (content) {
 }
 ```
 
-## 运行时环节
+## 运行时环节 {#runtime-phase}
 
 以上几个章节主要是分析了几个 Mpx 在编译构建环节所做的工作。接下来我们来看下 Mpx 在运行时环节做了哪些工作。
 
-### 响应式系统
+### 响应式系统 {#reactivity-system}
 
 小程序也是通过数据去驱动视图的渲染，需要手动的调用`setData`去完成这样一个动作。同时小程序的视图层也提供了用户交互的响应事件系统，在 js 代码中可以去注册相关的事件回调并在回调中去更改相关数据的值。Mpx 使用 Mobx 作为响应式数据工具并引入到小程序当中，使得小程序也有一套完成的响应式的系统，让小程序的开发有了更好的体验。
 
@@ -701,7 +701,7 @@ Watcher 观察者核心实现的工作流程就是：
 mpx 在构建这个响应式的系统当中，主要有2个大的环节，其一为在构建编译的过程中，将 template 模块转化为 renderFunction，提供了渲染模板时所需响应式数据的访问机制，并将 renderFunction 注入到运行时代码当中，其二就是在运行环节，mpx 通过构建一个小程序实例的代理对象，将小程序实例上的数据访问全部代理至 MPXProxy 实例上，而 MPXProxy 实例即 mpx 基于 Mobx 去构建的一套响应式数据对象，首先将 data 数据转化为响应式数据，其次提供了 computed 计算属性，watch 方法等一系列增强的拓展属性/方法，虽然在你的业务代码当中 page/component 实例 this 都是小程序提供的，但是最终经过代理机制，实际上访问的是 MPXProxy 所提供的增强功能，所以 mpx 也是通过这样一个代理对象去接管了小程序的实例。需要特别指出的是，mpx 将小程序官方提供的 setData 方法同样收敛至内部，这也是响应式系统提供的基础能力，即开发者只需要关注业务开发，而有关小程序渲染运行在 mpx 内部去帮你完成。
 
 
-## 性能优化
+## 性能优化 {#performance-optimization}
 
 由于小程序的双线程的架构设计，逻辑层和视图层之间需要桥接 native bridge。如果要完成视图层的更新，那么逻辑层需要调用 setData 方法，数据经由 native bridge，再到渲染层，这个工程流程为：
 
@@ -717,7 +717,7 @@ mpx 在构建这个响应式的系统当中，主要有2个大的环节，其一
 
 而 setData 作为逻辑层和视图层之间通讯的核心接口，那么对于这个接口的使用遵照一些准则将有助于性能方面的提升。
 
-### 尽可能的减少 setData 传输的数据
+### 尽可能的减少 setData 传输的数据 {#reduce-setdata-data}
 
 Mpx 在这个方面所做的工作之一就是基于数据路径的 diff。这也是官方所推荐的 setData 的方式。每次响应式数据发生了变化，调用 setData 方法的时候确保传递的数据都为 diff 过后的最小数据集，这样来减少 setData 传输的数据。
 
@@ -858,7 +858,7 @@ export function preprocessRenderData (renderData) {
 
 * [Page](https://developers.weixin.qq.com/miniprogram/dev/reference/api/Page.html#Page.prototype.setData(Object%20data,%20Function%20callback))
 
-### 尽可能的减少 setData 的调用频次
+### 尽可能的减少 setData 的调用频次 {#reduce-setdata-frequency}
 
 每次调用 setData 方法都会完成一次从逻辑层 -> native bridge -> 视图层的通讯，并完成页面的更新。因此频繁的调用 setData 方法势必也会造成视图的多次渲染，用户的交互受阻。所以对于 setData 方法另外一个优化角度就是尽可能的减少 setData 的调用频次，将多个同步的 setData 操作合并到一次调用当中。接下来就来看下 mpx 在这方面是如何做优化的。
 

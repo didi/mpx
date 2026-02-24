@@ -1,8 +1,8 @@
-# 事件处理
+# 事件处理 {#event-handling}
 
 Mpx 在事件处理上基于原生小程序，支持原生小程序的全部事件处理技术规范，在此基础上新增了事件处理内联传参的增强机制。
 
-## 事件分类
+## 事件分类 {#event-classification}
 
 事件分为冒泡事件和非冒泡事件：
 
@@ -21,9 +21,9 @@ Mpx 在事件处理上基于原生小程序，支持原生小程序的全部事�
 | longpress   | 手指触摸后，超过 350ms 再离开，推荐使用 longpress 代替 longtap |
 | longtap     | 手指触摸后，超过 350ms 再离开                                  |
 
-## 事件绑定方式
+## 事件绑定方式 {#event-binding}
 
-### 基础绑定
+### 基础绑定 {#basic-binding}
 
 事件绑定的写法同组件的属性，以 key、value 的形式：
 
@@ -43,7 +43,7 @@ Mpx 在事件处理上基于原生小程序，支持原生小程序的全部事�
 <view catch:tap="handleTap">阻止冒泡的点击事件</view>
 ```
 
-### 事件捕获
+### 事件捕获 {#event-capture}
 
 捕获阶段位于冒泡阶段之前，且在捕获阶段中，事件到达节点的顺序与冒泡阶段恰好相反。需要在捕获阶段监听事件时，可以采用 `capture-bind`、`capture-catch` 关键字：
 
@@ -52,7 +52,7 @@ Mpx 在事件处理上基于原生小程序，支持原生小程序的全部事�
 <view capture-catch:tap="handleCaptureAndStop">捕获阶段且停止传递</view>
 ```
 
-## 事件对象
+## 事件对象 {#event-object}
 
 当事件回调触发时，会收到一个事件对象，它的详细属性如下：
 
@@ -66,7 +66,7 @@ Mpx 在事件处理上基于原生小程序，支持原生小程序的全部事�
 | touches        | Array   | 触摸事件，当前停留在屏幕中的触摸点信息的数组 |
 | changedTouches | Array   | 触摸事件，当前变化的触摸点信息的数组         |
 
-### Target 和 CurrentTarget
+### Target 和 CurrentTarget {#target-and-currenttarget}
 
 - `target` 是触发事件的源组件
 - `currentTarget` 是事件绑定的当前组件
@@ -90,7 +90,7 @@ Mpx 在事件处理上基于原生小程序，支持原生小程序的全部事�
 - `e.target.id` 为 inner-view
 - `e.currentTarget.id` 为 outer-view
 
-### touches 和 changedTouches
+### touches 和 changedTouches {#touches-and-changedtouches}
 
 touches 数组中每个元素包含以下属性
 | 属性 | 说明 |
@@ -103,11 +103,11 @@ touches 数组中每个元素包含以下属性
 
 自定义事件所携带的数据，如表单组件的提交事件会携带用户的输入，媒体的错误事件会携带错误信息等。点击事件的 detail 带有的 x, y 同 pageX, pageY 代表距离文档左上角的距离。
 
-## Mpx 增强的内联传参
+## Mpx 增强的内联传参 {#inline-param-enhancement}
 
 Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几种传参方式：
 
-### 基础传参
+### 基础传参 {#basic-param-passing}
 
 ```html
 <!--原生小程序语法，通过dataset进行传参-->
@@ -125,7 +125,7 @@ Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几�
 </script>
 ```
 
-### 模板内联传参
+### 模板内联传参 {#template-inline-param-passing}
 
 ```html
 <!--Mpx增强语法，模板内联传参，方便简洁-->
@@ -143,7 +143,7 @@ Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几�
 </script>
 ```
 
-### 传递动态参数
+### 传递动态参数 {#passing-dynamic-params}
 
 ```html
 <!--参数支持传递字面量和组件数据-->
@@ -167,7 +167,7 @@ Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几�
 </script>
 ```
 
-### 使用 event 对象
+### 使用 event 对象 {#use-event-object}
 
 ```html
 <!-- 获取 event 对象 -->
@@ -186,7 +186,7 @@ Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几�
 </script>
 ```
 
-### 动态事件绑定
+### 动态事件绑定 {#dynamic-event-binding}
 
 ```html
 <!-- 支持传入动态数据 -->
@@ -219,7 +219,7 @@ Mpx 提供了比原生小程序更强大的事件传参能力，支持以下几�
 </script>
 ```
 
-## Mpx 增强事件代理
+## Mpx 增强事件代理 {#event-proxy-enhancement}
 
 Mpx 提供了事件代理机制，通过在事件绑定上添加 `.proxy` 修饰符，可以在事件触发时调用全局的 `proxyEventHandler` 钩子。
 
@@ -231,4 +231,4 @@ Mpx 提供了事件代理机制，通过在事件绑定上添加 `.proxy` 修饰
 
 当点击时，除了执行 `handleTap`，还会触发 `Mpx.config.proxyEventHandler(event, componentIns)`。
 
-更多细节见 [proxyEventHandler](/api/app-config.html#proxyeventhandler)。
+更多细节见 [proxyEventHandler](../../api/app-config.md#proxyeventhandler)。
