@@ -444,7 +444,7 @@ module.exports = function getSpec({ warn, error }) {
             // 单个值处理
             // rotate 处理成 rotateZ
             key = key === 'rotate' ? 'rotateZ' : key
-            transform.push({ [key]: val })
+            transform.push({ [key]: ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY'].includes(key) && !isNaN(+val) ? `${val}deg` : val })
             break
           case 'matrix':
             transform.push({ [key]: parseValues(val, ',').map(val => +val) })
@@ -467,7 +467,7 @@ module.exports = function getSpec({ warn, error }) {
                 if (key !== 'rotate' && index > 1) {
                   unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
                 }
-                return { [`${key}${xyz[index] || ''}`]: v.trim() }
+                return { [`${key}${xyz[index] || ''}`]: key === 'skew' && !isNaN(+v) ? `${v}deg` : v.trim() }
               }))
               break
             }

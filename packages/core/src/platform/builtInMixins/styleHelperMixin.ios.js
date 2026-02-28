@@ -323,24 +323,19 @@ export default function styleHelperMixin () {
         // parse animation
         if (hasOwn(result, 'animationName') || hasOwn(result, 'animation')) {
           const animationData = parseAnimationStyle(result)
-          // console.error('parse animation result: ', animationData)
-          const keyframes = {}
           if (animationData.animationName?.length) {
-            animationData.animationName.forEach(animationName => {
-              const _keyframe = this.__getClassStyle?.(animationName) || global.__getAppClassStyle?.(animationName)
-              _keyframe && (keyframes[animationName] = _keyframe)
-            })
+            animationData.animationName = animationData.animationName.map(animationName => (this.__getClassStyle?.(animationName) || global.__getAppClassStyle?.(animationName))).filter(Boolean)
           }
-          mergeResult(animationData, keyframes)
+          mergeResult(animationData)
           delete result.animation
         }
         // parse transition
-        if (hasOwn(result, 'transitionName') || hasOwn(result, 'transition')) {
-          const transitionData = parseAnimationStyle(result, 'transition')
-          // console.error('parse transition result: ', transitionData)
-          mergeResult(transitionData)
-          delete result.transition
-        }
+        // if (hasOwn(result, 'transitionName') || hasOwn(result, 'transition')) {
+        //   const transitionData = parseAnimationStyle(result, 'transition')
+        //   // console.error('parse transition result: ', transitionData)
+        //   mergeResult(transitionData)
+        //   delete result.transition
+        // }
         // console.error('styleHelperMixin: result=', result)
         return isEmpty ? empty : result
       }

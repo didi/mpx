@@ -71,7 +71,7 @@ function parseAnimationSingleProp (vals, property = '') {
         prop: 'animationTimingFunction',
         value: bezierParams?.length
             ? Easing.bezier(bezierParams[0], bezierParams[1], bezierParams[2], bezierParams[3])
-            : easingKey[value] || Easing.inOut(Easing.ease)
+            : value || 'ease'
       }
     }
     // direction
@@ -97,10 +97,10 @@ function parseAnimationSingleProp (vals, property = '') {
         value: getUnit(value)
       }
     }
-    if (!isNaN(+value)) {
+    if (!isNaN(+value) || value === 'infinite') {
       return {
         prop: 'animationIterationCount',
-        value: +value
+        value: value === 'infinite' ? value : +value
       }
     }
     // name
@@ -201,7 +201,7 @@ export function parseAnimationStyle (originalStyle, cssProp = 'animation') {
             animationData[propName].push(vals[idx])
           }
         })
-        // console.error(animationData[prop], 999111)
+        // console.error(animationData[propName], 999111)
       } else {
         animationData[propName] = vals
       }
