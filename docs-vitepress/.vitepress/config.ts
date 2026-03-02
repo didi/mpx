@@ -69,6 +69,10 @@ const sidebar: ExtendedSidebar = {
       items: [
         { text: "状态管理（store）", link: "/guide/advance/store" },
         { text: "状态管理（pinia）", link: "/guide/advance/pinia" },
+        {
+          text: "依赖注入（Provide/Inject）",
+          link: "/guide/advance/provide-inject",
+        },
         { text: "使用 mixin", link: "/guide/advance/mixin" },
         { text: "使用 npm", link: "/guide/advance/npm" },
         { text: "使用分包", link: "/guide/advance/subpackage" },
@@ -87,15 +91,13 @@ const sidebar: ExtendedSidebar = {
           text: "自定义路径",
           link: "/guide/advance/custom-output-path",
         },
+        { text: "使用TypeScript", link: "/guide/tool/ts" },
         {
           text: "使用原子类",
           link: "/guide/advance/utility-first-css",
         },
-        { text: "SSR", link: "/guide/advance/ssr" },
-        {
-          text: "依赖注入（Provide/Inject）",
-          link: "/guide/advance/provide-inject",
-        },
+        { text: "使用SSR", link: "/guide/advance/ssr" },
+        
         { text: "编译配置", link: "/guide/advance/build-config" },
       ],
     },
@@ -134,7 +136,7 @@ const sidebar: ExtendedSidebar = {
     {
       text: "工具",
       items: [
-        { text: "使用TypeScript开发小程序", link: "/guide/tool/ts" },
+        
         { text: "单元测试", link: "/guide/tool/unit-test" },
         { text: "E2E自动化测试", link: "/guide/tool/e2e-test" },
       ],
