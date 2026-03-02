@@ -21,6 +21,8 @@ class RNIntersectionObserver {
     this.thresholds = this.options.thresholds.sort((a, b) => a - b)
     this.initialRatio = this.options.initialRatio
     this.observeAll = this.options.observeAll
+    this.selector = null
+    this.relativeSelector = null
 
     // 组件上挂载对应的observers，用于在组件销毁的时候进行批量disconnect
     this.component._intersectionObservers = this.component._intersectionObservers || []
@@ -46,6 +48,18 @@ class RNIntersectionObserver {
 
     // 支持传递ref 或者 selector
   relativeTo (selector, margins = {}) {
+    const relativeRef = this._queryRelativeSelector(selector)
+
+    if (relativeRef) {
+      this.relativeSelector = selector
+      this.margins = Object.assign({}, DefaultMargin, margins)
+    } else {
+      warn(`node ${selector}is not found. The relative node for intersection observer will be ignored`, this.mpxFileResource)
+    }
+    return this
+  }
+
+  _queryRelativeSelector (selector) {
     let relativeRef
     if (isString(selector)) {
       relativeRef = this.component.__selectRef(selector, 'node')
@@ -53,13 +67,12 @@ class RNIntersectionObserver {
     if (isObject(selector)) {
       relativeRef = selector.nodeRefs?.[0]
     }
+
     if (relativeRef) {
       this.relativeRef = relativeRef
-      this.margins = Object.assign({}, DefaultMargin, margins)
-    } else {
-      warn(`node ${selector}is not found. The relative node for intersection observer will be ignored`, this.mpxFileResource)
     }
-    return this
+
+    return relativeRef
   }
 
   relativeToViewport (margins = {}) {
@@ -73,6 +86,13 @@ class RNIntersectionObserver {
       warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return
     }
+    this._queryObserveSelector(selector)
+    this.selector = selector
+    this.callback = callback
+    this._measureTarget(true)
+  }
+
+  _queryObserveSelector (selector) {
     let targetRef = null
     if (this.observeAll) {
       targetRef = this.component.__selectRef(selector, 'node', true)
@@ -84,8 +104,6 @@ class RNIntersectionObserver {
       return
     }
     this.observerRefs = isArray(targetRef) ? targetRef : [targetRef]
-    this.callback = callback
-    this._measureTarget(true)
   }
 
   _getWindowRect () {
@@ -201,6 +219,14 @@ class RNIntersectionObserver {
 
   // 计算节点的rect信息
   _measureTarget (isInit = false) {
+    if (this.selector) {
+      this._queryObserveSelector(this.selector)
+    }
+
+    if (this.relativeSelector) {
+      this._queryRelativeSelector(this.relativeSelector)
+    }
+
     if (!this.observerRefs || !this.relativeRef) {
       return
     }
@@ -222,7 +248,7 @@ class RNIntersectionObserver {
             // index: index,
             id: this.observerRefs[index].getNodeInstance().props?.current?.id,
             dataset: this.observerRefs[index].getNodeInstance().props?.current?.dataset || {},
-            intersectionRatio: Math.round(intersectionRatio * 100) / 100,
+            intersectionRatio,
             intersectionRect,
             boundingClientRect: observeRect,
             relativeRect: relativeRect,
