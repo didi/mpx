@@ -39,6 +39,7 @@ function createEffect (proxy, componentsMap, rawOptions) {
     // if (proxy.propsUpdatedFlag) {
     //   proxy.updatePreRender()
     // }
+    // console.log(`[mpx] ${proxy.options?.mpxFileResource} 组件render响应时数据变更，开始修改stateVersion，驱动组件更新`)
     if (proxy.isMounted()) {
       proxy.callHook(BEFOREUPDATE)
       proxy.pendingUpdatedFlag = true
@@ -61,11 +62,18 @@ function createEffect (proxy, componentsMap, rawOptions) {
     return createElement(type, ...rest)
   }
 
+  const debugConfig = typeof global.__getMpxRenderEffectDebugRules === 'function'
+? global.__getMpxRenderEffectDebugRules(rawOptions.mpxFileResource)
+: {
+    debug: 1,
+    name: `MpxRenderEffect-${rawOptions.mpxFileResource || 'unknown'}`
+  }
+
   proxy.effect = new ReactiveEffect(() => {
     // reset instance
     proxy.target.__resetInstance()
     return callWithErrorHandling(proxy.target.__injectedRender.bind(proxy.target), proxy, 'render function', [innerCreateElement, getComponent])
-  }, () => { return queueJob(update) }, proxy.scope, 1, `MpxRenderEffect-${rawOptions.mpxFileResource || 'unknown'}`)
+  }, () => { return queueJob(update) }, proxy.scope, debugConfig.debug, debugConfig.name)
   // render effect允许自触发
   proxy.toggleRecurse(true)
 }

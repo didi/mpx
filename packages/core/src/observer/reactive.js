@@ -110,7 +110,7 @@ function observe (value, shallow) {
  * Define a reactive property on an Object.
  */
 export function defineReactive (obj, key, val, shallow) {
-  const dep = new Dep()
+  const dep = new Dep(key)
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
@@ -130,9 +130,9 @@ export function defineReactive (obj, key, val, shallow) {
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend()
+        dep.depend(key, value)
         if (childOb) {
-          childOb.dep.depend()
+          childOb.dep.depend(key, value)
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -142,10 +142,12 @@ export function defineReactive (obj, key, val, shallow) {
     },
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
+      let oldVal = value
       if (!(shallow && isForceTrigger) && !hasChanged(newVal, value)) {
         return
       }
       if (!shallow && isRef(value) && !isRef(newVal)) {
+        oldVal = value.value
         value.value = newVal
       } else if (setter) {
         setter.call(obj, newVal)
@@ -153,7 +155,7 @@ export function defineReactive (obj, key, val, shallow) {
         val = newVal
       }
       childOb = shallow ? getObserver(newVal) : observe(newVal)
-      dep.notify(key, newVal, stack)
+      dep.notify(key, newVal, oldVal, stack)
     }
   })
 }
@@ -178,8 +180,9 @@ export function set (target, key, val) {
     target[key] = val
     return val
   }
+  const oldVal = target[key]
   defineReactive(ob.value, key, val, ob.shallow)
-  ob.dep.notify(key, val, new Error().stack)
+  ob.dep.notify(key, val, oldVal, new Error('此时被通知变更').stack)
   return val
 }
 
@@ -195,11 +198,12 @@ export function del (target, key) {
   if (!hasOwn(target, key)) {
     return
   }
+  const oldVal = target[key]
   delete target[key]
   if (!ob) {
     return
   }
-  ob.dep.notify(key, undefined, new Error().stack)
+  ob.dep.notify(key, undefined, oldVal, new Error('此时被通知变更').stack)
 }
 
 /**
@@ -210,7 +214,7 @@ function dependArray (arr) {
   for (let i = 0, l = arr.length; i < l; i++) {
     const item = arr[i]
     const ob = getObserver(item)
-    ob && ob.dep.depend()
+    ob && ob.dep.depend(i, item)
     if (Array.isArray(item)) {
       dependArray(item)
     }

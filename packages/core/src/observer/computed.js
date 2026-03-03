@@ -17,7 +17,7 @@ export function computed (getterOrOptions, options = {}) {
   let value
   const effect = new ReactiveEffect(getter, () => {
     dirty = true
-  }, options.debug || 0, options.name || 'anonymous computed')
+  }, undefined, options.debug || 0, options.name || 'anonymous computed')
 
   return createRef({
     get: () => {

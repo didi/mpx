@@ -166,6 +166,7 @@ export default class MpxProxy {
   }
 
   created () {
+    console.log('[mpx] create proxy instance')
     if (__mpx_dynamic_runtime__) {
       // 缓存上下文，在 destoryed 阶段删除
       contextMap.set(this.uid, this.target)
@@ -752,6 +753,13 @@ export default class MpxProxy {
     const moduleId = this.target.__moduleId
     const dynamicTarget = this.target.__dynamic
 
+    const debugConfig = typeof global.__getMpxRenderEffectDebugRules === 'function'
+      ? global.__getMpxRenderEffectDebugRules(this.options?.mpxFileResource)
+      : {
+          debug: 1,
+          name: `MpxRenderEffect-${this.options?.mpxFileResource || 'unknown'}`
+        }
+
     const effect = this.effect = new ReactiveEffect(() => {
       // pre render for props update
       if (this.propsUpdatedFlag) {
@@ -781,8 +789,9 @@ export default class MpxProxy {
       } else {
         this.render()
       }
-    }, () => queueJob(update), this.scope)
+    }, () => queueJob(update), this.scope, this.scope, debugConfig.debug, debugConfig.name)
 
+    console.log(`[mpx] ${this.options?.mpxFileResource} will initRender`)
     const update = this.update = effect.run.bind(effect)
     update.id = this.uid
     // render effect允许自触发
