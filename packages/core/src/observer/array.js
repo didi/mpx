@@ -32,7 +32,7 @@ export const arrayMethods = Object.create(arrayProto)
       }
       if (inserted) ob.observeArray(inserted)
       // notify change
-      ob.dep.notify(method, 'this', new Error().stack)
+      ob.dep.notify(method, '[Array Method]', '[Array Method]', new Error('此时被通知变更').stack)
     }
     return result
   })

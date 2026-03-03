@@ -7,30 +7,50 @@ let uid = 0
  * directives subscribing to it.
  */
 export default class Dep {
-  constructor () {
+  constructor (key) {
     this.id = uid++
     this.subs = []
+    this.addSubStacks = new Map()
+    this.key = key
   }
 
   addSub (sub) {
+    const addSubStack = new Error('此时被添加到订阅者列表').stack
+    this.addSubStacks.set(sub, addSubStack)
     this.subs.push(sub)
   }
 
   removeSub (sub) {
     remove(this.subs, sub)
+    this.addSubStacks.delete(sub)
   }
 
-  depend () {
+  depend (key, value) {
     if (Dep.target) {
-      Dep.target.addDep(this)
+      // if (this.key === 'link_params' || key === 'link_params') console.log(new Error('此时被依赖').stack)
+      Dep.target.addDep(this, key, value)
     }
   }
 
-  notify (key, value, stack) {
+  notify (key, value, oldvalue, stack) {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
+    try {
+      console.log('[Mpx Dep] notify ' +
+        this.subs.length +
+        ' subs, from ' +
+        key +
+        ': ' +
+        (typeof oldvalue === 'object' ? JSON.stringify(oldvalue) : oldvalue) +
+        ' -> ' +
+        (typeof value === 'object' ? JSON.stringify(value) : value) +
+        ', subs: ' +
+        subs.map(s => `id:${s.id} name:${s.name}`).join(', '))
+    } catch (e) {
+      // do nothing
+    }
     for (let i = 0, l = subs.length; i < l; i++) {
-      subs[i].update(key, value, stack)
+      subs[i].update(key, value, oldvalue, stack, this.addSubStacks.get(subs[i]))
     }
   }
 }
