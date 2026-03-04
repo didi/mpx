@@ -1,6 +1,7 @@
 import { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
 import { getCurrentPage, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
+import { Camera, useCameraDevice, useCodeScanner, useCameraFormat } from 'react-native-vision-camera'
 import { noop, warn, hasOwn } from '@mpxjs/utils'
 import { RouteContext } from './context'
 import { watch, WatchOptions } from '@mpxjs/core'
@@ -66,7 +67,6 @@ let RecordRes: any = null
 
 const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { Camera, useCameraDevice, useCodeScanner, useCameraFormat } = require('react-native-vision-camera')
   const cameraRef = useRef<any>(null)
   const {
     mode = 'normal',
@@ -304,7 +304,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
   }, [])
 
-  const innerProps = useInnerProps(
+  const innerProps:any = useInnerProps(
     extendObject(
       {},
       props,
