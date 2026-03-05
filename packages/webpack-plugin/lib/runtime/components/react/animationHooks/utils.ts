@@ -47,7 +47,7 @@ export type InterpolateOutput = {
 export type AnimationHooksPropsType = _ViewProps & { transitionend?: CustomAnimationCallback }
 
 // ms s 单位匹配
-export const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)?\s*$/
+export const secondRegExp = /^\s*(\d*(?:\.\d+)?)(s|ms)\s*$/
 export const cubicBezierExp = /cubic-bezier\(["']?(.*?)["']?\)/
 export const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 // export const PropNameColorExp = /^c|Color$/

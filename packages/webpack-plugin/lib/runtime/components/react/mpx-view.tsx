@@ -784,6 +784,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     transitionend
   })
 
+  const hasAnimatedView = enableStyleAnimation || viewStyle.transtionName || viewStyle.animationName
+
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -791,7 +793,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       layoutProps,
       {
         ref: nodeRef,
-        style: enableStyleAnimation ? [viewStyle, animationStyle] : viewStyle
+        style: animationStyle ? [viewStyle, animationStyle] : viewStyle
       }
     ),
     [
@@ -816,7 +818,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     enableFastImage
   })
 
-  let finalComponent: JSX.Element = enableStyleAnimation
+  let finalComponent: JSX.Element = hasAnimatedView
     ? createElement(Animated.View, innerProps, childNode)
     : createElement(View, innerProps, childNode)
 

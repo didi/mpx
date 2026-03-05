@@ -5,12 +5,15 @@ const getRulesRunner = require('../platform/index')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
 const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+// const percentExp = /^((-?(\d+(\.\d+)?|\.\d+))%)$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
 function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
-      ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
+      ? {
+          [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" }
+        }
       : {}
 
   const root = postcss.parse(content, {
@@ -39,28 +42,28 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
   function getMediaOptions (params) {
     return parseValues(params).reduce((option, item) => {
       if (['all', 'print'].includes(item)) {
-        if (item === 'media') {
-          option.type = item
-        } else {
-          error('not supported ', item)
-          return option
-        }
+        error(`Media type only support [screen], received ${item}, please check again!`)
+        return option
       }
       if (['not', 'only', 'or', ','].includes(item)) {
-        if (item === 'and') {
-          option.logical_operators = item
-        } else {
-          error('not supported ', item)
-          return option
-        }
+        error(`Media logical operator only support [and], received ${item}, please check again!`)
+        return option
       }
       const bracketsExp = /\((.+?)\)/
       if (bracketsExp.test(item)) {
-        const range = parseValues((item.match(bracketsExp)?.[1] || ''), ':')
+        const mediaFeatureStr = item.match(bracketsExp)?.[1] || ''
+        // console.log(mediaFeatureStr, 999111)
+        const range = parseValues(mediaFeatureStr, ':')
         if (range.length < 2) {
           return option
         } else {
-          option[dash2hump(range[0])] = +formatValue(range[1])
+          const mediaFeature = dash2hump(range[0])
+          if (mediaFeature === 'maxWidth' || mediaFeature === 'minWidth') {
+            option[mediaFeature] = +formatValue(range[1])
+          } else {
+            error(`Media feature only support [width], received [${mediaFeatureStr}], please check again!`)
+            return option
+          }
         }
       }
       return option
@@ -76,16 +79,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     error
   })
 
-  // 目前所有 AtRule 只支持 @media，其他全部给出错误提示
-  root.walkAtRules(rule => {
-    if (rule.name !== 'media') {
-      warn(`Only @media rule is supported in react native mode temporarily, but got @${rule.name}`)
-      // 删除不支持的 AtRule，防止其影响后续解析
-      rule.remove()
-    }
-  })
-
-  root.walkRules(rule => {
+  function walkRule ({ rule, classMap, ruleName = '', options }) {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
       if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
@@ -120,12 +114,24 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     })
 
     const classMapKeys = []
-    const options = getMediaOptions(rule.parent.params || '')
-    const isMedia = options.maxWidth || options.minWidth
     selectorParser(selectors => {
       selectors.each(selector => {
-        if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
+        if (selector.nodes.length === 1 && (selector.nodes[0].type === 'class')) {
           classMapKeys.push(selector.nodes[0].value)
+        } else if (ruleName === 'keyframes' && selector.nodes[0].type === 'tag') {
+          // 动画帧参数
+          const value = selector.nodes[0].value
+          // const val = value.match(percentExp)?.[2] / 100
+          if (value === 'from') {
+            // from
+            classMapKeys.push('0%')
+          } else if (value === 'to') {
+            // to
+            classMapKeys.push('100%')
+          } else {
+            // 百分比
+            classMapKeys.push(value)
+          }
         } else {
           error('Only single class selector is supported in react native mode temporarily.')
         }
@@ -137,7 +143,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         if (Object.keys(classMapValue).length) {
           let _default = classMap[key]?._default
           let _media = classMap[key]?._media
-          if (isMedia) {
+          if (ruleName === 'media' && options && (options.minWidth || options.maxWidth)) {
             // 当前是媒体查询
             _default = _default || {}
             _media = _media || []
@@ -146,8 +152,8 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
               value: classMapValue
             })
             classMap[key] = {
-              _media,
-              _default
+              _default,
+              _media
             }
           } else if (_default) {
             // 已有媒体查询数据，此次非媒体查询
@@ -160,6 +166,45 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         }
       })
     }
+  }
+  // 目前所有 AtRule 只支持 @media & @keyframes，其他全部给出错误提示
+  root.walkAtRules(rule => {
+    if (rule.name !== 'media' && rule.name !== 'keyframes') {
+      warn(`Only @media and @keyframes rules is supported in react native mode temporarily, but got @${rule.name}`)
+      // 删除不支持的 AtRule，防止其影响后续解析
+      rule.remove()
+      return
+    }
+    const ruleName = rule.name
+    let ruleClassMap
+    let options
+    if (ruleName === 'media') {
+      options = getMediaOptions(rule.params)
+      ruleClassMap = classMap
+    } else if (ruleName === 'keyframes') {
+      ruleClassMap = {}
+    }
+    rule.walkRules(node => {
+      walkRule({
+        rule: node,
+        ruleName,
+        options,
+        classMap: ruleClassMap
+      })
+    })
+    if (ruleName === 'keyframes') {
+      const animationName = rule.params
+      if (Object.keys(ruleClassMap).length > 0 && animationName) {
+        classMap[animationName] = ruleClassMap
+      }
+    }
+  })
+  root.walkRules(rule => {
+    if (rule.parent.type === 'atrule') return
+    walkRule({
+      rule,
+      classMap
+    })
   })
   return classMap
 }

@@ -3,7 +3,7 @@ const { parseValues } = require('../../../utils/string')
 
 module.exports = function getSpec({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -444,7 +444,7 @@ module.exports = function getSpec({ warn, error }) {
             // 单个值处理
             // rotate 处理成 rotateZ
             key = key === 'rotate' ? 'rotateZ' : key
-            transform.push({ [key]: val })
+            transform.push({ [key]: ['rotateX', 'rotateY', 'rotateZ', 'skewX', 'skewY'].includes(key) && !isNaN(+val) ? `${val}deg` : val })
             break
           case 'matrix':
             transform.push({ [key]: parseValues(val, ',').map(val => +val) })
@@ -467,7 +467,7 @@ module.exports = function getSpec({ warn, error }) {
                 if (key !== 'rotate' && index > 1) {
                   unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
                 }
-                return { [`${key}${xyz[index] || ''}`]: v.trim() }
+                return { [`${key}${xyz[index] || ''}`]: key === 'skew' && !isNaN(+v) ? `${v}deg` : v.trim() }
               }))
               break
             }
