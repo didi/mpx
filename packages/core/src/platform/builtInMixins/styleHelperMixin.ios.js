@@ -2,7 +2,7 @@ import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocused
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
-import { parseAnimationStyle } from './parse-animation'
+import { parseStyleAnimation, parseStyleTransition } from './parseAnimation'
 
 global.__mpxAppDimensionsInfo = {
   window: Dimensions.get('window'),
@@ -322,21 +322,24 @@ export default function styleHelperMixin () {
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
         // parse animation
         if (hasOwn(result, 'animationName') || hasOwn(result, 'animation')) {
-          const animationData = parseAnimationStyle(result)
-          if (animationData.animationName?.length) {
-            animationData.animationName = animationData.animationName.map(animationName => (this.__getClassStyle?.(animationName) || global.__getAppClassStyle?.(animationName))).filter(Boolean)
+          const animationData = parseStyleAnimation(result)
+          const name = animationData.animationName
+          if (Array.isArray(name)) {
+            animationData.animationName = name.map(item => (this.__getClassStyle?.(item) || global.__getAppClassStyle?.(item))).filter(Boolean)
+          } else if (name) {
+            animationData.animationName = this.__getClassStyle?.(name) || global.__getAppClassStyle?.(name) || {}
           }
           mergeResult(animationData)
           delete result.animation
         }
         // parse transition
-        // if (hasOwn(result, 'transitionName') || hasOwn(result, 'transition')) {
-        //   const transitionData = parseAnimationStyle(result, 'transition')
-        //   // console.error('parse transition result: ', transitionData)
-        //   mergeResult(transitionData)
-        //   delete result.transition
-        // }
-        // console.error('styleHelperMixin: result=', result)
+        if (hasOwn(result, 'transitionProperty') || hasOwn(result, 'transition')) {
+          const transitionData = parseStyleTransition(result, 'transition')
+          // console.error('parse transition result: ', transitionData)
+          mergeResult(transitionData)
+          delete result.transition
+        }
+        console.error('styleHelperMixin: result=', result)
         return isEmpty ? empty : result
       }
     }
