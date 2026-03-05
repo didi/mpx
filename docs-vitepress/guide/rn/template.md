@@ -1,20 +1,20 @@
-# 模板语法与生命周期
+# 模板语法与生命周期 {#template-syntax-lifecycle}
 
 本节介绍 Mpx RN 环境下的模板语法和生命周期支持。
 
-### 目录概览
+### 目录概览 {#directory-overview}
 
-- **[模板指令](#模板指令)** - 条件渲染、列表渲染、动态绑定等模板指令的使用
-- **[事件](#事件)** - 事件绑定、冒泡捕获、内联传参等事件机制
-- **[生命周期](#生命周期)** - 组件生命周期钩子的支持情况
+- **[模板指令](#template-directives)** - 条件渲染、列表渲染、动态绑定等模板指令的使用
+- **[事件](#events)** - 事件绑定、冒泡捕获、内联传参等事件机制
+- **[生命周期](#lifecycle)** - 组件生命周期钩子的支持情况
 
-## 模板指令
+## 模板指令 {#template-directives}
 
-### 支持范围
+### 支持范围 {#support-scope}
 
-在 React Native 环境下，Mpx 目前支持以下模板指令。详细的指令使用方法请参考 [模板指令 API 文档](/api/directives.html)。
+在 React Native 环境下，Mpx 目前支持以下模板指令。详细的指令使用方法请参考 [模板指令 API 文档](../../api/directives.md)。
 
-#### 基础模板指令
+#### 基础模板指令 {#basic-template-directives}
 
 | 指令 | 支持状态 | 说明 |
 |------|---------|------|
@@ -26,7 +26,7 @@
 | [wx:for-item](/api/directives.html#wx-for-item) | ✅ | 指定循环项变量名 |
 | [wx:for-index](/api/directives.html#wx-for-index) | ✅ | 指定循环索引变量名 |
 
-#### 增强模板指令
+#### 增强模板指令 {#enhanced-template-directives}
 
 | 指令 | 支持状态 | 说明 |
 |------|---------|------|
@@ -39,18 +39,18 @@
 | [wx:model-filter](/api/directives.html#wx-model-filter) | ✅ | 双向绑定过滤器 |
 | [wx:ref](/api/directives.html#wx-ref) | ⚠️ | 获取基础组件节点或自定义组件实例，RN 环境选择器受限 |
 
-#### 条件编译指令
+#### 条件编译指令 {#conditional-compile-directives}
 
 | 指令 | 支持状态 | 说明 |
 |------|---------|------|
-| [@mode](/api/directives.html#mode) | ✅ | 平台条件编译 |
+| [@mode](../../api/directives.md#mode) | ✅ | 平台条件编译 |
 | [@_mode](/api/directives.html#mode-1) | ✅ | 平台条件编译（保留转换能力）|
-| [@env](/api/directives.html#env) | ✅ | 自定义环境条件编译 |
-| [mpxTagName](/api/directives.html#mpxtagname) | ✅ | 动态标签名 |
+| [@env](../../api/directives.md#env) | ✅ | 自定义环境条件编译 |
+| [mpxTagName](../../api/directives.md#mpxtagname) | ✅ | 动态标签名 |
 
-### 特殊说明
+### 特殊说明 {#special-notes}
 
-#### wx:ref 使用注意事项
+#### wx:ref 使用注意事项 {#wx-ref-notes}
 
 在 RN 环境下使用 `wx:ref` 时需要注意选择器功能的限制：
 
@@ -81,7 +81,7 @@ createPage({
 </script>
 ```
 
-## 事件
+## 事件 {#events}
 
 在 React Native 环境下，Mpx 目前支持以下事件编写规范。
 
@@ -174,5 +174,5 @@ createPage({
 2. 由于 tap 事件是由 touchend 事件模拟实现，所以在 RN 环境，如果子组件绑定了 catchtouchend，那么父组件的 tap 事件将不会响应。
 3. 如果元素上设置了 opacity: 0 的样式，会导致 ios 事件无法响应。
    
-## 生命周期
-RN 环境支持 Mpx 除 SSR 外所有生命周期钩子，关于生命周期的完整说明和最佳实践，请参考 [**生命周期详细文档**](/guide/basic/lifecycle.html)。
+## 生命周期 {#lifecycle}
+RN 环境支持 Mpx 除 SSR 外所有生命周期钩子，关于生命周期的完整说明和最佳实践，请参考 [**生命周期详细文档**](../basic/lifecycle.md)。

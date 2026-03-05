@@ -20,9 +20,9 @@
 | fail       | function |                       | 否   | 接口调用失败的回调函数                                                        |          |
 | complete   | function |                       | 否   | 接口调用结束的回调函数（调用成功、失败都会执行）                              |          |
 
-### object.success 回调函数
+### object.success 回调函数 {#object-success-callback}
 
-### 参数
+### 参数 {#parameters}
 
 **Object res**
 
@@ -33,7 +33,7 @@
 **Object this**\
 在自定义组件下，当前组件实例的 this，以操作组件内 canvas 组件
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.canvasToTempFilePath({

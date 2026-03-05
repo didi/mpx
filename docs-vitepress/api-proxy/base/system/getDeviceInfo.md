@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/base/system/wx.getDeviceInfo.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object**
 
@@ -23,7 +23,7 @@
 | memorySize     | string | 设备内存大小，单位为 MB                                                                                | 2.30.0   | <span style="color: red; font-weight: bold;">✗</span>      | <span style="color: red; font-weight: bold;">✗</span>  | <span style="color: red; font-weight: bold;">✗</span>   |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 const deviceInfo = mpx.getDeviceInfo()
 

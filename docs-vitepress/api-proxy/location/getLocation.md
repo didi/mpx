@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/location/wx.getLocation.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -41,7 +41,7 @@
 
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 mpx.getLocation({
  type: 'wgs84',
