@@ -295,13 +295,17 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
       instance[key] = method.bind(instance)
     })
   }
-
+  const loadParams = {}
   if (type === 'page') {
     const props = propsRef.current
     instance.route = props.route.name
     global.__mpxPagesMap = global.__mpxPagesMap || {}
     global.__mpxPagesMap[props.route.key] = [instance, props.navigation]
     setFocusedNavigation(props.navigation)
+
+    if (!global.__mpxAppHotLaunched && global.__mpxInitialRunParams) {
+      Object.assign(loadParams, global.__mpxInitialRunParams)
+    }
     set(global.__mpxPageSizeCountMap, pageId, global.__mpxSizeCount)
     // App onLaunch 在 Page created 之前执行
     if (!global.__mpxAppHotLaunched && global.__mpxAppOnLaunch) {
@@ -311,11 +315,10 @@ function createInstance ({ propsRef, type, rawOptions, currentInject, validProps
 
   const proxy = instance.__mpxProxy = new MpxProxy(rawOptions, instance)
   proxy.created()
-
   if (type === 'page') {
     const props = propsRef.current
     const decodedQuery = {}
-    const rawQuery = props.route.params || {}
+    const rawQuery = Object.assign({}, loadParams, props.route.params || {})
     if (isObject(rawQuery)) {
       for (const key in rawQuery) {
         decodedQuery[key] = decodeURIComponent(rawQuery[key])
@@ -398,7 +401,7 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   }
 }
 
-function usePageEffect (mpxProxy, pageId) {
+function usePageEffect (mpxProxy, pageId, type) {
   const sizeRef = useRef(getSystemInfo())
 
   useEffect(() => {
@@ -415,7 +418,7 @@ function usePageEffect (mpxProxy, pageId) {
             triggerResizeEvent(mpxProxy, sizeRef)
 
             // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
-            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+            if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
               // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
               global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
             }
@@ -427,7 +430,9 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
-      del(global.__mpxPageSizeCountMap, pageId)
+      if (type === 'page') {
+        del(global.__mpxPageSizeCountMap, pageId)
+      }
     }
   }, [])
 }
@@ -697,7 +702,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     })
 
-    usePageEffect(proxy, pageId)
+    usePageEffect(proxy, pageId, type)
     useEffect(() => {
       proxy.mounted()
       return () => {

@@ -257,7 +257,7 @@ export default function styleHelperMixin () {
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
-        // 使用一下 __getSizeCount 触发其 get
+
         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
