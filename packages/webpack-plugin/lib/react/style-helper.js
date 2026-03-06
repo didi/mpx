@@ -8,14 +8,9 @@ const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error }) {
+function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
-      ? {
-          [MPX_TAG_PAGE_SELECTOR]: {
-            _media: [],
-            _default: { flex: 1, height: "'100%'" }
-          }
-        }
+      ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
       : {}
 
   const root = postcss.parse(content, {
@@ -30,12 +25,12 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
         value = matched[1]
         needStringify = false
       } else {
-        value = `global.__formatValue(${+matched[1]}, '${matched[2]}')`
+        value = `${formatValueName}(${+matched[1]}, '${matched[2]}')`
         needStringify = false
       }
     }
     if (hairlineRegExp.test(value)) {
-      value = `global.__formatValue(${JSON.stringify(value)}, 'hairlineWidth')`
+      value = `${formatValueName}(${JSON.stringify(value)}, 'hairlineWidth')`
       needStringify = false
     }
     return needStringify ? JSON.stringify(value) : value
@@ -93,7 +88,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
   root.walkRules(rule => {
     const classMapValue = {}
     rule.walkDecls(({ prop, value }) => {
-      if (cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
+      if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
       if (!Array.isArray(newData)) {
@@ -140,19 +135,27 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, warn, error 
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          const _default = classMap[key]?._default || {}
-          const _media = classMap[key]?._media || []
+          let _default = classMap[key]?._default
+          let _media = classMap[key]?._media
           if (isMedia) {
+            // 当前是媒体查询
+            _default = _default || {}
+            _media = _media || []
             _media.push({
               options,
               value: classMapValue
             })
-          } else {
+            classMap[key] = {
+              _media,
+              _default
+            }
+          } else if (_default) {
+            // 已有媒体查询数据，此次非媒体查询
             Object.assign(_default, classMapValue)
-          }
-          classMap[key] = {
-            _media,
-            _default
+          } else {
+            // 无媒体查询
+            const val = classMap[key] || {}
+            classMap[key] = Object.assign(val, classMapValue)
           }
         }
       })

@@ -15,8 +15,9 @@ import {
   ProviderContext,
   RouteContext
 } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/context'
-import { PortalHost, useSafeAreaInsets } from '../env/navigationHelper'
+import { PortalHost, useSafeAreaInsets, initialWindowMetrics } from '../env/navigationHelper'
 import { useInnerHeaderHeight } from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-nav'
+import Mpx from '../../index'
 
 function getSystemInfo () {
   const windowDimensions = global.__mpxAppDimensionsInfo.window
@@ -505,7 +506,17 @@ function getLayoutData (headerHeight) {
   // 在横屏状态下 screen.height = window.height + bottomVirtualHeight
   // 在正常状态   screen.height =  window.height + bottomVirtualHeight + statusBarHeight
   const isLandscape = screenDimensions.height < screenDimensions.width
-  const bottomVirtualHeight = isLandscape ? screenDimensions.height - windowDimensions.height : ((screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0)
+  let bottomVirtualHeight = 0
+  if (ReactNative.Platform.OS === 'android') {
+    if (isLandscape) {
+      bottomVirtualHeight = screenDimensions.height - windowDimensions.height
+    } else {
+      bottomVirtualHeight = initialWindowMetrics?.insets?.bottom || 0
+      if (typeof mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight === 'function') {
+        bottomVirtualHeight = mpxGlobal.__mpx.config?.rnConfig?.getBottomVirtualHeight() || 0
+      }
+    }
+  }
   return {
     left: 0,
     top: headerHeight,
@@ -603,6 +614,20 @@ export function PageWrapperHOC (WrappedComponent, pageConfig = {}) {
     )
   }
 }
+
+function updateProps (instance, props, validProps) {
+  Object.keys(validProps).forEach((key) => {
+    if (hasOwn(props, key)) {
+      instance[key] = props[key]
+    } else {
+      const altKey = hump2dash(key)
+      if (hasOwn(props, altKey)) {
+        instance[key] = props[altKey]
+      }
+    }
+  })
+}
+
 export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
   rawOptions = mergeOptions(rawOptions, type, false)
   const componentsMap = currentInject.componentsMap
@@ -655,16 +680,14 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
 
     if (!isFirst) {
       // 处理props更新
-      Object.keys(validProps).forEach((key) => {
-        if (hasOwn(props, key)) {
-          instance[key] = props[key]
-        } else {
-          const altKey = hump2dash(key)
-          if (hasOwn(props, altKey)) {
-            instance[key] = props[altKey]
-          }
-        }
-      })
+      if (Mpx.config.forceFlushSync) {
+        // 避免开启forceFlushSync时react报错：Cannot update a component while rendering a different component
+        Promise.resolve().then(() => {
+          updateProps(instance, props, validProps)
+        })
+      } else {
+        updateProps(instance, props, validProps)
+      }
     }
 
     useEffect(() => {

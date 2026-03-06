@@ -1,14 +1,14 @@
-# 条件编译机制
+# 条件编译机制 {#conditional-compile-mechanism}
 
 Mpx跨端输出时在框架内针对不同平台的差异进行了大量的转换抹平工作，但框架能做的工作始终是有限的，对于框架无法抹平的部分我们会在编译和运行时进行报错提示，同时提供了完善的跨平台条件编译机制，便于用户自行进行差异化处理，该能力也能够用于实现区分平台进行业务逻辑实现。
 
 Mpx中我们支持了几种维度的条件编译，分别是文件维度、区块维度、代码维度和属性维度，其中，文件维度和区块维度主要用于处理一些大块的平台差异性逻辑，而代码维度和属性维度主要用于处理一些局部简单的平台差异。
 
-## 文件维度条件编译
+## 文件维度条件编译 {#file-conditional-compile}
 
 文件维度条件编译简单的来说就是文件为维度进行跨平台差异代码的编写，例如在微信->支付宝的项目中存在一个业务地图组件map.mpx，由于微信和支付宝中的原生地图组件标准差异非常大，无法通过框架转译方式直接进行跨平台输出，这时你可以在相同的位置新建一个map.ali.mpx，在其中使用支付宝的技术标准进行开发，编译系统会根据当前编译的mode来加载对应模块，当mode为ali时，会优先加载map.ali.mpx，反之则会加载map.mpx。
 
-### 文件命名规则
+### 文件命名规则 {#file-naming-rule}
 
 ```
 原文件名.平台标识.扩展名
@@ -26,7 +26,7 @@ Mpx中我们支持了几种维度的条件编译，分别是文件维度、区�
 - `android` - Android平台
 - `harmony` - 鸿蒙平台
 
-### 示例
+### 示例 {#example}
 
 ```
 components/
@@ -36,7 +36,7 @@ components/
 └── map.ios.mpx          # iOS专用实现
 ```
 
-### RN平台文件兜底逻辑
+### RN平台文件兜底逻辑 {#rn-platform-fallback}
 
 在RN平台（即mode为 ios/android/harmony）中，文件维度的条件编译存在一个兜底逻辑：
 
@@ -46,7 +46,7 @@ components/
 因此，在开发RN跨端应用时，可以只编写一份 `index.ios.mpx` 文件，它将同时适用于iOS、Android和鸿蒙平台，除非你需要为特定平台提供不同实现。
 
 
-### 与webpack alias结合使用
+### 与webpack alias结合使用 {#webpack-alias-usage}
 
 文件维度条件编译能够与webpack alias结合使用，对于npm包的文件我们并不方便在原本的文件位置创建.ali的条件编译文件，但我们可以通过webpack alias在相同位置创建一个`虚拟的`.ali文件，并将其指向项目中的其他文件位置。
 
@@ -69,7 +69,7 @@ module.exports = defineConfig({
 })
 ```
 
-## 区块维度条件编译
+## 区块维度条件编译 {#block-conditional-compile}
 
 在.mpx单文件中一般存在template、js、stlye、json四个区块，mpx的编译系统支持以区块为维度进行条件编译，只需在区块标签中添加`mode`属性定义该区块的目标平台即可，示例如下：
 
@@ -86,13 +86,13 @@ module.exports = defineConfig({
 </template>
 ```
 
-## 代码维度条件编译
+## 代码维度条件编译 {#code-conditional-compile}
 
 代码维度条件编译主要用于处理一些局部简单的平台差异，用户可以在js代码和template插值中访问`__mpx_mode__`获取当前编译mode，进行平台差异逻辑编写。
 
 除了 `__mpx_mode__` 这个默认插值以外，有别的环境变量需要的话可以在mpx.plugin.conf.js里通过defs进行配置。
 
-### JS代码条件编译
+### JS代码条件编译 {#js-conditional-compile}
 
 ```js
 if(__mpx_mode__ === 'ali') {
@@ -102,7 +102,7 @@ if(__mpx_mode__ === 'ali') {
 }
 ```
 
-#### async/await 注意事项
+#### async/await 注意事项 {#async-await-notes}
 
 在使用条件编译时，如果涉及到 async/await 语法，需要注意以下问题：
 
@@ -169,7 +169,7 @@ function someMethod() {
 }
 ```
 
-### 模板条件编译
+### 模板条件编译 {#template-conditional-compile}
 
 ```html
 <!--此处的__mpx_mode__不需要在组件中声明数据，编译时会基于当前编译mode进行替换-->
@@ -177,7 +177,7 @@ function someMethod() {
 <view wx:else>其他环境</view>
 ```
 
-### JSON条件编译
+### JSON条件编译 {#json-conditional-compile}
 
 注意，这个依赖JSON的动态方案，得通过name="json"这种方式来编写，其实写的是js代码，最终module.exports导出一个可json化的对象即可：
 
@@ -197,7 +197,7 @@ module.exports = {
 </script>
 ```
 
-### 样式条件编译
+### 样式条件编译 {#style-conditional-compile}
 
 ```css
 /*
@@ -238,7 +238,7 @@ module.exports = {
 */
 ```
 
-## 属性维度条件编译
+## 属性维度条件编译 {#attr-conditional-compile}
 
 属性维度条件编译允许用户在组件上使用 `@` 和 `|` 符号来指定某个节点或属性只在某些平台下有效。
 
@@ -325,7 +325,7 @@ module.exports = {
 
 除了基于平台标识（mode）的条件编译外，Mpx 还支持通过自定义环境变量（env）实现在不同业务环境下编译产出不同的代码。这使得我们可以在同一平台下为不同的业务场景提供差异化实现。
 
-### 配置自定义环境变量
+### 配置自定义环境变量 {#config-custom-env-vars}
 
 在实例化 MpxWebpackPlugin 时，通过配置 env 参数来指定目标环境：
 
@@ -343,7 +343,7 @@ module.exports = defineConfig({
 })
 ```
 
-### 文件维度条件编译与 env
+### 文件维度条件编译与 env {#file-conditional-compile-env}
 
 在文件维度条件编译中，可以结合 mode 和 env 来命名文件，编译系统会根据当前编译的 mode 和 env 来加载对应模块。
 
@@ -361,7 +361,7 @@ components/
 - 如果找不到特定 env 的文件，则加载 map.ali.mpx
 - 如果都找不到，则加载默认的 map.mpx
 
-### 区块维度条件编译与 env
+### 区块维度条件编译与 env {#block-conditional-compile-env}
 
 在 .mpx 单文件的区块中，可以同时使用 `mode` 和 `env` 属性来定义条件编译，优先级从高到低如下：
 
@@ -389,7 +389,7 @@ components/
 
 注意：如果定义了多个具有相同 mode 和 env 的区块，默认会使用最后一个。
 
-### 代码维度条件编译与 env
+### 代码维度条件编译与 env {#code-conditional-compile-env}
 
 在代码中，可以通过访问 `__mpx_env__` 获取当前编译环境，与 `__mpx_mode__` 的用法相同：
 
@@ -403,7 +403,7 @@ if (__mpx_env__ === 'didi') {
 }
 ```
 
-### 属性维度条件编译与 env
+### 属性维度条件编译与 env {#attr-conditional-compile-env}
 
 env 属性维度条件编译使用 `:` 符号与 mode 进行组合，格式为 `attr@mode:env:env|mode:env`。当只有 env 条件时，需要添加 `:` 前缀，如 `attr@:env`。
 

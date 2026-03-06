@@ -1,4 +1,4 @@
-# 双向绑定
+# 双向绑定 {#two-way-binding}
 
 Mpx针对表单组件提供了`wx:model`双向绑定指令，类似于`v-model`，该指令是一个语法糖指令，监听了组件抛出的输入事件并对绑定的数据进行更新，默认情况下会监听表单组件的`input`事件，并将`event.detail.value`中的数据更新到组件的`value`属性上。
 
@@ -12,7 +12,7 @@ Mpx针对表单组件提供了`wx:model`双向绑定指令，类似于`v-model`�
 </view>
 ```
 
-## 对自定义组件使用
+## 对自定义组件使用 {#use-on-custom-component}
 
 对自定义组件使用双向绑定时用法与原生小程序组件完全一致
 
@@ -25,7 +25,7 @@ Mpx针对表单组件提供了`wx:model`双向绑定指令，类似于`v-model`�
 ```
 
 
-## 更改双向绑定的监听事件及数据属性
+## 更改双向绑定的监听事件及数据属性 {#change-two-way-binding-event-prop}
 
 如前文所述，`wx:model`指令默认监听组件抛出的`input`事件，并将声明的数据绑定到组件的`value`属性上，该行为在一些原生组件和自定义组件上并不成立，因为这些组件可能不存在`input`事件或`value`属性。对此，我们提供了`wx:model-event`和`wx:model-prop`指令来修改双向绑定的监听事件和数据属性，使用示例如下：
 
@@ -43,7 +43,7 @@ Mpx针对表单组件提供了`wx:model`双向绑定指令，类似于`v-model`�
 </view>
 ```
 
-## 更改双向绑定事件数据路径
+## 更改双向绑定事件数据路径 {#change-two-way-binding-path}
 
 Mpx中双向绑定默认使用event对象中的`event.detail.value`作为用户输入来更新组件数据，该行为在一些原生组件和自定义组件中也不成立，例如vant中的field输入框组件，用户的输入直接存储在`event.detail`当中，当然用户也可以将其存放在detail中的其他数据路径下，对此，我们提供了`wx:model-value-path`指令让用户声明在事件当中应该访问的数据路径。
 
@@ -60,7 +60,7 @@ Mpx中双向绑定默认使用event对象中的`event.detail.value`作为用户�
 </view>
 ```
 
-## 双向绑定过滤器
+## 双向绑定过滤器 {#two-way-binding-filter}
 
 用户可以使用`wx:model-filter`指令定义双向绑定过滤器，在修改数据之前对用户输入进行过滤，来实现特定的效果，框架内置了`trim`过滤器对用户输入进行trim操作，传入其他字符串时会使用当前组件中的同名方法作为自定义过滤器，使用示例如下：
 
