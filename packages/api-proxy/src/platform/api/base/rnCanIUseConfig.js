@@ -93,9 +93,16 @@ export const SUPPORTED_APIS = [
   'clearStorage',
   'clearStorageSync',
 
+  // page-scroll-to
+  'pageScrollTo',
+
   // system
   'getSystemInfo',
   'getSystemInfoSync',
+  'getDeviceInfo',
+  'getWindowInfo',
+  'getLaunchOptionsSync',
+  'getEnterOptionsSync',
 
   // setting
   'getMenuButtonBoundingClientRect',
