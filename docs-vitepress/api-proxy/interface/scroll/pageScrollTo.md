@@ -43,27 +43,53 @@ mpx.pageScrollTo({
 })
 ```
 
-#### 使用 selector 滚动到指定元素（React Native）
+#### 使用 scrollTop 滚动到顶部（React Native）
 
 ::: warning React Native 平台特殊说明
-在 React Native (iOS/Android) 平台上使用 selector 方式时，需要满足以下条件：
-1. scroll-view 组件必须添加 `wx:ref` 属性
-2. 目标元素必须同时添加 `id` 和 `wx:ref` 属性
-3. scroll-view 必须启用 `scroll-y` 或 `scroll-x`
+在 React Native 平台上使用 `pageScrollTo` 时，需要在页面的 scroll-view 组件上声明固定的 `wx:ref="scrollView"`，框架将通过该固定 ref 定位滚动容器。
 :::
 
 ```xml
 <template>
   <view class="page">
-    <!-- scroll-view 需要添加 wx:ref -->
+    <!-- scroll-view 必须声明固定 ref 名称 scrollView -->
     <scroll-view wx:ref="scrollView" scroll-y="{{true}}" style="height: 100vh;">
       <view style="height: 500px;">顶部内容</view>
-      
+      <view style="height: 500px;">底部内容</view>
+    </scroll-view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  methods: {
+    scrollToTop() {
+      mpx.pageScrollTo({
+        scrollTop: 0,
+        duration: 300
+      })
+    }
+  }
+})
+</script>
+```
+
+#### 使用 selector 滚动到指定元素（React Native）
+
+```xml
+<template>
+  <view class="page">
+    <!-- scroll-view 必须声明固定 ref 名称 scrollView -->
+    <scroll-view wx:ref="scrollView" scroll-y="{{true}}" style="height: 100vh;">
+      <view style="height: 500px;">顶部内容</view>
+
       <!-- 目标元素需要同时添加 id 和 wx:ref -->
       <view id="target-section" wx:ref style="height: 200px;">
         目标区域
       </view>
-      
+
       <view style="height: 500px;">底部内容</view>
     </scroll-view>
   </view>
@@ -76,15 +102,15 @@ createPage({
   methods: {
     scrollToTarget() {
       mpx.pageScrollTo({
-          selector: 'target-section',  // 只需要 id，不需要 # 前缀
-          duration: 300,
-          offsetTop: 10,  // 可选：偏移 10px
-          success: () => {
-            console.log('滚动成功')
-          },
-          fail: (err) => {
-            console.error('滚动失败:', err)
-          }
+        selector: '#target-section',
+        duration: 300,
+        offsetTop: 10,  // 可选：偏移 10px
+        success: () => {
+          console.log('滚动成功')
+        },
+        fail: (err) => {
+          console.error('滚动失败:', err)
+        }
       })
     }
   }
@@ -94,26 +120,22 @@ createPage({
 
 ### React Native 平台注意事项
 
-#### 为什么需要 wx:ref？
-
-在 React Native 平台上，Mpx 使用 refs 系统来管理和查找元素。只有添加了 `wx:ref` 属性的元素才会被注册到 refs 系统中，从而可以被查找到。
-
 #### 必需的配置
 
-1. **scroll-view 必须有 wx:ref**
+1. **scroll-view 必须声明固定 ref 名称 `scrollView`**
 ```xml
 <!-- ✅ 正确 -->
 <scroll-view wx:ref="scrollView" scroll-y="{{true}}">
   <!-- 内容 -->
 </scroll-view>
 
-<!-- ❌ 错误：缺少 wx:ref -->
+<!-- ❌ 错误：缺少 wx:ref="scrollView" -->
 <scroll-view scroll-y="{{true}}">
   <!-- 内容 -->
 </scroll-view>
 ```
 
-2. **目标元素必须同时有 id 和 wx:ref**
+2. **使用 selector 时，目标元素必须同时有 id 和 wx:ref**
 ```xml
 <!-- ✅ 正确：同时有 id 和 wx:ref -->
 <view id="section-1" wx:ref>区域 1</view>

@@ -4,6 +4,7 @@ import { CREATED } from '../../core/innerLifecycle'
 /**
  * React Native 页面滚动 Mixin
  * 提供页面级别的 pageScrollTo 方法
+ * 使用该功能需在页面的 scroll-view 组件上声明 wx:ref="scrollView"
  */
 export default function pageScrollMixin (mixinType) {
   if (mixinType !== 'page') {
@@ -13,16 +14,12 @@ export default function pageScrollMixin (mixinType) {
   return {
     [CREATED] () {
       this.__registerPageScrollTo()
-      // 初始化缓存
-      this.__scrollableNodeCache = null
     },
     beforeUnmount () {
       const navigation = this.__props?.navigation
       if (navigation && navigation.pageScrollTo) {
         delete navigation.pageScrollTo
       }
-      // 清理缓存
-      this.__scrollableNodeCache = null
     },
     methods: {
       /**
@@ -40,34 +37,13 @@ export default function pageScrollMixin (mixinType) {
       },
 
       /**
-       * 查找可滚动的节点（带缓存）
+       * 获取页面滚动视图节点（通过固定 ref 名称 scrollView）
        * @returns {Object|null} 滚动视图的节点实例
        */
       __findScrollableNode () {
-        // 如果缓存存在且有效，直接返回
-        if (this.__scrollableNodeCache?.instance?.node?.scrollTo) {
-          return this.__scrollableNodeCache
-        }
-
-        // 缓存失效或不存在，重新查找
-        if (!this.__refs) return null
-
-        for (const refs of Object.values(this.__refs)) {
-          if (!Array.isArray(refs)) continue
-
-          for (const ref of refs) {
-            if (ref.type === 'node' && ref.instance?.getNodeInstance) {
-              const nodeInstance = ref.instance.getNodeInstance()
-              if (nodeInstance?.instance?.node?.scrollTo) {
-                // 缓存找到的节点
-                this.__scrollableNodeCache = nodeInstance
-                return nodeInstance
-              }
-            }
-          }
-        }
-
-        return null
+        const ref = this.__refs?.scrollView?.[0]
+        if (!ref || ref.type !== 'node' || !ref.instance?.getNodeInstance) return null
+        return ref.instance.getNodeInstance()
       },
 
       /**
@@ -99,7 +75,7 @@ export default function pageScrollMixin (mixinType) {
           }
 
           // 没找到可滚动视图
-          const errMsg = 'pageScrollTo:fail scrollable view not found. Please ensure the page has a scroll-view component with scroll-y or scroll-x enabled'
+          const errMsg = 'pageScrollTo:fail scrollable view not found. Please add wx:ref="scrollView" to the scroll-view component in your page'
           warn(errMsg)
           onFail && onFail(errMsg)
         } catch (e) {
