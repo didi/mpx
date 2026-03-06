@@ -56,7 +56,12 @@ const removeUpdateStateSubscription = function () {
     updateStateSubscription = null
   }
 }
-const commonFailHandler = function (errMsg, fail, complete) {
+const commonFailHandler = function (errMsg, fail, complete, reason) {
+  if (reason instanceof Error) {
+    errMsg = errMsg + ' ' + reason.message
+  } else if (reason !== undefined && reason !== null) {
+    errMsg = errMsg + ' ' + reason
+  }
   const result = {
     errMsg
   }
@@ -80,12 +85,12 @@ function openBluetoothAdapter (options = {}) {
   // 先请求权限，再初始化蓝牙管理器
   bluetoothPermission().then((hasPermissions) => {
     if (!hasPermissions) {
-      commonFailHandler('openBluetoothAdapter:fail no permission', fail, complete)
+      commonFailHandler('openBluetoothAdapter:fail', fail, complete, 'no permission')
       return
     }
 
     if (bleManagerInitialized) {
-      commonFailHandler('openBluetoothAdapter:fail already opened', fail, complete)
+      commonFailHandler('openBluetoothAdapter:fail', fail, complete, 'already opened')
       return
     }
 
@@ -103,17 +108,17 @@ function openBluetoothAdapter (options = {}) {
             success(result)
             complete(result)
           } else {
-            commonFailHandler('openBluetoothAdapter:fail bluetooth not enabled', fail, complete)
+            commonFailHandler('openBluetoothAdapter:fail', fail, complete, 'bluetooth not enabled')
           }
         }).catch((error) => {
-          commonFailHandler('openBluetoothAdapter:fail ' + (typeof error === 'string' ? error : ''), fail, complete)
+          commonFailHandler('openBluetoothAdapter:fail', fail, complete, error)
         })
       }, 1000)
     }).catch((error) => {
-      commonFailHandler('openBluetoothAdapter:fail ' + (typeof error === 'string' ? error : ''), fail, complete)
+      commonFailHandler('openBluetoothAdapter:fail', fail, complete, error)
     })
-  }).catch(() => {
-    commonFailHandler('openBluetoothAdapter:fail no permission', fail, complete)
+  }).catch((error) => {
+    commonFailHandler('openBluetoothAdapter:fail', fail, complete, error)
   })
 }
 
@@ -194,7 +199,7 @@ function startBluetoothDevicesDiscovery (options = {}) {
   } = options
 
   if (!bleManagerInitialized) {
-    commonFailHandler('startBluetoothDevicesDiscovery:fail ble adapter hans\'t been opened or ble is unavailable.', fail, complete)
+    commonFailHandler('startBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hans\'t been opened or ble is unavailable.')
     return
   }
   DiscoverPeripheralSubscription = BleManager.onDiscoverPeripheral((device) => {
@@ -247,7 +252,7 @@ function startBluetoothDevicesDiscovery (options = {}) {
     success(result)
     complete(result)
   }).catch((error) => {
-    commonFailHandler('startBluetoothDevicesDiscovery:fail ' + (typeof error === 'string' ? error : ''), fail, complete)
+    commonFailHandler('startBluetoothDevicesDiscovery:fail', fail, complete, error)
   })
 }
 
@@ -256,7 +261,7 @@ function stopBluetoothDevicesDiscovery (options = {}) {
   const { success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
-    commonFailHandler('stopBluetoothDevicesDiscovery:fail ble adapter hans\'t been opened or ble is unavailable.', fail, complete)
+    commonFailHandler('stopBluetoothDevicesDiscovery:fail', fail, complete, 'ble adapter hans\'t been opened or ble is unavailable.')
     return
   }
   removeBluetoothDevicesDiscovery()
@@ -276,7 +281,7 @@ function stopBluetoothDevicesDiscovery (options = {}) {
     success(result)
     complete(result)
   }).catch((error) => {
-    commonFailHandler('stopBluetoothDevicesDiscovery:fail ' + (typeof error === 'string' ? error : ''), fail, complete)
+    commonFailHandler('stopBluetoothDevicesDiscovery:fail', fail, complete, error)
   })
 }
 
@@ -298,7 +303,7 @@ function getConnectedBluetoothDevices (options = {}) {
   const { services = [], success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
-    commonFailHandler('getConnectedBluetoothDevices:fail 请先调用 wx.openBluetoothAdapter 接口进行初始化操作', fail, complete)
+    commonFailHandler('getConnectedBluetoothDevices:fail', fail, complete, '请先调用 wx.openBluetoothAdapter 接口进行初始化操作')
     return
   }
 
@@ -314,7 +319,7 @@ function getConnectedBluetoothDevices (options = {}) {
     success(result)
     complete(result)
   }).catch((error) => {
-    commonFailHandler('getConnectedBluetoothDevices:fail ' + (typeof error === 'string' ? error : ''), fail, complete)
+    commonFailHandler('getConnectedBluetoothDevices:fail', fail, complete, error)
   })
 }
 
@@ -323,7 +328,7 @@ function getBluetoothAdapterState (options = {}) {
   const { success = noop, fail = noop, complete = noop } = options
 
   if (!bleManagerInitialized) {
-    commonFailHandler('getBluetoothAdapterState:fail ble adapter need open first.', fail, complete)
+    commonFailHandler('getBluetoothAdapterState:fail', fail, complete, 'ble adapter need open first.')
     return
   }
 
@@ -336,7 +341,7 @@ function getBluetoothAdapterState (options = {}) {
     success(result)
     complete(result)
   }).catch((error) => {
-    commonFailHandler('getBluetoothAdapterState:fail ' + (typeof error === 'string' ? error : ''), fail, complete)
+    commonFailHandler('getBluetoothAdapterState:fail', fail, complete, error)
   })
 }
 function onDidUpdateState () {
@@ -573,15 +578,15 @@ function setBLEMTU (options = {}) {
   const BleManager = require('react-native-ble-manager').default
   const { deviceId, mtu, success = noop, fail = noop, complete = noop } = options
   if (!mtu) {
-    commonFailHandler('setBLEMTU:fail parameter error: parameter.mtu should be Number instead of Undefined;', fail, complete)
+    commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.mtu should be Number instead of Undefined;')
     return
   }
   if (!deviceId) {
-    commonFailHandler('setBLEMTU:fail parameter error: parameter.deviceId should be String instead of Undefined;', fail, complete)
+    commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;')
     return
   }
   if (!deviceId && !mtu) {
-    commonFailHandler('setBLEMTU:fail parameter error: parameter.deviceId should be String instead of Undefined;parameter.mtu should be Number instead of Undefined;', fail, complete)
+    commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;parameter.mtu should be Number instead of Undefined;')
     return
   }
 
