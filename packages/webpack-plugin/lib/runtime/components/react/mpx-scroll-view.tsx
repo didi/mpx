@@ -641,9 +641,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 处理下拉刷新的手势 - 使用 useMemo 避免每次渲染都创建
   const panGesture = useMemo(() => {
-    if (!hasRefresher) return Gesture.Pan() // 返回空手势
-
     return Gesture.Pan()
+      .activeOffsetY([-5, 5])
+      .failOffsetX([-5, 5])
       .onUpdate((event) => {
         'worklet'
         if (enhanced && !!bounces) {
@@ -703,7 +703,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }
       })
       .simultaneousWithExternalGesture(scrollViewRef)
-  }, [hasRefresher, enhanced, bounces, refreshing, refresherThreshold])
+  }, [enhanced, bounces, refreshing, refresherThreshold])
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {
