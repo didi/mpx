@@ -18,6 +18,18 @@ module.exports = function ({ print }) {
 
   return {
     test: TAG_NAME,
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
     props: [
       {
         test: 'mode',
