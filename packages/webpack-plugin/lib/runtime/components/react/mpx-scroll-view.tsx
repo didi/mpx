@@ -357,9 +357,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         return
       }
 
-      const targetScrollViewRef = scrollViewRef.current
+      const targetScrollView = scrollViewRef.current
 
-      if (!targetScrollViewRef) {
+      if (!targetScrollView) {
         const errMsg = 'scrollViewRef is not ready'
         warn(errMsg)
         return
@@ -385,7 +385,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       }
 
       nodeRef.current.measureLayout(
-        targetScrollViewRef,
+        targetScrollView,
         (left: number, top: number) => {
           const adjustedLeft = scrollX ? left + offset : left
           const adjustedTop = scrollY ? top + offset : top
