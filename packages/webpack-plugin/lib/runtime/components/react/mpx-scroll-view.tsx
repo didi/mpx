@@ -369,7 +369,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         return
       }
 
-      // 如果 selector 不包含前缀，默认添加 # 前缀（id 选择器）
+      // scroll-into-view prop 按微信规范直传裸 id（如 "section-1"），而 __refs 注册时 key 带 # 或 . 前缀，需补齐才能命中；
+      // pageScrollTo 调用方已自带前缀（如 "#section-1"）
       const normalizedSelector = selector.startsWith('#') || selector.startsWith('.') ? selector : `#${selector}`
 
       // 调用 __selectRef 查找元素
@@ -380,30 +381,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         return
       }
 
-      // 获取节点实例
-      if (typeof refs.getNodeInstance !== 'function') {
-        const errMsg = `getNodeInstance is not a function for selector: ${normalizedSelector}`
-        warn(errMsg)
-        return
-      }
-
-      const nodeInstance = refs.getNodeInstance()
-      if (!nodeInstance) {
-        const errMsg = `Node instance is null for selector: ${normalizedSelector}`
-        warn(errMsg)
-        return
-      }
-
-      const { nodeRef } = nodeInstance
+      const { nodeRef } = refs.getNodeInstance()
       if (!nodeRef?.current) {
         const errMsg = `Node ref not available for selector: ${normalizedSelector}`
-        warn(errMsg)
-        return
-      }
-
-      // 执行 measureLayout
-      if (typeof nodeRef.current.measureLayout !== 'function') {
-        const errMsg = `measureLayout is not a function for selector: ${normalizedSelector}`
         warn(errMsg)
         return
       }
