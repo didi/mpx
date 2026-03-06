@@ -38,7 +38,7 @@ mpx.pageScrollTo({
 
 ```js
 mpx.pageScrollTo({
-  selector: 'target-section',  // 不需要 # 前缀
+  selector: '#target-section',
   duration: 300
 })
 ```
