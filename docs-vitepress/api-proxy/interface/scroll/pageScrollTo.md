@@ -46,14 +46,14 @@ mpx.pageScrollTo({
 #### 使用 scrollTop 滚动到顶部（React Native）
 
 ::: warning React Native 平台特殊说明
-在 React Native 平台上使用 `pageScrollTo` 时，需要在页面的 scroll-view 组件上声明固定的 `wx:ref="scrollView"`，框架将通过该固定 ref 定位滚动容器。
+在 React Native 平台上使用 `pageScrollTo` 时，需要在页面的 scroll-view 组件上声明固定的 `wx:ref="pageScrollView"`，框架将通过该固定 ref 定位滚动容器。
 :::
 
 ```xml
 <template>
   <view class="page">
-    <!-- scroll-view 必须声明固定 ref 名称 scrollView -->
-    <scroll-view wx:ref="scrollView" scroll-y="{{true}}" style="height: 100vh;">
+    <!-- scroll-view 必须声明固定 ref 名称 pageScrollView -->
+    <scroll-view wx:ref="pageScrollView" scroll-y="{{true}}" style="height: 100vh;">
       <view style="height: 500px;">顶部内容</view>
       <view style="height: 500px;">底部内容</view>
     </scroll-view>
@@ -81,8 +81,8 @@ createPage({
 ```xml
 <template>
   <view class="page">
-    <!-- scroll-view 必须声明固定 ref 名称 scrollView -->
-    <scroll-view wx:ref="scrollView" scroll-y="{{true}}" style="height: 100vh;">
+    <!-- scroll-view 必须声明固定 ref 名称 pageScrollView -->
+    <scroll-view wx:ref="pageScrollView" scroll-y="{{true}}" style="height: 100vh;">
       <view style="height: 500px;">顶部内容</view>
 
       <!-- 目标元素需要同时添加 id 和 wx:ref -->
@@ -122,14 +122,14 @@ createPage({
 
 #### 必需的配置
 
-1. **scroll-view 必须声明固定 ref 名称 `scrollView`**
+1. **scroll-view 必须声明固定 ref 名称 `pageScrollView`**
 ```xml
 <!-- ✅ 正确 -->
-<scroll-view wx:ref="scrollView" scroll-y="{{true}}">
+<scroll-view wx:ref="pageScrollView" scroll-y="{{true}}">
   <!-- 内容 -->
 </scroll-view>
 
-<!-- ❌ 错误：缺少 wx:ref="scrollView" -->
+<!-- ❌ 错误：缺少 wx:ref="pageScrollView" -->
 <scroll-view scroll-y="{{true}}">
   <!-- 内容 -->
 </scroll-view>

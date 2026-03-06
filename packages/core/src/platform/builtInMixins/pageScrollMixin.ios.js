@@ -4,7 +4,7 @@ import { CREATED } from '../../core/innerLifecycle'
 /**
  * React Native 页面滚动 Mixin
  * 提供页面级别的 pageScrollTo 方法
- * 使用该功能需在页面的 scroll-view 组件上声明 wx:ref="scrollView"
+ * 使用该功能需在页面的 scroll-view 组件上声明 wx:ref="pageScrollView"
  */
 export default function pageScrollMixin (mixinType) {
   if (mixinType !== 'page') {
@@ -37,11 +37,11 @@ export default function pageScrollMixin (mixinType) {
       },
 
       /**
-       * 获取页面滚动视图节点（通过固定 ref 名称 scrollView）
+       * 获取页面滚动视图节点（通过固定 ref 名称 pageScrollView）
        * @returns {Object|null} 滚动视图的节点实例
        */
       __findScrollableNode () {
-        const ref = this.__refs?.scrollView?.[0]
+        const ref = this.__refs?.pageScrollView?.[0]
         if (!ref || ref.type !== 'node' || !ref.instance?.getNodeInstance) return null
         return ref.instance.getNodeInstance()
       },
@@ -75,7 +75,7 @@ export default function pageScrollMixin (mixinType) {
           }
 
           // 没找到可滚动视图
-          const errMsg = 'pageScrollTo:fail scrollable view not found. Please add wx:ref="scrollView" to the scroll-view component in your page'
+          const errMsg = 'pageScrollTo:fail scrollable view not found. Please add wx:ref="pageScrollView" to the scroll-view component in your page'
           warn(errMsg)
           onFail && onFail(errMsg)
         } catch (e) {
