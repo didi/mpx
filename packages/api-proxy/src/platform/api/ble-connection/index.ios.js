@@ -577,16 +577,16 @@ function offBLECharacteristicValueChange (callback) {
 function setBLEMTU (options = {}) {
   const BleManager = require('react-native-ble-manager').default
   const { deviceId, mtu, success = noop, fail = noop, complete = noop } = options
+  if (!deviceId && !mtu) {
+    commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;parameter.mtu should be Number instead of Undefined;')
+    return
+  }
   if (!mtu) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.mtu should be Number instead of Undefined;')
     return
   }
   if (!deviceId) {
     commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;')
-    return
-  }
-  if (!deviceId && !mtu) {
-    commonFailHandler('setBLEMTU:fail', fail, complete, 'parameter error: parameter.deviceId should be String instead of Undefined;parameter.mtu should be Number instead of Undefined;')
     return
   }
 
