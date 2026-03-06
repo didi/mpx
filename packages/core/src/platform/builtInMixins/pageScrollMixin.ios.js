@@ -1,4 +1,4 @@
-import { warn, getFocusedNavigation } from '@mpxjs/utils'
+import { warn } from '@mpxjs/utils'
 import { CREATED } from '../../core/innerLifecycle'
 
 /**
@@ -17,7 +17,7 @@ export default function pageScrollMixin (mixinType) {
       this.__scrollableNodeCache = null
     },
     beforeUnmount () {
-      const navigation = getFocusedNavigation()
+      const navigation = this.__props?.navigation
       if (navigation && navigation.pageScrollTo) {
         delete navigation.pageScrollTo
       }
@@ -29,7 +29,7 @@ export default function pageScrollMixin (mixinType) {
        * 注册 pageScrollTo 方法到 navigation 对象
        */
       __registerPageScrollTo () {
-        const navigation = getFocusedNavigation()
+        const navigation = this.__props?.navigation
 
         // navigation.pageScrollTo 不存在时才注册，避免重复
         if (navigation && !navigation.pageScrollTo) {
