@@ -347,22 +347,18 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }
 
-  function handleScrollIntoView (selector = '', { offset = 0, animated = true, duration = undefined, __selectRef = undefined, scrollViewNativeRef = undefined }: { offset?: number; animated?: boolean; duration?: number; __selectRef?: any; scrollViewNativeRef?: any } = {}) {
+  function handleScrollIntoView (selector = '', { offset = 0, animated = true, duration = undefined }: { offset?: number; animated?: boolean; duration?: number } = {}) {
     try {
-      // 优先使用传递进来的 __selectRef（来自 pageScrollMixin），其次使用 props 中的
-      const currentSelectRef = __selectRef || propsRef.current.__selectRef
+      const currentSelectRef = propsRef.current.__selectRef
 
-      // 检查 __selectRef 是否存在
       if (!currentSelectRef) {
         const errMsg = '__selectRef is not available. Please ensure the scroll-view component is properly initialized.'
         warn(errMsg)
         return
       }
 
-      // 优先使用传递进来的 scrollViewNativeRef，其次使用本地的 scrollViewRef
-      const targetScrollViewRef = scrollViewNativeRef || scrollViewRef.current
+      const targetScrollViewRef = scrollViewRef.current
 
-      // 检查 scrollViewRef
       if (!targetScrollViewRef) {
         const errMsg = 'scrollViewRef is not ready'
         warn(errMsg)
