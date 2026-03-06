@@ -54,7 +54,7 @@ import {
   NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isAndroid } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -188,7 +188,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const defaultValue = parseValue(value)
+  // 微信小程序的 input 永远是单行，textAlignVertical 固定为 auto
+  // multiline 为 true 时表示是 textarea 组件复用此逻辑
   const textAlignVertical = multiline ? 'top' : 'auto'
+  const isAutoFocus = !!autoFocus || !!focus
 
   const tmpValue = useRef<string>(defaultValue)
   const cursorIndex = useRef<number>(0)
@@ -197,13 +200,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   const [inputValue, setInputValue] = useState(defaultValue)
   const [contentHeight, setContentHeight] = useState(0)
   const [selection, setSelection] = useState({ start: -1, end: tmpValue.current.length })
-
   const styleObj = extendObject(
     { padding: 0, backgroundColor: '#fff' },
     style,
-    multiline && autoHeight
-      ? { height: 'auto', minHeight: Math.max((style as any)?.minHeight || 35, contentHeight) }
-      : {}
+    multiline && autoHeight ? { height: 'auto' } : {}
   )
 
   const {
@@ -285,12 +285,13 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard }
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, readyToShow: true }
     }
   }
 
   const onTouchStart = () => {
-    // sometimes the focus event occurs later than the keyboardWillShow event
+    // 手动聚焦时初始化 keyboardAvoid 上下文
+    // auto-focus/focus 不会触发而是在 useEffect 中初始化
     setKeyboardAvoidContext()
   }
 
@@ -299,42 +300,49 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }
 
   const onFocus = (evt: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    setKeyboardAvoidContext()
+    if (!keyboardAvoid?.current) {
+      // Android：从一个正聚焦状态 input，聚焦到另一个新的 input 时，正常会触发如下时序：
+      // 新的 Input `onTouchStart` -> 旧输入框键盘 `keyboardDidHide` -> 新的 Input `onFocus`
+      // 导致这里的 keyboardAvoid.current 为 null，所以需要判空重新初始化。
+      setKeyboardAvoidContext()
+    }
 
-    if (bindfocus) {
-      const focusAction = () => {
-        bindfocus(
-          getCustomEvent(
-            'focus',
-            evt,
-            {
-              detail: {
-                value: tmpValue.current || '',
-                height: keyboardAvoid?.current?.keyboardHeight
-              },
-              layoutRef
+    const focusAction = () => {
+      bindfocus?.(
+        getCustomEvent(
+          'focus',
+          evt,
+          {
+            detail: {
+              value: tmpValue.current || '',
+              height: keyboardAvoid?.current?.keyboardHeight
             },
-            props
-          )
+            layoutRef
+          },
+          props
         )
-        if (keyboardAvoid?.current?.onKeyboardShow) {
-          keyboardAvoid.current.onKeyboardShow = undefined
-        }
+      )
+      if (keyboardAvoid?.current?.onKeyboardShow) {
+        keyboardAvoid.current.onKeyboardShow = undefined
       }
-      if (keyboardAvoid?.current) {
-        // 有 keyboardAvoiding
-        if (keyboardAvoid.current.keyboardHeight) {
-          // iOS: keyboard 获取高度时机 keyboardWillShow 在 input focus 之前，可以立即执行
-          focusAction()
-        } else {
-          // Android,Harmony: keyboard 获取高度时机 keyboardDidShow 在 input focus 之后，需要延迟回调
-          evt.persist()
-          keyboardAvoid.current.onKeyboardShow = focusAction
-        }
-      } else {
-        // 无 keyboardAvoiding，直接执行 focus 回调
+    }
+
+    if (keyboardAvoid?.current) {
+      // 有 keyboardAvoiding
+      if (keyboardAvoid.current.keyboardHeight) {
+        // 仅以下场景触发顺序：先 keyboardWillShow 获取高度 -> 后 onFocus，可以立即执行
+        // - iOS + 手动点击聚焦
         focusAction()
+      } else {
+        // 其他场景触发顺序：先 onFocus -> 后 keyboardWillShow 获取高度 -> 执行回调
+        // - iOS + auto-focus/focus=true 自动聚焦
+        // - Android 手动点击聚焦/自动聚焦 都一样
+        evt.persist()
+        keyboardAvoid.current.onKeyboardShow = focusAction
       }
+    } else {
+      // 兜底：无 keyboardAvoiding 直接执行 focus 回调
+      focusAction()
     }
   }
 
@@ -444,19 +452,28 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
   }, [])
 
   useEffect(() => {
-    if (focus) {
+    if (isAutoFocus) {
+      // auto-focus/focus=true 初始化 keyboardAvoidContext
       setKeyboardAvoidContext()
     }
-  }, [focus])
+  }, [isAutoFocus])
 
   useUpdateEffect(() => {
     if (!nodeRef?.current) {
       return
     }
-    focus
+    // RN autoFocus 属性仅在初次渲染时生效
+    // 后续更新需要手动调用 focus/blur 方法，和微信小程序对齐
+    isAutoFocus
       ? (nodeRef.current as TextInput)?.focus()
       : (nodeRef.current as TextInput)?.blur()
-  }, [focus])
+  }, [isAutoFocus])
+
+  // 使用 multiline 来修复光标位置问题
+  // React Native 的 TextInput 在 textAlign center + placeholder 时光标会跑到右边
+  // 这个问题只在 Android 上出现
+  // 参考：https://github.com/facebook/react-native/issues/28794 (Android only)
+  const needMultilineFix = isAndroid && !multiline
 
   const innerProps = useInnerProps(
     extendObject(
@@ -474,14 +491,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         value: inputValue,
         maxLength: maxlength === -1 ? undefined : maxlength,
         editable: !disabled,
-        autoFocus: !!autoFocus || !!focus,
+        autoFocus: isAutoFocus,
         selection: selectionStart > -1 || typeof cursor === 'number' ? selection : undefined,
         selectionColor: cursorColor,
-        blurOnSubmit: !multiline && !confirmHold,
+        blurOnSubmit: multiline ? confirmType !== 'return' : !confirmHold,
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: !!multiline,
+        multiline: multiline || needMultilineFix,
         onTouchStart,
         onTouchEnd,
         onFocus,
@@ -489,8 +506,9 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onChange,
         onSelectionChange,
         onContentSizeChange,
-        onSubmitEditing: bindconfirm && !multiline && onSubmitEditing
+        onSubmitEditing: bindconfirm && onSubmitEditing
       },
+      needMultilineFix ? { numberOfLines: 1 } : {},
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [

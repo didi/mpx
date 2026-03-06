@@ -1,9 +1,9 @@
 const { hump2dash } = require('../../../utils/hump-dash')
 const { parseValues } = require('../../../utils/string')
 
-module.exports = function getSpec ({ warn, error }) {
+module.exports = function getSpec({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|transition|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -33,7 +33,8 @@ module.exports = function getSpec ({ warn, error }) {
   }
   // 值类型
   const ValueType = {
-    number: 'number',
+    integer: 'integer',
+    length: 'length',
     color: 'color',
     enum: 'enum'
   }
@@ -63,26 +64,27 @@ module.exports = function getSpec ({ warn, error }) {
     'align-items': ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'align-self': ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
     'justify-content': ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
-    'background-size': ['contain', 'cover', 'auto', ValueType.number],
-    'background-position': ['left', 'right', 'top', 'bottom', 'center', ValueType.number],
+    'background-size': ['contain', 'cover', 'auto', ValueType.length],
+    'background-position': ['left', 'right', 'top', 'bottom', 'center', ValueType.length],
     'background-repeat': ['no-repeat'],
-    width: ['auto', ValueType.number],
-    height: ['auto', ValueType.number],
-    'flex-basis': ['auto', ValueType.number],
-    margin: ['auto', ValueType.number],
-    'margin-top': ['auto', ValueType.number],
-    'margin-left': ['auto', ValueType.number],
-    'margin-bottom': ['auto', ValueType.number],
-    'margin-right': ['auto', ValueType.number],
-    'margin-horizontal': ['auto', ValueType.number],
-    'margin-vertical': ['auto', ValueType.number]
+    width: ['auto', ValueType.length],
+    height: ['auto', ValueType.length],
+    'flex-basis': ['auto', ValueType.length],
+    margin: ['auto', ValueType.length],
+    'margin-top': ['auto', ValueType.length],
+    'margin-left': ['auto', ValueType.length],
+    'margin-bottom': ['auto', ValueType.length],
+    'margin-right': ['auto', ValueType.length],
+    'margin-horizontal': ['auto', ValueType.length],
+    'margin-vertical': ['auto', ValueType.length]
   }
   // 获取值类型
   const getValueType = (prop) => {
     const propValueTypeRules = [
       // 重要！！优先判断是不是枚举类型
       [ValueType.enum, new RegExp('^(' + Object.keys(SUPPORTED_PROP_VAL_ARR).join('|') + ')$')],
-      [ValueType.number, /^((opacity|flex-grow|flex-shrink|gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|index|offset|opacity)))$/],
+      [ValueType.length, /^((gap|left|right|top|bottom)|(.+-(width|height|left|right|top|bottom|radius|spacing|size|gap|offset)))$/],
+      [ValueType.integer, /^((opacity|flex-grow|flex-shrink|z-index)|(.+-(index|opacity)))$/],
       [ValueType.color, /^(color|(.+-color))$/]
     ]
     for (const rule of propValueTypeRules) {
@@ -102,67 +104,86 @@ module.exports = function getSpec ({ warn, error }) {
 
     const newVal = parseValues((str.match(totalVarExp)?.[1] || ''), ',')
     if (newVal.length <= 1) return null // 没有 fallback
-    const fallback = newVal[1].trim()
+    // fallback 可能本身包含逗号（如多 font-family 兜底、渐变等），这里取第2段及之后并 join 回去
+    const fallback = newVal.slice(1).join(',').trim()
     // 如果 fallback 也是 var()，递归提取
     if (totalVarExp.test(fallback)) return getDefaultValueFromVar(fallback, visited)
     return fallback
   }
 
+  // 属性值校验
+  // 返回值：
+  // - 通过：返回 true
+  // - 失败：返回 false
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
-    value = value.trim()
+    const rawValue = value.trim()
     const tips = isError ? error : warn
 
-    // 对于包含 CSS 变量的值，提取 fallback 值进行验证
-    if (cssVariableExp.test(value)) {
-      const fallback = getDefaultValueFromVar(value)
+    // CSS 自定义属性（--xxx）是变量定义，不属于 RN 样式属性：
+    // 不能按 `-height/-color` 等后缀推断类型去校验，否则会把变量定义错误过滤，导致运行时 var() 取值失败
+    if (/^--/.test(prop)) return true
+
+    // 校验阶段允许使用 fallback 作为最坏情况（避免 RN crash），但输出必须保留 rawValue
+    let valueForVerify = rawValue
+
+    if (cssVariableExp.test(valueForVerify)) {
+      const fallback = getDefaultValueFromVar(valueForVerify)
       // undefined 表示检测到循环引用
       if (fallback === undefined) {
-        tips(`CSS variable circular reference in fallback chain detected in ${selector} for property ${prop}, value: ${value}`)
+        tips(`CSS variable circular reference in fallback chain detected in ${selector} for property ${prop}, value: ${rawValue}`)
         return false
       }
       // null 表示没有 fallback，CSS 变量本身是合法的（运行时会解析）
       if (fallback === null) {
         return true
       }
-      // 有 fallback 值，将 fallback 作为新的 value 继续后续验证流程
-      value = fallback
+      // 有 fallback 值：使用 fallback 继续做值校验
+      valueForVerify = fallback.trim()
     }
 
-    // calc() 和 env() 跳过验证
-    if (calcExp.test(value) || envExp.test(value)) return true
+    // calc() / env() 跳过值校验，但保留 rawValue 输出
+    if (calcExp.test(valueForVerify) || envExp.test(valueForVerify)) return true
     const namedColor = ['transparent', 'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
     const valueExp = {
-      number: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
+      integer: /^(-?(\d+(\.\d+)?|\.\d+))$/,
+      length: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
       color: new RegExp(('^(' + namedColor.join('|') + ')$') + '|(^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$)|^(rgb|rgba|hsl|hsla|hwb)\\(.+\\)$')
     }
     const type = getValueType(prop)
     const tipsType = (type) => {
       const info = {
-        [ValueType.number]: '2rpx,10%,30rpx',
+        [ValueType.length]: '2rpx,10%,30rpx',
         [ValueType.color]: 'rgb,rgba,hsl,hsla,hwb,named color,#000000',
         [ValueType.enum]: `${SUPPORTED_PROP_VAL_ARR[prop]?.join(',')}`
       }
-      tips(`Value of ${prop} in ${selector} should be ${type}, eg ${info[type]}, received [${value}], please check again!`)
+      tips(`Value of ${prop} in ${selector} should be ${type}${info[type] ? `, eg ${info[type]}` : ''}, received [${rawValue}], please check again!`)
     }
     switch (type) {
-      case ValueType.number: {
-        if (!valueExp.number.test(value)) {
+      case ValueType.length: {
+        if (!valueExp.length.test(valueForVerify)) {
+          tipsType(type)
+          return false
+        }
+        return true
+      }
+      case ValueType.integer: {
+        if (!valueExp.integer.test(valueForVerify)) {
           tipsType(type)
           return false
         }
         return true
       }
       case ValueType.color: {
-        if (!valueExp.color.test(value)) {
+        if (!valueExp.color.test(valueForVerify)) {
           tipsType(type)
           return false
         }
         return true
       }
       case ValueType.enum: {
-        const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(value)
-        const isType = Object.keys(valueExp).some(item => valueExp[item].test(value) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
+        const isIn = SUPPORTED_PROP_VAL_ARR[prop].includes(valueForVerify)
+        const isType = Object.keys(valueExp).some(item => valueExp[item].test(valueForVerify) && SUPPORTED_PROP_VAL_ARR[prop].includes(ValueType[item]))
         if (!isIn && !isType) {
           tipsType(type)
           return false
@@ -400,6 +421,8 @@ module.exports = function getSpec ({ warn, error }) {
     // css var & 数组直接返回
     if (Array.isArray(value) || cssVariableExp.test(value)) return { prop, value }
     const values = parseValues(value)
+    // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+    values.sort()
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\((.+)\)/)
@@ -431,23 +454,23 @@ module.exports = function getSpec ({ warn, error }) {
           case 'skew':
           case 'translate3d': // x y 支持 z不支持
           case 'scale3d': // x y 支持 z不支持
-          {
-            // 2 个以上的值处理
-            key = key.replace('3d', '')
-            const vals = parseValues(val, ',').splice(0, 3)
-            // scale(.5) === scaleX(.5) scaleY(.5)
-            if (vals.length === 1 && key === 'scale') {
-              vals.push(vals[0])
-            }
-            const xyz = ['X', 'Y', 'Z']
-            transform.push(...vals.map((v, index) => {
-              if (key !== 'rotate' && index > 1) {
-                unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
+            {
+              // 2 个以上的值处理
+              key = key.replace('3d', '')
+              const vals = parseValues(val, ',').splice(0, 3)
+              // scale(.5) === scaleX(.5) scaleY(.5)
+              if (vals.length === 1 && key === 'scale') {
+                vals.push(vals[0])
               }
-              return { [`${key}${xyz[index] || ''}`]: v.trim() }
-            }))
-            break
-          }
+              const xyz = ['X', 'Y', 'Z']
+              transform.push(...vals.map((v, index) => {
+                if (key !== 'rotate' && index > 1) {
+                  unsupportedPropError({ prop: `${key}Z`, value, selector }, { mode })
+                }
+                return { [`${key}${xyz[index] || ''}`]: v.trim() }
+              }))
+              break
+            }
           case 'translateZ':
           case 'scaleZ':
           case 'rotate3d': // x y z angle

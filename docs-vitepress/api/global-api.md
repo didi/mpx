@@ -1,4 +1,4 @@
-# 全局 API
+# 全局 API {#global-api}
 
 ## 全局对象 Mpx {#global-mpx}
 
@@ -69,7 +69,7 @@ const b = mpx.observable(object)
   Mpx 2.8 版本后该 API 等同于 `reactive`，同时不再支持具名导出方式，建议直接使用 `reactive` 替代，请[点击](/api/reactivity-api/basic-reactivity.html#reactive)查看。
 
 ### set
-用于对一个响应式对象新增属性，会`触发订阅者更新操作`。[查看详情](/api/global-api.html#set)
+用于对一个响应式对象新增属性，会`触发订阅者更新操作`。[查看详情](global-api.md#set)
 
 ### delete
 
@@ -359,27 +359,27 @@ createComponent({
 
 ### BEFOREMOUNT
 
-选项式 API 中使用，作用同[onBeforeMount](/api/composition-api.html#onbeforemount)
+选项式 API 中使用，作用同[onBeforeMount](composition-api.md#onbeforemount)
 
 ### MOUNTED
 
-选项式 API 中使用，作用同[onMounted](/api/composition-api.html#onmounted)
+选项式 API 中使用，作用同[onMounted](composition-api.md#onmounted)
 
 ### BEFOREUPDATE
 
-选项式 API 中使用，作用同[onBeforeUpdate](/api/composition-api.html#onbeforeupdate)
+选项式 API 中使用，作用同[onBeforeUpdate](composition-api.md#onbeforeupdate)
 
 ### UPDATED
 
-选项式 API 中使用，作用同[onUpdated](/api/composition-api.html#onupdated)
+选项式 API 中使用，作用同[onUpdated](composition-api.md#onupdated)
 
 ### SERVERPREFETCH
 
-选项式 API 中使用，作用同[onServerPrefetch](/api/composition-api.html#onServerPrefetch)
+选项式 API 中使用，作用同[onServerPrefetch](composition-api.md#onserverprefetch)
 
 ### BEFOREUNMOUNT
 
-选项式 API 中使用，作用同[onBeforeUnmount](/api/composition-api.html#onbeforeunmount)
+选项式 API 中使用，作用同[onBeforeUnmount](composition-api.md#onbeforeunmount)
 
 ### UNMOUNTED
 
@@ -387,25 +387,25 @@ createComponent({
 
 ### ONLOAD
 
-选项式 API 中使用，作用同[onLoad](/api/composition-api.html#onload)
+选项式 API 中使用，作用同[onLoad](composition-api.md#onload)
 
 ### ONSHOW
 
-选项式 API 中使用，作用同[onShow](/api/composition-api.html#onshow)
+选项式 API 中使用，作用同[onShow](composition-api.md#onshow)
 
 ### ONHIDE
 
-选项式 API 中使用，作用同[onHide](/api/composition-api.html#onhide)
+选项式 API 中使用，作用同[onHide](composition-api.md#onhide)
 
 ### ONRESIZE
 
-选项式 API 中使用，作用同[onResize](/api/composition-api.html#onresize)
+选项式 API 中使用，作用同[onResize](composition-api.md#onresize)
 
-## 响应式 API
-详情请[移步](/api/reactivity-api.html)
+## 响应式 API {#reactivity-api}
+详情请[移步](reactivity-api.md)
 
-## 组合式 API
-详情请[移步](/api/composition-api.html)
+## 组合式 API {#composition-api}
+详情请[移步](composition-api.md)
 
 ## store API
-详情请[移步](/api/store-api.html)
+详情请[移步](store-api.md)

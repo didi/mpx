@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/setting/wx.getSetting.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -29,7 +29,7 @@
 | subscriptionsSetting | SubscriptionsSetting| 用户订阅消息设置，接口参数withSubscriptions值为true时才会返回。 | 2.10.3   |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.openSetting({
