@@ -733,6 +733,15 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       proxy.memoVersion = Symbol()
     }
 
+    // if (rawOptions.mpxFileResource.includes('nav.mpx')) {
+    //   const stateVersionChange = proxy.stateVersion === global.__mpxNavStateVersion
+    //   const memoVersionChange = proxy.memoVersion === global.__mpxNavMemoVersion
+    //   const propsChange = props === global.__mpxNavProps
+    //   console.log(`[mpx] nav.mpx render, stateVersionChange: ${stateVersionChange}, memoVersionChange: ${memoVersionChange}, propsChange: ${propsChange}`)
+    //   global.__mpxNavStateVersion = proxy.stateVersion
+    //   global.__mpxNavMemoVersion = proxy.memoVersion
+    //   global.__mpxNavProps = props
+    // }
     const finalMemoVersion = useMemo(() => {
       if (!hasPendingJob(proxy.update)) {
         proxy.finalMemoVersion = Symbol()

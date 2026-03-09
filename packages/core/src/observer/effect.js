@@ -117,7 +117,7 @@ export class ReactiveEffect {
   }
 
   // same as trigger
-  update (key, value, stack, fromAddSubStack) {
+  update (key, value, oldvalue, stack, fromAddSubStack) {
     const debugOptions = global.__getMpxReactiveEffectDebugRules?.(key, value)
     const debug = debugOptions ? debugOptions.debug : this.debug
     // avoid dead cycle
