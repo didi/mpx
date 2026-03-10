@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/network/wx.getNetworkType.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -96,7 +96,7 @@
 </table>
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.getNetworkType({

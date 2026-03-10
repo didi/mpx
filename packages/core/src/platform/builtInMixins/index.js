@@ -26,7 +26,8 @@ export default function getBuiltInMixins ({ type, rawOptions = {} }) {
       refsMixin(),
       i18nMixin(),
       relationsMixin(type),
-      pageRouteMixin(type)
+      pageRouteMixin(type),
+      pageScrollMixin(type)
     ]
   } else if (isWeb) {
     bulitInMixins = [

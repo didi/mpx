@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/login/wx.login.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object object**
 
@@ -39,7 +39,7 @@
 | errno  | Number | errno 错误码，错误码的详细说明参考 Errno错误码 | 2.24.0   |
 
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 
 mpx.login({
