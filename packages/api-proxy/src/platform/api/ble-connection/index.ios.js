@@ -57,10 +57,8 @@ const removeUpdateStateSubscription = function () {
   }
 }
 const commonFailHandler = function (errMsg, fail, complete, reason) {
-  if (reason instanceof Error) {
-    errMsg = errMsg + ' ' + reason.message
-  } else if (reason !== undefined && reason !== null) {
-    errMsg = errMsg + ' ' + reason
+  if (reason != null) {
+    errMsg = errMsg + ' ' + (reason.message != null ? reason.message : String(reason))
   }
   const result = {
     errMsg
