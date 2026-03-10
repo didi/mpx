@@ -416,8 +416,8 @@ function writeBLECharacteristicValue (options = {}) {
   }
   let writeTypeValue = writeType
   if (!writeType) {
-    // 与小程序拉齐 iOS 未传值的情况优先 write，安卓优先 writeNoResponse 。
-    writeTypeValue = __mpx_mode__ === 'ios' ? 'write' : 'writeNoResponse'
+    // 与小程序拉齐：iOS / 鸿蒙未传值优先 write，安卓优先 writeNoResponse 。
+    writeTypeValue = (__mpx_mode__ === 'ios' || __mpx_mode__ === 'harmony') ? 'write' : 'writeNoResponse'
   }
   // 将ArrayBuffer转换为byte array
   const bytes = Array.from(new Uint8Array(value))
