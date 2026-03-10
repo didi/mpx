@@ -824,9 +824,13 @@ function onBLEConnectionStateChange (callback) {
 }
 
 function offBLEConnectionStateChange (callback) {
-  const index = onBLEConnectionStateCallbacks.indexOf(callback)
-  if (index !== -1) {
-    onBLEConnectionStateCallbacks.splice(index, 1)
+  if (callback == null) {
+    onBLEConnectionStateCallbacks.length = 0
+  } else {
+    const index = onBLEConnectionStateCallbacks.indexOf(callback)
+    if (index !== -1) {
+      onBLEConnectionStateCallbacks.splice(index, 1)
+    }
   }
   if (onBLEConnectionStateCallbacks.length === 0) {
     removeUpdateStateSubscription()
