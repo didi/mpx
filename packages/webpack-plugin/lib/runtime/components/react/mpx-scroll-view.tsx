@@ -180,6 +180,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     offset: 0,
     scrollLeft: 0,
     scrollTop: 0,
+    scrollWidth: 0,
+    scrollHeight: 0,
     visibleLength: 0
   })
 
@@ -464,6 +466,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     const newContentLength = selectLength({ height, width })
     const oldContentLength = scrollOptions.current.contentLength
     scrollOptions.current.contentLength = newContentLength
+    scrollOptions.current.scrollWidth = width
+    scrollOptions.current.scrollHeight = height
     // 内容高度变化时，Animated.event 的映射可能会有不生效的场景，所以需要手动设置一下 scrollOffset 的值
     if (enableSticky && (__mpx_mode__ === 'android' || __mpx_mode__ === 'ios')) {
       // 当内容变少时，检查当前滚动位置是否超出新的内容范围
