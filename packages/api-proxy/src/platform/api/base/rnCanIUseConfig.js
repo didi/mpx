@@ -234,5 +234,13 @@ export const SUPPORTED_OBJECTS = {
     'abort',
     'onHeadersReceived',
     'offHeadersReceived'
+  ],
+
+  // camera
+  CameraContext: [
+    'setZoom',
+    'takePhoto',
+    'startRecord',
+    'stopRecord'
   ]
 }
