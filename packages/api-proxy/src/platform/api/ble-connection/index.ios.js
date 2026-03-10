@@ -379,14 +379,9 @@ function onBluetoothAdapterStateChange (callback) {
   }
 }
 
-function offBluetoothAdapterStateChange (callback) {
-  const index = onStateChangeCallbacks.indexOf(callback)
-  if (index > -1) {
-    onStateChangeCallbacks.splice(index, 1)
-  }
-  if (deviceFoundCallbacks.length === 0) {
-    removeUpdateStateSubscription()
-  }
+function offBluetoothAdapterStateChange () {
+  onStateChangeCallbacks.length = 0
+  removeUpdateStateSubscription()
 }
 
 function getBluetoothDevices (options = {}) { // 该能力只是获取应用级别已连接设备列表，非手机级别的已连接设备列表
