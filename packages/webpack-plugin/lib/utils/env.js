@@ -10,8 +10,13 @@ function isMiniProgram (mode) {
     return !isWeb(mode) && !isReact(mode)
 }
 
+function isNoMode (mode) {
+    return mode === 'noMode'
+}
+
 module.exports = {
     isWeb,
     isReact,
-    isMiniProgram
+    isMiniProgram,
+    isNoMode
 }

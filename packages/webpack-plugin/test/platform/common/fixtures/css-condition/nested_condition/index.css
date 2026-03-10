@@ -1,0 +1,14 @@
+body { margin: 0; }
+/*@mpx-if(isMobile)*/
+.mobile {
+  display: block;
+  /*@mpx-if(hasFeature)*/
+  .feature { color: red; }
+  /*@mpx-else*/
+  .feature { color: blue; }
+  /*@mpx-endif*/
+}
+/*@mpx-else*/
+.desktop { display: block; }
+/*@mpx-endif*/
+header { color: red }

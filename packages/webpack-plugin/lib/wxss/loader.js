@@ -32,13 +32,6 @@ const {
 } = require('./utils')
 const createHelpers = require('../helpers')
 
-const RN_PRESET_OPTIMISATION = {
-  reduceInitial: false,
-  normalizeWhitespace: false,
-  minifyFontValues: false,
-  convertValues: false
-}
-
 module.exports = async function loader (content, map, meta) {
   const rawOptions = this.getOptions(schema)
   const plugins = []
@@ -99,6 +92,9 @@ module.exports = async function loader (content, map, meta) {
         filter: options.import.filter,
         urlHandler: (url) => {
           url = combineRequests(getPreRequester(this)(options.importLoaders), url)
+          if (isRN) {
+            return stringifyRequest(this, url)
+          }
           return getRequestString('styles', { src: url }, {
             isStatic: true,
             issuerResource: this.resource,
@@ -157,12 +153,11 @@ module.exports = async function loader (content, map, meta) {
     )
   }
 
-  if (this.minimize) {
+  if (this.minimize && !isRN) {
     const cssnano = require('cssnano')
     const minimizeOptions = rawOptions.minimize || {}
     const presetOptimisation = Object.assign(
       {},
-      isRN ? RN_PRESET_OPTIMISATION : {},
       minimizeOptions.optimisation
     )
     let cssnanoConfig = {
@@ -257,7 +252,7 @@ module.exports = async function loader (content, map, meta) {
   let moduleCode
 
   try {
-    moduleCode = getModuleCode(result, api, replacements, options, this)
+    moduleCode = getModuleCode(result, api, replacements, options, isRN, this)
   } catch (error) {
     callback(error)
 

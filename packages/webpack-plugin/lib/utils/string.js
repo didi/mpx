@@ -28,9 +28,33 @@ function trimBlankRow (str) {
   return str.replace(/^\s*[\r\n]/gm, '')
 }
 
+// 多value解析
+function parseValues (str, char = ' ') {
+  let stack = 0
+  let temp = ''
+  const result = []
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '(') {
+      stack++
+    } else if (str[i] === ')') {
+      stack--
+    }
+    // 非括号内 或者 非分隔字符且非空
+    if (stack !== 0 || str[i] !== char) {
+      temp += str[i]
+    }
+    if ((stack === 0 && str[i] === char) || i === str.length - 1) {
+      result.push(temp.trim())
+      temp = ''
+    }
+  }
+  return result
+}
+
 module.exports = {
   isCapital,
   isMustache,
   capitalToHyphen,
-  trimBlankRow
+  trimBlankRow,
+  parseValues
 }

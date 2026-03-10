@@ -31,6 +31,7 @@ module.exports = function ({
       let componentGenerics = {}
       const usingComponentsInfo = {}
       const usingComponents = {}
+      let originalUsingComponents
       const finalCallback = (err) => {
         if (err) return callback(err)
         if (ctorType === 'app') {
@@ -43,6 +44,7 @@ module.exports = function ({
           componentPlaceholder,
           componentGenerics,
           usingComponentsInfo: Object.assign({}, usingComponentsInfo, mpx.globalComponentsInfo),
+          originalUsingComponents,
           jsonContent
         })
       }
@@ -61,6 +63,9 @@ module.exports = function ({
         if (ctorType !== 'app') {
           rulesRunnerOptions.mainKey = pagesMap[resourcePath] ? 'page' : 'component'
         }
+
+        originalUsingComponents = ret.usingComponents ? Object.keys(ret.usingComponents) : []
+
         const rulesRunner = getRulesRunner(rulesRunnerOptions)
         try {
           if (rulesRunner) rulesRunner(ret)

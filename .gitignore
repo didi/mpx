@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.trae/
 .cache/
 .gitconfig
 node_modules/
@@ -13,3 +14,4 @@ docs-vitepress/.vitepress/dist
 docs-vitepress/.vitepress/cache
 dev-dist
 packages/webpack-plugin/lib/runtime/components/react/dist/
+CHANGELOG.md

@@ -33,9 +33,8 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     'parent-height': parentHeight
   } = props
 
-  const scrollViewContext = useContext(ScrollViewContext)
+  const { scrollOffset, gestureRef: scrollViewRef } = useContext(ScrollViewContext)
   const stickyContext = useContext(StickyContext)
-  const { scrollOffset } = scrollViewContext
   const { registerStickyHeader, unregisterStickyHeader } = stickyContext
   const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
@@ -67,7 +66,6 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   function updatePosition () {
     if (headerRef.current) {
-      const scrollViewRef = scrollViewContext.gestureRef
       if (scrollViewRef && scrollViewRef.current) {
         headerRef.current.measureLayout(
           scrollViewRef.current,
@@ -95,7 +93,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   })
 
   useEffect(() => {
-    if (!bindstickontopchange) return
+    if (!bindstickontopchange || !scrollOffset) return
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
@@ -115,29 +113,31 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     return () => {
       scrollOffset.removeListener(listener)
     }
-  }, [])
+  }, [bindstickontopchange, scrollOffset])
 
   const animatedStyle = useMemo(() => {
-    const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1],
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'extend'
-    })
+    if (scrollOffset) {
+      const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1],
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'extend'
+      })
 
-    const finalTranslateY = offsetTop === 0
-      ? translateY
-      : Animated.add(
-        translateY,
-        Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, offsetTop],
-          extrapolate: 'clamp'
-        })
-      )
+      const finalTranslateY = offsetTop === 0
+        ? translateY
+        : Animated.add(
+          translateY,
+          Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, offsetTop],
+            extrapolate: 'clamp'
+          })
+        )
 
-    return {
-      transform: [{ translateY: finalTranslateY }]
+      return {
+        transform: [{ translateY: finalTranslateY }]
+      }
     }
   }, [scrollOffset, headerTopAnimated, offsetTop])
 

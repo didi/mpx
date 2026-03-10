@@ -23,13 +23,13 @@ module.exports = function (source) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[plugin loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[plugin loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 

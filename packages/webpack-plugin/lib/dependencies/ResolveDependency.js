@@ -36,7 +36,7 @@ class ResolveDependency extends NullDependency {
     const resolveResult = pagesMap[resourcePath] || currentComponentsMap[resourcePath] || mainComponentsMap[resourcePath] || currentStaticResourcesMap[resourcePath] || mainStaticResourcesMap[resourcePath] || ''
     if (!resolveResult) {
       if (!partialCompileRules || matchCondition(resourcePath, partialCompileRules)) {
-        compilation.errors.push(new Error(`Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
+        compilation.errors.push(new Error(`[Mpx json error]:Path ${resource} is not a page/component/static resource, which is resolved from ${issuerResource}!`))
       }
     }
     return resolveResult

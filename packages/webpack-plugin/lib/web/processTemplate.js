@@ -13,6 +13,7 @@ module.exports = function (template, {
   moduleId,
   ctorType,
   usingComponentsInfo,
+  originalUsingComponents,
   componentGenerics
 }, callback) {
   const mpx = loaderContext.getMpx()
@@ -51,10 +52,10 @@ module.exports = function (template, {
   if (template) {
     // 由于远端src template资源引用的相对路径可能发生变化，暂时不支持。
     if (template.src) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
+      return callback(new Error('[Mpx template error][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
     }
     if (template.lang) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
+      return callback(new Error('[Mpx template error][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
 
     output += genComponentTag(template, (template) => {
@@ -65,18 +66,19 @@ module.exports = function (template, {
         const templateSrcMode = template.mode || srcMode
         const warn = (msg) => {
           loaderContext.emitWarning(
-            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
           )
         }
         const error = (msg) => {
           loaderContext.emitError(
-            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
           )
         }
         const { root, meta } = templateCompiler.parse(template.content, {
           warn,
           error,
           usingComponentsInfo, // processTemplate中无其他地方使用，直接透传 string 类型
+          originalUsingComponents,
           hasComment,
           isNative,
           ctorType,

@@ -19,6 +19,10 @@ const processWeb = require('./web')
 const processReact = require('./react')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
+/**
+ * @this {MpxLoaderContext<any>}
+ * @param {string} content
+ */
 module.exports = function (content) {
   this.cacheable()
 
@@ -51,13 +55,13 @@ module.exports = function (content) {
 
   const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
     )
   }
 
   const emitError = (msg) => {
     this.emitError(
-      new Error('[mpx-loader][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
@@ -123,6 +127,7 @@ module.exports = function (content) {
         componentPlaceholder,
         componentGenerics,
         usingComponentsInfo,
+        originalUsingComponents,
         jsonContent
       } = jsonInfo
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
@@ -146,7 +151,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -168,7 +174,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -237,6 +244,7 @@ module.exports = function (content) {
           ctorType,
           moduleId,
           usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          originalUsingComponents: JSON.stringify(originalUsingComponents),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开
