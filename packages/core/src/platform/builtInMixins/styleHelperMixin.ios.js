@@ -12,8 +12,22 @@ global.__mpxPageSizeCountMap = reactive({})
 
 global.__GCC = function (className, classMap, classMapValueCache) {
   if (!classMapValueCache.has(className)) {
-    const styleObj = classMap[className]?.(global.__formatValue)
-    styleObj && classMapValueCache.set(className, styleObj)
+    const originalDependentScreenSize = dependentScreenSize
+    dependentScreenSize = false
+
+    let styleObj = classMap[className]?.(formatValue)
+    if (!styleObj) return
+    if (!styleObj._media?.length) {
+      styleObj = {
+        _default: styleObj
+      }
+    }
+
+    // 记录是否依赖屏幕尺寸，在屏幕尺寸变化时决定是否重新渲染对应组件
+    styleObj._dependentScreenSize = dependentScreenSize
+    dependentScreenSize = dependentScreenSize || originalDependentScreenSize
+
+    classMapValueCache.set(className, styleObj)
   }
   return classMapValueCache.get(className)
 }
@@ -79,12 +93,15 @@ const unit = {
 
 const empty = {}
 
+// 记录style是否依赖屏幕尺寸
+let dependentScreenSize = false
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
   if (unitType === 'hairlineWidth') {
     return StyleSheet.hairlineWidth
   }
   if (unitType && typeof unit[unitType] === 'function') {
+    dependentScreenSize = true
     return unit[unitType](+value)
   }
   const matched = unitRegExp.exec(value)
@@ -254,11 +271,11 @@ export default function styleHelperMixin () {
         return concat(staticClass, stringifyDynamicClass(dynamicClass))
       },
       __getStyle (staticClass, dynamicClass, staticStyle, dynamicStyle, hide) {
+        // 重置依赖标记
+        dependentScreenSize = false
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
-        // 使用一下 __getSizeCount 触发其 get
-        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           // todo 当前为了复用小程序unocss产物，暂时进行mpEscape，等后续正式支持unocss后可不进行mpEscape
@@ -267,17 +284,12 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              if (localStyle._media?.length) {
-                mergeResult(localStyle._default, getMediaStyle(localStyle._media))
-              } else {
-                mergeResult(localStyle)
-              }
+              mergeResult(localStyle._default, getMediaStyle(localStyle._media))
+              // class style 计算可能触发缓存，需要单独在结果中记录是否依赖屏幕尺寸，不能直接使用全局变量。
+              this.__dependentScreenSize = this.__dependentScreenSize || localStyle._dependentScreenSize
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              if (appStyle._media?.length) {
-                mergeResult(appStyle._default, getMediaStyle(appStyle._media))
-              } else {
-                mergeResult(appStyle)
-              }
+              mergeResult(appStyle._default, getMediaStyle(appStyle._media))
+              this.__dependentScreenSize = this.__dependentScreenSize || appStyle._dependentScreenSize
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               mergeResult(this.__props[className])
@@ -319,6 +331,12 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+
+        // 仅在依赖屏幕尺寸时才触发__getSizeCount进行相应式关联，避免屏幕尺寸变化时不必要的性能损耗
+        this.__dependentScreenSize = this.__dependentScreenSize || dependentScreenSize
+        if (this.__dependentScreenSize) {
+          this.__getSizeCount()
+        }
         return isEmpty ? empty : result
       }
     }
