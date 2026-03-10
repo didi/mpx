@@ -201,6 +201,9 @@ class RNIntersectionObserver {
 
   // 计算节点的rect信息
   _measureTarget (isInit = false) {
+    if (!this.observerRefs || !this.relativeRef) {
+      return
+    }
     Promise.all([
       this._getReferenceRect(this.observerRefs),
       this._getReferenceRect(this.relativeRef)

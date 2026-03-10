@@ -1,4 +1,5 @@
 import { CREATED, ONLOAD, ONSHOW, ONHIDE, ONRESIZE } from '../../core/innerLifecycle'
+import { isObject } from '@mpxjs/utils'
 
 export default function pageStatusMixin (mixinType) {
   if (mixinType === 'page') {
@@ -12,8 +13,19 @@ export default function pageStatusMixin (mixinType) {
       onResize (e) {
         this.__mpxProxy.callHook(ONRESIZE, [e])
       },
-      onLoad (query) {
-        this.__mpxProxy.callHook(ONLOAD, [query])
+      onLoad (rawQuery) {
+        if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'qq' || __mpx_mode__ === 'tt') {
+          const decodedQuery = {}
+          // 处理以上平台直接透传encode的结果，给到onload第二个参数供开发者使用
+          if (isObject(rawQuery)) {
+            for (const key in rawQuery) {
+              decodedQuery[key] = decodeURIComponent(rawQuery[key])
+            }
+          }
+          this.__mpxProxy.callHook(ONLOAD, [rawQuery, decodedQuery])
+        } else {
+          this.__mpxProxy.callHook(ONLOAD, [rawQuery, rawQuery])
+        }
       }
     }
     if (__mpx_mode__ === 'ali') {
