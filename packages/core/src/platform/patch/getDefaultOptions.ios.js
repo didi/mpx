@@ -639,6 +639,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
   }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  if (global.__externalClasses && global.__externalClasses.length > 0) {
+    global.__externalClasses.forEach((name) => {
+      validProps[name] = null
+    })
+  }
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {

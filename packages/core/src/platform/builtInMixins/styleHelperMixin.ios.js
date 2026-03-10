@@ -290,9 +290,9 @@ export default function styleHelperMixin () {
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               mergeResult(appStyle._default, getMediaStyle(appStyle._media))
               this.__dependentScreenSize = this.__dependentScreenSize || appStyle._dependentScreenSize
-            } else if (isObject(this.__props[className])) {
+            } else if (isObject(this.__mpxProxy.props[className])) {
               // externalClasses必定以对象形式传递下来
-              mergeResult(this.__props[className])
+              mergeResult(this.__mpxProxy.props[className])
             }
           })
         }
