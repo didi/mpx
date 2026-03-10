@@ -38,10 +38,9 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback, useUpdateEffect } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
-
 interface ScrollViewProps {
   children?: ReactNode;
   enhanced?: boolean;
@@ -109,6 +108,16 @@ type ScrollAdditionalProps = {
   onScrollEndDrag?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   onMomentumScrollEnd?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
 }
+type ScrollViewContextType = {
+  scrollEnabled: boolean
+  bounces: boolean
+  showScrollbar: boolean
+  pagingEnabled: boolean
+  fastDeceleration: boolean
+  decelerationDisabled: boolean
+  scrollTo: (options: { top?: number; left?: number; animated?: boolean; duration?: number }) => void
+  scrollIntoView: (selector: string, options: { offset?: number; animated?: boolean }) => void
+}
 
 const AnimatedScrollView = RNAnimated.createAnimatedComponent(ScrollView) as React.ComponentType<any>
 
@@ -167,7 +176,31 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   const [refreshing, setRefreshing] = useState(false)
   const [enableScroll, setEnableScroll] = useState(true)
+  // 下拉刷新内部维护的 bounces 状态
   const [scrollBounces, setScrollBounces] = useState(false)
+  // 外部用户传递的 bounces 属性
+  const [bouncesState, setBouncesState] = useState(!!bounces)
+  const [showScrollbarState, setShowScrollbarState] = useState(!!showScrollbar)
+  const [pagingEnabledState, setPagingEnabledState] = useState(!!pagingEnabled)
+
+  // 用于 ScrollViewContext getter 访问最新状态
+  const scrollViewStateRef = useRef({
+    enableScroll: true,
+    bounces: false,
+    showScrollbar,
+    pagingEnabled,
+    scrollX,
+    scrollY
+  })
+
+  scrollViewStateRef.current = {
+    enableScroll,
+    bounces: bouncesState,
+    showScrollbar: showScrollbarState,
+    pagingEnabled: pagingEnabledState,
+    scrollX,
+    scrollY
+  }
 
   const enableScrollValue = useSharedValue(true)
   const bouncesValue = useSharedValue(false)
@@ -228,21 +261,63 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   })
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
+  // 创建 ScrollViewContext 对象，支持动态读写属性
+  const scrollViewContext = useRef<ScrollViewContextType | null>(null)
+
+  if (!scrollViewContext.current) {
+    scrollViewContext.current = {
+      get scrollEnabled () {
+        const { enableScroll, scrollX, scrollY } = scrollViewStateRef.current
+        return !enableScroll ? false : !!(scrollX || scrollY)
+      },
+      set scrollEnabled (value: boolean) {
+        setEnableScroll(value)
+      },
+      get bounces () {
+        return scrollViewStateRef.current.bounces
+      },
+      set bounces (value: boolean) {
+        setBouncesState(value)
+      },
+      get showScrollbar () {
+        return scrollViewStateRef.current.showScrollbar
+      },
+      set showScrollbar (value: boolean) {
+        setShowScrollbarState(value)
+      },
+      get pagingEnabled () {
+        return scrollViewStateRef.current.pagingEnabled
+      },
+      set pagingEnabled (value: boolean) {
+        setPagingEnabledState(value)
+      },
+      get fastDeceleration () {
+        return false
+      },
+      set fastDeceleration (value: boolean) {
+        warn(`fastDeceleration is not supported in ${__mpx_mode__} platform`)
+      },
+      get decelerationDisabled () {
+        return false
+      },
+      set decelerationDisabled (value: boolean) {
+        warn(`decelerationDisabled is not supported in ${__mpx_mode__} platform`)
+      },
+      scrollTo,
+      scrollIntoView: handleScrollIntoView
+    }
+  }
+
   useNodesRef(props, ref, scrollViewRef, {
     style: normalStyle,
     scrollOffset: scrollOptions,
-    node: {
-      scrollEnabled: scrollX || scrollY,
-      bounces,
-      showScrollbar,
-      pagingEnabled,
-      fastDeceleration: false,
-      decelerationDisabled: false,
-      scrollTo,
-      scrollIntoView: handleScrollIntoView
-    },
+    node: scrollViewContext.current,
     gestureRef: scrollViewRef
   })
+
+  useUpdateEffect(() => { setScrollBounces(!!bounces) }, [bounces])
+  useUpdateEffect(() => { setShowScrollbarState(!!showScrollbar) }, [showScrollbar])
+  useUpdateEffect(() => { setPagingEnabledState(!!pagingEnabled) }, [pagingEnabled])
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout })
 
@@ -812,8 +887,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       horizontal: scrollX && !scrollY,
       scrollEventThrottle: scrollEventThrottle,
       scrollsToTop: enableBackToTop,
-      showsHorizontalScrollIndicator: scrollX && showScrollbar,
-      showsVerticalScrollIndicator: scrollY && showScrollbar,
+      showsHorizontalScrollIndicator: scrollX && showScrollbarState,
+      showsVerticalScrollIndicator: scrollY && showScrollbarState,
       scrollEnabled: !enableScroll ? false : !!(scrollX || scrollY),
       bounces: false,
       overScrollMode: 'never',
@@ -832,8 +907,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   if (enhanced) {
     Object.assign(scrollAdditionalProps, {
-      bounces: hasRefresher ? scrollBounces : !!bounces,
-      pagingEnabled
+      bounces: hasRefresher ? scrollBounces : bouncesState,
+      pagingEnabled: pagingEnabledState
     })
   }
 
