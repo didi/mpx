@@ -298,9 +298,9 @@ export default function styleHelperMixin () {
               }
             } else if (unoStyle = global.__getUnoStyle(className)) {
                 if (unoStyle._media?.length) {
-                  mergeToLayer(unoStyle.__layer || 'uno', unoStyle._default, getMediaStyle(unoStyle._media))
+                  mergeToLayer(unoStyle._layer || 'uno', unoStyle._default, getMediaStyle(unoStyle._media))
                 } else {
-                  mergeToLayer(unoStyle.__layer || 'uno', unoStyle)
+                  mergeToLayer(unoStyle._layer || 'uno', unoStyle)
                 }
                 if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
             } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
