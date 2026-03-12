@@ -334,8 +334,9 @@ export function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
-  // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
-  values.sort()
+  // Todo 2 RN下顺序不一致转换结果不一致，故这里不处理，动画前后transform 排序不一致的问题，由业务调整写法
+  // Todo 1 transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+  // values.sort()
   const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
