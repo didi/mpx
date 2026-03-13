@@ -282,7 +282,10 @@ function stopBluetoothDevicesDiscovery (options = {}) {
 }
 
 function onBluetoothDeviceFound (callback) {
-  if (type(callback) !== 'Function') return
+  if (type(callback) !== 'Function') {
+    console.warn('onBluetoothDeviceFound: callback 应为函数，已忽略')
+    return
+  }
   deviceFoundCallback = callback // 只允许一个回调，重复添加被最新覆盖
 }
 
@@ -363,7 +366,10 @@ function onDidUpdateState () {
 }
 
 function onBluetoothAdapterStateChange (callback) {
-  if (type(callback) !== 'Function') return
+  if (type(callback) !== 'Function') {
+    console.warn('onBluetoothAdapterStateChange: callback 应为函数，已忽略')
+    return
+  }
   if (!updateStateSubscription) {
     onDidUpdateState()
   }
@@ -534,7 +540,10 @@ function notifyBLECharacteristicValueChange (options = {}) {
 
 let valueForCharacteristicSubscriptions = null
 function onBLECharacteristicValueChange (callback) {
-  if (type(callback) !== 'Function') return
+  if (type(callback) !== 'Function') {
+    console.warn('onBLECharacteristicValueChange: callback 应为函数，已忽略')
+    return
+  }
   characteristicCallback = callback // 只允许一个回调，重复添加被最新覆盖
   const BleManager = require('react-native-ble-manager').default
   if (!valueForCharacteristicSubscriptions) {
@@ -810,7 +819,10 @@ function closeBLEConnection (options = {}) {
 }
 
 function onBLEConnectionStateChange (callback) {
-  if (type(callback) !== 'Function') return
+  if (type(callback) !== 'Function') {
+    console.warn('onBLEConnectionStateChange: callback 应为函数，已忽略')
+    return
+  }
   if (!updateStateSubscription) {
     onDidUpdateState()
   }
