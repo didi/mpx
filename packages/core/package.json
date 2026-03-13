@@ -91,6 +91,9 @@
     },
     "react-native-video": {
       "optional": true
+    },
+    "react-native-vision-camera": {
+      "optional": true
     }
   },
   "devDependencies": {

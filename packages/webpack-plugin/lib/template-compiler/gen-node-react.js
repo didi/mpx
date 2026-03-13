@@ -31,7 +31,24 @@ function mapAttrName (name) {
   return name
 }
 
+function genTemplate (node) {
+  if (!node.children || !node.children.length) return 'function(){}'
+  const children = node.children.map(child => genNode(child)).filter(c => c)
+  if (!children.length) return 'function(){}'
+
+  let content
+  if (children.length === 1) {
+    content = children[0]
+  } else {
+    // 模版存在多个根节点时，使用 block 包裹
+    content = `createElement(getComponent("block"), null, ${children.join(', ')})`
+  }
+  // data 作为 this 传入，createElement, getComponent 作为参数传入
+  return `function(createElement, getComponent){return ${content}}`
+}
+
 function genNode (node, isRoot = false) {
+  if (node.isDeleted) return ''
   let exp = ''
   if (node) {
     if (node.type === 3) {
@@ -46,11 +63,20 @@ function genNode (node, isRoot = false) {
     if (node.type === 1) {
       if (node.tag !== 'temp-node') {
         if (node.for && !node.forProcessed) {
-          exp += genFor(node)
-        } else if (node.if && !node.ifProcessed) {
-          exp += genIf(node)
-        } else {
-          const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
+          return genFor(node)
+        }
+        if (node.if && !node.ifProcessed) {
+          return genIf(node)
+        }
+      }
+      if (node.tag === 'template') {
+        if (node.templateInfo) {
+          const data = node.templateInfo.data || '{}'
+          // 模版中需要支持宿主组件的事件响应，同时天然支持__iter/__getSlot等帮助函数，故使用Object.create(this)创建作用域
+          exp += `getTemplate(${node.templateInfo.is}).call(Object.assign(Object.create(this), ${data}), createElement, getComponent)`
+        }
+      } else if (node.tag !== 'temp-node') {
+        const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {
             if (attrName) {
               map[attrName] = exp
             }
@@ -85,7 +111,6 @@ function genNode (node, isRoot = false) {
             }
             exp += ')'
           }
-        }
       } else {
         const nodes = node.children.map((child) => {
           return genNode(child)
@@ -102,4 +127,7 @@ function genNode (node, isRoot = false) {
   return exp
 }
 
-module.exports = genNode
+module.exports = {
+  genNode,
+  genTemplate
+}
