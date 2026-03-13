@@ -377,9 +377,19 @@ function onBluetoothAdapterStateChange (callback) {
   }
 }
 
-function offBluetoothAdapterStateChange () {
-  onStateChangeCallbacks.length = 0
-  removeUpdateStateSubscription()
+// 注意：微信官方文档标识没有标识 API 不支持传入 callback 参数，但实际测试发现支持传入 callback 进行移除指定回调
+function offBluetoothAdapterStateChange (callback) {
+  if (callback == null) {
+    onStateChangeCallbacks.length = 0
+  } else {
+    const index = onStateChangeCallbacks.indexOf(callback)
+    if (index !== -1) {
+      onStateChangeCallbacks.splice(index, 1)
+    }
+  }
+  if (onStateChangeCallbacks.length === 0) {
+    removeUpdateStateSubscription()
+  }
 }
 
 function getBluetoothDevices (options = {}) { // 该能力只是获取应用级别已连接设备列表，非手机级别的已连接设备列表
