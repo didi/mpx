@@ -409,7 +409,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           currentIndex.value = nextIndex
           runOnJS(runOnJSCallback)('loop')
         })
@@ -421,7 +422,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           // 执行动画到下一帧
           offset.value = withTiming(targetOffset, {
             duration: easeDuration
-          }, () => {
+          }, (finished) => {
+            if (!finished) return
             const initOffset = -step.value * patchElmNumShared.value + preMarginShared.value
             // 将开始位置设置为真正的位置
             offset.value = initOffset
@@ -435,7 +437,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           offset.value = withTiming(targetOffset, {
             duration: easeDuration,
             easing: easeMap[easeingFunc]
-          }, () => {
+          }, (finished) => {
+            if (!finished) return
             currentIndex.value = nextIndex
             runOnJS(runOnJSCallback)('loop')
           })
@@ -498,7 +501,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           currentIndex.value = propCurrent
         })
       } else {
@@ -540,14 +544,33 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   }, [preMargin, nextMargin])
 
   useEffect(() => {
+    const prevLength = childrenLength.value
     childrenLength.value = children.length
+    const newPatchElmNum = (circular && children.length > 1) ? (preMargin ? 2 : 1) : 0
+    const patchElmNumChanged = patchElmNumShared.value !== newPatchElmNum
+    patchElmNumShared.value = newPatchElmNum
     if (children.length - 1 < currentIndex.value) {
+      cancelAnimation(offset)
       pauseLoop()
       currentIndex.value = 0
       offset.value = getOffset(0, step.value)
       if (autoplay && children.length > 1) {
         loop()
       }
+    } else if (children.length < prevLength || patchElmNumChanged) {
+      cancelAnimation(offset)
+      offset.value = getOffset(currentIndex.value, step.value)
+      updateAutoplay()
+    } else if (children.length > prevLength) {
+      cancelAnimation(offset)
+      // 扩容且停留在旧数据末尾时，先回到首项，保持旧循环过渡顺序
+      if (circular && prevLength > 1 && currentIndex.value === prevLength - 1) {
+        currentIndex.value = 0
+        offset.value = getOffset(0, step.value)
+      } else {
+        offset.value = getOffset(currentIndex.value, step.value)
+      }
+      updateAutoplay()
     }
   }, [children.length])
 
@@ -644,7 +667,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           if (touchfinish.value !== false) {
             currentIndex.value = selectedIndex
             offset.value = resetOffset
@@ -655,7 +679,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
-        }, () => {
+        }, (finished) => {
+          if (!finished) return
           if (touchfinish.value !== false) {
             currentIndex.value = selectedIndex
             runOnJS(runOnJSCallback)('resumeLoop')
@@ -677,7 +702,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       offset.value = withTiming(targetOffset, {
         duration: easeDuration,
         easing: easeMap[easeingFunc]
-      }, () => {
+      }, (finished) => {
+        if (!finished) return
         if (touchfinish.value !== false) {
           currentIndex.value = moveToIndex
           runOnJS(runOnJSCallback)('resumeLoop')
