@@ -3,7 +3,7 @@ const { parseValues } = require('../../../utils/string')
 
 module.exports = function getSpec({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|background-position|caret-color)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -421,8 +421,9 @@ module.exports = function getSpec({ warn, error }) {
     // css var & 数组直接返回
     if (Array.isArray(value) || cssVariableExp.test(value)) return { prop, value }
     const values = parseValues(value)
+    // Todo 2 RN下顺序不一致转换结果不一致，故这里不处理，动画前后transform排序不一致的问题，由业务调整写法
     // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
-    values.sort()
+    // values.sort()
     const transform = []
     values.forEach(item => {
       const match = item.match(/([/\w]+)\((.+)\)/)
