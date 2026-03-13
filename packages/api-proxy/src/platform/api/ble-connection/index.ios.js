@@ -10,7 +10,7 @@ let DiscoverPeripheralSubscription = null
 let updateStateSubscription = null
 let discovering = false
 let getDevices = [] // 记录已扫描的设备列表
-const deviceFoundCallbacks = []
+let deviceFoundCallback = null // 仅允许一个回调，重复添加会被覆盖
 const onStateChangeCallbacks = []
 const characteristicCallbacks = []
 const onBLEConnectionStateCallbacks = []
@@ -153,7 +153,7 @@ function closeBluetoothAdapter (options = {}) {
       BleManager.disconnect(id).catch(() => {})
     })
     connectedDevices.clear()
-    deviceFoundCallbacks.length = 0
+    deviceFoundCallback = null
     onStateChangeCallbacks.length = 0
     characteristicCallbacks.length = 0
     onBLEConnectionStateCallbacks.length = 0
@@ -222,13 +222,11 @@ function startBluetoothDevicesDiscovery (options = {}) {
         return
       }
     }
-    deviceFoundCallbacks.forEach(cb => {
-      if (type(cb) === 'Function') {
-        cb({
-          devices: [deviceInfo]
-        })
-      }
-    })
+    if (type(deviceFoundCallback) === 'Function') {
+      deviceFoundCallback({
+        devices: [deviceInfo]
+      })
+    }
     getDevices.push(deviceInfo)
     // 处理设备发现逻辑
   })
@@ -284,16 +282,11 @@ function stopBluetoothDevicesDiscovery (options = {}) {
 }
 
 function onBluetoothDeviceFound (callback) {
-  if (deviceFoundCallbacks.indexOf(callback) === -1) {
-    deviceFoundCallbacks.push(callback)
-  }
+  deviceFoundCallback = callback // 只允许一个回调，重复添加被最新覆盖
 }
 
-function offBluetoothDeviceFound (callback) {
-  const index = deviceFoundCallbacks.indexOf(callback)
-  if (index > -1) {
-    deviceFoundCallbacks.splice(index, 1)
-  }
+function offBluetoothDeviceFound () {
+  deviceFoundCallback = null // 移除所有回调（当前仅有一个）
 }
 
 function getConnectedBluetoothDevices (options = {}) {
