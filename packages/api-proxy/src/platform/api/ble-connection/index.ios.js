@@ -11,8 +11,8 @@ let updateStateSubscription = null
 let discovering = false
 let getDevices = [] // 记录已扫描的设备列表
 let deviceFoundCallback = null // 仅允许一个回调，重复添加会被覆盖
+let characteristicCallback = null // 仅允许一个回调，重复添加会被覆盖
 const onStateChangeCallbacks = []
-const characteristicCallbacks = []
 const onBLEConnectionStateCallbacks = []
 let characteristicSubscriptions = {}
 const connectedDevices = new Set()
@@ -155,7 +155,7 @@ function closeBluetoothAdapter (options = {}) {
     connectedDevices.clear()
     deviceFoundCallback = null
     onStateChangeCallbacks.length = 0
-    characteristicCallbacks.length = 0
+    characteristicCallback = null
     onBLEConnectionStateCallbacks.length = 0
     if (valueForCharacteristicSubscriptions) {
       valueForCharacteristicSubscriptions.remove()
@@ -532,10 +532,11 @@ function notifyBLECharacteristicValueChange (options = {}) {
 
 let valueForCharacteristicSubscriptions = null
 function onBLECharacteristicValueChange (callback) {
+  characteristicCallback = callback // 只允许一个回调，重复添加被最新覆盖
   const BleManager = require('react-native-ble-manager').default
-  if (characteristicCallbacks.length === 0) {
+  if (!valueForCharacteristicSubscriptions) {
     valueForCharacteristicSubscriptions = BleManager.onDidUpdateValueForCharacteristic((data) => {
-      // 将byte array转换为ArrayBuffer
+      if (type(characteristicCallback) !== 'Function') return
       const buffer = new ArrayBuffer(data.value.length)
       const view = new Uint8Array(buffer)
       data.value.forEach((byte, index) => {
@@ -547,24 +548,14 @@ function onBLECharacteristicValueChange (callback) {
         characteristicId: data.characteristic,
         value: buffer
       }
-      characteristicCallbacks.forEach(cb => {
-        if (type(cb) === 'Function') {
-          cb(result)
-        }
-      })
+      characteristicCallback(result)
     })
-  }
-  if (characteristicCallbacks.indexOf(callback) === -1) {
-    characteristicCallbacks.push(callback)
   }
 }
 
-function offBLECharacteristicValueChange (callback) {
-  const index = characteristicCallbacks.indexOf(callback)
-  if (index > -1) {
-    characteristicCallbacks.splice(index, 1)
-  }
-  if (characteristicCallbacks.length === 0 && valueForCharacteristicSubscriptions) {
+function offBLECharacteristicValueChange () {
+  characteristicCallback = null
+  if (valueForCharacteristicSubscriptions) {
     valueForCharacteristicSubscriptions.remove()
     valueForCharacteristicSubscriptions = null
   }
