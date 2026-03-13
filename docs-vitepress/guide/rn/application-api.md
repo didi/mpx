@@ -139,7 +139,10 @@ externals: {
   'react-native-safe-area-context': 'react-native-safe-area-context',
   'react-native-reanimated': 'react-native-reanimated',
   'react-native-get-location': 'react-native-get-location',
-  'react-native-haptic-feedback': 'react-native-haptic-feedback'
+  'react-native-haptic-feedback': 'react-native-haptic-feedback',
+  'react-native-ble-manager': 'react-native-ble-manager',
+  'react-native-wifi-reborn': 'react-native-wifi-reborn',
+  'react-native-vision-camera': 'react-native-vision-camera'
 }
 ```
 
@@ -156,6 +159,9 @@ externals: {
 | **设备信息** | `getSystemInfo`、`getDeviceInfo` | `react-native-device-info` |
 | **安全区域** | `getWindowInfo`、`getLaunchOptionsSync` | `react-native-safe-area-context` |
 | **震动反馈** | `vibrateShort`、`vibrateLong` | `react-native-haptic-feedback` |
+| **wifi** | `startWifi`、`stopWifi`、`getWifiList`、`onGetWifiList`、`offGetWifiList`、`getConnectedWifi` | `react-native-wifi-reborn` |
+| **蓝牙** | `openBluetoothAdapter`、`closeBluetoothAdapter`、`startBluetoothDevicesDiscovery`、`stopBluetoothDevicesDiscovery`、`onBluetoothDeviceFound`、`offBluetoothDeviceFound`、`getConnectedBluetoothDevices`、`getBluetoothAdapterState`、`onBluetoothAdapterStateChange`、`offBluetoothAdapterStateChange`、`getBluetoothDevices`、`writeBLECharacteristicValue`、`readBLECharacteristicValue`、`notifyBLECharacteristicValueChange`、`onBLECharacteristicValueChange`、`offBLECharacteristicValueChange`、`setBLEMTU`、`getBLEDeviceRSSI`、`getBLEDeviceServices`、`getBLEDeviceCharacteristics`、`createBLEConnection`、`closeBLEConnection`、`onBLEConnectionStateChange`、`offBLEConnectionStateChange` | `react-native-ble-manager` |
+| **相机** | `CameraContext` | `react-native-vision-camera` |
 
 **按需安装示例：**
 
@@ -168,6 +174,9 @@ npm install react-native-get-location
 
 # 示例：使用网络状态监听 {#example-network-status}
 npm install @react-native-community/netinfo
+
+# 示例：使用相机组件实例api
+npm install react-native-vision-camera
 
 # iOS 项目需要执行（有原生依赖时） {#ios-native-dependency}
 cd ios && pod install
@@ -219,6 +228,54 @@ module.exports = {
 ```
 
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
+
+**react-native-ble-manager**
+
+在`android/app/src/main/AndroidManifest.xml`文件中添加
+```xml
+<!-- Add xmlns:tools -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="YOUR_PACKAGE_NAME">
+
+    <!--
+      HACK: this permission should not be needed on android 12+ devices anymore,
+      but in fact some manufacturers still need it for BLE to properly work :
+      https://stackoverflow.com/a/72370969
+    -->
+    <uses-permission android:name="android.permission.BLUETOOTH" tools:remove="android:maxSdkVersion" />
+    <!--
+      should normally only be needed on android < 12 if you want to:
+      - activate bluetooth programmatically
+      - discover local BLE devices
+      see: https://developer.android.com/guide/topics/connectivity/bluetooth/permissions#discover-local-devices.
+      Same as above, may still be wrongly needed by some manufacturers on android 12+.
+     -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" tools:remove="android:maxSdkVersion" />
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="28"/>
+    <uses-permission-sdk-23 android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30"/>
+
+    <!-- Only when targeting Android 12 or higher -->
+    <!--
+      Please make sure you read the following documentation
+      to have a better understanding of the new permissions.
+      https://developer.android.com/guide/topics/connectivity/bluetooth/permissions#assert-never-for-location
+    -->
+
+    <!-- Needed if your app search for Bluetooth devices. -->
+     <!--
+      If your app doesn't use Bluetooth scan results to derive physical location information,
+      you can strongly assert that your app doesn't derive physical location.
+    -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation" />
+    <!-- Needed if you want to interact with a BLE device. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Needed if your app makes the current device discoverable to other Bluetooth devices. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    ...
+```
 
 ### 跨平台 API 使用限制 {#cross-platform-api-limit}
 ### selectComponent/selectAllComponents
@@ -499,3 +556,116 @@ mpx.config.rnConfig.getBottomVirtualHeight = () => {
   return Math.max(initialWindowMetrics?.insets?.bottom || 0 , (screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0, 0)
 }
 ```
+
+### 请求客户端蓝牙权限授权
+
+#### mpx.config.rnConfig.bluetoothPermission
+
+```ts
+() => Promise<boolean>
+```
+
+框架内部已内置默认的蓝牙权限校验逻辑。该配置项作为开放扩展点，供业务在端内已有权限体系时接管校验流程（例如先走容器统一授权）。
+
+- 调用时机：`openBluetoothAdapter` 内部初始化蓝牙前调用。
+- 返回值：
+  - `true`：继续执行蓝牙初始化。
+  - `false` 或 Promise reject：中断流程，并回调 `openBluetoothAdapter:fail no permission`。
+
+默认行为（未自定义 `bluetoothPermission` 时）：
+
+- Android 23 ~ 30：申请 `ACCESS_FINE_LOCATION`
+- Android 31+：申请 `BLUETOOTH_SCAN`、`BLUETOOTH_CONNECT`
+- 其他平台：默认返回 `true`
+
+```javascript
+import mpx from '@mpxjs/core'
+
+mpx.config.rnConfig.bluetoothPermission = async () => {
+  return new Promise((resolve, reject) => {
+    NativeBridge.bluetoothPermission().then((result) => {
+      if (result?.granted) {
+        resolve(true)
+      } else {
+        reject(new Error('no permission'))
+      }
+    }).catch((err) => {
+      reject(err || new Error('permission check fail'))
+    })
+  })
+}
+```
+
+> 说明：如业务需要走客户端自定义授权逻辑，可配置 `mpx.config.rnConfig.bluetoothPermission`；配置后将优先使用该逻辑，不再走框架内基于 `PermissionsAndroid` 的默认授权流程，未配置时则使用默认流程。
+
+### 请求客户端wifi权限授权
+
+#### mpx.config.rnConfig.wifiPermission
+
+```ts
+() => Promise<boolean>
+```
+
+框架内部已内置默认的 Wi-Fi 权限校验逻辑。该配置项作为开放扩展点，供业务在端内已有权限体系时接管校验流程（例如先走容器统一授权）。
+
+- 调用时机：`startWifi` 内部执行前调用（仅 Android，iOS 不支持 `startWifi`）。
+- 默认行为（未自定义 `wifiPermission` 时）：通过 `PermissionsAndroid` 申请 `ACCESS_FINE_LOCATION`。
+- 配置后行为：优先使用业务自定义逻辑，不再走框架默认 `PermissionsAndroid` 授权流程。
+- 判定规则：当前实现按 Promise 状态判断，`resolve` 视为通过，`reject` 视为失败。
+- 失败处理：`wifiPermission` Promise `reject` 时，`startWifi` 返回失败，`errCode` 为 `12001`。
+
+```javascript
+import mpx from '@mpxjs/core'
+
+mpx.config.rnConfig.wifiPermission = async () => {
+  return new Promise((resolve, reject) => {
+    NativeBridge.wifiPermission().then((result) => {
+      if (result?.granted) {
+        resolve(true)
+      } else {
+        reject(new Error('no permission'))
+      }
+    }).catch((err) => {
+      reject(err || new Error('permission check fail'))
+    })
+  })
+}
+```
+
+> 说明：如业务需要走客户端自定义授权逻辑，可配置 `mpx.config.rnConfig.wifiPermission`；配置后将优先使用该逻辑，未配置时则使用框架内基于 `PermissionsAndroid` 的默认授权流程。
+
+### 请求客户端相机权限授权
+
+#### mpx.config.rnConfig.cameraPermission
+
+```ts
+() => Promise<boolean>
+```
+
+框架支持通过该配置项接入业务侧（客户端）自定义相机授权逻辑。
+
+- 调用时机：`camera` 组件挂载时执行权限检查。
+- 默认行为（未配置时）：默认视为有权限。
+- 配置后行为：执行自定义 `cameraPermission`，仅当返回值严格等于 `true` 时渲染相机。
+- 无权限表现：返回非 `true` 或 Promise reject 时，相机不渲染。
+
+```javascript
+import mpx from '@mpxjs/core'
+
+mpx.config.rnConfig.cameraPermission = async () => {
+  return new Promise((resolve, reject) => {
+    NativeBridge.cameraPermission().then((result) => {
+      if (result?.granted) {
+        resolve(true)
+      } else {
+        reject(new Error('no permission'))
+      }
+    }).catch((err) => {
+      reject(err || new Error('permission check fail'))
+    })
+  })
+}
+```
+
+> 说明：如业务需要走客户端自定义授权逻辑，可配置 `mpx.config.rnConfig.cameraPermission`；配置后将优先使用该逻辑，未配置时按默认行为直接渲染相机。
+

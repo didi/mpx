@@ -7,7 +7,7 @@
 - #### 基础组件
 **容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
 
-**媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas)
+**媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas) · [camera](#camera)
 
 **表单组件**：[input](#input) · [textarea](#textarea) · [button](#button) · [checkbox](#checkbox) · [checkbox-group](#checkbox-group) · [radio](#radio) · [radio-group](#radio-group) · [switch](#switch) · [picker](#picker) · [picker-view](#picker-view) · [picker-view-column](#picker-view-column) · [form](#form) · [label](#label)
 
@@ -748,6 +748,36 @@ API
 ### cover-image
 视图容器。
 功能同 image 组件
+
+### camera
+
+相机组件。
+
+属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| mode | string | `normal` | 相机模式，可选值：`normal`（拍照/录制）、`scanCode`（扫码） |
+| device-position | string | `back` | 摄像头朝向，可选值：`front`、`back` |
+| resolution | string | `medium` | 拍照分辨率，可选值：`low`、`medium`、`high` |
+| frame-size | string | `medium` | 录制分辨率，可选值：`small`、`medium`、`large` |
+| flash | string | `auto` | 闪光灯模式，可选值：`auto`、`on`、`off` |
+
+事件
+
+| 事件名 | 说明 |
+| ----------------| ------------------ |
+| bindinitdone | 相机初始化完成触发，`event.detail = { maxZoom }` |
+| bindstop | 相机停止预览时触发 |
+| bindscancode | 扫码结果回调（仅 `scanCode` 模式），`event.detail = { result, type, scanArea }` |
+| binderror | 相机异常回调 |
+
+> [!tip] 注意
+>
+> - 一个页面仅支持插入一个 `camera` 组件。
+> - `scanCode` 模式下不支持 `takePhoto/startRecord/stopRecord`。
+> - 可通过 `mpx.config.rnConfig.cameraPermission` 配置自定义相机权限校验；返回 `true` 才会渲染相机。
+
 
 
 ## 自定义组件 {#custom-component}
