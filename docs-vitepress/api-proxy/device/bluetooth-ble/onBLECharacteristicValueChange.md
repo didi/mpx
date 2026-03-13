@@ -9,7 +9,7 @@
 ### 参数 {#parameters}
 **function listener**
 
-蓝牙低功耗设备的特征值变化事件的监听函数
+蓝牙低功耗设备的特征值变化事件监听函数（多次 `onBLECharacteristicValueChange` 注册时，后一次会覆盖前一次）。
 
 **参数**
 

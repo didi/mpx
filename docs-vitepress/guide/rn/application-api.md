@@ -557,7 +557,7 @@ mpx.config.rnConfig.getBottomVirtualHeight = () => {
 }
 ```
 
-### 请求蓝牙权限授权
+### 请求客户端蓝牙权限授权
 
 #### mpx.config.rnConfig.bluetoothPermission
 
@@ -582,10 +582,90 @@ mpx.config.rnConfig.getBottomVirtualHeight = () => {
 import mpx from '@mpxjs/core'
 
 mpx.config.rnConfig.bluetoothPermission = async () => {
-  // 业务侧调用端内统一权限能力（示例）
-  const result = await NativeBridge.bluetoothPermission()
-  return !!result?.granted
+  return new Promise((resolve, reject) => {
+    NativeBridge.bluetoothPermission().then((result) => {
+      if (result?.granted) {
+        resolve(true)
+      } else {
+        reject(new Error('no permission'))
+      }
+    }).catch((err) => {
+      reject(err || new Error('permission check fail'))
+    })
+  })
 }
 ```
 
-> 说明：> 说明：如业务需要走客户端自定义授权逻辑，可配置 `mpx.config.rnConfig.bluetoothPermission`；配置后将优先使用该逻辑，不再走框架内基于 `PermissionsAndroid` 的默认授权流程，未配置时则使用默认流程。
+> 说明：如业务需要走客户端自定义授权逻辑，可配置 `mpx.config.rnConfig.bluetoothPermission`；配置后将优先使用该逻辑，不再走框架内基于 `PermissionsAndroid` 的默认授权流程，未配置时则使用默认流程。
+
+### 请求客户端wifi权限授权
+
+#### mpx.config.rnConfig.wifiPermission
+
+```ts
+() => Promise<boolean>
+```
+
+框架内部已内置默认的 Wi-Fi 权限校验逻辑。该配置项作为开放扩展点，供业务在端内已有权限体系时接管校验流程（例如先走容器统一授权）。
+
+- 调用时机：`startWifi` 内部执行前调用（仅 Android，iOS 不支持 `startWifi`）。
+- 默认行为（未自定义 `wifiPermission` 时）：通过 `PermissionsAndroid` 申请 `ACCESS_FINE_LOCATION`。
+- 配置后行为：优先使用业务自定义逻辑，不再走框架默认 `PermissionsAndroid` 授权流程。
+- 判定规则：当前实现按 Promise 状态判断，`resolve` 视为通过，`reject` 视为失败。
+- 失败处理：`wifiPermission` Promise `reject` 时，`startWifi` 返回失败，`errCode` 为 `12001`。
+
+```javascript
+import mpx from '@mpxjs/core'
+
+mpx.config.rnConfig.wifiPermission = async () => {
+  return new Promise((resolve, reject) => {
+    NativeBridge.wifiPermission().then((result) => {
+      if (result?.granted) {
+        resolve(true)
+      } else {
+        reject(new Error('no permission'))
+      }
+    }).catch((err) => {
+      reject(err || new Error('permission check fail'))
+    })
+  })
+}
+```
+
+> 说明：如业务需要走客户端自定义授权逻辑，可配置 `mpx.config.rnConfig.wifiPermission`；配置后将优先使用该逻辑，未配置时则使用框架内基于 `PermissionsAndroid` 的默认授权流程。
+
+### 请求客户端相机权限授权
+
+#### mpx.config.rnConfig.cameraPermission
+
+```ts
+() => Promise<boolean>
+```
+
+框架支持通过该配置项接入业务侧（客户端）自定义相机授权逻辑。
+
+- 调用时机：`camera` 组件挂载时执行权限检查。
+- 默认行为（未配置时）：默认视为有权限。
+- 配置后行为：执行自定义 `cameraPermission`，仅当返回值严格等于 `true` 时渲染相机。
+- 无权限表现：返回非 `true` 或 Promise reject 时，相机不渲染。
+
+```javascript
+import mpx from '@mpxjs/core'
+
+mpx.config.rnConfig.cameraPermission = async () => {
+  return new Promise((resolve, reject) => {
+    NativeBridge.cameraPermission().then((result) => {
+      if (result?.granted) {
+        resolve(true)
+      } else {
+        reject(new Error('no permission'))
+      }
+    }).catch((err) => {
+      reject(err || new Error('permission check fail'))
+    })
+  })
+}
+```
+
+> 说明：如业务需要走客户端自定义授权逻辑，可配置 `mpx.config.rnConfig.cameraPermission`；配置后将优先使用该逻辑，未配置时按默认行为直接渲染相机。
+

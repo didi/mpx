@@ -10,12 +10,14 @@
 
 **function listener**
 
-onGetWifiList 传入的监听函数。不传此参数则移除所有监听函数。
+移除当前生效的监听函数（当前实现仅保留最后一次 `onGetWifiList` 注册的函数，不支持无参移除全部监听）。
+
+> 说明：以上为当前实测行为，与微信文档中“可按传入函数移除，或无参移除全部监听”的描述不一致。
 
 ### 示例代码 {#example-code}
 ```js
 const listener = function (res) { console.log(res) }
 
 mpx.onGetWifiList(listener)
-mpx.offGetWifiList(listener) // 需传入与监听时同一个的函数对象
+mpx.offGetWifiList(listener) // 传入当前生效的监听函数
 ```

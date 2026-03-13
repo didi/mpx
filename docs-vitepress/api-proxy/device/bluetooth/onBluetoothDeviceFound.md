@@ -10,7 +10,7 @@
 
 **function listener**
 
-搜索到新设备的事件的监听函数
+搜索到新设备的事件监听函数（多次 `onBluetoothDeviceFound` 注册时，后一次会覆盖前一次）。
 
 **Object res**
 
