@@ -1,6 +1,6 @@
 ---
 name: mpx-rn-style-guide
-description: Mpx 跨端输出 RN 的样式能力说明与实践建议；当用户询问 Mpx 跨端输出 RN 样式相关问题时调用。
+description: Mpx 跨端输出 RN 的样式能力说明与实践建议，当用户询问 Mpx 跨端输出 RN 样式相关问题时调用。
 ---
 
 # Mpx 跨端输出 RN 样式开发指南
