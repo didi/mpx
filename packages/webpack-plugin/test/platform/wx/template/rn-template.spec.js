@@ -9,7 +9,8 @@ describe('RN template support', () => {
     defs: {},
     projectRoot: '/project',
     wxsContentMap: {},
-    checkUsingComponents: false
+    externalClasses: ['custom-class', 'i-class'],
+    getModuleId: jest.fn(() => 'm123')
   }
   const mockContext = {
     resource: '/test.wxml',
@@ -38,7 +39,7 @@ describe('RN template support', () => {
     expect(output).toContain('template-loader!./other.wxml")')
 
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
-    expect(output).toMatch(/"foo":\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
+    expect(output).toMatch(/"foo":\s*\(\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
     expect(output).toContain('getComponent("mpx-view")')
 
     // Check module structure
@@ -50,14 +51,14 @@ describe('RN template support', () => {
   it('should generate correct code for template usage inside template', () => {
     const input = `
       <template name="bar">
-        <template is="foo" data="{{d}}" />
+        <template is="foo" data="{{...d}}" />
       </template>
     `
     const output = templateLoader.call(mockContext, input)
 
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
     expect(output).toMatch(/getTemplate\("foo"\)\.call\(Object\.assign\(Object\.create\(this\),[\s\S]+\), createElement, getComponent\)/)
-    expect(output).toMatch(/"bar":\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
+    expect(output).toMatch(/"bar":\s*\(\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
   })
 
   it('should process conditional branches inside template definition', () => {
@@ -70,7 +71,7 @@ describe('RN template support', () => {
     const output = templateLoader.call(mockContext, input)
 
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
-    expect(output).toMatch(/"cond":\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
+    expect(output).toMatch(/"cond":\s*\(\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
     expect(output).toMatch(/this\.ok\s*\?/)
     expect(output).toMatch(/:\s*createElement\(/)
   })
@@ -87,7 +88,7 @@ describe('RN template support', () => {
     const output = templateLoader.call(mockContext, input)
 
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
-    expect(output).toMatch(/"directive-demo":\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
+    expect(output).toMatch(/"directive-demo":\s*\(\s*function\s*\(createElement,\s*getComponent\)\s*\{/)
     expect(output).toMatch(/this\.a\s*\?/)
     expect(output).toMatch(/this\.b\s*\?/)
     expect(output).toContain('this.__iter(')
@@ -108,29 +109,29 @@ describe('RN template support', () => {
   })
 
   it('should report error for template usage without valid is value', () => {
-    const input = '<template is="" data="{{d}}" />'
+    const input = '<template is="" data="{{...d}}" />'
     templateLoader.call(mockContext, input)
     expect(mockContext.emitError).toHaveBeenCalledTimes(1)
     expect(mockContext.emitError.mock.calls[0][0].message).toContain('valid is or name attr')
   })
 
   it('should report error for template tag without is and name', () => {
-    const input = '<template data="{{d}}" />'
+    const input = '<template data="{{...d}}" />'
     templateLoader.call(mockContext, input)
     expect(mockContext.emitError).toHaveBeenCalledTimes(1)
     expect(mockContext.emitError.mock.calls[0][0].message).toContain('valid is or name attr')
   })
 
   it('should generate correct code for template usage in regular render', () => {
-    const input = '<template is="foo" data="{{d}}" />'
+    const input = '<template is="foo" data="{{...d}}" />'
     const parsed = compiler.parse(input, {
-        mode: 'ios',
-        srcMode: 'wx',
-        defs: {},
-        usingComponentsInfo: {},
-        filePath: 'test.mpx',
-        warn: console.warn,
-        error: console.error
+      mode: 'ios',
+      srcMode: 'wx',
+      defs: {},
+      usingComponentsInfo: {},
+      filePath: 'test.mpx',
+      warn: console.warn,
+      error: console.error
     })
     const output = genNodeReact(parsed.root)
     expect(output).toMatch(/getTemplate\("foo"\)\.call\(Object\.assign\(Object\.create\(this\), .+\), createElement, getComponent\)/)
@@ -151,12 +152,25 @@ describe('RN template support', () => {
   it('should handle wxs in sub template', () => {
     const input = `
       <wxs module="m1" src="./test.wxs"></wxs>
+      <wxs module="m2">
+        var a = 1;
+        module.exports = { a: a };
+      </wxs>
       <template name="wxs-demo">
         <view>{{m1.xxx}}</view>
+        <view>{{m2.a}}</view>
       </template>
     `
     const output = templateLoader.call(mockContext, input)
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
+
+    // Check wxs imports generation
     expect(output).toContain('var m1 = require(')
+    expect(output).toContain('var m2 = require(')
+
+    // Check wxsContentMap merging with rawResourcePath prefix
+    // mockContext.resource is '/test.wxml'
+    expect(mockMpx.wxsContentMap['/test.wxml~m2']).toBeDefined()
+    expect(mockMpx.wxsContentMap['/test.wxml~m2']).toContain('var a = 1;')
   })
 })

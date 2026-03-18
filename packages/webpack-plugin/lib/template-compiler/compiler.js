@@ -17,6 +17,7 @@ const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb, isNoMode } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
+const { isNativeMiniTag } = require('../utils/dom-tag-config')
 
 const no = function () {
   return false
@@ -2432,6 +2433,10 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el) {
+  if (processingTemplate) {
+    // 处理模版时无法获取真实的usingComponents信息，除了小程序基础组件和框架内建组件外都识别为用户组件
+    return isRealNode(el) && !isNativeMiniTag(el.tag) && !el.isBuiltIn
+  }
   return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
 }
 
