@@ -1,6 +1,6 @@
 ---
 name: mpx-rn-style-guide
-description: Mpx 跨端输出 RN （Mpx2RN or Mpx2DRN）的样式能力说明与实践建议，当用户询问 Mpx 跨端输出 RN 样式相关问题时强制调用，包括：Mpx2RN 样式适配、Mpx2RN 样式兼容改造、Mpx2RN 样式能力支持、Mpx2RN 样式不生效、Mpx2RN 样式报错、Mpx2RN 样式开发最佳实践、Mpx2RN 中如何实现某样式效果等。
+description: Mpx 跨端输出 RN （Mpx2RN or Mpx2DRN）的样式兼容适配开发指南，当用户询问 Mpx 跨端输出 RN 样式相关问题时强制调用，包括：Mpx2RN 样式适配、Mpx2RN 样式兼容改造、Mpx2RN 样式能力支持、Mpx2RN 样式不生效、Mpx2RN 样式报错、Mpx2RN 样式开发最佳实践、Mpx2RN 中如何实现某样式效果等。
 ---
 
 # Mpx 跨端输出 RN 样式开发指南
