@@ -116,6 +116,7 @@ page { }
 view, text { }       /* 标签选择器 */
 .container .item { } /* 后代选择器 */
 .list > .item { }    /* 子选择器 */
+.item + .item { }    /* 相邻选择器 */
 .button:hover { }    /* 伪类选择器 */
 .text::before { }    /* 伪元素选择器 */
 [type="text"] { }    /* 属性选择器 */
