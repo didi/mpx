@@ -2,6 +2,7 @@ import { isObject, isArray, dash2hump, cached, isEmptyObject, hasOwn, getFocused
 import { StyleSheet, Dimensions } from 'react-native'
 import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
+import { parseStyleAnimation, parseStyleTransition } from './parseAnimation'
 
 global.__mpxAppDimensionsInfo = {
   window: Dimensions.get('window'),
@@ -319,6 +320,26 @@ export default function styleHelperMixin () {
           })
         }
         const isEmpty = isNativeStaticStyle ? !result.length : isEmptyObject(result)
+        // parse animation
+        if (hasOwn(result, 'animationName') || hasOwn(result, 'animation')) {
+          const animationData = parseStyleAnimation(result)
+          const name = animationData.animationName
+          if (Array.isArray(name)) {
+            animationData.animationName = name.map(item => (this.__getClassStyle?.(item) || global.__getAppClassStyle?.(item))).filter(Boolean)
+          } else if (name) {
+            animationData.animationName = this.__getClassStyle?.(name) || global.__getAppClassStyle?.(name) || {}
+          }
+          mergeResult(animationData)
+          delete result.animation
+        }
+        // parse transition
+        if (hasOwn(result, 'transitionProperty') || hasOwn(result, 'transition')) {
+          const transitionData = parseStyleTransition(result, 'transition')
+          // console.error('parse transition result: ', transitionData)
+          mergeResult(transitionData)
+          delete result.transition
+        }
+        console.error('styleHelperMixin: result=', result)
         return isEmpty ? empty : result
       }
     }
