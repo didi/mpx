@@ -17,6 +17,7 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
 
 - **样式能力参考**：当用户询问 Mpx2RN 样式能力支持详情，遇到样式不生效、样式报错等问题，或进行跨端样式适配开发时，读取 [跨端输出 RN 样式能力支持详情](./references/rn-style-reference.md)
 - **开发最佳实践**：当用户询问 Mpx2RN 样式开发的最佳实践，查询如何实现某项样式效果，或查询不支持的样式能力是否存在兼容方案时，读取 [跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md)
+- **样式注释规则**：当用户询问样式条件编译的注释写法、为什么空 class 选择器会出现等问题时，读取 [样式行注释规则](./references/rn-style-comment-rules.md)
 
 ## 跨端输出 RN 样式适配改造
 
@@ -86,67 +87,6 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
        .list-item { padding: 20rpx; }
        .list-item-active { color: red; }
        ```
-
-   - **相邻兄弟选择器 (+ / ~) 适配**：
-     * 分析是否存在 `.item + .item`、`.item ~ .item` 等相邻兄弟选择器
-     * 将兄弟选择器转换为静态类名（如 `.item-with-top`、`.item-with-left`）
-     * 在模板中手动为对应的元素添加该类名
-     * **Good Example**:
-       ```html
-       <view class="form-item form-item-first">
-         <text>第一项</text>
-       </view>
-       <view class="form-item form-item-with-top">
-         <text>第二项</text>
-       </view>
-       ```
-       ```stylus
-       // RN 适配：相邻兄弟选择器打平为单类名
-       .form-item-with-top {
-         margin-top: 10rpx;
-       }
-       ```
-
-   - **结构伪类 (:first-child / :nth-of-type 等) 适配**：
-     * 分析是否存在 `.item:first-child`、`.item:nth-of-type(2)` 等结构伪类选择器
-     * 将伪类选择器转换为静态类名（如 `.item-first`、`.item-second`）
-     * 在模板中使用 `wx:class` 动态绑定或直接添加静态类名
-     * **Good Example**:
-       ```html
-       <view class="form-item form-item-first">
-         <!-- 首项 -->
-       </view>
-       <view class="form-item form-item-second">
-         <!-- 第二项 -->
-       </view>
-       ```
-       ```stylus
-       // RN 适配：伪类 :nth-of-type 打平为静态类名
-       .form-item-first { flex-basis: 40%; }
-       .form-item-second { flex-basis: 34%; }
-       ```
-
-   - **伪元素 (::before / ::after) 适配**：
-     * 分析是否存在 `::before`、`::after` 伪元素用于装饰性内容
-     * 将伪元素样式删除，改为在模板中添加实际的 `<view>` 节点承载装饰内容
-     * 为装饰节点添加独立的类名（如 `.divider`、`.decorator`）
-     * **Good Example**:
-       ```html
-       <view class="form-item">
-         <!-- 使用实际的 view 节点替代伪元素 -->
-         <view class="form-item-divider"></view>
-         <text>选项内容</text>
-       </view>
-       ```
-       ```stylus
-       .form-item-divider {
-         position: absolute;
-         width: 2rpx;
-         height: 40%;
-         background-color: rgba(0, 0, 0, .04);
-       }
-       ```
-
    - 对于无法替换为单类选择器等效实现的选择器，使用原平台条件编译对该选择器样式片段进行局部包裹，保留在原平台输出产物中，并添加 `todo` 注释记录不兼容 RN 平台的详情。
      * **Good Example (局部条件编译)**:
        ```css
@@ -192,26 +132,6 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
   - **检查结构伪类**：`first-child`、`last-child`、`nth-child`、`nth-of-type` 等伪类必须转换为静态类名。
   - **检查伪元素**：`::before` 和 `::after` 必须改为模板中的实际节点承载。
   - 检查确保 `<style>`、`<template>` 和 `<script>` 中所有 RN 平台不支持的样式属性都已被替换为跨端兼容的等效实现，或被原平台条件编译所包裹，输出到 RN 的部分不包含不支持的样式属性。
-  - 检查确保 `<style>`、`<template>` 和 `<script>` 中不存在大面积的条件编译，所有添加的条件编译仅最小包裹不兼容的样式片段。
-
-### 样式行注释规则
-
-当使用条件编译包裹 RN 平台不支持的样式时，如果某个 class 选择器内**所有样式属性行都变成注释状态**，则应将 class 选择器行也一起注释掉，避免输出无效的空 class。
-
-**❌ 避免：**
-```css
-.invisible
-  /* @mpx-if (!__ISRN__) */
-  visibility hidden
-  /* @mpx-endif */
-```
-
-**✅ 推荐：**
-```css
-/* @mpx-if (!__ISRN__) */
-.invisible
-    visibility hidden
-/* @mpx-endif */
-```
-
-这样条件编译指令（`@mpx-if` / `@mpx-endif`）可以被 Mpx 正常处理，而 class 选择器和样式内容在 CSS 注释中不生效。
+  - **检查确保 `<style>`、`<template>` 和 `<script>` 中所有 RN 平台不支持的样式属性都已被替换为跨端兼容的等效实现，或被原平台条件编译所包裹，输出到 RN 的部分不包含不支持的样式属性。
+- 检查确保 `<style>`、`<template>` 和 `<script>` 中不存在大面积的条件编译，所有添加的条件编译仅最小包裹不兼容的样式片段。
+- 样式行注释规则：参考 [样式行注释规则](./references/rn-style-comment-rules.md)

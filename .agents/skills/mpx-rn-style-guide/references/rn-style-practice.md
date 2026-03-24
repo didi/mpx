@@ -3,13 +3,10 @@
 ## 目录
 
 - [1. 选择器使用建议](#1-选择器使用建议)
-  - [1.1 复合选择器替换为等效单类选择器](#11-复合选择器替换为等效单类选择器)
-  - [1.2 子元素伪类替代方案 (:first-child / :last-child / :nth-child)](#12-子元素伪类替代方案-first-child--last-child--nth-child)
-  - [1.3 伪元素选择](#13-伪元素选择器替代方案-before--after)
-  - <br />
-  - <br />
-  - &#x20;[(::before / ::after)](#13-伪元素选择器替代方案-before--after)
-  - [1.4 点击态处理 (:active)](#14-点击态处理-active)
+  - [1.1 后代选择器/子选择器/组合选择器替代方案](#11-后代选择器子选择器组合选择器替代方案)
+  - [1.2 结构伪类替代方案 (:first-child / :last-child / :nth-child)](#12-结构伪类替代方案-first-child--last-child--nth-child)
+  - [1.3 伪元素替代方案 (::before / ::after)](#13-伪元素替代方案-before--after)
+  - [1.4 相邻兄弟选择器替代方案 (+ / ~)](#14-相邻兄弟选择器替代方案---)
 - [2. 样式单位使用建议](#2-样式单位使用建议)
   - [2.1 优先使用 px 和 rpx 单位](#21-优先使用-px-和-rpx-单位)
   - [2.2 百分比用于相对布局](#22-百分比用于相对布局)
@@ -34,56 +31,33 @@
 
 Mpx 输出 RN 时仅支持**单类选择器**、`page` 选择器和 `:host` 选择器，但是大部分不支持的选择器都可以使用单类选择器进行等效替代实现。
 
-#### 1.1 复合选择器替换为等效单类选择器
+#### 1.1 后代选择器/子选择器/组合选择器替代方案
 
-Mpx 输出 RN 时通过类名样式映射模拟实现了 CSS 中定义样式的能力，从 RN 平台的技术限制和模拟实现的运行时开销考虑，当前主要支持了**单类选择器**，不支持复杂的复合选择器（如后代选择器 `.parent .child`、交集选择器 `.classA.classB` 等）。为了保证跨端样式表现一致，建议将复合选择器替换为等效的单类选择器。
+Mpx 输出 RN 时通过类名样式映射模拟实现了 CSS 中定义样式的能力，从 RN 平台的技术限制和模拟实现的运行时开销考虑，当前主要支持了**单类选择器**，不支持复杂的选择器类型：
 
-**注意：** 替换为单类选择器时，不仅需要更新 `<template>` 和 `<style>` 中的类名引用，还需要同步更新 `<script>` 中涉及的动态类名绑定的字面量，以及使用 `selector` 作为参数的相关 API（小程序中主要包括：`createSelectorQuery`、`createIntersectionObserver`、`selectComponent` 和 `selectAllComponents`）。
+| 不支持的类型 | 示例 |
+|-------------|------|
+| 后代选择器 | `.parent .child` |
+| 子选择器 | `.parent > .child` |
+| 交集选择器 | `.classA.classB` |
+| 兄弟选择器 | `.item + .sibling` / `.item ~ .siblings` |
+
+为了保证跨端样式表现一致，需要将复杂选择器转换为等效的单类选择器实现。
+
+##### 1.1.1 后代选择器替代
+
+后代选择器（`.container .item`）用于为嵌套在父元素内的子元素定义样式。RN 不支持此选择器，需要在每个子元素上单独添加类名。
 
 **❌ 避免：**
 
-```html
-<template>
-  <view class="list">
-    <!-- 避免：使用需要交集选择器匹配的修饰类名 -->
-    <view class="item" wx:class="{{dynamicClass}}">
-      <text class="title">标题</text>
-    </view>
-  </view>
-</template>
-
-<style>
-/* 避免使用后代选择器和交集选择器 */
+```css
+/* RN 不支持后代选择器 */
 .list .item {
   padding: 20rpx;
 }
-.item.active {
-  color: red;
+.list .item .title {
+  font-size: 32rpx;
 }
-</style>
-
-<script>
-import { createComponent } from '@mpxjs/core'
-
-createComponent({
-  data: {
-    isActive: true
-  },
-  computed: {
-    // script 中返回交集修饰类名
-    dynamicClass() {
-      return this.isActive ? 'active' : ''
-    }
-  },
-  ready() {
-    // 避免在 API 中使用复合选择器
-    this.createSelectorQuery().select('.list .item').boundingClientRect().exec()
-    this.createIntersectionObserver().relativeTo('.list').observe('.item.active', () => {})
-    this.selectComponent('.list .item')
-    this.selectAllComponents('.list .item')
-  }
-})
-</script>
 ```
 
 **✅ 推荐：**
@@ -91,50 +65,218 @@ createComponent({
 ```html
 <template>
   <view class="list">
-    <!-- 推荐：直接使用等效的单类名并使用 wx:class 进行动态绑定 -->
-    <view class="list-item" wx:class="{{dynamicClass}}">
-      <text class="title">标题</text>
+    <view class="list-item">
+      <text class="list-item-title">标题1</text>
+    </view>
+    <view class="list-item">
+      <text class="list-item-title">标题2</text>
     </view>
   </view>
 </template>
 
 <style>
-/* 推荐使用单类选择器 */
 .list-item {
   padding: 20rpx;
 }
+
+.list-item-title {
+  font-size: 32rpx;
+}
+</style>
+```
+
+##### 1.1.2 子选择器替代
+
+子选择器（`.parent > .child`）仅匹配直接子元素。RN 不支持此选择器，同样需要在直接子元素上添加类名。
+
+**❌ 避免：**
+
+```css
+/* RN 不支持子选择器 */
+.card > .title {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+```
+
+**✅ 推荐：**
+
+```html
+<template>
+  <view class="card">
+    <text class="card-title">卡片标题</text>
+    <view class="card-content">内容区域</view>
+  </view>
+</template>
+
+<style>
+.card {
+  padding: 20rpx;
+}
+
+.card-title {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.card-content {
+  margin-top: 16rpx;
+}
+</style>
+```
+
+##### 1.1.3 交集选择器替代
+
+交集选择器（`.base.active`）用于同时匹配具有多个类名的元素。RN 不支持此选择器，需要使用独立的类名组合。
+
+**❌ 避免：**
+
+```css
+/* RN 不支持交集选择器 */
+.btn.primary {
+  background-color: #007aff;
+}
+.btn.danger {
+  background-color: #ff3b30;
+}
+```
+
+**✅ 推荐：**
+
+```html
+<template>
+  <view class="btn btn-primary">主要按钮</view>
+  <view class="btn btn-danger">危险按钮</view>
+</template>
+
+<style>
+.btn {
+  padding: 16rpx 32rpx;
+  border-radius: 8rpx;
+}
+
+.btn-primary {
+  background-color: #007aff;
+  color: #fff;
+}
+
+.btn-danger {
+  background-color: #ff3b30;
+  color: #fff;
+}
+</style>
+```
+
+##### 1.1.4 组合选择器替代（动态状态类）
+
+当需要根据元素状态动态切换样式时，避免使用交集选择器，改为使用独立的组合类名。
+
+**❌ 避免：**
+
+```css
+/* RN 不支持交集选择器 */
+.item.active {
+  color: red;
+  background-color: #f0f0f0;
+}
+```
+
+**✅ 推荐：**
+
+```html
+<template>
+  <view
+    class="item"
+    wx:class="{{ { 'item-active': isActive } }}"
+  >
+    {{text}}
+  </view>
+</template>
+
+<style>
+.item {
+  padding: 20rpx;
+}
+
+.item-active {
+  color: red;
+  background-color: #f0f0f0;
+}
+</style>
+```
+
+##### 1.1.5 同步更新相关 API
+
+**注意：** 替换为单类选择器时，不仅需要更新 `<template>` 和 `<style>` 中的类名引用，还需要同步更新 `<script>` 中涉及的动态类名绑定的字面量，以及使用 `selector` 作为参数的相关 API。
+
+**涉及 API：**
+- `createSelectorQuery`
+- `createIntersectionObserver`
+- `selectComponent`
+- `selectAllComponents`
+
+**❌ 避免：**
+
+```javascript
+ready() {
+  // 使用复合选择器
+  this.createSelectorQuery().select('.list .item').boundingClientRect().exec()
+  this.createIntersectionObserver().relativeTo('.list').observe('.item.active', () => {})
+  this.selectComponent('.list .item')
+}
+```
+
+**✅ 推荐：**
+
+```javascript
+ready() {
+  // 使用单类选择器
+  this.createSelectorQuery().select('.list-item').boundingClientRect().exec()
+  this.createIntersectionObserver().relativeTo('.list').observe('.list-item-active', () => {})
+  this.selectComponent('.list-item')
+}
+```
+
+##### 1.1.6 预处理语言嵌套选择器展开
+
+对于 `sass`、`less`、`stylus` 等支持嵌套选择器写法的预处理语言，在进行 RN 适配前，需要先将嵌套选择器展开铺平为传统的选择器写法。
+
+**❌ 避免（嵌套未展开）：**
+
+```less
+.list {
+  .item {
+    padding: 20rpx;
+    &.active {
+      color: red;
+    }
+    .title {
+      font-size: 32rpx;
+    }
+  }
+}
+```
+
+**✅ 推荐（嵌套已展开）：**
+
+```less
+// 展开为单类选择器
+.list-item {
+  padding: 20rpx;
+}
+
 .list-item-active {
   color: red;
 }
-</style>
 
-<script>
-import { createComponent } from '@mpxjs/core'
-
-createComponent({
-  data: {
-    isActive: true
-  },
-  computed: {
-    // script 中的动态类名绑定也需要同步更新为完整的单类名
-    dynamicClass() {
-      return this.isActive ? 'list-item-active' : ''
-    }
-  },
-  ready() {
-    // 使用 selector 作为参数的 API 也需要同步更新为单类名
-    this.createSelectorQuery().select('.list-item').boundingClientRect().exec()
-    this.createIntersectionObserver().relativeTo('.list').observe('.list-item-active', () => {})
-    this.selectComponent('.list-item')
-    this.selectAllComponents('.list-item')
-  }
-})
-</script>
+.list-item-title {
+  font-size: 32rpx;
+}
 ```
 
-#### 1.2 子元素伪类替代方案 (:first-child / :last-child / :nth-child)
+#### 1.2 结构伪类替代方案 (:first-child / :last-child / :nth-child / :nth-of-type)
 
-RN 平台不支持 CSS 子元素伪类选择器（如 `:first-child`, `:last-child`, `:nth-child`）。建议在模版中通过数据下标 (`index`) 判断来动态应用样式类。
+RN 平台不支持 CSS 结构伪类选择器（如 `:first-child`, `:last-child`, `:nth-child`, `:nth-of-type`）。应将伪类选择器转换为静态类名等效实现，并在模板中根据数据下标或位置关系动态绑定类名。
 
 **❌ 避免：**
 
@@ -143,18 +285,55 @@ RN 平台不支持 CSS 子元素伪类选择器（如 `:first-child`, `:last-chi
 .item:first-child {
   margin-top: 0;
 }
+.item:nth-of-type(2) {
+  flex-basis: 40%;
+}
 ```
 
-**✅ 推荐：**
+**✅ 推荐（静态类名）：**
 
 ```html
 <template>
-  <!-- 建议使用 wx:class 进行动态样式绑定 -->
+  <view class="form-item form-item-first">
+    <!-- 首项 -->
+  </view>
+  <view class="form-item form-item-second">
+    <!-- 第二项 -->
+  </view>
+  <view class="form-item">
+    <!-- 其他项 -->
+  </view>
+</template>
+
+<style>
+.form-item {
+  padding: 20rpx;
+  border-bottom-width: 1rpx;
+}
+
+.form-item-first {
+  margin-top: 0;
+}
+
+.form-item-second {
+  flex-basis: 40%;
+}
+</style>
+```
+
+**✅ 推荐（动态绑定，适用于列表渲染）：**
+
+```html
+<template>
   <view
     wx:for="{{list}}"
     wx:key="id"
     class="item"
-    wx:class="{{ { 'first-item': index === 0 } }}"
+    wx:class="{{ {
+      'item-first': index === 0,
+      'item-last': index === list.length - 1,
+      'item-even': index % 2 === 0
+    } }}"
   >
     {{item.text}}
   </view>
@@ -162,20 +341,26 @@ RN 平台不支持 CSS 子元素伪类选择器（如 `:first-child`, `:last-chi
 
 <style>
 .item {
-  margin-top: 20rpx;
-  border-bottom-width: 1rpx;
+  padding: 20rpx;
 }
 
-/* 单独定义首项样式 */
-.first-item {
+.item-first {
   margin-top: 0;
+}
+
+.item-last {
+  margin-bottom: 0;
+}
+
+.item-even {
+  background-color: #f5f5f5;
 }
 </style>
 ```
 
-#### 1.3 伪元素选择器替代方案 (::before / ::after)
+#### 1.3 伪元素替代方案 (::before / ::after)
 
-RN 平台不支持 `::before` 和 `::after` 伪元素选择器。对于需要在元素前后添加装饰性内容的需求，应使用真实的组件节点进行等效替代。
+RN 平台不支持 `::before` 和 `::after` 伪元素选择器。对于需要使用伪元素添加装饰性内容的需求，应使用模板中的实际节点进行等效替代。
 
 **❌ 避免：**
 
@@ -187,49 +372,60 @@ RN 平台不支持 `::before` 和 `::after` 伪元素选择器。对于需要在
   height: 30rpx;
   background-color: blue;
 }
+
+.title::after {
+  content: '>';
+  margin-left: 10rpx;
+}
 ```
 
 **✅ 推荐：**
 
 ```html
 <template>
-  <view class="title-container">
-    <!-- 使用真实的 view 节点替代 ::before -->
-    <view class="title-decorator"></view>
-    <text class="title">标题内容</text>
+  <view class="form-item">
+    <!-- 使用实际的 view 节点替代 ::before -->
+    <view class="form-item-divider"></view>
+    <text class="title">选项内容</text>
+    <!-- 使用实际的 text 节点替代 ::after -->
+    <text class="title-arrow">></text>
   </view>
 </template>
 
 <style>
-.title-container {
+.form-item {
   display: flex;
-  flex-direction: row;
   align-items: center;
+  padding: 20rpx;
 }
 
-.title-decorator {
+.form-item-divider {
   width: 10rpx;
   height: 30rpx;
   background-color: blue;
   margin-right: 10rpx;
 }
+
+.title {
+  flex: 1;
+}
+
+.title-arrow {
+  margin-left: 10rpx;
+}
 </style>
 ```
 
-#### 1.4 点击态处理 (:active)
+#### 1.4 相邻兄弟选择器替代方案 (+ / ~)
 
-RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可以使用 `hover-class` 组件属性进行跨端兼容实现。
-
-**支持组件：**
-`view`、`button`、`navigator`
+RN 平台不支持 CSS 相邻兄弟选择器（`+` 和 `~`）。应将兄弟选择器转换为静态类名等效实现，并通过模板中的位置关系手动添加对应的类名。
 
 **❌ 避免：**
 
 ```css
-/* RN 不支持 :active 伪类 */
-.btn:active {
-  opacity: 0.8;
-  background-color: #f5f5f5;
+/* RN 不支持相邻兄弟选择器 */
+.item + .item {
+  margin-top: 10rpx;
 }
 ```
 
@@ -237,26 +433,25 @@ RN 平台不支持 `:active` 伪类选择器，如需实现点击态样式，可
 
 ```html
 <template>
-  <!-- 使用 hover-class 指定点击态样式类 -->
-  <!-- hover-stay-time 指定手指松开后点击态保留时间，单位毫秒 -->
-  <view
-    class="btn"
-    hover-class="btn-hover"
-    hover-stay-time="{{100}}"
-  >
-    点击我
+  <view class="form-item form-item-first">
+    <text>第一项</text>
+  </view>
+  <view class="form-item form-item-with-top">
+    <text>第二项</text>
+  </view>
+  <view class="form-item form-item-with-top">
+    <text>第三项</text>
   </view>
 </template>
 
 <style>
-.btn {
-  background-color: #ffffff;
+/* 单独定义带顶部间距的类名 */
+.form-item {
+  padding: 20rpx;
 }
 
-/* 定义点击态样式 */
-.btn-hover {
-  opacity: 0.8;
-  background-color: #f5f5f5;
+.form-item-with-top {
+  margin-top: 10rpx;
 }
 </style>
 ```
