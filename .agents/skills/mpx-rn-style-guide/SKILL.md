@@ -15,8 +15,10 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
 
 根据具体场景读取以下参考文件：
 
-- **样式能力参考**：当用户询问 Mpx2RN 样式能力支持详情，遇到样式不生效、样式报错等问题，或进行跨端样式适配开发时，读取 [跨端输出 RN 样式能力支持详情](./references/rn-style-reference.md)
-- **开发最佳实践**：当用户询问 Mpx2RN 样式开发的最佳实践，查询如何实现某项样式效果，或查询不支持的样式能力是否存在兼容方案时，读取 [跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md)
+- **条件编译**：当跨端适配遇到兼容性问题需要进行分端处理时，读取 [使用条件编译](./references/conditional-compile.md)
+- **样式能力参考**：当需要查询 Mpx2RN 样式能力支持详情，用户询问遇到样式不生效、样式报错等问题，或进行跨端样式适配开发时，读取 [跨端输出 RN 样式能力支持详情](./references/rn-style-reference.md)
+- **开发最佳实践**：当需要查询 Mpx2RN 样式开发的最佳实践，用户询问如何实现某个样式效果，或查询不支持的样式能力是否存在兼容方案时，读取 [跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md)
+
 
 ## 跨端输出 RN 样式适配改造
 
@@ -40,13 +42,13 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
 2. 模板样式类名动态绑定尽可能使用 `wx:style` 和 `wx:class` 模版指令，尽量避免在 `style` 和 `class` 属性中使用 `{{}}` 插值表达式进行动态绑定。
   * **Bad Example**: `<view class="item {{isActive ? 'active' : ''}}">`
   * **Good Example**: `<view class="item" wx:class="{{ {active: isActive} }}">`
-3. 非必要尽可能减少条件编译的使用，优先使用跨平台兼容的实现方式，**避免出现大面积连续的条件编译**，因为这会严重破坏代码的可读性和后期维护性。
-4. **保留原始样式定义中的 `/*use rpx*/` 和 `/*use px*/` 注释**，此类注释用于编译期间批量切换样式单位
+3. 非必要尽可能减少条件编译的使用，对于不支持的选择器和样式属性优先使用跨端兼容的等效实现，**避免出现大面积连续的条件编译**，因为这会严重破坏代码的可读性和后期维护性。
+4. **保留原始样式定义中的 `/*use rpx*/` 和 `/*use px*/` 注释**，此类注释用于编译期间批量切换样式单位。
 
 ### 任务流程
 
 1. **选择器适配改造**：
-  - 分析组件的 `<style>` 部分，对于 `sass`、`less`、`stylus` 等支持嵌套选择器写法的预处理语言，先将原代码中所有的嵌套选择器写法展开铺平为传统的选择器写法，便于后续进行选择器的兼容性判断及适配改造。
+  - 1.1 分析组件的 `<style>` 部分，对于 `sass`、`less`、`stylus` 等支持嵌套选择器写法的预处理语言，先将原代码中所有的嵌套选择器写法展开铺平为传统的选择器写法，便于后续进行选择器的兼容性判断及适配改造。
     * **Bad Example (嵌套选择器未展开)**:
       ```less
       .list {
@@ -63,47 +65,21 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
       .list .item { color: red; }
       .list .item.active { color: blue; }
       ```
-  - 分析组件的 `<style>` 部分，参考 [Mpx 跨端输出 RN 样式开发最佳实践#选择器使用建议](./references/rn-style-practice.md#1-选择器使用建议)，将 RN 平台不支持的选择器替换为单类选择器等效实现，并同步更新 `<template>` 和 `<script>` 中对应的类名引用。
-    * **Good Example (单类选择器等效实现)**:
-      ```html
-      <!-- 推荐：直接使用等效的单类名并使用 wx:class 进行动态绑定 -->
-      <view class="list-item" wx:class="{{ { 'list-item-active': isActive } }}">
-        <text class="title">标题</text>
-      </view>
-      ```
-      ```css
-      /* 推荐使用单类选择器，避免使用后代选择器和交集选择器 */
-      .list-item { padding: 20rpx; }
-      .list-item-active { color: red; }
-      ```
-  - 对于无法替换为单类选择器等效实现的选择器，使用原平台条件编译对该选择器样式片段进行局部包裹，保留在原平台输出产物中，并添加 `todo` 注释记录不兼容 RN 平台的详情。
+  - 1.2 读取 [Mpx 跨端输出 RN 样式开发最佳实践#选择器使用建议](./references/rn-style-practice.md#1-选择器使用建议)，分析组件的 `<style>` 部分，将 RN 平台不支持的选择器改造为跨端兼容的等效实现，并同步更新 `<template>` 和 `<script>` 中对应的类名引用。
+  - 1.3 对于无法进行跨端兼容等效实现的选择器，使用原平台条件编译对该选择器样式片段进行局部包裹，保留在原平台输出产物中，并添加 `todo` 注释记录不兼容 RN 平台的详情。
     * **Good Example (局部条件编译)**:
       ```css
       /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
-      /* todo: RN 不支持同级相邻选择器，仅在原平台保留 */
-      .item + .item { margin-top: 10rpx; }
+      /* todo: RN 不支持 ::-webkit-scrollbar 伪元素，仅在原平台保留 */
+      .scroll-view::-webkit-scrollbar { display: none; }
       /* @mpx-endif */
       ```
   
   
 2. **样式属性适配改造**：
-  - 参考 [跨端输出 RN 样式能力支持详情](./references/rn-style-reference.md)，对 `<style>`、`<template>` 和 `<script>` 中定义的样式属性进行分析，对于 RN 平台不支持的样式属性，结合 [Mpx 跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md) 将其替换为跨端兼容的等效实现。
-    * **Good Example (display: none 跨端等效实现)**:
-        ```css
-        .mask {
-          /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
-          flex: 0;
-          height: 0;
-          width: 0;
-          padding: 0;
-          margin: 0;
-          overflow: hidden;
-          /* @mpx-else */
-          display: none;
-          /* @mpx-endif */
-        }
-        ```
-  - 对于无法进行跨端兼容等效实现的样式属性，使用原平台条件编译对该样式属性进行局部包裹，保留在原平台输出产物中，并添加 `todo` 注释记录不兼容 RN 平台的详情。
+  - 2.1 读取 [跨端输出 RN 样式能力支持详情](./references/rn-style-reference.md)，对 `<style>`、`<template>` 和 `<script>` 中定义的样式属性进行分析，检查是否存在 RN 平台不支持的样式属性。
+  - 2.2 对于 RN 平台不支持的样式属性，读取 [Mpx 跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md)，将其改造为跨端兼容的等效实现。
+  - 2.3 对于无法进行跨端兼容等效实现的样式属性，使用原平台条件编译对该样式属性进行局部包裹，保留在原平台输出产物中，并添加 `todo` 注释记录不兼容 RN 平台的详情。
     * **Good Example (局部条件编译)**:
       ```css
       .animation-box {
@@ -115,12 +91,7 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
       ```
   
 3. **检查与确认**：
-  - 检查确保 `<style>` 中不存在任何嵌套选择器写法。
-  - 检查确保 `<style>` 中所有 RN 平台不支持的选择器都已被替换为单类选择器等效实现，或被原平台条件编译所包裹，输出到 RN 的部分不包含复合选择器。
-  - 检查确保 `<style>`、`<template>` 和 `<script>` 中所有 RN 平台不支持的样式属性都已被替换为跨端兼容的等效实现，或被原平台条件编译所包裹，输出到 RN 的部分不包含不支持的样式属性。
-  - 检查确保 `<style>`、`<template>` 和 `<script>` 中不存在大面积的条件编译，所有添加的条件编译仅最小包裹不兼容的样式片段。
-
-
-
-
-
+  - 3.1 检查确保 `<style>` 中不存在任何嵌套选择器写法。
+  - 3.2 检查确保 `<style>` 中所有 RN 平台不支持的选择器都已被替换为单类选择器等效实现，或被原平台条件编译所包裹，输出到 RN 的部分不包含复合选择器。
+  - 3.3 检查确保 `<style>`、`<template>` 和 `<script>` 中所有 RN 平台不支持的样式属性都已被替换为跨端兼容的等效实现，或被原平台条件编译所包裹，输出到 RN 的部分不包含不支持的样式属性。 
+  - 3.4 检查确保 `<style>`、`<template>` 和 `<script>` 中不存在大面积的条件编译，所有添加的条件编译仅最小包裹不兼容的样式片段。
