@@ -79,6 +79,7 @@ interface SwiperProps {
   disableGesture?: boolean
   'display-multiple-items'?: number
   bindchange?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
+  bindchangestart?: (event: NativeSyntheticEvent<TouchEvent> | unknown) => void
 }
 
 /**
@@ -159,7 +160,8 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     circular = false,
     disableGesture = false,
     current: propCurrent = 0,
-    bindchange
+    bindchange,
+    bindchangestart
   } = props
 
   const dotCommonStyle = {
@@ -425,6 +427,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         nextIndex += 1
         // targetOffset = -nextIndex * step.value - preMarginShared.value
         targetOffset = -nextIndex * step.value
+        runOnJSCallback('handleSwiperChangeStart', nextIndex)
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
@@ -438,6 +441,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           nextIndex = 0
           targetOffset = -(childrenLength.value + patchElmNumShared.value) * step.value + preMarginShared.value
           // 执行动画到下一帧
+          runOnJSCallback('handleSwiperChangeStart', nextIndex)
           offset.value = withTiming(targetOffset, {
             duration: easeDuration
           }, () => {
@@ -451,6 +455,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
           nextIndex = currentIndex.value + 1
           targetOffset = -(nextIndex + patchElmNumShared.value) * step.value + preMarginShared.value
           // 执行动画到下一帧
+          runOnJSCallback('handleSwiperChangeStart', nextIndex)
           offset.value = withTiming(targetOffset, {
             duration: easeDuration,
             easing: easeMap[easeingFunc]
@@ -489,11 +494,17 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     bindchange && bindchange(eventData)
   }
 
+  function handleSwiperChangeStart (current: number) {
+    const eventData = getCustomEvent('changestart', {}, { detail: { current }, layoutRef: layoutRef })
+    bindchangestart && bindchangestart(eventData)
+  }
+
   const runOnJSCallbackRef = useRef({
     loop,
     pauseLoop,
     resumeLoop,
-    handleSwiperChange
+    handleSwiperChange,
+    handleSwiperChangeStart
   })
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
 
@@ -514,6 +525,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     if (targetOffset !== offset.value) {
       // 内部基于props.current!==currentIndex.value决定是否使用动画及更新currentIndex.value
       if (propCurrent !== undefined && propCurrent !== currentIndex.value) {
+        runOnJSCallback('handleSwiperChangeStart', propCurrent)
         offset.value = withTiming(targetOffset, {
           duration: easeDuration,
           easing: easeMap[easeingFunc]
@@ -805,7 +817,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
         const offsetHalf = computeHalf()
         if (childrenLength.value > 1 && offsetHalf) {
           const { selectedIndex } = getTargetPosition({ transdir: moveDistance } as EventEndType)
-          currentIndex.value = selectedIndex
+          if (selectedIndex !== currentIndex.value) {
+            currentIndex.value = selectedIndex
+            runOnJS(runOnJSCallback)('handleSwiperChangeStart', selectedIndex)
+          }
         }
         // 2. 非循环: 处理用户一直拖拽到临界点的场景,如果放到onFinalize无法阻止offset.value更新为越界的值
         if (!circularShared.value) {
