@@ -79,7 +79,7 @@ export interface RegionProps extends BasePickerProps {
   /** 表示选中的省市区，默认选中每一列的第一个值, 默认值 [] */
   value?: string[]
   /** 默认值 region */
-  level?: 'province' | 'city' | 'region' | 'sub-district'
+  level?: 'province' | 'city' | 'region'
   /** 可为每一列的顶部添加一个自定义的项 */
   'custom-item'?: string
   /** value 改变时触发 change 事件, event.detail = {value, code, postcode},

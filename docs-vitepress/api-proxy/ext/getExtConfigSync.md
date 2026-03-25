@@ -6,7 +6,7 @@ mpx.getExtConfig 的同步版本
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ext/wx.getExtConfigSync.html)
 
-### 参数
+### 参数 {#parameters}
 
 **Object**
 

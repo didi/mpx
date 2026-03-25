@@ -299,22 +299,112 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
     }
   }, [refresherTriggered])
 
-  function scrollTo ({ top = 0, left = 0, animated = false }: { top?: number; left?: number; animated?: boolean }) {
-    scrollToOffset(left, top, animated)
+  function scrollTo ({ top = 0, left = 0, animated = false, duration }: { top?: number; left?: number; animated?: boolean; duration?: number }) {
+    // 如果指定了 duration 且需要动画，使用自定义动画
+    if (animated && duration && duration > 0) {
+      // 获取当前滚动位置
+      const currentY = scrollOptions.current.scrollTop || 0
+      const currentX = scrollOptions.current.scrollLeft || 0
+
+      const startTime = Date.now()
+      const deltaY = top - currentY
+      const deltaX = left - currentX
+
+      // 缓动函数：easeInOutCubic
+      const easing = (t: number) => {
+        return t < 0.5
+          ? 4 * t * t * t
+          : 1 - Math.pow(-2 * t + 2, 3) / 2
+      }
+
+      // 使用 requestAnimationFrame 实现平滑动画
+      const animate = () => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(elapsed / duration, 1) // 0 到 1
+
+        const easeProgress = easing(progress)
+        const nextY = currentY + deltaY * easeProgress
+        const nextX = currentX + deltaX * easeProgress
+
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: nextY, x: nextX, animated: false })
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          // 确保最终位置准确
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollTo({ y: top, x: left, animated: false })
+          }
+        }
+      }
+
+      requestAnimationFrame(animate)
+    } else {
+      // 使用原生的 scrollTo
+      scrollToOffset(left, top, animated)
+    }
   }
 
-  function handleScrollIntoView (selector = '', { offset = 0, animated = true } = {}) {
-    const refs = __selectRef!(`#${selector}`, 'node')
-    if (!refs) return
-    const { nodeRef } = refs.getNodeInstance()
-    nodeRef.current?.measureLayout(
-      scrollViewRef.current,
-      (left: number, top: number) => {
-        const adjustedLeft = scrollX ? left + offset : left
-        const adjustedTop = scrollY ? top + offset : top
-        scrollToOffset(adjustedLeft, adjustedTop, animated)
+  function handleScrollIntoView (selector = '', { offset = 0, animated = true, duration = undefined }: { offset?: number; animated?: boolean; duration?: number } = {}) {
+    try {
+      const currentSelectRef = propsRef.current.__selectRef
+
+      if (!currentSelectRef) {
+        const errMsg = '__selectRef is not available. Please ensure the scroll-view component is properly initialized.'
+        warn(errMsg)
+        return
       }
-    )
+
+      const targetScrollView = scrollViewRef.current
+
+      if (!targetScrollView) {
+        const errMsg = 'scrollViewRef is not ready'
+        warn(errMsg)
+        return
+      }
+
+      // scroll-into-view prop 按微信规范直传裸 id（如 "section-1"），而 __refs 注册时 key 带 # 或 . 前缀，需补齐才能命中；
+      // pageScrollTo 调用方已自带前缀（如 "#section-1"）
+      const normalizedSelector = selector.startsWith('#') || selector.startsWith('.') ? selector : `#${selector}`
+
+      // 调用 __selectRef 查找元素
+      const refs = currentSelectRef(normalizedSelector, 'node')
+      if (!refs) {
+        const errMsg = `Element not found for selector: ${normalizedSelector}`
+        warn(errMsg)
+        return
+      }
+
+      const { nodeRef } = refs.getNodeInstance()
+      if (!nodeRef?.current) {
+        const errMsg = `Node ref not available for selector: ${normalizedSelector}`
+        warn(errMsg)
+        return
+      }
+
+      nodeRef.current.measureLayout(
+        targetScrollView,
+        (left: number, top: number) => {
+          const adjustedLeft = scrollX ? left + offset : left
+          const adjustedTop = scrollY ? top + offset : top
+
+          // 使用 scrollTo 方法，支持 duration 参数
+          if (duration !== undefined) {
+            scrollTo({ left: adjustedLeft, top: adjustedTop, animated, duration })
+          } else {
+            scrollToOffset(adjustedLeft, adjustedTop, animated)
+          }
+        },
+        (error: any) => {
+          warn(`Failed to measure layout for selector ${normalizedSelector}: ${error}`)
+        }
+      )
+    } catch (error: any) {
+      const errMsg = `handleScrollIntoView error for selector ${selector}: ${error?.message || error}`
+      warn(errMsg)
+    }
   }
 
   function selectLength (size: { height: number; width: number }) {
@@ -641,9 +731,9 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
 
   // 处理下拉刷新的手势 - 使用 useMemo 避免每次渲染都创建
   const panGesture = useMemo(() => {
-    if (!hasRefresher) return Gesture.Pan() // 返回空手势
-
     return Gesture.Pan()
+      .activeOffsetY([-5, 5])
+      .failOffsetX([-5, 5])
       .onUpdate((event) => {
         'worklet'
         if (enhanced && !!bounces) {
@@ -703,7 +793,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
         }
       })
       .simultaneousWithExternalGesture(scrollViewRef)
-  }, [hasRefresher, enhanced, bounces, refreshing, refresherThreshold])
+  }, [enhanced, bounces, refreshing, refresherThreshold])
 
   const scrollAdditionalProps: ScrollAdditionalProps = extendObject(
     {

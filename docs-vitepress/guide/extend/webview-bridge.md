@@ -7,12 +7,12 @@ Mpx 在支持小程序跨平台开发后，各大平台的小程序均提供了 
 
 **支持运行环境**：微信小程序、支付宝小程序、QQ小程序、头条小程序、百度小程序、web、RN
 
-## 安装：
+## 安装： {#install}
 ```shell
 npm install @mpxjs/webview-bridge
 ```
 
-## 使用：
+## 使用： {#usage}
 ```js
 import mpx from '@mpxjs/webview-bridge'
 mpx.navigateBack()
@@ -20,7 +20,7 @@ mpx.env // 输出：wx/qq/ali/baidu/tt
 mpx.checkJSApi()
 ```
 
-## cdn地址引用：
+## cdn地址引用： {#cdn-import}
 ```js
 <!-- 开发环境版本，方便调试 -->
 <script src="https://dpubstatic.udache.com/static/dpubimg/D2JeLyT0_Y/2.2.43.webviewbridge.js"></script>
@@ -38,7 +38,7 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 //ES Module 开发版本地址： https://dpubstatic.udache.com/static/dpubimg/cdhpNhmWmJ/2.2.43.webviewbridge.esm.browser.js
 ```
 
-## 支持方法：
+## 支持方法： {#supported-methods}
 对于web-view组件打开的网页，想要跟宿主环境通信，或者跳转到宿主环境的页面，提供了以下能力
 
 **基础方法**
@@ -94,7 +94,7 @@ import mpx from "https://dpubstatic.udache.com/static/dpubimg/6MQOo-ocI4/2.2.43.
 | onMessage |<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: green; font-weight: bold;">✓</span>|<span style="color: red; font-weight: bold;">✗</span>|<span style="color: red; font-weight: bold;">✗</span>|
 
 
-### webview-bridge示例代码
+### webview-bridge示例代码 {#webview-bridge-example}
 ```javascript
 import webviewBridge from '@mpxjs/webview-bridge'
 webviewBridge.navigateTo({
@@ -105,7 +105,7 @@ webviewBridge.navigateTo({
 })
 ```
 
-### invoke示例代码
+### invoke示例代码 {#invoke-example}
 在业务场景中，当 H5 需要调用扩展方法中的api能力（如通过 getLocation 获取地理位置）时，需与承载 H5 的「宿主环境」（如原生 App、小程序容器等）进行数据交互。
 
 针对这类需求，Mpx 框架内部已提供「宿主环境能力挂载」机制，同时在 webview-bridge 中支持 invoke 通信方法，可实现 H5 与宿主环境的双向调用。

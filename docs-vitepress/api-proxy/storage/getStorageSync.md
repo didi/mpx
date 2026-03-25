@@ -7,7 +7,7 @@
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/storage/wx.getStorageSync.html)
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 try {

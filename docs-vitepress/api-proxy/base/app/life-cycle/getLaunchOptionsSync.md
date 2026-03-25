@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/miniapp/api/diffapi/getLaunchOptionsSync.html)
 
-### 返回值
+### 返回值 {#return-value}
 
 | 参数   | 类型   | 说明                                   |
 | ------ | ------ | -------------------------------------- |

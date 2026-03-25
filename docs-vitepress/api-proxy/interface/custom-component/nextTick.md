@@ -6,5 +6,5 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/custom-component/wx.nextTick.html)
 
-### 参数
+### 参数 {#parameters}
 **function callback**

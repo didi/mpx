@@ -1455,6 +1455,7 @@ class MpxWebpackPlugin {
             const context = parser.state.module.context
             const { queryObj, resourcePath } = parseRequest(request)
             let tarRoot = queryObj.root
+
             if (!tarRoot && mpx.asyncSubpackageRules) {
               for (const item of mpx.asyncSubpackageRules) {
                 if (matchCondition(resourcePath, item)) {
@@ -1463,49 +1464,49 @@ class MpxWebpackPlugin {
                 }
               }
             }
-            if (tarRoot) {
+            // TODO 后续考虑和 asyncSubpackageRules 配置合并
+            if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
+
+            if (tarRoot && mpx.supportRequireAsync) {
               // 删除root query
               if (queryObj.root) request = addQuery(request, {}, false, ['root'])
               // wx、ali和web平台支持require.async，其余平台使用CommonJsAsyncDependency进行模拟抹平
-              if (mpx.supportRequireAsync) {
-                if (isWeb(mpx.mode) || isReact(mpx.mode)) {
-                  if (isReact(mpx.mode)) tarRoot = transSubpackage(mpx.transSubpackageRules, tarRoot)
-                  const depBlock = new AsyncDependenciesBlock(
-                    {
-                      name: tarRoot + '/index'
-                    },
-                    expr.loc,
-                    request
-                  )
-                  const dep = new ImportDependency(request, expr.range, undefined, {
-                    isRequireAsync: true,
-                    retryRequireAsync: this.options.retryRequireAsync
-                  })
-                  dep.loc = expr.loc
-                  depBlock.addDependency(dep)
-                  parser.state.current.addBlock(depBlock)
-                } else {
-                  const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
-                    isAsync: true,
-                    isRequireAsync: true,
-                    retryRequireAsync: this.options.retryRequireAsync,
-                    requireAsyncRange: expr.range
-                  })
-
-                  parser.state.current.addPresentationalDependency(dep)
-                  // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
-                  parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
-                }
+              if (isWeb(mpx.mode) || isReact(mpx.mode)) {
+                const depBlock = new AsyncDependenciesBlock(
+                  {
+                    name: tarRoot + '/index'
+                  },
+                  expr.loc,
+                  request
+                )
+                const dep = new ImportDependency(request, expr.range, undefined, {
+                  isRequireAsync: true,
+                  retryRequireAsync: this.options.retryRequireAsync
+                })
+                dep.loc = expr.loc
+                depBlock.addDependency(dep)
+                parser.state.current.addBlock(depBlock)
               } else {
-                const range = expr.range
-                const dep = new CommonJsAsyncDependency(request, range)
-                parser.state.current.addDependency(dep)
+                const dep = new DynamicEntryDependency(range, request, 'export', '', tarRoot, '', context, {
+                  isAsync: true,
+                  isRequireAsync: true,
+                  retryRequireAsync: this.options.retryRequireAsync,
+                  requireAsyncRange: expr.range
+                })
+
+                parser.state.current.addPresentationalDependency(dep)
+                // 包含require.async的模块不能被concatenate，避免DynamicEntryDependency中无法获取模块chunk以计算相对路径
+                parser.state.module.buildInfo.moduleConcatenationBailout = 'require async'
               }
-              if (args) parser.walkExpressions(args)
-              return true
             } else {
-              compilation.errors.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
+              const dep = new CommonJsAsyncDependency(request, expr.range)
+              parser.state.current.addDependency(dep)
+              if (!tarRoot) {
+                compilation.warnings.push(new Error(`The require async JS [${request}] need to declare subpackage name by root`))
+              }
             }
+            if (args) parser.walkExpressions(args)
+            return true
           }
         }
 

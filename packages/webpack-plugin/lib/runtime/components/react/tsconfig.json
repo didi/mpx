@@ -3,7 +3,7 @@
   "include": [
     "./"
   ],
-  "exclude": [],
+  "exclude": ["./dist/"],
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",

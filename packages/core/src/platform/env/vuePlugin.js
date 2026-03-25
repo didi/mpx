@@ -1,4 +1,4 @@
-import { walkChildren, parseSelector, error, hasOwn, collectDataset } from '@mpxjs/utils'
+import { walkChildren, parseSelector, error, hasOwn, collectDataset, getByPath } from '@mpxjs/utils'
 import { createSelectorQuery, createIntersectionObserver } from '@mpxjs/api-proxy'
 import { EffectScope } from 'vue'
 import { PausedState } from '../../helper/const'
@@ -56,6 +56,17 @@ const hackEffectScope = () => {
 }
 
 export default function install (Vue) {
+  const originalWatch = Vue.prototype.$watch
+  Vue.prototype.$watch = function (expOrFn, cb, options) {
+    if (typeof expOrFn === 'string' && expOrFn.indexOf(',') > -1) {
+      const keys = expOrFn.split(',').map(key => key.trim())
+      expOrFn = function () {
+        return keys.map(key => getByPath(this, key))
+      }
+    }
+    return originalWatch.call(this, expOrFn, cb, options)
+  }
+
   Object.defineProperties(Vue.prototype, {
     data: {
       get () {
