@@ -1,4 +1,4 @@
-# 使用条件编译
+# 条件编译
 
 对于跨平台无法兼容的部分，局部使用条件编译进行分平台定义是可以接受的，跨平台输出 RN 时通常原平台使用 `__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web'` 作为条件，而 RN 平台则使用 `__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'` 作为条件。
 
@@ -99,7 +99,7 @@ const isRN = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode_
 const apiUrl = isRN ? 'https://api.rn.com' : 'https://api.original.com'
 ```
 
-## JSON条件编译
+## 配置条件编译
 
 我们可以在 `<script name="json">` 中编写 `JS` 逻辑动态定义组件的 `JSON` 配置，可以访问 `__mpx_mode__` 和 `__mpx_env__` 环境变量进行条件编译，在不同的平台和环境下导出不同的 `JSON` 配置。
 

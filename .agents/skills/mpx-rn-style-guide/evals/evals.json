@@ -1,0 +1,23 @@
+{
+  "skill_name": "mpx-rn-style-guide",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我把下面这个 Mpx 组件的样式适配到 RN 平台。这里面用了嵌套选择器、first-child 和伪元素：\n```html\n<template>\n  <view class=\"list\">\n    <view class=\"item\">\n      <text class=\"title\">标题</text>\n    </view>\n    <view class=\"item\">\n      <text class=\"title\">内容</text>\n    </view>\n  </view>\n</template>\n<style lang=\"less\">\n.list {\n  .item {\n    color: red;\n    &:first-child {\n      color: blue;\n    }\n    &::after {\n      content: '>>';\n    }\n  }\n}\n</style>\n```",
+      "expected_output": "展开了嵌套选择器，将 `:first-child` 替换为 `wx:class` 和 `index` 判断，将 `::after` 替换为真实节点，或使用条件编译规避不兼容 RN 的样式。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "这个组件在输出 RN 的时候报错了，帮我修一下：\n```html\n<template>\n  <view class=\"container\">\n    <view class=\"box active\"></view>\n  </view>\n</template>\n<style>\n.container .box {\n  display: none;\n  border: 1rpx solid #ccc;\n  font-weight: 500;\n}\n.container .box:active {\n  background-color: #eee;\n}\n</style>\n```",
+      "expected_output": "将复合选择器 `.container .box` 替换为单类名，将 `display: none` 替换为尺寸归零/条件编译，`1rpx` 处理为 RN 的 `hairlineWidth`，`font-weight: 500` 替换为 `normal` 或 `bold`，`:active` 替换为 `hover-class`。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "你好，我要开发一个新的 Mpx 组件，需要兼容 RN，帮我把下面的样式进行跨端适配改造：\n```html\n<template>\n  <view class=\"layout\">\n    <view class=\"left\">Left</view>\n    <view class=\"right\">Right</view>\n  </view>\n</template>\n<style>\n.layout {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n}\n.left {\n  float: left;\n  width: 10rem;\n}\n.right {\n  width: 50%;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n}\n</style>\n```",
+      "expected_output": "将 `grid` 和 `float` 布局修改为 `flex` 布局，将 `rem` 单位修改为 `rpx`，处理 `white-space` 和 `text-overflow` 使用 `numberOfLines` 或条件编译。",
+      "files": []
+    }
+  ]
+}
