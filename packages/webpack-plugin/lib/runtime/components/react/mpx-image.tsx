@@ -48,7 +48,6 @@ export type Mode =
 export interface ImageProps {
   src?: string
   mode?: Mode
-  svg?: boolean
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
@@ -456,8 +455,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     ),
     [
       'src',
-      'mode',
-      'svg'
+      'mode'
     ],
     {
       layoutRef
