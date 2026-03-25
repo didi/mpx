@@ -41,7 +41,6 @@ module.exports = function (content) {
   const parseOptions = {
     warn,
     error,
-    ctorType: 'template',
     mode,
     srcMode: queryObj.srcMode || srcMode,
     env,
