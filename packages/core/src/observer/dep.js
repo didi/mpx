@@ -35,20 +35,28 @@ export default class Dep {
   notify (key, value, oldvalue, stack) {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
-    try {
-      console.log('[Mpx Dep] notify ' +
-        this.subs.length +
-        ' subs, from ' +
-        key +
-        ': ' +
-        (typeof oldvalue === 'object' ? JSON.stringify(oldvalue) : oldvalue) +
-        ' -> ' +
-        (typeof value === 'object' ? JSON.stringify(value) : value) +
-        ', subs: ' +
-        subs.map(s => `id:${s.id} name:${s.name}`).join(', '))
-    } catch (e) {
-      // do nothing
+    const debugOptions = global.__getMpxDepDebug?.(key, value, oldvalue) || {}
+    if (debugOptions.debug) {
+      try {
+        const oldVal = (typeof oldvalue === 'object' ? JSON.stringify(oldvalue) : oldvalue)
+        const newVal = (typeof value === 'object' ? JSON.stringify(value) : value)
+        console.log('[Mpx Dep] notify ' +
+          this.subs.length +
+          ' subs, from ' +
+          key +
+          ': ' +
+          oldVal +
+          ' -> ' +
+          newVal +
+          ', equals:' +
+          (oldVal === newVal) +
+          ', subs: ' +
+          subs.map(s => `id:${s.id} name:${s.name}`).join(', '))
+      } catch (e) {
+        // do nothing
+      }
     }
+
     for (let i = 0, l = subs.length; i < l; i++) {
       subs[i].update(key, value, oldvalue, stack, this.addSubStacks.get(subs[i]))
     }
