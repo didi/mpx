@@ -35,7 +35,7 @@
 1.  **处理 `<import>` 标签**：
     *   识别 `tag === 'import'`。
     *   提取 `src` 属性（支持 `.wxml` 文件），记录到 `meta.imports` 数组中。
-    *   从 AST 树中移除该节点 (不再参与后续渲染)。
+    *   标记该节点在后处理阶段从 AST 树中移除 (不再参与后续渲染)。
 
 2.  **处理 `<template>` 标签**：
     *   **定义模式** (`name` 属性存在)：
@@ -85,7 +85,7 @@
 
 3.  **注入 `templates` 对象**：
     *   将引入的模版和本地模版合并：`const allTemplates = Object.assign({}, import_1, import_2, localTemplates);`
-    *   在渲染函数内部生成 `getTemplate` 帮助函数，用于查找模版。
+    *   在模块作用域按需生成 `getTemplate` 帮助函数，用于查找模版。
 
 4.  **内建组件信息处理**：
     *   `processTemplate.js` 不再递归预读 `meta.imports` 指向的模版文件。
@@ -160,20 +160,18 @@ Object.keys(localTemplates).forEach(function (name) {
   };
 });
 
-// 合并模版
+// 合并模版（按需生成）
 var templates = Object.assign({}, import_item, localTemplates);
+function getTemplate(name) {
+  return templates[name] || function(){};
+}
 
 // 渲染函数
 global.currentInject.render = function(createElement, getComponent) {
-  // 本地帮助函数，直接在作用域内访问 templates
-  function getTemplate(name) {
-    return templates[name] || function(){};
-  }
-
   return createElement(View, null,
-    // 模版调用，直接调用本地函数
-    getTemplate('msgItem').call(Object.assign(Object.create(this), this.item || {}), createElement, getComponent),
-    getTemplate('item').call(Object.assign(Object.create(this), this.item || {}), createElement, getComponent)
+    // 模版调用，包含运行时容错
+    (typeof getTemplate === 'function' && getTemplate('msgItem') || function(){}).call(Object.assign(Object.create(this), this.item || {}), createElement, getComponent),
+    (typeof getTemplate === 'function' && getTemplate('item') || function(){}).call(Object.assign(Object.create(this), this.item || {}), createElement, getComponent)
   );
 };
 ```
@@ -192,21 +190,22 @@ global.currentInject.render = function(createElement, getComponent) {
 1.  **`compiler.js` (AST 处理)**
     *   在 React 模式下处理 `<import>` 与 `<template>` 标签。
     *   `<import src="...">` 生成带 `!!` 前缀的 `template-loader` request（例如 `!!path/to/template-loader!./item.wxml`）。
-    *   `<template name="...">` 提取到 `meta.templates`；`<template is="...">` 保留用于后续代码生成。
+    *   `<template name="...">` 提取到 `meta.templates`；`<template is="...">` 保留用于后续代码生成；需要移除的节点统一在后处理阶段清理。
 
 2.  **`gen-node-react.js` (代码生成)**
     *   `genTemplate` 复用 `genNode` 生成模版函数，多根节点场景使用 `block` (Fragment) 包裹。
-    *   `genNode` 识别 `<template is="...">` 并生成 `getTemplate(name).call(...)` 调用代码。
+    *   `genNode` 识别 `<template is="...">` 并生成带 `getTemplate` 容错的 `.call(...)` 调用代码。
     *   模版调用上下文使用 `Object.assign(Object.create(this), data || {})`，支持数据覆盖与原型链访问。
     *   Element 节点优先处理 `genIf` 与 `genFor`，再处理 template 引用。
 
 3.  **`processTemplate.js` (模版聚合)**
     *   模版引入直接使用 AST 阶段生成的完整 request 字符串。
-    *   **模版聚合**：将引入的外部模版对象和本地定义的模版对象合并为统一的 `templates` 对象，并注入到运行时闭包中，供渲染函数使用。
+    *   **模版聚合**：将引入的外部模版对象和本地定义的模版对象合并为统一的 `templates` 对象，并按需生成模块级 `getTemplate` 供渲染函数使用。
     *   内建组件信息仅基于当前模版编译结果输出，不递归预读 imported template 文件。
 
 4.  **`template-loader.js` (模版 Loader)**
     *   位置：`packages/webpack-plugin/lib/react/template-loader.js`。
     *   解析 RN 模式下的 `.wxml`，提取 `meta.templates` 与 `meta.builtInComponentsMap`，生成模版导出对象。
     *   **运行时内建组件解析**：注入 `builtInComponentsMap`、`getBuiltInComponent` 与 `getTemplateComponent`，在模版执行时完成 imported template 的内建组件解析。
+    *   **按需 helper 注入**：仅在存在 imported/local template 源时生成 `templates/getTemplate` helper。
     *   **模版函数包装**：对本地 template 函数进行包装，统一使用增强后的组件查找函数。
