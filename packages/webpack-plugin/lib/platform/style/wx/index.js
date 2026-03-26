@@ -10,7 +10,7 @@ module.exports = function getSpec({ warn, error }) {
     // React Native android 不支持的 CSS property
     android: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
     // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
-    harmony: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius|box-shadow)$/
+    harmony: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
   // var(xx)
   const cssVariableExp = /var\(/
