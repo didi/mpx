@@ -2570,7 +2570,7 @@ function processTemplateReact (el, meta) {
       }
       meta.imports.push(el.attrsMap.src)
     }
-    removeNode(el)
+    el.shouldRemove = true
     return
   }
 
@@ -2593,7 +2593,7 @@ function processTemplateReact (el, meta) {
     }
     // invalid template tag
     error$1('Invalid template tag, should have valid is or name attr')
-    removeNode(el)
+    el.shouldRemove = true
   }
 }
 
@@ -2998,8 +2998,9 @@ function processMpxTagName (el) {
 
 function processElement (el, root, options, meta) {
   processAtMode(el)
-  // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._matchStatus === statusEnum.MISMATCH) {
+    // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
+    el.shouldRemove = true
     return
   }
 
@@ -3039,7 +3040,7 @@ function processElement (el, root, options, meta) {
 
   if (isReact(mode)) {
     const isTemplate = processTemplateReact(el, meta) || processingTemplate
-    if (el.isRemoved) return
+    if (el.shouldRemove) return
     const isReactComponent$1 = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
@@ -3090,18 +3091,19 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, options, meta) {
-  postProcessAtMode(el)
   postProcessWxs(el, meta)
 
   if (isWeb(mode)) {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
+    postProcessRemove(el)
     return
   }
   if (isReact(mode)) {
     postProcessForReact(el)
     postProcessIfReact(el)
     postProcessTemplateReact(el, meta)
+    postProcessRemove(el)
     return
   }
 
@@ -3130,6 +3132,7 @@ function closeElement (el, options, meta) {
     postProcessIf(el)
   }
   postProcessTemplate(el)
+  postProcessRemove(el)
 }
 
 // 运行时组件的模版节点收集，最终注入到 mpx-custom-element-*.wxml 中
@@ -3137,8 +3140,8 @@ function collectDynamicInfo (el, options, meta) {
   setBaseWxml(el, { mode, isComponentNode, options }, meta)
 }
 
-function postProcessAtMode (el) {
-  if (el._matchStatus === statusEnum.MISMATCH) {
+function postProcessRemove (el) {
+  if (el.shouldRemove) {
     removeNode(el)
   }
 }
@@ -3294,7 +3297,6 @@ function removeNode (node, reserveError) {
     const index = parent.children.indexOf(node)
     if (index !== -1) {
       parent.children.splice(index, 1)
-      node.isRemoved = true
       return true
     }
   }
@@ -3373,7 +3375,7 @@ function addIfConditionDynamic (el, condition) {
   el.ifConditions.push(condition)
 }
 
-function processIfConditionsDynamic (el) {
+function postProcessIfConditionsDynamic (el) {
   const prevNode = findPrevNode(el)
   if (prevNode && prevNode.if) {
     addIfConditionDynamic(prevNode, {
@@ -3455,7 +3457,7 @@ function postProcessIfDynamic (vnode, config) {
       ? config.directive.elseif
       : config.directive.else
     getAndRemoveAttr(vnode, directive)
-    processIfConditionsDynamic(vnode)
+    postProcessIfConditionsDynamic(vnode)
     delete vnode.elseif
     delete vnode.else
   }
