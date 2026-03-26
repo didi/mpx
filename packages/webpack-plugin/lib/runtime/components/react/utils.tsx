@@ -424,7 +424,7 @@ function transformBoxShadow (styleObj: Record<string, any>) {
   if (!styleObj.boxShadow) return
 
   if (isHarmony) {
-    const rawStr: string = String(styleObj.boxShadow)
+    const rawStr = String(styleObj.boxShadow)
     delete styleObj.boxShadow
 
     if (rawStr === 'none' || rawStr === '0 0 0 0 transparent' || rawStr === '0px 0px 0px 0px transparent') return
