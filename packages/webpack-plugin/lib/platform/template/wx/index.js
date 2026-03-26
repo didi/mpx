@@ -120,7 +120,7 @@ module.exports = function getSpec ({ warn, error }) {
           }
           if (el) {
             const injectWxsInfo = {
-              injectWxsPath: '~' + normalize.lib('runtime/swanHelper.wxs'),
+              injectWxsRequest: '~' + normalize.lib('runtime/swanHelper.wxs'),
               injectWxsModuleName: 'mpxSwanHelper'
             }
             if (el.injectWxsInfos && Array.isArray(el.injectWxsInfos)) {

@@ -2903,8 +2903,8 @@ function processDuplicateAttrsList (el) {
 function processInjectWxsInfos (el, meta) {
   if (el.injectWxsInfos && el.injectWxsInfos.length) {
     el.injectWxsInfos.forEach((injectWxsInfo) => {
-      const { injectWxsPath, injectWxsModuleName } = injectWxsInfo
-      injectWxs(meta, injectWxsModuleName, injectWxsPath)
+      const { injectWxsRequest, injectWxsModuleName } = injectWxsInfo
+      injectWxs(meta, injectWxsModuleName, injectWxsRequest)
     })
   }
 }
