@@ -2,11 +2,12 @@ const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../..
 
 module.exports = function () {
   const handleComponentTag = (el, data) => {
+    const newTag = `mpx-com-${el.tag}`
     const usingComponents = data.usingComponents || []
     // 当前组件名与原生tag或内建tag同名，对组件名进行转义
     // json转义见：platform/json/wx/index.js fixComponentName
     if (usingComponents.includes(newTag)) {
-      el.tag = `mpx-com-${el.tag}`
+      el.tag = newTag
     }
     return el
   }

@@ -32,9 +32,9 @@ function mapAttrName (name) {
 }
 
 function genTemplate (node) {
-  if (!node.children || !node.children.length) return '(function(){})'
+  if (!node.children || !node.children.length) return 'function(){}'
   const children = node.children.map(child => genNode(child)).filter(c => c)
-  if (!children.length) return '(function(){})'
+  if (!children.length) return 'function(){}'
 
   let content
   if (children.length === 1) {
@@ -44,7 +44,7 @@ function genTemplate (node) {
     content = `createElement(getComponent("block"), null, ${children.join(', ')})`
   }
   // data 作为 this 传入，createElement, getComponent 作为参数传入
-  return `(function(createElement, getComponent){return ${content}})`
+  return `function(createElement, getComponent){return ${content}}`
 }
 
 function genNode (node, isRoot = false) {
@@ -73,7 +73,7 @@ function genNode (node, isRoot = false) {
         if (node.templateInfo) {
           const data = node.templateInfo.data || '{}'
           // 模版中需要支持宿主组件的事件响应，同时天然支持__iter/__getSlot等帮助函数，故使用Object.create(this)创建作用域
-          exp += `getTemplate(${node.templateInfo.is}).call(Object.assign(Object.create(this), ${data}), createElement, getComponent)`
+          exp += `(typeof getTemplate === "function" && getTemplate(${node.templateInfo.is}) || function(){}).call(Object.assign(Object.create(this), ${data}), createElement, getComponent)`
         }
       } else if (node.tag !== 'temp-node') {
         const attrExpMap = (node.exps || []).reduce((map, { exp, attrName }) => {

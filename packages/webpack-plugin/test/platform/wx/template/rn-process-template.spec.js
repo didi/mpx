@@ -57,8 +57,39 @@ describe('RN process template', () => {
       expect(output).toContain('this.show') // bindThis transformation
 
       // Check local template
-      expect(output).toContain('"local": (function')
+      expect(output).toContain('var localTemplates = {')
+      expect(output).toContain('"local": function')
+      expect(output).toContain('Object.assign({}, localTemplates)')
 
+      done()
+    })
+  })
+
+  it('should not generate getTemplate helper when no template source exists', (done) => {
+    const template = {
+      content: `
+        <view>Main</view>
+      `
+    }
+
+    const options = {
+      loaderContext: mockContext,
+      hasComment: false,
+      isNative: false,
+      srcMode: 'wx',
+      moduleId: 'm123',
+      ctorType: 'component',
+      usingComponentsInfo: {},
+      originalUsingComponents: {},
+      componentGenerics: {}
+    }
+
+    processTemplate(template, options, (err, result) => {
+      expect(err).toBeNull()
+      const output = result.output
+      expect(output).toContain('global.currentInject.render = function')
+      expect(output).not.toContain('function getTemplate(')
+      expect(output).not.toContain('var templates = Object.assign({},')
       done()
     })
   })

@@ -2900,10 +2900,10 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (el, meta) {
-  if (el.injectWxsProps && el.injectWxsProps.length) {
-    el.injectWxsProps.forEach((injectWxsProp) => {
-      const { injectWxsPath, injectWxsModuleName } = injectWxsProp
+function processInjectWxsInfos (el, meta) {
+  if (el.injectWxsInfos && el.injectWxsInfos.length) {
+    el.injectWxsInfos.forEach((injectWxsInfo) => {
+      const { injectWxsPath, injectWxsModuleName } = injectWxsInfo
       injectWxs(meta, injectWxsModuleName, injectWxsPath)
     })
   }
@@ -3021,7 +3021,7 @@ function processElement (el, root, options, meta) {
   // 检测跨平台语法使用情况并给出警告
   processCrossPlatformSyntaxWarning(el)
 
-  processInjectWxs(el, meta, options)
+  processInjectWxsInfos(el, meta, options)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
 

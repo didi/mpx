@@ -54,7 +54,7 @@
 1.  **新增 `genTemplate(node)` 函数**：
     *   用于生成模版定义对应的函数代码。
     *   输入：`template` 定义的 AST 节点。
-    *   输出：`function(createElement, getComponent) { return ... }` 形式的字符串。
+    *   输出：`(function(createElement, getComponent) { return ... })` 形式的字符串，自带括号包裹以确保 AST 能够正确解析。
     *   内部调用 `genNode` 生成函数体内容。
 
 2.  **修改 `genNode(node)` 函数**：
@@ -81,7 +81,7 @@
 2.  **处理本地模版 (`meta.templates`)**：
     *   遍历 `meta.templates`。
     *   调用 `genTemplate` 生成每个模版的函数代码。
-    *   对生成的代码使用 `bindThis.transform` 进行处理，确保变量访问正确转换为 `this.variable`。
+    *   调用抽象出来的 `transformCode` 函数，内部使用 `bindThis.transform` 进行处理，确保变量访问正确转换为 `this.variable`，并处理可能的错误。
 
 3.  **注入 `templates` 对象**：
     *   将引入的模版和本地模版合并：`const allTemplates = Object.assign({}, import_1, import_2, localTemplates);`
@@ -141,13 +141,13 @@ function getTemplateComponent(name, getComponent) {
 
 // 本地模版定义
 var localTemplates = {
-  msgItem: function(data) {
+  msgItem: (function(data) {
     // bindThis 处理后，index -> this.index
     return createElement(View, null,
       createElement(Text, null, this.index, ": ", this.msg),
       createElement(Text, null, " Time: ", this.time)
     );
-  }
+  })
 };
 
 Object.keys(localTemplates).forEach(function (name) {

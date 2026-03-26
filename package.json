@@ -13,7 +13,7 @@
     "docs:dev": "npm run dev -w docs-vitepress",
     "docs:build": "npm run build -w docs-vitepress",
     "docs:preview": "npm run preview -w docs-vitepress",
-    "test:debug": "jest packages/webpack-plugin/test/platform/wx/template/rn-template.spec.js"
+    "test:debug": "jest packages/webpack-plugin/test/platform/wx/template/"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
