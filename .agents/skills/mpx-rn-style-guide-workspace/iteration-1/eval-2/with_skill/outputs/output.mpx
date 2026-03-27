@@ -1,0 +1,27 @@
+<template>
+  <view class="container">
+    <view class="container-box active" hover-class="container-box-active"></view>
+  </view>
+</template>
+<style>
+.container-box {
+  /* 使用条件编译处理 1rpx 极细边框和 display: none */
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+  display: none;
+  border: 1rpx solid #ccc;
+  /* @mpx-elif (__mpx_mode__ === 'rn') */
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  border-width: StyleSheet.hairlineWidth;
+  border-color: #ccc;
+  border-style: solid;
+  /* @mpx-endif */
+  
+  /* font-weight 避免数值 */
+  font-weight: normal; 
+}
+.container-box-active {
+  background-color: #eee;
+}
+</style>

@@ -17,6 +17,7 @@ const { parseExp } = require('./parse-exps')
 const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb, isNoMode } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
+const { isNativeMiniTag } = require('../utils/dom-tag-config')
 
 const no = function () {
   return false
@@ -180,9 +181,9 @@ const i18nWxsLoaderPath = normalize.lib('wxs/i18n-loader.js')
 // 添加~前缀避免wxs绝对路径在存在projectRoot时被拼接为错误路径
 const i18nWxsRequest = '~' + i18nWxsLoaderPath + '!' + i18nWxsPath
 const i18nModuleName = '_i_'
-const stringifyWxsPath = '~' + normalize.lib('runtime/stringify.wxs')
+const stringifyWxsRequest = '~' + normalize.lib('runtime/stringify.wxs')
 const stringifyModuleName = '_s_'
-const optionalChainWxsPath = '~' + normalize.lib('runtime/oc.wxs')
+const optionalChainWxsRequest = '~' + normalize.lib('runtime/oc.wxs')
 const optionalChainWxsName = '_oc_' // 改成_oc解决web下_o重名问题
 
 const tagRES = /(\{\{(?:.|\n|\r)+?\}\})(?!})/
@@ -617,9 +618,9 @@ function parse (template, options) {
   warn$1 = options.warn || baseWarn
   error$1 = options.error || baseError
   mode = options.mode || 'wx'
+  srcMode = options.srcMode || mode
   env = options.env
   defs = options.defs || {}
-  srcMode = options.srcMode || mode
   ctorType = options.ctorType
   moduleId = options.moduleId
   isNative = options.isNative
@@ -640,11 +641,11 @@ function parse (template, options) {
   processingTemplate = false
   rulesResultMap.clear()
   componentGenerics = options.componentGenerics || {}
+  usingComponentsInfo = options.usingComponentsInfo || {}
+  usingComponents = Object.keys(usingComponentsInfo)
+
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
-
-  usingComponents = Object.keys(options.usingComponentsInfo)
-  usingComponentsInfo = options.usingComponentsInfo
 
   const _warn = content => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
@@ -811,7 +812,7 @@ function parse (template, options) {
   }
 
   if (hasOptionalChaining) {
-    injectWxs(meta, optionalChainWxsName, optionalChainWxsPath)
+    injectWxs(meta, optionalChainWxsName, optionalChainWxsRequest)
   }
 
   injectNodes.forEach((node) => {
@@ -1703,6 +1704,10 @@ function parseMustacheWithContext (raw = '') {
         const funcNameRE = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`)
         const funcNameREG = new RegExp(`(?<![A-Za-z0-9_$.])${i18nFuncName}\\(`, 'g')
         if (funcNameRE.test(exp)) {
+          if (processingTemplate) {
+            warn$1('i18n function is not supported in template!')
+            break
+          }
           if (i18n.useComputed || !i18nFuncName.startsWith('\\$')) {
             const i18nInjectComputedKey = `_i${i18nInjectableComputed.length + 1}`
             i18nInjectableComputed.push(`${i18nInjectComputedKey} () {\nreturn ${exp.trim()}}`)
@@ -2381,7 +2386,7 @@ function processClass (el, meta) {
       // swan中externalClass是通过编译时静态实现，因此需要保留原有的staticClass形式避免externalClass失效
       value: mode === 'swan' && staticClass ? `${staticClass} {{${stringifyModuleName}.c('', ${dynamicClassExp})}}` : `{{${stringifyModuleName}.c(${staticClassExp}, ${dynamicClassExp})}}`
     }])
-    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    injectWxs(meta, stringifyModuleName, stringifyWxsRequest)
   } else if (staticClass) {
     addAttrs(el, [{
       name: targetType,
@@ -2414,7 +2419,7 @@ function processStyle (el, meta) {
       name: targetType,
       value: `{{${stringifyModuleName}.s(${staticStyleExp}, ${dynamicStyleExp})}}`
     }])
-    injectWxs(meta, stringifyModuleName, stringifyWxsPath)
+    injectWxs(meta, stringifyModuleName, stringifyWxsRequest)
   } else if (staticStyle) {
     addAttrs(el, [{
       name: targetType,
@@ -2432,6 +2437,10 @@ function isRealNode (el) {
 }
 
 function isComponentNode (el) {
+  if (processingTemplate) {
+    // 处理模版时无法获取真实的usingComponents信息，除了小程序基础组件和框架内建组件外都识别为用户组件
+    return isRealNode(el) && !isNativeMiniTag(el.tag) && !el.isBuiltIn
+  }
   return usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component' || componentGenerics[el.tag]
 }
 
@@ -2545,6 +2554,60 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
+/**
+ * 输出RN时处理template标签
+ * @param {*} el
+ * @param {*} meta
+ * @returns
+ * - true: 当前正在处理template定义节点及其子节点
+ * - false|undefined: 当前不在处理template定义节点及其子节点
+ */
+function processTemplateReact (el, meta) {
+  if (el.tag === 'import') {
+    if (el.attrsMap.src) {
+      if (!meta.imports) {
+        meta.imports = []
+      }
+      meta.imports.push(el.attrsMap.src)
+    }
+    el.shouldRemove = true
+    return
+  }
+
+  if (el.tag === 'template') {
+    const is = getAndRemoveAttr(el, 'is').val
+    if (is) {
+      // template usage, keep processing
+      const data = getAndRemoveAttr(el, 'data').val
+      el.templateInfo = {
+        is: parseMustacheWithContext(is).result,
+        data: data ? parseMustacheWithContext(`{${data}}`).result : ''
+      }
+      return
+    }
+    if (el.attrsMap.name) {
+      // template definition, keep processing
+      el.isTemplate = true
+      processingTemplate = true
+      return true
+    }
+    // invalid template tag
+    error$1('Invalid template tag, should have valid is or name attr')
+    el.shouldRemove = true
+  }
+}
+
+function postProcessTemplateReact (el, meta) {
+  if (el.isTemplate) {
+    if (!meta.templates) {
+      meta.templates = {}
+    }
+    meta.templates[el.attrsMap.name] = el
+    removeNode(el, true)
+    processingTemplate = false
+  }
+}
+
 function postProcessAliComponentRootView (el, options, meta) {
   const processAttrsConditions = [
     { condition: /^(on|catch)Tap$/, action: 'clone' },
@@ -2615,8 +2678,8 @@ function postProcessAliComponentRootView (el, options, meta) {
 // 有virtualHost情况wx组件注入virtualHost。无virtualHost阿里组件注入root-view。其他跳过。
 function getVirtualHostRoot (options, meta) {
   if (srcMode === 'wx') {
-    if (ctorType === 'component') {
-      if (isWeb(mode) && !hasVirtualHost) {
+    if (ctorType === 'component' && !hasVirtualHost) {
+      if (isWeb(mode)) {
         // ali组件根节点实体化
         const rootView = createASTElement('view', [
           {
@@ -2631,7 +2694,7 @@ function getVirtualHostRoot (options, meta) {
         processElement(rootView, rootView, options, meta)
         return rootView
       }
-      if (isReact(mode) && !hasVirtualHost) {
+      if (isReact(mode)) {
         const tagName = isCustomText ? 'text' : 'view'
         const rootView = createASTElement(tagName, [
           {
@@ -2647,18 +2710,20 @@ function getVirtualHostRoot (options, meta) {
         return rootView
       }
     }
-    if (isWeb(mode) && ctorType === 'page') {
-      return createASTElement('page')
-    }
-    if (isReact(mode) && ctorType === 'page') {
-      const rootView = createASTElement('view', [
-        {
-          name: 'class',
-          value: MPX_TAG_PAGE_SELECTOR
-        }
-      ])
-      processElement(rootView, rootView, options, meta)
-      return rootView
+    if (ctorType === 'page') {
+      if (isWeb(mode)) {
+        return createASTElement('page')
+      }
+      if (isReact(mode)) {
+        const rootView = createASTElement('view', [
+          {
+            name: 'class',
+            value: MPX_TAG_PAGE_SELECTOR
+          }
+        ])
+        processElement(rootView, rootView, options, meta)
+        return rootView
+      }
     }
   }
   return getTempNode()
@@ -2713,7 +2778,6 @@ function processTemplate (el) {
 function postProcessTemplate (el) {
   if (el.isTemplate) {
     processingTemplate = false
-    return true
   }
 }
 
@@ -2836,11 +2900,11 @@ function processDuplicateAttrsList (el) {
 }
 
 // 处理wxs注入逻辑
-function processInjectWxs (el, meta) {
-  if (el.injectWxsProps && el.injectWxsProps.length) {
-    el.injectWxsProps.forEach((injectWxsProp) => {
-      const { injectWxsPath, injectWxsModuleName } = injectWxsProp
-      injectWxs(meta, injectWxsModuleName, injectWxsPath)
+function processInjectWxsInfos (el, meta) {
+  if (el.injectWxsInfos && el.injectWxsInfos.length) {
+    el.injectWxsInfos.forEach((injectWxsInfo) => {
+      const { injectWxsRequest, injectWxsModuleName } = injectWxsInfo
+      injectWxs(meta, injectWxsModuleName, injectWxsRequest)
     })
   }
 }
@@ -2934,8 +2998,9 @@ function processMpxTagName (el) {
 
 function processElement (el, root, options, meta) {
   processAtMode(el)
-  // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
   if (el._matchStatus === statusEnum.MISMATCH) {
+    // 如果已经标记了这个元素要被清除，直接return跳过后续处理步骤
+    el.shouldRemove = true
     return
   }
 
@@ -2957,7 +3022,7 @@ function processElement (el, root, options, meta) {
   // 检测跨平台语法使用情况并给出警告
   processCrossPlatformSyntaxWarning(el)
 
-  processInjectWxs(el, meta, options)
+  processInjectWxsInfos(el, meta, options)
 
   const transAli = mode === 'ali' && srcMode === 'wx'
 
@@ -2968,25 +3033,26 @@ function processElement (el, root, options, meta) {
     processIfWeb(el)
     processScoped(el)
     processEventWeb(el)
-    // processWebExternalClassesHack(el, options)
     processExternalClasses(el, options)
     processComponentGenerics(el, meta)
     return
   }
 
   if (isReact(mode)) {
-    const pass = isReactComponent(el, options)
+    const isTemplate = processTemplateReact(el, meta) || processingTemplate
+    if (el.shouldRemove) return
+    const isReactComponent$1 = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
-    processRefReact(el, meta)
+    if (!isTemplate) processRefReact(el, meta)
     processStyleReact(el, options)
-    if (!pass) {
+    if (!isReactComponent$1) {
       processEventReact(el, options)
-      processComponentGenerics(el, meta)
-      processComponentIs(el, options)
+      if (!isTemplate) processComponentGenerics(el, meta)
+      if (!isTemplate) processComponentIs(el, options)
       processSlotReact(el, meta)
     }
     processAttrs(el, options)
@@ -3001,7 +3067,6 @@ function processElement (el, root, options, meta) {
   }
 
   if (transAli) {
-    // processAliExternalClassesHack(el, options)
     processExternalClasses(el, options)
   }
 
@@ -3026,22 +3091,23 @@ function processElement (el, root, options, meta) {
 }
 
 function closeElement (el, options, meta) {
-  postProcessAtMode(el)
   postProcessWxs(el, meta)
 
   if (isWeb(mode)) {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
+    postProcessRemove(el)
     return
   }
   if (isReact(mode)) {
     postProcessForReact(el)
     postProcessIfReact(el)
+    postProcessTemplateReact(el, meta)
+    postProcessRemove(el)
     return
   }
 
-  const isTemplate = postProcessTemplate(el) || processingTemplate
-  if (!isTemplate) {
+  if (!processingTemplate) {
     if (!isNative) {
       postProcessComponentIs(el, (child) => {
         if (!getComponentInfo(el).hasVirtualHost && mode === 'ali') {
@@ -3065,6 +3131,8 @@ function closeElement (el, options, meta) {
     postProcessFor(el)
     postProcessIf(el)
   }
+  postProcessTemplate(el)
+  postProcessRemove(el)
 }
 
 // 运行时组件的模版节点收集，最终注入到 mpx-custom-element-*.wxml 中
@@ -3072,8 +3140,8 @@ function collectDynamicInfo (el, options, meta) {
   setBaseWxml(el, { mode, isComponentNode, options }, meta)
 }
 
-function postProcessAtMode (el) {
-  if (el._matchStatus === statusEnum.MISMATCH) {
+function postProcessRemove (el) {
+  if (el.shouldRemove) {
     removeNode(el)
   }
 }
@@ -3307,7 +3375,7 @@ function addIfConditionDynamic (el, condition) {
   el.ifConditions.push(condition)
 }
 
-function processIfConditionsDynamic (el) {
+function postProcessIfConditionsDynamic (el) {
   const prevNode = findPrevNode(el)
   if (prevNode && prevNode.if) {
     addIfConditionDynamic(prevNode, {
@@ -3389,7 +3457,7 @@ function postProcessIfDynamic (vnode, config) {
       ? config.directive.elseif
       : config.directive.else
     getAndRemoveAttr(vnode, directive)
-    processIfConditionsDynamic(vnode)
+    postProcessIfConditionsDynamic(vnode)
     delete vnode.elseif
     delete vnode.else
   }
