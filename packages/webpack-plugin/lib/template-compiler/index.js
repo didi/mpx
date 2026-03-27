@@ -33,6 +33,7 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
   const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath, false, queryObj.moduleId ? null : this)
+  const isStatic = queryObj.isStatic
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -89,7 +90,8 @@ module.exports = function (raw) {
   }
 
   let result = runtimeCompile ? '' : compiler.serialize(root)
-  if (isNative) {
+  if (isNative || isStatic) {
+    // 对于原生小程序组件和静态模版无需注入运行时信息，直接返回模版编译结果
     return result
   }
 
