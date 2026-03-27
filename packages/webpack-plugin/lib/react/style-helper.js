@@ -135,7 +135,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-		  // set css defalut value
+          // set css defalut value
           const val = classMap[key] || {}
           classMap[key] = Object.assign(val, classMapValue)
 
