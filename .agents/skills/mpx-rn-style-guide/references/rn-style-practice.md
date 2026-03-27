@@ -21,11 +21,7 @@
 - [5. 隐藏元素](#5-隐藏元素)
 - [6. 文本垂直居中](#6-文本垂直居中)
 - [7. 渐变中避免使用 transparent](#7-渐变中避免使用-transparent)
-- [8. 使用条件编译](#8-使用条件编译)
-  - [8.1 样式条件编译](#81-样式条件编译)
-  - [8.2 模版条件编译](#82-模版条件编译)
-  - [8.3 脚本条件编译](#83-脚本条件编译)
-- [9. 提取公共样式](#9-提取公共样式)
+- [8. 提取公共样式](#8-提取公共样式)
 
 ### 1. 选择器使用建议
 
@@ -621,100 +617,7 @@ Grid 布局在 RN 平台不支持。
 }
 ```
 
-### 8. 使用条件编译
-
-对于跨平台无法兼容的样式，局部使用条件编译进行分平台定义是可以接受的，跨平台输出 RN 时通常原平台使用 `_mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web'` 作为条件，而 RN 平台则使用 `__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'` 作为条件。
-
-#### 8.1 样式条件编译
-
-```html
-<style>
-.container {
-  /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
-  padding-top: 0; /* RN 自行处理安全区域 */
-  /* @mpx-else */
-  padding-top: 88rpx; /* 包含导航栏高度 */
-  /* @mpx-endif */
-}
-</style>
-```
-
-#### 8.2 模板条件编译
-
-模板条件编译提供了两种，常用的有 `wx:if` 条件编译和 `@mode` / `@_mode` 节点/属性维度的条件编译。
-
-**1. wx:if 条件编译**
-
-直接使用 `wx:if` 和 `__mpx_mode__` 变量进行条件渲染，逻辑直观但灵活性较低。
-
-```html
-<template>
-  <!-- 此处的 __mpx_mode__ 不需要声明数据，编译时会基于当前编译 mode 进行替换 -->
-  <view wx:if="{{__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'}}">
-    仅 RN 平台可见
-  </view>
-  <view wx:else>
-    原平台可见
-  </view>
-</template>
-```
-
-**2. 节点/属性维度条件编译**
-
-使用 `@` 和 `|` 符号来指定某个节点或属性只在某些平台下有效。这种方式更加灵活简洁。
-
-- **显式声明 (`@mode`)**：节点或属性仅在目标平台下输出，节点或属性为目标平台原生支持，**框架会跳过对该节点或属性的跨平台语法转换**。
-- **隐式声明 (`@_mode`)**：节点或属性仅在目标平台下输出，节点或属性为 Mpx 转换支持，**框架仍然会对其进行正常的跨平台语法转换**。
-
-**示例：**
-
-```html
-<template>
-  <!-- 属性维度条件编译，仅在 RN 平台注入 numberOfLines，该属性为 RN 平台原生支持，使用 @mode 进行显式声明，输出 RN 时跳过属性跨平台语法转换-->
-  <text
-    class="title"
-    numberOfLines@ios|android|harmony="{{1}}"
-  >
-    {{title}}
-  </text>
-  <!-- 属性维度条件编译，仅在 RN 平台注入 is-simple，该属性为 Mpx 转换支持，使用 @_mode 进行隐式声明，输出 RN 时保留属性跨平台语法转换-->
-  <text
-    class="content"
-    is-simple@_ios|_android|_harmony
-  >
-    {{content}}
-  </text>
-</template>
-```
-
-```html
-<template>
-  <!-- 节点维度条件编译，使用 @_mode 进行隐式声明，仅在目标平台输出，并且保留节点与属性的跨平台语法转换 -->
-  <view @_ios|_android|_harmony bindtap="handleTap" class="rn-only">仅 RN 可见</view>
-</template>
-```
-
-#### 8.3 脚本条件编译
-
-在 `<script>` 中，可以通过访问 `__mpx_mode__` 获取当前编译 mode，进行平台差异逻辑编写（例如处理 RN 与原平台在选择器 API 上的差异等）。
-
-**基础用法：**
-```javascript
-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') {
-  // 执行 RN 环境相关逻辑
-} else {
-  // 执行原平台相关逻辑
-}
-```
-
-**三元表达式用法：**
-```javascript
-// 对于简单的变量赋值或传参，推荐使用三元表达式
-const isRN = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'
-const apiUrl = isRN ? 'https://api.rn.com' : 'https://api.original.com'
-```
-
-### 9. 提取公共样式
+### 8. 提取公共样式
 
 对于多个组件复用的样式提取到公共样式文件中，减少包体积开销。
 
