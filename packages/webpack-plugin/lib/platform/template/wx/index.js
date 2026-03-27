@@ -119,14 +119,14 @@ module.exports = function getSpec ({ warn, error }) {
             }
           }
           if (el) {
-            const injectWxsProp = {
-              injectWxsPath: '~' + normalize.lib('runtime/swanHelper.wxs'),
+            const injectWxsInfo = {
+              injectWxsRequest: '~' + normalize.lib('runtime/swanHelper.wxs'),
               injectWxsModuleName: 'mpxSwanHelper'
             }
-            if (el.injectWxsProps && Array.isArray(el.injectWxsProps)) {
-              el.injectWxsProps.push(injectWxsProp)
+            if (el.injectWxsInfos && Array.isArray(el.injectWxsInfos)) {
+              el.injectWxsInfos.push(injectWxsInfo)
             } else {
-              el.injectWxsProps = [injectWxsProp]
+              el.injectWxsInfos = [injectWxsInfo]
             }
           }
           return {
