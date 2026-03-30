@@ -398,7 +398,7 @@ const triggerResizeEvent = (mpxProxy, sizeRef) => {
   }
 }
 
-function usePageEffect (mpxProxy, pageId) {
+function usePageEffect (mpxProxy, pageId, type) {
   const sizeRef = useRef(getSystemInfo())
 
   useEffect(() => {
@@ -415,7 +415,7 @@ function usePageEffect (mpxProxy, pageId) {
             triggerResizeEvent(mpxProxy, sizeRef)
 
             // 如果当前全局size与pagesize不一致，在show之后触发一次resize事件
-            if (newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
+            if (type === 'page' && newVal === 'show' && global.__mpxPageSizeCountMap[pageId] !== global.__mpxSizeCount) {
               // 刷新__mpxPageSizeCountMap, 每个页面仅会执行一次，直接驱动render刷新
               global.__mpxPageSizeCountMap[pageId] = global.__mpxSizeCount
             }
@@ -427,7 +427,9 @@ function usePageEffect (mpxProxy, pageId) {
     }
     return () => {
       unWatch && unWatch()
-      del(global.__mpxPageSizeCountMap, pageId)
+      if (type === 'page') {
+        del(global.__mpxPageSizeCountMap, pageId)
+      }
     }
   }, [])
 }
@@ -637,6 +639,11 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
     })
   }
   const validProps = Object.assign({}, rawOptions.props, rawOptions.properties)
+  if (global.__externalClasses && global.__externalClasses.length > 0) {
+    global.__externalClasses.forEach((name) => {
+      validProps[name] = null
+    })
+  }
   const { hasDescendantRelation, hasAncestorRelation } = checkRelation(rawOptions)
   if (rawOptions.methods) rawOptions.methods = wrapMethodsWithErrorHandling(rawOptions.methods)
   const defaultOptions = memo(forwardRef((props, ref) => {
@@ -697,7 +704,7 @@ export function getDefaultOptions ({ type, rawOptions = {}, currentInject }) {
       }
     })
 
-    usePageEffect(proxy, pageId)
+    usePageEffect(proxy, pageId, type)
     useEffect(() => {
       proxy.mounted()
       return () => {
