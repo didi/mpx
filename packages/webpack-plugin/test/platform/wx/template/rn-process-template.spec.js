@@ -7,7 +7,7 @@ describe('RN process template', () => {
     defs: {},
     projectRoot: '/project',
     wxsContentMap: {},
-    checkUsingComponents: false,
+    globalComponents: {},
     getModuleId: jest.fn(() => 'm123')
   }
   const mockContext = {

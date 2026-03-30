@@ -24,10 +24,11 @@ module.exports = function (template, {
     wxsContentMap,
     decodeHTMLText,
     externalClasses,
-    checkUsingComponents,
     webConfig,
     autoVirtualHostRules,
-    forceProxyEventRules
+    forceProxyEventRules,
+    checkUsingComponentsRules,
+    globalComponents,
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -92,13 +93,13 @@ module.exports = function (template, {
           moduleId,
           filePath: rawResourcePath,
           i18n: null,
-          checkUsingComponents,
-          // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
-          globalComponents: [],
+          // 与 template-compiler/index 一致：usingComponentsInfo 已合并 globalComponentsInfo，此处白名单避免对仅 app 注册的组件误报「未使用」
+          globalComponents: Object.keys(globalComponents || {}),
           // web模式下实现抽象组件
           componentGenerics,
           hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
-          forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules)
+          forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
+          checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules)
         })
         if (meta.wxsModuleMap) {
           wxsModuleMap = meta.wxsModuleMap
