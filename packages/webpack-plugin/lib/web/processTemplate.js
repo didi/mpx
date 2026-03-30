@@ -28,7 +28,7 @@ module.exports = function (template, {
     autoVirtualHostRules,
     forceProxyEventRules,
     checkUsingComponentsRules,
-    globalComponents,
+    globalComponents
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
