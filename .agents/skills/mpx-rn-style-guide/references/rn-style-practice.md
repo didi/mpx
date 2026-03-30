@@ -28,6 +28,7 @@
 - [6. 文本垂直居中](#6-文本垂直居中)
 - [7. 渐变中避免使用 transparent](#7-渐变中避免使用-transparent)
 - [8. 提取公共样式](#8-提取公共样式)
+- [9. 动态样式绑定中的简写属性限制](#9-动态样式绑定中的简写属性限制)
 
 ### 1. 选择器使用建议
 
@@ -878,3 +879,78 @@ Grid 布局在 RN 平台不支持。
 }
 </style>
 ```
+
+### 9. 动态样式绑定中的简写属性限制
+
+RN 平台中，`style` 属性（以及通过 `wx:style`、组件 props 等方式传入的动态样式）**仅支持 RN 原生简写属性**，Mpx 的编译时展开**不会作用于动态样式**。这是一个非常容易踩坑的限制点。
+
+#### class 类样式 vs style 内联样式的关键区别
+
+| 样式位置 | 简写属性支持 | 说明 |
+|---------|------------|------|
+| `<style>` class 类样式 | ✅ Mpx 编译时自动展开 | `margin: 10px 20px` → 编译为 `marginTop`/`marginRight` 等 |
+| `style` 属性（静态/style binding/组件 props） | ❌ 不支持编译展开 | 需手动使用展开后的独立属性 |
+
+#### 受影响的场景
+
+| 场景 | 示例 |
+|------|------|
+| 静态 `style` 属性 | `<view style="margin: 10px 20px">` |
+| `wx:style` 动态绑定 | `<view wx:style="{{ {margin: '10px 20px'} }}">` |
+| 组件 props 传入的样式字符串 | `<child customStyle="margin: 10px; background: red">` |
+
+#### 常见问题示例
+
+**❌ 错误：computed 中返回带简写属性的样式字符串**
+
+```javascript
+// 问题：RN 中 style 属性不支持多值 margin、background 简写、box-sizing
+const submitBtnStyle = computed(() => {
+  return `height: 55px; border-radius: 999px; box-sizing: border-box; background: ${bg};`
+})
+```
+
+**✅ 正确：统一使用展开后的独立属性（所有平台统一，无需条件编译）**
+
+```javascript
+// 使用 RN 兼容的属性写法，rpx 响应式，background-color 展开写法
+const submitBtnStyle = computed(() => {
+  const bg = isReady.value || isLoading.value ? '#FF6435' : '#D3D6DC'
+  return `height: 110rpx; border-radius: 999px; background-color: ${bg};`
+})
+```
+
+**❌ 错误：组件样式 props 中使用简写**
+
+```html
+<!-- 问题：customStyle 为 style 属性，RN 不支持 background 简写和 box-sizing -->
+<submit-order customStyle="height: 55px; border-radius: 999px; box-sizing: border-box; background: #FF6435;" />
+```
+
+**✅ 正确：组件 props 样式也使用展开写法**
+
+```html
+<submit-order customStyle="height: 110rpx; border-radius: 999px; background-color: #FF6435;" />
+```
+
+#### style 属性支持的属性速查
+
+| 属性 | style 属性支持情况 | 推荐替代写法 |
+|------|------|------|
+| `margin: 10px` | ✅ 单值可用 | — |
+| `margin: 10px 20px` | ❌ 不支持 | `marginTop: 10px; marginRight: 20px;` 或 `margin: 10px` |
+| `border-radius: 8px` | ✅ 单值可用 | — |
+| `border-radius: 8px 4px` | ❌ 不支持 | `borderTopLeftRadius: 8px; borderTopRightRadius: 4px;` |
+| `border: 1px solid red` | ❌ 不支持 | `borderWidth: 1px; borderColor: red;` |
+| `box-sizing: border-box` | ❌ 不支持 | RN 默认即为 border-box，无需设置 |
+| `background: red` | ❌ 不支持 | `background-color: red`（写法更明确） |
+| `background: url(...)` | ❌ 不支持 | `background-image: url(...)` |
+| `background: linear-gradient(...)` | ❌ 不支持 | `background-image: linear-gradient(...)` |
+| `flex: 1` | ✅ | — |
+
+#### 最佳实践总结
+
+1. **尽量所有平台统一**：动态样式中使用 RN 兼容写法，在没有对应兼容写法时再采取需条件编译。
+2. **避免简写**：动态样式中完全不使用 `margin`/`padding` 多值、`border`/`background` 简写、`box-sizing`。
+3. **明确属性名**：使用 `background-color` 而非 `background`、`marginTop` 而非 `margin` 多值。
+4. **注意默认值**：RN 中 `box-sizing` 默认即为 `border-box`，无需设置；`display` 默认即为 `flex`，无需设置。

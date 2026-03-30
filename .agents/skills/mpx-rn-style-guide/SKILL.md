@@ -56,6 +56,7 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
     - 文本溢出：`white-space`/`text-overflow` → 原平台保留样式，RN 使用 `numberOfLines` 模板属性条件编译：[参考](./references/rn-style-practice.md#4-文本溢出处理)
     - 隐藏元素：避免 `display: none`，使用尺寸归零与 `overflow: hidden` 等组合样式：[参考](./references/rn-style-practice.md#5-隐藏元素)
     - 布局属性：避免 `grid`/`float`，统一使用 Flex 布局：[参考](./references/rn-style-practice.md#32-避免使用-grid-布局) [参考](./references/rn-style-practice.md#33-避免使用-float-布局)
+    - **style 属性简写限制**：RN 中 style 属性（静态 `style`、`wx:style`、组件 `customStyle` props 等动态样式）仅支持 RN 原生简写属性，应统一使用展开后的独立属性写法：[参考](./references/rn-style-practice.md#9-动态样式绑定中的简写属性限制)
 4. 非必要时减少条件编译的使用，**避免出现大面积连续的条件编译**，因为这会严重破坏代码的可读性和后期维护性。
 5. **保留原始样式定义中的 `/*use rpx*/` 和 `/*use px*/` 注释**，此类注释用于编译期间批量切换样式单位。
 
@@ -103,11 +104,11 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
         /* @mpx-endif */
       }
       ```
-  
+
 3. **检查与确认**：
   - 3.1 检查确保 `<style>` 中不存在任何嵌套选择器写法。
   - 3.2 检查确保 `<style>`、`<template>` 和 `<script>` 中所有存在跨端兼容方案的选择器和样式属性都已被改造为跨端兼容的等效实现。
-  - 3.3 检查确保 `<style>`、`<template>` 和 `<script>` 中所有 RN 平台不支持的选择器和样式属性都已被原平台条件编译所包裹。 
+  - 3.3 检查确保 `<style>`、`<template>` 和 `<script>` 中所有 RN 平台不支持的选择器和样式属性都已被原平台条件编译所包裹。
   - 3.4 检查确保 `<style>`、`<template>` 和 `<script>` 中不存在大面积的条件编译，所有添加的条件编译仅最小包裹不兼容的样式片段。
-  - 3.5 样式行注释规则：参考 [样式行注释规则](./references/rn-style-comment-rules.md)
-
+  - 3.5 检查确保所有 `style` 属性（静态 `style`、`wx:style`、组件 `customStyle`/`lStyle`/`ruleStyle` 等样式 props）中不存在 RN 不支持的简写属性**：[参考](./references/rn-style-practice.md#9-动态样式绑定中的简写属性限制)
+  - 3.6 样式行注释规则：参考 [样式行注释规则](./references/rn-style-comment-rules.md)
