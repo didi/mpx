@@ -1,6 +1,6 @@
-# 使用TypeScript开发小程序
+# 使用TypeScript开发小程序 {#use-ts}
 
-## 什么是TypeScript
+## 什么是TypeScript {#what-is-ts}
 
 TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最常用的语言之一） 的基础上添加静态类型定义构建而成。
 
@@ -8,7 +8,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 
 在 TypeScript 中，不是每个地方都需要标注类型，因为类型推断允许您无需编写额外的代码即可获得大量功能。
 
-## TypeScript优势
+## TypeScript优势 {#ts-advantage}
 
 1. 静态类型检查
    静态类型检查可以避免很多不必要类型的错误，在编译阶段提前发现问题；
@@ -20,9 +20,9 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
    目前主流的 IDE 都对 `TypeScript` 提供了良好的支持，基于 `TypeScript` 的类型系统提供友好准确的编码提示与错误检查。
 
 
-## 使用方式
+## 使用方式 {#usage}
 
-### 编写ts前的准备工作
+### 编写ts前的准备工作 {#preparation}
 
 由于对 store 做类型推导使用了最新的 `TypeScript` 特性，因此需要将编辑器的 `TypeScript` 版本升级至 **4.1.3** 及以上版本。以下是 VSCode 配置示例：
 
@@ -38,7 +38,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 使用 @typescript/eslint-plugin 对 ts 代码进行检查，当在.mpx文件中使用全局类型时，eslint 会抛出 no-undef 错误，可以关闭相关 eslint 规则校验
 :::
 
-### .mpx中编写ts（推荐）
+### .mpx中编写ts（推荐） {#write-ts-in-mpx}
 
 目前 Mpx 已经支持在.mpx文件的 script 标签中编写 ts 代码，需要在 script 标签上添加 ` lang="ts" ` 属性，在编译时会自动这部分 script 中的内容进行 ts 类型检查。
 
@@ -54,7 +54,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 <script lang="ts" src="./index.ts"></script>
 ```
 
-### 为.ts文件添加loader
+### 为.ts文件添加loader {#add-ts-loader}
 
 在 Webpack 配置中添加如下 rules 以配置 ts-loader
 
@@ -68,7 +68,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 }
 ```
 
-### 编写tsconfig.json文件
+### 编写tsconfig.json文件 {#write-tsconfig}
 
 对相关配置不熟悉的同学可以直接采用下面配置，能够最大限度发挥 Mpx 中强大的 ts 类型推导能力
 
@@ -90,7 +90,7 @@ TypeScript 是一个开源的编程语言，通过在 JavaScript（世界上最�
 }
 ```
 
-### 增强类型
+### 增强类型 {#enhanced-types}
 
 如果需要增加 Mpx 的属性和选项，可以自定义声明 `TypeScript` 补充现有的类型。
 
@@ -120,7 +120,7 @@ import mpx from '@mpxjs/core'
 mpx.$myProperty = 'my-property'
 ```
 
-## 类型推导及注意事项
+## 类型推导及注意事项 {#type-inference-notes}
 
 Mpx 基于泛型函数提供了非常方便用户使用的反向类型推导能力，简单来说，就是用户可以用非常接近于 js 的方式调用 Mpx 提供的 api ，就能够获得大量基于用户输入参数反向推导得到的类型提示及检查。但是由于 ts 本身的能力限制，我们在 Mpx 的运行时中添加了少量辅助函数和变种api，便于用户最大程度地享受反向类型推导带来的便利性，简单的使用示例如下：
 

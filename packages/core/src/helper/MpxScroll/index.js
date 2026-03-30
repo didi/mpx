@@ -57,8 +57,8 @@ export default class MpxScroll {
       const isIntersecting = change.isIntersecting
       this.isIntersecting = isIntersecting
       if (!isIntersecting) {
-        // 非 inter section 状态下及时清除 transtorm，以免影响正常滚动时元素的 fixed 定位
-        this.el.style.cssText = ''
+        // 非 inter section 状态下及时清除 transform，以免影响正常滚动时元素的 fixed 定位
+        this.el.style.transform = ''
         this.pullDownEventRegister && this.pullDownEventRegister.destroy()
       } else {
         this.pullDownEventRegister = new EventRegister(this.el, [
@@ -103,7 +103,12 @@ export default class MpxScroll {
 
   transformPage (distance) {
     this.translateY = distance
-    this.el.style.cssText = `transform: translateY(${distance}px)`
+    if (distance === 0) {
+      // 距离为 0 时移除 transform，避免影响页面 fixed 定位
+      this.el.style.transform = ''
+    } else {
+      this.el.style.transform = `translateY(${distance}px)`
+    }
   }
 
   onTouchEnd (e) {
@@ -219,8 +224,15 @@ export default class MpxScroll {
   }
 
   onReachBottom (onReachBottomDistance, callback) {
-    const { bottom } = this.el.getBoundingClientRect()
-    const mark = bottom - window.innerHeight <= onReachBottomDistance
+    const scrollTop = getScrollTop()
+    const scrollHeight = document.documentElement.scrollHeight
+    const clientHeight = window.innerHeight
+
+    // 使用 scrollHeight 判断实际内容高度是否超过视口，只有可滚动时才计算触底
+    const scrollable = scrollHeight > clientHeight
+    // 距离底部的距离 = 内容总高度 - (当前滚动位置 + 视口高度)
+    const distanceToBottom = scrollHeight - (scrollTop + clientHeight)
+    const mark = scrollable && (distanceToBottom <= onReachBottomDistance)
 
     if (!this.bottomReached && mark) {
       this.bottomReached = true

@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/navigation-bar/wx.hideHomeButton.html)
 
-### 参数
+### 参数 {#parameters}
 **Object object**
 
 | 属性    | 类型     | 默认值 | 必填 | 说明                 |

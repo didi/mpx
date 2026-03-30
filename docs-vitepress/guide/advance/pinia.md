@@ -1,8 +1,8 @@
-# 状态管理（pinia）
+# 状态管理（pinia） {#pinia}
 
 Mpx 参考 [Pinia](https://pinia.vuejs.org/) 设计实现了一套外部状态逻辑管理系统（pinia），允许跨页面/组件共享状态，其中的概念与 api 与 Pinia 保持一致，同时支持在 Mpx 组合式 API（Composition API）和选项式 API（Options API）模式下使用。
 
-## 介绍
+## 介绍 {#intro}
 
 `pinia` 是一个状态管理容器，可支持复杂场景下的组件通信机制，与`Vuex`状态管理不同之处在于：
 
@@ -12,7 +12,7 @@ Mpx 参考 [Pinia](https://pinia.vuejs.org/) 设计实现了一套外部状态�
 
 3. 扁平架构，不再有 modules 嵌套结构，支持不同 store 之间的交叉组合方式使用。
 
-### 创建 pinia
+### 创建 pinia {#create-pinia}
 
 首先在应用中调用`createPinia`方法来创建全局 pinia 实例。
 
@@ -42,7 +42,7 @@ createApp({
 })
 ```
 
-### 创建 store
+### 创建 store {#create-store}
 
 然后调用`defineStore`方法，传入 store 唯一标识（id），来创建一个 store，支持 Setup 和 Options 两种风格的 store。
 
@@ -100,7 +100,7 @@ export const useOptionsStore = defineStore('options', {
   }
 })
 ```
-### 使用 store
+### 使用 store {#use-store}
 
 在选项式 API 中使用，如果你不能使用组合式 API，但你可以使用 `computed`, `methods`, '...'，那你可以使用 `mapState()`, `mapActions()` 辅助函数
 来将 `state`, `getter`, `action` 等映射到你的组件中。
@@ -170,7 +170,7 @@ createComponent({
 ```
 > 注意：在组合式 API（Setup API）模式下，直接解构获取到的 store 数据会失去响应性，需要通过 storeToRefs 方法处理赋予数据响应性。另外`storeToRefs`方法只会返回 state 或 getter。
 
-## 使用插件
+## 使用插件 {#use-plugin}
 
 Mpx pinia 支持使用插件扩展当前 store 实例的功能，用法如下：
 

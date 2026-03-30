@@ -115,7 +115,7 @@ interface Context {
   refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
   asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
 
-  forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
+  forceUpdate (data?: object): void
 
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
@@ -204,7 +204,7 @@ export interface MpxComponentIns {
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
-  $forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
+  $forceUpdate (data?: object): void
 
   $nextTick (fn: () => void): void
 
@@ -387,7 +387,37 @@ export interface RnConfig {
    * @platform android
    * @default true
    */
-  enableNativeKeyboardAvoiding?: boolean
+  enableNativeKeyboardAvoiding?: boolean,
+
+  /**
+   * 自定义蓝牙权限检查函数，用于在调用 openBluetoothAdapter 时替代默认的权限检查逻辑。
+   *
+   * Mpx 在 iOS 上默认返回 true（假定权限由系统弹窗处理），在 Android 上会请求 ACCESS_FINE_LOCATION 或 BLUETOOTH_SCAN/CONNECT 权限。
+   * 如果需要自定义权限申请逻辑（例如在某些定制 Android 设备上），可配置此函数。
+   *
+   * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
+   */
+  bluetoothPermission?: () => Promise<boolean>
+
+  /**
+   * 自定义 Wi-Fi 权限检查函数，用于在调用 startWifi 时替代默认的权限检查逻辑。
+   *
+   * Mpx 在 Android 上默认会请求 ACCESS_FINE_LOCATION 权限。
+   * 如果需要自定义权限申请逻辑，可配置此函数。
+   *
+   * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
+   */
+  wifiPermission?: () => Promise<boolean>
+
+  /**
+   * 自定义相机权限检查函数，用于在渲染 Camera 组件前进行权限检查。
+   *
+   * 默认情况下，Mpx 会直接渲染 Camera 组件。
+   * 如果配置了此函数，Camera 组件会等待该函数返回 true 后再进行渲染。
+   *
+   * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
+   */
+  cameraPermission?: () => Promise<boolean>
 }
 
 interface MpxConfig {
@@ -412,7 +442,7 @@ interface MpxConfig {
   rnConfig: RnConfig,
 }
 
-type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
+type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'| 'ks' | 'jd' | 'dd'
 
 interface ImplementOptions {
   modes?: Array<SupportedMode>

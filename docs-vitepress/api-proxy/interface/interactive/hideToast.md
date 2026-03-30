@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/ui/interaction/wx.hideToast.html)
 
-### 参数
+### 参数 {#parameters}
 **Object object**
 
 | 属性        | 类型     | 默认值 | 必填 | 说明                                         | 最低版本 | 支付宝 | RN | web |

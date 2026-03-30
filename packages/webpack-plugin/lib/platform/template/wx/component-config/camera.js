@@ -13,8 +13,23 @@ module.exports = function ({ print }) {
   const qqEventLog = print({ platform: 'qq', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const qaEventLog = print({ platform: 'qa', tag: TAG_NAME, isError: false, type: 'event' })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
+
   return {
     test: TAG_NAME,
+    ios (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
+    android (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
+    harmony (tag, { el }) {
+      el.isBuiltIn = true
+      return 'mpx-camera'
+    },
     props: [
       {
         test: 'mode',
@@ -46,7 +61,8 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(resolution|frame-size)$/,
-        qq: qqPropLog
+        qq: qqPropLog,
+        ks: ksPropLog
       },
       {
         test: /^(frame-size|device-position)$/,
@@ -73,11 +89,17 @@ module.exports = function ({ print }) {
         test: /^(scancode)$/,
         swan: baiduEventLog,
         tt: ttEventLog,
-        qa: qaEventLog
+        qa: qaEventLog,
+        ks: ksEventLog
       },
       {
         test: /^(initdone)$/,
-        qq: qqEventLog
+        qq: qqEventLog,
+        ks: ksEventLog
+      },
+      {
+        test: /^(stop|error)$/,
+        ks: ksEventLog
       }
     ]
   }

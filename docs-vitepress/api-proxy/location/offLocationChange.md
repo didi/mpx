@@ -6,12 +6,12 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/location/wx.offLocationChange.html)
 
-### 参数
+### 参数 {#parameters}
 
 **function listener**\
 onLocationChange 传入的监听函数。不传此参数则移除所有监听函数。
 
-### 示例代码
+### 示例代码 {#example-code}
 ```js
 const listener = function (res) { console.log(res) }
 
