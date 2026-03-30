@@ -2,12 +2,14 @@
   "name": "ReactNativeProject",
   "version": "0.0.1",
   "private": true,
- "scripts": {
+  "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start --reset-cache",
     "test": "jest",
+    "midscene:prepare": "node ./midscene/ensure-runtime.mjs",
+    "midscene:smoke:android": "npm run midscene:prepare && tsx ./midscene/android.smoke.ts",
     "bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output ./ios/main.jsbundle --assets-dest ./ios",
     "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/",
     "e2e:build:android": "detox build --configuration android.emu.debug",
@@ -43,6 +45,7 @@
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
+    "@midscene/android": "^1.6.0",
     "@react-native-community/cli": "15.0.1",
     "@react-native-community/cli-platform-android": "15.0.1",
     "@react-native-community/cli-platform-ios": "15.0.1",
@@ -54,10 +57,12 @@
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "detox": "^20.27.4",
+    "dotenv": "^17.3.1",
     "eslint": "^8.19.0",
     "jest": "^29.6.3",
     "prettier": "2.8.8",
     "react-test-renderer": "18.3.1",
+    "tsx": "^4.21.0",
     "typescript": "5.0.4"
   },
   "engines": {

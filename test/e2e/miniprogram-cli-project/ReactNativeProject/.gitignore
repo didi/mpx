@@ -39,6 +39,8 @@ local.properties
 node_modules/
 npm-debug.log
 yarn-error.log
+.npm-cache/
+.env.midscene
 
 # fastlane
 #

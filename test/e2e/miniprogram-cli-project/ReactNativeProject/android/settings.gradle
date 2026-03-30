@@ -1,5 +1,22 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+pluginManagement {
+    repositories {
+        maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2/") }
+        google()
+        mavenCentral()
+    }
+    includeBuild("../node_modules/@react-native/gradle-plugin")
+}
+
 plugins { id("com.facebook.react.settings") }
+
+dependencyResolutionManagement {
+    repositories {
+        maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2/") }
+        google()
+        mavenCentral()
+    }
+}
+
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'ReactNativeProject'
 include ':app'
