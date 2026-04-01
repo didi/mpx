@@ -193,6 +193,7 @@ module.exports = function getSpec({ warn, error }) {
     }
     return true
   }
+
   // prop & value 校验：过滤的不合法的属性和属性值
   const verification = ({ prop, value, selector }, { mode }) => {
     return verifyProps({ prop, value, selector }, { mode }) && verifyValues({ prop, value, selector }) && ({ prop, value })
@@ -425,6 +426,7 @@ module.exports = function getSpec({ warn, error }) {
     values.sort()
     const transform = []
     values.forEach(item => {
+      // const match = item.match(/(\w+)\(([^()]+|\s*var\([^)]+\))\)/)
       const match = item.match(/([/\w]+)\((.+)\)/)
       if (match && match.length >= 3) {
         let key = match[1]
