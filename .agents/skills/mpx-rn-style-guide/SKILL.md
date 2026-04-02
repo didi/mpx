@@ -19,7 +19,6 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
 | [条件编译](./references/conditional-compile.md) | 描述了 Mpx 中包括模板、脚本、样式和配置等不同部分的条件编译语法，当跨端适配开发遇到兼容性问题需要分端处理时读取 |
 | [跨端输出 RN 样式能力参考](./references/rn-style-reference.md) | 描述了 Mpx 输出 RN 时详细的样式能力支持情况，当查询某项样式能力是否支持，遇到样式不生效、样式报错等问题时读取 |
 | [跨端输出 RN 样式开发最佳实践](./references/rn-style-practice.md) | 描述了 Mpx 输出 RN 时常用选择器和样式属性的跨端兼容方案和样式开发最佳实践，当进行已有组件跨端样式适配改造或新组件跨端样式开发时读取 |
-| [样式行注释规则](./references/rn-style-comment-rules.md) | 描述了样式条件编译的注释写法，以及空 class 选择器等注意事项 |
 
 ## 跨端输出 RN 样式适配改造
 
@@ -56,7 +55,7 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
     - 文本溢出：`white-space`/`text-overflow` → 原平台保留样式，RN 使用 `numberOfLines` 模板属性条件编译：[参考](./references/rn-style-practice.md#4-文本溢出处理)
     - 隐藏元素：避免 `display: none`，使用尺寸归零与 `overflow: hidden` 等组合样式：[参考](./references/rn-style-practice.md#5-隐藏元素)
     - 布局属性：避免 `grid`/`float`，统一使用 Flex 布局：[参考](./references/rn-style-practice.md#32-避免使用-grid-布局) [参考](./references/rn-style-practice.md#33-避免使用-float-布局)
-    - **style 属性简写限制**：RN 中 style 属性（静态 `style`、`wx:style`、组件 `customStyle` props 等动态样式）仅支持 RN 原生简写属性，应统一使用展开后的独立属性写法：[参考](./references/rn-style-practice.md#9-动态样式绑定中的简写属性限制)
+    - style 属性简写：避免 style 内联样式中有 RN 原生不支持的简写属性：[参考](./references/rn-style-practice.md#9-动态样式绑定中的简写属性限制)
 4. 非必要时减少条件编译的使用，**避免出现大面积连续的条件编译**，因为这会严重破坏代码的可读性和后期维护性。
 5. **保留原始样式定义中的 `/*use rpx*/` 和 `/*use px*/` 注释**，此类注释用于编译期间批量切换样式单位。
 
@@ -110,5 +109,4 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
   - 3.2 检查确保 `<style>`、`<template>` 和 `<script>` 中所有存在跨端兼容方案的选择器和样式属性都已被改造为跨端兼容的等效实现。
   - 3.3 检查确保 `<style>`、`<template>` 和 `<script>` 中所有 RN 平台不支持的选择器和样式属性都已被原平台条件编译所包裹。
   - 3.4 检查确保 `<style>`、`<template>` 和 `<script>` 中不存在大面积的条件编译，所有添加的条件编译仅最小包裹不兼容的样式片段。
-  - 3.5 检查确保所有 `style` 属性（静态 `style`、`wx:style`、组件 `customStyle`/`lStyle`/`ruleStyle` 等样式 props）中不存在 RN 不支持的简写属性**：[参考](./references/rn-style-practice.md#9-动态样式绑定中的简写属性限制)
-  - 3.6 样式行注释规则：参考 [样式行注释规则](./references/rn-style-comment-rules.md)
+  - 3.5 检查确保样式 <style> 中条件编译处理后产物中不存在空选择器：参考[条件编译注释规则](./references/rn-style-practice.md)

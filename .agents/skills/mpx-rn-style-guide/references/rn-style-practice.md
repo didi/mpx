@@ -29,6 +29,7 @@
 - [7. 渐变中避免使用 transparent](#7-渐变中避免使用-transparent)
 - [8. 提取公共样式](#8-提取公共样式)
 - [9. 动态样式绑定中的简写属性限制](#9-动态样式绑定中的简写属性限制)
+- [10. 条件编译注释规则](#10-条件编译注释规则)
 
 ### 1. 选择器使用建议
 
@@ -954,3 +955,50 @@ const submitBtnStyle = computed(() => {
 2. **避免简写**：动态样式中完全不使用 `margin`/`padding` 多值、`border`/`background` 简写、`box-sizing`。
 3. **明确属性名**：使用 `background-color` 而非 `background`、`marginTop` 而非 `margin` 多值。
 4. **注意默认值**：RN 中 `box-sizing` 默认即为 `border-box`，无需设置；`display` 默认即为 `flex`，无需设置。
+
+### 10. 条件编译注释规则
+
+当使用条件编译包裹 RN 平台不支持的样式时，如果某个 class 选择器内**所有样式属性行都变成注释状态**，则应将 class 选择器行也一起注释掉，避免输出无效的空 class。
+
+#### 规则说明
+
+使用条件编译指令（`@mpx-if` / `@mpx-else` / `@mpx-endif`）包裹不兼容 RN 的样式时，需要注意选择器和样式的注释层级关系。
+
+#### 将 class 选择器行也包裹在条件编译注释内
+
+**❌ 避免：**
+```css
+.invisible
+  /* @mpx-if (!__ISRN__) */
+  visibility hidden
+  /* @mpx-endif */
+```
+
+**✅ 推荐：** 整个 class 块都被条件编译包裹，确保 RN 平台完全排除这些样式。
+```css
+/* @mpx-if (!__ISRN__) */
+.invisible
+  visibility hidden
+/* @mpx-endif */
+```
+
+**✅ 推荐：** 当一个 class 同时包含兼容和不兼容 RN 的样式时，只对不兼容的部分进行条件编译
+```css
+/* RN 使用 flex 布局隐藏 */
+.mask
+    /* @mpx-if (!__ISRN__) */
+    display none
+    /* @mpx-endif */
+    /* RN 使用 flex:0 隐藏 */
+    flex 0
+    width 0
+    height 0
+```
+
+#### 原因说明
+
+1. **避免无效输出**：当 class 选择器未被注释而所有样式属性都被条件编译排除时，会在 RN 输出产物中产生空的 class 定义，这是不必要的冗余代码。
+
+2. **条件编译指令正常处理**：条件编译指令（`@mpx-if` / `@mpx-endif`）可以被 Mpx 正常识别和处理，而被注释的 class 选择器和样式内容在 CSS 注释中不会生效。
+
+3. **保持产物整洁**：RN 平台的输出产物中不会包含被注释掉的 class 和样式规则。

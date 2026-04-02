@@ -215,43 +215,27 @@ RN 原生仅支持部分 CSS 简写属性，Mpx 会在**编译时**对 class 类
 
 以下简写属性 **class 类样式中可放心使用**，Mpx 会在编译时自动展开：
 
-| 简写属性 | 展开为目标属性 | 示例 |
-|----------|--------------|------|
-| `margin` | `marginTop` `marginRight` `marginBottom` `marginLeft` | `margin: 10px 20px` → 4 个单边属性 |
-| `padding` | `paddingTop` `paddingRight` `paddingBottom` `paddingLeft` | `padding: 8px` → 4 个单边属性 |
-| `border-radius` | `borderTopLeftRadius` `borderTopRightRadius` `borderBottomRightRadius` `borderBottomLeftRadius` | `border-radius: 8px 4px` → 4 个单角属性 |
-| `border-width` | `borderTopWidth` `borderRightWidth` `borderBottomWidth` `borderLeftWidth` | `border-width: 1px 2px` → 4 个单边属性 |
-| `border-color` | `borderTopColor` `borderRightColor` `borderBottomColor` `borderLeftColor` | `border-color: red blue` → 4 个单边属性 |
-| `border` | `borderWidth` `borderStyle` `borderColor` | `border: 1px solid red` → 3 个属性 |
-| `border-top/right/bottom/left` | `borderTopWidth/Style/Color` 等 | `border-top: 1px dashed red` → 3 个方向属性 |
-| `flex` | `flexGrow` `flexShrink` `flexBasis` | `flex: 1` → `flexGrow: 1`；`flex: 0 0 auto` → 3 个属性 |
-| `flex-flow` | `flexDirection` `flexWrap` | `flex-flow: row wrap` → 2 个属性 |
-| `background` | `background-image` `background-color` `background-repeat` | 仅支持 3 种组合，不支持 `background-position`/`background-size` 简写 |
-| `text-shadow` | `textShadowOffset.width` `textShadowOffset.height` `textShadowRadius` `textShadowColor` | 仅支持 offset-x/offset-y/blur/color 顺序 |
-| `text-decoration` | `textDecorationLine` `textDecorationStyle` `textDecorationColor` | 仅支持 line/style/color 顺序 |
-
-**margin/padding/border-radius/border-width/border-color 多值处理规则**：
-
-| 值数量 | 处理方式                 |
-|--------|----------------------|
-| 1 个值 | 直接使用该值（单值语法 RN 原生支持） |
-| 2 个值 | 上下、左右                |
-| 3 个值 | 上、左右、下               |
-| 4 个值 | 上右下左                 |
-
-**background 简写的处理细节**：
-
-- `background: none` → `background-image: none` + `background-color: transparent`
-- 仅支持 `background-image`（url/渐变/css var）+ `background-color` + `background-repeat` 组合
-- 在简写中不支持 `background-position` / `background-size`组合形式，需使用独立属性
-- **不支持**多重背景（逗号分隔多个值）
-
-**flex 简写的处理细节**：
-
-- 单值 `flex: 1` → `flexGrow: 1`
-- `flex: none` → `flexGrow: 0; flexShrink: 0`（无 flexBasis）
-- `flex: initial` → `flexGrow: 0; flexShrink: 1`
-- 双值/三值自动推断：未指定 grow/shrink 时默认为 1
+| 简写属性 | 示例 |
+|---------|------|
+| `margin` | `margin: 10px 20px;` |
+| `padding` | `padding: 8px;` |
+| `border-radius` | `border-radius: 8px 4px;` |
+| `border-width` | `border-width: 1px 2px;` |
+| `border-color` | `border-color: red blue;` |
+| `border` | `border: 1px solid red;` |
+| `border-top` | `border-top: 1px dashed red;` |
+| `border-right` | `border-right: 1px dashed red;` |
+| `border-bottom` | `border-bottom: 1px dashed red;` |
+| `border-left` | `border-left: 1px dashed red;` |
+| `flex` | `flex: 1;` |
+| `flex` | `flex: 0 0 auto;` |
+| `flex-flow` | `flex-flow: row wrap;` |
+| `background` | `background: url(...) no-repeat #fff;` |
+| `background` | `background: linear-gradient(...) #fff;` |
+| `background` | `background: var(--bg) no-repeat;` |
+| `background` | `background: none;` |
+| `text-shadow` | `text-shadow: 2px 2px 4px red;` |
+| `text-decoration` | `text-decoration: underline dashed red;` |
 
 **CSS 变量在简写属性中的限制**：
 
@@ -263,13 +247,18 @@ RN 原生仅支持部分 CSS 简写属性，Mpx 会在**编译时**对 class 类
 
 以下属性在 RN 中原生支持，在 **class 类样式**和 **style 属性**中均可直接使用：
 
-| 属性 | 支持的值                                         |
-|------|----------------------------------------------|
-| `margin` / `padding` | 单值，如 `margin: 10px`                          |
-| `border-width` / `border-color` / `border-radius` | 单值，如 `border-width: 1px`                                          |
-| `flex` | 单值，支持 `flex: 1` / `flex: 0` 等                |
-| `border-width`、`border-color`、`border-radius` | 仅支持单值语法**，如 `border-width: 1px`         |
-| `box-shadow` | RN 0.76+ 原生支持                                |
+| 简写属性 | 示例 |
+|---------|------|
+| `margin` | `margin: 10` |
+| `padding` | `padding: 10` |
+| `border-width` | `border-width: 1` |
+| `border-color` | `border-color: red` |
+| `border-radius` | `border-radius: 4` |
+| `border-style` | `border-style: solid` |
+| `flex` | `flex: 1` |
+| `box-shadow` | `box-shadow: 0 0 10px rgba(0,0,0,0.5)` (RN 0.76+ New Architecture) |
+| `gap` | `gap: 10` |
+| `inset` | `inset: 10` (仅 New Architecture) |                            |
 
 #### 2.5.3 style 属性（内联样式）的额外限制
 
