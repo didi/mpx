@@ -1,6 +1,6 @@
 # 跨端输出 RN 逻辑能力参考
 
-本文档详细描述了 Mpx 跨端输出 RN 的逻辑能力支持情况，包括 `<script>` 中可用的构造选项、实例 API、数据响应与组合式 API等。
+本文档详细描述了 Mpx 跨端输出 RN 的逻辑能力支持情况，包括 `<script>` 中可用的构造选项、实例 API、数据响应与组合式 API 等。
 
 ## 目录
 
@@ -19,7 +19,6 @@
 
 ### App 构造选项
 
-
 `createApp(options)` 用于注册应用级逻辑与全局字段。**App 不支持数据响应式构造选项**（无 `data` / `computed` / `watch` 等），**也不使用 `provide` / `inject` / `setup`**；全局状态请通过挂载在 `getApp()` 返回对象上的普通字段（如 `globalData`）或业务层单例维护。
 
 页面或其它模块中读取全局数据：`const version = getApp().globalData.version`。
@@ -27,23 +26,23 @@
 ```html
 <!-- app.mpx：应用级生命周期与 globalData -->
 <script>
-  import { createApp } from '@mpxjs/core'
+  import { createApp } from "@mpxjs/core"
 
   createApp({
-    globalData: { version: '1.0.0' },
-    onLaunch (options) {
-      console.log('onLaunch', options.path, options.query, options.isLaunch)
+    globalData: { version: "1.0.0" },
+    onLaunch(options) {
+      console.log("onLaunch", options.path, options.query, options.isLaunch)
     },
-    onShow (options) {
-      console.log('onShow', options)
+    onShow(options) {
+      console.log("onShow", options)
     },
-    onHide (payload) {
-      console.log('onHide', payload.reason)
+    onHide(payload) {
+      console.log("onHide", payload.reason)
     },
-    onError (err) {
+    onError(err) {
       console.error(err)
     },
-    onUnhandledRejection (evt) {
+    onUnhandledRejection(evt) {
       console.warn(evt.reason)
     }
   })
@@ -71,18 +70,19 @@
 ```html
 <!-- 页面与组件共用一套选项模型（data、methods、生命周期等） -->
 <script>
-  import { createPage } from '@mpxjs/core'
+  import { createPage } from "@mpxjs/core"
 
   createPage({
-    data: { title: '首页' },
-    onLoad (rawQuery, decodedQuery) {
+    data: { title: "首页" },
+    onLoad(rawQuery, decodedQuery) {
       console.log(rawQuery, decodedQuery)
     },
     methods: {
-      go () { /* ... */ }
+      go() {
+        /* ... */
+      }
     }
   })
-
 </script>
 ```
 
@@ -135,16 +135,20 @@
 
 ```html
 <template>
-  <view id="box">内容</view>
+  <!-- RN：script 里传给 select* / SelectorQuery / IntersectionObserver 的 #id、.class 须在对应节点上写 wx:ref，编译期建 ref 并与 selector 映射 -->
+  <view id="box" wx:ref="boxRef">内容</view>
 </template>
 <script>
-  import { createPage } from '@mpxjs/core'
+  import { createPage } from "@mpxjs/core"
 
   createPage({
-    ready () {
-      this.createSelectorQuery().select('#box').boundingClientRect().exec((res) => {
-        console.log(res)
-      })
+    ready() {
+      this.createSelectorQuery()
+        .select("#box")
+        .boundingClientRect()
+        .exec((res) => {
+          console.log(res)
+        })
     }
   })
 </script>
@@ -156,11 +160,11 @@
 | `getPageId()` | 方法 | 共用 | 返回当前实例所在页的 pageId 字符串。 |
 | `getOpenerEventChannel()` | 方法 | 页面 | 打开当前页的 `EventChannel`，组件侧多为空实现占位。 |
 | `triggerEvent(name, detail?)` | 方法 | 组件 | 向父节点派发自定义事件。 |
-| `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例（依赖 ref 注册）。 |
-| `selectAllComponents(selector)` | 方法 | 共用 | 取全部匹配实例数组。 |
-| `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。 |
-| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察（依赖 RN 实现与上下文）。 |
-| `$refs` | 属性 | 共用 | 模板 `wx:ref` 对应的懒解析访问器集合。 |
+| `selectComponent(selector)` | 方法 | 共用 | 按选择器取第一个匹配实例。RN 不能像小程序一样按 selector 遍历视图树，须在模板目标节点上声明 **`wx:ref`**，由编译期创建 ref 并建立 **`#id` / `.class` 与节点**的映射后，本 API 才能按小程序写法解析。 |
+| `selectAllComponents(selector)` | 方法 | 共用 | 取全部匹配实例数组，**RN 侧与 `selectComponent` 相同**：依赖模板 **`wx:ref`** 与编译期 selector 映射，仅支持 **`#id` / `.class`**。 |
+| `createSelectorQuery()` | 方法 | 共用 | 在实例作用域内创建查询对象。后续 **`select(selector)`** 等链式调用在 RN 上同样依赖目标节点已写 **`wx:ref`**，通过编译映射将 `#id` / `.class` 落到真实视图，以兼容小程序用法。 |
+| `createIntersectionObserver(options?)` | 方法 | 共用 | 在实例作用域内创建交叉观察。若相对某一节点观察且传入 **`#id` / `.class`**（如 `relativeTo` 等），RN 侧同样要求该节点模板已声明 **`wx:ref`** 并完成编译期映射，其余行为依赖 `@mpxjs/api-proxy` 的 RN 实现。 |
+| `$refs` | 属性 | 共用 | 模板 `wx:ref` 对应的懒解析访问器集合，与上述基于 selector 的 API 共用同一套编译期 ref 信息。 |
 | `$watch` | 方法 | 共用 | 动态创建对数据路径或表达式的侦听，返回用于停止侦听的函数，行为与选项式 `watch` 对齐。 |
 | `$forceUpdate` | 方法 | 共用 | 强制触发视图更新，可传入数据对象参与本次刷新，RN 侧由 `MpxProxy` 与 React 更新调度配合完成。 |
 | `$nextTick` | 方法 | 共用 | 在下一轮视图更新完成之后执行回调，用于在数据变更后读取更新后的视图状态。 |
@@ -171,8 +175,10 @@
 
 #### 注意事项
 
-- **`selectComponent` / `selectAllComponents` / `$refs` 与模板 `wx:ref` 配套**：RN 上 ref 选择器仅支持 **`#id` 与 `.class`**，因为底层用 ref 映射而非完整小程序选择器引擎；复合选择器、深层选择器不可用。未在模板声明 `wx:ref` 的节点无法被上述 API 解析到实例。
-- `createSelectorQuery` 的能力边界以 `@mpxjs/api-proxy` 的 RN 实现为准；与真机布局、原生视图层级相关的行为需在设备上验证。
+- **RN 无原生 selector 视图查询**：`selectComponent`、`selectAllComponents`、`createSelectorQuery`（及其 `select` 等链式入参）、`createIntersectionObserver`（涉及相对节点的 selector 时）在小程序里依赖视图层按 selector 查找节点，**RN 底层不支持同等能力**。
+- **须配合模板 `wx:ref`**：在**与 script 中 selector 对应**的节点上添加 **`wx:ref`**（指令名固定为 `wx:ref`，值为 ref 名，可与 `id` / `class` 并存），由 **Mpx 在编译期创建 ref**，并**建立 `#id` 与 `.class` 和 ref / 节点的映射**，从而在 RN 上**兼容**上述 API 在小程序中的写法。
+- **选择器形态受限**：映射仅覆盖 **`#id` 与 `.class`**，不支持复合选择器、后代 / 子代等小程序其它选择器语法；未声明 `wx:ref` 的节点无法被这些 API 解析。
+- **`createSelectorQuery` / `createIntersectionObserver` 的其余行为**（字段类型、布局测量、交叉比例等）仍以 `@mpxjs/api-proxy` 的 RN 实现为准，与真机布局、原生视图层级相关的能力请在设备上验证。
 
 ---
 
@@ -181,18 +187,24 @@
 Mpx 在页面与组件上对 `data` 做响应式处理：**直接赋值** `this.field = value` 即可驱动 RN 视图更新，无需 `setData`。`computed` 基于依赖缓存；`watch` 可控制 `flush`（如 `post` 默认在视图更新后）。
 
 ```js
-import { createPage } from '@mpxjs/core'
+import { createPage } from "@mpxjs/core"
 
 createPage({
   data: { count: 0 },
   computed: {
-    double () { return this.count * 2 }
+    double() {
+      return this.count * 2
+    }
   },
   watch: {
-    count () { console.log('count changed') }
+    count() {
+      console.log("count changed")
+    }
   },
   methods: {
-    inc () { this.count++ }
+    inc() {
+      this.count++
+    }
   }
 })
 ```
@@ -217,13 +229,13 @@ createPage({
 在 **`setup(props, context)`** 或 **`script setup`** 中使用：从 `@mpxjs/core` 导入响应式 API、生命周期钩子、`provide` / `inject` 等。钩子须在 **`setup` 执行期间同步注册**，依赖当前正在创建的实例上下文。
 
 ```js
-import { createComponent, ref, computed, onMounted, provide } from '@mpxjs/core'
+import { createComponent, ref, computed, onMounted, provide } from "@mpxjs/core"
 
 createComponent({
-  setup (props, context) {
+  setup(props, context) {
     const n = ref(0)
     const doubled = computed(() => n.value * 2)
-    provide('token', 'demo')
+    provide("token", "demo")
     onMounted(() => {
       console.log(n.value, context.refs)
     })
@@ -236,14 +248,14 @@ createComponent({
 | --- | --- | --- |
 | `setup(props, context)` | 组合式入口，返回对象会合并到实例 | 与 `docs-vitepress/api/composition-api.md` 一致，`context` 各字段见下列各行。 |
 | `context.triggerEvent` | `(name, detail?, options?) => void` | 语义同实例 `triggerEvent`，RN 上受 props 事件绑定方式约束。 |
-| `context.refs` | 与选项式 `$refs` 对应 | RN 上与模板 `wx:ref`、选择器限制一致，见「实例方法」注意事项。 |
+| `context.refs` | 与选项式 `$refs` 对应 | RN 上依赖模板 `wx:ref` 与编译期映射，见「页面 / 组件实例方法与属性」注意事项。 |
 | `context.asyncRefs` | Promise 形式 refs | 字节等场景为主，RN 侧以实际导出与类型为准。 |
 | `context.nextTick` | `(fn) => void` | 同全局 `nextTick`，在视图更新后执行回调。 |
 | `context.forceUpdate` | 可带参数与回调 | 同实例强制更新路径，RN 由 `MpxProxy` 调度。 |
-| `context.selectComponent` | `(selector) => instance` | 同实例 `selectComponent`。 |
-| `context.selectAllComponents` | `(selector) => instance[]` | 同实例 `selectAllComponents`。 |
-| `context.createSelectorQuery` | `() => SelectorQuery` | 同实例 `createSelectorQuery`，能力边界见 api-proxy RN 实现。 |
-| `context.createIntersectionObserver` | `(options?) => IntersectionObserver` | 同实例 `createIntersectionObserver`。 |
+| `context.selectComponent` | `(selector) => instance` | 同实例 `selectComponent`，RN 上 **selector 须由模板 `wx:ref` 参与编译映射**。 |
+| `context.selectAllComponents` | `(selector) => instance[]` | 同实例 `selectAllComponents`，规则同上。 |
+| `context.createSelectorQuery` | `() => SelectorQuery` | 同实例 `createSelectorQuery`，**`select` 等链式 selector** 在 RN 上同样依赖 **`wx:ref`** 映射。 |
+| `context.createIntersectionObserver` | `(options?) => IntersectionObserver` | 同实例 `createIntersectionObserver`，涉及 **selector 相对节点** 时在 RN 上同样依赖 **`wx:ref`** 映射。 |
 | `ref` | 基本引用容器 | 与 Vue 3 类似，可用于 `setup` 返回值驱动模板。 |
 | `shallowRef` | 浅层 `ref` | 与 Vue 3 类似，深层属性变更不自动触发依赖。 |
 | `unref` | 解包 `ref` | 与 Vue 3 类似。 |
@@ -282,12 +294,10 @@ createComponent({
 | `onReactHooksExec` | 与 RN 渲染协同 | 框架内部使用为主。 |
 | `useI18n` | 见 i18n 文档 | 工程启用 i18n 时可用。 |
 
-#### setup script
-
 #### 注意事项
 
 - 组合式生命周期 **禁止在异步回调里再注册**，否则会丢失当前实例上下文。
-- `refs` 在 `onMounted` 及之后才可靠；与模板 `wx:ref` 的 RN 限制相同。
+- `context.refs` 及 **`selectComponent` / `selectAllComponents` / `createSelectorQuery` / `createIntersectionObserver`** 在 RN 上与选项式相同：`refs` 在 `onMounted` 及之后更可靠，**凡传入 `#id` / `.class` 的用法均须在模板对应节点声明 `wx:ref`**，详见「页面 / 组件实例方法与属性」注意事项。
 
 ---
 
@@ -326,33 +336,33 @@ setAppHide()
 运行时对象 **`Mpx.config.rnConfig`**（`Mpx` 为 `@mpxjs/core` 默认导出）用于扩展 RN 导航、分包、状态栏等行为。下列为脚本侧常见项（以源码为准，未列项可能随版本增加）。
 
 ```js
-import Mpx from '@mpxjs/core'
+import Mpx from "@mpxjs/core"
 
 // 须在 createApp 与页面脚本执行前完成赋值
 Mpx.config.rnConfig = {
-  parseAppProps (props) {
+  parseAppProps(props) {
     return {
-      initialRouteName: 'pages/index',
+      initialRouteName: "pages/index",
       initialParams: props || {}
     }
   },
-  onStateChange (state) {
-    console.log('navigation state', state)
+  onStateChange(state) {
+    console.log("navigation state", state)
   },
   openTypeHandler: {
-    onShareAppMessage (shareInfo) {
-      console.log('share', shareInfo)
+    onShareAppMessage(shareInfo) {
+      console.log("share", shareInfo)
     },
-    onUserInfo () {
-      return { userInfo: { nickName: 'RN' } }
+    onUserInfo() {
+      return { userInfo: { nickName: "RN" } }
     }
   }
 }
 ```
 
-
 | 配置项 | 说明 |
 | --- | --- |
+| `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
 | `parseAppProps` | `(props) => { initialRouteName?, initialParams? }`，解析外层传入 App 根组件的初始路由。 |
 | `onStateChange` | 导航 state 变化时回调。 |
 | `disableAppStateListener` | 为 `true` 时不注册 `AppState` 监听（避免与宿主 App 重复）。 |
@@ -360,10 +370,9 @@ Mpx.config.rnConfig = {
 | `openTypeHandler.onShareAppMessage` | 对应模板中 `open-type="share"`：框架会先取当前页 `onShareAppMessage` 的返回（含与默认 `title` / `path` 的合并及可选 `promise` 异步结果），再调用本回调，入参为 `{ title, path, imageUrl? }`，由宿主调起系统分享等能力。 |
 | `openTypeHandler.onUserInfo` | 对应模板中 `open-type="getUserInfo"`：由宿主实现获取用户信息的逻辑，结果需满足按钮侧对 `bindgetuserinfo` 的约定（以 `@mpxjs/webpack-plugin` 中 `mpx-button` 运行时为准）。 |
 | `statusBarTranslucent` | 影响 Stack `screenOptions` 中状态栏相关配置。 |
-| `downloadChunkAsync` | 分包预下载，与 `global.__preloadRule` 等配合。 |
 | `getBottomVirtualHeight` | Android 底部虚拟区域高度修正。 |
-| `loadChunkAsync` | 异步分包加载实现（webpack 插件运行时可能引用）。 |
-| `projectName` | 由构建注入到 RN 入口，与 `AppRegistry.registerComponent` 相关（偏构建侧）。 |
+| `loadChunkAsync` | 异步分包加载实现。 |
+| `downloadChunkAsync` | 分包下载实现，用于实现 preloadRule。 |
 | `supportSubpackage` | 是否启用分包相关异步加载能力，与页面 `json` 中 `async` 等配合。 |
 | `asyncChunk` | 异步页面的 `fallback`、`loading` 等组件路径配置，偏构建与运行时加载。 |
 

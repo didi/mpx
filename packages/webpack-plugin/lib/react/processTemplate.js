@@ -1,4 +1,3 @@
-const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
@@ -8,6 +7,7 @@ const { genNode, genTemplate } = require('../template-compiler/gen-node-react')
 const bindThis = require('../template-compiler/bind-this')
 const isEmptyObject = require('../utils/is-empty-object')
 const dash2hump = require('../utils/hump-dash').dash2hump
+const addQuery = require('../utils/add-query')
 
 function transformCode (code, wxsModuleMap, error) {
   try {
@@ -52,7 +52,8 @@ module.exports = function (template, {
     forceProxyEventRules,
     checkUsingComponentsRules,
     globalComponents,
-    customTextRules
+    customTextRules,
+    rnConfig
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -147,13 +148,12 @@ module.exports = function (template, {
         }
       }
 
-      if (meta.builtInComponentsMap) {
-        Object.keys(meta.builtInComponentsMap).forEach((name) => {
-          builtInComponentsMap[name] = {
-            resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-          }
-        })
-      }
+      const mergedPaths = Object.assign({}, meta.builtInComponentsMap || {}, (rnConfig && rnConfig.customBuiltInComponents) || {})
+      Object.keys(mergedPaths).forEach((name) => {
+        builtInComponentsMap[name] = {
+          resource: addQuery(mergedPaths[name], { isComponent: true })
+        }
+      })
       if (meta.genericsInfo) {
         genericsInfo = meta.genericsInfo
       }

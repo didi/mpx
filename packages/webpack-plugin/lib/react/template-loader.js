@@ -21,7 +21,8 @@ module.exports = function (content) {
     decodeHTMLText,
     externalClasses,
     forceProxyEventRules,
-    getModuleId
+    getModuleId,
+    rnConfig
   } = mpx
 
   const { resourcePath, rawResourcePath, queryObj } = parseRequest(loaderContext.resource)
@@ -69,13 +70,12 @@ module.exports = function (content) {
     })
   }
 
+  const mergedPaths = Object.assign({}, meta.builtInComponentsMap || {}, (rnConfig && rnConfig.customBuiltInComponents) || {})
   const builtInComponents = []
-  if (meta.builtInComponentsMap) {
-    Object.keys(meta.builtInComponentsMap).forEach((componentName) => {
-      const componentRequest = loaderUtils.stringifyRequest(loaderContext, addQuery(meta.builtInComponentsMap[componentName], { isComponent: true }))
-      builtInComponents.push(`"${componentName}": function () { return getBuiltInBaseComponent(require(${componentRequest}), { __mpxBuiltIn: true }) }`)
-    })
-  }
+  Object.keys(mergedPaths).forEach((componentName) => {
+    const componentRequest = loaderUtils.stringifyRequest(loaderContext, addQuery(mergedPaths[componentName], { isComponent: true }))
+    builtInComponents.push(`"${componentName}": function () { return getBuiltInBaseComponent(require(${componentRequest}), { __mpxBuiltIn: true }) }`)
+  })
 
   // Generate local templates
   let localTemplatesCode = 'var localTemplates = {\n'

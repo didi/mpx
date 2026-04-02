@@ -109,13 +109,12 @@ module.exports = function (template, {
             wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
-        if (meta.builtInComponentsMap) {
-          Object.keys(meta.builtInComponentsMap).forEach((name) => {
-            builtInComponentsMap[name] = {
-              resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-            }
-          })
-        }
+        const mergedPaths = Object.assign({}, meta.builtInComponentsMap || {}, (webConfig && webConfig.customBuiltInComponents) || {})
+        Object.keys(mergedPaths).forEach((name) => {
+          builtInComponentsMap[name] = {
+            resource: addQuery(mergedPaths[name], { isComponent: true })
+          }
+        })
         if (meta.genericsInfo) {
           genericsInfo = meta.genericsInfo
         }

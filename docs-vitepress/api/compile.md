@@ -818,7 +818,7 @@ module.exports = defineConfig({
 })
 ```
 
-### webConfig
+### webConfig {#web-config}
 
 `{transRpxFn(match:string, $1:number): string}`
 
@@ -832,6 +832,14 @@ useSSR 默认值为 `false`，当 SSR 模式下使用异步分包时，需要将
 
 用于配置禁用/开启页面切换动画，默认禁用
 
+`{customBuiltInComponents?: Record<string, string>}`
+
+仅 **`mode === 'web'`** 且 **非 app 入口**（存在用户模版并参与 `parse`）时生效，用于覆盖框架默认的内建基础组件实现。
+
+- **key**：运行时内建标签名（如 `mpx-view`、`mpx-text`），与编译产物中的内建 tag 一致，而非微信侧的 `view`、`text`。
+- **value**（**文档约定**，插件 **不做格式校验**）：须为 **绝对路径**（POSIX 下以 **`/`** 开头的路径，或 Windows 下 **`path.isAbsolute` 为真的路径**），或 **以 npm 包名开头的模块路径**（作用域包如 **`@scope/pkg/...`**；无作用域包如 **`my-pkg/...`**，首段须为合法包名，避免使用 `src/` 等易被误认为工程相对路径的写法）。**不要使用** **`./`、`../`** 等相对路径；**不要使用**以 **`~`** 开头的 webpack 模块前缀。不符合约定时由 **webpack 解析**等环节报错。
+
+合并规则：`Object.assign({}, meta.builtInComponentsMap, customBuiltInComponents || {})`，同 key 时用户配置覆盖框架默认。**app** 入口仅注入固定的 `mpx-keep-alive`，不参与 `customBuiltInComponents` 合并。
 
 ```js
 // mpx.config.js
@@ -847,7 +855,75 @@ module.exports = defineConfig({
           // 当 SSR 模式下使用异步分包时
           useSSR: true,
           // 开启页面切换动画
-          disablePageTransition: false
+          disablePageTransition: false,
+          customBuiltInComponents: {
+            'mpx-view': require('path').resolve(__dirname, 'src/builtin/MpxView.vue')
+          }
+        }
+      }
+    }
+  }
+})
+```
+
+### rnConfig {#rn-config}
+
+**`mode` 为输出 React Native（如 `react`）时**使用的编译期配置对象，由 `MpxWebpackPlugin` 传入 loader 上下文，并会挂到运行时的 `mpx.config.rnConfig` 上供 RN 逻辑读取（与小程序 / Web 无关）。
+
+#### rnConfig.projectName
+
+`string | undefined`
+
+若配置，则在入口脚本中调用 `AppRegistry.registerComponent(projectName, () => app)`，用于注册 RN 根组件名称。
+
+#### rnConfig.supportSubpackage
+
+`boolean = true`
+
+为 `true` 时，RN 输出下页面与组件可走异步分包与 `import()` 等逻辑；为 `false` 时关闭相关能力。插件初始化时若未传入则默认为 `true`。
+
+#### rnConfig.asyncChunk
+
+`{ timeout?: number, fallback?: string, loading?: string } | undefined`
+
+异步分包相关：
+
+- **timeout**：传给内部 `LoadAsyncChunkModule` 的超时时间（毫秒级用途，见 `@mpxjs/webpack-plugin` 实现）。
+- **fallback** / **loading**：异步页面/组件的占位与 loading 组件资源路径（经 `addQuery(..., { isComponent: true })` 参与打包），在 `react/script-helper.js` 中生成异步包装代码时使用。
+
+#### rnConfig.customBuiltInComponents
+
+`Record<string, string> | undefined`
+
+与 [webConfig.customBuiltInComponents](#web-config) 类似，但作用于 **RN 输出**：在 `react/processTemplate.js` 与 `react/template-loader.js` 中，于 `templateCompiler.parse` 得到 `meta.builtInComponentsMap` 之后，与 **`Object.assign`** 合并再 `addQuery`。
+
+**value 约定与 Web 一致**（插件不校验）：仅 **绝对路径** 或 **以 npm 包名开头的路径**（`@scope/pkg/...` 或 `my-pkg/...`）；**禁止** `./`、`../` 及 **`~`** 前缀；详见 [webConfig.customBuiltInComponents](#web-config)。
+
+#### rnConfig.loadChunkAsync（运行时）
+
+编译插件不会在选项里“实现”该函数；异步分包下载 chunk 时，运行时代码会调用 **`mpx.config.rnConfig.loadChunkAsync`**（若存在）。需在 RN 应用启动后自行挂载，例如与原生下载、热更新方案对接。与 **asyncChunk** 编译配置配合使用。
+
+```js
+// vue.config.js / mpx.config.js 片段
+const path = require('path')
+
+module.exports = defineConfig({
+  pluginOptions: {
+    mpx: {
+      plugin: {
+        mode: 'react',
+        rnConfig: {
+          projectName: 'MyMpxApp',
+          supportSubpackage: true,
+          asyncChunk: {
+            timeout: 10000,
+            fallback: path.resolve(__dirname, 'src/rn/PageFallback.mpx'),
+            loading: path.resolve(__dirname, 'src/rn/PageLoading.mpx')
+          },
+          customBuiltInComponents: {
+            'mpx-view': '@your-org/mpx-rn-builtin/MpxView.mpx',
+            'mpx-text': path.resolve(__dirname, 'src/builtin/MpxText.mpx')
+          }
         }
       }
     }
