@@ -602,6 +602,34 @@ const sidebar: ExtendedSidebar = {
                 },
               ],
             },
+            {
+              text: '相机',
+              collapsed: true,
+              items: [
+                {
+                  text: 'CameraContext',
+                  link: '/api-proxy/media/camera/CameraContext',
+                  items: [
+                    {
+                      text: 'CameraContext.setZoom',
+                      link: '/api-proxy/media/camera/CameraContext/setZoom',
+                    },
+                    {
+                      text: 'CameraContext.startRecord',
+                      link: '/api-proxy/media/camera/CameraContext/startRecord',
+                    },
+                    {
+                      text: 'CameraContext.stopRecord',
+                      link: '/api-proxy/media/camera/CameraContext/stopRecord',
+                    },
+                    {
+                      text: 'CameraContext.takePhoto',
+                      link: '/api-proxy/media/camera/CameraContext/takePhoto',
+                    },
+                  ]
+                },
+              ],
+            }
           ],
         },
         {
@@ -688,6 +716,56 @@ const sidebar: ExtendedSidebar = {
               ],
             },
             {
+              text: '蓝牙-通用',
+              collapsed: true,
+              items: [
+                {
+                  text: 'openBluetoothAdapter',
+                  link: '/api-proxy/device/bluetooth/openBluetoothAdapter',
+                },
+                {
+                  text: 'closeBluetoothAdapter',
+                  link: '/api-proxy/device/bluetooth/closeBluetoothAdapter',
+                },
+                {
+                  text: 'startBluetoothDevicesDiscovery',
+                  link: '/api-proxy/device/bluetooth/startBluetoothDevicesDiscovery',
+                },
+                {
+                  text: 'stopBluetoothDevicesDiscovery',
+                  link: '/api-proxy/device/bluetooth/stopBluetoothDevicesDiscovery',
+                },
+                {
+                  text: 'onBluetoothDeviceFound',
+                  link: '/api-proxy/device/bluetooth/onBluetoothDeviceFound',
+                },
+                {
+                  text: 'offBluetoothDeviceFound',
+                  link: '/api-proxy/device/bluetooth/offBluetoothDeviceFound',
+                },
+                {
+                  text: 'getConnectedBluetoothDevices',
+                  link: '/api-proxy/device/bluetooth/getConnectedBluetoothDevices',
+                },
+                {
+                  text: 'getBluetoothAdapterState',
+                  link: '/api-proxy/device/bluetooth/getBluetoothAdapterState',
+                },
+                {
+                  text: 'onBluetoothAdapterStateChange',
+                  link: '/api-proxy/device/bluetooth/onBluetoothAdapterStateChange',
+                },
+                {
+                  text: 'offBluetoothAdapterStateChange',
+                  link: '/api-proxy/device/bluetooth/offBluetoothAdapterStateChange',
+                },
+                {
+                  text: 'getBluetoothDevices',
+                  link: '/api-proxy/device/bluetooth/getBluetoothDevices',
+                },
+              ]
+            },
+            {
               text: '蓝牙-低功耗中心设备',
               collapsed: true,
               items: [
@@ -703,7 +781,77 @@ const sidebar: ExtendedSidebar = {
                   text: 'onBLEConnectionStateChange',
                   link: '/api-proxy/device/bluetooth-ble/onBLEConnectionStateChange',
                 },
+                {
+                  text: 'offBLEConnectionStateChange',
+                  link: '/api-proxy/device/bluetooth-ble/offBLEConnectionStateChange',
+                },
+                {
+                  text: 'writeBLECharacteristicValue',
+                  link: '/api-proxy/device/bluetooth-ble/writeBLECharacteristicValue',
+                },
+                {
+                  text: 'readBLECharacteristicValue',
+                  link: '/api-proxy/device/bluetooth-ble/readBLECharacteristicValue',
+                },
+                {
+                  text: 'notifyBLECharacteristicValueChange',
+                  link: '/api-proxy/device/bluetooth-ble/notifyBLECharacteristicValueChange',
+                },
+                {
+                  text: 'onBLECharacteristicValueChange',
+                  link: '/api-proxy/device/bluetooth-ble/onBLECharacteristicValueChange',
+                },
+                {
+                  text: 'offBLECharacteristicValueChange',
+                  link: '/api-proxy/device/bluetooth-ble/offBLECharacteristicValueChange',
+                },
+                {
+                  text: 'setBLEMTU',
+                  link: '/api-proxy/device/bluetooth-ble/setBLEMTU',
+                },
+                {
+                  text: 'getBLEDeviceRSSI',
+                  link: '/api-proxy/device/bluetooth-ble/getBLEDeviceRSSI',
+                },
+                {
+                  text: 'getBLEDeviceServices',
+                  link: '/api-proxy/device/bluetooth-ble/getBLEDeviceServices',
+                },
+                {
+                  text: 'getBLEDeviceCharacteristics',
+                  link: '/api-proxy/device/bluetooth-ble/getBLEDeviceCharacteristics',
+                },
               ],
+            },
+            {
+              text: 'Wi-Fi',
+              collapsed: true,
+              items: [
+                {
+                  text: 'startWifi',
+                  link: '/api-proxy/device/wifi/startWifi',
+                },
+                {
+                  text: 'stopWifi',
+                  link: '/api-proxy/device/wifi/stopWifi',
+                },
+                {
+                  text: 'getWifiList',
+                  link: '/api-proxy/device/wifi/getWifiList',
+                },
+                {
+                  text: 'onGetWifiList',
+                  link: '/api-proxy/device/wifi/onGetWifiList',
+                },
+                {
+                  text: 'offGetWifiList',
+                  link: '/api-proxy/device/wifi/offGetWifiList',
+                },
+                {
+                  text: 'getConnectedWifi',
+                  link: '/api-proxy/device/wifi/getConnectedWifi',
+                },
+              ]
             },
             {
               text: '剪贴板',
