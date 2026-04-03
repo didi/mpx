@@ -373,7 +373,7 @@ export interface RnConfig {
    * @param params.package 分包名
    * @returns Promise，表示加载完成
    */
-  loadChunkAsync?: (params: { url: string; package: string }) => Promise<any>
+  loadChunkAsync?: (params: { url: string; package: string }) => Promise<null>
 
   /**
    * 下载多个异步分包的方法（不执行）。
