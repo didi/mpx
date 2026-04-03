@@ -257,7 +257,7 @@ export default function styleHelperMixin () {
         const isNativeStaticStyle = staticStyle && isNativeStyle(staticStyle)
         let result = isNativeStaticStyle ? [] : {}
         const mergeResult = isNativeStaticStyle ? (...args) => result.push(...args) : (...args) => Object.assign(result, ...args)
-
+        // 使用一下 __getSizeCount 触发其 get
         this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
@@ -268,13 +268,13 @@ export default function styleHelperMixin () {
             let localStyle, appStyle
             if (localStyle = this.__getClassStyle?.(className)) {
               if (localStyle._media?.length) {
-                mergeResult(localStyle._default, getMediaStyle(localStyle._media))
+                mergeResult(localStyle, getMediaStyle(localStyle._media))
               } else {
                 mergeResult(localStyle)
               }
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               if (appStyle._media?.length) {
-                mergeResult(appStyle._default, getMediaStyle(appStyle._media))
+                mergeResult(appStyle, getMediaStyle(appStyle._media))
               } else {
                 mergeResult(appStyle)
               }
