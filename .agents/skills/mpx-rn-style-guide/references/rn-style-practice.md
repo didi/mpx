@@ -1017,18 +1017,35 @@ Grid 布局在 RN 平台不支持。
 </style>
 ```
 
-### 9. 行内样式的简写属性限制
+### 9. Class 类样式支持简写，行内样式不支持简写
 
-RN 平台中，`style` 属性（以及通过 `wx:style`、组件 props 等方式传入的动态样式）**仅支持 RN 原生简写属性**，Mpx 的编译时展开**不会作用于动态样式**。这是一个非常容易踩坑的限制点。
+RN 平台中，**`<style>` 标签中定义的 class 类样式支持简写属性**（Mpx 编译时会自动展开），但**`style` 属性等动态行内样式仅支持 RN 原生简写属性**，Mpx 的编译时展开**不会作用于动态样式**。
 
-#### class 类样式 vs style 内联样式的关键区别
+#### class 类样式 vs 行内样式的关键区别
 
 | 样式位置 | 简写属性支持 | 说明 |
 |---------|------------|------|
 | `<style>` class 类样式 | ✅ Mpx 编译时自动展开 | `margin: 10px 20px` → 编译为 `marginTop`/`marginRight` 等 |
 | `style` 属性（静态/style binding/组件 props） | ❌ 不支持编译展开 | 需手动使用展开后的独立属性 |
 
-#### 受影响的场景
+#### ✅ Class 类样式可以正常使用简写
+
+在 `<style>` 标签中定义的 class 类样式，Mpx 编译时会自动将简写属性展开为独立属性，因此可以正常使用各种简写形式：
+
+```css
+/* ✅ Class 类样式中简写完全支持，Mpx 编译时会自动展开 */
+.container {
+  margin: 20px 30px;              /* 展开为 marginTop/marginRight/marginBottom/marginLeft */
+  padding: 10px 20px 10px 20px;   /* 展开为各方向独立属性 */
+  border: 1px solid #e5e5e5;       /* 展开为 borderWidth/borderColor/borderStyle */
+  background: linear-gradient(...); /* 展开为 backgroundImage */
+  border-radius: 8px 4px;          /* 展开为 borderTopLeftRadius 等 */
+}
+```
+
+#### ❌ 行内样式不支持简写
+
+`style` 属性等动态行内样式 Mpx 编译时无法展开，仅支持 RN 原生支持的简写形式：
 
 | 场景 | 示例 |
 |------|------|
@@ -1036,59 +1053,67 @@ RN 平台中，`style` 属性（以及通过 `wx:style`、组件 props 等方式
 | `wx:style` 动态绑定 | `<view wx:style="{{ {margin: '10px 20px'} }}">` |
 | 组件 props 传入的样式字符串 | `<child customStyle="margin: 10px; background: red">` |
 
+#### 受影响的场景（仅限行内样式）
+
+| 场景 | 示例 | 问题 |
+|------|------|------|
+| 静态 `style` 属性 | `<view style="margin: 10px 20px">` | 多值简写不支持 |
+| `wx:style` 动态绑定 | `<view wx:style="{{ {margin: '10px 20px'} }}">` | 多值简写不支持 |
+| 组件 props 传入的样式字符串 | `<child customStyle="margin: 10px; background: red">` | 多值简写、background 简写不支持 |
+
 #### 常见问题示例
 
-**❌ 错误：computed 中返回带简写属性的样式字符串**
+**❌ 错误：行内样式中使用了简写**
 
 ```javascript
-// 问题：RN 中 style 属性不支持多值 margin、background 简写、box-sizing
+// 问题：行内样式不支持多值 margin、background 简写、box-sizing
 const submitBtnStyle = computed(() => {
   return `height: 55px; border-radius: 999px; box-sizing: border-box; background: ${bg};`
 })
 ```
 
-**✅ 正确：统一使用展开后的独立属性（所有平台统一，无需条件编译）**
+**✅ 正确：行内样式使用展开后的独立属性**
 
 ```javascript
-// 使用 RN 兼容的属性写法，rpx 响应式，background-color 展开写法
+// 行内样式中需使用 RN 原生支持的写法
 const submitBtnStyle = computed(() => {
   const bg = isReady.value || isLoading.value ? '#FF6435' : '#D3D6DC'
-  return `height: 110rpx; border-radius: 999px; box-sizing: border-box; background-color: ${bg};`
+  return `height: 110rpx; border-radius: 999rpx; background-color: ${bg};`
 })
 ```
 
-**❌ 错误：组件样式 props 中使用简写**
+**❌ 错误：组件 props 样式中使用简写**
 
 ```html
-<!-- 问题：customStyle 为 style 属性，RN 不支持 background 简写和 box-sizing -->
-<submit-order customStyle="height: 55px; border-radius: 999px; box-sizing: border-box; background: #FF6435;" />
+<!-- 问题：customStyle 为 style 属性，RN 不支持 background 简写 -->
+<submit-order customStyle="height: 55px; border-radius: 999px; background: #FF6435;" />
 ```
 
-**✅ 正确：组件 props 样式也使用展开写法**
+**✅ 正确：组件 props 样式使用展开写法**
 
 ```html
-<submit-order customStyle="height: 110rpx; border-radius: 999px; background-color: #FF6435;" />
+<submit-order customStyle="height: 110rpx; border-radius: 999rpx; background-color: #FF6435;" />
 ```
 
-#### style 属性支持的属性速查
+#### 行内样式（style 属性）支持的属性速查
 
-| 属性 | style 属性支持情况 | 推荐替代写法 |
+| 属性 | 行内样式支持情况 | 推荐替代写法 |
 |------|------|------|
 | `margin: 10px` | ✅ 单值可用 | — |
 | `margin: 10px 20px` | ❌ 不支持 | `marginTop: 10px; marginRight: 20px;` 或 `margin: 10px` |
 | `border-radius: 8px` | ✅ 单值可用 | — |
 | `border-radius: 8px 4px` | ❌ 不支持 | `borderTopLeftRadius: 8px; borderTopRightRadius: 4px;` |
 | `border: 1px solid red` | ❌ 不支持 | `borderWidth: 1px; borderColor: red;` |
-| `background: red` | ❌ 不支持 | `background-color: red`（写法更明确） |
+| `background: red` | ❌ 不支持 | `background-color: red` |
 | `background: url(...)` | ❌ 不支持 | `background-image: url(...)` |
 | `background: linear-gradient(...)` | ❌ 不支持 | `background-image: linear-gradient(...)` |
 | `flex: 1` | ✅ | — |
 
 #### 最佳实践总结
 
-1. **尽量所有平台统一**：行内样式中的简写使用 RN 原生支持的写法，在没有对应兼容写法时可采取条件编译。
-2. **避免简写**：动态样式中完全不使用 `margin`/`padding` 多值、`border`/`background` 简写等。
-3. **明确属性名**：使用 `background-color` 而非 `background`、`marginTop` 而非 `margin` 多值。
+1. **class 类样式放心使用简写**：`<style>` 中的 class 类样式，Mpx 编译时会自动展开，无需担心。
+2. **行内样式避免简写**：动态样式中完全不使用 `margin`/`padding` 多值、`border`/`background` 简写等。
+3. **行内样式明确属性名**：使用 `background-color` 而非 `background`、`marginTop` 而非 `margin` 多值。
 
 ### 10. 选择器条件编译注释规则
 
