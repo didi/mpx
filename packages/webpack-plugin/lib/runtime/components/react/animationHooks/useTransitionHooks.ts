@@ -94,6 +94,7 @@ function parseTransitionSingleProp (vals: string[], property: string) {
     }
   }).filter(item => item !== undefined)
 }
+
 // transition 解析
 function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   let transitionData: AnimationDataType[] = []
@@ -205,61 +206,58 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   const runOnJSCallbackRef = useRef({})
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 根据 animation action 创建&驱动动画
-  function createAnimation () {
+  function createAnimation (key: string, transitionKey: string, timing: { delay?: number, duration: number, easing: EasingFunction }) {
     let transformTransitionendDone = false
-    animatedKeys.forEach(key => {
-      // console.log(`createAnimation key=${key} originalStyle=`, originalStyle)
-      const isTransformKey = isTransform(key)
-      let ruleV = originalStyle[key]
+    const { delay = 0, duration, easing } = timing
+    const isTransformKey = isTransform(key)
+    let ruleV = originalStyle[key]
+    if (isTransformKey) {
+      const transform = getTransformObj(originalStyle.transform!)
+      ruleV = transform[key]
+    }
+    let toVal = ruleV !== undefined
+      ? ruleV
+      : transitionSupportedProperty[key]
+    const shareVal = shareValMap[key].value
+    if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && !isNaN(+shareVal)) {
+      // 获取到的toVal为百分比格式化shareValMap为百分比
+      shareValMap[key].value = `${shareVal as number * 100}%`
+    } else if (percentExp.test(shareVal as string) && !percentExp.test(toVal as string) && !isNaN(+toVal)) {
+      // 初始值为百分比则格式化toVal为百分比
+      toVal = `${toVal * 100}%`
+    } else if (typeof toVal !== typeof shareVal) {
+      // 动画起始值和终态值类型不一致报错提示一下
+      warn(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
+    }
+    if ((toVal === 'auto' && !isNaN(+shareVal)) || (shareVal === 'auto' && !isNaN(+toVal))) {
+      // 有 auto 直接赋值不做动画
+      shareValMap[key].value = toVal
+    } else {
+      // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
+      // console.log('animationOptions=', { delay, duration, easing })
+      let callback
+      if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
+        runOnJSCallbackRef.current = {
+          animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
+            transitionend(finished, current, duration)
+          }
+        }
+        callback = (finished?: boolean, current?: AnimatableValue) => {
+          'worklet'
+          // 动画结束后设置下一次transformOrigin
+          if (finished) {
+            runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
+          }
+        }
+      }
+      const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
+      // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
       if (isTransformKey) {
-        const transform = getTransformObj(originalStyle.transform!)
-        ruleV = transform[key]
+        transformTransitionendDone = true
       }
-      let toVal = ruleV !== undefined
-        ? ruleV
-        : transitionSupportedProperty[key]
-      const shareVal = shareValMap[key].value
-      if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && !isNaN(+shareVal)) {
-        // 获取到的toVal为百分比格式化shareValMap为百分比
-        shareValMap[key].value = `${shareVal as number * 100}%`
-      } else if (percentExp.test(shareVal as string) && !percentExp.test(toVal as string) && !isNaN(+toVal)) {
-        // 初始值为百分比则格式化toVal为百分比
-        toVal = `${toVal * 100}%`
-      } else if (typeof toVal !== typeof shareVal) {
-        // 动画起始值和终态值类型不一致报错提示一下
-        warn(`[Mpx runtime error]: Value types of property ${key} must be consistent during the animation`)
-      }
-      if ((toVal === 'auto' && !isNaN(+shareVal)) || (shareVal === 'auto' && !isNaN(+toVal))) {
-        // 有 auto 直接赋值不做动画
-        shareValMap[key].value = toVal
-      } else {
-        // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
-        const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
-        // console.log('animationOptions=', { delay, duration, easing })
-        let callback
-        if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
-          runOnJSCallbackRef.current = {
-            animationCallback: (duration: number, finished: boolean, current?: AnimatableValue) => {
-              transitionend(finished, current, duration)
-            }
-          }
-          callback = (finished?: boolean, current?: AnimatableValue) => {
-            'worklet'
-            // 动画结束后设置下一次transformOrigin
-            if (finished) {
-              runOnJS(runOnJSCallback)('animationCallback', duration, finished, current)
-            }
-          }
-        }
-        const animation = getAnimation({ key, value: toVal! }, { delay, duration, easing }, callback)
-        // Todo transform 有多个属性时也仅执行一次 transitionend（对齐wx）
-        if (isTransformKey) {
-          transformTransitionendDone = true
-        }
-        shareValMap[key].value = animation
-      }
-      // console.log(`useTransitionHooks, ${key}=`, animation)
-    })
+      shareValMap[key].value = animation
+    }
+    // console.log(`useTransitionHooks, ${key}=`, animation)
   }
   // ** style 更新
   useEffect(() => {
@@ -269,7 +267,15 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       animationDeps.current = 1
       return
     }
-    createAnimation()
+    // 从当前 style 解析最新 timing
+    const currentTransitionMap = parseTransitionStyle(originalStyle)
+    animatedKeys.forEach(key => {
+      const transitionKey = isTransform(key) ? 'transform' : key
+      const timing = currentTransitionMap[transitionKey] // || transitionMap[transitionKey]
+      if (timing) {
+        createAnimation(key, transitionKey, timing)
+      }
+    })
   }, [originalStyle])
   // ** 清空动画
   useEffect(() => {
