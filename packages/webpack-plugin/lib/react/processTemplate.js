@@ -48,9 +48,10 @@ module.exports = function (template, {
     wxsContentMap,
     decodeHTMLText,
     externalClasses,
-    checkUsingComponents,
     autoVirtualHostRules,
     forceProxyEventRules,
+    checkUsingComponentsRules,
+    globalComponents,
     customTextRules
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
@@ -103,13 +104,13 @@ module.exports = function (template, {
         filePath: rawResourcePath,
         // react中模版i18n不需要特殊处理
         i18n: null,
-        checkUsingComponents,
-        // rn模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
-        globalComponents: [],
+        // 与 template-compiler/index 一致：usingComponentsInfo 已合并 globalComponentsInfo，此处白名单避免对仅 app 注册的组件误报「未使用」
+        globalComponents: Object.keys(globalComponents || {}),
         // rn模式下实现抽象组件
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
         forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
+        checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules),
         isCustomText: matchCondition(resourcePath, customTextRules)
       }
       const { root, meta } = templateCompiler.parse(template.content, parseOptions)
