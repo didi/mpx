@@ -8,7 +8,7 @@ import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
-export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
+export const TEXT_STYLE_REGEX = /(?<!shadow)color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
@@ -393,9 +393,88 @@ function transformTransform (style: Record<string, any>) {
   style.transform = parseTransform(style.transform)
 }
 
+/**
+ * Parse a CSS color string into [r, g, b, a] components (0-1 range).
+ * Handles: #rgb #rrggbb rgba(...) rgb(...) 'transparent'
+ */
+function parseCssColor (color: string): [number, number, number, number] | null {
+  const c = color.trim()
+  if (c === 'transparent') return [0, 0, 0, 0]
+  const m = c.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/)
+  if (m) return [+m[1] / 255, +m[2] / 255, +m[3] / 255, m[4] !== undefined ? +m[4] : 1]
+  const hm = c.match(/^#([0-9a-fA-F]{3,8})$/)
+  if (hm) {
+    let h = hm[1]
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]
+    const n = parseInt(h, 16)
+    if (h.length === 6) return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255, 1]
+    if (h.length === 8) return [(n >> 24 & 255) / 255, (n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]
+  }
+  return null
+}
+
+/**
+ * On Harmony, RNOH rawProps does NOT carry boxShadow (C++ Fabric strips it before
+ * reaching ArkTS). Instead we map the first outer box-shadow to the legacy iOS
+ * shadow* props (shadowColor / shadowOffset / shadowRadius / shadowOpacity) which
+ * ARE transmitted through rawProps and handled by ViewDescriptorWrapper.
+ *
+ * On other platforms the value is kept as a string for RN's own processBoxShadow.
+ */
 function transformBoxShadow (styleObj: Record<string, any>) {
   if (!styleObj.boxShadow) return
-  styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res, i, idx) => {
+
+  if (isHarmony) {
+    const rawStr = String(styleObj.boxShadow)
+    delete styleObj.boxShadow
+
+    if (rawStr === 'none' || rawStr === '0 0 0 0 transparent' || rawStr === '0px 0px 0px 0px transparent') return
+
+    const tokens = parseValues(rawStr)
+
+    // Skip inset shadows — ArkUI shadow() has no inset support
+    if (tokens.includes('inset')) return
+
+    const nums: number[] = []
+    let colorStr: string | null = null
+
+    for (const t of tokens) {
+      const v = global.__formatValue(t)
+      if (typeof v === 'number') {
+        nums.push(v)
+      } else {
+        colorStr = t
+      }
+    }
+
+    if (nums.length < 2) return
+
+    const offsetX = nums[0] ?? 0
+    const offsetY = nums[1] ?? 0
+    const blurRadius = nums[2] ?? 0
+    // nums[3] would be spread-radius — ArkUI ignores it
+
+    styleObj.shadowOffset = { width: offsetX, height: offsetY }
+    styleObj.shadowRadius = blurRadius
+
+    if (colorStr) {
+      const rgba = parseCssColor(colorStr)
+      if (rgba) {
+        styleObj.shadowOpacity = rgba[3]
+        styleObj.shadowColor = `rgb(${Math.round(rgba[0] * 255)},${Math.round(rgba[1] * 255)},${Math.round(rgba[2] * 255)})`
+      } else {
+        styleObj.shadowColor = colorStr
+        styleObj.shadowOpacity = 1
+      }
+    } else {
+      styleObj.shadowColor = '#000'
+      styleObj.shadowOpacity = 1
+    }
+    return
+  }
+
+  // Non-harmony: keep as string for RN's own processBoxShadow
+  styleObj.boxShadow = parseValues(styleObj.boxShadow).reduce((res: string, i: string, idx: number) => {
     return `${res}${idx === 0 ? '' : ' '}${global.__formatValue(i)}`
   }, '')
 }
