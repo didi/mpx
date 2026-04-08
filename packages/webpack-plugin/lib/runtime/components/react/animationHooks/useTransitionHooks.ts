@@ -43,6 +43,7 @@ const propName = {
 const behaviorExp = /^(allow-discrete|normal)$/
 const defaultValueExp = /^(inherit|initial|revert|revert-layer|unset)$/
 const timingFunctionExp = /^(step-start|step-end|steps)/
+const transitionKeys = ['transition', 'transitionDuration', 'transitionProperty', 'transitionTimingFunction', 'transitionDelay'] as const
 // cubic-bezier 参数解析
 function getBezierParams (str: string) {
   // ease 0.25, 0.1, 0.25, 1.0
@@ -145,7 +146,7 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   const transitionMap = transitionData.reduce((acc, cur) => {
     // hasOwn(transitionSupportedProperty, dash2hump(val)) || val === Transform
     const { property = '', duration = 0, delay = 0, easing = Easing.inOut(Easing.ease) } = cur
-    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === 'transform') && duration > 0) {
+    if ((hasOwn(transitionSupportedProperty, dash2hump(property)) || property === 'transform') && duration >= 0) {
       acc[property] = {
         duration,
         delay,
@@ -163,8 +164,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   const { style: originalStyle = {}, transitionend } = props
   // style变更标识(首次render不执行)，初始值为0，首次渲染后为1
   const animationDeps = useRef(0)
-  // 记录上次style map
-  // const lastStyleRef = useRef({} as {[propName: keyof ExtendedViewStyle]: number|string})
+  // 记录上次 transition 相关属性，用于判断是否需要重新解析
+  const lastTransitionStyleRef = useRef<Partial<ExtendedViewStyle>>({})
   // ** 从 style 中获取动画数据
   const transitionMap = useMemo(() => {
     return parseTransitionStyle(originalStyle)
@@ -266,6 +267,19 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     if (!animationDeps.current) {
       animationDeps.current = 1
       return
+    }
+    // 仅当 transition 相关属性变化时才重新解析
+    const prevStyle = lastTransitionStyleRef.current
+    const hasTransitionChanged = transitionKeys.some(key => prevStyle[key] !== originalStyle[key])
+    if (!hasTransitionChanged) {
+      return
+    }
+    lastTransitionStyleRef.current = {
+      transition: originalStyle.transition,
+      transitionDuration: originalStyle.transitionDuration,
+      transitionProperty: originalStyle.transitionProperty,
+      transitionTimingFunction: originalStyle.transitionTimingFunction,
+      transitionDelay: originalStyle.transitionDelay
     }
     // 从当前 style 解析最新 timing
     const currentTransitionMap = parseTransitionStyle(originalStyle)
