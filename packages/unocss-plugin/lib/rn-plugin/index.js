@@ -16,7 +16,7 @@ const formatValueName = '_f'
 
 const classMapToCode = (classMap) => Object.entries(classMap).reduce((result, [key, value]) => {
   result !== '' && (result += ',')
-  result += `${isValidIdentifierStr(key) ? `${key}` : `['${key}']`}: function(${formatValueName}){return ${shallowStringify(value)};}`
+  result += `${isValidIdentifierStr(key) ? `${key}` : `[${JSON.stringify(key)}]`}: function(${formatValueName}){return ${shallowStringify(value)};}`
   return result
 }, '')
 

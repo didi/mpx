@@ -240,12 +240,18 @@ const createLayer = (isNativeStyle) => {
 
   const mergeToLayer = (name, ...classObjs) => {
     const layer = layerMap[name] || layerMap.normal
-    return isNativeStyle ? layer.push(...classObjs) : Object.assign(layer, ...classObjs)
+    classObjs.forEach(v => {
+      if (v._inlineLayer) {
+        Object.keys(v._inlineLayer).forEach(l => {
+          mergeToLayer(l, v._inlineLayer[l])
+        })
+      }
+      isNativeStyle ? layer.push(v) : Object.assign(layer, v)
+    })
   }
 
   return {
     mergeToLayer,
-    layerMap,
     genResult
   }
 }
@@ -281,7 +287,7 @@ export default function styleHelperMixin () {
 
         const { mergeToLayer, genResult } = createLayer(isNativeStaticStyle)
 
-         this.__getSizeCount()
+        this.__getSizeCount()
 
         if (staticClass || dynamicClass) {
           const classString = concat(staticClass, stringifyDynamicClass(dynamicClass))
@@ -291,26 +297,14 @@ export default function styleHelperMixin () {
           classString.split(/\s+/).forEach((className) => {
             let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
-              if (localStyle._media?.length) {
-                mergeToLayer(localStyle._layer || 'normal', localStyle._default, getMediaStyle(localStyle._media))
-              } else {
-                mergeToLayer(localStyle._layer || 'normal', localStyle)
-              }
+              mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
             } else if (unoStyle = global.__getUnoStyle(className)) {
-                if (unoStyle._media?.length) {
-                  mergeToLayer(unoStyle._layer || 'uno', unoStyle._default, getMediaStyle(unoStyle._media))
-                } else {
-                  mergeToLayer(unoStyle._layer || 'uno', unoStyle)
-                }
-                if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
+              mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
+              if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
             } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
-                mergeToLayer('important', unoVarStyle)
+              mergeToLayer('important', unoVarStyle)
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
-              if (appStyle._media?.length) {
-                mergeToLayer(appStyle._layer || 'app', appStyle._default, getMediaStyle(appStyle._media))
-              } else {
-                mergeToLayer(appStyle._layer || 'app', appStyle)
-              }
+              mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))
             } else if (isObject(this.__props[className])) {
               // externalClasses必定以对象形式传递下来
               mergeToLayer('normal', this.__props[className])
