@@ -827,7 +827,7 @@ function parse (template, options) {
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
     const arr = []
     usingComponents.forEach((item) => {
-      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder.includes(item)) {
+      if (!tagNames.has(item) && !options.globalComponents.includes(item) && !options.componentPlaceholder?.includes(item)) {
         arr.push(item)
       }
     })

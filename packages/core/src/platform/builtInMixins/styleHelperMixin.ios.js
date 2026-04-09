@@ -298,10 +298,10 @@ export default function styleHelperMixin () {
             let localStyle, appStyle, unoStyle, unoVarStyle
             if (localStyle = this.__getClassStyle?.(className)) {
               mergeToLayer(localStyle._layer || 'normal', localStyle, getMediaStyle(localStyle._media))
-            } else if (unoStyle = global.__getUnoStyle(className)) {
+            } else if (unoStyle = global.__getUnoStyle?.(className)) {
               mergeToLayer(unoStyle._layer || 'uno', unoStyle, getMediaStyle(unoStyle._media))
               if (unoStyle.transform || unoStyle.filter) needAddUnoPreflight = true
-            } else if (unoVarStyle = global.__getUnoVarStyle(className)) {
+            } else if (unoVarStyle = global.__getUnoVarStyle?.(className)) {
               mergeToLayer('important', unoVarStyle)
             } else if (appStyle = global.__getAppClassStyle?.(className)) {
               mergeToLayer(appStyle._layer || 'app', appStyle, getMediaStyle(appStyle._media))

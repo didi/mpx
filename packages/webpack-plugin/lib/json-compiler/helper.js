@@ -214,8 +214,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (tarRoot) {
       if (placeholder) {
         placeholder = getNormalizePlaceholder(placeholder)
-        if (placeholder.resource) {
-          processComponent(placeholder.resource, context, { relativePath }, (err, entry, { resourcePath }) => {
+        if (placeholder && placeholder.resource) {
+          processComponent(placeholder.resource, context, { relativePath }, (err, entry, { resourcePath } = {}) => {
             if (err) return callback(err)
             placeholder.resourcePath = resourcePath
             fillInComponentPlaceholder({ jsonObj, name, placeholder, placeholderEntry: entry, resolveResourcePathMap }, callback)
