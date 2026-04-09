@@ -8,16 +8,14 @@ const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueName, warn, error }) {
-  const classMap = ctorType === 'page'
-      ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
-      : {}
+function getClassMap({ content, filename, mode, srcMode, ctorType, formatValueName, warn, error }) {
+  const classMap = ctorType === 'page' ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } } : {}
 
   const root = postcss.parse(content, {
     from: filename
   })
 
-  function formatValue (value) {
+  function formatValue(value) {
     let needStringify = true
     const matched = unitRegExp.exec(value)
     if (matched) {
@@ -36,7 +34,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     return needStringify ? JSON.stringify(value) : value
   }
 
-  function getMediaOptions (params) {
+  function getMediaOptions(params) {
     return parseValues(params).reduce((option, item) => {
       if (['all', 'print'].includes(item)) {
         if (item === 'media') {
@@ -56,7 +54,7 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
       }
       const bracketsExp = /\((.+?)\)/
       if (bracketsExp.test(item)) {
-        const range = parseValues((item.match(bracketsExp)?.[1] || ''), ':')
+        const range = parseValues(item.match(bracketsExp)?.[1] || '', ':')
         if (range.length < 2) {
           return option
         } else {
@@ -87,13 +85,20 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
 
   root.walkRules(rule => {
     const classMapValue = {}
-    rule.walkDecls(({ prop, value }) => {
+    const prev = rule.prev()
+    let layer
+    if (prev && prev.type === 'comment' && prev.text.includes('rn-layer:')) {
+      layer = JSON.stringify(prev.text.split(':')[1].trim())
+    }
+
+    rule.walkDecls(({ prop, value, important }) => {
       if (value === 'undefined' || cssPrefixExp.test(prop) || cssPrefixExp.test(value)) return
       let newData = rulesRunner({ prop, value, selector: rule.selector })
       if (!newData) return
       if (!Array.isArray(newData)) {
         newData = [newData]
       }
+
       newData.forEach(item => {
         prop = varRegExp.test(item.prop) ? item.prop : dash2hump(item.prop)
         value = item.value
@@ -115,10 +120,16 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
         } else {
           value = formatValue(value)
         }
-        classMapValue[prop] = value
+
+        if (important) {
+          classMapValue._inlineLayer = classMapValue._inlineLayer || {}
+          classMapValue._inlineLayer.important = classMapValue._inlineLayer.important || {}
+          classMapValue._inlineLayer.important[prop] = value
+        } else {
+          classMapValue[prop] = value
+        }
       })
     })
-
     const classMapKeys = []
     const options = getMediaOptions(rule.parent.params || '')
     const isMedia = options.maxWidth || options.minWidth
@@ -126,6 +137,12 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
       selectors.each(selector => {
         if (selector.nodes.length === 1 && selector.nodes[0].type === 'class') {
           classMapKeys.push(selector.nodes[0].value)
+        } else if (
+          selector.nodes.length === 2 &&
+          selector.nodes[0].type === 'class' &&
+          selector.nodes[1].type === 'pseudo'
+        ) {
+          classMapKeys.push(selector.nodes[0].value + selector.nodes[1].value)
         } else {
           error('Only single class selector is supported in react native mode temporarily.')
         }
@@ -133,11 +150,17 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     }).processSync(rule.selector)
 
     if (classMapKeys.length) {
-      classMapKeys.forEach((key) => {
+      classMapKeys.forEach(key => {
         if (Object.keys(classMapValue).length) {
           // set css defalut value
           const val = classMap[key] || {}
           classMap[key] = Object.assign(val, classMapValue)
+
+          // set css layer
+          if (layer) {
+            if (key.endsWith('!')) layer = '"important"'
+            classMap[key]._layer = layer
+          }
 
           // set css media
           if (isMedia) {
