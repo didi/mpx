@@ -7,6 +7,8 @@
     "build": "mpx-cli-service build",
     "lint": "eslint --ext .js,.ts,.mpx src/",
     "midscene:smoke:android": "cd ReactNativeProject && npm run midscene:smoke:android",
+    "midscene:visual:update-baseline:android": "cd ReactNativeProject && npm run midscene:visual:update-baseline:android",
+    "midscene:visual:android": "cd ReactNativeProject && npm run midscene:visual:android",
     "serve:wx": "mpx-cli-service serve --targets=wx",
     "build:android": "mpx-cli-service build --targets=android && cd ReactNativeProject && npm run bundle:android",
     "build:ios": "mpx-cli-service build --targets=ios && cd ReactNativeProject && npm run bundle:ios",

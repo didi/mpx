@@ -50,6 +50,12 @@ const components = [
     desc: 'scroll-view 组件功能测试'
   },
   {
+    name: 'visual-regression',
+    path: '/pages/visual-regression',
+    icon: '🖼️',
+    desc: '视觉回归检测 demo'
+  },
+  {
     name: '其他',
     path: '/pages/common',
     icon: '⚙️',

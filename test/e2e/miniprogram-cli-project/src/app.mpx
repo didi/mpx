@@ -24,7 +24,8 @@ const commonPages = [
   "./pages/view",
   "./pages/text",
   "./pages/scroll-view",
-  "./pages/common"
+  "./pages/common",
+  "./pages/visual-regression"
 ]
 
 module.exports = {

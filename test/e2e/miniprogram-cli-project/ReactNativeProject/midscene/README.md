@@ -32,6 +32,8 @@ From `ReactNativeProject`:
 
 ```bash
 npm run midscene:smoke:android
+npm run midscene:visual:update-baseline:android
+npm run midscene:visual:android
 ```
 
 This command first runs `midscene:prepare`, which checks whether the local `sharp`
@@ -41,7 +43,31 @@ From the demo root:
 
 ```bash
 npm run midscene:smoke:android
+npm run midscene:visual:update-baseline:android
+npm run midscene:visual:android
 ```
+
+## Visual Regression Check
+
+Use the commands in this order:
+
+1. `midscene:visual:update-baseline:android`
+   Save a known-good screenshot from the `正确布局` state as the baseline reference image.
+2. `midscene:visual:android`
+   Re-open the page with the saved baseline fixed, then switch through three anomaly scenarios and fail the run whenever Midscene sees visible differences in the demo area:
+   - `左右布局变化`
+   - `间距变化`
+   - `1 像素变化`
+
+For simplicity, the current implementation compares one stable single-screen region only.
+The saved image is cropped to the `visualStoryBoard` demo area instead of the full device screen.
+
+The reference image is saved under `artifacts/midscene/reference-images` by default.
+If you want to keep a persistent reference image elsewhere, set
+`MIDSCENE_VISUAL_REFERENCE_PATH` in `.env.midscene`.
+
+`midscene:visual:android` no longer refreshes the baseline automatically. This is intentional:
+in a gate-style visual regression check, any visible difference from the baseline should make the case fail instead of silently accepting the new screenshot.
 
 ## Output
 

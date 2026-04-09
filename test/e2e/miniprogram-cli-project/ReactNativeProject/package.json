@@ -10,6 +10,8 @@
     "test": "jest",
     "midscene:prepare": "node ./midscene/ensure-runtime.mjs",
     "midscene:smoke:android": "npm run midscene:prepare && tsx ./midscene/android.smoke.ts",
+    "midscene:visual:update-baseline:android": "npm run midscene:prepare && tsx ./midscene/android.visual-update-baseline.ts",
+    "midscene:visual:android": "npm run midscene:prepare && tsx ./midscene/android.visual-regression.ts",
     "bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output ./ios/main.jsbundle --assets-dest ./ios",
     "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/",
     "e2e:build:android": "detox build --configuration android.emu.debug",

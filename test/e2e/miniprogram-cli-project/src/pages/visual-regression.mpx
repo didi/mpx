@@ -1,0 +1,568 @@
+<template>
+  <scroll-view class="container" scroll-y="{{ true }}" testID="visualRegressionPage">
+    <view class="header">
+      <view class="header-content">
+        <view class="back-btn" bindtap="goBack" testID="visualBackBtn">
+          <text class="back-text">←</text>
+        </view>
+        <view class="header-copy">
+          <text class="title" testID="visualTitle">视觉回归检测示例</text>
+          <text class="subtitle">对比 3 类异常场景，观察 Midscene 是否能识别差异</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel-card toolbar-card" testID="visualToolbar">
+      <view class="toolbar-row">
+        <text class="toolbar-label">当前场景</text>
+        <view class="mode-chip {{ layoutMode === 'baseline' ? 'mode-chip-baseline' : 'mode-chip-warning' }}">
+          <text class="mode-chip-text" testID="visualLayoutModeLabel">{{ currentModeLabel }}</text>
+        </view>
+      </view>
+
+      <view class="mode-grid">
+        <view
+          class="mode-btn {{ layoutMode === 'baseline' ? 'mode-btn-active' : '' }}"
+          bindtap="setLayoutMode"
+          data-mode="baseline"
+          testID="visualMode-baseline"
+        >
+          <text class="mode-btn-text {{ layoutMode === 'baseline' ? 'mode-btn-text-active' : '' }}">正确布局</text>
+        </view>
+        <view
+          class="mode-btn mode-btn-warning {{ layoutMode === 'layout' ? 'mode-btn-active-warning' : '' }}"
+          bindtap="setLayoutMode"
+          data-mode="layout"
+          testID="visualMode-layout"
+        >
+          <text class="mode-btn-text {{ layoutMode === 'layout' ? 'mode-btn-text-active' : '' }}">左右布局变化</text>
+        </view>
+        <view
+          class="mode-btn mode-btn-secondary {{ layoutMode === 'spacing' ? 'mode-btn-active-secondary' : '' }}"
+          bindtap="setLayoutMode"
+          data-mode="spacing"
+          testID="visualMode-spacing"
+        >
+          <text class="mode-btn-text {{ layoutMode === 'spacing' ? 'mode-btn-text-active' : '' }}">间距变化</text>
+        </view>
+        <view
+          class="mode-btn mode-btn-muted {{ layoutMode === 'pixel' ? 'mode-btn-active-muted' : '' }}"
+          bindtap="setLayoutMode"
+          data-mode="pixel"
+          testID="visualMode-pixel"
+        >
+          <text class="mode-btn-text {{ layoutMode === 'pixel' ? 'mode-btn-text-active' : '' }}">1 像素变化</text>
+        </view>
+      </view>
+
+      <text class="toolbar-hint" testID="visualHint">{{ currentHint }}</text>
+    </view>
+
+    <view class="panel-card preview-card" testID="visualPreviewCard">
+      <view class="preview-header">
+        <text class="section-title">待检测主区域</text>
+        <text class="preview-header-note">测试只比对下面这块单屏主区域</text>
+      </view>
+
+      <view
+        class="story-board {{ layoutMode === 'spacing' ? 'story-board-spacing' : '' }}"
+        testID="visualStoryBoard"
+      >
+        <view class="board-topline {{ layoutMode === 'spacing' ? 'board-topline-spacing' : '' }}">
+          <text class="eyebrow">春季发布</text>
+          <view class="badge-group">
+            <view class="badge badge-dark">
+              <text class="badge-text">网格检测</text>
+            </view>
+            <view class="badge badge-light">
+              <text class="badge-text badge-text-light">间距观察</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="board-grid">
+          <view
+            class="hero-card {{ layoutMode === 'spacing' ? 'hero-card-spacing' : '' }} {{ layoutMode === 'pixel' ? 'hero-card-pixel' : '' }}"
+            testID="visualHeroCard"
+          >
+            <text class="hero-kicker">设计系统</text>
+            <text class="hero-title">布局基线海报</text>
+            <text class="hero-desc">
+              标准状态下，主卡片固定在上方，下方两张信息卡横向并排，按钮与底部信息保持稳定节奏。
+            </text>
+
+            <view class="hero-footer {{ layoutMode === 'layout' ? 'hero-footer-layout' : '' }} {{ layoutMode === 'spacing' ? 'hero-footer-spacing' : '' }}">
+              <view class="pill pill-primary">
+                <text class="pill-text pill-text-primary">准备发布</text>
+              </view>
+              <view class="cta-btn">
+                <text class="cta-text">查看基线</text>
+              </view>
+            </view>
+          </view>
+
+          <view
+            class="side-column {{ layoutMode === 'layout' ? 'side-column-layout' : '' }} {{ layoutMode === 'spacing' ? 'side-column-spacing' : '' }}"
+            testID="visualSideColumn"
+          >
+            <view
+              class="mini-card mini-card-teal {{ layoutMode === 'spacing' ? 'mini-card-spacing' : '' }}"
+              testID="visualMiniCard-progress"
+            >
+              <text class="mini-label">进度</text>
+              <text class="mini-value">84%</text>
+            </view>
+            <view
+              class="mini-card mini-card-light {{ layoutMode === 'spacing' ? 'mini-card-spacing mini-card-light-spacing' : '' }}"
+              testID="visualMiniCard-review"
+            >
+              <text class="mini-label">检查项</text>
+              <text class="mini-note">间距 / 顺序 / 对齐</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="board-footer {{ layoutMode === 'spacing' ? 'board-footer-spacing' : '' }}">
+          <view class="tag-list">
+            <text
+              wx:for="{{ tags }}"
+              wx:key="*this"
+              class="tag-item"
+            >{{ item }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+
+<script setup>
+import mpx, { computed, ref } from '@mpxjs/core'
+
+const layoutMode = ref('baseline')
+const tags = ['主卡置顶', '双卡横排', '基线对齐']
+
+const modeLabelMap = {
+  baseline: '正确布局',
+  layout: '左右布局变化',
+  spacing: '间距变化',
+  pixel: '1 像素变化'
+}
+
+const hintMap = {
+  baseline: '先保存这张基线图，后面的对比都以它为准。',
+  layout: '改变卡片左右次序和按钮方向，观察 Midscene 是否能识别结构变化。',
+  spacing: '保持结构不变，只改上下左右留白，观察 Midscene 是否能识别间距异常。',
+  pixel: '只在主卡片上增加 1 像素描边，观察 Midscene 对极小像素变化的敏感度。'
+}
+
+const currentModeLabel = computed(() => modeLabelMap[layoutMode.value] || modeLabelMap.baseline)
+const currentHint = computed(() => hintMap[layoutMode.value] || hintMap.baseline)
+
+function setLayoutMode(e) {
+  const nextMode = e.currentTarget.dataset.mode
+  layoutMode.value = modeLabelMap[nextMode] ? nextMode : 'baseline'
+}
+
+function goBack() {
+  mpx.navigateBack()
+}
+
+defineExpose({
+  layoutMode,
+  tags,
+  currentModeLabel,
+  currentHint,
+  setLayoutMode,
+  goBack
+})
+</script>
+
+<style>
+.container {
+  flex: 1;
+  background-color: #f3f1ea;
+}
+
+.header {
+  padding: 16px 18px 14px;
+  background-color: #153243;
+}
+
+.header-content {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.back-btn {
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.back-text {
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.header-copy {
+  flex: 1;
+}
+
+.title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.panel-card {
+  margin: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  background-color: #fffdf7;
+}
+
+.toolbar-row {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.toolbar-label {
+  font-size: 15px;
+  font-weight: bold;
+  color: #1c2b33;
+}
+
+.mode-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.mode-chip-baseline {
+  background-color: #ddf4e4;
+}
+
+.mode-chip-warning {
+  background-color: #ffe2d4;
+}
+
+.mode-chip-text {
+  font-size: 12px;
+  font-weight: bold;
+  color: #1c2b33;
+}
+
+.mode-grid {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.mode-btn {
+  width: 48%;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 8px;
+  border-radius: 12px;
+  background-color: #edf1f4;
+  margin-bottom: 8px;
+}
+
+.mode-btn-warning {
+  background-color: #f8e6df;
+}
+
+.mode-btn-secondary {
+  background-color: #ecf4ef;
+}
+
+.mode-btn-muted {
+  background-color: #f0efef;
+}
+
+.mode-btn-active {
+  background-color: #153243;
+}
+
+.mode-btn-active-warning {
+  background-color: #c75b39;
+}
+
+.mode-btn-active-secondary {
+  background-color: #3f7d5a;
+}
+
+.mode-btn-active-muted {
+  background-color: #6d6b73;
+}
+
+.mode-btn-text {
+  font-size: 13px;
+  font-weight: bold;
+  color: #18313f;
+}
+
+.mode-btn-text-active {
+  color: #fff;
+}
+
+.toolbar-hint {
+  font-size: 12px;
+  line-height: 18px;
+  color: #6b7b86;
+}
+
+.preview-header {
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: bold;
+  color: #1c2b33;
+  margin-bottom: 6px;
+}
+
+.preview-header-note {
+  font-size: 12px;
+  color: #7b6c5d;
+}
+
+.story-board {
+  padding: 12px;
+  border-radius: 22px;
+  background-color: #f7efe1;
+  border-width: 1px;
+  border-color: #eadac2;
+}
+
+.story-board-spacing {
+  padding: 16px;
+}
+
+.board-topline {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.board-topline-spacing {
+  margin-bottom: 12px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: bold;
+  color: #8a6f4d;
+}
+
+.badge-group {
+  flex-direction: row;
+  align-items: center;
+}
+
+.badge {
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+
+.badge-light {
+  margin-left: 8px;
+  background-color: #fff6e9;
+}
+
+.badge-dark {
+  background-color: #153243;
+}
+
+.badge-text {
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.badge-text-light {
+  color: #8a6f4d;
+}
+
+.board-grid {
+  flex-direction: column;
+}
+
+.hero-card {
+  padding: 14px;
+  border-radius: 18px;
+  background-color: #18313f;
+}
+
+.hero-card-spacing {
+  padding: 20px;
+}
+
+.hero-card-pixel {
+  border-width: 1px;
+  border-color: #315260;
+}
+
+.hero-kicker {
+  color: #9ac6d5;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.hero-title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.hero-desc {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.hero-footer {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.hero-footer-layout {
+  flex-direction: row-reverse;
+}
+
+.hero-footer-spacing {
+  margin-top: 16px;
+}
+
+.pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+
+.pill-primary {
+  background-color: #f8c14a;
+}
+
+.pill-text {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.pill-text-primary {
+  color: #513b11;
+}
+
+.cta-btn {
+  padding: 9px 14px;
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.cta-text {
+  font-size: 13px;
+  font-weight: bold;
+  color: #18313f;
+}
+
+.side-column {
+  margin-top: 8px;
+  flex-direction: row;
+}
+
+.side-column-layout {
+  flex-direction: row-reverse;
+}
+
+.side-column-spacing {
+  margin-top: 14px;
+}
+
+.mini-card {
+  flex: 1;
+  padding: 12px 12px;
+  border-radius: 16px;
+}
+
+.mini-card-spacing {
+  padding: 16px 14px;
+}
+
+.mini-card-light {
+  margin-left: 8px;
+  background-color: #fffaf1;
+}
+
+.mini-card-light-spacing {
+  margin-left: 16px;
+}
+
+.mini-card-teal {
+  background-color: #a8d6d0;
+}
+
+.mini-label {
+  font-size: 12px;
+  color: #576874;
+  margin-bottom: 6px;
+}
+
+.mini-value {
+  font-size: 22px;
+  font-weight: bold;
+  color: #18313f;
+}
+
+.mini-note {
+  font-size: 12px;
+  line-height: 17px;
+  color: #18313f;
+}
+
+.board-footer {
+  margin-top: 8px;
+}
+
+.board-footer-spacing {
+  margin-top: 14px;
+}
+
+.tag-list {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.tag-item {
+  padding: 5px 8px;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background-color: #fff8ec;
+  font-size: 10px;
+  color: #7d6648;
+}
+</style>
+
+<script type="application/json">
+  {
+    "usingComponents": {},
+    "navigationBarTitleText": "视觉回归检测"
+  }
+</script>
