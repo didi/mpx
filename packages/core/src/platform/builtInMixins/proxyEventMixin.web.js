@@ -27,8 +27,9 @@ export default function proxyEventMixin () {
           } catch (e) {}
         }
         const location = this.__mpxProxy.options.mpxFileResource
+        const isObjectEvent = rawEvent && typeof rawEvent === 'object'
 
-        if (rawEvent.target && !rawEvent.target._datasetProcessed) {
+        if (isObjectEvent && rawEvent.target && !rawEvent.target._datasetProcessed) {
           const originalDataset = rawEvent.target.dataset
           Object.defineProperty(rawEvent.target, 'dataset', {
             get: () => parseDataset(originalDataset),
@@ -37,7 +38,7 @@ export default function proxyEventMixin () {
           })
           rawEvent.target._datasetProcessed = true
         }
-        if (rawEvent.currentTarget && !rawEvent.currentTarget._datasetProcessed) {
+        if (isObjectEvent && rawEvent.currentTarget && !rawEvent.currentTarget._datasetProcessed) {
           const originalDataset = rawEvent.currentTarget.dataset
           Object.defineProperty(rawEvent.currentTarget, 'dataset', {
             get: () => parseDataset(originalDataset),
