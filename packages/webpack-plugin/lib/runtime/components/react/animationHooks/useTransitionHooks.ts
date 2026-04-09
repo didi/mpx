@@ -275,6 +275,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     const prevStyle = lastTransitionStyleRef.current
     const hasTransitionChanged = transitionKeys.some(key => prevStyle[key] !== originalStyle[key])
     const currentTransitionMap = hasTransitionChanged
+	  // 从当前 style 解析最新 timing
       ? parseTransitionStyle(originalStyle)
       : transitionMapRef.current
     if (hasTransitionChanged) {
@@ -287,7 +288,6 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       }
 	  transitionMapRef.current = currentTransitionMap
     }
-    // 从当前 style 解析最新 timing
     createAnimation()
   }, [originalStyle])
   // ** 清空动画
