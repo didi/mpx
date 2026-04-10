@@ -39,7 +39,6 @@ const view = require('./view')
 const webView = require('./web-view')
 const label = require('./label')
 const wxs = require('./wxs')
-const component = require('./component')
 const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
 const stickyHeader = require('./sticky-header')
@@ -126,7 +125,6 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     livePusher({ print }),
     hyphenTagName({ print }),
     label({ print }),
-    component(),
     rootPortal({ print }),
     stickyHeader({ print }),
     stickySection({ print })

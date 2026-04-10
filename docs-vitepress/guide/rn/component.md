@@ -79,7 +79,9 @@
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | user-select             | boolean  | `false`       | 文本是否可选。 |
-| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 text 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
+| selectable              | boolean  | `false`       | 文本是否可选。该属性已废弃，请使用 user-select |
+| decode                  | boolean  | `false`       | 是否解码 |
+| is-simple               | -  | -  | RN环境特有标记，设置后将使用简单版本的 text 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
 
 
 
@@ -105,7 +107,7 @@
 | enhanced                | boolean | `false`   | scroll-view 组件功能增强                             |
 | bounces                | boolean | `true`   | iOS 下 scroll-view 边界弹性控制 (同时开启 enhanced 属性后生效)                          |
 | refresher-enabled       | boolean | `false`   | 开启自定义下拉刷新                                    |
-| scroll-anchoring        | boolean | `false`   | 开启滚动区域滚动锚点                                   |
+| refresher-threshold     | number  | `45`      | 设置自定义下拉刷新阈值                                  |
 | scroll-into-view	        | boolean | `false` | 值应为某子元素id（id不能以数字开头）    |  
 | scroll-into-view-offset	        | number | `0` | 跳转到 scroll-into-view 目标节点时的额外偏移                       |
 | refresher-default-style | string  | `'black'` | 设置下拉刷新默认样式,支持 `black`、`white`、`none`，仅安卓支持 |
@@ -151,6 +153,11 @@
 | indicator-dots          | boolean | `false`             | 是否显示面板指示点                     |
 | indicator-color         | color   | `rgba(0, 0, 0, .3)` | 指示点颜色                            |
 | indicator-active-color  | color   | `#000000`           | 当前选中的指示点颜色                   |
+| indicator-width         | number  |                     | 指示点宽度             |
+| indicator-height        | number  |                     | 指示点高度             |
+| indicator-spacing       | number  |                     | 指示点间距             |
+| indicator-radius        | number  |                     | 指示点圆角             |
+| indicator-margin        | number  |                     | 指示点外边距           |
 | autoplay                | boolean | `false`             | 是否自动切换                          |
 | current                 | number  | `0`                 | 当前所在滑块的 index                  |
 | interval                | number  | `5000`              | 自动切换时间间隔                       |
@@ -201,6 +208,8 @@ movable-view的可移动区域。
 | y  | number  |        | 定义y轴方向的偏移 |
 | disabled  | boolean  |    `false`   | 是否禁用 |
 | animation  | boolean  |    `true`   | 是否使用动画	 |
+| damping   | number   |    `20`      | 阻尼系数，用于控制x或y改变时的动画和过界回弹的动画，值越大移动越快 |
+| friction  | number   |    `2`       | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止 |
 | simultaneous-handlers  | array\<object>  |   `[]`   | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | wait-for  |  array\<object>  |  `[]`    |  RN 环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | disable-event-passthrough | boolean  |  `false`   | RN 环境特有属性，有时候我们希望movable-view 在水平方向滑动，并且竖直方向的手势也希望被 movable-view 组件消费掉，不被其他组件响应，可以将这个属性设置为true） |
@@ -221,7 +230,7 @@ movable-view的可移动区域。
 > - RN 环境 movable 相关组件暂不支持缩放能力
 
 ### image
-图片。
+图片组件
 
 属性
 
@@ -246,7 +255,6 @@ movable-view的可移动区域。
 ### icon
 图标组件
 
-
 属性
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
@@ -268,6 +276,7 @@ movable-view的可移动区域。
 | plain                   | boolean | `false`       | 按钮是否镂空，背景色透明                                       |
 | disabled                | boolean | `false`       | 是否禁用                                                    |
 | loading                 | boolean | `false`       | 名称前是否带 loading 图标                                     |
+| form-type               | string  |               | 用于 form 组件，点击分别会触发 form 组件的 submit/reset 事件，有效值为 `submit`、`reset` |
 | open-type               | string  |               | 微信开放能力，当前仅支持 `share` 和 `getUserInfo`                              |
 | hover-class             | string  |               | 指定按钮按下去的样式类。当 hover-class="none" 时，没有点击态效果  |
 | hover-start-time        | number  |  `20`         | 按住后多久出现点击态，单位毫秒                                  |
@@ -363,15 +372,18 @@ movable-view的可移动区域。
 | placeholder-style       | string  |               | 指定 placeholder 的样式，仅支持 color 属性                    |
 | disabled                | boolean | `false`       | 是否禁用                                                    |
 | maxlength               | number  | `140`         | 最大输入长度，设置为 -1 的时候不限制最大长度                     |
+| cursor-spacing          | number  | `0`           | 指定光标与键盘的距离，单位 px。取 input 距离底部的距离和 cursor-spacing 指定的距离的最小值作为光标与键盘的距离 |
 | auto-focus              | boolean | `false`       | (即将废弃，请直接使用 focus )自动聚焦，拉起键盘                  |
 | focus                   | boolean | `false`       | 获取焦点                                                    |
-| confirm-type            | string  | `done`        | 设置键盘右下角按钮的文字，仅在 type='text' 时生效，可选值为 `send`、`search`、`next`、`go`、`done`              |
+| confirm-type            | string  | `done`        | 设置键盘右下角按钮的文字，仅在 type='text' 时生效，可选值为 `send`、`search`、`next`、`go`、`done`、`return`              |
 | confirm-hold            | boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
 | hold-keyboard           | boolean | `false`       | 输入框聚焦时，点击页面其他地方是否收起键盘 <badge type="tip" text="2.10.18+" />  |
 | cursor                  | number  |               | 指定 focus 时的光标位置                                      |
 | cursor-color            | string  |               | 光标颜色                                                    |
 | selection-start         | number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
 | selection-end           | number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
+| adjust-position         | boolean | `true`        | 键盘弹起时，是否自动上推页面                                  |
+| keyboard-type           | string  |               | RN环境特有属性，设置键盘类型                                  |
 
 事件
 
@@ -392,22 +404,24 @@ movable-view的可移动区域。
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
 | value                   | string  |               | 输入框内容                                                   |
-| type                    | string  | `text`        | input 的类型，不支持 `safe-password`、`nickname`              |
 | placeholder             | string  |               | 输入框为空时占位符                                            |
 | placeholder-class       | string  |               | 指定 placeholder 的样式类，仅支持 color 属性                   |
 | placeholder-style       | string  |               | 指定 placeholder 的样式，仅支持 color 属性                    |
 | disabled                | boolean | `false`       | 是否禁用                                                    |
 | maxlength               | number  | `140`         | 最大输入长度，设置为 -1 的时候不限制最大长度                     |
+| cursor-spacing          | number  | `0`           | 指定光标与键盘的距离，单位 px。取 textarea 距离底部的距离和 cursor-spacing 指定的距离的最小值作为光标与键盘的距离 |
 | auto-focus              | boolean | `false`       | (即将废弃，请直接使用 focus )自动聚焦，拉起键盘                  |
 | focus                   | boolean | `false`       | 获取焦点                                                    |
 | auto-height             | boolean | `false`       | 是否自动增高，设置 auto-height 时，style.height不生效          |
-| confirm-type            | string  | `done`        | 设置键盘右下角按钮的文字，可选值为 `send`、`search`、`next`、`go`、`done`，不支持 `return`                       |
-| confirm-hold            |         |               | 暂不支持                         |
+| confirm-type            | string  | `return`      | 设置键盘右下角按钮的文字，可选值为 `send`、`search`、`next`、`go`、`done`、`return`                       |
+| confirm-hold            | boolean | `false`       | 点击键盘右下角按钮时是否保持键盘不收起                           |
 | hold-keyboard           | boolean | `false`       | 输入框聚焦时，点击页面其他地方是否收起键盘 <badge type="tip" text="2.10.18+" /> |
 | cursor                  | number  |               | 指定 focus 时的光标位置                                      |
 | cursor-color            | string  |               | 光标颜色                                                    |
 | selection-start         | number  | `-1`          | 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用         |
 | selection-end           | number  | `-1`          | 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用       |
+| adjust-position         | boolean | `true`        | 键盘弹起时，是否自动上推页面                                  |
+| keyboard-type           | string  |               | RN环境特有属性，设置键盘类型                                  |
 
 事件
 
@@ -491,6 +505,7 @@ movable-view的可移动区域。
 | -----------------------| ------------| ------------------ | -----------------------------|
 | mode                   | string      | `selector`         | 选择器类型，目前支持 `selector`、 `multiSelector`、 `time`、 `date`、  `region`   |
 | disabled               | boolean     | `false`            | 是否禁用                       |
+| header-text            | string      |                    | 头部标题                       |
 
 公共事件
 
@@ -562,7 +577,6 @@ level 有效值：
 | city                   | 市级选择器                 |
 | region                 | 区级选择器                 |
 
-
 ### switch
 开关选择器。
 
@@ -594,6 +608,7 @@ level 有效值：
 | hover-stay-time	  | number  |     `400`    | 手指松开后点击态保留时间，单位毫秒	 |
 | open-type		  | string  |     `navigate`    | 可支持`navigateBack`、`redirect`、`switchTab`、`reLaunch`、`navigateTo`|
 | url		  | string  |       |  跳转链接	|
+| delta		  | number  |       |  当 open-type 为 'navigateBack' 时有效，表示回退的层数	|
 
 
 ### rich-text
@@ -618,7 +633,7 @@ level 有效值：
 | bindtouchmove	   | 手指触摸后移动		|
 | bindtouchend	  | 手指触摸动作结束	|
 | bindtouchcancel	  | 手指触摸动作被打断	|
-| bindlongpress    | 手指长按 350ms 之后触发	|
+| bindlongtap    | 手指长按 350ms 之后触发	|
 | binderror	    | 当发生错误时触发 error 事件， `detail = {errMsg}`	|
 
 API
@@ -655,6 +670,10 @@ API
 | poster	    | string  |               | 视频封面的图片地址|
 | enable-auto-rotation	    | boolean  |         `false`      | 是否开启手机横屏时自动全屏，当系统设置开启自动旋转时生效，仅 ios 支持|
 | preferred-peak-bit-rate	    | number  |        `0`      | 指定码率上界，单位为比特每秒|
+| is-drm	    | boolean  |         `false`      | 是否为 drm 视频|
+| provision-url	    | string  |               | android 环境特有属性，drm 视频的 provision url|
+| certificate-url	    | string  |               | ios 环境特有属性，drm 视频的 certificate url|
+| license-url	    | string  |               | drm 视频的 license url|
 
 
 事件
@@ -743,11 +762,11 @@ API
 
 ### cover-view
 视图容器。
-功能同 view 组件
+功能同 [view 组件](#view)，在 cover-view 中只能嵌套 cover-view 或 cover-image 组件。
 
 ### cover-image
 视图容器。
-功能同 image 组件
+功能同 [image 组件](#image)
 
 
 ## 自定义组件 {#custom-component}
