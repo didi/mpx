@@ -50,6 +50,18 @@ module.exports = function ({ print }) {
     // 支付宝中的基础事件有touchStart|touchMove|touchEnd|touchCancel|tap|longTap
     event: [
       {
+        test: /^longtap$/,
+        ios (eventName) {
+          return eventName
+        },
+        android (eventName) {
+          return eventName
+        },
+        harmony (eventName) {
+          return eventName
+        }
+      },
+      {
         test: /^(touchstart|touchmove|touchend|touchcancel|longtap)$/,
         ali (eventName) {
           const eventMap = {

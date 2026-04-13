@@ -19,6 +19,9 @@ const globalEventState: GlobalEventState = {
   identifier: null
 }
 
+const LONG_PRESS_DELAY = 350
+const LONG_TAP_DELAY = 500
+
 const getTouchEvent = (
   type: string,
   event: ExtendedNativeTouchEvent,
@@ -116,7 +119,7 @@ function handleEmitEvent (
   const { propsRef } = eventConfig
   const eventCfg = eventConfig[name]
   if (eventCfg) {
-    if (eventCfg.hasCatch && name !== 'tap' && name !== 'longpress') {
+    if (eventCfg.hasCatch && name !== 'tap' && name !== 'longpress' && name !== 'longtap') {
       e.stopPropagation()
     }
     eventCfg[type].forEach((event) => {
@@ -164,21 +167,22 @@ function handleTouchstart (e: ExtendedNativeTouchEvent, type: EventType, eventCo
 
   handleEmitEvent('touchstart', e, type, eventConfig)
 
-  if (eventConfig.longpress) {
+  const pressEventName = eventConfig.longtap ? 'longtap' : (eventConfig.longpress ? 'longpress' : '')
+  if (pressEventName) {
     // 只有单指触摸时才启动长按定时器
     if (isSingle) {
-      if (e._stoppedEventTypes?.has('longpress')) {
+      if (e._stoppedEventTypes?.has(pressEventName)) {
         return
       }
-      if (eventConfig.longpress.hasCatch) {
+      if (eventConfig[pressEventName].hasCatch) {
         e._stoppedEventTypes = e._stoppedEventTypes || new Set()
-        e._stoppedEventTypes.add('longpress')
+        e._stoppedEventTypes.add(pressEventName)
       }
       innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
       innerRef.current.startTimer[type] = setTimeout(() => {
         globalEventState.needPress = false
-        handleEmitEvent('longpress', e, type, eventConfig)
-      }, 350)
+        handleEmitEvent(pressEventName, e, type, eventConfig)
+      }, pressEventName === 'longtap' ? LONG_TAP_DELAY : LONG_PRESS_DELAY)
     }
   }
 }
@@ -195,6 +199,7 @@ function handleTouchend (e: ExtendedNativeTouchEvent, type: EventType, eventConf
   const { innerRef, disableTap } = eventConfig
   handleEmitEvent('touchend', e, type, eventConfig)
   innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
+  innerRef.current.startTimer[type] = null
 
   // 只有单指触摸结束时才触发 tap
   if (shouldHandleTapEvent(e, eventConfig)) {
@@ -214,6 +219,7 @@ function handleTouchcancel (e: ExtendedNativeTouchEvent, type: EventType, eventC
   const { innerRef } = eventConfig
   handleEmitEvent('touchcancel', e, type, eventConfig)
   innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
+  innerRef.current.startTimer[type] = null
 }
 
 function createTouchEventHandler (eventName: string, eventConfig: EventConfig) {
