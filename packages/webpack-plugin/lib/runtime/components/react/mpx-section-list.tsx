@@ -1,7 +1,8 @@
-import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo } from 'react'
+import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo, useContext } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle } from './utils'
+import { IntersectionObserverContext } from './context'
 interface ListItem {
   isSectionHeader?: boolean;
   _originalItemIndex?: number;
@@ -46,6 +47,7 @@ interface SectionListProps {
   'parent-width'?: number;
   'parent-height'?: number;
   'enable-sticky'?: boolean;
+  'enable-trigger-intersection-observer'?: boolean;
   'enable-back-to-top'?: boolean;
   'end-reached-threshold'?: number;
   'refresher-enabled'?: boolean;
@@ -103,6 +105,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'enable-sticky': enableSticky = false,
+    'enable-trigger-intersection-observer': enableTriggerIntersectionObserver = false,
     'enable-back-to-top': enableBackToTop = false,
     'end-reached-threshold': onEndReachedThreshold = 0.1,
     'refresher-enabled': refresherEnabled,
@@ -113,6 +116,12 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
 
   const scrollViewRef = useRef<any>(null)
+  const intersectionObservers = useContext(IntersectionObserverContext)
+  const intersectionTriggerState = useRef({
+    lastTriggerTime: 0,
+    lastScrollLeft: 0,
+    lastScrollTop: 0
+  })
 
   const indexMap = useRef<{ [key: string]: string | number }>({})
 
@@ -132,6 +141,50 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     }
   }, [refresherTriggered])
 
+  const updateIntersectionObserver = useCallback(() => {
+    if (!enableTriggerIntersectionObserver || !intersectionObservers) {
+      return
+    }
+    for (const key in intersectionObservers) {
+      intersectionObservers[key].throttleMeasure()
+    }
+  }, [enableTriggerIntersectionObserver, intersectionObservers])
+
+  const updateIntersectionByScroll = useCallback((event?: NativeSyntheticEvent<NativeScrollEvent>, force = false) => {
+    if (!enableTriggerIntersectionObserver || !intersectionObservers) return
+    const now = Date.now()
+    const triggerState = intersectionTriggerState.current
+    if (event) {
+      const contentOffset = event.nativeEvent && event.nativeEvent.contentOffset
+      const scrollLeft = contentOffset?.x || 0
+      const scrollTop = contentOffset?.y || 0
+      const moveX = Math.abs(scrollLeft - triggerState.lastScrollLeft)
+      const moveY = Math.abs(scrollTop - triggerState.lastScrollTop)
+      triggerState.lastScrollLeft = scrollLeft
+      triggerState.lastScrollTop = scrollTop
+      if (!force && moveX < 2 && moveY < 2) return
+    }
+    if (!force && (now - triggerState.lastTriggerTime) < 80) return
+    triggerState.lastTriggerTime = now
+    updateIntersectionObserver()
+  }, [enableTriggerIntersectionObserver, intersectionObservers, updateIntersectionObserver])
+
+  const updateIntersectionObserverRef = useRef(updateIntersectionObserver)
+  updateIntersectionObserverRef.current = updateIntersectionObserver
+
+  const originOnViewableItemsChangedRef = useRef(props.onViewableItemsChanged)
+  originOnViewableItemsChangedRef.current = props.onViewableItemsChanged
+
+  const onViewableItemsChangedRef = useRef((event: any) => {
+    updateIntersectionObserverRef.current()
+    const originOnViewableItemsChanged = originOnViewableItemsChangedRef.current
+    if (typeof originOnViewableItemsChanged === 'function') {
+      originOnViewableItemsChanged(event)
+    }
+  })
+
+  const onViewableItemsChanged = onViewableItemsChangedRef.current
+
   const onRefresh = () => {
     const { bindrefresherrefresh } = props
     bindrefresherrefresh &&
@@ -146,6 +199,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       bindscrolltolower(
         getCustomEvent('scrolltolower', {}, { layoutRef }, props)
       )
+    updateIntersectionObserver()
   }
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -154,6 +208,15 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       bindscroll(
         getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
       )
+    updateIntersectionByScroll(event)
+  }
+
+  const onScrollEndDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    updateIntersectionByScroll(event, true)
+  }
+
+  const onMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    updateIntersectionByScroll(event, true)
   }
 
   // 通过sectionIndex和rowIndex获取原始索引
@@ -273,6 +336,10 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     return sections
   }, [listData])
 
+  useEffect(() => {
+    updateIntersectionObserver()
+  }, [convertedListData, updateIntersectionObserver])
+
   const { getItemLayout } = useMemo(() => {
     const layouts: Array<{ length: number, offset: number, index: number }> = []
     let offset = 0
@@ -330,7 +397,10 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       bounces: false,
       stickySectionHeadersEnabled: enableSticky,
       onScroll: onScroll,
-      onEndReached: onEndReached
+      onEndReached: onEndReached,
+      onScrollEndDrag: onScrollEndDrag,
+      onMomentumScrollEnd: onMomentumScrollEnd,
+      onViewableItemsChanged: onViewableItemsChanged
     },
     layoutProps
   )
@@ -347,10 +417,9 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   }
 
   useImperativeHandle(ref, () => {
-    return {
-      ...props,
+    return Object.assign({}, props, {
       scrollToIndex
-    }
+    })
   })
 
   const innerProps = useInnerProps(extendObject({}, props, scrollAdditionalProps), [
@@ -359,7 +428,8 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'lower-threshold',
     'refresher-triggered',
     'refresher-enabled',
-    'bindrefresherrefresh'
+    'bindrefresherrefresh',
+    'enable-trigger-intersection-observer'
   ], { layoutRef })
 
   // 使用 ref 保存最新的数据，避免数据变化时组件销毁重建
