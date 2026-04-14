@@ -120,7 +120,7 @@ export default function createApp (options) {
           const current = state.routes[state.index]
           options = {
             path: current.name,
-            query: current.params,
+            query: current.name === global.__mpxInitialRouteName ? global.__mpxInitialRunParams : current.params,
             scene: 0,
             shareTicket: '',
             referrerInfo: {}
@@ -180,7 +180,7 @@ export default function createApp (options) {
         const current = state.routes[state.index]
         const options = {
           path: current.name,
-          query: current.params,
+          query: current.name === global.__mpxInitialRouteName ? global.__mpxInitialRunParams : current.params,
           scene: 0,
           shareTicket: '',
           referrerInfo: {},
