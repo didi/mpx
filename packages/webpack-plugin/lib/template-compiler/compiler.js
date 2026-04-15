@@ -106,6 +106,7 @@ let hasVirtualHost
 let isCustomText
 let runtimeCompile
 let rulesRunner
+let customBuiltInComponentsOpt
 let currentEl
 let injectNodes = []
 let forScopes = []
@@ -643,6 +644,7 @@ function parse (template, options) {
   componentGenerics = options.componentGenerics || {}
   usingComponentsInfo = options.usingComponentsInfo || {}
   usingComponents = Object.keys(usingComponentsInfo)
+  customBuiltInComponentsOpt = options.customBuiltInComponents || null
 
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
@@ -668,7 +670,8 @@ function parse (template, options) {
     type: 'template',
     testKey: 'tag',
     data: {
-      usingComponents
+      usingComponents,
+      customBuiltInComponents: customBuiltInComponentsOpt
     },
     warn: _warn,
     error: _error
@@ -2538,19 +2541,25 @@ function processScoped (el) {
 
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
+function resolveCustomBuiltinResource (el) {
+  if (!customBuiltInComponentsOpt || !el.isBuiltIn) return null
+  if (el.originalTag != null && customBuiltInComponentsOpt[el.originalTag]) {
+    return customBuiltInComponentsOpt[el.originalTag]
+  }
+  return null
+}
+
 function processBuiltInComponents (el, meta) {
   if (el.isBuiltIn) {
     if (!meta.builtInComponentsMap) {
       meta.builtInComponentsMap = {}
     }
     const tag = el.tag
-    if (!meta.builtInComponentsMap[tag]) {
-      if (isReact(mode)) {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
-      } else {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
-      }
-    }
+    const customResource = resolveCustomBuiltinResource(el)
+    const defaultResource = isReact(mode)
+      ? `${builtInComponentsPrefix}/react/dist/${tag}`
+      : `${builtInComponentsPrefix}/${mode}/${tag}`
+    meta.builtInComponentsMap[tag] = customResource != null ? customResource : defaultResource
   }
 }
 

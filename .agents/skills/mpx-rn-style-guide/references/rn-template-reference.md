@@ -2,11 +2,22 @@
 
 ## 目录索引
 
+- [数据绑定](#数据绑定)
+  - [文本、属性与表达式](#文本属性与表达式)
 - [模板指令](#模板指令)
 - [事件处理](#事件处理)
-  - [基础通用事件](#基础通用事件)
+  - [通用事件](#通用事件)
   - [事件绑定语法](#事件绑定语法)
-  - [注意事项](#注意事项)
+  - [注意事项](#注意事项-1)
+- [i18n 国际化](#i18n-国际化)
+  - [工程配置示例](#工程配置示例)
+  - [模板中使用翻译函数](#模板中使用翻译函数)
+  - [JS 中使用翻译函数](#js-中使用翻译函数)
+  - [注意事项](#注意事项-2)
+- [无障碍访问](#无障碍访问)
+  - [模板属性](#模板属性)
+  - [示例](#示例)
+  - [注意事项](#注意事项-3)
 - [基础组件](#基础组件)
   - [通用属性](#通用属性)
   - [view](#view)
@@ -42,6 +53,60 @@
   - [sticky-header](#sticky-header)
   - [cover-view](#cover-view)
   - [cover-image](#cover-image)
+
+
+## 数据绑定
+
+跨端输出 RN 时，模板数据绑定规则与微信小程序一致：在模板中使用 Mustache 语法 `{{}}` 将脚本中的响应式数据、计算属性等绑定到视图。编译后由 Mpx 在 RN 侧生成等价的数据流与属性传递，写法上与输出小程序、Web 保持同一套 `.mpx` 模板习惯即可。
+
+### 文本、属性与表达式
+
+- **文本节点**：在标签闭合内容中使用 Mustache 表达式插值，例如 `<text>{{ message }}</text>`。
+- **属性值**：属性值同样支持 Mustache 表达式插值，例如 `value="{{ inputValue }}"`、`placeholder="共 {{ total }} 条"`，同时支持在模版指令中使用，如 `wx:if`、`wx:for`、`wx:show` 等。
+- **表达式能力**：`{{}}` 内支持算术、三元、逻辑运算、属性访问等常见 JavaScript 表达式，可与 `data`、`computed`、`setup` 暴露的数据字段组合使用。`{{}}` 内支持**可选链** `?.`，例如 `{{ user?.name }}`、`wx:if="{{ list?.length }}"`。
+- **访问环境变量**：在 `{{}}` 中可直接访问 **`__mpx_mode__`**（当前目标平台，如 `wx`、`ali`、`ios`、`android` 等）、**`__mpx_env__`**（用户在编译配置中通过 `env` 定义的环境标识），以及用户在编译配置中通过 **`defs`** 定义的自定义环境变量。
+
+```html
+<template>
+  <!-- 不推荐：在 {{}} 中直接调用 methods 或任意函数 -->
+  <!-- <text>{{ formatTitle(title) }}</text> -->
+
+  <!-- 推荐：绑定 computed / data 字段 -->
+  <text>{{ displayTitle }}</text>
+
+  <!-- i18n：翻译方法由编译器改写，可按项目 i18n 文档使用 -->
+  <text>{{ $t('hello') }}</text>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data () {
+    return {
+      title: 'demo'
+    }
+  },
+  computed: {
+    displayTitle () {
+      return this.formatTitle(this.title)
+    }
+  },
+  methods: {
+    formatTitle (str) {
+      return str ? str.toUpperCase() : ''
+    }
+  }
+})
+</script>
+```
+
+#### 注意事项
+
+1. 模板数据绑定中**不支持**对组件 `methods` 或任意函数的**一般方法调用**（例如 `{{ formatTitle(title) }}`）。
+2. 需要在模版中加工展示数据时，请使用 **`computed`** 替代，或改写为 **`wxs`** 函数，模版中支持调用 `wxs` 函数。
+3. **例外**：**i18n 翻译函数**（如 `$t`、`$tc` 等，组合式 API 中为 `t`、`tc` 等）会在**编译期**被 Mpx **改写为等效的 `computed` 或 `wxs` 实现**，因此模板中支持直接调用 i18n 翻译函数。
+
 
 ## 模板指令
 
@@ -118,12 +183,16 @@ Mpx 支持了事件内联传参机制。
   <!--Mpx增强语法，模板内联传参，方便简洁-->
   <view bindtap="handleTapInline('inline')">内联传参</view>
 </template>
-<script setup>
-  // 直接通过参数获取数据，直观方便
-  const handleTapInline = (params) => {
-    console.log("params:", params)
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  methods: {
+    handleTapInline (params) {
+      console.log('params:', params)
+    }
   }
-  // ...
+})
 </script>
 ```
 
@@ -136,22 +205,30 @@ Mpx 也支持使用 `{{}}` 插值进行动态事件绑定。
   <!--动态事件绑定-->
   <view wx:for="{{items}}" bindtap="handleTap_{{index}}"> {{item}} </view>
 </template>
-<script setup>
-  import { ref } from "@mpxjs/core"
-  const items = ref(["Item 1", "Item 2", "Item 3", "Item 4"])
-  const handleTap_0 = (event) => {
-    console.log("Tapped on item 1")
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data () {
+    return {
+      items: ['Item 1', 'Item 2', 'Item 3', 'Item 4']
+    }
+  },
+  methods: {
+    handleTap_0 () {
+      console.log('Tapped on item 1')
+    },
+    handleTap_1 () {
+      console.log('Tapped on item 2')
+    },
+    handleTap_2 () {
+      console.log('Tapped on item 3')
+    },
+    handleTap_3 () {
+      console.log('Tapped on item 4')
+    }
   }
-  const handleTap_1 = (event) => {
-    console.log("Tapped on item 2")
-  }
-  const handleTap_2 = (event) => {
-    console.log("Tapped on item 3")
-  }
-  const handleTap_3 = (event) => {
-    console.log("Tapped on item 4")
-  }
-  // ...
+})
 </script>
 ```
 
@@ -161,6 +238,187 @@ Mpx 也支持使用 `{{}}` 插值进行动态事件绑定。
 2. 当使用了事件委托想获取 `e.target.dataset` 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 `e.currentTarget` 来获取 `dataset` 等数据。
 3. 由于 `tap` 和 `longpress` 事件是由 `touchstart` / `touchend` 等底层触摸事件模拟实现，所以在 RN 环境，如果子组件绑定了 `catchtouchend`，那么父组件的 `tap` 事件将不会响应。
 4. 如果元素上设置了 `opacity: 0` 的样式，会导致 ios 事件无法响应。
+
+## i18n 国际化
+
+Mpx 跨端输出 RN 时完整支持 i18n，在模板 Mustache 表达式中可直接调用翻译函数，选项式 API 与组合式 API 均可使用。与输出小程序保持一致。**必须**在构建配置里为 **`MpxWebpackPlugin` 传入 `i18n` 选项**（如 `locale`、`messages` 或 `messagesPath` 等）；未配置时模板与脚本中的翻译调用均无法按预期工作。
+
+### 工程配置示例
+
+在接入 `MpxWebpackPlugin` 时传入 `i18n` 配置（具体挂在 `new MpxWebpackPlugin({...})`、`pluginOptions.mpx.plugin` 等位置以项目脚手架为准）：
+
+```js
+i18n: {
+  locale: 'zh-CN',
+  messages: {
+    'zh-CN': {
+      message: { hello: '{msg}，你好' }
+    },
+    'en-US': {
+      message: { hello: 'Hello, {msg}' }
+    }
+  }
+  // messagesPath: path.resolve(__dirname, '../src/i18n/messages.js')
+  // useComputed: false // 见下方「注意事项」
+}
+```
+
+### 模板中使用翻译函数
+
+| 场景 | 模板中常用写法 | 说明 |
+| --- | --- | --- |
+| 选项式 API | `$t`、`$tc`、`$te`、`$tm` | 与 vue-i18n 习惯一致，可在 `{{}}` 与指令属性中书写表达式。 |
+| 组合式 API | `t`、`tc`、`te`、`tm` | 须在 `setup` 中通过 **`useI18n()`** 解构，并 **原样名** 放入 `return`，供模板绑定；**禁止** `const { t: t1 } = useI18n()` 后再把 `t1` 交给模板，否则编译期无法正确解析。 |
+
+**选项式：模板 + 指令中的翻译**
+
+```html
+<template>
+  <view>
+    <text wx:if="{{ $te('message.hello') }}">{{ $t('message.hello', { msg: title }) }}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data () {
+    return { title: 'Mpx' }
+  }
+})
+</script>
+```
+
+**组合式：在模板中使用 `t`（翻译函数需在 `setup` 中导出，且不能随意变更函数名称）**
+
+```html
+<template>
+  <view>
+    <text>{{ t('message.hello', { msg: title }) }}</text>
+  </view>
+</template>
+
+<script>
+import { ref, createComponent, useI18n } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    const title = ref('Mpx')
+    const { t } = useI18n()
+    return {
+      title,
+      t
+    }
+  }
+})
+</script>
+```
+
+翻译函数参数、复数文案 `tc`、存在性判断 `te`、消息对象 `tm` 等用法与 vue-i18n 保持一致。
+
+### JS 中使用翻译函数
+
+- **选项式 API**：在 `methods`、`computed`、生命周期钩子等任意可访问组件实例处，使用 **`this.$t` / `this.$tc` / `this.$te` / `this.$tm`**，与 vue-i18n 相同。
+- **组合式 API**：在 **`setup`** 函数体内直接调用 **`useI18n()`** 返回的 **`t`/`tc`/`te`/`tm`**，用于拼 **`computed`**、**`watch`**、异步回调等；勿在 `setup` 外闭包中延迟首次调用 `useI18n`（须顶层同步调用）。
+
+**选项式：在逻辑层调用**
+
+```js
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data () {
+    return { userName: 'Lee' }
+  },
+  ready () {
+    const text = this.$t('message.hello', { msg: this.userName })
+    console.log(text)
+  },
+  computed: {
+    greeting () {
+      return this.$t('message.hello', { msg: this.userName })
+    }
+  }
+})
+```
+
+**组合式：列表文案建议在 JS 中先翻译再渲染（多端一致）**
+
+```html
+<template>
+  <view wx:for="{{ displayList }}" wx:key="id">
+    <text>{{ item.label }}</text>
+  </view>
+</template>
+
+<script>
+import { ref, computed, createComponent, useI18n } from '@mpxjs/core'
+
+createComponent({
+  setup () {
+    const { t } = useI18n()
+    const list = ref([
+      { id: 1, nameKey: 'apple' },
+      { id: 2, nameKey: 'banana' }
+    ])
+    const displayList = computed(function () {
+      return list.value.map(function (item) {
+        return {
+          id: item.id,
+          label: t('fruit.' + item.nameKey)
+        }
+      })
+    })
+    return {
+      displayList
+    }
+  }
+})
+</script>
+```
+
+### 注意事项
+
+1. **`useI18n` 须在 `setup` 顶层同步调用**；组合式下模板里出现的翻译函数名必须与 **`useI18n()` 解构名完全一致**（`t`、`tc`、`te`、`tm`），不可重命名后交给模板。
+2. 输出小程序且开启 **`i18n.useComputed`** 时，模板中的翻译函数走 computed 注入，**无法引用 `wx:for` 循环体内的 `item` / `index`**。输出 RN 虽不受该机制限制，为与小程序等行为对齐、避免同一模板在不同端表现不一致，**列表场景仍建议在 JS 中先完成翻译**（见上文 `displayList` 示例），避免依赖 `{{ t('key', { x: item }) }}` 仅在部分端可用的写法。
+3. **能力边界**：当前与主站一致，仅支持 **`$t` / `$tc` / `$te` / `$tm`（选项式）** 与 **`t` / `tc` / `te` / `tm`（组合式）**；**不支持** **`$d` / `$n`** 等日期、数字格式化 API。
+4. **组合式 + 模板**：模板里的 `t`/`tc`/`te`/`tm` 由编译器按 computed 类方式处理，除循环变量问题外，仍需保证 **`return` 中暴露**了模板所需翻译函数，否则对应翻译函数无法在模版中生效。
+
+## 无障碍访问
+
+跨端输出 RN 时，模板侧请**优先且统一**使用 **`aria-role`**、**`aria-label`**，与小程序侧写法对齐。**不推荐**在模板里直接书写 React Native 文档中的驼峰无障碍属性名（如 **`accessibilityLabel`**、**`accessibilityHint`**、**`accessibilityRole`**、**`accessibilityState`** 等）：这类写法不利于与其它端模板保持一致，也更容易在后续编译或组件封装变动时产生隐性差异。底层 RN 映射由框架与编译规则完成；若需了解语义对应关系，可对照 [React Native Accessibility](https://reactnative.dev/docs/accessibility) 作阅读参考，而不是在业务模板中手写 RN 属性名。
+
+### 模板属性
+
+| 模板属性 | 说明 |
+| --- | --- |
+| `aria-role` | 用于声明按钮、标题、图像等语义角色。 |
+| `aria-label` | 用于补充读屏文案。 |
+
+属性值支持 Mustache，例如 `aria-label="{{ desc }}"`。
+
+### 示例
+
+**语义角色 + 读屏文案（推荐写法）**
+
+```html
+<template>
+  <view
+    aria-role="button"
+    aria-label="{{ submitText }}"
+    bindtap="onSubmit"
+  >
+    <text>{{ submitText }}</text>
+  </view>
+</template>
+```
+
+### 注意事项
+
+1. **可点击区域**：除可见文案外，为图标按钮等补充 **`aria-label`**，避免读屏仅播报「按钮」而无含义。
+2. **与样式隐藏区分**：视觉上用 `wx:show` / 样式隐藏时，仍注意焦点与读屏顺序是否应与视觉一致；若需定义 RN 专有行为，放在 **仅 RN 的条件编译** 中处理，而不是在跨端模板中直接写 RN 无障碍属性名。
+3. **多端一致**：小程序与 RN 读屏实现不同，上线前应在 **iOS VoiceOver** 与 **Android TalkBack** 上各测一遍关键路径。
 
 ## 基础组件
 

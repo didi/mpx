@@ -40,6 +40,7 @@ const webView = require('./web-view')
 const label = require('./label')
 const wxs = require('./wxs')
 const fixComponentName = require('./fix-component-name')
+const customBuiltInComponent = require('./custom-built-in-component')
 const rootPortal = require('./root-portal')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
@@ -84,6 +85,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
   // 转换规则只需以微信为基准配置微信和支付宝的差异部分，比如微信和支付宝都支持但是写法不一致，或者微信支持而支付宝不支持的部分(抛出错误或警告)
   return [
     fixComponentName({ print }),
+    customBuiltInComponent(),
     ...unsupported({ print }),
     ad({ print }),
     view({ print }),

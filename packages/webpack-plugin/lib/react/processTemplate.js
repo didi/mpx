@@ -112,7 +112,8 @@ module.exports = function (template, {
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
         forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
         checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules),
-        isCustomText: matchCondition(resourcePath, customTextRules)
+        isCustomText: matchCondition(resourcePath, customTextRules),
+        customBuiltInComponents: rnConfig && rnConfig.customBuiltInComponents
       }
       const { root, meta } = templateCompiler.parse(template.content, parseOptions)
 
@@ -148,10 +149,10 @@ module.exports = function (template, {
         }
       }
 
-      const mergedPaths = Object.assign({}, meta.builtInComponentsMap || {}, (rnConfig && rnConfig.customBuiltInComponents) || {})
-      Object.keys(mergedPaths).forEach((name) => {
+      const builtInPaths = meta.builtInComponentsMap || {}
+      Object.keys(builtInPaths).forEach((name) => {
         builtInComponentsMap[name] = {
-          resource: addQuery(mergedPaths[name], { isComponent: true })
+          resource: addQuery(builtInPaths[name], { isComponent: true })
         }
       })
       if (meta.genericsInfo) {

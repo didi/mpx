@@ -49,7 +49,8 @@ module.exports = function (content) {
     externalClasses,
     moduleId,
     filePath: rawResourcePath,
-    forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules)
+    forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
+    customBuiltInComponents: rnConfig && rnConfig.customBuiltInComponents
   }
 
   // Parse the template
@@ -70,10 +71,10 @@ module.exports = function (content) {
     })
   }
 
-  const mergedPaths = Object.assign({}, meta.builtInComponentsMap || {}, (rnConfig && rnConfig.customBuiltInComponents) || {})
+  const builtInPaths = meta.builtInComponentsMap || {}
   const builtInComponents = []
-  Object.keys(mergedPaths).forEach((componentName) => {
-    const componentRequest = loaderUtils.stringifyRequest(loaderContext, addQuery(mergedPaths[componentName], { isComponent: true }))
+  Object.keys(builtInPaths).forEach((componentName) => {
+    const componentRequest = loaderUtils.stringifyRequest(loaderContext, addQuery(builtInPaths[componentName], { isComponent: true }))
     builtInComponents.push(`"${componentName}": function () { return getBuiltInBaseComponent(require(${componentRequest}), { __mpxBuiltIn: true }) }`)
   })
 
