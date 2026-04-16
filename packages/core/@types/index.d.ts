@@ -115,7 +115,7 @@ interface Context {
   refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
   asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
 
-  forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
+  forceUpdate (data?: object): void
 
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
@@ -204,7 +204,7 @@ export interface MpxComponentIns {
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
-  $forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
+  $forceUpdate (data?: object): void
 
   $nextTick (fn: () => void): void
 
@@ -381,6 +381,13 @@ export interface RnConfig {
    * @param packages 分包名数组
    */
   downloadChunkAsync?: (packages: Array<string>) => void
+
+  /**
+   * bundle 中是否关闭 android 键盘避让功能，如果关闭需要将该配置设置为 false，使用 mpx 内置的键盘避让逻辑
+   * @platform android
+   * @default true
+   */
+  enableNativeKeyboardAvoiding?: boolean
 }
 
 interface MpxConfig {
@@ -405,7 +412,7 @@ interface MpxConfig {
   rnConfig: RnConfig,
 }
 
-type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
+type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'| 'ks' | 'jd' | 'dd'
 
 interface ImplementOptions {
   modes?: Array<SupportedMode>

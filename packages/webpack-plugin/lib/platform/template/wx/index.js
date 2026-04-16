@@ -62,7 +62,7 @@ module.exports = function getSpec ({ warn, error }) {
   }
 
   const spec = {
-    supportedModes: ['ali', 'swan', 'qq', 'tt', 'web', 'qa', 'jd', 'dd', 'ios', 'android', 'harmony'],
+    supportedModes: ['ali', 'swan', 'qq', 'tt', 'ks', 'web', 'qa', 'jd', 'dd', 'ios', 'android', 'harmony'],
     // props预处理
     preProps: [],
     // props后处理
@@ -325,6 +325,13 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
+        ks ({ name, value }) {
+          const dir = this.test.exec(name)[1]
+          return {
+            name: 'ks:' + dir,
+            value
+          }
+        },
         dd ({ name, value }) {
           const dir = this.test.exec(name)[1]
           return {
@@ -407,6 +414,19 @@ module.exports = function getSpec ({ warn, error }) {
           const modifierStr = match[3] || ''
           let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
           const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
+          if (rEventName.includes('-')) rPrefix += ':'
+          return {
+            name: rPrefix + rEventName + modifierStr,
+            value
+          }
+        },
+        ks ({ name, value }, { eventRules }) {
+          const match = this.test.exec(name)
+          const prefix = match[1]
+          const eventName = match[2]
+          const modifierStr = match[3] || ''
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ks' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'ks' })
           if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,

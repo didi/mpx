@@ -170,7 +170,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         columnData,
         ref: cloneRef,
         columnIndex: index,
-        key: `pick-view-${index}`,
+        key: `pick-view-${index}-${columnData.length}`,
         wrapperStyle: {
           height: normalStyle?.height || DefaultPickerItemH,
           itemHeight: indicatorH || DefaultPickerItemH

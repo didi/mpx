@@ -37,6 +37,9 @@ export * from './api/create-selector-query'
 // getNetworkType, onNetworkStatusChange, offNetworkStatusChange
 export * from './api/device/network'
 
+// startWifi, stopWifi, getWifiList, onGetWifiList, offGetWifiList, getConnectedWifi
+export * from './api/device/wifi'
+
 // downloadFile, uploadFile
 export * from './api/file'
 

@@ -19,6 +19,10 @@ const processWeb = require('./web')
 const processReact = require('./react')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
+/**
+ * @this {MpxLoaderContext<any>}
+ * @param {string} content
+ */
 module.exports = function (content) {
   this.cacheable()
 
@@ -147,7 +151,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -169,7 +174,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
