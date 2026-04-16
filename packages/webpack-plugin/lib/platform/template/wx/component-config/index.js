@@ -123,7 +123,6 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     livePusher({ print }),
     hyphenTagName({ print }),
     label({ print }),
-    component(),
     rootPortal({ print })
   ]
 }
