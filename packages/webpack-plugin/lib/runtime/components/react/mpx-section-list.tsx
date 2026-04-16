@@ -66,6 +66,51 @@ interface ScrollPositionParams {
   viewPosition?: number;
 }
 
+interface LayoutItem {
+  length: number;
+  offset: number;
+  index: number;
+}
+
+const getVisibleRangeByLayouts = (layouts: LayoutItem[] = [], scrollTop = 0, viewportHeight = 0) => {
+  if (!layouts.length || viewportHeight <= 0) {
+    return {
+      start: -1,
+      end: -1
+    }
+  }
+  const viewportBottom = scrollTop + viewportHeight
+  let start = -1
+  let end = -1
+  for (let i = 0; i < layouts.length; i++) {
+    const item = layouts[i]
+    const itemTop = item.offset
+    const itemBottom = item.offset + item.length
+    if (itemBottom >= scrollTop && itemTop <= viewportBottom) {
+      if (start < 0) start = i
+      end = i
+    } else if (itemTop > viewportBottom && end >= 0) {
+      break
+    }
+  }
+  return {
+    start,
+    end
+  }
+}
+
+const getViewableOriginalIndexes = (viewableItems: any[] = []) => {
+  const indexes: number[] = []
+  viewableItems.forEach((viewableItem) => {
+    const originalIndex = viewableItem?.item?._originalItemIndex
+    if (typeof originalIndex === 'number') {
+      indexes.push(originalIndex)
+    }
+  })
+  indexes.sort((a, b) => a - b)
+  return indexes
+}
+
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
   const GenericComponent = global.__mpxGenericsMap?.[generichash]?.[generickey]?.()
@@ -117,10 +162,13 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
 
   const scrollViewRef = useRef<any>(null)
   const intersectionObservers = useContext(IntersectionObserverContext)
-  const intersectionTriggerState = useRef({
-    lastTriggerTime: 0,
-    lastScrollLeft: 0,
-    lastScrollTop: 0
+  const itemLayoutsRef = useRef<LayoutItem[]>([])
+  const sectionListIntersectionStateRef = useRef({
+    scrollTop: 0,
+    viewportHeight: 0,
+    visibleRangeStart: -1,
+    visibleRangeEnd: -1,
+    viewableSignature: ''
   })
 
   const indexMap = useRef<{ [key: string]: string | number }>({})
@@ -141,42 +189,44 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     }
   }, [refresherTriggered])
 
-  const updateIntersectionObserver = useCallback(() => {
+  const getSectionListIntersectionPayload = useCallback((payload = {}) => {
+    const { scrollTop, viewportHeight, visibleRangeStart, visibleRangeEnd, viewableSignature } = sectionListIntersectionStateRef.current
+    return Object.assign({
+      signature: `${visibleRangeStart}_${visibleRangeEnd}_${viewableSignature}`,
+      scrollTop,
+      viewportHeight,
+      visibleRangeStart,
+      visibleRangeEnd
+    }, payload)
+  }, [])
+
+  const triggerIntersectionObserver = useCallback((payload = {}) => {
     if (!enableTriggerIntersectionObserver || !intersectionObservers) {
       return
     }
     for (const key in intersectionObservers) {
-      intersectionObservers[key].throttleMeasure()
+      const observer = intersectionObservers[key]
+      if (!observer) continue
+      if (observer.throttleMeasureBySource) {
+        observer.throttleMeasureBySource('section-list', payload)
+      } else {
+        observer.throttleMeasure()
+      }
     }
   }, [enableTriggerIntersectionObserver, intersectionObservers])
 
-  const updateIntersectionByScroll = useCallback((event?: NativeSyntheticEvent<NativeScrollEvent>, force = false) => {
-    if (!enableTriggerIntersectionObserver || !intersectionObservers) return
-    const now = Date.now()
-    const triggerState = intersectionTriggerState.current
-    if (event) {
-      const contentOffset = event.nativeEvent && event.nativeEvent.contentOffset
-      const scrollLeft = contentOffset?.x || 0
-      const scrollTop = contentOffset?.y || 0
-      const moveX = Math.abs(scrollLeft - triggerState.lastScrollLeft)
-      const moveY = Math.abs(scrollTop - triggerState.lastScrollTop)
-      triggerState.lastScrollLeft = scrollLeft
-      triggerState.lastScrollTop = scrollTop
-      if (!force && moveX < 2 && moveY < 2) return
-    }
-    if (!force && (now - triggerState.lastTriggerTime) < 80) return
-    triggerState.lastTriggerTime = now
-    updateIntersectionObserver()
-  }, [enableTriggerIntersectionObserver, intersectionObservers, updateIntersectionObserver])
-
-  const updateIntersectionObserverRef = useRef(updateIntersectionObserver)
-  updateIntersectionObserverRef.current = updateIntersectionObserver
+  const triggerIntersectionObserverRef = useRef(triggerIntersectionObserver)
+  triggerIntersectionObserverRef.current = triggerIntersectionObserver
+  const getSectionListIntersectionPayloadRef = useRef(getSectionListIntersectionPayload)
+  getSectionListIntersectionPayloadRef.current = getSectionListIntersectionPayload
 
   const originOnViewableItemsChangedRef = useRef(props.onViewableItemsChanged)
   originOnViewableItemsChangedRef.current = props.onViewableItemsChanged
 
   const onViewableItemsChangedRef = useRef((event: any) => {
-    updateIntersectionObserverRef.current()
+    sectionListIntersectionStateRef.current.viewableSignature = getViewableOriginalIndexes(event?.viewableItems).join(',')
+    const payload = getSectionListIntersectionPayloadRef.current()
+    triggerIntersectionObserverRef.current(payload)
     const originOnViewableItemsChanged = originOnViewableItemsChangedRef.current
     if (typeof originOnViewableItemsChanged === 'function') {
       originOnViewableItemsChanged(event)
@@ -199,7 +249,9 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       bindscrolltolower(
         getCustomEvent('scrolltolower', {}, { layoutRef }, props)
       )
-    updateIntersectionObserver()
+    triggerIntersectionObserver(getSectionListIntersectionPayload({
+      force: true
+    }))
   }
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -208,15 +260,29 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       bindscroll(
         getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
       )
-    updateIntersectionByScroll(event)
+    const contentOffset = event.nativeEvent && event.nativeEvent.contentOffset
+    const layoutMeasurement = event.nativeEvent && event.nativeEvent.layoutMeasurement
+    const scrollTop = contentOffset?.y || 0
+    const viewportHeight = layoutMeasurement?.height || sectionListIntersectionStateRef.current.viewportHeight
+    const visibleRange = getVisibleRangeByLayouts(itemLayoutsRef.current, scrollTop, viewportHeight)
+    Object.assign(sectionListIntersectionStateRef.current, {
+      scrollTop,
+      viewportHeight,
+      visibleRangeStart: visibleRange.start,
+      visibleRangeEnd: visibleRange.end
+    })
   }
 
-  const onScrollEndDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    updateIntersectionByScroll(event, true)
+  const onScrollEndDrag = () => {
+    triggerIntersectionObserver(getSectionListIntersectionPayload({
+      force: true
+    }))
   }
 
-  const onMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    updateIntersectionByScroll(event, true)
+  const onMomentumScrollEnd = () => {
+    triggerIntersectionObserver(getSectionListIntersectionPayload({
+      force: true
+    }))
   }
 
   // 通过sectionIndex和rowIndex获取原始索引
@@ -336,11 +402,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     return sections
   }, [listData])
 
-  useEffect(() => {
-    updateIntersectionObserver()
-  }, [convertedListData, updateIntersectionObserver])
-
-  const { getItemLayout } = useMemo(() => {
+  const { getItemLayout, itemLayouts } = useMemo(() => {
     const layouts: Array<{ length: number, offset: number, index: number }> = []
     let offset = 0
 
@@ -384,6 +446,20 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       getItemLayout: (data: any, index: number) => layouts[index]
     }
   }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, listHeaderHeight.value, listHeaderHeight.getter])
+
+  itemLayoutsRef.current = itemLayouts
+
+  useEffect(() => {
+    const { scrollTop, viewportHeight } = sectionListIntersectionStateRef.current
+    const visibleRange = getVisibleRangeByLayouts(itemLayouts, scrollTop, viewportHeight)
+    Object.assign(sectionListIntersectionStateRef.current, {
+      visibleRangeStart: visibleRange.start,
+      visibleRangeEnd: visibleRange.end
+    })
+    triggerIntersectionObserver(getSectionListIntersectionPayload({
+      force: true
+    }))
+  }, [convertedListData, itemLayouts, triggerIntersectionObserver, getSectionListIntersectionPayload])
 
   const scrollAdditionalProps = extendObject(
     {

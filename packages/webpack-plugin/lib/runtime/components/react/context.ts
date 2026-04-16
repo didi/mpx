@@ -41,6 +41,7 @@ export interface FormContextValue {
 export interface IntersectionObserver {
   [key: number]: {
     throttleMeasure: () => void
+    throttleMeasureBySource?: (sourceType?: string, payload?: Record<string, any>) => void
   }
 }
 

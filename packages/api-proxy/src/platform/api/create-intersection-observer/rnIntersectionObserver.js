@@ -27,15 +27,15 @@ class RNIntersectionObserver {
     this.component._intersectionObservers.push(this)
 
     this.observerRefs = null
-    this.observeSelector = ''
     this.relativeRef = null
     this.margins = DefaultMargin
     this.callback = noop
 
     this.throttleMeasure = this.getThrottleMeasure(this.options.throttleTime)
+    this.sectionListMeasureSignature = ''
 
-    // 记录上一次相交的比例，以目标节点实例为 key 避免复用场景下索引错位
-    this.previousIntersectionRatioMap = typeof WeakMap === 'function' ? new WeakMap() : new Map()
+    // 记录上一次相交的比例
+    this.previousIntersectionRatio = []
 
      // 添加实例添加到上下文中，滚动组件可以获取到上下文内的实例从而触发滚动
     if (intersectionCtx && isObject(intersectionCtx)) {
@@ -70,44 +70,23 @@ class RNIntersectionObserver {
   }
 
   observe (selector, callback) {
-    if (this.observeSelector) {
+    if (this.observerRefs) {
       warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return
     }
-    this.observeSelector = selector
-    this.callback = callback
-    this._refreshObserveRefs()
-    if (!this.observerRefs || this.observerRefs.length === 0) {
-      warn('intersection observer target not found', this.mpxFileResource)
-    }
-    this._measureTarget(true)
-  }
-
-  _refreshObserveRefs () {
-    if (!this.observeSelector) return
     let targetRef = null
     if (this.observeAll) {
-      targetRef = this.component.__selectRef(this.observeSelector, 'node', true)
+      targetRef = this.component.__selectRef(selector, 'node', true)
     } else {
-      targetRef = this.component.__selectRef(this.observeSelector, 'node')
+      targetRef = this.component.__selectRef(selector, 'node')
     }
     if (!targetRef || targetRef.length === 0) {
-      this.observerRefs = []
+      warn('intersection observer target not found', this.mpxFileResource)
       return
     }
-    const observerRefs = isArray(targetRef) ? targetRef : [targetRef]
-    this.observerRefs = observerRefs
-
-    // Map 需要手动清理已被移除的节点缓存，WeakMap 会自动回收无需处理
-    if (this.previousIntersectionRatioMap instanceof Map) {
-      const previousIntersectionRatioMap = this.previousIntersectionRatioMap
-      this.previousIntersectionRatioMap = new Map()
-      observerRefs.forEach((observerRef) => {
-        if (previousIntersectionRatioMap.has(observerRef)) {
-          this.previousIntersectionRatioMap.set(observerRef, previousIntersectionRatioMap.get(observerRef))
-        }
-      })
-    }
+    this.observerRefs = isArray(targetRef) ? targetRef : [targetRef]
+    this.callback = callback
+    this._measureTarget(true)
   }
 
   _getWindowRect () {
@@ -190,7 +169,7 @@ class RNIntersectionObserver {
   }
 
   // 计算相交区域
-  _measureIntersection ({ observeRect, relativeRect, observeRef, isInit }) {
+  _measureIntersection ({ observeRect, relativeRect, observeIndex, isInit }) {
     const visibleRect = {
       left: this._restrictValueInRange(relativeRect.left, relativeRect.right, observeRect.left),
       top: this._restrictValueInRange(relativeRect.top, relativeRect.bottom, observeRect.top),
@@ -201,9 +180,8 @@ class RNIntersectionObserver {
     const targetArea = (observeRect.bottom - observeRect.top) * (observeRect.right - observeRect.left)
     const visibleArea = (visibleRect.bottom - visibleRect.top) * (visibleRect.right - visibleRect.left)
     const intersectionRatio = targetArea ? visibleArea / targetArea : 0
-    const previousIntersectionRatio = this.previousIntersectionRatioMap.get(observeRef)
-    const isInsected = isInit ? intersectionRatio > this.initialRatio : !(this._getRatioIndex(intersectionRatio, this.thresholds) === this._getRatioIndex(previousIntersectionRatio, this.thresholds))
-    this.previousIntersectionRatioMap.set(observeRef, intersectionRatio)
+    const isInsected = isInit ? intersectionRatio > this.initialRatio : !(this._getRatioIndex(intersectionRatio, this.thresholds) === this._getRatioIndex(this.previousIntersectionRatio[observeIndex], this.thresholds))
+    this.previousIntersectionRatio[observeIndex] = intersectionRatio
     return {
       intersectionRatio,
       intersectionRect: {
@@ -222,35 +200,41 @@ class RNIntersectionObserver {
     }, throttleTime)
   }
 
-  // 计算节点的rect信息
-  _measureTarget (isInit = false) {
-    if (!this.relativeRef) {
+  throttleMeasureBySource (sourceType = 'scroll-view', payload = {}) {
+    if (sourceType === 'section-list') {
+      const signature = payload && payload.signature
+      const force = payload && payload.force
+      if (!force && signature && this.sectionListMeasureSignature === signature) return
+      this.sectionListMeasureSignature = signature || ''
+      this.throttleMeasure()
       return
     }
-    this._refreshObserveRefs()
-    const observerRefs = this.observerRefs
-    if (!observerRefs || observerRefs.length === 0) return
+    this.throttleMeasure()
+  }
+
+  // 计算节点的rect信息
+  _measureTarget (isInit = false) {
+    if (!this.observerRefs || !this.relativeRef) {
+      return
+    }
     Promise.all([
-      this._getReferenceRect(observerRefs),
+      this._getReferenceRect(this.observerRefs),
       this._getReferenceRect(this.relativeRef)
     ]).then(([observeRects, relativeRect]) => {
       if (relativeRect === IgnoreTarget) return
       observeRects.forEach((observeRect, index) => {
         if (observeRect === IgnoreTarget) return
-        const observeRef = observerRefs[index]
-        if (!observeRef) return
         const { intersectionRatio, intersectionRect, isInsected } = this._measureIntersection({
           observeRect,
-          observeRef,
+          observeIndex: index,
           relativeRect,
           isInit
         })
         if (isInsected) {
-          const nodeInstance = observeRef.getNodeInstance()
           this.callback({
             // index: index,
-            id: nodeInstance.props?.current?.id,
-            dataset: nodeInstance.props?.current?.dataset || {},
+            id: this.observerRefs[index].getNodeInstance().props?.current?.id,
+            dataset: this.observerRefs[index].getNodeInstance().props?.current?.dataset || {},
             intersectionRatio: Math.round(intersectionRatio * 100) / 100,
             intersectionRect,
             boundingClientRect: observeRect,
@@ -266,13 +250,7 @@ class RNIntersectionObserver {
 
   disconnect () {
     if (this.intersectionCtx) delete this.intersectionCtx[this.id]
-    if (this.throttleMeasure && this.throttleMeasure.cancel) {
-      this.throttleMeasure.cancel()
-    }
-    this.observerRefs = null
-    this.observeSelector = ''
-    this.callback = noop
-    this.previousIntersectionRatioMap = typeof WeakMap === 'function' ? new WeakMap() : new Map()
+    this.sectionListMeasureSignature = ''
   }
 }
 
