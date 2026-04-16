@@ -124,8 +124,6 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     hyphenTagName({ print }),
     label({ print }),
     component(),
-    rootPortal({ print }),
-    stickyHeader({ print }),
-    stickySection({ print })
+    rootPortal({ print })
   ]
 }
