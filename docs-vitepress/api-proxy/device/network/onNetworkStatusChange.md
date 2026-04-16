@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/network/wx.onNetworkStatusChange.html)
 
-### 参数
+### 参数 {#parameters}
 **function listener**\
 网络状态变化事件的监听函数
 
@@ -58,7 +58,7 @@
 </table>
 
 
-### 示例代码
+### 示例代码 {#example-code}
 
 ```js
 mpx.onNetworkStatusChange(function (res) {

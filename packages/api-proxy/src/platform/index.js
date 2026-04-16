@@ -122,3 +122,6 @@ export * from './api/keyboard'
 
 // getSetting, openSetting, enableAlertBeforeUnload, disableAlertBeforeUnload, getMenuButtonBoundingClientRect
 export * from './api/setting'
+
+// createCameraContext
+export * from './api/camera'

@@ -91,7 +91,7 @@ function parse(cssString) {
   return ast
 }
 
-function evaluateCondition(condition, defs) {
+function evaluateCondition(condition, defs, filePath) {
   try {
     const keys = Object.keys(defs)
     const values = keys.map(key => defs[key])
@@ -99,12 +99,12 @@ function evaluateCondition(condition, defs) {
     const func = new Function(...keys, `return (${condition});`)
     return func(...values)
   } catch (e) {
-    console.error(`[Mpx style error]:Error evaluating condition: ${condition}`, e)
+    console.error(`[Mpx style error] File: ${filePath}, Error evaluating condition: ${condition}`, e)
     return false
   }
 }
 
-function traverseAndEvaluate(ast, defs) {
+function traverseAndEvaluate(ast, defs, filePath) {
   let output = ''
   let batchedIf = false
   function traverse(nodes) {
@@ -114,12 +114,12 @@ function traverseAndEvaluate(ast, defs) {
       } else if (node.type === 'If') {
         // 直接判断 If 节点
         batchedIf = false
-        if (evaluateCondition(node.condition, defs)) {
+        if (evaluateCondition(node.condition, defs, filePath)) {
           traverse(node.children)
           batchedIf = true
         }
       } else if (node.type === 'ElseIf' && !batchedIf) {
-        if (evaluateCondition(node.condition, defs)) {
+        if (evaluateCondition(node.condition, defs, filePath)) {
           traverse(node.children)
           batchedIf = true
         }
@@ -136,11 +136,12 @@ function traverseAndEvaluate(ast, defs) {
  *
  * @param {string} content
  * @param {Record<string, any>} defs
+ * @param {string} [filePath]
  * @returns
  */
-function stripCondition(content, defs) {
+function stripCondition(content, defs, filePath) {
   const ast = parse(content)
-  return traverseAndEvaluate(ast, defs)
+  return traverseAndEvaluate(ast, defs, filePath || 'unknown')
 }
 
 let proxyReadFileSync
@@ -185,10 +186,10 @@ function startFSStripForCss(defs) {
     if (shouldStrip(path)) {
       try {
         if (typeof content === 'string') {
-          return stripCondition(content, defs)
+          return stripCondition(content, defs, path)
         } else if (Buffer.isBuffer(content)) {
           const str = content.toString('utf-8')
-          const result = stripCondition(str, defs)
+          const result = stripCondition(str, defs, path)
           if (result !== str) {
             return Buffer.from(result, 'utf-8')
           }
@@ -215,11 +216,11 @@ function startFSStripForCss(defs) {
       if (shouldStrip(path)) {
         try {
           if (typeof data === 'string') {
-            const result = stripCondition(data, defs)
+            const result = stripCondition(data, defs, path)
             return callback(null, result)
           } else if (Buffer.isBuffer(data)) {
             const content = data.toString('utf-8')
-            const result = stripCondition(content, defs)
+            const result = stripCondition(content, defs, path)
             if (result !== content) {
               return callback(null, Buffer.from(result, 'utf-8'))
             }

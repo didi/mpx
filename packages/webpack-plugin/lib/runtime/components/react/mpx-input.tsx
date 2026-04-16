@@ -54,7 +54,7 @@ import {
   NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isAndroid } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isIOS } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -285,7 +285,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, readyToShow: true }
+      // readyToShow 仅在从另一个输入框切换聚焦时为 true（ref 不同），
+      // 避免同一个输入框重复调用（onTouchStart + useEffect）或单次聚焦时误设为 true 导致无法正常失焦
+      const readyToShow = !!(keyboardAvoid.current && keyboardAvoid.current.ref !== nodeRef)
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, readyToShow }
     }
   }
 
@@ -469,12 +472,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       : (nodeRef.current as TextInput)?.blur()
   }, [isAutoFocus])
 
-  // 使用 multiline 来修复光标位置问题
-  // React Native 的 TextInput 在 textAlign center + placeholder 时光标会跑到右边
-  // 这个问题只在 Android 上出现
-  // 参考：https://github.com/facebook/react-native/issues/28794 (Android only)
-  const needMultilineFix = isAndroid && !multiline
-
   const innerProps = useInnerProps(
     extendObject(
       {},
@@ -498,7 +495,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         underlineColorAndroid: 'rgba(0,0,0,0)',
         textAlignVertical: textAlignVertical,
         placeholderTextColor: placeholderStyle?.color,
-        multiline: multiline || needMultilineFix,
+        multiline: !!multiline,
         onTouchStart,
         onTouchEnd,
         onFocus,
@@ -508,7 +505,6 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
         onContentSizeChange,
         onSubmitEditing: bindconfirm && onSubmitEditing
       },
-      needMultilineFix ? { numberOfLines: 1 } : {},
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [

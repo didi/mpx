@@ -30,6 +30,7 @@ const AddEnvPlugin = require('./resolver/AddEnvPlugin')
 const PackageEntryPlugin = require('./resolver/PackageEntryPlugin')
 const DynamicRuntimePlugin = require('./resolver/DynamicRuntimePlugin')
 const FixDescriptionInfoPlugin = require('./resolver/FixDescriptionInfoPlugin')
+const ExtendComponentsPlugin = require('./resolver/ExtendComponentsPlugin')
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency')
 // const HarmonyImportSideEffectDependency = require('webpack/lib/dependencies/HarmonyImportSideEffectDependency')
 // const RequireHeaderDependency = require('webpack/lib/dependencies/RequireHeaderDependency')
@@ -403,6 +404,7 @@ class MpxWebpackPlugin {
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
+    const extendComponentsPlugin = new ExtendComponentsPlugin('described-resolve', this.options.mode, 'resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
       compiler.options.resolve.plugins.push(addModePlugin)
@@ -417,6 +419,7 @@ class MpxWebpackPlugin {
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
+    compiler.options.resolve.plugins.push(extendComponentsPlugin)
     compiler.options.resolve.plugins.push(dynamicPlugin)
 
     const optimization = compiler.options.optimization
@@ -651,7 +654,7 @@ class MpxWebpackPlugin {
           }, (chunk, set) => {
             compilation.addRuntimeModule(
               chunk,
-              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk && this.options.rnConfig.asyncChunk.timeout)
+              new LoadAsyncChunkModule()
             )
             return true
           })
@@ -2072,3 +2075,12 @@ try {
 }
 
 module.exports = MpxWebpackPlugin
+
+/**
+ * 定义 MpxWebpackPlugin 的配置
+ * @param {MpxWebpackPluginOptions} options - 插件选项
+ * @returns {MpxWebpackPluginOptions}
+ */
+module.exports.defineConfig = function defineConfig(options) {
+  return options
+}

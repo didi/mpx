@@ -6,7 +6,7 @@
 
 [参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/device/screen/wx.onUserCaptureScreen.html)
 
-### 参数
+### 参数 {#parameters}
 
 **function callback**
 

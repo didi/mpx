@@ -76,7 +76,6 @@ export default function createApp (options) {
         return createElement(Stack.Screen, {
           name: key,
           getComponent,
-          initialParams,
           layout: headerLayout
         })
       }
@@ -120,7 +119,7 @@ export default function createApp (options) {
           const current = state.routes[state.index]
           options = {
             path: current.name,
-            query: current.params,
+            query: current.name === global.__mpxInitialRouteName ? global.__mpxInitialRunParams : current.params,
             scene: 0,
             shareTicket: '',
             referrerInfo: {}
@@ -180,7 +179,7 @@ export default function createApp (options) {
         const current = state.routes[state.index]
         const options = {
           path: current.name,
-          query: current.params,
+          query: current.name === global.__mpxInitialRouteName ? global.__mpxInitialRunParams : current.params,
           scene: 0,
           shareTicket: '',
           referrerInfo: {},
@@ -211,6 +210,10 @@ export default function createApp (options) {
     }, [])
 
     const { initialRouteName, initialParams } = initialRouteRef.current
+    if (!global.__mpxAppHotLaunched) {
+      global.__mpxInitialRouteName = initialRouteName
+      global.__mpxInitialRunParams = initialParams
+    }
     const navScreenOpts = {
       headerShown: false,
       statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,

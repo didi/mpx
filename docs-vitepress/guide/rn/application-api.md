@@ -1,19 +1,19 @@
-# 应用能力
+# 应用能力 {#application-ability}
 
 本节介绍在 React Native 环境下 Mpx 支持的各种应用能力，包括配置、状态管理、API适配等核心功能。
 
-### 目录概览
+### 目录概览 {#directory-overview}
 
-- [配置能力](#配置能力) - App配置、页面配置、导航配置
+- [配置能力](#config-ability) - App配置、页面配置、导航配置
 - [状态管理](#状态管理-1) - Pinia、Store、依赖注入
-- [国际化](#国际化) - i18n多语言支持
+- [国际化](#i18n) - i18n多语言支持
 - [API能力](#api能力) - 跨平台API、Webview通信
 - [rnConfig 相关内容](#rnconfig-相关内容) - 异步分包、分享、路由控制、屏幕适配
 
 
-## 配置能力
+## 配置能力 {#config-ability}
 
-### App 全局配置
+### App 全局配置 {#app-global-config}
 
 对标参考 [微信 app 配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html)，以下为 RN 环境支持情况：
 
@@ -28,7 +28,7 @@
 | ✅ usingComponents | 完全支持 | 全局自定义组件注册 |
 | ✅ vw | 完全支持 | 视窗单位支持 |
 
-### Window 导航配置
+### Window 导航配置 {#window-nav-config}
 
 Window 配置控制应用导航栏外观，参考 [微信 window 配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html#window)：
 
@@ -39,7 +39,7 @@ Window 配置控制应用导航栏外观，参考 [微信 window 配置](https:/
 | ✅ navigationStyle | 完全支持 | 导航栏样式 |
 | ✅ backgroundColor | 完全支持 | 页面背景颜色 |
 
-### 页面配置
+### 页面配置 {#page-config}
 
 页面级别配置，参考 [微信页面配置](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/page.html)：
 
@@ -53,9 +53,9 @@ Window 配置控制应用导航栏外观，参考 [微信 window 配置](https:/
 | ❌ disableScroll | 不支持 | RN 默认不支持页面滚动，需使用 scroll-view 组件 |
 
 
-## 状态管理
+## 状态管理 {#state-management}
 
-### Pinia 状态管理
+### Pinia 状态管理 {#pinia-store}
 
 **支持状态：✅ 完全支持**
 
@@ -79,17 +79,17 @@ export const useUserStore = defineStore('user', {
 })
 ```
 
-📖 **详细文档：** [Pinia 状态管理指南](/guide/advance/pinia.html)
+📖 **详细文档：** [Pinia 状态管理指南](../advance/pinia.md)
 
-### Store 状态管理
+### Store 状态管理 {#store-manage}
 
 **支持状态：✅ 完全支持**
 
 支持 Mpx 原生的 Store 状态管理方案，兼容小程序开发习惯。
 
-📖 **详细文档：** [Store 状态管理指南](/guide/advance/store.html)
+📖 **详细文档：** [Store 状态管理指南](../advance/store.md)
 
-### 依赖注入
+### 依赖注入 {#dependency-injection}
 
 **支持状态：✅ 完全支持**
 
@@ -98,23 +98,23 @@ export const useUserStore = defineStore('user', {
 📖 **详细文档：** [依赖注入指南](/guide/advance/provide-inject.html#依赖注入-provide-inject)
 
 
-## 国际化
+## 国际化 {#i18n}
 
 **支持状态：✅ 完全支持**
 
 Mpx 的 i18n 国际化功能在 RN 环境下保持完整支持。
 
-📖 **详细文档：** [国际化 i18n 指南](/guide/advance/i18n.html)
+📖 **详细文档：** [国际化 i18n 指南](../advance/i18n.md)
 
-## API 能力
+## API 能力 {#api-ability}
 
-### 跨平台 API 适配
+### 跨平台 API 适配 {#cross-platform-api-adapt}
 
 通过 `@mpxjs/api-proxy` 提供跨平台的小程序 API 适配能力，在 RN 环境中保持与小程序一致的使用方式。部分 API 能力相比小程序有所限制，详细支持列表请[查看完整文档](/api/extend.html#api-proxy)。
 
-#### 使用说明
+#### 使用说明 {#usage-instruction}
 
-#### 1. 安装和配置
+#### 1. 安装和配置 {#install-config}
 
 **步骤1：引入 @mpxjs/api-proxy**
 
@@ -143,7 +143,7 @@ externals: {
 }
 ```
 
-#### 2. 依赖安装
+#### 2. 依赖安装 {#dependency-install}
 
 根据使用的 API 选择性安装依赖：
 
@@ -160,22 +160,22 @@ externals: {
 **按需安装示例：**
 
 ```bash
-# 示例：只使用存储和设备信息API
+# 示例：只使用存储和设备信息API {#example-storage-device-api}
 npm install @react-native-async-storage/async-storage react-native-device-info
 
-# 示例：使用位置服务
+# 示例：使用位置服务 {#example-location-service}
 npm install react-native-get-location
 
-# 示例：使用网络状态监听
+# 示例：使用网络状态监听 {#example-network-status}
 npm install @react-native-community/netinfo
 
-# iOS 项目需要执行（有原生依赖时）
+# iOS 项目需要执行（有原生依赖时） {#ios-native-dependency}
 cd ios && pod install
 ```
 
 > 💡 **建议：** 根据实际使用的 API 选择安装对应依赖，避免不必要的包体积增加
 
-#### 3. 平台特殊配置
+#### 3. 平台特殊配置 {#platform-special-config}
 
 **react-native-get-location**
 
@@ -220,7 +220,7 @@ module.exports = {
 
 > ⚠️ **注意：** 确保 Mpx 项目和容器中的 `react-native-reanimated` 版本一致
 
-### 跨平台 API 使用限制
+### 跨平台 API 使用限制 {#cross-platform-api-limit}
 ### selectComponent/selectAllComponents
 在 RN 环境下使用 `selectComponent` 或 `selectAllComponents` 时，必须在目标节点上标记 wx:ref。选择器支持范围有限，仅支持以下方式
   * id 选择器：`#id`
@@ -270,15 +270,15 @@ module.exports = {
 </script>
 ```
 
-### Webview 通信
+### Webview 通信 {#webview-communication}
 
-Mpx 提供 `@mpxjs/webview-bridge` 来实现 H5 页面与 RN 应用的双向通信，具体使用方式参考[webview-bridge](/guide/extend/webview-bridge.html)文档。
+Mpx 提供 `@mpxjs/webview-bridge` 来实现 H5 页面与 RN 应用的双向通信，具体使用方式参考[webview-bridge](../extend/webview-bridge.md)文档。
 
-## 高级特性
+## 高级特性 {#advanced-features}
 
 `rnConfig` 是 Mpx 框架专为 React Native 环境提供的配置对象，用于定制 RN 平台特有的行为和功能。通过 `mpx.config.rnConfig` 可以配置异步分包、分享、路由控制、屏幕适配等高级特性。
   
-### 异步分包
+### 异步分包 {#async-subpackage}
 
 Mpx 在 RN 环境下实现了与微信小程序同等的异步分包功能，支持按需加载分包内容。基础使用可参考 [异步分包指南](https://www.mpxjs.cn/guide/advance/async-subpackage.html)
 
@@ -301,7 +301,7 @@ mpx.config.rnConfig.downloadChunkAsync = function (packages) {
 }
 ```
 
-#### 构建配置
+#### 构建配置 {#build-config}
 
 在 `mpx.config.js` 中配置异步分包选项：
 
@@ -321,7 +321,7 @@ module.exports = defineConfig({
 })
 ```
 
-#### 错误处理
+#### 错误处理 {#error-handling}
 
 **组件加载失败监听**：微信小程序提供了 wx.onLazyLoadError 的全局 api 来监听异步组件加载失败，这个 api 同样在 Mpx 转 RN 场景下生效；
 
@@ -346,7 +346,7 @@ mpx.config.rnConfig.onLazyLoadPageError = (error) => {
 }
 ```
 
-#### 自定义兜底页面
+#### 自定义兜底页面 {#custom-fallback-page}
 
 对于异步分包页面加载失败的情况会展示默认兜底页面，用户可以点击兜底页面底部的重试按钮重新加载异步分包页面。那么对于开发者提供的自定义的 fallback 兜底页面，框架会自动给自定义页面注入一个 `onReload` 方法以供开发者做页面重试的操作，具体见下方示例：
 
@@ -392,7 +392,7 @@ createComponent({
 </style>
 ```
 
-### 分享
+### 分享 {#share}
 
 #### mpx.config.rnConfig.openTypeHandler.onShareAppMessage
 
@@ -404,7 +404,7 @@ createComponent({
 (shareInfo: { title: string, path: string, imageUrl?: string }) => void
 ```
 
-### 路由
+### 路由 {#router}
 
 #### mpx.config.rnConfig.parseAppProps
 
@@ -450,7 +450,7 @@ createComponent({
 
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能 RN 应用到首页并不是 NA 应用的首页，此时可能需要 RN 应用首页展示返回按钮
 
-### 折叠屏适配
+### 折叠屏适配 {#foldable-screen-adaption}
 
 #### mpx.config.rnConfig.customDimensions
 
@@ -465,7 +465,7 @@ createComponent({
 例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
 
 
-### 前后台切换
+### 前后台切换 {#app-state-change}
 
 #### mpx.config.rnConfig.disableAppStateListener
 
@@ -478,7 +478,7 @@ Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callb
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能会出现AppState触发时机异常的情况（例如从 RN 页面跳转到 NA 页面时），此时可以将 disableAppStateListener 设置为 true 来禁用框架内部对 AppState 的监听。但需要在合适的时机手动调用 setAppShow() 与 setAppHide() 方法来进行驱动以确保对于的钩子能正常触发。
 
 
-### 自定义设置底部虚拟按键区高度
+### 自定义设置底部虚拟按键区高度 {#custom-bottom-bar-height}
 
 #### mpx.config.rnConfig.getBottomVirtualHeight
 
@@ -495,5 +495,5 @@ mpx.config.rnConfig.getBottomVirtualHeight = (bottomHeight) => {
   const screenDimensions = ReactNative.Dimensions.get('screen')
   const windowDimensions = ReactNative.Dimensions.get('window')
   return Math.max(initialWindowMetrics?.insets?.bottom || 0 , (screenDimensions.height - windowDimensions.height - ReactNative.StatusBar.currentHeight) || 0, 0)
-}vscode 如何打开markdown
+}
 ```

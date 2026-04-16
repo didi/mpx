@@ -1,4 +1,4 @@
-# API 转换
+# API 转换 {#api-transform}
 
 Mpx 生态提供的一套跨平台 API 转换机制，能够将不同端之间的 API 进行自动适配与转换，帮助开发者实现一套代码跨端运行。目前已支持微信转支付宝、微信转 web、微信转 RN。
 
@@ -6,7 +6,7 @@ Mpx 生态提供的一套跨平台 API 转换机制，能够将不同端之间�
 
 对于尚未适配的 API，您可参考对应平台（如微信、支付宝等）的官方文档，直接在业务代码中调用其原生接口。即使未被 Mpx 适配，这类 API 仍支持挂载在 Mpx 实例上直接调用，不影响其正常使用。
 
-## 使用
+## 使用 {#usage}
 
 ```js
 // 使用 Mpx 生态
@@ -17,7 +17,7 @@ import apiProxy from "@mpxjs/api-proxy"
 mpx.use(apiProxy, options)
 ```
 
-## 配置项 (Options)
+## 配置项 (Options) {#options}
 
 所有配置均为可选，可根据实际需求组合使用
 
@@ -31,9 +31,9 @@ mpx.use(apiProxy, options)
 | ~~fallbackMap~~ | ~~Object~~        | ~~对于不支持的 API，允许配置一个映射表，接管不存在的 API~~ | ~~否~~   | ~~{}~~  | 已删除                                                      |
 | custom          | Object            | 提供用户在各渠道下自定义 api 开放能力                      | 否       | `[]`    | 用于扩展或自定义特定平台下的 API 实现                       |
 
-## 使用介绍
+## 使用介绍 {#introduction}
 
-### 普通形式
+### 普通形式 {#normal-form}
 
 ```js
 import mpx from "@mpxjs/core"
@@ -88,7 +88,7 @@ mpx.getSystemInfo({
 })
 ```
 
-### whiteList 与 blackList
+### whiteList 与 blackList {#whitelist-and-blacklist}
 
 当微信平台新增了某些 API，而 Mpx 框架暂未及时适配时，您可以通过配置 whiteList 或 blackList 来明确指定这些 API 是否应被 Promise 化，从而避免因框架未及时更新而导致的调用异常或兼容性问题。
 
@@ -124,7 +124,7 @@ if (__mpx_mode__ === "ali" || __mpx_mode__ === "ios") {
 }
 ```
 
-### 独立调用
+### 独立调用 {#standalone-call}
 
 作为 Mpx 框架的内置能力，也支持独立调用，无需显式挂载在 Mpx 实例上
 
@@ -142,7 +142,7 @@ proxy.navigateTo({
 })
 ```
 
-### 按需导入单个 API
+### 按需导入单个 API {#import-single-api}
 
 除了使用完整的代理实例，你也可以直接从 `@mpxjs/api-proxy` 中按需导入特定的 API 方法
 
