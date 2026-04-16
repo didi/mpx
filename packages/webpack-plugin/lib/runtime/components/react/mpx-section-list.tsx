@@ -1,7 +1,8 @@
-import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo } from 'react'
+import { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, memo } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { extendObject, useLayout, useTransformStyle } from './utils'
+import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from './utils'
 interface ListItem {
   isSectionHeader?: boolean;
   _originalItemIndex?: number;
@@ -51,6 +52,8 @@ interface SectionListProps {
   'refresher-enabled'?: boolean;
   'show-scrollbar'?: boolean;
   'refresher-triggered'?: boolean;
+  'wait-for'?: Array<GestureHandler>;
+  'simultaneous-handlers'?: Array<GestureHandler>;
   bindrefresherrefresh?: (event: any) => void;
   bindscrolltolower?: (event: any) => void;
   bindscroll?: (event: any) => void;
@@ -107,12 +110,16 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'end-reached-threshold': onEndReachedThreshold = 0.1,
     'refresher-enabled': refresherEnabled,
     'show-scrollbar': showScrollbar = true,
-    'refresher-triggered': refresherTriggered
+    'refresher-triggered': refresherTriggered,
+    'simultaneous-handlers': originSimultaneousHandlers,
+    'wait-for': waitFor
   } = props
 
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
 
   const scrollViewRef = useRef<any>(null)
+  const sectionListGestureRef = useRef<any>()
+
 
   const indexMap = useRef<{ [key: string]: string | number }>({})
 
@@ -335,22 +342,35 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     layoutProps
   )
 
+  const nativeGesture = useMemo(() => {
+    const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
+    const waitForHandlers = flatGesture(waitFor)
+    const gesture = Gesture.Native().withRef(sectionListGestureRef as any)
+    if (simultaneousHandlers && simultaneousHandlers.length) {
+      gesture.simultaneousWithExternalGesture(...simultaneousHandlers)
+    }
+    if (waitForHandlers && waitForHandlers.length) {
+      gesture.requireExternalGestureToFail(...waitForHandlers)
+    }
+    return gesture
+  }, [originSimultaneousHandlers, waitFor])
+
   if (enhanced) {
-    Object.assign(scrollAdditionalProps, {
+    extendObject(scrollAdditionalProps, {
       bounces
     })
   }
   if (refresherEnabled) {
-    Object.assign(scrollAdditionalProps, {
+    extendObject(scrollAdditionalProps, {
       refreshing: refreshing
     })
   }
 
   useImperativeHandle(ref, () => {
-    return {
-      ...props,
+    return extendObject({}, props, {
+      gestureRef: sectionListGestureRef,
       scrollToIndex
-    }
+    })
   })
 
   const innerProps = useInnerProps(extendObject({}, props, scrollAdditionalProps), [
@@ -359,7 +379,9 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'lower-threshold',
     'refresher-triggered',
     'refresher-enabled',
-    'bindrefresherrefresh'
+    'bindrefresherrefresh',
+    'simultaneous-handlers',
+    'wait-for'
   ], { layoutRef })
 
   // 使用 ref 保存最新的数据，避免数据变化时组件销毁重建
@@ -412,24 +434,28 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   )
 
   return createElement(
-    SectionList,
-    extendObject(
-      {
-        style: [{ height, width }, style, layoutStyle],
-        sections: convertedListData,
-        renderItem: renderItem,
-        getItemLayout: getItemLayout,
-        ListHeaderComponent: useListHeader ? ListHeaderComponent : null,
-        ListFooterComponent: useListFooter ? ListFooterComponent : null,
-        renderSectionHeader: renderSectionHeader,
-        refreshControl: refresherEnabled
-          ? React.createElement(RefreshControl, {
-            onRefresh: onRefresh,
-            refreshing: refreshing
-          })
-          : undefined
-      },
-      innerProps
+    GestureDetector,
+    { gesture: nativeGesture },
+    createElement(
+      SectionList,
+      extendObject(
+        {
+          style: [{ height, width }, style, layoutStyle],
+          sections: convertedListData,
+          renderItem: renderItem,
+          getItemLayout: getItemLayout,
+          ListHeaderComponent: useListHeader ? ListHeaderComponent : null,
+          ListFooterComponent: useListFooter ? ListFooterComponent : null,
+          renderSectionHeader: renderSectionHeader,
+          refreshControl: refresherEnabled
+            ? createElement(RefreshControl, {
+              onRefresh: onRefresh,
+              refreshing: refreshing
+            })
+            : undefined
+        },
+        innerProps
+      )
     )
   )
 })
