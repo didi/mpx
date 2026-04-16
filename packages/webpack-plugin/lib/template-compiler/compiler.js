@@ -692,13 +692,6 @@ function parse (template, options) {
     // 使用临时节点作为root，处理multi root的情况
     root = currentParent = getVirtualHostRoot(options, meta)
     stack.push(root)
-
-    // if (mode === 'web' && ctorType === 'page') {
-    //   // web下需要添加titlebar, 并将页面内容放到content中
-    //   const { content } = getWebTitleBarContainer(root, options, meta)
-    //   stack.push(content)
-    //   currentParent = content
-    // }
   }
 
   parseHTML(template, {
