@@ -173,8 +173,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     // 有动画样式的 style key(useAnimatedStyle使用)
     const animatedStyleKeys = [] as (string|string[])[]
     const transforms = [] as string[]
-	// ** 从 style 中获取动画数据
-	const transitionMap = parseTransitionStyle(originalStyle)
+    // ** 从 style 中获取动画数据
+    const transitionMap = parseTransitionStyle(originalStyle)
     const shareValMap = Object.keys(transitionMap).reduce((valMap, property) => {
       // const { property } = transition || {}
       if (property === 'transform') {
@@ -200,10 +200,10 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       shareValMap,
       animatedKeys,
       animatedStyleKeys,
-	  transitionMap
+      transitionMap
     }
   }, [])
-  const  transitionMapRef = useRef(transitionMap)
+  const transitionMapRef = useRef(transitionMap)
   const runOnJSCallbackRef = useRef({})
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 根据 animation action 创建&驱动动画
@@ -275,7 +275,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     const prevStyle = lastTransitionStyleRef.current
     const hasTransitionChanged = transitionKeys.some(key => prevStyle[key] !== originalStyle[key])
     const currentTransitionMap = hasTransitionChanged
-	  // 从当前 style 解析最新 timing
+      // 从当前 style 解析最新 timing
       ? parseTransitionStyle(originalStyle)
       : transitionMapRef.current
     if (hasTransitionChanged) {
@@ -286,7 +286,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         transitionTimingFunction: originalStyle.transitionTimingFunction,
         transitionDelay: originalStyle.transitionDelay
       }
-	  transitionMapRef.current = currentTransitionMap
+      transitionMapRef.current = currentTransitionMap
     }
     createAnimation()
   }, [originalStyle])
