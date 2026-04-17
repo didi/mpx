@@ -420,6 +420,11 @@ function usePageStatus (navigation, pageId) {
     set(pageStatusMap, pageId, '')
   }
   useEffect(() => {
+    if (navigation.isFocused && navigation.isFocused()) {
+      Promise.resolve().then(() => {
+        pageStatusMap[pageId] = 'show'
+      })
+    }
     const focusSubscription = navigation.addListener('focus', () => {
       pageStatusMap[pageId] = 'show'
     })
