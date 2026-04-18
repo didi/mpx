@@ -27,7 +27,10 @@
 - [6. 文本垂直居中](#6-文本垂直居中)
 - [7. 渐变中避免使用 transparent](#7-渐变中避免使用-transparent)
 - [8. 提取公共样式](#8-提取公共样式)
-- [9. 行内样式的简写属性限制](#9-行内样式的简写属性限制)
+- [9. 简写属性限制](#9-简写属性限制)
+  - [9.1 Class 类样式支持简写](#91-class-类样式支持简写)
+  - [9.2 行内样式不支持简写](#92-行内样式不支持简写)
+  - [9.3 CSS 变量不支持简写属性](#93-css-变量不支持简写属性)
 - [10. 选择器条件编译注释规则](#10-选择器条件编译注释规则)
 
 ### 1. 选择器使用建议
@@ -1017,20 +1020,19 @@ Grid 布局在 RN 平台不支持。
 </style>
 ```
 
-### 9. Class 类样式支持简写，行内样式不支持简写
+### 9. 简写属性限制
 
-RN 平台中，**`<style>` 标签中定义的 class 类样式支持简写属性**（Mpx 编译时会自动展开），但**`style` 属性等动态行内样式仅支持 RN 原生简写属性**，Mpx 的编译时展开**不会作用于动态样式**。
+RN 平台中，简写属性的使用存在三方面限制：
 
-#### class 类样式 vs 行内样式的关键区别
+| 限制类型 | 说明 |
+|---------|------|
+| Class 类样式 | ✅ 支持简写，Mpx 编译时自动展开 |
+| 行内样式 | ❌ 不支持简写，需手动展开为独立属性 |
+| CSS 变量 | ❌ 简写属性中不支持多值 CSS 变量，需拆分为独立方向属性 |
 
-| 样式位置 | 简写属性支持 | 说明 |
-|---------|------------|------|
-| `<style>` class 类样式 | ✅ Mpx 编译时自动展开 | `margin: 10px 20px` → 编译为 `marginTop`/`marginRight` 等 |
-| `style` 属性（静态/style binding/组件 props） | ❌ 不支持编译展开 | 需手动使用展开后的独立属性 |
+#### 9.1 Class 类样式支持简写
 
-#### ✅ Class 类样式可以正常使用简写
-
-在 `<style>` 标签中定义的 class 类样式，Mpx 编译时会自动将简写属性展开为独立属性，因此可以正常使用各种简写形式：
+`<style>` 标签中定义的 class 类样式，Mpx 编译时会自动将简写属性展开为独立属性，因此可以正常使用各种简写形式：
 
 ```css
 /* ✅ Class 类样式中简写完全支持，Mpx 编译时会自动展开 */
@@ -1043,59 +1045,54 @@ RN 平台中，**`<style>` 标签中定义的 class 类样式支持简写属性*
 }
 ```
 
-#### ❌ 行内样式不支持简写
+#### 9.2 行内样式不支持简写
 
-`style` 属性等动态行内样式 Mpx 编译时无法展开，仅支持 RN 原生支持的简写形式：
+`style` 属性等动态行内样式，Mpx 编译时无法展开，仅支持 RN 原生支持的简写形式。
 
-| 场景 | 示例 |
-|------|------|
-| 静态 `style` 属性 | `<view style="margin: 10px 20px">` |
-| `wx:style` 动态绑定 | `<view wx:style="{{ {margin: '10px 20px'} }}">` |
-| 组件 props 传入的样式字符串 | `<child customStyle="margin: 10px; background: red">` |
-
-#### 受影响的场景（仅限行内样式）
+**受影响的场景：**
 
 | 场景 | 示例 | 问题 |
 |------|------|------|
 | 静态 `style` 属性 | `<view style="margin: 10px 20px">` | 多值简写不支持 |
 | `wx:style` 动态绑定 | `<view wx:style="{{ {margin: '10px 20px'} }}">` | 多值简写不支持 |
 | 组件 props 传入的样式字符串 | `<child customStyle="margin: 10px; background: red">` | 多值简写、background 简写不支持 |
+| 计算属性返回样式字符串 | `return 'margin: 0 4rpx;'` | 多值简写不支持 |
 
-#### 常见问题示例
-
-**❌ 错误：行内样式中使用了简写**
+**❌ 错误示例：**
 
 ```javascript
 // 问题：行内样式不支持多值 margin、background 简写、box-sizing
 const submitBtnStyle = computed(() => {
-  return `height: 55px; border-radius: 999px; box-sizing: border-box; background: ${bg};`
+  return `height: 55px; border-radius: 999px; box-sizing: border-box; background: ${bg};` // ❌ background 简写不支持
+})
+const priceRules = computed(() => {
+  return {
+    '{x}': {
+      style: `color: #FF6435; margin: 0 4rpx;`  // ❌ margin 多值不支持
+    }
+  }
 })
 ```
 
-**✅ 正确：行内样式使用展开后的独立属性**
+**✅ 正确示例：**
 
 ```javascript
 // 行内样式中需使用 RN 原生支持的写法
 const submitBtnStyle = computed(() => {
   const bg = isReady.value || isLoading.value ? '#FF6435' : '#D3D6DC'
-  return `height: 110rpx; border-radius: 999rpx; background-color: ${bg};`
+  return `height: 110rpx; border-radius: 999rpx; background-color: ${bg};` // ✅ 使用 background-color
+})
+const priceRules = computed(() => {
+  return {
+    '{x}': {
+      // ✅ 使用展开后的独立属性
+      style: `color: #FF6435; margin-top: 0; margin-bottom: 0; margin-left: 4rpx; margin-right: 4rpx;`
+    }
+  }
 })
 ```
 
-**❌ 错误：组件 props 样式中使用简写**
-
-```html
-<!-- 问题：customStyle 为 style 属性，RN 不支持 background 简写 -->
-<submit-order customStyle="height: 55px; border-radius: 999px; background: #FF6435;" />
-```
-
-**✅ 正确：组件 props 样式使用展开写法**
-
-```html
-<submit-order customStyle="height: 110rpx; border-radius: 999rpx; background-color: #FF6435;" />
-```
-
-#### 行内样式（style 属性）支持的属性速查
+**行内样式（style 属性）支持的简写属性速查表：**
 
 | 属性 | 行内样式支持情况 | 推荐替代写法 |
 |------|------|------|
@@ -1109,11 +1106,82 @@ const submitBtnStyle = computed(() => {
 | `background: linear-gradient(...)` | ❌ 不支持 | `background-image: linear-gradient(...)` |
 | `flex: 1` | ✅ | — |
 
+#### 9.3 CSS 变量不支持简写属性
+
+RN 平台中，CSS 变量（Custom Properties）不支持在简写属性中使用多值。当需要在简写属性（如 `margin`、`padding` 等）中使用 CSS 变量时，必须将简写属性拆分为独立的方向属性。
+
+**❌ 避免：简写属性中使用 CSS 变量**
+
+```css
+/* 错误：margin 简写属性中使用了 CSS 变量 */
+.screen-medium {
+  --price-area-margin: 0 0 10px 0;
+  --price-title-margin: 0 0 4px 0 ;
+  --tp-list-padding: 43px 40px 0 40px;
+}
+
+.price-area {
+  margin: var(--price-area-margin, 0);
+}
+
+.price-title {
+  margin: var(--price-title-margin, 0 0 4px 0);
+}
+
+.tp-list {
+  padding: var(--tp-list-padding, 67px 40px 0 40px);
+}
+```
+
+**✅ 推荐：拆分为独立方向属性**
+
+变量定义拆分：
+
+```css
+.screen-medium {
+  /* 仅设置单值 */
+  --price-area-margin: 20px;
+  /* 多值拆分为独立方向变量 */
+  --tp-list-padding-top: 43px;
+  --tp-list-padding-right: 40px;
+  --tp-list-padding-bottom: 0;
+  --tp-list-padding-left: 40px;
+  --price-title-margin-top: 0;
+  --price-title-margin-right: 0;
+  --price-title-margin-bottom: 4px;
+  --price-title-margin-left: 0;
+}
+```
+
+变量使用拆分：
+
+```css
+.price-area {
+  margin: var(--price-area-margin, 0);
+}
+
+.price-title {
+  margin-top: var(--price-title-margin-top, 0);
+  margin-right: var(--price-title-margin-right, 0);
+  margin-bottom: var(--price-title-margin-bottom, 4px);
+  margin-left: var(--price-title-margin-left, 0);
+}
+
+.tp-list {
+  padding-top: var(--tp-list-padding-top, 67px);
+  padding-right: var(--tp-list-padding-right, 40px);
+  padding-bottom: var(--tp-list-padding-bottom, 0);
+  padding-left: var(--tp-list-padding-left, 40px);
+}
+```
+
 #### 最佳实践总结
 
 1. **class 类样式放心使用简写**：`<style>` 中的 class 类样式，Mpx 编译时会自动展开，无需担心。
 2. **行内样式避免简写**：动态样式中完全不使用 `margin`/`padding` 多值、`border`/`background` 简写等。
 3. **行内样式明确属性名**：使用 `background-color` 而非 `background`、`marginTop` 而非 `margin` 多值。
+4. **单值属性可直接使用 CSS 变量**：`width: var(--tp-width, 280px)` ✅
+5. **简写属性CSS变量中有设置多值时需拆分为独立方向属性，且需同时更新CSS变量定义和使用，确保变量定义与使用处的拆分方式一致**：`margin: var(--m, 0 10px 0)` ❌ → `margin-top/right/bottom/left` ✅
 
 ### 10. 选择器条件编译注释规则
 

@@ -55,7 +55,7 @@ Mpx 采用类 Vue 的单文件组件（SFC）格式 `.mpx` 进行组件与页面
     - 文本溢出：`white-space`/`text-overflow` → 原平台保留样式，RN 使用 `numberOfLines` 模板属性条件编译：[参考](./references/rn-style-practice.md#4-文本溢出处理)
     - 隐藏元素：避免 `display: none`，使用尺寸归零与 `overflow: hidden` 等组合样式：[参考](./references/rn-style-practice.md#5-隐藏元素)
     - 布局属性：避免 `grid`/`float`，统一使用 Flex 布局：[参考](./references/rn-style-practice.md#32-避免使用-grid-布局) [参考](./references/rn-style-practice.md#33-避免使用-float-布局)
-    - style 属性简写：避免 style 内联样式中有 RN 原生不支持的简写属性：[参考](./references/rn-style-practice.md#9-行内样式的简写属性限制)
+    - 简写属性限制：Class 类样式支持简写、行内样式不支持简写、CSS 变量不支持简写属性：[参考](./references/rn-style-practice.md#9-简写属性限制)
 4. 非必要时减少条件编译的使用，**避免出现大面积连续的条件编译**，因为这会严重破坏代码的可读性和后期维护性。
 5. **保留原始样式定义中的 `/*use rpx*/` 和 `/*use px*/` 注释**，此类注释用于编译期间批量切换样式单位。
 
