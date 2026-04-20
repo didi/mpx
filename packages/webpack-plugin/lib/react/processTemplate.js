@@ -1,4 +1,3 @@
-const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
@@ -8,6 +7,7 @@ const { genNode, genTemplate } = require('../template-compiler/gen-node-react')
 const bindThis = require('../template-compiler/bind-this')
 const isEmptyObject = require('../utils/is-empty-object')
 const dash2hump = require('../utils/hump-dash').dash2hump
+const addQuery = require('../utils/add-query')
 
 function transformCode (code, wxsModuleMap, error) {
   try {
@@ -52,7 +52,8 @@ module.exports = function (template, {
     forceProxyEventRules,
     checkUsingComponentsRules,
     globalComponents,
-    customTextRules
+    customTextRules,
+    rnConfig
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -111,7 +112,8 @@ module.exports = function (template, {
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
         forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
         checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules),
-        isCustomText: matchCondition(resourcePath, customTextRules)
+        isCustomText: matchCondition(resourcePath, customTextRules),
+        customBuiltInComponents: rnConfig && rnConfig.customBuiltInComponents
       }
       const { root, meta } = templateCompiler.parse(template.content, parseOptions)
 
@@ -147,13 +149,12 @@ module.exports = function (template, {
         }
       }
 
-      if (meta.builtInComponentsMap) {
-        Object.keys(meta.builtInComponentsMap).forEach((name) => {
-          builtInComponentsMap[name] = {
-            resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-          }
-        })
-      }
+      const builtInPaths = meta.builtInComponentsMap || {}
+      Object.keys(builtInPaths).forEach((name) => {
+        builtInComponentsMap[name] = {
+          resource: addQuery(builtInPaths[name], { isComponent: true })
+        }
+      })
       if (meta.genericsInfo) {
         genericsInfo = meta.genericsInfo
       }

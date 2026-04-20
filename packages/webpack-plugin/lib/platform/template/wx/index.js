@@ -590,6 +590,6 @@ module.exports = function getSpec ({ warn, error }) {
       ]
     }
   }
-  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec)
+  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }), spec)
   return spec
 }
