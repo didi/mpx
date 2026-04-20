@@ -45,6 +45,20 @@ const rootPortal = require('./root-portal')
 const stickyHeader = require('./sticky-header')
 const stickySection = require('./sticky-section')
 
+/**
+ * 未命中上方任一组件 test 的标签，仍须走 normalizeComponentRules 中的通用
+ * 指令 / 属性 / 事件链路（如 wx 源码输出 ali 时 bindtap → onTap）。
+ * 历史上在 template/wx/index.js 里通过 normalizeComponentRules(cfgs.concat({}), spec)
+ * 末尾塞入空对象，由 run-rules 对缺省 test 退化为恒 true；此处改为显式配置且必须排在最后。
+ */
+function defaultCatchAllComponentConfig () {
+  return {
+    test () {
+      return true
+    }
+  }
+}
+
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
    * universal print for detail component warn or error
@@ -129,6 +143,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     label({ print }),
     rootPortal({ print }),
     stickyHeader({ print }),
-    stickySection({ print })
+    stickySection({ print }),
+    defaultCatchAllComponentConfig()
   ]
 }
