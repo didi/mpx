@@ -99,7 +99,8 @@ module.exports = function (template, {
           componentGenerics,
           hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
           forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
-          checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules)
+          checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules),
+          customBuiltInComponents: webConfig && webConfig.customBuiltInComponents
         })
         if (meta.wxsModuleMap) {
           wxsModuleMap = meta.wxsModuleMap
@@ -109,13 +110,12 @@ module.exports = function (template, {
             wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
-        if (meta.builtInComponentsMap) {
-          Object.keys(meta.builtInComponentsMap).forEach((name) => {
-            builtInComponentsMap[name] = {
-              resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-            }
-          })
-        }
+        const builtInPaths = meta.builtInComponentsMap || {}
+        Object.keys(builtInPaths).forEach((name) => {
+          builtInComponentsMap[name] = {
+            resource: addQuery(builtInPaths[name], { isComponent: true })
+          }
+        })
         if (meta.genericsInfo) {
           genericsInfo = meta.genericsInfo
         }
