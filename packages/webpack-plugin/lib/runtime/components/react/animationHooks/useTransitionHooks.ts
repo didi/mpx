@@ -43,7 +43,7 @@ const propName = {
 const behaviorExp = /^(allow-discrete|normal)$/
 const defaultValueExp = /^(inherit|initial|revert|revert-layer|unset)$/
 const timingFunctionExp = /^(step-start|step-end|steps)/
-const transitionKeys = ['transition', 'transitionDuration', 'transitionProperty', 'transitionTimingFunction', 'transitionDelay'] as const
+const transitionKeys = ['transition', 'transitionDuration', 'transitionTimingFunction', 'transitionDelay'] as const
 // cubic-bezier 参数解析
 function getBezierParams (str: string) {
   // ease 0.25, 0.1, 0.25, 1.0
@@ -282,9 +282,9 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
       lastTransitionStyleRef.current = {
         transition: originalStyle.transition,
         transitionDuration: originalStyle.transitionDuration,
-        transitionProperty: originalStyle.transitionProperty,
         transitionTimingFunction: originalStyle.transitionTimingFunction,
         transitionDelay: originalStyle.transitionDelay
+        // transitionProperty: originalStyle.transitionProperty
       }
       transitionMapRef.current = currentTransitionMap
     }
