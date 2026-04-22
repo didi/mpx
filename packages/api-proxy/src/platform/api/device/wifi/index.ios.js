@@ -2,7 +2,7 @@ import { PermissionsAndroid } from 'react-native'
 import { noop, type } from '@mpxjs/utils'
 import mpx from '@mpxjs/core'
 let startWifiReady = false
-const wifiListListeners = []
+let wifiListListener = null
 
 async function requestWifiPermission () {
   const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
@@ -78,7 +78,7 @@ function stopWifi (options = {}) {
     return
   }
   startWifiReady = false
-  wifiListListeners.length = 0
+  wifiListListener = null
   const result = {
     errMsg: 'stopWifi:success'
   }
@@ -115,11 +115,9 @@ function getWifiList (options = {}) {
         signalStrength: 100 + (item.level || 0)
       }
     })
-    wifiListListeners.forEach(callback => {
-      if (type(callback) === 'Function') {
-        callback({ wifiList })
-      }
-    })
+    if (type(wifiListListener) === 'Function') {
+      wifiListListener({ wifiList })
+    }
     const result = {
       errMsg: 'getWifiList:success',
       errno: 0,
@@ -137,20 +135,16 @@ function getWifiList (options = {}) {
 }
 
 function onGetWifiList (callback) {
-  if (!startWifiReady && wifiListListeners.indexOf(callback) > -1) {
-    return
+  if (callback && type(callback) === 'Function') {
+    wifiListListener = callback
   }
-  wifiListListeners.push(callback)
 }
 
-function offGetWifiList (callback) {
+function offGetWifiList () {
   if (!startWifiReady) {
     return
   }
-  const index = wifiListListeners.indexOf(callback)
-  if (index > -1) {
-    wifiListListeners.splice(index, 1)
-  }
+  wifiListListener = null
 }
 
 function getConnectedWifi (options = {}) {
