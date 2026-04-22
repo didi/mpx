@@ -12,9 +12,9 @@ class SocketTask {
     this._closeData = null
 
     if (protocols && protocols.length > 0) {
-      this._socket = new window.WebSocket(url, protocols)
+      this._socket = new WebSocket(url, protocols)
     } else {
-      this._socket = new window.WebSocket(url)
+      this._socket = new WebSocket(url)
     }
     this.addListener(this._socket)
     socketTasks.add(this._socket)
@@ -62,7 +62,7 @@ class SocketTask {
       reason
     }
     try {
-      this._socket.close()
+      this._socket.close(code, reason)
       const res = { errMsg: 'closeSocket:ok' }
       successHandle(res, success, complete)
     } catch (err) {
@@ -90,7 +90,7 @@ class SocketTask {
         return
       }
       if (this._closeData) {
-        this._closeCb(event)
+        this._closeCb(this._closeData)
       } else {
         this._closeCb({ code: event.code, reason: event.reason })
       }

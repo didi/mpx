@@ -32,6 +32,14 @@ const onKeyboardHeightChange = function (callback) {
   callbacks.push(callback)
 }
 const offKeyboardHeightChange = function (callback) {
+  if (callback == null) {
+    // 不传 callback 时清除所有监听
+    callbacks.length = 0
+    Keyboard.removeAllListeners('keyboardDidShow')
+    Keyboard.removeAllListeners('keyboardDidHide')
+    hasListener = false
+    return
+  }
   const index = callbacks.indexOf(callback)
   if (index > -1) {
     callbacks.splice(index, 1)

@@ -1,8 +1,6 @@
 import { nextTick } from '../next-tick'
 import { parseDataset, warn } from '@mpxjs/utils'
 
-let isInit = true
-
 class WebIntersectionObserver {
   constructor (_component, options) {
     this._component = _component
@@ -14,6 +12,7 @@ class WebIntersectionObserver {
     this._rootMargin = ''
     this._disconnected = false
     this._minThreshold = this.getMinThreshold()
+    this._isFirst = true
   }
 
   initObserver () {
@@ -25,7 +24,7 @@ class WebIntersectionObserver {
     return new IntersectionObserver((entries, observer) => {
       const initialRatio = this._options.initialRatio || 0
       entries.forEach(entry => {
-        if (!isInit || (isInit && (entry.intersectionRatio !== initialRatio && (this._minThreshold <= entry.intersectionRatio)))) {
+        if (!this._isFirst || (this._isFirst && (entry.intersectionRatio !== initialRatio && (this._minThreshold <= entry.intersectionRatio)))) {
           Object.defineProperties(entry, {
             id: {
               get () {
@@ -57,7 +56,7 @@ class WebIntersectionObserver {
           this._callback && this._callback(entry)
         }
       })
-      isInit = false
+      this._isFirst = false
     }, {
       root: this._root || null,
       rootMargin: this._rootMargin,
