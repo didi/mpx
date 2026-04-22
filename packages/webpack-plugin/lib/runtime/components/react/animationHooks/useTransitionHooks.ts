@@ -258,8 +258,8 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         ruleV = transform[key]
       }
       let toVal = ruleV !== undefined
-          ? ruleV
-          : transitionSupportedProperty[key]
+        ? ruleV
+        : transitionSupportedProperty[key]
       const shareVal = shareValMap[key].value
       if (percentExp.test(`${toVal}`) && !percentExp.test(shareVal as string) && !isNaN(+shareVal)) {
         // 获取到的toVal为百分比格式化shareValMap为百分比
