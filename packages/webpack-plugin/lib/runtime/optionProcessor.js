@@ -2,13 +2,15 @@ import { hasOwn, isEmptyObject, extend } from './utils'
 import { isBrowser } from './env'
 import transRpxStyle from './transRpxStyle'
 import animation from './animation'
-import { error } from '@mpxjs/utils'
+import { error, proxy } from '@mpxjs/utils'
 const dash2hump = require('../utils/hump-dash').dash2hump
 
 export function processComponentOption (
   {
     option,
     ctorType,
+    moduleId,
+    hasScoped,
     outputPath,
     pageConfig,
     componentsMap,
@@ -75,6 +77,19 @@ registered in parent context!`)
   if (outputPath) {
     option.componentPath = '/' + outputPath
   }
+
+  // 宿主组件的 moduleId / scoped / ctorType 信息挂在 option 上，供 mpx-wx-tpl-* 子模版通过 __mpxHost.$options 读取
+  option.__mpxModuleId = moduleId || ''
+  option.__mpxScoped = !!hasScoped
+  option.__mpxCtorType = ctorType
+  // 暴露宿主实例引用，供 mpx-wx-tpl-* 子模版组件通过 inject 获取
+  const prevProvide = option.provide
+  option.provide = function () {
+    const base = typeof prevProvide === 'function'
+      ? prevProvide.call(this)
+      : (prevProvide || {})
+    return extend({}, base, { __mpxHost: this })
+  }
   if (ctorType === 'app') {
     option.data = function () {
       return {
@@ -132,6 +147,67 @@ export function getWxsMixin (wxsModules) {
       })
     }
   }
+}
+
+/**
+ * 将子模版实例的 `$slots` 代理到 `inject` 的宿主 `__mpxHost.$slots`（仅默认 / 具名，与 solutions/web-template-support.md §2.8 一致）。
+ * 不使用 `$watch`；若无法 defineProperty（如属性已不可配置），开发环境告警并跳过。
+ */
+function installMpxWxTemplateHostSlotsProxy (vm) {
+  if (!vm.__mpxHost) return
+  try {
+    Object.defineProperty(vm, '$slots', {
+      configurable: true,
+      enumerable: true,
+      get () {
+        const h = this.__mpxHost
+        return (h && h.$slots) || {}
+      },
+      set () { } // 不支持写入
+    })
+  } catch (e) {
+    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') {
+      console.warn('[Mpx] mpx-wx-tpl: could not proxy $slots to __mpxHost:', e && e.message)
+    }
+  }
+}
+
+// 创建 wxml template 对应的 Vue 子组件选项（仅接受构建期编译产物，见 web/compile-wx-template-fragment）
+// - props.mpxData：承载模版调用传入的数据，通过 proxy 在 this 上建立访问代理
+// - inject.__mpxHost：从最近的 mpx 宿主获取 this，用于继承 methods/components；其 $slots 经 installMpxWxTemplateHostSlotsProxy 供模版内 <slot> 使用
+// - wxsModules：由模版所在 wxml 自身声明的 wxs 模块（不继承宿主 wxs）
+// - render / staticRenderFns：须由 `vue/compiler-sfc` compileTemplate 等在构建期注入，不支持字符串 template
+export function createWxTemplateComponent ({ name, render, staticRenderFns, components, wxsModules }) {
+  if (typeof render !== 'function') {
+    throw new Error('[Mpx] createWxTemplateComponent requires a build-time `render` function (string template is not supported).')
+  }
+  const wxsMixin = getWxsMixin(wxsModules)
+  const base = {
+    name,
+    render,
+    components: components || {},
+    mixins: wxsMixin ? [wxsMixin] : [],
+    props: { mpxData: { type: Object, default: () => ({}) } },
+    inject: { __mpxHost: { default: null } },
+    created () {
+      const host = this.__mpxHost
+      if (host) {
+        const hostMethods = host.$options.methods || {}
+        Object.keys(hostMethods).forEach((k) => {
+          if (!(k in this)) this[k] = hostMethods[k].bind(host)
+        })
+        const compBase = this.$options.components || {}
+        const merged = Object.create(Object.getPrototypeOf(compBase) || null)
+        extend(merged, compBase, host.$options.components || {})
+        this.$options.components = merged
+        installMpxWxTemplateHostSlotsProxy(this)
+      }
+      // mpxData 常为宿主每次 render 的新字面量：source 传 getter，proxy 每次读都解析当前 this.mpxData；假定 key 集合在生命周期内不变（不在 updated 中补全新 key）
+      proxy(this, () => this.mpxData || {})
+    }
+  }
+  if (staticRenderFns && staticRenderFns.length) base.staticRenderFns = staticRenderFns
+  return base
 }
 
 function createApp ({ componentsMap, Vue, pagesMap, firstPage, VueRouter, App, tabBarMap }) {
