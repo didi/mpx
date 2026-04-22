@@ -15,9 +15,13 @@ export const createInnerAudioContext = () => {
   const _stopCbs = []
 
   __audio.stop = () => {
-    __audio.pause()
-    __audio.seek(0)
-    _stopCbs.forEach(cb => cb())
+    _stopping = true // 打开屏蔽开关，后续 pause 事件的 wrapper 会看到这个标志
+    audio.pause()
+    audio.currentTime = 0
+    setTimeout(() => {
+      _stopping = false // pause 事件已经派发完，关掉开关
+      _stopCbs.forEach(cb => cb())
+    }, 0)
   }
 
   __audio.seek = value => {
@@ -55,6 +59,8 @@ export const createInnerAudioContext = () => {
     'Error'
   ]
 
+  let _stopping = false
+
   const eventCallbacks = {}
   eventNames.forEach(eventName => {
     const nativeName = eventName.toLowerCase()
@@ -63,8 +69,11 @@ export const createInnerAudioContext = () => {
     Object.defineProperty(__audio, `on${eventName}`, {
       get () {
         return (cb) => {
-          eventCallbacks[nativeName].push(cb)
-          audio.addEventListener(nativeName, cb)
+          const wrapper = nativeName === 'pause'
+            ? (e) => { if (!_stopping) cb(e) }
+            : cb
+          eventCallbacks[nativeName].push({ cb, wrapper })
+          audio.addEventListener(nativeName, wrapper)
         }
       }
     })
@@ -73,13 +82,13 @@ export const createInnerAudioContext = () => {
       get () {
         return (cb) => {
           if (cb == null) {
-            eventCallbacks[nativeName].forEach(fn => audio.removeEventListener(nativeName, fn))
+            eventCallbacks[nativeName].forEach(({ wrapper }) => audio.removeEventListener(nativeName, wrapper))
             eventCallbacks[nativeName] = []
           } else {
-            const idx = eventCallbacks[nativeName].indexOf(cb)
+            const idx = eventCallbacks[nativeName].findIndex(item => item.cb === cb)
             if (idx > -1) {
+              audio.removeEventListener(nativeName, eventCallbacks[nativeName][idx].wrapper)
               eventCallbacks[nativeName].splice(idx, 1)
-              audio.removeEventListener(nativeName, cb)
             }
           }
         }
