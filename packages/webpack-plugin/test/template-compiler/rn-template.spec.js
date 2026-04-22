@@ -1,6 +1,6 @@
-const templateLoader = require('../../../../lib/react/template-loader')
-const compiler = require('../../../../lib/template-compiler/compiler')
-const { genNode: genNodeReact } = require('../../../../lib/template-compiler/gen-node-react')
+const templateLoader = require('../../lib/react/template-loader')
+const compiler = require('../../lib/template-compiler/compiler')
+const { genNode: genNodeReact } = require('../../lib/template-compiler/gen-node-react')
 
 describe('RN template support', () => {
   const mockMpx = {
