@@ -24,6 +24,10 @@ function onUnhandledRejection (callback) {
 }
 
 function offUnhandledRejection (callback) {
+  if (callback == null) {
+    global.__mpxAppCbs.rejection.length = 0
+    return
+  }
   off(global.__mpxAppCbs.rejection, callback)
 }
 
@@ -57,7 +61,6 @@ function offAppShow (callback) {
 
 function onAppHide (callback) {
   if (isBrowser || isReact) {
-
     global.__mpxAppCbs.hide.push(callback)
   }
 }
@@ -78,6 +81,10 @@ function onLazyLoadError (callback) {
 
 function offLazyLoadError (callback) {
   if (isReact) {
+    if (callback == null) {
+      global.__mpxAppCbs.lazyLoad.length = 0
+      return
+    }
     off(global.__mpxAppCbs.lazyLoad, callback)
   }
 }

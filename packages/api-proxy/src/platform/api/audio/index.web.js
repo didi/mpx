@@ -12,9 +12,12 @@ export const createInnerAudioContext = () => {
 
   __audio.pause = () => audio.pause()
 
+  const _stopCbs = []
+
   __audio.stop = () => {
     __audio.pause()
     __audio.seek(0)
+    _stopCbs.forEach(cb => cb())
   }
 
   __audio.seek = value => {
@@ -49,27 +52,58 @@ export const createInnerAudioContext = () => {
     'Seeking',
     'TimeUpdate',
     'Waiting',
-    'Stop',
     'Error'
   ]
-  const eventListeners = [
-    ['on', audio.addEventListener],
-    ['off', audio.removeEventListener]
-  ]
+
+  const eventCallbacks = {}
   eventNames.forEach(eventName => {
-    eventListeners.forEach(([eventNameItem, listenerFn]) => {
-      Object.defineProperty(__audio, `${eventNameItem}${eventName}`, {
-        get () {
-          return (callback = audio.cb) => {
-            if (eventNameItem !== 'off') {
-              audio.cb = callback
+    const nativeName = eventName.toLowerCase()
+    eventCallbacks[nativeName] = []
+
+    Object.defineProperty(__audio, `on${eventName}`, {
+      get () {
+        return (cb) => {
+          eventCallbacks[nativeName].push(cb)
+          audio.addEventListener(nativeName, cb)
+        }
+      }
+    })
+
+    Object.defineProperty(__audio, `off${eventName}`, {
+      get () {
+        return (cb) => {
+          if (cb == null) {
+            eventCallbacks[nativeName].forEach(fn => audio.removeEventListener(nativeName, fn))
+            eventCallbacks[nativeName] = []
+          } else {
+            const idx = eventCallbacks[nativeName].indexOf(cb)
+            if (idx > -1) {
+              eventCallbacks[nativeName].splice(idx, 1)
+              audio.removeEventListener(nativeName, cb)
             }
-            // debugger
-            return listenerFn.call(audio, eventName.toLowerCase(), audio.cb)
           }
         }
-      })
+      }
     })
   })
+
+  Object.defineProperty(__audio, 'onStop', {
+    get () {
+      return (cb) => { _stopCbs.push(cb) }
+    }
+  })
+  Object.defineProperty(__audio, 'offStop', {
+    get () {
+      return (cb) => {
+        if (cb == null) {
+          _stopCbs.length = 0
+        } else {
+          const idx = _stopCbs.indexOf(cb)
+          if (idx > -1) _stopCbs.splice(idx, 1)
+        }
+      }
+    }
+  })
+
   return __audio
 }
