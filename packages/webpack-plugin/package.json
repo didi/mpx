@@ -63,7 +63,13 @@
     "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
+    "vue": "^2.7.10",
     "webpack": "^5.75.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
@@ -100,6 +106,7 @@
     "react-native-vision-camera": "^4.7.2",
     "react-native-webview": "^13.12.2",
     "rimraf": "^6.0.1",
+    "vue": "^2.7.16",
     "webpack": "^5.75.0"
   },
   "engines": {
