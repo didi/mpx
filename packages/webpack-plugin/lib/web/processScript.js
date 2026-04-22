@@ -10,12 +10,14 @@ const {
   stringifyRequest,
   buildI18n
 } = require('./script-helper')
+const { compileTemplateFragment, wrapCreateTemplateComponentWithBlock } = require('./compile-wx-template-fragment')
 
 module.exports = function (script, {
   loaderContext,
   ctorType,
   srcMode,
   moduleId,
+  hasScoped,
   isProduction,
   componentGenerics,
   jsonConfig,
@@ -23,6 +25,7 @@ module.exports = function (script, {
   builtInComponentsMap,
   genericsInfo,
   wxsModuleMap,
+  wxTemplateComponentsInfo,
   localComponentsMap
 }, callback) {
   const { projectRoot, appInfo, webConfig, i18n } = loaderContext.getMpx()
@@ -46,8 +49,14 @@ module.exports = function (script, {
       delete attrs.setup
       return attrs
     },
-    content (script) {
-      let content = `\n  import { processComponentOption, getComponent, getWxsMixin } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
+      content (script) {
+      const isProduction = loaderContext.mode === 'production'
+      const hasWxTemplate = !!(wxTemplateComponentsInfo &&
+        ((wxTemplateComponentsInfo.imports && wxTemplateComponentsInfo.imports.length) ||
+          (wxTemplateComponentsInfo.locals && wxTemplateComponentsInfo.locals.length)))
+      const optionProcessorImports = ['processComponentOption', 'getComponent', 'getWxsMixin']
+      if (hasWxTemplate) optionProcessorImports.push('createWxTemplateComponent')
+      let content = `\n  import { ${optionProcessorImports.join(', ')} } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
       let hasApp = true
       if (!appInfo.name) {
         hasApp = false
@@ -65,6 +74,30 @@ module.exports = function (script, {
       // 获取组件集合
       const componentsMap = buildComponentsMap({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig })
 
+      // 注入 wx template 子组件（<template name> / <import src>）
+      let wxTemplateComponentsExpr = ''
+      if (hasWxTemplate) {
+        const parts = (wxTemplateComponentsInfo.imports || []).slice()
+        const localsExprs = (wxTemplateComponentsInfo.locals || []).map((local) => {
+          const emitError = (msg) => {
+            loaderContext.emitError(new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg))
+          }
+          const compiled = compileTemplateFragment(local.template, {
+            emitError,
+            definitionName: local.name,
+            resourcePath: loaderContext.resourcePath,
+            isProduction
+          })
+          const inner = `name: ${JSON.stringify(local.name)}`
+          return `${JSON.stringify(local.name)}: ${wrapCreateTemplateComponentWithBlock(compiled.block, inner)}`
+        })
+        if (localsExprs.length) {
+          parts.push(`{${localsExprs.join(',')}}`)
+        }
+        wxTemplateComponentsExpr = `Object.assign({}, ${parts.join(', ')})`
+        content += `  var wxTemplateComponentsMap = ${wxTemplateComponentsExpr}\n`
+      }
+
       // 获取pageConfig
       const pageConfig = {}
       if (ctorType === 'page') {
@@ -77,14 +110,19 @@ module.exports = function (script, {
         content += buildI18n({ i18n, loaderContext })
       }
       content += getRequireScript({ ctorType, script, loaderContext })
+      const componentsMapExpr = hasWxTemplate
+        ? `Object.assign({}, ${shallowStringify(componentsMap)}, wxTemplateComponentsMap)`
+        : shallowStringify(componentsMap)
       content += `
   // @ts-ignore
   export default processComponentOption({
     option: global.__mpxOptionsMap[${JSON.stringify(moduleId)}],
     ctorType: ${JSON.stringify(ctorType)},
+    moduleId: ${JSON.stringify(moduleId)},
+    hasScoped: ${JSON.stringify(!!hasScoped)},
     outputPath: ${JSON.stringify(outputPath)},
     pageConfig: ${JSON.stringify(pageConfig)},
-    componentsMap: ${shallowStringify(componentsMap)},
+    componentsMap: ${componentsMapExpr},
     componentGenerics: ${JSON.stringify(componentGenerics)},
     genericsInfo: ${JSON.stringify(genericsInfo)},
     wxsMixin: getWxsMixin(wxsModules),
