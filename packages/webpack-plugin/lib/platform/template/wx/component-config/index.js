@@ -42,8 +42,6 @@ const label = require('./label')
 const wxs = require('./wxs')
 const fixComponentName = require('./fix-component-name')
 const rootPortal = require('./root-portal')
-const stickyHeader = require('./sticky-header')
-const stickySection = require('./sticky-section')
 
 module.exports = function getComponentConfigs ({ warn, error }) {
   /**
@@ -127,8 +125,6 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     livePusher({ print }),
     hyphenTagName({ print }),
     label({ print }),
-    rootPortal({ print }),
-    stickyHeader({ print }),
-    stickySection({ print })
+    rootPortal({ print })
   ]
 }

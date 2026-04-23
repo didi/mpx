@@ -4,7 +4,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 'react-native-reanimated'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture, HIDDEN_STYLE, useRunOnJSCallback } from './utils'
-
 interface ListItem {
   isSectionHeader?: boolean;
   _originalItemIndex?: number;
