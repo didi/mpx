@@ -140,6 +140,33 @@ describe('RN template support', () => {
     expect(output).toMatch(/\.call\(Object\.assign\(Object\.create\(this\), .+\), createElement, getComponent\)/)
   })
 
+  it('should transform section-list refresher generic for RN', () => {
+    const input = '<section-list generic:refresher="custom-refresh" refresher-enabled="{{true}}"></section-list>'
+    const parsed = compiler.parse(input, {
+      mode: 'ios',
+      srcMode: 'wx',
+      moduleId: 'm123',
+      defs: {},
+      usingComponentsInfo: {},
+      filePath: 'test.mpx',
+      warn: console.warn,
+      error: console.error
+    })
+    const output = genNodeReact(parsed.root)
+    expect(output).toContain('getComponent("mpx-section-list")')
+    expect(output).toContain('genericrefresher: "custom-refresh"')
+    expect(output).toContain('generichash: "m123"')
+    expect(parsed.meta.genericsInfo).toEqual({
+      hash: 'm123',
+      map: {
+        'custom-refresh': true
+      }
+    })
+    expect(parsed.meta.builtInComponentsMap).toEqual({
+      'mpx-section-list': '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-section-list'
+    })
+  })
+
   it('should not generate getTemplate helper when no template source exists', () => {
     const input = '<view>plain</view>'
     const output = templateLoader.call(mockContext, input)

@@ -26,6 +26,7 @@ const radioGroup = require('./radio-group')
 const radio = require('./radio')
 const richText = require('./rich-text')
 const scrollView = require('./scroll-view')
+const sectionList = require('./section-list')
 const slider = require('./slider')
 const swiperItem = require('./swiper-item')
 const swiper = require('./swiper')
@@ -88,6 +89,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     ad({ print }),
     view({ print }),
     scrollView({ print }),
+    sectionList({ print }),
     swiper({ print }),
     swiperItem({ print }),
     movableView({ print }),
