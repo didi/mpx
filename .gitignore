@@ -1,10 +1,18 @@
 .idea/
 .vscode/
 .trae/
+# Share project hook configs; keep the rest of .claude / .cursor local
+.claude/**
+!.claude/
+!.claude/settings.json
+.cursor/**
+!.cursor/
+!.cursor/hooks.json
 .cache/
 .gitconfig
 node_modules/
 *.log
+scripts/log.json
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
