@@ -76,10 +76,10 @@ module.exports = function (raw) {
     // 这里需传递rawResourcePath和wxsContentMap保持一致
     filePath: rawResourcePath,
     i18n,
-    checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
-    globalComponents: Object.keys(mpx.globalComponents),
+    globalComponents: Object.keys(mpx.globalComponents || {}),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules) || runtimeCompile,
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
+    checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     dynamicTemplateRuleRunner: mpx.dynamicTemplateRuleRunner
   })
 

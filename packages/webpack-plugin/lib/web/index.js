@@ -103,6 +103,7 @@ module.exports = function ({
         ctorType,
         srcMode,
         moduleId,
+        hasScoped,
         isProduction,
         componentGenerics,
         jsonConfig: jsonRes.jsonObj,
@@ -110,6 +111,7 @@ module.exports = function ({
         builtInComponentsMap: templateRes.builtInComponentsMap,
         genericsInfo: templateRes.genericsInfo,
         wxsModuleMap: templateRes.wxsModuleMap,
+        wxTemplateComponentsInfo: templateRes.wxTemplateComponentsInfo,
         localComponentsMap: jsonRes.localComponentsMap
       }, callback)
     }
