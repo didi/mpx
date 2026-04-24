@@ -1,9 +1,7 @@
 name: gen-dynamic
 
 on:
-  push:
-    branches:
-      - master
+  pull_request:
     paths:
       - 'packages/api-proxy/src/platform/**'
       - 'packages/api-proxy/scripts/gen-dynamic.js'
@@ -17,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate dynamic.js
@@ -30,6 +29,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "dynamic.js is already up-to-date, nothing to commit"
           else
-            git commit -m "chore: auto-generate dynamic.js [skip ci]"
-            git push
+            git commit -m "chore: auto-generate dynamic.js"
+            git push origin HEAD:${{ github.head_ref }}
           fi
