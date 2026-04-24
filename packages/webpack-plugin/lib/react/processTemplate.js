@@ -1,4 +1,3 @@
-const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
@@ -8,6 +7,7 @@ const { genNode, genTemplate } = require('../template-compiler/gen-node-react')
 const bindThis = require('../template-compiler/bind-this')
 const isEmptyObject = require('../utils/is-empty-object')
 const dash2hump = require('../utils/hump-dash').dash2hump
+const addQuery = require('../utils/add-query')
 
 function transformCode (code, wxsModuleMap, error) {
   try {
@@ -48,10 +48,12 @@ module.exports = function (template, {
     wxsContentMap,
     decodeHTMLText,
     externalClasses,
-    checkUsingComponents,
     autoVirtualHostRules,
     forceProxyEventRules,
-    customTextRules
+    checkUsingComponentsRules,
+    globalComponents,
+    customTextRules,
+    rnConfig
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -103,14 +105,15 @@ module.exports = function (template, {
         filePath: rawResourcePath,
         // react中模版i18n不需要特殊处理
         i18n: null,
-        checkUsingComponents,
-        // rn模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
-        globalComponents: [],
+        // 与 template-compiler/index 一致：usingComponentsInfo 已合并 globalComponentsInfo，此处白名单避免对仅 app 注册的组件误报「未使用」
+        globalComponents: Object.keys(globalComponents || {}),
         // rn模式下实现抽象组件
         componentGenerics,
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
         forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
-        isCustomText: matchCondition(resourcePath, customTextRules)
+        checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules),
+        isCustomText: matchCondition(resourcePath, customTextRules),
+        customBuiltInComponents: rnConfig && rnConfig.customBuiltInComponents
       }
       const { root, meta } = templateCompiler.parse(template.content, parseOptions)
 
@@ -146,13 +149,12 @@ module.exports = function (template, {
         }
       }
 
-      if (meta.builtInComponentsMap) {
-        Object.keys(meta.builtInComponentsMap).forEach((name) => {
-          builtInComponentsMap[name] = {
-            resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-          }
-        })
-      }
+      const builtInPaths = meta.builtInComponentsMap || {}
+      Object.keys(builtInPaths).forEach((name) => {
+        builtInComponentsMap[name] = {
+          resource: addQuery(builtInPaths[name], { isComponent: true })
+        }
+      })
       if (meta.genericsInfo) {
         genericsInfo = meta.genericsInfo
       }

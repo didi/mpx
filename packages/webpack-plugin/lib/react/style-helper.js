@@ -135,27 +135,18 @@ function getClassMap ({ content, filename, mode, srcMode, ctorType, formatValueN
     if (classMapKeys.length) {
       classMapKeys.forEach((key) => {
         if (Object.keys(classMapValue).length) {
-          let _default = classMap[key]?._default
-          let _media = classMap[key]?._media
+          // set css defalut value
+          const val = classMap[key] || {}
+          classMap[key] = Object.assign(val, classMapValue)
+
+          // set css media
           if (isMedia) {
-            // 当前是媒体查询
-            _default = _default || {}
-            _media = _media || []
+            const _media = classMap[key]?._media || []
             _media.push({
               options,
               value: classMapValue
             })
-            classMap[key] = {
-              _media,
-              _default
-            }
-          } else if (_default) {
-            // 已有媒体查询数据，此次非媒体查询
-            Object.assign(_default, classMapValue)
-          } else {
-            // 无媒体查询
-            const val = classMap[key] || {}
-            classMap[key] = Object.assign(val, classMapValue)
+            classMap[key]._media = _media
           }
         }
       })
