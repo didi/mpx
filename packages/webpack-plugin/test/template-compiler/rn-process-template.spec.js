@@ -1,4 +1,4 @@
-const processTemplate = require('../../../../lib/react/processTemplate')
+const processTemplate = require('../../lib/react/processTemplate')
 
 describe('RN process template', () => {
   const mockMpx = {
@@ -7,7 +7,7 @@ describe('RN process template', () => {
     defs: {},
     projectRoot: '/project',
     wxsContentMap: {},
-    checkUsingComponents: false,
+    globalComponents: {},
     getModuleId: jest.fn(() => 'm123')
   }
   const mockContext = {
@@ -61,6 +61,33 @@ describe('RN process template', () => {
       expect(output).toContain('"local": function')
       expect(output).toContain('Object.assign({}, localTemplates)')
 
+      done()
+    })
+  })
+
+  it('sets injectOptions.disableMemo when template has <import> (conservative RN slot memo)', (done) => {
+    const template = {
+      content: `
+        <import src="./item.wxml" />
+        <view>Main</view>
+      `
+    }
+    const options = {
+      loaderContext: mockContext,
+      hasComment: false,
+      isNative: false,
+      srcMode: 'wx',
+      moduleId: 'm123',
+      ctorType: 'component',
+      usingComponentsInfo: {},
+      originalUsingComponents: {},
+      componentGenerics: {}
+    }
+    processTemplate(template, options, (err, result) => {
+      expect(err).toBeNull()
+      const output = result.output
+      expect(output).toContain('global.currentInject.injectOptions')
+      expect(output).toMatch(/"disableMemo"\s*:\s*true/)
       done()
     })
   })
