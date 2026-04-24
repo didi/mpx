@@ -1,33 +1,22 @@
-const path = require('path')
-const { minimatch } = require('minimatch')
-const unoConfig = require('@unocss/config')
-const core = require('@unocss/core')
-const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
-const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
-const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
-const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
-const { has } = require('@mpxjs/webpack-plugin/lib/utils/set')
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-const UnoCSSWebpackPlugin = require('./web-plugin')
-const transformerDirectives = require('@unocss/transformer-directives').default
-const transformerVariantGroup = require('@unocss/transformer-variant-group')
-const {
-  parseClasses,
-  parseStrings,
-  parseMustache,
-  stringifyAttr,
-  parseComments,
-  parseCommentConfig
-} = require('./parser')
-const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
-const {
-  transformStyle,
-  buildAliasTransformer,
-  transformGroups,
-  mpEscape,
-  cssRequiresTransform
-} = require('./transform')
-const platformPreflightsMap = require('./platform')
+import { loadConfig } from '@unocss/config'
+import { createGenerator, e as cssEscape } from '@unocss/core'
+import transformerDirectives from '@unocss/transformer-directives'
+import transformerVariantGroup from '@unocss/transformer-variant-group'
+import path from 'path'
+import { minimatch } from 'minimatch'
+import mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
+import toPosix from '@mpxjs/webpack-plugin/lib/utils/to-posix.js'
+import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
+import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
+import set from '@mpxjs/webpack-plugin/lib/utils/set.js'
+import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
+import { parseClasses, parseStrings, parseMustache, stringifyAttr, parseComments, parseCommentConfig } from './parser.js'
+import { getReplaceSource, getConcatSource, getRawSource } from './source.js'
+import { transformStyle, buildAliasTransformer, transformGroups, mpEscape, cssRequiresTransform } from './transform.js'
+import platformPreflightsMap from './platform.js'
+import UnoCSSWebpackPlugin from './web-plugin/index.js'
+const { has } = set
+
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
 function filterFile (file, scan) {
@@ -206,22 +195,70 @@ class MpxUnocssPlugin {
 
   async createContext (compilation, mode) {
     const { root, config, configFiles } = this.options
-    const { config: resolved, sources } = await unoConfig.loadConfig(root, config, configFiles)
+    const { config: resolved, sources } = await loadConfig(root, config, configFiles)
     sources.forEach((item) => {
       compilation.fileDependencies.add(item)
       // fix jiti require cache for watch
-      delete require.cache[item]
+      // delete require.cache[item]
     })
 
     const platformPreflights = platformPreflightsMap[mode] || []
 
-    return core.createGenerator({
+    return await createGenerator({
       ...resolved,
       preflights: [
         ...(resolved.preflights || []),
         ...platformPreflights
       ]
     })
+  }
+
+  getTemplateParser (uno) {
+    // process classes
+    const transformAlias = buildAliasTransformer(uno.config.alias)
+    const transformClasses = (source, classNameHandler = c => c) => {
+      // pre process
+      source = transformAlias(source)
+      if (this.options.transformGroups) {
+        source = transformGroups(source, this.options.transformGroups)
+      }
+      const content = source.source()
+      // escape & fill classesMap
+      return content.split(/\s+/).map(classNameHandler).join(' ')
+    }
+    return (source, classNameHandler) => {
+      source = getReplaceSource(source)
+      const content = source.original().source()
+      parseClasses(content).forEach(({ result, start, end }) => {
+        let { replaced, val } = parseMustache(result, (exp) => {
+          const expSource = getReplaceSource(exp)
+          parseStrings(exp).forEach(({ result, start, end }) => {
+            result = transformClasses(result, classNameHandler)
+            expSource.replace(start, end, result)
+          })
+          return expSource.source()
+        }, str => transformClasses(str, classNameHandler))
+        if (replaced) {
+          val = stringifyAttr(val)
+          source.replace(start - 1, end + 1, val)
+        }
+      })
+      // process comments
+      const commentConfig = {}
+      parseComments(content).forEach(({ result, start, end }) => {
+        Object.assign(commentConfig, parseCommentConfig(result))
+        source.replace(start, end, '')
+      })
+      if (commentConfig.safelist) {
+        this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
+          classNameHandler(className)
+        })
+      }
+      return {
+        newsource: source,
+        commentConfig
+      }
+    }
   }
 
   apply (compiler) {
@@ -311,29 +348,15 @@ class MpxUnocssPlugin {
         const commentConfigMap = {}
 
         const mainClassesMap = packageClassesMaps.main
-        const cssEscape = core.e
         // config中的safelist视为主包classes
         const safeListClasses = this.getSafeListClasses(config.safelist)
 
         safeListClasses.forEach((className) => {
           mainClassesMap[className] = true
         })
-        const transformAlias = buildAliasTransformer(config.alias)
-        const transformClasses = (source, classNameHandler = c => c) => {
-          // pre process
-          source = transformAlias(source)
-          if (this.options.transformGroups) {
-            source = transformGroups(source, this.options.transformGroups)
-          }
-          const content = source.source()
-          // escape & fill classesMap
-          return content.split(/\s+/).map(classNameHandler).join(' ')
-        }
+        const parseTemplate = this.getTemplateParser(uno)
 
         const processTemplate = async (file, source) => {
-          source = getReplaceSource(source)
-          const content = source.original().source()
-
           const packageName = getPackageName(file)
           const filename = file.slice(0, -templateExt.length)
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
@@ -351,35 +374,9 @@ class MpxUnocssPlugin {
             }
             return mpEscape(cssEscape(className), this.options.escapeMap)
           }
-          parseClasses(content).forEach(({ result, start, end }) => {
-            let { replaced, val } = parseMustache(result, (exp) => {
-              const expSource = getReplaceSource(exp)
-              parseStrings(exp).forEach(({ result, start, end }) => {
-                result = transformClasses(result, classNameHandler)
-                expSource.replace(start, end, result)
-              })
-              return expSource.source()
-            }, str => transformClasses(str, classNameHandler))
-            if (replaced) {
-              val = stringifyAttr(val)
-              source.replace(start - 1, end + 1, val)
-            }
-          })
-          // process comments
-          const commentConfig = {}
-          parseComments(content).forEach(({ result, start, end }) => {
-            Object.assign(commentConfig, parseCommentConfig(result))
-            source.replace(start, end, '')
-          })
-          if (commentConfig.safelist) {
-            this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
-              classNameHandler(className)
-            })
-          }
-
+          const { newsource, commentConfig } = parseTemplate(source, classNameHandler)
           commentConfigMap[filename] = commentConfig
-
-          assets[file] = source
+          assets[file] = newsource
         }
 
         await Promise.all(Object.entries(assets).map(([file, source]) => {
@@ -538,4 +535,4 @@ class MpxUnocssPlugin {
   }
 }
 
-module.exports = MpxUnocssPlugin
+export default MpxUnocssPlugin
