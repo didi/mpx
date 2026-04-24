@@ -68,7 +68,12 @@ module.exports = function getSpec ({ warn, error }) {
     // props后处理
     postProps: [
       {
-        web ({ name, value }) {
+        web (prop, data) {
+          const { name, value } = prop
+          // `<template is>` / `data` 留给 compiler 与 RN 一致的 parseMustache 路径；勿在此处转成 :is / :data
+          if (data.el && data.el.tag === 'template' && (name === 'is' || name === 'data')) {
+            return prop
+          }
           const parsed = parseMustacheWithContext(value)
           if (name.startsWith('data-')) {
             return {

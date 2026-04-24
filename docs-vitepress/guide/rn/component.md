@@ -106,7 +106,7 @@
 | enable-back-to-top      | boolean | `false`   | 点击状态栏的时候视图会滚动到顶部，仅 iOS环境支持                      |
 | enhanced                | boolean | `false`   | scroll-view 组件功能增强                             |
 | bounces                | boolean | `true`   | iOS 下 scroll-view 边界弹性控制 (同时开启 enhanced 属性后生效)                          |
-| refresher-enabled       | boolean | `false`   | 开启自定义下拉刷新                                    |
+| refresher-enabled       | boolean | `false`   | 开启自定义下拉刷新，iOS 下需要把 enhanced 和 bounces 都设置为 true                               |
 | refresher-threshold     | number  | `45`      | 设置自定义下拉刷新阈值                                  |
 | scroll-into-view	        | boolean | `false` | 值应为某子元素id（id不能以数字开头）    |  
 | scroll-into-view-offset	        | number | `0` | 跳转到 scroll-into-view 目标节点时的额外偏移                       |
