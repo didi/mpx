@@ -43,7 +43,6 @@ const propName = {
 const behaviorExp = /^(allow-discrete|normal)$/
 const defaultValueExp = /^(inherit|initial|revert|revert-layer|unset)$/
 const timingFunctionExp = /^(step-start|step-end|steps)/
-const transitionKeys = ['transition', 'transitionDuration', 'transitionTimingFunction', 'transitionDelay'] as const
 // cubic-bezier 参数解析
 function getBezierParams (str: string) {
   // ease 0.25, 0.1, 0.25, 1.0
@@ -95,7 +94,6 @@ function parseTransitionSingleProp (vals: string[], property: string) {
     }
   }).filter(item => item !== undefined)
 }
-
 // transition 解析
 function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   let transitionData: AnimationDataType[] = []
@@ -159,22 +157,66 @@ function parseTransitionStyle (originalStyle: ExtendedViewStyle) {
   return transitionMap
 }
 
+const transitionKeys = ['transition', 'transitionDuration', 'transitionTimingFunction', 'transitionDelay', 'transitionProperty'] as const
+
+function getTransitionPropertyKeys (map: TransitionMap): string {
+  return Object.keys(map).sort().join(',')
+}
+
 export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType) {
   // console.log(`useTransitionHooks, props=`, props)
   const { style: originalStyle = {}, transitionend } = props
   // style变更标识(首次render不执行)，初始值为0，首次渲染后为1
   const animationDeps = useRef(0)
-  // 记录上次 transition 相关属性，用于判断是否需要重新解析
-  const lastTransitionStyleRef = useRef<Partial<ExtendedViewStyle>>({})
+  // transition 时序属性动态更新追踪
+  const transitionMapVersionRef = useRef(0)
+  const lastTransitionStyleRef = useRef<Record<string, any>>(
+    transitionKeys.reduce((acc, key) => { acc[key] = originalStyle[key]; return acc }, {} as Record<string, any>)
+  )
+  const initialPropertyKeysRef = useRef('')
+  const prevTransitionMapRef = useRef<TransitionMap>({})
+  // 检测 transition 时序属性变化，返回版本号驱动 transitionMap 重新计算
+  const transitionMapVersion = useMemo(() => {
+    const prevStyle = lastTransitionStyleRef.current
+    const hasChanged = transitionKeys.some(key => prevStyle[key] !== originalStyle[key])
+    if (hasChanged) {
+      transitionKeys.forEach(key => { lastTransitionStyleRef.current[key] = originalStyle[key] })
+      transitionMapVersionRef.current++
+    }
+    return transitionMapVersionRef.current
+  }, [originalStyle])
+  // ** 从 style 中获取动画数据(支持动态更新 transitionDuration/transitionDelay/transitionTimingFunction)
+  const transitionMap = useMemo(() => {
+    const newTransitionMap = parseTransitionStyle(originalStyle)
+    const newPropertyKeys = getTransitionPropertyKeys(newTransitionMap)
+    if (!initialPropertyKeysRef.current) {
+      // 首次计算，记录初始属性集合
+      initialPropertyKeysRef.current = newPropertyKeys
+      prevTransitionMapRef.current = newTransitionMap
+      return newTransitionMap
+    }
+    // 检测 transitionProperty 是否变化
+    if (newPropertyKeys !== initialPropertyKeysRef.current) {
+      error('[Mpx runtime error]: dynamic setting transitionProperty is not supported')
+      // 保留初始属性集合，仅更新已有属性的时序
+      const prevMap = prevTransitionMapRef.current
+      const result = Object.keys(prevMap).reduce((map, property) => {
+        map[property] = newTransitionMap[property] || prevMap[property]
+        return map
+      }, {} as TransitionMap)
+      prevTransitionMapRef.current = result
+      return result
+    }
+    prevTransitionMapRef.current = newTransitionMap
+    return newTransitionMap
+  }, [transitionMapVersion])
   // ** style prop sharedValue  interpolateOutput: SharedValue<InterpolateOutput>
-  const { shareValMap, animatedKeys, animatedStyleKeys, transitionMap } = useMemo(() => {
+  const { shareValMap, animatedKeys, animatedStyleKeys } = useMemo(() => {
     // 记录需要执行动画的 propName
     const animatedKeys = [] as string[]
     // 有动画样式的 style key(useAnimatedStyle使用)
     const animatedStyleKeys = [] as (string|string[])[]
     const transforms = [] as string[]
-    // ** 从 style 中获取动画数据
-    const transitionMap = parseTransitionStyle(originalStyle)
     const shareValMap = Object.keys(transitionMap).reduce((valMap, property) => {
       // const { property } = transition || {}
       if (property === 'transform') {
@@ -199,11 +241,9 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     return {
       shareValMap,
       animatedKeys,
-      animatedStyleKeys,
-      transitionMap
+      animatedStyleKeys
     }
   }, [])
-  const transitionMapRef = useRef(transitionMap)
   const runOnJSCallbackRef = useRef({})
   const runOnJSCallback = useRunOnJSCallback(runOnJSCallbackRef)
   // 根据 animation action 创建&驱动动画
@@ -236,7 +276,7 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
         shareValMap[key].value = toVal
       } else {
         // console.log(`key=${key} oldVal=${shareValMap[key].value} newVal=${toVal}`)
-        const { delay = 0, duration = 0, easing = Easing.inOut(Easing.ease) } = transitionMapRef.current[isTransformKey ? 'transform' : key] || {}
+        const { delay = 0, duration, easing } = transitionMap[isTransformKey ? 'transform' : key]
         // console.log('animationOptions=', { delay, duration, easing })
         let callback
         if (transitionend && (!isTransformKey || !transformTransitionendDone)) {
@@ -270,23 +310,6 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
     if (!animationDeps.current) {
       animationDeps.current = 1
       return
-    }
-    // 仅当 transition 相关属性变化时才重新解析
-    const prevStyle = lastTransitionStyleRef.current
-    const hasTransitionChanged = transitionKeys.some(key => prevStyle[key] !== originalStyle[key])
-    const currentTransitionMap = hasTransitionChanged
-	  // 从当前 style 解析最新 timing
-      ? parseTransitionStyle(originalStyle)
-      : transitionMapRef.current
-    if (hasTransitionChanged) {
-      lastTransitionStyleRef.current = {
-        transition: originalStyle.transition,
-        transitionDuration: originalStyle.transitionDuration,
-        transitionTimingFunction: originalStyle.transitionTimingFunction,
-        transitionDelay: originalStyle.transitionDelay
-        // transitionProperty: originalStyle.transitionProperty
-      }
-      transitionMapRef.current = currentTransitionMap
     }
     createAnimation()
   }, [originalStyle])
