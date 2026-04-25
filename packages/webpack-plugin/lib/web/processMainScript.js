@@ -60,7 +60,9 @@ Vue.use(VueRouter)\n`
     globalTabBar
   })
 
-  output += `var App = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { isApp: true }))}).default\n`
+  output += `var App = require(${stringifyRequest(loaderContext, addQuery(loaderContext.resource, { isApp: true }))}).default;\n`
+
+  output += `Vue.component('mpx-titlebar', require(${stringifyRequest(loaderContext, normalize.lib('runtime/components/web/mpx-titlebar.vue'))}).default);\n`
 
   output += `
 export default processAppOption({
