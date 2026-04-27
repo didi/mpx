@@ -21,6 +21,7 @@ const navigator = require('./navigator')
 const pickerViewColumn = require('./picker-view-column')
 const pickerView = require('./picker-view')
 const picker = require('./picker')
+const pageContainer = require('./page-container')
 const progress = require('./progress')
 const radioGroup = require('./radio-group')
 const radio = require('./radio')
@@ -121,6 +122,7 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     form({ print }),
     input({ print }),
     picker({ print }),
+    pageContainer({ print }),
     pickerView({ print }),
     pickerViewColumn({ print }),
     slider({ print }),

@@ -87,7 +87,7 @@ const isBuildInWebTag = makeMap(
 const isBuildInReactTag = makeMap(
   'mpx-web-view,mpx-view,mpx-video,mpx-textarea,mpx-text,mpx-switch,' +
   'mpx-swiper,mpx-swiper-item,mpx-scroll-view,' +
-  'mpx-root-portal,mpx-radio,mpx-radio-group,mpx-navigator,mpx-movable-view,' +
+  'mpx-root-portal,mpx-page-container,mpx-radio,mpx-radio-group,mpx-navigator,mpx-movable-view,' +
   'mpx-movable-area,mpx-label,mpx-input,' +
   'mpx-image,mpx-form,mpx-checkbox,mpx-checkbox-group,mpx-button,' +
   'mpx-rich-text,mpx-picker-view-column,mpx-picker-view,mpx-picker,' +

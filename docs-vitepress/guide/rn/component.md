@@ -5,7 +5,7 @@
 ### 目录概览 {#directory-overview}
 
 - #### 基础组件
-**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
+**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [page-container](#page-container) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
 
 **媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas)
 
@@ -731,6 +731,28 @@ API
 > [!tip] 注意
 >
 > - style 样式不支持中使用百分比计算、css variable
+
+### page-container
+页面内容容器，常用于实现“假页”弹层。容器展示期间会拦截页面返回行为（包含返回按钮与侧滑返回），并通过回调通知业务侧自行关闭容器。
+
+属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| show | boolean | `false` | 是否显示容器 |
+| overlay | boolean | `true` | 是否显示遮罩层 |
+
+事件
+
+| 事件名 | 说明 |
+| --- | --- |
+| bind:beforeleave | 触发返回离开前回调，业务可在回调中更新 `show=false` 关闭容器 |
+
+> [!tip] 注意
+>
+> - 当前仅支持 `show`、`overlay` 与 `bind:beforeleave` 三项能力。
+> - 容器显示时会自动禁用页面返回手势，并在隐藏时恢复，避免 `native-stack` 场景下手势返回与 JS 状态不一致。
+> - 该组件依赖导航上下文，仅在 RN 页面路由栈内生效。
    
 ### sticky-section
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
