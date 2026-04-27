@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR, MPX_WX_TEMPLATE_COMPONENT_PREFIX } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR, MPX_TEMPLATE_COMPONENT_PREFIX, STYLE_PAD_PLACEHOLDER } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -586,8 +586,7 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
-      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
+      if (options.pad) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -597,6 +596,10 @@ function parseComponent (content, options) {
   }
 
   function padContent (block, pad) {
+    if (block.tag === 'style' && pad === 'line') {
+      const offset = content.slice(0, block.start).split(splitRE).length
+      return Array(offset).join(`/* ${STYLE_PAD_PLACEHOLDER} */\n`)
+    }
     if (pad === 'space') {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
@@ -2649,7 +2652,7 @@ function postProcessTemplateReact (el, meta) {
   collectTranspileTemplateDefinition(el, meta)
 }
 
-// Web：template 定义收集 + `<template is="...">` 使用节点替换为 mpx-wx-tpl-* / component
+// Web：template 定义收集 + `<template is="...">` 使用节点替换为 mpx-tpl-* / component
 function postProcessTemplateWeb (el, meta) {
   if (collectTranspileTemplateDefinition(el, meta)) return
   if (el.tag !== 'template' || !el.templateInfo) return
@@ -2661,11 +2664,11 @@ function postProcessTemplateWeb (el, meta) {
   if (literalMatch) {
     const name = literalMatch[1]
     const built = data ? [{ name: ':mpx-data', value: data }] : []
-    newNode = createASTElement(`${MPX_WX_TEMPLATE_COMPONENT_PREFIX}${name}`, baseAttrs.concat(built))
+    newNode = createASTElement(`${MPX_TEMPLATE_COMPONENT_PREFIX}${name}`, baseAttrs.concat(built))
     newNode.unary = true
   } else {
     const built = [
-      { name: ':is', value: `'${MPX_WX_TEMPLATE_COMPONENT_PREFIX}' + (${is})` },
+      { name: ':is', value: `'${MPX_TEMPLATE_COMPONENT_PREFIX}' + (${is})` },
       ...(data ? [{ name: ':mpx-data', value: data }] : [])
     ]
     newNode = createASTElement('component', baseAttrs.concat(built))

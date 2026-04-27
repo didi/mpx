@@ -114,7 +114,7 @@ module.exports = function (content) {
   const output = `
     var __optionProcessor = require(${loaderUtils.stringifyRequest(loaderContext, optionProcessorPath)});
     var getComponent = __optionProcessor.getComponent;
-    var createWxTemplateComponent = __optionProcessor.createWxTemplateComponent;
+    var createTemplateComponent = __optionProcessor.createTemplateComponent;
     var __wxsModules = {};
 ${wxsInitLines.join('\n')}
     module.exports = Object.assign({}, ${[...importExprs, localMapExpr].join(', ')});

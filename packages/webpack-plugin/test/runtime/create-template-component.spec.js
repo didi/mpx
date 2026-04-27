@@ -6,10 +6,10 @@ global.mpxGlobal = {
   }
 }
 const { compileTemplate } = require('vue/compiler-sfc')
-const { createWxTemplateComponent } = require('../../lib/runtime/optionProcessor')
+const { createTemplateComponent } = require('../../lib/runtime/optionProcessor')
 
 function buildRenderFromSource (source) {
-  const { code, errors } = compileTemplate({ source, filename: 'create-wx-tpl-test.vue' })
+  const { code, errors } = compileTemplate({ source, filename: 'create-template-test.vue' })
   if (errors && errors.length) {
     throw new Error(String(errors[0]))
   }
@@ -17,11 +17,11 @@ function buildRenderFromSource (source) {
   return new Function(code + '; return { render, staticRenderFns }')()
 }
 
-describe('createWxTemplateComponent', () => {
+describe('createTemplateComponent', () => {
   it('proxies $slots to __mpxHost.$slots via getter (§2.8)', () => {
     const { render, staticRenderFns } = buildRenderFromSource('<div/>')
-    const opt = createWxTemplateComponent({
-      name: 'mpx-wx-tpl-test',
+    const opt = createTemplateComponent({
+      name: 'mpx-tpl-test',
       render,
       staticRenderFns
     })
@@ -43,8 +43,8 @@ describe('createWxTemplateComponent', () => {
 
   it('does not throw when __mpxHost is missing', () => {
     const { render, staticRenderFns } = buildRenderFromSource('<div/>')
-    const opt = createWxTemplateComponent({
-      name: 'mpx-wx-tpl-test',
+    const opt = createTemplateComponent({
+      name: 'mpx-tpl-test',
       render,
       staticRenderFns
     })
@@ -58,8 +58,8 @@ describe('createWxTemplateComponent', () => {
 
   it('mpxData proxy uses getter: new object literal on prop update still reads current fields', () => {
     const { render, staticRenderFns } = buildRenderFromSource('<div/>')
-    const opt = createWxTemplateComponent({
-      name: 'mpx-wx-tpl-test',
+    const opt = createTemplateComponent({
+      name: 'mpx-tpl-test',
       render,
       staticRenderFns
     })
@@ -79,7 +79,7 @@ describe('createWxTemplateComponent', () => {
 
   it('throws when render is missing', () => {
     expect(() =>
-      createWxTemplateComponent({ name: 'x' })
+      createTemplateComponent({ name: 'x' })
     ).toThrow(/requires a build-time `render`/)
   })
 })

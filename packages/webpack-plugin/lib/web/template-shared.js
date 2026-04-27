@@ -1,10 +1,10 @@
 const loaderUtils = require('loader-utils')
 const templateCompiler = require('../template-compiler/compiler')
 const normalize = require('../utils/normalize')
-const { MPX_WX_TEMPLATE_COMPONENT_PREFIX } = require('../utils/const')
+const { MPX_TEMPLATE_COMPONENT_PREFIX } = require('../utils/const')
 
 function getWxTemplateComponentName (definitionName) {
-  return MPX_WX_TEMPLATE_COMPONENT_PREFIX + definitionName
+  return MPX_TEMPLATE_COMPONENT_PREFIX + definitionName
 }
 
 /**

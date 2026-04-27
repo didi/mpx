@@ -1,12 +1,21 @@
 const fs = require('fs')
+const { STYLE_PAD_PLACEHOLDER } = require('../utils/const')
 
 class Node {
-  constructor(type, condition = null) {
+  constructor(type, condition = null, value = '') {
     this.type = type // 'If', 'ElseIf', 'Else' 或 'Text'
     this.condition = condition // If 或 Elif 的条件
     this.children = []
-    this.value = ''
+    this.value = value
   }
+}
+
+function keepLines(content) {
+  return content.replace(/([^\r\n]*)(\r\n|\r|\n|$)/g, (all, line, lineBreak) => {
+    if (!all) return ''
+    const indent = (/^[ \t]*/.exec(line) || [''])[0]
+    return `${indent}/* ${STYLE_PAD_PLACEHOLDER} */${lineBreak}`
+  })
 }
 
 // 提取 css string 为 token
@@ -35,7 +44,8 @@ function tokenize(cssString) {
 
     tokens.push({
       type: type,
-      condition: condition ? condition.trim() : null
+      condition: condition ? condition.trim() : null,
+      content: match[0]
     })
     lastIndex = regex.lastIndex
   }
@@ -55,11 +65,10 @@ function parse(cssString) {
   let currentChildren = ast
   tokens.forEach(token => {
     if (token.type === 'text') {
-      const node = new Node('Text')
-      node.value = token.content
+      const node = new Node('Text', null, token.content)
       currentChildren.push(node)
     } else if (token.type === 'if') {
-      const node = new Node('If', token.condition)
+      const node = new Node('If', token.condition, token.content)
       currentChildren.push(node)
       nodeStack.push(currentChildren)
       currentChildren = node.children
@@ -68,7 +77,7 @@ function parse(cssString) {
         throw new Error('[Mpx style error]: elif without a preceding if')
       }
       currentChildren = nodeStack[nodeStack.length - 1]
-      const node = new Node('ElseIf', token.condition)
+      const node = new Node('ElseIf', token.condition, token.content)
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'else') {
@@ -76,11 +85,12 @@ function parse(cssString) {
         throw new Error('[Mpx style error]: else without a preceding if')
       }
       currentChildren = nodeStack[nodeStack.length - 1]
-      const node = new Node('Else')
+      const node = new Node('Else', null, token.content)
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'endif') {
       if (nodeStack.length > 0) {
+        currentChildren.push(new Node('EndIf', null, token.content))
         currentChildren = nodeStack.pop()
       }
     }
@@ -105,31 +115,35 @@ function evaluateCondition(condition, defs) {
 }
 
 function traverseAndEvaluate(ast, defs) {
-  let output = ''
-  let batchedIf = false
-  function traverse(nodes) {
+  function traverse(nodes, active) {
+    let output = ''
+    let batchedIf = false
     for (const node of nodes) {
       if (node.type === 'Text') {
-        output += node.value
+        output += active ? node.value : keepLines(node.value)
       } else if (node.type === 'If') {
         // 直接判断 If 节点
-        batchedIf = false
-        if (evaluateCondition(node.condition, defs)) {
-          traverse(node.children)
-          batchedIf = true
-        }
-      } else if (node.type === 'ElseIf' && !batchedIf) {
-        if (evaluateCondition(node.condition, defs)) {
-          traverse(node.children)
-          batchedIf = true
-        }
-      } else if (node.type === 'Else' && !batchedIf) {
-        traverse(node.children)
+        output += keepLines(node.value)
+        const currentMatched = active && evaluateCondition(node.condition, defs)
+        output += traverse(node.children, currentMatched)
+        batchedIf = currentMatched
+      } else if (node.type === 'ElseIf') {
+        output += keepLines(node.value)
+        const currentMatched = active && !batchedIf && evaluateCondition(node.condition, defs)
+        output += traverse(node.children, currentMatched)
+        batchedIf = batchedIf || currentMatched
+      } else if (node.type === 'Else') {
+        output += keepLines(node.value)
+        const currentMatched = active && !batchedIf
+        output += traverse(node.children, currentMatched)
+        batchedIf = true
+      } else if (node.type === 'EndIf') {
+        output += keepLines(node.value)
       }
     }
+    return output
   }
-  traverse(ast)
-  return output
+  return traverse(ast, true)
 }
 
 /**

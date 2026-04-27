@@ -22,9 +22,9 @@ describe('compileTemplateFragment (wxml template → vue/compiler-sfc)', () => {
     expect(emitError).toHaveBeenCalled()
   })
 
-  it('wrapCreateTemplateComponentWithBlock wires render from block into createWxTemplateComponent', () => {
+  it('wrapCreateTemplateComponentWithBlock wires render from block into createTemplateComponent', () => {
     const compiled = compileTemplateFragment('<div/>', { definitionName: 'x' })
-    const wrapped = wrapCreateTemplateComponentWithBlock(compiled.block, 'name: "mpx-wx-tpl-x"')
-    expect(wrapped).toContain('createWxTemplateComponent({ render, staticRenderFns, name: "mpx-wx-tpl-x" })')
+    const wrapped = wrapCreateTemplateComponentWithBlock(compiled.block, 'name: "mpx-tpl-x"')
+    expect(wrapped).toContain('createTemplateComponent({ render, staticRenderFns, name: "mpx-tpl-x" })')
   })
 })

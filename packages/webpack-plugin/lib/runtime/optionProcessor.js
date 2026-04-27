@@ -78,11 +78,11 @@ registered in parent context!`)
     option.componentPath = '/' + outputPath
   }
 
-  // 宿主组件的 moduleId / scoped / ctorType 信息挂在 option 上，供 mpx-wx-tpl-* 子模版通过 __mpxHost.$options 读取
+  // 宿主组件的 moduleId / scoped / ctorType 信息挂在 option 上，供 mpx-tpl-* 子模版通过 __mpxHost.$options 读取
   option.__mpxModuleId = moduleId || ''
   option.__mpxScoped = !!hasScoped
   option.__mpxCtorType = ctorType
-  // 暴露宿主实例引用，供 mpx-wx-tpl-* 子模版组件通过 inject 获取
+  // 暴露宿主实例引用，供 mpx-tpl-* 子模版组件通过 inject 获取
   const prevProvide = option.provide
   option.provide = function () {
     const base = typeof prevProvide === 'function'
@@ -167,7 +167,7 @@ function installMpxWxTemplateHostSlotsProxy (vm) {
     })
   } catch (e) {
     if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') {
-      console.warn('[Mpx] mpx-wx-tpl: could not proxy $slots to __mpxHost:', e && e.message)
+      console.warn('[Mpx] mpx-tpl: could not proxy $slots to __mpxHost:', e && e.message)
     }
   }
 }
@@ -177,9 +177,9 @@ function installMpxWxTemplateHostSlotsProxy (vm) {
 // - inject.__mpxHost：从最近的 mpx 宿主获取 this，用于继承 methods/components；其 $slots 经 installMpxWxTemplateHostSlotsProxy 供模版内 <slot> 使用
 // - wxsModules：由模版所在 wxml 自身声明的 wxs 模块（不继承宿主 wxs）
 // - render / staticRenderFns：须由 `vue/compiler-sfc` compileTemplate 等在构建期注入，不支持字符串 template
-export function createWxTemplateComponent ({ name, render, staticRenderFns, components, wxsModules }) {
+export function createTemplateComponent ({ name, render, staticRenderFns, components, wxsModules }) {
   if (typeof render !== 'function') {
-    throw new Error('[Mpx] createWxTemplateComponent requires a build-time `render` function (string template is not supported).')
+    throw new Error('[Mpx] createTemplateComponent requires a build-time `render` function (string template is not supported).')
   }
   const wxsMixin = getWxsMixin(wxsModules)
   const base = {
