@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   }
 })
 
-const _PageContainer = (props: PageContainerProps) => {
+const PageContainer = (props: PageContainerProps) => {
   const { show = false, overlay = true, bindbeforeleave, children } = props
   const { navigation } = useContext(RouteContext) || {}
   const showRef = useRef(show)
@@ -78,6 +78,6 @@ const _PageContainer = (props: PageContainerProps) => {
   )
 }
 
-_PageContainer.displayName = 'MpxPageContainer'
+PageContainer.displayName = 'MpxPageContainer'
 
-export default _PageContainer
+export default PageContainer
