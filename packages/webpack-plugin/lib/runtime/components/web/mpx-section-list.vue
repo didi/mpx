@@ -26,8 +26,17 @@
               :key="'header' + (item.itemData.item_key || item._index)"
               :itemData="item.itemData"
             />
+            <section-footer
+              v-if="item.itemData && item.itemData.isSectionFooter"
+              :key="'footer' + (item.itemData.item_key || item._index)"
+              :itemData="item.itemData"
+            />
             <recycle-item
-              v-if="item.itemData && !item.itemData.isSectionHeader"
+              v-if="
+                item.itemData &&
+                !item.itemData.isSectionHeader &&
+                !item.itemData.isSectionFooter
+              "
               :key="'item' + (item.itemData.item_key || item._index)"
               :itemData="item.itemData"
             />
@@ -112,6 +121,12 @@ export default {
         return {}
       }
     },
+    sectionFooterHeight: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    },
     listHeaderData: {
       type: Object,
       default: () => {
@@ -156,7 +171,8 @@ export default {
     genericlistHeader: String,
     genericlistFooter: String,
     genericrecycleItem: String,
-    genericsectionHeader: String
+    genericsectionHeader: String,
+    genericsectionFooter: String
   },
   data() {
     return {
@@ -287,6 +303,12 @@ export default {
       },
       deep: true
     },
+    sectionFooterHeight: {
+      handler() {
+        this.handleHeightChange()
+      },
+      deep: true
+    },
     listHeaderHeight: {
       handler() {
         this.handleHeightChange()
@@ -330,6 +352,7 @@ export default {
         "recycle-item": this.genericrecycleItem ,
         "list-header": this.genericlistHeader,
         "section-header": this.genericsectionHeader,
+        "section-footer": this.genericsectionFooter,
         "list-footer": this.genericlistFooter
       }
 
@@ -364,7 +387,11 @@ export default {
         const height = this.getItemHeight(
           item.itemData,
           index,
-          item.itemData.isSectionHeader ? "sectionHeaderHeight" : "itemHeight"
+          item.itemData.isSectionHeader
+            ? "sectionHeaderHeight"
+            : item.itemData.isSectionFooter
+              ? "sectionFooterHeight"
+              : "itemHeight"
         );
         const position = {
           index,

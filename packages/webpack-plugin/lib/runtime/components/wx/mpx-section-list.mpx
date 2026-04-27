@@ -25,6 +25,9 @@
           <!-- section items -->
           <recycle-item itemData="{{ subItem.itemData }}" id="{{ subItem._domId }}"></recycle-item>
         </block>
+        <block wx:if="{{ item.hasSectionFooter }}">
+          <section-footer itemData="{{ item.footerData }}" id="{{ item._footerDomId }}"></section-footer>
+        </block>
       </sticky-section>
     </block>
     <block wx:if="{{ useListFooter }}">
@@ -156,18 +159,39 @@ createComponent({
           // 创建新的 section
           currentSection = {
             headerData: item,
+            footerData: null,
             data: [],
             hasSectionHeader: true,
+            hasSectionFooter: false,
             _domId: `mpx-recycle-item-${index}`
           }
+        } else if (item.isSectionFooter) {
+          // 如果没有当前 section，创建一个默认的
+          if (!currentSection) {
+            // 创建默认section (无header的section)
+            currentSection = {
+              headerData: null,
+              footerData: null,
+              data: [],
+              hasSectionHeader: false,
+              hasSectionFooter: false
+            }
+          }
+          currentSection.footerData = item
+          currentSection.hasSectionFooter = true
+          currentSection._footerDomId = `mpx-recycle-item-${index}`
+          sections.push(currentSection)
+          currentSection = null
         } else {
           // 如果没有当前 section，创建一个默认的
           if (!currentSection) {
             // 创建默认section (无header的section)
             currentSection = {
               headerData: null,
+              footerData: null,
               data: [],
-              hasSectionHeader: false
+              hasSectionHeader: false,
+              hasSectionFooter: false
             }
           }
           currentSection.data.push({
@@ -197,6 +221,9 @@ createComponent({
       },
       "section-header": {
         "default": "./mpx-section-list-default/section-header.mpx"
+      },
+      "section-footer": {
+        "default": "./mpx-section-list-default/section-footer.mpx"
       },
       "list-header": {
         "default": "./mpx-section-list-default/list-header.mpx"
