@@ -31,14 +31,16 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)'
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 0
   },
   content: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
-    left: 0
+    left: 0,
+    zIndex: 1
   }
 })
 
@@ -68,8 +70,8 @@ const PageContainer = (props: PageContainerProps) => {
 
   return (
     <Portal>
-      <View style={styles.container}>
-        {overlay ? <View style={styles.overlay} /> : null}
+      <View style={styles.container} pointerEvents='box-none'>
+        {overlay ? <View style={styles.overlay} pointerEvents='auto' /> : null}
         <View style={styles.content} pointerEvents='box-none'>
           {children}
         </View>
