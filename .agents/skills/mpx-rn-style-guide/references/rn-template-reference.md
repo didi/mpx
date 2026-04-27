@@ -9,6 +9,10 @@
   - [通用事件](#通用事件)
   - [事件绑定语法](#事件绑定语法)
   - [注意事项](#注意事项-1)
+- [Slot](#slot)
+- [WXML 模板](#wxml-模板)
+  - [组件内联定义](#组件内联定义)
+  - [import 外联引入](#import-外联引入)
 - [i18n 国际化](#i18n-国际化)
   - [工程配置示例](#工程配置示例)
   - [模板中使用翻译函数](#模板中使用翻译函数)
@@ -238,6 +242,122 @@ createComponent({
 2. 当使用了事件委托想获取 `e.target.dataset` 时，只有点击到文本节点才能获取到，点击其他区域无效。建议直接将事件绑定到事件触发的元素上，使用 `e.currentTarget` 来获取 `dataset` 等数据。
 3. 由于 `tap` 和 `longpress` 事件是由 `touchstart` / `touchend` 等底层触摸事件模拟实现，所以在 RN 环境，如果子组件绑定了 `catchtouchend`，那么父组件的 `tap` 事件将不会响应。
 4. 如果元素上设置了 `opacity: 0` 的样式，会导致 ios 事件无法响应。
+
+## Slot
+
+插槽（slot）：跨端输出 RN 时，**自定义组件插槽能力与微信小程序一致，已完整支持**：在组件模板中使用 `<slot>` 承载引用方传入的子节点；编译后在 RN 侧走与小程序等价的组合与渲染路径。
+
+### 默认插槽
+
+组件内提供一个无 `name` 的 `<slot></slot>`，引用组件时写在标签内部的子节点会渲染到该位置。
+
+```html
+<!-- child.mpx 组件模板 -->
+<template>
+  <view class="wrapper">
+    <view>组件内部结构</view>
+    <slot></slot>
+  </view>
+</template>
+```
+
+```html
+<!-- 引用方 -->
+<child>
+  <view>这段会出现在默认 slot 位置</view>
+</child>
+```
+
+### 具名插槽与 `multipleSlots`
+
+默认每个组件模板中只有一个插槽。若需要多个插槽，在 `createComponent` 的 **`options.multipleSlots`** 中设为 **`true`**，在模板里用 **`<slot name="...">`** 区分；引用方在子节点上使用 **`slot="..."`** 指定落入哪个插槽。
+
+```js
+createComponent({
+  options: {
+    multipleSlots: true
+  }
+})
+```
+
+```html
+<!-- 组件模板 -->
+<template>
+  <view class="wrapper">
+    <slot name="before"></slot>
+    <view>中间固定内容</view>
+    <slot name="after"></slot>
+  </view>
+</template>
+```
+
+```html
+<!-- 引用方 -->
+<my-panel>
+  <view slot="before">前置区域</view>
+  <view slot="after">后置区域</view>
+</my-panel>
+```
+
+## WXML 模板
+
+小程序 WXML 的 **具名模板**（`<template name>` + `<template is>`）可在**同一组件内联**或通过 **`<import>`** 跨文件复用；跨端输出 RN 时，**内联与 `import` 均已完整支持**。语法与语义与微信保持一致。
+
+### 模板内联定义
+
+在同一页面或组件的 **`<template>` 根内**，用 **`<template name="片段名">`** 定义可复用片段，在同一根下用 **`<template is="片段名" data="{{...}}"/>`** 引用。常用 **`data="{{ ...obj }}"`** 展开对象字段传入模板；**`is` 支持表达式**，可按数据切换不同模板名。
+
+```html
+<template>
+  <template name="msgItem">
+    <view>
+      <text>{{ index }}: {{ msg }}</text>
+      <text>Time: {{ time }}</text>
+    </view>
+  </template>
+
+  <template is="msgItem" data="{{ ...item }}" />
+</template>
+```
+
+```js
+createComponent({
+  data () {
+    return {
+      item: { index: 0, msg: 'demo', time: '2026-04-17' }
+    }
+  }
+})
+```
+
+**作用域**：模板片段**只能**使用 **`data`** 绑定传入的字段，不能直接读取引用处外层的 `data`（除非通过 `data` 显式传入）。
+
+### import 外联引入
+
+在独立文件（如 `item.wxml`）中用 `<template name="...">` 定义片段；在使用方通过 **`<import src="路径"/>`** 引入后，再用 **`<template is="模板名" data="{{...}}"/>`** 渲染（`is` 同样支持表达式）。
+
+```html
+<!-- item.wxml：外联模板文件 -->
+<template name="item">
+  <text>{{ text }}</text>
+</template>
+```
+
+```html
+<!-- 页面或组件的 <template> 内 -->
+<import src="./item.wxml" />
+<template is="item" data="{{ text: 'foobar' }}" />
+```
+
+**`import` 的作用域**：`import` **只**引入目标文件中**直接定义**的 `template`，**不会**把「目标文件再次 `import` 的其它文件里的 `template`」一并带过来。例如 C import B、B import A：在 C 中可使用 B 定义的模板，不能使用 A 定义的模板，除非 C 再显式 `import` A。
+
+
+
+### 注意事项
+
+1. **`is`** 对应的 **`name`** 须在当前可见范围内已定义：内联时在**同一** `<template>` 根内；外联时在 **`import` 已引入** 的文件内。
+2. **`import`** 的 **`src`** 为相对路径时相对于当前模板文件，须能被工程构建解析并参与编译。
+3. Mpx 跨端输出时不支持使用 `include` 方式引用外联模板，请使用 `import` 方式代替。
 
 ## i18n 国际化
 
