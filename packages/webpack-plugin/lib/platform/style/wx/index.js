@@ -8,9 +8,9 @@ module.exports = function getSpec({ warn, error }) {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
     // React Native android 不支持的 CSS property
-    android: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
+    android: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/,
     // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
-    harmony: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
+    harmony: /^(text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
   // var(xx)
   const cssVariableExp = /var\(/
@@ -597,6 +597,16 @@ module.exports = function getSpec({ warn, error }) {
     }
   }
 
+  // Android/Harmony 平台的 text-decoration-style 只支持 solid
+  const formatTextDecorationStyle = ({ prop, value, selector }, { mode }) => {
+    value = value.trim()
+    if ((mode === 'android' || mode === 'harmony') && value !== 'solid' && !cssVariableExp.test(value)) {
+      warn(`Property [text-decoration-style] on ${selector} only supports value "solid" in ${mode} environment, received [${value}], will use "solid" instead!`)
+      return { prop, value: 'solid' }
+    }
+    return verifyValues({ prop, value, selector }) && { prop, value }
+  }
+
   return {
     supportedModes: ['ios', 'android', 'harmony'],
     rules: [
@@ -647,6 +657,12 @@ module.exports = function getSpec({ warn, error }) {
         ios: formatBorder,
         android: formatBorder,
         harmony: formatBorder
+      },
+      {
+        test: 'text-decoration-style',
+        ios: formatTextDecorationStyle,
+        android: formatTextDecorationStyle,
+        harmony: formatTextDecorationStyle
       },
       // 通用的简写格式匹配
       {
