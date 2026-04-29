@@ -41,6 +41,23 @@ function requireFromProject (name, projectRoot) {
   return require(resolved)
 }
 
+// 简单 semver 比较：a >= b 返回 true。仅支持 'x.y.z' 三段数字。
+function gteVersion (a, b) {
+  const pa = String(a).split('.').map(n => parseInt(n, 10) || 0)
+  const pb = String(b).split('.').map(n => parseInt(n, 10) || 0)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const da = pa[i] || 0
+    const db = pb[i] || 0
+    if (da > db) return true
+    if (da < db) return false
+  }
+  return true
+}
+
+// `partialCompileRules.components` 自 @mpxjs/webpack-plugin@2.10.20 起支持。
+// 低版本回退到前置 loader 剥离 usingComponents 的"不完美"兼容方案。
+const PARTIAL_COMPILE_COMPONENTS_MIN_VERSION = '2.10.20'
+
 async function compileValidate (input, options = {}) {
   const mpxPaths = (Array.isArray(input) ? input : [input]).map(p => path.resolve(p))
   for (const p of mpxPaths) {
@@ -51,10 +68,15 @@ async function compileValidate (input, options = {}) {
 
   const {
     target = 'ios',
+    type = 'component',
     projectRoot: explicitRoot,
     ignoreSubComponents = true,
     cleanup = true
   } = options
+
+  if (type !== 'page' && type !== 'component') {
+    throw new InvalidInputError(`不支持的 type: ${type}，只接受 'page' 或 'component'`)
+  }
 
   const projectRoot = explicitRoot
     ? path.resolve(explicitRoot)
@@ -72,16 +94,16 @@ async function compileValidate (input, options = {}) {
 
   const targets = Array.isArray(target) ? target : [target]
   if (targets.length === 1) {
-    return compileOne(projectRoot, mpxPaths, targets[0], ignoreSubComponents, cleanup)
+    return compileOne(projectRoot, mpxPaths, targets[0], type, ignoreSubComponents, cleanup)
   }
   const out = {}
   for (const t of targets) {
-    out[t] = await compileOne(projectRoot, mpxPaths, t, ignoreSubComponents, cleanup)
+    out[t] = await compileOne(projectRoot, mpxPaths, t, type, ignoreSubComponents, cleanup)
   }
   return out
 }
 
-async function compileOne (projectRoot, mpxPaths, targetMode, ignoreSubComponents, cleanup) {
+async function compileOne (projectRoot, mpxPaths, targetMode, type, ignoreSubComponents, cleanup) {
   const startedAt = Date.now()
   const originalCwd = process.cwd()
 
@@ -100,6 +122,10 @@ async function compileOne (projectRoot, mpxPaths, targetMode, ignoreSubComponent
   const PluginAPI = requireFromProject('@vue/cli-service/lib/PluginAPI', projectRoot)
   const webpack = requireFromProject('webpack', projectRoot)
   const MpxWebpackPlugin = requireFromProject('@mpxjs/webpack-plugin', projectRoot)
+  const mpxPluginPkg = requireFromProject('@mpxjs/webpack-plugin/package.json', projectRoot)
+  const supportsComponentPartialCompile = gteVersion(
+    mpxPluginPkg.version, PARTIAL_COMPILE_COMPONENTS_MIN_VERSION
+  )
 
   if (!SUPPORT_MODE.includes(targetMode)) {
     throw new InvalidInputError(
@@ -137,8 +163,30 @@ async function compileOne (projectRoot, mpxPaths, targetMode, ignoreSubComponent
     const api = new PluginAPI('compile-validate', service)
     const projectOptions = service.projectOptions
 
+    const entryPaths = new Set(mpxPaths)
+    const inTargetSet = (resourcePath) => entryPaths.has(path.resolve(resourcePath))
+
     api.chainWebpack((cfg) => {
       addBuildWebpackConfig(api, projectOptions, cfg, target, args)
+      if (ignoreSubComponents && supportsComponentPartialCompile) {
+        // 首选方案 (webpack-plugin >= 2.10.20)：通过 partialCompileRules 让 resolver
+        // 把非目标 page/component 替换为内置占位实现，保留 usingComponents 声明、
+        // 依赖解析仍正常进行，但不递归编译子组件内部。
+        cfg.plugin('mpx-webpack-plugin').tap((pluginArgs) => {
+          const opts = pluginArgs[0] = Object.assign({}, pluginArgs[0])
+          if (type === 'page') {
+            opts.partialCompileRules = {
+              pages: { include: inTargetSet },
+              components: { include: () => false }
+            }
+          } else {
+            opts.partialCompileRules = {
+              components: { include: inTargetSet }
+            }
+          }
+          return pluginArgs
+        })
+      }
     })
 
     const webpackConfigs = await resolveBuildWebpackConfigByTarget(
@@ -157,11 +205,14 @@ async function compileOne (projectRoot, mpxPaths, targetMode, ignoreSubComponent
     )
     fs.mkdirSync(outDir, { recursive: true })
 
-    const entryPaths = new Set(mpxPaths)
-    const preLoaderPath = path.resolve(__dirname, 'strip-using-components-loader.js')
+    // 仅当宿主 webpack-plugin 不支持组件级 partialCompileRules 时启用前置 loader
+    const useLegacyStripLoader = ignoreSubComponents && !supportsComponentPartialCompile
+    const preLoaderPath = useLegacyStripLoader
+      ? path.resolve(__dirname, 'strip-using-components-loader.js')
+      : null
 
     rewriteWebpackConfigs(webpackConfigs, {
-      mpxPaths, outDir, ignoreSubComponents, preLoaderPath, entryPaths, MpxWebpackPlugin
+      mpxPaths, outDir, type, useLegacyStripLoader, preLoaderPath, entryPaths, MpxWebpackPlugin
     })
 
     const errors = []
@@ -214,7 +265,10 @@ async function compileOne (projectRoot, mpxPaths, targetMode, ignoreSubComponent
 }
 
 function rewriteWebpackConfigs (webpackConfigs, ctx) {
-  const { mpxPaths, outDir, ignoreSubComponents, preLoaderPath, entryPaths, MpxWebpackPlugin } = ctx
+  const { mpxPaths, outDir, type, useLegacyStripLoader, preLoaderPath, entryPaths, MpxWebpackPlugin } = ctx
+  const makeEntry = type === 'page'
+    ? MpxWebpackPlugin.getPageEntry.bind(MpxWebpackPlugin)
+    : MpxWebpackPlugin.getComponentEntry.bind(MpxWebpackPlugin)
   const stripPluginNames = new Set([
     'BundleAnalyzerPlugin',
     'ESLintWebpackPlugin',
@@ -231,13 +285,13 @@ function rewriteWebpackConfigs (webpackConfigs, ctx) {
   for (const cfg of webpackConfigs) {
     const entry = {}
     mpxPaths.forEach((p, i) => {
-      entry[`__validate_${i}`] = MpxWebpackPlugin.getComponentEntry(p)
+      entry[`__validate_${i}`] = makeEntry(p)
     })
     cfg.entry = entry
 
     cfg.output = Object.assign({}, cfg.output, { path: outDir, clean: false })
 
-    cfg.devtool = false
+    cfg.devtool = 'source-map'
     cfg.cache = false
     cfg.performance = false
     cfg.bail = false
@@ -255,7 +309,7 @@ function rewriteWebpackConfigs (webpackConfigs, ctx) {
       })
     }
 
-    if (ignoreSubComponents) {
+    if (useLegacyStripLoader) {
       cfg.module = cfg.module || {}
       cfg.module.rules = cfg.module.rules || []
       cfg.module.rules.unshift({
@@ -276,8 +330,9 @@ function normalizeIssue (raw) {
   const obj = typeof raw === 'string' ? { message: raw } : (raw || {})
   const msg = obj.message || String(raw)
   const moduleIdent = obj.moduleIdentifier || obj.moduleName || ''
-  const file = extractFile(moduleIdent) || obj.file
-  const loc = parseLoc(obj.loc)
+  const mpxDiagnostic = parseMpxDiagnosticHeader(msg)
+  const file = mpxDiagnostic.file || extractFile(moduleIdent) || obj.file
+  const loc = parseLoc(obj.loc) || mpxDiagnostic.loc
   const blockType = detectBlock(moduleIdent)
   const category = categorize({ message: msg, moduleIdent, blockType, name: obj.name })
   return {
@@ -294,6 +349,28 @@ function truncate (msg, maxLines) {
   const lines = String(msg).split('\n')
   if (lines.length <= maxLines) return msg
   return lines.slice(0, maxLines).join('\n') + '\n...'
+}
+
+function parseMpxDiagnosticHeader (msg) {
+  const match = String(msg).match(/^\[Mpx [^\]]+\]\[([^\]]+)\]:/)
+  if (!match) return {}
+  return parseFileLoc(match[1])
+}
+
+function parseFileLoc (raw) {
+  const match = String(raw).match(/^(.*):(\d+):(\d+)$/)
+  if (match) {
+    return {
+      file: match[1],
+      loc: {
+        line: +match[2],
+        column: +match[3]
+      }
+    }
+  }
+  return {
+    file: raw
+  }
 }
 
 function extractFile (moduleIdent) {
@@ -362,6 +439,7 @@ async function runCli () {
   const argv = process.argv.slice(2)
   const files = []
   let targetArg = 'ios'
+  let typeArg = 'component'
   let jsonOut = false
   let ignoreSubComponents = true
   let projectRoot
@@ -369,6 +447,7 @@ async function runCli () {
   for (const a of argv) {
     if (a === '-h' || a === '--help') { printHelp(); process.exit(0) }
     else if (a.startsWith('--target=')) targetArg = a.slice('--target='.length)
+    else if (a.startsWith('--type=')) typeArg = a.slice('--type='.length)
     else if (a.startsWith('--project-root=')) projectRoot = a.slice('--project-root='.length)
     else if (a === '--json') jsonOut = true
     else if (a === '--no-ignore-sub-components') ignoreSubComponents = false
@@ -381,7 +460,9 @@ async function runCli () {
   if (!files.length) { printHelp(); process.exit(2) }
 
   const target = targetArg.includes(',') ? targetArg.split(',') : targetArg
-  const result = await compileValidate(files, { target, ignoreSubComponents, projectRoot })
+  const result = await compileValidate(files, {
+    target, type: typeArg, ignoreSubComponents, projectRoot
+  })
 
   if (jsonOut) {
     console.log(JSON.stringify(result, null, 2))
@@ -396,6 +477,7 @@ function printHelp () {
 
 options:
   --target=<mode>              编译目标 (默认 ios)，多个用逗号分隔
+  --type=<page|component>      入口类型，默认 component
   --project-root=<path>        显式指定宿主项目根目录（覆盖自动探测）
   --no-ignore-sub-components   不忽略子组件，一并纳入编译
   --json                       输出结构化 JSON

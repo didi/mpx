@@ -1,6 +1,6 @@
-# 跨端输出 RN 逻辑能力参考
+# 跨端输出 RN 脚本能力参考
 
-本文档详细描述了 Mpx 跨端输出 RN 的逻辑能力支持情况，包括 `<script>` 中可用的构造选项、实例 API、数据响应与组合式 API 等。
+本文档详细描述了 Mpx 跨端输出 RN 的脚本能力支持情况，包括 `<script>` 中可用的构造选项、实例 API、数据响应与组合式 API 等。
 
 ## 目录
 
@@ -12,16 +12,22 @@
 - [组合式 API](#组合式-api)
   - [`setup` 的第一个参数 `props`](#setup-的第一个参数-props)
   - [`setup` 的第二个参数 `context`](#setup-的第二个参数-context)
+  - [`<script setup>`](#script-setup)
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
+- [Mpx.config.rnConfig](#mpxconfigrnconfig)
 - [全局 API](#全局-api)
-- [Mpx.config.rnConfig](#mpxconfigrnConfig)
 - [环境 API](#环境-api)
 - [网络请求](#网络请求)
+  - [接入与调用方式](#接入与调用方式)
+  - [`fetch(config)` 常用配置（从简）](#fetchconfig-常用配置从简)
   - [拦截器](#拦截器)
   - [取消请求](#取消请求)
 - [状态管理](#状态管理)
+  - [`@mpxjs/pinia`（Pinia 风格，推荐）](#mpxjspiniapinia-风格推荐)
+  - [`@mpxjs/store`（Vuex 风格）](#mpxjsstorevuex-风格)
+  - [选型建议](#选型建议)
 
 ---
 
@@ -78,19 +84,41 @@
 页面使用 `createPage` 构造，组件使用 `createComponent` 构造，两者共享大部分能力选项。
 
 ```html
-<!-- 页面与组件共用一套选项模型（data、methods、生命周期等） -->
+<!-- 组件常用选项示例 -->
 <script>
-  import { createPage } from "@mpxjs/core"
+  import { createComponent } from "@mpxjs/core"
 
-  createPage({
-    data: { title: "首页" },
-    onLoad(rawQuery, decodedQuery) {
-      console.log(rawQuery, decodedQuery)
+  createComponent({
+    props: {
+      title: String,
+      count: {
+        type: Number,
+        value: 0
+      }
+    },
+    data: {
+      visible: true
+    },
+    computed: {
+      displayTitle() {
+        return `${this.title}(${this.count})`
+      }
+    },
+    watch: {
+      count(value) {
+        console.log(value)
+      }
     },
     methods: {
-      go() {
-        /* ... */
+      handleTap() {
+        this.triggerEvent("tap", { count: this.count })
       }
+    },
+    attached() {
+      console.log("attached")
+    },
+    ready() {
+      console.log("ready")
     }
   })
 </script>
@@ -98,7 +126,7 @@
 
 | 选项 | 适用 | 说明 |
 | --- | --- | --- |
-| `properties`（或 `props`） | 组件 | 对外属性声明，含 `type`、`value`、`observer` 等。 |
+| `properties`（或 `props`） | 组件 | 对外属性声明，两者会合并；支持 `title: String` 等类型简写，完整写法含 `type`、`value`、`observer` 等。 |
 | `data` | 共用 | 实例状态，对象或返回对象的函数，RN 侧经响应式代理，可直接 `this.xxx = y` 更新视图。 |
 | `computed` | 共用 | 计算属性，见「数据响应」节。 |
 | `watch` | 共用 | 侦听器，支持 `deep` / `immediate` / `flush` 等。 |
@@ -292,8 +320,67 @@ createComponent({
 | `createSelectorQuery` | `() => SelectorQuery` | 同实例 `createSelectorQuery`，**`select` 等链式 selector** 在 RN 上同样依赖 **`wx:ref`** 映射。 |
 | `createIntersectionObserver` | `(options?) => IntersectionObserver` | 同实例 `createIntersectionObserver`，涉及 **selector 相对节点** 时在 RN 上同样依赖 **`wx:ref`** 映射。 |
 
+### `<script setup>`
+
+`<script setup>` 是 Mpx 单文件组件中使用组合式 API 的编译时语法糖，代码会被编译进组件或页面的 `setup()` 函数中。受小程序与跨端编译模型限制，它不完全等同于 Vue 3 的完整实现。
+
+```html
+<template>
+  <view class="page">
+    <text>{{ title }}</text>
+    <button bindtap="inc">{{ count }}</button>
+    <text>{{ doubled }}</text>
+    <view wx:ref="panel" id="panel" />
+  </view>
+</template>
+
+<script setup>
+  import { ref, computed, onMounted, toRefs } from "@mpxjs/core"
+
+  const props = defineProps({
+    title: {
+      type: String,
+      value: "RN"
+    }
+  })
+  const { title } = toRefs(props)
+  const context = useContext()
+  const count = ref(0)
+  const doubled = computed(() => count.value * 2)
+
+  function inc() {
+    count.value++
+  }
+
+  onMounted(() => {
+    console.log(context.refs.panel)
+  })
+
+  defineExpose({
+    title,
+    count,
+    doubled,
+    inc
+  })
+</script>
+```
+
+| 能力 | 说明 | RN 说明 |
+| --- | --- | --- |
+| 顶层代码 | `<script setup>` 顶层代码等价于在 `setup()` 中执行。 | 组合式生命周期仍须同步注册；不要在异步回调里调用 `onMounted` / `onShow` 等钩子。 |
+| `defineProps()` | 声明组件 `properties`，可使用运行时声明或 TS 类型声明。 | 编译后仍是 Mpx 组件 props；按字段使用时如需保持响应式，仍可结合 `toRefs(props)` / `toRef(props, "key")`。 |
+| `defineExpose()` | 声明暴露给模板的数据与方法。 | Mpx 中属于强制要求；输出 RN 时也应只暴露模板实际使用的字段，避免把大型 store、RN 原生对象等无 UI 数据挂到实例更新链路。 |
+| `defineOptions()` | 声明需要提升到页面 / 组件构造器的选项，如 `pageLifetimes`、`components`、`options` 等。 | 注册 RN 原生组件、`options.virtualHost` / `options.disableMemo` 等仍通过该宏进入构造选项；宏参数不可引用 setup 局部变量。 |
+| `useContext()` | 获取与 `setup(props, context)` 第二个参数一致的上下文。 | `refs`、`selectComponent`、`createSelectorQuery`、`createIntersectionObserver` 的 RN 规则同上：selector 映射依赖模板中的 `wx:ref`。 |
+| `withDefaults()` | 配合 TS 类型版 `defineProps` 设置默认值。 | 会编译为小程序 `properties.value` 语义；`optionalTypes`、`observer` 等仍需运行时 props 写法。 |
+
 #### 注意事项
 
+- `<script setup>` 顶层绑定不会自动暴露给模板，必须通过 **`defineExpose()`** 显式声明模板需要访问的数据或方法。
+- `defineProps`、`defineExpose`、`defineOptions`、`useContext`、`withDefaults` 是编译宏，不需要从 `@mpxjs/core` 导入；`ref`、`computed`、生命周期钩子等运行时 API 仍需从 `@mpxjs/core` 命名导入。
+- `defineProps()` 传入的运行时声明、`defineOptions()` 传入的构造选项会提升到模块作用域，不可引用 `<script setup>` 中的局部变量，可引用 import 进来的绑定。
+- `<script setup>` 不支持和 `src` attribute 一起使用，也不支持通过 import 快捷引入组件；输出 RN 时使用 RN 原生组件请通过 `defineOptions({ components: { NativeView } })` 注册。
+- 需要访问节点、组件实例或 selector 能力时，优先在 `onMounted` 及之后读取 `useContext().refs`；传入 `#id` / `.class` 的 selector 仍要在模板对应节点声明空 `wx:ref`，具名访问使用 `wx:ref="refName"`。
 - 组合式生命周期 **禁止在异步回调里注册**，否则会丢失当前实例上下文。
 - `context.refs` 及 **`selectComponent` / `selectAllComponents` / `createSelectorQuery` / `createIntersectionObserver`** 在 RN 上与选项式相同：`refs` 在 `onMounted` 及之后更可靠，**凡传入 `#id` / `.class` 的用法均须在模板对应节点声明空 wx:ref**（具名访问用 `wx:ref="refName"`），详见「页面 / 组件实例方法与属性」注意事项。
 
@@ -424,6 +511,8 @@ createComponent({
 
 - **`Mpx.use`** 安装的插件会合并到 **`Mpx` 静态对象**与 **`Mpx.prototype`**，若与业务自定义全局名冲突，可为插件传入 **`prefix` / `postfix`** 选项。
 
+---
+
 ## Mpx.config.rnConfig
 
 运行时对象 **`Mpx.config.rnConfig`**（`Mpx` 为 `@mpxjs/core` 默认导出）用于扩展 RN 导航、分包、状态栏等行为。下列为常见配置项（以源码为准，未列项可能随版本增加）。
@@ -474,6 +563,8 @@ Mpx.config.rnConfig = {
 - `rnConfig` 为普通对象，应在 **任何页面 import 并执行 `createApp` 之前** 赋值，避免导航已初始化后配置未生效。
 - 具体键名以 `packages/core/src/index.js` 注释、`createApp.ios.js`、`LoadAsyncChunkModule.js` 等处的读取逻辑为准。
 
+---
+
 ## 全局 API
 
 Mpx 输出 RN 时模拟实现了微信小程序中常用的全局 API。
@@ -502,9 +593,13 @@ setAppHide()
 - 勿在 App 构造函数执行完成前依赖 `getApp()` 内业务字段已赋值完毕；与路由相关的初始化宜放在 `onLaunch` / `onShow`。
 - `getCurrentPages()` 依赖 React Navigation 焦点与 `__mpxPagesMap`，与原生小程序栈细节不完全相同。
 
+---
+
 ## 环境 API
 
 Mpx 中通过 `@mpxjs/api-proxy` 提供了跨多端一致的环境 API 能力，详情查看[跨端输出 RN 环境 API 参考](./rn-api-reference.md) 
+
+---
 
 ## 网络请求
 
@@ -636,6 +731,8 @@ promise.then((res) => {
   console.log(res.data)
 })
 ```
+
+---
 
 ## 状态管理
 

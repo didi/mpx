@@ -1,0 +1,68 @@
+<template>
+  <view class="card-list">
+    <view class="card" wx:for="{{cards}}" wx:key="id" bindtap="onTap">
+      <text class="card-title">{{item.title}}</text>
+      <view class="card-content">{{item.content}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    cards: { type: Array, value: [] }
+  },
+  methods: {
+    onTap () {
+      this.triggerEvent('cardtap')
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.card-list {
+  padding: 16rpx;
+  .card {
+    position: relative;
+    padding: 20rpx;
+    background: white;
+    border: 1rpx solid #ddd;
+    border-radius: 8rpx;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4rpx;
+      height: 100%;
+      background: blue;
+    }
+    &:active {
+      opacity: 0.8;
+    }
+    .card-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #333;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .card-content {
+      margin-top: 12rpx;
+      font-size: 28rpx;
+      color: #666;
+      word-break: break-all;
+      line-clamp: 3;
+    }
+  }
+  .card + .card {
+    margin-top: 16rpx;
+  }
+}
+</style>

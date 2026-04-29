@@ -2,6 +2,18 @@
 
 对于跨平台无法兼容的部分，局部使用条件编译进行分平台定义是可以接受的，跨平台输出 RN 时通常原平台使用 `__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web'` 作为条件，而 RN 平台则使用 `__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'` 作为条件。
 
+## 目录
+
+- [样式条件编译](#样式条件编译)
+  - [避免产物中出现空选择器](#避免产物中出现空选择器)
+- [模板条件编译](#模板条件编译)
+  - [wx:if 条件编译](#wxif-条件编译)
+  - [节点/属性维度条件编译](#节点属性维度条件编译)
+- [脚本条件编译](#脚本条件编译)
+- [配置条件编译](#配置条件编译)
+
+---
+
 ## 样式条件编译
 
 ```html
@@ -47,6 +59,8 @@
 /* @mpx-endif */
 </style>
 ```
+
+---
 
 ## 模板条件编译
 
@@ -111,6 +125,8 @@
 </template>
 ```
 
+---
+
 ## 脚本条件编译
 
 在 `<script>` 中，可以通过访问 `__mpx_mode__` 获取当前编译 mode，进行平台差异逻辑编写（例如处理 RN 与原平台在选择器 API 上的差异等）。
@@ -130,6 +146,8 @@ if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'ha
 const isRN = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'
 const apiUrl = isRN ? 'https://api.rn.com' : 'https://api.original.com'
 ```
+
+---
 
 ## 配置条件编译
 

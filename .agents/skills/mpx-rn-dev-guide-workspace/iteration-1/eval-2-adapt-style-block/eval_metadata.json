@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "adapt-style-block",
+  "prompt": "请对附件中的 .mpx 文件进行 RN 跨端样式适配改造，重点改造 <style> 部分，确保 RN 平台编译通过且保留小程序/Web 平台兼容性。",
+  "files": ["input/style-block.mpx"]
+}

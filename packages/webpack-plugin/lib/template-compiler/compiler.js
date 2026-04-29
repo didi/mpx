@@ -18,6 +18,7 @@ const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb, isNoMode } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
+const { offsetToLoc } = require('../utils/source-location')
 
 const no = function () {
   return false
@@ -341,7 +342,10 @@ function parseHTML (html, options) {
       advance(start[0].length)
       let end, attr
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+        const attrStart = index
         advance(attr[0].length)
+        attr.start = attrStart
+        attr.end = index
         match.attrs.push(attr)
       }
       if (end) {
@@ -393,7 +397,9 @@ function parseHTML (html, options) {
       }
       attrs[i] = {
         name: args[1],
-        value: decode(value)
+        value: decode(value),
+        start: args.start,
+        end: args.end
       }
     }
 
@@ -652,19 +658,19 @@ function parse (template, options) {
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
 
-  const _warn = content => {
+  const _warn = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.warnArray.push(content)
+    currentElementRuleResult.warnArray.push({ content, loc })
   }
-  const _error = content => {
+  const _error = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.errorArray.push(content)
+    currentElementRuleResult.errorArray.push({ content, loc })
   }
 
   rulesRunner = getRulesRunner({
@@ -677,7 +683,11 @@ function parse (template, options) {
       customBuiltInComponents: customBuiltInComponentsOpt
     },
     warn: _warn,
-    error: _error
+    error: _error,
+    diagnostic: {
+      file: filePath,
+      source: template
+    }
   })
 
   const stack = []
@@ -707,12 +717,20 @@ function parse (template, options) {
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldKeepComment: true,
-    start: function start (tag, attrs, unary) {
+    start: function start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       const element = createASTElement(tag, attrs, currentParent)
+      element.start = start
+      element.end = end
+      element.loc = offsetToLoc(template, start, end)
+      element.attrsList.forEach((attr) => {
+        if (attr.start != null) {
+          attr.loc = offsetToLoc(template, attr.start, attr.end)
+        }
+      })
 
       if (ns) {
         element.ns = ns
@@ -826,8 +844,8 @@ function parse (template, options) {
   })
 
   rulesResultMap.forEach((val) => {
-    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
-    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
+    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item.content, item.loc))
+    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item.content, item.loc))
   })
 
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {

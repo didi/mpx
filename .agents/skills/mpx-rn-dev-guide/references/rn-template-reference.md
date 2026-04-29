@@ -1,6 +1,6 @@
-# 跨端输出 RN 模版能力参考
+# 跨端输出 RN 模板能力参考
 
-## 目录索引
+## 目录
 
 - [数据绑定](#数据绑定)
   - [文本、属性与表达式](#文本属性与表达式)
@@ -10,18 +10,21 @@
   - [事件绑定语法](#事件绑定语法)
   - [注意事项](#注意事项-1)
 - [Slot](#slot)
+  - [默认插槽](#默认插槽)
+  - [具名插槽与 `multipleSlots`](#具名插槽与-multipleslots)
 - [WXML 模板](#wxml-模板)
-  - [组件内联定义](#组件内联定义)
+  - [模板内联定义](#模板内联定义)
   - [import 外联引入](#import-外联引入)
+  - [注意事项](#注意事项-2)
 - [i18n 国际化](#i18n-国际化)
   - [工程配置示例](#工程配置示例)
   - [模板中使用翻译函数](#模板中使用翻译函数)
   - [JS 中使用翻译函数](#js-中使用翻译函数)
-  - [注意事项](#注意事项-2)
+  - [注意事项](#注意事项-3)
 - [无障碍访问](#无障碍访问)
   - [模板属性](#模板属性)
   - [示例](#示例)
-  - [注意事项](#注意事项-3)
+  - [注意事项](#注意事项-4)
 - [基础组件](#基础组件)
   - [通用属性](#通用属性)
   - [view](#view)
@@ -58,6 +61,7 @@
   - [cover-view](#cover-view)
   - [cover-image](#cover-image)
 
+---
 
 ## 数据绑定
 
@@ -111,6 +115,7 @@ createComponent({
 2. 需要在模版中加工展示数据时，请使用 **`computed`** 替代，或改写为 **`wxs`** 函数，模版中支持调用 `wxs` 函数。
 3. **例外**：**i18n 翻译函数**（如 `$t`、`$tc` 等，组合式 API 中为 `t`、`tc` 等）会在**编译期**被 Mpx **改写为等效的 `computed` 或 `wxs` 实现**，因此模板中支持直接调用 i18n 翻译函数。
 
+---
 
 ## 模板指令
 
@@ -133,6 +138,8 @@ Mpx 跨端输出 RN 时，支持以下模板指令。
 | wx:model-value-path | ✅ | 定义了双向绑定时从 `e.detail` 中获取更新值的访问路径，默认值为 `value`，即通过 `e.detail.value` 获取更新值，如通过 `e.detail` 直接作为更新值，可以设置 `wx:model-value-path="[]"` | `<custom-input wx:model="{{value}}" wx:model-value-path="[]" />` |
 | wx:model-filter | ✅ | 双向绑定过滤器，可绑定内建（如 trim）或组件实例方法，在双向绑定时对更新值进行过滤和修饰 | `<input wx:model="{{value}}" wx:model-filter="trim" />` |
 | wx:ref | ✅ | 获取基础组件节点或自定义组件实例 | `<view wx:ref="myView">...</view>` |
+
+---
 
 ## 事件处理
 
@@ -243,6 +250,8 @@ createComponent({
 3. 由于 `tap` 和 `longpress` 事件是由 `touchstart` / `touchend` 等底层触摸事件模拟实现，所以在 RN 环境，如果子组件绑定了 `catchtouchend`，那么父组件的 `tap` 事件将不会响应。
 4. 如果元素上设置了 `opacity: 0` 的样式，会导致 ios 事件无法响应。
 
+---
+
 ## Slot
 
 插槽（slot）：跨端输出 RN 时，**自定义组件插槽能力与微信小程序一致，已完整支持**：在组件模板中使用 `<slot>` 承载引用方传入的子节点；编译后在 RN 侧走与小程序等价的组合与渲染路径。
@@ -298,6 +307,8 @@ createComponent({
   <view slot="after">后置区域</view>
 </my-panel>
 ```
+
+---
 
 ## WXML 模板
 
@@ -358,6 +369,8 @@ createComponent({
 1. **`is`** 对应的 **`name`** 须在当前可见范围内已定义：内联时在**同一** `<template>` 根内；外联时在 **`import` 已引入** 的文件内。
 2. **`import`** 的 **`src`** 为相对路径时相对于当前模板文件，须能被工程构建解析并参与编译。
 3. Mpx 跨端输出时不支持使用 `include` 方式引用外联模板，请使用 `import` 方式代替。
+
+---
 
 ## i18n 国际化
 
@@ -505,9 +518,11 @@ createComponent({
 3. **能力边界**：当前与主站一致，仅支持 **`$t` / `$tc` / `$te` / `$tm`（选项式）** 与 **`t` / `tc` / `te` / `tm`（组合式）**；**不支持** **`$d` / `$n`** 等日期、数字格式化 API。
 4. **组合式 + 模板**：模板里的 `t`/`tc`/`te`/`tm` 由编译器按 computed 类方式处理，除循环变量问题外，仍需保证 **`return` 中暴露**了模板所需翻译函数，否则对应翻译函数无法在模版中生效。
 
+---
+
 ## 无障碍访问
 
-跨端输出 RN 时，模板侧请**优先且统一**使用 **`aria-role`**、**`aria-label`**，与小程序侧写法对齐。**不推荐**在模板里直接书写 React Native 文档中的驼峰无障碍属性名（如 **`accessibilityLabel`**、**`accessibilityHint`**、**`accessibilityRole`**、**`accessibilityState`** 等）：这类写法不利于与其它端模板保持一致，也更容易在后续编译或组件封装变动时产生隐性差异。底层 RN 映射由框架与编译规则完成；若需了解语义对应关系，可对照 [React Native Accessibility](https://reactnative.dev/docs/accessibility) 作阅读参考，而不是在业务模板中手写 RN 属性名。
+跨端输出 RN 如需支持无障碍访问能力时，模板侧请**优先且统一**使用 **`aria-role`**、**`aria-label`**，与小程序侧写法对齐。**不推荐**在模板里直接书写 RN 文档中的驼峰无障碍属性名（如 **`accessibilityLabel`**、**`accessibilityHint`**、**`accessibilityRole`**、**`accessibilityState`** 等）：这类写法不利于与其它端模板保持一致，也更容易在后续编译或组件封装变动时产生隐性差异。底层 RN 映射由框架与编译规则完成；若需了解语义对应关系，可对照 [RN Accessibility](https://reactnative.dev/docs/accessibility) 作阅读参考，而不是在业务模板中手写 RN 属性名。
 
 ### 模板属性
 
@@ -540,9 +555,13 @@ createComponent({
 2. **与样式隐藏区分**：视觉上用 `wx:show` / 样式隐藏时，仍注意焦点与读屏顺序是否应与视觉一致；若需定义 RN 专有行为，放在 **仅 RN 的条件编译** 中处理，而不是在跨端模板中直接写 RN 无障碍属性名。
 3. **多端一致**：小程序与 RN 读屏实现不同，上线前应在 **iOS VoiceOver** 与 **Android TalkBack** 上各测一遍关键路径。
 
+---
+
 ## 基础组件
 
-目前 Mpx 输出 React Native 支持的基础组件如下：
+Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文档。
+
+**自定义覆盖与扩展**：当某个内置基础组件在 RN 上不满足业务需要、需替换为自定义实现，或希望在模板中直接使用一组宿主特有的基础组件时，可在 `@mpxjs/webpack-plugin` 的编译配置 `rnConfig.customBuiltInComponents` 中声明自定义组件 —— **同名组件会覆盖**框架内置实现，**新名称则作为扩展基础组件**注入到模板编译期识别表中，无需在每个 `.mpx` 的 `usingComponents` 中重复注册即可在模板中以基础组件方式使用。该配置在模板编译阶段生效，并非应用入口的运行时 `Mpx.config.rnConfig` 配置。
 
 ### 通用属性
 
@@ -559,9 +578,9 @@ createComponent({
 | parent-width | number |  | 父组件宽度，主要用于百分比计算的场景，如 width: calc(100% - 20px)，需要在外部传递父组件的宽度 |
 | parent-height | number |  | 父组件高度，主要用于百分比计算的场景，如 height: calc(100% - 20px),需要在外部传递父组件的高度 |
 
-以上基础组件的通用属性仅在 React Native 环境中支持。在跨平台输出到小程序或 Web 时，这些属性将无法使用。
+以上基础组件的通用属性仅在 RN 环境中支持。在跨平台输出到小程序或 Web 时，这些属性将无法使用。
 
-由于 view、text、scroll-view、image 和 input 组件都是基于 React Native 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
+由于 view、text、scroll-view、image 和 input 组件都是基于 RN 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
 
 ### view
 

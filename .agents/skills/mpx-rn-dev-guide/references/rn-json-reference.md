@@ -2,7 +2,7 @@
 
 本文档说明在 Mpx 输出 React Native（如 `mode` 为 `ios`、`android`、`harmony` 等 RN 目标）时，**小程序形态 JSON 配置**（`app.mpx` / 页面与组件 `.mpx` 中的 JSON 块）的支持范围与使用注意。写法上仍与微信小程序 `app.json`、页面/组件配置对齐；RN 端对部分字段仅有编译期处理或运行时等价能力，下文按层级说明。
 
-## 索引
+## 目录
 
 - [应用配置](#应用配置)
 - [页面配置](#页面配置)
@@ -15,7 +15,7 @@
   - [注册 `loadChunkAsync` 和 `downloadChunkAsync`](#注册-loadchunkasync-和-downloadchunkasync)
   - [分包失败处理](#分包失败处理)
 - [抽象节点](#抽象节点)
-  - [声明 `componentGenerics`（定义方 JSON）](#定义方声明-componentgenerics)
+  - [定义方声明 `componentGenerics`](#定义方声明-componentgenerics)
   - [定义方模板](#定义方模板)
   - [使用方 `generic:` 绑定](#使用方-generic-绑定)
   - [默认组件（可选）](#默认组件可选)
@@ -392,6 +392,8 @@ loadUtil().then((mod) => {
   mod.doSomething()
 })
 ```
+
+---
 
 ## 抽象节点
 

@@ -1,0 +1,23 @@
+{
+  "skill_name": "mpx-rn-dev-guide",
+  "evals": [
+    {
+      "id": 0,
+      "name": "adapt-list-page",
+      "prompt": "请帮我对附件中的 Mpx 页面 list.mpx 进行 RN 跨端适配改造，确保它能在 RN 平台正确编译运行，同时保留小程序/Web 平台的兼容性。请输出修改后的完整 .mpx 代码（保持 SFC 结构 template/script/style），不要省略任何内容。",
+      "files": ["input/list.mpx"]
+    },
+    {
+      "id": 1,
+      "name": "create-card-component",
+      "prompt": "请帮我创建一个符合 RN 跨端兼容规范的 Mpx 卡片组件 card.mpx，需求：\n- 接收 props：title (string)、desc (string)、avatar (string，图片 URL)、selected (boolean，默认 false)\n- 卡片整体可点击，点击时通过 triggerEvent 抛出 'tap' 事件\n- 点击时有按下视觉反馈\n- selected=true 时卡片边框色变为蓝色 (#1677ff)\n- 标题需要单行省略\n- 描述最多展示 2 行后省略\n- 使用组合式 API（setup 或 <script setup>）实现\n请直接输出完整组件代码（包含 template/script/style），不要省略任何内容。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "adapt-style-block",
+      "prompt": "请对附件中的 .mpx 文件进行 RN 跨端样式适配改造，重点改造 <style> 部分（template、script 仅在样式改造连带影响时同步修改），确保 RN 平台编译通过且保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件，不要省略任何内容。",
+      "files": ["input/style-block.mpx"]
+    }
+  ]
+}

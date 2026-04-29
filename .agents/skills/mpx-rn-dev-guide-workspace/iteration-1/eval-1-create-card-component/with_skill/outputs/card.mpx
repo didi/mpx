@@ -1,0 +1,124 @@
+<template>
+  <view
+    class="card"
+    wx:class="{{ { 'card-selected': selected } }}"
+    hover-class="card-hover"
+    hover-stay-time="{{100}}"
+    aria-role="button"
+    aria-label="{{title}}"
+    bindtap="onCardTap"
+  >
+    <image class="card-avatar" src="{{avatar}}" mode="aspectFill" />
+    <view class="card-body">
+      <text
+        class="card-title"
+        numberOfLines@ios|android|harmony="{{1}}"
+      >{{title}}</text>
+      <text
+        class="card-desc"
+        numberOfLines@ios|android|harmony="{{2}}"
+      >{{desc}}</text>
+    </view>
+  </view>
+</template>
+
+<script setup>
+  import { useContext } from '@mpxjs/core'
+
+  defineProps({
+    title: {
+      type: String,
+      value: ''
+    },
+    desc: {
+      type: String,
+      value: ''
+    },
+    avatar: {
+      type: String,
+      value: ''
+    },
+    selected: {
+      type: Boolean,
+      value: false
+    }
+  })
+
+  const context = useContext()
+
+  function onCardTap (e) {
+    context.triggerEvent('tap', {
+      target: e && e.currentTarget
+    })
+  }
+
+  defineExpose({
+    onCardTap
+  })
+</script>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {}
+  }
+</script>
+
+<style lang="stylus">
+  .card
+    display flex
+    flex-direction row
+    align-items center
+    padding 24rpx
+    background-color #ffffff
+    border-radius 16rpx
+    border-style solid
+    border-color #e5e5e5
+    /*use rpx*/
+    /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+    border-width hairlineWidth
+    /* @mpx-else */
+    border-width 1rpx
+    /* @mpx-endif */
+
+  .card-hover
+    opacity 0.8
+    background-color #f5f5f5
+
+  .card-selected
+    border-color #1677ff
+
+  .card-avatar
+    width 96rpx
+    height 96rpx
+    border-radius 48rpx
+    margin-right 24rpx
+
+  .card-body
+    flex 1
+    display flex
+    flex-direction column
+
+  .card-title
+    font-size 32rpx
+    font-weight bold
+    color #222222
+    margin-bottom 8rpx
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+    white-space nowrap
+    overflow hidden
+    text-overflow ellipsis
+    /* @mpx-endif */
+
+  .card-desc
+    font-size 26rpx
+    color #888888
+    line-height 36rpx
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+    display -webkit-box
+    -webkit-box-orient vertical
+    -webkit-line-clamp 2
+    overflow hidden
+    text-overflow ellipsis
+    /* @mpx-endif */
+</style>
