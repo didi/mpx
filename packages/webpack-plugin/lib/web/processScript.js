@@ -55,7 +55,7 @@ module.exports = function (script, {
         ((wxTemplateComponentsInfo.imports && wxTemplateComponentsInfo.imports.length) ||
           (wxTemplateComponentsInfo.locals && wxTemplateComponentsInfo.locals.length)))
       const optionProcessorImports = ['processComponentOption', 'getComponent', 'getWxsMixin']
-      if (hasWxTemplate) optionProcessorImports.push('createWxTemplateComponent')
+      if (hasWxTemplate) optionProcessorImports.push('createTemplateComponent')
       let content = `\n  import { ${optionProcessorImports.join(', ')} } from ${stringifyRequest(loaderContext, optionProcessorPath)}\n`
       let hasApp = true
       if (!appInfo.name) {

@@ -1,0 +1,57 @@
+{
+  "eval_id": 2,
+  "run_kind": "without_skill",
+  "expectations": [
+    {
+      "text": "style: no less nesting outside of conditional compile",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "text": "style on RN: no ::before pseudo-element",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style on RN: no `display: grid`",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style on RN: no `:active` pseudo-class",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style on RN: no `+` adjacent sibling combinator",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style: numeric font-weight (e.g. 600) replaced with bold/normal",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "text": "template: real node added to replace ::before (e.g. card-decorator/card-bar)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style: no empty selector rules",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.7778,
+    "passed": 7,
+    "failed": 2,
+    "total": 9
+  }
+}

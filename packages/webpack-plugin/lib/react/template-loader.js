@@ -28,14 +28,14 @@ module.exports = function (content) {
   const { resourcePath, rawResourcePath, queryObj } = parseRequest(loaderContext.resource)
   const moduleId = getModuleId(resourcePath)
 
-  const warn = (msg) => {
+  const warn = (msg, loc) => {
     loaderContext.emitWarning(
-      new Error('[Mpx template warning][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx template warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
-  const error = (msg) => {
+  const error = (msg, loc) => {
     loaderContext.emitError(
-      new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
+      new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
     )
   }
   const parseOptions = {

@@ -21,9 +21,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       expect(result).toEqual({})
-      expect(config.error).toHaveBeenCalledWith(
-        expect.stringContaining('letter-spacing')
-      )
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('letter-spacing'))
     })
 
     test('should filter out line-height with invalid "normal" fallback', () => {
@@ -37,9 +35,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       expect(result).toEqual({})
-      expect(config.error).toHaveBeenCalledWith(
-        expect.stringContaining('line-height')
-      )
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('line-height'))
     })
 
     test('should keep valid CSS variable with numeric fallback', () => {
@@ -119,9 +115,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       expect(result).toEqual({})
-      expect(config.error).toHaveBeenCalledWith(
-        expect.stringContaining('letter-spacing')
-      )
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('letter-spacing'))
     })
 
     test('should keep nested CSS variables with valid fallback', () => {

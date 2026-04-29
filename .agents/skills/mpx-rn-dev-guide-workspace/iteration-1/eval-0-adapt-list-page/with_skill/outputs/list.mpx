@@ -1,0 +1,129 @@
+<template>
+  <scroll-view
+    class="list"
+    scroll-y="{{true}}"
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+    bindscrolltolower="loadMore"
+  >
+    <view class="list-header">
+      <text class="title">列表标题</text>
+    </view>
+    <view
+      class="item"
+      wx:class="{{ { 'item-active': currentId === item.id, 'item-first': index === 0 } }}"
+      hover-class="item-hover"
+      hover-stay-time="{{100}}"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="goDetail"
+    >
+      <text class="content" numberOfLines@ios|android|harmony="{{1}}">{{item.text}}</text>
+    </view>
+    <view wx:if="{{loading}}" class="loading">
+      <text class="loading-text">加载中...</text>
+    </view>
+  </scroll-view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import mpx from '@mpxjs/core'
+
+createPage({
+  data: {
+    items: [],
+    loading: false,
+    refreshing: false,
+    currentId: null
+  },
+  onLoad () {
+    this.fetchList()
+  },
+  // todo: RN 平台页面默认不可滚动，onPullDownRefresh / onReachBottom 不会触发
+  // 已通过 scroll-view 的 refresher-* 与 bindscrolltolower 等效实现
+  onPullDownRefresh () {
+    this.fetchList()
+  },
+  onReachBottom () {
+    this.loadMore()
+  },
+  methods: {
+    fetchList () {
+      this.loading = true
+      mpx.request({
+        url: '/api/list',
+        success: (res) => {
+          this.items = res.data
+          this.loading = false
+          this.refreshing = false
+        },
+        fail: () => {
+          this.loading = false
+          this.refreshing = false
+        }
+      })
+    },
+    onRefresh () {
+      this.refreshing = true
+      this.fetchList()
+    },
+    loadMore () {},
+    goDetail (e) {
+      const id = e.currentTarget.dataset.id
+      this.currentId = id
+      mpx.navigateTo({ url: '/pages/detail?id=' + id })
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.list {
+  padding: 24rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+.item {
+  padding: 20rpx;
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #eee;
+}
+.item-first {
+  border-top-width: 1rpx;
+  border-top-style: solid;
+  border-top-color: #eee;
+}
+.item-hover {
+  background-color: #f5f5f5;
+}
+.item-active {
+  background-color: #e8f0ff;
+}
+.content {
+  font-size: 28rpx;
+  color: #666;
+}
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+/* todo: RN 不支持 white-space / text-overflow，已通过模板属性 numberOfLines 条件编译等效实现 */
+.content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* @mpx-endif */
+.loading {
+  text-align: center;
+  padding: 20rpx;
+}
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+</style>

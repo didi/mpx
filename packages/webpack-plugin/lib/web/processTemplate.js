@@ -68,14 +68,14 @@ module.exports = function (template, {
       }
       if (template.content) {
         const templateSrcMode = template.mode || srcMode
-        const warn = (msg) => {
+        const warn = (msg, loc) => {
           loaderContext.emitWarning(
-            new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
           )
         }
-        const error = (msg) => {
+        const error = (msg, loc) => {
           loaderContext.emitError(
-            new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
           )
         }
         const hasVirtualHost = matchCondition(resourcePath, autoVirtualHostRules)
