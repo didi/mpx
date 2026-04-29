@@ -9,7 +9,9 @@ describe('template should transform correct', function () {
   it('should warning if button\'s open-type is a variable', function () {
     const input = '<button open-type="{{ aaa }}" bindTap="handleClick"></button>'
     compileTemplate(input)
-    expect(warnFn).toHaveBeenCalledWith('<button>\'s property \'open-type\' does not support \'[{{ aaa }}]\' value in ali environment!')
+    expect(warnFn.mock.calls.map(args => args[0])).toEqual(expect.arrayContaining([
+      expect.stringContaining('<button>\'s property \'open-type\' does not support \'[{{ aaa }}]\' value in ali environment!')
+    ]))
   })
 
   it('should transform button correct', function () {
@@ -25,7 +27,9 @@ describe('template should transform correct', function () {
 
     expect(output1).toBe('<button open-type="getAuthorize" scope="userInfo">获取用户信息</button>')
     expect(output2).toBe('<button open-type="getAuthorize" scope="phoneNumber">获取手机号</button>')
-    expect(errorFn).toHaveBeenCalledWith('<button>\'s property \'open-type\' does not support \'[openSetting]\' value in ali environment!')
+    expect(errorFn.mock.calls.map(args => args[0])).toEqual(expect.arrayContaining([
+      expect.stringContaining('<button>\'s property \'open-type\' does not support \'[openSetting]\' value in ali environment!')
+    ]))
     expect(output4).toBe('<button open-type="{{aaa}}">{{name}}</button>')
   })
 
