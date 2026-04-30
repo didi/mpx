@@ -34,31 +34,52 @@ RN 0.74.5 内部存在 `TextAncestorContext`，但不建议直接复用：
 
 ## 推荐方案
 
-新增一个 Mpx runtime 内部 context，例如 `TextPassThroughContext`，只承载 Mpx 容器拆出的文本样式和文本属性：
+新增一个 Mpx runtime 内部 context，例如 `TextPassThroughContext`，但需要区分两类语义：
+
+1. `textStyle` 是可继承值，用于模拟 Web/小程序文本样式逐级继承。
+2. `ellipsizeMode` / `numberOfLines` 这类 `textProps` 不是继承值，只是 RN 适配中的“待迁移属性”：它们可以跨非 text 中间层传递到最近的 `mpx-text`，但被 `mpx-text` 消费后不能继续向更深层 text 继承。
+3. `allowFontScaling` 不参与 context 透传，也不再作为 `textProps` 迁移。它是 RN 文本组件的全局运行时策略，应该通过 `mpx.config.rnConfig.allowFontScaling` 统一控制，组件显式传入的 `allowFontScaling` 再覆盖全局默认。
 
 ```ts
 export interface TextPassThroughContextValue {
   textStyle?: TextStyle
-  textProps?: Record<string, any>
+  pendingTextProps?: Record<string, any>
 }
 
 export const TextPassThroughContext = createContext<TextPassThroughContextValue | null>(null)
 ```
 
-在 `utils.tsx` 中新增一个显式 hook，例如 `useTextPassThroughValue`，负责把当前容器的 `textStyle` / `textProps` 与祖先 context 合并，并通过 `diffAndCloneA` 保持 value 引用稳定。合并顺序保持现有行为：祖先值优先进入，当前容器覆盖祖先，最终具体 `mpx-text` 自身 props/style 再覆盖 context。
+在 `utils.tsx` 中新增一个显式 hook，例如 `useTextPassThroughValue`，负责把当前容器的 `textStyle` / `textProps` 与祖先 context 合并，并通过 `diffAndCloneA` 保持 value 引用稳定。合并顺序为：祖先值优先进入，当前容器覆盖祖先，最终具体 `mpx-text` 自身 props/style 再覆盖 context。
 
 不建议把 `useContext` / `useRef` 直接写进现有 `wrapChildren`。`wrapChildren` 当前是普通工具函数，调用点里存在嵌套 render 函数、循环渲染等场景；如果它内部开始调用 hooks，会变成隐式 hook，容易破坏 hooks 调用顺序，也不利于 ESLint 识别。更稳妥的方式是让各组件在顶层调用 `useTextPassThroughValue`，再把结果传给仍然保持纯函数的 `wrapChildren`。
 
 ```tsx
-export function useTextPassThroughValue (textStyle?: TextStyle, textProps?: Record<string, any>) {
+interface UseTextPassThroughValueOptions {
+  inheritTextProps?: boolean
+}
+
+export function useTextPassThroughValue (
+  textStyle?: TextStyle,
+  textProps?: Record<string, any>,
+  { inheritTextProps = true }: UseTextPassThroughValueOptions = {}
+) {
   const parent = useContext(TextPassThroughContext)
   const valueRef = useRef<TextPassThroughContextValue | null>(null)
 
-  if (!textStyle && !textProps) return null
+  if (!textStyle && !textProps && (inheritTextProps || !parent?.pendingTextProps)) return null
+
+  const nextTextStyle = textStyle
+    ? extendObject({}, parent?.textStyle, textStyle)
+    : parent?.textStyle
+  const nextTextProps = inheritTextProps
+    ? textProps
+      ? extendObject({}, parent?.pendingTextProps, textProps)
+      : parent?.pendingTextProps
+    : textProps
 
   const nextValue = {
-    textStyle: extendObject({}, parent?.textStyle, textStyle),
-    textProps: extendObject({}, parent?.textProps, textProps)
+    textStyle: nextTextStyle,
+    pendingTextProps: nextTextProps
   }
 
   if (diffAndCloneA(valueRef.current, nextValue).diff) {
@@ -109,7 +130,7 @@ const childNode = wrapChildren(props, {
 ```tsx
 const inheritedText = useContext(TextPassThroughContext)
 const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
-const mergedProps = extendObject({}, inheritedText?.textProps, props, { style: mergedStyle })
+const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props, { style: mergedStyle })
 ```
 
 后续解构、`useTransformStyle`、`useInnerProps`、`useNodesRef` 都基于 `mergedProps` 工作。这样可以保持：
@@ -119,7 +140,15 @@ const mergedProps = extendObject({}, inheritedText?.textProps, props, { style: m
 3. `mpx-text` 自身显式传入的 props/style 优先级最高。
 4. 不需要 clone 子节点，只有真正的 `mpx-text` 消费 context 时才做合并。
 
-对于 `mpx-text` 自身的子树，建议继续通过 `wrapChildren` 向下提供当前 text 的已解析文本样式。RN 原生 text 子树本身也有文本继承，但 Mpx context 负责 Mpx 组件级属性/样式透传，两者职责不同；即使嵌套 text 既受 RN 原生继承又读取 Mpx context，同名样式值也会按“祖先 -> 当前 -> 子级自身”的顺序稳定覆盖。
+对于 `mpx-text` 自身的子树，建议继续通过 `wrapChildren` 向下提供当前 text 的已解析文本样式，但要清空已经被当前 text 消费过的 `pendingTextProps`：
+
+```tsx
+const childTextPassThrough = useTextPassThroughValue(normalStyle, undefined, {
+  inheritTextProps: false
+})
+```
+
+这样可以形成“样式继承、属性迁移”的不同语义：`textStyle` 在 `mpx-text -> mpx-text` 中继续继承；`numberOfLines` 等 `textProps` 只从 view 等非 text 容器迁移到最近的 text，不会从父 text 继续深度继承给子 text。RN 原生 text 子树本身也有文本继承，但 Mpx context 负责 Mpx 组件级属性/样式透传，两者职责不同；即使嵌套 text 既受 RN 原生继承又读取 Mpx context，同名样式值也会按“祖先 -> 当前 -> 子级自身”的顺序稳定覆盖。
 
 ## 影响范围
 
@@ -129,27 +158,35 @@ const mergedProps = extendObject({}, inheritedText?.textProps, props, { style: m
    - 新增 `TextPassThroughContext` 类型与实例。
 2. `packages/webpack-plugin/lib/runtime/components/react/utils.tsx`
    - 引入 `TextPassThroughContext`。
+   - 将 `TEXT_PROPS_REGEX` 从 `/ellipsizeMode|numberOfLines|allowFontScaling/` 调整为 `/ellipsizeMode|numberOfLines/`，避免 `allowFontScaling` 进入迁移链路。
+   - 新增获取全局默认字体缩放配置的 helper，例如 `getDefaultAllowFontScaling()`，返回 `global.__mpx?.config?.rnConfig?.allowFontScaling ?? false`。
    - 新增 `useTextPassThroughValue`，通过 `diffAndCloneA` 保持 context value 引用稳定。
    - 调整 `wrapChildren`，删除 `Children.map` + `isText` + `cloneElement` 的透传逻辑，改为直接包 `TextPassThroughContext.Provider`。
    - 如果 `isText` 后续无其他使用，可评估是否保留；为降低风险可以先保留。
 3. `packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx`
    - 读取 `TextPassThroughContext`。
-   - 先合并 context 与自身 props/style，再执行现有 transform、listeners、decode、Portal 等逻辑。
-   - 在包裹自身 children 时，将当前 text 的文本样式继续作为下层 context。
+   - 先合并 context 中的 `textStyle` / `pendingTextProps` 与自身 props/style，再执行现有 transform、listeners、decode、Portal 等逻辑。
+   - `allowFontScaling` 默认值改为 `props.allowFontScaling ?? getDefaultAllowFontScaling()`，不从 `pendingTextProps` 读取。
+   - 在包裹自身 children 时，将当前 text 的文本样式继续作为下层 context，同时通过 `inheritTextProps: false` 清空已消费的 `pendingTextProps`。
 4. `packages/webpack-plugin/lib/runtime/components/react/mpx-simple-text.tsx`、`mpx-inline-text.tsx`
    - 如果这两个组件也可能由编译产物作为 text 类组件使用，应同步消费 context，避免原先被 `isText` 命中的组件在新方案下丢失透传能力。
-5. `packages/webpack-plugin/lib/runtime/components/react/mpx-portal/index.tsx`
+   - `allowFontScaling` 默认值同样改为读取 `rnConfig.allowFontScaling`，显式 prop 优先。
+5. `packages/webpack-plugin/lib/runtime/components/react/mpx-input.tsx`
+   - 如果期望运行时配置覆盖所有 RN 文本输入场景，`TextInput` 的 `allowFontScaling` 默认值也应改为 `props.allowFontScaling ?? getDefaultAllowFontScaling()`；如果只想控制 text 类基础组件，则该项可作为独立兼容改造评估。
+6. `packages/core/@types/index.d.ts`
+   - 在 `RnConfig` 中新增 `allowFontScaling?: boolean` 类型声明，默认语义为 `false`。
+7. `packages/webpack-plugin/lib/runtime/components/react/mpx-portal/index.tsx`
    - 当前 custom portal 已手动补传 `VarContext` / `ProviderContext`，新 context 也需要在 portal mount 前读取并重新包裹，否则 fixed/portal 子树会丢失文本透传。
-6. `packages/webpack-plugin/lib/runtime/components/react/dist/**`
+8. `packages/webpack-plugin/lib/runtime/components/react/dist/**`
    - 若仓库要求提交编译产物，需要在 `packages/webpack-plugin` 下执行 `npm run build`，同步生成 dist。
 
 ## 兼容性与边界
 
 1. 不依赖 RN 内部 `TextAncestorContext`，避免 RN 版本升级导致路径或语义变化。
 2. 不向 RN 的 `TextAncestorContext` 写入值，不影响 RN 判断 native text / virtual text 的逻辑。
-3. Mpx 的 `TextPassThroughContext` 不应被 `View` 重置。跨非 text 组件继续传递正是本方案要模拟的 Web/小程序行为。
+3. Mpx 的 `TextPassThroughContext` 不应被 `View` 重置。跨非 text 组件继续传递正是本方案要模拟的 Web/小程序行为；但 `mpx-text` 是 `pendingTextProps` 的消费边界，消费后应清空，避免把迁移属性误当成继承属性。
 4. 合并对象时遵守仓库约束，运行时代码使用 `extendObject` / `Object.assign`，不使用 object spread。
-5. `textProps` 仍沿用现有 `TEXT_PROPS_REGEX` 的范围，避免把普通 view props 误透传到 text。是否扩展 `selectable` 等属性应作为单独行为变更评估。
+5. `textProps` 范围收敛为 `ellipsizeMode|numberOfLines`，避免把普通 view props 误透传到 text。`allowFontScaling` 通过 `rnConfig.allowFontScaling` 控制，`selectable` 等其他属性是否迁移应作为单独行为变更评估。
 6. 如果某些组件手动 clone 子项并注入 `textStyle` / `textProps`，例如 picker-view column item，需要单独确认是否应迁移到统一 context，避免出现双重合并或优先级变化。
 
 ## 验证用例
@@ -160,8 +197,10 @@ const mergedProps = extendObject({}, inheritedText?.textProps, props, { style: m
 2. 非 text 中间层不中断：`view(style=color:red) -> view -> text`，text 最终 color 为 red。
 3. 近层覆盖远层：`view(color:red) -> view(color:blue) -> text`，text 最终 color 为 blue。
 4. text 自身覆盖 context：`view(color:red) -> text(style=color:green)`，text 最终 color 为 green。
-5. `textProps` 继承：外层容器设置 `numberOfLines`，深层 `mpx-text` 能读取；深层自身设置时自身优先。
-6. Portal 场景：带 `position: fixed` 的 text 子树进入 custom portal 后仍能继承外层文本样式。
-7. RN text nesting 场景：`mpx-text -> mpx-text` 可以正常渲染，不影响 RN 选择 `NativeVirtualText`。
+5. `textProps` 迁移：外层 `view` 设置 `numberOfLines`，经过非 text 中间层后的最近 `mpx-text` 能读取；该 `mpx-text` 自身设置时自身优先。
+6. `textProps` 不深度继承：`view(numberOfLines=1) -> mpx-text -> mpx-text` 中，第一层 `mpx-text` 能读取 `numberOfLines`，第二层不会因为父 text 消费过该属性而继续继承。
+7. `allowFontScaling` 全局配置：未显式设置 prop 时，`mpx.config.rnConfig.allowFontScaling` 控制 text 类组件默认值；显式 prop 优先；该属性不会通过 view 迁移到 text。
+8. Portal 场景：带 `position: fixed` 的 text 子树进入 custom portal 后仍能继承外层文本样式，并保留未消费的迁移属性。
+9. RN text nesting 场景：`mpx-text -> mpx-text` 可以正常渲染，不影响 RN 选择 `NativeVirtualText`。
 
 执行变更后仅需跑与 RN runtime text 组件相关的测试、类型检查或最小 demo 编译，不需要全量测试。
