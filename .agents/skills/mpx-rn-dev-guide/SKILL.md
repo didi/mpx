@@ -1,6 +1,9 @@
 ---
 name: mpx-rn-dev-guide
 description: Mpx 跨端输出 RN（简称 Mpx2RN 或 Mpx2DRN）的开发适配指南，覆盖模板、脚本、样式、JSON 配置四大维度。当用户要求对已有 Mpx 组件进行 RN 跨端适配改造、创建符合 RN 跨端兼容规范的 Mpx 组件、排查 Mpx2RN 编译报错或查询某项能力（模板指令、基础组件、样式属性、生命周期、环境 API、JSON 字段等）在 RN 平台的支持情况时强制调用。当用户问题不涉及 Mpx 跨端输出 RN 时不应调用，如小程序原生开发问题，纯 RN 原生开发问题、Web 端样式问题等。
+metadata:
+  version: "1.0.1"
+  author: donghongping
 ---
 
 # Mpx 跨端输出 RN 开发与适配指南
