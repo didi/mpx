@@ -94,8 +94,8 @@ function normalizeOptions (options) {
   // web配置
   // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
-    include: scan.include || [],
-    exclude: scan.exclude || [],
+    include: scan.include,
+    exclude: scan.exclude,
     transformers: [
       ...transformGroups ? [transformerVariantGroup(transformGroups)] : [],
       ...transformCSS ? [transformerDirectives()] : []
