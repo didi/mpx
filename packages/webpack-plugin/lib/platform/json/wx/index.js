@@ -6,6 +6,8 @@ const { isOriginTag, isBuildInWebTag, isBuildInReactTag } = require('../../../ut
 const getBuildInTagComponent = require('../../../utils/get-build-tag-component')
 
 module.exports = function getSpec ({ warn, error }) {
+  const reactModes = ['ios', 'android', 'harmony']
+
   function print (mode, path, value, isError) {
     const msg = `Json path <${path}> is not supported in ${mode} environment!`
     isError ? error(msg, { path, value }) : warn(msg, { path, value })
@@ -30,6 +32,14 @@ module.exports = function getSpec ({ warn, error }) {
       })
       return input
     }
+  }
+
+  function createReactRule (test, processor) {
+    const rule = { test }
+    reactModes.forEach(mode => {
+      rule[mode] = processor
+    })
+    return rule
   }
 
   /**
@@ -220,6 +230,7 @@ module.exports = function getSpec ({ warn, error }) {
       },
       jd: deletePath()
     },
+    createReactRule('enablePullDownRefresh|onReachBottomDistance', deletePath()),
     {
       test: 'navigationBarBackgroundColor',
       ali (input) {
@@ -247,8 +258,13 @@ module.exports = function getSpec ({ warn, error }) {
     {
       test: 'backgroundColorTop|backgroundColorBottom',
       ali: deletePath(),
-      swan: deletePath()
+      swan: deletePath(),
+      ios: deletePath(),
+      android: deletePath(),
+      harmony: deletePath()
     },
+    createReactRule('backgroundColor|backgroundTextStyle', deletePath()),
+    createReactRule('pageOrientation', deletePath()),
     {
       test: 'navigationBarTextStyle|navigationStyle|backgroundTextStyle',
       ali: deletePath()
@@ -382,7 +398,10 @@ module.exports = function getSpec ({ warn, error }) {
         qq: deletePath(),
         swan: deletePath(),
         tt: deletePath(),
-        jd: deletePath()
+        jd: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'preloadRule',
@@ -394,14 +413,20 @@ module.exports = function getSpec ({ warn, error }) {
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath(),
-        jd: deletePath(true)
+        jd: deletePath(true),
+        ios: deletePath(true),
+        android: deletePath(true),
+        harmony: deletePath(true)
       },
       {
         test: 'plugins',
         qq: deletePath(true),
         swan: deletePath(true),
         tt: deletePath(),
-        jd: deletePath(true)
+        jd: deletePath(true),
+        ios: deletePath(true),
+        android: deletePath(true),
+        harmony: deletePath(true)
       },
       {
         test: 'usingComponents',
@@ -427,19 +452,28 @@ module.exports = function getSpec ({ warn, error }) {
       {
         test: 'debug',
         ali: deletePath(),
-        swan: deletePath()
+        swan: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'requiredBackgroundModes',
         ali: deletePath(),
-        tt: deletePath()
+        tt: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'workers',
         jd: deletePath(),
         ali: deletePath(),
         swan: deletePath(),
-        tt: deletePath()
+        tt: deletePath(),
+        ios: deletePath(),
+        android: deletePath(),
+        harmony: deletePath()
       },
       {
         test: 'subpackages|subPackages',
@@ -454,6 +488,8 @@ module.exports = function getSpec ({ warn, error }) {
         ali: deletePath(),
         jd: deletePath()
       },
+      createReactRule('navigateToMiniProgramAppIdList', deletePath()),
+      createReactRule('tabBar', deletePath(true)),
       {
         test: 'tabBar',
         ali: getTabBarRule(),
@@ -470,7 +506,10 @@ module.exports = function getSpec ({ warn, error }) {
         swan: getWindowRule(),
         tt: getWindowRule(),
         ks: getWindowRule(),
-        jd: getWindowRule()
+        jd: getWindowRule(),
+        ios: getWindowRule(),
+        android: getWindowRule(),
+        harmony: getWindowRule()
       }
     ]
   }
