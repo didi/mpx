@@ -49,10 +49,12 @@
   - [picker-view](#picker-view)
   - [picker-view-column](#picker-view-column)
   - [picker](#picker)
+  - [slider](#slider)
   - [switch](#switch)
   - [navigator](#navigator)
   - [rich-text](#rich-text)
   - [canvas](#canvas)
+  - [camera](#camera)
   - [video](#video)
   - [web-view](#web-view)
   - [root-portal](#root-portal)
@@ -650,13 +652,13 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 | bounces | boolean | `true` | iOS 下 scroll-view 边界弹性控制 (同时开启 enhanced 属性后生效) |
 | refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
 | refresher-threshold | number | `45` | 设置自定义下拉刷新阈值 |
-| scroll-into-view | boolean | `false` | 值应为某子元素 id（id 不能以数字开头） |
+| scroll-into-view | string |  | 值应为某子元素 id（id 不能以数字开头） |
 | scroll-into-view-offset | number | `0` | 跳转到 scroll-into-view 目标节点时的额外偏移 |
 | refresher-default-style | string | `'black'` | 设置下拉刷新默认样式,支持 `black`、`white`、`none`，仅安卓支持 |
 | refresher-background | string | `'#fff'` | 设置自定义下拉刷新背景颜色，仅安卓支持 |
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态,true 表示已触发 |
-| paging-enabled | number | `false` | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置 |
-| show-scrollbar | number | `true` | 滚动条显隐控制 (同时开启 enhanced 属性后生效) |
+| paging-enabled | boolean | `false` | 分页滑动效果 (同时开启 enhanced 属性后生效)，当值为 true 时，滚动条会停在滚动视图的尺寸的整数倍位置 |
+| show-scrollbar | boolean | `true` | 滚动条显隐控制 (同时开启 enhanced 属性后生效) |
 | enable-trigger-intersection-observer | boolean | `false` | RN 环境特有属性，是否开启 intersection-observer |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
 | wait-for | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 scroll-view 组件 |
@@ -915,7 +917,6 @@ movable-view 的可移动区域。
 | auto-focus | boolean | `false` | (即将废弃，请直接使用 focus )自动聚焦，拉起键盘 |
 | focus | boolean | `false` | 获取焦点 |
 | confirm-type | string | `done` | 设置键盘右下角按钮的文字，仅在 type='text' 时生效，可选值为 `send`、`search`、`next`、`go`、`done`、`return` |
-| confirm-hold | boolean | `false` | 点击键盘右下角按钮时是否保持键盘不收起 |
 | hold-keyboard | boolean | `false` | 输入框聚焦时，点击页面其他地方是否收起键盘 <badge type="tip" text="2.10.18+" /> |
 | cursor | number |  | 指定 focus 时的光标位置 |
 | cursor-color | string |  | 光标颜色 |
@@ -972,6 +973,10 @@ movable-view 的可移动区域。
 | bindconfirm | 点击完成按钮时触发，`event.detail = { value }` |
 | bindlinechange | 输入框行数变化时调用，`event.detail = { height: 0, lineCount: 0 }`，不支持 `heightRpx` |
 | bind:selectionchange | 选区改变事件, `event.detail = {selectionStart, selectionEnd}` |
+
+#### 注意事项
+
+- textarea 组件不支持 `confirm-hold` 属性。
 
 ### progress
 
@@ -1116,6 +1121,37 @@ level 有效值：
 | city     | 市级选择器   |
 | region   | 区级选择器   |
 
+### slider
+
+滑动选择器。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| min | number | `0` | 最小值 |
+| max | number | `100` | 最大值 |
+| step | number | `1` | 步长 |
+| disabled | boolean | `false` | 是否禁用 |
+| value | number | `min` | 当前取值 |
+| color | string |  | 背景条颜色（已废弃，请使用 backgroundColor） |
+| selected-color | string |  | 已选择颜色（已废弃，请使用 activeColor） |
+| activeColor | string | `#1aad19` | 已选择颜色 |
+| backgroundColor | string | `#e9e9e9` | 背景条颜色 |
+| block-size | number | `28` | 滑块大小，RN 侧会限制在 12 到 28 之间 |
+| block-color | string | `#ffffff` | 滑块颜色 |
+
+#### 事件
+
+| 事件名 | 说明 |
+| --- | --- |
+| bindchange | 完成一次拖动后触发，`event.detail = { value }` |
+| bindchanging | 拖动过程中触发，`event.detail = { value }` |
+
+#### 注意事项
+
+- 不支持 `show-value` 属性，即不支持在滑动条右侧显示当前 value。
+
 ### switch
 
 开关选择器。
@@ -1190,6 +1226,42 @@ level 有效值：
 - 通过 Canvas.getContext('2d') 接口可以获取 CanvasRenderingContext2D 对象，具体接口可以参考 [HTML Canvas 2D Context](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) 定义的属性、方法
 - canvas 的实现主要借助于 PostMessage 方式与 webview 容器通信进行绘制，所以对于严格依赖方法执行时机的场景，如调用 drawImage 绘图，再通过 getImageData 获取图片数据的场景，调用时需要使用 await 等方式来保证方法的执行时机
 - 通过 Canvas.createImage 画图，图片的链接不能有特殊字符，安卓手机可能会 load 失败
+
+### camera
+
+系统相机。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| mode | string | `normal` | 应用模式，可选值为 `normal`、`scanCode` |
+| resolution | string | `medium` | 分辨率，可选值为 `low`、`medium`、`high` |
+| device-position | string | `back` | 摄像头朝向，可选值为 `front`、`back` |
+| flash | string | `auto` | 闪光灯，可选值为 `auto`、`on`、`off` |
+| frame-size | string | `medium` | 指定期望的相机帧数据尺寸，可选值为 `small`、`medium`、`large` |
+
+#### 事件
+
+| 事件名 | 说明 |
+| --- | --- |
+| bindinitdone | 相机初始化完成时触发，`event.detail = { maxZoom }` |
+| bindstop | 摄像头在非正常终止时触发 |
+| binderror | 相机发生错误时触发 |
+| bindscancode | 在 `scanCode` 模式下识别到二维码时触发，`event.detail = { result, type, scanArea }` |
+
+#### API
+
+| 方法名 | 说明 |
+| --- | --- |
+| setZoom | 设置缩放级别 |
+| takePhoto | 拍照，仅支持在 `normal` 模式中使用 |
+| startRecord | 开始录像 |
+| stopRecord | 结束录像 |
+
+#### 注意事项
+
+- camera 组件基于第三方库 `react-native-vision-camera` 来实现，需要容器中安装此依赖包并完成相机权限配置。
 
 ### video
 

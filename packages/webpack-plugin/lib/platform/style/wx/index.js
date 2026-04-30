@@ -3,7 +3,7 @@ const { parseValues } = require('../../../utils/string')
 
 module.exports = function getSpec({ warn, error }) {
   // React Native 双端都不支持的 CSS property
-  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color)$/
+  const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color|float|clear)$/
   const unsupportedPropMode = {
     // React Native ios 不支持的 CSS property
     ios: /^(vertical-align)$/,
@@ -50,7 +50,7 @@ module.exports = function getSpec({ warn, error }) {
     'flex-direction': ['row', 'row-reverse', 'column', 'column-reverse'],
     'flex-wrap': ['wrap', 'nowrap', 'wrap-reverse'],
     'pointer-events': ['auto', 'box-none', 'box-only', 'none'],
-    'vertical-align': ['auto', 'top', 'bottom', 'center'],
+    'vertical-align': ['auto', 'top', 'bottom', 'middle'],
     position: ['relative', 'absolute', 'fixed'],
     'font-variant': ['small-caps', 'oldstyle-nums', 'lining-nums', 'tabular-nums', 'proportional-nums'],
     'text-align': ['left', 'right', 'center', 'justify'],
