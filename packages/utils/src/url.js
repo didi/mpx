@@ -97,7 +97,7 @@ function parseQuery (query, noDecode = false) {
     return JSON.parse(query)
   }
 
-  const queryArgs = query.split(/[,&]/g)
+  const queryArgs = query.split(noDecode ? /&/g : /[,&]/g)
   const result = Object.create(null)
 
   queryArgs.forEach((arg) => {
