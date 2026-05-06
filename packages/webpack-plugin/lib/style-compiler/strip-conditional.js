@@ -143,6 +143,60 @@ function stripCondition(content, defs) {
   return traverseAndEvaluate(ast, defs)
 }
 
+/**
+ * 检测内容中是否包含条件编译指令
+ * @param {string} content
+ * @returns {boolean}
+ */
+function hasConditionalDirective(content) {
+  const regex = /(?:\/\*\s*@mpx-(if|elif|else|endif)(?:\s*\([\s\S]*?\))?\s*\*\/)|(?:\/\/\s*@mpx-(if|elif|else|endif)(?:\s*\(.*?\))?\s*)|(?:<!--\s*@mpx-(if|elif|else|endif)(?:\s*\([\s\S]*?\))?\s*-->)/
+  return regex.test(content)
+}
+
+/**
+ * 处理 .mpx 文件内容：
+ * 1. 仅对 <style> 块中的内容进行条件编译裁剪
+ * 2. 非 <style> 区域出现条件指令时通过 logStripError 报错并返回原始内容
+ * @param {string} content .mpx 文件完整内容
+ * @param {Record<string, any>} defs 条件变量定义
+ * @param {string} path 文件路径
+ * @returns {string} 处理后的内容
+ */
+function stripConditionForMpx(content, defs, path) {
+  // 匹配 <style ...> ... </style> 块（支持多个 style 块）
+  const styleRegex = /(<style[^>]*>)([\s\S]*?)(<\/style>)/gi
+  let lastIndex = 0
+  let result = ''
+  let match
+
+  while ((match = styleRegex.exec(content)) !== null) {
+    // match.index 到 match[1] 结束前的内容为非 style 区域
+    const beforeStyle = content.substring(lastIndex, match.index)
+    // 检测非 style 区域是否包含条件指令
+    if (hasConditionalDirective(beforeStyle)) {
+      logStripError(path, new Error('@mpx conditional directives are only allowed inside <style> blocks in .mpx files'))
+      return content
+    }
+    result += beforeStyle
+    // 处理 style 块内容
+    const styleOpen = match[1]
+    const styleContent = match[2]
+    const styleClose = match[3]
+    const strippedStyle = stripCondition(styleContent, defs)
+    result += styleOpen + strippedStyle + styleClose
+    lastIndex = styleRegex.lastIndex
+  }
+
+  // 处理最后一个 style 块之后的剩余内容
+  const remaining = content.substring(lastIndex)
+  if (hasConditionalDirective(remaining)) {
+    logStripError(path, new Error('@mpx conditional directives are only allowed inside <style> blocks in .mpx files'))
+    return content
+  }
+  result += remaining
+  return result
+}
+
 let proxyReadFileSync
 let proxyReadFile
 const rawReadFileSync = fs.readFileSync
@@ -180,15 +234,24 @@ function startFSStripForCss(defs) {
   function shouldStrip(path) {
     return typeof path === 'string' && /\.(styl|scss|sass|less|css|mpx)$/.test(path)
   }
+  function isMpxFile(path) {
+    return typeof path === 'string' && /\.mpx$/.test(path)
+  }
+  function doStrip(content, path) {
+    if (isMpxFile(path)) {
+      return stripConditionForMpx(content, defs, path)
+    }
+    return stripCondition(content, defs)
+  }
   proxyReadFileSync = function (path, options) {
     const content = rawReadFileSync.call(fs, path, options)
     if (shouldStrip(path)) {
       try {
         if (typeof content === 'string') {
-          return stripCondition(content, defs)
+          return doStrip(content, path)
         } else if (Buffer.isBuffer(content)) {
           const str = content.toString('utf-8')
-          const result = stripCondition(str, defs)
+          const result = doStrip(str, path)
           if (result !== str) {
             return Buffer.from(result, 'utf-8')
           }
@@ -215,11 +278,11 @@ function startFSStripForCss(defs) {
       if (shouldStrip(path)) {
         try {
           if (typeof data === 'string') {
-            const result = stripCondition(data, defs)
+            const result = doStrip(data, path)
             return callback(null, result)
           } else if (Buffer.isBuffer(data)) {
             const content = data.toString('utf-8')
-            const result = stripCondition(content, defs)
+            const result = doStrip(content, path)
             if (result !== content) {
               return callback(null, Buffer.from(result, 'utf-8'))
             }
@@ -238,6 +301,8 @@ function startFSStripForCss(defs) {
 }
 
 module.exports.stripCondition = stripCondition
+module.exports.stripConditionForMpx = stripConditionForMpx
+module.exports.hasConditionalDirective = hasConditionalDirective
 module.exports.rewriteFSForCss = rewriteFSForCss
 module.exports.startFSStripForCss = startFSStripForCss
 module.exports.registerStripCompilation = registerStripCompilation
