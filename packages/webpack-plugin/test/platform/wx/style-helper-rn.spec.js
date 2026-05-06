@@ -21,9 +21,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       expect(result).toEqual({})
-      expect(config.error).toHaveBeenCalledWith(
-        expect.stringContaining('letter-spacing')
-      )
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('letter-spacing'))
     })
 
     test('should filter out line-height with invalid "normal" fallback', () => {
@@ -37,9 +35,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       expect(result).toEqual({})
-      expect(config.error).toHaveBeenCalledWith(
-        expect.stringContaining('line-height')
-      )
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('line-height'))
     })
 
     test('should keep valid CSS variable with numeric fallback', () => {
@@ -119,9 +115,7 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       expect(result).toEqual({})
-      expect(config.error).toHaveBeenCalledWith(
-        expect.stringContaining('letter-spacing')
-      )
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('letter-spacing'))
     })
 
     test('should keep nested CSS variables with valid fallback', () => {
@@ -281,6 +275,50 @@ describe('React Native style validation for CSS variables', () => {
         letterSpacing: '2'
       })
       expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should filter out text-align: auto', () => {
+      const css = '.text { text-align: auto; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).toEqual({})
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('text-align'))
+    })
+
+    test('should keep vertical-align: middle on android', () => {
+      const css = '.text { vertical-align: middle; }'
+      const config = createConfig('android')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text).toEqual({
+        verticalAlign: '"middle"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should filter out unsupported float and clear', () => {
+      const css = '.box { float: left; clear: both; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).toEqual({})
+      expect(config.error).toHaveBeenCalledTimes(2)
     })
   })
 })

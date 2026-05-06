@@ -1,0 +1,443 @@
+{
+  "metadata": {
+    "skill_name": "mpx-rn-dev-guide",
+    "skill_path": "/Users/didi/work/mpx2/.agents/skills/mpx-rn-dev-guide",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-29T03:49:52Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 63.1,
+        "tokens": 48442,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "style: no less nesting (& or rule-in-rule)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN (wx-conditional stripped): no `:active`",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `:first-child`",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "script: replaced wx.request with mpx.request",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "script: replaced wx.navigateTo with mpx.navigateTo",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "script: uses e.currentTarget.dataset (not e.target.dataset)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "template: dynamic class via wx:class (not class string interp)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style: no empty selector rules after stripping comments",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 102.4,
+        "tokens": 95996,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses composition API (script setup or setup())",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style: no nesting / compound selectors",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "uses hover-class for press feedback (not bare :active on root)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "triggerEvent('tap', ...) is called",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "title uses numberOfLines for ellipsis",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "avatar uses <image> (not <img>)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "text content wrapped in <text> elements",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "defineProps uses Mpx-style `value:` (not Vue-style `default:`)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 57.3,
+        "tokens": 52994,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "style: no less nesting outside of conditional compile",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no ::before pseudo-element",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `display: grid`",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `:active` pseudo-class",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `+` adjacent sibling combinator",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style: numeric font-weight (e.g. 600) replaced with bold/normal",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "template: real node added to replace ::before (e.g. card-decorator/card-bar)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style: no empty selector rules",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5556,
+        "passed": 5,
+        "failed": 4,
+        "total": 9,
+        "time_seconds": 65.3,
+        "tokens": 18598,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "style: no less nesting (& or rule-in-rule)",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "text": "style on RN (wx-conditional stripped): no `:active`",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `:first-child`",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "script: replaced wx.request with mpx.request",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "script: replaced wx.navigateTo with mpx.navigateTo",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "script: uses e.currentTarget.dataset (not e.target.dataset)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "template: dynamic class via wx:class (not class string interp)",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "text": "style: no empty selector rules after stripping comments",
+          "passed": false,
+          "evidence": "FAIL"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7778,
+        "passed": 7,
+        "failed": 2,
+        "total": 9,
+        "time_seconds": 115.3,
+        "tokens": 16390,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "uses composition API (script setup or setup())",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style: no nesting / compound selectors",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "uses hover-class for press feedback (not bare :active on root)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "triggerEvent('tap', ...) is called",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "title uses numberOfLines for ellipsis",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "text": "avatar uses <image> (not <img>)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "text content wrapped in <text> elements",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "defineProps uses Mpx-style `value:` (not Vue-style `default:`)",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7778,
+        "passed": 7,
+        "failed": 2,
+        "total": 9,
+        "time_seconds": 44.3,
+        "tokens": 17836,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "style: no less nesting outside of conditional compile",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "text": "style on RN: no ::before pseudo-element",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `display: grid`",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `:active` pseudo-class",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style on RN: no `+` adjacent sibling combinator",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style: numeric font-weight (e.g. 600) replaced with bold/normal",
+          "passed": false,
+          "evidence": "FAIL"
+        },
+        {
+          "text": "template: real node added to replace ::before (e.g. card-decorator/card-bar)",
+          "passed": true,
+          "evidence": "PASS"
+        },
+        {
+          "text": "style: no empty selector rules",
+          "passed": true,
+          "evidence": "PASS"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 74.2667,
+        "stddev": 24.5362,
+        "min": 57.3,
+        "max": 102.4
+      },
+      "tokens": {
+        "mean": 65810.6667,
+        "stddev": 26240.1589,
+        "min": 48442,
+        "max": 95996
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.7037,
+        "stddev": 0.1283,
+        "min": 0.5556,
+        "max": 0.7778
+      },
+      "time_seconds": {
+        "mean": 74.9667,
+        "stddev": 36.4737,
+        "min": 44.3,
+        "max": 115.3
+      },
+      "tokens": {
+        "mean": 17608.0,
+        "stddev": 1121.5186,
+        "min": 16390,
+        "max": 18598
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.30",
+      "time_seconds": "-0.7",
+      "tokens": "+48203"
+    }
+  },
+  "notes": []
+}

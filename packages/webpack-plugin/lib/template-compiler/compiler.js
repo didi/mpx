@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR, MPX_WX_TEMPLATE_COMPONENT_PREFIX } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR, MPX_TEMPLATE_COMPONENT_PREFIX, STYLE_PAD_PLACEHOLDER } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -18,6 +18,7 @@ const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb, isNoMode } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
+const { offsetToLoc } = require('../utils/source-location')
 
 const no = function () {
   return false
@@ -341,7 +342,10 @@ function parseHTML (html, options) {
       advance(start[0].length)
       let end, attr
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+        const attrStart = index
         advance(attr[0].length)
+        attr.start = attrStart
+        attr.end = index
         match.attrs.push(attr)
       }
       if (end) {
@@ -393,7 +397,9 @@ function parseHTML (html, options) {
       }
       attrs[i] = {
         name: args[1],
-        value: decode(value)
+        value: decode(value),
+        start: args.start,
+        end: args.end
       }
     }
 
@@ -586,8 +592,7 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
-      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
+      if (options.pad) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -597,6 +602,10 @@ function parseComponent (content, options) {
   }
 
   function padContent (block, pad) {
+    if (block.tag === 'style' && pad === 'line') {
+      const offset = content.slice(0, block.start).split(splitRE).length
+      return Array(offset).join(`/* ${STYLE_PAD_PLACEHOLDER} */\n`)
+    }
     if (pad === 'space') {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
@@ -649,19 +658,19 @@ function parse (template, options) {
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
 
-  const _warn = content => {
+  const _warn = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.warnArray.push(content)
+    currentElementRuleResult.warnArray.push({ content, loc })
   }
-  const _error = content => {
+  const _error = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.errorArray.push(content)
+    currentElementRuleResult.errorArray.push({ content, loc })
   }
 
   rulesRunner = getRulesRunner({
@@ -674,7 +683,11 @@ function parse (template, options) {
       customBuiltInComponents: customBuiltInComponentsOpt
     },
     warn: _warn,
-    error: _error
+    error: _error,
+    diagnostic: {
+      file: filePath,
+      source: template
+    }
   })
 
   const stack = []
@@ -704,12 +717,20 @@ function parse (template, options) {
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldKeepComment: true,
-    start: function start (tag, attrs, unary) {
+    start: function start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       const element = createASTElement(tag, attrs, currentParent)
+      element.start = start
+      element.end = end
+      element.loc = offsetToLoc(template, start, end)
+      element.attrsList.forEach((attr) => {
+        if (attr.start != null) {
+          attr.loc = offsetToLoc(template, attr.start, attr.end)
+        }
+      })
 
       if (ns) {
         element.ns = ns
@@ -823,8 +844,8 @@ function parse (template, options) {
   })
 
   rulesResultMap.forEach((val) => {
-    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
-    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
+    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item.content, item.loc))
+    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item.content, item.loc))
   })
 
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
@@ -2649,7 +2670,7 @@ function postProcessTemplateReact (el, meta) {
   collectTranspileTemplateDefinition(el, meta)
 }
 
-// Web：template 定义收集 + `<template is="...">` 使用节点替换为 mpx-wx-tpl-* / component
+// Web：template 定义收集 + `<template is="...">` 使用节点替换为 mpx-tpl-* / component
 function postProcessTemplateWeb (el, meta) {
   if (collectTranspileTemplateDefinition(el, meta)) return
   if (el.tag !== 'template' || !el.templateInfo) return
@@ -2661,11 +2682,11 @@ function postProcessTemplateWeb (el, meta) {
   if (literalMatch) {
     const name = literalMatch[1]
     const built = data ? [{ name: ':mpx-data', value: data }] : []
-    newNode = createASTElement(`${MPX_WX_TEMPLATE_COMPONENT_PREFIX}${name}`, baseAttrs.concat(built))
+    newNode = createASTElement(`${MPX_TEMPLATE_COMPONENT_PREFIX}${name}`, baseAttrs.concat(built))
     newNode.unary = true
   } else {
     const built = [
-      { name: ':is', value: `'${MPX_WX_TEMPLATE_COMPONENT_PREFIX}' + (${is})` },
+      { name: ':is', value: `'${MPX_TEMPLATE_COMPONENT_PREFIX}' + (${is})` },
       ...(data ? [{ name: ':mpx-data', value: data }] : [])
     ]
     newNode = createASTElement('component', baseAttrs.concat(built))
