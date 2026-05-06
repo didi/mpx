@@ -276,5 +276,49 @@ describe('React Native style validation for CSS variables', () => {
       })
       expect(config.error).not.toHaveBeenCalled()
     })
+
+    test('should filter out text-align: auto', () => {
+      const css = '.text { text-align: auto; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).toEqual({})
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('text-align'))
+    })
+
+    test('should keep vertical-align: middle on android', () => {
+      const css = '.text { vertical-align: middle; }'
+      const config = createConfig('android')
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.text).toEqual({
+        verticalAlign: '"middle"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should filter out unsupported float and clear', () => {
+      const css = '.box { float: left; clear: both; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result).toEqual({})
+      expect(config.error).toHaveBeenCalledTimes(2)
+    })
   })
 })
