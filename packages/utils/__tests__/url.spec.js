@@ -13,11 +13,16 @@ describe('url utils', () => {
     expect(queryObj.id).toBe('1')
   })
 
-  test('parseQuery keeps comma as separator by default', () => {
+  test('parseQuery keeps comma in query value', () => {
     expect(parseQuery('?a=1,b=2&c=3')).toEqual({
-      a: '1',
-      b: '2',
+      a: '1,b=2',
       c: '3'
+    })
+  })
+
+  test('parseQuery keeps encoded child url query value', () => {
+    expect(parseQuery('?redirectUrl=https%3A%2F%2Fdidi.com%3Fa%3D1%26b%3D2')).toEqual({
+      redirectUrl: 'https://didi.com?a=1&b=2'
     })
   })
 })
