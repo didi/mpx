@@ -83,13 +83,15 @@ class RNIntersectionObserver {
     } else {
       targetRef = this.component.__selectRef(selector, 'node')
     }
-    if (!targetRef || targetRef.length === 0) {
+    const hasTargetRef = targetRef && (!isArray(targetRef) || targetRef.length > 0)
+    const virtualMeasureContext = this._getVirtualMeasureContext()
+    if (!hasTargetRef && !virtualMeasureContext) {
       warn('intersection observer target not found', this.mpxFileResource)
       return
     }
-    this.observerRefs = isArray(targetRef) ? targetRef : [targetRef]
+    this.observerRefs = hasTargetRef ? (isArray(targetRef) ? targetRef : [targetRef]) : null
     this.callback = callback
-    this._measureTarget(true, this._getVirtualMeasureContext())
+    this._measureTarget(true, virtualMeasureContext)
   }
 
   _getWindowRect () {
@@ -181,6 +183,9 @@ class RNIntersectionObserver {
       selector: this.observeSelector,
       observeAll: this.observeAll
     })
+    if (isArray(observeRects) && observeRects.length === 0) {
+      return null
+    }
     if (!observeRects) {
       return null
     }
@@ -213,7 +218,9 @@ class RNIntersectionObserver {
     if (!measureContexts || typeof measureContexts.forEach !== 'function') {
       return virtualMeasureContext
     }
+    let contextCount = 0
     measureContexts.forEach((measureContext) => {
+      contextCount++
       if (virtualMeasureContext) return
       if (typeof measureContext.isObserveTarget === 'function') {
         if (measureContext.isObserveTarget({
@@ -290,9 +297,13 @@ class RNIntersectionObserver {
       virtualObserveRects ? Promise.resolve(virtualObserveRects) : this._getReferenceRect(this.observerRefs),
       virtualRelativeRect ? Promise.resolve(virtualRelativeRect) : this._getReferenceRect(this.relativeRef)
     ]).then(([observeRects, relativeRect]) => {
-      if (relativeRect === IgnoreTarget) return
+      if (relativeRect === IgnoreTarget) {
+        return
+      }
       observeRects.forEach((observeRect, index) => {
-        if (observeRect === IgnoreTarget) return
+        if (observeRect === IgnoreTarget) {
+          return
+        }
         const { intersectionRatio, intersectionRect, isInsected } = this._measureIntersection({
           observeRect,
           observeIndex: index,

@@ -1,9 +1,33 @@
-
-import { forwardRef, useRef, useState, useEffect, useMemo, useLayoutEffect, createElement, useImperativeHandle, useCallback, memo, useContext } from 'react'
-import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import {
+  forwardRef,
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+  useLayoutEffect,
+  createElement,
+  useImperativeHandle,
+  useCallback,
+  memo,
+  useContext
+} from 'react'
+import {
+  SectionList,
+  RefreshControl,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  Dimensions
+} from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture, useNavigation } from './utils'
+import {
+  extendObject,
+  useLayout,
+  useTransformStyle,
+  GestureHandler,
+  flatGesture,
+  useNavigation
+} from './utils'
 import { IntersectionObserverContext } from './context'
 interface ListItem {
   isSectionHeader?: boolean;
@@ -113,11 +137,16 @@ interface SectionListIntersectionObserverOptions {
   enableSticky: boolean;
 }
 
-const VirtualMeasureContextsKey = '__mpxVirtualIntersectionObserverMeasureContexts'
+const VirtualMeasureContextsKey =
+  '__mpxVirtualIntersectionObserverMeasureContexts'
 const emptyVirtualTargetMap = new Map<any, VirtualTarget>()
 const emptyVirtualTargetIdMap = new Map<string, VirtualTarget>()
 
-const getVisibleRangeByLayouts = (layouts: LayoutItem[] = [], scrollTop = 0, viewportHeight = 0) => {
+const getVisibleRangeByLayouts = (
+  layouts: LayoutItem[] = [],
+  scrollTop = 0,
+  viewportHeight = 0
+) => {
   if (!layouts.length || viewportHeight <= 0) {
     return {
       start: -1,
@@ -161,10 +190,22 @@ const restrictValueInRange = (start = 0, end = 0, value = 0) => {
 }
 
 const getRectIntersection = (baseRect: Rect, clipRect: Rect) => {
-  const left = restrictValueInRange(clipRect.left, clipRect.right, baseRect.left)
+  const left = restrictValueInRange(
+    clipRect.left,
+    clipRect.right,
+    baseRect.left
+  )
   const top = restrictValueInRange(clipRect.top, clipRect.bottom, baseRect.top)
-  const right = restrictValueInRange(clipRect.left, clipRect.right, baseRect.right)
-  const bottom = restrictValueInRange(clipRect.top, clipRect.bottom, baseRect.bottom)
+  const right = restrictValueInRange(
+    clipRect.left,
+    clipRect.right,
+    baseRect.right
+  )
+  const bottom = restrictValueInRange(
+    clipRect.top,
+    clipRect.bottom,
+    baseRect.bottom
+  )
   return {
     left,
     top,
@@ -187,14 +228,24 @@ const getVirtualMeasureContexts = (intersectionObservers: any) => {
 
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
-  const GenericComponent = global.__mpxGenericsMap?.[generichash]?.[generickey]?.()
+  const GenericComponent =
+    global.__mpxGenericsMap?.[generichash]?.[generickey]?.()
   if (!GenericComponent) return null
 
-  return memo(forwardRef((props: any, ref: any) => {
-    return createElement(GenericComponent, extendObject({}, {
-      ref: ref
-    }, props))
-  }))
+  return memo(
+    forwardRef((props: any, ref: any) => {
+      return createElement(
+        GenericComponent,
+        extendObject(
+          {},
+          {
+            ref: ref
+          },
+          props
+        )
+      )
+    })
+  )
 }
 
 const useSectionListIntersectionObserver = ({
@@ -214,6 +265,7 @@ const useSectionListIntersectionObserver = ({
   const measureContextRef = useRef<any>(null)
   const virtualMeasureContextIdRef = useRef({})
   const enabledRef = useRef(enabled)
+  const deferredMeasureTimersRef = useRef<any[]>([])
   const stateRef = useRef({
     scrollTop: 0,
     viewportHeight: 0,
@@ -223,140 +275,275 @@ const useSectionListIntersectionObserver = ({
   })
 
   const getPayload = useCallback((payload = {}) => {
-    const { scrollTop, viewportHeight, visibleRangeStart, visibleRangeEnd, viewableSignature } = stateRef.current
-    return Object.assign({
-      signature: `${scrollTop}_${viewportHeight}_${visibleRangeStart}_${visibleRangeEnd}_${viewableSignature}`,
+    const {
       scrollTop,
       viewportHeight,
       visibleRangeStart,
-      visibleRangeEnd
-    }, payload)
+      visibleRangeEnd,
+      viewableSignature
+    } = stateRef.current
+    return Object.assign(
+      {
+        signature: `${scrollTop}_${viewportHeight}_${visibleRangeStart}_${visibleRangeEnd}_${viewableSignature}`,
+        scrollTop,
+        viewportHeight,
+        visibleRangeStart,
+        visibleRangeEnd
+      },
+      payload
+    )
   }, [])
 
-  const triggerWithPayload = useCallback((payload = {}) => {
-    if (!enabled || !intersectionObservers) return
-    const measurePayload = measureContextRef.current
-      ? Object.assign({ measureContext: measureContextRef.current }, payload)
-      : payload
-    for (const key in intersectionObservers) {
-      const observer = intersectionObservers[key]
-      if (!observer) continue
-      if (observer.throttleMeasureBySource) {
-        observer.throttleMeasureBySource('section-list', measurePayload)
-      } else {
-        observer.throttleMeasure(measureContextRef.current)
+  const triggerWithPayload = useCallback(
+    (payload = {}) => {
+      if (!enabled || !intersectionObservers) {
+        return
       }
-    }
-  }, [enabled, intersectionObservers])
+      const observerKeys = Object.keys(intersectionObservers).filter(
+        (key) => key !== VirtualMeasureContextsKey
+      )
+      const measurePayload = measureContextRef.current
+        ? Object.assign({ measureContext: measureContextRef.current }, payload)
+        : payload
+      for (const key in intersectionObservers) {
+        const observer: any = intersectionObservers[key]
+        if (!observer) continue
+        if (observer.throttleMeasureBySource) {
+          observer.throttleMeasureBySource('section-list', measurePayload)
+        } else {
+          observer.throttleMeasure(measureContextRef.current)
+        }
+      }
+    },
+    [enabled, intersectionObservers]
+  )
 
-  const triggerIntersectionObserver = useCallback((payload = {}) => {
-    triggerWithPayload(getPayload(payload))
-  }, [triggerWithPayload, getPayload])
+  const triggerIntersectionObserver = useCallback(
+    (payload = {}) => {
+      triggerWithPayload(getPayload(payload))
+    },
+    [triggerWithPayload, getPayload]
+  )
+
+  const triggerIntersectionObserverDeferred = useCallback(
+    (payload = {}) => {
+      triggerIntersectionObserver(payload)
+      if (!enabled) return;
+      [0, 80].forEach((delay) => {
+        const timer = setTimeout(() => {
+          triggerIntersectionObserver(
+            extendObject({}, payload, {
+              force: true,
+              deferred: delay
+            })
+          )
+        }, delay)
+        deferredMeasureTimersRef.current.push(timer)
+      })
+    },
+    [enabled, triggerIntersectionObserver]
+  )
 
   const updateViewportRect = useCallback(() => {
     if (!enabled) return
     const node = scrollViewRef.current
     if (node?.measureInWindow) {
-      node.measureInWindow((x: number, y: number, viewportWidth: number, viewportHeight: number) => {
-        const statusBarHeight = navigation?.layout?.statusBarHeight || 0
-        const top = y + statusBarHeight
+      node.measureInWindow(
+        (
+          x: number,
+          y: number,
+          viewportWidth: number,
+          viewportHeight: number
+        ) => {
+          const statusBarHeight = navigation?.layout?.statusBarHeight || 0
+          const top = y + statusBarHeight
+          viewportRectRef.current = {
+            left: x,
+            top,
+            right: x + viewportWidth,
+            bottom: top + viewportHeight,
+            width: viewportWidth,
+            height: viewportHeight
+          }
+          triggerIntersectionObserverDeferred({
+            force: true
+          })
+        }
+      )
+    } else {
+      const layout = navigation?.layout || {}
+      const windowSize = Dimensions.get('window')
+      const viewportWidth = layout.width || windowSize.width
+      const viewportHeight = layout.height || windowSize.height
+      if (viewportWidth && viewportHeight) {
+        const left = layout.left || 0
+        const top = layout.top || 0
         viewportRectRef.current = {
-          left: x,
+          left,
           top,
-          right: x + viewportWidth,
+          right: left + viewportWidth,
           bottom: top + viewportHeight,
           width: viewportWidth,
           height: viewportHeight
         }
-        triggerIntersectionObserver({
-          force: true
+        triggerIntersectionObserverDeferred({
+          force: true,
+          fallback: true
         })
+      }
+    }
+  }, [enabled, scrollViewRef, navigation, triggerIntersectionObserverDeferred])
+
+  const updateScrollState = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!enabled) return
+      const contentOffset =
+        event.nativeEvent && event.nativeEvent.contentOffset
+      const layoutMeasurement =
+        event.nativeEvent && event.nativeEvent.layoutMeasurement
+      const scrollTop = contentOffset?.y || 0
+      const viewportHeight =
+        layoutMeasurement?.height || stateRef.current.viewportHeight
+      const visibleRange = getVisibleRangeByLayouts(
+        itemLayoutsRef.current,
+        scrollTop,
+        viewportHeight
+      )
+      Object.assign(stateRef.current, {
+        scrollTop,
+        viewportHeight,
+        visibleRangeStart: visibleRange.start,
+        visibleRangeEnd: visibleRange.end
       })
-    }
-  }, [enabled, scrollViewRef, navigation, triggerIntersectionObserver])
+      if (layoutMeasurement && viewportRectRef.current) {
+        const { width: viewportWidth, height: viewportHeight } =
+          layoutMeasurement
+        viewportRectRef.current.width = viewportWidth
+        viewportRectRef.current.height = viewportHeight
+        viewportRectRef.current.right =
+          viewportRectRef.current.left + viewportWidth
+        viewportRectRef.current.bottom =
+          viewportRectRef.current.top + viewportHeight
+      }
+      triggerIntersectionObserver()
+    },
+    [enabled, itemLayoutsRef, triggerIntersectionObserver]
+  )
 
-  const updateScrollState = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (!enabled) return
-    const contentOffset = event.nativeEvent && event.nativeEvent.contentOffset
-    const layoutMeasurement = event.nativeEvent && event.nativeEvent.layoutMeasurement
-    const scrollTop = contentOffset?.y || 0
-    const viewportHeight = layoutMeasurement?.height || stateRef.current.viewportHeight
-    const visibleRange = getVisibleRangeByLayouts(itemLayoutsRef.current, scrollTop, viewportHeight)
-    Object.assign(stateRef.current, {
-      scrollTop,
-      viewportHeight,
-      visibleRangeStart: visibleRange.start,
-      visibleRangeEnd: visibleRange.end
-    })
-    if (layoutMeasurement && viewportRectRef.current) {
-      const { width: viewportWidth, height: viewportHeight } = layoutMeasurement
-      viewportRectRef.current.width = viewportWidth
-      viewportRectRef.current.height = viewportHeight
-      viewportRectRef.current.right = viewportRectRef.current.left + viewportWidth
-      viewportRectRef.current.bottom = viewportRectRef.current.top + viewportHeight
-    }
-    triggerIntersectionObserver()
-  }, [enabled, itemLayoutsRef, triggerIntersectionObserver])
+  const updateViewableSignature = useCallback(
+    (viewableItems: any[] = []) => {
+      if (!enabled) return
+      stateRef.current.viewableSignature =
+        getViewableOriginalIndexes(viewableItems).join(',')
+      triggerIntersectionObserver()
+    },
+    [enabled, triggerIntersectionObserver]
+  )
 
-  const updateViewableSignature = useCallback((viewableItems: any[] = []) => {
-    if (!enabled) return
-    stateRef.current.viewableSignature = getViewableOriginalIndexes(viewableItems).join(',')
-    triggerIntersectionObserver()
-  }, [enabled, triggerIntersectionObserver])
-
-  const getVirtualRect = useCallback((target: VirtualTarget): Rect | null => {
-    const viewportRect = viewportRectRef.current
-    if (!viewportRect) return null
-    const scrollOffset = stateRef.current.scrollTop || 0
-    let top = viewportRect.top + target.offset - scrollOffset
-    if (enableSticky && target.type === 'header' && target.length) {
-      const stickyTop = Math.max(top, viewportRect.top)
-      top = typeof target.nextHeaderOffset === 'number'
-        ? Math.min(stickyTop, viewportRect.top + target.nextHeaderOffset - scrollOffset - target.length)
-        : stickyTop
-    }
-    const bottom = top + target.length
-    return {
-      id: target.id,
-      left: viewportRect.left,
-      top,
-      right: viewportRect.right,
-      bottom,
-      width: viewportRect.width,
-      height: target.length
-    }
-  }, [enableSticky])
+  const getVirtualRect = useCallback(
+    (target: VirtualTarget, observer?: any): Rect | null => {
+      const viewportRect = viewportRectRef.current
+      if (!viewportRect) {
+        return null
+      }
+      const windowRect =
+        typeof observer?._getWindowRect === 'function'
+          ? observer._getWindowRect()
+          : null
+      const baseRect = windowRect
+        ? getRectIntersection(windowRect, viewportRect)
+        : viewportRect
+      const scrollOffset = stateRef.current.scrollTop || 0
+      let top = baseRect.top + target.offset - scrollOffset
+      if (enableSticky && target.type === 'header' && target.length) {
+        const stickyTop = Math.max(top, baseRect.top)
+        top =
+          typeof target.nextHeaderOffset === 'number'
+            ? Math.min(
+              stickyTop,
+              baseRect.top +
+                  target.nextHeaderOffset -
+                  scrollOffset -
+                  target.length
+            )
+            : stickyTop
+      }
+      const bottom = top + target.length
+      const rect = {
+        id: target.id,
+        left: baseRect.left,
+        top,
+        right: baseRect.right,
+        bottom,
+        width: baseRect.right - baseRect.left,
+        height: target.length
+      }
+      return rect
+    },
+    [enableSticky]
+  )
 
   const measureContext = useMemo(() => {
     if (!enabled) return null
-    const getVirtualTarget = (observer: any, selector = '', allowSelector = true) => {
+    const getVirtualTarget = (
+      observer: any,
+      selector = '',
+      allowSelector = true
+    ) => {
       const componentProps = observer?.component?.__props || {}
-      const target = componentProps.itemData !== undefined
-        ? virtualTargetMap.get(componentProps.itemData)
-        : null
+      const target =
+        componentProps.itemData !== undefined
+          ? virtualTargetMap.get(componentProps.itemData)
+          : null
       if (target) return target
       if (componentProps.listHeaderData !== undefined) return listHeaderTarget
       if (componentProps.listFooterData !== undefined) return listFooterTarget
       if (!allowSelector) return null
-      const selectorId = selector && selector.charAt(0) === '#' ? selector.slice(1) : ''
+      const selectorId =
+        selector && selector.charAt(0) === '#' ? selector.slice(1) : ''
       return virtualTargetIdMap.get(selectorId)
     }
     const shouldUseRealMeasure = (observerRefs: any[] = []) => {
-      return observerRefs.some((ref) => {
+      const refs = Array.isArray(observerRefs) ? observerRefs : []
+      return refs.some((ref) => {
         const props = ref?.getNodeInstance?.().props?.current || {}
         const dataset = props.dataset || {}
-        return !!(dataset.mpxSectionListObserveReal || props['data-mpx-section-list-observe-real'])
+        return !!(
+          dataset.mpxSectionListObserveReal ||
+          props['data-mpx-section-list-observe-real']
+        )
       })
     }
     return {
-      isObserveTarget ({ observer, observerRefs }: { observer: any, observerRefs: any[] }) {
-        return !!getVirtualTarget(observer, '', false) && !shouldUseRealMeasure(observerRefs)
+      isObserveTarget ({
+        observer,
+        observerRefs
+      }: {
+        observer: any;
+        observerRefs: any[];
+      }) {
+        return (
+          !!getVirtualTarget(observer, '', false) &&
+          !shouldUseRealMeasure(observerRefs)
+        )
       },
-      getObserveRects ({ observer, observerRefs, selector }: { observer: any, observerRefs: any[], selector: string }) {
-        if (shouldUseRealMeasure(observerRefs)) return null
+      getObserveRects ({
+        observer,
+        observerRefs,
+        selector
+      }: {
+        observer: any;
+        observerRefs: any[];
+        selector: string;
+      }) {
+        if (shouldUseRealMeasure(observerRefs)) {
+          return null
+        }
         const target = getVirtualTarget(observer, selector)
-        const rect = target && getVirtualRect(target)
-        if (target && !rect) return []
+        const rect = target && getVirtualRect(target, observer)
+        if (target && !rect) {
+          return null
+        }
         if (!rect) return null
         const refsCount = observerRefs?.length || 1
         const rects = []
@@ -365,30 +552,60 @@ const useSectionListIntersectionObserver = ({
         }
         return rects
       },
-      getRelativeRect ({ observer, relativeRef }: { observer: any, relativeRef: any }) {
+      getRelativeRect ({
+        observer,
+        relativeRef
+      }: {
+        observer: any;
+        relativeRef: any;
+      }) {
         const viewportRect = viewportRectRef.current
-        if (relativeRef !== 'window' || !viewportRect || typeof observer?._getWindowRect !== 'function') {
+        if (
+          relativeRef !== 'window' ||
+          !viewportRect ||
+          typeof observer?._getWindowRect !== 'function'
+        ) {
           return null
         }
-        return getRectIntersection(observer._getWindowRect(), viewportRect)
+        const rect = getRectIntersection(
+          observer._getWindowRect(),
+          viewportRect
+        )
+        return rect
       }
     }
-  }, [enabled, virtualTargetMap, virtualTargetIdMap, listHeaderTarget, listFooterTarget, getVirtualRect])
+  }, [
+    enabled,
+    virtualTargetMap,
+    virtualTargetIdMap,
+    listHeaderTarget,
+    listFooterTarget,
+    getVirtualRect
+  ])
 
   measureContextRef.current = measureContext
 
   useLayoutEffect(() => {
     if (!enabled || !intersectionObservers || !measureContext) return
-    const virtualMeasureContexts = getVirtualMeasureContexts(intersectionObservers)
+    const virtualMeasureContexts = getVirtualMeasureContexts(
+      intersectionObservers
+    )
     const contextId = virtualMeasureContextIdRef.current
     virtualMeasureContexts.set(contextId, measureContext)
-    triggerIntersectionObserver({
+    updateViewportRect()
+    triggerIntersectionObserverDeferred({
       force: true
     })
     return () => {
       virtualMeasureContexts.delete(contextId)
     }
-  }, [enabled, intersectionObservers, measureContext, triggerIntersectionObserver])
+  }, [
+    enabled,
+    intersectionObservers,
+    measureContext,
+    updateViewportRect,
+    triggerIntersectionObserverDeferred
+  ])
 
   useLayoutEffect(() => {
     const wasEnabled = enabledRef.current
@@ -398,10 +615,27 @@ const useSectionListIntersectionObserver = ({
     }
   }, [enabled, updateViewportRect])
 
+  useLayoutEffect(() => {
+    if (enabled) {
+      updateViewportRect()
+    }
+  }, [enabled, updateViewportRect])
+
+  useEffect(() => {
+    return () => {
+      deferredMeasureTimersRef.current.forEach((timer) => clearTimeout(timer))
+      deferredMeasureTimersRef.current = []
+    }
+  }, [])
+
   useEffect(() => {
     if (!enabled) return
     const { scrollTop, viewportHeight } = stateRef.current
-    const visibleRange = getVisibleRangeByLayouts(itemLayouts, scrollTop, viewportHeight)
+    const visibleRange = getVisibleRangeByLayouts(
+      itemLayouts,
+      scrollTop,
+      viewportHeight
+    )
     Object.assign(stateRef.current, {
       visibleRangeStart: visibleRange.start,
       visibleRangeEnd: visibleRange.end
@@ -450,7 +684,8 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     'enable-sticky': enableSticky = false,
-    'enable-trigger-intersection-observer': enableTriggerIntersectionObserver = false,
+    'enable-trigger-intersection-observer':
+      enableTriggerIntersectionObserver = false,
     'enable-back-to-top': enableBackToTop = false,
     'end-reached-threshold': onEndReachedThreshold = 0.1,
     'refresher-enabled': refresherEnabled,
@@ -470,11 +705,13 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
 
-  const {
-    hasSelfPercent,
-    setWidth,
-    setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  const { hasSelfPercent, setWidth, setHeight } = useTransformStyle(style, {
+    enableVar,
+    externalVarContext,
+    parentFontSize,
+    parentWidth,
+    parentHeight
+  })
 
   useEffect(() => {
     if (refreshing !== refresherTriggered) {
@@ -483,22 +720,31 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   }, [refresherTriggered])
 
   // 通过sectionIndex和rowIndex获取原始索引
-  const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header' | 'footer'): number => {
+  const getOriginalIndex = (
+    sectionIndex: number,
+    rowIndex: number | 'header' | 'footer'
+  ): number => {
     const key = `${sectionIndex}_${rowIndex}`
     return reverseIndexMap.current[key] ?? -1 // 如果找不到，返回-1
   }
 
-  const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
+  const scrollToIndex = ({
+    index,
+    animated,
+    viewOffset = 0,
+    viewPosition = 0
+  }: ScrollPositionParams) => {
     if (scrollViewRef.current) {
       // 通过索引映射表快速定位位置
       const position = indexMap.current[index]
       const [sectionIndex, itemIndex] = (position as string).split('_')
       const targetSectionIndex = Number(sectionIndex) || 0
-      const targetItemIndex = itemIndex === 'header'
-        ? 0
-        : itemIndex === 'footer'
-          ? convertedListData[targetSectionIndex].data.length + 1
-          : Number(itemIndex) + 1
+      const targetItemIndex =
+        itemIndex === 'header'
+          ? 0
+          : itemIndex === 'footer'
+            ? convertedListData[targetSectionIndex].data.length + 1
+            : Number(itemIndex) + 1
       scrollViewRef.current.scrollToLocation?.({
         itemIndex: targetItemIndex,
         sectionIndex: targetSectionIndex,
@@ -509,7 +755,13 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     }
   }
 
-  const getItemHeight = ({ sectionIndex, rowIndex }: { sectionIndex: number, rowIndex: number }) => {
+  const getItemHeight = ({
+    sectionIndex,
+    rowIndex
+  }: {
+    sectionIndex: number;
+    rowIndex: number;
+  }) => {
     if (!itemHeight) {
       return 0
     }
@@ -523,27 +775,41 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     }
   }
 
-  const getSectionHeaderHeight = ({ sectionIndex }: { sectionIndex: number }) => {
+  const getSectionHeaderHeight = ({
+    sectionIndex
+  }: {
+    sectionIndex: number;
+  }) => {
     const item = convertedListData[sectionIndex]
     const { hasSectionHeader } = item
     // 使用getOriginalIndex获取原始索引
     const originalIndex = getOriginalIndex(sectionIndex, 'header')
     if (!hasSectionHeader) return 0
     if ((sectionHeaderHeight as ItemHeightType).getter) {
-      return (sectionHeaderHeight as ItemHeightType).getter?.(item, originalIndex) || 0
+      return (
+        (sectionHeaderHeight as ItemHeightType).getter?.(item, originalIndex) ||
+        0
+      )
     } else {
       return (sectionHeaderHeight as ItemHeightType).value || 0
     }
   }
 
-  const getSectionFooterHeight = ({ sectionIndex }: { sectionIndex: number }) => {
+  const getSectionFooterHeight = ({
+    sectionIndex
+  }: {
+    sectionIndex: number;
+  }) => {
     const item = convertedListData[sectionIndex]
     const { hasSectionFooter } = item
     // 使用getOriginalIndex获取原始索引
     const originalIndex = getOriginalIndex(sectionIndex, 'footer')
     if (!hasSectionFooter) return 0
     if ((sectionFooterHeight as ItemHeightType).getter) {
-      return (sectionFooterHeight as ItemHeightType).getter?.(item, originalIndex) || 0
+      return (
+        (sectionFooterHeight as ItemHeightType).getter?.(item, originalIndex) ||
+        0
+      )
     } else {
       return (sectionFooterHeight as ItemHeightType).value || 0
     }
@@ -556,9 +822,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       return footerHeightGetter(listFooterData, -1) || 0
     }
     const footerHeight = (listFooterHeight as ItemHeightType).value
-    return typeof footerHeight === 'number'
-      ? footerHeight
-      : 0
+    return typeof footerHeight === 'number' ? footerHeight : 0
   }
 
   const convertedListData = useMemo(() => {
@@ -630,9 +894,11 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
         }
         // 将 item 添加到当前 section 的 data 中
         const itemIndex = currentSection.data.length
-        currentSection.data.push(extendObject({}, item, {
-          _originalItemIndex: index
-        }))
+        currentSection.data.push(
+          extendObject({}, item, {
+            _originalItemIndex: index
+          })
+        )
         let sectionIndex
         // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
         if (!currentSection.hasSectionHeader && sections.length === 0) {
@@ -655,11 +921,23 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     return sections
   }, [listData])
 
-  const { getItemLayout, itemLayouts, virtualTargetMap, virtualTargetIdMap, listHeaderTarget, listFooterTarget } = useMemo(() => {
-    const layouts: Array<{ length: number, offset: number, index: number }> = []
+  const {
+    getItemLayout,
+    itemLayouts,
+    virtualTargetMap,
+    virtualTargetIdMap,
+    listHeaderTarget,
+    listFooterTarget
+  } = useMemo(() => {
+    const layouts: Array<{ length: number; offset: number; index: number }> =
+      []
     const shouldBuildVirtualTargets = enableTriggerIntersectionObserver
-    const targetMap = shouldBuildVirtualTargets ? new Map<any, VirtualTarget>() : emptyVirtualTargetMap
-    const targetIdMap = shouldBuildVirtualTargets ? new Map<string, VirtualTarget>() : emptyVirtualTargetIdMap
+    const targetMap = shouldBuildVirtualTargets
+      ? new Map<any, VirtualTarget>()
+      : emptyVirtualTargetMap
+    const targetIdMap = shouldBuildVirtualTargets
+      ? new Map<string, VirtualTarget>()
+      : emptyVirtualTargetIdMap
     const headerTargets: VirtualTarget[] = []
     let listHeaderTarget: VirtualTarget | null = null
     let listFooterTarget: VirtualTarget | null = null
@@ -667,7 +945,8 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
 
     if (useListHeader) {
       // 计算列表头部的高度
-      const headerHeight = listHeaderHeight.getter?.() || listHeaderHeight.value || 0
+      const headerHeight =
+        listHeaderHeight.getter?.() || listHeaderHeight.value || 0
       if (shouldBuildVirtualTargets) {
         const target = {
           id: 'mpx-recycle-list-header',
@@ -711,7 +990,10 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
 
       // 添加该 section 中所有 items 的位置信息
       section.data.forEach((item: ListItem, itemIndex: number) => {
-        const contenteight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
+        const contenteight = getItemHeight({
+          sectionIndex,
+          rowIndex: itemIndex
+        })
         layouts.push({
           length: contenteight,
           offset,
@@ -782,7 +1064,24 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       listHeaderTarget,
       listFooterTarget
     }
-  }, [convertedListData, enableTriggerIntersectionObserver, useListHeader, listHeaderData, useListFooter, listFooterData, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight.value, listHeaderHeight.getter, listFooterHeight.value, listFooterHeight.getter])
+  }, [
+    convertedListData,
+    enableTriggerIntersectionObserver,
+    useListHeader,
+    listHeaderData,
+    useListFooter,
+    listFooterData,
+    itemHeight.value,
+    itemHeight.getter,
+    sectionHeaderHeight.value,
+    sectionHeaderHeight.getter,
+    sectionFooterHeight.value,
+    sectionFooterHeight.getter,
+    listHeaderHeight.value,
+    listHeaderHeight.getter,
+    listFooterHeight.value,
+    listFooterHeight.getter
+  ])
 
   itemLayoutsRef.current = itemLayouts
 
@@ -803,7 +1102,14 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     enableSticky
   })
 
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout: updateViewportRect })
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({
+    props,
+    hasSelfPercent,
+    setWidth,
+    setHeight,
+    nodeRef: scrollViewRef,
+    onLayout: updateViewportRect
+  })
 
   const updateViewableSignatureRef = useRef(updateViewableSignature)
   updateViewableSignatureRef.current = updateViewableSignature
@@ -813,7 +1119,8 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
 
   const onViewableItemsChangedRef = useRef((event: any) => {
     updateViewableSignatureRef.current(event?.viewableItems)
-    const originOnViewableItemsChanged = originOnViewableItemsChangedRef.current
+    const originOnViewableItemsChanged =
+      originOnViewableItemsChangedRef.current
     if (typeof originOnViewableItemsChanged === 'function') {
       originOnViewableItemsChanged(event)
     }
@@ -861,9 +1168,14 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     })
   }
 
-  const shouldHandleScroll = enableTriggerIntersectionObserver || typeof props.bindscroll === 'function'
-  const shouldHandleEndReached = enableTriggerIntersectionObserver || typeof props.bindscrolltolower === 'function'
-  const shouldHandleViewableItemsChanged = enableTriggerIntersectionObserver || typeof props.onViewableItemsChanged === 'function'
+  const shouldHandleScroll =
+    enableTriggerIntersectionObserver || typeof props.bindscroll === 'function'
+  const shouldHandleEndReached =
+    enableTriggerIntersectionObserver ||
+    typeof props.bindscrolltolower === 'function'
+  const shouldHandleViewableItemsChanged =
+    enableTriggerIntersectionObserver ||
+    typeof props.onViewableItemsChanged === 'function'
 
   const scrollAdditionalProps = extendObject(
     {
@@ -878,9 +1190,15 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       stickySectionHeadersEnabled: enableSticky,
       onScroll: shouldHandleScroll ? onScroll : undefined,
       onEndReached: shouldHandleEndReached ? onEndReached : undefined,
-      onScrollEndDrag: enableTriggerIntersectionObserver ? onScrollEndDrag : undefined,
-      onMomentumScrollEnd: enableTriggerIntersectionObserver ? onMomentumScrollEnd : undefined,
-      onViewableItemsChanged: shouldHandleViewableItemsChanged ? onViewableItemsChanged : undefined
+      onScrollEndDrag: enableTriggerIntersectionObserver
+        ? onScrollEndDrag
+        : undefined,
+      onMomentumScrollEnd: enableTriggerIntersectionObserver
+        ? onMomentumScrollEnd
+        : undefined,
+      onViewableItemsChanged: shouldHandleViewableItemsChanged
+        ? onViewableItemsChanged
+        : undefined
     },
     layoutProps
   )
@@ -916,17 +1234,21 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     })
   })
 
-  const innerProps = useInnerProps(extendObject({}, props, scrollAdditionalProps), [
-    'id',
-    'show-scrollbar',
-    'lower-threshold',
-    'refresher-triggered',
-    'refresher-enabled',
-    'bindrefresherrefresh',
-    'enable-trigger-intersection-observer',
-    'simultaneous-handlers',
-    'wait-for'
-  ], { layoutRef })
+  const innerProps = useInnerProps(
+    extendObject({}, props, scrollAdditionalProps),
+    [
+      'id',
+      'show-scrollbar',
+      'lower-threshold',
+      'refresher-triggered',
+      'refresher-enabled',
+      'bindrefresherrefresh',
+      'enable-trigger-intersection-observer',
+      'simultaneous-handlers',
+      'wait-for'
+    ],
+    { layoutRef }
+  )
 
   // 使用 ref 保存最新的数据，避免数据变化时组件销毁重建
   const listHeaderDataRef = useRef(listHeaderData)
@@ -936,58 +1258,66 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   listFooterDataRef.current = listFooterData
 
   // 使用 useMemo 获取 GenericComponent 并创建渲染函数，避免每次组件更新都重新创建函数引用导致不必要的重新渲染
-  const renderItem = useMemo(
-    () => {
-      const ItemComponent = getGeneric(generichash, genericrecycleItem)
-      if (!ItemComponent) return undefined
-      return ({ item }: { item: any }) => createElement(ItemComponent, { itemData: item })
-    },
-    [generichash, genericrecycleItem]
-  )
+  const renderItem = useMemo(() => {
+    const ItemComponent = getGeneric(generichash, genericrecycleItem)
+    if (!ItemComponent) return undefined
+    return ({ item }: { item: any }) =>
+      createElement(ItemComponent, { itemData: item })
+  }, [generichash, genericrecycleItem])
 
-  const renderSectionHeader = useMemo(
-    () => {
-      const SectionHeaderComponent = getGeneric(generichash, genericsectionHeader)
-      if (!SectionHeaderComponent) return undefined
-      return (sectionData: { section: Section }) => {
-        if (!sectionData.section.hasSectionHeader) return null
-        return createElement(SectionHeaderComponent, { itemData: sectionData.section.headerData })
-      }
-    },
-    [generichash, genericsectionHeader]
-  )
+  const renderSectionHeader = useMemo(() => {
+    const SectionHeaderComponent = getGeneric(
+      generichash,
+      genericsectionHeader
+    )
+    if (!SectionHeaderComponent) return undefined
+    return (sectionData: { section: Section }) => {
+      if (!sectionData.section.hasSectionHeader) return null
+      return createElement(SectionHeaderComponent, {
+        itemData: sectionData.section.headerData
+      })
+    }
+  }, [generichash, genericsectionHeader])
 
-  const renderSectionFooter = useMemo(
-    () => {
-      const SectionFooterComponent = getGeneric(generichash, genericsectionFooter)
-      if (!SectionFooterComponent) return undefined
-      return (sectionData: { section: Section }) => {
-        if (!sectionData.section.hasSectionFooter) return null
-        return createElement(SectionFooterComponent, { itemData: sectionData.section.footerData })
-      }
-    },
-    [generichash, genericsectionFooter]
-  )
+  const renderSectionFooter = useMemo(() => {
+    const SectionFooterComponent = getGeneric(
+      generichash,
+      genericsectionFooter
+    )
+    if (!SectionFooterComponent) return undefined
+    return (sectionData: { section: Section }) => {
+      if (!sectionData.section.hasSectionFooter) return null
+      return createElement(SectionFooterComponent, {
+        itemData: sectionData.section.footerData
+      })
+    }
+  }, [generichash, genericsectionFooter])
 
-  const ListHeaderComponent = useMemo(
-    () => {
-      if (!useListHeader) return null
-      const ListHeaderGenericComponent = getGeneric(generichash, genericListHeader)
-      if (!ListHeaderGenericComponent) return null
-      return () => createElement(ListHeaderGenericComponent, { listHeaderData: listHeaderDataRef.current })
-    },
-    [useListHeader, generichash, genericListHeader]
-  )
+  const ListHeaderComponent = useMemo(() => {
+    if (!useListHeader) return null
+    const ListHeaderGenericComponent = getGeneric(
+      generichash,
+      genericListHeader
+    )
+    if (!ListHeaderGenericComponent) return null
+    return () =>
+      createElement(ListHeaderGenericComponent, {
+        listHeaderData: listHeaderDataRef.current
+      })
+  }, [useListHeader, generichash, genericListHeader])
 
-  const ListFooterComponent = useMemo(
-    () => {
-      if (!useListFooter) return null
-      const ListFooterGenericComponent = getGeneric(generichash, genericListFooter)
-      if (!ListFooterGenericComponent) return null
-      return () => createElement(ListFooterGenericComponent, { listFooterData: listFooterDataRef.current })
-    },
-    [useListFooter, generichash, genericListFooter]
-  )
+  const ListFooterComponent = useMemo(() => {
+    if (!useListFooter) return null
+    const ListFooterGenericComponent = getGeneric(
+      generichash,
+      genericListFooter
+    )
+    if (!ListFooterGenericComponent) return null
+    return () =>
+      createElement(ListFooterGenericComponent, {
+        listFooterData: listFooterDataRef.current
+      })
+  }, [useListFooter, generichash, genericListFooter])
 
   return createElement(
     GestureDetector,
