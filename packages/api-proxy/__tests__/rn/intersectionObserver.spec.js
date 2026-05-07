@@ -23,16 +23,14 @@ jest.mock('../../src/common/js', () => ({
 const waitPromise = () => new Promise(resolve => setTimeout(resolve, 0))
 const VirtualMeasureContextsKey = '__mpxVirtualIntersectionObserverMeasureContexts'
 
-function createObserver ({ measureInWindow, intersectionCtx = {} } = {}) {
+function createObserver ({ measureInWindow, intersectionCtx = {}, dataset = { index: 1 } } = {}) {
   const targetRef = {
     getNodeInstance () {
       return {
         props: {
           current: {
             id: 'target',
-            dataset: {
-              index: 1
-            }
+            dataset
           }
         },
         nodeRef: {
@@ -126,6 +124,43 @@ describe('RNIntersectionObserver virtual measure', () => {
     expect(measureInWindow).toHaveBeenCalledTimes(1)
   })
 
+  test('allows virtual context to opt out by observed ref dataset marker', async () => {
+    const measureInWindow = jest.fn((cb) => cb(0, 20, 100, 50))
+    const intersectionCtx = {}
+    Object.defineProperty(intersectionCtx, VirtualMeasureContextsKey, {
+      value: new Map()
+    })
+    intersectionCtx[VirtualMeasureContextsKey].set('section-list', {
+      isObserveTarget ({ observerRefs }) {
+        return !observerRefs.some((ref) => {
+          return ref.getNodeInstance().props.current.dataset.mpxSectionListObserveReal
+        })
+      },
+      getObserveRects () {
+        return [{
+          left: 0,
+          top: 10,
+          right: 100,
+          bottom: 60,
+          width: 100,
+          height: 50
+        }]
+      }
+    })
+    const observer = createObserver({
+      measureInWindow,
+      intersectionCtx,
+      dataset: {
+        index: 1,
+        mpxSectionListObserveReal: true
+      }
+    })
+    observer.observe('#target', jest.fn())
+    await waitPromise()
+
+    expect(measureInWindow).toHaveBeenCalledTimes(1)
+  })
+
   test('uses virtual rects without calling measureInWindow', async () => {
     const measureInWindow = jest.fn((cb) => cb(0, 200, 100, 50))
     const observer = createObserver({ measureInWindow })
@@ -155,6 +190,56 @@ describe('RNIntersectionObserver virtual measure', () => {
           bottom: 100
         }
       }
+    })
+    await waitPromise()
+
+    expect(measureInWindow).not.toHaveBeenCalled()
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback.mock.calls[0][0].boundingClientRect.top).toBe(10)
+  })
+
+  test('force init dispatches when virtual rect ratio stays unchanged', async () => {
+    const measureInWindow = jest.fn((cb) => cb(0, 10, 100, 50))
+    const observer = createObserver({ measureInWindow })
+    const callback = jest.fn()
+    const measureContext = {
+      getObserveRects () {
+        return [{
+          left: 0,
+          top: 10,
+          right: 100,
+          bottom: 60,
+          width: 100,
+          height: 50,
+          id: 'virtual-target'
+        }]
+      },
+      getRelativeRect () {
+        return {
+          left: 0,
+          top: 0,
+          right: 100,
+          bottom: 100
+        }
+      }
+    }
+    observer.observe('#target', callback)
+    await waitPromise()
+    callback.mockClear()
+    measureInWindow.mockClear()
+
+    observer.throttleMeasureBySource('section-list', {
+      signature: 'same-ratio',
+      measureContext
+    })
+    await waitPromise()
+
+    expect(callback).not.toHaveBeenCalled()
+    observer.throttleMeasureBySource('section-list', {
+      signature: 'data-change',
+      force: true,
+      forceInit: true,
+      measureContext
     })
     await waitPromise()
 

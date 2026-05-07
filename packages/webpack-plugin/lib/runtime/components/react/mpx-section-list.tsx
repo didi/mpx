@@ -1,9 +1,9 @@
 
-import { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo, useContext } from 'react'
+import { forwardRef, useRef, useState, useEffect, useMemo, useLayoutEffect, createElement, useImperativeHandle, useCallback, memo, useContext } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from './utils'
+import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture, useNavigation } from './utils'
 import { IntersectionObserverContext } from './context'
 interface ListItem {
   isSectionHeader?: boolean;
@@ -42,6 +42,7 @@ interface SectionListProps {
   listHeaderHeight?: ItemHeightType;
   useListHeader?: boolean;
   listFooterData?: any;
+  listFooterHeight?: ItemHeightType;
   useListFooter?: boolean;
   'genericrecycle-item'?: string;
   'genericsection-header'?: string;
@@ -80,6 +81,41 @@ interface LayoutItem {
   offset: number;
   index: number;
 }
+
+interface VirtualTarget {
+  id: string;
+  itemData: any;
+  length: number;
+  offset: number;
+  type: 'header' | 'footer' | 'item' | 'list-header' | 'list-footer';
+  nextHeaderOffset?: number;
+}
+
+interface Rect {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  width: number;
+  height: number;
+  id?: string;
+}
+
+interface SectionListIntersectionObserverOptions {
+  enabled: boolean;
+  scrollViewRef: any;
+  itemLayouts: LayoutItem[];
+  itemLayoutsRef: any;
+  virtualTargetMap: Map<any, VirtualTarget>;
+  virtualTargetIdMap: Map<string, VirtualTarget>;
+  listHeaderTarget: VirtualTarget | null;
+  listFooterTarget: VirtualTarget | null;
+  enableSticky: boolean;
+}
+
+const VirtualMeasureContextsKey = '__mpxVirtualIntersectionObserverMeasureContexts'
+const emptyVirtualTargetMap = new Map<any, VirtualTarget>()
+const emptyVirtualTargetIdMap = new Map<string, VirtualTarget>()
 
 const getVisibleRangeByLayouts = (layouts: LayoutItem[] = [], scrollTop = 0, viewportHeight = 0) => {
   if (!layouts.length || viewportHeight <= 0) {
@@ -120,6 +156,35 @@ const getViewableOriginalIndexes = (viewableItems: any[] = []) => {
   return indexes
 }
 
+const restrictValueInRange = (start = 0, end = 0, value = 0) => {
+  return Math.min(Math.max(start, value), end)
+}
+
+const getRectIntersection = (baseRect: Rect, clipRect: Rect) => {
+  const left = restrictValueInRange(clipRect.left, clipRect.right, baseRect.left)
+  const top = restrictValueInRange(clipRect.top, clipRect.bottom, baseRect.top)
+  const right = restrictValueInRange(clipRect.left, clipRect.right, baseRect.right)
+  const bottom = restrictValueInRange(clipRect.top, clipRect.bottom, baseRect.bottom)
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width: right - left,
+    height: bottom - top
+  }
+}
+
+const getVirtualMeasureContexts = (intersectionObservers: any) => {
+  if (!intersectionObservers[VirtualMeasureContextsKey]) {
+    Object.defineProperty(intersectionObservers, VirtualMeasureContextsKey, {
+      value: new Map(),
+      configurable: true
+    })
+  }
+  return intersectionObservers[VirtualMeasureContextsKey]
+}
+
 const getGeneric = (generichash: string, generickey: string) => {
   if (!generichash || !generickey) return null
   const GenericComponent = global.__mpxGenericsMap?.[generichash]?.[generickey]?.()
@@ -130,6 +195,229 @@ const getGeneric = (generichash: string, generickey: string) => {
       ref: ref
     }, props))
   }))
+}
+
+const useSectionListIntersectionObserver = ({
+  enabled,
+  scrollViewRef,
+  itemLayouts,
+  itemLayoutsRef,
+  virtualTargetMap,
+  virtualTargetIdMap,
+  listHeaderTarget,
+  listFooterTarget,
+  enableSticky
+}: SectionListIntersectionObserverOptions) => {
+  const intersectionObservers = useContext(IntersectionObserverContext)
+  const navigation = useNavigation()
+  const viewportRectRef = useRef<Rect | null>(null)
+  const measureContextRef = useRef<any>(null)
+  const virtualMeasureContextIdRef = useRef({})
+  const enabledRef = useRef(enabled)
+  const stateRef = useRef({
+    scrollTop: 0,
+    viewportHeight: 0,
+    visibleRangeStart: -1,
+    visibleRangeEnd: -1,
+    viewableSignature: ''
+  })
+
+  const getPayload = useCallback((payload = {}) => {
+    const { scrollTop, viewportHeight, visibleRangeStart, visibleRangeEnd, viewableSignature } = stateRef.current
+    return Object.assign({
+      signature: `${scrollTop}_${viewportHeight}_${visibleRangeStart}_${visibleRangeEnd}_${viewableSignature}`,
+      scrollTop,
+      viewportHeight,
+      visibleRangeStart,
+      visibleRangeEnd
+    }, payload)
+  }, [])
+
+  const triggerWithPayload = useCallback((payload = {}) => {
+    if (!enabled || !intersectionObservers) return
+    const measurePayload = measureContextRef.current
+      ? Object.assign({ measureContext: measureContextRef.current }, payload)
+      : payload
+    for (const key in intersectionObservers) {
+      const observer = intersectionObservers[key]
+      if (!observer) continue
+      if (observer.throttleMeasureBySource) {
+        observer.throttleMeasureBySource('section-list', measurePayload)
+      } else {
+        observer.throttleMeasure(measureContextRef.current)
+      }
+    }
+  }, [enabled, intersectionObservers])
+
+  const triggerIntersectionObserver = useCallback((payload = {}) => {
+    triggerWithPayload(getPayload(payload))
+  }, [triggerWithPayload, getPayload])
+
+  const updateViewportRect = useCallback(() => {
+    if (!enabled) return
+    const node = scrollViewRef.current
+    if (node?.measureInWindow) {
+      node.measureInWindow((x: number, y: number, viewportWidth: number, viewportHeight: number) => {
+        const statusBarHeight = navigation?.layout?.statusBarHeight || 0
+        const top = y + statusBarHeight
+        viewportRectRef.current = {
+          left: x,
+          top,
+          right: x + viewportWidth,
+          bottom: top + viewportHeight,
+          width: viewportWidth,
+          height: viewportHeight
+        }
+        triggerIntersectionObserver({
+          force: true
+        })
+      })
+    }
+  }, [enabled, scrollViewRef, navigation, triggerIntersectionObserver])
+
+  const updateScrollState = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!enabled) return
+    const contentOffset = event.nativeEvent && event.nativeEvent.contentOffset
+    const layoutMeasurement = event.nativeEvent && event.nativeEvent.layoutMeasurement
+    const scrollTop = contentOffset?.y || 0
+    const viewportHeight = layoutMeasurement?.height || stateRef.current.viewportHeight
+    const visibleRange = getVisibleRangeByLayouts(itemLayoutsRef.current, scrollTop, viewportHeight)
+    Object.assign(stateRef.current, {
+      scrollTop,
+      viewportHeight,
+      visibleRangeStart: visibleRange.start,
+      visibleRangeEnd: visibleRange.end
+    })
+    if (layoutMeasurement && viewportRectRef.current) {
+      const { width: viewportWidth, height: viewportHeight } = layoutMeasurement
+      viewportRectRef.current.width = viewportWidth
+      viewportRectRef.current.height = viewportHeight
+      viewportRectRef.current.right = viewportRectRef.current.left + viewportWidth
+      viewportRectRef.current.bottom = viewportRectRef.current.top + viewportHeight
+    }
+    triggerIntersectionObserver()
+  }, [enabled, itemLayoutsRef, triggerIntersectionObserver])
+
+  const updateViewableSignature = useCallback((viewableItems: any[] = []) => {
+    if (!enabled) return
+    stateRef.current.viewableSignature = getViewableOriginalIndexes(viewableItems).join(',')
+    triggerIntersectionObserver()
+  }, [enabled, triggerIntersectionObserver])
+
+  const getVirtualRect = useCallback((target: VirtualTarget): Rect | null => {
+    const viewportRect = viewportRectRef.current
+    if (!viewportRect) return null
+    const scrollOffset = stateRef.current.scrollTop || 0
+    let top = viewportRect.top + target.offset - scrollOffset
+    if (enableSticky && target.type === 'header' && target.length) {
+      const stickyTop = Math.max(top, viewportRect.top)
+      top = typeof target.nextHeaderOffset === 'number'
+        ? Math.min(stickyTop, viewportRect.top + target.nextHeaderOffset - scrollOffset - target.length)
+        : stickyTop
+    }
+    const bottom = top + target.length
+    return {
+      id: target.id,
+      left: viewportRect.left,
+      top,
+      right: viewportRect.right,
+      bottom,
+      width: viewportRect.width,
+      height: target.length
+    }
+  }, [enableSticky])
+
+  const measureContext = useMemo(() => {
+    if (!enabled) return null
+    const getVirtualTarget = (observer: any, selector = '', allowSelector = true) => {
+      const componentProps = observer?.component?.__props || {}
+      const target = componentProps.itemData !== undefined
+        ? virtualTargetMap.get(componentProps.itemData)
+        : null
+      if (target) return target
+      if (componentProps.listHeaderData !== undefined) return listHeaderTarget
+      if (componentProps.listFooterData !== undefined) return listFooterTarget
+      if (!allowSelector) return null
+      const selectorId = selector && selector.charAt(0) === '#' ? selector.slice(1) : ''
+      return virtualTargetIdMap.get(selectorId)
+    }
+    const shouldUseRealMeasure = (observerRefs: any[] = []) => {
+      return observerRefs.some((ref) => {
+        const props = ref?.getNodeInstance?.().props?.current || {}
+        const dataset = props.dataset || {}
+        return !!(dataset.mpxSectionListObserveReal || props['data-mpx-section-list-observe-real'])
+      })
+    }
+    return {
+      isObserveTarget ({ observer, observerRefs }: { observer: any, observerRefs: any[] }) {
+        return !!getVirtualTarget(observer, '', false) && !shouldUseRealMeasure(observerRefs)
+      },
+      getObserveRects ({ observer, observerRefs, selector }: { observer: any, observerRefs: any[], selector: string }) {
+        if (shouldUseRealMeasure(observerRefs)) return null
+        const target = getVirtualTarget(observer, selector)
+        const rect = target && getVirtualRect(target)
+        if (target && !rect) return []
+        if (!rect) return null
+        const refsCount = observerRefs?.length || 1
+        const rects = []
+        for (let i = 0; i < refsCount; i++) {
+          rects.push(extendObject({}, rect))
+        }
+        return rects
+      },
+      getRelativeRect ({ observer, relativeRef }: { observer: any, relativeRef: any }) {
+        const viewportRect = viewportRectRef.current
+        if (relativeRef !== 'window' || !viewportRect || typeof observer?._getWindowRect !== 'function') {
+          return null
+        }
+        return getRectIntersection(observer._getWindowRect(), viewportRect)
+      }
+    }
+  }, [enabled, virtualTargetMap, virtualTargetIdMap, listHeaderTarget, listFooterTarget, getVirtualRect])
+
+  measureContextRef.current = measureContext
+
+  useLayoutEffect(() => {
+    if (!enabled || !intersectionObservers || !measureContext) return
+    const virtualMeasureContexts = getVirtualMeasureContexts(intersectionObservers)
+    const contextId = virtualMeasureContextIdRef.current
+    virtualMeasureContexts.set(contextId, measureContext)
+    triggerIntersectionObserver({
+      force: true
+    })
+    return () => {
+      virtualMeasureContexts.delete(contextId)
+    }
+  }, [enabled, intersectionObservers, measureContext, triggerIntersectionObserver])
+
+  useLayoutEffect(() => {
+    const wasEnabled = enabledRef.current
+    enabledRef.current = enabled
+    if (enabled && !wasEnabled) {
+      updateViewportRect()
+    }
+  }, [enabled, updateViewportRect])
+
+  useEffect(() => {
+    if (!enabled) return
+    const { scrollTop, viewportHeight } = stateRef.current
+    const visibleRange = getVisibleRangeByLayouts(itemLayouts, scrollTop, viewportHeight)
+    Object.assign(stateRef.current, {
+      visibleRangeStart: visibleRange.start,
+      visibleRangeEnd: visibleRange.end
+    })
+    triggerIntersectionObserver({
+      force: true,
+      forceInit: true
+    })
+  }, [enabled, itemLayouts, triggerIntersectionObserver])
+
+  return {
+    updateViewportRect: enabled ? updateViewportRect : undefined,
+    updateScrollState,
+    updateViewableSignature,
+    triggerIntersectionObserver
+  }
 }
 
 const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
@@ -149,6 +437,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     listHeaderData = null,
     useListHeader = false,
     listFooterData = null,
+    listFooterHeight = {},
     useListFooter = false,
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
@@ -174,15 +463,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
 
   const scrollViewRef = useRef<any>(null)
-  const intersectionObservers = useContext(IntersectionObserverContext)
   const itemLayoutsRef = useRef<LayoutItem[]>([])
-  const sectionListIntersectionStateRef = useRef({
-    scrollTop: 0,
-    viewportHeight: 0,
-    visibleRangeStart: -1,
-    visibleRangeEnd: -1,
-    viewableSignature: ''
-  })
   const sectionListGestureRef = useRef<any>()
 
   const indexMap = useRef<{ [key: string]: string | number }>({})
@@ -195,109 +476,11 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     setHeight
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
-  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
-
   useEffect(() => {
     if (refreshing !== refresherTriggered) {
       setRefreshing(!!refresherTriggered)
     }
   }, [refresherTriggered])
-
-  const getSectionListIntersectionPayload = useCallback((payload = {}) => {
-    const { scrollTop, viewportHeight, visibleRangeStart, visibleRangeEnd, viewableSignature } = sectionListIntersectionStateRef.current
-    return Object.assign({
-      signature: `${visibleRangeStart}_${visibleRangeEnd}_${viewableSignature}`,
-      scrollTop,
-      viewportHeight,
-      visibleRangeStart,
-      visibleRangeEnd
-    }, payload)
-  }, [])
-
-  const triggerIntersectionObserver = useCallback((payload = {}) => {
-    if (!enableTriggerIntersectionObserver || !intersectionObservers) {
-      return
-    }
-    for (const key in intersectionObservers) {
-      const observer = intersectionObservers[key]
-      if (!observer) continue
-      if (observer.throttleMeasureBySource) {
-        observer.throttleMeasureBySource('section-list', payload)
-      } else {
-        observer.throttleMeasure()
-      }
-    }
-  }, [enableTriggerIntersectionObserver, intersectionObservers])
-
-  const triggerIntersectionObserverRef = useRef(triggerIntersectionObserver)
-  triggerIntersectionObserverRef.current = triggerIntersectionObserver
-  const getSectionListIntersectionPayloadRef = useRef(getSectionListIntersectionPayload)
-  getSectionListIntersectionPayloadRef.current = getSectionListIntersectionPayload
-
-  const originOnViewableItemsChangedRef = useRef(props.onViewableItemsChanged)
-  originOnViewableItemsChangedRef.current = props.onViewableItemsChanged
-
-  const onViewableItemsChangedRef = useRef((event: any) => {
-    sectionListIntersectionStateRef.current.viewableSignature = getViewableOriginalIndexes(event?.viewableItems).join(',')
-    const payload = getSectionListIntersectionPayloadRef.current()
-    triggerIntersectionObserverRef.current(payload)
-    const originOnViewableItemsChanged = originOnViewableItemsChangedRef.current
-    if (typeof originOnViewableItemsChanged === 'function') {
-      originOnViewableItemsChanged(event)
-    }
-  })
-
-  const onViewableItemsChanged = onViewableItemsChangedRef.current
-
-  const onRefresh = () => {
-    const { bindrefresherrefresh } = props
-    bindrefresherrefresh &&
-      bindrefresherrefresh(
-        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
-      )
-  }
-
-  const onEndReached = () => {
-    const { bindscrolltolower } = props
-    bindscrolltolower &&
-      bindscrolltolower(
-        getCustomEvent('scrolltolower', {}, { layoutRef }, props)
-      )
-    triggerIntersectionObserver(getSectionListIntersectionPayload({
-      force: true
-    }))
-  }
-
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { bindscroll } = props
-    bindscroll &&
-      bindscroll(
-        getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
-      )
-    const contentOffset = event.nativeEvent && event.nativeEvent.contentOffset
-    const layoutMeasurement = event.nativeEvent && event.nativeEvent.layoutMeasurement
-    const scrollTop = contentOffset?.y || 0
-    const viewportHeight = layoutMeasurement?.height || sectionListIntersectionStateRef.current.viewportHeight
-    const visibleRange = getVisibleRangeByLayouts(itemLayoutsRef.current, scrollTop, viewportHeight)
-    Object.assign(sectionListIntersectionStateRef.current, {
-      scrollTop,
-      viewportHeight,
-      visibleRangeStart: visibleRange.start,
-      visibleRangeEnd: visibleRange.end
-    })
-  }
-
-  const onScrollEndDrag = () => {
-    triggerIntersectionObserver(getSectionListIntersectionPayload({
-      force: true
-    }))
-  }
-
-  const onMomentumScrollEnd = () => {
-    triggerIntersectionObserver(getSectionListIntersectionPayload({
-      force: true
-    }))
-  }
 
   // 通过sectionIndex和rowIndex获取原始索引
   const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header' | 'footer'): number => {
@@ -364,6 +547,18 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     } else {
       return (sectionFooterHeight as ItemHeightType).value || 0
     }
+  }
+
+  const getListFooterHeight = () => {
+    if (!useListFooter) return 0
+    const footerHeightGetter = (listFooterHeight as ItemHeightType).getter
+    if (footerHeightGetter) {
+      return footerHeightGetter(listFooterData, -1) || 0
+    }
+    const footerHeight = (listFooterHeight as ItemHeightType).value
+    return typeof footerHeight === 'number'
+      ? footerHeight
+      : 0
   }
 
   const convertedListData = useMemo(() => {
@@ -460,13 +655,34 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     return sections
   }, [listData])
 
-  const { getItemLayout, itemLayouts } = useMemo(() => {
+  const { getItemLayout, itemLayouts, virtualTargetMap, virtualTargetIdMap, listHeaderTarget, listFooterTarget } = useMemo(() => {
     const layouts: Array<{ length: number, offset: number, index: number }> = []
+    const shouldBuildVirtualTargets = enableTriggerIntersectionObserver
+    const targetMap = shouldBuildVirtualTargets ? new Map<any, VirtualTarget>() : emptyVirtualTargetMap
+    const targetIdMap = shouldBuildVirtualTargets ? new Map<string, VirtualTarget>() : emptyVirtualTargetIdMap
+    const headerTargets: VirtualTarget[] = []
+    let listHeaderTarget: VirtualTarget | null = null
+    let listFooterTarget: VirtualTarget | null = null
     let offset = 0
 
     if (useListHeader) {
       // 计算列表头部的高度
-      offset += listHeaderHeight.getter?.() || listHeaderHeight.value || 0
+      const headerHeight = listHeaderHeight.getter?.() || listHeaderHeight.value || 0
+      if (shouldBuildVirtualTargets) {
+        const target = {
+          id: 'mpx-recycle-list-header',
+          itemData: listHeaderData,
+          length: headerHeight,
+          offset,
+          type: 'list-header' as const
+        }
+        listHeaderTarget = target
+        if (listHeaderData != null) {
+          targetMap.set(listHeaderData, target)
+        }
+        targetIdMap.set(target.id, target)
+      }
+      offset += headerHeight
     }
 
     // 遍历所有 sections
@@ -478,6 +694,19 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
         offset,
         index: layouts.length
       })
+      if (shouldBuildVirtualTargets && section.headerData) {
+        const headerOriginalIndex = getOriginalIndex(sectionIndex, 'header')
+        const target = {
+          id: `mpx-recycle-item-${headerOriginalIndex}`,
+          itemData: section.headerData,
+          length: headerHeight,
+          offset,
+          type: 'header' as const
+        }
+        targetMap.set(section.headerData, target)
+        targetIdMap.set(target.id, target)
+        headerTargets.push(target)
+      }
       offset += headerHeight
 
       // 添加该 section 中所有 items 的位置信息
@@ -488,6 +717,18 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
           offset,
           index: layouts.length
         })
+        if (shouldBuildVirtualTargets) {
+          const originalIndex = getOriginalIndex(sectionIndex, itemIndex)
+          const target = {
+            id: `mpx-recycle-item-${originalIndex}`,
+            itemData: item,
+            length: contenteight,
+            offset,
+            type: 'item' as const
+          }
+          targetMap.set(item, target)
+          targetIdMap.set(target.id, target)
+        }
         offset += contenteight
       })
 
@@ -499,27 +740,130 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
         offset,
         index: layouts.length
       })
+      if (shouldBuildVirtualTargets && section.footerData) {
+        const footerOriginalIndex = getOriginalIndex(sectionIndex, 'footer')
+        const target = {
+          id: `mpx-recycle-item-${footerOriginalIndex}`,
+          itemData: section.footerData,
+          length: footerHeight,
+          offset,
+          type: 'footer' as const
+        }
+        targetMap.set(section.footerData, target)
+        targetIdMap.set(target.id, target)
+      }
       offset += footerHeight
     })
+    if (shouldBuildVirtualTargets) {
+      headerTargets.forEach((target, index) => {
+        const nextHeader = headerTargets[index + 1]
+        if (nextHeader) {
+          target.nextHeaderOffset = nextHeader.offset
+        }
+      })
+    }
+    if (shouldBuildVirtualTargets && useListFooter) {
+      const footerHeight = getListFooterHeight()
+      const target = {
+        id: 'mpx-recycle-list-footer',
+        itemData: listFooterData,
+        length: footerHeight,
+        offset,
+        type: 'list-footer' as const
+      }
+      listFooterTarget = target
+      targetIdMap.set(target.id, target)
+    }
     return {
       itemLayouts: layouts,
-      getItemLayout: (data: any, index: number) => layouts[index]
+      getItemLayout: (data: any, index: number) => layouts[index],
+      virtualTargetMap: targetMap,
+      virtualTargetIdMap: targetIdMap,
+      listHeaderTarget,
+      listFooterTarget
     }
-  }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight.value, listHeaderHeight.getter])
+  }, [convertedListData, enableTriggerIntersectionObserver, useListHeader, listHeaderData, useListFooter, listFooterData, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight.value, listHeaderHeight.getter, listFooterHeight.value, listFooterHeight.getter])
 
   itemLayoutsRef.current = itemLayouts
 
-  useEffect(() => {
-    const { scrollTop, viewportHeight } = sectionListIntersectionStateRef.current
-    const visibleRange = getVisibleRangeByLayouts(itemLayouts, scrollTop, viewportHeight)
-    Object.assign(sectionListIntersectionStateRef.current, {
-      visibleRangeStart: visibleRange.start,
-      visibleRangeEnd: visibleRange.end
-    })
-    triggerIntersectionObserver(getSectionListIntersectionPayload({
+  const {
+    updateViewportRect,
+    updateScrollState,
+    updateViewableSignature,
+    triggerIntersectionObserver
+  } = useSectionListIntersectionObserver({
+    enabled: enableTriggerIntersectionObserver,
+    scrollViewRef,
+    itemLayouts,
+    itemLayoutsRef,
+    virtualTargetMap,
+    virtualTargetIdMap,
+    listHeaderTarget,
+    listFooterTarget,
+    enableSticky
+  })
+
+  const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef, onLayout: updateViewportRect })
+
+  const updateViewableSignatureRef = useRef(updateViewableSignature)
+  updateViewableSignatureRef.current = updateViewableSignature
+
+  const originOnViewableItemsChangedRef = useRef(props.onViewableItemsChanged)
+  originOnViewableItemsChangedRef.current = props.onViewableItemsChanged
+
+  const onViewableItemsChangedRef = useRef((event: any) => {
+    updateViewableSignatureRef.current(event?.viewableItems)
+    const originOnViewableItemsChanged = originOnViewableItemsChangedRef.current
+    if (typeof originOnViewableItemsChanged === 'function') {
+      originOnViewableItemsChanged(event)
+    }
+  })
+
+  const onViewableItemsChanged = onViewableItemsChangedRef.current
+
+  const onRefresh = () => {
+    const { bindrefresherrefresh } = props
+    bindrefresherrefresh &&
+      bindrefresherrefresh(
+        getCustomEvent('refresherrefresh', {}, { layoutRef }, props)
+      )
+  }
+
+  const onEndReached = () => {
+    const { bindscrolltolower } = props
+    bindscrolltolower &&
+      bindscrolltolower(
+        getCustomEvent('scrolltolower', {}, { layoutRef }, props)
+      )
+    triggerIntersectionObserver({
       force: true
-    }))
-  }, [convertedListData, itemLayouts, triggerIntersectionObserver, getSectionListIntersectionPayload])
+    })
+  }
+
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { bindscroll } = props
+    bindscroll &&
+      bindscroll(
+        getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
+      )
+    updateScrollState(event)
+  }
+
+  const onScrollEndDrag = () => {
+    triggerIntersectionObserver({
+      force: true
+    })
+  }
+
+  const onMomentumScrollEnd = () => {
+    triggerIntersectionObserver({
+      force: true
+    })
+  }
+
+  const shouldHandleScroll = enableTriggerIntersectionObserver || typeof props.bindscroll === 'function'
+  const shouldHandleEndReached = enableTriggerIntersectionObserver || typeof props.bindscrolltolower === 'function'
+  const shouldHandleViewableItemsChanged = enableTriggerIntersectionObserver || typeof props.onViewableItemsChanged === 'function'
 
   const scrollAdditionalProps = extendObject(
     {
@@ -532,11 +876,11 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       ref: scrollViewRef,
       bounces: false,
       stickySectionHeadersEnabled: enableSticky,
-      onScroll: onScroll,
-      onEndReached: onEndReached,
-      onScrollEndDrag: onScrollEndDrag,
-      onMomentumScrollEnd: onMomentumScrollEnd,
-      onViewableItemsChanged: onViewableItemsChanged
+      onScroll: shouldHandleScroll ? onScroll : undefined,
+      onEndReached: shouldHandleEndReached ? onEndReached : undefined,
+      onScrollEndDrag: enableTriggerIntersectionObserver ? onScrollEndDrag : undefined,
+      onMomentumScrollEnd: enableTriggerIntersectionObserver ? onMomentumScrollEnd : undefined,
+      onViewableItemsChanged: shouldHandleViewableItemsChanged ? onViewableItemsChanged : undefined
     },
     layoutProps
   )
@@ -579,7 +923,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'refresher-triggered',
     'refresher-enabled',
     'bindrefresherrefresh',
-    'enable-trigger-intersection-observer'
+    'enable-trigger-intersection-observer',
     'simultaneous-handlers',
     'wait-for'
   ], { layoutRef })

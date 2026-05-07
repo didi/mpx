@@ -5,6 +5,7 @@ import { getFocusedNavigation } from '../../../common/js'
 const WindowRefStr = 'window'
 const IgnoreTarget = 'ignore'
 const DefaultMargin = { top: 0, bottom: 0, left: 0, right: 0 }
+const VirtualMeasureContextsKey = '__mpxVirtualIntersectionObserverMeasureContexts'
 let idCount = 0
 
 class RNIntersectionObserver {
@@ -27,6 +28,7 @@ class RNIntersectionObserver {
     this.component._intersectionObservers.push(this)
 
     this.observerRefs = null
+    this.observeSelector = ''
     this.relativeRef = null
     this.margins = DefaultMargin
     this.callback = noop
@@ -74,6 +76,7 @@ class RNIntersectionObserver {
       warn('"observe" call can be only called once in IntersectionObserver', this.mpxFileResource)
       return
     }
+    this.observeSelector = selector
     let targetRef = null
     if (this.observeAll) {
       targetRef = this.component.__selectRef(selector, 'node', true)
@@ -86,7 +89,7 @@ class RNIntersectionObserver {
     }
     this.observerRefs = isArray(targetRef) ? targetRef : [targetRef]
     this.callback = callback
-    this._measureTarget(true)
+    this._measureTarget(true, this._getVirtualMeasureContext())
   }
 
   _getWindowRect () {
@@ -168,6 +171,66 @@ class RNIntersectionObserver {
     return returnIndex
   }
 
+  _getVirtualObserveRects (measureContext) {
+    if (!measureContext || typeof measureContext.getObserveRects !== 'function') {
+      return null
+    }
+    const observeRects = measureContext.getObserveRects({
+      observer: this,
+      observerRefs: this.observerRefs,
+      selector: this.observeSelector,
+      observeAll: this.observeAll
+    })
+    if (!observeRects) {
+      return null
+    }
+    return isArray(observeRects) ? observeRects : [observeRects]
+  }
+
+  _getVirtualRelativeRect (measureContext) {
+    if (!measureContext || typeof measureContext.getRelativeRect !== 'function') {
+      return null
+    }
+    return measureContext.getRelativeRect({
+      observer: this,
+      relativeRef: this.relativeRef
+    })
+  }
+
+  _getObserveInfo (observeIndex, observeRect) {
+    const observerRef = this.observerRefs && this.observerRefs[observeIndex]
+    const props = observerRef?.getNodeInstance().props?.current || {}
+    return {
+      id: props.id != null ? props.id : observeRect?.id,
+      dataset: props.dataset || observeRect?.dataset || {},
+      boundingClientRect: observeRect
+    }
+  }
+
+  _getVirtualMeasureContext () {
+    const measureContexts = this.intersectionCtx?.[VirtualMeasureContextsKey]
+    let virtualMeasureContext = null
+    if (!measureContexts || typeof measureContexts.forEach !== 'function') {
+      return virtualMeasureContext
+    }
+    measureContexts.forEach((measureContext) => {
+      if (virtualMeasureContext) return
+      if (typeof measureContext.isObserveTarget === 'function') {
+        if (measureContext.isObserveTarget({
+          observer: this,
+          observerRefs: this.observerRefs,
+          selector: this.observeSelector,
+          observeAll: this.observeAll
+        })) {
+          virtualMeasureContext = measureContext
+        }
+      } else if (this._getVirtualObserveRects(measureContext)) {
+        virtualMeasureContext = measureContext
+      }
+    })
+    return virtualMeasureContext
+  }
+
   // 计算相交区域
   _measureIntersection ({ observeRect, relativeRect, observeIndex, isInit }) {
     const visibleRect = {
@@ -195,8 +258,11 @@ class RNIntersectionObserver {
   }
 
   getThrottleMeasure (throttleTime) {
-    return throttle(() => {
-      this._measureTarget()
+    return throttle((measureContext, forceInit) => {
+      if (forceInit) {
+        this.previousIntersectionRatio = []
+      }
+      this._measureTarget(!!forceInit, measureContext)
     }, throttleTime)
   }
 
@@ -204,22 +270,25 @@ class RNIntersectionObserver {
     if (sourceType === 'section-list') {
       const signature = payload && payload.signature
       const force = payload && payload.force
+      const forceInit = payload && payload.forceInit
       if (!force && signature && this.sectionListMeasureSignature === signature) return
       this.sectionListMeasureSignature = signature || ''
-      this.throttleMeasure()
+      this.throttleMeasure(payload?.measureContext, forceInit)
       return
     }
     this.throttleMeasure()
   }
 
   // 计算节点的rect信息
-  _measureTarget (isInit = false) {
-    if (!this.observerRefs || !this.relativeRef) {
+  _measureTarget (isInit = false, measureContext) {
+    const virtualObserveRects = this._getVirtualObserveRects(measureContext)
+    const virtualRelativeRect = virtualObserveRects ? this._getVirtualRelativeRect(measureContext) : null
+    if ((!this.observerRefs && !virtualObserveRects) || (!this.relativeRef && !virtualRelativeRect)) {
       return
     }
     Promise.all([
-      this._getReferenceRect(this.observerRefs),
-      this._getReferenceRect(this.relativeRef)
+      virtualObserveRects ? Promise.resolve(virtualObserveRects) : this._getReferenceRect(this.observerRefs),
+      virtualRelativeRect ? Promise.resolve(virtualRelativeRect) : this._getReferenceRect(this.relativeRef)
     ]).then(([observeRects, relativeRect]) => {
       if (relativeRect === IgnoreTarget) return
       observeRects.forEach((observeRect, index) => {
@@ -231,13 +300,14 @@ class RNIntersectionObserver {
           isInit
         })
         if (isInsected) {
+          const observeInfo = this._getObserveInfo(index, observeRect)
           this.callback({
             // index: index,
-            id: this.observerRefs[index].getNodeInstance().props?.current?.id,
-            dataset: this.observerRefs[index].getNodeInstance().props?.current?.dataset || {},
+            id: observeInfo.id,
+            dataset: observeInfo.dataset,
             intersectionRatio: Math.round(intersectionRatio * 100) / 100,
             intersectionRect,
-            boundingClientRect: observeRect,
+            boundingClientRect: observeInfo.boundingClientRect,
             relativeRect: relativeRect,
             time: Date.now()
           })

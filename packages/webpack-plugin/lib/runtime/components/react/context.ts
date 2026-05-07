@@ -40,9 +40,10 @@ export interface FormContextValue {
 
 export interface IntersectionObserver {
   [key: number]: {
-    throttleMeasure: () => void
+    throttleMeasure: (measureContext?: any) => void
     throttleMeasureBySource?: (sourceType?: string, payload?: Record<string, any>) => void
   }
+  __mpxVirtualIntersectionObserverMeasureContexts?: Map<any, any>
 }
 
 export interface PortalContextValue {
