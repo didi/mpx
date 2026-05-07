@@ -91,7 +91,9 @@ class RNIntersectionObserver {
     }
     this.observerRefs = hasTargetRef ? (isArray(targetRef) ? targetRef : [targetRef]) : null
     this.callback = callback
-    this._measureTarget(true, virtualMeasureContext)
+    this._measureTarget(true, virtualMeasureContext, {
+      suppressCallback: !!virtualMeasureContext
+    })
   }
 
   _getWindowRect () {
@@ -287,9 +289,10 @@ class RNIntersectionObserver {
   }
 
   // 计算节点的rect信息
-  _measureTarget (isInit = false, measureContext) {
+  _measureTarget (isInit = false, measureContext, measureOptions = {}) {
     const virtualObserveRects = this._getVirtualObserveRects(measureContext)
     const virtualRelativeRect = virtualObserveRects ? this._getVirtualRelativeRect(measureContext) : null
+    const suppressCallback = !!measureOptions.suppressCallback
     if ((!this.observerRefs && !virtualObserveRects) || (!this.relativeRef && !virtualRelativeRect)) {
       return
     }
@@ -311,6 +314,7 @@ class RNIntersectionObserver {
           isInit
         })
         if (isInsected) {
+          if (suppressCallback) return
           const observeInfo = this._getObserveInfo(index, observeRect)
           this.callback({
             // index: index,
