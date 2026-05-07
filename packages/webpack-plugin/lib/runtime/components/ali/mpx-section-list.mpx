@@ -32,8 +32,13 @@
               wx:key="header{{item.itemData.item_key || item._index}}"
               itemData="{{item.itemData}}"
             />
+            <section-footer
+              wx:if="{{item.itemData && item.itemData.isSectionFooter}}"
+              wx:key="footer{{item.itemData.item_key || item._index}}"
+              itemData="{{item.itemData}}"
+            />
             <recycle-item
-              wx:if="{{item.itemData && !item.itemData.isSectionHeader}}"
+              wx:if="{{item.itemData && !item.itemData.isSectionHeader && !item.itemData.isSectionFooter}}"
               wx:key="item{{item.itemData.item_key || item._index}}"
               itemData="{{item.itemData}}"
             />
@@ -111,6 +116,12 @@
         }
       },
       sectionHeaderHeight: {
+        type: Object,
+        value: () => {
+          return {}
+        }
+      },
+      sectionFooterHeight: {
         type: Object,
         value: () => {
           return {}
@@ -290,6 +301,14 @@
         },
         deep: true
       },
+      sectionFooterHeight: {
+        handler() {
+          this.initPositions()
+          this.setPlaceholderStyle()
+          this.setStartOffset()
+        },
+        deep: true
+      },
       listHeaderHeight: {
         handler() {
           this.initPositions()
@@ -336,7 +355,11 @@
           const height = this.getItemHeight(
             item.itemData,
             index,
-            item.itemData.isSectionHeader ? 'sectionHeaderHeight' : 'itemHeight'
+            item.itemData.isSectionHeader
+              ? 'sectionHeaderHeight'
+              : item.itemData.isSectionFooter
+                ? 'sectionFooterHeight'
+                : 'itemHeight'
           )
           const position = {
             index,
@@ -554,6 +577,9 @@
       },
       "section-header": {
         "default": "../wx/mpx-section-list-default/section-header.mpx"
+      },
+      "section-footer": {
+        "default": "../wx/mpx-section-list-default/section-footer.mpx"
       },
       "list-header": {
         "default": "../wx/mpx-section-list-default/list-header.mpx"

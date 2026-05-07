@@ -1,18 +1,23 @@
-import React, { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo, useContext } from 'react'
+
+import { forwardRef, useRef, useState, useEffect, useMemo, createElement, useImperativeHandle, useCallback, memo, useContext } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { extendObject, useLayout, useTransformStyle } from './utils'
+import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from './utils'
 import { IntersectionObserverContext } from './context'
 interface ListItem {
   isSectionHeader?: boolean;
+  isSectionFooter?: boolean;
   _originalItemIndex?: number;
   [key: string]: any;
 }
 
 interface Section {
   headerData: ListItem | null;
+  footerData: ListItem | null;
   data: ListItem[];
   hasSectionHeader?: boolean;
+  hasSectionFooter?: boolean;
   _originalItemIndex?: number;
 }
 
@@ -32,6 +37,7 @@ interface SectionListProps {
   style?: Record<string, any>;
   itemHeight?: ItemHeightType;
   sectionHeaderHeight?: ItemHeightType;
+  sectionFooterHeight?: ItemHeightType;
   listHeaderData?: any;
   listHeaderHeight?: ItemHeightType;
   useListHeader?: boolean;
@@ -39,6 +45,7 @@ interface SectionListProps {
   useListFooter?: boolean;
   'genericrecycle-item'?: string;
   'genericsection-header'?: string;
+  'genericsection-footer'?: string;
   'genericlist-header'?: string;
   'genericlist-footer'?: string;
   'enable-var'?: boolean;
@@ -53,6 +60,8 @@ interface SectionListProps {
   'refresher-enabled'?: boolean;
   'show-scrollbar'?: boolean;
   'refresher-triggered'?: boolean;
+  'wait-for'?: Array<GestureHandler>;
+  'simultaneous-handlers'?: Array<GestureHandler>;
   bindrefresherrefresh?: (event: any) => void;
   bindscrolltolower?: (event: any) => void;
   bindscroll?: (event: any) => void;
@@ -135,6 +144,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     style = {},
     itemHeight = {},
     sectionHeaderHeight = {},
+    sectionFooterHeight = {},
     listHeaderHeight = {},
     listHeaderData = null,
     useListHeader = false,
@@ -142,6 +152,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     useListFooter = false,
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
+    'genericsection-footer': genericsectionFooter,
     'genericlist-header': genericListHeader,
     'genericlist-footer': genericListFooter,
     'enable-var': enableVar,
@@ -155,7 +166,9 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'end-reached-threshold': onEndReachedThreshold = 0.1,
     'refresher-enabled': refresherEnabled,
     'show-scrollbar': showScrollbar = true,
-    'refresher-triggered': refresherTriggered
+    'refresher-triggered': refresherTriggered,
+    'simultaneous-handlers': originSimultaneousHandlers,
+    'wait-for': waitFor
   } = props
 
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
@@ -170,6 +183,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     visibleRangeEnd: -1,
     viewableSignature: ''
   })
+  const sectionListGestureRef = useRef<any>()
 
   const indexMap = useRef<{ [key: string]: string | number }>({})
 
@@ -286,7 +300,7 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   }
 
   // 通过sectionIndex和rowIndex获取原始索引
-  const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header'): number => {
+  const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header' | 'footer'): number => {
     const key = `${sectionIndex}_${rowIndex}`
     return reverseIndexMap.current[key] ?? -1 // 如果找不到，返回-1
   }
@@ -296,9 +310,15 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
       // 通过索引映射表快速定位位置
       const position = indexMap.current[index]
       const [sectionIndex, itemIndex] = (position as string).split('_')
+      const targetSectionIndex = Number(sectionIndex) || 0
+      const targetItemIndex = itemIndex === 'header'
+        ? 0
+        : itemIndex === 'footer'
+          ? convertedListData[targetSectionIndex].data.length + 1
+          : Number(itemIndex) + 1
       scrollViewRef.current.scrollToLocation?.({
-        itemIndex: itemIndex === 'header' ? 0 : Number(itemIndex) + 1,
-        sectionIndex: Number(sectionIndex) || 0,
+        itemIndex: targetItemIndex,
+        sectionIndex: targetSectionIndex,
         animated,
         viewOffset,
         viewPosition
@@ -333,6 +353,19 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     }
   }
 
+  const getSectionFooterHeight = ({ sectionIndex }: { sectionIndex: number }) => {
+    const item = convertedListData[sectionIndex]
+    const { hasSectionFooter } = item
+    // 使用getOriginalIndex获取原始索引
+    const originalIndex = getOriginalIndex(sectionIndex, 'footer')
+    if (!hasSectionFooter) return 0
+    if ((sectionFooterHeight as ItemHeightType).getter) {
+      return (sectionFooterHeight as ItemHeightType).getter?.(item, originalIndex) || 0
+    } else {
+      return (sectionFooterHeight as ItemHeightType).value || 0
+    }
+  }
+
   const convertedListData = useMemo(() => {
     const sections: Section[] = []
     let currentSection: Section | null = null
@@ -355,8 +388,10 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
         // 创建新的 section
         currentSection = {
           headerData: item,
+          footerData: null,
           data: [],
           hasSectionHeader: true,
+          hasSectionFooter: false,
           _originalItemIndex: index
         }
         // 为 section header 添加索引映射
@@ -364,14 +399,37 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
         indexMap.current[index] = `${sectionIndex}_header`
         // 添加反向索引映射
         reverseIndexMap.current[`${sectionIndex}_header`] = index
+      } else if (item.isSectionFooter) {
+        // 如果没有当前 section，创建一个默认的
+        if (!currentSection) {
+          // 创建默认section (无header的section)
+          currentSection = {
+            headerData: null,
+            footerData: null,
+            data: [],
+            hasSectionHeader: false,
+            hasSectionFooter: false,
+            _originalItemIndex: -1
+          }
+        }
+        const sectionIndex = sections.length
+        currentSection.footerData = item
+        currentSection.hasSectionFooter = true
+        indexMap.current[index] = `${sectionIndex}_footer`
+        // 添加反向索引映射
+        reverseIndexMap.current[`${sectionIndex}_footer`] = index
+        sections.push(currentSection)
+        currentSection = null
       } else {
         // 如果没有当前 section，创建一个默认的
         if (!currentSection) {
           // 创建默认section (无header的section)
           currentSection = {
             headerData: null,
+            footerData: null,
             data: [],
             hasSectionHeader: false,
+            hasSectionFooter: false,
             _originalItemIndex: -1
           }
         }
@@ -435,17 +493,19 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
 
       // 添加该 section 尾部位置信息
       // 因为即使 sectionList 没传 renderSectionFooter，getItemLayout 中的 index 的计算也会包含尾部节点
+      const footerHeight = getSectionFooterHeight({ sectionIndex })
       layouts.push({
-        length: 0,
+        length: footerHeight,
         offset,
         index: layouts.length
       })
+      offset += footerHeight
     })
     return {
       itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
-  }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, listHeaderHeight.value, listHeaderHeight.getter])
+  }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight.value, listHeaderHeight.getter])
 
   itemLayoutsRef.current = itemLayouts
 
@@ -481,19 +541,33 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     layoutProps
   )
 
+  const nativeGesture = useMemo(() => {
+    const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
+    const waitForHandlers = flatGesture(waitFor)
+    const gesture = Gesture.Native().withRef(sectionListGestureRef as any)
+    if (simultaneousHandlers && simultaneousHandlers.length) {
+      gesture.simultaneousWithExternalGesture(...simultaneousHandlers)
+    }
+    if (waitForHandlers && waitForHandlers.length) {
+      gesture.requireExternalGestureToFail(...waitForHandlers)
+    }
+    return gesture
+  }, [originSimultaneousHandlers, waitFor])
+
   if (enhanced) {
-    Object.assign(scrollAdditionalProps, {
+    extendObject(scrollAdditionalProps, {
       bounces
     })
   }
   if (refresherEnabled) {
-    Object.assign(scrollAdditionalProps, {
+    extendObject(scrollAdditionalProps, {
       refreshing: refreshing
     })
   }
 
   useImperativeHandle(ref, () => {
-    return Object.assign({}, props, {
+    return extendObject({}, props, {
+      gestureRef: sectionListGestureRef,
       scrollToIndex
     })
   })
@@ -506,6 +580,8 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     'refresher-enabled',
     'bindrefresherrefresh',
     'enable-trigger-intersection-observer'
+    'simultaneous-handlers',
+    'wait-for'
   ], { layoutRef })
 
   // 使用 ref 保存最新的数据，避免数据变化时组件销毁重建
@@ -537,6 +613,18 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
     [generichash, genericsectionHeader]
   )
 
+  const renderSectionFooter = useMemo(
+    () => {
+      const SectionFooterComponent = getGeneric(generichash, genericsectionFooter)
+      if (!SectionFooterComponent) return undefined
+      return (sectionData: { section: Section }) => {
+        if (!sectionData.section.hasSectionFooter) return null
+        return createElement(SectionFooterComponent, { itemData: sectionData.section.footerData })
+      }
+    },
+    [generichash, genericsectionFooter]
+  )
+
   const ListHeaderComponent = useMemo(
     () => {
       if (!useListHeader) return null
@@ -558,24 +646,29 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   )
 
   return createElement(
-    SectionList,
-    extendObject(
-      {
-        style: [{ height, width }, style, layoutStyle],
-        sections: convertedListData,
-        renderItem: renderItem,
-        getItemLayout: getItemLayout,
-        ListHeaderComponent: useListHeader ? ListHeaderComponent : null,
-        ListFooterComponent: useListFooter ? ListFooterComponent : null,
-        renderSectionHeader: renderSectionHeader,
-        refreshControl: refresherEnabled
-          ? React.createElement(RefreshControl, {
-            onRefresh: onRefresh,
-            refreshing: refreshing
-          })
-          : undefined
-      },
-      innerProps
+    GestureDetector,
+    { gesture: nativeGesture },
+    createElement(
+      SectionList,
+      extendObject(
+        {
+          style: [{ height, width }, style, layoutStyle],
+          sections: convertedListData,
+          renderItem: renderItem,
+          getItemLayout: getItemLayout,
+          ListHeaderComponent: useListHeader ? ListHeaderComponent : null,
+          ListFooterComponent: useListFooter ? ListFooterComponent : null,
+          renderSectionHeader: renderSectionHeader,
+          renderSectionFooter: renderSectionFooter,
+          refreshControl: refresherEnabled
+            ? createElement(RefreshControl, {
+              onRefresh: onRefresh,
+              refreshing: refreshing
+            })
+            : undefined
+        },
+        innerProps
+      )
     )
   )
 })
