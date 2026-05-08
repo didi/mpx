@@ -77,6 +77,7 @@ module.exports = function ({
         },
         (callback) => {
           processStyles(parts.styles, {
+            loaderContext,
             ctorType,
             autoScope,
             moduleId
