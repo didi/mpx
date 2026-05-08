@@ -1,25 +1,44 @@
 import { Text, TextProps } from 'react-native'
-import { JSX, createElement } from 'react'
+import { JSX, createElement, useContext } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject } from './utils'
+import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren } from './utils'
+import { TextPassThroughContext } from './context'
 
 const SimpleText = (props: TextProps): JSX.Element => {
+  const inheritedText = useContext(TextPassThroughContext)
+  const style = extendObject({}, inheritedText?.textStyle, props.style)
+  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props, { style })
   const {
-    allowFontScaling = false,
+    allowFontScaling,
     children
-  } = props
+  } = mergedProps
 
   const innerProps = useInnerProps(
     extendObject(
       {},
-      props,
+      mergedProps,
       {
-        allowFontScaling
+        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling()
       }
     )
   )
+  const isStringOnly = isStringChildren(children)
+  const childTextPassThrough = useTextPassThroughValue(
+    Object.keys(style).length ? style : undefined,
+    undefined,
+    {
+      inheritTextProps: false,
+      disabled: isStringOnly
+    }
+  )
 
-  return createElement(Text, innerProps, children)
+  return createElement(Text, innerProps, wrapChildren(
+    { children },
+    {
+      hasVarDec: false,
+      textPassThrough: childTextPassThrough
+    }
+  ))
 }
 
 SimpleText.displayName = 'MpxSimpleText'

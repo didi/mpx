@@ -125,20 +125,22 @@ const childNode = wrapChildren(props, {
 })
 ```
 
-`mpx-text` 改为读取 context，并在进入 `useTransformStyle` 前完成合并：
+`mpx-text` 改为读取 context，但祖先传下来的 `textStyle` 已经是 transform 后的样式，不能再次进入 `useTransformStyle`。正确顺序是：先合并 `pendingTextProps` 与当前 props；当前节点自己的 `props.style` 单独进入 `useTransformStyle`；最后再把继承样式与当前节点转换后的样式合并成最终 RN Text style。
 
 ```tsx
 const inheritedText = useContext(TextPassThroughContext)
-const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
-const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props, { style: mergedStyle })
+const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
+const { normalStyle } = useTransformStyle(props.style, transformConfig)
+const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
 ```
 
-后续解构、`useTransformStyle`、`useInnerProps`、`useNodesRef` 都基于 `mergedProps` 工作。这样可以保持：
+后续 `useInnerProps`、`useNodesRef` 和 RN `<Text>` 都使用 `finalStyle`。这样可以保持：
 
 1. 祖先容器文本样式可以跨中间非 text 组件继续传递。
 2. 近层容器覆盖远层容器。
 3. `mpx-text` 自身显式传入的 props/style 优先级最高。
-4. 不需要 clone 子节点，只有真正的 `mpx-text` 消费 context 时才做合并。
+4. 祖先样式不会重复执行 CSS var、percent、calc 等 transform 逻辑。
+5. 不需要 clone 子节点，只有真正的 `mpx-text` 消费 context 时才做合并。
 
 对于 `mpx-text` 自身的子树，建议继续通过 `wrapChildren` 向下提供当前 text 的已解析文本样式，但要清空已经被当前 text 消费过的 `pendingTextProps`：
 

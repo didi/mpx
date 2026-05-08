@@ -313,6 +313,13 @@ export interface RnConfig {
   disableAppStateListener?: boolean
 
   /**
+   * RN 文本类组件是否允许跟随系统字体缩放。
+   *
+   * @default false
+   */
+  allowFontScaling?: boolean
+
+  /**
    * 控制首页回退按钮是否展示，并监听点击事件。
    *
    * 如果绑定该函数，则首页显示返回按钮，点击后调用该函数作为回调。
