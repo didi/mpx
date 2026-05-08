@@ -1,6 +1,6 @@
 import { View, ViewProps, TextStyle } from 'react-native'
 import { createElement } from 'react'
-import { splitProps, splitStyle, wrapChildren, extendObject } from './utils'
+import { splitProps, splitStyle, wrapChildren, extendObject, transformBoxSizing } from './utils'
 import useInnerProps from './getInnerListeners'
 
 const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
@@ -13,7 +13,7 @@ const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
       {},
       props,
       {
-        style: innerStyle
+        style: transformBoxSizing(extendObject({}, innerStyle))
       }
     )
   )

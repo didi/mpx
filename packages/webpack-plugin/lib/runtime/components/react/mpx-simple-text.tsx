@@ -1,7 +1,7 @@
 import { Text, TextProps } from 'react-native'
 import { JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject } from './utils'
+import { extendObject, transformBoxSizing } from './utils'
 
 const SimpleText = (props: TextProps): JSX.Element => {
   const {
@@ -14,7 +14,8 @@ const SimpleText = (props: TextProps): JSX.Element => {
       {},
       props,
       {
-        allowFontScaling
+        allowFontScaling,
+        style: transformBoxSizing(extendObject({}, props.style || {}))
       }
     )
   )
