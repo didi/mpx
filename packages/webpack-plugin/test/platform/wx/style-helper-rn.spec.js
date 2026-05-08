@@ -320,5 +320,24 @@ describe('React Native style validation for CSS variables', () => {
       expect(result).toEqual({})
       expect(config.error).toHaveBeenCalledTimes(2)
     })
+
+    test('should keep explicit box-sizing values', () => {
+      const css = '.content { box-sizing: content-box; } .border { box-sizing: border-box; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.content).toEqual({
+        boxSizing: '"content-box"'
+      })
+      expect(result.border).toEqual({
+        boxSizing: '"border-box"'
+      })
+      expect(config.error).not.toHaveBeenCalled()
+    })
   })
 })
