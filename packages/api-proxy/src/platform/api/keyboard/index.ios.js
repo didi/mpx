@@ -12,15 +12,9 @@ function keyboardShowListener (e) {
 }
 function keyboardHideListener (e) {
   const endCoordinates = e.endCoordinates || {}
-  let height
-  if (__mpx_mode__ === 'ios') {
-    height = 0
-  } else {
-    height = endCoordinates.height
-  }
   // eslint-disable-next-line node/no-callback-literal
   callbacks.forEach(cb => cb({
-    height
+    height: 0
   }))
 }
 const onKeyboardHeightChange = function (callback) {
@@ -32,19 +26,12 @@ const onKeyboardHeightChange = function (callback) {
   callbacks.push(callback)
 }
 const offKeyboardHeightChange = function (callback) {
-  if (callback == null) {
-    // 不传 callback 时清除所有监听
-    callbacks.length = 0
-    Keyboard.removeAllListeners('keyboardDidShow')
-    Keyboard.removeAllListeners('keyboardDidHide')
-    hasListener = false
-    return
-  }
   const index = callbacks.indexOf(callback)
   if (index > -1) {
     callbacks.splice(index, 1)
   }
-  if (callbacks.length === 0) {
+  if (callbacks.length === 0 || callback == null) {
+    callbacks.length = 0
     Keyboard.removeAllListeners('keyboardDidShow')
     Keyboard.removeAllListeners('keyboardDidHide')
     hasListener = false
