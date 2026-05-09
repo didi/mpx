@@ -133,12 +133,12 @@ function traverseAndEvaluate(ast, defs) {
 }
 
 /**
- *
+ *处理普通字符串的内部方法
  * @param {string} content
  * @param {Record<string, any>} defs
  * @returns
  */
-function stripCondition(content, defs) {
+function doStripCondition(content, defs) {
   const ast = parse(content)
   return traverseAndEvaluate(ast, defs)
 }
@@ -159,10 +159,10 @@ function hasConditionalDirective(content) {
  * 2. 非 <style> 区域出现条件指令时通过 logStripError 报错并返回原始内容
  * @param {string} content .mpx 文件完整内容
  * @param {Record<string, any>} defs 条件变量定义
- * @param {string} path 文件路径
+ * @param {string=} path 文件路径
  * @returns {string} 处理后的内容
  */
-function stripConditionForMpx(content, defs, path) {
+function stripConditionMpx(content, defs, path) {
   // 匹配 <style ...> ... </style> 块（支持多个 style 块）
   const styleRegex = /(<style[^>]*>)([\s\S]*?)(<\/style>)/gi
   let lastIndex = 0
@@ -182,7 +182,7 @@ function stripConditionForMpx(content, defs, path) {
     const styleOpen = match[1]
     const styleContent = match[2]
     const styleClose = match[3]
-    const strippedStyle = stripCondition(styleContent, defs)
+    const strippedStyle = doStripCondition(styleContent, defs)
     result += styleOpen + strippedStyle + styleClose
     lastIndex = styleRegex.lastIndex
   }
@@ -195,6 +195,26 @@ function stripConditionForMpx(content, defs, path) {
   }
   result += remaining
   return result
+}
+
+function isMpxFile(path) {
+  return typeof path === 'string' && /\.mpx$/.test(path)
+}
+
+/**
+ * 统一条件编译裁剪入口：
+ * - 传入 .mpx 文件路径时，仅裁剪 <style> 块中的条件编译
+ * - 未传入 path 或传入普通样式文件路径时，按普通样式字符串裁剪
+ * @param {string} content
+ * @param {Record<string, any>} defs
+ * @param {string=} path
+ * @returns {string}
+ */
+function stripCondition(content, defs, path) {
+  if (isMpxFile(path)) {
+    return stripConditionMpx(content, defs, path)
+  }
+  return doStripCondition(content, defs)
 }
 
 let proxyReadFileSync
@@ -234,24 +254,15 @@ function startFSStripForCss(defs) {
   function shouldStrip(path) {
     return typeof path === 'string' && /\.(styl|scss|sass|less|css|mpx)$/.test(path)
   }
-  function isMpxFile(path) {
-    return typeof path === 'string' && /\.mpx$/.test(path)
-  }
-  function doStrip(content, path) {
-    if (isMpxFile(path)) {
-      return stripConditionForMpx(content, defs, path)
-    }
-    return stripCondition(content, defs)
-  }
   proxyReadFileSync = function (path, options) {
     const content = rawReadFileSync.call(fs, path, options)
     if (shouldStrip(path)) {
       try {
         if (typeof content === 'string') {
-          return doStrip(content, path)
+          return stripCondition(content, defs, path)
         } else if (Buffer.isBuffer(content)) {
           const str = content.toString('utf-8')
-          const result = doStrip(str, path)
+          const result = stripCondition(str, defs, path)
           if (result !== str) {
             return Buffer.from(result, 'utf-8')
           }
@@ -278,11 +289,11 @@ function startFSStripForCss(defs) {
       if (shouldStrip(path)) {
         try {
           if (typeof data === 'string') {
-            const result = doStrip(data, path)
+            const result = stripCondition(data, defs, path)
             return callback(null, result)
           } else if (Buffer.isBuffer(data)) {
             const content = data.toString('utf-8')
-            const result = doStrip(content, path)
+            const result = stripCondition(content, defs, path)
             if (result !== content) {
               return callback(null, Buffer.from(result, 'utf-8'))
             }
@@ -301,8 +312,6 @@ function startFSStripForCss(defs) {
 }
 
 module.exports.stripCondition = stripCondition
-module.exports.stripConditionForMpx = stripConditionForMpx
-module.exports.hasConditionalDirective = hasConditionalDirective
 module.exports.rewriteFSForCss = rewriteFSForCss
 module.exports.startFSStripForCss = startFSStripForCss
 module.exports.registerStripCompilation = registerStripCompilation
