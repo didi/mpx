@@ -2,7 +2,7 @@ import { useEffect, useRef, useContext, forwardRef, useMemo, createElement, Reac
 import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, useAnimatedValue } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThroughValue } from './utils'
 import { error } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
@@ -33,9 +33,8 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     'parent-height': parentHeight
   } = props
 
-  const scrollViewContext = useContext(ScrollViewContext)
+  const { scrollOffset, gestureRef: scrollViewRef } = useContext(ScrollViewContext)
   const stickyContext = useContext(StickyContext)
-  const { scrollOffset } = scrollViewContext
   const { registerStickyHeader, unregisterStickyHeader } = stickyContext
   const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
@@ -53,6 +52,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const { layoutRef, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   const headerTopAnimated = useAnimatedValue(0)
   // harmony animatedValue 不支持通过 _value 访问
@@ -67,7 +67,6 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   function updatePosition () {
     if (headerRef.current) {
-      const scrollViewRef = scrollViewContext.gestureRef
       if (scrollViewRef && scrollViewRef.current) {
         headerRef.current.measureLayout(
           scrollViewRef.current,
@@ -95,7 +94,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   })
 
   useEffect(() => {
-    if (!bindstickontopchange) return
+    if (!bindstickontopchange || !scrollOffset) return
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
@@ -115,29 +114,31 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     return () => {
       scrollOffset.removeListener(listener)
     }
-  }, [])
+  }, [bindstickontopchange, scrollOffset])
 
   const animatedStyle = useMemo(() => {
-    const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1],
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'extend'
-    })
+    if (scrollOffset) {
+      const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1],
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'extend'
+      })
 
-    const finalTranslateY = offsetTop === 0
-      ? translateY
-      : Animated.add(
-        translateY,
-        Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, offsetTop],
-          extrapolate: 'clamp'
-        })
-      )
+      const finalTranslateY = offsetTop === 0
+        ? translateY
+        : Animated.add(
+          translateY,
+          Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, offsetTop],
+            extrapolate: 'clamp'
+          })
+        )
 
-    return {
-      transform: [{ translateY: finalTranslateY }]
+      return {
+        transform: [{ translateY: finalTranslateY }]
+      }
     }
   }, [scrollOffset, headerTopAnimated, offsetTop])
 
@@ -160,8 +161,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
         {
           hasVarDec,
           varContext: varContextRef.current,
-          textStyle,
-          textProps
+          textPassThrough
         }
       )
     )

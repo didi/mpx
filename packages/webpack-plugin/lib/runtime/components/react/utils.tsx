@@ -1,12 +1,11 @@
-import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
-import { VarContext, ScrollViewContext, RouteContext } from './context'
+import { VarContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import FastImage, { FastImageProps } from '@d11/react-native-fast-image'
+import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
-import { runOnJS } from 'react-native-reanimated'
 import { Gesture } from 'react-native-gesture-handler'
 
 export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
@@ -14,10 +13,13 @@ export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
-export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
+}
+export const DEFAULT_BOX_SIZING_STYLE = {
+  boxSizing: 'content-box'
 }
 
 declare const __mpx_mode__: 'ios' | 'android' | 'harmony'
@@ -31,6 +33,7 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
+const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
 const filterRegExp = /(calc|env|%)/
 
@@ -39,6 +42,19 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-right': 'right',
   'safe-area-inset-bottom': 'bottom',
   'safe-area-inset-left': 'left'
+}
+
+export const extendObject = Object.assign
+
+export function getDefaultAllowFontScaling (): boolean {
+  return global.__mpx?.config?.rnConfig?.allowFontScaling ?? false
+}
+
+export function transformBoxSizing (style: Record<string, any> = {}) {
+  if (style.boxSizing === undefined) {
+    style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? DEFAULT_BOX_SIZING_STYLE.boxSizing
+  }
+  return style
 }
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
@@ -105,9 +121,10 @@ export function isText (ele: ReactNode): ele is ReactElement {
   return false
 }
 
-export function every (children: ReactNode, callback: (children: ReactNode) => boolean) {
-  const childrenArray = Array.isArray(children) ? children : [children]
-  return childrenArray.every((child) => callback(child))
+export function isStringChildren (children: ReactNode) {
+  if (typeof children === 'string') return true
+  if (!Array.isArray(children)) return false
+  return children.every((child) => typeof child === 'string')
 }
 
 type GroupData<T> = Record<string, Partial<T>>
@@ -143,16 +160,17 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
     innerStyle: Partial<T>
   }
 }
-
-const selfPercentRule: Record<string, 'height' | 'width'> = {
-  translateX: 'width',
-  translateY: 'height',
+const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
   borderBottomLeftRadius: 'width',
   borderBottomRightRadius: 'width',
   borderTopRightRadius: 'width',
   borderRadius: 'width'
 }
+const selfPercentRule: Record<string, 'height' | 'width'> = extendObject({
+  translateX: 'width',
+  translateY: 'height'
+}, radiusPercentRule)
 
 const parentHeightPercentRule: Record<string, boolean> = {
   height: true,
@@ -216,16 +234,22 @@ function resolveVar (input: string, varContext: Record<string, any>) {
   const replaced = new ReplaceSource(input)
 
   for (const { start, end, args } of parsed) {
+    // NOTE:
+    // - CSS var() fallback 允许包含空格、逗号等字符（如 font-family 的 fallback）
+    // - parseFunc 会按逗号分割 args，因此这里把 args[1..] 重新 join 回 fallback
     const varName = args[0]
-    const fallback = args[1]
-    let varValue = hasOwn(varContext, varName) ? varContext[varName] : fallback
-    if (varValue === undefined) return
-    if (varUseRegExp.test(varValue)) {
-      varValue = resolveVar(varValue, varContext)
-      if (varValue === undefined) return
-    } else {
-      varValue = global.__formatValue(varValue)
+    const fallback: string | undefined = args.length > 1 ? args.slice(1).join(',').trim() : undefined
+
+    // 先处理 varValue
+    let varValue = hasOwn(varContext, varName) ? varContext[varName] : undefined
+    if (varValue !== undefined) {
+      varValue = varUseRegExp.test(varValue) ? resolveVar(varValue, varContext) : global.__formatValue(varValue)
     }
+    // 再处理 fallback
+    if (varValue === undefined && fallback !== undefined) {
+      varValue = varUseRegExp.test(fallback) ? resolveVar(fallback, varContext) : global.__formatValue(fallback)
+    }
+    if (varValue === undefined) return
     replaced.replace(start, end - 1, varValue)
   }
 
@@ -288,6 +312,10 @@ function transformStringify (styleObj: Record<string, any>) {
   if (isNumber(styleObj.fontWeight)) {
     styleObj.fontWeight = '' + styleObj.fontWeight
   }
+  // transformOrigin 20px 需要转换为 transformOrigin '20'
+  if (isNumber(styleObj.transformOrigin)) {
+    styleObj.transformOrigin = '' + styleObj.transformOrigin
+  }
 }
 
 function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
@@ -297,7 +325,7 @@ function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
   }
 }
 // 多value解析
-function parseValues (str: string, char = ' ') {
+export function parseValues (str: string, char = ' ') {
   let stack = 0
   let temp = ''
   const result = []
@@ -308,11 +336,11 @@ function parseValues (str: string, char = ' ') {
       stack--
     }
     // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || (str[i] !== char && str[i] !== ' ')) {
+    if (stack !== 0 || str[i] !== char) {
       temp += str[i]
     }
     if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp)
+      result.push(temp.trim())
       temp = ''
     }
   }
@@ -321,6 +349,9 @@ function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
+  // Todo 2 RN下顺序不一致转换结果不一致，故这里不处理，动画前后transform 排序不一致的问题，由业务调整写法
+  // Todo 1 transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+  // values.sort()
   const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
     const match = item.match(/([/\w]+)\((.+)\)/)
@@ -390,9 +421,10 @@ interface TransformStyleConfig {
   parentFontSize?: number
   parentWidth?: number
   parentHeight?: number
+  transformRadiusPercent?: boolean
 }
 
-export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
+export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
   const unoVarStyle: Record<string, any> = {}
   const normalStyle: Record<string, any> = {}
@@ -440,14 +472,21 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
+  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
+      // calc translate & border-radius 的百分比计算
+      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
+        hasSelfPercent = true
+        percentKeyPaths.push(keyPath.slice())
+      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
 
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
-    if (hasOwn(selfPercentRule, key) && PERCENT_REGEX.test(value)) {
+    // fixme 去掉 translate & border-radius 的百分比计算
+    // fixme Image 组件 borderRadius 仅支持 number
+    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
       hasSelfPercent = true
       percentKeyPaths.push(keyPath.slice())
     } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
@@ -463,7 +502,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
 
   // traverse var & generate normalStyle
   traverseStyle(styleObj, [varVisitor])
-
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
@@ -527,9 +565,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformStringify(normalStyle)
   // transform rpx to px
   transformBoxShadow(normalStyle)
-
-  // transform 字符串格式转化数组格式
+  // transform 字符串格式转化数组格式(先转数组再处理css var)
   transformTransform(normalStyle)
+  transformBoxSizing(normalStyle)
 
   return {
     hasVarDec,
@@ -646,20 +684,50 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
 export interface WrapChildrenConfig {
   hasVarDec: boolean
   varContext?: Record<string, any>
-  textStyle?: TextStyle
-  textProps?: Record<string, any>
+  textPassThrough?: TextPassThroughContextValue | null
 }
 
-export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textStyle, textProps }: WrapChildrenConfig) {
+export interface TextPassThroughValueOptions {
+  inheritTextProps?: boolean
+  disabled?: boolean
+}
+
+export function useTextPassThroughValue (
+  textStyle?: TextStyle,
+  textProps?: Record<string, any>,
+  { inheritTextProps = true, disabled = false }: TextPassThroughValueOptions = {}
+) {
+  const parent = useContext(TextPassThroughContext)
+  const valueRef = useRef<TextPassThroughContextValue | null>(null)
+
+  if (disabled) return null
+
+  if (!textStyle && !textProps && (inheritTextProps || !parent?.pendingTextProps)) return null
+
+  const nextTextStyle = textStyle
+    ? extendObject({}, parent?.textStyle, textStyle)
+    : parent?.textStyle
+  const nextTextProps = inheritTextProps
+    ? textProps
+      ? extendObject({}, parent?.pendingTextProps, textProps)
+      : parent?.pendingTextProps
+    : textProps
+  const nextValue = {
+    textStyle: nextTextStyle,
+    pendingTextProps: nextTextProps
+  }
+
+  if (diffAndCloneA(valueRef.current, nextValue).diff) {
+    valueRef.current = nextValue
+  }
+
+  return valueRef.current
+}
+
+export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textPassThrough }: WrapChildrenConfig) {
   let { children } = props
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = extendObject({}, textStyle, child.props.style)
-        return cloneElement(child, extendObject({}, textProps, { style }))
-      }
-      return child
-    })
+  if (textPassThrough) {
+    children = <TextPassThroughContext.Provider value={textPassThrough} key='textPassThroughWrap'>{children}</TextPassThroughContext.Provider>
   }
   if (hasVarDec && varContext) {
     children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
@@ -726,8 +794,6 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
   })) || []
 }
 
-export const extendObject = Object.assign
-
 export function getCurrentPage (pageId: number | null | undefined) {
   if (!global.getCurrentPages) return
   const pages = global.getCurrentPages()
@@ -736,9 +802,14 @@ export function getCurrentPage (pageId: number | null | undefined) {
 
 export function renderImage (
   imageProps: ImageProps | FastImageProps,
-  enableFastImage = false
+  enableFastImage = true
 ) {
-  const Component: React.ComponentType<ImageProps | FastImageProps> = enableFastImage ? FastImage : Image
+  let Component: React.ComponentType<ImageProps | FastImageProps> = Image
+  if (enableFastImage) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fastImageModule = require('@d11/react-native-fast-image')
+    Component = fastImageModule.default || fastImageModule
+  }
   return createElement(Component, imageProps)
 }
 

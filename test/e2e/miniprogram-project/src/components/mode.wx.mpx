@@ -1,0 +1,15 @@
+<template>
+  <view> wx </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({})
+</script>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

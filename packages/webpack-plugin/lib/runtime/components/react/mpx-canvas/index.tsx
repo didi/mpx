@@ -310,6 +310,6 @@ const _Canvas = forwardRef<HandlerRef<CanvasProps & View, CanvasProps>, CanvasPr
   return canvasComponent
 })
 
-_Canvas.displayName = 'mpxCanvas'
+_Canvas.displayName = 'MpxCanvas'
 
 export default _Canvas

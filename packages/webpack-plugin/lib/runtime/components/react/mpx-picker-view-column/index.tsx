@@ -5,7 +5,8 @@ import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAn
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
-import MpxPickerVIewColumnItem from './pickerViewColumnItem'
+import MpxPickerViewColumnItem from './pickerViewColumnItem'
+import MpxPickerViewColumnItemLite from './pickerViewColumnItemLite'
 import { PickerViewColumnAnimationContext } from '../mpx-picker-view/pickerVIewContext'
 import { calcHeightOffsets } from './pickerViewFaces'
 
@@ -25,6 +26,7 @@ interface ColumnProps {
   }
   pickerMaskStyle: Record<string, any>
   pickerIndicatorStyle: Record<string, any>
+  enableWheelAnimation?: boolean
 }
 
 const visibleCount = 5
@@ -39,6 +41,7 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     wrapperStyle,
     pickerMaskStyle,
     pickerIndicatorStyle,
+    enableWheelAnimation = true,
     'enable-var': enableVar,
     'external-var-context': externalVarContext
   } = props
@@ -94,6 +97,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const contentContainerStyle = useMemo(() => {
     return [{ paddingVertical: paddingHeight }]
   }, [paddingHeight])
+
+  const initialContentOffsetY = useMemo(
+    () => initialIndex * itemRawH,
+    [initialIndex, itemRawH]
+  )
 
   const getIndex = useCallback((y: number) => {
     const calc = Math.round(y / itemRawH)
@@ -151,17 +159,6 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       activeIndex.current = initialIndex
     }, isIOS ? 0 : 200)
   }, [itemRawH, maxIndex, initialIndex])
-
-  const onContentSizeChange = useCallback((_w: number, h: number) => {
-    const y = initialIndex * itemRawH
-    if (y <= h) {
-      clearTimerScrollTo()
-      timerScrollTo.current = setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
-        activeIndex.current = initialIndex
-      }, 0)
-    }
-  }, [itemRawH, initialIndex])
 
   const onItemLayout = useCallback((e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
@@ -287,8 +284,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {
-      return (
-        <MpxPickerVIewColumnItem
+      return enableWheelAnimation
+        ? (<MpxPickerViewColumnItem
           key={index}
           item={item}
           index={index}
@@ -297,8 +294,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
           textProps={textProps}
           visibleCount={visibleCount}
           onItemLayout={onItemLayout}
-        />
-      )
+        />)
+        : (<MpxPickerViewColumnItemLite
+          key={index}
+          item={item}
+          index={index}
+          itemHeight={itemHeight}
+          textStyle={textStyle}
+          textProps={textProps}
+          onItemLayout={onItemLayout}
+        />)
     })
 
   const renderScollView = () => {
@@ -320,8 +325,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       onScrollEndDrag,
       onMomentumScrollBegin,
       onMomentumScrollEnd,
-      onContentSizeChange,
-      contentContainerStyle
+      contentContainerStyle,
+      contentOffset: { x: 0, y: initialContentOffsetY }
     }) as React.ComponentProps<typeof Reanimated.ScrollView>
 
     return createElement(
@@ -351,9 +356,9 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   return (
     <View style={[styles.wrapper, normalStyle]}>
-        {renderScollView()}
-        {renderMask()}
-        {renderIndicator()}
+      {renderScollView()}
+      {renderMask()}
+      {renderIndicator()}
     </View>
   )
 })

@@ -19,6 +19,10 @@ const processWeb = require('./web')
 const processReact = require('./react')
 const genMpxCustomElement = require('./runtime-render/gen-mpx-custom-element')
 
+/**
+ * @this {MpxLoaderContext<any>}
+ * @param {string} content
+ */
 module.exports = function (content) {
   this.cacheable()
 
@@ -49,15 +53,15 @@ module.exports = function (content) {
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
 
-  const emitWarning = (msg) => {
+  const emitWarning = (msg, loc) => {
     this.emitWarning(
-      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const emitError = (msg, loc) => {
     this.emitError(
-      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
@@ -123,6 +127,7 @@ module.exports = function (content) {
         componentPlaceholder,
         componentGenerics,
         usingComponentsInfo,
+        originalUsingComponents,
         jsonContent
       } = jsonInfo
       const hasScoped = parts.styles.some(({ scoped }) => scoped) || autoScope
@@ -146,7 +151,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -168,7 +174,8 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          usingComponentsInfo,
+          originalUsingComponents,
           componentGenerics,
           autoScope,
           callback
@@ -237,6 +244,7 @@ module.exports = function (content) {
           ctorType,
           moduleId,
           usingComponentsInfo: JSON.stringify(usingComponentsInfo),
+          originalUsingComponents: JSON.stringify(originalUsingComponents),
           componentPlaceholder
           // 添加babel处理渲染函数中可能包含的...展开运算符
           // 由于...运算符应用范围极小以及babel成本极高，先关闭此特性后续看情况打开

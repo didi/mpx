@@ -9,6 +9,7 @@
 
 import type { GetComputedType } from '@mpxjs/store'
 import type { ScaledSize } from 'react-native'
+import type { ComponentType } from 'react'
 export * from '@mpxjs/store'
 
 // utils
@@ -114,7 +115,7 @@ interface Context {
   refs: ObjectOf<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>
   asyncRefs: ObjectOf<Promise<WechatMiniprogram.NodesRef & ComponentIns<{}, {}, {}, {}, []>>>
 
-  forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
+  forceUpdate (data?: object): void
 
   selectComponent: ReplaceWxComponentIns['selectComponent']
   selectAllComponents: ReplaceWxComponentIns['selectAllComponents']
@@ -126,9 +127,17 @@ interface Context {
 type ExtendedComponentOptions = {
   disconnectOnUnmounted?: boolean
   shallowReactivePattern?: RegExp
+  /**
+   * 是否禁用render函数的useMemo，仅输出RN支持
+   */
+  disableMemo?: boolean
 } & WechatMiniprogram.Component.ComponentOptions
 
 interface ComponentOpt<D extends Data, P extends Properties, C, M extends Methods, Mi extends Array<any>, S extends Record<any, any>> extends Partial<WechatMiniprogram.Component.Lifetimes & WechatMiniprogram.Component.OtherOption> {
+  /**
+   * ReactNative 原生组件注册
+   */
+  components?: Record<string, ComponentType>,
   data?: D
   properties?: P
   computed?: C
@@ -195,7 +204,7 @@ export interface MpxComponentIns {
 
   $watch (expr: string | (() => any), handler: WatchHandler | WatchOptWithHandler, options?: WatchOpt): () => void
 
-  $forceUpdate (params?: object, options?: object | (() => void), callback?: () => void): void
+  $forceUpdate (data?: object): void
 
   $nextTick (fn: () => void): void
 
@@ -221,7 +230,7 @@ type WxComponentIns<D extends Data = {}, P extends Properties = {}, M extends Me
   Omit<WechatMiniprogram.Component.Instance<D, P, M>, 'selectComponent' | 'selectAllComponents'>
   & ReplaceWxComponentIns
 
-type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
+export type ComponentIns<D extends Data = {}, P extends Properties = {}, C = {}, M extends Methods = {}, Mi extends Array<any> = [], S extends Record<any, any> = {}, O = {}> =
   GetDataType<D> & UnboxMixinsField<Mi, 'data'> &
   M & UnboxMixinsField<Mi, 'methods'> & { [K in keyof S]: S[K] extends Ref<infer V> ? V : S[K] } &
   GetPropsType<P & UnboxMixinsField<Mi, 'properties'>> &
@@ -271,6 +280,14 @@ export interface WebviewConfig {
  */
 export interface RnConfig {
   /**
+   * RN 节点未显式声明 box-sizing 时使用的默认盒模型。
+   *
+   * 默认值为 content-box，用于对齐小程序 / Web 的默认行为。
+   * 如需保留 RN 原始默认盒模型，可配置为 border-box。
+   */
+  defaultBoxSizing?: 'border-box' | 'content-box'
+
+  /**
    * 当导航状态发生变化时触发，例如页面跳转、返回等。
    *
    * @param state 当前的导航状态对象
@@ -296,12 +313,19 @@ export interface RnConfig {
    * - `true`：允许退出应用
    * - `false`：阻止退出应用
    */
-  onAppBack?: () => boolean
+  onAppBack?: (delta: number) => boolean
 
   /**
    * 是否禁用框架内部的 AppStateChange 监听。
    */
   disableAppStateListener?: boolean
+
+  /**
+   * RN 文本类组件是否允许跟随系统字体缩放。
+   *
+   * @default false
+   */
+  allowFontScaling?: boolean
 
   /**
    * 控制首页回退按钮是否展示，并监听点击事件。
@@ -357,26 +381,6 @@ export interface RnConfig {
   ) => T | void
 
   /**
-   * 异步分包加载配置。
-   */
-  asyncChunk?: {
-    /**
-     * 加载超时时长配置，单位为毫秒。
-     */
-    timeout: number
-
-    /**
-     * 异步分包页面加载超时或失败时，自定义兜底页面文件路径。
-     */
-    fallback: string
-
-    /**
-     * 异步分包页面加载时，自定义 loading 页面文件路径。
-     */
-    loading: string
-  }
-
-  /**
    * 加载并执行异步分包的方法。
    *
    * @param params 分包下载参数
@@ -384,7 +388,7 @@ export interface RnConfig {
    * @param params.package 分包名
    * @returns Promise，表示加载完成
    */
-  loadChunkAsync?: (params: { url: string; package: string }) => Promise<any>
+  loadChunkAsync?: (params: { url: string; package: string }) => Promise<null>
 
   /**
    * 下载多个异步分包的方法（不执行）。
@@ -392,6 +396,43 @@ export interface RnConfig {
    * @param packages 分包名数组
    */
   downloadChunkAsync?: (packages: Array<string>) => void
+
+  /**
+   * bundle 中是否关闭 android 键盘避让功能，如果关闭需要将该配置设置为 false，使用 mpx 内置的键盘避让逻辑
+   * @platform android
+   * @default true
+   */
+  enableNativeKeyboardAvoiding?: boolean,
+
+  /**
+   * 自定义蓝牙权限检查函数，用于在调用 openBluetoothAdapter 时替代默认的权限检查逻辑。
+   *
+   * Mpx 在 iOS 上默认返回 true（假定权限由系统弹窗处理），在 Android 上会请求 ACCESS_FINE_LOCATION 或 BLUETOOTH_SCAN/CONNECT 权限。
+   * 如果需要自定义权限申请逻辑（例如在某些定制 Android 设备上），可配置此函数。
+   *
+   * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
+   */
+  bluetoothPermission?: () => Promise<boolean>
+
+  /**
+   * 自定义 Wi-Fi 权限检查函数，用于在调用 startWifi 时替代默认的权限检查逻辑。
+   *
+   * Mpx 在 Android 上默认会请求 ACCESS_FINE_LOCATION 权限。
+   * 如果需要自定义权限申请逻辑，可配置此函数。
+   *
+   * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
+   */
+  wifiPermission?: () => Promise<boolean>
+
+  /**
+   * 自定义相机权限检查函数，用于在渲染 Camera 组件前进行权限检查。
+   *
+   * 默认情况下，Mpx 会直接渲染 Camera 组件。
+   * 如果配置了此函数，Camera 组件会等待该函数返回 true 后再进行渲染。
+   *
+   * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
+   */
+  cameraPermission?: () => Promise<boolean>
 }
 
 interface MpxConfig {
@@ -399,10 +440,10 @@ interface MpxConfig {
   ignoreWarning: boolean | string | RegExp | ((msg: string, location: string, e: Error) => boolean)
   ignoreProxyWhiteList: Array<string>
   observeClassInstance: boolean | Array<AnyConstructor>
-  errorHandler: (msg: String, location: String, e: Error) => any | null
-  warnHandler: (msg: String, location: String, e: Error) => any | null
-  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
-  setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => any | null
+  errorHandler: (msg: String, location: String, e: Error) => void
+  warnHandler: (msg: String, location: String, e: Error) => void
+  proxyEventHandler: (e: WechatMiniprogram.CustomEvent, target: ComponentIns<{}, {}, {}, {}, []>) => void
+  setDataHandler: (data: object, target: ComponentIns<{}, {}, {}, {}, []>) => void
   forceFlushSync: boolean,
   webRouteConfig: object,
   webConfig: object,
@@ -413,10 +454,10 @@ interface MpxConfig {
   */
   webviewConfig: WebviewConfig,
   /** react-native 相关配置，用于挂载事件等，如 onShareAppMessage */
-  rnConfig?: RnConfig,
+  rnConfig: RnConfig,
 }
 
-type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'
+type SupportedMode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa'| 'ks' | 'jd' | 'dd'
 
 interface ImplementOptions {
   modes?: Array<SupportedMode>

@@ -8,8 +8,10 @@ const loaderUtils = require('loader-utils')
 const resolve = require('../utils/resolve')
 const { matchCondition } = require('../utils/match-condition')
 const { isWeb, isReact } = require('../utils/env')
+const getBuildInTagComponent = require('../utils/get-build-tag-component')
+const { capitalToHyphen } = require('../utils/string')
 
-module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry }) {
+module.exports = function createJSONHelper ({ loaderContext, emitWarning, customGetDynamicEntry, emitError }) {
   const mpx = loaderContext.getMpx()
   const resolveMode = mpx.resolveMode
   const externals = mpx.externals
@@ -49,6 +51,8 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
+    // 增加 component 标识，与 page 的 partialCompile 处理保持一致
+    component = addQuery(component, { isComponent: true })
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
@@ -166,11 +170,78 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     })
   }
 
+  const fillInComponentPlaceholder = ({ jsonObj, name: componentName, placeholder, placeholderEntry, resolveResourcePathMap }) => {
+    let placeholderComponentName = placeholder.name
+    const componentPlaceholder = jsonObj.componentPlaceholder || {}
+    if (componentPlaceholder[componentName]) {
+      return
+    }
+    jsonObj.componentPlaceholder = componentPlaceholder
+    componentPlaceholder[componentName] = placeholderComponentName
+    if (placeholderEntry) {
+      if (resolveResourcePathMap.has(placeholderComponentName) && resolveResourcePathMap.get(placeholderComponentName) !== placeholder.resourcePath) {
+        // 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
+        let i = 1
+        let newPlaceholder = placeholderComponentName + i
+        while (jsonObj.usingComponents[newPlaceholder]) {
+          newPlaceholder = placeholderComponentName + ++i
+        }
+        componentPlaceholder[componentName] = placeholderComponentName = newPlaceholder
+      }
+      jsonObj.usingComponents[placeholderComponentName] = placeholderEntry
+      resolveResourcePathMap.set(placeholderComponentName, placeholder.resourcePath)
+      return {
+        name: placeholderComponentName,
+        entry: placeholderEntry
+      }
+    }
+  }
+
+  const getNormalizePlaceholder = (placeholder) => {
+    if (typeof placeholder === 'string') {
+      placeholder = getBuildInTagComponent(mode, placeholder) || { name: placeholder }
+    }
+    if (!placeholder.name) {
+      emitError('The asyncSubpackageRules configuration format of @mpxjs/webpack-plugin a is incorrect')
+    }
+    // ali 下与 rulesRunner 规则一致，组件名驼峰转连字符
+    if (mode === 'ali') {
+      placeholder.name = capitalToHyphen(placeholder.name)
+    }
+    return placeholder
+  }
+
+  const processPlaceholder = ({ jsonObj, context, name, tarRoot, placeholder, relativePath, resolveResourcePathMap }, callback) => {
+    if (tarRoot) {
+      if (placeholder) {
+        placeholder = getNormalizePlaceholder(placeholder)
+        if (placeholder.resource) {
+          processComponent(placeholder.resource, context, { relativePath }, (err, entry, { resourcePath }) => {
+            if (err) return callback(err)
+            placeholder.resourcePath = resourcePath
+            callback(null, fillInComponentPlaceholder({ jsonObj, name, placeholder, placeholderEntry: entry, resolveResourcePathMap }))
+          })
+        } else {
+          callback(null, fillInComponentPlaceholder({ jsonObj, name, placeholder }))
+        }
+      } else {
+        if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {
+          const errMsg = `componentPlaceholder of "${name}" doesn't exist! \n\r`
+          emitError(errMsg)
+        }
+        callback()
+      }
+    } else {
+      callback()
+    }
+  }
+
   return {
     processComponent,
     processDynamicEntry,
     processPage,
     processJsExport,
+    processPlaceholder,
     isUrlRequest,
     urlToRequest
   }

@@ -4,7 +4,7 @@ const t = require('@babel/types')
 const generate = require('@babel/generator').default
 const parseRequest = require('../utils/parse-request')
 const isEmptyObject = require('../utils/is-empty-object')
-const chainAssign = require('../utils/chain-assign')
+const mergeVisitors = require('../utils/merge-visitors')
 const parseQuery = require('loader-utils').parseQuery
 
 module.exports = function (content) {
@@ -31,7 +31,7 @@ module.exports = function (content) {
         '  __mpx_args__[i] = arguments[i];\n' +
         '}'
       ).program.body
-      chainAssign(visitor, {
+      mergeVisitors(visitor, {
         Identifier (path) {
           if (path.node.name === 'arguments') {
             path.node.name = '__mpx_args__'
@@ -66,7 +66,7 @@ module.exports = function (content) {
     }
 
     if (mode !== 'wx') {
-      chainAssign(visitor, {
+      mergeVisitors(visitor, {
         CallExpression (path) {
           const callee = path.node.callee
           if (t.isIdentifier(callee) && callee.name === 'getRegExp') {
@@ -81,7 +81,7 @@ module.exports = function (content) {
   }
 
   if (mode === 'dd') {
-    chainAssign(visitor, {
+    mergeVisitors(visitor, {
       MemberExpression (path) {
         const property = path.node.property
         if (
@@ -96,11 +96,14 @@ module.exports = function (content) {
   }
 
   if (!module.wxs) {
-    chainAssign(visitor, {
+    mergeVisitors(visitor, {
       MemberExpression (path) {
+        if (!t.isMemberExpression(path.node)) {
+          return
+        }
         const property = path.node.property
         if (
-          (property.name === 'constructor' || property.value === 'constructor') &&
+          property && (property.name === 'constructor' || property.value === 'constructor') &&
           !(t.isMemberExpression(path.parent) && path.parentKey === 'object')
         ) {
           path.replaceWith(t.memberExpression(path.node, t.identifier('name')))

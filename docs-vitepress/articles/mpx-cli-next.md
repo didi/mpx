@@ -1,8 +1,8 @@
-# @mpxjs/cli 插件化改造
+# @mpxjs/cli 插件化改造 {#mpx-cli-plugin-transformation}
 
 [@mxpjs/cli 地址](https://github.com/mpx-ecology/mpx-cli)
 
-## 背景 & 现状
+## 背景 & 现状 {#background-and-status}
 
 Mpx 脚手架 `@mpxjs/cli` 作为 Mpx 生态当中比较重要的一部分，是使用 Mpx 进行小程序开发的入口。
 
@@ -35,7 +35,7 @@ Mpx 脚手架 `@mpxjs/cli` 作为 Mpx 生态当中比较重要的一部分，是
 
 **基于远程模板初始化项目的方式最大的一个好处就是将项目所有的底层配置完全暴露给开发者，开发者可以任意去修改对应的配置。**
 
-## `mpxjs/cli@2.x` 自身的痛点
+## `mpxjs/cli@2.x` 自身的痛点 {#mpx-cli-2-x-pain-points}
 
 目前 `@mpxjs/cli@2.x` 采用这种基于模板的方式面临着两方面的痛点：
 
@@ -55,7 +55,7 @@ Mpx 脚手架 `@mpxjs/cli` 作为 Mpx 生态当中比较重要的一部分，是
 
 **针对以上问题，通过调研业内一些优秀的脚手架工具，发现 `@vue/cli` 插件化的架构设计能很好的去解决我们以上所遇到的问题。核心思路是将 `@vue/cli` 作为 `@mpxjs/cli` 底层的引擎，收敛 Mpx 对于核心依赖管理、模板、构建配置的能力，充分利用 `@vue/cli` 提供的插件机制去构建、拓展上层的插件集。**
 
-### 有关 `@vue/cli`
+### 有关 `@vue/cli` {#about-vue-cli}
 
 简单介绍下 `@vue/cli` 的插件化架构：
 
@@ -76,17 +76,17 @@ Mpx 脚手架 `@mpxjs/cli` 作为 Mpx 生态当中比较重要的一部分，是
 * @vue/cli-service **约定**插件的 `webpack` 配置更新需要放到插件的入口文件当中来完成，同时插件的命名也需要包含 `vue-cli-plugin` 前缀，因为 @vue/cli-service 是依据命名来加载相关的插件的；
 
 
-## 插件化改造方案
+## 插件化改造方案 {#plugin-transformation-plan}
 
 一张图了解下插件化改造之后的 `@mpxjs/cli` 的架构设计：
 
 ![mpx-cli-2](https://dpubstatic.udache.com/static/dpubimg/hNaL_GUMzUVLOsyY5quGE_cli-2.png)
 
-### 底层能力
+### 底层能力 {#underlying-capabilities}
 
 将 `@vue/cli`、`@vue/cli-service` 分别作为 `@mpx/cli`和 `@mpx/cli-service` 的底层能力，即利用插件化的架构设计，同时还非常灵活的满足了 Mpx 做差异化场景迭代的定制化改造。上层的插件满足 `vue-cli-plugin` 插件开发的规范，最终底层的能力还是依托于 `@vue/cli` 和 `@vue/cli-service` 进行工作。
 
-### 上层插件拆分
+### 上层插件拆分 {#upper-plugin-splitting}
 
 将原本大而全的模板进行插件化拆分，从 Mpx 所要解决的问题以及设计思路来考虑，站在跨平台的角度：
 
@@ -209,7 +209,7 @@ module.exports = function (api, options, webpackConfig) {
 
 在跨 web 的开发模式下，`vue-cli-plugin-mpx-web` 会在 `vue-cli-plugin-mpx` 和 `@vue/cli` 的基础上去拓展配置以满足 web 侧的开发编译构建。
 
-### Web 平台编译构建能力增强
+### Web 平台编译构建能力增强 {#web-platform-build-enhancement}
 
 在 `@mpxjs/cli@2.x` 版本当中有关 `web` 侧的编译构建的配置是比较初级的，像 `热更新`、`MPA 多页应用` 等比较常用的功能是需要用户重新去手动搭建一套的。而 `@vue/cli@3.x` 即为 `vue` 项目而生，提供了非常完备的 `web` 应用的编译构建打包配置。
 
@@ -219,7 +219,7 @@ module.exports = function (api, options, webpackConfig) {
 
 **这也意味着 `@vue/cli` 所提供的能力基本上在 mpx 跨 web 项目当中都可使用。**
 
-### 项目配置拓展能力
+### 项目配置拓展能力 {#project-config-extension}
 
 在 `@mpxjs/cli@2.x` 版本的项目如果要进行配置拓展，基本需要进行以下2个步骤：
 
@@ -252,7 +252,7 @@ module.exports = {
 }
 ```
 
-### 改造后的目录结构
+### 改造后的目录结构 {#transformed-directory-structure}
 
 在第一章节展示了目前 `@mpxjs/cli@2.x` 初始化项目的结构和现状。经过这次的插件化的改造后，项目的结构变得更为简洁，开发者只需要关注 `src` 源码目录以及 `vue.config.js` 配置文件即可：
 
@@ -262,7 +262,7 @@ module.exports = {
  |--vue.config.js 
 ```
 
-## 没有银弹
+## 没有银弹 {#no-silver-bullet}
 
 虽然基于 `@vue/cli` 插件的架构模式完成了 `@mpxjs/cli@3.x` 的插件化改造升级。但是由于 `mpx` 项目开发的一些特殊性，不同插件之间的协同工作是有一些约定的。
 
@@ -278,6 +278,6 @@ module.export.platform = 'mp'  // 可选值： 'web'
 
 这样在实际的构建过程当中通过平台的标识来决定对应哪些插件会生效。
 
-## 如何开发一个基于 mpx 的业务脚手架插件
+## 如何开发一个基于 mpx 的业务脚手架插件 {#how-to-develop-mpx-cli-plugin}
 
 具体参阅[文档](https://github.com/mpx-ecology/mpx-cli/blob/master/PLUGIN_GUIDE.md)

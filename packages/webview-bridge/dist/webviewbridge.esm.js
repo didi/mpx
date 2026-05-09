@@ -1,5 +1,5 @@
 /**
- * mpxjs webview bridge v2.10.3
+ * mpxjs webview bridge v2.10.6
  * (c) 2025 @mpxjs team
  * @license Apache
  */
@@ -44,6 +44,7 @@ function loadScript(url) {
 }
 
 var sdkReady;
+var loadErrorCallbacks = [];
 var SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -118,6 +119,14 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
 }
 var initWebviewBridge = function initWebviewBridge() {
   sdkReady = env !== 'web' && env !== 'rn' ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  sdkReady["catch"](function () {
+    var err = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    loadErrorCallbacks.forEach(function (callback) {
+      if (typeof callback === 'function') {
+        callback(err.message || err);
+      }
+    });
+  });
   getWebviewApi();
 };
 var webviewSdkready = false;
@@ -142,6 +151,17 @@ var webviewBridge = {
         window.wx.config(_config);
       }
     });
+  },
+  onLoadScriptError: function onLoadScriptError(callback) {
+    if (loadErrorCallbacks.indexOf(callback) === -1) {
+      loadErrorCallbacks.push(callback);
+    }
+  },
+  offLoadScriptError: function offLoadScriptError(callback) {
+    var index = loadErrorCallbacks.indexOf(callback);
+    if (index > -1) {
+      loadErrorCallbacks.splice(index, 1);
+    }
   }
 };
 function postMessage(type) {

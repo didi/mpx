@@ -8,7 +8,8 @@ import {
   splitStyle,
   wrapChildren,
   useTransformStyle,
-  extendObject
+  extendObject,
+  useTextPassThroughValue
 } from '../utils'
 import { PickerViewStyleContext } from './pickerVIewContext'
 import Portal from '../mpx-portal'
@@ -33,6 +34,7 @@ interface PickerViewProps {
   style?: {
     [key: string]: any
   }
+  'enable-wheel-animation'?: boolean
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
   'enable-var'?: boolean
@@ -69,6 +71,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     value = [],
     bindchange,
     style,
+    'enable-wheel-animation': enableWheelAnimation = true,
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
     'enable-var': enableVar,
@@ -102,6 +105,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     const activeValue = activeValueRef.current
@@ -168,7 +172,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         columnData,
         ref: cloneRef,
         columnIndex: index,
-        key: `pick-view-${index}`,
+        key: `pick-view-${index}-${columnData.length}`,
         wrapperStyle: {
           height: normalStyle?.height || DefaultPickerItemH,
           itemHeight: indicatorH || DefaultPickerItemH
@@ -176,7 +180,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
         onSelectChange: onSelectChange.bind(null, index),
         initialIndex,
         pickerIndicatorStyle,
-        pickerMaskStyle
+        pickerMaskStyle,
+        enableWheelAnimation
       }
     )
     const realElement = React.cloneElement(child, wrappedProps)
@@ -187,8 +192,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       }
     )
   }

@@ -26,7 +26,7 @@ import { noop } from '@mpxjs/utils'
 import { SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject } from './utils'
+import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
 import Portal from './mpx-portal'
 
 export type Mode =
@@ -48,7 +48,6 @@ export type Mode =
 export interface ImageProps {
   src?: string
   mode?: Mode
-  svg?: boolean
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
@@ -190,7 +189,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     normalStyle,
     setWidth,
     setHeight
-  } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(styleObj, { enableVar, transformRadiusPercent: isAndroid && !isSvg && !isLayoutMode, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({
     props,
@@ -456,52 +455,57 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     ),
     [
       'src',
-      'mode',
-      'svg'
+      'mode'
     ],
     {
       layoutRef
     }
   )
 
-  const SvgImage = createElement(
-    View,
-    innerProps,
-    createElement(SvgCssUri, {
-      uri: src,
-      onLayout: onSvgLoad,
-      onError: binderror && onSvgError,
-      style: extendObject(
-        { transformOrigin: 'left top' },
-        modeStyle
-      )
-    })
-  )
-
-  const BaseImage = renderImage(
-    extendObject(
-      {
-        source: { uri: src },
-        resizeMode: resizeMode,
-        onLoad: bindload && onImageLoad,
-        onError: binderror && onImageError,
+  function renderSvgImage () {
+    return createElement(
+      View,
+      innerProps,
+      createElement(SvgCssUri, {
+        uri: src,
+        onLayout: onSvgLoad,
+        onError: binderror && onSvgError,
         style: extendObject(
-          {
-            transformOrigin: 'left top',
-            width: isCropMode ? imageWidth : '100%',
-            height: isCropMode ? imageHeight : '100%'
-          },
-          isCropMode ? modeStyle : {}
+          { transformOrigin: 'left top' },
+          modeStyle
         )
-      },
-      isLayoutMode ? {} : innerProps
-    ),
-    enableFastImage
-  )
+      })
+    )
+  }
 
-  const LayoutImage = createElement(View, innerProps, loaded && BaseImage)
+  function renderBaseImage () {
+    return renderImage(
+      extendObject(
+        {
+          source: { uri: src },
+          resizeMode: resizeMode,
+          onLoad: bindload && onImageLoad,
+          onError: binderror && onImageError,
+          style: extendObject(
+            {
+              transformOrigin: 'left top',
+              width: isCropMode ? imageWidth : '100%',
+              height: isCropMode ? imageHeight : '100%'
+            },
+            isCropMode ? modeStyle : {}
+          )
+        },
+        isLayoutMode ? {} : innerProps
+      ),
+      enableFastImage
+    )
+  }
 
-  const finalComponent = isSvg ? SvgImage : isLayoutMode ? LayoutImage : BaseImage
+  function renderLayoutImage () {
+    return createElement(View, innerProps, loaded && renderBaseImage())
+  }
+
+  const finalComponent = isSvg ? renderSvgImage() : isLayoutMode ? renderLayoutImage() : renderBaseImage()
 
   if (hasPositionFixed) {
     return createElement(Portal, null, finalComponent)
@@ -510,6 +514,6 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   return finalComponent
 })
 
-Image.displayName = 'mpx-image'
+Image.displayName = 'MpxImage'
 
 export default Image

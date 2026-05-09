@@ -1,14 +1,22 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { NativeSyntheticEvent, Animated } from 'react-native'
+import type { NativeSyntheticEvent, Animated, ScaledSize, TextStyle } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
   triggerChange: (evt: NativeSyntheticEvent<TouchEvent>) => void
 }>
 
-export type KeyboardAvoidContextValue = MutableRefObject<
-  { cursorSpacing: number, ref: MutableRefObject<any> } | null
->
+export type KeyboardAvoidContextValue = MutableRefObject<{
+  cursorSpacing: number
+  ref: MutableRefObject<any>
+  adjustPosition: boolean
+  holdKeyboard?: boolean
+  keyboardHeight?: number
+  /** @internal bindfocus 异步延迟上报方法 */
+  onKeyboardShow?: () => void
+  /** @internal 多个 Input 切换聚焦场景标记位 */
+  readyToShow?: boolean
+} | null>
 
 export interface GroupValue {
   [key: string]: { checked: boolean; setValue: Dispatch<SetStateAction<boolean>> }
@@ -37,14 +45,14 @@ export interface IntersectionObserver {
 }
 
 export interface PortalContextValue {
-  mount: (children: React.ReactNode, key?: number | null, id?: number| null) => number| undefined
+  mount: (children: React.ReactNode, key?: number | null, id?: number | null) => number | undefined
   update: (key: number, children: React.ReactNode) => void
   unmount: (key: number) => void
 }
 
 export interface ScrollViewContextValue {
-  gestureRef: React.RefObject<any> | null,
-  scrollOffset: Animated.Value
+  gestureRef: React.RefObject<any> | null
+  scrollOffset: Animated.Value | null
 }
 
 export interface RouteContextValue {
@@ -52,9 +60,19 @@ export interface RouteContextValue {
   navigation: Record<string, any>
 }
 
+export interface DimensionsValue {
+  window: ScaledSize;
+  screen: ScaledSize;
+}
+
 export interface StickyContextValue {
-  registerStickyHeader: Function,
+  registerStickyHeader: Function
   unregisterStickyHeader: Function
+}
+
+export interface TextPassThroughContextValue {
+  textStyle?: TextStyle
+  pendingTextProps?: Record<string, any>
 }
 
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
@@ -71,6 +89,8 @@ export const PickerContext = createContext(null)
 
 export const VarContext = createContext({})
 
+export const TextPassThroughContext = createContext<TextPassThroughContextValue | null>(null)
+
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 
 export const RouteContext = createContext<RouteContextValue | null>(null)
@@ -79,7 +99,7 @@ export const SwiperContext = createContext({})
 
 export const KeyboardAvoidContext = createContext<KeyboardAvoidContextValue | null>(null)
 
-export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: new Animated.Value(0) })
+export const ScrollViewContext = createContext<ScrollViewContextValue>({ gestureRef: null, scrollOffset: null })
 
 export const PortalContext = createContext<PortalContextValue>(null as any)
 

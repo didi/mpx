@@ -2,15 +2,42 @@
 /**
  * ✔ selectable
  * ✘ space
- * ✘ decode
+ * ✔ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX, createElement } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
+import { TextPassThroughContext } from './context'
 
+const decodeMap = {
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&amp;': '&',
+  '&#39;': '\'',
+  '&nbsp;': ' '
+}
+
+const encodedRe = /&(?:lt|gt|quot|amp|#39|nbsp);/g
+function decode (value: string) {
+  if (value != null) {
+    return value.replace(encodedRe, function (match) {
+      return decodeMap[match as keyof typeof decodeMap]
+    })
+  }
+}
+
+function getDecodedChildren (children: ReactNode) {
+  return Children.map(children, (child) => {
+    if (typeof child === 'string') {
+      return decode(child)
+    }
+    return child
+  })
+}
 interface _TextProps extends TextProps {
   style?: TextStyle
   children?: ReactNode
@@ -21,60 +48,85 @@ interface _TextProps extends TextProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
+  decode?: boolean
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
+  const inheritedText = useContext(TextPassThroughContext)
+  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
-    style = {},
-    allowFontScaling = false,
+    style: currentStyle = {},
+    allowFontScaling,
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
-    'parent-height': parentHeight
-  } = props
+    'parent-height': parentHeight,
+    decode
+  } = mergedProps
 
   const {
     normalStyle,
     hasVarDec,
     varContextRef,
     hasPositionFixed
-  } = useTransformStyle(style, {
+  } = useTransformStyle(currentStyle, {
     enableVar,
     externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
   })
+  const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
 
   const nodeRef = useRef(null)
-  useNodesRef<Text, _TextProps>(props, ref, nodeRef, {
-    style: normalStyle
+  useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
+    style: finalStyle
   })
 
   const innerProps = useInnerProps(
     extendObject(
       {},
-      props,
+      mergedProps,
       {
         ref: nodeRef,
-        style: normalStyle,
+        style: finalStyle,
         selectable: !!selectable || !!userSelect,
-        allowFontScaling
+        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling()
       }
     ),
     [
-      'user-select'
+      'user-select',
+      'decode'
     ]
   )
 
+  const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
+  const isStringOnly = isStringChildren(children)
+  let childTextStyle: TextStyle | undefined
+  if (!isStringOnly) {
+    const { textStyle = {} } = splitStyle(finalStyle)
+    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
+  }
+  const textPassThrough = useTextPassThroughValue(
+    childTextStyle,
+    undefined,
+    {
+      inheritTextProps: false,
+      disabled: isStringOnly
+    }
+  )
+
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
-    props,
+    extendObject({}, mergedProps, {
+      children
+    }),
     {
       hasVarDec,
-      varContext: varContextRef.current
+      varContext: varContextRef.current,
+      textPassThrough
     }
   ))
 

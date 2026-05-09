@@ -54,7 +54,7 @@ class LoadAsyncChunkRuntimeModule extends HelperRuntimeModule {
           ]),
           '}',
           `var timeout = setTimeout(callback.bind(null, 'timeout'), ${this.timeout})`,
-          'var loadChunkAsyncFn = global.__mpx.config.rnConfig && global.__mpx.config.rnConfig.loadChunkAsync',
+          `var loadChunkAsyncFn = ${RuntimeGlobals.global}.__mpx.config.rnConfig && ${RuntimeGlobals.global}.__mpx.config.rnConfig.loadChunkAsync`,
           'try {',
           Template.indent([
             'loadChunkAsyncFn(config).then(callback).catch(callback)'

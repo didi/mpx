@@ -11,7 +11,7 @@ const getSystemInfoSync = function () {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName().toLowerCase(),
     deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
     fontSizeSetting: PixelRatio.getFontScale()
   }
@@ -46,7 +46,7 @@ const getSystemInfo = function (options = {}) {
   try {
     const systemInfo = getSystemInfoSync()
     Object.assign(systemInfo, {
-      errMsg: 'setStorage:ok'
+      errMsg: 'getSystemInfo:ok'
     })
     successHandle(systemInfo, success, complete)
   } catch (err) {
@@ -68,7 +68,7 @@ const getDeviceInfo = function () {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName().toLowerCase(),
     memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
   })
   return deviceInfo

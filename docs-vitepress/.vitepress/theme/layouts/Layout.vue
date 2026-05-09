@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-<!--    <ParentLayout/>-->
+   <!-- <ParentLayout/> -->
   </div>
 </template>
 

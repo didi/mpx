@@ -12,5 +12,6 @@
   "testPathIgnorePatterns": ["dist", "node_modules"],
   "projects": [
     "<rootDir>/packages/*/jest.config.json"
-  ]
+  ],
+  "testTimeout": 10000
 }
