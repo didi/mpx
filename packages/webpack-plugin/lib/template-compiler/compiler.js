@@ -1,7 +1,7 @@
 const JSON5 = require('json5')
 const he = require('he')
 const config = require('../config')
-const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR } = require('../utils/const')
+const { MPX_ROOT_VIEW, MPX_APP_MODULE_ID, PARENT_MODULE_ID, MPX_TAG_PAGE_SELECTOR, MPX_TEMPLATE_COMPONENT_PREFIX, STYLE_PAD_PLACEHOLDER } = require('../utils/const')
 const normalize = require('../utils/normalize')
 const { normalizeCondition } = require('../utils/match-condition')
 const isValidIdentifierStr = require('../utils/is-valid-identifier-str')
@@ -18,6 +18,7 @@ const shallowStringify = require('../utils/shallow-stringify')
 const { isReact, isWeb, isNoMode } = require('../utils/env')
 const { capitalToHyphen } = require('../utils/string')
 const { isNativeMiniTag } = require('../utils/dom-tag-config')
+const { offsetToLoc } = require('../utils/source-location')
 
 const no = function () {
   return false
@@ -106,6 +107,7 @@ let hasVirtualHost
 let isCustomText
 let runtimeCompile
 let rulesRunner
+let customBuiltInComponentsOpt
 let currentEl
 let injectNodes = []
 let forScopes = []
@@ -340,7 +342,10 @@ function parseHTML (html, options) {
       advance(start[0].length)
       let end, attr
       while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+        const attrStart = index
         advance(attr[0].length)
+        attr.start = attrStart
+        attr.end = index
         match.attrs.push(attr)
       }
       if (end) {
@@ -392,7 +397,9 @@ function parseHTML (html, options) {
       }
       attrs[i] = {
         name: args[1],
-        value: decode(value)
+        value: decode(value),
+        start: args.start,
+        end: args.end
       }
     }
 
@@ -585,8 +592,7 @@ function parseComponent (content, options) {
       let text = content.slice(currentBlock.start, currentBlock.end)
       // pad content so that linters and pre-processors can output correct
       // line numbers in errors and warnings
-      // stylus编译遇到大量空行时会出现栈溢出，故针对stylus不走pad
-      if (options.pad && !(currentBlock.tag === 'style' && currentBlock.lang === 'stylus')) {
+      if (options.pad) {
         text = padContent(currentBlock, options.pad) + text
       }
       currentBlock.content = text
@@ -600,7 +606,7 @@ function parseComponent (content, options) {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
       const offset = content.slice(0, block.start).split(splitRE).length
-      const padChar = '\n'
+      const padChar = block.tag === 'style' ? `/* ${STYLE_PAD_PLACEHOLDER} */\n` : '\n'
       return Array(offset).join(padChar)
     }
   }
@@ -643,23 +649,24 @@ function parse (template, options) {
   componentGenerics = options.componentGenerics || {}
   usingComponentsInfo = options.usingComponentsInfo || {}
   usingComponents = Object.keys(usingComponentsInfo)
+  customBuiltInComponentsOpt = options.customBuiltInComponents || null
 
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
 
-  const _warn = content => {
+  const _warn = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.warnArray.push(content)
+    currentElementRuleResult.warnArray.push({ content, loc })
   }
-  const _error = content => {
+  const _error = (content, loc) => {
     const currentElementRuleResult = rulesResultMap.get(currentEl) || rulesResultMap.set(currentEl, {
       warnArray: [],
       errorArray: []
     }).get(currentEl)
-    currentElementRuleResult.errorArray.push(content)
+    currentElementRuleResult.errorArray.push({ content, loc })
   }
 
   rulesRunner = getRulesRunner({
@@ -668,10 +675,15 @@ function parse (template, options) {
     type: 'template',
     testKey: 'tag',
     data: {
-      usingComponents
+      usingComponents,
+      customBuiltInComponents: customBuiltInComponentsOpt
     },
     warn: _warn,
-    error: _error
+    error: _error,
+    diagnostic: {
+      file: filePath,
+      source: template
+    }
   })
 
   const stack = []
@@ -701,12 +713,20 @@ function parse (template, options) {
     isUnaryTag: options.isUnaryTag,
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldKeepComment: true,
-    start: function start (tag, attrs, unary) {
+    start: function start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
 
       const element = createASTElement(tag, attrs, currentParent)
+      element.start = start
+      element.end = end
+      element.loc = offsetToLoc(template, start, end)
+      element.attrsList.forEach((attr) => {
+        if (attr.start != null) {
+          attr.loc = offsetToLoc(template, attr.start, attr.end)
+        }
+      })
 
       if (ns) {
         element.ns = ns
@@ -820,8 +840,8 @@ function parse (template, options) {
   })
 
   rulesResultMap.forEach((val) => {
-    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item))
-    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item))
+    Array.isArray(val.warnArray) && val.warnArray.forEach(item => warn$1(item.content, item.loc))
+    Array.isArray(val.errorArray) && val.errorArray.forEach(item => error$1(item.content, item.loc))
   })
 
   if (!tagNames.has('component') && !tagNames.has('template') && options.checkUsingComponents) {
@@ -2452,81 +2472,102 @@ function isReactComponent (el) {
   return !isComponentNode(el) && isRealNode(el) && !el.isBuiltIn
 }
 
+function processWebClass (classLikeAttrName, classLikeAttrValue, el, options, processingWebTemplate) {
+  let classNames = classLikeAttrValue.split(/\s+/)
+  let hasExternalClass = false
+  const attrsSource = processingWebTemplate ? '(__mpxHost && __mpxHost.$attrs || {})' : '$attrs'
+  classNames = classNames.map((className) => {
+    if (options.externalClasses.includes(className)) {
+      hasExternalClass = true
+      return `(${attrsSource}[${stringify(className)}] || '')`
+    }
+    return stringify(className)
+  })
+  if (hasExternalClass) {
+    classNames.push(`(${attrsSource}[${stringify(PARENT_MODULE_ID)}] || '')`)
+  }
+  if (classLikeAttrName === 'class') {
+    const dynamicClass = getAndRemoveAttr(el, ':class').val
+    if (dynamicClass) classNames.push(dynamicClass)
+    addAttrs(el, [{
+      name: ':class',
+      value: `[${classNames}]`
+    }])
+  } else {
+    addAttrs(el, [{
+      name: ':' + classLikeAttrName,
+      value: `[${classNames}].join(' ')`
+    }])
+  }
+}
+
+function processAliClass (classLikeAttrName, classLikeAttrValue, el, options) {
+  let hasExternalClass = false
+  options.externalClasses.forEach((className) => {
+    const reg = new RegExp('\\b' + className + '\\b', 'g')
+    const replacementClassName = dash2hump(className)
+    if (classLikeAttrValue.includes(className)) hasExternalClass = true
+    classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName} || ''}}`)
+  })
+  if (hasExternalClass) {
+    classLikeAttrValue += ` {{${PARENT_MODULE_ID} || ''}}`
+  }
+  addAttrs(el, [{
+    name: classLikeAttrName,
+    value: classLikeAttrValue
+  }])
+}
+
 function processExternalClasses (el, options) {
   const isComponent = isComponentNode(el)
   const classLikeAttrNames = isComponent ? ['class'].concat(options.externalClasses) : ['class']
+  const processingWebTemplate = isWeb(mode) && processingTemplate
 
   classLikeAttrNames.forEach((classLikeAttrName) => {
     const classLikeAttrValue = getAndRemoveAttr(el, classLikeAttrName).val
     if (classLikeAttrValue) {
       if (mode === 'web') {
-        processWebClass(classLikeAttrName, classLikeAttrValue, el, options)
+        processWebClass(classLikeAttrName, classLikeAttrValue, el, options, processingWebTemplate)
       } else {
         processAliClass(classLikeAttrName, classLikeAttrValue, el, options)
       }
     }
   })
 
-  if (hasScoped && isComponent) {
+  if ((hasScoped || processingWebTemplate) && isComponent) {
     const needAddModuleId = options.externalClasses.some((className) => {
       return el.attrsMap[className] || (mode === 'web' && el.attrsMap[':' + className])
     })
 
     if (needAddModuleId) {
-      addAttrs(el, [{
-        name: PARENT_MODULE_ID,
-        value: `${moduleId}`
-      }])
-    }
-  }
-  function processWebClass (classLikeAttrName, classLikeAttrValue, el, options) {
-    let classNames = classLikeAttrValue.split(/\s+/)
-    let hasExternalClass = false
-    classNames = classNames.map((className) => {
-      if (options.externalClasses.includes(className)) {
-        hasExternalClass = true
-        return `($attrs[${stringify(className)}] || '')`
+      if (processingWebTemplate) {
+        addAttrs(el, [{
+          name: ':' + PARENT_MODULE_ID,
+          value: '(__mpxHost && __mpxHost.$options.__mpxScoped ? (__mpxHost.$options.__mpxModuleId || "") : "")'
+        }])
+      } else {
+        addAttrs(el, [{
+          name: PARENT_MODULE_ID,
+          value: `${moduleId}`
+        }])
       }
-      return stringify(className)
-    })
-    if (hasExternalClass) {
-      classNames.push(`($attrs[${stringify(PARENT_MODULE_ID)}] || '')`)
     }
-    if (classLikeAttrName === 'class') {
-      const dynamicClass = getAndRemoveAttr(el, ':class').val
-      if (dynamicClass) classNames.push(dynamicClass)
-      addAttrs(el, [{
-        name: ':class',
-        value: `[${classNames}]`
-      }])
-    } else {
-      addAttrs(el, [{
-        name: ':' + classLikeAttrName,
-        value: `[${classNames}].join(' ')`
-      }])
-    }
-  }
-
-  function processAliClass (classLikeAttrName, classLikeAttrValue, el, options) {
-    let hasExternalClass = false
-    options.externalClasses.forEach((className) => {
-      const reg = new RegExp('\\b' + className + '\\b', 'g')
-      const replacementClassName = dash2hump(className)
-      if (classLikeAttrValue.includes(className)) hasExternalClass = true
-      classLikeAttrValue = classLikeAttrValue.replace(reg, `{{${replacementClassName} || ''}}`)
-    })
-    if (hasExternalClass) {
-      classLikeAttrValue += ` {{${PARENT_MODULE_ID} || ''}}`
-    }
-    addAttrs(el, [{
-      name: classLikeAttrName,
-      value: classLikeAttrValue
-    }])
   }
 }
 
 function processScoped (el) {
-  if (hasScoped && isRealNode(el)) {
+  if (!isRealNode(el)) return
+  // web 模版组件（<template name>）内的节点：scoped 类拼接由运行时 __mpxHost 决定，自成闭环
+  if (isWeb(mode) && processingTemplate) {
+    const parts = []
+    const existingDynamic = getAndRemoveAttr(el, ':class').val
+    if (existingDynamic) parts.push(existingDynamic)
+    const scopedCls = `(__mpxHost && __mpxHost.$options.__mpxScoped ? [__mpxHost.$options.__mpxModuleId || "", __mpxHost.$options.__mpxCtorType !== "component" ? ${stringify(MPX_APP_MODULE_ID)} : ""].filter(Boolean).join(" ") : "")`
+    parts.push(scopedCls)
+    addAttrs(el, [{ name: ':class', value: `[${parts.join(',')}]` }])
+    return
+  }
+  if (hasScoped) {
     const rootModuleId = ctorType === 'component' ? '' : MPX_APP_MODULE_ID // 处理app全局样式对页面的影响
     const staticClass = getAndRemoveAttr(el, 'class').val
     addAttrs(el, [{
@@ -2538,74 +2579,116 @@ function processScoped (el) {
 
 const builtInComponentsPrefix = '@mpxjs/webpack-plugin/lib/runtime/components'
 
+function resolveCustomBuiltinResource (el) {
+  if (!customBuiltInComponentsOpt || !el.isBuiltIn) return null
+  if (el.originalTag != null && customBuiltInComponentsOpt[el.originalTag]) {
+    return customBuiltInComponentsOpt[el.originalTag]
+  }
+  return null
+}
+
 function processBuiltInComponents (el, meta) {
   if (el.isBuiltIn) {
     if (!meta.builtInComponentsMap) {
       meta.builtInComponentsMap = {}
     }
     const tag = el.tag
-    if (!meta.builtInComponentsMap[tag]) {
-      if (isReact(mode)) {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/react/dist/${tag}`
-      } else {
-        meta.builtInComponentsMap[tag] = `${builtInComponentsPrefix}/${mode}/${tag}`
-      }
+    const customResource = resolveCustomBuiltinResource(el)
+    const defaultResource = isReact(mode)
+      ? `${builtInComponentsPrefix}/react/dist/${tag}`
+      : `${builtInComponentsPrefix}/${mode}/${tag}`
+    meta.builtInComponentsMap[tag] = customResource != null ? customResource : defaultResource
+  }
+}
+
+/** Web / RN 共用：<import src> 收集并移除 */
+function processTemplateImport (el, meta) {
+  if (el.tag !== 'import') return false
+  if (el.attrsMap.src) {
+    if (!meta.imports) {
+      meta.imports = []
+    }
+    meta.imports.push(el.attrsMap.src)
+    // RN：存在外部 import 模版时保守关闭 render memo（子文件内 <slot> 不进本轮 AST；见 getDefaultOptions.ios.js __getSlot + useMemo）
+    if (isReact(mode)) {
+      meta.options = Object.assign({}, meta.options, { disableMemo: true })
     }
   }
+  el.shouldRemove = true
+  return true
 }
 
 /**
- * 输出RN时处理template标签
- * @param {*} el
- * @param {*} meta
- * @returns
- * - true: 当前正在处理template定义节点及其子节点
- * - false|undefined: 当前不在处理template定义节点及其子节点
+ * Web / RN 共用：`<template is>` / `<template name>`（Web 下 `is`/`data` 在 platform postProps 中原样保留，与 RN 同一条 parse 路径）
+ * @returns {true|undefined} true 表示进入 template 定义子树
  */
-function processTemplateReact (el, meta) {
-  if (el.tag === 'import') {
-    if (el.attrsMap.src) {
-      if (!meta.imports) {
-        meta.imports = []
-      }
-      meta.imports.push(el.attrsMap.src)
+function processTemplateTranspile (el, meta) {
+  if (processTemplateImport(el, meta)) return
+
+  if (el.tag !== 'template') return
+
+  const is = getAndRemoveAttr(el, 'is').val
+  if (is) {
+    // template usage, keep processing
+    const data = getAndRemoveAttr(el, 'data').val
+    el.templateInfo = {
+      is: parseMustacheWithContext(is).result,
+      data: data ? parseMustacheWithContext(`{${data}}`).result : ''
     }
-    el.shouldRemove = true
     return
   }
 
-  if (el.tag === 'template') {
-    const is = getAndRemoveAttr(el, 'is').val
-    if (is) {
-      // template usage, keep processing
-      const data = getAndRemoveAttr(el, 'data').val
-      el.templateInfo = {
-        is: parseMustacheWithContext(is).result,
-        data: data ? parseMustacheWithContext(`{${data}}`).result : ''
-      }
-      return
-    }
-    if (el.attrsMap.name) {
-      // template definition, keep processing
-      el.isTemplate = true
-      processingTemplate = true
-      return true
-    }
-    // invalid template tag
-    error$1('Invalid template tag, should have valid is or name attr')
-    el.shouldRemove = true
+  if (el.attrsMap.name) {
+    el.isTemplate = true
+    processingTemplate = true
+    return true
   }
+  error$1('Invalid template tag, should have valid is or name attr')
+  el.shouldRemove = true
+}
+
+// `<template name="...">` 定义：收集 meta.templates 后移除（Web / RN 共用逻辑）
+function collectTranspileTemplateDefinition (el, meta) {
+  if (!el.isTemplate) return false
+  if (!meta.templates) {
+    meta.templates = {}
+  }
+  if (meta.templates[el.attrsMap.name]) {
+    error$1(`Duplicated template name "${el.attrsMap.name}" in the same file.`)
+  }
+  meta.templates[el.attrsMap.name] = el
+  removeNode(el, true)
+  processingTemplate = false
+  return true
 }
 
 function postProcessTemplateReact (el, meta) {
-  if (el.isTemplate) {
-    if (!meta.templates) {
-      meta.templates = {}
-    }
-    meta.templates[el.attrsMap.name] = el
-    removeNode(el, true)
-    processingTemplate = false
+  collectTranspileTemplateDefinition(el, meta)
+}
+
+// Web：template 定义收集 + `<template is="...">` 使用节点替换为 mpx-tpl-* / component
+function postProcessTemplateWeb (el, meta) {
+  if (collectTranspileTemplateDefinition(el, meta)) return
+  if (el.tag !== 'template' || !el.templateInfo) return
+  const { is, data } = el.templateInfo
+  if (!is) return
+  const literalMatch = /^"([A-Za-z_][\w-]*)"$/.exec(is)
+  const baseAttrs = cloneAttrsList(el.attrsList)
+  let newNode
+  if (literalMatch) {
+    const name = literalMatch[1]
+    const built = data ? [{ name: ':mpx-data', value: data }] : []
+    newNode = createASTElement(`${MPX_TEMPLATE_COMPONENT_PREFIX}${name}`, baseAttrs.concat(built))
+    newNode.unary = true
+  } else {
+    const built = [
+      { name: ':is', value: `'${MPX_TEMPLATE_COMPONENT_PREFIX}' + (${is})` },
+      ...(data ? [{ name: ':mpx-data', value: data }] : [])
+    ]
+    newNode = createASTElement('component', baseAttrs.concat(built))
+    newNode.unary = true
   }
+  replaceNode(el, newNode, true)
 }
 
 function postProcessAliComponentRootView (el, options, meta) {
@@ -3027,6 +3110,8 @@ function processElement (el, root, options, meta) {
   const transAli = mode === 'ali' && srcMode === 'wx'
 
   if (isWeb(mode)) {
+    const isTemplate = processTemplateTranspile(el, meta) || processingTemplate
+    if (el.shouldRemove) return
     // 收集内建组件
     processBuiltInComponents(el, meta)
     // 预处理代码维度条件编译
@@ -3034,12 +3119,12 @@ function processElement (el, root, options, meta) {
     processScoped(el)
     processEventWeb(el)
     processExternalClasses(el, options)
-    processComponentGenerics(el, meta)
+    if (!isTemplate) processComponentGenerics(el, meta)
     return
   }
 
   if (isReact(mode)) {
-    const isTemplate = processTemplateReact(el, meta) || processingTemplate
+    const isTemplate = processTemplateTranspile(el, meta) || processingTemplate
     if (el.shouldRemove) return
     const isReactComponent$1 = isReactComponent(el, options)
     // 收集内建组件
@@ -3096,6 +3181,7 @@ function closeElement (el, options, meta) {
   if (isWeb(mode)) {
     // 处理代码维度条件编译移除死分支
     postProcessIf(el)
+    postProcessTemplateWeb(el, meta)
     postProcessRemove(el)
     return
   }

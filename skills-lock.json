@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "karpathy-guidelines": {
+      "source": "forrestchang/andrej-karpathy-skills",
+      "sourceType": "github",
+      "computedHash": "41e8ca055bbde13d240776a14a076a59614057200340c243130a76ba4e64cac8"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",

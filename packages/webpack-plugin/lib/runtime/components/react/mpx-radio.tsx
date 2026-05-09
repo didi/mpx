@@ -10,7 +10,7 @@ import { warn } from '@mpxjs/utils'
 import { LabelContext, RadioGroupContext } from './context'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
 import Icon from './mpx-icon'
 import Portal from './mpx-portal'
 
@@ -128,6 +128,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
     if (backgroundStyle) {
       warn('Radio does not support background image-related styles!')
@@ -210,8 +211,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
         {
           hasVarDec,
           varContext: varContextRef.current,
-          textStyle,
-          textProps
+          textPassThrough
         }
       )
     )
