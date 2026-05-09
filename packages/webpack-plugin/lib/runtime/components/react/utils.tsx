@@ -18,6 +18,9 @@ export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
 }
+export const DEFAULT_BOX_SIZING_STYLE = {
+  boxSizing: 'content-box'
+}
 
 declare const __mpx_mode__: 'ios' | 'android' | 'harmony'
 
@@ -45,6 +48,13 @@ export const extendObject = Object.assign
 
 export function getDefaultAllowFontScaling (): boolean {
   return global.__mpx?.config?.rnConfig?.allowFontScaling ?? false
+}
+
+export function transformBoxSizing (style: Record<string, any> = {}) {
+  if (style.boxSizing === undefined) {
+    style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? DEFAULT_BOX_SIZING_STYLE.boxSizing
+  }
+  return style
 }
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
@@ -557,6 +567,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformBoxShadow(normalStyle)
   // transform 字符串格式转化数组格式(先转数组再处理css var)
   transformTransform(normalStyle)
+  transformBoxSizing(normalStyle)
 
   return {
     hasVarDec,

@@ -9,7 +9,7 @@ import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
 import { TextPassThroughContext } from './context'
 
 const decodeMap = {
@@ -105,11 +105,19 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
 
   const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
   const isStringOnly = isStringChildren(children)
-  const childTextStyle = Object.keys(finalStyle).length ? finalStyle : undefined
-  const textPassThrough = useTextPassThroughValue(childTextStyle, undefined, {
-    inheritTextProps: false,
-    disabled: isStringOnly
-  })
+  let childTextStyle: TextStyle | undefined
+  if (!isStringOnly) {
+    const { textStyle = {} } = splitStyle(finalStyle)
+    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
+  }
+  const textPassThrough = useTextPassThroughValue(
+    childTextStyle,
+    undefined,
+    {
+      inheritTextProps: false,
+      disabled: isStringOnly
+    }
+  )
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
     extendObject({}, mergedProps, {

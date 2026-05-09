@@ -1,13 +1,13 @@
-import { Text, TextProps } from 'react-native'
+import { Text, TextStyle, TextProps } from 'react-native'
 import { JSX, createElement, useContext } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren } from './utils'
+import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren, transformBoxSizing, splitStyle } from './utils'
 import { TextPassThroughContext } from './context'
 
 const SimpleText = (props: TextProps): JSX.Element => {
   const inheritedText = useContext(TextPassThroughContext)
-  const style = extendObject({}, inheritedText?.textStyle, props.style)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props, { style })
+  const finalStyle = transformBoxSizing(extendObject({}, inheritedText?.textStyle, props.style))
+  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
     allowFontScaling,
     children
@@ -18,13 +18,19 @@ const SimpleText = (props: TextProps): JSX.Element => {
       {},
       mergedProps,
       {
-        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling()
+        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
+        style: finalStyle
       }
     )
   )
   const isStringOnly = isStringChildren(children)
+  let childTextStyle: TextStyle | undefined
+  if (!isStringOnly) {
+    const { textStyle = {} } = splitStyle(finalStyle)
+    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
+  }
   const childTextPassThrough = useTextPassThroughValue(
-    Object.keys(style).length ? style : undefined,
+    childTextStyle,
     undefined,
     {
       inheritTextProps: false,
