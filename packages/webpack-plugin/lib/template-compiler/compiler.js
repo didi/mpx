@@ -602,15 +602,11 @@ function parseComponent (content, options) {
   }
 
   function padContent (block, pad) {
-    if (block.tag === 'style' && pad === 'line') {
-      const offset = content.slice(0, block.start).split(splitRE).length
-      return Array(offset).join(`/* ${STYLE_PAD_PLACEHOLDER} */\n`)
-    }
     if (pad === 'space') {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
       const offset = content.slice(0, block.start).split(splitRE).length
-      const padChar = '\n'
+      const padChar = block.tag === 'style' ? `/* ${STYLE_PAD_PLACEHOLDER} */\n` : '\n'
       return Array(offset).join(padChar)
     }
   }
