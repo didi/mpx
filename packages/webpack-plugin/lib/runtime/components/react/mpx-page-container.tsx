@@ -1,9 +1,28 @@
+/**
+ * ✔ show
+ * ✔ duration
+ * ✔ z-index
+ * ✔ overlay
+ * ✔ position
+ * ✔ round
+ * ✔ close-on-slide-down
+ * ✔ overlay-style
+ * ✔ custom-style
+ * ✔ bindbeforeenter
+ * ✔ bindenter
+ * ✔ bindafterenter
+ * ✔ bindbeforeleave
+ * ✔ bindleave
+ * ✔ bindafterleave
+ * ✔ bindclickoverlay
+ * ✔ bindclose RN下特有属性，用于同步show状态到父组件
+ */
 import React, { createElement, forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import { StyleSheet, Dimensions, TouchableWithoutFeedback, StyleProp, ViewStyle } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, runOnJS, WithTimingConfig, Easing, AnimationCallback } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal/index'
-import { PreventRemoveEvent, usePreventRemove } from '@react-navigation/native'
+import { usePreventRemove } from '@react-navigation/native'
 import { extendObject, useLayout, useNavigation, useRunOnJSCallback } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef from './useNodesRef'
@@ -137,9 +156,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
   function createTick () {
     currentTick.current++
     const current = currentTick.current
-    console.log('createTick ', current)
     return () => {
-      console.log('isCurrentTick ', current, ', global tick is ' + currentTick.current)
       return currentTick.current === current
     }
   }
@@ -283,7 +300,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     }, [show])
 
     // 路由返回拦截
-    usePreventRemove(show, (event: PreventRemoveEvent) => {
+    usePreventRemove(show, (event) => {
       const { data } = event
       if (show) {
         close()
@@ -437,6 +454,6 @@ const positionStyle: Record<Position, ViewStyle> = {
   center: extendObject({}, StyleSheet.absoluteFillObject)
 }
 
-PageContainer.displayName = 'PageContainer'
+PageContainer.displayName = 'MpxPageContainer'
 
 export default PageContainer

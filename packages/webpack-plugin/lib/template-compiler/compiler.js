@@ -1162,7 +1162,7 @@ function processStyleReact (el, options) {
   // 原生组件支持 xx-class 与 xx-style（xx-class 将会被合并到 xx-style 中）
   const match = el.tag.match(specialClassReg)
   if (match) {
-    let staticClassNames
+    let staticClassNames = []
     switch (el.tag) {
       case 'mpx-view':
       case 'mpx-cover-view':

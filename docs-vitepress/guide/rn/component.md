@@ -5,7 +5,7 @@
 ### 目录概览 {#directory-overview}
 
 - #### 基础组件
-**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
+**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [page-container](#page-container) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
 
 **媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas)
 
@@ -767,6 +767,80 @@ API
 ### cover-image
 视图容器。
 功能同 [image 组件](#image)
+
+### page-container
+
+页面容器。可在页面内创建一个覆盖于页面之上的子页面容器，常用于实现弹出层、抽屉等交互效果。
+
+属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| ----- | ---- | ----- | ---- |
+| show | boolean | `false` | 是否显示容器 |
+| duration | number | `300` | 动画时长，单位毫秒 |
+| z-index | number | `100` | z-index 层级 |
+| overlay | boolean | `true` | 是否显示遮罩层 |
+| position | string | `bottom` | 弹出位置，可选值为 `top`、`bottom`、`right`、`center` |
+| round | boolean | `false` | 是否显示圆角，仅 `position` 为 `top` 或 `bottom` 时生效 |
+| close-on-slide-down | boolean | `false` | 是否在下滑时关闭容器，仅 `position` 为 `bottom` 时生效 |
+| overlay-style | string | | 自定义遮罩层样式 |
+| custom-style | string | | 自定义容器样式 |
+
+事件
+
+| 事件名 | 说明 |
+| ----- | ---- |
+| bindbeforeenter | 进入前触发 |
+| bindenter | 进入时触发 |
+| bindafterenter | 进入后触发 |
+| bindbeforeleave | 离开前触发 |
+| bindleave | 离开时触发 |
+| bindafterleave | 离开后触发 |
+| bindclickoverlay | 点击遮罩层时触发 |
+| bindclose | RN 环境特有事件，容器关闭时触发，用于同步 `show` 状态到父组件，`event.detail = { value: false }` |
+
+> [!tip] 注意
+>
+> - 在 RN 环境下，当容器显示时会禁用页面手势返回（iOS 左滑返回），并拦截系统返回事件，触发 `bindclose` 事件而非直接返回上一页。因此必须监听 `bindclose` 事件并将 `show` 同步设置为 `false`，否则无法正常关闭容器。
+> - 为什么需要 `bindclose`？特殊场景：在微信小程序中 `show={{a}}` 在关闭`page-container`后，a会变为false（类似wx:model的效果）,所以需要bindclose来模拟此效果
+
+示例
+
+```html
+<template>
+  <view>
+    <button bindtap="openContainer">打开容器</button>
+    <page-container
+      show="{{show}}"
+      position="bottom"
+      round="{{true}}"
+      bindclose="onClose"
+    >
+      <view style="height: 300px; padding: 20px;">
+        <text>容器内容</text>
+      </view>
+    </page-container>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    show: false
+  },
+  methods: {
+    openContainer() {
+      this.show = true
+    },
+    onClose() {
+      this.show = false
+    }
+  }
+})
+</script>
+```
 
 
 ## 自定义组件 {#custom-component}
