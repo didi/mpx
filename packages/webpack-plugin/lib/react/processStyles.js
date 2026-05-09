@@ -12,16 +12,17 @@ module.exports = function (styles, {
 }, callback) {
   const { getRequestString } = createHelpers(loaderContext)
   let content = ''
+  const styleResults = []
   let output = '/* styles */\n'
   if (styles.length) {
-    const warn = (msg) => {
+    const warn = (msg, loc) => {
       loaderContext.emitWarning(
-        new Error('[Mpx style warning][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
       )
     }
-    const error = (msg) => {
+    const error = (msg, loc) => {
       loaderContext.emitError(
-        new Error('[Mpx style error][' + loaderContext.resource + ']: ' + msg)
+        new Error('[Mpx style error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
       )
     }
     const { mode, srcMode } = loaderContext.getMpx()
@@ -35,11 +36,22 @@ module.exports = function (styles, {
       // todo 建立新的request在内部导出classMap，便于样式模块复用
       loaderContext.importModule(JSON.parse(getRequestString('styles', style, extraOptions, i))).then((result) => {
         if (Array.isArray(result)) {
-          result = result.map((item) => {
-            return item[1]
-          }).join('\n')
+          result.forEach((item) => {
+            const css = item[1]
+            styleResults.push({
+              content: css,
+              map: item[3],
+              filename: loaderContext.resourcePath
+            })
+            content += css.trim() + '\n'
+          })
+        } else {
+          styleResults.push({
+            content: result,
+            filename: loaderContext.resourcePath
+          })
+          content += result.trim() + '\n'
         }
-        content += result.trim() + '\n'
         callback()
       }).catch((e) => {
         callback(e)
@@ -55,7 +67,9 @@ module.exports = function (styles, {
         const formatValueName = '_f'
         const classMap = getClassMap({
           content,
+          styles: styleResults,
           filename: loaderContext.resourcePath,
+          inputFileSystem: loaderContext._compiler && loaderContext._compiler.inputFileSystem,
           mode,
           srcMode,
           ctorType,

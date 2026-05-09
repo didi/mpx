@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "adapt-list-page",
+  "prompt": "请帮我对附件中的 Mpx 页面 list.mpx 进行 RN 跨端适配改造，确保它能在 RN 平台正确编译运行，同时保留小程序/Web 平台的兼容性。请输出修改后的完整 .mpx 代码（保持 SFC 结构 template/script/style），不要省略任何内容。",
+  "files": ["input/list.mpx"]
+}

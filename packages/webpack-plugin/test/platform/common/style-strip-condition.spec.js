@@ -1,4 +1,10 @@
+const postcss = require('postcss')
+const stylus = require('stylus')
+const { SourceMapConsumer } = require('source-map')
 const { stripCondition } = require('../../../lib/style-compiler/strip-conditional')
+const removeStripConditionalComments = require('../../../lib/style-compiler/plugins/remove-strip-conditional-comments')
+const { parseComponent } = require('../../../lib/template-compiler/compiler')
+const { STYLE_PAD_PLACEHOLDER } = require('../../../lib/utils/const')
 
 describe('strip-conditional unit tests', () => {
   describe('stripCondition logic', () => {
@@ -26,7 +32,8 @@ describe('strip-conditional unit tests', () => {
           /* @mpx-endif */
         `
         const result = stripCondition(input, defs)
-        expect(result.trim()).toBe('')
+        expect(result).not.toContain('.ali-style { color: blue; }')
+        expect(result).toContain(STYLE_PAD_PLACEHOLDER)
       })
 
       it('should support elif and else', () => {
@@ -64,7 +71,8 @@ describe('strip-conditional unit tests', () => {
           // @mpx-endif
         `
         const result = stripCondition(input, defs)
-        expect(result.trim()).toBe('')
+        expect(result).not.toContain('.light-mode { background: #fff; }')
+        expect(result).toContain(STYLE_PAD_PLACEHOLDER)
       })
     })
 
@@ -218,7 +226,136 @@ describe('strip-conditional unit tests', () => {
         `
         // We expect it to not throw, but exclude the content
         const result = stripCondition(input, defs)
-        expect(result.trim()).toBe('')
+        expect(result).not.toContain('.should-not-exist {}')
+        expect(result).toContain(STYLE_PAD_PLACEHOLDER)
+      })
+
+      it('should preserve original line count after stripping', () => {
+        const input = [
+          '.before { color: gray; }',
+          '/* @mpx-if (platform === \'ali\') */',
+          '.ali { color: blue; }',
+          '/* @mpx-else */',
+          '.wx { color: red; }',
+          '/* @mpx-endif */',
+          '.after { color: black; }'
+        ].join('\n')
+        const result = stripCondition(input, defs)
+        expect(result.split('\n').length).toBe(input.split('\n').length)
+        expect(result).not.toContain('.ali { color: blue; }')
+        expect(result).toContain('.wx { color: red; }')
+      })
+
+      it('should preserve line positions for content after stripped branches', () => {
+        const input = [
+          '.before { color: gray; }',
+          '/* @mpx-if (platform === \'ali\') */',
+          '.ali { color: blue; }',
+          '/* @mpx-endif */',
+          '.after { color: black; }'
+        ].join('\n')
+        const result = stripCondition(input, defs)
+        const getAfterLine = content => content.split('\n').findIndex(line => {
+          return line.indexOf('.after') > -1
+        })
+        expect(getAfterLine(result)).toBe(getAfterLine(input))
+      })
+
+      it('should use removable comment placeholders without blank lines', () => {
+        const input = [
+          '.before',
+          '  color gray',
+          '  /* @mpx-if (platform === \'ali\') */',
+          '  color blue',
+          '  /* @mpx-endif */',
+          '  color black'
+        ].join('\n')
+        const result = stripCondition(input, defs)
+        expect(result.split('\n').length).toBe(input.split('\n').length)
+        expect(result).not.toContain('color blue')
+        expect(result).toContain(`  /* ${STYLE_PAD_PLACEHOLDER} */`)
+        expect(result.split('\n').some(line => line === '')).toBe(false)
+      })
+
+      it('should remove placeholder comments in postcss output', async () => {
+        const input = [
+          `/* ${STYLE_PAD_PLACEHOLDER} */`,
+          '.before { color: gray; }',
+          `  /* ${STYLE_PAD_PLACEHOLDER} */`,
+          '.after { color: black; }'
+        ].join('\n')
+        const result = await postcss([removeStripConditionalComments()]).process(input, { from: undefined })
+        expect(result.css).not.toContain(STYLE_PAD_PLACEHOLDER)
+        expect(result.css).toContain('.before { color: gray; }')
+        expect(result.css).toContain('.after { color: black; }')
+      })
+
+      it('should pad style blocks with removable comments', () => {
+        const input = [
+          '<template>',
+          '  <view />',
+          '</template>',
+          '<script>',
+          'export default {}',
+          '</script>',
+          '<style lang="stylus">',
+          '.after',
+          '  color black',
+          '</style>'
+        ].join('\n')
+        const result = parseComponent(input, { pad: 'line' })
+        const lines = result.styles[0].content.split('\n')
+        expect(lines[0]).toBe(`/* ${STYLE_PAD_PLACEHOLDER} */`)
+        expect(lines[5]).toBe(`/* ${STYLE_PAD_PLACEHOLDER} */`)
+        expect(lines[7]).toBe('.after')
+      })
+    })
+
+    describe('end-to-end pipeline (strip-conditional → stylus → postcss → sourcemap)', () => {
+      it('preserves source line positions through the full style pipeline', async () => {
+        const filename = '/abs/source.styl'
+        const src = [
+          '.before',
+          '  color gray',
+          '/* @mpx-if (platform === \'ali\') */',
+          '.ali',
+          '  color blue',
+          '/* @mpx-endif */',
+          '.after',
+          '  color black'
+        ].join('\n')
+
+        const stripped = stripCondition(src, defs)
+        expect(stripped.split('\n').length).toBe(src.split('\n').length)
+
+        const renderer = stylus(stripped)
+          .set('filename', filename)
+          .set('sourcemap', { inline: false, comment: false })
+        const stylusCss = await new Promise((resolve, reject) => {
+          renderer.render((err, css) => err ? reject(err) : resolve(css))
+        })
+        expect(stylusCss).toContain('.before')
+        expect(stylusCss).toContain('.after')
+        expect(stylusCss).not.toContain('.ali')
+        expect(stylusCss).toContain(STYLE_PAD_PLACEHOLDER)
+
+        const postResult = await postcss([removeStripConditionalComments()]).process(stylusCss, {
+          from: filename,
+          to: '/abs/source.css',
+          map: { prev: renderer.sourcemap, inline: false, annotation: false }
+        })
+        expect(postResult.css).not.toContain(STYLE_PAD_PLACEHOLDER)
+        expect(postResult.css).toContain('.before')
+        expect(postResult.css).toContain('.after')
+
+        const consumer = await new SourceMapConsumer(postResult.map.toJSON())
+        const finalLines = postResult.css.split('\n')
+        const findOutputLine = needle => finalLines.findIndex(l => l.indexOf(needle) > -1) + 1
+
+        const beforeOrig = consumer.originalPositionFor({ line: findOutputLine('.before'), column: 0 })
+        const afterOrig = consumer.originalPositionFor({ line: findOutputLine('.after'), column: 0 })
+        expect(beforeOrig.line).toBe(1)
+        expect(afterOrig.line).toBe(7)
       })
     })
   })
