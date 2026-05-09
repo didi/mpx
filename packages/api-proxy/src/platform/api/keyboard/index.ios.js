@@ -11,7 +11,6 @@ function keyboardShowListener (e) {
   }))
 }
 function keyboardHideListener (e) {
-  const endCoordinates = e.endCoordinates || {}
   // eslint-disable-next-line node/no-callback-literal
   callbacks.forEach(cb => cb({
     height: 0
