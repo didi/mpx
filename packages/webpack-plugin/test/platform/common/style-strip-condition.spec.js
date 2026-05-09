@@ -1,7 +1,6 @@
 const postcss = require('postcss')
 const stylus = require('stylus')
 const { SourceMapConsumer } = require('source-map')
-const { stripCondition } = require('../../../lib/style-compiler/strip-conditional')
 const removeStripConditionalComments = require('../../../lib/style-compiler/plugins/remove-strip-conditional-comments')
 const { parseComponent } = require('../../../lib/template-compiler/compiler')
 const { STYLE_PAD_PLACEHOLDER } = require('../../../lib/utils/const')
