@@ -1,7 +1,7 @@
-import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
-import { VarContext, ScrollViewContext, RouteContext } from './context'
+import { VarContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
 import type { FastImageProps } from '@d11/react-native-fast-image'
@@ -13,7 +13,7 @@ export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
 export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
 export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
-export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines/
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
@@ -45,6 +45,10 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 }
 
 export const extendObject = Object.assign
+
+export function getDefaultAllowFontScaling (): boolean {
+  return global.__mpx?.config?.rnConfig?.allowFontScaling ?? false
+}
 
 export function transformBoxSizing (style: Record<string, any> = {}) {
   if (style.boxSizing === undefined) {
@@ -117,9 +121,10 @@ export function isText (ele: ReactNode): ele is ReactElement {
   return false
 }
 
-export function every (children: ReactNode, callback: (children: ReactNode) => boolean) {
-  const childrenArray = Array.isArray(children) ? children : [children]
-  return childrenArray.every((child) => callback(child))
+export function isStringChildren (children: ReactNode) {
+  if (typeof children === 'string') return true
+  if (!Array.isArray(children)) return false
+  return children.every((child) => typeof child === 'string')
 }
 
 type GroupData<T> = Record<string, Partial<T>>
@@ -679,20 +684,50 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
 export interface WrapChildrenConfig {
   hasVarDec: boolean
   varContext?: Record<string, any>
-  textStyle?: TextStyle
-  textProps?: Record<string, any>
+  textPassThrough?: TextPassThroughContextValue | null
 }
 
-export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textStyle, textProps }: WrapChildrenConfig) {
+export interface TextPassThroughValueOptions {
+  inheritTextProps?: boolean
+  disabled?: boolean
+}
+
+export function useTextPassThroughValue (
+  textStyle?: TextStyle,
+  textProps?: Record<string, any>,
+  { inheritTextProps = true, disabled = false }: TextPassThroughValueOptions = {}
+) {
+  const parent = useContext(TextPassThroughContext)
+  const valueRef = useRef<TextPassThroughContextValue | null>(null)
+
+  if (disabled) return null
+
+  if (!textStyle && !textProps && (inheritTextProps || !parent?.pendingTextProps)) return null
+
+  const nextTextStyle = textStyle
+    ? extendObject({}, parent?.textStyle, textStyle)
+    : parent?.textStyle
+  const nextTextProps = inheritTextProps
+    ? textProps
+      ? extendObject({}, parent?.pendingTextProps, textProps)
+      : parent?.pendingTextProps
+    : textProps
+  const nextValue = {
+    textStyle: nextTextStyle,
+    pendingTextProps: nextTextProps
+  }
+
+  if (diffAndCloneA(valueRef.current, nextValue).diff) {
+    valueRef.current = nextValue
+  }
+
+  return valueRef.current
+}
+
+export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textPassThrough }: WrapChildrenConfig) {
   let { children } = props
-  if (textStyle || textProps) {
-    children = Children.map(children, (child) => {
-      if (isText(child)) {
-        const style = extendObject({}, textStyle, child.props.style)
-        return cloneElement(child, extendObject({}, textProps, { style }))
-      }
-      return child
-    })
+  if (textPassThrough) {
+    children = <TextPassThroughContext.Provider value={textPassThrough} key='textPassThroughWrap'>{children}</TextPassThroughContext.Provider>
   }
   if (hasVarDec && varContext) {
     children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>

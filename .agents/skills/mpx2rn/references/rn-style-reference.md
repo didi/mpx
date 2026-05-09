@@ -228,18 +228,24 @@ mpx.config.rnConfig = Object.assign({}, mpx.config.rnConfig, {
 
 ### 文本样式继承
 
-Mpx 框架抹平了平台差异，使 `view` 等容器节点可以直接包裹文本并向直接子级文本组件透传文本样式。
+Mpx 框架抹平了平台差异，使 `view` 等容器节点可以直接包裹文本，并向 Mpx 子树中的文本组件透传文本样式。
 
 **继承规则：**
 
-1.  **容器 -> text 继承**：只有容器节点下的**直接子** `text` 节点可以继承容器节点上的文本样式；中间存在非 text 节点时不会继续透传。
-2.  **text 嵌套继承**：父级 `text` 节点的样式可以被嵌套的子 `text` 节点继承。
-3.  **自动包裹**：`view` 节点直接包裹文本时，Mpx 编译时会自动添加 `text` 节点包裹文本。
+1.  **容器 -> text 继承**：容器节点上的文本样式会透传到其 Mpx 子树中的 `text` 节点，中间存在非 text 的 Mpx 组件时不会中断。
+2.  **text 嵌套继承**：父级 `text` 节点的文本样式可以被嵌套的子 `text` 节点继承。
+3.  **自动包裹**：`view` 节点直接包裹裸文本时，Mpx 编译时会自动添加 `text` 节点包裹文本。
 
-**透传属性：**
+**文本样式透传范围：**
 
-- Mpx 会从容器上拆分文本组件属性并透传到直接子 `text` 节点，包括：`ellipsizeMode`、`numberOfLines`、`allowFontScaling`
-- Mpx 会从容器的样式中拆分文本样式并透传到直接子 `text` 节点，包括：`color`、`font*`、`text*`、`letterSpacing`、`lineHeight`、`includeFontPadding`、`writingDirection`
+- Mpx 会从容器的样式中拆分文本样式并透传到子树中的 `text` 节点，包括：`color`、`font*`、`text*`、`letterSpacing`、`lineHeight`、`includeFontPadding`、`writingDirection`
+- 透传给 `text` 的祖先文本样式已经在祖先节点处理完成，不会在子 `text` 节点重复执行 CSS 变量、百分比、`calc()` 等运行时转换。
+
+**文本属性迁移：**
+
+- `numberOfLines`、`ellipsizeMode` 不是继承属性，只是 RN 适配中的迁移属性。
+- Mpx 会将容器上的 `numberOfLines`、`ellipsizeMode` 迁移到最近的 `text` 节点；被该 `text` 消费后，不会继续向更深层的子 `text` 继承。
+- `allowFontScaling` 不参与文本样式继承或属性迁移，应通过 `mpx.config.rnConfig.allowFontScaling` 设置全局默认值；组件显式设置的 `allowFontScaling` 优先。
 
 ### 简写属性支持
 
