@@ -86,6 +86,40 @@ function getRoundStyle (position: Position) {
   }
 }
 
+// 禁用页面返回
+function useDisablePageBack (show: boolean, close: () => void) {
+  /**
+   * 如果当前页面是首页，则需要拦截返回关闭容器的逻辑
+   * 如果不是首页，则由RN逻辑完成拦截（usePreventRemove + gestureEnabled:false）
+   */
+  const navigation = useNavigation()!
+  // TODO resetRouterStack 可能会导致 isFirstPage 发生变化，需要监听路由变化
+  const isFirstPage = navigation.getState().routes.length === 1
+
+  useEffect(() => {
+    if (isFirstPage) {
+      if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
+        // DRN 问题，当 resetRouterStack 页面数为1时会关闭 disableSwipeBack，此时需要再次 disableSwipeBack
+        global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
+      }
+    } else {
+      navigation.setOptions({
+        gestureEnabled: !show
+      })
+    }
+  }, [show])
+
+  // 路由返回拦截
+  usePreventRemove(show, (event) => {
+    const { data } = event
+    if (show) {
+      close()
+    } else {
+      navigation?.dispatch(data.action)
+    }
+  })
+}
+
 const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
   const {
     show,
@@ -166,6 +200,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     animateOutEnd: noop,
     close
   })
+  invokeRunOnJSRef.current.close = close
   const invokeRunOnJS = useRunOnJSCallback(invokeRunOnJSRef)
 
   function clearAnimation () {
@@ -276,40 +311,7 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
     }
   }, [show])
 
-  // 禁用页面返回
-  function useDisablePageBack () {
-    /**
-     * 如果当前页面是首页，则需要拦截返回关闭容器的逻辑
-     * 如果不是首页，则由RN逻辑完成拦截（usePreventRemove + gestureEnabled:false）
-     */
-    const navigation = useNavigation()!
-    // TODO resetRouterStack 可能会导致 isFirstPage 发生变化，需要监听路由变化
-    const isFirstPage = navigation.getState().routes.length === 1
-
-    useEffect(() => {
-      if (isFirstPage) {
-        if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
-          // DRN 问题，当 resetRouterStack 页面数为1时会关闭 disableSwipeBack，此时需要再次 disableSwipeBack
-          global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
-        }
-      } else {
-        navigation.setOptions({
-          gestureEnabled: !show
-        })
-      }
-    }, [show])
-
-    // 路由返回拦截
-    usePreventRemove(show, (event) => {
-      const { data } = event
-      if (show) {
-        close()
-      } else {
-        navigation?.dispatch(data.action)
-      }
-    })
-  }
-  useDisablePageBack()
+  useDisablePageBack(show, close)
   /**
    * IOS 下需要关闭手势返回（原因： IOS手势返回时页面会跟随手指滑动，但是实际返回动作是在松手时触发，需禁掉页面跟随手指滑动的效果）
    * 禁用与启用逻辑抽离为rnConfig由外部实现，并补充纯RN下默认实现
