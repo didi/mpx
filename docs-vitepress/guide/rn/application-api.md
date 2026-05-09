@@ -477,6 +477,28 @@ Mpx 框架默认会使用 `ReactNative.AppState.addEventListener('change', callb
 在需要将 RN 应用嵌入到现有的 NA 应用中时，可能会出现AppState触发时机异常的情况（例如从 RN 页面跳转到 NA 页面时），此时可以将 disableAppStateListener 设置为 true 来禁用框架内部对 AppState 的监听。但需要在合适的时机手动调用 setAppShow() 与 setAppHide() 方法来进行驱动以确保对应的钩子能正常触发。
 
 
+### page-container {#page-container}
+
+#### mpx.config.rnConfig.disableSwipeBack
+
+```ts
+(options: { disable: boolean }) => void
+```
+
+禁用或启用 iOS 页面左滑手势返回，主要用于 DRN（混合容器）等场景。
+
+当页面内使用 `page-container` 组件时，框架会在容器显示时自动调用此方法禁用手势返回，以防止用户左滑时触发页面返回而非关闭容器；容器关闭或组件销毁时会再次调用以恢复。
+
+在纯 RN 环境下，框架通过 React Navigation 的 `gestureEnabled` 选项自动处理手势返回的禁用与恢复，无需配置此项。
+
+```javascript
+// 示例（DRN 场景）
+mpx.config.rnConfig.disableSwipeBack = ({ disable }) => {
+  // 调用 NA 提供的方法控制手势返回
+  NativeModules.NavigationModule.setSwipeBackEnabled(!disable)
+}
+```
+
 ### 自定义设置底部虚拟按键区高度 {#custom-bottom-bar-height}
 
 #### mpx.config.rnConfig.getBottomVirtualHeight

@@ -823,7 +823,7 @@ API
   </view>
 </template>
 
-<script>
+<script lang="ts" setup>
 import { createPage } from '@mpxjs/core'
 
 createPage({

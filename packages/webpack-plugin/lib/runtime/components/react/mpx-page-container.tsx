@@ -17,8 +17,8 @@
  * ✔ bindclickoverlay
  * ✔ bindclose RN下特有属性，用于同步show状态到父组件
  */
-import React, { createElement, forwardRef, useCallback, useEffect, useRef, useState } from 'react'
-import { StyleSheet, Dimensions, TouchableWithoutFeedback, StyleProp, ViewStyle } from 'react-native'
+import React, { createElement, forwardRef, useEffect, useRef, useState } from 'react'
+import { StyleSheet, BackHandler, TouchableWithoutFeedback, StyleProp, ViewStyle } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, runOnJS, WithTimingConfig, Easing, AnimationCallback } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal/index'
@@ -51,8 +51,6 @@ interface PageContainerProps {
     bindclose: (event: CustomEvent<{ value: boolean}>) => void;
     children: React.ReactNode;
 }
-
-const screenWidth = Dimensions.get('screen').width
 
 function nextTick (cb: () => void) {
   setTimeout(cb, 0)
@@ -90,11 +88,33 @@ function getRoundStyle (position: Position) {
 function useDisablePageBack (show: boolean, close: () => void) {
   /**
    * 如果当前页面是首页，则需要拦截返回关闭容器的逻辑
-   * 如果不是首页，则由RN逻辑完成拦截（usePreventRemove + gestureEnabled:false）
+   * 如果不是首页，则由RN逻辑完成拦截（usePreventRemove）
    */
   const navigation = useNavigation()!
   // TODO resetRouterStack 可能会导致 isFirstPage 发生变化，需要监听路由变化
   const isFirstPage = navigation.getState().routes.length === 1
+  const onBackPressRef = useRef(() => false as boolean)
+  onBackPressRef.current = () => {
+    if (show) {
+      close()
+      return true
+    }
+    return false
+  }
+
+  const backHandlerSubscriptionRef = useRef<ReturnType<typeof BackHandler.addEventListener> | null>(null)
+  const addBackPressListener = () => {
+    backHandlerSubscriptionRef.current = BackHandler.addEventListener('hardwareBackPress', () => onBackPressRef.current())
+  }
+  const removeBackPressListener = () => {
+    backHandlerSubscriptionRef.current?.remove()
+    backHandlerSubscriptionRef.current = null
+  }
+
+  // 记录组件挂载时的初始 gestureEnabled 值，用于组件销毁时还原
+  const originalGestureEnabledRef = useRef<boolean>(
+    navigation.getState().routes.at(-1)?.options?.gestureEnabled ?? true
+  )
 
   useEffect(() => {
     if (isFirstPage) {
@@ -102,21 +122,32 @@ function useDisablePageBack (show: boolean, close: () => void) {
         // DRN 问题，当 resetRouterStack 页面数为1时会关闭 disableSwipeBack，此时需要再次 disableSwipeBack
         global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
       }
-    } else {
-      navigation.setOptions({
-        gestureEnabled: !show
-      })
+
+      // 首页的返回事件无法通过usePreventRemove拦截，所以通过监听物理返回事件的方式来拦截
+      if (__mpx_mode__ !== 'ios') {
+        removeBackPressListener()
+        if (show) {
+          addBackPressListener()
+        }
+      }
+      return () => {
+        removeBackPressListener()
+        if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
+          global.__mpx.config.rnConfig.disableSwipeBack({ disable: false })
+        }
+      }
+    } else if (__mpx_mode__ === 'ios' && show) {
+      // 原生导航栏部分手势容器无法覆盖到，通过设置 gestureEnabled 来禁止系统手势返回
+      navigation.setOptions({ gestureEnabled: false })
+      return () => {
+        navigation.setOptions({ gestureEnabled: originalGestureEnabledRef.current })
+      }
     }
   }, [show])
 
   // 路由返回拦截
-  usePreventRemove(show, (event) => {
-    const { data } = event
-    if (show) {
-      close()
-    } else {
-      navigation?.dispatch(data.action)
-    }
+  usePreventRemove(show, () => {
+    close()
   })
 }
 
@@ -237,7 +268,6 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
         if (position === 'center') {
           durationTime = durationTime * (1 - contentOpacity.value)
         } else {
-          // durationTime * (1 - |contentTranslate| / 100)
           durationTime = durationTime * (Math.abs(contentTranslate.value) / 100)
         }
       }
@@ -312,50 +342,32 @@ const PageContainer = forwardRef<any, PageContainerProps>((props, ref) => {
   }, [show])
 
   useDisablePageBack(show, close)
-  /**
-   * IOS 下需要关闭手势返回（原因： IOS手势返回时页面会跟随手指滑动，但是实际返回动作是在松手时触发，需禁掉页面跟随手指滑动的效果）
-   * 禁用与启用逻辑抽离为rnConfig由外部实现，并补充纯RN下默认实现
-   */
-  // TODO 如果是首页，需要拦截调用NA的disableSwipeBack拦截关闭容器的逻辑
-  // 如果不是首页，由RN逻辑完成拦截
-  // useEffect(() => {
-  //   if (typeof global.__mpx.config?.rnConfig?.disableSwipeBack === 'function') {
-  //     global.__mpx.config.rnConfig.disableSwipeBack({ disable: show })
-  //   } else {
-  //     navigation?.setOptions({
-  //       gestureEnabled: !show
-  //     })
-  //   }
-  // }, [show])
 
-  const THRESHOLD = screenWidth * 0.3 // 距离阈值
-  const VELOCITY_THRESHOLD = 1000 // px/s
   const contentGesture = Gesture.Pan()
-    .activeOffsetY(150) // 下滑至少滑动 150px 才处理
-    .onEnd((e) => {
-      const { velocityY, translationY } = e
-      const shouldGoBack = translationY > THRESHOLD || velocityY > VELOCITY_THRESHOLD
-      if (shouldGoBack) {
+    .activeOffsetY([0, 0]) // 只要开始下滑就激活
+    .failOffsetX([-10, 10]) // 横向位移超过 10px 则 fail，确保只处理纵向滑动
+    .onUpdate((e) => {
+      if (e.translationY > 200) {
         runOnJS(invokeRunOnJS)('close')
       }
     })
   /**
    * 全屏幕 IOS 左滑手势返回（ios默认页面返回存在页面跟手逻辑，page-container暂不支持，对齐微信小程序）
    * 1: 仅在屏幕左边缘滑动 才触发返回手势。
-   * 2: 用户滑动距离足够 或 滑动速度足够快，才触发返回。
-   * 3: 用户中途回退（滑回来）或滑太慢/太短，则应取消返回。
    */
-  const screenGesture = Gesture.Pan()
-    .activeOffsetX(THRESHOLD) // 左滑至少滑动 30% 屏幕宽度才处理
+  const screenGestureBase = Gesture.Pan()
+    .activeOffsetX([0, 0]) // 只要开始右滑就激活
+    .failOffsetY([-10, 10]) // 纵向位移超过 10px 则 fail，确保只处理横向滑动
     .hitSlop({ left: 0, width: 30 }) // 从屏幕左侧 30px 内触发才处理
-    .onEnd((e) => {
-      const { velocityX, translationX } = e
-      // const shouldGoBack = translationX > THRESHOLD || velocityX > VELOCITY_THRESHOLD
-      const shouldGoBack = velocityX > VELOCITY_THRESHOLD
-      if (shouldGoBack) {
+    .onUpdate((e) => {
+      if (e.translationX > 10) {
         runOnJS(invokeRunOnJS)('close')
       }
     })
+  // closeOnSlideDown 时与 contentGesture 并行识别，避免两者竞争
+  const screenGesture = closeOnSlideDown
+    ? screenGestureBase.simultaneousWithExternalGesture(contentGesture)
+    : screenGestureBase
 
   const renderMask = () => {
     const onPress = () => {
