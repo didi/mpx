@@ -433,6 +433,19 @@ export interface RnConfig {
    * @returns Promise<boolean> Resolves 为 true 表示权限获取成功，false 表示失败。
    */
   cameraPermission?: () => Promise<boolean>
+
+  /**
+   * 禁用或启用 iOS 页面左滑手势返回。
+   *
+   * 当 `page-container` 组件显示时，框架会调用此方法禁用手势返回，以防止与容器交互冲突；
+   * 容器关闭或销毁时会再次调用以恢复。
+   *
+   * 主要用于 DRN（混合容器）等场景，在纯 RN 环境下框架会通过 React Navigation 的
+   * `gestureEnabled` 选项自动处理，无需配置此项。
+   *
+   * @param options.disable true 表示禁用手势返回，false 表示恢复
+   */
+  disableSwipeBack?: (options: { disable: boolean }) => void
 }
 
 interface MpxConfig {
