@@ -36,5 +36,8 @@ module.exports = {
       harmony: `${componentPrefixPath}/react/dist/mpx-sticky-section.jsx`
     }
   },
-  MPX_TAG_PAGE_SELECTOR: 'mpx-page'
+  MPX_TAG_PAGE_SELECTOR: 'mpx-page',
+  // web / template is：具名 wx 模版子组件标签前缀（与 compiler 中 AST 替换一致）
+  MPX_TEMPLATE_COMPONENT_PREFIX: 'mpx-tpl-',
+  STYLE_PAD_PLACEHOLDER: 'mpx-style-pad-placeholder'
 }

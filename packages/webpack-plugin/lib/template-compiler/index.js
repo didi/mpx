@@ -43,15 +43,15 @@ module.exports = function (raw) {
     }
   }
 
-  const warn = (msg) => {
+  const warn = (msg, loc) => {
     this.emitWarning(
-      new Error('[Mpx template warning][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template warning][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
-  const error = (msg) => {
+  const error = (msg, loc) => {
     this.emitError(
-      new Error('[Mpx template error][' + this.resource + ']: ' + msg)
+      new Error('[Mpx template error][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 

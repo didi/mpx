@@ -3,7 +3,7 @@ const MagicString = require('magic-string')
 const { SourceMapConsumer, SourceMapGenerator } = require('source-map')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
-const formatCodeFrame = require('@babel/code-frame')
+const { default: formatCodeFrame } = require('@babel/code-frame')
 const parseRequest = require('../utils/parse-request')
 
 // Special compiler macros
