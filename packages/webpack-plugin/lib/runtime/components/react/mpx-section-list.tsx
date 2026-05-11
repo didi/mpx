@@ -302,13 +302,13 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
 
       // 添加该 section 中所有 items 的位置信息
       section.data.forEach((item: ListItem, itemIndex: number) => {
-        const contenteight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
+        const contentHeight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
         layouts.push({
-          length: contenteight,
+          length: contentHeight,
           offset,
           index: layouts.length
         })
-        offset += contenteight
+        offset += contentHeight
       })
 
       // 添加该 section 尾部位置信息

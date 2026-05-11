@@ -140,7 +140,7 @@ export default {
     },
     useListHeader: {
       type: Boolean,
-      default: true
+      default: false
     },
     listFooterData: {
       type: Object,
