@@ -53,15 +53,15 @@ module.exports = function (content) {
   const autoScope = matchCondition(resourcePath, mpx.autoScopeRules)
   const isRuntimeMode = queryObj.isDynamic
 
-  const emitWarning = (msg) => {
+  const emitWarning = (msg, loc) => {
     this.emitWarning(
-      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json warning][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 
-  const emitError = (msg) => {
+  const emitError = (msg, loc) => {
     this.emitError(
-      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
+      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
     )
   }
 

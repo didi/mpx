@@ -1,6 +1,6 @@
 const compiler = require('../../lib/template-compiler/compiler')
 const templateShared = require('../../lib/web/template-shared')
-const { MPX_WX_TEMPLATE_COMPONENT_PREFIX } = require('../../lib/utils/const')
+const { MPX_TEMPLATE_COMPONENT_PREFIX } = require('../../lib/utils/const')
 
 function createWebParseOptions (overrides = {}) {
   const error = jest.fn()
@@ -47,13 +47,13 @@ describe('Web template support (compiler + template-shared)', () => {
       expect(html).not.toMatch(/<template/)
     })
 
-    it('replaces static <template is> with mpx-wx-tpl-* self-closing tag', () => {
+    it('replaces static <template is> with mpx-tpl-* self-closing tag', () => {
       const opts = createWebParseOptions()
       const { root } = compiler.parse(
         '<template name="msgItem"><view>x</view></template><template is="msgItem" />',
         opts
       )
-      expect(compiler.serialize(root)).toBe(`<${MPX_WX_TEMPLATE_COMPONENT_PREFIX}msgItem/>`)
+      expect(compiler.serialize(root)).toBe(`<${MPX_TEMPLATE_COMPONENT_PREFIX}msgItem/>`)
     })
 
     it('accepts wx-style data="{{...d}}" on <template is> (same as RN template usage)', () => {
@@ -64,7 +64,7 @@ describe('Web template support (compiler + template-shared)', () => {
       )
       const html = compiler.serialize(root)
       expect(html).toBe(
-        `<${MPX_WX_TEMPLATE_COMPONENT_PREFIX}msgItem :mpx-data="({...d})"/>`
+        `<${MPX_TEMPLATE_COMPONENT_PREFIX}msgItem :mpx-data="({...d})"/>`
       )
       expect(opts.error).not.toHaveBeenCalled()
     })
@@ -77,19 +77,19 @@ describe('Web template support (compiler + template-shared)', () => {
       )
       const html = compiler.serialize(root)
       expect(html).toBe(
-        `<component :is="'${MPX_WX_TEMPLATE_COMPONENT_PREFIX}' + ((tplName))" :mpx-data="({...d})"/>`
+        `<component :is="'${MPX_TEMPLATE_COMPONENT_PREFIX}' + ((tplName))" :mpx-data="({...d})"/>`
       )
       expect(opts.error).not.toHaveBeenCalled()
     })
 
-    it('keeps wx:if and other attrs on <template is> after replacement (v-if + mpx-wx-tpl)', () => {
+    it('keeps wx:if and other attrs on <template is> after replacement (v-if + mpx-tpl)', () => {
       const opts = createWebParseOptions()
       const { root } = compiler.parse(
         '<template name="msgItem"><view>x</view></template><template is="msgItem" wx:if="{{show}}" class="a" />',
         opts
       )
       const html = compiler.serialize(root)
-      expect(html).toMatch(new RegExp(`^<${MPX_WX_TEMPLATE_COMPONENT_PREFIX}msgItem`))
+      expect(html).toMatch(new RegExp(`^<${MPX_TEMPLATE_COMPONENT_PREFIX}msgItem`))
       expect(html).toContain('v-if=')
       expect(html).toContain('show')
       expect(html).toMatch(/:class=| class=/)
@@ -112,7 +112,7 @@ describe('Web template support (compiler + template-shared)', () => {
   describe('template-shared', () => {
     it('getWxTemplateComponentName matches const prefix', () => {
       expect(templateShared.getWxTemplateComponentName('foo')).toBe(
-        MPX_WX_TEMPLATE_COMPONENT_PREFIX + 'foo'
+        MPX_TEMPLATE_COMPONENT_PREFIX + 'foo'
       )
     })
 
