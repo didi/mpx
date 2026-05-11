@@ -463,7 +463,7 @@ createComponent({
 
 例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
 
-#### mpx.config.rnConfig.notifyDimensionsChange
+#### notifyDimensionsChange
 
 ```ts
 (dimensions?: { window: ScaledSize; screen: ScaledSize }) => void
@@ -480,7 +480,7 @@ createComponent({
 import { Dimensions } from 'react-native'
 
 foldableScreen.on('change', () => {
-  mpx.config.rnConfig.notifyDimensionsChange({
+  notifyDimensionsChange({
     window: Dimensions.get('window'),
     screen: Dimensions.get('screen')
   })
@@ -498,7 +498,7 @@ mpx.config.rnConfig.customDimensions = ({ window, screen }) => {
   return isFolded ? { window, screen } : { window, screen: { ...screen, width: screen.width / 2 } }
 }
 // 不传参，用当前屏幕尺寸重新触发 customDimensions
-mpx.config.rnConfig.notifyDimensionsChange()
+notifyDimensionsChange()
 ```
 
 ### 前后台切换 {#app-state-change}
