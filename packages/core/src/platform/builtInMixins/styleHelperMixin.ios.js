@@ -63,6 +63,8 @@ function onDimensionsChange (dimensions) {
     }
   }
 }
+// 默认实现：不传参时通过 Dimensions 实时获取当前屏幕尺寸（拷贝一份防止原对象被外部修改）
+global.notifyDimensionsChange = onDimensionsChange
 
 Dimensions.addEventListener('change', onDimensionsChange)
 
@@ -97,8 +99,6 @@ function formatValue (value, unitType) {
   if (!dimensionsApplied) {
     dimensionsApplied = true
     applyDimensionsInfo(global.__mpxAppDimensionsInfo)
-    // 默认实现：不传参时通过 Dimensions 实时获取当前屏幕尺寸（拷贝一份防止原对象被外部修改）
-    Mpx.config.rnConfig.notifyDimensionsChange = onDimensionsChange
   }
   if (unitType === 'hairlineWidth') {
     return StyleSheet.hairlineWidth
