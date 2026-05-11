@@ -4,8 +4,8 @@ import { reactive } from '../../observer/reactive'
 import Mpx from '../../index'
 
 global.__mpxAppDimensionsInfo = {
-  window: Dimensions.get('window'),
-  screen: Dimensions.get('screen')
+  window: Object.assign({}, Dimensions.get('window')),
+  screen: Object.assign({}, Dimensions.get('screen'))
 }
 global.__mpxSizeCount = 0
 global.__mpxPageSizeCountMap = reactive({})
@@ -18,30 +18,40 @@ global.__GCC = function (className, classMap, classMapValueCache) {
   return classMapValueCache.get(className)
 }
 
-let dimensionsInfoInitialized = false
-function useDimensionsInfo (dimensions) {
-  dimensionsInfoInitialized = true
+function getPageSize (screen = global.__mpxAppDimensionsInfo.screen) {
+  return screen.width + 'x' + screen.height
+}
+
+// 将 dimensions 写入全局（支持 customDimensions 自定义），返回最终生效的 dimensions
+function applyDimensionsInfo (dimensions) {
   if (typeof Mpx.config.rnConfig?.customDimensions === 'function') {
     dimensions = Mpx.config.rnConfig.customDimensions(dimensions) || dimensions
   }
   global.__mpxAppDimensionsInfo.window = dimensions.window
   global.__mpxAppDimensionsInfo.screen = dimensions.screen
+  return dimensions
 }
 
-function getPageSize (window = global.__mpxAppDimensionsInfo.screen) {
-  return window.width + 'x' + window.height
-}
+function onDimensionsChange (dimensions) {
+  const oldScreen = getPageSize()
+  /**
+   * 鸿蒙上在屏幕尺寸不变时，调用 Dimensions.get 获取到的返回值都是同一个对象，
+   * 为防止外部修改dimensions导致影响其他位置调用Dimensions.get的返回，所以clone一份进行后续处理
+   */
+  if (!dimensions) {
+    dimensions = {
+      window: Dimensions.get('window'),
+      screen: Dimensions.get('screen')
+    }
+  }
+  applyDimensionsInfo({ window: Object.assign({}, dimensions.window), screen: Object.assign({}, dimensions.screen) })
 
-Dimensions.addEventListener('change', ({ window, screen }) => {
-  const oldScreen = getPageSize(global.__mpxAppDimensionsInfo.screen)
-  useDimensionsInfo({ window, screen })
-
-  // 对比 screen 高宽是否存在变化
-  if (getPageSize(screen) === oldScreen) return
+  // screen 高宽未变化时不触发 resize 副作用
+  if (getPageSize() === oldScreen) return
 
   global.__classCaches?.forEach(cache => cache?.clear())
 
-  // 更新全局和栈顶页面的标记，其他后台页面的标记在show之后更新
+  // 更新全局和栈顶页面的标记，其他后台页面的标记在 show 之后更新
   global.__mpxSizeCount++
 
   const navigation = getFocusedNavigation()
@@ -52,7 +62,9 @@ Dimensions.addEventListener('change', ({ window, screen }) => {
       global.__mpxPageStatusMap[navigation.pageId] = `resize${global.__mpxSizeCount}`
     }
   }
-})
+}
+
+Dimensions.addEventListener('change', onDimensionsChange)
 
 // TODO: 1 目前测试鸿蒙下折叠屏screen固定为展开状态下屏幕尺寸，仅window会变化，且window包含状态栏高度
 // TODO: 2 存在部分安卓折叠屏机型在折叠/展开切换时，Dimensions监听到的width/height尺寸错误，并触发多次问题
@@ -79,8 +91,15 @@ const unit = {
 
 const empty = {}
 
+let dimensionsApplied = false
 function formatValue (value, unitType) {
-  if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  // 懒初始化：首次调用时将初始 dimensions 写入全局（触发 customDimensions 处理）
+  if (!dimensionsApplied) {
+    dimensionsApplied = true
+    applyDimensionsInfo(global.__mpxAppDimensionsInfo)
+    // 默认实现：不传参时通过 Dimensions 实时获取当前屏幕尺寸（拷贝一份防止原对象被外部修改）
+    Mpx.config.rnConfig.notifyDimensionsChange = onDimensionsChange
+  }
   if (unitType === 'hairlineWidth') {
     return StyleSheet.hairlineWidth
   }
