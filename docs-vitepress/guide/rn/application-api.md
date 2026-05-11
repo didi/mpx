@@ -463,44 +463,6 @@ createComponent({
 
 例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
 
-#### notifyDimensionsChange
-
-```ts
-(dimensions?: { window: ScaledSize; screen: ScaledSize }) => void
-```
-
-主动通知框架 dimensions 发生变化，触发 rpx、vw、vh、媒体查询、onResize 等的重新计算。
-
-框架默认已监听 `Dimensions.addEventListener('change', ...)` 自动处理尺寸变化。在某些容器环境下（如折叠屏、分屏）系统事件无法正常触发时，可手动调用此方法驱动更新。不传参时默认使用当前全局 dimensions。
-
-**传入 dimensions（系统事件无法触发时）：**
-
-```javascript
-// 示例：折叠屏展开/折叠时手动通知框架
-import { Dimensions } from 'react-native'
-
-foldableScreen.on('change', () => {
-  notifyDimensionsChange({
-    window: Dimensions.get('window'),
-    screen: Dimensions.get('screen')
-  })
-})
-```
-
-**不传参（`customDimensions` 逻辑变更后重新应用）：**
-
-`customDimensions` 是在 dimensions 变化时被调用的转换函数，如果运行时动态修改了 `customDimensions` 的逻辑，需要用无参调用让框架以当前屏幕尺寸重新执行一次 `customDimensions`，使新逻辑立即生效。
-
-```javascript
-// 示例：切换折叠屏展示模式后，重新应用 customDimensions
-mpx.config.rnConfig.customDimensions = ({ window, screen }) => {
-  // 更新后的转换逻辑
-  return isFolded ? { window, screen } : { window, screen: { ...screen, width: screen.width / 2 } }
-}
-// 不传参，用当前屏幕尺寸重新触发 customDimensions
-notifyDimensionsChange()
-```
-
 ### 前后台切换 {#app-state-change}
 
 #### mpx.config.rnConfig.disableAppStateListener
