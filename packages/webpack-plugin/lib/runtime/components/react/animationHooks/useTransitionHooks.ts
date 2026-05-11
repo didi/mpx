@@ -177,15 +177,15 @@ export default function useTransitionHooks<T, P> (props: AnimationHooksPropsType
   const transitionMap = useMemo(() => {
     const prevStyle = lastTransitionStyleRef.current
     // 检测 transition 时序属性是否变化并更新
-    let hasTimingChanged = false
+    let hasChanged = false
     transitionKeys.forEach(key => {
       if (prevStyle[key] !== originalStyle[key]) {
-        hasTimingChanged = true
+        hasChanged = true
         prevStyle[key] = originalStyle[key]
       }
     })
     // 时序属性未变化且非首次计算，跳过重新解析
-    if (!hasTimingChanged && prevTransitionMapRef.current) {
+    if (!hasChanged && prevTransitionMapRef.current) {
       return prevTransitionMapRef.current
     }
     const newTransitionMap = parseTransitionStyle(originalStyle)
