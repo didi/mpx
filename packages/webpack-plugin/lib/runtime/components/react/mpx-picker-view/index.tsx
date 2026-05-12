@@ -8,7 +8,8 @@ import {
   splitStyle,
   wrapChildren,
   useTransformStyle,
-  extendObject
+  extendObject,
+  useTextPassThroughValue
 } from '../utils'
 import { PickerViewStyleContext } from './pickerVIewContext'
 import Portal from '../mpx-portal'
@@ -104,6 +105,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     const activeValue = activeValueRef.current
@@ -190,8 +192,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       }
     )
   }
