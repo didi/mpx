@@ -4,7 +4,6 @@ import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } fr
 import { VarContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
-import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
@@ -36,6 +35,7 @@ const calcUseRegExp = /calc\(/
 const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
 const filterRegExp = /(calc|env|%)/
+const boxSizingAffectingRegExp = /^(padding.*|border.*Width)$/
 
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
@@ -50,11 +50,15 @@ export function getDefaultAllowFontScaling (): boolean {
   return global.__mpx?.config?.rnConfig?.allowFontScaling ?? false
 }
 
-export function transformBoxSizing (style: Record<string, any> = {}) {
-  if (style.boxSizing === undefined) {
+export function transformBoxSizing (style: Record<string, any> = {}, hasBoxSizingAffectingStyle = false) {
+  if (hasBoxSizingAffectingStyle && style.boxSizing === undefined) {
     style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? DEFAULT_BOX_SIZING_STYLE.boxSizing
   }
   return style
+}
+
+export function isBoxSizingAffectingStyle (key: string) {
+  return boxSizingAffectingRegExp.test(key)
 }
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
@@ -128,6 +132,7 @@ export function isStringChildren (children: ReactNode) {
 }
 
 type GroupData<T> = Record<string, Partial<T>>
+
 export function groupBy<T extends Record<string, any>> (
   obj: T,
   callback: (key: string, val: T[keyof T]) => string,
@@ -141,12 +146,13 @@ export function groupBy<T extends Record<string, any>> (
   return group
 }
 
-export function splitStyle<T extends Record<string, any>> (styleObj: T): {
+export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffect?: (key: string, val: T[keyof T]) => void): {
   textStyle?: Partial<T>
   backgroundStyle?: Partial<T>
   innerStyle?: Partial<T>
 } {
-  return groupBy(styleObj, (key) => {
+  return groupBy(styleObj, (key, val) => {
+    sideEffect && sideEffect(key, val)
     if (TEXT_STYLE_REGEX.test(key)) {
       return 'textStyle'
     } else if (BACKGROUND_REGEX.test(key)) {
@@ -154,11 +160,7 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T): {
     } else {
       return 'innerStyle'
     }
-  }) as {
-    textStyle: Partial<T>
-    backgroundStyle: Partial<T>
-    innerStyle: Partial<T>
-  }
+  })
 }
 const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
@@ -431,6 +433,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   let hasVarDec = false
   let hasVarUse = false
   let hasSelfPercent = false
+  let hasBoxSizingAffectingStyle = false
   const varKeyPaths: Array<Array<string>> = []
   const unoVarKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
@@ -463,6 +466,12 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
       } else {
         visitOther({ target, key, value, keyPath })
       }
+    }
+  }
+
+  function boxSizingVisitor ({ key, keyPath }: VisitorArg) {
+    if (keyPath.length === 1 && !hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
+      hasBoxSizingAffectingStyle = true
     }
   }
 
@@ -501,7 +510,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
 
   // traverse var & generate normalStyle
-  traverseStyle(styleObj, [varVisitor])
+  traverseStyle(styleObj, [varVisitor, boxSizingVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
@@ -567,7 +576,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformBoxShadow(normalStyle)
   // transform 字符串格式转化数组格式(先转数组再处理css var)
   transformTransform(normalStyle)
-  transformBoxSizing(normalStyle)
+  transformBoxSizing(normalStyle, hasBoxSizingAffectingStyle)
 
   return {
     hasVarDec,
@@ -801,10 +810,10 @@ export function getCurrentPage (pageId: number | null | undefined) {
 }
 
 export function renderImage (
-  imageProps: ImageProps | FastImageProps,
+  imageProps: ImageProps,
   enableFastImage = true
 ) {
-  let Component: React.ComponentType<ImageProps | FastImageProps> = Image
+  let Component = Image
   if (enableFastImage) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const fastImageModule = require('@d11/react-native-fast-image')
