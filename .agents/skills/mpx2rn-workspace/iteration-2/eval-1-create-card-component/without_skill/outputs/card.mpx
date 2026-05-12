@@ -1,0 +1,119 @@
+<template>
+  <view
+    class="card-wrapper"
+    wx:style="{{cardStyle}}"
+    bindtap="handleTap"
+    hover-class="card-hover"
+  >
+    <view class="card-header">
+      <image
+        class="card-avatar"
+        src="{{avatar}}"
+        mode="aspectFill"
+        wx:if="{{avatar}}"
+      />
+      <view class="card-info">
+        <text class="card-title">{{title}}</text>
+        <text class="card-desc">{{desc}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { computed } from '@mpxjs/core'
+
+const props = defineProps({
+  title: {
+    type: String,
+    value: ''
+  },
+  desc: {
+    type: String,
+    value: ''
+  },
+  avatar: {
+    type: String,
+    value: ''
+  },
+  selected: {
+    type: Boolean,
+    value: false
+  }
+})
+
+const cardStyle = computed(() => {
+  if (props.selected) {
+    return {
+      borderColor: '#1677ff'
+    }
+  }
+  return {
+    borderColor: '#e8e8e8'
+  }
+})
+
+const handleTap = () => {
+  triggerEvent('tap')
+}
+</script>
+
+<style>
+.card-wrapper {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border-width: 2px;
+  border-style: solid;
+  border-color: #e8e8e8;
+  padding: 16px;
+}
+
+.card-hover {
+  opacity: 0.7;
+  background-color: #f5f5f5;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  margin-right: 12px;
+}
+
+.card-info {
+  flex: 1;
+  /* RN 需要 overflow hidden 配合文本省略 */
+  overflow: hidden;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333333;
+  lines: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.card-desc {
+  font-size: 14px;
+  color: #999999;
+  margin-top: 4px;
+  lines: 2;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

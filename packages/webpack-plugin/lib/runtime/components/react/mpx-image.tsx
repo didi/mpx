@@ -56,6 +56,7 @@ export interface ImageProps {
   'parent-width'?: number
   'parent-height'?: number
   'enable-fast-image'?: boolean
+  'is-svg'?: boolean
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
 }
@@ -136,6 +137,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     'enable-fast-image': enableFastImage,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
+    'is-svg': isSvgProp,
     bindload,
     binderror
   } = props
@@ -157,7 +159,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     defaultStyle
   })
 
-  const isSvg = SVG_REGEXP.test(src)
+  const isSvg = isSvgProp || SVG_REGEXP.test(src)
   const isWidthFixMode = mode === 'widthFix'
   const isHeightFixMode = mode === 'heightFix'
   const isCropMode = cropMode.includes(mode)
@@ -455,7 +457,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     ),
     [
       'src',
-      'mode'
+      'mode',
+      'is-svg'
     ],
     {
       layoutRef
