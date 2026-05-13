@@ -7,6 +7,7 @@ const vw = require('./plugins/vw')
 const scopeId = require('./plugins/scope-id')
 const transSpecial = require('./plugins/trans-special')
 const cssArrayList = require('./plugins/css-array-list')
+const removeStripConditionalComments = require('./plugins/remove-strip-conditional-comments')
 const { matchCondition } = require('../utils/match-condition')
 const parseRequest = require('../utils/parse-request')
 const isReact = require('../utils/env').isReact
@@ -96,6 +97,7 @@ module.exports = function (css, map) {
     if (mpx.mode === 'web') {
       postPlugins.push(vw({ transRpxFn }))
     }
+    postPlugins.push(removeStripConditionalComments())
 
     const finalPlugins = config.prePlugins.concat(plugins, config.plugins, postPlugins)
 
