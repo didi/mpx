@@ -239,6 +239,7 @@ movable-view的可移动区域。
 | src                     | string  | `false`       | 图片资源地址及 base64 格式数据 |
 | mode                    | string  | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right`             |
 | enable-fast-image          | boolean  | `false`   | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| is-svg                 | boolean  | `false`   | RN 环境特有属性，传递为 `true` 时强制使用 SVG 方式渲染图片 |
 
 事件
 

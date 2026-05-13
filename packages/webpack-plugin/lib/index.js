@@ -51,6 +51,7 @@ const fixRelative = require('./utils/fix-relative')
 const parseRequest = require('./utils/parse-request')
 const { transSubpackage } = require('./utils/trans-async-sub-rules')
 const { matchCondition } = require('./utils/match-condition')
+const { getPartialCompileRules } = require('./utils/partial-compile-rules')
 const processDefs = require('./utils/process-defs')
 const config = require('./config')
 const hash = require('hash-sum')
@@ -494,12 +495,30 @@ class MpxWebpackPlugin {
 
     let mpx
 
-    if (this.options.partialCompileRules) {
+    const pagePartialCompileRules = getPartialCompileRules(this.options.partialCompileRules, 'page')
+    const componentPartialCompileRules = getPartialCompileRules(this.options.partialCompileRules, 'component')
+
+    if (pagePartialCompileRules || componentPartialCompileRules) {
       function isResolvingPage (obj) {
         // valid query should start with '?'
         const query = parseQuery(obj.query || '?')
         return query.isPage && !query.type
       }
+
+      function isResolvingComponent (obj) {
+        // valid query should start with '?'
+        const query = parseQuery(obj.query || '?')
+        return query.isComponent && !query.type
+      }
+
+      const replaceResource = (obj, target) => {
+        const infix = obj.query ? '&' : '?'
+        obj.query += `${infix}resourcePath=${obj.path}`
+        obj.path = target
+      }
+
+      const defaultPagePath = require.resolve('./runtime/components/wx/default-page.mpx')
+      const defaultComponentPath = require.resolve('./runtime/components/wx/default-component.mpx')
 
       // new PartialCompilePlugin(this.options.partialCompile).apply(compiler)
       compiler.resolverFactory.hooks.resolver.intercept({
@@ -509,13 +528,13 @@ class MpxWebpackPlugin {
               name: 'MpxPartialCompilePlugin',
               stage: -100
             }, (obj, resolverContext, callback) => {
-              if (obj.path.startsWith(require.resolve('./runtime/components/wx/default-page.mpx'))) {
+              if (obj.path.startsWith(defaultPagePath) || obj.path.startsWith(defaultComponentPath)) {
                 return callback(null, obj)
               }
-              if (isResolvingPage(obj) && !matchCondition(obj.path, this.options.partialCompileRules)) {
-                const infix = obj.query ? '&' : '?'
-                obj.query += `${infix}resourcePath=${obj.path}`
-                obj.path = require.resolve('./runtime/components/wx/default-page.mpx')
+              if (pagePartialCompileRules && isResolvingPage(obj) && !matchCondition(obj.path, pagePartialCompileRules)) {
+                replaceResource(obj, defaultPagePath)
+              } else if (componentPartialCompileRules && isResolvingComponent(obj) && !matchCondition(obj.path, componentPartialCompileRules)) {
+                replaceResource(obj, defaultComponentPath)
               }
               callback(null, obj)
             })

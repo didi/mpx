@@ -1,0 +1,113 @@
+<template>
+  <view class="card-list">
+    <view
+      class="card {{index > 0 ? 'card-spacing' : ''}}"
+      wx:for="{{cards}}"
+      wx:key="id"
+      bindtap="onTap"
+      hover-class="card-hover"
+    >
+      <view class="card-bar"></view>
+      <text class="card-title" numberOfLines="{{1}}">{{item.title}}</text>
+      <text class="card-content" numberOfLines="{{3}}">{{item.content}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    cards: { type: Array, value: [] }
+  },
+  methods: {
+    onTap () {
+      this.triggerEvent('cardtap')
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.card-list {
+  padding: 16rpx;
+  .card {
+    position: relative;
+    padding: 20rpx;
+    padding-left: 24rpx; /* leave space for the left bar (4rpx bar + 20rpx padding) */
+    background-color: white;
+    border-width: 1rpx;
+    border-style: solid;
+    border-color: #ddd;
+    border-radius: 8rpx;
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* @mpx-endif */
+    /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+    display: flex;
+    flex-direction: column;
+    /* @mpx-endif */
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4rpx;
+      height: 100%;
+      background: blue;
+    }
+    &:active {
+      opacity: 0.8;
+    }
+    /* @mpx-endif */
+    .card-bar {
+      /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4rpx;
+      height: 100%;
+      background-color: blue;
+      /* @mpx-endif */
+      /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+      display: none;
+      /* @mpx-endif */
+    }
+    .card-title {
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #333;
+      /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      /* @mpx-endif */
+    }
+    .card-content {
+      margin-top: 12rpx;
+      font-size: 28rpx;
+      color: #666;
+      /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+      word-break: break-all;
+      line-clamp: 3;
+      /* @mpx-endif */
+    }
+  }
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'web') */
+  .card + .card {
+    margin-top: 16rpx;
+  }
+  /* @mpx-endif */
+  /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+  .card-spacing {
+    margin-top: 16rpx;
+  }
+  .card-hover {
+    opacity: 0.8;
+  }
+  /* @mpx-endif */
+}
+</style>

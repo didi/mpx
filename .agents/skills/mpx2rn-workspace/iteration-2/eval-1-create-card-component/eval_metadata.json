@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "create-card-component",
+  "prompt": "请帮我创建一个符合 RN 跨端兼容规范的 Mpx 卡片组件 card.mpx。需求：title/desc/avatar/selected props；triggerEvent('tap')；hover 反馈；选中时蓝色边框；标题单行省略；描述 2 行省略；使用组合式 API。",
+  "files": []
+}

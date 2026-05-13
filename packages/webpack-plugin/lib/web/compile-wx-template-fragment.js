@@ -53,13 +53,13 @@ function compileTemplateFragment (source, ctx) {
 }
 
 /**
- * 用 compileTemplate 产出的 `block` 包一层 IIFE，再调用 createWxTemplateComponent（block 内已声明 `render` / `staticRenderFns`）。
- * 用于将 wxml template 的 Web 侧子组件选项与宿主 `createWxTemplateComponent` 对接。
+ * 用 compileTemplate 产出的 `block` 包一层 IIFE，再调用 createTemplateComponent（block 内已声明 `render` / `staticRenderFns`）。
+ * 用于将 wxml template 的 Web 侧子组件选项与宿主 `createTemplateComponent` 对接。
  * @param {string} block compileTemplate 返回的 `code`
- * @param {string} innerOptionProps createWxTemplateComponent 除 render/staticRenderFns 外的选项片段，例如 `name: "x", components: ...`
+ * @param {string} innerOptionProps createTemplateComponent 除 render/staticRenderFns 外的选项片段，例如 `name: "x", components: ...`
  */
 function wrapCreateTemplateComponentWithBlock (block, innerOptionProps) {
-  return `(function () {\n${block}\n  return createWxTemplateComponent({ render, staticRenderFns, ${innerOptionProps} })\n})()`
+  return `(function () {\n${block}\n  return createTemplateComponent({ render, staticRenderFns, ${innerOptionProps} })\n})()`
 }
 
 module.exports = {

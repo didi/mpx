@@ -9,7 +9,7 @@ import { JSX, useRef, forwardRef, ReactNode, useMemo, createElement } from 'reac
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { FormContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject } from './utils'
+import { useTransformStyle, splitProps, splitStyle, useLayout, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
 interface FormProps {
   style?: Record<string, any>
   children?: ReactNode
@@ -48,6 +48,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   const formRef = useRef(null)
   useNodesRef(props, ref, formRef, {
@@ -117,8 +118,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       }
     )
   ))

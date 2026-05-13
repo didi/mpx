@@ -1,5 +1,5 @@
 import { ReactNode, useContext, useEffect, useRef } from 'react'
-import { PortalContext, ProviderContext, RouteContext, VarContext } from '../context'
+import { PortalContext, ProviderContext, RouteContext, VarContext, TextPassThroughContext } from '../context'
 import PortalHost, { portal } from './portal-host'
 
 export type PortalProps = {
@@ -11,8 +11,12 @@ const Portal = ({ children }: PortalProps): null => {
   const keyRef = useRef<any>(null)
   const { pageId } = useContext(RouteContext) || {}
   const varContext = useContext(VarContext)
+  const textPassThroughContext = useContext(TextPassThroughContext)
   const parentProvides = useContext(ProviderContext)
 
+  if (textPassThroughContext) {
+    children = (<TextPassThroughContext.Provider value={textPassThroughContext} key='textPassThroughWrap'>{children}</TextPassThroughContext.Provider>)
+  }
   if (varContext) {
     children = (<VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>)
   }

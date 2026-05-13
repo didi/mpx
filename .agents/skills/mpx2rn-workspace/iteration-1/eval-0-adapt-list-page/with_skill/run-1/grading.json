@@ -1,0 +1,57 @@
+{
+  "eval_id": 0,
+  "run_kind": "with_skill",
+  "expectations": [
+    {
+      "text": "style: no less nesting (& or rule-in-rule)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style on RN (wx-conditional stripped): no `:active`",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style on RN: no `:first-child`",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "script: replaced wx.request with mpx.request",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "script: replaced wx.navigateTo with mpx.navigateTo",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "script: uses e.currentTarget.dataset (not e.target.dataset)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "template: dynamic class via wx:class (not class string interp)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style: no empty selector rules after stripping comments",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 9,
+    "failed": 0,
+    "total": 9
+  }
+}
