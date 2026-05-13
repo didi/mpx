@@ -108,6 +108,8 @@ let isCustomText
 let runtimeCompile
 let rulesRunner
 let customBuiltInComponentsOpt
+let isUrlRequest
+let templateAssetId
 let currentEl
 let injectNodes = []
 let forScopes = []
@@ -650,6 +652,8 @@ function parse (template, options) {
   usingComponentsInfo = options.usingComponentsInfo || {}
   usingComponents = Object.keys(usingComponentsInfo)
   customBuiltInComponentsOpt = options.customBuiltInComponents || null
+  isUrlRequest = options.isUrlRequest
+  templateAssetId = 0
 
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
@@ -2601,6 +2605,21 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
+const reactTemplateAssetTags = makeMap('mpx-image,mpx-video,mpx-audio', true)
+
+function processTemplateAssetReact (el, meta) {
+  if (!reactTemplateAssetTags(el.tag)) return
+  const src = el.attrsMap.src
+  if (!isUrlRequest(src)) return
+
+  const name = `__mpx_template_asset_${templateAssetId++}__`
+  if (!meta.templateAssets) {
+    meta.templateAssets = {}
+  }
+  meta.templateAssets[name] = src
+  addExp(el, name, false, 'src')
+}
+
 /** Web / RN 共用：<import src> 收集并移除 */
 function processTemplateImport (el, meta) {
   if (el.tag !== 'import') return false
@@ -3129,6 +3148,8 @@ function processElement (el, root, options, meta) {
     const isReactComponent$1 = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
+    // 处理模版内资源引用
+    processTemplateAssetReact(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)
