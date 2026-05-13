@@ -54,7 +54,7 @@ import {
   NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isAndroid } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isAndroid, getDefaultAllowFontScaling } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -131,7 +131,7 @@ const inputModeMap: Record<Type, string> = {
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
   const {
     style = {},
-    allowFontScaling = false,
+    allowFontScaling,
     type = 'text',
     value,
     password,
@@ -486,7 +486,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle),
-        allowFontScaling,
+        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
         inputMode: originalKeyboardType ? undefined : inputModeMap[type],
         keyboardType: originalKeyboardType,
         secureTextEntry: !!password,

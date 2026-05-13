@@ -1,0 +1,57 @@
+{
+  "eval_id": 1,
+  "run_kind": "without_skill",
+  "expectations": [
+    {
+      "text": "uses composition API (script setup or setup())",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style: no nesting / compound selectors",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "uses hover-class for press feedback (not bare :active on root)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "triggerEvent('tap', ...) is called",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "title uses numberOfLines for ellipsis",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "text": "avatar uses <image> (not <img>)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "text content wrapped in <text> elements",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "defineProps uses Mpx-style `value:` (not Vue-style `default:`)",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.7778,
+    "passed": 7,
+    "failed": 2,
+    "total": 9
+  }
+}

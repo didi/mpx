@@ -1,0 +1,91 @@
+<template>
+  <view class="card-list">
+    <view
+      class="card"
+      wx:for="{{cards}}"
+      wx:key="id"
+      wx:class="{{ { 'card-follow': index > 0 } }}"
+      hover-class="card-hover"
+      hover-stay-time="{{100}}"
+      bindtap="onTap"
+    >
+      <view class="card-decorator"></view>
+      <text class="card-title" numberOfLines@ios|android|harmony="{{1}}">{{item.title}}</text>
+      <view class="card-content" numberOfLines@ios|android|harmony="{{3}}">{{item.content}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    cards: { type: Array, value: [] }
+  },
+  methods: {
+    onTap () {
+      this.triggerEvent('cardtap')
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.card-list {
+  padding: 16rpx;
+}
+.card {
+  position: relative;
+  padding: 20rpx;
+  background: white;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  /* todo: RN 不支持 grid 布局，改用 flex 等效实现 */
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.card-decorator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4rpx;
+  height: 100%;
+  background: blue;
+}
+.card-hover {
+  opacity: 0.8;
+}
+.card-title {
+  font-size: 32rpx;
+  /* todo: RN 数值型 font-weight 跨端表现不稳定，统一使用 bold 关键字 */
+  font-weight: bold;
+  color: #333;
+}
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+/* todo: RN 不支持 text-overflow / white-space，模板使用 numberOfLines 等效实现，原平台保留原写法 */
+.card-title {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* @mpx-endif */
+.card-content {
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  color: #666;
+  /* 在 grid 改 flex 后，让内容占满可换行宽度 */
+  width: 100%;
+}
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+/* todo: RN 不支持 word-break / line-clamp，模板使用 numberOfLines 等效实现，原平台保留原写法 */
+.card-content {
+  word-break: break-all;
+  line-clamp: 3;
+}
+/* @mpx-endif */
+.card-follow {
+  margin-top: 16rpx;
+}
+</style>

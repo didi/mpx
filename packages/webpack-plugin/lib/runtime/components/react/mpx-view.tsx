@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover } from './utils'
+import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThroughValue } from './utils'
 import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -681,16 +681,16 @@ interface WrapChildrenConfig {
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
   textProps?: Record<string, any>
+  textPassThrough?: ReturnType<typeof useTextPassThroughValue>
   innerStyle?: Record<string, any>
   enableFastImage?: boolean
 }
 
-function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, textStyle, backgroundStyle, varContext, textProps, innerStyle, enableFastImage }: WrapChildrenConfig) {
+function wrapWithChildren (props: _ViewProps, { hasVarDec, enableBackground, backgroundStyle, varContext, textPassThrough, innerStyle, enableFastImage }: WrapChildrenConfig) {
   const children = wrapChildren(props, {
     hasVarDec,
     varContext,
-    textStyle,
-    textProps
+    textPassThrough
   })
 
   return [
@@ -752,6 +752,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)
@@ -808,10 +809,9 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   const childNode = wrapWithChildren(props, {
     hasVarDec,
     enableBackground: enableBackgroundRef.current,
-    textStyle,
     backgroundStyle,
     varContext: varContextRef.current,
-    textProps,
+    textPassThrough,
     innerStyle,
     enableFastImage
   })
