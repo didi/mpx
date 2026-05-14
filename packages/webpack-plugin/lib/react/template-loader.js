@@ -6,6 +6,7 @@ const { matchCondition } = require('../utils/match-condition')
 const templateCompiler = require('../template-compiler/compiler')
 const { genTemplate } = require('../template-compiler/gen-node-react')
 const bindThis = require('../template-compiler/bind-this')
+const isUrlRequestBase = require('../utils/is-url-request')
 
 module.exports = function (content) {
   const loaderContext = this
@@ -13,6 +14,7 @@ module.exports = function (content) {
 
   const {
     projectRoot,
+    externals,
     mode,
     srcMode,
     env,
@@ -50,11 +52,21 @@ module.exports = function (content) {
     moduleId,
     filePath: rawResourcePath,
     forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
-    customBuiltInComponents: rnConfig && rnConfig.customBuiltInComponents
+    customBuiltInComponents: rnConfig && rnConfig.customBuiltInComponents,
+    isUrlRequest: (url) => isUrlRequestBase(url, projectRoot, externals)
   }
 
   // Parse the template
   const { meta } = templateCompiler.parse(content, parseOptions)
+  const templateAssetsIgnoreMap = {}
+  let templateAssetsCode = ''
+  if (meta.templateAssets) {
+    Object.keys(meta.templateAssets).forEach((name) => {
+      templateAssetsIgnoreMap[name] = true
+      const request = loaderUtils.urlToRequest(meta.templateAssets[name], projectRoot)
+      templateAssetsCode += `var ${name} = require(${loaderUtils.stringifyRequest(loaderContext, request)});\n`
+    })
+  }
   if (meta.wxsContentMap && wxsContentMap) {
     for (const module in meta.wxsContentMap) {
       wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
@@ -96,7 +108,7 @@ module.exports = function (content) {
       createElement: true,
       getComponent: true,
       getTemplate: true
-    }, meta.wxsModuleMap)
+    }, meta.wxsModuleMap, templateAssetsIgnoreMap)
     const bindResult = bindThis.transform(localTemplatesCode, {
       ignoreMap
     })
@@ -123,6 +135,7 @@ module.exports = function (content) {
 
   const output = `
     ${wxsImports}
+    ${templateAssetsCode}
     var getBuiltInBaseComponent = require(${loaderUtils.stringifyRequest(loaderContext, normalize.lib('runtime/optionProcessorReact'))}).getComponent;
     var builtInComponentsMap = {${builtInComponents.join(',')}};
     ${localTemplatesCode}
