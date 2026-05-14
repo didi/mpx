@@ -285,7 +285,10 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
 
   const setKeyboardAvoidContext = () => {
     if (keyboardAvoid) {
-      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, readyToShow: true }
+      // readyToShow 仅在从另一个输入框切换聚焦时为 true（ref 不同），
+      // 避免同一个输入框重复调用（onTouchStart + useEffect）或单次聚焦时误设为 true 导致无法正常失焦
+      const readyToShow = !!(keyboardAvoid.current && keyboardAvoid.current.ref !== nodeRef)
+      keyboardAvoid.current = { cursorSpacing, ref: nodeRef, adjustPosition, holdKeyboard, readyToShow }
     }
   }
 
