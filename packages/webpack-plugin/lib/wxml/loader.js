@@ -39,7 +39,7 @@ module.exports = function (content) {
 
   const { getRequestString } = createHelpers(this)
 
-  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
+  const attributes = ['image:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
