@@ -34,7 +34,7 @@ export default class SelectorQuery {
       warn('SelectQuery.select don\'t support combinator selector, it only supports selector like #a or .a or .a.b now.')
       return new NodeRef([], this, !all)
     }
-    const refs = this._component && this._component.__selectRef(selector, 'node', all)
+    const refs = this._component && this._component.__selectRef(selector, ['node', 'component'], all)
     return new NodeRef(refs, this, !all)
   }
 
