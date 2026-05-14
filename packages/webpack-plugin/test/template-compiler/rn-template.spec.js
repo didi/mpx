@@ -23,6 +23,7 @@ describe('RN template support', () => {
     mockContext.emitWarning.mockClear()
     mockContext.emitError.mockClear()
     mockMpx.wxsContentMap = {}
+    mockMpx.rnConfig = undefined
   })
 
   it('should generate correct code for template import and definition', () => {
@@ -146,6 +147,21 @@ describe('RN template support', () => {
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
     expect(output).not.toContain('var templates = Object.assign({},')
     expect(output).not.toContain('function getTemplate(name)')
+  })
+
+  it('should transform static image src in imported templates to webpack require', () => {
+    const input = `
+      <template name="asset-demo">
+        <image src="./logo.png" />
+        <video src="./demo.mp4" />
+      </template>
+    `
+    const output = templateLoader.call(mockContext, input)
+    expect(mockContext.emitError).toHaveBeenCalledTimes(0)
+    expect(output).toContain('var __mpx_template_asset_0__ = require("./logo.png");')
+    expect(output).toContain('var __mpx_template_asset_1__ = require("./demo.mp4");')
+    expect(output).toContain('src: __mpx_template_asset_0__')
+    expect(output).toContain('src: __mpx_template_asset_1__')
   })
 
   it('should support using registered components from host', () => {
