@@ -376,9 +376,9 @@ export interface RnConfig {
    * @param dimensions 包含 window 和 screen 的尺寸信息
    * @returns 返回修改后的尺寸对象，或 void 表示不修改
    */
-  customDimensions?: <T extends { window: ScaledSize; screen: ScaledSize }>(
-    dimensions: T
-  ) => T | void
+  customDimensions?: (
+    dimensions: { window: ScaledSize; screen: ScaledSize }
+  ) => { window: ScaledSize; screen: ScaledSize } | void
 
   /**
    * 加载并执行异步分包的方法。
