@@ -1,0 +1,169 @@
+<template>
+  <view class="panel" enable-var wx:style="{{panelStyle}}">
+    <view class="panel-header" enable-background wx:style="{{headerBgStyle}}">
+      <slot name="icon"></slot>
+      <text class="panel-title">{{ $t('panel.title') }}</text>
+      <text class="panel-subtitle">{{ $t('panel.subtitle') }}</text>
+    </view>
+    <view class="panel-body">
+      <slot></slot>
+      <view class="panel-section" wx:for="{{sections}}" wx:key="id">
+        <view class="section-header">
+          <text class="section-title">{{item.title}}</text>
+          <view class="section-badge">
+            <text class="badge-text">{{item.count}}</text>
+          </view>
+        </view>
+        <view class="section-content">
+          <text class="section-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="panel-footer">
+      <slot name="actions"></slot>
+      <text class="footer-hint">{{ $t('panel.hint') }}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  options: {
+    multipleSlots: true
+  },
+  properties: {
+    theme: { type: String, value: 'light' },
+    sections: { type: Array, value: [] }
+  },
+  data: {
+    panelStyle: {},
+    headerBgStyle: {}
+  },
+  attached () {
+    this.applyTheme()
+  },
+  methods: {
+    applyTheme () {
+      if (this.theme === 'dark') {
+        this.panelStyle = {
+          '--panel-bg': '#1a1a2e',
+          '--panel-text': '#eaeaea',
+          '--panel-border': '#333'
+        }
+        this.headerBgStyle = {
+          backgroundImage: 'linear-gradient(135deg, #1a1a2e, #16213e)'
+        }
+      } else {
+        this.panelStyle = {
+          '--panel-bg': '#ffffff',
+          '--panel-text': '#333333',
+          '--panel-border': '#e8e8e8'
+        }
+        this.headerBgStyle = {
+          backgroundImage: 'linear-gradient(135deg, #667eea, #764ba2)'
+        }
+      }
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.panel {
+  background: var(--panel-bg, #ffffff);
+  border: 1rpx solid var(--panel-border, #e8e8e8);
+  border-radius: 16rpx;
+  overflow: hidden;
+
+  .panel-header {
+    padding: 32rpx;
+    position: relative;
+    .panel-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: white;
+    }
+    .panel-subtitle {
+      font-size: 24rpx;
+      color: rgba(255,255,255,0.8);
+      margin-top: 8rpx;
+    }
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 32rpx;
+      right: 32rpx;
+      height: 1rpx;
+      background: rgba(255,255,255,0.3);
+    }
+  }
+
+  .panel-body {
+    padding: 24rpx;
+    .panel-section {
+      margin-bottom: 24rpx;
+      .section-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        .section-title {
+          font-size: 30rpx;
+          font-weight: 500;
+          color: var(--panel-text, #333);
+        }
+        .section-badge {
+          background: #ff4757;
+          border-radius: 50%;
+          width: calc(100% - 600rpx);
+          min-width: 40rpx;
+          height: 40rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          .badge-text {
+            color: white;
+            font-size: 22rpx;
+          }
+        }
+      }
+      .section-content {
+        margin-top: 12rpx;
+        .section-desc {
+          font-size: 26rpx;
+          color: var(--panel-text, #666);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
+  .panel-footer {
+    padding: 24rpx 32rpx;
+    border-top: 1rpx solid var(--panel-border, #e8e8e8);
+    .footer-hint {
+      font-size: 22rpx;
+      color: #999;
+    }
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .panel {
+    max-width: 600rpx;
+    margin: 0 auto;
+  }
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {}
+}
+</script>

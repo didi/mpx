@@ -1,0 +1,17 @@
+{
+  "eval_id": 4,
+  "eval_name": "slots-cssvar-i18n",
+  "prompt": "请对附件中的 panel.mpx 面板组件进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件，不要省略任何内容。",
+  "files": ["input/panel.mpx"],
+  "assertions": [
+    {"text": "multipleSlots: true preserved in component options"},
+    {"text": "CSS variables (var(--...)) syntax preserved"},
+    {"text": "$t() i18n function calls preserved in template"},
+    {"text": "background-image only on view components (not text)"},
+    {"text": "enable-background declared on dynamic background view"},
+    {"text": "::after pseudo-element replaced with real node"},
+    {"text": "style: no less nesting (all selectors flattened)"},
+    {"text": "calc() expressions preserved"},
+    {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"}
+  ]
+}

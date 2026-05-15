@@ -1,0 +1,237 @@
+<template>
+  <view class="dashboard">
+    <view class="header">
+      <text class="header-title">数据概览</text>
+    </view>
+    <view class="chart-area" id="chartBox" wx:ref>
+      <view class="chart-bar" wx:for="{{bars}}" wx:key="id"
+        wx:style="{{{'height': item.value + '%'}}}"
+        data-idx="{{index}}"
+        bindtap="onBarTap">
+        <text class="bar-label">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="stat-card" wx:for="{{displayStats}}" wx:key="name">
+      <view class="stat-icon"
+        enable-background@ios|android|harmony="{{true}}"
+        wx:style="{{{'background-image': 'linear-gradient(135deg, ' + item.color + ', ' + item.colorEnd + ')'}}}"></view>
+      <view class="stat-info">
+        <text class="stat-value">{{item.value}}</text>
+        <text class="stat-name">{{item.name}}</text>
+      </view>
+    </view>
+    <view class="lazy-section" id="lazyArea" wx:ref>
+      <view wx:if="{{lazyVisible}}" class="lazy-content">
+        <text>延迟加载的内容</text>
+      </view>
+      <view wx:else class="lazy-placeholder">
+        <text>加载中...</text>
+      </view>
+    </view>
+    <view wx:if="{{showTip}}" class="tooltip"
+      animation="{{tipAnimation}}"
+      enable-animation@ios|android|harmony="{{true}}">
+      <text class="tooltip-text">{{tipText}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+import mpx from '@mpxjs/core'
+
+createComponent({
+  data: {
+    bars: [],
+    stats: [],
+    lazyVisible: false,
+    showTip: false,
+    tipText: '',
+    chartHeight: 0,
+    tipAnimation: null
+  },
+  computed: {
+    displayStats () {
+      return this.stats.map(function (item) {
+        var colorEnd = 'transparent'
+        // todo: RN 中 transparent 等价于 rgba(0,0,0,0)，渐变过渡中会出现灰色过渡带，此处尝试解析颜色生成对应的透明色
+        if (item.color) {
+          var hexMatch = item.color.match(/^#([0-9a-fA-F]{3,8})$/)
+          if (hexMatch) {
+            var hex = hexMatch[1]
+            var r, g, b
+            if (hex.length === 3) {
+              r = parseInt(hex[0] + hex[0], 16)
+              g = parseInt(hex[1] + hex[1], 16)
+              b = parseInt(hex[2] + hex[2], 16)
+            } else if (hex.length >= 6) {
+              r = parseInt(hex.substring(0, 2), 16)
+              g = parseInt(hex.substring(2, 4), 16)
+              b = parseInt(hex.substring(4, 6), 16)
+            }
+            if (r !== undefined) {
+              colorEnd = 'rgba(' + r + ', ' + g + ', ' + b + ', 0)'
+            }
+          }
+        }
+        return {
+          name: item.name,
+          value: item.value,
+          color: item.color,
+          colorEnd: colorEnd
+        }
+      })
+    }
+  },
+  ready () {
+    this.measureChart()
+    this.observeLazy()
+  },
+  methods: {
+    measureChart () {
+      this.createSelectorQuery()
+        .select('#chartBox')
+        .boundingClientRect()
+        .exec((res) => {
+          this.chartHeight = res[0].height
+        })
+    },
+    observeLazy () {
+      this.createIntersectionObserver()
+        .relativeTo('#chartBox')
+        .observe('#lazyArea', (res) => {
+          if (res.intersectionRatio > 0) {
+            this.lazyVisible = true
+          }
+        })
+    },
+    onBarTap (e) {
+      const idx = e.currentTarget.dataset.idx
+      const bar = this.bars[idx]
+      this.showTip = true
+      this.tipText = bar.label + ': ' + bar.value
+      const animation = mpx.createAnimation({ duration: 300, timingFunction: 'ease' })
+      animation.opacity(1).step()
+      this.tipAnimation = animation.export()
+      setTimeout(() => {
+        this.showTip = false
+      }, 2000)
+    }
+  }
+})
+</script>
+
+<style lang="less">
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+/* todo: RN 不支持 CSS @keyframes 动画 */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+/* @mpx-endif */
+
+.dashboard {
+  padding: 48rpx;
+}
+
+.header {
+  margin-bottom: 32rpx;
+}
+
+.header-title {
+  font-size: 64rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.chart-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  height: 300rpx;
+  background-image: linear-gradient(180deg, #f0f0f0, rgba(240, 240, 240, 0));
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.chart-bar {
+  flex: 1;
+  margin: 0 4rpx;
+  background-image: linear-gradient(180deg, #4a90d9, #2c5aa0);
+  border-radius: 6rpx 6rpx 0 0;
+  transition: height 0.3s ease;
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+  /* todo: RN 不支持 CSS @keyframes 动画 */
+  animation: pulse 2s infinite;
+  /* @mpx-endif */
+}
+
+.bar-label {
+  font-size: 20rpx;
+  color: white;
+  text-align: center;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 20rpx;
+  margin-top: 16rpx;
+  border-style: solid;
+  border-color: #eeeeee;
+  /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+  border-width: hairlineWidth;
+  /* @mpx-else */
+  border-width: 1rpx;
+  /* @mpx-endif */
+  border-radius: 8rpx;
+}
+
+.stat-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+}
+
+.stat-info {
+  margin-left: 20rpx;
+}
+
+.stat-value {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.stat-name {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.lazy-section {
+  margin-top: 40rpx;
+}
+
+.lazy-placeholder {
+  height: 200rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltip {
+  position: fixed;
+  bottom: 100rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 16rpx 32rpx;
+  border-radius: 8rpx;
+}
+
+.tooltip-text {
+  color: white;
+  font-size: 28rpx;
+}
+</style>

@@ -1,0 +1,197 @@
+<template>
+  <view class="dashboard">
+    <view class="header">
+      <text class="header-title">数据概览</text>
+    </view>
+    <view class="chart-area" id="chartBox" wx:ref>
+      <view class="chart-bar" wx:for="{{bars}}" wx:key="id"
+        wx:style="{{{'height': item.value + '%'}}}"
+        data-idx="{{index}}"
+        bindtap="onBarTap">
+        <text class="bar-label">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="stat-card" wx:for="{{stats}}" wx:key="name">
+      <view class="stat-icon" wx:style="{{{'background-image': 'linear-gradient(135deg, ' + item.color + ', ' + item.colorTransparent + ')'}}}"></view>
+      <view class="stat-info">
+        <text class="stat-value">{{item.value}}</text>
+        <text class="stat-name">{{item.name}}</text>
+      </view>
+    </view>
+    <view class="lazy-section" id="lazyArea" wx:ref>
+      <view wx:if="{{lazyVisible}}" class="lazy-content">
+        <text>延迟加载的内容</text>
+      </view>
+      <view wx:else class="lazy-placeholder">
+        <text>加载中...</text>
+      </view>
+    </view>
+    <view wx:if="{{showTip}}" class="tooltip" animation="{{tipAnimation}}">
+      <text class="tooltip-text">{{tipText}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import mpx, { createComponent } from '@mpxjs/core'
+
+createComponent({
+  data: {
+    bars: [],
+    stats: [],
+    lazyVisible: false,
+    showTip: false,
+    tipText: '',
+    chartHeight: 0,
+    tipAnimation: null
+  },
+  ready () {
+    this.measureChart()
+    this.observeLazy()
+  },
+  methods: {
+    measureChart () {
+      this.createSelectorQuery()
+        .select('#chartBox')
+        .boundingClientRect()
+        .exec((res) => {
+          this.chartHeight = res[0].height
+        })
+    },
+    observeLazy () {
+      this.createIntersectionObserver()
+        .relativeTo('#chartBox')
+        .observe('#lazyArea', (res) => {
+          if (res.intersectionRatio > 0) {
+            this.lazyVisible = true
+          }
+        })
+    },
+    onBarTap (e) {
+      const idx = e.currentTarget.dataset.idx
+      const bar = this.bars[idx]
+      this.showTip = true
+      this.tipText = bar.label + ': ' + bar.value
+      const animation = mpx.createAnimation({ duration: 300, timingFunction: 'ease' })
+      animation.opacity(1).step()
+      this.tipAnimation = animation.export()
+      setTimeout(() => {
+        this.showTip = false
+      }, 2000)
+    }
+  }
+})
+</script>
+
+<style lang="less">
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+/* @mpx-endif */
+
+.dashboard {
+  padding: 30rpx;
+}
+
+.header {
+  margin-bottom: 20rpx;
+}
+
+.header-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.chart-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  height: 300rpx;
+  background: linear-gradient(180deg, #f0f0f0, rgba(240, 240, 240, 0));
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.chart-bar {
+  flex: 1;
+  margin: 0 4rpx;
+  background: linear-gradient(180deg, #4a90d9, #2c5aa0);
+  border-radius: 6rpx 6rpx 0 0;
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+  transition: height 0.3s ease;
+  animation: pulse 2s infinite;
+  /* @mpx-endif */
+}
+
+.bar-label {
+  font-size: 20rpx;
+  color: white;
+  text-align: center;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 20rpx;
+  margin-top: 16rpx;
+  border-style: solid;
+  border-color: #eee;
+  border-radius: 8rpx;
+  /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+  border-width: hairlineWidth;
+  /* @mpx-else */
+  border-width: 1rpx;
+  /* @mpx-endif */
+}
+
+.stat-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+}
+
+.stat-info {
+  margin-left: 20rpx;
+}
+
+.stat-value {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.stat-name {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.lazy-section {
+  margin-top: 40rpx;
+}
+
+.lazy-placeholder {
+  height: 200rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltip {
+  position: fixed;
+  bottom: 100rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 16rpx 32rpx;
+  border-radius: 8rpx;
+}
+
+.tooltip-text {
+  color: white;
+  font-size: 28rpx;
+}
+</style>

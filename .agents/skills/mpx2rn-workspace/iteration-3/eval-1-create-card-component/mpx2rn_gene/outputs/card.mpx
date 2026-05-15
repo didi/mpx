@@ -1,0 +1,136 @@
+<template>
+  <view
+    class="card"
+    wx:class="{{ { 'card-selected': selected } }}"
+    hover-class="card-hover"
+    hover-stay-time="{{100}}"
+    bindtap="handleTap"
+  >
+    <view class="card-content">
+      <image class="card-avatar" src="{{avatar}}" mode="aspectFill" />
+      <view class="card-info">
+        <text
+          class="card-title"
+          numberOfLines@ios|android|harmony="{{1}}"
+        >{{title}}</text>
+        <text
+          class="card-desc"
+          numberOfLines@ios|android|harmony="{{2}}"
+        >{{desc}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  props: {
+    title: {
+      type: String,
+      value: ''
+    },
+    desc: {
+      type: String,
+      value: ''
+    },
+    avatar: {
+      type: String,
+      value: ''
+    },
+    selected: {
+      type: Boolean,
+      value: false
+    }
+  },
+  setup (props, context) {
+    function handleTap () {
+      context.triggerEvent('tap')
+    }
+
+    return {
+      handleTap
+    }
+  }
+})
+</script>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {}
+}
+</script>
+
+<style>
+.card {
+  display: flex;
+  flex-direction: column;
+  border-width: 2rpx;
+  border-style: solid;
+  border-color: #e5e5e5;
+  border-radius: 16rpx;
+  background-color: #ffffff;
+  padding: 24rpx;
+}
+
+.card-selected {
+  border-color: #1677ff;
+}
+
+.card-hover {
+  opacity: 0.7;
+  background-color: #f5f5f5;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.card-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  margin-right: 24rpx;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+  overflow: hidden;
+}
+
+.card-desc {
+  font-size: 26rpx;
+  color: #999999;
+  margin-top: 8rpx;
+  overflow: hidden;
+}
+
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+.card-title {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* @mpx-endif */
+
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+.card-desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+/* @mpx-endif */
+</style>
