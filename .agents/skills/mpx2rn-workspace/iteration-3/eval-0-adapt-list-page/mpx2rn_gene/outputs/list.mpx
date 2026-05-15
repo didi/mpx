@@ -1,0 +1,166 @@
+<template>
+  <scroll-view
+    class="list"
+    scroll-y
+    refresher-enabled
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+    bindscrolltolower="onScrollToLower"
+  >
+    <view class="list-header">
+      <text class="list-header-title">列表标题</text>
+    </view>
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="list-item"
+      wx:class="{{{'list-item-active': currentId === item.id, 'list-item-first': index === 0}}}"
+      hover-class="list-item-hover"
+      hover-stay-time="{{100}}"
+      bindtap="goDetail(item.id)"
+    >
+      <text
+        class="list-item-content"
+        numberOfLines@ios|android|harmony="{{1}}"
+      >{{item.text}}</text>
+    </view>
+    <view wx:if="{{loading}}" class="loading">
+      <text class="loading-text">加载中...</text>
+    </view>
+  </scroll-view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import mpx from '@mpxjs/core'
+
+createPage({
+  data: {
+    items: [],
+    loading: false,
+    currentId: null,
+    refreshing: false
+  },
+  onLoad () {
+    this.fetchList()
+  },
+  methods: {
+    fetchList () {
+      this.loading = true
+      mpx.request({
+        url: '/api/list',
+        success: (res) => {
+          this.items = res.data
+          this.loading = false
+        }
+      })
+    },
+    loadMore () {},
+    goDetail (id) {
+      this.currentId = id
+      mpx.navigateTo({ url: '/pages/detail?id=' + id })
+    },
+    onRefresh () {
+      this.refreshing = true
+      mpx.request({
+        url: '/api/list',
+        success: (res) => {
+          this.items = res.data
+          this.refreshing = false
+        },
+        fail: () => {
+          this.refreshing = false
+        }
+      })
+    },
+    onScrollToLower () {
+      this.loadMore()
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.list {
+  padding: 24rpx;
+  flex: 1;
+}
+
+.list-header {
+  display: flex;
+  flex-direction: column;
+}
+
+.list-header-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.list-item {
+  padding: 20rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #eee;
+  /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+  border-bottom-width: hairlineWidth;
+  /* @mpx-else */
+  border-bottom-width: 1rpx;
+  /* @mpx-endif */
+}
+
+.list-item-first {
+  border-top-style: solid;
+  border-top-color: #eee;
+  /* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+  border-top-width: hairlineWidth;
+  /* @mpx-else */
+  border-top-width: 1rpx;
+  /* @mpx-endif */
+}
+
+.list-item-hover {
+  background-color: #f5f5f5;
+}
+
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+.list-item-content {
+  font-size: 28rpx;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* @mpx-endif */
+
+/* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+.list-item-content {
+  font-size: 28rpx;
+  color: #666;
+}
+/* @mpx-endif */
+
+.list-item-active {
+  background-color: #e8f0ff;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 20rpx;
+}
+
+.loading-text {
+  text-align: center;
+  font-size: 28rpx;
+  color: #999;
+}
+</style>
+
+<script name="json">
+const isRN = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'
+
+module.exports = {
+  navigationBarTitleText: '列表标题',
+  disableScroll: isRN
+}
+</script>

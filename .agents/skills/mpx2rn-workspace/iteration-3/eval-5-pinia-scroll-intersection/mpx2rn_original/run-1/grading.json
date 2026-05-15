@@ -1,0 +1,57 @@
+{
+  "eval_id": 5,
+  "run_kind": "mpx2rn_original",
+  "expectations": [
+    {
+      "text": "Pinia store import and usage preserved",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "onPullDownRefresh/onReachBottom replaced with scroll-view events",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "createIntersectionObserver target (#exposureAnchor) has wx:ref",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "all wx.xxx replaced with mpx.xxx",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "template: event params use inline syntax (not data- dataset)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "float layout replaced with flex",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "font-weight numeric (500/700) replaced with bold/normal",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "style: no less nesting (all selectors flattened)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 9,
+    "failed": 0,
+    "total": 9
+  }
+}

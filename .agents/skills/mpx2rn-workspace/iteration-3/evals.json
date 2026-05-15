@@ -1,0 +1,113 @@
+{
+  "skill_name": "mpx2rn-gene vs mpx2rn",
+  "comparison": {
+    "skill_a": "mpx2rn-gene (Gene-based)",
+    "skill_b": "mpx2rn (Original)"
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "adapt-list-page",
+      "prompt": "请帮我对附件中的 Mpx 页面 list.mpx 进行 RN 跨端适配改造，确保它能在 RN 平台正确编译运行，同时保留小程序/Web 平台的兼容性。请输出修改后的完整 .mpx 代码（保持 SFC 结构 template/script/style），不要省略任何内容。",
+      "files": ["input/list.mpx"],
+      "assertions": [
+        {"text": "style: no less nesting (& or rule-in-rule)"},
+        {"text": "style on RN (wx-conditional stripped): no :active"},
+        {"text": "style on RN: no :first-child"},
+        {"text": "script: replaced wx.request with mpx.request"},
+        {"text": "script: replaced wx.navigateTo with mpx.navigateTo"},
+        {"text": "template: event params use inline syntax (not data- dataset)"},
+        {"text": "template: dynamic class via wx:class (not class string interp)"},
+        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"},
+        {"text": "style: no empty selector rules after stripping comments"}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "create-card-component",
+      "prompt": "请帮我创建一个符合 RN 跨端兼容规范的 Mpx 卡片组件 card.mpx，需求：\n- 接收 props：title (string)、desc (string)、avatar (string，图片 URL)、selected (boolean，默认 false)\n- 卡片整体可点击，点击时通过 triggerEvent 抛出 'tap' 事件\n- 点击时有按下视觉反馈\n- selected=true 时卡片边框色变为蓝色 (#1677ff)\n- 标题需要单行省略\n- 描述最多展示 2 行后省略\n- 使用组合式 API（setup 或 <script setup>）实现\n请直接输出完整组件代码（包含 template/script/style），不要省略任何内容。",
+      "files": [],
+      "assertions": [
+        {"text": "uses composition API (script setup or setup())"},
+        {"text": "style: no nesting / compound selectors"},
+        {"text": "uses hover-class for press feedback (not bare :active on root)"},
+        {"text": "triggerEvent('tap', ...) is called"},
+        {"text": "title uses numberOfLines for ellipsis"},
+        {"text": "avatar uses <image> (not <img>)"},
+        {"text": "text content wrapped in <text> elements"},
+        {"text": "defineProps uses Mpx-style value: (not Vue-style default:)"},
+        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "adapt-style-block",
+      "prompt": "请对附件中的 .mpx 文件进行 RN 跨端样式适配改造，重点改造 <style> 部分（template、script 仅在样式改造连带影响时同步修改），确保 RN 平台编译通过且保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件，不要省略任何内容。",
+      "files": ["input/style-block.mpx"],
+      "assertions": [
+        {"text": "style: no less nesting outside of conditional compile"},
+        {"text": "style on RN: no ::before pseudo-element"},
+        {"text": "style on RN: no display: grid"},
+        {"text": "style on RN: no :active pseudo-class"},
+        {"text": "style on RN: no + adjacent sibling combinator"},
+        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"},
+        {"text": "style: numeric font-weight (e.g. 600) replaced with bold/normal"},
+        {"text": "template: real node added to replace ::before (e.g. card-decorator/card-bar)"},
+        {"text": "style: no empty selector rules"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "selector-api-animation",
+      "prompt": "请对附件中的 dashboard.mpx 仪表盘组件进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件，不要省略任何内容。",
+      "files": ["input/dashboard.mpx"],
+      "assertions": [
+        {"text": "selector API nodes (#chartBox, #lazyArea) have empty wx:ref in template"},
+        {"text": "wx.createAnimation replaced with mpx.createAnimation"},
+        {"text": "gradient transparent replaced with rgba equivalent"},
+        {"text": "rem units converted to rpx"},
+        {"text": "template: event params use inline syntax (not data- dataset)"},
+        {"text": "enable-animation declared on animated view"},
+        {"text": "@keyframes isolated with conditional compile (RN does not support)"},
+        {"text": "display:none replaced with wx:if or size-zero hiding"},
+        {"text": "transition preserved on RN (not stripped into wx-only conditional)"},
+        {"text": "style: no less nesting (all selectors flattened to single-class)"},
+        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "slots-cssvar-i18n",
+      "prompt": "请对附件中的 panel.mpx 面板组件进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件，不要省略任何内容。",
+      "files": ["input/panel.mpx"],
+      "assertions": [
+        {"text": "multipleSlots: true preserved in component options"},
+        {"text": "CSS variables (var(--...)) syntax preserved"},
+        {"text": "$t() i18n function calls preserved in template"},
+        {"text": "background-image only on view components (not text)"},
+        {"text": "enable-background declared on dynamic background view"},
+        {"text": "::after pseudo-element replaced with real node"},
+        {"text": "style: no less nesting (all selectors flattened)"},
+        {"text": "calc() preserved or replaced with flex equivalent"},
+        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "pinia-scroll-intersection",
+      "prompt": "请对附件中的 product-list.mpx 商品列表页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件，不要省略任何内容。",
+      "files": ["input/product-list.mpx"],
+      "assertions": [
+        {"text": "Pinia store import and usage preserved"},
+        {"text": "onPullDownRefresh/onReachBottom replaced with scroll-view events"},
+        {"text": "createIntersectionObserver target (#exposureAnchor) has wx:ref"},
+        {"text": "all wx.xxx replaced with mpx.xxx"},
+        {"text": "template: event params use inline syntax (not data- dataset)"},
+        {"text": "float layout replaced with flex"},
+        {"text": "font-weight numeric (500/700) replaced with bold/normal"},
+        {"text": "style: no less nesting (all selectors flattened)"},
+        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"}
+      ]
+    }
+  ]
+}

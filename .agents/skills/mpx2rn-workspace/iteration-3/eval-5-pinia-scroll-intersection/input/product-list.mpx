@@ -1,0 +1,254 @@
+<template>
+  <view class="product-page">
+    <view class="search-bar">
+      <input class="search-input" placeholder="搜索商品" bindinput="onSearch" value="{{keyword}}" />
+      <view class="search-btn" bindtap="doSearch">
+        <text class="btn-text">搜索</text>
+      </view>
+    </view>
+    <view class="filter-bar">
+      <view class="filter-item {{activeFilter === 'price' ? 'filter-active' : ''}}" data-type="price" bindtap="switchFilter">
+        <text>价格</text>
+      </view>
+      <view class="filter-item {{activeFilter === 'sales' ? 'filter-active' : ''}}" data-type="sales" bindtap="switchFilter">
+        <text>销量</text>
+      </view>
+    </view>
+    <view class="product-list">
+      <view class="product-card" wx:for="{{products}}" wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goDetail">
+        <image class="product-img" src="{{item.image}}" mode="aspectFill" />
+        <view class="product-info">
+          <text class="product-name">{{item.name}}</text>
+          <view class="product-tags">
+            <text class="tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+          </view>
+          <view class="price-row">
+            <text class="product-price">¥{{item.price}}</text>
+            <text class="product-sales">已售 {{item.sales}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="exposure-tracker" id="exposureAnchor">
+      <text wx:if="{{loading}}">加载中...</text>
+      <text wx:elif="{{noMore}}">没有更多了</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { useProductStore } from '@/stores/product'
+
+createPage({
+  data: {
+    keyword: '',
+    activeFilter: 'price',
+    loading: false,
+    noMore: false
+  },
+  computed: {
+    products () {
+      const store = useProductStore()
+      return store.filteredProducts
+    }
+  },
+  onLoad () {
+    this.fetchProducts()
+    this.setupExposure()
+  },
+  onPullDownRefresh () {
+    this.keyword = ''
+    this.fetchProducts()
+    wx.stopPullDownRefresh()
+  },
+  onReachBottom () {
+    if (!this.loading && !this.noMore) {
+      this.loadMore()
+    }
+  },
+  onPageScroll (e) {
+    if (e.scrollTop > 200) {
+      this.showBackTop = true
+    } else {
+      this.showBackTop = false
+    }
+  },
+  methods: {
+    fetchProducts () {
+      this.loading = true
+      const store = useProductStore()
+      wx.request({
+        url: '/api/products',
+        data: { keyword: this.keyword, filter: this.activeFilter },
+        success: (res) => {
+          store.setProducts(res.data.list)
+          this.loading = false
+          this.noMore = res.data.list.length < 20
+        }
+      })
+    },
+    loadMore () {
+      this.loading = true
+      const store = useProductStore()
+      wx.request({
+        url: '/api/products',
+        data: {
+          keyword: this.keyword,
+          filter: this.activeFilter,
+          page: store.currentPage + 1
+        },
+        success: (res) => {
+          store.appendProducts(res.data.list)
+          this.loading = false
+          this.noMore = res.data.list.length < 20
+        }
+      })
+    },
+    setupExposure () {
+      this.createIntersectionObserver()
+        .observe('#exposureAnchor', (res) => {
+          if (res.intersectionRatio > 0 && !this.loading && !this.noMore) {
+            this.loadMore()
+          }
+        })
+    },
+    onSearch (e) {
+      this.keyword = e.detail.value
+    },
+    doSearch () {
+      this.fetchProducts()
+    },
+    switchFilter (e) {
+      this.activeFilter = e.target.dataset.type
+      const store = useProductStore()
+      store.setFilter(this.activeFilter)
+      this.fetchProducts()
+    },
+    goDetail (e) {
+      const id = e.target.dataset.id
+      wx.navigateTo({ url: '/pages/product/detail?id=' + id })
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.product-page {
+  padding: 20rpx;
+  .search-bar {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 20rpx;
+    .search-input {
+      flex: 1;
+      height: 72rpx;
+      border: 1rpx solid #ddd;
+      border-radius: 8rpx;
+      padding: 0 20rpx;
+      font-size: 28rpx;
+    }
+    .search-btn {
+      width: 120rpx;
+      height: 72rpx;
+      margin-left: 16rpx;
+      background: #ff6b00;
+      border-radius: 8rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .btn-text {
+        color: white;
+        font-size: 28rpx;
+      }
+    }
+  }
+  .filter-bar {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 20rpx;
+    .filter-item {
+      padding: 12rpx 24rpx;
+      margin-right: 16rpx;
+      border-radius: 24rpx;
+      background: #f5f5f5;
+      &:active {
+        opacity: 0.7;
+      }
+      &.filter-active {
+        background: #ff6b00;
+        color: white;
+      }
+    }
+  }
+  .product-list {
+    .product-card {
+      display: flex;
+      flex-direction: row;
+      padding: 20rpx;
+      margin-bottom: 16rpx;
+      border: 1rpx solid #eee;
+      border-radius: 12rpx;
+      &:active {
+        background: #fafafa;
+      }
+      .product-img {
+        width: 200rpx;
+        height: 200rpx;
+        border-radius: 8rpx;
+        float: left;
+      }
+      .product-info {
+        float: left;
+        margin-left: 20rpx;
+        flex: 1;
+        .product-name {
+          font-size: 30rpx;
+          font-weight: 500;
+          color: #333;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .product-tags {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: wrap;
+          margin-top: 8rpx;
+          .tag {
+            font-size: 20rpx;
+            color: #ff6b00;
+            border: 1rpx solid #ff6b00;
+            border-radius: 4rpx;
+            padding: 2rpx 8rpx;
+            margin-right: 8rpx;
+            margin-bottom: 4rpx;
+          }
+        }
+        .price-row {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 12rpx;
+          .product-price {
+            font-size: 36rpx;
+            font-weight: 700;
+            color: #ff4757;
+          }
+          .product-sales {
+            font-size: 22rpx;
+            color: #999;
+          }
+        }
+      }
+    }
+  }
+  .exposure-tracker {
+    padding: 20rpx;
+    text-align: center;
+  }
+}
+</style>
