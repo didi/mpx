@@ -1,10 +1,10 @@
 const postcss = require('postcss')
 const stylus = require('stylus')
 const { SourceMapConsumer } = require('source-map')
-const { stripCondition } = require('../../../lib/style-compiler/strip-conditional')
 const removeStripConditionalComments = require('../../../lib/style-compiler/plugins/remove-strip-conditional-comments')
 const { parseComponent } = require('../../../lib/template-compiler/compiler')
 const { STYLE_PAD_PLACEHOLDER } = require('../../../lib/utils/const')
+const { stripCondition, registerStripCompilation } = require('../../../lib/style-compiler/strip-conditional')
 
 describe('strip-conditional unit tests', () => {
   describe('stripCondition logic', () => {
@@ -357,6 +357,145 @@ describe('strip-conditional unit tests', () => {
         expect(beforeOrig.line).toBe(1)
         expect(afterOrig.line).toBe(7)
       })
+    })
+  })
+
+  describe('stripCondition for .mpx', () => {
+    const defs = {
+      __mpx_mode__: 'wx',
+      platform: 'wx',
+      theme: 'dark'
+    }
+
+    it('should only strip conditions inside <style> blocks', () => {
+      const input = `<template>
+  <view class="container">Hello</view>
+</template>
+<style>
+/* @mpx-if (platform === 'wx') */
+.wx-only { color: red; }
+/* @mpx-endif */
+/* @mpx-if (platform === 'ali') */
+.ali-only { color: blue; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('<view class="container">Hello</view>')
+      expect(result).toContain('.wx-only { color: red; }')
+      expect(result).not.toContain('.ali-only { color: blue; }')
+    })
+
+    it('should handle multiple <style> blocks', () => {
+      const input = `<template>
+  <view>Test</view>
+</template>
+<style>
+/* @mpx-if (platform === 'wx') */
+.block1 { color: red; }
+/* @mpx-endif */
+</style>
+<style lang="less">
+/* @mpx-if (theme === 'dark') */
+.block2 { background: #000; }
+/* @mpx-endif */
+/* @mpx-if (theme === 'light') */
+.block3 { background: #fff; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('.block1 { color: red; }')
+      expect(result).toContain('.block2 { background: #000; }')
+      expect(result).not.toContain('.block3 { background: #fff; }')
+    })
+
+    it('should return original content and log error when conditional directive appears in <template> section', () => {
+      const compilation = { errors: [] }
+      registerStripCompilation(compilation)
+      const input = `<template>
+  <!-- @mpx-if (platform === 'wx') -->
+  <view>Wx Only</view>
+  <!-- @mpx-endif -->
+</template>
+<style>
+.container { color: red; }
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+      expect(compilation.errors).toHaveLength(1)
+      expect(compilation.errors[0].file).toBe('/test/app.mpx')
+      expect(compilation.errors[0].message).toContain('@mpx conditional directives are only allowed inside <style> blocks in .mpx files')
+      registerStripCompilation(null)
+    })
+
+    it('should return original content and log error when conditional directive appears in <script> section', () => {
+      const input = `<template>
+  <view>Test</view>
+</template>
+<script>
+// @mpx-if (platform === 'wx')
+console.log('wx')
+// @mpx-endif
+</script>
+<style>
+.container { color: red; }
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+    })
+
+    it('should return original content and log error when conditional directive appears after last </style>', () => {
+      const input = `<style>
+.a { color: red; }
+</style>
+/* @mpx-if (platform === 'wx') */
+.orphan { color: green; }
+/* @mpx-endif */`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+    })
+
+    it('should preserve non-style content unchanged', () => {
+      const input = `<template>
+  <view class="box">{{message}}</view>
+</template>
+<script>
+import { createComponent } from '@mpxjs/core'
+createComponent({ data: { message: 'hi' } })
+</script>
+<style>
+/* @mpx-if (platform === 'wx') */
+.box { padding: 10px; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('<view class="box">{{message}}</view>')
+      expect(result).toContain("import { createComponent } from '@mpxjs/core'")
+      expect(result).toContain('.box { padding: 10px; }')
+    })
+
+    it('should work with .mpx file that has no <style> and no directives', () => {
+      const input = `<template>
+  <view>Hello</view>
+</template>
+<script>
+console.log('test')
+</script>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toBe(input)
+    })
+
+    it('should handle style block with attributes correctly', () => {
+      const input = `<template>
+  <view>Test</view>
+</template>
+<style lang="stylus" scoped>
+/* @mpx-if (platform === 'wx') */
+.styled { font-size: 14px; }
+/* @mpx-endif */
+</style>`
+      const result = stripCondition(input, defs, '/test/app.mpx')
+      expect(result).toContain('.styled { font-size: 14px; }')
+      expect(result).toContain('<style lang="stylus" scoped>')
     })
   })
 })
