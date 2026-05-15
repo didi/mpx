@@ -63,6 +63,16 @@ def has_empty_rules(style_text):
 
 def uses_wrong_endif(text): return "@mpx-end-if" in text
 
+def has_bad_wx_style_keys(template_text):
+    """Check for quoted or kebab-case keys in wx:style object literals."""
+    wx_style_exprs = re.findall(r'wx:style\s*=\s*"([^"]*)"', template_text)
+    for expr in wx_style_exprs:
+        if re.search(r"""['"]\s*[a-zA-Z][\w-]*\s*['"]\s*:""", expr):
+            return True
+        if re.search(r'[a-zA-Z][\w]*-[\w-]*\s*:', expr):
+            return True
+    return False
+
 def check_eval_0(output_path):
     src = output_path.read_text()
     blocks = extract_blocks(src)
@@ -179,6 +189,8 @@ def check_eval_3(output_path):
                     "passed": not has_less_nesting(blocks["style"])})
     results.append({"text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
                     "passed": not uses_wrong_endif(src)})
+    results.append({"text": "wx:style object keys use unquoted camelCase (no quoted or kebab-case keys)",
+                    "passed": not has_bad_wx_style_keys(blocks["template"])})
     return results
 
 def check_eval_4(output_path):

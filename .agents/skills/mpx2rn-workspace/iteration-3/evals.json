@@ -72,7 +72,8 @@
         {"text": "display:none replaced with wx:if or size-zero hiding"},
         {"text": "transition preserved on RN (not stripped into wx-only conditional)"},
         {"text": "style: no less nesting (all selectors flattened to single-class)"},
-        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"}
+        {"text": "conditional compile uses @mpx-endif (not @mpx-end-if)"},
+        {"text": "wx:style object keys use unquoted camelCase (no quoted or kebab-case keys)"}
       ]
     },
     {

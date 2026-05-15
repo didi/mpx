@@ -56,12 +56,17 @@
       "text": "conditional compile uses @mpx-endif (not @mpx-end-if)",
       "passed": true,
       "evidence": "PASS"
+    },
+    {
+      "text": "wx:style object keys use unquoted camelCase (no quoted or kebab-case keys)",
+      "passed": false,
+      "evidence": "FAIL"
     }
   ],
   "summary": {
-    "pass_rate": 0.7273,
+    "pass_rate": 0.6667,
     "passed": 8,
-    "failed": 3,
-    "total": 11
+    "failed": 4,
+    "total": 12
   }
 }
