@@ -18,8 +18,7 @@ module.exports = ({ id, transPage = false }) => {
                 }))
                 selector.insertAfter(n, compoundSelectors)
               }
-              // 处理 page 标签选择器（避免.page类选择器被处理）
-              if (transPage && n.value === 'page' && n.type === 'tag') {
+              if (transPage && n.type === 'tag' && n.value === 'page') {
                 const compoundSelectors = n.nodes || []
                 n.replaceWith(selectorParser.className({
                   value: MPX_TAG_PAGE_SELECTOR
