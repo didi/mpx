@@ -1,0 +1,41 @@
+name: build-webview-bridge
+
+on:
+  pull_request:
+    paths:
+      - 'packages/webview-bridge/src/**'
+      - 'packages/webview-bridge/build/**'
+      - 'packages/webview-bridge/package.json'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        working-directory: packages/webview-bridge
+        run: npm install
+
+      - name: Build webview-bridge
+        working-directory: packages/webview-bridge
+        run: node build/build.js
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/webview-bridge/dist/
+          git add examples/mpx-webview/H5/webviewbridge.min.js
+          if git diff --cached --quiet; then
+            echo "dist is already up-to-date, nothing to commit"
+          else
+            git commit -m "chore: auto-build webview-bridge dist"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
