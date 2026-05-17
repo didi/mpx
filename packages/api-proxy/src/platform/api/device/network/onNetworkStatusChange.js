@@ -37,8 +37,20 @@ export function offNetworkStatusChange (callbackFn) {
     throwSSRWarning('offNetworkStatusChange API is running in non browser environments')
     return
   }
+  if (callbackFn == null) {
+    // 不传 callback 时清除所有监听
+    fnMap.forEach((proxyCallback, originalCallback) => {
+      if (navigator.connection) {
+        navigator.connection.removeEventListener('change', proxyCallback)
+      }
+    })
+    fnMap.clear()
+    oldObserveList.clear()
+    return
+  }
   if (navigator.connection) {
     navigator.connection.removeEventListener('change', fnMap.get(callbackFn))
+    fnMap.delete(callbackFn)
   } else {
     oldObserveList.has(callbackFn) && oldObserveList.delete(callbackFn)
   }
