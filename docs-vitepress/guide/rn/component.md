@@ -47,16 +47,16 @@
 视图容器。
 属性
 
-| 属性名                   | 类型     | 默认值         | 说明                                                       |
-| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| hover-class	             | string  |         | 指定按下去的样式类。 |
-| hover-start-time   | number  |     `50`    | 按住后多久出现点击态，单位毫秒|
-| hover-stay-time	  | number  |     `400`    | 手指松开后点击态保留时间，单位毫秒	 |
-| animation | object  |   | 传递动画的实例， 可配合mpx.createAnimation方法一起使用|
-| enable-background		  | boolean  |     `false `   |  RN环境特有属性，是否要开启background-image、background-size和background-position的相关计算或渲染，请根据实际情况开启 |
-| enable-animation | boolean  | `false`  | RN环境特有属性，开启要开启动画渲染，请根据实际情况开启 |
-| enable-fast-image | boolean  | `false`  | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
-| is-simple | -  | -  | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置 |
+| 属性名                   | 类型      | 默认值                                 | 说明                                                                                                                                            |
+| ----------------------- |---------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| hover-class	             | string  |                                     | 指定按下去的样式类。                                                                                                                                    |
+| hover-start-time   | number  | `50`                                | 按住后多久出现点击态，单位毫秒                                                                                                                               |
+| hover-stay-time	  | number  | `400`                               | 手指松开后点击态保留时间，单位毫秒	                                                                                                                            |
+| animation | object  |                                     | 传递动画的实例， 可配合mpx.createAnimation方法一起使用                                                                                                         |
+| enable-background		  | boolean | `false `                            | RN环境特有属性，是否要开启background-image、background-size和background-position的相关计算或渲染，请根据实际情况开启                                                          |
+| enable-animation | boolean\|enum(`api`/`transition`)  | 默认会根据 css 中的动画属性设置 enable-animation | 设置 api/transition 可指定使用 createAnimation API/transition 的动画形式，enable-animation 设置 true 默认为 createAnimation API 形式，需要注意的是指定动画类型后，对应的动画参数也需要匹配设置 |
+| enable-fast-image | boolean | `false`                             | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启                                                                                      |
+| is-simple | -       | -                                   | RN环境特有标记，设置后将使用简单版本的 view 组件渲染，该组件不包含 css var、calc、ref 等拓展功能，但性能更优，请根据实际情况设置                                                                  |
 
 事件
 
