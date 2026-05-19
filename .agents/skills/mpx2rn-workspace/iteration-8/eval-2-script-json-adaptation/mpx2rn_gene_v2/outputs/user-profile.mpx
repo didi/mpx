@@ -1,0 +1,214 @@
+<template>
+  <scroll-view class="profile-page" scroll-y>
+    <view class="user-section">
+      <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+      <view class="user-info">
+        <text class="nickname">{{userInfo.nickName}}</text>
+        <text class="user-id">ID: {{userInfo.userId}}</text>
+      </view>
+    </view>
+    <view class="menu-list">
+      <view class="menu-item" wx:for="{{menuItems}}" wx:key="id" bindtap="onMenuTap(item)">
+        <text class="menu-label">{{item.label}}</text>
+        <text class="menu-arrow">></text>
+      </view>
+    </view>
+    <view class="action-section">
+      <view class="btn-logout" bindtap="logout">
+        <text class="btn-text">退出登录</text>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+
+<script>
+import mpx, { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    userInfo: {},
+    menuItems: [
+      { id: 1, label: '我的订单', path: '/pages/orders' },
+      { id: 2, label: '收货地址', path: '/pages/address' },
+      { id: 3, label: '账户设置', path: '/pages/settings' },
+      { id: 4, label: '关于我们', path: '/pages/about' }
+    ],
+    locationInfo: null
+  },
+  onLoad () {
+    this.loadUserInfo()
+    this.getLocation()
+  },
+  onShow () {
+    this.refreshBadge()
+  },
+  // onShareTimeline 输出 RN 时无效，条件编译隔离
+  // onShareAppMessage 输出 RN 时需通过 Mpx.config.rnConfig.openTypeHandler 实现，此处保留原平台实现
+  onShareAppMessage () {
+    if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') {
+      return {
+        title: '推荐给你这个应用',
+        path: '/pages/index'
+      }
+    }
+  },
+  methods: {
+    loadUserInfo () {
+      const cachedInfo = mpx.getStorageSync('userInfo')
+      if (cachedInfo) {
+        this.userInfo = JSON.parse(cachedInfo)
+      } else {
+        if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') {
+          mpx.getUserProfile({
+            desc: '用于展示用户信息',
+            success: (res) => {
+              this.userInfo = res.userInfo
+              mpx.setStorageSync('userInfo', JSON.stringify(res.userInfo))
+            },
+            fail: () => {
+              mpx.showToast({ title: '获取信息失败', icon: 'none' })
+            }
+          })
+        } else {
+          mpx.showToast({ title: '获取信息失败', icon: 'none' })
+        }
+      }
+    },
+    getLocation () {
+      mpx.getLocation({
+        type: 'gcj02',
+        success: (res) => {
+          this.locationInfo = { lat: res.latitude, lng: res.longitude }
+          mpx.setStorageSync('lastLocation', JSON.stringify(this.locationInfo))
+        }
+      })
+    },
+    onMenuTap (item) {
+      mpx.navigateTo({ url: item.path })
+    },
+    logout () {
+      mpx.showModal({
+        title: '确认退出',
+        content: '确定要退出登录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            mpx.removeStorageSync('userInfo')
+            mpx.removeStorageSync('token')
+            mpx.reLaunch({ url: '/pages/login' })
+          }
+        }
+      })
+    },
+    refreshBadge () {
+      mpx.request({
+        url: '/api/user/badge',
+        header: { Authorization: 'Bearer ' + mpx.getStorageSync('token') },
+        success: (res) => {
+          if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') {
+            if (res.data.orderCount > 0) {
+              mpx.setTabBarBadge({
+                index: 2,
+                text: String(res.data.orderCount)
+              })
+            } else {
+              mpx.removeTabBarBadge({ index: 2 })
+            }
+          }
+        }
+      })
+    },
+    refreshData () {}
+  }
+})
+</script>
+
+<style lang="less">
+.profile-page {
+  padding: 24rpx;
+  background: #f5f5f5;
+  flex: 1;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  margin-right: 24rpx;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.nickname {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.user-id {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.menu-list {
+  background: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #f0f0f0;
+}
+
+.menu-label {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.menu-arrow {
+  font-size: 28rpx;
+  color: #ccc;
+}
+
+.action-section {
+  margin-top: 40rpx;
+}
+
+.btn-logout {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+
+.btn-text {
+  font-size: 30rpx;
+  color: #ff4d4f;
+}
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "个人中心",
+  "navigationBarBackgroundColor": "#ffffff",
+  "disableScroll": true
+}
+</script>

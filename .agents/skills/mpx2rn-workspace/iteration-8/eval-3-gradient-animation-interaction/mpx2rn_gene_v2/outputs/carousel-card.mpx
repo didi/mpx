@@ -1,0 +1,286 @@
+<template>
+  <view class="carousel-card">
+    <view class="card-header">
+      <view
+        class="gradient-overlay"
+        wx:style="{{bgStyle}}"
+        enable-background="{{true}}"
+      >
+        <text class="card-title">{{title}}</text>
+        <text class="card-subtitle">{{subtitle}}</text>
+      </view>
+    </view>
+
+    <view class="card-body">
+      <view
+        wx:for="{{items}}"
+        wx:key="id"
+        class="card-item"
+        wx:style="{{animStyle}}"
+        enable-animation="{{true}}"
+        hover-class="card-item-hover"
+        hover-stay-time="{{100}}"
+        bindtap="handleItemTap(item.id)"
+      >
+        <image class="item-image" src="{{item.cover}}" mode="aspectFill" />
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-price">{{item.price}}</text>
+        </view>
+        <view class="item-badge" wx:if="{{item.isNew}}">NEW</view>
+      </view>
+    </view>
+
+    <view class="card-footer">
+      <view
+        class="load-trigger"
+        id="load-trigger"
+        wx:ref
+      >
+        <text wx:if="{{loading}}">loading...</text>
+      </view>
+    </view>
+
+    <view
+      class="toast-mask"
+      wx:show="{{showToast}}"
+      bindtap="hideToast"
+    >
+      <view class="toast-content">{{toastMsg}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent, ref, onMounted, computed } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    title: { type: String, value: 'Featured' },
+    subtitle: { type: String, value: '' }
+  },
+  setup (props, context) {
+    const items = ref([])
+    const loading = ref(false)
+    const showToast = ref(false)
+    const toastMsg = ref('')
+
+    const bgStyle = computed(() => {
+      return {
+        backgroundImage: `linear-gradient(180deg, #ff6b6b, rgba(255,107,107,0))`
+      }
+    })
+
+    const animStyle = computed(() => {
+      return {
+        transition: 'opacity 0.3s ease, transform 0.3s ease'
+      }
+    })
+
+    onMounted(() => {
+      initObserver()
+    })
+
+    function initObserver () {
+      const observer = context.createIntersectionObserver()
+      observer.relativeTo('.card-item').observe('#load-trigger', (res) => {
+        if (res.intersectionRatio > 0) {
+          loadMore()
+        }
+      })
+    }
+
+    function loadMore () {
+      if (loading.value) return
+      loading.value = true
+      mpx.request({
+        url: '/api/items',
+        data: { page: items.value.length / 10 + 1 },
+        success (res) {
+          items.value = items.value.concat(res.data.list)
+          loading.value = false
+        }
+      })
+    }
+
+    function handleItemTap (id) {
+      mpx.navigateTo({ url: `/pages/detail/index?id=${id}` })
+    }
+
+    function hideToast () {
+      showToast.value = false
+    }
+
+    return {
+      items,
+      loading,
+      showToast,
+      toastMsg,
+      bgStyle,
+      animStyle,
+      handleItemTap,
+      hideToast
+    }
+  }
+})
+</script>
+
+<style>
+.carousel-card {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.card-header {
+  position: relative;
+  height: 360rpx;
+}
+
+.gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding-top: 30rpx;
+  padding-right: 30rpx;
+  padding-bottom: 30rpx;
+  padding-left: 30rpx;
+  background-image: linear-gradient(to bottom, #ff6b6b 0%, rgba(255,107,107,0) 100%);
+}
+
+.card-title {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+.card-subtitle {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 8rpx;
+}
+
+.card-body {
+  padding-top: 20rpx;
+  padding-right: 20rpx;
+  padding-bottom: 20rpx;
+  padding-left: 20rpx;
+}
+
+.card-item {
+  display: flex;
+  align-items: center;
+  padding-top: 24rpx;
+  padding-bottom: 24rpx;
+  border-style: solid;
+  border-color: #eee;
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+  border-bottom-width: 1px;
+  /* @mpx-else */
+  border-bottom-width: 1px;
+  /* @mpx-endif */
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.card-item-hover {
+  background-color: #f5f5f5;
+}
+
+.item-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+}
+
+.item-info {
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.item-name {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.item-price {
+  font-size: 32rpx;
+  color: #ff4d4f;
+  margin-top: 8rpx;
+  font-weight: bold;
+}
+
+.item-badge {
+  padding-top: 4rpx;
+  padding-right: 12rpx;
+  padding-bottom: 4rpx;
+  padding-left: 12rpx;
+  background-color: #ff4d4f;
+  color: #fff;
+  font-size: 20rpx;
+  border-radius: 4rpx;
+}
+
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+/* @mpx-endif */
+
+.toast-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.toast-content {
+  padding-top: 24rpx;
+  padding-right: 48rpx;
+  padding-bottom: 24rpx;
+  padding-left: 48rpx;
+  background-color: #fff;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.card-footer {
+  padding-top: 20rpx;
+  padding-right: 20rpx;
+  padding-bottom: 20rpx;
+  padding-left: 20rpx;
+}
+
+.load-trigger {
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {
+    "lottie-view": "../../components/lottie-view/index"
+  },
+  "componentPlaceholder": {
+    "lottie-view": "view"
+  }
+}
+</script>

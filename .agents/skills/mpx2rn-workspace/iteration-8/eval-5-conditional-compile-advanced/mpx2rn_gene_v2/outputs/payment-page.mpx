@@ -1,0 +1,325 @@
+<template>
+  <view class="payment-page">
+    <view class="pay-header">
+      <text class="pay-title">Confirm Payment</text>
+      <text class="pay-amount" style="borderWidth: 1px; borderStyle: solid; borderColor: #eee">{{formatAmount}}</text>
+    </view>
+
+    <pay-form id="pay-form" wx:ref="" bindsuccess="onPaySuccess">
+      <view class="form-section">
+        <view class="form-item">
+          <text class="form-label">Payment Method</text>
+          <view
+            class="method-selector"
+            bindtap="showMethodPicker"
+            enable-var
+            wx:style="{{methodStyle}}"
+          >
+            <text>{{selectedMethod.name}}</text>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">Coupon</text>
+          <view class="coupon-tag" wx:if="{{coupon}}">
+            <text class="coupon-text">-{{coupon.discount}}</text>
+          </view>
+          <text wx:else class="no-coupon">None</text>
+        </view>
+      </view>
+
+      <view class="security-section">
+        <view class="security-badge">
+          <image class="security-icon" src="./shield.png" />
+          <text class="security-text">Secured by encryption</text>
+        </view>
+        <view class="security-bg" enable-background></view>
+      </view>
+
+      <view class="action-section">
+        <view
+          class="pay-button"
+          bindtap="submitPayment"
+          hover-class="pay-button-hover"
+        >
+          <text class="pay-button-text">Pay Now</text>
+        </view>
+        <text class="pay-agreement">By paying, you agree to our Terms of Service</text>
+      </view>
+    </pay-form>
+  </view>
+</template>
+
+<script>
+import { createPage, ref, computed, onMounted, toRefs } from '@mpxjs/core'
+
+createPage({
+  setup (props, context) {
+    const orderId = ref('')
+    const amount = ref(0)
+
+    const selectedMethod = ref({ id: 'wechat', name: 'WeChat Pay' })
+    const coupon = ref(null)
+    const payStatus = ref('idle')
+
+    const formatAmount = computed(() => {
+      return '¥' + (amount.value / 100).toFixed(2)
+    })
+
+    const methodStyle = computed(() => {
+      return {
+        '--method-color': selectedMethod.value.id === 'wechat' ? '#07c160' : '#1677ff',
+        borderColor: 'var(--method-color)'
+      }
+    })
+
+    onMounted(() => {
+      queryPayForm()
+    })
+
+    function queryPayForm () {
+      context.selectComponent('#pay-form')
+    }
+
+    function showMethodPicker () {
+      mpx.showActionSheet({
+        itemList: ['WeChat Pay', 'Alipay', 'Bank Card'],
+        success (res) {
+          const methods = [
+            { id: 'wechat', name: 'WeChat Pay' },
+            { id: 'alipay', name: 'Alipay' },
+            { id: 'bank', name: 'Bank Card' }
+          ]
+          selectedMethod.value = methods[res.tapIndex]
+        }
+      })
+    }
+
+    function submitPayment () {
+      if (payStatus.value === 'loading') return
+      payStatus.value = 'loading'
+
+      mpx.request({
+        url: '/api/pay/create',
+        method: 'POST',
+        data: {
+          orderId: orderId.value,
+          method: selectedMethod.value.id,
+          couponId: coupon.value ? coupon.value.id : null
+        },
+        success (res) {
+          if (res.data.code === 0) {
+            payStatus.value = 'success'
+            mpx.showToast({ title: 'Payment Successful', icon: 'success' })
+            setTimeout(() => {
+              mpx.navigateBack()
+            }, 1500)
+          } else {
+            payStatus.value = 'idle'
+            mpx.showModal({ title: 'Error', content: res.data.message })
+          }
+        },
+        fail () {
+          payStatus.value = 'idle'
+          mpx.showToast({ title: 'Network Error', icon: 'none' })
+        }
+      })
+    }
+
+    function onPaySuccess (e) {
+      console.log('pay success:', e.detail)
+    }
+
+    return {
+      orderId,
+      amount,
+      selectedMethod,
+      coupon,
+      payStatus,
+      formatAmount,
+      methodStyle,
+      showMethodPicker,
+      submitPayment,
+      onPaySuccess
+    }
+  },
+  onLoad (query, decodedQuery) {
+    this.orderId = decodedQuery.orderId || query.orderId || ''
+    this.amount = Number(decodedQuery.amount || query.amount || 0)
+  }
+})
+</script>
+
+<style>
+.payment-page {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  padding: 30rpx;
+}
+
+.pay-header {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.pay-title {
+  font-size: 32rpx;
+  color: #333;
+  /* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') */
+  font-family: 'PingFang SC', 'Helvetica Neue', sans-serif;
+  /* @mpx-else */
+  font-family: PingFangSC-Regular;
+  /* @mpx-endif */
+}
+
+.pay-amount {
+  font-size: 64rpx;
+  color: #1a1a2e;
+  font-weight: bold;
+  margin-top: 16rpx;
+  /* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') */
+  text-decoration-style: dashed;
+  text-decoration-color: #ccc;
+  /* @mpx-endif */
+}
+
+.form-section {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.form-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.method-selector {
+  padding: 12rpx 24rpx;
+  border-radius: 8rpx;
+  /* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') */
+  border-top-style: dashed;
+  border-bottom-style: solid;
+  border-left-style: solid;
+  border-right-style: solid;
+  /* @mpx-else */
+  border-style: solid;
+  /* @mpx-endif */
+  border-width: 1px;
+  border-color: #ddd;
+}
+
+.coupon-tag {
+  padding: 6rpx 16rpx;
+  background-color: #fff0f0;
+  border-radius: 6rpx;
+}
+
+.coupon-text {
+  font-size: 24rpx;
+  color: #ff4d4f;
+}
+
+.no-coupon {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.security-section {
+  margin-bottom: 30rpx;
+  position: relative;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx;
+}
+
+.security-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 8rpx;
+}
+
+.security-text {
+  font-size: 22rpx;
+  color: #52c41a;
+}
+
+.security-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('./security-pattern.png');
+  /* @mpx-if (__mpx_mode__ !== 'ios' && __mpx_mode__ !== 'android' && __mpx_mode__ !== 'harmony') */
+  background-repeat: repeat-x;
+  /* @mpx-else */
+  background-repeat: no-repeat;
+  /* @mpx-endif */
+  opacity: 0.05;
+  z-index: -1;
+}
+
+/* @mpx-if (__mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony') */
+.pay-button {
+  background-color: #1677ff;
+  border-radius: 44rpx;
+}
+/* @mpx-endif */
+
+.action-section {
+  margin-top: 40rpx;
+}
+
+.pay-button {
+  width: 100%;
+  height: 88rpx;
+  background-color: #07c160;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pay-button-hover {
+  opacity: 0.8;
+}
+
+.pay-button-text {
+  font-size: 32rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+.pay-agreement {
+  font-size: 20rpx;
+  color: #999;
+  text-align: center;
+  margin-top: 16rpx;
+}
+</style>
+
+<script name="json">
+const isRN = __mpx_mode__ === 'ios' || __mpx_mode__ === 'android' || __mpx_mode__ === 'harmony'
+
+module.exports = {
+  usingComponents: {
+    'pay-form': '../components/pay-form/index'
+  },
+  navigationBarTitleText: 'Payment',
+  disableScroll: isRN ? true : false
+}
+</script>
