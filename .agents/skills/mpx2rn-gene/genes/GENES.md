@@ -16,6 +16,7 @@
 | `gene_conditional_compile` | 条件编译, @mpx-if, @mode, __mpx_mode__ | 各区块用对应语法，最小包裹 | [gene_conditional_compile.md](gene_conditional_compile.md) |
 | `gene_text_overflow` | text-overflow, numberOfLines, hairlineWidth | 文本溢出/极细线双轨模式 | [gene_text_overflow.md](gene_text_overflow.md) |
 | `gene_json_config` | json, usingComponents, disableScroll, tabBar | JSON 配置仅用 RN 支持字段 | [gene_json_config.md](gene_json_config.md) |
+| `gene_evolution` | 演化, evolution, capsule, event, GEP loop | GEP 六步循环驱动 Gene 持续演化 | [gene_evolution.md](gene_evolution.md) |
 
 ## Gene 调度逻辑
 
@@ -39,7 +40,7 @@
 
 **收尾：** 编译校验 → ESLint 校验
 
-## GEP 层级说明
+## GEP 三层结构
 
 ```
 Gene（原子控制单元）→ 直接注入推理时上下文，控制行为
@@ -49,7 +50,22 @@ Capsule（已验证执行路径）→ 记录成功的 gene 组合 + 执行轨迹
 Event（不可变演化日志）→ 记录 gene 的修正/优化/验证历史
 ```
 
-当前仅实现 Gene 层。后续可基于实际适配经验积累 Capsule（成功案例）和 Event（失败修正记录），实现 gene 的迭代演化。
+### Gene 层（genes/）
+8 个领域 Gene + 1 个演化控制 Gene，直接注入推理上下文控制行为。
+
+### Capsule 层（capsules/）
+记录成功的 RN 适配执行路径。每个 Capsule 包含：任务签名、使用的 Gene 集合、关键决策点、验证结果。详见 [capsules/CAPSULES.md](../capsules/CAPSULES.md)。
+
+### Event 层（events/）
+不可变的 Gene 演化日志。每个 Event 记录一次 Gene 变更的触发信号、变更 diff 和验证结果。详见 [events/EVENTS.md](../events/EVENTS.md)。
+
+### 演化循环（GEP Loop）
+```
+失败/纠正 → Scan → Signal → Intent → Mutate → Validate → Solidify
+                                                    ↓           ↓
+                                              更新 Gene    记录 Event + Capsule
+```
+演化由 `gene_evolution` 控制，触发信号包括：编译失败、ESLint 报错、用户反馈纠正、适配方案不生效。
 
 ## 扩展参考
 

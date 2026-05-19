@@ -10,7 +10,7 @@ metadata:
 
 # Mpx2RN Strategy Gene Skill
 
-本 Skill 基于 Gene Evolution Protocol (GEP) 蒸馏为 8 个原子 Strategy Gene，每个 ~200-300 tokens，直接控制行为而非解释文档。
+本 Skill 基于 Gene Evolution Protocol (GEP) 蒸馏为 8 个领域 Gene + 1 个演化控制 Gene，每个 ~200-300 tokens，直接控制行为而非解释文档。支持 GEP 三层结构（Gene / Capsule / Event）和六步演化循环。
 
 ## Gene 注册表
 
@@ -24,6 +24,7 @@ metadata:
 | `gene_conditional_compile` | 条件编译, @mpx-if, @mode, __mpx_mode__ | [genes/gene_conditional_compile.md](genes/gene_conditional_compile.md) |
 | `gene_text_overflow` | text-overflow, numberOfLines, hairlineWidth | [genes/gene_text_overflow.md](genes/gene_text_overflow.md) |
 | `gene_json_config` | json, usingComponents, disableScroll, tabBar | [genes/gene_json_config.md](genes/gene_json_config.md) |
+| `gene_evolution` | 演化, evolution, capsule, event, GEP loop | [genes/gene_evolution.md](genes/gene_evolution.md) |
 
 ## 调度规则
 
@@ -47,6 +48,26 @@ metadata:
 
 **收尾：** 编译校验 → ESLint 校验
 
+### 任务三：Gene 演化（适配经验积累）
+
+**触发信号：** 编译失败 / ESLint 报错 / 用户反馈纠正 / 适配方案不生效
+
+**加载：** `gene_evolution`
+
+**GEP 六步循环：**
+1. **Scan**：定位失败根因，收集错误日志/用户反馈
+2. **Signal**：映射到具体 gene_id（如样式不兼容→`gene_style_property`）
+3. **Intent**：确定演化类型（repair / optimization / extension）
+4. **Mutate**：修改目标 Gene 的 Strategy 或 AVOID 项
+5. **Validate**：重新执行编译校验，确认修正有效
+6. **Solidify**：写回 Gene 文件 + 记录 Event（`events/`）+ 记录 Capsule（`capsules/`）
+
+### 任务四：查阅已有经验（Capsule 检索）
+
+**触发信号：** 遇到同类任务时，先查阅 `capsules/CAPSULES.md` 中是否有可参考的成功路径
+
+**加载：** 对应 Capsule 中记录的 Gene 集合
+
 ## 详细参考
 
 当 gene 中的策略指令不足以解决具体问题时，查阅详细参考文档：
@@ -61,3 +82,5 @@ metadata:
 | [JSON 配置参考](references/rn-json-reference.md) | 页面/组件 JSON 配置支持 |
 | [条件编译](references/conditional-compile.md) | 各区块条件编译语法 |
 | [单文件组件](references/single-file-component.md) | Mpx SFC 基本结构 |
+| [Capsule 注册表](capsules/CAPSULES.md) | 已验证的成功执行路径 |
+| [Event 注册表](events/EVENTS.md) | Gene 演化变更日志 |
