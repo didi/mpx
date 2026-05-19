@@ -681,7 +681,7 @@ OUTPUT_FILES = {
     4: "data-panel.mpx",
     5: "payment-page.mpx",
 }
-RUN_KINDS = ("no_skill", "mpx2rn_original", "mpx2rn_gene")
+RUN_KINDS = ("no_skill", "mpx2rn_original", "mpx2rn_gene", "mpx2rn_gene_v2")
 
 
 def _first_present(data, keys):

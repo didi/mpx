@@ -28,6 +28,10 @@
     "mpx2rn_gene": {
       "label": "使用 mpx2rn gene 版 skill",
       "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**输入文件**：读取 {{INPUT_PATH}}\n\n**Skill 参考**：你必须严格按照 gene skill 文档进行改造。首先读取 {{GENE_SKILL_PATH}}，这是 Mpx2RN Strategy Gene Skill。按照 SKILL.md 中的调度规则和 Gene 注册表，读取 {{GENE_GENES_PATH}} 目录下的相关 gene 文件。当 gene 指令不足时，查阅 {{GENE_REFS_PATH}} 目录下的详细参考文档。\n\n**输出**：将完整的修改后 .mpx 文件写入 {{OUTPUT_PATH}}\n\n**运行指标**：将本次 run 的度量数据写入 {{METRICS_PATH}}，JSON 格式为 {\"total_tokens\": number, \"tool_calls\": number, \"duration_ms\": number}。"
+    },
+    "mpx2rn_gene_v2": {
+      "label": "使用演化后 mpx2rn gene v2 版 skill",
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**输入文件**：读取 {{INPUT_PATH}}\n\n**Skill 参考**：你必须严格按照 gene skill 文档进行改造。首先读取 {{GENE_SKILL_PATH}}，这是 Mpx2RN Strategy Gene Skill。按照 SKILL.md 中的调度规则和 Gene 注册表，读取 {{GENE_GENES_PATH}} 目录下的相关 gene 文件。当 gene 指令不足时，查阅 {{GENE_REFS_PATH}} 目录下的详细参考文档。\n\n**输出**：将完整的修改后 .mpx 文件写入 {{OUTPUT_PATH}}\n\n**运行指标**：将本次 run 的度量数据写入 {{METRICS_PATH}}，JSON 格式为 {\"total_tokens\": number, \"tool_calls\": number, \"duration_ms\": number}。"
     }
   }
 }

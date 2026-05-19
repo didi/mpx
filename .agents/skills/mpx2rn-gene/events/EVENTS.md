@@ -34,4 +34,4 @@
 
 | event_id | 类型 | 目标 Gene | 触发信号 | 日期 | 文件 |
 |----------|------|----------|---------|------|------|
-<!-- 待记录 -->
+| evt_001 | repair + extension | gene_template, gene_script, gene_style_property | iteration-8 eval 11条失败 | 2026-05-19 | [evt_001_iter8_repair.md](evt_001_iter8_repair.md) |
