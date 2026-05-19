@@ -1,0 +1,72 @@
+{
+  "eval_id": 1,
+  "run_kind": "mpx2rn_original",
+  "expectations": [
+    {
+      "id": "t0",
+      "text": "template: dynamic class via wx:class (not class string interpolation)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t1",
+      "text": "template: event params use inline syntax (not data- dataset)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t2",
+      "text": "template: no method calls in Mustache (getStatusColor/getStatusText replaced)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t3",
+      "text": "template: page scroll replaced with scroll-view",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t4",
+      "text": "template: scroll-view has bindscrolltolower or equivalent",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t5",
+      "text": "script: all wx.xxx API replaced with mpx.xxx",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t6",
+      "text": "script: no e.target.dataset usage",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t7",
+      "text": "style on RN: no .btn-default .btn-text compound selector",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "t8",
+      "text": "template: wx:style object keys use unquoted camelCase (no quoted or kebab-case keys)",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 9,
+    "failed": 0,
+    "total": 9
+  },
+  "metrics": {
+    "valid": false,
+    "errors": [
+      "missing metrics file: /Users/didi/work/mpx2/.agents/skills/mpx2rn-workspace/iteration-8/eval-1-template-adaptation/mpx2rn_original/run-1/metrics.json"
+    ]
+  }
+}

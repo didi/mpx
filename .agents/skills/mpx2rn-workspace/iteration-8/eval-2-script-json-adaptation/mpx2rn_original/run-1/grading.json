@@ -1,0 +1,72 @@
+{
+  "eval_id": 2,
+  "run_kind": "mpx2rn_original",
+  "expectations": [
+    {
+      "id": "j0",
+      "text": "script: all wx.xxx API replaced with mpx.xxx",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j1",
+      "text": "script: onShareTimeline removed or isolated with conditional compile",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j2",
+      "text": "script: onTabItemTap removed or isolated with conditional compile",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j3",
+      "text": "script: setTabBarBadge/removeTabBarBadge isolated with conditional compile",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j4",
+      "text": "script: wx.getUserProfile isolated or replaced",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j5",
+      "text": "script: no e.target.dataset usage",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j7",
+      "text": "json: enablePullDownRefresh handled for RN",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j8",
+      "text": "template: data- attributes removed (inline event params used)",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "j9",
+      "text": "script: onShareAppMessage preserved (RN supported, should not be removed)",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 1.0,
+    "passed": 9,
+    "failed": 0,
+    "total": 9
+  },
+  "metrics": {
+    "valid": false,
+    "errors": [
+      "missing metrics file: /Users/didi/work/mpx2/.agents/skills/mpx2rn-workspace/iteration-8/eval-2-script-json-adaptation/mpx2rn_original/run-1/metrics.json"
+    ]
+  }
+}

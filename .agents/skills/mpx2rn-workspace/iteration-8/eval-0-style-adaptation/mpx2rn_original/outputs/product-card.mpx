@@ -1,0 +1,190 @@
+<template>
+  <view class="product-card">
+    <!-- 伪元素 ::before 替换为真实节点，实现顶部渐变色条 -->
+    <view class="card-top-bar"></view>
+    <view class="card-header">
+      <image class="card-avatar" src="{{info.avatar}}" mode="aspectFill"></image>
+      <view class="card-title-wrap">
+        <!-- 文本溢出：RN 平台使用 numberOfLines 属性条件编译等效实现 -->
+        <text class="card-title" numberOfLines@ios|android|harmony="{{1}}">{{info.title}}</text>
+        <text class="card-subtitle">{{info.subtitle}}</text>
+      </view>
+    </view>
+    <view class="card-body">
+      <!-- 文本溢出：RN 平台使用 numberOfLines 属性条件编译等效实现 -->
+      <text class="card-desc" numberOfLines@ios|android|harmony="{{1}}">{{info.description}}</text>
+      <view class="card-tags">
+        <!-- wx:class key 改为 camelCase 无引号形式；tag-highlight 交集选择器改为单类 tagHighlight -->
+        <text
+          class="tag"
+          wx:for="{{info.tags}}"
+          wx:key="*this"
+          wx:class="{{ {tagHighlight: item === info.tags[0]} }}"
+        >{{item}}</text>
+      </view>
+    </view>
+    <view class="card-footer">
+      <text class="price">{{info.price}}</text>
+      <!-- :active 伪类替换为 hover-class 跨端兼容实现 -->
+      <view class="btn-buy" hover-class="btn-buy-active" hover-stay-time="{{100}}" bindtap="onBuy">
+        <text class="btn-text">立即购买</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    info: { type: Object, value: {} }
+  },
+  methods: {
+    onBuy () {
+      this.triggerEvent('buy', { id: this.info.id })
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.product-card {
+  margin: 16rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+/* 伪元素 ::before → 真实节点 .card-top-bar，实现顶部渐变色条 */
+.card-top-bar {
+  height: 4rpx;
+  background-image: linear-gradient(to right, #1677ff, #69c0ff);
+}
+
+.card-header {
+  /* grid 布局替换为 flex 布局 */
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  padding: 24rpx;
+  align-items: center;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.card-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-title-wrap {
+  overflow: hidden;
+  flex: 1;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  overflow: hidden;
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+  /* todo: RN 不支持 text-overflow / white-space，使用 numberOfLines 模板属性等效实现 */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* @mpx-endif */
+}
+
+.card-subtitle {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.card-body {
+  padding: 24rpx;
+}
+
+.card-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+  overflow: hidden;
+  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+  /* todo: RN 不支持 text-overflow / white-space，使用 numberOfLines 模板属性等效实现 */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* @mpx-endif */
+}
+
+.card-tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 16rpx;
+}
+
+.tag {
+  font-size: 22rpx;
+  color: #1677ff;
+  background: rgba(22, 119, 255, 0.08);
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+  margin-right: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+/* 交集选择器 .tag.tag-highlight → 单类 .tagHighlight，模板中通过 wx:class 绑定 */
+.tagHighlight {
+  background: rgba(255, 77, 79, 0.08);
+  color: #ff4d4f;
+}
+
+.card-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.price {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #ff4d4f;
+}
+
+.btn-buy {
+  padding: 12rpx 32rpx;
+  background: #1677ff;
+  border-radius: 8rpx;
+}
+
+/* :active 伪类 → hover-class="btn-buy-active" 跨端兼容实现 */
+.btn-buy-active {
+  opacity: 0.7;
+}
+
+.btn-text {
+  font-size: 26rpx;
+  color: #fff;
+}
+
+/* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+/* todo: RN 不支持相邻兄弟选择器，此规则仅在原平台生效；RN 侧需在父容器通过 wx:class 实现 */
+.product-card + .product-card {
+  margin-top: 24rpx;
+}
+/* @mpx-endif */
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {}
+}
+</script>
