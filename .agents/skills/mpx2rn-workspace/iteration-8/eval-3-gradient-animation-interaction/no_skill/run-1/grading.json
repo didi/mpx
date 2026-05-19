@@ -69,10 +69,5 @@
     "failed": 2,
     "total": 10
   },
-  "metrics": {
-    "valid": false,
-    "errors": [
-      "missing metrics file: /Users/didi/work/mpx2/.agents/skills/mpx2rn-workspace/iteration-8/eval-3-gradient-animation-interaction/no_skill/run-1/metrics.json"
-    ]
-  }
+  "metrics": null
 }

@@ -6,7 +6,7 @@
     "prompt_templates": "prompt_templates.json",
     "run_script": "run_evals.py",
     "grade_script": "grade.py",
-    "usage": "1) python3 run_evals.py [--evals 0 1] [--groups no_skill] [--model opus] 生成 agent dispatch JSON，每个 dispatch 包含 output_path 与 metrics_path; 2) 将输出的每个 dispatch 作为 Agent 工具调用并行执行，子 agent 需写入 output_path 与 metrics_path; 3) 执行完成后由主 agent 运行 python3 grade.py 评分，grading.json 会包含 summary 与 metrics，缺少 metrics 时 grade.py 非零退出"
+    "usage": "1) python3 run_evals.py [--evals 0 1] [--groups no_skill] [--model opus] 生成 agent dispatch JSON，每个 dispatch 包含 output_path 与 metrics_path; 2) 将输出的每个 dispatch 作为 Agent 工具调用（run_in_background）并行执行，子 agent 仅需写入 output_path; 3) 每个 agent 完成后，主 agent 从 task-notification 的 <usage> 标签提取真实指标（total_tokens/tool_uses/duration_ms）写入对应 metrics_path; 4) 全部完成后运行 python3 grade.py 评分，grading.json 包含 summary 与 metrics"
   },
   "comparison": {
     "groups": [

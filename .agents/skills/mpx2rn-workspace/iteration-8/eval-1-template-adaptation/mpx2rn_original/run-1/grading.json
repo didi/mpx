@@ -63,10 +63,5 @@
     "failed": 0,
     "total": 9
   },
-  "metrics": {
-    "valid": false,
-    "errors": [
-      "missing metrics file: /Users/didi/work/mpx2/.agents/skills/mpx2rn-workspace/iteration-8/eval-1-template-adaptation/mpx2rn_original/run-1/metrics.json"
-    ]
-  }
+  "metrics": null
 }

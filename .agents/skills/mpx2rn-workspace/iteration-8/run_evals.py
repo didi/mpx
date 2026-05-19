@@ -19,7 +19,8 @@ Output is a JSON array of agent dispatch descriptors, each with:
   { "description", "model", "prompt", "output_path", "metrics_path" }
 
 Copy the output to Claude Code to dispatch agents.
-Each agent must write metrics_path before it finishes. Required schema:
+Metrics are collected from task-notification <usage> by the main agent after each
+sub-agent completes, then written to metrics_path. Required schema:
   {
     "total_tokens": 84852,
     "tool_calls": 12,

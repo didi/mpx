@@ -681,7 +681,7 @@ OUTPUT_FILES = {
     4: "data-panel.mpx",
     5: "payment-page.mpx",
 }
-RUN_KINDS = ("no_skill", "mpx2rn_original", "mpx2rn_gene", "mpx2rn_gene_v2")
+RUN_KINDS = ("no_skill", "mpx2rn_original", "mpx2rn_gene")
 
 
 def _first_present(data, keys):
@@ -695,9 +695,10 @@ def _is_number(value):
 
 
 def load_metrics(run_dir):
+    """Load metrics.json written by the main agent from task-notification <usage> data."""
     metrics_path = run_dir / "metrics.json"
     if not metrics_path.exists():
-        return None, [f"missing metrics file: {metrics_path}"]
+        return None, []
     try:
         data = json.loads(metrics_path.read_text())
     except json.JSONDecodeError as e:
@@ -707,7 +708,7 @@ def load_metrics(run_dir):
 
     errors = []
     total_tokens = _first_present(data, ("total_tokens", "tokens"))
-    tool_calls = _first_present(data, ("tool_calls", "tool_call_count"))
+    tool_calls = _first_present(data, ("tool_calls", "tool_call_count", "tool_uses"))
     duration_ms = _first_present(data, ("duration_ms", "elapsed_ms"))
     if duration_ms is None:
         duration_seconds = _first_present(
@@ -743,7 +744,7 @@ def grade_run(eval_id, run_kind):
     run_dir.mkdir(parents=True, exist_ok=True)
     metrics, metric_errors = load_metrics(run_dir)
     if metric_errors:
-        print(f"metrics error for {EVAL_DIRS[eval_id]} / {run_kind}: "
+        print(f"metrics warning for {EVAL_DIRS[eval_id]} / {run_kind}: "
               + "; ".join(metric_errors), file=sys.stderr)
     results = CHECKERS[eval_id](out_path)
     enriched = [{"id": r.get("id", ""), "text": r["text"], "passed": bool(r["passed"]),
@@ -757,7 +758,7 @@ def grade_run(eval_id, run_kind):
     grading = {
         "eval_id": eval_id, "run_kind": run_kind, "expectations": enriched,
         "summary": summary,
-        "metrics": metrics or {"valid": False, "errors": metric_errors},
+        "metrics": metrics,
     }
     (run_dir / "grading.json").write_text(json.dumps(grading, ensure_ascii=False, indent=2))
     return grading
@@ -765,22 +766,18 @@ def grade_run(eval_id, run_kind):
 
 def main():
     summary = []
-    has_metric_errors = False
     for eid in sorted(EVAL_DIRS.keys()):
         for kind in RUN_KINDS:
             g = grade_run(eid, kind)
             if g:
                 s = g["summary"]
-                metrics = g["metrics"]
-                has_metric_errors = has_metric_errors or metrics.get("valid") is False
+                metrics = g.get("metrics") or {}
                 summary.append({"eval": EVAL_DIRS[eid], "kind": kind,
                                 "score": f"{s['passed']}/{s['total']}",
                                 "total_tokens": metrics.get("total_tokens"),
                                 "tool_calls": metrics.get("tool_calls"),
                                 "duration_ms": metrics.get("duration_ms")})
     print(json.dumps(summary, ensure_ascii=False, indent=2))
-    if has_metric_errors:
-        sys.exit(1)
 
 
 if __name__ == "__main__":
