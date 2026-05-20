@@ -383,12 +383,12 @@ function parseTransform (transformStr: string) {
         case 'translate':
         case 'scale':
         case 'skew':
-        case 'translate3d': // x y 支持 z不支持
-        case 'scale3d': // x y 支持 z不支持
+        case 'translate3d': // x/y 支持，z 不支持
+        case 'scale3d': // x/y 支持，z 不支持
         {
           // 2 个以上的值处理
           key = key.replace('3d', '')
-          const vals = parseValues(val, ',').splice(0, 3)
+          const vals = parseValues(val, ',').splice(0, 2)
           // scale(.5) === scaleX(.5) scaleY(.5)
           if (vals.length === 1 && key === 'scale') {
             vals.push(vals[0])
