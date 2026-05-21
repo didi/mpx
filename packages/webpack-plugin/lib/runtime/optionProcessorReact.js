@@ -14,8 +14,12 @@ export function getComponent (component, extendOptions) {
   // eslint-disable-next-line
   if (extendOptions && !component.__mpxExtended) {
     extend(component, extendOptions, { __mpxExtended: true })
-    if (extendOptions.displayName && component.type && component.type.render) {
-      component.type.render.displayName = extendOptions.displayName
+    if (extendOptions.displayName) {
+      if (component.type && component.type.render) {
+        component.type.render.displayName = extendOptions.displayName
+      } else if (component.render) {
+        component.render.displayName = extendOptions.displayName
+      }
     }
   }
   return component

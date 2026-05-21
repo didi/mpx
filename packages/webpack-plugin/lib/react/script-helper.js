@@ -35,8 +35,8 @@ function getComponent (componentRequest, componentName) {
   return `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`
 }
 
-function getBuiltInComponent (componentRequest) {
-  return `getComponent(require(${componentRequest}), {__mpxBuiltIn: true})`
+function getBuiltInComponent (componentRequest, componentName) {
+  return `getComponent(require(${componentRequest}), {__mpxBuiltIn: true, displayName: ${JSON.stringify(componentName)}})`
 }
 
 // function getLazyPage (componentRequest) {
@@ -117,7 +117,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     Object.keys(builtInComponentsMap).forEach((componentName) => {
       const componentCfg = builtInComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
-      componentsMap[componentName] = getComponentGetter(getBuiltInComponent(componentRequest))
+      componentsMap[componentName] = getComponentGetter(getBuiltInComponent(componentRequest, componentName))
     })
   }
   return componentsMap
