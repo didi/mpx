@@ -13,6 +13,11 @@
   - [`setup` 的第一个参数 `props`](#setup-的第一个参数-props)
   - [`setup` 的第二个参数 `context`](#setup-的第二个参数-context)
   - [`<script setup>`](#script-setup)
+- [生命周期](#生命周期)
+  - [生命周期对应关系](#生命周期对应关系)
+  - [三类写法说明](#三类写法说明)
+  - [用法示例](#用法示例)
+  - [注意事项](#注意事项-3)
 - [Mpx 运行时导出](#mpx-运行时导出)
   - [默认导出](#默认导出)
   - [命名导出](#命名导出)
@@ -162,10 +167,6 @@
 | `onTabItemTap` | 页面 | 输出 RN 时无效，暂不支持。 |
 | `onAddToFavorites` | 页面 | 输出 RN 时无效。 |
 | `onSaveExitState` | 页面 | 输出 RN 时无效。 |
-
-#### 注意事项
-
-- 由于不同平台对 `onLoad` 中 `query` 参数的处理逻辑不同，有的进行了 `decodeURIComponent` 而有的没有，为了方便跨平台统一处理，Mpx 在 `onLoad` 生命周期中添加了第二个参数 `decodedQuery`，该参数能保证所有平台下获取到的结果都是经过 `decodeURIComponent` 处理的。
 
 ---
 
@@ -383,6 +384,172 @@ createComponent({
 - 需要访问节点、组件实例或 selector 能力时，优先在 `onMounted` 及之后读取 `useContext().refs`；传入 `#id` / `.class` 的 selector 仍要在模板对应节点声明空 `wx:ref`，具名访问使用 `wx:ref="refName"`。
 - 组合式生命周期 **禁止在异步回调里注册**，否则会丢失当前实例上下文。
 - `context.refs` 及 **`selectComponent` / `selectAllComponents` / `createSelectorQuery` / `createIntersectionObserver`** 在 RN 上与选项式相同：`refs` 在 `onMounted` 及之后更可靠，**凡传入 `#id` / `.class` 的用法均须在模板对应节点声明空 wx:ref**（具名访问用 `wx:ref="refName"`），详见「页面 / 组件实例方法与属性」注意事项。
+
+---
+
+## 生命周期
+
+Mpx 生命周期体系包含三类写法，在组合式 API 中统一使用 Vue 风格钩子；选项式 API 中可使用小程序原生生命周期或框架内置生命周期常量。三者对应关系如下：
+
+### 生命周期对应关系
+
+| 框架内置生命周期常量 | 选项式 API（原生生命周期） | 组合式 API 钩子 | 说明 |
+|:---|:---|:---|:---|
+| `BEFORECREATE` | 页面：`onLoad` / 组件：`attached` | —（直接在 `setup` 中编写） | 实例初始化之后，数据观测之前 |
+| `CREATED` | 页面：`onLoad` / 组件：`attached` | —（直接在 `setup` 中编写） | 实例创建完成，数据观测已就绪 |
+| `BEFOREMOUNT` | 页面：`onReady` / 组件：`ready` | `onBeforeMount` | 挂载开始之前，视图尚未渲染 |
+| `MOUNTED` | 页面：`onReady` / 组件：`ready` | `onMounted` | 视图渲染完成，可访问节点与 refs |
+| `BEFOREUPDATE` | — | `onBeforeUpdate` | 数据变更后，视图重新渲染之前 |
+| `UPDATED` | — | `onUpdated` | 视图重新渲染完毕之后 |
+| `BEFOREUNMOUNT` | 页面：`onUnload` / 组件：`detached` | `onBeforeUnmount` | 实例卸载之前，仍可访问实例 |
+| `UNMOUNTED` | 页面：`onUnload` / 组件：`detached` | `onUnmounted` | 实例卸载完成，子组件已全部卸载 |
+| `ONLOAD` | `onLoad` | `onLoad` | 页面创建时触发，仅调用一次；入参 `(rawQuery, decodedQuery)` |
+| `ONSHOW` | `onShow` | `onShow` | 页面显示 / 从后台切入前台时触发 |
+| `ONHIDE` | `onHide` | `onHide` | 页面隐藏 / 切入后台时触发 |
+| `ONRESIZE` | `onResize` | `onResize` | 页面可视区域尺寸变化时触发；入参 `(res)`，含 `windowWidth`、`windowHeight` 等 |
+| `REACTHOOKSEXEC` | — | `onReactHooksExec` | RN 组件渲染期，用于执行 React Hooks；入参 `(props)`，返回值（对象）会合并到组件实例上 |
+
+### 三类写法说明
+
+1. **小程序原生生命周期**（选项式 API）：直接使用各平台原生名称，如 `onLoad`、`attached`、`ready`、`detached`、`onShow` 等。
+2. **框架内置生命周期常量**（选项式 API）：从 `@mpxjs/core` 导入 `BEFORECREATE`、`CREATED`、`MOUNTED` 等常量，以计算属性名 `[MOUNTED]() {}` 形式声明，保持跨平台一致性。
+3. **组合式生命周期钩子**（组合式 API）：从 `@mpxjs/core` 导入 `onMounted`、`onBeforeUnmount`、`onShow` 等函数，在 `setup` 内同步调用注册。`setup` 本身等价于 `beforeCreate` + `created`，可直接在其中编写初始化逻辑。
+
+### 用法示例
+
+#### 小程序原生生命周期（选项式 API）
+
+```js
+import { createComponent } from "@mpxjs/core"
+
+createComponent({
+  data: {
+    count: 0
+  },
+  attached() {
+    console.log("组件进入页面节点树，可访问 data")
+    this.count = 1
+  },
+  ready() {
+    console.log("组件视图层布局完成，可操作节点")
+  },
+  detached() {
+    console.log("组件从节点树移除，清理资源")
+  },
+  pageLifetimes: {
+    show() {
+      console.log("组件所在页面显示")
+    },
+    hide() {
+      console.log("组件所在页面隐藏")
+    }
+  }
+})
+```
+
+#### 框架内置生命周期常量（选项式 API）
+
+```js
+import { createComponent, CREATED, MOUNTED, BEFOREUNMOUNT, ONSHOW } from "@mpxjs/core"
+
+createComponent({
+  data: {
+    timer: null
+  },
+  [CREATED]() {
+    console.log("组件创建完成")
+  },
+  [MOUNTED]() {
+    console.log("组件挂载完成")
+    this.timer = setInterval(() => {
+      console.log("定时任务")
+    }, 1000)
+  },
+  [BEFOREUNMOUNT]() {
+    console.log("组件即将销毁")
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
+  },
+  [ONSHOW]() {
+    console.log("页面显示")
+  }
+})
+```
+
+#### 组合式生命周期钩子（组合式 API）
+
+```js
+import {
+  createComponent,
+  ref,
+  onBeforeMount,
+  onMounted,
+  onBeforeUpdate,
+  onUpdated,
+  onBeforeUnmount,
+  onUnmounted,
+  onShow,
+  onHide,
+  onResize
+} from "@mpxjs/core"
+
+createComponent({
+  setup() {
+    // setup 执行期相当于 beforeCreate + created
+    const count = ref(0)
+
+    onBeforeMount(() => {
+      console.log("组件即将挂载")
+    })
+
+    onMounted(() => {
+      console.log("组件已挂载，可访问 refs")
+    })
+
+    onBeforeUpdate(() => {
+      console.log("数据即将更新")
+    })
+
+    onUpdated(() => {
+      console.log("数据更新完成")
+    })
+
+    onBeforeUnmount(() => {
+      console.log("组件即将卸载，清理资源")
+    })
+
+    onUnmounted(() => {
+      console.log("组件已卸载")
+    })
+
+    onShow(() => {
+      console.log("页面显示")
+    })
+
+    onHide(() => {
+      console.log("页面隐藏")
+    })
+
+    onResize((res) => {
+      console.log("页面尺寸变化", res)
+    })
+
+    return { count }
+  }
+})
+```
+
+### 注意事项
+
+- 由于不同平台对 `onLoad` 中 `query` 参数的处理逻辑不同，有的进行了 `decodeURIComponent` 而有的没有，为了方便跨平台统一处理，Mpx 在 `onLoad` 生命周期中添加了第二个参数 `decodedQuery`，该参数能保证所有平台下获取到的结果都是经过 `decodeURIComponent` 处理的。
+- 组合式生命周期钩子**必须在 `setup` 执行期间同步注册**，禁止在异步回调（`setTimeout`、`Promise.then` 等）中调用，否则会丢失当前实例上下文。
+- `setup` 本身即 `BEFORECREATE` + `CREATED` 阶段，无需额外的 `onBeforeCreate` / `onCreated` 钩子。
+- `onMounted` 对应页面 `onReady` / 组件 `ready`，此时可安全访问 `context.refs` 和 selector 查询。
+- `onShow` / `onHide` 在组件中监听的是所在页面的显示/隐藏事件。
+- `onReactHooksExec` 为 RN 混编场景专用，用于在组件渲染期执行 React Hooks。
+- App 级别**不支持** `setup` 语法，应用生命周期（`onLaunch`、`onShow`、`onHide`、`onError`）只能在选项式 API 中使用。
 
 ---
 
