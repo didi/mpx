@@ -46,7 +46,6 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
-const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
 const boxSizingAffectingStyleMap: Record<string, boolean> = {
   padding: true,
@@ -509,13 +508,8 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
+  function calcVisitor ({ value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
-      // calc translate & border-radius 的百分比计算
-      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
-        hasSelfPercent = true
-        percentKeyPaths.push(keyPath.slice())
-      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
@@ -583,6 +577,9 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply calc
   transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
     if (PERCENT_REGEX.test(value)) {
+      if (hasOwn(selfPercentRule, key)) {
+        hasSelfPercent = true
+      }
       const resolved = resolvePercent(value, key, percentConfig)
       return typeof resolved === 'number' ? resolved : 0
     } else {
