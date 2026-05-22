@@ -754,11 +754,13 @@ setAppHide()
 | `getCurrentPages()` | 返回当前导航栈中已映射的页面实例列表（顺序与路由 state 相关）。 |
 | `setAppShow()` | 手动触发应用「进入前台」逻辑，驱动已注册的 `onShow`。 |
 | `setAppHide()` | 手动触发应用「进入后台」逻辑，驱动已注册的 `onHide`。 |
+| `notifyDimensionsChange(dimensions?)` | 主动通知框架 dimensions 发生变化，触发 rpx、vw、vh、媒体查询、onResize 等的重新计算。不传参时默认使用当前屏幕 dimensions 并重新执行 `customDimensions`。 |
 
 #### 注意事项
 
 - 勿在 App 构造函数执行完成前依赖 `getApp()` 内业务字段已赋值完毕；与路由相关的初始化宜放在 `onLaunch` / `onShow`。
 - `getCurrentPages()` 依赖 React Navigation 焦点与 `__mpxPagesMap`，与原生小程序栈细节不完全相同。
+- `notifyDimensionsChange` 由框架在首次样式计算时自动注入，需在开始渲染后才可调用。
 
 ---
 

@@ -463,7 +463,6 @@ createComponent({
 
 例如: 在折叠屏中我们期望只在其中一半屏上展示，可在 customDimensions 中判断当前是否为折叠屏展开状态，如果是则将 ScreenWidth 设置为原来的一半。
 
-
 ### 前后台切换 {#app-state-change}
 
 #### mpx.config.rnConfig.disableAppStateListener
