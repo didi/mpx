@@ -154,19 +154,40 @@ const getVisibleRangeByLayouts = (
     }
   }
   const viewportBottom = scrollTop + viewportHeight
-  let start = -1
-  let end = -1
-  for (let i = 0; i < layouts.length; i++) {
-    const item = layouts[i]
-    const itemTop = item.offset
-    const itemBottom = item.offset + item.length
-    if (itemBottom >= scrollTop && itemTop <= viewportBottom) {
-      if (start < 0) start = i
-      end = i
-    } else if (itemTop > viewportBottom && end >= 0) {
-      break
+
+  let low = 0
+  let high = layouts.length - 1
+  let start = layouts.length
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    const item = layouts[mid]
+    if (item.offset + item.length >= scrollTop) {
+      start = mid
+      high = mid - 1
+    } else {
+      low = mid + 1
     }
   }
+
+  low = 0
+  high = layouts.length - 1
+  let end = -1
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    const item = layouts[mid]
+    if (item.offset <= viewportBottom) {
+      end = mid
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+
+  if (start > end) {
+    start = -1
+    end = -1
+  }
+
   return {
     start,
     end
