@@ -1,4 +1,4 @@
-const { getClassMap } = require('../../../lib/react/style-helper')
+const { getClassMap } = require('../../../../lib/react/style-helper')
 
 describe('React Native style validation for CSS variables', () => {
   const createConfig = (mode = 'ios') => ({
@@ -242,6 +242,49 @@ describe('React Native style validation for CSS variables', () => {
       })
 
       expect(result.box).toHaveProperty('marginLeft')
+      expect(config.error).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Background shorthand', () => {
+    test('should expand background-position and background-size from slash shorthand', () => {
+      const css = '.bg { background: url(https://example.com/bg.png) no-repeat center/cover #fff; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.bg).toEqual({
+        backgroundImage: '"url(https://example.com/bg.png)"',
+        backgroundRepeat: '"no-repeat"',
+        backgroundColor: '"#fff"',
+        backgroundPosition: ['"50%"'],
+        backgroundSize: ['"cover"']
+      })
+      expect(config.warn).not.toHaveBeenCalled()
+      expect(config.error).not.toHaveBeenCalled()
+    })
+
+    test('should expand background-position and background-size with spaced slash', () => {
+      const css = '.bg { background: url(bg.png) no-repeat left top / 100% 50%; }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.bg).toEqual({
+        backgroundImage: '"url(bg.png)"',
+        backgroundRepeat: '"no-repeat"',
+        backgroundPosition: ['"left"', '"top"'],
+        backgroundSize: ['"100%"', '"50%"']
+      })
+      expect(config.warn).not.toHaveBeenCalled()
       expect(config.error).not.toHaveBeenCalled()
     })
   })
