@@ -2025,7 +2025,7 @@ const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    const isTemplateData = el.tag === 'template' && attr.name === 'data' && attr.value
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
 
