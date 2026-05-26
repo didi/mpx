@@ -39,5 +39,33 @@ module.exports = {
   MPX_TAG_PAGE_SELECTOR: 'mpx-page',
   // web / template is：具名 wx 模版子组件标签前缀（与 compiler 中 AST 替换一致）
   MPX_TEMPLATE_COMPONENT_PREFIX: 'mpx-tpl-',
-  STYLE_PAD_PLACEHOLDER: 'mpx-style-pad-placeholder'
+  STYLE_PAD_PLACEHOLDER: 'mpx-style-pad-placeholder',
+  // 扩展组件的平台配置：声明哪些组件在哪些平台有专用实现，哪些使用公共组件
+  EXTEND_COMPONENT_CONFIG: {
+    'section-list': {
+      wx: `${componentPrefixPath}/wx/mpx-section-list.mpx`,
+      ali: `${componentPrefixPath}/ali/mpx-section-list.mpx`,
+      web: `${componentPrefixPath}/web/mpx-section-list.vue`,
+      ios: `${componentPrefixPath}/react/dist/mpx-section-list.jsx`,
+      android: `${componentPrefixPath}/react/dist/mpx-section-list.jsx`,
+      harmony: `${componentPrefixPath}/react/dist/mpx-section-list.jsx`
+    },
+    'sticky-header': {
+      wx: `${componentPrefixPath}/wx/mpx-sticky-header.mpx`,
+      ali: `${componentPrefixPath}/ali/mpx-sticky-header.mpx`,
+      web: `${componentPrefixPath}/web/mpx-sticky-header.vue`,
+      ios: `${componentPrefixPath}/react/dist/mpx-sticky-header.jsx`,
+      android: `${componentPrefixPath}/react/dist/mpx-sticky-header.jsx`,
+      harmony: `${componentPrefixPath}/react/dist/mpx-sticky-header.jsx`
+    },
+    'sticky-section': {
+      wx: `${componentPrefixPath}/wx/mpx-sticky-section.mpx`,
+      ali: `${componentPrefixPath}/ali/mpx-sticky-section.mpx`,
+      web: `${componentPrefixPath}/web/mpx-sticky-section.vue`,
+      ios: `${componentPrefixPath}/react/dist/mpx-sticky-section.jsx`,
+      android: `${componentPrefixPath}/react/dist/mpx-sticky-section.jsx`,
+      harmony: `${componentPrefixPath}/react/dist/mpx-sticky-section.jsx`
+    }
+  },
+  MPX_TAG_PAGE_SELECTOR: 'mpx-page'
 }

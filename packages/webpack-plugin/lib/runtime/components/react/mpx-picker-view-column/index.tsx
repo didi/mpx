@@ -136,6 +136,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [])
 
+  // `contentOffset` prop sets visual position but does not fire scroll events,
+  // so `offsetYShared` (from `useScrollViewOffset`) stays at 0 until the user scrolls.
+  // Directly sync it whenever `itemRawH` is established so wheel animation renders correctly.
+  useEffect(() => {
+    if (!itemRawH || dragging.current || scrolling.current) {
+      return
+    }
+    offsetYShared.value = activeIndex.current * itemRawH
+  }, [itemRawH])
+
   useEffect(() => {
     if (
       !scrollViewRef.current ||

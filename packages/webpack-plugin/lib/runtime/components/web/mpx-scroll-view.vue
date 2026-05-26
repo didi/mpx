@@ -380,7 +380,7 @@
             const top = item.offsetTop
             const width = item.offsetWidth
             const height = item.offsetHeight
-    
+
             minLeft = getMinLength(minLeft, left)
             minTop = getMinLength(minTop, top)
             maxRight = getMaxLength(maxRight, left + width)
