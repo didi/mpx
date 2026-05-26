@@ -5,11 +5,12 @@
  * ✔ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX, createElement, Children } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
+import { TextPassThroughContext } from './context'
 
 const decodeMap = {
   '&lt;': '<',
@@ -51,9 +52,11 @@ interface _TextProps extends TextProps {
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
+  const inheritedText = useContext(TextPassThroughContext)
+  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
-    style = {},
-    allowFontScaling = false,
+    style: currentStyle = {},
+    allowFontScaling,
     selectable,
     'enable-var': enableVar,
     'external-var-context': externalVarContext,
@@ -62,35 +65,36 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     decode
-  } = props
+  } = mergedProps
 
   const {
     normalStyle,
     hasVarDec,
     varContextRef,
     hasPositionFixed
-  } = useTransformStyle(style, {
+  } = useTransformStyle(currentStyle, {
     enableVar,
     externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight
   })
+  const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
 
   const nodeRef = useRef(null)
-  useNodesRef<Text, _TextProps>(props, ref, nodeRef, {
-    style: normalStyle
+  useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
+    style: finalStyle
   })
 
   const innerProps = useInnerProps(
     extendObject(
       {},
-      props,
+      mergedProps,
       {
         ref: nodeRef,
-        style: normalStyle,
+        style: finalStyle,
         selectable: !!selectable || !!userSelect,
-        allowFontScaling
+        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling()
       }
     ),
     [
@@ -99,15 +103,30 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     ]
   )
 
-  const children = decode ? getDecodedChildren(props.children) : props.children
+  const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
+  const isStringOnly = isStringChildren(children)
+  let childTextStyle: TextStyle | undefined
+  if (!isStringOnly) {
+    const { textStyle = {} } = splitStyle(finalStyle)
+    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
+  }
+  const textPassThrough = useTextPassThroughValue(
+    childTextStyle,
+    undefined,
+    {
+      inheritTextProps: false,
+      disabled: isStringOnly
+    }
+  )
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(
-    extendObject({}, props, {
+    extendObject({}, mergedProps, {
       children
     }),
     {
       hasVarDec,
-      varContext: varContextRef.current
+      varContext: varContextRef.current,
+      textPassThrough
     }
   ))
 

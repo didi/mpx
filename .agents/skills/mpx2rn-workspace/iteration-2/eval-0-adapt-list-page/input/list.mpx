@@ -1,0 +1,97 @@
+<template>
+  <view class="list">
+    <view class="list-header">
+      <text class="title">列表标题</text>
+    </view>
+    <view
+      class="item {{currentId === item.id ? 'item-active' : ''}}"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="goDetail"
+    >
+      <text class="content">{{item.text}}</text>
+    </view>
+    <view wx:if="{{loading}}" class="loading">加载中...</view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+
+createPage({
+  data: {
+    items: [],
+    loading: false,
+    currentId: null
+  },
+  onLoad () {
+    this.fetchList()
+  },
+  onPullDownRefresh () {
+    this.fetchList()
+  },
+  onReachBottom () {
+    this.loadMore()
+  },
+  methods: {
+    fetchList () {
+      this.loading = true
+      wx.request({
+        url: '/api/list',
+        success: (res) => {
+          this.items = res.data
+          this.loading = false
+        }
+      })
+    },
+    loadMore () {},
+    goDetail (e) {
+      const id = e.target.dataset.id
+      this.currentId = id
+      wx.navigateTo({ url: '/pages/detail?id=' + id })
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.list {
+  padding: 24rpx;
+  .list-header {
+    .title {
+      font-size: 36rpx;
+      font-weight: 500;
+      color: #333;
+    }
+  }
+  .item {
+    padding: 20rpx;
+    border-bottom: 1rpx solid #eee;
+    &:first-child {
+      border-top: 1rpx solid #eee;
+    }
+    &:active {
+      background-color: #f5f5f5;
+    }
+    .content {
+      font-size: 28rpx;
+      color: #666;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  .item-active {
+    background-color: #e8f0ff;
+  }
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 20rpx;
+    &.show {
+      display: block;
+    }
+  }
+}
+</style>

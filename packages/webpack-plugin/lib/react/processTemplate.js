@@ -1,4 +1,3 @@
-const addQuery = require('../utils/add-query')
 const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
@@ -8,15 +7,11 @@ const { genNode, genTemplate } = require('../template-compiler/gen-node-react')
 const bindThis = require('../template-compiler/bind-this')
 const isEmptyObject = require('../utils/is-empty-object')
 const dash2hump = require('../utils/hump-dash').dash2hump
+const addQuery = require('../utils/add-query')
+const isUrlRequestBase = require('../utils/is-url-request')
 
-function transformCode (code, wxsModuleMap, error) {
+function transformCode (code, ignoreMap, error) {
   try {
-    const ignoreMap = Object.assign({
-      createElement: true,
-      getComponent: true,
-      getTemplate: true
-    }, wxsModuleMap)
-
     const bindResult = bindThis.transform(code, {
       ignoreMap
     })
@@ -42,6 +37,7 @@ module.exports = function (template, {
   const mpx = loaderContext.getMpx()
   const {
     projectRoot,
+    externals,
     mode,
     env,
     defs,
@@ -52,7 +48,8 @@ module.exports = function (template, {
     forceProxyEventRules,
     checkUsingComponentsRules,
     globalComponents,
-    customTextRules
+    customTextRules,
+    rnConfig
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
@@ -75,14 +72,14 @@ module.exports = function (template, {
 
     if (template.content) {
       const templateSrcMode = template.mode || srcMode
-      const warn = (msg) => {
+      const warn = (msg, loc) => {
         loaderContext.emitWarning(
-          new Error('[Mpx template warning][' + loaderContext.resource + ']: ' + msg)
+          new Error('[Mpx template warning][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
         )
       }
-      const error = (msg) => {
+      const error = (msg, loc) => {
         loaderContext.emitError(
-          new Error('[Mpx template error][' + loaderContext.resource + ']: ' + msg)
+          new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
         )
       }
       const parseOptions = {
@@ -111,9 +108,26 @@ module.exports = function (template, {
         hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
         forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
         checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules),
-        isCustomText: matchCondition(resourcePath, customTextRules)
+        isCustomText: matchCondition(resourcePath, customTextRules),
+        customBuiltInComponents: rnConfig && rnConfig.customBuiltInComponents,
+        isUrlRequest: (url) => isUrlRequestBase(url, projectRoot, externals)
       }
       const { root, meta } = templateCompiler.parse(template.content, parseOptions)
+      const templateAssetsIgnoreMap = {}
+      let templateAssetsCode = ''
+      if (meta.templateAssets) {
+        Object.keys(meta.templateAssets).forEach((name) => {
+          templateAssetsIgnoreMap[name] = true
+          const request = loaderUtils.urlToRequest(meta.templateAssets[name], projectRoot)
+          templateAssetsCode += `var ${name} = require(${loaderUtils.stringifyRequest(loaderContext, request)});\n`
+        })
+      }
+
+      const ignoreMap = Object.assign({
+        createElement: true,
+        getComponent: true,
+        getTemplate: true
+      }, meta.wxsModuleMap, templateAssetsIgnoreMap)
 
       if (meta.wxsContentMap) {
         for (const module in meta.wxsContentMap) {
@@ -140,20 +154,19 @@ module.exports = function (template, {
           }
         })
         localTemplatesCode += '};'
-        const transformedCode = transformCode(localTemplatesCode, meta.wxsModuleMap, error)
+        const transformedCode = transformCode(localTemplatesCode, ignoreMap, error)
         if (transformedCode) {
           output += transformedCode + '\n'
           templates.push('localTemplates')
         }
       }
 
-      if (meta.builtInComponentsMap) {
-        Object.keys(meta.builtInComponentsMap).forEach((name) => {
-          builtInComponentsMap[name] = {
-            resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-          }
-        })
-      }
+      const builtInPaths = meta.builtInComponentsMap || {}
+      Object.keys(builtInPaths).forEach((name) => {
+        builtInComponentsMap[name] = {
+          resource: addQuery(builtInPaths[name], { isComponent: true })
+        }
+      })
       if (meta.genericsInfo) {
         genericsInfo = meta.genericsInfo
       }
@@ -162,6 +175,7 @@ module.exports = function (template, {
         const src = loaderUtils.urlToRequest(meta.wxsModuleMap[module], projectRoot)
         output += `var ${module} = require(${loaderUtils.stringifyRequest(loaderContext, src)});\n`
       }
+      output += templateAssetsCode
 
       const templateHelpersCode = templates.length
         ? `var templates = Object.assign({}, ${templates.join(', ')});
@@ -174,7 +188,7 @@ function getTemplate(name) {
 
       const rawCode = genNode(root, true)
       if (rawCode) {
-        const transformedCode = transformCode(rawCode, meta.wxsModuleMap, error)
+        const transformedCode = transformCode(rawCode, ignoreMap, error)
         if (transformedCode) {
           output += `global.currentInject.render = function (createElement, getComponent) {
   return ${transformedCode}

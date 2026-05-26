@@ -117,13 +117,24 @@ function proxy (target, source, keys, readonly, onConflict) {
   if (!mpxGlobal.__mpx) {
     console.warn('[Mpx utils warn]: Can not find "global.__mpx", "proxy" may encounter some potential problems!')
   }
-  keys = keys || Object.keys(source)
+  // source 为函数时视为 getter：每次读/写都 resolve 出当前对象（如 props 每次 render 传入的新字面量）
+  const resolveSource = typeof source === 'function'
+    ? source
+    : function resolveSource () {
+      return source
+    }
+  if (!keys) {
+    const src = resolveSource()
+    keys = (src != null && typeof src === 'object') ? Object.keys(src) : []
+  }
   keys.forEach((key) => {
     const descriptor = {
       get () {
-        const val = source[key]
+        const src = resolveSource()
+        if (src == null || typeof src !== 'object') return
+        const val = src[key]
         if (mpxGlobal.__mpx) {
-          return !mpxGlobal.__mpx.isReactive(source) && mpxGlobal.__mpx.isRef(val) ? val.value : val
+          return !mpxGlobal.__mpx.isReactive(src) && mpxGlobal.__mpx.isRef(val) ? val.value : val
         } else {
           return val
         }
@@ -134,18 +145,20 @@ function proxy (target, source, keys, readonly, onConflict) {
     descriptor.set = readonly
       ? noop
       : function (val) {
+        const src = resolveSource()
+        if (src == null || typeof src !== 'object') return
         if (mpxGlobal.__mpx) {
           const isRef = mpxGlobal.__mpx.isRef
           // 对reactive对象代理时不需要处理ref解包
-          if (!mpxGlobal.__mpx.isReactive(source)) {
-            const oldVal = source[key]
+          if (!mpxGlobal.__mpx.isReactive(src)) {
+            const oldVal = src[key]
             if (isRef(oldVal) && !isRef(val)) {
               oldVal.value = val
               return
             }
           }
         }
-        source[key] = val
+        src[key] = val
       }
     if (onConflict) {
       if (key in target) {
