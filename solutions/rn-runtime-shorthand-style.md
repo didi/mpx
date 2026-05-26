@@ -237,10 +237,9 @@ const boxSizingAffectingStyleMap: Record<string, boolean> = {
 1. 每个顶层 key 一次 `hasOwn` 判断（直接复用 `runtimeAbbreviationMap`，无额外 map）。
 2. `shorthandKeys.length === 0` 时跳过 `transformShorthand`。
 3. `transformLineHeight` / `transformFontFamily` / `transformFlex` 各一次类型判断。
-4. 单正数值 `flex` 跳过展开（RN 原生支持）。
-5. 单值 composite 属性跳过展开（RN 原生支持）。
-6. `expandFlex` 使用索引遍历，避免数组拷贝和 `shift()`。
-7. 正则常量提升至模块顶层，避免循环内重复创建。
+4. 单值 composite 属性跳过展开（RN 原生支持）。
+5. `expandFlex` 使用索引遍历，避免数组拷贝和 `shift()`。
+6. 正则常量提升至模块顶层，避免循环内重复创建。
 
 不引入额外 clone、二次遍历。
 
