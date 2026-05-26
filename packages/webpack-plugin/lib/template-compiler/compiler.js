@@ -2644,7 +2644,7 @@ function processTemplateImport (el, meta) {
 function processTemplateTranspile (el, meta) {
   if (processTemplateImport(el, meta)) return
 
-  if (el.tag !== 'template') return
+  if (el.tag !== 'template' || el.isBlock) return
 
   const is = getAndRemoveAttr(el, 'is').val
   if (is) {
