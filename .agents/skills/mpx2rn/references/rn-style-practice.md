@@ -882,15 +882,19 @@ Grid 布局在 RN 平台不支持。
 
 ## 文本溢出处理
 
+### 溢出打点（text-overflow: ellipsis）
+
 **原平台：**
 
 ```html
 <template>
   <text class="text">{{text}}</text>
+  <view class="text">{{text}}</view>
 </template>
 
 <style>
   .text {
+    overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -903,19 +907,58 @@ Grid 布局在 RN 平台不支持。
 <template>
   <!-- RN 平台内使用模板属性条件编译添加 numberOfLines 属性进行等效实现-->
   <text class="text" numberOfLines@ios|android|harmony="{{1}}"> {{text}} </text>
-
   <!-- numberOfLines 也可用于 view -->
   <view class="text" numberOfLines@ios|android|harmony="{{1}}"> {{text}} </view>
 </template>
 
 <style>
-  /* 原平台内使用样式条件编译保留原有样式定义 */
-  /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
   .text {
+    overflow: hidden;
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
     white-space: nowrap;
     text-overflow: ellipsis;
+    /* @mpx-endif */
   }
-  /* @mpx-endif */
+</style>
+```
+
+### 溢出截断（text-overflow: clip）
+
+**原平台：**
+
+```html
+<template>
+  <text class="text">{{text}}</text>
+  <view class="text">{{text}}</view>
+</template>
+
+<style>
+  .text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+</style>
+```
+
+**跨平台兼容方案：**
+
+```html
+<template>
+  <!-- RN 平台内使用 numberOfLines + ellipsizeMode="clip" 实现等效裁剪效果 -->
+  <text class="text" numberOfLines@ios|android|harmony="{{1}}" ellipsizeMode@ios|android|harmony="clip">{{text}}</text>
+  <!-- numberOfLines + ellipsizeMode 也可用于 view -->
+  <view class="text" numberOfLines@ios|android|harmony="{{1}}" ellipsizeMode@ios|android|harmony="clip">{{text}}</view>
+</template>
+
+<style>
+  .text {
+    overflow: hidden;
+    /* @mpx-if (__mpx_mode__ === 'wx' || __mpx_mode__ === 'ali' || __mpx_mode__ === 'web') */
+    white-space: nowrap;
+    text-overflow: clip;
+    /* @mpx-endif */
+  }
 </style>
 ```
 
