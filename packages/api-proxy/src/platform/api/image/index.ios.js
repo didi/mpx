@@ -22,16 +22,13 @@ const getImageInfo = function (options = {}) {
     failHandle(result, fail, complete)
     return
   }
-  let path = ''
-  if (src.toLowerCase().startsWith('http')) {
-    path = src
-  }
+
   Image.getSize(src, (width, height) => {
     const result = {
       errMsg: 'getImageInfo:ok',
       width,
       height,
-      path
+      path: src
     }
     defineUnsupportedProps(result, ['orientation', 'type'])
     successHandle(result, success, complete)

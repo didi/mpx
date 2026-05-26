@@ -1,6 +1,6 @@
 import { noop, getFocusedNavigation } from '@mpxjs/utils'
 
-export default class CreateCamera {
+export default class CameraContext {
   constructor () {
     const navigation = getFocusedNavigation() || {}
     this.camera = navigation.camera || {}

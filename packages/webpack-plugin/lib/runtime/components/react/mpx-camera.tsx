@@ -1,8 +1,10 @@
-import React, { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect } from 'react'
-import { useTransformStyle, useLayout, extendObject } from './utils'
+import { createElement, forwardRef, useRef, useCallback, useContext, useState, useEffect, useMemo } from 'react'
+import { getCurrentPage, useTransformStyle, useLayout, extendObject } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { noop } from '@mpxjs/utils'
+import { Camera, useCameraDevice, useCodeScanner, useCameraFormat } from 'react-native-vision-camera'
+import { noop, warn, hasOwn } from '@mpxjs/utils'
 import { RouteContext } from './context'
+import { watch, WatchOptions } from '@mpxjs/core'
 
 const qualityValue = {
   high: 90,
@@ -14,9 +16,9 @@ const qualityValue = {
 interface CameraProps {
   mode?: 'normal' | 'scanCode'
   resolution?: 'low' | 'medium' | 'high'
-  devicePosition?: 'front' | 'back'
+  'device-position'?: 'front' | 'back'
   flash?: 'auto' | 'on' | 'off'
-  frameSize?: 'small' | 'medium' | 'large'
+  'frame-size'?: 'small' | 'medium' | 'large'
   style?: Record<string, any>
   bindstop?: () => void
   binderror?: (error: { message: string }) => void
@@ -65,14 +67,13 @@ let RecordRes: any = null
 
 const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: CameraProps, ref): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { Camera, useCameraDevice, useCodeScanner, useCameraFormat } = require('react-native-vision-camera')
   const cameraRef = useRef<any>(null)
   const {
     mode = 'normal',
     resolution = 'medium',
-    devicePosition = 'back',
+    'device-position': devicePosition = 'back',
     flash = 'auto',
-    frameSize = 'medium',
+    'frame-size': frameSize = 'medium',
     bindinitdone,
     bindstop,
     bindscancode,
@@ -100,24 +101,26 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     parentHeight
   })
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: cameraRef })
-  const isPhoto = mode === 'normal'
+  const isPhoto = useRef<boolean>(false)
+  isPhoto.current = mode === 'normal'
   const device = useCameraDevice(devicePosition || 'back')
-  const { navigation } = useContext(RouteContext) || {}
+  const { navigation, pageId } = useContext(RouteContext) || {}
   const [zoomValue, setZoomValue] = useState<number>(1)
+  const [isActive, setIsActive] = useState<boolean>(true)
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
-  const hasCamera = useRef(false)
+  const page = getCurrentPage(pageId)
 
   // 先定义常量，避免在条件判断后使用
   const maxZoom = device?.maxZoom || 1
-  const RESOLUTION_MAPPING: Record<string, { width: number, height: number }> = {
-    low: { width: 640, height: 480 },
-    medium: { width: 1280, height: 720 },
-    high: { width: 1920, height: 1080 }
+  const RESOLUTION_MAPPING: Record<string, { width: number, height: number } | 'max'> = {
+    low: { width: 1280, height: 720 },
+    medium: { width: 1920, height: 1080 },
+    high: 'max'
   }
-  const FRAME_SIZE_MAPPING: Record<string, { width: number, height: number }> = {
-    small: { width: 480, height: 360 },
-    medium: { width: 720, height: 540 },
-    large: { width: 1080, height: 810 }
+  const FRAME_SIZE_MAPPING: Record<string, { width: number, height: number } | 'max'> = {
+    small: { width: 1280, height: 720 },
+    medium: { width: 1920, height: 1080 },
+    large: 'max'
   }
 
   const format = useCameraFormat(device, [
@@ -126,16 +129,31 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       videoResolution: FRAME_SIZE_MAPPING[frameSize] || RESOLUTION_MAPPING[resolution]
     }
   ])
-
+  const isScancode = useCallback((fail: (res: { errMsg: string }) => void, complete: (res: { errMsg: string }) => void) => {
+    if (!isPhoto.current) {
+      const result = {
+        errMsg: 'Not allow to invoke takePhoto in \'scanCode\' mode.'
+      }
+      fail(result)
+      complete(result)
+      return true
+    }
+    return false
+  }, [])
   const codeScanner = useCodeScanner({
-    codeTypes: ['qr', 'ean-13'],
+    codeTypes: ['qr'],
     onCodeScanned: (codes: any[]) => {
-      const result = codes.map(code => code.value).join(',')
-      bindscancode && bindscancode(getCustomEvent('scancode', {}, {
-        detail: {
-          result: codes.map(code => code.value).join(',')
-        }
-      }))
+      codes.forEach(code => {
+        const type = code.type === 'qr' ? 'QR_CODE' : code.type?.toUpperCase()
+        const frame = code.frame || {}
+        bindscancode && bindscancode(getCustomEvent('scancode', {}, {
+          detail: {
+            result: code.value,
+            type,
+            scanArea: [parseInt(frame.x) || 0, parseInt(frame.y) || 0, parseInt(frame.width) || 0, parseInt(frame.height) || 0]
+          }
+        }))
+      })
     }
   })
 
@@ -151,14 +169,14 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     bindstop && bindstop()
   }, [bindstop])
 
-  const camera: CameraRef = {
+  const camera: CameraRef = useMemo(() => ({
     setZoom: (zoom: number) => {
       setZoomValue(zoom)
     },
     takePhoto: (options: TakePhotoOptions = {}) => {
       const { success = noop, fail = noop, complete = noop } = options
+      if (isScancode(fail, complete)) return
       cameraRef.current?.takePhoto?.({
-        flash,
         quality: qualityValue[options.quality || 'normal'] as number
       } as any).then((res: { path: any }) => {
         const result = {
@@ -179,7 +197,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       let { timeout = 30, success = noop, fail = noop, complete = noop, timeoutCallback = noop } = options
       timeout = timeout > 300 ? 300 : timeout
       let recordTimer: NodeJS.Timeout | null = null
-      let isTimeout = false
+      if (isScancode(fail, complete)) return
       try {
         const result = {
           errMsg: 'startRecord:ok'
@@ -188,7 +206,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         complete(result)
 
         cameraRef.current?.startRecording?.({
-          flash,
           onRecordingError: (error: any) => {
             if (recordTimer) clearTimeout(recordTimer)
             const errorResult = {
@@ -204,7 +221,6 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         })
 
         recordTimer = setTimeout(() => { // 超时自动停止
-          isTimeout = true
           cameraRef.current?.stopRecording().catch(() => {
             // 忽略停止录制时的错误
           })
@@ -220,6 +236,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     },
     stopRecord: (options: StopRecordOptions = {}) => {
       const { success = noop, fail = noop, complete = noop } = options
+      if (isScancode(fail, complete)) return
       try {
         cameraRef.current?.stopRecording().then(() => {
           setTimeout(() => {
@@ -249,16 +266,21 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
         complete(result)
       }
     }
-  }
+  }), [])
 
   useEffect(() => {
-    if (navigation) {
-      if (navigation && !navigation.camera) {
-        navigation.camera = camera
-      } else {
-        hasCamera.current = true
-        navigation.camera.multi = true
-      }
+    let unWatch: any
+    if (pageId && hasOwn(global.__mpxPageStatusMap, String(pageId))) {
+      unWatch = watch(() => global.__mpxPageStatusMap[pageId], (newVal: string) => {
+        if (newVal === 'show') {
+          if (page.id === pageId) {
+            setIsActive(true)
+          }
+        }
+        if (newVal === 'hide') {
+          setIsActive(false)
+        }
+      }, { sync: true } as WatchOptions)
     }
     const checkCameraPermission = async () => {
       try {
@@ -275,13 +297,14 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
     checkCameraPermission()
     return () => {
-      if (navigation && navigation.camera) {
-        navigation.camera = null
+      if (navigation?.camera === camera) {
+        delete navigation.camera
       }
+      unWatch && unWatch()
     }
   }, [])
 
-  const innerProps = useInnerProps(
+  const innerProps:any = useInnerProps(
     extendObject(
       {},
       props,
@@ -289,15 +312,16 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       {
         ref: cameraRef,
         style: extendObject({}, normalStyle, layoutStyle),
-        isActive: true,
+        isActive,
         photo: true,
         video: true,
         onInitialized,
         onStopped,
         device,
         format,
-        codeScanner: !isPhoto ? codeScanner : undefined,
-        zoom: zoomValue
+        codeScanner: !isPhoto.current ? codeScanner : undefined,
+        zoom: zoomValue,
+        torch: flash
       }
     ),
     [
@@ -315,7 +339,14 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
     }
   )
 
-  if (!hasPermission || hasCamera.current || !device) {
+  if (navigation && navigation.camera && navigation.camera !== camera) {
+    warn('<camera>: 一个页面只能插入一个')
+    return null
+  } else if (navigation) {
+    navigation.camera = camera
+  }
+
+  if (!hasPermission || !device) {
     return null
   }
 

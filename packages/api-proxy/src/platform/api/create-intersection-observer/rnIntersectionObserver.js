@@ -76,10 +76,11 @@ class RNIntersectionObserver {
     let targetRef = null
     // 支持传递 ref 对象或数组
     if (isArray(selector)) {
-      const refs = selector.map(item => item.nodeRefs?.[0]).filter(Boolean)
+      const refs = [].concat(...selector.map(item => (item && item.nodeRefs) || []))
       targetRef = this.observeAll ? refs : refs[0]
     } else if (isObject(selector)) {
-      targetRef = selector.nodeRefs?.[0]
+      const refs = selector.nodeRefs || []
+      targetRef = this.observeAll ? refs : refs[0]
     } else if (isString(selector)) {
       if (this.observeAll) {
         targetRef = this.component.__selectRef(selector, 'node', true)

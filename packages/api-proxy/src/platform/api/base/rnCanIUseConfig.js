@@ -93,9 +93,16 @@ export const SUPPORTED_APIS = [
   'clearStorage',
   'clearStorageSync',
 
+  // page-scroll-to
+  'pageScrollTo',
+
   // system
   'getSystemInfo',
   'getSystemInfoSync',
+  'getDeviceInfo',
+  'getWindowInfo',
+  'getLaunchOptionsSync',
+  'getEnterOptionsSync',
 
   // setting
   'getMenuButtonBoundingClientRect',
@@ -227,5 +234,13 @@ export const SUPPORTED_OBJECTS = {
     'abort',
     'onHeadersReceived',
     'offHeadersReceived'
+  ],
+
+  // camera
+  CameraContext: [
+    'setZoom',
+    'takePhoto',
+    'startRecord',
+    'stopRecord'
   ]
 }

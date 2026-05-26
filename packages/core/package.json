@@ -26,7 +26,6 @@
   "peerDependencies": {
     "@d11/react-native-fast-image": "*",
     "@mpxjs/api-proxy": "^2.9.0",
-    "@mpxjs/store": "^2.9.0",
     "@react-navigation/native": "*",
     "@react-navigation/native-stack": "*",
     "react": "*",
@@ -37,6 +36,7 @@
     "react-native-safe-area-context": "*",
     "react-native-screens": "*",
     "react-native-video": "*",
+    "react-native-vision-camera": "*",
     "react-native-webview": "*",
     "vue": "^2.7.10",
     "vue-demi": "^0.14.6",
@@ -44,6 +44,48 @@
     "vue-i18n-bridge": "^9.2.2"
   },
   "peerDependenciesMeta": {
+    "@mpxjs/api-proxy": {
+      "optional": true
+    },
+    "@d11/react-native-fast-image": {
+      "optional": true
+    },
+    "@react-navigation/native": {
+      "optional": true
+    },
+    "@react-navigation/native-stack": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    },
+    "react-native-gesture-handler": {
+      "optional": true
+    },
+    "react-native-linear-gradient": {
+      "optional": true
+    },
+    "react-native-reanimated": {
+      "optional": true
+    },
+    "react-native-safe-area-context": {
+      "optional": true
+    },
+    "react-native-screens": {
+      "optional": true
+    },
+    "react-native-video": {
+      "optional": true
+    },
+    "react-native-webview": {
+      "optional": true
+    },
+    "react-native-vision-camera": {
+      "optional": true
+    },
     "vue": {
       "optional": true
     },
@@ -54,42 +96,6 @@
       "optional": true
     },
     "vue-i18n-bridge": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    },
-    "react-native": {
-      "optional": true
-    },
-    "react-native-reanimated": {
-      "optional": true
-    },
-    "@react-navigation/native": {
-      "optional": true
-    },
-    "@react-navigation/native-stack": {
-      "optional": true
-    },
-    "react-native-safe-area-context": {
-      "optional": true
-    },
-    "react-native-screens": {
-      "optional": true
-    },
-    "react-native-webview": {
-      "optional": true
-    },
-    "react-native-gesture-handler": {
-      "optional": true
-    },
-    "react-native-linear-gradient": {
-      "optional": true
-    },
-    "@d11/react-native-fast-image": {
-      "optional": true
-    },
-    "react-native-video": {
       "optional": true
     }
   },
