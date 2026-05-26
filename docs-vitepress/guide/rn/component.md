@@ -236,9 +236,10 @@ movable-view的可移动区域。
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| src                     | string  | `false`       | 图片资源地址及 base64 格式数据 |
+| src                     | string  | `false`       | 图片资源地址、base64 格式数据或本地静态资源相对路径 |
 | mode                    | string  | `scaleToFill` | 图片裁剪、缩放的模式，可选值为 `scaleToFill`、`aspectFit`、`aspectFill`、`widthFix`、`heightFix`、`top`、`bottom`、`center`、`left`、`right`、`top left`、`top right`、`bottom left`、`bottom right`             |
 | enable-fast-image          | boolean  | `false`   | RN环境特有属性，开启后将使用 react-native-fast-image 进行图片渲染，请根据实际情况开启 |
+| is-svg                 | boolean  | `false`   | RN 环境特有属性，传递为 `true` 时强制使用 SVG 方式渲染图片 |
 
 事件
 
@@ -251,6 +252,7 @@ movable-view的可移动区域。
 >
 > - image 组件默认宽度320px、高度240px
 > - image 组件进行缩放时，计算出来的宽高可能带有小数，在不同 webview 内核下渲染可能会被抹去小数部分
+> - RN 输出支持 `<image src="./logo.png" />` / `<image src="./icon.svg" />` 这类本地静态资源写法，编译后会通过 webpack 资源 loader 处理；动态绑定本地图片时建议在脚本中 `import` 后再绑定。
 
 ### icon
 图标组件
@@ -660,7 +662,7 @@ API
 
 | 属性名                   | 类型     | 默认值         | 说明                                                       |
 | ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| src	    | string  |               | 要播放视频的资源地址|
+| src	    | string  |               | 要播放视频的资源地址或本地静态资源相对路径 |
 | controls	    | boolean  |     `true`         | 是否显示默认播放控件|
 | autoplay	    | boolean  |   `false`  | 是否自动播放|
 | loop	    | boolean  |       `false`        | 是否循环播放	|

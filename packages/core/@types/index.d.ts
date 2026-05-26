@@ -280,6 +280,14 @@ export interface WebviewConfig {
  */
 export interface RnConfig {
   /**
+   * RN 节点未显式声明 box-sizing 时使用的默认盒模型。
+   *
+   * 默认值为 content-box，用于对齐小程序 / Web 的默认行为。
+   * 如需保留 RN 原始默认盒模型，可配置为 border-box。
+   */
+  defaultBoxSizing?: 'border-box' | 'content-box'
+
+  /**
    * 当导航状态发生变化时触发，例如页面跳转、返回等。
    *
    * @param state 当前的导航状态对象
@@ -311,6 +319,13 @@ export interface RnConfig {
    * 是否禁用框架内部的 AppStateChange 监听。
    */
   disableAppStateListener?: boolean
+
+  /**
+   * RN 文本类组件是否允许跟随系统字体缩放。
+   *
+   * @default false
+   */
+  allowFontScaling?: boolean
 
   /**
    * 控制首页回退按钮是否展示，并监听点击事件。

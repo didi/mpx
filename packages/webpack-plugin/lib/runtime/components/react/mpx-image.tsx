@@ -20,10 +20,11 @@ import {
   ImageErrorEventData,
   LayoutChangeEvent,
   DimensionValue,
-  ImageLoadEventData
+  ImageLoadEventData,
+  ImageSourcePropType
 } from 'react-native'
 import { noop } from '@mpxjs/utils'
-import { SvgCssUri } from 'react-native-svg/css'
+import { LocalSvg, SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
@@ -46,7 +47,7 @@ export type Mode =
   | 'bottom right'
 
 export interface ImageProps {
-  src?: string
+  src?: string | ImageSourcePropType
   mode?: Mode
   style?: ImageStyle & Record<string, any>
   'enable-offset'?: boolean
@@ -56,6 +57,7 @@ export interface ImageProps {
   'parent-width'?: number
   'parent-height'?: number
   'enable-fast-image'?: boolean
+  'is-svg'?: boolean
   bindload?: (evt: NativeSyntheticEvent<ImageLoadEventData> | unknown) => void
   binderror?: (evt: NativeSyntheticEvent<ImageErrorEventData> | unknown) => void
 }
@@ -70,7 +72,6 @@ interface ImageState {
 
 const DEFAULT_IMAGE_WIDTH = 320
 const DEFAULT_IMAGE_HEIGHT = 240
-
 const cropMode: Mode[] = [
   'top',
   'bottom',
@@ -96,6 +97,32 @@ const isNumber = (value: DimensionValue): value is number => typeof value === 'n
 
 const relativeCenteredSize = (viewSize: number, imageSize: number) => {
   return (viewSize - imageSize) / 2
+}
+
+function normalizeImageSource (src: string | ImageSourcePropType): ImageSourcePropType {
+  return typeof src === 'string' ? { uri: src } : src
+}
+
+function getImageUri (src: string | ImageSourcePropType) {
+  return typeof src === 'string' ? src : RNImage.resolveAssetSource(src)?.uri || ''
+}
+
+function isSvgSource (src: string | ImageSourcePropType) {
+  const uri = getImageUri(src)
+  return SVG_REGEXP.test(uri)
+}
+
+function getImageSize (src: string | ImageSourcePropType, success: (width: number, height: number) => void, fail: () => void = noop) {
+  if (typeof src === 'string') {
+    RNImage.getSize(src, success, fail)
+    return
+  }
+  const source = RNImage.resolveAssetSource(src)
+  if (source && source.width && source.height) {
+    success(source.width, source.height)
+  } else {
+    fail()
+  }
 }
 
 // 获取能完全显示图片的缩放比例：长宽方向的缩放比例最小值即为能完全展示的比例
@@ -136,6 +163,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     'enable-fast-image': enableFastImage,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
+    'is-svg': isSvgProp,
     bindload,
     binderror
   } = props
@@ -157,7 +185,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     defaultStyle
   })
 
-  const isSvg = SVG_REGEXP.test(src)
+  const isSvg = isSvgProp || isSvgSource(src)
   const isWidthFixMode = mode === 'widthFix'
   const isHeightFixMode = mode === 'heightFix'
   const isCropMode = cropMode.includes(mode)
@@ -379,7 +407,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     evt.persist()
-    RNImage.getSize(src, (width: number, height: number) => {
+    const triggerLoad = (width: number, height: number) => {
       bindload!(
         getCustomEvent(
           'load',
@@ -391,7 +419,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
           props
         )
       )
-    })
+    }
+    const { source } = evt.nativeEvent
+    if (source && source.width && source.height) {
+      triggerLoad(source.width, source.height)
+      return
+    }
+    getImageSize(src, triggerLoad)
   }
 
   const onImageError = (evt: NativeSyntheticEvent<ImageErrorEventData>) => {
@@ -410,7 +444,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
 
   useEffect(() => {
     if (!isSvg && isLayoutMode) {
-      RNImage.getSize(
+      getImageSize(
         src,
         (width: number, height: number) => {
           state.current.imageWidth = width
@@ -455,7 +489,8 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     ),
     [
       'src',
-      'mode'
+      'mode',
+      'is-svg'
     ],
     {
       layoutRef
@@ -463,18 +498,19 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   )
 
   function renderSvgImage () {
+    const svgProps = {
+      onLayout: onSvgLoad,
+      style: extendObject(
+        { transformOrigin: 'left top' },
+        modeStyle
+      )
+    }
     return createElement(
       View,
       innerProps,
-      createElement(SvgCssUri, {
-        uri: src,
-        onLayout: onSvgLoad,
-        onError: binderror && onSvgError,
-        style: extendObject(
-          { transformOrigin: 'left top' },
-          modeStyle
-        )
-      })
+      typeof src === 'string'
+        ? createElement(SvgCssUri, extendObject({ uri: src, onError: binderror && onSvgError }, svgProps))
+        : createElement(LocalSvg, extendObject({ asset: src }, svgProps))
     )
   }
 
@@ -482,7 +518,7 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     return renderImage(
       extendObject(
         {
-          source: { uri: src },
+          source: normalizeImageSource(src),
           resizeMode: resizeMode,
           onLoad: bindload && onImageLoad,
           onError: binderror && onImageError,

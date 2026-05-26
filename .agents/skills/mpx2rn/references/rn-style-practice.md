@@ -15,6 +15,7 @@
   - [谨慎使用 font-weight 数值](#谨慎使用-font-weight-数值)
 - [布局最佳实践](#布局最佳实践)
   - [使用 Flexbox 布局](#使用-flexbox-布局)
+  - [不要依赖 BFC 和 margin 合并](#不要依赖-bfc-和-margin-合并)
   - [避免使用 Grid 布局](#避免使用-grid-布局)
   - [避免使用 Float 布局](#避免使用-float-布局)
 - [文本溢出处理](#文本溢出处理)
@@ -688,6 +689,97 @@ Flexbox 是跨平台最可靠的布局方式。
 
   .item {
     flex: 1;
+  }
+</style>
+```
+
+### 不要依赖 BFC 和 margin 合并
+
+小程序 / Web 的普通块级布局中存在相邻块级元素垂直 `margin` 合并行为，常见现象包括：父子元素的垂直外边距可能合并、相邻兄弟元素的上下外边距可能取较大值而不是相加。BFC（块级格式化上下文）是常见的隔离手段；例如 `overflow: hidden` 可通过创建 BFC 隔离部分父子 margin 合并。CSS margin 合并只发生在块级布局的垂直方向，水平方向的 `margin-left` / `margin-right` 不会发生 margin 合并。
+
+RN 基于 Yoga 布局，没有 BFC 和 margin 合并概念。输出 RN 时，`marginTop` / `marginBottom` 会作为节点自身间距参与布局，相邻节点的垂直 margin 通常会叠加，`overflow: hidden` 也不具备创建 BFC 的布局语义。因此跨端适配时不要依赖 BFC 或 margin 合并来“自动修正”间距，应改为显式、单向地定义间距归属。
+
+**推荐处理原则：**
+
+1. **容器外沿空间用父容器 `padding` 表达**：不要依赖首个 / 末个子节点的 margin 与父容器合并。
+2. **兄弟节点间距只交给一侧负责**：列表项之间统一使用后一项的 `margin-top` 或前一项的 `margin-bottom`，不要同时给上下两个节点都写垂直 margin。
+3. **用模板状态标记首尾项**：需要去掉首项或末项间距时，用 `wx:class` + `index` 显式绑定单类。
+4. **不要把 BFC hack 当作跨端布局手段**：`overflow: hidden` 在 RN 中主要用于裁剪，不应用来隔离 margin 合并。
+5. **必要时可显式声明纵向 Flex**：如果容器内仍存在难以拆解的垂直 margin 关系，可在确认不影响原布局的前提下，同时声明 `display: flex` 与 `flex-direction: column`，使原平台子节点也作为 flex item 参与布局，进一步避免垂直 margin 合并；若已通过 `padding` 和单侧 margin 明确处理间距，则不必额外添加 flex 声明。
+
+注意，Mpx 输出 RN 时，如果显式声明了 `display: flex` 但未声明 `flex-direction`，会自动补充 `flex-direction: row` 与小程序 / Web 对齐。为了保持原本块级纵向布局，选择添加 flex 声明时必须同步声明 `flex-direction: column`。
+
+**❌ 避免：**依赖 Web / 小程序中的 margin 合并或 BFC 隔离来得到最终间距。下例在原平台中 `.card` 通过 `overflow: hidden` 创建 BFC 隔离父子 margin，但普通流里的相邻兄弟垂直 margin 仍可能按 CSS 规则合并；RN 中没有这套行为，间距可能明显不同。
+
+```html
+<template>
+  <view class="card">
+    <view class="card-title">标题</view>
+    <view class="card-desc">说明</view>
+  </view>
+</template>
+
+<style>
+  .card {
+    overflow: hidden;
+  }
+
+  .card-title {
+    margin-top: 24rpx;
+    margin-bottom: 16rpx;
+  }
+
+  .card-desc {
+    margin-top: 12rpx;
+  }
+</style>
+```
+
+**✅ 推荐：**把容器内边距交给父容器，把标题和说明之间的间距交给单侧节点，跨端都会得到明确且稳定的布局结果。
+
+```html
+<template>
+  <view class="card">
+    <view class="card-title">标题</view>
+    <view class="card-desc">说明</view>
+  </view>
+</template>
+
+<style>
+  .card {
+    padding-top: 24rpx;
+  }
+
+  .card-desc {
+    margin-top: 16rpx;
+  }
+</style>
+```
+
+**列表场景：**
+
+```html
+<template>
+  <view class="list">
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="list-item"
+      wx:class="{{ { 'list-item-gap': index > 0 } }}"
+    >
+      {{item.text}}
+    </view>
+  </view>
+</template>
+
+<style>
+  .list {
+    padding-top: 24rpx;
+    padding-bottom: 24rpx;
+  }
+
+  .list-item-gap {
+    margin-top: 16rpx;
   }
 </style>
 ```
