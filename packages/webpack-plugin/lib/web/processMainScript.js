@@ -21,7 +21,7 @@ module.exports = function ({
   tabBarStr,
   localPagesMap
 }, callback) {
-  const { i18n, webConfig } = loaderContext.getMpx()
+  const { i18n, webConfig, hasUnoCSS } = loaderContext.getMpx()
   const { pagesMap, firstPage, globalTabBar } = buildPagesMap({
     localPagesMap,
     loaderContext,
@@ -37,8 +37,12 @@ module.exports = function ({
     jsonConfig
   })
 
-  let output = `import '@mpxjs/webpack-plugin/lib/runtime/base.styl'
-import Vue from 'vue'
+  let output = 'import \'@mpxjs/webpack-plugin/lib/runtime/base.styl\'\n'
+  // hasUnoCSS由@mpxjs/unocss-plugin注入
+  if (hasUnoCSS) {
+    output += 'import \'uno.css\'\n'
+  }
+  output += `import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Mpx from '@mpxjs/core'
 import { processAppOption, getComponent } from ${stringifyRequest(loaderContext, optionProcessorPath)}

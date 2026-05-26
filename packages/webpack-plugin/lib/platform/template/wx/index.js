@@ -9,7 +9,7 @@ const { dash2hump } = require('../../../utils/hump-dash')
 
 module.exports = function getSpec ({ warn, error }) {
   function getRnDirectiveEventHandle (mode) {
-    return function ({ name, value }, { eventRules, el, attr, diagnostic }) {
+    return function ({ name, value }, { eventRules, el }) {
       const match = this.test.exec(name)
       const prefix = match[1]
       const eventName = match[2]
@@ -17,9 +17,8 @@ module.exports = function getSpec ({ warn, error }) {
       const meta = {
         modifierStr
       }
-      const data = { el, attr }
-      const rPrefix = runRules(spec.event.prefix, prefix, { mode, data, diagnostic })
-      const rEventName = runRules(eventRules, eventName, { mode, data, diagnostic })
+      const rPrefix = runRules(spec.event.prefix, prefix, { mode })
+      const rEventName = runRules(eventRules, eventName, { mode, data: { el } })
       return {
         name: rPrefix + rEventName + meta.modifierStr,
         value
@@ -69,12 +68,7 @@ module.exports = function getSpec ({ warn, error }) {
     // props后处理
     postProps: [
       {
-        web (prop, data) {
-          const { name, value } = prop
-          // `<template is>` / `data` 留给 compiler 与 RN 一致的 parseMustache 路径；勿在此处转成 :is / :data
-          if (data.el && data.el.tag === 'template' && (name === 'is' || name === 'data')) {
-            return prop
-          }
+        web ({ name, value }) {
           const parsed = parseMustacheWithContext(value)
           if (name.startsWith('data-')) {
             return {
@@ -125,14 +119,14 @@ module.exports = function getSpec ({ warn, error }) {
             }
           }
           if (el) {
-            const injectWxsInfo = {
-              injectWxsRequest: '~' + normalize.lib('runtime/swanHelper.wxs'),
+            const injectWxsProp = {
+              injectWxsPath: '~' + normalize.lib('runtime/swanHelper.wxs'),
               injectWxsModuleName: 'mpxSwanHelper'
             }
-            if (el.injectWxsInfos && Array.isArray(el.injectWxsInfos)) {
-              el.injectWxsInfos.push(injectWxsInfo)
+            if (el.injectWxsProps && Array.isArray(el.injectWxsProps)) {
+              el.injectWxsProps.push(injectWxsProp)
             } else {
-              el.injectWxsInfos = [injectWxsInfo]
+              el.injectWxsProps = [injectWxsProp]
             }
           }
           return {
@@ -360,14 +354,13 @@ module.exports = function getSpec ({ warn, error }) {
       // 事件
       {
         test: /^(bind|catch|capture-bind|capture-catch):?(.*?)(\..*)?$/,
-        ali ({ name, value }, { eventRules, el, attr, diagnostic }) {
+        ali ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const data = { el, attr }
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali', data, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'ali', data, diagnostic })
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ali' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'ali' })
           return {
             name: rPrefix + dash2hump(rEventName.replace(/^./, (matched) => {
               return matched.toUpperCase()
@@ -375,91 +368,85 @@ module.exports = function getSpec ({ warn, error }) {
             value
           }
         },
-        swan ({ name, value }, { eventRules, el, attr, diagnostic }) {
+        swan ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const data = { el, attr }
-          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan', data, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'swan', data, diagnostic })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'swan' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'swan' })
           if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
           }
         },
-        qq ({ name, value }, { eventRules, el, attr, diagnostic }) {
+        qq ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const data = { el, attr }
-          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq', data, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'qq', data, diagnostic })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'qq' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'qq' })
           if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
           }
         },
-        jd ({ name, value }, { eventRules, el, attr, diagnostic }) {
+        jd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const data = { el, attr }
-          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd', data, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'jd', data, diagnostic })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'jd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'jd' })
           if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
           }
         },
-        tt ({ name, value }, { eventRules, el, attr, diagnostic }) {
+        tt ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const data = { el, attr }
-          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt', data, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'tt', data, diagnostic })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'tt' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'tt' })
           if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
           }
         },
-        ks ({ name, value }, { eventRules, el, attr, diagnostic }) {
+        ks ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const data = { el, attr }
-          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ks', data, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'ks', data, diagnostic })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'ks' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'ks' })
           if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
           }
         },
-        dd ({ name, value }, { eventRules, el, attr, diagnostic }) {
+        dd ({ name, value }, { eventRules }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
           const modifierStr = match[3] || ''
-          const data = { el, attr }
-          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd', data, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'dd', data, diagnostic })
+          let rPrefix = runRules(spec.event.prefix, prefix, { mode: 'dd' })
+          const rEventName = runRules(eventRules, eventName, { mode: 'dd' })
           if (rEventName.includes('-')) rPrefix += ':'
           return {
             name: rPrefix + rEventName + modifierStr,
             value
           }
         },
-        web ({ name, value }, { eventRules, el, attr, usingComponents, diagnostic }) {
+        web ({ name, value }, { eventRules, el, usingComponents }) {
           const match = this.test.exec(name)
           const prefix = match[1]
           const eventName = match[2]
@@ -468,9 +455,8 @@ module.exports = function getSpec ({ warn, error }) {
             modifierStr
           }
           const isComponent = usingComponents.indexOf(el.tag) !== -1 || el.tag === 'component'
-          const data = { el, attr, isComponent }
-          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', data, meta, diagnostic })
-          const rEventName = runRules(eventRules, eventName, { mode: 'web', data, diagnostic })
+          const rPrefix = runRules(spec.event.prefix, prefix, { mode: 'web', meta })
+          const rEventName = runRules(eventRules, eventName, { mode: 'web', data: { isComponent } })
           return {
             name: rPrefix + rEventName + meta.modifierStr,
             value
@@ -604,6 +590,6 @@ module.exports = function getSpec ({ warn, error }) {
       ]
     }
   }
-  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }), spec)
+  spec.rules = normalizeComponentRules(getComponentConfigs({ warn, error }).concat({}), spec)
   return spec
 }

@@ -81,11 +81,11 @@ const empty = {}
 
 function formatValue (value, unitType) {
   if (!dimensionsInfoInitialized) useDimensionsInfo(global.__mpxAppDimensionsInfo)
+  if (unitType === 'hairlineWidth') {
+    return StyleSheet.hairlineWidth
+  }
   if (unitType && typeof unit[unitType] === 'function') {
     return unit[unitType](+value)
-  }
-  if (value === 'hairlineWidth') {
-    return StyleSheet.hairlineWidth
   }
   const matched = unitRegExp.exec(value)
   if (matched) {
@@ -95,6 +95,7 @@ function formatValue (value, unitType) {
       return unit[matched[2]](+matched[1])
     }
   }
+  if (hairlineRegExp.test(value)) return StyleSheet.hairlineWidth
   return value
 }
 
@@ -170,6 +171,7 @@ function stringifyDynamicClass (value) {
 const listDelimiter = /;(?![^(]*[)])/g
 const propertyDelimiter = /:(.+)/
 const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 
 const parseStyleText = cached((cssText) => {

@@ -93,6 +93,12 @@ module.exports = function ({ print }) {
         }
       },
       {
+        test: /^(password|auto-focus|focus|cursor|selection-start|selection-end|use-built-in)$/,
+        web (prop, { el }) {
+          el.isBuiltIn = true
+        }
+      },
+      {
         test: /^(placeholder-style|placeholder-class|cursor-spacing|confirm-type|confirm-hold|adjust-position|hold-keyboard)$/,
         web: webPropLog
       },
@@ -101,7 +107,7 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(always-embed|safe-password-.+)$/,
+        test: /^(always-embed|hold-keyboard|safe-password-.+)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog

@@ -51,8 +51,6 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     if (resolveMode === 'native') {
       component = urlToRequest(component)
     }
-    // 增加 component 标识，与 page 的 partialCompile 处理保持一致
-    component = addQuery(component, { isComponent: true })
     resolve(context, component, loaderContext, (err, resource, info) => {
       if (err) return callback(err)
       const { resourcePath, queryObj } = parseRequest(resource)
@@ -170,14 +168,14 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
     })
   }
 
-  const fillInComponentPlaceholder = ({ jsonObj, name: componentName, placeholder, placeholderEntry, resolveResourcePathMap }) => {
+  const fillInComponentPlaceholder = ({ jsonObj, name: componentName, placeholder, placeholderEntry, resolveResourcePathMap }, callback) => {
     let placeholderComponentName = placeholder.name
     const componentPlaceholder = jsonObj.componentPlaceholder || {}
     if (componentPlaceholder[componentName]) {
+      callback()
       return
     }
     jsonObj.componentPlaceholder = componentPlaceholder
-    componentPlaceholder[componentName] = placeholderComponentName
     if (placeholderEntry) {
       if (resolveResourcePathMap.has(placeholderComponentName) && resolveResourcePathMap.get(placeholderComponentName) !== placeholder.resourcePath) {
         // 如果存在placeholder与已有usingComponents冲突, 重新生成一个组件名，在当前组件后增加一个数字
@@ -186,15 +184,16 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
         while (jsonObj.usingComponents[newPlaceholder]) {
           newPlaceholder = placeholderComponentName + ++i
         }
-        componentPlaceholder[componentName] = placeholderComponentName = newPlaceholder
+        placeholderComponentName = newPlaceholder
       }
       jsonObj.usingComponents[placeholderComponentName] = placeholderEntry
       resolveResourcePathMap.set(placeholderComponentName, placeholder.resourcePath)
-      return {
-        name: placeholderComponentName,
-        entry: placeholderEntry
-      }
     }
+    componentPlaceholder[componentName] = placeholderComponentName
+    callback(null, {
+      name: placeholderComponentName,
+      entry: placeholderEntry
+    })
   }
 
   const getNormalizePlaceholder = (placeholder) => {
@@ -219,10 +218,10 @@ module.exports = function createJSONHelper ({ loaderContext, emitWarning, custom
           processComponent(placeholder.resource, context, { relativePath }, (err, entry, { resourcePath }) => {
             if (err) return callback(err)
             placeholder.resourcePath = resourcePath
-            callback(null, fillInComponentPlaceholder({ jsonObj, name, placeholder, placeholderEntry: entry, resolveResourcePathMap }))
+            fillInComponentPlaceholder({ jsonObj, name, placeholder, placeholderEntry: entry, resolveResourcePathMap }, callback)
           })
         } else {
-          callback(null, fillInComponentPlaceholder({ jsonObj, name, placeholder }))
+          fillInComponentPlaceholder({ jsonObj, name, placeholder }, callback)
         }
       } else {
         if (!jsonObj.componentPlaceholder || !jsonObj.componentPlaceholder[name]) {

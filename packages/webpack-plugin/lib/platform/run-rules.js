@@ -15,23 +15,19 @@ function defaultNormalizeTest (rawTest, context) {
 }
 
 module.exports = function runRules (rules = [], input, options = {}) {
-  const { mode, testKey, normalizeTest, data = {}, meta = {}, waterfall, diagnostic } = options
+  const { mode, testKey, normalizeTest, data = {}, meta = {}, waterfall } = options
   rules = rules.rules || rules
   for (let i = 0; i < rules.length; i++) {
     const rule = rules[i]
     const tester = (normalizeTest || defaultNormalizeTest)(rule.test, rule)
     const testInput = testKey ? input[testKey] : input
     const processor = rule[mode]
-    // mode 和 diagnostic 传入 data 中供 processor 内部使用
+    // mode传入data中供processor使用
     Object.assign(data, {
-      mode,
-      diagnostic
+      mode
     })
-    if (tester(testInput, meta, data) && processor) {
-      const runProcessor = () => processor.call(rule, input, data, meta)
-      const result = diagnostic && diagnostic.withContext
-        ? diagnostic.withContext({ mode, rule, input, data, meta, testKey, testInput }, runProcessor)
-        : runProcessor()
+    if (tester(testInput, meta) && processor) {
+      const result = processor.call(rule, input, data, meta)
       meta.processed = true
       if (result !== undefined) {
         input = result

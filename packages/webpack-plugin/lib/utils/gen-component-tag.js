@@ -20,6 +20,10 @@ function genComponentTag (part, processor = {}) {
       content: processor
     }
   }
+  if (part.content) {
+    // unpad
+    part.content = '\n' + part.content.replace(/^\n*/m, '')
+  }
 
   const tag = processor.tag ? processor.tag(part) : part.tag
   const attrs = processor.attrs ? processor.attrs(part) : part.attrs
@@ -31,7 +35,7 @@ function genComponentTag (part, processor = {}) {
       result += stringifyAttrs(attrs)
     }
     if (content) {
-      result += `>\n${content}\n</${tag}>`
+      result += `>${content}</${tag}>`
     } else {
       result += '/>'
     }

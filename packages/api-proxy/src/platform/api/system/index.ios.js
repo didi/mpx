@@ -46,7 +46,7 @@ const getSystemInfo = function (options = {}) {
   try {
     const systemInfo = getSystemInfoSync()
     Object.assign(systemInfo, {
-      errMsg: 'getSystemInfo:ok'
+      errMsg: 'setStorage:ok'
     })
     successHandle(systemInfo, success, complete)
   } catch (err) {

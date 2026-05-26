@@ -77,7 +77,7 @@ import useNodesRef, { HandlerRef } from './useNodesRef'
 import Portal from './mpx-portal'
 
 interface VideoProps {
-  src: string | ReactVideoSourceProperties | number
+  src: string
   autoplay?: boolean
   loop?: boolean
   muted?: boolean
@@ -321,8 +321,10 @@ const MpxVideo = forwardRef<HandlerRef<View, VideoProps>, VideoProps>((videoProp
     videoRef.current && videoRef.current.setFullScreen(true)
   }
 
-  const source = typeof src === 'string' ? { uri: src } : (typeof src === 'number' ? src : extendObject({}, src))
-  if (isDrm && source && typeof source !== 'number') {
+  const source: ReactVideoSourceProperties = {
+    uri: src
+  }
+  if (isDrm) {
     source.drm = {
       type: DRMType.FAIRPLAY,
       certificateUrl: __mpx_mode__ !== 'ios' ? provisionUrl : certificateUrl,

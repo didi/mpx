@@ -15,7 +15,6 @@ const blackList = [
   'getWindowInfo',
   'getAppBaseInfo',
   'getAppAuthorizeSetting',
-  'getSystemSetting',
   'getApiCategory',
   'postMessageToReferrerPage',
   'postMessageToReferrerMiniProgram',

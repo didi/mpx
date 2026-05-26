@@ -105,15 +105,15 @@ module.exports = function (content) {
     })
   }
 
-  const emitWarning = (msg, loc) => {
+  const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[Mpx json warning][native-loader][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx json warning][native-loader][' + this.resource + ']: ' + msg)
     )
   }
 
-  const emitError = (msg, loc) => {
+  const emitError = (msg) => {
     this.emitError(
-      new Error('[Mpx json error][native-loader][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx json error][native-loader][' + this.resource + ']: ' + msg)
     )
   }
   let ctorType = pagesMap[resourcePath]

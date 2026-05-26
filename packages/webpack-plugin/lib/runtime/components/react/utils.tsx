@@ -1,38 +1,22 @@
-import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, createElement, MutableRefObject } from 'react'
+import { useEffect, useCallback, useMemo, useRef, ReactNode, ReactElement, isValidElement, useContext, useState, Dispatch, SetStateAction, Children, cloneElement, createElement, MutableRefObject } from 'react'
 import { LayoutChangeEvent, TextStyle, ImageProps, Image } from 'react-native'
 import { isObject, isFunction, isNumber, hasOwn, diffAndCloneA, error, warn } from '@mpxjs/utils'
-import { VarContext, ScrollViewContext, RouteContext, TextPassThroughContext, TextPassThroughContextValue } from './context'
+import { VarContext, ScrollViewContext, RouteContext } from './context'
 import { ExpressionParser, parseFunc, ReplaceSource } from './parser'
 import { initialWindowMetrics } from 'react-native-safe-area-context'
+import type { FastImageProps } from '@d11/react-native-fast-image'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
-export const TEXT_STYLE_MAP: Record<string, boolean> = {
-  color: true,
-  letterSpacing: true,
-  lineHeight: true,
-  includeFontPadding: true,
-  writingDirection: true
-}
+export const TEXT_STYLE_REGEX = /color|font.*|text.*|letterSpacing|lineHeight|includeFontPadding|writingDirection/
 export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
 export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
-export const SVG_REGEXP = /\.svg(?:[?#].*)?$/i
-export const BACKGROUND_STYLE_MAP: Record<string, boolean> = {
-  backgroundImage: true,
-  backgroundSize: true,
-  backgroundRepeat: true,
-  backgroundPosition: true
-}
-export const TEXT_PROPS_MAP: Record<string, boolean> = {
-  ellipsizeMode: true,
-  numberOfLines: true
-}
+export const SVG_REGEXP = /https?:\/\/.*\.(?:svg)/i
+export const BACKGROUND_REGEX = /^background(Image|Size|Repeat|Position)$/
+export const TEXT_PROPS_REGEX = /ellipsizeMode|numberOfLines|allowFontScaling/
 export const DEFAULT_FONT_SIZE = 16
 export const HIDDEN_STYLE = {
   opacity: 0
-}
-export const DEFAULT_BOX_SIZING_STYLE = {
-  boxSizing: 'content-box'
 }
 
 declare const __mpx_mode__: 'ios' | 'android' | 'harmony'
@@ -46,19 +30,9 @@ const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
+const calcPercentExp = /^calc\(.*-?\d+(\.\d+)?%.*\)$/
 const envUseRegExp = /env\(/
-const boxSizingAffectingStyleMap: Record<string, boolean> = {
-  padding: true,
-  paddingTop: true,
-  paddingRight: true,
-  paddingBottom: true,
-  paddingLeft: true,
-  borderWidth: true,
-  borderTopWidth: true,
-  borderRightWidth: true,
-  borderBottomWidth: true,
-  borderLeftWidth: true
-}
+const filterRegExp = /(calc|env|%)/
 
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
@@ -68,25 +42,6 @@ const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
 }
 
 export const extendObject = Object.assign
-
-export function getDefaultAllowFontScaling (): boolean {
-  return global.__mpx?.config?.rnConfig?.allowFontScaling ?? false
-}
-
-export function transformBoxSizing (style: Record<string, any> = {}, hasBoxSizingAffectingStyle = false) {
-  if (hasBoxSizingAffectingStyle && style.boxSizing === undefined) {
-    style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? DEFAULT_BOX_SIZING_STYLE.boxSizing
-  }
-  return style
-}
-
-export function isBoxSizingAffectingStyle (key: string) {
-  return hasOwn(boxSizingAffectingStyleMap, key)
-}
-
-function isTextStyle (key: string) {
-  return hasOwn(TEXT_STYLE_MAP, key) || key.startsWith('font') || key.startsWith('text')
-}
 
 function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
   const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
@@ -152,14 +107,12 @@ export function isText (ele: ReactNode): ele is ReactElement {
   return false
 }
 
-export function isStringChildren (children: ReactNode) {
-  if (typeof children === 'string') return true
-  if (!Array.isArray(children)) return false
-  return children.every((child) => typeof child === 'string')
+export function every (children: ReactNode, callback: (children: ReactNode) => boolean) {
+  const childrenArray = Array.isArray(children) ? children : [children]
+  return childrenArray.every((child) => callback(child))
 }
 
 type GroupData<T> = Record<string, Partial<T>>
-
 export function groupBy<T extends Record<string, any>> (
   obj: T,
   callback: (key: string, val: T[keyof T]) => string,
@@ -173,21 +126,24 @@ export function groupBy<T extends Record<string, any>> (
   return group
 }
 
-export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffect?: (key: string, val: T[keyof T]) => void): {
+export function splitStyle<T extends Record<string, any>> (styleObj: T): {
   textStyle?: Partial<T>
   backgroundStyle?: Partial<T>
   innerStyle?: Partial<T>
 } {
-  return groupBy(styleObj, (key, val) => {
-    sideEffect && sideEffect(key, val)
-    if (isTextStyle(key)) {
+  return groupBy(styleObj, (key) => {
+    if (TEXT_STYLE_REGEX.test(key)) {
       return 'textStyle'
-    } else if (hasOwn(BACKGROUND_STYLE_MAP, key)) {
+    } else if (BACKGROUND_REGEX.test(key)) {
       return 'backgroundStyle'
     } else {
       return 'innerStyle'
     }
-  })
+  }) as {
+    textStyle: Partial<T>
+    backgroundStyle: Partial<T>
+    innerStyle: Partial<T>
+  }
 }
 const radiusPercentRule: Record<string, 'height' | 'width'> = {
   borderTopLeftRadius: 'width',
@@ -378,8 +334,7 @@ export function parseValues (str: string, char = ' ') {
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
-  // Todo 2 RN下顺序不一致转换结果不一致，故这里不处理，动画前后transform 排序不一致的问题，由业务调整写法
-  // Todo 1 transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
+  // Todo transform 排序不一致时，transform动画会闪烁，故这里同样的排序输出 transform
   // values.sort()
   const transform: { [propName: string]: string | number | number[] }[] = []
   values.forEach(item => {
@@ -460,7 +415,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   let hasVarDec = false
   let hasVarUse = false
   let hasSelfPercent = false
-  let hasBoxSizingAffectingStyle = false
   const varKeyPaths: Array<Array<string>> = []
   const unoVarKeyPaths: Array<Array<string>> = []
   const percentKeyPaths: Array<Array<string>> = []
@@ -496,20 +450,19 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
     }
   }
 
-  function boxSizingVisitor ({ key, keyPath }: VisitorArg) {
-    if (keyPath.length === 1 && !hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
-      hasBoxSizingAffectingStyle = true
-    }
-  }
-
   function envVisitor ({ value, keyPath }: VisitorArg) {
     if (envUseRegExp.test(value)) {
       envKeyPaths.push(keyPath.slice())
     }
   }
 
-  function calcVisitor ({ value, keyPath }: VisitorArg) {
+  function calcVisitor ({ key, value, keyPath }: VisitorArg) {
     if (calcUseRegExp.test(value)) {
+      // calc translate & border-radius 的百分比计算
+      if (hasOwn(selfPercentRule, key) && calcPercentExp.test(value)) {
+        hasSelfPercent = true
+        percentKeyPaths.push(keyPath.slice())
+      }
       calcKeyPaths.push(keyPath.slice())
     }
   }
@@ -526,13 +479,13 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
 
   function visitOther ({ target, key, value, keyPath }: VisitorArg) {
-    if (typeof value === 'string' && (value.includes('%') || value.includes('calc(') || value.includes('env('))) {
+    if (filterRegExp.test(value)) {
       [envVisitor, percentVisitor, calcVisitor].forEach(visitor => visitor({ target, key, value, keyPath }))
     }
   }
 
   // traverse var & generate normalStyle
-  traverseStyle(styleObj, [varVisitor, boxSizingVisitor])
+  traverseStyle(styleObj, [varVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
@@ -577,9 +530,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   // apply calc
   transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
     if (PERCENT_REGEX.test(value)) {
-      if (hasOwn(selfPercentRule, key)) {
-        hasSelfPercent = true
-      }
       const resolved = resolvePercent(value, key, percentConfig)
       return typeof resolved === 'number' ? resolved : 0
     } else {
@@ -601,7 +551,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformBoxShadow(normalStyle)
   // transform 字符串格式转化数组格式(先转数组再处理css var)
   transformTransform(normalStyle)
-  transformBoxSizing(normalStyle, hasBoxSizingAffectingStyle)
 
   return {
     hasVarDec,
@@ -664,7 +613,7 @@ export function splitProps<T extends Record<string, any>> (props: T): {
   innerProps?: Partial<T>
 } {
   return groupBy(props, (key) => {
-    if (hasOwn(TEXT_PROPS_MAP, key)) {
+    if (TEXT_PROPS_REGEX.test(key)) {
       return 'textProps'
     } else {
       return 'innerProps'
@@ -718,50 +667,20 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
 export interface WrapChildrenConfig {
   hasVarDec: boolean
   varContext?: Record<string, any>
-  textPassThrough?: TextPassThroughContextValue | null
+  textStyle?: TextStyle
+  textProps?: Record<string, any>
 }
 
-export interface TextPassThroughValueOptions {
-  inheritTextProps?: boolean
-  disabled?: boolean
-}
-
-export function useTextPassThroughValue (
-  textStyle?: TextStyle,
-  textProps?: Record<string, any>,
-  { inheritTextProps = true, disabled = false }: TextPassThroughValueOptions = {}
-) {
-  const parent = useContext(TextPassThroughContext)
-  const valueRef = useRef<TextPassThroughContextValue | null>(null)
-
-  if (disabled) return null
-
-  if (!textStyle && !textProps && (inheritTextProps || !parent?.pendingTextProps)) return null
-
-  const nextTextStyle = textStyle
-    ? extendObject({}, parent?.textStyle, textStyle)
-    : parent?.textStyle
-  const nextTextProps = inheritTextProps
-    ? textProps
-      ? extendObject({}, parent?.pendingTextProps, textProps)
-      : parent?.pendingTextProps
-    : textProps
-  const nextValue = {
-    textStyle: nextTextStyle,
-    pendingTextProps: nextTextProps
-  }
-
-  if (diffAndCloneA(valueRef.current, nextValue).diff) {
-    valueRef.current = nextValue
-  }
-
-  return valueRef.current
-}
-
-export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textPassThrough }: WrapChildrenConfig) {
+export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textStyle, textProps }: WrapChildrenConfig) {
   let { children } = props
-  if (textPassThrough) {
-    children = <TextPassThroughContext.Provider value={textPassThrough} key='textPassThroughWrap'>{children}</TextPassThroughContext.Provider>
+  if (textStyle || textProps) {
+    children = Children.map(children, (child) => {
+      if (isText(child)) {
+        const style = extendObject({}, textStyle, child.props.style)
+        return cloneElement(child, extendObject({}, textProps, { style }))
+      }
+      return child
+    })
   }
   if (hasVarDec && varContext) {
     children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
@@ -835,10 +754,10 @@ export function getCurrentPage (pageId: number | null | undefined) {
 }
 
 export function renderImage (
-  imageProps: ImageProps,
+  imageProps: ImageProps | FastImageProps,
   enableFastImage = true
 ) {
-  let Component = Image
+  let Component: React.ComponentType<ImageProps | FastImageProps> = Image
   if (enableFastImage) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const fastImageModule = require('@d11/react-native-fast-image')

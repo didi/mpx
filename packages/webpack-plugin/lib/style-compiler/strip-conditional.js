@@ -1,21 +1,12 @@
 const fs = require('fs')
-const { STYLE_PAD_PLACEHOLDER } = require('../utils/const')
 
 class Node {
-  constructor(type, condition = null, value = '') {
+  constructor(type, condition = null) {
     this.type = type // 'If', 'ElseIf', 'Else' 或 'Text'
     this.condition = condition // If 或 Elif 的条件
     this.children = []
-    this.value = value
+    this.value = ''
   }
-}
-
-function keepLines(content) {
-  return content.replace(/([^\r\n]*)(\r\n|\r|\n|$)/g, (all, line, lineBreak) => {
-    if (!all) return ''
-    const indent = (/^[ \t]*/.exec(line) || [''])[0]
-    return `${indent}/* ${STYLE_PAD_PLACEHOLDER} */${lineBreak}`
-  })
 }
 
 // 提取 css string 为 token
@@ -44,8 +35,7 @@ function tokenize(cssString) {
 
     tokens.push({
       type: type,
-      condition: condition ? condition.trim() : null,
-      content: match[0]
+      condition: condition ? condition.trim() : null
     })
     lastIndex = regex.lastIndex
   }
@@ -65,10 +55,11 @@ function parse(cssString) {
   let currentChildren = ast
   tokens.forEach(token => {
     if (token.type === 'text') {
-      const node = new Node('Text', null, token.content)
+      const node = new Node('Text')
+      node.value = token.content
       currentChildren.push(node)
     } else if (token.type === 'if') {
-      const node = new Node('If', token.condition, token.content)
+      const node = new Node('If', token.condition)
       currentChildren.push(node)
       nodeStack.push(currentChildren)
       currentChildren = node.children
@@ -77,7 +68,7 @@ function parse(cssString) {
         throw new Error('[Mpx style error]: elif without a preceding if')
       }
       currentChildren = nodeStack[nodeStack.length - 1]
-      const node = new Node('ElseIf', token.condition, token.content)
+      const node = new Node('ElseIf', token.condition)
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'else') {
@@ -85,12 +76,11 @@ function parse(cssString) {
         throw new Error('[Mpx style error]: else without a preceding if')
       }
       currentChildren = nodeStack[nodeStack.length - 1]
-      const node = new Node('Else', null, token.content)
+      const node = new Node('Else')
       currentChildren.push(node)
       currentChildren = node.children
     } else if (token.type === 'endif') {
       if (nodeStack.length > 0) {
-        currentChildren.push(new Node('EndIf', null, token.content))
         currentChildren = nodeStack.pop()
       }
     }
@@ -101,7 +91,7 @@ function parse(cssString) {
   return ast
 }
 
-function evaluateCondition(condition, defs) {
+function evaluateCondition(condition, defs, filePath) {
   try {
     const keys = Object.keys(defs)
     const values = keys.map(key => defs[key])
@@ -109,52 +99,49 @@ function evaluateCondition(condition, defs) {
     const func = new Function(...keys, `return (${condition});`)
     return func(...values)
   } catch (e) {
-    console.error(`[Mpx style error]:Error evaluating condition: ${condition}`, e)
+    console.error(`[Mpx style error] File: ${filePath}, Error evaluating condition: ${condition}`, e)
     return false
   }
 }
 
-function traverseAndEvaluate(ast, defs) {
-  function traverse(nodes, active) {
-    let output = ''
-    let batchedIf = false
+function traverseAndEvaluate(ast, defs, filePath) {
+  let output = ''
+  let batchedIf = false
+  function traverse(nodes) {
     for (const node of nodes) {
       if (node.type === 'Text') {
-        output += active ? node.value : keepLines(node.value)
+        output += node.value
       } else if (node.type === 'If') {
         // 直接判断 If 节点
-        output += keepLines(node.value)
-        const currentMatched = active && evaluateCondition(node.condition, defs)
-        output += traverse(node.children, currentMatched)
-        batchedIf = currentMatched
-      } else if (node.type === 'ElseIf') {
-        output += keepLines(node.value)
-        const currentMatched = active && !batchedIf && evaluateCondition(node.condition, defs)
-        output += traverse(node.children, currentMatched)
-        batchedIf = batchedIf || currentMatched
-      } else if (node.type === 'Else') {
-        output += keepLines(node.value)
-        const currentMatched = active && !batchedIf
-        output += traverse(node.children, currentMatched)
-        batchedIf = true
-      } else if (node.type === 'EndIf') {
-        output += keepLines(node.value)
+        batchedIf = false
+        if (evaluateCondition(node.condition, defs, filePath)) {
+          traverse(node.children)
+          batchedIf = true
+        }
+      } else if (node.type === 'ElseIf' && !batchedIf) {
+        if (evaluateCondition(node.condition, defs, filePath)) {
+          traverse(node.children)
+          batchedIf = true
+        }
+      } else if (node.type === 'Else' && !batchedIf) {
+        traverse(node.children)
       }
     }
-    return output
   }
-  return traverse(ast, true)
+  traverse(ast)
+  return output
 }
 
 /**
  *
  * @param {string} content
  * @param {Record<string, any>} defs
+ * @param {string} [filePath]
  * @returns
  */
-function stripCondition(content, defs) {
+function stripCondition(content, defs, filePath) {
   const ast = parse(content)
-  return traverseAndEvaluate(ast, defs)
+  return traverseAndEvaluate(ast, defs, filePath || 'unknown')
 }
 
 let proxyReadFileSync
@@ -199,10 +186,10 @@ function startFSStripForCss(defs) {
     if (shouldStrip(path)) {
       try {
         if (typeof content === 'string') {
-          return stripCondition(content, defs)
+          return stripCondition(content, defs, path)
         } else if (Buffer.isBuffer(content)) {
           const str = content.toString('utf-8')
-          const result = stripCondition(str, defs)
+          const result = stripCondition(str, defs, path)
           if (result !== str) {
             return Buffer.from(result, 'utf-8')
           }
@@ -229,11 +216,11 @@ function startFSStripForCss(defs) {
       if (shouldStrip(path)) {
         try {
           if (typeof data === 'string') {
-            const result = stripCondition(data, defs)
+            const result = stripCondition(data, defs, path)
             return callback(null, result)
           } else if (Buffer.isBuffer(data)) {
             const content = data.toString('utf-8')
-            const result = stripCondition(content, defs)
+            const result = stripCondition(content, defs, path)
             if (result !== content) {
               return callback(null, Buffer.from(result, 'utf-8'))
             }

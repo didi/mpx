@@ -58,9 +58,6 @@ module.exports = function ({
           waterfall: true,
           warn: emitWarning,
           error: emitError,
-          diagnostic: {
-            file: resourcePath
-          },
           meta: rulesMeta
         }
         if (ctorType !== 'app') {

@@ -21,15 +21,15 @@ module.exports = function (source) {
 
   this._module.addPresentationalDependency(new FlagPluginDependency())
 
-  const emitWarning = (msg, loc) => {
+  const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[Mpx json warning][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx json warning][' + this.resource + ']: ' + msg)
     )
   }
 
-  const emitError = (msg, loc) => {
+  const emitError = (msg) => {
     this.emitError(
-      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 

@@ -33,7 +33,10 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^(out-of-bounds)$/,
-        ali: qaPropLog
+        ali: qaPropLog,
+        ios: iosPropLog,
+        android: androidPropLog,
+        harmony: harmonyPropLog
       },
       {
         test: /^(inertia)$/,
@@ -41,6 +44,9 @@ module.exports = function ({ print }) {
       },
       {
         test: /^(damping|friction)$/,
+        ios: iosPropLog,
+        android: androidPropLog,
+        harmony: harmonyPropLog,
         ks: ksPropLog
       },
       {

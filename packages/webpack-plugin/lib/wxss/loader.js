@@ -40,7 +40,7 @@ module.exports = async function loader (content, map, meta) {
   const mpx = this.getMpx()
   const externals = mpx.externals
   const root = mpx.projectRoot
-  const sourceMap = this.sourceMap
+  const sourceMap = mpx.cssSourceMap || false
   const isRN = ['ios', 'android', 'harmony'].includes(mpx.mode)
 
   let options

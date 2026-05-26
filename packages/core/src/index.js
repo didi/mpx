@@ -155,9 +155,7 @@ Mpx.config = {
   /**
   * react-native 相关配置，用于挂载事件等，如 onShareAppMessage
   */
-  rnConfig: {
-    defaultBoxSizing: 'content-box'
-  }
+  rnConfig: {}
 }
 
 init(Mpx)

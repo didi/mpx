@@ -972,13 +972,11 @@ function normalizeSourceMapForRuntime (map, loaderContext) {
 
       const resourceDirname = path.dirname(loaderContext.resourcePath)
       const absoluteSource = path.resolve(resourceDirname, source)
-      // 为方便编译报错信息显示，直接返回绝对路径，后续如果有需要再改成 webpack://./xxx 的形式
-      return normalizePath(absoluteSource)
-      // const contextifyPath = normalizePath(
-      //   path.relative(loaderContext.rootContext, absoluteSource)
-      // )
+      const contextifyPath = normalizePath(
+        path.relative(loaderContext.rootContext, absoluteSource)
+      )
 
-      // return `webpack://./${contextifyPath}`
+      return `webpack://./${contextifyPath}`
     })
   }
 

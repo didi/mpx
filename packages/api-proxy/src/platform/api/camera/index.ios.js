@@ -1,7 +1,7 @@
-import CameraContext from './rnCamera'
+import CreateCamera from './rnCamera'
 
 function createCameraContext () {
-  return new CameraContext()
+  return new CreateCamera()
 }
 
 export {

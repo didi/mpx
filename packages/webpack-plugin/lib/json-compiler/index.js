@@ -46,15 +46,15 @@ module.exports = function (content) {
   const fs = this._compiler.inputFileSystem
   const runtimeCompile = queryObj.isDynamic
 
-  const emitWarning = (msg, loc) => {
+  const emitWarning = (msg) => {
     this.emitWarning(
-      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
-  const emitError = (msg, loc) => {
+  const emitError = (msg) => {
     this.emitError(
-      new Error('[Mpx json error][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx json error][' + this.resource + ']: ' + msg)
     )
   }
 
@@ -180,9 +180,6 @@ module.exports = function (content) {
     waterfall: true,
     warn: emitWarning,
     error: emitError,
-    diagnostic: {
-      file: resourcePath
-    },
     data: {
       // polyfill global usingComponents
       globalComponents: mpx.globalComponents

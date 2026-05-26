@@ -1,5 +1,5 @@
 import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
-import type { NativeSyntheticEvent, Animated, ScaledSize, TextStyle } from 'react-native'
+import type { NativeSyntheticEvent, Animated, ScaledSize } from 'react-native'
 import { noop } from '@mpxjs/utils'
 
 export type LabelContextValue = MutableRefObject<{
@@ -70,11 +70,6 @@ export interface StickyContextValue {
   unregisterStickyHeader: Function
 }
 
-export interface TextPassThroughContextValue {
-  textStyle?: TextStyle
-  pendingTextProps?: Record<string, any>
-}
-
 export const MovableAreaContext = createContext({ width: 0, height: 0 })
 
 export const FormContext = createContext<FormContextValue | null>(null)
@@ -88,8 +83,6 @@ export const LabelContext = createContext<LabelContextValue | null>(null)
 export const PickerContext = createContext(null)
 
 export const VarContext = createContext({})
-
-export const TextPassThroughContext = createContext<TextPassThroughContextValue | null>(null)
 
 export const IntersectionObserverContext = createContext<IntersectionObserver | null>(null)
 

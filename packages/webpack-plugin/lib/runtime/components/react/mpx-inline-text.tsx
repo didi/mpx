@@ -1,21 +1,16 @@
 import { Text, TextProps } from 'react-native'
-import { JSX, createElement, useContext } from 'react'
+import { JSX, createElement } from 'react'
 
-import { extendObject, getDefaultAllowFontScaling } from './utils'
-import { TextPassThroughContext } from './context'
+import { extendObject } from './utils'
 
 const InlineText = (props: TextProps): JSX.Element => {
-  const inheritedText = useContext(TextPassThroughContext)
-  const style = extendObject({}, inheritedText?.textStyle, props.style)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props, { style })
   const {
-    allowFontScaling,
-    children
-  } = mergedProps
+    allowFontScaling = false
+  } = props
 
-  return createElement(Text, extendObject({}, mergedProps, {
-    allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling()
-  }), children)
+  return createElement(Text, extendObject({}, props, {
+    allowFontScaling
+  }))
 }
 
 InlineText.displayName = 'MpxInlineText'

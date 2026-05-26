@@ -1,5 +1,4 @@
 const runRules = require('./run-rules')
-const createDiagnostic = require('./create-diagnostic')
 
 module.exports = function getRulesRunner ({
   type,
@@ -11,8 +10,7 @@ module.exports = function getRulesRunner ({
   mainKey,
   waterfall,
   warn,
-  error,
-  diagnostic
+  error
 }) {
   const specMap = {
     template: {
@@ -25,24 +23,13 @@ module.exports = function getRulesRunner ({
       wx: require('./json/wx')
     }
   }
-  diagnostic = createDiagnostic({
-    type,
-    mode,
-    srcMode,
-    warn,
-    error,
-    diagnostic
-  })
-  const spec = specMap[type] && specMap[type][srcMode] && specMap[type][srcMode]({
-    warn: diagnostic.warn,
-    error: diagnostic.error
-  })
+  const spec = specMap[type] && specMap[type][srcMode] && specMap[type][srcMode]({ warn, error })
   if (spec && spec.supportedModes.indexOf(mode) > -1) {
     const normalizeTest = spec.normalizeTest
     const mainRules = mainKey ? spec[mainKey] : spec
     if (mainRules) {
       return function (input) {
-        return runRules(mainRules, input, { mode, data, meta, testKey, waterfall, normalizeTest, diagnostic })
+        return runRules(mainRules, input, { mode, data, meta, testKey, waterfall, normalizeTest })
       }
     }
   }

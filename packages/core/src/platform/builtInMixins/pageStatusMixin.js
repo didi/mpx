@@ -19,11 +19,7 @@ export default function pageStatusMixin (mixinType) {
           // 处理以上平台直接透传encode的结果，给到onload第二个参数供开发者使用
           if (isObject(rawQuery)) {
             for (const key in rawQuery) {
-              try {
-                decodedQuery[key] = decodeURIComponent(rawQuery[key])
-              } catch (e) {
-                decodedQuery[key] = rawQuery[key]
-              }
+              decodedQuery[key] = decodeURIComponent(rawQuery[key])
             }
           }
           this.__mpxProxy.callHook(ONLOAD, [rawQuery, decodedQuery])

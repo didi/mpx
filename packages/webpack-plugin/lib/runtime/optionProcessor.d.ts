@@ -17,6 +17,4 @@ export function getComponent (...args: any): object
 
 export function getWxsMixin (...args: any): object
 
-export function createTemplateComponent (...args: any): object
-
 export function processAppOption (...args: any): void

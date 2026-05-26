@@ -14,7 +14,7 @@ module.exports = (content, { filePath, needMap, mode, env }) => {
   output = compiler.parseComponent(content, {
     mode,
     filePath,
-    pad: mode !== 'web' && 'line',
+    pad: 'line',
     env
   })
   if (needMap) {

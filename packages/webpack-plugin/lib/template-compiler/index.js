@@ -33,7 +33,6 @@ module.exports = function (raw) {
   const hasScoped = queryObj.hasScoped
   const runtimeCompile = queryObj.isDynamic
   const moduleId = queryObj.moduleId || mpx.getModuleId(resourcePath, false, queryObj.moduleId ? null : this)
-  const isStatic = queryObj.isStatic
 
   let optimizeRenderLevel = 0
   for (const rule of optimizeRenderRules) {
@@ -43,15 +42,15 @@ module.exports = function (raw) {
     }
   }
 
-  const warn = (msg, loc) => {
+  const warn = (msg) => {
     this.emitWarning(
-      new Error('[Mpx template warning][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx template warning][' + this.resource + ']: ' + msg)
     )
   }
 
-  const error = (msg, loc) => {
+  const error = (msg) => {
     this.emitError(
-      new Error('[Mpx template error][' + (loc || this.resourcePath) + ']: ' + msg)
+      new Error('[Mpx template error][' + this.resource + ']: ' + msg)
     )
   }
 
@@ -76,10 +75,10 @@ module.exports = function (raw) {
     // 这里需传递rawResourcePath和wxsContentMap保持一致
     filePath: rawResourcePath,
     i18n,
-    globalComponents: Object.keys(mpx.globalComponents || {}),
+    checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
+    globalComponents: Object.keys(mpx.globalComponents),
     forceProxyEvent: matchCondition(resourcePath, mpx.forceProxyEventRules) || runtimeCompile,
     hasVirtualHost: matchCondition(resourcePath, mpx.autoVirtualHostRules),
-    checkUsingComponents: matchCondition(resourcePath, mpx.checkUsingComponentsRules),
     dynamicTemplateRuleRunner: mpx.dynamicTemplateRuleRunner
   })
 
@@ -90,8 +89,7 @@ module.exports = function (raw) {
   }
 
   let result = runtimeCompile ? '' : compiler.serialize(root)
-  if (isNative || isStatic) {
-    // 对于原生小程序组件和静态模版无需注入运行时信息，直接返回模版编译结果
+  if (isNative) {
     return result
   }
 
