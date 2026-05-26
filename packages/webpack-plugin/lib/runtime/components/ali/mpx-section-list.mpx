@@ -152,7 +152,7 @@
       },
       pollingDuration: {
         type: Number,
-        value: 3000
+        value: 300
       },
       useListHeader: {
         type: Boolean,
