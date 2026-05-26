@@ -27,7 +27,7 @@ import { noop } from '@mpxjs/utils'
 import { LocalSvg, SvgCssUri } from 'react-native-svg/css'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { SVG_REGEXP, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
+import { svgRegExp, useLayout, useTransformStyle, renderImage, extendObject, isAndroid } from './utils'
 import Portal from './mpx-portal'
 
 export type Mode =
@@ -109,7 +109,7 @@ function getImageUri (src: string | ImageSourcePropType) {
 
 function isSvgSource (src: string | ImageSourcePropType) {
   const uri = getImageUri(src)
-  return SVG_REGEXP.test(uri)
+  return svgRegExp.test(uri)
 }
 
 function getImageSize (src: string | ImageSourcePropType, success: (width: number, height: number) => void, fail: () => void = noop) {

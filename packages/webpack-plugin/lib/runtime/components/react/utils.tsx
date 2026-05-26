@@ -7,46 +7,51 @@ import { initialWindowMetrics } from 'react-native-safe-area-context'
 import type { AnyFunc, ExtendedFunctionComponent } from './types/common'
 import { Gesture } from 'react-native-gesture-handler'
 
-export const TEXT_STYLE_MAP: Record<string, boolean> = {
+// ============================================================
+// declare + constants
+// ============================================================
+
+declare const __mpx_mode__: 'ios' | 'android' | 'harmony'
+
+export const percentRegExp = /^\s*-?\d+(\.\d+)?%\s*$/
+export const svgRegExp = /\.svg(?:[?#].*)?$/i
+export const hiddenStyle = {
+  opacity: 0
+}
+export const isIOS = __mpx_mode__ === 'ios'
+export const isAndroid = __mpx_mode__ === 'android'
+export const isHarmony = __mpx_mode__ === 'harmony'
+export const extendObject = Object.assign
+
+const textStyleMap: Record<string, boolean> = {
   color: true,
   letterSpacing: true,
   lineHeight: true,
   includeFontPadding: true,
   writingDirection: true
 }
-export const PERCENT_REGEX = /^\s*-?\d+(\.\d+)?%\s*$/
-export const URL_REGEX = /^\s*url\(["']?(.*?)["']?\)\s*$/
-export const SVG_REGEXP = /\.svg(?:[?#].*)?$/i
-export const BACKGROUND_STYLE_MAP: Record<string, boolean> = {
-  backgroundImage: true,
-  backgroundSize: true,
-  backgroundRepeat: true,
-  backgroundPosition: true
-}
-export const TEXT_PROPS_MAP: Record<string, boolean> = {
-  ellipsizeMode: true,
-  numberOfLines: true
-}
-export const DEFAULT_FONT_SIZE = 16
-export const HIDDEN_STYLE = {
-  opacity: 0
-}
-export const DEFAULT_BOX_SIZING_STYLE = {
-  boxSizing: 'content-box'
-}
-
-declare const __mpx_mode__: 'ios' | 'android' | 'harmony'
-
-export const isIOS = __mpx_mode__ === 'ios'
-export const isAndroid = __mpx_mode__ === 'android'
-export const isHarmony = __mpx_mode__ === 'harmony'
-
+const urlRegExp = /^\s*url\(["']?(.*?)["']?\)\s*$/
+const linearGradientRegExp = /^\s*linear-gradient\(.*\)\s*$/
+const digitStartRegExp = /^\d/
 const varDecRegExp = /^--/
 const varUseRegExp = /var\(/
 const unoVarDecRegExp = /^--un-/
 const unoVarUseRegExp = /var\(--un-/
 const calcUseRegExp = /calc\(/
 const envUseRegExp = /env\(/
+const defaultBoxSizingStyle = {
+  boxSizing: 'content-box'
+}
+const backgroundStyleMap: Record<string, boolean> = {
+  backgroundImage: true,
+  backgroundSize: true,
+  backgroundRepeat: true,
+  backgroundPosition: true
+}
+const textPropsMap: Record<string, boolean> = {
+  ellipsizeMode: true,
+  numberOfLines: true
+}
 const boxSizingAffectingStyleMap: Record<string, boolean> = {
   padding: true,
   paddingTop: true,
@@ -57,46 +62,284 @@ const boxSizingAffectingStyleMap: Record<string, boolean> = {
   borderTopWidth: true,
   borderRightWidth: true,
   borderBottomWidth: true,
-  borderLeftWidth: true
+  borderLeftWidth: true,
+  border: true,
+  borderTop: true,
+  borderRight: true,
+  borderBottom: true,
+  borderLeft: true
 }
-
+const runtimeAbbreviationMap: Record<string, string[]> = {
+  margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
+  padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
+  borderRadius: ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'],
+  borderWidth: ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'],
+  borderColor: ['borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'],
+  border: ['borderWidth', 'borderStyle', 'borderColor'],
+  borderTop: ['borderTopWidth', 'borderTopStyle', 'borderTopColor'],
+  borderRight: ['borderRightWidth', 'borderRightStyle', 'borderRightColor'],
+  borderBottom: ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
+  borderLeft: ['borderLeftWidth', 'borderLeftStyle', 'borderLeftColor'],
+  flexFlow: ['flexDirection', 'flexWrap'],
+  textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
+  textDecoration: ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
+}
+const runtimeCompositeStyleMap: Record<string, boolean> = {
+  margin: true,
+  padding: true,
+  borderRadius: true,
+  borderWidth: true,
+  borderColor: true
+}
 const safeAreaInsetMap: Record<string, 'top' | 'right' | 'bottom' | 'left'> = {
   'safe-area-inset-top': 'top',
   'safe-area-inset-right': 'right',
   'safe-area-inset-bottom': 'bottom',
   'safe-area-inset-left': 'left'
 }
-
-export const extendObject = Object.assign
-
-export function getDefaultAllowFontScaling (): boolean {
-  return global.__mpx?.config?.rnConfig?.allowFontScaling ?? false
+const radiusPercentRule: Record<string, 'height' | 'width'> = {
+  borderTopLeftRadius: 'width',
+  borderBottomLeftRadius: 'width',
+  borderBottomRightRadius: 'width',
+  borderTopRightRadius: 'width',
+  borderRadius: 'width'
+}
+const selfPercentRule: Record<string, 'height' | 'width'> = extendObject({
+  translateX: 'width',
+  translateY: 'height'
+}, radiusPercentRule)
+const parentHeightPercentRule: Record<string, boolean> = {
+  height: true,
+  minHeight: true,
+  maxHeight: true,
+  top: true,
+  bottom: true
+}
+const bgRepeatMap: Record<string, boolean> = {
+  repeat: true,
+  'repeat-x': true,
+  'repeat-y': true,
+  'no-repeat': true
+}
+const bgPositionMap: Record<string, boolean> = {
+  left: true,
+  right: true,
+  top: true,
+  bottom: true,
+  center: true
+}
+const namedColorSet: Record<string, boolean> = {
+  transparent: true,
+  aliceblue: true,
+  antiquewhite: true,
+  aqua: true,
+  aquamarine: true,
+  azure: true,
+  beige: true,
+  bisque: true,
+  black: true,
+  blanchedalmond: true,
+  blue: true,
+  blueviolet: true,
+  brown: true,
+  burlywood: true,
+  cadetblue: true,
+  chartreuse: true,
+  chocolate: true,
+  coral: true,
+  cornflowerblue: true,
+  cornsilk: true,
+  crimson: true,
+  cyan: true,
+  darkblue: true,
+  darkcyan: true,
+  darkgoldenrod: true,
+  darkgray: true,
+  darkgreen: true,
+  darkgrey: true,
+  darkkhaki: true,
+  darkmagenta: true,
+  darkolivegreen: true,
+  darkorange: true,
+  darkorchid: true,
+  darkred: true,
+  darksalmon: true,
+  darkseagreen: true,
+  darkslateblue: true,
+  darkslategrey: true,
+  darkturquoise: true,
+  darkviolet: true,
+  deeppink: true,
+  deepskyblue: true,
+  dimgray: true,
+  dimgrey: true,
+  dodgerblue: true,
+  firebrick: true,
+  floralwhite: true,
+  forestgreen: true,
+  fuchsia: true,
+  gainsboro: true,
+  ghostwhite: true,
+  gold: true,
+  goldenrod: true,
+  gray: true,
+  green: true,
+  greenyellow: true,
+  grey: true,
+  honeydew: true,
+  hotpink: true,
+  indianred: true,
+  indigo: true,
+  ivory: true,
+  khaki: true,
+  lavender: true,
+  lavenderblush: true,
+  lawngreen: true,
+  lemonchiffon: true,
+  lightblue: true,
+  lightcoral: true,
+  lightcyan: true,
+  lightgoldenrodyellow: true,
+  lightgray: true,
+  lightgreen: true,
+  lightgrey: true,
+  lightpink: true,
+  lightsalmon: true,
+  lightseagreen: true,
+  lightskyblue: true,
+  lightslategrey: true,
+  lightsteelblue: true,
+  lightyellow: true,
+  lime: true,
+  limegreen: true,
+  linen: true,
+  magenta: true,
+  maroon: true,
+  mediumaquamarine: true,
+  mediumblue: true,
+  mediumorchid: true,
+  mediumpurple: true,
+  mediumseagreen: true,
+  mediumslateblue: true,
+  mediumspringgreen: true,
+  mediumturquoise: true,
+  mediumvioletred: true,
+  midnightblue: true,
+  mintcream: true,
+  mistyrose: true,
+  moccasin: true,
+  navajowhite: true,
+  navy: true,
+  oldlace: true,
+  olive: true,
+  olivedrab: true,
+  orange: true,
+  orangered: true,
+  orchid: true,
+  palegoldenrod: true,
+  palegreen: true,
+  paleturquoise: true,
+  palevioletred: true,
+  papayawhip: true,
+  peachpuff: true,
+  peru: true,
+  pink: true,
+  plum: true,
+  powderblue: true,
+  purple: true,
+  rebeccapurple: true,
+  red: true,
+  rosybrown: true,
+  royalblue: true,
+  saddlebrown: true,
+  salmon: true,
+  sandybrown: true,
+  seagreen: true,
+  seashell: true,
+  sienna: true,
+  silver: true,
+  skyblue: true,
+  slateblue: true,
+  slategray: true,
+  snow: true,
+  springgreen: true,
+  steelblue: true,
+  tan: true,
+  teal: true,
+  thistle: true,
+  tomato: true,
+  turquoise: true,
+  violet: true,
+  wheat: true,
+  white: true,
+  whitesmoke: true,
+  yellow: true,
+  yellowgreen: true
 }
 
-export function transformBoxSizing (style: Record<string, any> = {}, hasBoxSizingAffectingStyle = false) {
-  if (hasBoxSizingAffectingStyle && style.boxSizing === undefined) {
-    style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? DEFAULT_BOX_SIZING_STYLE.boxSizing
-  }
-  return style
+// ============================================================
+// interfaces / types
+// ============================================================
+
+interface PercentConfig {
+  fontSize?: number | string
+  width?: number
+  height?: number
+  parentFontSize?: number
+  parentWidth?: number
+  parentHeight?: number
 }
 
-export function isBoxSizingAffectingStyle (key: string) {
-  return hasOwn(boxSizingAffectingStyleMap, key)
+interface PositionMeta {
+  hasPositionFixed: boolean
 }
 
-function isTextStyle (key: string) {
-  return hasOwn(TEXT_STYLE_MAP, key) || key.startsWith('font') || key.startsWith('text')
+interface TransformStyleConfig {
+  enableVar?: boolean
+  externalVarContext?: Record<string, any>
+  parentFontSize?: number
+  parentWidth?: number
+  parentHeight?: number
+  transformRadiusPercent?: boolean
 }
 
-function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
-  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
-  return insets[safeAreaInsetMap[name]]
+export interface VisitorArg {
+  target: Record<string, any>
+  key: string
+  value: any
+  keyPath: Array<string>
 }
 
-export function useNavigation (): Record<string, any> | undefined {
-  const { navigation } = useContext(RouteContext) || {}
-  return navigation
+type GroupData<T> = Record<string, Partial<T>>
+
+interface LayoutConfig {
+  props: Record<string, any>
+  hasSelfPercent: boolean
+  setWidth?: Dispatch<SetStateAction<number>>
+  setHeight?: Dispatch<SetStateAction<number>>
+  onLayout?: (event?: LayoutChangeEvent) => void
+  nodeRef: React.RefObject<any>
 }
+
+export interface WrapChildrenConfig {
+  hasVarDec: boolean
+  varContext?: Record<string, any>
+  textPassThrough?: TextPassThroughContextValue | null
+}
+
+export interface TextPassThroughValueOptions {
+  inheritTextProps?: boolean
+  disabled?: boolean
+}
+
+export interface GestureHandler {
+  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>
+  current?: unknown
+}
+
+// ============================================================
+// generic utility functions
+// ============================================================
 
 export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
   const shallowCopy: any = extendObject({}, obj)
@@ -107,31 +350,9 @@ export function omit<T, K extends string> (obj: T, fields: K[]): Omit<T, K> {
   return shallowCopy
 }
 
-/**
- * 用法等同于 useEffect，但是会忽略首次执行，只在依赖更新时执行
- */
-export const useUpdateEffect = (effect: any, deps: any) => {
-  const isMounted = useRef(false)
-
-  // for react-refresh
-  useEffect(() => {
-    return () => {
-      isMounted.current = false
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true
-    } else {
-      return effect()
-    }
-  }, deps)
-}
-
 export const parseUrl = (cssUrl = '') => {
   if (!cssUrl) return
-  const match = cssUrl.match(URL_REGEX)
+  const match = cssUrl.match(urlRegExp)
   return match?.[1]
 }
 
@@ -141,6 +362,10 @@ export const getRestProps = (transferProps: any = {}, originProps: any = {}, del
     transferProps,
     omit(originProps, deletePropsKey)
   )
+}
+
+export function getDefaultAllowFontScaling (): boolean {
+  return global.__mpx?.config?.rnConfig?.allowFontScaling ?? false
 }
 
 export function isText (ele: ReactNode): ele is ReactElement {
@@ -158,8 +383,6 @@ export function isStringChildren (children: ReactNode) {
   return children.every((child) => typeof child === 'string')
 }
 
-type GroupData<T> = Record<string, Partial<T>>
-
 export function groupBy<T extends Record<string, any>> (
   obj: T,
   callback: (key: string, val: T[keyof T]) => string,
@@ -173,6 +396,76 @@ export function groupBy<T extends Record<string, any>> (
   return group
 }
 
+// 多value解析
+export function parseValues (str: string, char = ' ') {
+  let stack = 0
+  let temp = ''
+  const result = []
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '(') {
+      stack++
+    } else if (str[i] === ')') {
+      stack--
+    }
+    // 非括号内 或者 非分隔字符且非空
+    if (stack !== 0 || str[i] !== char) {
+      temp += str[i]
+    }
+    if ((stack === 0 && str[i] === char) || i === str.length - 1) {
+      result.push(temp.trim())
+      temp = ''
+    }
+  }
+  return result
+}
+
+export const debounce = <T extends AnyFunc> (
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  let timer: any
+  const wrapper = (...args: ReadonlyArray<any>) => {
+    timer && clearTimeout(timer)
+    timer = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+  wrapper.clear = () => {
+    timer && clearTimeout(timer)
+    timer = null
+  }
+  return wrapper
+}
+
+// ============================================================
+// style classification & splitting
+// ============================================================
+
+function isTextStyle (key: string) {
+  return hasOwn(textStyleMap, key) || key.startsWith('font') || key.startsWith('text')
+}
+
+function isColorValue (token: string): boolean {
+  if (token.startsWith('#') || token.startsWith('rgb(') || token.startsWith('rgba(') || token.startsWith('hsl(') || token.startsWith('hsla(')) return true
+  return hasOwn(namedColorSet, token.toLowerCase())
+}
+
+function getSafeAreaInset (name: string, navigation: Record<string, any> | undefined) {
+  const insets = extendObject({}, initialWindowMetrics?.insets, navigation?.insets)
+  return insets[safeAreaInsetMap[name]]
+}
+
+export function isBoxSizingAffectingStyle (key: string) {
+  return hasOwn(boxSizingAffectingStyleMap, key)
+}
+
+export function transformBoxSizing (style: Record<string, any> = {}, hasBoxSizingAffectingStyle = false) {
+  if (hasBoxSizingAffectingStyle && style.boxSizing === undefined) {
+    style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? defaultBoxSizingStyle.boxSizing
+  }
+  return style
+}
+
 export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffect?: (key: string, val: T[keyof T]) => void): {
   textStyle?: Partial<T>
   backgroundStyle?: Partial<T>
@@ -182,81 +475,44 @@ export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffe
     sideEffect && sideEffect(key, val)
     if (isTextStyle(key)) {
       return 'textStyle'
-    } else if (hasOwn(BACKGROUND_STYLE_MAP, key)) {
+    } else if (hasOwn(backgroundStyleMap, key)) {
       return 'backgroundStyle'
     } else {
       return 'innerStyle'
     }
   })
 }
-const radiusPercentRule: Record<string, 'height' | 'width'> = {
-  borderTopLeftRadius: 'width',
-  borderBottomLeftRadius: 'width',
-  borderBottomRightRadius: 'width',
-  borderTopRightRadius: 'width',
-  borderRadius: 'width'
-}
-const selfPercentRule: Record<string, 'height' | 'width'> = extendObject({
-  translateX: 'width',
-  translateY: 'height'
-}, radiusPercentRule)
 
-const parentHeightPercentRule: Record<string, boolean> = {
-  height: true,
-  minHeight: true,
-  maxHeight: true,
-  top: true,
-  bottom: true
-}
-
-interface PercentConfig {
-  fontSize?: number | string
-  width?: number
-  height?: number
-  parentFontSize?: number
-  parentWidth?: number
-  parentHeight?: number
-}
-
-interface PositionMeta {
-  hasPositionFixed: boolean
-}
-
-function resolvePercent (value: string | number | undefined, key: string, percentConfig: PercentConfig): string | number | undefined {
-  if (!(typeof value === 'string' && PERCENT_REGEX.test(value))) return value
-  let base
-  let reason
-  if (key === 'fontSize') {
-    base = percentConfig.parentFontSize
-    reason = 'parent-font-size'
-  } else if (key === 'lineHeight') {
-    base = resolvePercent(percentConfig.fontSize, 'fontSize', percentConfig)
-    reason = 'font-size'
-  } else if (selfPercentRule[key]) {
-    base = percentConfig[selfPercentRule[key]]
-    reason = selfPercentRule[key]
-  } else if (parentHeightPercentRule[key]) {
-    base = percentConfig.parentHeight
-    reason = 'parent-height'
-  } else {
-    base = percentConfig.parentWidth
-    reason = 'parent-width'
-  }
-  if (typeof base !== 'number') {
-    error(`[${key}] can not contain % unit unless you set [${reason}] with a number for the percent calculation.`)
-    return value
-  } else {
-    return parseFloat(value) / 100 * base
+export function splitProps<T extends Record<string, any>> (props: T): {
+  textProps?: Partial<T>
+  innerProps?: Partial<T>
+} {
+  return groupBy(props, (key) => {
+    if (hasOwn(textPropsMap, key)) {
+      return 'textProps'
+    } else {
+      return 'innerProps'
+    }
+  }) as {
+    textProps: Partial<T>
+    innerProps: Partial<T>
   }
 }
 
-function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array<Array<string>>, percentConfig: PercentConfig) {
-  percentKeyPaths.forEach((percentKeyPath) => {
-    setStyle(styleObj, percentKeyPath, ({ target, key, value }) => {
-      target[key] = resolvePercent(value, key, percentConfig)
-    })
-  })
+export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
+  return pickedKeys.reduce<Record<string, any>>((acc, key) => {
+    if (key in styleObj) {
+      acc[key] = callback ? callback(key, styleObj[key]) : styleObj[key]
+    }
+    return acc
+  }, {})
 }
+
+// ============================================================
+// style transform pipeline
+// ============================================================
+
+// --- var ---
 
 function resolveVar (input: string, varContext: Record<string, any>) {
   const parsed = parseFunc(input, 'var')
@@ -300,6 +556,8 @@ function transformVar (styleObj: Record<string, any>, varKeyPaths: Array<Array<s
   })
 }
 
+// --- env ---
+
 function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<string>>, navigation: Record<string, any> | undefined) {
   envKeyPaths.forEach((envKeyPath) => {
     setStyle(styleObj, envKeyPath, ({ target, key, value }) => {
@@ -315,6 +573,46 @@ function transformEnv (styleObj: Record<string, any>, envKeyPaths: Array<Array<s
     })
   })
 }
+
+// --- percent ---
+
+function resolvePercent (value: string | number | undefined, key: string, percentConfig: PercentConfig): string | number | undefined {
+  if (!(typeof value === 'string' && percentRegExp.test(value))) return value
+  let base
+  let reason
+  if (key === 'fontSize') {
+    base = percentConfig.parentFontSize
+    reason = 'parent-font-size'
+  } else if (key === 'lineHeight') {
+    base = resolvePercent(percentConfig.fontSize, 'fontSize', percentConfig)
+    reason = 'font-size'
+  } else if (selfPercentRule[key]) {
+    base = percentConfig[selfPercentRule[key]]
+    reason = selfPercentRule[key]
+  } else if (parentHeightPercentRule[key]) {
+    base = percentConfig.parentHeight
+    reason = 'parent-height'
+  } else {
+    base = percentConfig.parentWidth
+    reason = 'parent-width'
+  }
+  if (typeof base !== 'number') {
+    error(`[${key}] can not contain % unit unless you set [${reason}] with a number for the percent calculation.`)
+    return value
+  } else {
+    return parseFloat(value) / 100 * base
+  }
+}
+
+function transformPercent (styleObj: Record<string, any>, percentKeyPaths: Array<Array<string>>, percentConfig: PercentConfig) {
+  percentKeyPaths.forEach((percentKeyPath) => {
+    setStyle(styleObj, percentKeyPath, ({ target, key, value }) => {
+      target[key] = resolvePercent(value, key, percentConfig)
+    })
+  })
+}
+
+// --- calc ---
 
 function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array<string>>, formatter: (value: string, key: string) => number) {
   calcKeyPaths.forEach((calcKeyPath) => {
@@ -337,6 +635,15 @@ function transformCalc (styleObj: Record<string, any>, calcKeyPaths: Array<Array
   })
 }
 
+// --- misc ---
+
+function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
+  if (styleObj.position === 'fixed') {
+    styleObj.position = 'absolute'
+    meta.hasPositionFixed = true
+  }
+}
+
 function transformStringify (styleObj: Record<string, any>) {
   if (isNumber(styleObj.fontWeight)) {
     styleObj.fontWeight = '' + styleObj.fontWeight
@@ -347,34 +654,8 @@ function transformStringify (styleObj: Record<string, any>) {
   }
 }
 
-function transformPosition (styleObj: Record<string, any>, meta: PositionMeta) {
-  if (styleObj.position === 'fixed') {
-    styleObj.position = 'absolute'
-    meta.hasPositionFixed = true
-  }
-}
-// 多value解析
-export function parseValues (str: string, char = ' ') {
-  let stack = 0
-  let temp = ''
-  const result = []
-  for (let i = 0; i < str.length; i++) {
-    if (str[i] === '(') {
-      stack++
-    } else if (str[i] === ')') {
-      stack--
-    }
-    // 非括号内 或者 非分隔字符且非空
-    if (stack !== 0 || str[i] !== char) {
-      temp += str[i]
-    }
-    if ((stack === 0 && str[i] === char) || i === str.length - 1) {
-      result.push(temp.trim())
-      temp = ''
-    }
-  }
-  return result
-}
+// --- transform / shadow ---
+
 // parse string transform, eg: transform: 'rotateX(45deg) rotateZ(0.785398rad)'
 function parseTransform (transformStr: string) {
   const values = parseValues(transformStr)
@@ -431,6 +712,7 @@ function parseTransform (transformStr: string) {
   })
   return transform
 }
+
 // format style transform
 function transformTransform (style: Record<string, any>) {
   if (!style.transform || Array.isArray(style.transform)) return
@@ -444,14 +726,225 @@ function transformBoxShadow (styleObj: Record<string, any>) {
   }, '')
 }
 
-interface TransformStyleConfig {
-  enableVar?: boolean
-  externalVarContext?: Record<string, any>
-  parentFontSize?: number
-  parentWidth?: number
-  parentHeight?: number
-  transformRadiusPercent?: boolean
+// --- shorthand ---
+
+function expandCompositeValues (values: string[]): string[] {
+  const v = values.slice(0, 4)
+  switch (v.length) {
+    case 1:
+      return [v[0], v[0], v[0], v[0]]
+    case 2:
+      return [v[0], v[1], v[0], v[1]]
+    case 3:
+      return [v[0], v[1], v[2], v[1]]
+    default:
+      return v
+  }
 }
+
+function expandAbbreviation (values: string[], props: string[]): Array<[string, any]> {
+  const result: Array<[string, any]> = []
+  const dotMap: Record<string, Record<string, any>> = {}
+  for (let i = 0; i < props.length && i < values.length; i++) {
+    const prop = props[i]
+    const formatted = global.__formatValue(values[i])
+    if (prop.includes('.')) {
+      const [main, sub] = prop.split('.')
+      if (!dotMap[main]) {
+        dotMap[main] = {}
+        result.push([main, dotMap[main]])
+      }
+      dotMap[main][sub] = formatted
+    } else {
+      result.push([prop, formatted])
+    }
+  }
+  return result
+}
+
+function expandFlex (value: string): Array<[string, any]> | null {
+  const values = parseValues(value)
+  if (values.length === 0) return null
+  if (values.length === 1) {
+    if (values[0] === 'none') {
+      return [['flexGrow', 0], ['flexShrink', 0]]
+    }
+    if (values[0] === 'initial') {
+      return [['flexGrow', 0], ['flexShrink', 1]]
+    }
+  }
+  const result: Array<[string, any]> = []
+  let i = 0
+  const isNum = (v: string) => !isNaN(+v)
+  if (isNum(values[i])) {
+    result.push(['flexGrow', +values[i++]])
+  } else {
+    result.push(['flexGrow', 1])
+  }
+  if (i < values.length && isNum(values[i])) {
+    result.push(['flexShrink', +values[i++]])
+  } else {
+    result.push(['flexShrink', 1])
+  }
+  if (i < values.length) {
+    if (values[i] !== 'auto') {
+      result.push(['flexBasis', global.__formatValue(values[i])])
+    }
+  } else {
+    result.push(['flexBasis', 0])
+  }
+  return result
+}
+
+function transformFlex (styleObj: Record<string, any>) {
+  const value = styleObj.flex
+  if (typeof value !== 'string') return
+  const flexResult = expandFlex(value)
+  if (!flexResult) return
+  delete styleObj.flex
+  for (const [prop, val] of flexResult) {
+    if (!hasOwn(styleObj, prop)) styleObj[prop] = val
+  }
+}
+
+function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
+  if (shorthandKeys.length === 0) return
+  for (const key of shorthandKeys) {
+    const value = styleObj[key]
+    if (typeof value !== 'string') continue
+    if ((key === 'border' || key === 'borderTop' || key === 'borderRight' || key === 'borderBottom' || key === 'borderLeft') && value.trim() === 'none') {
+      const prop = runtimeAbbreviationMap[key][0]
+      delete styleObj[key]
+      if (!hasOwn(styleObj, prop)) styleObj[prop] = 0
+      continue
+    }
+    const values = parseValues(value)
+    const props = runtimeAbbreviationMap[key]
+    if (!props) continue
+    if (hasOwn(runtimeCompositeStyleMap, key) && values.length === 1) continue
+    const expandedValues = hasOwn(runtimeCompositeStyleMap, key) ? expandCompositeValues(values) : values
+    const pairs = expandAbbreviation(expandedValues, props)
+    delete styleObj[key]
+    for (const [prop, val] of pairs) {
+      if (!hasOwn(styleObj, prop)) styleObj[prop] = val
+    }
+  }
+}
+
+// --- runtime alignment ---
+
+function transformLineHeight (styleObj: Record<string, any>) {
+  const value = styleObj.lineHeight
+  if (typeof value === 'number' && value !== 0) {
+    styleObj.lineHeight = `${Math.round(value * 100)}%`
+  }
+}
+
+function transformFontFamily (styleObj: Record<string, any>) {
+  const value = styleObj.fontFamily
+  if (typeof value !== 'string') return
+  const stripped = value.replace(/["']/g, '').trim()
+  if (!stripped) return
+  const values = parseValues(stripped, ',')
+  styleObj.fontFamily = values[0].trim()
+}
+
+function transformBackground (styleObj: Record<string, any>) {
+  if (typeof styleObj.backgroundSize === 'string') {
+    styleObj.backgroundSize = parseValues(styleObj.backgroundSize)
+  }
+  if (typeof styleObj.backgroundPosition === 'string') {
+    const parts = parseValues(styleObj.backgroundPosition)
+    styleObj.backgroundPosition = parts.map(v => v === 'center' ? '50%' : v)
+  }
+  const value = styleObj.background
+  if (typeof value !== 'string') return
+  delete styleObj.background
+  if (value === 'none') {
+    styleObj.backgroundImage = 'none'
+    styleObj.backgroundColor = 'transparent'
+    return
+  }
+  const tokens = parseValues(value)
+  const positionValues: string[] = []
+  const sizeValues: string[] = []
+  let isSize = false
+  for (const token of tokens) {
+    if (urlRegExp.test(token)) {
+      styleObj.backgroundImage = token
+    } else if (linearGradientRegExp.test(token)) {
+      styleObj.backgroundImage = token
+    } else if (hasOwn(bgRepeatMap, token)) {
+      styleObj.backgroundRepeat = token
+    } else if (isColorValue(token)) {
+      styleObj.backgroundColor = token
+    } else if (token === '/') {
+      isSize = true
+    } else {
+      const slashParts = parseValues(token, '/')
+      if (slashParts.length > 1) {
+        const posPart = slashParts[0]
+        if (posPart) positionValues.push(posPart === 'center' ? '50%' : posPart)
+        isSize = true
+        for (let i = 1; i < slashParts.length; i++) {
+          if (slashParts[i]) sizeValues.push(slashParts[i])
+        }
+      } else if (isSize) {
+        sizeValues.push(token)
+      } else if (hasOwn(bgPositionMap, token) || percentRegExp.test(token) || digitStartRegExp.test(token)) {
+        positionValues.push(token === 'center' ? '50%' : token)
+      }
+    }
+  }
+  if (positionValues.length) styleObj.backgroundPosition = positionValues
+  if (sizeValues.length) styleObj.backgroundSize = sizeValues
+}
+
+// ============================================================
+// style traversal
+// ============================================================
+
+export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(arg: VisitorArg) => void>) {
+  const keyPath: Array<string> = []
+  function traverse<T extends Record<string, any>> (target: T) {
+    if (Array.isArray(target)) {
+      target.forEach((value, index) => {
+        const key = String(index)
+        keyPath.push(key)
+        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
+        traverse(value)
+        keyPath.pop()
+      })
+    } else if (isObject(target)) {
+      Object.entries(target).forEach(([key, value]) => {
+        keyPath.push(key)
+        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
+        traverse(value)
+        keyPath.pop()
+      })
+    }
+  }
+  traverse(styleObj)
+}
+
+export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>, setter: (arg: VisitorArg) => void) {
+  let target = styleObj
+  const lastKey = keyPath[keyPath.length - 1]
+  for (let i = 0; i < keyPath.length - 1; i++) {
+    target = target[keyPath[i]]
+    if (!target) return
+  }
+  setter({
+    target,
+    key: lastKey,
+    value: target[lastKey],
+    keyPath
+  })
+}
+
+// ============================================================
+// core style hook
+// ============================================================
 
 export function useTransformStyle (styleObj: Record<string, any> = {}, { enableVar, transformRadiusPercent, externalVarContext, parentFontSize, parentWidth, parentHeight }: TransformStyleConfig) {
   const varStyle: Record<string, any> = {}
@@ -466,6 +959,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   const percentKeyPaths: Array<Array<string>> = []
   const calcKeyPaths: Array<Array<string>> = []
   const envKeyPaths: Array<Array<string>> = []
+  const shorthandKeys: string[] = []
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(0)
   const navigation = useNavigation()
@@ -517,11 +1011,17 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   function percentVisitor ({ key, value, keyPath }: VisitorArg) {
     // fixme 去掉 translate & border-radius 的百分比计算
     // fixme Image 组件 borderRadius 仅支持 number
-    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && PERCENT_REGEX.test(value)) {
+    if (transformRadiusPercent && hasOwn(radiusPercentRule, key) && percentRegExp.test(value)) {
       hasSelfPercent = true
       percentKeyPaths.push(keyPath.slice())
-    } else if ((key === 'fontSize' || key === 'lineHeight') && PERCENT_REGEX.test(value)) {
+    } else if ((key === 'fontSize' || key === 'lineHeight') && percentRegExp.test(value)) {
       percentKeyPaths.push(keyPath.slice())
+    }
+  }
+
+  function shorthandVisitor ({ key, keyPath }: VisitorArg) {
+    if (keyPath.length === 1 && hasOwn(runtimeAbbreviationMap, key)) {
+      shorthandKeys.push(key)
     }
   }
 
@@ -532,7 +1032,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
 
   // traverse var & generate normalStyle
-  traverseStyle(styleObj, [varVisitor, boxSizingVisitor])
+  traverseStyle(styleObj, [varVisitor, boxSizingVisitor, shorthandVisitor])
   hasVarDec = hasVarDec || !!externalVarContext
   enableVar = enableVar || hasVarDec || hasVarUse
   const enableVarRef = useRef(enableVar)
@@ -576,7 +1076,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformPercent(normalStyle, percentKeyPaths, percentConfig)
   // apply calc
   transformCalc(normalStyle, calcKeyPaths, (value: string, key: string) => {
-    if (PERCENT_REGEX.test(value)) {
+    if (percentRegExp.test(value)) {
       if (hasOwn(selfPercentRule, key)) {
         hasSelfPercent = true
       }
@@ -597,11 +1097,17 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformPosition(normalStyle, positionMeta)
   // transform number enum stringify
   transformStringify(normalStyle)
-  // transform rpx to px
+  // transform unit
   transformBoxShadow(normalStyle)
-  // transform 字符串格式转化数组格式(先转数组再处理css var)
+  // transform 字符串格式转化数组格式
   transformTransform(normalStyle)
   transformBoxSizing(normalStyle, hasBoxSizingAffectingStyle)
+  // apply runtime style processing alignment
+  transformLineHeight(normalStyle)
+  transformFontFamily(normalStyle)
+  transformFlex(normalStyle)
+  transformShorthand(normalStyle, shorthandKeys)
+  transformBackground(normalStyle)
 
   return {
     hasVarDec,
@@ -614,79 +1120,41 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   }
 }
 
-export interface VisitorArg {
-  target: Record<string, any>
-  key: string
-  value: any
-  keyPath: Array<string>
+// ============================================================
+// other React hooks
+// ============================================================
+
+export function useNavigation (): Record<string, any> | undefined {
+  const { navigation } = useContext(RouteContext) || {}
+  return navigation
 }
 
-export function traverseStyle (styleObj: Record<string, any>, visitors: Array<(arg: VisitorArg) => void>) {
-  const keyPath: Array<string> = []
-  function traverse<T extends Record<string, any>> (target: T) {
-    if (Array.isArray(target)) {
-      target.forEach((value, index) => {
-        const key = String(index)
-        keyPath.push(key)
-        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
-        traverse(value)
-        keyPath.pop()
-      })
-    } else if (isObject(target)) {
-      Object.entries(target).forEach(([key, value]) => {
-        keyPath.push(key)
-        visitors.forEach(visitor => visitor({ target, key, value, keyPath }))
-        traverse(value)
-        keyPath.pop()
-      })
+/**
+ * 用法等同于 useEffect，但是会忽略首次执行，只在依赖更新时执行
+ */
+export const useUpdateEffect = (effect: any, deps: any) => {
+  const isMounted = useRef(false)
+
+  // for react-refresh
+  useEffect(() => {
+    return () => {
+      isMounted.current = false
     }
-  }
-  traverse(styleObj)
-}
+  }, [])
 
-export function setStyle (styleObj: Record<string, any>, keyPath: Array<string>, setter: (arg: VisitorArg) => void) {
-  let target = styleObj
-  const lastKey = keyPath[keyPath.length - 1]
-  for (let i = 0; i < keyPath.length - 1; i++) {
-    target = target[keyPath[i]]
-    if (!target) return
-  }
-  setter({
-    target,
-    key: lastKey,
-    value: target[lastKey],
-    keyPath
-  })
-}
-
-export function splitProps<T extends Record<string, any>> (props: T): {
-  textProps?: Partial<T>
-  innerProps?: Partial<T>
-} {
-  return groupBy(props, (key) => {
-    if (hasOwn(TEXT_PROPS_MAP, key)) {
-      return 'textProps'
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true
     } else {
-      return 'innerProps'
+      return effect()
     }
-  }) as {
-    textProps: Partial<T>
-    innerProps: Partial<T>
-  }
+  }, deps)
 }
 
-interface LayoutConfig {
-  props: Record<string, any>
-  hasSelfPercent: boolean
-  setWidth?: Dispatch<SetStateAction<number>>
-  setHeight?: Dispatch<SetStateAction<number>>
-  onLayout?: (event?: LayoutChangeEvent) => void
-  nodeRef: React.RefObject<any>
-}
 export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout, nodeRef }: LayoutConfig) => {
   const layoutRef = useRef({})
   const hasLayoutRef = useRef(false)
-  const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? HIDDEN_STYLE : {} }, [hasLayoutRef.current])
+  const layoutStyle = useMemo(() => { return !hasLayoutRef.current && hasSelfPercent ? hiddenStyle : {} }, [hasLayoutRef.current])
   const layoutProps: Record<string, any> = {}
   const navigation = useNavigation()
   const enableOffset = props['enable-offset']
@@ -713,17 +1181,6 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
     layoutStyle,
     layoutProps
   }
-}
-
-export interface WrapChildrenConfig {
-  hasVarDec: boolean
-  varContext?: Record<string, any>
-  textPassThrough?: TextPassThroughContextValue | null
-}
-
-export interface TextPassThroughValueOptions {
-  inheritTextProps?: boolean
-  disabled?: boolean
 }
 
 export function useTextPassThroughValue (
@@ -756,104 +1213,6 @@ export function useTextPassThroughValue (
   }
 
   return valueRef.current
-}
-
-export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textPassThrough }: WrapChildrenConfig) {
-  let { children } = props
-  if (textPassThrough) {
-    children = <TextPassThroughContext.Provider value={textPassThrough} key='textPassThroughWrap'>{children}</TextPassThroughContext.Provider>
-  }
-  if (hasVarDec && varContext) {
-    children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
-  }
-  return children
-}
-
-export const debounce = <T extends AnyFunc> (
-  func: T,
-  delay: number
-): ((...args: Parameters<T>) => void) & { clear: () => void } => {
-  let timer: any
-  const wrapper = (...args: ReadonlyArray<any>) => {
-    timer && clearTimeout(timer)
-    timer = setTimeout(() => {
-      func(...args)
-    }, delay)
-  }
-  wrapper.clear = () => {
-    timer && clearTimeout(timer)
-    timer = null
-  }
-  return wrapper
-}
-
-export const useDebounceCallback = <T extends AnyFunc> (
-  func: T,
-  delay: number
-): ((...args: Parameters<T>) => void) & { clear: () => void } => {
-  const debounced = useMemo(() => debounce(func, delay), [func])
-  return debounced
-}
-
-export const useStableCallback = <T extends AnyFunc | null | undefined> (
-  callback: T
-): T extends AnyFunc ? T : () => void => {
-  const ref = useRef<T>(callback)
-  ref.current = callback
-  return useCallback<any>(
-    (...args: any[]) => ref.current?.(...args),
-    []
-  )
-}
-
-export function usePrevious<T> (value: T): T | undefined {
-  const ref = useRef<T | undefined>()
-  const prev = ref.current
-  ref.current = value
-  return prev
-}
-
-export interface GestureHandler {
-  nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>
-  current?: unknown
-}
-
-export function flatGesture (gestures: Array<GestureHandler> = []) {
-  return (gestures && gestures.flatMap((gesture: GestureHandler) => {
-    if (gesture && gesture.nodeRefs) {
-      return gesture.nodeRefs
-        .map((item: { getNodeInstance: () => any }) => item.getNodeInstance()?.instance?.gestureRef || {})
-    }
-    return gesture?.current ? [gesture] : []
-  })) || []
-}
-
-export function getCurrentPage (pageId: number | null | undefined) {
-  if (!global.getCurrentPages) return
-  const pages = global.getCurrentPages()
-  return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
-}
-
-export function renderImage (
-  imageProps: ImageProps,
-  enableFastImage = true
-) {
-  let Component = Image
-  if (enableFastImage) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fastImageModule = require('@d11/react-native-fast-image')
-    Component = fastImageModule.default || fastImageModule
-  }
-  return createElement(Component, imageProps)
-}
-
-export function pickStyle (styleObj: Record<string, any> = {}, pickedKeys: Array<string>, callback?: (key: string, val: number | string) => number | string) {
-  return pickedKeys.reduce<Record<string, any>>((acc, key) => {
-    if (key in styleObj) {
-      acc[key] = callback ? callback(key, styleObj[key]) : styleObj[key]
-    }
-    return acc
-  }, {})
 }
 
 export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled }: { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {
@@ -932,4 +1291,74 @@ export function useRunOnJSCallback (callbackMapRef: MutableRefObject<Record<stri
   }, [])
 
   return invokeCallback
+}
+
+export const useDebounceCallback = <T extends AnyFunc> (
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { clear: () => void } => {
+  const debounced = useMemo(() => debounce(func, delay), [func])
+  return debounced
+}
+
+export const useStableCallback = <T extends AnyFunc | null | undefined> (
+  callback: T
+): T extends AnyFunc ? T : () => void => {
+  const ref = useRef<T>(callback)
+  ref.current = callback
+  return useCallback<any>(
+    (...args: any[]) => ref.current?.(...args),
+    []
+  )
+}
+
+export function usePrevious<T> (value: T): T | undefined {
+  const ref = useRef<T | undefined>()
+  const prev = ref.current
+  ref.current = value
+  return prev
+}
+
+// ============================================================
+// component helpers
+// ============================================================
+
+export function wrapChildren (props: Record<string, any> = {}, { hasVarDec, varContext, textPassThrough }: WrapChildrenConfig) {
+  let { children } = props
+  if (textPassThrough) {
+    children = <TextPassThroughContext.Provider value={textPassThrough} key='textPassThroughWrap'>{children}</TextPassThroughContext.Provider>
+  }
+  if (hasVarDec && varContext) {
+    children = <VarContext.Provider value={varContext} key='varContextWrap'>{children}</VarContext.Provider>
+  }
+  return children
+}
+
+export function renderImage (
+  imageProps: ImageProps,
+  enableFastImage = true
+) {
+  let Component = Image
+  if (enableFastImage) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fastImageModule = require('@d11/react-native-fast-image')
+    Component = fastImageModule.default || fastImageModule
+  }
+  return createElement(Component, imageProps)
+}
+
+export function flatGesture (gestures: Array<GestureHandler> = []) {
+  return (gestures && gestures.flatMap((gesture: GestureHandler) => {
+    if (gesture && gesture.nodeRefs) {
+      return gesture.nodeRefs
+        .map((item: { getNodeInstance: () => any }) => item.getNodeInstance()?.instance?.gestureRef || {})
+    }
+    return gesture?.current ? [gesture] : []
+  })) || []
+}
+
+export function getCurrentPage (pageId: number | null | undefined) {
+  if (!global.getCurrentPages) return
+  const pages = global.getCurrentPages()
+  return pages.find((page: any) => isFunction(page.getPageId) && page.getPageId() === pageId)
 }
