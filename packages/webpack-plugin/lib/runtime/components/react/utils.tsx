@@ -315,7 +315,6 @@ export function transformBoxSizing (style: Record<string, any> = {}, hasBoxSizin
   if (hasBoxSizingAffectingStyle && style.boxSizing === undefined) {
     style.boxSizing = global.__mpx?.config?.rnConfig?.defaultBoxSizing ?? defaultBoxSizingStyle.boxSizing
   }
-  return style
 }
 
 export function splitStyle<T extends Record<string, any>> (styleObj: T, sideEffect?: (key: string, val: T[keyof T]) => void): {
@@ -685,7 +684,7 @@ function transformShorthand (styleObj: Record<string, any>, shorthandKeys: strin
 
 // --- runtime alignment ---
 
-function transformLineHeight (styleObj: Record<string, any>) {
+export function transformLineHeight (styleObj: Record<string, any>) {
   const value = styleObj.lineHeight
   if (typeof value === 'number') {
     if (value === 0) return

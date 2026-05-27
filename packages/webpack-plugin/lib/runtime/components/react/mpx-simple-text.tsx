@@ -1,7 +1,7 @@
 import { Text, TextStyle, TextProps } from 'react-native'
 import { JSX, createElement, useContext } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
+import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle, transformLineHeight } from './utils'
 import { TextPassThroughContext } from './context'
 
 const SimpleText = (props: TextProps): JSX.Element => {
@@ -13,7 +13,8 @@ const SimpleText = (props: TextProps): JSX.Element => {
       hasBoxSizingAffectingStyle = true
     }
   })
-  const finalStyle = transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
+  transformLineHeight(mergedStyle)
+  transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
   const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
     allowFontScaling,
@@ -26,7 +27,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
       mergedProps,
       {
         allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
-        style: finalStyle
+        style: mergedStyle
       }
     )
   )
