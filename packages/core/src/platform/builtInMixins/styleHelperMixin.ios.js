@@ -212,7 +212,11 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    if (prop === 'lineHeight' || prop === 'flex') {
+      transformed[prop] = styleObj[prop]
+    } else {
+      transformed[prop] = formatValue(styleObj[prop])
+    }
   })
   return transformed
 }

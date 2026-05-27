@@ -149,7 +149,16 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
               value[key] = formatValue(value[key])
             }
           } else {
-            value = formatValue(value)
+            if (prop === 'lineHeight' || prop === 'flex') {
+              const matched = unitRegExp.exec(value)
+              if (matched && !matched[2]) {
+                value = matched[1]
+              } else {
+                value = JSON.stringify(value)
+              }
+            } else {
+              value = formatValue(value)
+            }
           }
           classMapValue[prop] = value
         })
