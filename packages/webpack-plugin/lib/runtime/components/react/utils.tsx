@@ -833,10 +833,15 @@ function transformShorthand (styleObj: Record<string, any>, shorthandKeys: strin
 
 // --- runtime alignment ---
 
-function transformLineHeight (styleObj: Record<string, any>) {
+function transformLineHeight (styleObj: Record<string, any>, percentConfig: PercentConfig) {
   const value = styleObj.lineHeight
   if (typeof value === 'number' && value !== 0) {
-    styleObj.lineHeight = `${Math.round(value * 100)}%`
+    const base = percentConfig.fontSize
+    if (typeof base !== 'number') {
+      error('[lineHeight] can not use number multiplier unless you set [font-size] with a number for the calculation.')
+    } else {
+      styleObj.lineHeight = Math.round(value * base)
+    }
   }
 }
 
@@ -1103,7 +1108,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformTransform(normalStyle)
   transformBoxSizing(normalStyle, hasBoxSizingAffectingStyle)
   // apply runtime style processing alignment
-  transformLineHeight(normalStyle)
+  transformLineHeight(normalStyle, percentConfig)
   transformFontFamily(normalStyle)
   transformFlex(normalStyle)
   transformShorthand(normalStyle, shorthandKeys)
