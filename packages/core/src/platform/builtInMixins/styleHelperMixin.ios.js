@@ -185,7 +185,14 @@ function mergeObjectArray (arr) {
 function transformStyleObj (styleObj) {
   const transformed = {}
   Object.keys(styleObj).forEach((prop) => {
-    transformed[prop] = formatValue(styleObj[prop])
+    const v = formatValue(styleObj[prop])
+    if (typeof v === 'string' && v.endsWith('!important')) {
+      transformed._inlineLayer = transformed._inlineLayer || {}
+      transformed._inlineLayer.important = transformed._inlineLayer.important || {}
+      transformed._inlineLayer.important[prop] = v.split('!')[0]
+    } else {
+      transformed[prop] = v
+    }
   })
   return transformed
 }
@@ -317,7 +324,6 @@ export default function styleHelperMixin () {
         }
 
         if (staticStyle || dynamicStyle) {
-          const styleObj = {}
           if (isNativeStaticStyle) {
             if (Array.isArray(staticStyle)) {
               mergeToLayer('normal', ...staticStyle)
@@ -325,14 +331,13 @@ export default function styleHelperMixin () {
               mergeToLayer('normal', staticStyle)
             }
           } else {
-            Object.assign(styleObj, parseStyleText(staticStyle))
+            mergeToLayer('normal', transformStyleObj(parseStyleText(staticStyle)))
           }
-          Object.assign(styleObj, normalizeDynamicStyle(dynamicStyle))
-          mergeToLayer('normal', transformStyleObj(styleObj))
+          mergeToLayer('normal', transformStyleObj(normalizeDynamicStyle(dynamicStyle)))
         }
 
         if (hide) {
-          mergeToLayer('important', HIDE_STYLE)
+          mergeToLayer('important', { ...HIDE_STYLE })
         }
 
         const result = genResult()
