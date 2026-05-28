@@ -1,0 +1,73 @@
+{
+  "eval_id": 4,
+  "run_kind": "mpx2rn_gene",
+  "expectations": [
+    {
+      "id": "l0",
+      "text": "style: 纵向布局显式声明 flex-direction:column",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l1",
+      "text": "style: position:sticky 替换为 sticky-header 方案",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l2",
+      "text": "style: 保留 /*use rpx*/ /*use px*/ 单位转换注释",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l3",
+      "text": "style: background-image 不应用于 text 元素类",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l4",
+      "text": "template: 内联 style 中不使用多值 margin/padding 简写",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "l5",
+      "text": "template: scroll-into-view 目标添加 wx:ref",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l6",
+      "text": "template: createSelectorQuery 目标添加空 wx:ref",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l7",
+      "text": "script: 选择器 API 仅使用简单选择器",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "l8",
+      "text": "script: 非触摸事件不使用 catch 前缀",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "l9",
+      "text": "style: radial-gradient 条件编译或替换",
+      "passed": false,
+      "evidence": "FAIL"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.7,
+    "passed": 7,
+    "failed": 3,
+    "total": 10
+  },
+  "metrics": null
+}

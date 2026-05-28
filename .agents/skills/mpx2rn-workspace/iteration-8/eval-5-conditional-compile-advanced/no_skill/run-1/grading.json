@@ -1,0 +1,79 @@
+{
+  "eval_id": 5,
+  "run_kind": "no_skill",
+  "expectations": [
+    {
+      "id": "c0",
+      "text": "style: @mpx-if 包裹完整规则不产生空选择器",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "c1",
+      "text": "style: font-family 使用单一字体名",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "c2",
+      "text": "style: border-style 统一设置不使用单边",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "c3",
+      "text": "template: 内联 style 不使用 border 简写",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "c4",
+      "text": "template: selectComponent 目标自定义组件添加 wx:ref",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "c5",
+      "text": "template: 动态 CSS 变量元素设置 enable-var",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "c6",
+      "text": "script: props 通过 toRefs 解构保持响应式",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "c7",
+      "text": "style: background-repeat 仅使用 no-repeat",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "c8",
+      "text": "json: JSON 条件编译使用 if(__mpx_mode__) 不使用注释语法",
+      "passed": true,
+      "evidence": "PASS"
+    },
+    {
+      "id": "c9",
+      "text": "style: text-decoration-style/color 条件编译处理",
+      "passed": false,
+      "evidence": "FAIL"
+    },
+    {
+      "id": "c10",
+      "text": "script: onLoad 使用 decodedQuery 第二个参数",
+      "passed": true,
+      "evidence": "PASS"
+    }
+  ],
+  "summary": {
+    "pass_rate": 0.3636,
+    "passed": 4,
+    "failed": 7,
+    "total": 11
+  },
+  "metrics": null
+}

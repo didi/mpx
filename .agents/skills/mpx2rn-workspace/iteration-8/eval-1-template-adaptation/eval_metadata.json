@@ -1,0 +1,19 @@
+{
+  "eval_id": 1,
+  "eval_name": "template-adaptation",
+  "complexity": "normal",
+  "focus": "template",
+  "prompt": "请对附件中的 order-list.mpx 页面进行 RN 跨端适配改造，确保 RN 平台编译运行正确，同时保留小程序/Web 平台兼容性。请输出修改后的完整 .mpx 文件（保持 SFC 结构 template/script/style），不要省略任何内容。",
+  "files": ["input/order-list.mpx"],
+  "assertions": [
+    {"id": "t0", "text": "template: dynamic class via wx:class (not class string interpolation)", "category": "template"},
+    {"id": "t1", "text": "template: event params use inline syntax (not data- dataset)", "category": "template"},
+    {"id": "t2", "text": "template: no method calls in Mustache (getStatusColor/getStatusText replaced with computed or wx:style binding)", "category": "template"},
+    {"id": "t3", "text": "template: page scroll replaced with scroll-view (onPullDownRefresh/onReachBottom removed)", "category": "template"},
+    {"id": "t4", "text": "template: scroll-view has bindscrolltolower or equivalent scroll event", "category": "template"},
+    {"id": "t5", "text": "script: all wx.xxx API replaced with mpx.xxx", "category": "script"},
+    {"id": "t6", "text": "script: no e.target.dataset usage (event params via inline syntax)", "category": "script"},
+    {"id": "t7", "text": "style on RN: no .btn-default .btn-text compound selector", "category": "style"},
+    {"id": "t8", "text": "template: wx:style object keys use unquoted camelCase (no quoted or kebab-case keys)", "category": "template"}
+  ]
+}
