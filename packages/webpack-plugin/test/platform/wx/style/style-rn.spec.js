@@ -246,6 +246,29 @@ describe('React Native style validation for CSS variables', () => {
     })
   })
 
+   describe('Transform z-axis handling', () => {
+    test('should drop unsupported z-axis values from 3d transforms', () => {
+      const css = '.box { transform: translate3d(1px, 2px, 3px) scale3d(1, 2, 3); }'
+      const config = createConfig()
+
+      const result = getClassMap({
+        content: css,
+        filename: 'test.css',
+        ...config
+      })
+
+      expect(result.box.transform).toEqual([
+        { translateX: '1' },
+        { translateY: '2' },
+        { scaleX: '1' },
+        { scaleY: '2' }
+      ])
+      expect(config.error).toHaveBeenCalledTimes(2)
+      expect(config.error.mock.calls[0][0]).toEqual(expect.stringContaining('translateZ'))
+      expect(config.error.mock.calls[1][0]).toEqual(expect.stringContaining('scaleZ'))
+    })
+  })
+
   describe('Background shorthand', () => {
     test('should expand background-position and background-size from slash shorthand', () => {
       const css = '.bg { background: url(https://example.com/bg.png) no-repeat center/cover #fff; }'
