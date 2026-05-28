@@ -388,20 +388,20 @@ function parseTransform (transformStr: string) {
       let key = match[1]
       const val = match[2]
       switch (key) {
-        case 'translateX':
-        case 'translateY':
-        case 'scaleX':
-        case 'scaleY':
         case 'rotateX':
         case 'rotateY':
         case 'rotateZ':
         case 'rotate':
         case 'skewX':
         case 'skewY':
-        case 'perspective':
-          // rotate 处理成 rotateZ
           key = key === 'rotate' ? 'rotateZ' : key
-          // 单个值处理
+          transform.push({ [key]: val })
+          break
+        case 'translateX':
+        case 'translateY':
+        case 'scaleX':
+        case 'scaleY':
+        case 'perspective':
           transform.push({ [key]: global.__formatValue(val) })
           break
         case 'matrix': {
@@ -444,9 +444,9 @@ function parseTransform (transformStr: string) {
             const y = +parts[1].trim()
             const z = +parts[2].trim()
             const angle = parts[3].trim()
-            if (x && !y && !z) transform.push({ rotateX: global.__formatValue(angle) })
-            else if (!x && y && !z) transform.push({ rotateY: global.__formatValue(angle) })
-            else if (!x && !y && z) transform.push({ rotateZ: global.__formatValue(angle) })
+            if (x && !y && !z) transform.push({ rotateX: angle })
+            else if (!x && y && !z) transform.push({ rotateY: angle })
+            else if (!x && !y && z) transform.push({ rotateZ: angle })
           }
           break
         }
