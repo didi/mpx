@@ -646,22 +646,20 @@ module.exports = function getSpec({ warn, error }) {
       error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
       return []
     }
-    const supportedLineValues = SUPPORTED_PROP_VAL_ARR['text-decoration-line'] || []
-    const supportedStyleValues = SUPPORTED_PROP_VAL_ARR['text-decoration-style'] || []
     const cssMap = []
     const lineValues = []
     let styleValue = null
     let colorValue = null
     for (const v of values) {
       if (mdnTextDecorationLineValues.includes(v)) {
-        if (!supportedLineValues.includes(v)) {
-          warn(`Value [${v}] of text-decoration-line in ${selector} is not supported, supported values are [${supportedLineValues.join(', ')}]`)
+        if (!SUPPORTED_PROP_VAL_ARR['text-decoration-line'].includes(v)) {
+          warn(`Value [${v}] of text-decoration-line in ${selector} is not supported, supported values are [${SUPPORTED_PROP_VAL_ARR['text-decoration-line'].join(', ')}]`)
           continue
         }
         lineValues.push(v)
       } else if (mdnTextDecorationStyleValues.includes(v)) {
-        if (!supportedStyleValues.includes(v)) {
-          warn(`Value [${v}] of text-decoration-style in ${selector} is not supported, supported values are [${supportedStyleValues.join(', ')}]`)
+        if (!SUPPORTED_PROP_VAL_ARR['text-decoration-style'].includes(v)) {
+          warn(`Value [${v}] of text-decoration-style in ${selector} is not supported, supported values are [${SUPPORTED_PROP_VAL_ARR['text-decoration-style'].join(', ')}]`)
           continue
         }
         styleValue = v
