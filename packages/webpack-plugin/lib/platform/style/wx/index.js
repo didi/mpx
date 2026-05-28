@@ -648,20 +648,13 @@ module.exports = function getSpec({ warn, error }) {
     }
     const supportedLineValues = SUPPORTED_PROP_VAL_ARR['text-decoration-line'] || []
     const supportedStyleValues = SUPPORTED_PROP_VAL_ARR['text-decoration-style'] || []
-    // 提取单个 line 关键字集合，用于从简写中逐词匹配
-    const supportedLineSingles = new Set()
-    for (const v of supportedLineValues) {
-      for (const part of v.split(' ')) {
-        supportedLineSingles.add(part)
-      }
-    }
     const cssMap = []
     const lineValues = []
     let styleValue = null
     let colorValue = null
     for (const v of values) {
       if (mdnTextDecorationLineValues.includes(v)) {
-        if (!supportedLineSingles.has(v)) {
+        if (!supportedLineValues.includes(v)) {
           warn(`Value [${v}] of text-decoration-line in ${selector} is not supported, supported values are [${supportedLineValues.join(', ')}]`)
           continue
         }
