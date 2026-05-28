@@ -217,7 +217,7 @@ module.exports = function getSpec({ warn, error }) {
     // 仅支持 offset-x | offset-y | blur-radius | color 排序
     // 'box-shadow': ['shadowOffset.width', 'shadowOffset.height', 'shadowRadius', 'shadowColor'],
     // 仅支持 text-decoration-line text-decoration-style text-decoration-color 这种格式
-    'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
+    // 'text-decoration': ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor'],
     // flex-grow | flex-shrink | flex-basis
     flex: ['flexGrow', 'flexShrink', 'flexBasis'],
     // flex-flow: <'flex-direction'> or flex-flow: <'flex-direction'> and <'flex-wrap'>
@@ -633,6 +633,67 @@ module.exports = function getSpec({ warn, error }) {
   //   })
   //   return cssMap
   // }
+
+  const formatTextDecoration = ({ prop, value, selector }, { mode }) => {
+    // MDN text-decoration-line 所有合法值（含 RN 不支持的 overline/blink）
+    const mdnTextDecorationLineValues = ['none', 'underline', 'overline', 'line-through', 'blink']
+    // MDN text-decoration-style 所有合法值（含 RN 不支持的 wavy）
+    const mdnTextDecorationStyleValues = ['solid', 'double', 'dotted', 'dashed', 'wavy']
+    const values = Array.isArray(value) ? value : parseValues(value)
+    if (values.length === 1 && cssVariableExp.test(value)) {
+      error(`Property ${prop} in ${selector} is abbreviated property and does not support a single CSS var`)
+      return []
+    }
+    const supportedLineValues = SUPPORTED_PROP_VAL_ARR['text-decoration-line'] || []
+    const supportedStyleValues = SUPPORTED_PROP_VAL_ARR['text-decoration-style'] || []
+    // 提取单个 line 关键字集合，用于从简写中逐词匹配
+    const supportedLineSingles = new Set()
+    for (const v of supportedLineValues) {
+      for (const part of v.split(' ')) {
+        supportedLineSingles.add(part)
+      }
+    }
+    const cssMap = []
+    const lineValues = []
+    let styleValue = null
+    let colorValue = null
+    for (const v of values) {
+      if (mdnTextDecorationLineValues.includes(v)) {
+        if (!supportedLineSingles.has(v)) {
+          warn(`Value [${v}] of text-decoration-line in ${selector} is not supported, supported values are [${supportedLineValues.join(', ')}]`)
+          continue
+        }
+        lineValues.push(v)
+      } else if (mdnTextDecorationStyleValues.includes(v)) {
+        if (!supportedStyleValues.includes(v)) {
+          warn(`Value [${v}] of text-decoration-style in ${selector} is not supported, supported values are [${supportedStyleValues.join(', ')}]`)
+          continue
+        }
+        styleValue = v
+      } else {
+        colorValue = v
+      }
+    }
+    if (lineValues.length > 0) {
+      const lineValue = lineValues.join(' ')
+      if (verifyProps({ prop: 'text-decoration-line', value: lineValue, selector }, { mode }, true)) {
+        cssMap.push({ prop: 'textDecorationLine', value: lineValue })
+      }
+    }
+    if (styleValue !== null) {
+      if (verifyProps({ prop: 'text-decoration-style', value: styleValue, selector }, { mode }, true)) {
+        cssMap.push({ prop: 'textDecorationStyle', value: styleValue })
+      }
+    }
+    if (colorValue !== null) {
+      if (verifyProps({ prop: 'text-decoration-color', value: colorValue, selector }, { mode }, true) &&
+          verifyValues({ prop: 'text-decoration-color', value: colorValue, selector }, true)) {
+        cssMap.push({ prop: 'textDecorationColor', value: colorValue })
+      }
+    }
+    return cssMap
+  }
+
   const formatBorder = ({ prop, value, selector }, { mode }) => {
     value = value.trim()
     if (value === 'none') {
@@ -690,6 +751,12 @@ module.exports = function getSpec({ warn, error }) {
       //   android: formatBoxShadow,
       //   harmony: formatBoxShadow
       // },
+      {
+        test: 'text-decoration',
+        ios: formatTextDecoration,
+        android: formatTextDecoration,
+        harmony: formatTextDecoration
+      },
       {
         test: 'border',
         ios: formatBorder,
