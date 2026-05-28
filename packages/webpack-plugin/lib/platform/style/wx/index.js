@@ -670,7 +670,7 @@ module.exports = function getSpec({ warn, error }) {
           continue
         }
         styleValue = v
-      } else {
+      } else if (verifyValues({ prop: 'text-decoration-color', value: v, selector }, silentVerify)) {
         colorValue = v
       }
     }
@@ -686,8 +686,7 @@ module.exports = function getSpec({ warn, error }) {
       }
     }
     if (colorValue !== null) {
-      if (verifyProps({ prop: 'text-decoration-color', value: colorValue, selector }, { mode }, true) &&
-          verifyValues({ prop: 'text-decoration-color', value: colorValue, selector }, true)) {
+      if (verifyProps({ prop: 'text-decoration-color', value: colorValue, selector }, { mode }, true)) {
         cssMap.push({ prop: 'textDecorationColor', value: colorValue })
       }
     }
