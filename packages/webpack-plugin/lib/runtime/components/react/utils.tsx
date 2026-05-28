@@ -81,8 +81,7 @@ const runtimeAbbreviationMap: Record<string, string[]> = {
   borderBottom: ['borderBottomWidth', 'borderBottomStyle', 'borderBottomColor'],
   borderLeft: ['borderLeftWidth', 'borderLeftStyle', 'borderLeftColor'],
   flexFlow: ['flexDirection', 'flexWrap'],
-  textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor'],
-  textDecoration: ['textDecorationLine', 'textDecorationStyle', 'textDecorationColor']
+  textShadow: ['textShadowOffset.width', 'textShadowOffset.height', 'textShadowRadius', 'textShadowColor']
 }
 const runtimeCompositeStyleMap: Record<string, boolean> = {
   margin: true,
@@ -807,6 +806,36 @@ function transformFlex (styleObj: Record<string, any>) {
   }
 }
 
+function transformTextDecoration (styleObj: Record<string, any>) {
+  const value = styleObj.textDecoration
+  if (typeof value !== 'string') return
+  const textDecorationLineSet = new Set(['none', 'underline', 'line-through'])
+  const textDecorationStyleSet = new Set(['solid', 'double', 'dotted', 'dashed'])
+  const values = parseValues(value)
+  const lineValues: string[] = []
+  let styleValue = ''
+  let colorValue = ''
+  for (const v of values) {
+    if (textDecorationLineSet.has(v)) {
+      lineValues.push(v)
+    } else if (textDecorationStyleSet.has(v)) {
+      styleValue = v
+    } else if (isColorValue(v)) {
+      colorValue = v
+    }
+  }
+  delete styleObj.textDecoration
+  if (lineValues.length > 0 && !hasOwn(styleObj, 'textDecorationLine')) {
+    styleObj.textDecorationLine = lineValues.join(' ')
+  }
+  if (styleValue && !hasOwn(styleObj, 'textDecorationStyle')) {
+    styleObj.textDecorationStyle = styleValue
+  }
+  if (colorValue && !hasOwn(styleObj, 'textDecorationColor')) {
+    styleObj.textDecorationColor = colorValue
+  }
+}
+
 function transformShorthand (styleObj: Record<string, any>, shorthandKeys: string[]) {
   if (shorthandKeys.length === 0) return
   for (const key of shorthandKeys) {
@@ -1106,6 +1135,7 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformLineHeight(normalStyle)
   transformFontFamily(normalStyle)
   transformFlex(normalStyle)
+  transformTextDecoration(normalStyle)
   transformShorthand(normalStyle, shorthandKeys)
   transformBackground(normalStyle)
 
