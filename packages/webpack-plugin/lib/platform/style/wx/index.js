@@ -1,7 +1,7 @@
 const { hump2dash } = require('../../../utils/hump-dash')
 const { parseValues } = require('../../../utils/string')
 
-module.exports = function getSpec({ warn, error }) {
+module.exports = function getSpec ({ warn, error }) {
   // React Native 双端都不支持的 CSS property
   const unsupportedPropExp = /^(white-space|text-overflow|animation|font-variant-caps|font-variant-numeric|font-variant-east-asian|font-variant-alternates|font-variant-ligatures|caret-color|float|clear)$/
   const unsupportedPropMode = {
@@ -12,6 +12,7 @@ module.exports = function getSpec({ warn, error }) {
     // TODO: rnoh 文档暂未找到 css 属性支持说明，暂时同步 android，同时需要注意此处校验是否有缺失，类似 will-change 之类属性
     harmony: /^(text-decoration-style|text-decoration-color|shadow-offset|shadow-opacity|shadow-radius)$/
   }
+  const isNum = (v) => !isNaN(+v)
   // var(xx)
   const cssVariableExp = /var\(/
   // calc(xx)
@@ -22,10 +23,11 @@ module.exports = function getSpec({ warn, error }) {
   const hexColorExp = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
   const colorFnExp = /^(rgb|rgba|hsl|hsla|hwb)\(.+\)$/
   const valueExp = {
-    integer: /^(-?(\d+(\.\d+)?|\.\d+))$/,
+    integer: { test: isNum },
     length: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
     color: { test: (v) => namedColorSet.has(v) || hexColorExp.test(v) || colorFnExp.test(v) }
   }
+  
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, value, selector }, { mode }, isError = true) => {
     const tips = isError ? error : warn
@@ -127,7 +129,7 @@ module.exports = function getSpec({ warn, error }) {
   const verifyValues = ({ prop, value, selector }, isError = true) => {
     prop = prop.trim()
     const rawValue = value.trim()
-    const tips = isError === silentVerify ? () => {} : isError ? error : warn
+    const tips = isError === silentVerify ? () => { } : isError ? error : warn
 
     // CSS 自定义属性（--xxx）是变量定义，不属于 RN 样式属性：
     // 不能按 `-height/-color` 等后缀推断类型去校验，否则会把变量定义错误过滤，导致运行时 var() 取值失败
@@ -320,12 +322,12 @@ module.exports = function getSpec({ warn, error }) {
     if (+value === 0) {
       return {
         prop,
-        value
+        value: 0
       }
     }
     return verifyValues({ prop, value, selector }) && ({
       prop,
-      value: /^\s*(-?(\d+(\.\d+)?|\.\d+))\s*$/.test(value) ? `${Math.round(value * 100)}%` : value
+      value: isNum(value) ? `${Math.round(value * 100)}%` : value
     })
   }
 

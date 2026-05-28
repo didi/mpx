@@ -5,21 +5,22 @@ const getRulesRunner = require('../platform/index')
 const createDiagnostic = require('../platform/create-diagnostic')
 const dash2hump = require('../utils/hump-dash').dash2hump
 const parseValues = require('../utils/string').parseValues
-const unitRegExp = /^\s*(-?\d+(?:\.\d+)?)(rpx|vw|vh|px)?\s*$/
+const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
+const isNum = (v) => !isNaN(+v)
 function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
-      ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
-      : {}
+    ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
+    : {}
 
   styles = styles && styles.length
     ? styles
     : [{
-        content,
-        filename
-      }]
+      content,
+      filename
+    }]
 
   function formatValue (value) {
     let needStringify = true
@@ -149,13 +150,8 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
               value[key] = formatValue(value[key])
             }
           } else {
-            if (prop === 'lineHeight' || prop === 'flex') {
-              const matched = unitRegExp.exec(value)
-              if (matched && !matched[2]) {
-                value = matched[1]
-              } else {
-                value = JSON.stringify(value)
-              }
+            if (prop === 'flex') {
+              value = isNum(value) ? JSON.stringify(+value) : JSON.stringify(value)
             } else {
               value = formatValue(value)
             }

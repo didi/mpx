@@ -684,21 +684,6 @@ function transformShorthand (styleObj: Record<string, any>, shorthandKeys: strin
 
 // --- runtime alignment ---
 
-export function transformLineHeight (styleObj: Record<string, any>) {
-  const value = styleObj.lineHeight
-  if (typeof value === 'number') {
-    if (value === 0) return
-    const base = styleObj.fontSize
-    if (typeof base !== 'number') {
-      error('[lineHeight] can not use number multiplier unless you set [font-size] with a number for the calculation.')
-    } else {
-      styleObj.lineHeight = Math.round(value * base)
-    }
-  } else if (typeof value === 'string') {
-    styleObj.lineHeight = global.__formatValue(value)
-  }
-}
-
 function transformFontFamily (styleObj: Record<string, any>) {
   const value = styleObj.fontFamily
   if (typeof value !== 'string') return
@@ -962,7 +947,6 @@ export function useTransformStyle (styleObj: Record<string, any> = {}, { enableV
   transformTransform(normalStyle)
   transformBoxSizing(normalStyle, hasBoxSizingAffectingStyle)
   // apply runtime style processing alignment
-  transformLineHeight(normalStyle)
   transformFontFamily(normalStyle)
   transformFlex(normalStyle)
   transformShorthand(normalStyle, shorthandKeys)
