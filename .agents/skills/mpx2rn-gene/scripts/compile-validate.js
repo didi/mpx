@@ -1,0 +1,1 @@
+../../mpx2rn/scripts/compile-validate.js

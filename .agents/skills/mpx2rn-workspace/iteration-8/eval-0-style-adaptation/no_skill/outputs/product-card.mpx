@@ -1,0 +1,171 @@
+<template>
+  <view class="product-card">
+    <view class="card-header">
+      <image class="card-avatar" src="{{info.avatar}}" mode="aspectFill"></image>
+      <view class="card-title-wrap">
+        <text class="card-title" mpx-lines="1">{{info.title}}</text>
+        <text class="card-subtitle">{{info.subtitle}}</text>
+      </view>
+    </view>
+    <view class="card-body">
+      <text class="card-desc" mpx-lines="1">{{info.description}}</text>
+      <view class="card-tags">
+        <text class="tag" wx:for="{{info.tags}}" wx:key="*this" wx:class="{{{'tag-highlight': item === info.tags[0]}}}">{{item}}</text>
+      </view>
+    </view>
+    <view class="card-footer">
+      <text class="price">{{info.price}}</text>
+      <view class="btn-buy" hover-class="btn-buy-active" bindtap="onBuy">
+        <text class="btn-text">立即购买</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    info: { type: Object, value: {} }
+  },
+  methods: {
+    onBuy () {
+      this.triggerEvent('buy', { id: this.info.id })
+    }
+  }
+})
+</script>
+
+<style lang="less">
+.product-card {
+  margin: 16rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  /* RN: overflow hidden removed from outer card to allow shadow rendering */
+  /* iOS shadow */
+  shadow-color: rgba(0, 0, 0, 0.08);
+  shadow-offset: 0 2rpx;
+  shadow-opacity: 1;
+  shadow-radius: 12rpx;
+  /* Android shadow */
+  elevation: 3;
+
+  .card-header {
+    /* RN: replaced display:grid with flexbox */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 24rpx;
+    border-bottom-width: 1rpx;
+    border-bottom-color: #f0f0f0;
+    border-bottom-style: solid;
+
+    .card-avatar {
+      width: 80rpx;
+      height: 80rpx;
+      border-radius: 40rpx;
+      flex-shrink: 0;
+    }
+
+    .card-title-wrap {
+      flex: 1;
+      overflow: hidden;
+      margin-left: 16rpx;
+
+      .card-title {
+        font-size: 32rpx;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .card-subtitle {
+        font-size: 24rpx;
+        color: #999;
+        margin-top: 4rpx;
+      }
+    }
+  }
+
+  .card-body {
+    padding: 24rpx;
+    overflow: hidden;
+
+    .card-desc {
+      font-size: 28rpx;
+      color: #666;
+      line-height: 45rpx;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      margin-top: 16rpx;
+
+      .tag {
+        font-size: 22rpx;
+        color: #1677ff;
+        background: rgba(22, 119, 255, 0.08);
+        padding-top: 4rpx;
+        padding-bottom: 4rpx;
+        padding-left: 12rpx;
+        padding-right: 12rpx;
+        border-radius: 4rpx;
+        margin-right: 8rpx;
+        margin-bottom: 8rpx;
+      }
+    }
+  }
+
+  .card-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20rpx;
+    padding-bottom: 20rpx;
+    padding-left: 24rpx;
+    padding-right: 24rpx;
+    border-top-width: 1rpx;
+    border-top-color: #f0f0f0;
+    border-top-style: solid;
+
+    .price {
+      font-size: 36rpx;
+      font-weight: 500;
+      color: #ff4d4f;
+    }
+
+    .btn-buy {
+      padding-top: 12rpx;
+      padding-bottom: 12rpx;
+      padding-left: 32rpx;
+      padding-right: 32rpx;
+      background: #1677ff;
+      border-radius: 8rpx;
+
+      .btn-text {
+        font-size: 26rpx;
+        color: #fff;
+      }
+    }
+  }
+}
+
+.btn-buy-active {
+  opacity: 0.7;
+}
+
+.tag.tag-highlight {
+  background: rgba(255, 77, 79, 0.08);
+  color: #ff4d4f;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {}
+}
+</script>
