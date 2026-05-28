@@ -1,0 +1,1 @@
+../../mpx2rn/references/single-file-component.md

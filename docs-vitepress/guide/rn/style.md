@@ -303,7 +303,7 @@ Mpx 对通过 `class` 类定义的样式会按照 RN 的样式规则进行编译
 | **文本相关** | `text-shadow`、`text-decoration` |
 | **布局相关** | `flex`、`flex-flow` |
 | **间距相关** | `margin`、`padding` |
-| **背景相关** | `background` |
+| **背景相关** | `background`（支持 `background-position / background-size`） |
 | **阴影相关** | `box-shadow` |
 | **边框相关** | `border-radius`、`border-width`、`border-color`、`border` |
 | **方向边框** | `border-top`、`border-right`、`border-bottom`、`border-left` |
@@ -1032,6 +1032,7 @@ border-left: 2px dotted blue; /* 左边框：宽度 样式 颜色 */
 
 ```css
 background: url("image.jpg") no-repeat center;
+background: url("image.jpg") no-repeat center/cover;
 background: linear-gradient(45deg, red, blue);
 background: #f0f0f0;
 ```
