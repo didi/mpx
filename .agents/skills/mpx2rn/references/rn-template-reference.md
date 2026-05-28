@@ -753,6 +753,7 @@ movable-view 的可移动区域。
 | animation | boolean | `true` | 是否使用动画 |
 | damping | number | `20` | 阻尼系数，用于控制 x 或 y 改变时的动画和过界回弹的动画，值越大移动越快 |
 | friction | number | `2` | 摩擦系数，用于控制惯性滑动的动画，值越大摩擦力越大，滑动越快停止 |
+| workletChange | function |  | RN 环境特有属性，拖动位置变化时在 UI 线程立即触发，回调参数为 `{x, y, source}`，不受 `changeThrottleTime` 影响 |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许多个手势同时识别和处理并触发，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | wait-for | array\<object> | `[]` | RN 环境特有属性，主要用于组件嵌套场景，允许延迟激活处理某些手势，这个属性可以指定一个或多个手势处理器，处理器支持使用 this.$refs.xxx 获取组件实例来作为数组参数传递给 movable-view 组件 |
 | disable-event-passthrough | boolean | `false` | RN 环境特有属性，有时候我们希望 movable-view 在水平方向滑动，并且竖直方向的手势也希望被 movable-view 组件消费掉，不被其他组件响应，可以将这个属性设置为 true） |
@@ -769,6 +770,7 @@ movable-view 的可移动区域。
 
 - simultaneous-handlers 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#simultaneouswithexternalgesture)
 - wait-for 为 RN 环境特有属性，具体含义可参考[react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/gesture-composition/#requireexternalgesturetofail)
+- workletChange 为 RN 环境特有属性，回调会在 UI 线程执行，函数体需包含 `'worklet'` 指令，且只接收 `{x, y, source}` 参数，不是完整 Mpx 事件对象
 - RN 环境 movable 相关组件暂不支持缩放能力
 
 ### image
