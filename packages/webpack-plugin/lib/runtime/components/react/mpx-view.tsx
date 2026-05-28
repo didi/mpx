@@ -12,7 +12,7 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, PERCENT_REGEX, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThroughValue } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThroughValue } from './utils'
 import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -127,18 +127,7 @@ const applyHandlers = (handlers: Handler[], args: any[]) => {
   }
 }
 
-const normalizeStyle = (style: ExtendedViewStyle = {}) => {
-  ['backgroundSize', 'backgroundPosition'].forEach(name => {
-    if (style[name] && typeof style[name] === 'string') {
-      if (style[name].trim()) {
-        style[name] = style[name].split(' ')
-      }
-    }
-  })
-  return style
-}
-
-const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && PERCENT_REGEX.test(val)
+const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && percentRegExp.test(val)
 
 const isBackgroundSizeKeyword = (val: string | number): boolean => typeof val === 'string' && /^cover|contain$/.test(val)
 
@@ -546,7 +535,7 @@ function normalizeBackgroundSize (
 }
 
 function preParseImage (imageStyle?: ExtendedViewStyle) {
-  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = normalizeStyle(imageStyle) || {}
+  const { backgroundImage = '', backgroundSize = ['auto'], backgroundPosition = [0, 0] } = imageStyle || {}
   const { type, src, linearInfo } = parseBgImage(backgroundImage)
 
   return {
