@@ -1,4 +1,4 @@
-const { getClassMap } = require('../../../../lib/react/style-helper')
+const { getClassMap } = require('../../../lib/react/style-helper')
 
 describe('React Native style validation for CSS variables', () => {
   const createConfig = (mode = 'ios') => ({
