@@ -498,8 +498,16 @@ module.exports = function getSpec({ warn, error }) {
             transform.push({ [key]: val })
             break
           case 'matrix':
-            transform.push({ [key]: parseValues(val, ',').map(val => +val) })
-            break
+            {
+              const matrixValues = parseValues(val, ',').map(val => +val)
+              if (matrixValues.length === 6) {
+                const [a, b, c, d, tx, ty] = matrixValues
+                transform.push({ [key]: [a, b, 0, c, d, 0, tx, ty, 1] })
+              } else {
+                transform.push({ [key]: matrixValues })
+              }
+              break
+            }
           case 'translate':
           case 'scale':
           case 'skew':
@@ -522,12 +530,27 @@ module.exports = function getSpec({ warn, error }) {
               }))
               break
             }
+          case 'rotate3d': {
+            const parts = parseValues(val, ',')
+            if (parts.length === 4) {
+              const x = +parts[0].trim()
+              const y = +parts[1].trim()
+              const z = +parts[2].trim()
+              const angle = parts[3].trim()
+              if (x && !y && !z) transform.push({ rotateX: angle })
+              else if (!x && y && !z) transform.push({ rotateY: angle })
+              else if (!x && !y && z) transform.push({ rotateZ: angle })
+              else unsupportedPropError({ prop, value, selector }, { mode })
+            }
+            break
+          }
+          case 'matrix3d':
+            transform.push({ matrix: parseValues(val, ',').map(val => +val) })
+            break
+          // 不支持的属性处理
           case 'translateZ':
           case 'scaleZ':
-          case 'rotate3d': // x y z angle
-          case 'matrix3d':
           default:
-            // 不支持的属性处理
             unsupportedPropError({ prop, value, selector }, { mode })
             break
         }

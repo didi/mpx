@@ -668,24 +668,35 @@ function parseTransform (transformStr: string) {
       let key = match[1]
       const val = match[2]
       switch (key) {
-        case 'translateX':
-        case 'translateY':
-        case 'scaleX':
-        case 'scaleY':
         case 'rotateX':
         case 'rotateY':
         case 'rotateZ':
         case 'rotate':
         case 'skewX':
         case 'skewY':
-        case 'perspective':
-          // rotate 处理成 rotateZ
           key = key === 'rotate' ? 'rotateZ' : key
-          // 单个值处理
+          transform.push({ [key]: val })
+          break
+        case 'translateX':
+        case 'translateY':
+        case 'scaleX':
+        case 'scaleY':
+        case 'perspective':
           transform.push({ [key]: global.__formatValue(val) })
           break
-        case 'matrix':
-          transform.push({ [key]: parseValues(val, ',').map(val => +val) })
+        case 'matrix': {
+          const matrixValues = parseValues(val, ',').map(v => +v.trim())
+          if (matrixValues.length === 6) {
+            // CSS matrix(a,b,c,d,tx,ty) → RN 9-value column-major format
+            const [a, b, c, d, tx, ty] = matrixValues
+            transform.push({ matrix: [a, b, 0, c, d, 0, tx, ty, 1] })
+          } else {
+            transform.push({ matrix: matrixValues })
+          }
+          break
+        }
+        case 'matrix3d':
+          transform.push({ matrix: parseValues(val, ',').map(v => +v.trim()) })
           break
         case 'translate':
         case 'scale':
@@ -706,6 +717,22 @@ function parseTransform (transformStr: string) {
           }))
           break
         }
+        case 'rotate3d': {
+          const parts = parseValues(val, ',')
+          if (parts.length === 4) {
+            const x = +parts[0].trim()
+            const y = +parts[1].trim()
+            const z = +parts[2].trim()
+            const angle = parts[3].trim()
+            if (x && !y && !z) transform.push({ rotateX: angle })
+            else if (!x && y && !z) transform.push({ rotateY: angle })
+            else if (!x && !y && z) transform.push({ rotateZ: angle })
+          }
+          break
+        }
+        case 'translateZ':
+        case 'scaleZ':
+          break
       }
     }
   })
