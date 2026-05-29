@@ -120,7 +120,6 @@ const _SectionList = forwardRef<any, SectionListProps>((props = {}, ref) => {
   const scrollViewRef = useRef<any>(null)
   const sectionListGestureRef = useRef<any>()
 
-
   const indexMap = useRef<{ [key: string]: string | number }>({})
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})

@@ -381,7 +381,31 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
   const onImageLoad = (evt: NativeSyntheticEvent<ImageLoadEventData>) => {
     evt.persist()
     RNImage.getSize(src, (width: number, height: number) => {
-      bindload!(
+      // iPhone 8 等设备对缓存图 getSize 偶发返回 0，用 onLoad 事件里的真实尺寸兜底
+      if (!width || !height) {
+        const nativeEvent = evt.nativeEvent as any
+        const source = nativeEvent.source
+        width = (source && source.width) || nativeEvent.width || 0
+        height = (source && source.height) || nativeEvent.height || 0
+        // 布局模式下用真实尺寸同步 view（此时 useEffect 里的 getSize 也没拿到尺寸）
+        if (isLayoutMode && width && height && !state.current.ratio) {
+          state.current.imageWidth = width
+          state.current.imageHeight = height
+          state.current.ratio = height / width
+          if (isWidthFixMode
+            ? state.current.viewWidth
+            : isHeightFixMode
+              ? state.current.viewHeight
+              : state.current.viewWidth && state.current.viewHeight) {
+            setRatio(state.current.ratio)
+            setImageWidth(width)
+            setImageHeight(height)
+            setViewSize(state.current.viewWidth!, state.current.viewHeight!, state.current.ratio)
+            setLoaded(true)
+          }
+        }
+      }
+      bindload && bindload!(
         getCustomEvent(
           'load',
           evt,
@@ -486,11 +510,13 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
         {
           source: { uri: src },
           resizeMode: resizeMode,
-          onLoad: bindload && onImageLoad,
+          onLoad: onImageLoad,
           onError: binderror && onImageError,
           style: extendObject(
             {
               transformOrigin: 'left top',
+              // 布局模式下尺寸未知（ratio 为 0）前先隐藏，避免按默认高度闪一下（iPhone 8 getSize 返回 0 时尤其明显）
+              opacity: isLayoutMode && !ratio ? 0 : 1,
               width: isCropMode ? imageWidth : '100%',
               height: isCropMode ? imageHeight : '100%'
             },
