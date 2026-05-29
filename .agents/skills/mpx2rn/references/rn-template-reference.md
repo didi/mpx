@@ -584,6 +584,8 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 由于 view、text、scroll-view、image 和 input 组件都是基于 RN 原生组件实现的，因此这些组件默认继承原生组件支持的属性。
 
+与微信小程序一致，RN 输出支持只传递属性名不传递属性值的布尔写法，例如 `<scroll-view scroll-y />` 等价于 `<scroll-view scroll-y="{{ true }}" />`。
+
 ### view
 
 视图容器。

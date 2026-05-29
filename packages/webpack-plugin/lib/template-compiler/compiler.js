@@ -2025,17 +2025,23 @@ const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    const isTemplateData = el.tag === 'template' && attr.name === 'data' && attr.value
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
 
-    // 修复React Native环境下属性值中插值表达式带空格的问题
-    if (isReact(mode) && typeof value === 'string') {
-      // 检查是否为带空格的插值表达式
-      const trimmedValue = value.trim()
-      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
-        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
-        value = trimmedValue
+    if (isReact(mode)) {
+      // 修复React Native环境下属性值中插值表达式带空格的问题
+      if (typeof value === 'string') {
+        // 检查是否为带空格的插值表达式
+        const trimmedValue = value.trim()
+        if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+          // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+          value = trimmedValue
+        }
+      }
+      if (value === undefined) {
+        value = '{{true}}'
+        modifyAttr(el, attr.name, value)
       }
     }
 
