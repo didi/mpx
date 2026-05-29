@@ -331,8 +331,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   prevSimultaneousHandlersRef.current = originSimultaneousHandlers || []
   prevWaitForHandlersRef.current = waitFor || []
 
-  const getWorkletChangeDetail = useCallback(({ x, y, type }: ChangePayload) => {
-    'worklet'
+  const handleTriggerChange = useCallback(({ x, y, type }: ChangePayload) => {
+    const { bindchange } = propsRef.current
+    if (!bindchange) return
     const source = type !== 'setData'
       ? getChangeSource(
         x,
@@ -341,29 +342,9 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         draggableYRange.value,
         isMoving.value,
         xInertialMotion.value || yInertialMotion.value,
-        workletChangeSource.value
+        bindChangeSource.current
       )
       : ''
-    workletChangeSource.value = source
-    return { x, y, source }
-  }, [])
-
-  const getBindTouchSource = useCallback((offsetX: number, offsetY: number) => {
-    return getChangeSource(
-      offsetX,
-      offsetY,
-      draggableXRange.value,
-      draggableYRange.value,
-      isMoving.value,
-      xInertialMotion.value || yInertialMotion.value,
-      bindChangeSource.current
-    )
-  }, [])
-
-  const handleTriggerChange = useCallback(({ x, y, type }: ChangePayload) => {
-    const { bindchange } = propsRef.current
-    if (!bindchange) return
-    const source = type !== 'setData' ? getBindTouchSource(x, y) : ''
     bindChangeSource.current = source
     bindchange(
       getCustomEvent('change', {}, {
@@ -379,7 +360,19 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
 
   const handleTriggerWorkletChange = useCallback(({ x, y, type }: ChangePayload) => {
     'worklet'
-    workletChange && workletChange(getWorkletChangeDetail({ x, y, type }))
+    const source = type !== 'setData'
+      ? getChangeSource(
+        x,
+        y,
+        draggableXRange.value,
+        draggableYRange.value,
+        isMoving.value,
+        xInertialMotion.value || yInertialMotion.value,
+        workletChangeSource.value
+      )
+      : ''
+    workletChangeSource.value = source
+    workletChange && workletChange({ x, y, source })
   }, [workletChange])
 
   useEffect(() => {
