@@ -150,35 +150,6 @@ const withWechatDecay = (
 type ChangePayload = { x: number; y: number; type?: string }
 type ChangeDetail = { x: number; y: number; source: string }
 
-const getChangeSource = (
-  offsetX: number,
-  offsetY: number,
-  xRange: [min: number, max: number],
-  yRange: [min: number, max: number],
-  moving: boolean,
-  inertialMotion: boolean,
-  currentSource: string
-) => {
-  'worklet'
-  const hasOverBoundary = offsetX < xRange[0] || offsetX > xRange[1] ||
-    offsetY < yRange[0] || offsetY > yRange[1]
-  let source = currentSource
-  if (hasOverBoundary) {
-    if (moving) {
-      source = 'touch-out-of-bounds'
-    } else {
-      source = 'out-of-bounds'
-    }
-  } else {
-    if (moving) {
-      source = 'touch'
-    } else if (inertialMotion && (currentSource === 'touch' || currentSource === 'friction')) {
-      source = 'friction'
-    }
-  }
-  return source
-}
-
 interface MovableViewProps {
   children: ReactNode
   style?: Record<string, any>
@@ -227,6 +198,34 @@ const styles = StyleSheet.create({
     top: 0
   }
 })
+const getChangeSource = (
+  offsetX: number,
+  offsetY: number,
+  xRange: [min: number, max: number],
+  yRange: [min: number, max: number],
+  moving: boolean,
+  inertialMotion: boolean,
+  currentSource: string
+) => {
+  'worklet'
+  const hasOverBoundary = offsetX < xRange[0] || offsetX > xRange[1] ||
+    offsetY < yRange[0] || offsetY > yRange[1]
+  let source = currentSource
+  if (hasOverBoundary) {
+    if (moving) {
+      source = 'touch-out-of-bounds'
+    } else {
+      source = 'out-of-bounds'
+    }
+  } else {
+    if (moving) {
+      source = 'touch'
+    } else if (inertialMotion && (currentSource === 'touch' || currentSource === 'friction')) {
+      source = 'friction'
+    }
+  }
+  return source
+}
 
 const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewProps>((movableViewProps: MovableViewProps, ref): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(movableViewProps)
@@ -350,7 +349,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   }, [])
 
   const getBindTouchSource = useCallback((offsetX: number, offsetY: number) => {
-    const source = getChangeSource(
+    return getChangeSource(
       offsetX,
       offsetY,
       draggableXRange.value,
@@ -359,19 +358,13 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       xInertialMotion.value || yInertialMotion.value,
       bindChangeSource.current
     )
-    bindChangeSource.current = source
-    return source
   }, [])
 
   const handleTriggerChange = useCallback(({ x, y, type }: ChangePayload) => {
     const { bindchange } = propsRef.current
     if (!bindchange) return
-    let source = ''
-    if (type !== 'setData') {
-      source = getBindTouchSource(x, y)
-    } else {
-      bindChangeSource.current = ''
-    }
+    const source = type !== 'setData' ? getBindTouchSource(x, y) : ''
+    bindChangeSource.current = source
     bindchange(
       getCustomEvent('change', {}, {
         detail: {
