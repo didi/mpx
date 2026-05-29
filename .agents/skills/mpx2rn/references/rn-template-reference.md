@@ -609,6 +609,7 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 #### 注意事项
 
+- **view 内可直接插入文字**：Mpx2RN 支持在 `view` 等非 `text` 组件中直接插入文字内容，无需严格遵循 RN 中文字必须由 `text` 组件包裹的限制，框架会在编译时自动为裸文字插入一个 `text` 包裹节点。但该行为存在性能开销——会额外多引入一个 `view` 层级，因此如果可以直接使用 `text` 组件包裹文字，仍应优先使用 `text`，以获得更优的渲染性能。`view` 内多个 `text` 的跨平台布局对齐方案见 [样式开发最佳实践 · text 跨平台布局对齐](./rn-style-practice.md#text-跨平台布局对齐)。
 - 如果从未使用背景图、动图或动画，请不要开启`enable-background`、`enable-animation`或`enable-fast-image`属性，会有一定的性能消耗。
 - 若开启`enable-background`需要给当前 view 组件设置一个唯一 key。
 - `background-image`、`background-size`、`background-position` 等背景图相关 css 属性，仅 view 组件支持
@@ -629,7 +630,6 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 #### 注意事项
 
-- 未包裹 text 标签的文本，会自动包裹 text 标签。
 - text 组件开启 enable-offset 后，offsetLeft、offsetWidth 获取时机仅为组件首次渲染阶段
 
 ### scroll-view
