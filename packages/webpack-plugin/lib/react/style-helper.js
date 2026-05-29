@@ -9,7 +9,6 @@ const unitRegExp = /^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(rpx|vw|vh|px)?\s*$/
 const hairlineRegExp = /^\s*hairlineWidth\s*$/
 const varRegExp = /^--/
 const cssPrefixExp = /^-(webkit|moz|ms|o)-/
-const isNum = (v) => !isNaN(+v)
 function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMode, ctorType, formatValueName, warn, error }) {
   const classMap = ctorType === 'page'
     ? { [MPX_TAG_PAGE_SELECTOR]: { flex: 1, height: "'100%'" } }
@@ -150,11 +149,7 @@ function getClassMap ({ content, styles, filename, inputFileSystem, mode, srcMod
               value[key] = formatValue(value[key])
             }
           } else {
-            if (prop === 'flex') {
-              value = isNum(value) ? JSON.stringify(+value) : JSON.stringify(value)
-            } else {
-              value = formatValue(value)
-            }
+            value = formatValue(value)
           }
           classMapValue[prop] = value
         })
