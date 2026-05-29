@@ -5,12 +5,11 @@
  * ✔ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useContext } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useMemo } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
 import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
-import { TextPassThroughContext } from './context'
 
 const decodeMap = {
   '&lt;': '<',
@@ -51,8 +50,6 @@ interface _TextProps extends TextProps {
 }
 
 const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref): JSX.Element => {
-  const inheritedText = useContext(TextPassThroughContext)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
     style: currentStyle = {},
     allowFontScaling,
@@ -63,7 +60,7 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     'parent-width': parentWidth,
     'parent-height': parentHeight,
     decode
-  } = mergedProps
+  } = props
 
   const {
     normalStyle,
@@ -76,7 +73,26 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     parentWidth,
     parentHeight
   })
-  const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
+
+  const children = decode ? getDecodedChildren(props.children) : props.children
+  const isStringOnly = isStringChildren(children)
+  const { textStyle } = splitStyle(normalStyle)
+  const textPassThroughValue = useTextPassThroughValue(
+    textStyle,
+    undefined,
+    {
+      enableTextPassThrough: true
+    }
+  )
+
+  const mergedProps = extendObject({}, textPassThroughValue?.pendingTextProps, props)
+  const finalStyle = extendObject({}, textPassThroughValue?.textStyle, normalStyle)
+  const textPassThrough = useMemo(() => {
+    if (isStringOnly) return null
+    return textPassThroughValue?.pendingTextProps
+      ? extendObject({}, textPassThroughValue, { pendingTextProps: undefined })
+      : textPassThroughValue
+  }, [isStringOnly, textPassThroughValue])
 
   const nodeRef = useRef(null)
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
@@ -98,22 +114,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
       'user-select',
       'decode'
     ]
-  )
-
-  const children = decode ? getDecodedChildren(mergedProps.children) : mergedProps.children
-  const isStringOnly = isStringChildren(children)
-  let childTextStyle: TextStyle | undefined
-  if (!isStringOnly) {
-    const { textStyle = {} } = splitStyle(finalStyle)
-    childTextStyle = Object.keys(textStyle).length ? textStyle : undefined
-  }
-  const textPassThrough = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      inheritTextProps: false,
-      disabled: isStringOnly
-    }
   )
 
   let finalComponent:JSX.Element = createElement(Text, innerProps, wrapChildren(

@@ -26,6 +26,7 @@ export interface _ViewProps extends ViewProps {
   'hover-start-time'?: number
   'hover-stay-time'?: number
   'enable-background'?: boolean
+  'enable-text-pass-through'?: boolean
   'enable-var'?: boolean
   'enable-fast-image'?: boolean
   'parent-font-size'?: number
@@ -697,6 +698,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'hover-stay-time': hoverStayTime = 400,
     'enable-var': enableVar,
     'enable-background': enableBackground,
+    'enable-text-pass-through': enableTextPassThrough,
     'enable-fast-image': enableFastImage,
     'enable-animation': enableAnimation,
     'parent-font-size': parentFontSize,
@@ -738,7 +740,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)

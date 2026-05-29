@@ -38,6 +38,7 @@ interface PickerViewProps {
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
   'enable-var'?: boolean
+  'enable-text-pass-through'?: boolean
   'enable-offset'?: boolean
 }
 
@@ -73,7 +74,8 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'enable-wheel-animation': enableWheelAnimation = true,
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
-    'enable-var': enableVar
+    'enable-var': enableVar,
+    'enable-text-pass-through': enableTextPassThrough
   } = props
   const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
@@ -103,7 +105,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: nodeRef })
   const { textProps } = splitProps(props)
   const { textStyle } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
   const onSelectChange = (columnIndex: number, selectedIndex: number) => {
     const activeValue = activeValueRef.current

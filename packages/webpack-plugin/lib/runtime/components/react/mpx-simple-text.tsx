@@ -1,24 +1,37 @@
 import { Text, TextStyle, TextProps } from 'react-native'
-import { JSX, createElement, useContext } from 'react'
+import { JSX, createElement, useMemo } from 'react'
 import useInnerProps from './getInnerListeners'
 import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
-import { TextPassThroughContext } from './context'
 
 const SimpleText = (props: TextProps): JSX.Element => {
-  const inheritedText = useContext(TextPassThroughContext)
-  const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
   let hasBoxSizingAffectingStyle = false
-  const { textStyle = {} } = splitStyle(mergedStyle, (key) => {
+  const { textStyle = {} } = splitStyle(props.style || {}, (key) => {
     if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
       hasBoxSizingAffectingStyle = true
     }
   })
+  const isStringOnly = isStringChildren(props.children)
+  const childTextStyle: TextStyle | undefined = !isStringOnly && Object.keys(textStyle).length ? textStyle as TextStyle : undefined
+  const textPassThroughValue = useTextPassThroughValue(
+    childTextStyle,
+    undefined,
+    {
+      enableTextPassThrough: true
+    }
+  )
+  const mergedStyle = extendObject({}, textPassThroughValue?.textStyle, props.style)
   transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
-  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
+  const mergedProps = extendObject({}, textPassThroughValue?.pendingTextProps, props)
   const {
     allowFontScaling,
     children
   } = mergedProps
+  const childTextPassThrough = useMemo(() => {
+    if (isStringOnly) return null
+    return textPassThroughValue?.pendingTextProps
+      ? extendObject({}, textPassThroughValue, { pendingTextProps: undefined })
+      : textPassThroughValue
+  }, [isStringOnly, textPassThroughValue])
 
   const innerProps = useInnerProps(
     extendObject(
@@ -29,16 +42,6 @@ const SimpleText = (props: TextProps): JSX.Element => {
         style: mergedStyle
       }
     )
-  )
-  const isStringOnly = isStringChildren(children)
-  const childTextStyle: TextStyle | undefined = !isStringOnly && Object.keys(textStyle).length ? textStyle : undefined
-  const childTextPassThrough = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      inheritTextProps: false,
-      disabled: isStringOnly
-    }
   )
 
   return createElement(Text, innerProps, wrapChildren(

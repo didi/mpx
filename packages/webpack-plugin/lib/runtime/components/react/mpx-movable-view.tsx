@@ -179,6 +179,7 @@ interface MovableViewProps {
   'simultaneous-handlers'?: Array<GestureHandler>
   inertia?: boolean
   'enable-var'?: boolean
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -212,6 +213,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
     friction = 2,
     'out-of-bounds': outOfBounds = false,
     'enable-var': enableVar,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -249,7 +251,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
   const gestureSwitch = useRef(false)
   const { textStyle, innerStyle } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)

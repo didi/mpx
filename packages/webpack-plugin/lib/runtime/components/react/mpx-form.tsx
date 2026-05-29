@@ -15,6 +15,7 @@ interface FormProps {
   children?: ReactNode
   'enable-offset'?: boolean
   'enable-var'?: boolean
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -31,6 +32,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   const {
     style,
     'enable-var': enableVar,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -46,7 +48,7 @@ const _Form = forwardRef<HandlerRef<View, FormProps>, FormProps>((fromProps: For
   } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
   const formRef = useRef(null)
   useNodesRef(props, ref, formRef, {

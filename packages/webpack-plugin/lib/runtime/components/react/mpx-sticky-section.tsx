@@ -11,6 +11,7 @@ interface StickySectionProps {
   style?: ViewStyle;
   'offset-top'?: number;
   'enable-var'?: boolean;
+  'enable-text-pass-through'?: boolean;
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -21,6 +22,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const {
     style,
     'enable-var': enableVar,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -39,7 +41,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const { layoutRef, layoutProps, layoutStyle } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: sectionRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
   const stickyHeaders = useRef<Map<string, any>>(new Map())
 

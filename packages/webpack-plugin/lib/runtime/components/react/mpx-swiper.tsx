@@ -70,6 +70,7 @@ interface SwiperProps {
   'next-margin'?: string
   'enable-offset'?: boolean
   'enable-var': boolean
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -146,6 +147,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'indicator-margin': paginationMargin = 10,
     'indicator-active-color': activeDotColor = '#000000',
     'enable-var': enableVar = false,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
@@ -196,7 +198,7 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
   })
   const { textStyle } = splitStyle(normalStyle)
   const { textProps } = splitProps(props)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
   const preMargin = props['previous-margin'] ? global.__formatValue(props['previous-margin']) as number : 0
   const nextMargin = props['next-margin'] ? global.__formatValue(props['next-margin']) as number : 0
   const preMarginShared = useSharedValue(preMargin)

@@ -12,6 +12,7 @@ interface StickyHeaderProps {
   padding?: [number, number, number, number];
   'offset-top'?: number;
   'enable-var'?: boolean;
+  'enable-text-pass-through'?: boolean;
   'parent-font-size'?: number;
   'parent-width'?: number;
   'parent-height'?: number;
@@ -26,6 +27,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     padding = [0, 0, 0, 0],
     'offset-top': offsetTop = 0,
     'enable-var': enableVar,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -50,7 +52,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const { layoutRef, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
   const headerTopAnimated = useAnimatedValue(0)
   // harmony animatedValue 不支持通过 _value 访问

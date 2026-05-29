@@ -22,6 +22,7 @@ export interface RadioProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -74,6 +75,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       color = '#09BB07',
       style = [],
       'enable-var': enableVar,
+      'enable-text-pass-through': enableTextPassThrough,
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
@@ -126,7 +128,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
     } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+    const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
     if (backgroundStyle) {
       warn('Radio does not support background image-related styles!')

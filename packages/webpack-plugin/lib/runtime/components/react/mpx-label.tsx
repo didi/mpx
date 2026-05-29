@@ -15,6 +15,7 @@ export interface LabelProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
+  'enable-text-pass-through'?: boolean
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -30,6 +31,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const {
       style = {},
       'enable-var': enableVar,
+      'enable-text-pass-through': enableTextPassThrough,
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight
@@ -59,7 +61,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
+    const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
 
     if (backgroundStyle) {
       warn('Label does not support background image-related styles!')

@@ -179,8 +179,7 @@ export interface WrapChildrenConfig {
 }
 
 export interface TextPassThroughValueOptions {
-  inheritTextProps?: boolean
-  disabled?: boolean
+  enableTextPassThrough?: boolean
 }
 
 export interface GestureHandler {
@@ -298,6 +297,7 @@ function isTextStyle (key: string) {
 
 function isColorValue (token: string): boolean {
   if (token.startsWith('#') || token.startsWith('rgb(') || token.startsWith('rgba(') || token.startsWith('hsl(') || token.startsWith('hsla(')) return true
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   return hasOwn(require('./namedColorSet').default, token.toLowerCase())
 }
 
@@ -1027,23 +1027,32 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
 export function useTextPassThroughValue (
   textStyle?: TextStyle,
   textProps?: Record<string, any>,
-  { inheritTextProps = true, disabled = false }: TextPassThroughValueOptions = {}
+  { enableTextPassThrough = false }: TextPassThroughValueOptions = {}
 ) {
+  const shouldEnableTextPassThrough = (
+    enableTextPassThrough ||
+    !!textStyle ||
+    !!textProps
+  )
+  const enableTextPassThroughRef = useRef(shouldEnableTextPassThrough)
+
+  if (enableTextPassThroughRef.current !== shouldEnableTextPassThrough) {
+    error('[Mpx runtime error]: text style/props use should be stable in the component lifecycle, or you can set [enable-text-pass-through] with true.')
+  }
+
+  if (!enableTextPassThroughRef.current) return null
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const parent = useContext(TextPassThroughContext)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const valueRef = useRef<TextPassThroughContextValue | null>(null)
-
-  if (disabled) return null
-
-  if (!textStyle && !textProps && (inheritTextProps || !parent?.pendingTextProps)) return null
 
   const nextTextStyle = textStyle
     ? extendObject({}, parent?.textStyle, textStyle)
     : parent?.textStyle
-  const nextTextProps = inheritTextProps
-    ? textProps
-      ? extendObject({}, parent?.pendingTextProps, textProps)
-      : parent?.pendingTextProps
-    : textProps
+  const nextTextProps = textProps
+    ? extendObject({}, parent?.pendingTextProps, textProps)
+    : parent?.pendingTextProps
   const nextValue = {
     textStyle: nextTextStyle,
     pendingTextProps: nextTextProps
