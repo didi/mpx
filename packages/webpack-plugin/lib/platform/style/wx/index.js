@@ -27,7 +27,7 @@ module.exports = function getSpec ({ warn, error }) {
     length: /^((-?(\d+(\.\d+)?|\.\d+))(rpx|px|%|vw|vh)?|hairlineWidth)$/,
     color: { test: (v) => namedColorSet.has(v) || hexColorExp.test(v) || colorFnExp.test(v) }
   }
-  
+
   // 不支持的属性提示
   const unsupportedPropError = ({ prop, value, selector }, { mode }, isError = true) => {
     const tips = isError ? error : warn

@@ -787,7 +787,13 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
       'hover-start-time',
       'hover-stay-time',
       'hover-style',
-      'hover-class'
+      'hover-class',
+      'enable-background',
+      'enable-animation',
+      'enable-fast-image',
+      'animation',
+      'catchtransitionend',
+      'bindtransitionend'
     ],
     {
       layoutRef
