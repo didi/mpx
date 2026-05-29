@@ -38,7 +38,6 @@ interface PickerViewProps {
   'indicator-style'?: Record<string, any>,
   'mask-style'?: Record<string, any>,
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>,
   'enable-offset'?: boolean
 }
 
@@ -74,8 +73,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     'enable-wheel-animation': enableWheelAnimation = true,
     'indicator-style': indicatorStyle = {},
     'mask-style': pickerMaskStyle = {},
-    'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'enable-var': enableVar
   } = props
   const { height: indicatorH, ...pickerIndicatorStyle } = indicatorStyle
   const nodeRef = useRef(null)
@@ -92,7 +90,7 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
     setWidth,
     setHeight,
     hasPositionFixed
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar })
 
   useNodesRef<View, PickerViewProps>(props, ref, nodeRef, {
     style: normalStyle

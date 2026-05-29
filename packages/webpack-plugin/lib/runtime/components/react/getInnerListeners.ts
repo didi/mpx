@@ -321,7 +321,6 @@ const useInnerProps = (
     'enable-background',
     'enable-offset',
     'enable-var',
-    'external-var-context',
     'parent-font-size',
     'parent-width',
     'parent-height',

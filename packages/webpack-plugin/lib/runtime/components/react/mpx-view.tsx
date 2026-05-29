@@ -28,7 +28,6 @@ export interface _ViewProps extends ViewProps {
   'enable-background'?: boolean
   'enable-var'?: boolean
   'enable-fast-image'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -697,7 +696,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     'hover-start-time': hoverStartTime = 50,
     'hover-stay-time': hoverStayTime = 400,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'enable-background': enableBackground,
     'enable-fast-image': enableFastImage,
     'enable-animation': enableAnimation,
@@ -734,7 +732,6 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     setHeight
   } = useTransformStyle(styleObj, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight

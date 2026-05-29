@@ -73,7 +73,6 @@ interface SwiperProps {
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
-  'external-var-context'?: Record<string, any>
   'wait-for'?: Array<GestureHandler>
   'simultaneous-handlers'?: Array<GestureHandler>
   disableGesture?: boolean
@@ -150,7 +149,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight,
-    'external-var-context': externalVarContext,
     'simultaneous-handlers': originSimultaneousHandlers = [],
     'wait-for': waitFor = [],
     style = {},
@@ -192,7 +190,6 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
     setHeight
   } = useTransformStyle(style, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight

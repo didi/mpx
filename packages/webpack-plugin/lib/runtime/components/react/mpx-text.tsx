@@ -44,7 +44,6 @@ interface _TextProps extends TextProps {
   selectable?: boolean
   'user-select'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -59,7 +58,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     allowFontScaling,
     selectable,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'user-select': userSelect,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
@@ -74,7 +72,6 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
     hasPositionFixed
   } = useTransformStyle(currentStyle, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight

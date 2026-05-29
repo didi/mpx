@@ -59,7 +59,6 @@ export interface SliderProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -84,7 +83,6 @@ const Slider = forwardRef<
     name,
     style = {},
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
@@ -128,7 +126,6 @@ const Slider = forwardRef<
     hasPositionFixed
   } = useTransformStyle(style, {
     enableVar,
-    externalVarContext,
     parentFontSize,
     parentWidth,
     parentHeight

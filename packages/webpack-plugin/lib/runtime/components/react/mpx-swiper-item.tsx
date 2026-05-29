@@ -10,7 +10,6 @@ interface SwiperItemProps {
   'item-id'?: string
   'enable-offset'?: boolean
   'enable-var': boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -30,7 +29,6 @@ interface ContextType {
 const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProps>((props: SwiperItemProps, ref) => {
   const {
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
     style,
     customStyle,
     itemIndex
@@ -51,7 +49,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
+  } = useTransformStyle(style, { enableVar })
   const { textStyle, innerStyle } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThroughValue(textStyle, textProps)
   useNodesRef(props, ref, nodeRef, {

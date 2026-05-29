@@ -22,7 +22,6 @@ export interface RadioProps {
   style?: ViewStyle & Record<string, any>
   'enable-offset'?: boolean
   'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
   'parent-font-size'?: number
   'parent-width'?: number
   'parent-height'?: number
@@ -75,7 +74,6 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       color = '#09BB07',
       style = [],
       'enable-var': enableVar,
-      'external-var-context': externalVarContext,
       'parent-font-size': parentFontSize,
       'parent-width': parentWidth,
       'parent-height': parentHeight,
@@ -125,7 +123,7 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       varContextRef,
       setWidth,
       setHeight
-    } = useTransformStyle(styleObj, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+    } = useTransformStyle(styleObj, { enableVar, parentFontSize, parentWidth, parentHeight })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
     const textPassThrough = useTextPassThroughValue(textStyle, textProps)
