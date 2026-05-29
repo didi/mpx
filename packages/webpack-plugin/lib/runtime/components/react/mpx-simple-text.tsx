@@ -13,7 +13,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
       hasBoxSizingAffectingStyle = true
     }
   })
-  const finalStyle = transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
+  transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
   const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   const {
     allowFontScaling,
@@ -26,7 +26,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
       mergedProps,
       {
         allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
-        style: finalStyle
+        style: mergedStyle
       }
     )
   )

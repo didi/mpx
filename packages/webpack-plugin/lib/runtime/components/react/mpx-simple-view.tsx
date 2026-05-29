@@ -14,12 +14,15 @@ const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
   })
   const textPassThrough = useTextPassThroughValue(textStyle as TextStyle, textProps)
 
+  const styleObj = extendObject({}, innerStyle)
+  transformBoxSizing(styleObj, hasBoxSizingAffectingStyle)
+
   const innerProps = useInnerProps(
     extendObject(
       {},
       props,
       {
-        style: transformBoxSizing(extendObject({}, innerStyle), hasBoxSizingAffectingStyle)
+        style: styleObj
       }
     )
   )
