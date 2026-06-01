@@ -88,7 +88,9 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
           bindtap: onTap
         }
       ),
-      [],
+      [
+        'for'
+      ],
       {
         layoutRef
       }
