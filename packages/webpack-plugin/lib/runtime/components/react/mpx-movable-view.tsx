@@ -22,7 +22,7 @@ import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, hiddenStyle, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback, useTextPassThroughValue } from './utils'
+import { useTransformStyle, splitProps, splitStyle, hiddenStyle, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -251,7 +251,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
   const gestureSwitch = useRef(false)
   const { textStyle, innerStyle } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)

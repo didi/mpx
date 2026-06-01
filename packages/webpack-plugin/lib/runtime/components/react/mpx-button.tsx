@@ -47,7 +47,7 @@ import {
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThroughValue } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThrough } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -308,7 +308,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   if (backgroundStyle) {
     warn('Button does not support background image-related styles!')

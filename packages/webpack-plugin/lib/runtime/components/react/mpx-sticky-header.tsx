@@ -2,7 +2,7 @@ import { useEffect, useRef, useContext, forwardRef, useMemo, createElement, Reac
 import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, useAnimatedValue } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThrough } from './utils'
 import { error } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
@@ -52,7 +52,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const { layoutRef, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const headerTopAnimated = useAnimatedValue(0)
   // harmony animatedValue 不支持通过 _value 访问

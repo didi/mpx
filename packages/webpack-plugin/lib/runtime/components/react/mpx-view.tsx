@@ -12,7 +12,8 @@ import useAnimationHooks, { AnimationType } from './animationHooks/index'
 import type { AnimationProp } from './animationHooks/utils'
 import { ExtendedViewStyle } from './types/common'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThroughValue } from './utils'
+import { parseUrl, percentRegExp, splitStyle, splitProps, useTransformStyle, wrapChildren, useLayout, renderImage, pickStyle, extendObject, useHover, useTextPassThrough } from './utils'
+import { TextPassThroughContextValue } from './context'
 import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
@@ -670,7 +671,7 @@ interface WrapChildrenConfig {
   backgroundStyle?: ExtendedViewStyle
   varContext?: Record<string, any>
   textProps?: Record<string, any>
-  textPassThrough?: ReturnType<typeof useTextPassThroughValue>
+  textPassThrough?: TextPassThroughContextValue | null
   innerStyle?: Record<string, any>
   enableFastImage?: boolean
 }
@@ -740,7 +741,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   enableBackground = enableBackground || !!backgroundStyle
   const enableBackgroundRef = useRef(enableBackground)

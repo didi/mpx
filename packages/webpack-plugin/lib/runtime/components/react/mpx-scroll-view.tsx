@@ -38,7 +38,7 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, hiddenStyle, useRunOnJSCallback, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, hiddenStyle, useRunOnJSCallback, useTextPassThrough } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
 
@@ -203,7 +203,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   } = useTransformStyle(style, { enableVar, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const scrollViewRef = useRef<ScrollView>(null)
 

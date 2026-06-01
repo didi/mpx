@@ -5,17 +5,17 @@
 当前 RN runtime 通过 `TextPassThroughContext` 实现文本样式与文本属性透传：
 
 1. 容器组件通过 `splitStyle` 拆出 `textStyle`，通过 `splitProps` 拆出 `textProps`。
-2. 容器组件调用 `useTextPassThroughValue(textStyle, textProps)` 合并祖先透传值。
+2. 容器组件调用 `useTextPassThrough(textStyle, textProps)` 合并祖先透传值。
 3. `wrapChildren` 在存在 `textPassThrough` 时包 `TextPassThroughContext.Provider`。
 4. `mpx-text`、`mpx-simple-text`、`mpx-inline-text` 等文本类组件读取 context，并把继承样式合并到 RN Text。
 
-问题在于 `useTextPassThroughValue` 当前一开始就会调用 `useContext(TextPassThroughContext)`。因此任何调用该 hook 的容器，即使自身没有字体样式或文本属性，也会订阅 `TextPassThroughContext`。在 view-heavy 页面中，大量普通布局节点成为无效 consumer，会增加 context dependency、render 阶段 JS 执行与 context propagation 成本。
+问题在于 `useTextPassThrough` 当前一开始就会调用 `useContext(TextPassThroughContext)`。因此任何调用该 hook 的容器，即使自身没有字体样式或文本属性，也会订阅 `TextPassThroughContext`。在 view-heavy 页面中，大量普通布局节点成为无效 consumer，会增加 context dependency、render 阶段 JS 执行与 context propagation 成本。
 
 此前考虑过将 hook 改成按需 `TextPassThroughWrap` 组件，但这会让子树在“直接 children”和“wrapper 包 children”之间切换。动态字体样式或文本属性出现/消失时，React 可能把子树识别为不同结构，带来 remount、本地状态丢失、effect 重跑、动画/手势状态重置等风险。
 
 ## 目标
 
-1. 保留当前 `useTextPassThroughValue` + `wrapChildren` 的整体设计。
+1. 保留当前 `useTextPassThrough` + `wrapChildren` 的整体设计。
 2. 无本地文本透传源的容器默认不订阅 `TextPassThroughContext`。
 3. 有本地 `textStyle` / `textProps` 或显式开启 `enable-text-pass-through` 的节点，稳定订阅 context 并稳定包 Provider。
 4. “是否启用文本透传 Provider”在组件生命周期内保持稳定，避免子树结构动态切换。
@@ -25,9 +25,9 @@
 
 ## 总体设计
 
-保留 `useTextPassThroughValue`，但把“是否需要订阅 context”的判断前置到 hook 内部：
+保留 `useTextPassThrough`，但把“是否需要订阅 context”的判断前置到 hook 内部：
 
-1. 组件仍然在顶层调用 `useTextPassThroughValue`。
+1. 组件仍然在顶层调用 `useTextPassThrough`。
 2. hook 先根据 `textStyle`、`textProps`、`enableTextPassThrough` 计算 `enableTextPassThrough` 状态。
 3. 通过 `useRef` 记录首次计算结果，后续如果变化则报错，要求生命周期稳定。
 4. 如果首次结果为 false，hook 直接返回 `null`，不调用 `useContext(TextPassThroughContext)`，从而不订阅 context。
@@ -71,7 +71,7 @@ export interface TextPassThroughValueOptions {
 
 1. `enableTextPassThrough` 对应组件属性 `enable-text-pass-through`，用于提前稳定启用 Provider。
 
-## useTextPassThroughValue 改造
+## useTextPassThrough 改造
 
 ### 启用判断
 
@@ -88,7 +88,7 @@ const shouldEnableTextPassThrough = (
 说明：
 
 1. 容器组件通常只会因为 `enableTextPassThrough`、`textStyle`、`textProps` 启用。
-2. 文本组件通过 `enableTextPassThrough: true` 稳定消费父级透传值。
+2. 文本组件不复用该 hook，改用文本组件专用 hook 消费父级透传值，并按需为子树创建 Provider。
 
 ### 生命周期稳定性检查
 
@@ -145,7 +145,7 @@ return valueRef.current
 ### 完整示意
 
 ```tsx
-export function useTextPassThroughValue (
+export function useTextPassThrough (
   textStyle?: TextStyle,
   textProps?: Record<string, any>,
   {
@@ -213,7 +213,7 @@ export function wrapChildren (props = {}, { hasVarDec, varContext, textPassThrou
 }
 ```
 
-只要 `useTextPassThroughValue` 的启用状态生命周期稳定，`textPassThrough` 的空/非空状态也会稳定，Provider 不会动态新增/删除。
+只要容器侧 `useTextPassThrough` 的启用状态生命周期稳定，容器子树里的 Provider 就不会动态新增/删除。
 
 ## 容器组件改造
 
@@ -227,7 +227,7 @@ const {
 } = props
 
 const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
-const textPassThrough = useTextPassThroughValue(textStyle, textProps, {
+const textPassThrough = useTextPassThrough(textStyle, textProps, {
   enableTextPassThrough
 })
 ```
@@ -236,58 +236,88 @@ const textPassThrough = useTextPassThroughValue(textStyle, textProps, {
 
 1. 类型中补充 `'enable-text-pass-through'?: boolean`。
 2. 从 props 中取出 `enableTextPassThrough`。
-3. 调用 `useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })`。
+3. 调用 `useTextPassThrough(textStyle, textProps, { enableTextPassThrough })`。
 4. 保持传给 `wrapChildren` 的 `textPassThrough` 不变。
 
 无需改 `wrapChildren` 调用结构。
 
 ## 文本组件处理
 
-### mpx-text
+文本组件与容器组件职责不同：
 
-`mpx-text` 自身需要消费父级透传值，同时在存在非纯字符串子节点时继续向子树提供 Provider。它不直接订阅 `TextPassThroughContext`，也不二次调用 hook，而是把当前节点的文本样式传给 `useTextPassThroughValue`，统一拿到合并后的文本样式与文本属性：
+1. `mpx-text` / `mpx-simple-text` / `mpx-inline-text` 自身必须消费父级 `TextPassThroughContext`，否则无法继承外层字体样式与文本属性。
+2. 它们只有在“当前 text 存在可继续向子 text 继承的本地 `textStyle`，且子节点不是纯字符串”时，才需要继续向子树提供 Provider。
+3. `pendingTextProps` 属于当前 Text 的消费项，消费后不继续向更深层 text 透传。
+
+因此为文本组件提供专用 hook，例如 `useTextPassThroughText`：
 
 ```tsx
-const textPassThroughValue = useTextPassThroughValue(
-  textStyle,
-  undefined,
-  {
-    enableTextPassThrough: true
-  }
-)
+export function useTextPassThroughText (textStyle?: TextStyle) {
+  const inheritedText = useContext(TextPassThroughContext)
+  const valueRef = useRef<TextPassThroughContextValue | null>(null)
 
-const mergedProps = extendObject({}, textPassThroughValue?.pendingTextProps, props)
-const finalStyle = extendObject({}, textPassThroughValue?.textStyle, normalStyle)
-const textPassThrough = isStringOnly
-  ? null
-  : textPassThroughValue?.pendingTextProps
-    ? extendObject({}, textPassThroughValue, { pendingTextProps: undefined })
-    : textPassThroughValue
+  if (!textStyle) {
+    return {
+      inheritedText,
+      textPassThrough: null
+    }
+  }
+
+  const nextValue = {
+    textStyle: extendObject({}, inheritedText?.textStyle, textStyle)
+  }
+
+  if (diffAndCloneA(valueRef.current, nextValue).diff) {
+    valueRef.current = nextValue
+  }
+
+  return {
+    inheritedText,
+    textPassThrough: valueRef.current
+  }
+}
 ```
 
-`textPassThroughValue` 用于当前 `Text` 消费父级透传值；派生出的 `textPassThrough` 用于子树 Provider。派生时会清空已被当前 `Text` 消费的 `pendingTextProps`，避免 `numberOfLines`、`ellipsizeMode` 继续传给更深层的子 `text`。
+其中：
+
+1. `inheritedText` 用于当前 Text 消费父级样式和 `pendingTextProps`。
+2. `textPassThrough` 仅用于包裹子树；没有本地 `textStyle` 时返回 `null`，不创建子级 Provider。
+3. `textPassThrough` 不携带 `pendingTextProps`，避免 `numberOfLines`、`ellipsizeMode` 被更深层 text 重复消费。
+4. 该 hook 不复用容器侧 `useTextPassThrough`，避免为了 text 场景强制创建 Provider 或在组件内做二次派生处理。
+
+### mpx-text
+
+`mpx-text` 使用专用 hook 拆分当前层消费与子级透传：
+
+```tsx
+const { textStyle } = splitStyle(normalStyle)
+const { inheritedText, textPassThrough } = useTextPassThroughText(
+  !isStringOnly ? textStyle : undefined
+)
+
+const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
+const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
+```
+
+`textPassThrough` 传给 `wrapChildren`。当 `textStyle` 不存在或子节点是纯字符串时，它为 `null`，不会为 text 子树创建 Provider。
 
 ### mpx-simple-text
 
-`mpx-simple-text` 与 `mpx-text` 一致：
-
-1. 不直接 `useContext(TextPassThroughContext)`。
-2. 通过 `useTextPassThroughValue(..., { enableTextPassThrough: true })` 一次拿到合并后的文本透传值。
-3. 基于合并后的值消费当前 `Text`，并派生子级 Provider value。
+`mpx-simple-text` 与 `mpx-text` 保持同一语义：
 
 ```tsx
-const textPassThroughValue = useTextPassThroughValue(
-  childTextStyle,
-  undefined,
-  {
-    enableTextPassThrough: true
-  }
-)
+const { textStyle } = splitStyle(props.style || {}, sideEffect)
+const childTextStyle = !isStringOnly ? textStyle : undefined
+const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
+const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
 ```
+
+它只在存在本地 `textStyle` 且子节点不是纯字符串时向子树提供 Provider。
 
 ### mpx-inline-text
 
-`mpx-inline-text` 是编译器为 RN 裸文字自动补的 Text 包裹，按叶子文本节点处理。它只消费祖先透传值，不继续向子级提供 Provider：
+`mpx-inline-text` 是编译器为 RN 裸文字自动补的 Text 包裹，按叶子文本节点处理。它只需消费祖先透传值，不继续向子级提供 Provider，因此直接 `useContext(TextPassThroughContext)` 即可，无需走专用 hook：
 
 ```tsx
 const inheritedText = useContext(TextPassThroughContext)
@@ -309,7 +339,7 @@ const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props, { s
 view(color:red) -> view(no text style) -> text
 ```
 
-中间 `view` 首次渲染没有 `textStyle`、没有 `textProps`、没有 `enable-text-pass-through`，因此 `useTextPassThroughValue` 返回 `null` 且不订阅 context。`text` 仍能直接读取外层 `view(color:red)` 的 Provider。
+中间 `view` 首次渲染没有 `textStyle`、没有 `textProps`、没有 `enable-text-pass-through`，因此 `useTextPassThrough` 返回 `null` 且不订阅 context。`text` 仍能直接读取外层 `view(color:red)` 的 Provider。
 
 ### 本地覆盖
 
@@ -331,13 +361,15 @@ view(enable-text-pass-through) -> text
 
 ### textProps 消费边界
 
-`mpx-text` / `mpx-simple-text` 消费 `pendingTextProps` 后，基于 `useTextPassThroughValue` 返回的合并值派生新的 Provider value，并将 `pendingTextProps` 置空，避免 `numberOfLines` 等继续传给更深层 text。
+`mpx-text` / `mpx-simple-text` 消费 `pendingTextProps` 后，专用 hook 只为子级 Provider 生成 `textStyle`，不携带 `pendingTextProps`，避免 `numberOfLines` 等继续传给更深层 text。
 
 ## 与树形稳定性的关系
 
-该方案不新增 `TextPassThroughWrap` 组件，不改变现有 `wrapChildren` 的 Provider 包裹形态，只让 `textPassThrough` 的空/非空状态生命周期稳定。
+该方案不新增 `TextPassThroughWrap` 组件，不改变现有 `wrapChildren` 的 Provider 包裹形态。容器侧通过 `enable-text-pass-through` 保证 Provider 存在性稳定。
 
 首次未启用的节点始终不包 Provider；首次启用的节点始终包 Provider。动态文本源需要通过 `enable-text-pass-through` 提前启用，避免在运行时新增/删除 Provider。
+
+文本组件侧是消费节点，不复用容器侧稳定开关。`mpx-text` / `mpx-simple-text` 没有本地 `textStyle` 时只消费父级 context，不创建子级 Provider；只有存在本地 `textStyle` 且存在非纯字符串子树时才向下提供 Provider。
 
 这与现有 `enable-background`、`hover-class`、`enable-animation` 的约束口径一致。
 
@@ -366,7 +398,7 @@ K + T + portal consumer
 
 成本：
 
-1. `useTextPassThroughValue` 内多一次稳定性判断。
+1. `useTextPassThrough` 内多一次稳定性判断。
 2. 动态场景需要显式开启 `enable-text-pass-through`，会让该节点从首次渲染就订阅 context。
 3. 条件式内部 hook 需要 ESLint 注释与稳定性检查共同维护。
 
@@ -378,24 +410,25 @@ K + T + portal consumer
 
 1. `packages/webpack-plugin/lib/runtime/components/react/utils.tsx`
    - 扩展 `TextPassThroughValueOptions`。
-   - 改造 `useTextPassThroughValue` 的启用判断、稳定性检查与条件订阅。
-2. 所有当前调用 `useTextPassThroughValue(textStyle, textProps)` 的容器组件。
+   - 改造 `useTextPassThrough` 的启用判断、稳定性检查与条件订阅。
+   - 新增 `useTextPassThroughText`，供文本组件消费父级透传并按需生成子级 Provider value。
+2. 所有当前调用 `useTextPassThrough(textStyle, textProps)` 的容器组件。
    - 增加 `'enable-text-pass-through'?: boolean` 类型。
    - 读取该属性并传给 hook。
 3. `packages/webpack-plugin/lib/runtime/components/react/mpx-text.tsx`
-   - 去除直接 `useContext(TextPassThroughContext)`。
-   - 使用 `useTextPassThroughValue` 一次拿到合并后的文本透传值，再基于该值消费当前 `Text` 与派生子级 Provider value。
+   - 使用 `useTextPassThroughText` 拆分当前 Text 消费值与子级 Provider value。
+   - 当前 text 没有可向子级继承的 `textStyle` 时，不创建子级 Provider。
 4. `packages/webpack-plugin/lib/runtime/components/react/mpx-simple-text.tsx`
    - 同步 `mpx-text` 的处理方式。
 5. `packages/webpack-plugin/lib/runtime/components/react/mpx-inline-text.tsx`
-   - 保持纯叶子消费逻辑，直接读取 `TextPassThroughContext`，不引入子级 Provider。
+   - 复用 `useTextPassThroughText`，保持纯叶子消费逻辑，不引入子级 Provider。
 
 ## 实施步骤
 
 ### Step 1：改造 hook
 
 1. `TextPassThroughValueOptions` 新增 `enableTextPassThrough?: boolean`。
-2. 在 `useTextPassThroughValue` 内新增 `shouldEnableTextPassThrough`。
+2. 在 `useTextPassThrough` 内新增 `shouldEnableTextPassThrough`。
 3. 用 `useRef` 记录首次启用状态。
 4. 启用状态变化时报错。
 5. 未启用时 return `null`，且不调用 `useContext`。
@@ -410,9 +443,11 @@ K + T + portal consumer
 
 ### Step 3：文本组件调整
 
-1. `mpx-text` 去除直接 `useContext(TextPassThroughContext)`，改为一次调用 `useTextPassThroughValue(..., { enableTextPassThrough: true })`。
-2. `mpx-simple-text` 同步上述处理。
-3. `mpx-inline-text` 保持纯消费逻辑，不改为 `useTextPassThroughValue`。
+1. 新增 `useTextPassThroughText(textStyle?)`。
+2. `mpx-text` 调用该 hook，使用 `inheritedText` 合并当前 Text 的 props / style，使用 `textPassThrough` 传给 `wrapChildren`。
+3. `mpx-simple-text` 同步上述处理。
+4. 当前 text 没有本地 `textStyle` 或子节点为纯字符串时，`textPassThrough` 为 `null`，不创建子级 Provider。
+5. `mpx-inline-text` 复用 `useTextPassThroughText()`，保持纯消费逻辑，不改为容器侧 `useTextPassThrough`。
 
 ### Step 4：残留检查
 
@@ -442,11 +477,11 @@ K + T + portal consumer
 1. 条件式内部 hook 需要稳定性检查兜底，否则可能违反 Hooks 调用顺序。
 2. 某些动态样式场景未显式开启 `enable-text-pass-through`，会从原先“动态生效”变成 runtime error。
 3. 容器组件漏加 `enable-text-pass-through` 类型或漏从 props 中剔除，可能透传到 RN 原生组件。
-4. 文本组件子级 Provider value 派生错误，可能导致无意义 Provider 或 `pendingTextProps` 清空失败。
+4. 文本组件专用 hook 生成子级 Provider value 错误，可能导致无意义 Provider 或 `pendingTextProps` 被继续向下透传。
 
 回滚方式：
 
-1. 恢复 `useTextPassThroughValue` 为无条件 `useContext`。
+1. 恢复 `useTextPassThrough` 为无条件 `useContext`。
 2. 移除 `enableTextPassThrough` option 和组件属性。
 3. 保留原有 `wrapChildren` 与组件调用方式。
 

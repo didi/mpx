@@ -3,7 +3,7 @@ import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-nati
 import { ReactNode, forwardRef, useRef, useContext, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject, isHarmony, useTextPassThroughValue } from './utils'
+import { useTransformStyle, splitStyle, splitProps, wrapChildren, useLayout, extendObject, isHarmony, useTextPassThrough } from './utils'
 import { SwiperContext } from './context'
 
 interface SwiperItemProps {
@@ -53,7 +53,7 @@ const _SwiperItem = forwardRef<HandlerRef<View, SwiperItemProps>, SwiperItemProp
     setHeight
   } = useTransformStyle(style, { enableVar })
   const { textStyle, innerStyle } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
   useNodesRef(props, ref, nodeRef, {
     style: normalStyle
   })

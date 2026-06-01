@@ -1,37 +1,25 @@
 import { Text, TextStyle, TextProps } from 'react-native'
-import { JSX, createElement, useMemo } from 'react'
+import { JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
-import { extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
+import { extendObject, getDefaultAllowFontScaling, useTextPassThroughText, wrapChildren, isStringChildren, transformBoxSizing, splitStyle, isBoxSizingAffectingStyle } from './utils'
 
 const SimpleText = (props: TextProps): JSX.Element => {
   let hasBoxSizingAffectingStyle = false
-  const { textStyle = {} } = splitStyle(props.style || {}, (key) => {
+  const { textStyle } = splitStyle(props.style || {}, (key) => {
     if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
       hasBoxSizingAffectingStyle = true
     }
   })
   const isStringOnly = isStringChildren(props.children)
-  const childTextStyle: TextStyle | undefined = !isStringOnly && Object.keys(textStyle).length ? textStyle as TextStyle : undefined
-  const textPassThroughValue = useTextPassThroughValue(
-    childTextStyle,
-    undefined,
-    {
-      enableTextPassThrough: true
-    }
-  )
-  const mergedStyle = extendObject({}, textPassThroughValue?.textStyle, props.style)
+  const childTextStyle: TextStyle | undefined = !isStringOnly ? textStyle as TextStyle : undefined
+  const { inheritedText, textPassThrough } = useTextPassThroughText(childTextStyle)
+  const mergedStyle = extendObject({}, inheritedText?.textStyle, props.style)
+  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
   transformBoxSizing(mergedStyle, hasBoxSizingAffectingStyle)
-  const mergedProps = extendObject({}, textPassThroughValue?.pendingTextProps, props)
   const {
     allowFontScaling,
     children
   } = mergedProps
-  const childTextPassThrough = useMemo(() => {
-    if (isStringOnly) return null
-    return textPassThroughValue?.pendingTextProps
-      ? extendObject({}, textPassThroughValue, { pendingTextProps: undefined })
-      : textPassThroughValue
-  }, [isStringOnly, textPassThroughValue])
 
   const innerProps = useInnerProps(
     extendObject(
@@ -48,7 +36,7 @@ const SimpleText = (props: TextProps): JSX.Element => {
     { children },
     {
       hasVarDec: false,
-      textPassThrough: childTextPassThrough
+      textPassThrough
     }
   ))
 }

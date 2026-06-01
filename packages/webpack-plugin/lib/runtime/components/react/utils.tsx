@@ -1024,7 +1024,7 @@ export const useLayout = ({ props, hasSelfPercent, setWidth, setHeight, onLayout
   }
 }
 
-export function useTextPassThroughValue (
+export function useTextPassThrough (
   textStyle?: TextStyle,
   textProps?: Record<string, any>,
   { enableTextPassThrough = false }: TextPassThroughValueOptions = {}
@@ -1063,6 +1063,31 @@ export function useTextPassThroughValue (
   }
 
   return valueRef.current
+}
+
+export function useTextPassThroughText (textStyle?: TextStyle) {
+  const inheritedText = useContext(TextPassThroughContext)
+  const valueRef = useRef<TextPassThroughContextValue | null>(null)
+
+  if (!textStyle) {
+    return {
+      inheritedText,
+      textPassThrough: null
+    }
+  }
+
+  const nextValue = {
+    textStyle: extendObject({}, inheritedText?.textStyle, textStyle)
+  }
+
+  if (diffAndCloneA(valueRef.current, nextValue).diff) {
+    valueRef.current = nextValue
+  }
+
+  return {
+    inheritedText,
+    textPassThrough: valueRef.current
+  }
 }
 
 export function useHover ({ enableHover, hoverStartTime, hoverStayTime, disabled }: { enableHover: boolean, hoverStartTime: number, hoverStayTime: number, disabled?: boolean }) {

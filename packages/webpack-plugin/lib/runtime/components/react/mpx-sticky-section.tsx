@@ -2,7 +2,7 @@
 import { useRef, forwardRef, createElement, ReactNode, useCallback, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThroughValue } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThrough } from './utils'
 import { StickyContext } from './context'
 import useInnerProps from './getInnerListeners'
 
@@ -41,7 +41,7 @@ const _StickySection = forwardRef<HandlerRef<View, StickySectionProps>, StickySe
   const { layoutRef, layoutProps, layoutStyle } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: sectionRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
-  const textPassThrough = useTextPassThroughValue(textStyle, textProps, { enableTextPassThrough })
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const stickyHeaders = useRef<Map<string, any>>(new Map())
 

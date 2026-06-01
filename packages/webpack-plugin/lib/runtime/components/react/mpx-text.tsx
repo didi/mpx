@@ -5,11 +5,11 @@
  * ✔ decode
  */
 import { Text, TextStyle, TextProps } from 'react-native'
-import { useRef, forwardRef, ReactNode, JSX, createElement, Children, useMemo } from 'react'
+import { useRef, forwardRef, ReactNode, JSX, createElement, Children } from 'react'
 import Portal from './mpx-portal'
 import useInnerProps from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef' // 引入辅助函数
-import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughValue, isStringChildren, splitStyle } from './utils'
+import { useTransformStyle, wrapChildren, extendObject, getDefaultAllowFontScaling, useTextPassThroughText, isStringChildren, splitStyle } from './utils'
 
 const decodeMap = {
   '&lt;': '<',
@@ -77,22 +77,10 @@ const _Text = forwardRef<HandlerRef<Text, _TextProps>, _TextProps>((props, ref):
   const children = decode ? getDecodedChildren(props.children) : props.children
   const isStringOnly = isStringChildren(children)
   const { textStyle } = splitStyle(normalStyle)
-  const textPassThroughValue = useTextPassThroughValue(
-    textStyle,
-    undefined,
-    {
-      enableTextPassThrough: true
-    }
-  )
+  const { inheritedText, textPassThrough } = useTextPassThroughText(!isStringOnly ? textStyle : undefined)
 
-  const mergedProps = extendObject({}, textPassThroughValue?.pendingTextProps, props)
-  const finalStyle = extendObject({}, textPassThroughValue?.textStyle, normalStyle)
-  const textPassThrough = useMemo(() => {
-    if (isStringOnly) return null
-    return textPassThroughValue?.pendingTextProps
-      ? extendObject({}, textPassThroughValue, { pendingTextProps: undefined })
-      : textPassThroughValue
-  }, [isStringOnly, textPassThroughValue])
+  const mergedProps = extendObject({}, inheritedText?.pendingTextProps, props)
+  const finalStyle = extendObject({}, inheritedText?.textStyle, normalStyle)
 
   const nodeRef = useRef(null)
   useNodesRef<Text, _TextProps>(mergedProps, ref, nodeRef, {
