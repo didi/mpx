@@ -136,7 +136,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const scrollViewRef = useRef<any>(null)
   const sectionListGestureRef = useRef<any>()
 
-  const indexMap = useRef<{ [key: string]: string | number }>({})
+  const indexMap = useRef<{ [key: string]: string }>({})
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
 
@@ -185,24 +185,24 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   }
 
   const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
-    if (scrollViewRef.current) {
-      // 通过索引映射表快速定位位置
-      const position = indexMap.current[index]
-      const [sectionIndex, itemIndex] = (position as string).split('_')
-      const targetSectionIndex = Number(sectionIndex) || 0
-      const targetItemIndex = itemIndex === 'header'
-        ? 0
-        : itemIndex === 'footer'
-          ? convertedListData[targetSectionIndex].data.length + 1
-          : Number(itemIndex) + 1
-      scrollViewRef.current.scrollToLocation?.({
-        itemIndex: targetItemIndex,
-        sectionIndex: targetSectionIndex,
-        animated,
-        viewOffset,
-        viewPosition
-      })
-    }
+    if (!scrollViewRef.current) return
+    // 通过索引映射表快速定位位置
+    const position = indexMap.current[index]
+    if (!position) return
+    const [sectionIndex, itemIndex] = position.split('_')
+    const targetSectionIndex = Number(sectionIndex) || 0
+    const targetItemIndex = itemIndex === 'header'
+      ? 0
+      : itemIndex === 'footer'
+        ? convertedListData[targetSectionIndex].data.length + 1
+        : Number(itemIndex) + 1
+    scrollViewRef.current.scrollToLocation?.({
+      itemIndex: targetItemIndex,
+      sectionIndex: targetSectionIndex,
+      animated,
+      viewOffset,
+      viewPosition
+    })
   }
 
   const getItemHeight = ({ sectionIndex, rowIndex }: { sectionIndex: number, rowIndex: number }) => {
@@ -219,30 +219,16 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     }
   }
 
-  const getSectionHeaderHeight = ({ sectionIndex }: { sectionIndex: number }) => {
+  const getSectionExtraHeight = ({ sectionIndex, type }: { sectionIndex: number, type: 'header' | 'footer' }) => {
     const item = convertedListData[sectionIndex]
-    const { hasSectionHeader } = item
-    // 使用getOriginalIndex获取原始索引
-    const originalIndex = getOriginalIndex(sectionIndex, 'header')
-    if (!hasSectionHeader) return 0
-    if ((sectionHeaderHeight as ItemHeightType).getter) {
-      return (sectionHeaderHeight as ItemHeightType).getter?.(item, originalIndex) || 0
-    } else {
-      return (sectionHeaderHeight as ItemHeightType).value || 0
+    const isHeader = type === 'header'
+    if (!(isHeader ? item.hasSectionHeader : item.hasSectionFooter)) return 0
+    const sectionExtraHeight = (isHeader ? sectionHeaderHeight : sectionFooterHeight) as ItemHeightType
+    if (sectionExtraHeight.getter) {
+      const sectionExtraData = isHeader ? item.headerData : item.footerData
+      return sectionExtraHeight.getter?.(sectionExtraData, getOriginalIndex(sectionIndex, type)) || 0
     }
-  }
-
-  const getSectionFooterHeight = ({ sectionIndex }: { sectionIndex: number }) => {
-    const item = convertedListData[sectionIndex]
-    const { hasSectionFooter } = item
-    // 使用getOriginalIndex获取原始索引
-    const originalIndex = getOriginalIndex(sectionIndex, 'footer')
-    if (!hasSectionFooter) return 0
-    if ((sectionFooterHeight as ItemHeightType).getter) {
-      return (sectionFooterHeight as ItemHeightType).getter?.(item, originalIndex) || 0
-    } else {
-      return (sectionFooterHeight as ItemHeightType).value || 0
-    }
+    return sectionExtraHeight.value || 0
   }
 
   const convertedListData = useMemo(() => {
@@ -351,7 +337,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     // 遍历所有 sections
     convertedListData.forEach((section: Section, sectionIndex: number) => {
       // 添加 section header 的位置信息
-      const headerHeight = getSectionHeaderHeight({ sectionIndex })
+      const headerHeight = getSectionExtraHeight({ sectionIndex, type: 'header' })
       layouts.push({
         length: headerHeight,
         offset,
@@ -372,7 +358,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
       // 添加该 section 尾部位置信息
       // 因为即使 sectionList 没传 renderSectionFooter，getItemLayout 中的 index 的计算也会包含尾部节点
-      const footerHeight = getSectionFooterHeight({ sectionIndex })
+      const footerHeight = getSectionExtraHeight({ sectionIndex, type: 'footer' })
       layouts.push({
         length: footerHeight,
         offset,
