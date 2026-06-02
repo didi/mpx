@@ -673,7 +673,7 @@ class MpxWebpackPlugin {
           }, (chunk, set) => {
             compilation.addRuntimeModule(
               chunk,
-              new LoadAsyncChunkModule(this.options.rnConfig && this.options.rnConfig.asyncChunk && this.options.rnConfig.asyncChunk.timeout)
+              new LoadAsyncChunkModule()
             )
             return true
           })
@@ -2094,3 +2094,12 @@ try {
 }
 
 module.exports = MpxWebpackPlugin
+
+/**
+ * 定义 MpxWebpackPlugin 的配置
+ * @param {MpxWebpackPluginOptions} options - 插件选项
+ * @returns {MpxWebpackPluginOptions}
+ */
+module.exports.defineConfig = function defineConfig(options) {
+  return options
+}
