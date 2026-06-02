@@ -215,9 +215,9 @@ export default function createApp (options) {
       global.__mpxInitialRunParams = initialParams
     }
     const navScreenOpts = {
-      headerShown: false,
-      statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
-      statusBarBackgroundColor: 'transparent'
+      headerShown: false
+      // statusBarTranslucent: Mpx.config.rnConfig.statusBarTranslucent ?? true,
+      // statusBarBackgroundColor: 'transparent'
     }
 
     return createElement(SafeAreaProvider,
