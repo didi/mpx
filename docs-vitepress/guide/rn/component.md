@@ -5,7 +5,7 @@
 ### 目录概览 {#directory-overview}
 
 - #### 基础组件
-**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
+**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [section-list](#section-list) · [cover-view](#cover-view)
 
 **媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas)
 
@@ -732,33 +732,66 @@ API
 >
 > - style 样式不支持中使用百分比计算、css variable
    
-### sticky-section
-吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
+### section-list
+RN 环境下的分组列表组件，基于 React Native `SectionList` 实现。使用前需要在 `usingComponents` 中注册：
 
-> [!tip] 注意
->
-> - sticky-section 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
-
-### sticky-header
-吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
+```json
+{
+  "usingComponents": {
+    "section-list": "@mpxjs/webpack-plugin/lib/runtime/components/extends/section-list"
+  }
+}
+```
 
 属性
 
-| 属性名                   | 类型     | 默认值         | 说明                                                       |
-| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
-| offset-top	    | number  |    `0`      | 吸顶时与顶部的距离 |
-| padding	    | array  |     `[0, 0, 0, 0] `         | 长度为 4 的数组，按 top、right、bottom、left 顺序指定内边距 |
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| height | string/number |  | 组件高度 |
+| width | string/number |  | 组件宽度 |
+| listData | array |  | 列表数据，分组头数据需包含 `isSectionHeader: true` |
+| generic:recycle-item | string |  | 列表项抽象节点组件名 |
+| generic:section-header | string |  | 分组头抽象节点组件名 |
+| generic:list-header | string |  | 列表头抽象节点组件名 |
+| generic:list-footer | string |  | 列表尾抽象节点组件名 |
+| itemHeight | object |  | 列表项高度配置，支持 `value` 或 `getter(item, index)` |
+| sectionHeaderHeight | object |  | 分组头高度配置，支持 `value` 或 `getter(item, index)` |
+| listHeaderHeight | object |  | 列表头高度配置，支持 `value` 或 `getter()` |
+| useListHeader | boolean | `false` | 是否渲染列表头 |
+| listHeaderData | object |  | 列表头数据 |
+| useListFooter | boolean | `false` | 是否渲染列表尾 |
+| listFooterData | object |  | 列表尾数据 |
+| enable-sticky | boolean | `false` | 是否开启分组头吸顶 |
+| enhanced | boolean | `false` | 是否开启增强能力 |
+| bounces | boolean | `true` | iOS 边界弹性控制，开启 `enhanced` 后生效 |
+| enable-back-to-top | boolean | `false` | 点击状态栏回到顶部，仅 iOS 支持 |
+| end-reached-threshold | number | `0.1` | 触底事件触发阈值 |
+| refresher-enabled | boolean | `false` | 是否开启下拉刷新 |
+| refresher-triggered | boolean | `false` | 当前下拉刷新状态 |
+| show-scrollbar | boolean | `true` | 是否显示滚动条 |
+| scroll-event-throttle | number | `0` | scroll 事件触发频率 |
+| simultaneous-handlers | array\<object> | `[]` | 允许多个外部手势同时识别 |
+| wait-for | array\<object> | `[]` | 等待外部手势失败后再识别 |
 
 事件
 
-| 事件名           | 说明                                                 |
-| ----------------| --------------------------------------------------- |
-| bindstickontopchange      |  吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false   |
+| 事件名 | 说明 |
+| --- | --- |
+| bindscroll | 滚动时触发 |
+| bindscrolltolower | 滚动到底部时触发 |
+| bindrefresherrefresh | 自定义下拉刷新被触发 |
+
+方法
+
+| 方法名 | 说明 |
+| --- | --- |
+| scrollToIndex({ index, animated, viewOffset, viewPosition }) | 滚动到指定原始索引 |
 
 > [!tip] 注意
 >
-> - sticky-header 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
-> - RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前如果 sticky 还在动画过程中就触发组件更新（如在bindstickontopchange 回调中立刻更新 state）、scroll-view 内容高度由多变少、通过修改 scroll-into-view、scroll-top 让 scroll-view 滚动，以上场景在安卓上都可能会导致闪烁或抖动
+> - `generic:*` 指向的抽象节点组件也需要在当前页面或组件的 `usingComponents` 中注册。
+> - 使用 `itemHeight`、`sectionHeaderHeight`、`listHeaderHeight` 提供稳定高度，可减少滚动定位异常。
+> - 开启 `enable-sticky` 且快速滑动时，自定义分组头可能出现闪烁，这是 RN `SectionList` 底层机制限制。
 
 ### cover-view
 视图容器。
