@@ -490,7 +490,10 @@ const Image = forwardRef<HandlerRef<RNImage, ImageProps>, ImageProps>((props, re
     [
       'src',
       'mode',
-      'is-svg'
+      'is-svg',
+      'enable-fast-image',
+      'bindload',
+      'binderror'
     ],
     {
       layoutRef

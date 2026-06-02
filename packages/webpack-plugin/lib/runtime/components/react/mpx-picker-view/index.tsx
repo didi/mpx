@@ -158,7 +158,10 @@ const _PickerView = forwardRef<HandlerRef<View, PickerViewProps>, PickerViewProp
       'indicator-style',
       'indicator-class',
       'mask-style',
-      'mask-class'
+      'mask-class',
+      'value',
+      'bindchange',
+      'enable-wheel-animation'
     ],
     { layoutRef }
   )
