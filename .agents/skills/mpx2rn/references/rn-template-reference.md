@@ -629,8 +629,6 @@ Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文
 
 **自定义覆盖与扩展**：当某个内置基础组件在 RN 上不满足业务需要、需替换为自定义实现，或希望在模板中直接使用一组宿主特有的基础组件时，可在 `@mpxjs/webpack-plugin` 的编译配置 `rnConfig.customBuiltInComponents` 中声明自定义组件 —— **同名组件会覆盖**框架内置实现，**新名称则作为扩展基础组件**注入到模板编译期识别表中，无需在每个 `.mpx` 的 `usingComponents` 中重复注册即可在模板中以基础组件方式使用。该配置在模板编译阶段生效，并非应用入口的运行时 `Mpx.config.rnConfig` 配置。
 
-自定义基础组件如果最终渲染到 React Native 原生组件，需要先消费或映射自身支持的属性、事件，再过滤已处理的小程序属性以及 Mpx 内部辅助属性，避免它们继续透传到原生节点上。例如 `enable-var`、`enable-offset`、`enable-background`、`external-var-context`、`parent-font-size`、`parent-width`、`parent-height`、`enable-text-pass-through` 以及组件已处理的 `bind*` / `catch*` 事件属性。
-
 ### 通用属性
 
 通用属性除了前述的[模板指令](#模板指令)和[通用事件](#通用事件)绑定外，还包括以下属性：
