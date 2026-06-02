@@ -82,26 +82,30 @@ const events = useMemo(() => {
 
 ## 技术方案
 
-### 1. 模块级预计算事件元信息
+### 1. 直接维护事件元信息配置
 
-在 `getInnerListeners.ts` 中基于 `eventConfigMap` 生成 `eventMetaMap`：
+`event.config.ts` 仅被 `getInnerListeners.ts` 消费，直接把配置维护为运行时需要的元信息格式，避免额外的模块初始化推导：
 
 ```ts
-const eventMetaMap = Object.keys(eventConfigMap).reduce((map, key) => {
-  const match = /^(bind|catch|capture-bind|capture-catch)(.*)$/.exec(key)!
-  const prefix = match[1]
-
-  map[key] = extendObject({}, eventConfigMap[key], {
-    eventName: match[2],
-    eventType: prefix === 'bind' || prefix === 'catch' ? 'bubble' : 'capture',
-    hasCatch: prefix === 'catch' || prefix === 'capture-catch'
-  })
-
-  return map
-}, {} as Record<string, EventMeta>)
+const eventConfigMap: Record<string, EventMeta> = {
+  bindtap: {
+    bitFlag: '0',
+    events: ['onTouchStart', 'onTouchMove', 'onTouchEnd'],
+    eventName: 'tap',
+    eventType: 'bubble',
+    hasCatch: false
+  },
+  catchtouchmove: {
+    bitFlag: '9',
+    events: ['onTouchMove'],
+    eventName: 'touchmove',
+    eventType: 'bubble',
+    hasCatch: true
+  }
+}
 ```
 
-这样正则只在模块初始化时执行一次。`EventMeta` 可包含：
+这样事件 key 不再需要在运行时解析。`EventMeta` 可包含：
 
 1. `bitFlag`
 2. `events`
@@ -116,9 +120,10 @@ const eventMetaMap = Object.keys(eventConfigMap).reduce((map, key) => {
 ```ts
 const baseRemovePropsMap = {
   children: true,
-  'enable-text-pass-through': true,
+  'enable-background': true,
   'enable-offset': true,
   'enable-var': true,
+  'external-var-context': true,
   'parent-font-size': true,
   'parent-width': true,
   'parent-height': true
@@ -134,7 +139,7 @@ const baseRemovePropsMap = {
 1. 先创建本次 render 的 `eventConfig`。
 2. 创建 `userRemovePropsMap`。
 3. 遍历 `Object.keys(props)` 一次。
-4. 如果 key 命中 `eventMetaMap`：更新 `hashEventKey`、事件名集合和 `eventConfig`，不写入 `restProps`。
+4. 如果 key 命中 `eventConfigMap`：更新 `hashEventKey`、事件名集合和 `eventConfig`，不写入 `restProps`。
 5. 如果 key 命中基础移除属性或用户移除属性：跳过。
 6. 其他 key 写入 `restProps`。
 
@@ -146,7 +151,7 @@ const eventNameMap: Record<string, true> = {}
 let hashEventKey = ''
 
 Object.keys(props).forEach((key) => {
-  const eventMeta = eventMetaMap[key]
+  const eventMeta = eventConfigMap[key]
 
   if (eventMeta) {
     hashEventKey += eventMeta.bitFlag
@@ -230,7 +235,7 @@ function createTouchEventHandler (eventName: string, eventConfigRef: EventConfig
 
 ## 建议落地步骤
 
-1. 新增 `EventMeta` / `EventConfigRef` 类型，补充 `eventMetaMap`、`baseRemovePropsMap`、`touchHandlerMap` 模块级常量。
+1. 将 `event.config.ts` 调整为 `EventMeta` 配置格式，新增 `EventConfigRef` 类型，补充 `baseRemovePropsMap`、`touchHandlerMap` 模块级常量。
 2. 改造 `createTouchEventHandler`，参数从 `eventConfig` 改为 `eventConfigRef`。
 3. 改造 `useInnerProps` 的 render 阶段逻辑，单次遍历 props 生成 `restProps`、`hashEventKey`、`eventNameMap`、`eventConfig`。
 4. 用 `eventConfigRef.current = eventConfig` 保证 handler 读取最新配置。
