@@ -23,13 +23,15 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 
 ## 知识库索引
 
-| 知识库 | 说明 |
-| --- | --- |
+| 知识库 | 说明                                             |
+| --- |------------------------------------------------|
 | [Skyline 基础组件支持与差异参考](./references/skyline-component-reference.md) | 查询组件支持情况与差异，涉及不支持组件的替代方案、Skyline 新增组件、组件使用注意事项 |
-| [Skyline WXSS 样式能力参考](./references/skyline-style-reference.md) | 查询样式属性/选择器/单位是否支持，逐属性支持详情与 WebView 差异对比 |
-| [WebView→Skyline 适配改造最佳实践](./references/skyline-migration-practice.md) | 进行适配改造时读取，覆盖布局适配、样式适配、组件适配、层叠适配的完整实操方案 |
-| [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 切换渲染模式、接入代码配置、分包规范、上线放量等项目级配置时读取 |
-| [Worklet 动画与手势系统参考](./references/skyline-worklet-animation.md) | 使用 worklet 动画、手势系统、自定义路由等 Skyline 增强特性时读取 |
+| [Skyline WXSS 样式能力参考](./references/skyline-style-reference.md) | 查询样式属性/选择器/单位是否支持，逐属性支持详情与 WebView 差异对比        |
+| [WebView→Skyline 适配改造最佳实践](./references/skyline-migration-practice.md) | 进行适配改造时读取，覆盖布局适配、样式适配、组件适配、层叠适配的完整实操方案         |
+| [Skyline 配置项与接入规范参考](./references/skyline-configuration.md) | 接入代码配置等项目级配置时读取                                |
+| [Worklet 动画](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/worklet.html) | 使用 worklet 动画 Skyline 增强特性时读取                  |
+| [手势系统参考](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/skyline/gesture.html) | 使用 手势系统 Skyline 增强特性时读取                        |
+
 
 ### 知识库使用建议
 
@@ -77,9 +79,12 @@ Skyline 是微信小程序新一代渲染引擎，旨在替代 WebView 渲染以
 ### 组件（component）约束
 
 1. **scroll-view 必须指定 type**：`<scroll-view type="list">`，Skyline 下缺少 type 属性将无法正常工作。
-2. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
-3. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。
-4. **组件根节点**：默认 `block` + `relative`，宽高 `100%` 可能失效。
+2. **横向滚动需 enable-flex**：scroll-view 横向滚动需同时开启 `enable-flex` 以兼容 WebView。
+3. **不支持组件**：`web-view` / `movable-area` / `movable-view` / `editor` / `progress` / `navigation-bar` → 使用替代方案，详见 [组件支持参考](./references/skyline-component-reference.md)。
+4. **自定义组件样式隔离**：`tag` / `id` 选择器不支持跨自定义组件匹配，`class` 遵循组件样式隔离机制。
+
+[//]: # (5. **组件根节点**：默认 `block` + `relative`，宽高 `100%` 可能失效。)
+[//]: # (6. **不使用 WebView-only** image 的 WebView-only 裁剪模式（`top` / `bottom` / `center` / `left` / `right`）)
 
 ## 任务一：对已有 WebView 页面进行 Skyline 适配改造
 

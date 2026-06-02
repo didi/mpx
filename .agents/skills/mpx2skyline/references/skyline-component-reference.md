@@ -4,20 +4,27 @@
 
 - [通用特性](#通用特性)
 - [组件支持详情](#组件支持详情)
+- [高频组件用法](#高频组件用法)
+  - [scroll-view](#scroll-view)
+  - [swiper](#swiper)
+  - [view](#view)
+  - [text](#text)
+  - [image](#image)
+  - [button](#button)
+  - [input](#input)
+  - [textarea](#textarea)
+  - [navigator](#navigator)
 - [Skyline 新增组件](#skyline-新增组件)
-  - [span — 内联混排](#span--内联混排)
-  - [snapshot — 截图](#snapshot--截图)
-  - [sticky-header / sticky-section — 吸顶布局](#sticky-header--sticky-section--吸顶布局)
-  - [nested-scroll-header / nested-scroll-body — 嵌套滚动](#nested-scroll-header--nested-scroll-body--嵌套滚动)
-  - [list-view — 列表布局](#list-view--列表布局)
-  - [grid-view — 网格/瀑布流布局](#grid-view--网格瀑布流布局)
-  - [draggable-sheet — 半屏可拖拽](#draggable-sheet--半屏可拖拽)
+  - [span](#span)
+  - [snapshot](#snapshot)
+  - [sticky-header / sticky-section](#sticky-header--sticky-section)
+  - [nested-scroll-header / nested-scroll-body](#nested-scroll-header--nested-scroll-body)
+  - [list-view / grid-view](#list-view--grid-view)
+  - [list-builder / grid-builder](#list-builder--grid-builder)
+  - [draggable-sheet](#draggable-sheet)
+  - [share-element](#share-element)
   - [手势组件族](#手势组件族)
 - [组件使用注意事项](#组件使用注意事项)
-  - [scroll-view 必须指定 type](#scroll-view-必须指定-type)
-  - [text 是唯一内联文本组件](#text-是唯一内联文本组件)
-  - [navigator 嵌套限制](#navigator-嵌套限制)
-  - [share-element 使用方式差异](#share-element-使用方式差异)
   - [rich-text 渲染差异](#rich-text-渲染差异)
   - [自定义组件样式隔离](#自定义组件样式隔离)
   - [组件根节点行为](#组件根节点行为)
@@ -80,120 +87,600 @@
 | navigation-bar | 不考虑 | Skyline 只能用自定义导航 |
 | open-data | 完全支持 | 已废弃特性不支持 |
 
+## 高频组件用法
+
+### scroll-view
+
+可滚动视图区域，Skyline 下必须通过 `type` 属性声明滚动模式，否则性能会退化。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| scroll-x | boolean | false | 允许横向滚动 |
+| scroll-y | boolean | false | 允许纵向滚动 |
+| scroll-top | number/string | — | 设置竖向滚动条位置 |
+| scroll-left | number/string | — | 设置横向滚动条位置 |
+| scroll-into-view | string | — | 滚动到指定子节点 id |
+| scroll-with-animation | boolean | false | 滚动时使用动画 |
+| upper-threshold | number | 50 | 距顶部/左侧多远时触发 scrolltoupper |
+| lower-threshold | number | 50 | 距底部/右侧多远时触发 scrolltolower |
+| refresher-enabled | boolean | false | 开启自定义下拉刷新 |
+| refresher-threshold | number | 45 | 下拉刷新触发阈值 |
+| refresher-default-style | string | black | 刷新器默认样式（black/white/none） |
+| refresher-background | string | #FFF | 刷新器背景色 |
+| refresher-triggered | boolean | false | 刷新状态（true 为已触发） |
+
+#### Skyline 特有属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| type | string | — | **必填**，滚动模式：list / custom / nested |
+| cache-extent | number | — | 视口外预渲染距离（px） |
+| reverse | boolean | false | 反向滚动 |
+| clip | boolean | true | 是否裁剪溢出内容 |
+| min-drag-distance | number | 18 | 触发滚动的最小拖动距离（px） |
+| padding | Array | [0,0,0,0] | 内边距 [top, right, bottom, left]（px） |
+| scroll-into-view-alignment | string | — | scroll-into-view 对齐方式：start / center / end / nearest |
+| scroll-into-view-within-extent | boolean | false | 目标在预渲染区内时是否仍触发滚动 |
+| associative-container | string | — | 关联的外层容器：draggable-sheet / nested-scroll-view / pop-gesture |
+| worklet:onscrollstart | worklet | — | 滚动开始回调（UI 线程） |
+| worklet:onscrollupdate | worklet | — | 滚动过程回调（UI 线程） |
+| worklet:onscrollend | worklet | — | 滚动结束回调（UI 线程） |
+| worklet:adjust-deceleration-velocity | worklet | — | 调整惯性滚动初速度 |
+
+#### 事件
+
+| 事件名 | 说明 | detail |
+| --- | --- | --- |
+| bindscrolltoupper | 滚动到顶部/左侧 | — |
+| bindscrolltolower | 滚动到底部/右侧 | — |
+| bindscroll | 滚动时持续触发 | scrollLeft, scrollTop, scrollHeight, scrollWidth, deltaX, deltaY |
+| bindrefresherrefresh | 下拉刷新触发 | — |
+| bindrefresherpulling | 下拉过程 | — |
+| bindrefresherrestore | 刷新复位 | — |
+| bindrefresherabort | 下拉中止 | — |
+
+#### 注意事项
+
+- Skyline 下**必须**显式设置 `type`（list / custom / nested），否则性能退化为 WebView 模式
+- 横向滚动（scroll-x）需同时设置 `enable-flex`，否则子节点不会横向排列
+- list 模式下列表项必须是 scroll-view 的直接子节点；若只有一个直接子节点，按需渲染退化
+- nested 模式下，内层 scroll-view 需设置 `associative-container="nested-scroll-view"`
+
+---
+
+### swiper
+
+滑块视图容器，Skyline 下支持多种布局形态和指示器样式。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| indicator-dots | boolean | false | 是否显示面板指示点 |
+| indicator-color | string | rgba(0,0,0,.3) | 指示点颜色 |
+| indicator-active-color | string | #000 | 当前指示点颜色 |
+| autoplay | boolean | false | 自动切换 |
+| current | number | 0 | 当前所在滑块索引 |
+| interval | number | 5000 | 自动切换时间间隔（ms） |
+| duration | number | 500 | 滑动动画时长（ms） |
+| circular | boolean | false | 衔接滑动（循环） |
+| vertical | boolean | false | 竖向滑动 |
+| display-multiple-items | number | 1 | 同时显示的滑块数量 |
+| previous-margin | string | 0px | 前边距，露出前一项 |
+| next-margin | string | 0px | 后边距，露出后一项 |
+| easing-function | string | default | 切换缓动函数 |
+| scroll-with-animation | boolean | false | 改变 current 时使用动画 |
+
+#### Skyline 特有属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| layout-type | string | normal | 布局形态：normal / stackLeft / stackRight / tinder / transformer |
+| transformer-type | string | scaleAndFade | layout-type=transformer 时的变换效果：scaleAndFade / accordion / threeD / zoomIn / zoomOut / deepthPage |
+| indicator-type | string | normal | 指示器样式：normal / worm / wormThin / expand / jump / scroll / slide / scale / swap 等 |
+| indicator-margin | number | 10 | 指示器外边距 |
+| indicator-spacing | number | 4 | 指示器间距 |
+| indicator-radius | number | 4 | 指示点圆角 |
+| indicator-width | number | 8 | 指示点宽度 |
+| indicator-height | number | 8 | 指示点高度 |
+| indicator-alignment | string | auto | 指示器对齐方式 |
+| indicator-offset | Array | [0,0] | 指示器偏移量 [x, y] |
+| cache-extent | number | 1 | 预渲染区域（1 表示上下各一屏） |
+| direction | string | all | 可滑动方向：all / positive / negative（3.8.10+） |
+| worklet:onscrollstart | worklet | — | 滑动开始回调（UI 线程） |
+| worklet:onscrollupdate | worklet | — | 滑动过程回调（UI 线程） |
+| worklet:onscrollend | worklet | — | 滑动结束回调（UI 线程） |
+
+#### 事件
+
+| 事件名 | 说明 | detail |
+| --- | --- | --- |
+| bindchange | 当前滑块变化 | current（索引）, source（autoplay / touch / ""） |
+
+#### 注意事项
+
+- Skyline 下单项循环（circular + 仅一项）可能表现异常
+- swiper-item 自定义宽度建议通过内部子节点控制，直接设置可能不生效
+- layout-type 为 stackLeft / stackRight / tinder 时，仅支持 indicator-type=normal
+- indicator-type 为 scrollFixedCenter / swap / swapYRotation 时，不支持 circular
+
+---
+
+### view
+
+最基础的容器组件，Skyline 下布局能力与 WebView 基本一致，但有若干差异。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| hover-class | string | none | 点击时附加的样式类 |
+| hover-start-time | number | 50 | 按下后出现 hover 的等待时间（ms） |
+| hover-stay-time | number | 400 | 松开后 hover 保留时间（ms） |
+
+#### 注意事项
+
+- z-index 仅在兄弟节点间生效，不支持跨层叠上下文
+- 不支持 inline 布局（display: inline / inline-block）
+
+---
+
+### text
+
+文本组件，Skyline 下扩展了溢出处理和行数限制能力。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| user-select | boolean | false | 是否可选中文本 |
+
+#### Skyline 特有属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| overflow | string | visible | 文本溢出处理：visible / clip / fade / ellipsis |
+| max-lines | number | — | 最大显示行数 |
+
+#### WebView 特有属性
+
+| 属性名 | 类型 | 说明 |
+| --- | --- | --- |
+| space | string | 连续空格处理方式：ensp / emsp / nbsp |
+| decode | boolean | 是否解码 HTML 实体（&amp; &lt; 等） |
+
+#### 注意事项
+
+- Skyline 中内联文本只能用 `text` 组件，`view` 不支持 inline 布局
+- `text` 内只能嵌套 `text`，不能嵌套其他类型组件
+- 图文混排使用 Skyline 专属的 `span` 组件；WebView 下用 `display: flex` 的 view 替代
+- `space`、`decode` 属性仅 WebView 支持，Skyline 忽略
+
+---
+
+### image
+
+图片组件，Skyline 下默认开启懒加载，并新增渐显效果。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| src | string | — | 图片资源地址 |
+| mode | string | scaleToFill | 裁剪/缩放模式（见下表） |
+| show-menu-by-longpress | boolean | false | 长按显示菜单 |
+| binderror | eventhandler | — | 加载失败回调 |
+| bindload | eventhandler | — | 加载成功回调，detail: { width, height } |
+
+**通用 mode 值**（两端均支持）：scaleToFill / aspectFit / aspectFill / widthFix / heightFix
+
+**WebView-only mode 值**：top / bottom / center / left / right / top left / top right / bottom left / bottom right
+
+#### Skyline 特有属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| fade-in | boolean | false | 图片加载完成后是否渐显 |
+
+#### WebView 特有属性
+
+| 属性名 | 类型 | 说明 |
+| --- | --- | --- |
+| webp | boolean | 是否解析 WebP 格式 |
+| lazy-load | boolean | 是否懒加载（Skyline 默认懒加载，无需设置） |
+| forceHttps | boolean | 是否强制使用 HTTPS |
+
+#### 注意事项
+
+- 默认尺寸为 320 × 240 px，必须显式指定宽高
+- 在 image 上直接设置 border / padding 会导致尺寸计算异常，建议用外层 view 包裹
+- Skyline 默认懒加载，WebView 需手动设置 `lazy-load`
+- top / bottom / center 等裁剪 mode 仅 WebView 支持，需在运行时判断渲染器后兼容
+
+---
+
+### button
+
+按钮组件，Skyline 下与 WebView 行为一致，无差异。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| size | string | default | 大小：default / mini |
+| type | string | default | 样式类型：default / primary / warn |
+| plain | boolean | false | 是否镂空 |
+| disabled | boolean | false | 是否禁用 |
+| loading | boolean | false | 是否显示 loading 状态 |
+| form-type | string | — | 触发 form 的 submit / reset |
+| open-type | string | — | 微信开放能力 |
+
+---
+
+### input
+
+单行输入框，原生组件，字体固定为系统字体。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| value | string | — | 输入内容 |
+| type | string | text | 键盘类型：text / number / idcard / digit / nickname |
+| password | boolean | false | 是否密码类型 |
+| placeholder | string | — | 占位文本 |
+| placeholder-style | string | — | 占位文本样式 |
+| disabled | boolean | false | 是否禁用 |
+| maxlength | number | 140 | 最大输入长度，-1 为不限制 |
+| cursor-spacing | number | 0 | 光标与键盘的距离（px） |
+| focus | boolean | false | 是否自动聚焦 |
+| confirm-type | string | done | 键盘右下角按钮文字：send / search / next / go / done |
+| confirm-hold | boolean | false | 点击确认时是否保持键盘 |
+| cursor | number | — | 指定光标位置 |
+| cursor-color | string | — | 光标颜色 |
+| selection-start | number | -1 | 选区起始位置，-1 为不设置 |
+| selection-end | number | -1 | 选区结束位置 |
+| adjust-position | boolean | true | 键盘弹起时是否上推页面 |
+| hold-keyboard | boolean | false | focus 时是否不收起键盘 |
+
+#### Skyline 特有属性
+
+| 属性名 | 类型 | 说明 |
+| --- | --- | --- |
+| bind:selectionchange | eventhandler | 选区改变，detail: { selectionStart, selectionEnd } |
+| bind:keyboardcompositionstart | eventhandler | 输入法组合开始 |
+| bind:keyboardcompositionupdate | eventhandler | 输入法组合更新 |
+| bind:keyboardcompositionend | eventhandler | 输入法组合结束 |
+| worklet:onkeyboardheightchange | worklet | 键盘高度变化（UI 线程），detail: { height, pageBottomPadding } |
+
+#### 事件
+
+| 事件名 | 说明 | detail |
+| --- | --- | --- |
+| bindinput | 输入时触发 | value, cursor, keyCode |
+| bindchange | 失焦时触发 | value |
+| bindfocus | 聚焦时触发 | value, height |
+| bindblur | 失焦时触发 | value |
+| bindconfirm | 点击确认时触发 | value |
+| bindkeyboardheightchange | 键盘高度变化 | height, duration |
+
+#### 注意事项
+
+- input / textarea 是原生组件，字体固定为系统字体，无法设置 font-family
+- Skyline 下键盘收起/恢复行为与 WebView 有差异，可能引起布局跳动
+- 自定义组件中的 input 需使用 `wx://form-field` behavior 才能被外层 form 组件获取值
+
+---
+
+### textarea
+
+多行输入框，属性基本与 input 一致，以下列出特有属性。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| auto-height | boolean | false | 是否自动增高 |
+| fixed | boolean | false | 在 position:fixed 区域内时是否固定（WebView 兼容用） |
+| show-confirm-bar | boolean | true | 是否显示键盘上方的完成工具栏 |
+
+> 其余通用属性（value、placeholder、disabled、maxlength、cursor-spacing、focus 等）与 input 相同。
+
+#### 注意事项
+
+- 同 input，字体固定为系统字体，无法设置 font-family
+
+---
+
+### navigator
+
+页面链接组件，Skyline 下内容嵌套有限制。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| url | string | — | 跳转页面路径 |
+| open-type | string | navigate | 跳转方式：navigate / redirect / switchTab / reLaunch / navigateBack / exit |
+| delta | number | 1 | navigateBack 时回退层数 |
+| hover-class | string | navigator-hover | 点击时附加的样式类 |
+| hover-start-time | number | 50 | 按下后出现 hover 的等待时间（ms） |
+| hover-stay-time | number | 600 | 松开后 hover 保留时间（ms） |
+
+#### 注意事项
+
+- Skyline 下 navigator 内只能嵌套 `text` 组件或纯文本节点，不能嵌套 image 或 view
+- 如需图文混排链接，Skyline 下使用 `span` 包裹；WebView 下用外层 flex view 替代
+
+---
+
 ## Skyline 新增组件
 
-### span — 内联混排
+### span
 
-用于支持内联文本和 image / navigator 的混排。在 Skyline 中，`view` 不支持 inline 布局，需要内联混排时使用 `span` 包裹 `text` 和 `image`。
+Skyline 专属内联容器，用于实现 text、image、navigator 的图文混排。
 
-```html
-<span>
-  <text>文本内容</text>
-  <image src="icon.png" style="width:16px;height:16px;" />
-  <text>更多文本</text>
-</span>
-```
+#### 注意事项
 
-在 Mpx 中使用 span 需要通过条件编译指定标签名：
+- Skyline 专属，WebView 不识别此组件
+- Mpx 中通过 `mpxTagName@wx="span"` 条件渲染；WebView 下用 `display: flex` 的 view 替代
+- 内部可嵌套 text、image、navigator
 
-```html
-<view mpxTagName@wx="span">
-  <view mpxTagName@wx="text">文本1</view>
-  <view mpxTagName@wx="text">文本2</view>
-</view>
-```
+---
 
-### snapshot — 截图
+### snapshot
 
-截图组件，用于对指定区域进行截图操作。
+截图组件，可将组件内容渲染为图片，Skyline 专属。
 
-### sticky-header / sticky-section — 吸顶布局
+#### 属性
 
-吸顶布局容器，替代 WebView 中的 `position: sticky` 方案。
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| mode | string | view | view：与普通 view 无差别，样式变化实时体现；picture：对子节点截图为纹理，后续样式变化不反映到界面，适合 scale/rotate 动画优化 |
 
-- `sticky-section`：吸顶分组容器
-- `sticky-header`：吸顶头部节点
+**takeSnapshot 方法**（通过 `createSelectorQuery` 获取节点后调用）：
 
-### nested-scroll-header / nested-scroll-body — 嵌套滚动
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| type | string | 输出类型：file / arraybuffer |
+| format | string | 图片格式：png / jpg |
+| quality | number | 压缩质量（0~1，仅 jpg 有效） |
 
-嵌套 scroll-view 场景中使用的节点，仅支持作为 `<scroll-view type="nested">` 模式的直接子节点。
+返回值：data（文件路径或 ArrayBuffer）、width、height。
 
-- `nested-scroll-header`：嵌套滚动的头部区域
-- `nested-scroll-body`：嵌套滚动的主体区域
+#### 注意事项
 
-### list-view — 列表布局
+- Skyline 专属
 
-列表布局容器，仅支持作为 `<scroll-view type="custom">` 模式的直接子节点或 `sticky-section` 组件直接子节点。用于替代长列表场景，具有更好的性能表现。
+---
 
-### grid-view — 网格/瀑布流布局
+### sticky-header / sticky-section
 
-Skyline 下的网格布局容器和瀑布流布局容器。
+吸顶布局组件，实现分组列表的吸顶效果，必须在 `scroll-view type="custom"` 中使用。
 
-### draggable-sheet — 半屏可拖拽
+#### sticky-section 属性
 
-半屏可拖拽组件，用于实现从底部弹出的半屏面板。
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| push-pinned-header | boolean | true | 新 header 吸顶时是否推动之前已吸顶的 header |
+
+#### sticky-header 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| padding | Array | [0,0,0,0] | 内边距 [top, right, bottom, left] |
+| offset-top | number | 0 | 吸顶时与视窗顶部的距离（px），3.0.0+ |
+| allow-overlapping | boolean | false | 是否允许与前一个 sticky-header 重叠，3.7.11+ |
+
+#### 事件
+
+| 事件名 | 说明 | detail |
+| --- | --- | --- |
+| bind:stickontopchange | 吸顶状态变化，3.6.2+ | isStickOnTop |
+
+#### 注意事项
+
+- 必须在 `scroll-view type="custom"` 中使用
+- sticky-header 必须是 sticky-section 的第一个子节点
+- 每个 sticky-section 只能有一个 sticky-header
+- sticky-header 背景必须显式设置，否则会透出下层内容
+
+---
+
+### nested-scroll-header / nested-scroll-body
+
+嵌套滚动布局组件，实现外层 `scroll-view type="nested"` 与内层 scroll-view 的无缝联动。
+
+#### nested-scroll-body 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| offset-top | number | 0 | 外层滚动时此组件逐渐撑开，直到顶部与视窗顶部距离达到该值才切换为内层滚动（3.6.2+） |
+
+#### 注意事项
+
+- nested-scroll-header 和 nested-scroll-body 均只渲染第一个子节点，其余子节点不渲染
+- 一个 `type="nested"` 的 scroll-view 只能包含一个 nested-scroll-body
+- 可以有多个 nested-scroll-header，每个只包裹一个元素
+- 内层 scroll-view 需设置 `associative-container="nested-scroll-view"`
+
+---
+
+### list-view / grid-view
+
+列表/网格布局容器，必须作为 `scroll-view type="custom"` 或 `sticky-section` 的直接子节点，Skyline 专属。
+
+#### list-view 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| padding | Array | [0,0,0,0] | 内边距 [top, right, bottom, left]（px） |
+
+#### grid-view 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| type | string | aligned | 网格类型：aligned（等高网格）/ masonry（瀑布流，可不等高） |
+| cross-axis-count | number | — | 列数（必填） |
+| cross-axis-gap | number | 0 | 列间距（px） |
+| main-axis-gap | number | 0 | 行间距（px） |
+| padding | Array | [0,0,0,0] | 内边距 [top, right, bottom, left]（px） |
+| max-cross-axis-extent | number | — | 交叉轴方向单元格最大尺寸 |
+
+#### 注意事项
+
+- 必须作为 `scroll-view type="custom"` 或 `sticky-section` 的直接子节点
+- Skyline 专属
+
+---
+
+### list-builder / grid-builder
+
+虚拟列表/网格组件，仅渲染视口内元素，适合超长列表（1000+ 项），Skyline 专属。
+
+#### list-builder 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| type | string | static | 高度模式：static（定高）/ dynamic（不定高） |
+| list | Array | — | 数据列表 |
+| child-count | number | — | 列表项数量 |
+| child-height | number | — | 列表项高度（定高模式必填，px） |
+| padding | Array | [0,0,0,0] | 内边距 [top, right, bottom, left]（px） |
+| initial-child-count | number | 0 | 首次渲染数量（3.7.12+） |
+
+#### 事件
+
+| 事件名 | 说明 | detail |
+| --- | --- | --- |
+| bind:itembuild | 列表项被创建 | index |
+| bind:itemdispose | 列表项被回收 | index |
+
+#### 注意事项
+
+- 必须在 `scroll-view type="custom"` 中使用
+- 目前仅支持纵向滚动列表
+- grid-builder 存在已知 Bug：滚动出屏幕后返回可能自动滚回顶部
+- Skyline 专属
+
+---
+
+### draggable-sheet
+
+半屏可拖拽面板，实现从底部弹出的半屏交互（类似地图 App 底部面板），Skyline 专属。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| initial-child-size | number | 0.5 | 初始高度比例（相对父容器，0~1） |
+| min-child-size | number | 0.25 | 最小高度比例 |
+| max-child-size | number | 1.0 | 最大高度比例 |
+| snap | boolean | false | 松手后是否自动吸附到关键点 |
+| snap-sizes | Array | [] | 吸附关键点列表（不含 min/max，会自动包含） |
+| worklet:onsizeupdate | worklet | — | UI 线程尺寸变化回调，参数 { pixels, size } |
+
+**DraggableSheetContext.scrollTo 参数**（通过 `createSelectorQuery` 获取节点后调用）：
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| size | number | 目标高度比例（0~1） |
+| animated | boolean | 是否启用动画 |
+| duration | number | 动画时长（ms） |
+| easingFunction | string | 缓动函数：ease / ease-in / ease-out / ease-in-out / linear |
+
+#### 注意事项
+
+- Skyline 专属
+- 内部 scroll-view 必须设置 `associative-container="draggable-sheet"`
+- 所有尺寸属性均为相对父容器高度的比例（0~1），非像素值
+
+---
+
+### share-element
+
+共享元素动画组件，实现页面间元素过渡动画（类似 Flutter Hero），双端支持，Skyline 下能力增强。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| key | string | — | **必填**，页面内唯一标识，源页面与目标页面必须相同 |
+| transform | boolean | false | 是否启用动画（两端均需设置为 true） |
+| duration | number | 300 | 动画时长（ms） |
+| easing-function | string | ease-out | 缓动函数 |
+
+#### Skyline 特有属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| transition-on-gesture | boolean | false | 手势返回时触发动画 |
+| shuttle-on-push | string | to | push 阶段飞跃物：from / to |
+| shuttle-on-pop | string | to | pop 阶段飞跃物：from / to |
+| rect-tween-type | string | materialRectArc | 动画轨迹：materialRectArc / materialRectCenterArc / linear / elasticIn / elasticOut 等 |
+| worklet:onframe | worklet | — | 动画帧回调（UI 线程），参数含 progress（0~1） |
+
+#### 注意事项
+
+- 源页面和目标页面的 key 必须完全匹配，两端均需设置 `transform="{{true}}"` 才触发动画
+- 共享元素内容不宜过于复杂，否则影响动画性能
+
+---
 
 ### 手势组件族
 
-Skyline 提供了 9 种手势组件，直接在 UI 线程响应，避免跨线程延迟：
+Skyline 专属，在 UI 线程直接响应手势，避免跨线程延迟。手势组件是"虚组件"，不参与布局，**只能有一个直接子节点**。
 
-| 组件 | 触发时机 |
-| --- | --- |
-| `tap-gesture-handler` | 点击时触发 |
-| `double-tap-gesture-handler` | 双击时触发 |
-| `force-press-gesture-handler` | iPhone 设备重按时触发 |
-| `horizontal-drag-gesture-handler` | 横向滑动时触发 |
-| `long-press-gesture-handler` | 长按时触发 |
-| `pan-gesture-handler` | 拖动（横向/纵向）时触发 |
-| `scale-gesture-handler` | 多指缩放时触发 |
-| `vertical-drag-gesture-handler` | 纵向滑动时触发 |
+**组件列表**：
 
-手势组件的详细用法和事件参数见 [Worklet 动画与手势系统参考](./skyline-worklet-animation.md#手势系统)。
+| 组件 | 触发条件 | 典型用途 |
+| --- | --- | --- |
+| tap-gesture-handler | 点击 | 按钮点击 |
+| double-tap-gesture-handler | 双击 | 点赞、图片放大 |
+| long-press-gesture-handler | 长按 | 菜单弹出 |
+| pan-gesture-handler | 拖动（横向/纵向） | 拖拽排序 |
+| horizontal-drag-gesture-handler | 横向滑动 | 左滑删除 |
+| vertical-drag-gesture-handler | 纵向滑动 | 下拉刷新 |
+| scale-gesture-handler | 多指缩放 | 图片缩放 |
+| force-press-gesture-handler | iPhone 重按 | 3D Touch |
+
+#### 通用属性
+
+| 属性名 | 类型 | 说明 |
+| --- | --- | --- |
+| tag | string | 手势协商标识 |
+| worklet:ongesture | worklet | 手势回调（必须为 worklet 函数） |
+| simultaneous-handlers | Array\<string\> | 可同时触发的手势 tag 列表 |
+| worklet:should-response-on-move | worklet | 移动过程中是否响应 |
+| worklet:should-accept-gesture | worklet | 手势是否应被识别 |
+| native-view | string | 代理的原生节点类型（如 scroll-view） |
+
+**手势状态**（回调参数 `evt.state`）：
+
+| 值 | 常量名 | 含义 |
+| --- | --- | --- |
+| 0 | POSSIBLE | 待识别 |
+| 1 | BEGIN | 手势开始 |
+| 2 | ACTIVE | 手势进行中 |
+| 3 | END | 手势结束 |
+| 4 | CANCELLED | 手势取消 |
+
+**pan / horizontal-drag / vertical-drag 额外回调参数**：absoluteX/Y（屏幕坐标）、deltaX/Y（相对上次位移）、velocityX/Y（px/s，手指离开时）
+
+**scale 额外回调参数**：scale（累计缩放比）、rotation（弧度）、focalX/Y（缩放中心）、pointerCount
+
+#### 注意事项
+
+- Skyline 专属，WebView 下使用 bind:touchstart / touchmove / touchend + WXS 替代
+- 回调函数必须在函数体顶部声明 `'worklet'` 指令
+- 每个手势组件只能有一个直接子节点
+- 必须处理 CANCELLED 状态，避免状态残留
+
+手势协商（多手势并存）见 [skyline-worklet-animation.md](./skyline-worklet-animation.md#手势协商)。
 
 ## 组件使用注意事项
-
-### scroll-view 必须指定 type
-
-Skyline 下 `scroll-view` 必须显式指定 `type` 属性：
-
-```html
-<!-- 列表滚动 -->
-<scroll-view type="list" scroll-y style="height:100%">
-  <!-- 列表内容 -->
-</scroll-view>
-
-<!-- 嵌套滚动 -->
-<scroll-view type="nested">
-  <nested-scroll-header>头部</nested-scroll-header>
-  <nested-scroll-body>内容</nested-scroll-body>
-</scroll-view>
-```
-
-### text 是唯一内联文本组件
-
-Skyline 中 `view` 不支持 inline 布局，内联文本只能用 `text` 组件。可通过 `span` 组件实现 text / image 混排。
-
-### navigator 嵌套限制
-
-`navigator` 只能嵌套 `text` 组件或文本节点。如需与 image 内联，可通过 `span` 组件。
-
-```html
-<!-- 正确 -->
-<navigator url="/page/detail">
-  <text>链接文字</text>
-</navigator>
-
-<!-- 内联混排 -->
-<span>
-  <text>文字</text>
-  <navigator url="/page/detail"><text>链接</text></navigator>
-  <image src="icon.png" style="width:16px;height:16px;" />
-</span>
-```
-
-### share-element 使用方式差异
-
-`share-element` 在 Skyline 下使用方式与 WebView 有异，且特性有所增强。使用前需查阅微信官方文档确认 Skyline 下的用法。
 
 ### rich-text 渲染差异
 
@@ -236,6 +723,8 @@ Skyline 使用 `glass-easel` 作为组件框架，与 WebView 下的旧组件框
 
 ### 特定组件踩坑
 
+Todo 待补充
+
 #### image 组件
 
 - **max-width 行为异常**：设置 `max-width` 后实际渲染宽度可能不符合预期，建议使用明确的 `width` 值
@@ -260,7 +749,3 @@ Skyline 使用 `glass-easel` 作为组件框架，与 WebView 下的旧组件框
 #### input / textarea 组件
 
 - **键盘收起/恢复**：Skyline 下键盘收起和恢复行为与 WebView 有差异，可能导致页面布局跳动
-
-#### scroll-view 组件
-
-- **scrollOffset 节点限制**：`scrollOffset` 相关字段（`scrollLeft` / `scrollTop`）仅在 `scroll-view` 和 `viewport` 节点上生效
