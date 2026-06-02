@@ -519,6 +519,8 @@
   .mpx-scroll-view
     overflow hidden
     position relative
+    .mpx-scroll-view-content
+      flex-shrink 0 // 解决内容区域被挤压导致的滚动异常问题，在scroll-view开启增强特性时会有子元素使用flex布局的场景
 
     .mpx-pull-down-wrapper
       position: absolute
