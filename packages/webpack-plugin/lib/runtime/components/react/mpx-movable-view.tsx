@@ -22,7 +22,7 @@ import { StyleSheet, View, LayoutChangeEvent } from 'react-native'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { MovableAreaContext } from './context'
-import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback } from './utils'
+import { useTransformStyle, splitProps, splitStyle, HIDDEN_STYLE, wrapChildren, GestureHandler, flatGesture, extendObject, omit, useNavigation, useRunOnJSCallback, useTextPassThroughValue } from './utils'
 import { GestureDetector, Gesture, GestureTouchEvent, GestureStateChangeEvent, PanGestureHandlerEventPayload, PanGesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
@@ -251,6 +251,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
   const prevWaitForHandlersRef = useRef<Array<GestureHandler>>(waitFor || [])
   const gestureSwitch = useRef(false)
   const { textStyle, innerStyle } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   const offsetX = useSharedValue(x)
   const offsetY = useSharedValue(y)
@@ -745,7 +746,23 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         style: [innerStyle, animatedStyles, layoutStyle]
       },
       rewriteCatchEvent()
-    )
+    ),
+    [
+      'direction',
+      'x',
+      'y',
+      'disabled',
+      'animation',
+      'damping',
+      'friction',
+      'out-of-bounds',
+      'inertia',
+      'wait-for',
+      'simultaneous-handlers',
+      'disable-event-passthrough',
+      'changeThrottleTime',
+      'bindchange'
+    ]
   )
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
@@ -756,8 +773,7 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       }
     )
   ))

@@ -23,7 +23,22 @@ describe('RN template support', () => {
     mockContext.emitWarning.mockClear()
     mockContext.emitError.mockClear()
     mockMpx.wxsContentMap = {}
+    mockMpx.rnConfig = undefined
   })
+
+  function compileReactTemplate (input, extraOptions) {
+    const parsed = compiler.parse(input, Object.assign({
+      mode: 'ios',
+      srcMode: 'wx',
+      defs: {},
+      usingComponentsInfo: {},
+      filePath: 'test.mpx',
+      warn: console.warn,
+      error: console.error,
+      isUrlRequest: () => false
+    }, extraOptions))
+    return genNodeReact(parsed.root)
+  }
 
   it('should generate correct code for template import and definition', () => {
     const input = `
@@ -110,6 +125,40 @@ describe('RN template support', () => {
     expect(output).toContain('"mpx-movable-view": function')
   })
 
+  it('should treat no-value attrs as true in RN render code', () => {
+    expect(compileReactTemplate('<scroll-view scroll-y></scroll-view>')).toContain('"scroll-y": (true)')
+    expect(compileReactTemplate('<scroll-view scroll-y="{{false}}"></scroll-view>')).toContain('"scroll-y": (false)')
+    expect(compileReactTemplate('<view id=""></view>')).toContain('id: ""')
+  })
+
+  it('should pass no-value attrs as boolean true to custom components', () => {
+    const output = compileReactTemplate('<custom-comp enabled></custom-comp>', {
+      usingComponentsInfo: {
+        'custom-comp': {}
+      }
+    })
+    expect(output).toContain('getComponent("custom-comp")')
+    expect(output).toContain('enabled: (true)')
+    expect(output).not.toContain('enabled: "true"')
+  })
+
+  it('should keep RN compile marker attrs consumed before no-value attr normalization', () => {
+    const output = compileReactTemplate('<view is-simple></view>')
+    expect(output).toContain('getComponent("mpx-simple-view")')
+    expect(output).not.toContain('"is-simple"')
+  })
+
+  it('should treat no-value attrs as true on custom built-in components', () => {
+    const output = compileReactTemplate('<audio controls></audio>', {
+      customBuiltInComponents: {
+        audio: '/components/mpx-audio'
+      }
+    })
+    expect(output).toContain('getComponent("mpx-audio")')
+    expect(output).toContain('controls: (true)')
+    expect(output).not.toContain('controls: "true"')
+  })
+
   it('should report error for template usage without valid is value', () => {
     const input = '<template is="" data="{{...d}}" />'
     templateLoader.call(mockContext, input)
@@ -146,6 +195,21 @@ describe('RN template support', () => {
     expect(mockContext.emitError).toHaveBeenCalledTimes(0)
     expect(output).not.toContain('var templates = Object.assign({},')
     expect(output).not.toContain('function getTemplate(name)')
+  })
+
+  it('should transform static image src in imported templates to webpack require', () => {
+    const input = `
+      <template name="asset-demo">
+        <image src="./logo.png" />
+        <video src="./demo.mp4" />
+      </template>
+    `
+    const output = templateLoader.call(mockContext, input)
+    expect(mockContext.emitError).toHaveBeenCalledTimes(0)
+    expect(output).toContain('var __mpx_template_asset_0__ = require("./logo.png");')
+    expect(output).toContain('var __mpx_template_asset_1__ = require("./demo.mp4");')
+    expect(output).toContain('src: __mpx_template_asset_0__')
+    expect(output).toContain('src: __mpx_template_asset_1__')
   })
 
   it('should support using registered components from host', () => {

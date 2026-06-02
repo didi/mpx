@@ -6,7 +6,7 @@ import { View, ViewStyle, NativeSyntheticEvent } from 'react-native'
 import { noop, warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
 import { LabelContext, LabelContextValue } from './context'
 import Portal from './mpx-portal'
 
@@ -61,6 +61,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
     if (backgroundStyle) {
       warn('Label does not support background image-related styles!')
@@ -87,7 +88,9 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
           bindtap: onTap
         }
       ),
-      [],
+      [
+        'for'
+      ],
       {
         layoutRef
       }
@@ -101,8 +104,7 @@ const Label = forwardRef<HandlerRef<View, LabelProps>, LabelProps>(
         {
           hasVarDec,
           varContext: varContextRef.current,
-          textStyle,
-          textProps
+          textPassThrough
         }
       )
     ))

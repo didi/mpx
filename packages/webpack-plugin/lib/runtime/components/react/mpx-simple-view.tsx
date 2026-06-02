@@ -1,19 +1,25 @@
 import { View, ViewProps, TextStyle } from 'react-native'
 import { createElement } from 'react'
-import { splitProps, splitStyle, wrapChildren, extendObject } from './utils'
+import { splitProps, splitStyle, wrapChildren, extendObject, useTextPassThroughValue, transformBoxSizing, isBoxSizingAffectingStyle } from './utils'
 import useInnerProps from './getInnerListeners'
 
 const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
   const { textProps, innerProps: props = {} } = splitProps(simpleViewProps)
 
-  const { textStyle, innerStyle = {} } = splitStyle(props.style || {})
+  let hasBoxSizingAffectingStyle = false
+  const { textStyle, innerStyle = {} } = splitStyle(props.style || {}, (key) => {
+    if (!hasBoxSizingAffectingStyle && isBoxSizingAffectingStyle(key)) {
+      hasBoxSizingAffectingStyle = true
+    }
+  })
+  const textPassThrough = useTextPassThroughValue(textStyle as TextStyle, textProps)
 
   const innerProps = useInnerProps(
     extendObject(
       {},
       props,
       {
-        style: innerStyle
+        style: transformBoxSizing(extendObject({}, innerStyle), hasBoxSizingAffectingStyle)
       }
     )
   )
@@ -22,8 +28,7 @@ const SimpleView = (simpleViewProps: ViewProps): JSX.Element => {
     props,
     {
       hasVarDec: false,
-      textStyle: textStyle as TextStyle,
-      textProps
+      textPassThrough
     }
   ))
 }

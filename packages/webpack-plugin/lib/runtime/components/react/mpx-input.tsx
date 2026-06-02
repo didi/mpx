@@ -54,7 +54,7 @@ import {
   NativeTouchEvent
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
-import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isAndroid } from './utils'
+import { useUpdateEffect, useTransformStyle, useLayout, extendObject, isAndroid, getDefaultAllowFontScaling } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { FormContext, FormFieldValue, KeyboardAvoidContext } from './context'
@@ -131,7 +131,7 @@ const inputModeMap: Record<Type, string> = {
 const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps>((props: FinalInputProps, ref): JSX.Element => {
   const {
     style = {},
-    allowFontScaling = false,
+    allowFontScaling,
     type = 'text',
     value,
     password,
@@ -483,7 +483,7 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       {
         ref: nodeRef,
         style: extendObject({}, normalStyle, layoutStyle),
-        allowFontScaling,
+        allowFontScaling: allowFontScaling ?? getDefaultAllowFontScaling(),
         inputMode: originalKeyboardType ? undefined : inputModeMap[type],
         keyboardType: originalKeyboardType,
         secureTextEntry: !!password,
@@ -512,7 +512,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [
+      'name',
       'type',
+      'maxlength',
+      'cursor-spacing',
+      'adjust-position',
+      'hold-keyboard',
+      'keyboard-type',
+      'auto-height',
       'password',
       'placeholder-style',
       'disabled',
@@ -523,7 +530,13 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       'cursor',
       'cursor-color',
       'selection-start',
-      'selection-end'
+      'selection-end',
+      'bindinput',
+      'bindfocus',
+      'bindblur',
+      'bindconfirm',
+      'bindselectionchange',
+      'bindlinechange'
     ],
     {
       layoutRef

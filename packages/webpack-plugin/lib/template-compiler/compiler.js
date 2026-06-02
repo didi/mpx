@@ -108,6 +108,8 @@ let isCustomText
 let runtimeCompile
 let rulesRunner
 let customBuiltInComponentsOpt
+let isUrlRequest
+let templateAssetId
 let currentEl
 let injectNodes = []
 let forScopes = []
@@ -602,15 +604,11 @@ function parseComponent (content, options) {
   }
 
   function padContent (block, pad) {
-    if (block.tag === 'style' && pad === 'line') {
-      const offset = content.slice(0, block.start).split(splitRE).length
-      return Array(offset).join(`/* ${STYLE_PAD_PLACEHOLDER} */\n`)
-    }
     if (pad === 'space') {
       return content.slice(0, block.start).replace(replaceRE, ' ')
     } else {
       const offset = content.slice(0, block.start).split(splitRE).length
-      const padChar = '\n'
+      const padChar = block.tag === 'style' ? `/* ${STYLE_PAD_PLACEHOLDER} */\n` : '\n'
       return Array(offset).join(padChar)
     }
   }
@@ -654,6 +652,8 @@ function parse (template, options) {
   usingComponentsInfo = options.usingComponentsInfo || {}
   usingComponents = Object.keys(usingComponentsInfo)
   customBuiltInComponentsOpt = options.customBuiltInComponents || null
+  isUrlRequest = options.isUrlRequest
+  templateAssetId = 0
 
   // 初始化跨平台语法检测配置（每次解析时只初始化一次）
   crossPlatformConfig = initCrossPlatformConfig()
@@ -2025,17 +2025,23 @@ const spreadREG = /\{\s*\.\.\.\s*([^,{]+?)\s*\}/g
 
 function processAttrs (el, options) {
   el.attrsList.forEach((attr) => {
-    const isTemplateData = el.tag === 'template' && attr.name === 'data'
+    const isTemplateData = el.tag === 'template' && attr.name === 'data' && attr.value
     const needWrap = isTemplateData && mode !== 'swan'
     let value = needWrap ? `{${attr.value}}` : attr.value
 
-    // 修复React Native环境下属性值中插值表达式带空格的问题
-    if (isReact(mode) && typeof value === 'string') {
-      // 检查是否为带空格的插值表达式
-      const trimmedValue = value.trim()
-      if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
-        // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
-        value = trimmedValue
+    if (isReact(mode)) {
+      // 修复React Native环境下属性值中插值表达式带空格的问题
+      if (typeof value === 'string') {
+        // 检查是否为带空格的插值表达式
+        const trimmedValue = value.trim()
+        if (trimmedValue.startsWith('{{') && trimmedValue.endsWith('}}')) {
+          // 如果是纯插值表达式但带有前后空格，则使用去除空格后的值进行解析
+          value = trimmedValue
+        }
+      }
+      if (value === undefined) {
+        value = '{{true}}'
+        modifyAttr(el, attr.name, value)
       }
     }
 
@@ -2609,6 +2615,21 @@ function processBuiltInComponents (el, meta) {
   }
 }
 
+const reactTemplateAssetTags = makeMap('mpx-image,mpx-video,mpx-audio', true)
+
+function processTemplateAssetReact (el, meta) {
+  if (!reactTemplateAssetTags(el.tag)) return
+  const src = el.attrsMap.src
+  if (!isUrlRequest(src)) return
+
+  const name = `__mpx_template_asset_${templateAssetId++}__`
+  if (!meta.templateAssets) {
+    meta.templateAssets = {}
+  }
+  meta.templateAssets[name] = src
+  addExp(el, name, false, 'src')
+}
+
 /** Web / RN 共用：<import src> 收集并移除 */
 function processTemplateImport (el, meta) {
   if (el.tag !== 'import') return false
@@ -2633,7 +2654,7 @@ function processTemplateImport (el, meta) {
 function processTemplateTranspile (el, meta) {
   if (processTemplateImport(el, meta)) return
 
-  if (el.tag !== 'template') return
+  if (el.tag !== 'template' || el.isBlock) return
 
   const is = getAndRemoveAttr(el, 'is').val
   if (is) {
@@ -3137,6 +3158,8 @@ function processElement (el, root, options, meta) {
     const isReactComponent$1 = isReactComponent(el, options)
     // 收集内建组件
     processBuiltInComponents(el, meta)
+    // 处理模版内资源引用
+    processTemplateAssetReact(el, meta)
     // 预处理代码维度条件编译
     processIf(el)
     processFor(el)

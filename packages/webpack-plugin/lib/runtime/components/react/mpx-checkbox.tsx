@@ -26,7 +26,7 @@ import { warn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import Icon from './mpx-icon'
-import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject } from './utils'
+import { splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useTextPassThroughValue } from './utils'
 import { CheckboxGroupContext, LabelContext } from './context'
 import Portal from './mpx-portal'
 
@@ -148,6 +148,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
     const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
     const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+    const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
     if (backgroundStyle) {
       warn('Checkbox does not support background image-related styles!')
@@ -178,7 +179,9 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       [
         'value',
         'disabled',
-        'checked'
+        'checked',
+        'color',
+        '_onChange'
       ],
       {
         layoutRef
@@ -224,8 +227,7 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
         {
           hasVarDec,
           varContext: varContextRef.current,
-          textStyle,
-          textProps
+          textPassThrough
         }
       )
     )

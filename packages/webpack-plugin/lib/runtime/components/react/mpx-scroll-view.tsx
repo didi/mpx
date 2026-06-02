@@ -38,7 +38,7 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS } from 
 import { warn, hasOwn } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback } from './utils'
+import { splitProps, splitStyle, useTransformStyle, useLayout, wrapChildren, extendObject, flatGesture, GestureHandler, HIDDEN_STYLE, useRunOnJSCallback, useTextPassThroughValue } from './utils'
 import { IntersectionObserverContext, ScrollViewContext } from './context'
 import Portal from './mpx-portal'
 
@@ -203,6 +203,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   const scrollViewRef = useRef<ScrollView>(null)
 
@@ -855,7 +856,15 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       'refresher-triggered',
       'refresher-enabled',
       'refresher-default-style',
+      'refresher-threshold',
       'refresher-background',
+      'scroll-into-view',
+      'enable-sticky',
+      'wait-for',
+      'simultaneous-handlers',
+      'scroll-event-throttle',
+      'scroll-into-view-offset',
+      '__selectRef',
       'children',
       'enhanced',
       'binddragstart',
@@ -864,7 +873,8 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       'bindscroll',
       'bindscrolltoupper',
       'bindscrolltolower',
-      'bindrefresherrefresh'
+      'bindrefresherrefresh',
+      'bindscrollend'
     ], { layoutRef })
 
   const ScrollViewComponent = enableSticky ? AnimatedScrollView : ScrollView
@@ -874,8 +884,7 @@ const _ScrollView = forwardRef<HandlerRef<ScrollView & View, ScrollViewProps>, S
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       })
     return createElement(ScrollViewContext.Provider, { value: contextValue }, wrappedChildren)
   }

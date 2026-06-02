@@ -19,7 +19,7 @@
  * ✘ app-parameter
  * ✘ show-message-card
  * ✘ phone-number-no-quota-toast
- * ✘ bindgetuserinfo
+ * ✔ bindgetuserinfo
  * ✘ bindcontact
  * ✘ createliveactivity
  * ✘ bindgetphonenumber
@@ -47,7 +47,7 @@ import {
 } from 'react-native'
 import { warn } from '@mpxjs/utils'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
-import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover } from './utils'
+import { getCurrentPage, splitProps, splitStyle, useLayout, useTransformStyle, wrapChildren, extendObject, useHover, useTextPassThroughValue } from './utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import useNodesRef, { HandlerRef } from './useNodesRef'
 import { RouteContext, FormContext } from './context'
@@ -308,6 +308,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
   if (backgroundStyle) {
     warn('Button does not support background image-related styles!')
@@ -395,7 +396,8 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       'hover-start-time',
       'hover-stay-time',
       'open-type',
-      'form-type'
+      'form-type',
+      'bindgetuserinfo'
     ],
     {
       layoutRef,
@@ -409,8 +411,7 @@ const Button = forwardRef<HandlerRef<View, ButtonProps>, ButtonProps>((buttonPro
       {
         hasVarDec,
         varContext: varContextRef.current,
-        textStyle,
-        textProps
+        textPassThrough
       }
     )
   )

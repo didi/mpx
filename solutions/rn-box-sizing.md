@@ -123,7 +123,7 @@ style: applyDefaultBoxSizing(extendObject({}, innerStyle))
 
 ### 4. 更新 RN 样式文档
 
-文件：`.agents/skills/mpx-rn-dev-guide/references/rn-style-reference.md`
+文件：`.agents/skills/mpx2rn/references/rn-style-reference.md`
 
 当前文档中 `box-sizing` 默认值记录为 RN 原始默认 `border-box`。完成实现后应改为 Mpx RN 有效默认：
 
