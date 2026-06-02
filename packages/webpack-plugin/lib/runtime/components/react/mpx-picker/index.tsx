@@ -147,7 +147,17 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
         },
         layoutProps
       ),
-      [],
+      [
+        'mode',
+        'value',
+        'range',
+        'disabled',
+        'bindcancel',
+        'bindchange',
+        'header-text',
+        'name',
+        'bindcolumnchange'
+      ],
       { layoutRef }
     )
 
@@ -218,7 +228,7 @@ const Picker = forwardRef<HandlerRef<View, PickerProps>, PickerProps>(
       hide()
     }
 
-    const specificProps = extendObject(innerProps, {
+    const specificProps = extendObject({}, innerProps, {
       mode,
       children,
       bindchange: onChange,
