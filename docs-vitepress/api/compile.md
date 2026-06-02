@@ -922,6 +922,7 @@ module.exports = defineConfig({
 
 - 页面/组件 **主模版** 以及 **子模版**（如通过 import 引入的模版）均会应用本配置。
 - **key / value** 及路径书写要求与 Web 一节一致，此处不再重复；详见 [webConfig.customBuiltInComponents](#webconfig-custombuiltincomponents)。
+- 自定义基础组件如果最终渲染到 React Native 原生组件，需要先消费或映射自身支持的属性、事件，再过滤已处理的小程序属性以及 Mpx 内部辅助属性，避免它们继续透传到原生节点上。例如 `enable-var`、`enable-offset`、`enable-background`、`external-var-context`、`parent-font-size`、`parent-width`、`parent-height`、`enable-text-pass-through` 以及组件已处理的 `bind*` / `catch*` 事件属性。
 
 #### rnConfig.loadChunkAsync（运行时）
 

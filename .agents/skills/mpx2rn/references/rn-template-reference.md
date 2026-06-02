@@ -61,6 +61,7 @@
   - [video](#video)
   - [web-view](#web-view)
   - [root-portal](#root-portal)
+  - [section-list](#section-list)
   - [sticky-section](#sticky-section)
   - [sticky-header](#sticky-header)
   - [cover-view](#cover-view)
@@ -627,6 +628,8 @@ createComponent({
 Mpx 输出 RN 内置支持了大部分常用的基础组件，详情见下方文档。
 
 **自定义覆盖与扩展**：当某个内置基础组件在 RN 上不满足业务需要、需替换为自定义实现，或希望在模板中直接使用一组宿主特有的基础组件时，可在 `@mpxjs/webpack-plugin` 的编译配置 `rnConfig.customBuiltInComponents` 中声明自定义组件 —— **同名组件会覆盖**框架内置实现，**新名称则作为扩展基础组件**注入到模板编译期识别表中，无需在每个 `.mpx` 的 `usingComponents` 中重复注册即可在模板中以基础组件方式使用。该配置在模板编译阶段生效，并非应用入口的运行时 `Mpx.config.rnConfig` 配置。
+
+自定义基础组件如果最终渲染到 React Native 原生组件，需要先消费或映射自身支持的属性、事件，再过滤已处理的小程序属性以及 Mpx 内部辅助属性，避免它们继续透传到原生节点上。例如 `enable-var`、`enable-offset`、`enable-background`、`external-var-context`、`parent-font-size`、`parent-width`、`parent-height`、`enable-text-pass-through` 以及组件已处理的 `bind*` / `catch*` 事件属性。
 
 ### 通用属性
 
@@ -1409,9 +1412,81 @@ level 有效值：
 
 - style 样式中不支持使用百分比计算、css variable
 
+### section-list
+
+RN 环境下的分组列表组件，基于 React Native `SectionList` 实现。使用前需要在 `usingComponents` 中注册：
+
+```json
+{
+  "usingComponents": {
+    "section-list": "@mpxjs/webpack-plugin/lib/runtime/components/extends/section-list"
+  }
+}
+```
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| height | string/number |  | 组件高度 |
+| width | string/number |  | 组件宽度 |
+| listData | array |  | 列表数据，分组头数据需包含 `isSectionHeader: true` |
+| generic:recycle-item | string |  | 列表项抽象节点组件名 |
+| generic:section-header | string |  | 分组头抽象节点组件名 |
+| generic:list-header | string |  | 列表头抽象节点组件名 |
+| generic:list-footer | string |  | 列表尾抽象节点组件名 |
+| itemHeight | object |  | 列表项高度配置，支持 `value` 或 `getter(item, index)` |
+| sectionHeaderHeight | object |  | 分组头高度配置，支持 `value` 或 `getter(item, index)` |
+| listHeaderHeight | object |  | 列表头高度配置，支持 `value` 或 `getter()` |
+| useListHeader | boolean | `false` | 是否渲染列表头 |
+| listHeaderData | object |  | 列表头数据 |
+| useListFooter | boolean | `false` | 是否渲染列表尾 |
+| listFooterData | object |  | 列表尾数据 |
+| enable-sticky | boolean | `false` | 是否开启分组头吸顶 |
+| enhanced | boolean | `false` | 是否开启增强能力 |
+| bounces | boolean | `true` | iOS 边界弹性控制，开启 `enhanced` 后生效 |
+| enable-back-to-top | boolean | `false` | 点击状态栏回到顶部，仅 iOS 支持 |
+| end-reached-threshold | number | `0.1` | 触底事件触发阈值 |
+| refresher-enabled | boolean | `false` | 是否开启下拉刷新 |
+| refresher-triggered | boolean | `false` | 当前下拉刷新状态 |
+| show-scrollbar | boolean | `true` | 是否显示滚动条 |
+| scroll-event-throttle | number | `0` | scroll 事件触发频率 |
+| simultaneous-handlers | array\<object> | `[]` | 允许多个外部手势同时识别 |
+| wait-for | array\<object> | `[]` | 等待外部手势失败后再识别 |
+
+#### 事件
+
+| 事件名 | 说明 |
+| --- | --- |
+| bindscroll | 滚动时触发 |
+| bindscrolltolower | 滚动到底部时触发 |
+| bindrefresherrefresh | 自定义下拉刷新被触发 |
+
+#### 方法
+
+| 方法名 | 说明 |
+| --- | --- |
+| scrollToIndex({ index, animated, viewOffset, viewPosition }) | 滚动到指定原始索引 |
+
+#### 注意事项
+
+- `generic:*` 指向的抽象节点组件也需要在当前页面或组件的 `usingComponents` 中注册。
+- 使用 `itemHeight`、`sectionHeaderHeight`、`listHeaderHeight` 提供稳定高度，可减少滚动定位异常。
+- 开启 `enable-sticky` 且快速滑动时，自定义分组头可能出现闪烁，这是 RN `SectionList` 底层机制限制。
+
 ### sticky-section
 
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
+
+可直接作为基础标签使用，也可在 `usingComponents` 中注册：
+
+```json
+{
+  "usingComponents": {
+    "sticky-section": "@mpxjs/webpack-plugin/lib/runtime/components/extends/sticky-section"
+  }
+}
+```
 
 #### 注意事项
 
@@ -1420,6 +1495,16 @@ level 有效值：
 ### sticky-header
 
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
+
+可直接作为基础标签使用，也可在 `usingComponents` 中注册：
+
+```json
+{
+  "usingComponents": {
+    "sticky-header": "@mpxjs/webpack-plugin/lib/runtime/components/extends/sticky-header"
+  }
+}
+```
 
 #### 属性
 

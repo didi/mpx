@@ -224,6 +224,24 @@ describe('RN template support', () => {
     expect(output).toContain('createElement(getComponent("custom-comp"), null, createElement(getComponent("mpx-inline-text"), null, "content"))')
   })
 
+  it('should process extend component tags as component nodes', () => {
+    const parsed = compiler.parse('<section-list bindscroll="onScroll" generic:recycle-item="item" />', {
+      mode: 'ios',
+      srcMode: 'wx',
+      defs: {},
+      usingComponentsInfo: {},
+      componentGenerics: {},
+      externalClasses: [],
+      filePath: 'test.mpx',
+      warn: console.warn,
+      error: console.error
+    })
+    const output = genNodeReact(parsed.root)
+    expect(output).toContain('bindscroll: (this.onScroll)')
+    expect(output).toContain('"genericrecycle-item": "item"')
+    expect(output).toContain('generichash: undefined')
+  })
+
   it('should handle wxs in sub template', () => {
     const input = `
       <wxs module="m1" src="./test.wxs"></wxs>
