@@ -512,7 +512,14 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       !!multiline && confirmType === 'return' ? {} : { enterKeyHint: confirmType }
     ),
     [
+      'name',
       'type',
+      'maxlength',
+      'cursor-spacing',
+      'adjust-position',
+      'hold-keyboard',
+      'keyboard-type',
+      'auto-height',
       'password',
       'placeholder-style',
       'disabled',
@@ -523,7 +530,13 @@ const Input = forwardRef<HandlerRef<TextInput, FinalInputProps>, FinalInputProps
       'cursor',
       'cursor-color',
       'selection-start',
-      'selection-end'
+      'selection-end',
+      'bindinput',
+      'bindfocus',
+      'bindblur',
+      'bindconfirm',
+      'bindselectionchange',
+      'bindlinechange'
     ],
     {
       layoutRef
