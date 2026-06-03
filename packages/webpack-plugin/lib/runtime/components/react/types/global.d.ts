@@ -1,4 +1,8 @@
 declare let __mpx_mode__: 'wx' | 'ali' | 'swan' | 'qq' | 'tt' | 'web' | 'dd' | 'qa' | 'jd' | 'android' | 'ios' | 'harmony'
+// 性能探针开关（DefinePlugin 注入）。详见 packages/webpack-plugin/lib/utils/normalize-perf-options.js
+declare const __mpx_perf__: boolean
+declare const __mpx_perf_framework__: boolean
+declare const __mpx_perf_user__: boolean
 declare module '@mpxjs/utils' {
   export function isEmptyObject (obj: Object): boolean
   export function isFunction (fn: unknown): boolean

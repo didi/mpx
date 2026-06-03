@@ -28,6 +28,7 @@
     "@better-scroll/slide": "^2.5.1",
     "@better-scroll/wheel": "^2.5.1",
     "@better-scroll/zoom": "^2.5.1",
+    "@mpxjs/perf": "^2.10.20",
     "@mpxjs/template-engine": "^2.8.7",
     "@mpxjs/utils": "^2.10.20",
     "acorn": "^8.11.3",
