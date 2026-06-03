@@ -16,7 +16,7 @@ Mpx 2.9 版本正式发布，支持原子类、SSR和构建产物体积优化，
 
 ## 简介
 
-Mpx是一款致力于提升小程序开发体验和用户体验的增强型小程序跨端框架，通过Mpx，我们能够以类Vue的开发体验高效优雅地构筑出高性能跨端小程序应用，在所有开放的小程序平台及web平台中运行。
+Mpx是一款致力于提升小程序开发体验和用户体验的增强型小程序跨端框架，通过Mpx，我们能够以类Vue的开发体验高效优雅地构筑出高性能跨端应用，在所有开放的小程序平台、Web 平台以及 React Native（iOS / Android / Harmony）环境中运行。
 
 Mpx具有以下功能特性：
 * [数据响应](https://www.mpxjs.cn/guide/basic/reactive.html) (赋值响应 / [watch](https://www.mpxjs.cn/api/global-api.html#watch) / computed)
@@ -32,7 +32,8 @@ Mpx具有以下功能特性：
 * [周边能力](https://www.mpxjs.cn/guide/extend/) (fetch / api增强 / mock / webview-bridge)
 * 脚手架支持
 * 多平台增强 (支持在微信、支付宝、百度、qq、头条小程序平台中进行增强开发)
-* [跨平台编译](https://www.mpxjs.cn/guide/advance/platform.html) (一套代码跨端输出到微信、支付宝、百度、字节、QQ、京东、快应用(web) 和 [web平台](https://www.mpxjs.cn/guide/advance/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E8%BE%93%E5%87%BAweb) 中运行)
+* [跨平台编译](https://www.mpxjs.cn/guide/advance/platform.html) (一套代码跨端输出到微信、支付宝、百度、字节、QQ、京东、快应用(web)、[Web 平台](https://www.mpxjs.cn/guide/advance/platform.html#%E8%B7%A8%E5%B9%B3%E5%8F%B0%E8%BE%93%E5%87%BAweb) 和 React Native 平台中运行)
+* [跨端输出 React Native](https://www.mpxjs.cn/guide/rn/start.html) (支持输出到 iOS、Android 与 Harmony，延续 Mpx 单文件组件、模板、样式、运行时和 API 适配能力)
 * [TypeScript支持](https://www.mpxjs.cn/guide/tool/ts.html) (基于ThisType实现了完善的类型推导)
 * [I18n国际化](https://www.mpxjs.cn/guide/tool/i18n.html)
 * [单元测试](https://www.mpxjs.cn/guide/tool/unit-test.html)
@@ -40,7 +41,6 @@ Mpx具有以下功能特性：
 * [原子类](https://mpxjs.cn/guide/advance/utility-first-css.html)
 * [SSR](https://mpxjs.cn/guide/advance/ssr.html)
 * 运行时渲染方案
-* 跨端输出RN（即将到来）
 
 ## 快速开始
 
@@ -65,6 +65,14 @@ npm run build
 ```
 
 使用小程序开发者工具打开项目文件夹下dist中对应平台的文件夹即可预览效果。
+
+## 跨端输出 React Native
+
+Mpx 已支持将同一套基于微信增强语法编写的业务源码输出为 React Native 应用，覆盖 iOS、Android 与 Harmony 三类运行环境。RN 输出会尽量保留 Mpx 原有的开发体验，包括单文件组件、数据响应、组合式 API、条件编译、基础组件、样式编译、路由和 `@mpxjs/api-proxy` 环境 API 适配等能力。
+
+需要特别说明的是，Mpx 对 Harmony 的支持属于 React Native 输出链路的一部分：开发者使用 `harmony` 作为编译目标时，Mpx 负责生成可被 Harmony 侧 React Native / RNOH 工程消费的 JS 与资源产物；原生工程创建、打包、签名和发布仍由对应的 Harmony RN 容器与工具链完成。这意味着 Harmony 不是一套独立的小程序输出形态，而是与 iOS、Android 并列的 RN 运行目标。
+
+在 RN 平台（`ios` / `android` / `harmony`）中，文件维度条件编译也提供兜底逻辑：当 `android` 或 `harmony` 目标没有命中对应平台文件时，会自动兜底查找 `.ios` 文件。因此在多数业务场景下可以先编写一份 RN 通用实现（如 `index.ios.mpx`），再针对 Android 或 Harmony 的差异补充 `.android.mpx` / `.harmony.mpx` 文件。更多内容可查看 [RN 快速开始](https://www.mpxjs.cn/guide/rn/start.html) 和 [RN 平台文件兜底逻辑](https://www.mpxjs.cn/guide/cross-platform/conditional.html#rn-platform-fallback)。
 
 ## 使用示例
 
