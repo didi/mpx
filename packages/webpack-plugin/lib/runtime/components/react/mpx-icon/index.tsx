@@ -99,7 +99,11 @@ const Icon = forwardRef<HandlerRef<Text, IconProps>, IconProps>(
           style: extendObject({}, normalStyle, layoutStyle, { tintColor: color })
         }
       ),
-      [],
+      [
+        'type',
+        'size',
+        'color'
+      ],
       {
         layoutRef
       }
