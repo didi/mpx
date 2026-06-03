@@ -1,0 +1,23 @@
+// 用于 section-list extend 组件生成
+{
+  "include": [
+    "./index.ios.tsx",
+    "../../react/types/global.d.ts"
+  ],
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "jsx": "preserve",
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable"
+    ]
+  }
+}

@@ -3,8 +3,8 @@ import type { ComponentType } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import type { SectionListData, SectionListProps as RNSectionListProps } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import useInnerProps, { getCustomEvent } from './getInnerListeners'
-import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from './utils'
+import useInnerProps, { getCustomEvent } from '../../react/dist/getInnerListeners'
+import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from '../../react/dist/utils'
 interface ListItem {
   isSectionHeader?: boolean;
   isSectionFooter?: boolean;
