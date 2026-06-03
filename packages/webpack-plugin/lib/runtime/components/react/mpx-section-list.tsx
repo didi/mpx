@@ -449,13 +449,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'wait-for'
   ], { layoutRef })
 
-  // 使用 ref 保存最新的数据，避免数据变化时组件销毁重建
-  const listHeaderDataRef = useRef(listHeaderData)
-  listHeaderDataRef.current = listHeaderData
-
-  const listFooterDataRef = useRef(listFooterData)
-  listFooterDataRef.current = listFooterData
-
   // 使用 useMemo 获取 GenericComponent 并创建渲染函数，避免每次组件更新都重新创建函数引用导致不必要的重新渲染
   const renderItem = useMemo(
     () => {
@@ -490,24 +483,36 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     [generichash, genericsectionFooter]
   )
 
-  const ListHeaderComponent = useMemo(
+  const ListHeaderGenericComponent = useMemo(
     () => {
       if (!useListHeader) return null
-      const ListHeaderGenericComponent = getGeneric(generichash, genericListHeader)
-      if (!ListHeaderGenericComponent) return null
-      return () => createElement(ListHeaderGenericComponent, { listHeaderData: listHeaderDataRef.current })
+      return getGeneric(generichash, genericListHeader)
     },
     [useListHeader, generichash, genericListHeader]
   )
 
-  const ListFooterComponent = useMemo(
+  const ListFooterGenericComponent = useMemo(
     () => {
       if (!useListFooter) return null
-      const ListFooterGenericComponent = getGeneric(generichash, genericListFooter)
-      if (!ListFooterGenericComponent) return null
-      return () => createElement(ListFooterGenericComponent, { listFooterData: listFooterDataRef.current })
+      return getGeneric(generichash, genericListFooter)
     },
     [useListFooter, generichash, genericListFooter]
+  )
+
+  const ListHeaderComponent = useMemo(
+    () => {
+      if (!ListHeaderGenericComponent) return null
+      return createElement(ListHeaderGenericComponent, { listHeaderData })
+    },
+    [ListHeaderGenericComponent, listHeaderData]
+  )
+
+  const ListFooterComponent = useMemo(
+    () => {
+      if (!ListFooterGenericComponent) return null
+      return createElement(ListFooterGenericComponent, { listFooterData })
+    },
+    [ListFooterGenericComponent, listFooterData]
   )
 
   const sectionListProps: RNSectionListProps<ListItem, SectionExtra> = extendObject(
