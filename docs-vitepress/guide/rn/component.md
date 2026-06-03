@@ -736,63 +736,33 @@ API
 >
 > - style 样式不支持中使用百分比计算、css variable
 
-
-## sticky-section
-
+### sticky-section
 吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
 
-支持平台：微信小程序（仅 skyline 支持）、Web、RN
+> [!tip] 注意
+>
+> - sticky-section 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
 
-### 用法示例
+### sticky-header
+吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
 
-```html
-<template>
-  <scroll-view>
-    <sticky-section>
-      <sticky-header>这是会吸顶的内容</sticky-header>
-    </sticky-section>
-  </scroll-view>
-</template>
-```
+属性
 
-## sticky-header
+| 属性名                   | 类型     | 默认值         | 说明                                                       |
+| ----------------------- | ------- | ------------- | ---------------------------------------------------------- |
+| offset-top	    | number  |    `0`      | 吸顶时与顶部的距离 |
+| padding	    | array  |     `[0, 0, 0, 0] `         | 长度为 4 的数组，按 top、right、bottom、left 顺序指定内边距 |
 
-吸顶头部组件，支持在滚动容器中实现元素吸顶效果。仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
+事件
 
-支持平台：微信小程序（仅 skyline 支持）、Web、RN
+| 事件名           | 说明                                                 |
+| ----------------| --------------------------------------------------- |
+| bindstickontopchange      |  吸顶状态变化事件, `event.detail = { isStickOnTop }`，当 sticky-header 吸顶时为 true，否则为 false   |
 
-### 属性
-
-| 属性名 | 类型 | 默认值 | 说明 | 支持平台 |
-|-------|------|--------|------|---------|
-| offsetTop | Number | 0 | 吸顶距离顶部的偏移量 | 微信小程序、Web、RN |
-| padding | Array | - | 内边距配置 [top, right, bottom, left] | 微信小程序、Web、RN |
-
-### 事件
-
-| 事件名 | 说明 | 支持平台 |
-|-------|------|---------|
-| stickontopchange | 吸顶状态改变时触发，返回 { isStickOnTop, id } | 微信小程序、Web、RN |
-
-**注意**：
-- RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前如果 sticky-header 还在动画过程中就触发组件更新（如在bindstickontopchange 回调中立刻更新 state）、scroll-view 内容高度由多变少、通过修改 scroll-into-view、scroll-top 让 scroll-view 滚动，以上场景在安卓上都可能会导致闪烁或抖动
-  
-
-### 用法示例
-
-```html
-<template>
-  <scroll-view id="scrollViewContainer" scroll-y>
-    <sticky-header 
-      scroll-view-id="scrollViewContainer"
-      sticky-id="header1"
-      offset-top="0"
-      bind:stickontopchange="handleStickyChange">
-      <view>这是会吸顶的内容</view>
-    </sticky-header>
-  </scroll-view>
-</template>
-```
+> [!tip] 注意
+>
+> - sticky-header 目前仅支持 RN 、web 以及微信小程序环境，其他环境暂不支持。微信小程序中使用需开启 skyline 渲染模式
+> - RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前如果 sticky 还在动画过程中就触发组件更新（如在bindstickontopchange 回调中立刻更新 state）、scroll-view 内容高度由多变少、通过修改 scroll-into-view、scroll-top 让 scroll-view 滚动，以上场景在安卓上都可能会导致闪烁或抖动
 
 ### cover-view
 视图容器。
