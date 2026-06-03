@@ -816,7 +816,7 @@ export function usePrevious<T> (value: T): T | undefined {
 export interface GestureHandler {
   nodeRefs?: Array<{ getNodeInstance: () => { nodeRef: unknown } }>
   current?: unknown
-  handlerTag?: Number
+  handlerTag?: number
 }
 
 export function flatGesture (gestures: Array<GestureHandler> = []) {
@@ -825,7 +825,7 @@ export function flatGesture (gestures: Array<GestureHandler> = []) {
       return gesture.nodeRefs
         .map((item: { getNodeInstance: () => any }) => item.getNodeInstance()?.instance?.gestureRef || {})
     }
-    if (gesture && ('current' in gesture || gesture.handlerTag !== undefined)) {
+    if (gesture && (gesture.current || gesture.handlerTag !== undefined)) {
       return [gesture]
     }
     return []

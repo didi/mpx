@@ -5,7 +5,7 @@
 ### 目录概览 {#directory-overview}
 
 - #### 基础组件
-**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [section-list](#section-list) · [cover-view](#cover-view)
+**容器组件**：[view](#view) · [scroll-view](#scroll-view) · [swiper](#swiper) · [swiper-item](#swiper-item) · [movable-area](#movable-area) · [movable-view](#movable-view) · [root-portal](#root-portal) · [sticky-section](#sticky-section) · [sticky-header](#sticky-header) · [cover-view](#cover-view)
 
 **媒体组件**：[image](#image) · [video](#video) · [canvas](#canvas)
 
@@ -735,6 +735,64 @@ API
 > [!tip] 注意
 >
 > - style 样式不支持中使用百分比计算、css variable
+
+
+## sticky-section
+
+吸顶布局容器，仅支持作为 `<scroll-view>` 的直接子节点
+
+支持平台：微信小程序（仅 skyline 支持）、Web、RN
+
+### 用法示例
+
+```html
+<template>
+  <scroll-view>
+    <sticky-section>
+      <sticky-header>这是会吸顶的内容</sticky-header>
+    </sticky-section>
+  </scroll-view>
+</template>
+```
+
+## sticky-header
+
+吸顶头部组件，支持在滚动容器中实现元素吸顶效果。仅支持作为 `<scroll-view>` 的直接子节点或 `sticky-section` 组件直接子节点
+
+支持平台：微信小程序（仅 skyline 支持）、Web、RN
+
+### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 | 支持平台 |
+|-------|------|--------|------|---------|
+| offsetTop | Number | 0 | 吸顶距离顶部的偏移量 | 微信小程序、Web、RN |
+| padding | Array | - | 内边距配置 [top, right, bottom, left] | 微信小程序、Web、RN |
+
+### 事件
+
+| 事件名 | 说明 | 支持平台 |
+|-------|------|---------|
+| stickontopchange | 吸顶状态改变时触发，返回 { isStickOnTop, id } | 微信小程序、Web、RN |
+
+**注意**：
+- RN 环境的 sticky-header 更适用于内容稳定，状态不常变更的场景使用，目前如果 sticky-header 还在动画过程中就触发组件更新（如在bindstickontopchange 回调中立刻更新 state）、scroll-view 内容高度由多变少、通过修改 scroll-into-view、scroll-top 让 scroll-view 滚动，以上场景在安卓上都可能会导致闪烁或抖动
+  
+
+### 用法示例
+
+```html
+<template>
+  <scroll-view id="scrollViewContainer" scroll-y>
+    <sticky-header 
+      scroll-view-id="scrollViewContainer"
+      sticky-id="header1"
+      offset-top="0"
+      bind:stickontopchange="handleStickyChange">
+      <view>这是会吸顶的内容</view>
+    </sticky-header>
+  </scroll-view>
+</template>
+```
 
 ### cover-view
 视图容器。
