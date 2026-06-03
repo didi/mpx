@@ -29,7 +29,8 @@ const baseRemovePropsMap: Record<string, boolean> = {
   'external-var-context': true,
   'parent-font-size': true,
   'parent-width': true,
-  'parent-height': true
+  'parent-height': true,
+  'enable-text-pass-through': true
 }
 
 const getTouchEvent = (
