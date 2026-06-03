@@ -58,6 +58,7 @@
   - [video](#video)
   - [web-view](#web-view)
   - [root-portal](#root-portal)
+  - [section-list](#section-list)
   - [sticky-section](#sticky-section)
   - [sticky-header](#sticky-header)
   - [cover-view](#cover-view)
@@ -1345,6 +1346,61 @@ level 有效值：
 #### 注意事项
 
 - style 样式中不支持使用百分比计算、css variable
+
+### section-list
+
+跨端虚拟列表组件，可自定义分组头、列表头、列表项，自动分段渲染兼容各端。
+
+#### 属性
+
+| 属性名 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| height | string \| number | `100%` | 组件高度 |
+| width | string \| number | `100%` | 组件宽度 |
+| list-data | array | `[]` | 列表数据；分组头数据需包含 `isSectionHeader: true`，分组尾数据需包含 `isSectionFooter: true` |
+| enable-sticky | boolean | `false` | 启用分组吸顶 |
+| scroll-event-throttle | number | `0` | 控制 scroll 事件触发频率 |
+| enhanced | boolean | `false` | 开启滚动增强能力 |
+| bounces | boolean | `true` | iOS 下边界弹性控制，需同时开启 `enhanced` |
+| use-list-header | boolean | `false` | 使用自定义列表头 |
+| list-header-data | object | `{}` | 列表头数据 |
+| use-list-footer | boolean | `false` | 使用自定义列表页脚 |
+| list-footer-data | object | `{}` | 列表页脚数据 |
+| generic:recycle-item | string |  | 列表项抽象节点组件名 |
+| generic:section-header | string |  | 列表分组头抽象节点组件名 |
+| generic:section-footer | string |  | 列表分组尾抽象节点组件名 |
+| generic:list-header | string |  | 列表头抽象节点组件名 |
+| generic:list-footer | string |  | 列表页脚抽象节点组件名 |
+| item-height | object | `{}` | 列表项高度配置，支持 `getter` / `value` |
+| section-header-height | object | `{}` | 分组头部高度配置，支持 `getter` / `value` |
+| section-footer-height | object | `{}` | 分组尾部高度配置，支持 `getter` / `value` |
+| list-header-height | number | `0` | 列表头部固定高度，不支持 `getter` / `value` |
+| enable-back-to-top | boolean | `false` | 点击状态栏时滚动到顶部，仅 iOS 环境支持 |
+| end-reached-threshold | number | `0.1` | 触底事件触发阈值 |
+| refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
+| refresher-triggered | boolean | `false` | 设置当前下拉刷新状态，true 表示已触发 |
+| show-scrollbar | boolean | `true` | 滚动条显隐控制 |
+| simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，允许多个手势同时识别和处理 |
+| wait-for | array\<object> | `[]` | RN 环境特有属性，允许延迟激活处理某些手势 |
+
+#### 事件
+
+| 事件名 | 说明 |
+| --- | --- |
+| bindscroll | 滚动时触发，返回滚动信息 |
+| bindscrolltolower | 滚动到底部 / 触底通知 |
+| bindrefresherrefresh | 自定义下拉刷新被触发 |
+
+#### 方法
+
+| 方法名 | 说明 |
+| --- | --- |
+| scrollToIndex | 通过 ref 获取实例后可调用，`scrollToIndex({ index, animated, viewOffset, viewPosition })`，用于滚动到指定索引 |
+
+#### 注意事项
+
+- 当使用列表项、列表头、自定义分组头或者自定义分组尾，必须配置对应 `item-height`、`section-header-height`、`section-footer-height`、`list-header-height` 高度参数，否则会出现滚动异常。
+- RN 环境中，section-list 通过 RN 的 `SectionList` 实现分组吸顶。开启 `enable-sticky` 且快速滑动时，自定义分组头有时会出现闪烁，属于 RN 底层实现限制。
 
 ### sticky-section
 

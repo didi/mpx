@@ -36,20 +36,20 @@ interface ItemHeightType {
 interface MpxSectionListProps {
   enhanced?: boolean;
   bounces?: boolean;
-  scrollEventThrottle?: number;
   height?: number | string;
   width?: number | string;
-  listData?: ListItem[];
   generichash?: string;
   style?: Record<string, any>;
-  itemHeight?: ItemHeightType;
-  sectionHeaderHeight?: ItemHeightType;
-  sectionFooterHeight?: ItemHeightType;
-  listHeaderData?: any;
-  listHeaderHeight?: ItemHeightType;
-  useListHeader?: boolean;
-  listFooterData?: any;
-  useListFooter?: boolean;
+  'scroll-event-throttle'?: number;
+  'list-data'?: ListItem[];
+  'item-height'?: ItemHeightType;
+  'section-header-height'?: ItemHeightType;
+  'section-footer-height'?: ItemHeightType;
+  'list-header-data'?: any;
+  'list-header-height'?: number;
+  'use-list-header'?: boolean;
+  'list-footer-data'?: any;
+  'use-list-footer'?: boolean;
   'genericrecycle-item'?: string;
   'genericsection-header'?: string;
   'genericsection-footer'?: string;
@@ -97,20 +97,20 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const {
     enhanced = false,
     bounces = true,
-    scrollEventThrottle = 0,
     height,
     width,
-    listData,
     generichash,
     style = {},
-    itemHeight = {},
-    sectionHeaderHeight = {},
-    sectionFooterHeight = {},
-    listHeaderHeight = {},
-    listHeaderData = null,
-    useListHeader = false,
-    listFooterData = null,
-    useListFooter = false,
+    'list-data': listData,
+    'scroll-event-throttle': scrollEventThrottle = 0,
+    'item-height': itemHeight = {},
+    'section-header-height': sectionHeaderHeight = {},
+    'section-footer-height': sectionFooterHeight = {},
+    'list-header-height': listHeaderHeight = 0,
+    'list-header-data': listHeaderData = null,
+    'use-list-header': useListHeader = false,
+    'list-footer-data': listFooterData = null,
+    'use-list-footer': useListFooter = false,
     'genericrecycle-item': genericrecycleItem,
     'genericsection-header': genericsectionHeader,
     'genericsection-footer': genericsectionFooter,
@@ -331,7 +331,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
     if (useListHeader) {
       // 计算列表头部的高度
-      offset += listHeaderHeight.getter?.() || listHeaderHeight.value || 0
+      offset += listHeaderHeight
     }
 
     // 遍历所有 sections
@@ -370,7 +370,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       itemLayouts: layouts,
       getItemLayout: (data: any, index: number) => layouts[index]
     }
-  }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight.value, listHeaderHeight.getter])
+  }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -381,7 +381,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       showsHorizontalScrollIndicator: showScrollbar,
       onEndReachedThreshold,
       ref: scrollViewRef,
-      bounces: false,
+      bounces: enhanced ? bounces : false,
       stickySectionHeadersEnabled: enableSticky,
       onScroll: onScroll,
       onEndReached: onEndReached
@@ -402,11 +402,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     return gesture
   }, [originSimultaneousHandlers, waitFor])
 
-  if (enhanced) {
-    extendObject(scrollAdditionalProps, {
-      bounces
-    })
-  }
   if (refresherEnabled) {
     extendObject(scrollAdditionalProps, {
       refreshing: refreshing
@@ -414,19 +409,42 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   }
 
   useImperativeHandle(ref, () => {
-    return extendObject({}, props, {
+    return {
       gestureRef: sectionListGestureRef,
       scrollToIndex
-    })
+    }
   })
 
   const innerProps = useInnerProps(extendObject({}, props, scrollAdditionalProps), [
     'id',
+    'enhanced',
+    'height',
+    'width',
+    'list-data',
+    'item-height',
+    'section-header-height',
+    'section-footer-height',
+    'list-header-height',
+    'list-header-data',
+    'use-list-header',
+    'list-footer-data',
+    'use-list-footer',
+    'genericrecycle-item',
+    'genericsection-header',
+    'genericsection-footer',
+    'genericlist-header',
+    'genericlist-footer',
     'show-scrollbar',
     'lower-threshold',
+    'scroll-event-throttle',
+    'enable-sticky',
+    'enable-back-to-top',
+    'end-reached-threshold',
     'refresher-triggered',
     'refresher-enabled',
     'bindrefresherrefresh',
+    'bindscrolltolower',
+    'bindscroll',
     'simultaneous-handlers',
     'wait-for'
   ], { layoutRef })

@@ -15,18 +15,6 @@ module.exports = {
       ios: `${reactComponentPath}/mpx-section-list.jsx`,
       android: `${reactComponentPath}/mpx-section-list.jsx`,
       harmony: `${reactComponentPath}/mpx-section-list.jsx`
-    },
-    'sticky-header': {
-      web: `${componentPrefixPath}/web/mpx-sticky-header.vue`,
-      ios: `${reactComponentPath}/mpx-sticky-header.jsx`,
-      android: `${reactComponentPath}/mpx-sticky-header.jsx`,
-      harmony: `${reactComponentPath}/mpx-sticky-header.jsx`
-    },
-    'sticky-section': {
-      web: `${componentPrefixPath}/web/mpx-sticky-section.vue`,
-      ios: `${reactComponentPath}/mpx-sticky-section.jsx`,
-      android: `${reactComponentPath}/mpx-sticky-section.jsx`,
-      harmony: `${reactComponentPath}/mpx-sticky-section.jsx`
     }
   },
   MPX_TAG_PAGE_SELECTOR: 'mpx-page',

@@ -42,6 +42,8 @@ const wxs = require('./wxs')
 const fixComponentName = require('./fix-component-name')
 const customBuiltInComponent = require('./custom-built-in-component')
 const rootPortal = require('./root-portal')
+const stickyHeader = require('./sticky-header')
+const stickySection = require('./sticky-section')
 
 /**
  * 未命中上方任一组件 test 的标签，仍须走 normalizeComponentRules 中的通用
@@ -140,6 +142,8 @@ module.exports = function getComponentConfigs ({ warn, error }) {
     hyphenTagName({ print }),
     label({ print }),
     rootPortal({ print }),
+    stickyHeader({ print }),
+    stickySection({ print }),
     defaultCatchAllComponentConfig()
   ]
 }
