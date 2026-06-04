@@ -405,12 +405,13 @@ class MpxWebpackPlugin {
     const addEnvPlugin = new AddEnvPlugin('before-file', this.options.env, this.options.fileConditionRules, 'file')
     const packageEntryPlugin = new PackageEntryPlugin('before-file', this.options.miniNpmPackages, this.options.normalNpmPackages, 'file')
     const dynamicPlugin = new DynamicPlugin('result', this.options.dynamicComponentRules)
-    const extendComponentsPlugin = new ExtendComponentsPlugin('described-resolve', this.options.mode, 'resolve')
+    const extendComponentsPlugin = new ExtendComponentsPlugin('before-file', this.options.mode, 'resolve')
 
     if (Array.isArray(compiler.options.resolve.plugins)) {
+      compiler.options.resolve.plugins.push(extendComponentsPlugin)
       compiler.options.resolve.plugins.push(addModePlugin)
     } else {
-      compiler.options.resolve.plugins = [addModePlugin]
+      compiler.options.resolve.plugins = [extendComponentsPlugin, addModePlugin]
     }
     if (this.options.env) {
       compiler.options.resolve.plugins.push(addEnvPlugin)
@@ -420,7 +421,6 @@ class MpxWebpackPlugin {
     }
     compiler.options.resolve.plugins.push(packageEntryPlugin)
     compiler.options.resolve.plugins.push(new FixDescriptionInfoPlugin())
-    compiler.options.resolve.plugins.push(extendComponentsPlugin)
     compiler.options.resolve.plugins.push(dynamicPlugin)
 
     const optimization = compiler.options.optimization
