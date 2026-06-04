@@ -5,7 +5,7 @@
  * ✔ hover-stay-time
  */
 import { View, TextStyle, NativeSyntheticEvent, ViewProps, ImageStyle, StyleSheet, Image, LayoutChangeEvent } from 'react-native'
-import { useRef, useState, useEffect, forwardRef, ReactNode, JSX, createElement } from 'react'
+import { useRef, useState, useEffect, useContext, forwardRef, ReactNode, JSX, createElement } from 'react'
 import useInnerProps from './getInnerListeners'
 import Animated from 'react-native-reanimated'
 import useAnimationHooks, { AnimationType } from './animationHooks/index'
@@ -17,6 +17,7 @@ import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
+import { FixedContext } from './context'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -750,6 +751,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentWidth,
     parentHeight
   })
+  const inFixedContext = useContext(FixedContext)
 
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThroughValue(textStyle, textProps)
@@ -830,6 +832,10 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   }
 
   if (hasPositionFixed) {
+    finalComponent = createElement(FixedContext.Provider, { value: true }, finalComponent)
+  }
+
+  if (hasPositionFixed && !inFixedContext) {
     finalComponent = createElement(Portal, null, finalComponent)
   }
   return finalComponent
