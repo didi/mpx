@@ -343,7 +343,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     }
     if ((itemHeight as ItemHeightType).getter) {
       const item = convertedListData[sectionIndex].data[rowIndex]
-      // 使用getOriginalIndex获取原始索引
+      // 使用 item 记录的原始索引
       return (itemHeight as ItemHeightType).getter?.(item.itemData, item.index) || 0
     } else {
       return (itemHeight as ItemHeightType).value || 0
