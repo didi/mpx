@@ -325,6 +325,7 @@ const _camera = forwardRef<HandlerRef<any, CameraProps>, CameraProps>((props: Ca
       'mode',
       'resolution',
       'frame-size',
+      'device-position',
       'bindinitdone',
       'bindstop',
       'flash',

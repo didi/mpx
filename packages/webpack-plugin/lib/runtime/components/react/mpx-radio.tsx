@@ -165,7 +165,8 @@ const Radio = forwardRef<HandlerRef<View, RadioProps>, RadioProps>(
       [
         'value',
         'disabled',
-        'checked'
+        'checked',
+        'color'
       ],
       {
         layoutRef

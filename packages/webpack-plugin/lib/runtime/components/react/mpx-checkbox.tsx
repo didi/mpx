@@ -179,7 +179,9 @@ const Checkbox = forwardRef<HandlerRef<View, CheckboxProps>, CheckboxProps>(
       [
         'value',
         'disabled',
-        'checked'
+        'checked',
+        'color',
+        '_onChange'
       ],
       {
         layoutRef

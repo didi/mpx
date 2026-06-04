@@ -100,7 +100,9 @@ const _RichText = forwardRef<HandlerRef<View, _RichTextProps>, _RichTextProps>((
         style: extendObject(normalStyle, layoutStyle)
       }
     ),
-    [],
+    [
+      'nodes'
+    ],
     {
       layoutRef
     }

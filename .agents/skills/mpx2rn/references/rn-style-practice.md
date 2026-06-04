@@ -693,6 +693,48 @@ Flexbox 是跨平台最可靠的布局方式。
 </style>
 ```
 
+### text 跨平台布局对齐
+
+原平台（小程序 / Web）中 `view` 默认为流式布局，`text` 等行内元素会排列在同一行；而 RN 中 `view` 默认使用纵向 Flex 布局（`flex-direction: column`），子元素会各占一行。例如：
+
+```html
+<view>
+  <text>a</text>
+  <text>b</text>
+</view>
+```
+
+在原平台中 a 和 b 渲染在同一行，但在 RN 中会渲染为两行。为拉齐跨平台表现，建议在 `view` 中显式声明布局方向，不要依赖平台默认行为：
+
+```html
+<style>
+  .container {
+    display: flex;
+    flex-direction: row;
+  }
+</style>
+
+<template>
+  <view class="container">
+    <text>a</text>
+    <text>b</text>
+  </view>
+</template>
+```
+
+如需将多段文字渲染为同一行且保持文本流式排版（如自动换行、基线对齐），可在拉齐容器布局的基础上，再进行一层 `text` 包裹，让内部的 `text` 进行行内布局：
+
+```html
+<template>
+  <view class="container">
+    <text>
+      <text>a</text>
+      <text>b</text>
+    </text>
+  </view>
+</template>
+```
+
 ### 不要依赖 BFC 和 margin 合并
 
 小程序 / Web 的普通块级布局中存在相邻块级元素垂直 `margin` 合并行为，常见现象包括：父子元素的垂直外边距可能合并、相邻兄弟元素的上下外边距可能取较大值而不是相加。BFC（块级格式化上下文）是常见的隔离手段；例如 `overflow: hidden` 可通过创建 BFC 隔离部分父子 margin 合并。CSS margin 合并只发生在块级布局的垂直方向，水平方向的 `margin-left` / `margin-right` 不会发生 margin 合并。

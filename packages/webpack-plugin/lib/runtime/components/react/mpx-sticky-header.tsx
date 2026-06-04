@@ -150,7 +150,11 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
       paddingBottom: padding[2] || 0,
       paddingLeft: padding[3] || 0
     })
-  }, layoutProps), [], { layoutRef })
+  }, layoutProps), [
+    'padding',
+    'offset-top',
+    'bindstickontopchange'
+  ], { layoutRef })
 
   return (
     createElement(

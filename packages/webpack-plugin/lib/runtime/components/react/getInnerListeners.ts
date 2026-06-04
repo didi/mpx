@@ -324,6 +324,7 @@ const useInnerProps = (
     'parent-font-size',
     'parent-width',
     'parent-height',
+    'enable-text-pass-through',
     ...userRemoveProps,
     ...rawEventKeys
   ]

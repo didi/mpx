@@ -278,6 +278,10 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'indicator-dots',
       'indicator-color',
       'indicator-width',
+      'indicator-height',
+      'indicator-radius',
+      'indicator-spacing',
+      'indicator-margin',
       'indicator-active-color',
       'previous-margin',
       'vertical',
@@ -287,7 +291,15 @@ const SwiperWrapper = forwardRef<HandlerRef<View, SwiperProps>, SwiperProps>((pr
       'autoplay',
       'circular',
       'interval',
-      'easing-function'
+      'easing-function',
+      'current',
+      'duration',
+      'scale',
+      'disableGesture',
+      'wait-for',
+      'simultaneous-handlers',
+      'bindchange'
+
     ], { layoutRef: layoutRef })
 
   function onWrapperLayout (e: LayoutChangeEvent) {

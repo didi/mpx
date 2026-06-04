@@ -126,7 +126,8 @@ const CheckboxGroup = forwardRef<
       }
     ),
     [
-      'name'
+      'name',
+      'bindchange'
     ],
     {
       layoutRef

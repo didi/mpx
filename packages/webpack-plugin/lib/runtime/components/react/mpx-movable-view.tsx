@@ -746,7 +746,23 @@ const _MovableView = forwardRef<HandlerRef<View, MovableViewProps>, MovableViewP
         style: [innerStyle, animatedStyles, layoutStyle]
       },
       rewriteCatchEvent()
-    )
+    ),
+    [
+      'direction',
+      'x',
+      'y',
+      'disabled',
+      'animation',
+      'damping',
+      'friction',
+      'out-of-bounds',
+      'inertia',
+      'wait-for',
+      'simultaneous-handlers',
+      'disable-event-passthrough',
+      'changeThrottleTime',
+      'bindchange'
+    ]
   )
 
   return createElement(GestureDetector, { gesture: gesture }, createElement(
