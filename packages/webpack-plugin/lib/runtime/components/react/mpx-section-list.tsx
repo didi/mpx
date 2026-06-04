@@ -33,6 +33,33 @@ interface ItemHeightType {
   getter?: (item: any, index: number) => number;
 }
 
+interface ItemExposureDetail {
+  originalIndex: number;
+  itemData: ListItem;
+  threshold: number;
+}
+
+interface ItemExposureViewToken {
+  item: ListItem;
+  key: string;
+  index: number | null;
+  isViewable: boolean;
+  section?: any;
+}
+
+interface ItemExposureViewabilityConfig {
+  itemVisiblePercentThreshold: number;
+  minimumViewTime?: number;
+}
+
+interface ItemExposureViewabilityPair {
+  viewabilityConfig: ItemExposureViewabilityConfig;
+  onViewableItemsChanged: (info: {
+    viewableItems: ItemExposureViewToken[];
+    changed: ItemExposureViewToken[];
+  }) => void;
+}
+
 interface MpxSectionListProps {
   enhanced?: boolean;
   bounces?: boolean;
@@ -66,11 +93,15 @@ interface MpxSectionListProps {
   'refresher-enabled'?: boolean;
   'show-scrollbar'?: boolean;
   'refresher-triggered'?: boolean;
+  'enable-item-exposure'?: boolean;
+  'item-exposure-threshold'?: number;
+  'item-exposure-minimum-view-time'?: number;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
   bindrefresherrefresh?: (event: any) => void;
   bindscrolltolower?: (event: any) => void;
   bindscroll?: (event: any) => void;
+  binditemexposure?: (event: any) => void;
   [key: string]: any;
 }
 
@@ -91,6 +122,10 @@ const getGeneric = (generichash: string, generickey: string) => {
       ref: ref
     }, props))
   }))
+}
+
+const getExposurePercentThreshold = (threshold = 0) => {
+  return Math.max(0, Math.min(100, threshold))
 }
 
 const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
@@ -127,8 +162,12 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'refresher-enabled': refresherEnabled,
     'show-scrollbar': showScrollbar = true,
     'refresher-triggered': refresherTriggered,
+    'enable-item-exposure': enableItemExposure = false,
+    'item-exposure-threshold': itemExposureThreshold = 0,
+    'item-exposure-minimum-view-time': itemExposureMinimumViewTime = 0,
     'simultaneous-handlers': originSimultaneousHandlers,
-    'wait-for': waitFor
+    'wait-for': waitFor,
+    binditemexposure
   } = props
 
   const [refreshing, setRefreshing] = useState(!!refresherTriggered)
@@ -139,6 +178,21 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const indexMap = useRef<{ [key: string]: string }>({})
 
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
+  const itemExposureState = useRef<{ [key: string]: boolean }>({})
+  const enableItemExposureRef = useRef(false)
+  const bindItemExposureRef = useRef<typeof binditemexposure>()
+  const propsRef = useRef(props)
+  const useItemExposureViewability = useRef(enableItemExposure)
+  const itemExposureViewabilityConfig = useRef<ItemExposureViewabilityConfig>()
+  if (!itemExposureViewabilityConfig.current) {
+    itemExposureViewabilityConfig.current = {
+      itemVisiblePercentThreshold: getExposurePercentThreshold(itemExposureThreshold)
+    }
+    if (itemExposureMinimumViewTime > 0) {
+      itemExposureViewabilityConfig.current.minimumViewTime = itemExposureMinimumViewTime
+    }
+  }
+  const itemExposureViewabilityConfigValue = itemExposureViewabilityConfig.current as ItemExposureViewabilityConfig
 
   const {
     hasSelfPercent,
@@ -147,6 +201,10 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
 
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
+
+  enableItemExposureRef.current = enableItemExposure
+  bindItemExposureRef.current = binditemexposure
+  propsRef.current = props
 
   useEffect(() => {
     if (refreshing !== refresherTriggered) {
@@ -176,6 +234,53 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       bindscroll(
         getCustomEvent('scroll', event.nativeEvent, { layoutRef }, props)
       )
+  }
+
+  const itemExposureViewabilityPairs = useRef<ItemExposureViewabilityPair[]>()
+  if (!itemExposureViewabilityPairs.current) {
+    itemExposureViewabilityPairs.current = [
+      {
+        viewabilityConfig: itemExposureViewabilityConfigValue,
+        onViewableItemsChanged: ({ changed }) => {
+          const bindItemExposure = bindItemExposureRef.current
+          if (!enableItemExposureRef.current || !bindItemExposure) return
+
+          const exposedItems: ItemExposureDetail[] = []
+          changed.forEach((viewToken) => {
+            const item = viewToken.item
+            const originalIndex = item?._originalItemIndex ?? -1
+            if (originalIndex < 0) return
+
+            const key = `${originalIndex}`
+            if (!viewToken.isViewable) {
+              delete itemExposureState.current[key]
+              return
+            }
+
+            if (!itemExposureState.current[key]) {
+              itemExposureState.current[key] = true
+              exposedItems.push({
+                originalIndex,
+                itemData: item,
+                threshold: itemExposureViewabilityConfigValue.itemVisiblePercentThreshold
+              })
+            }
+          })
+
+          if (exposedItems.length) {
+            bindItemExposure(
+              getCustomEvent('itemexposure', {}, {
+                detail: {
+                  items: exposedItems,
+                  time: Date.now()
+                },
+                layoutRef
+              }, propsRef.current)
+            )
+          }
+        }
+      }
+    ]
   }
 
   // 通过sectionIndex和rowIndex获取原始索引
@@ -372,6 +477,10 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     }
   }, [convertedListData, useListHeader, itemHeight.value, itemHeight.getter, sectionHeaderHeight.value, sectionHeaderHeight.getter, sectionFooterHeight.value, sectionFooterHeight.getter, listHeaderHeight])
 
+  useEffect(() => {
+    itemExposureState.current = {}
+  }, [convertedListData, enableItemExposure])
+
   const scrollAdditionalProps = extendObject(
     {
       alwaysBounceVertical: false,
@@ -388,6 +497,12 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     },
     layoutProps
   )
+
+  if (useItemExposureViewability.current) {
+    extendObject(scrollAdditionalProps, {
+      viewabilityConfigCallbackPairs: itemExposureViewabilityPairs.current
+    })
+  }
 
   const nativeGesture = useMemo(() => {
     const simultaneousHandlers = flatGesture(originSimultaneousHandlers)
@@ -442,9 +557,13 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'end-reached-threshold',
     'refresher-triggered',
     'refresher-enabled',
+    'enable-item-exposure',
+    'item-exposure-threshold',
+    'item-exposure-minimum-view-time',
     'bindrefresherrefresh',
     'bindscrolltolower',
     'bindscroll',
+    'binditemexposure',
     'simultaneous-handlers',
     'wait-for'
   ], { layoutRef })
