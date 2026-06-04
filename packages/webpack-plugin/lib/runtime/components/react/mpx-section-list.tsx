@@ -8,7 +8,6 @@ import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture
 interface ListItem {
   isSectionHeader?: boolean;
   isSectionFooter?: boolean;
-  _originalItemIndex?: number;
   [key: string]: any;
 }
 
@@ -17,7 +16,6 @@ interface SectionExtra {
   footerData: ListItem | null;
   hasSectionHeader?: boolean;
   hasSectionFooter?: boolean;
-  _originalItemIndex?: number;
 }
 
 interface Section extends SectionExtra {
@@ -256,8 +254,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
           footerData: null,
           data: [],
           hasSectionHeader: true,
-          hasSectionFooter: false,
-          _originalItemIndex: index
+          hasSectionFooter: false
         }
         // 为 section header 添加索引映射
         const sectionIndex = sections.length
@@ -273,8 +270,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
             footerData: null,
             data: [],
             hasSectionHeader: false,
-            hasSectionFooter: false,
-            _originalItemIndex: -1
+            hasSectionFooter: false
           }
         }
         const sectionIndex = sections.length
@@ -294,15 +290,12 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
             footerData: null,
             data: [],
             hasSectionHeader: false,
-            hasSectionFooter: false,
-            _originalItemIndex: -1
+            hasSectionFooter: false
           }
         }
         // 将 item 添加到当前 section 的 data 中
         const itemIndex = currentSection.data.length
-        currentSection.data.push(extendObject({}, item, {
-          _originalItemIndex: index
-        }))
+        currentSection.data.push(item)
         let sectionIndex
         // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
         if (!currentSection.hasSectionHeader && sections.length === 0) {
