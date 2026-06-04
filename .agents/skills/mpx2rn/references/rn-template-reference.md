@@ -1443,9 +1443,8 @@ level 有效值：
 | refresher-enabled | boolean | `false` | 开启自定义下拉刷新 |
 | refresher-triggered | boolean | `false` | 设置当前下拉刷新状态，true 表示已触发 |
 | show-scrollbar | boolean | `true` | 滚动条显隐控制 |
-| enable-item-exposure | boolean | `false` | 开启普通列表项曝光通知 |
-| item-exposure-threshold | number | `0` | 普通列表项露出比例达到多少后触发曝光通知，取值 0-100 |
-| item-exposure-minimum-view-time | number | `0` | 普通列表项至少可见多少 ms 后触发曝光通知 |
+| enable-item-exposure | boolean | `false` | 开启列表项曝光通知 |
+| item-exposure-threshold | number | `0` | 列表项露出比例达到多少后触发曝光通知，取值 0-100 |
 | simultaneous-handlers | array\<object> | `[]` | RN 环境特有属性，允许多个手势同时识别和处理 |
 | wait-for | array\<object> | `[]` | RN 环境特有属性，允许延迟激活处理某些手势 |
 
@@ -1456,7 +1455,7 @@ level 有效值：
 | bindscroll | 滚动时触发，返回滚动信息 |
 | bindscrolltolower | 滚动到底部 / 触底通知 |
 | bindrefresherrefresh | 自定义下拉刷新被触发 |
-| binditemexposure | 普通列表项露出比例达到阈值时触发 |
+| binditemexposure | 列表项露出比例达到阈值时触发 |
 
 #### 方法
 
@@ -1467,7 +1466,11 @@ level 有效值：
 #### 注意事项
 
 - 当使用列表项、列表头、自定义分组头或者自定义分组尾，必须配置对应 `item-height`、`section-header-height`、`section-footer-height`、`list-header-height` 高度参数，否则会出现滚动异常。
-- `binditemexposure` 基于 RN 的 `onViewableItemsChanged` 触发，`item-exposure-threshold` 为 item 自身可见百分比阈值，0 表示露出任意像素即可触发，100 表示完全可见时触发；仅统计普通 `recycle-item`，不统计 `section-header`、`section-footer`、`list-header`、`list-footer`。同一个 item 达到阈值后不会在停留期间重复触发，划出列表可视区域后会重置本轮状态，再次划入并达到阈值时可再次触发。RN 的 `viewabilityConfig` 不支持运行时动态修改，`enable-item-exposure`、`item-exposure-threshold` 与 `item-exposure-minimum-view-time` 请在组件初始化时确定。
+- `binditemexposure` 基于 RN 的 `onViewableItemsChanged` 触发，`item-exposure-threshold` 为 item 自身可见百分比阈值，0 表示露出任意像素即可触发，100 表示完全可见时触发。
+- 会统计 `recycle-item`、`section-header`、`section-footer`，不统计 `list-header`、`list-footer`。
+- `section-header` 曝光统计仅支持 `enable-sticky=false` 场景；开启 `enable-sticky` 时暂不支持统计 `section-header` 曝光。
+- 同一个 item 达到阈值后不会在停留期间重复触发；划出列表可视区域后会重置本轮状态，再次划入并达到阈值时可再次触发。
+- RN 的 `viewabilityConfig` 不支持运行时动态修改，`enable-item-exposure` 与 `item-exposure-threshold` 请在组件初始化时确定。
 - RN 环境中，section-list 通过 RN 的 `SectionList` 实现分组吸顶。开启 `enable-sticky` 且快速滑动时，自定义分组头有时会出现闪烁，属于 RN 底层实现限制。
 
 ### sticky-section

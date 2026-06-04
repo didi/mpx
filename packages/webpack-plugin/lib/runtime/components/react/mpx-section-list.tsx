@@ -17,15 +17,22 @@ interface SectionExtra {
   footerData: ListItem | null;
   hasSectionHeader?: boolean;
   hasSectionFooter?: boolean;
+  headerIndex?: number;
+  footerIndex?: number;
+}
+
+interface SectionItem {
+  itemData: ListItem;
+  index: number;
 }
 
 interface Section extends SectionExtra {
-  data: ListItem[];
+  data: SectionItem[];
 }
 
-type RNSection = SectionListData<ListItem, SectionExtra>
+type RNSection = SectionListData<SectionItem, SectionExtra>
 
-const TypedSectionList = SectionList as unknown as ComponentType<RNSectionListProps<ListItem, SectionExtra>>
+const TypedSectionList = SectionList as unknown as ComponentType<RNSectionListProps<SectionItem, SectionExtra>>
 
 interface ItemHeightType {
   value?: number;
@@ -33,13 +40,13 @@ interface ItemHeightType {
 }
 
 interface ItemExposureDetail {
-  originalIndex: number;
+  index: number;
   itemData: ListItem;
   threshold: number;
 }
 
 interface ItemExposureViewToken {
-  item: ListItem;
+  item: Section | SectionItem;
   key: string;
   index: number | null;
   isViewable: boolean;
@@ -48,7 +55,6 @@ interface ItemExposureViewToken {
 
 interface ItemExposureViewabilityConfig {
   itemVisiblePercentThreshold: number;
-  minimumViewTime?: number;
 }
 
 interface ItemExposureViewabilityPair {
@@ -57,6 +63,11 @@ interface ItemExposureViewabilityPair {
     viewableItems: ItemExposureViewToken[];
     changed: ItemExposureViewToken[];
   }) => void;
+}
+
+interface ItemExposureInfo {
+  index: number;
+  itemData: ListItem;
 }
 
 interface MpxSectionListProps {
@@ -94,7 +105,6 @@ interface MpxSectionListProps {
   'refresher-triggered'?: boolean;
   'enable-item-exposure'?: boolean;
   'item-exposure-threshold'?: number;
-  'item-exposure-minimum-view-time'?: number;
   'wait-for'?: Array<GestureHandler>;
   'simultaneous-handlers'?: Array<GestureHandler>;
   bindrefresherrefresh?: (event: any) => void;
@@ -156,7 +166,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'refresher-triggered': refresherTriggered,
     'enable-item-exposure': enableItemExposure = false,
     'item-exposure-threshold': itemExposureThreshold = 0,
-    'item-exposure-minimum-view-time': itemExposureMinimumViewTime = 0,
     'simultaneous-handlers': originSimultaneousHandlers,
     'wait-for': waitFor,
     binditemexposure
@@ -172,16 +181,14 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const reverseIndexMap = useRef<{ [key: string]: number }>({})
   const itemExposureState = useRef<{ [key: string]: boolean }>({})
   const enableItemExposureRef = useRef(false)
+  const enableStickyRef = useRef(enableSticky)
   const bindItemExposureRef = useRef<typeof binditemexposure>()
   const propsRef = useRef(props)
-  const useItemExposureViewability = useRef(enableItemExposure)
+  const initialEnableItemExposureRef = useRef(enableItemExposure)
   const itemExposureViewabilityConfig = useRef<ItemExposureViewabilityConfig>()
   if (!itemExposureViewabilityConfig.current) {
     itemExposureViewabilityConfig.current = {
       itemVisiblePercentThreshold: getExposurePercentThreshold(itemExposureThreshold)
-    }
-    if (itemExposureMinimumViewTime > 0) {
-      itemExposureViewabilityConfig.current.minimumViewTime = itemExposureMinimumViewTime
     }
   }
   const itemExposureViewabilityConfigValue = itemExposureViewabilityConfig.current as ItemExposureViewabilityConfig
@@ -195,6 +202,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
   enableItemExposureRef.current = enableItemExposure
+  enableStickyRef.current = enableSticky
   bindItemExposureRef.current = binditemexposure
   propsRef.current = props
 
@@ -233,11 +241,12 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
           const exposedItems: ItemExposureDetail[] = []
           changed.forEach((viewToken) => {
-            const item = viewToken.item
-            const originalIndex = item?._originalItemIndex ?? -1
-            if (originalIndex < 0) return
+            const exposureInfo = getItemExposureInfo(viewToken)
+            if (!exposureInfo) return
 
-            const key = `${originalIndex}`
+            const { index, itemData } = exposureInfo
+            const key = `${index}`
+
             if (!viewToken.isViewable) {
               delete itemExposureState.current[key]
               return
@@ -246,8 +255,8 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
             if (!itemExposureState.current[key]) {
               itemExposureState.current[key] = true
               exposedItems.push({
-                originalIndex,
-                itemData: item,
+                index,
+                itemData,
                 threshold: itemExposureViewabilityConfigValue.itemVisiblePercentThreshold
               })
             }
@@ -273,6 +282,38 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const getOriginalIndex = (sectionIndex: number, rowIndex: number | 'header' | 'footer'): number => {
     const key = `${sectionIndex}_${rowIndex}`
     return reverseIndexMap.current[key] ?? -1 // 如果找不到，返回-1
+  }
+
+  const getItemExposureInfo = (viewToken: ItemExposureViewToken): ItemExposureInfo | null => {
+    const item = viewToken.item
+    if (!item) return null
+
+    if (viewToken.key.endsWith(':header')) {
+      if (enableStickyRef.current) return null
+      const section = item as Section
+      return section.headerData && section.headerIndex != null
+        ? {
+            index: section.headerIndex,
+            itemData: section.headerData
+          }
+        : null
+    }
+
+    if (viewToken.key.endsWith(':footer')) {
+      const section = item as Section
+      return section.footerData && section.footerIndex != null
+        ? {
+            index: section.footerIndex,
+            itemData: section.footerData
+          }
+        : null
+    }
+
+    const sectionItem = item as SectionItem
+    return {
+      index: sectionItem.index,
+      itemData: sectionItem.itemData
+    }
   }
 
   const scrollToIndex = ({ index, animated, viewOffset = 0, viewPosition = 0 }: ScrollPositionParams) => {
@@ -303,8 +344,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     if ((itemHeight as ItemHeightType).getter) {
       const item = convertedListData[sectionIndex].data[rowIndex]
       // 使用getOriginalIndex获取原始索引
-      const originalIndex = getOriginalIndex(sectionIndex, rowIndex)
-      return (itemHeight as ItemHeightType).getter?.(item, originalIndex) || 0
+      return (itemHeight as ItemHeightType).getter?.(item.itemData, item.index) || 0
     } else {
       return (itemHeight as ItemHeightType).value || 0
     }
@@ -347,7 +387,8 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
           footerData: null,
           data: [],
           hasSectionHeader: true,
-          hasSectionFooter: false
+          hasSectionFooter: false,
+          headerIndex: index
         }
         // 为 section header 添加索引映射
         const sectionIndex = sections.length
@@ -369,6 +410,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
         const sectionIndex = sections.length
         currentSection.footerData = item
         currentSection.hasSectionFooter = true
+        currentSection.footerIndex = index
         indexMap.current[index] = `${sectionIndex}_footer`
         // 添加反向索引映射
         reverseIndexMap.current[`${sectionIndex}_footer`] = index
@@ -388,7 +430,10 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
         }
         // 将 item 添加到当前 section 的 data 中
         const itemIndex = currentSection.data.length
-        currentSection.data.push(item)
+        currentSection.data.push({
+          itemData: item,
+          index
+        })
         let sectionIndex
         // 为 item 添加索引映射 - 存储格式为: "sectionIndex_itemIndex"
         if (!currentSection.hasSectionHeader && sections.length === 0) {
@@ -432,7 +477,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
       offset += headerHeight
 
       // 添加该 section 中所有 items 的位置信息
-      section.data.forEach((item: ListItem, itemIndex: number) => {
+      section.data.forEach((item: SectionItem, itemIndex: number) => {
         const contentHeight = getItemHeight({ sectionIndex, rowIndex: itemIndex })
         layouts.push({
           length: contentHeight,
@@ -460,7 +505,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
 
   useEffect(() => {
     itemExposureState.current = {}
-  }, [convertedListData, enableItemExposure])
+  }, [convertedListData, enableItemExposure, enableSticky])
 
   const scrollAdditionalProps = extendObject(
     {
@@ -486,7 +531,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     layoutProps
   )
 
-  if (useItemExposureViewability.current) {
+  if (initialEnableItemExposureRef.current) {
     extendObject(scrollAdditionalProps, {
       viewabilityConfigCallbackPairs: itemExposureViewabilityPairs.current
     })
@@ -541,7 +586,6 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     'refresher-enabled',
     'enable-item-exposure',
     'item-exposure-threshold',
-    'item-exposure-minimum-view-time',
     'bindrefresherrefresh',
     'bindscrolltolower',
     'bindscroll',
@@ -555,7 +599,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     () => {
       const ItemComponent = getGeneric(generichash, genericrecycleItem)
       if (!ItemComponent) return undefined
-      return ({ item }: { item: ListItem }) => createElement(ItemComponent, { itemData: item })
+      return ({ item }: { item: SectionItem }) => createElement(ItemComponent, { itemData: item.itemData })
     },
     [generichash, genericrecycleItem]
   )
@@ -616,7 +660,7 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
     [ListFooterGenericComponent, listFooterData]
   )
 
-  const sectionListProps: RNSectionListProps<ListItem, SectionExtra> = extendObject(
+  const sectionListProps: RNSectionListProps<SectionItem, SectionExtra> = extendObject(
     {
       sections: convertedListData,
       renderItem: renderItem,
