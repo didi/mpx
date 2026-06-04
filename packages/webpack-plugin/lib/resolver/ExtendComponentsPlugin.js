@@ -1,4 +1,9 @@
-const { EXTEND_COMPONENT_CONFIG } = require('../utils/const')
+const toPosix = require('../utils/to-posix')
+const EXTEND_COMPONENT_RELATIVE_PATH = './lib/runtime/components/extends/'
+const EXTEND_COMPONENT_TARGET_PATH = '@mpxjs/webpack-plugin/lib/runtime/components/react/dist'
+const EXTEND_COMPONENTS = {
+  'section-list': ['ios', 'android', 'harmony']
+}
 
 /**
  * 扩展组件路径解析插件
@@ -17,44 +22,49 @@ module.exports = class ExtendComponentsPlugin {
     const mode = this.mode
 
     resolver.getHook(this.source).tapAsync('ExtendComponentsPlugin', (request, resolveContext, callback) => {
-      const requestPath = request.request
-      if (!requestPath || !requestPath.startsWith('@mpxjs/webpack-plugin/lib/runtime/components/extends/')) {
+      const componentName = getComponentName(request)
+      if (!componentName) {
         return callback()
       }
-
-      // 匹配 @mpxjs/webpack-plugin/lib/runtime/components/extends/[component-name]
-      const extendsMatch = requestPath.match(/^@mpxjs\/webpack-plugin\/lib\/runtime\/components\/extends\/(.+)$/)
-
-      if (!extendsMatch) {
-        return callback()
-      }
-
-      const componentName = extendsMatch[1]
 
       // 检查组件是否在配置中
-      if (!EXTEND_COMPONENT_CONFIG[componentName]) {
-        return callback(new Error(`Extended component "${componentName}" was not found. Available extended components: ${Object.keys(EXTEND_COMPONENT_CONFIG).join(', ')}`))
+      const supportedModes = EXTEND_COMPONENTS[componentName]
+      if (!supportedModes) {
+        return callback(new Error(`Extended component "${componentName}" was not found. Available extended components: ${Object.keys(EXTEND_COMPONENTS).join(', ')}`))
       }
 
       // 获取当前模式下的组件路径
-      const componentConfig = EXTEND_COMPONENT_CONFIG[componentName]
-      const newRequest = componentConfig[mode]
-
-      if (!newRequest) {
-        return callback(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform. Supported platforms include: ${Object.keys(componentConfig).join(', ')}`))
+      if (!supportedModes.includes(mode)) {
+        return callback(new Error(`Extended component "${componentName}" cannot be used on the ${mode} platform. Supported platforms include: ${supportedModes.join(', ')}`))
       }
+      const newRequest = `${EXTEND_COMPONENT_TARGET_PATH}/mpx-${componentName}.jsx`
 
-      const obj = Object.assign({}, request, {
-        request: newRequest
+      const redirectRequest = Object.assign({}, request, {
+        request: newRequest,
+        fullySpecified: false,
+        __mpxResolvedExtendComponent: true
       })
 
       resolver.doResolve(
         target,
-        obj,
+        redirectRequest,
         `resolve extend component: ${componentName} to ${newRequest}`,
         resolveContext,
-        callback
+        (err, result) => {
+          if (err) return callback(err)
+          if (!result) return callback(new Error(`Extended component "${componentName}" resolved to "${newRequest}", but the target file was not found.`))
+          callback(null, result)
+        }
       )
     })
   }
+}
+
+function getComponentName (request) {
+  const descriptionFileData = request.descriptionFileData
+  const relativePath = request.relativePath && toPosix(request.relativePath)
+
+  if (!descriptionFileData || descriptionFileData.name !== '@mpxjs/webpack-plugin' || !relativePath || !relativePath.startsWith(EXTEND_COMPONENT_RELATIVE_PATH)) return
+
+  return relativePath.slice(EXTEND_COMPONENT_RELATIVE_PATH.length).replace(/\.[^/.]+$/, '')
 }
