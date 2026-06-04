@@ -17,7 +17,7 @@ import { error, isFunction } from '@mpxjs/utils'
 import LinearGradient from 'react-native-linear-gradient'
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler'
 import Portal from './mpx-portal'
-import { FixedContext } from './context'
+import { FixedStackContext } from './context'
 
 export interface _ViewProps extends ViewProps {
   style?: ExtendedViewStyle
@@ -137,6 +137,21 @@ const normalizeStyle = (style: ExtendedViewStyle = {}) => {
     }
   })
   return style
+}
+
+const getStyleZIndex = (style?: ExtendedViewStyle) => {
+  const zIndex = style?.zIndex as unknown
+  if (typeof zIndex === 'number') return zIndex
+  if (typeof zIndex === 'string' && zIndex.trim()) {
+    const parsed = Number(zIndex)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
+
+const getFixedStackPath = (style: ExtendedViewStyle, fixedStackContext: { stackPath: number[] } | null) => {
+  const localZIndex = getStyleZIndex(style)
+  return fixedStackContext ? [...fixedStackContext.stackPath, localZIndex] : [localZIndex]
 }
 
 const isPercent = (val: string | number | undefined): val is string => typeof val === 'string' && PERCENT_REGEX.test(val)
@@ -751,8 +766,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
     parentWidth,
     parentHeight
   })
-  const inFixedContext = useContext(FixedContext)
-
+  const fixedStackContext = useContext(FixedStackContext)
   const { textStyle, backgroundStyle, innerStyle = {} } = splitStyle(normalStyle)
   const textPassThrough = useTextPassThroughValue(textStyle, textProps)
 
@@ -774,6 +788,7 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef })
 
   const viewStyle = extendObject({}, innerStyle, layoutStyle)
+  const fixedStackPath = hasPositionFixed ? getFixedStackPath(viewStyle, fixedStackContext) : undefined
   const transitionend = isFunction(catchtransitionend)
     ? catchtransitionend
     : isFunction(bindtransitionend)
@@ -832,11 +847,8 @@ const _View = forwardRef<HandlerRef<View, _ViewProps>, _ViewProps>((viewProps, r
   }
 
   if (hasPositionFixed) {
-    finalComponent = createElement(FixedContext.Provider, { value: true }, finalComponent)
-  }
-
-  if (hasPositionFixed && !inFixedContext) {
-    finalComponent = createElement(Portal, null, finalComponent)
+    finalComponent = createElement(FixedStackContext.Provider, { value: { stackPath: fixedStackPath as number[] } }, finalComponent)
+    finalComponent = createElement(Portal, { stackPath: fixedStackPath }, finalComponent)
   }
   return finalComponent
 })
