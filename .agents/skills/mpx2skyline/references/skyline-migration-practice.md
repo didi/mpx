@@ -59,10 +59,23 @@ const isSkyline = this.renderer === 'skyline'
 在生命周期（如 `onLoad`）中赋值到 data，供模板使用：
 
 ```js
+// 选项式 API
 createPage({
   onLoad() {
     this.setData({ isSkyline: this.renderer === 'skyline' })
   }
+})
+```
+
+```js
+// setup script
+import { getCurrentInstance, onMounted } from '@mpxjs/core'
+
+const instance = getCurrentInstance()
+const renderer = instance.proxy.renderer
+
+onMounted(() => {
+  console.log('当前 renderer:', renderer)
 })
 ```
 
