@@ -3,7 +3,7 @@ import type { ComponentType } from 'react'
 import { SectionList, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import type { SectionListData, SectionListProps as RNSectionListProps } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { hasOwn } from '@mpxjs/utils'
+import { hasOwn, error } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 import { extendObject, useLayout, useTransformStyle, GestureHandler, flatGesture } from './utils'
 interface ListItem {
@@ -202,6 +202,10 @@ const _SectionList = forwardRef<any, MpxSectionListProps>((props = {}, ref) => {
   const { layoutRef, layoutStyle, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: scrollViewRef })
 
   enableItemExposureRef.current = enableItemExposure
+  if (initialEnableItemExposureRef.current !== enableItemExposure) {
+    error('[Mpx runtime error]: [enable-item-exposure] cannot be toggled at runtime. Set its value once at component initialization.')
+  }
+
   enableStickyRef.current = enableSticky
   bindItemExposureRef.current = binditemexposure
   propsRef.current = props
